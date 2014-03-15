@@ -15,7 +15,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->projectTreeWidget->addTopLevelItem(
                 new QTreeWidgetItem(QStringList() << "Example Projects", QTreeWidgetItem::Type));
     connectActions();
-    m_baseProjectDir = QDir::homePath() + "/odo";
+    m_baseProjectDir = QDir::homePath() + "/ODO";
     QDir dir(m_baseProjectDir);
     if (!QFile::exists(m_baseProjectDir)) {
         qDebug() << "Creating base project directory at " << m_baseProjectDir;

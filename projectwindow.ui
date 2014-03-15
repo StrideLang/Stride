@@ -263,30 +263,62 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
-   <addaction name="actionNew_Effect"/>
-   <addaction name="actionNew_Synth"/>
    <addaction name="actionBuild"/>
-   <addaction name="actionFlash"/>
+   <addaction name="actionUpload"/>
    <addaction name="actionSimple"/>
   </widget>
-  <action name="actionNew_Effect">
-   <property name="text">
-    <string>New Effect</string>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>686</width>
+     <height>20</height>
+    </rect>
    </property>
-  </action>
-  <action name="actionNew_Synth">
-   <property name="text">
-    <string>New Synth</string>
-   </property>
-  </action>
+   <widget class="QMenu" name="menuProject">
+    <property name="title">
+     <string>Project</string>
+    </property>
+    <widget class="QMenu" name="menuTarget">
+     <property name="title">
+      <string>Target</string>
+     </property>
+     <addaction name="separator"/>
+     <addaction name="separator"/>
+    </widget>
+    <addaction name="actionRename"/>
+    <addaction name="menuTarget"/>
+    <addaction name="actionRefresh"/>
+   </widget>
+   <widget class="QMenu" name="menuBuild">
+    <property name="title">
+     <string>Build</string>
+    </property>
+    <addaction name="actionBuild"/>
+    <addaction name="actionUpload"/>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <addaction name="actionSimple"/>
+   </widget>
+   <addaction name="menuProject"/>
+   <addaction name="menuBuild"/>
+   <addaction name="menuView"/>
+  </widget>
   <action name="actionBuild">
    <property name="text">
     <string>Build</string>
    </property>
   </action>
-  <action name="actionFlash">
+  <action name="actionUpload">
    <property name="text">
-    <string>Flash</string>
+    <string>Upload</string>
+   </property>
+   <property name="toolTip">
+    <string>Upload to board</string>
    </property>
   </action>
   <action name="actionSimple">
@@ -295,6 +327,21 @@
    </property>
    <property name="text">
     <string>Simple</string>
+   </property>
+  </action>
+  <action name="actionRename">
+   <property name="text">
+    <string>Properties</string>
+   </property>
+  </action>
+  <action name="actionTarget_2">
+   <property name="text">
+    <string>target</string>
+   </property>
+  </action>
+  <action name="actionRefresh">
+   <property name="text">
+    <string>Refresh targets/devices</string>
    </property>
   </action>
  </widget>

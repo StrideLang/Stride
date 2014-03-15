@@ -4,6 +4,7 @@
 #include <QProcess>
 #include <QDebug>
 #include <QQuickView>
+#include <QActionGroup>
 
 #include "simpleproject.h"
 
@@ -28,6 +29,7 @@ ProjectWindow::ProjectWindow(QWidget *parent, QString projectDir) :
 
     QString name = projectDir.mid(projectDir.lastIndexOf("/") + 1);
     setWindowTitle(name);
+    updateMenus();
 
 }
 
@@ -46,7 +48,16 @@ void ProjectWindow::build()
 
 void ProjectWindow::flash()
 {
-    Q_ASSERT(false);
+    ui->consoleText->clear();
+    m_project->flash();
+}
+
+void ProjectWindow::setTargetFromMenu()
+{
+    QAction *act = static_cast<QAction *>(sender());
+    Q_ASSERT(act);
+
+    m_project->setTarget(act->text());
 }
 
 void ProjectWindow::printConsoleText(QString text)
@@ -80,11 +91,44 @@ void ProjectWindow::setView(bool simple)
     }
 }
 
+void ProjectWindow::updateMenus()
+{
+    QStringList deviceList = m_project->listDevices();
+    QStringList targetList = m_project->listTargets();
+
+    ui->menuTarget->clear();
+    QActionGroup *deviceGroup = new QActionGroup(ui->menuTarget);
+    foreach (QString device, deviceList) {
+        QAction *act = ui->menuTarget->addAction(device);
+        act->setCheckable(true);
+        deviceGroup->addAction(act);
+        if (act->text().startsWith(m_project->getBoardId())) {
+            act->setChecked(true);
+        }
+//        connect(act, SIGNAL(triggered()),
+//                this, SLOT(setTargetFromMenu()));
+    }
+    ui->menuTarget->addSeparator();
+    QActionGroup *targetGroup = new QActionGroup(ui->menuTarget);
+    foreach (QString target, targetList) {
+        QAction *act = ui->menuTarget->addAction(target);
+        act->setCheckable(true);
+        targetGroup->addAction(act);
+        if (act->text() == m_project->getTarget()) {
+            act->setChecked(true);
+        }
+        connect(act, SIGNAL(triggered()),
+                this, SLOT(setTargetFromMenu()));
+    }
+}
+
 void ProjectWindow::connectActions()
 {
     connect(ui->actionBuild, SIGNAL(triggered()), this, SLOT(build()));
-    connect(ui->actionFlash, SIGNAL(triggered()), this, SLOT(flash()));
+    connect(ui->actionUpload, SIGNAL(triggered()), this, SLOT(flash()));
     connect(ui->actionSimple, SIGNAL(toggled(bool)), this, SLOT(setView(bool)));
+
+    connect(ui->actionRefresh, SIGNAL(triggered()), this, SLOT(updateMenus()));
 
     connect(m_project, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
     connect(m_project, SIGNAL(errorText(QString)), this, SLOT(printConsoleError(QString)));

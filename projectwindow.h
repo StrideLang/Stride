@@ -19,10 +19,13 @@ public:
 
 public slots:
     void setView(bool simple);
+    void updateMenus();
 
 private slots:
     void build();
     void flash();
+
+    void setTargetFromMenu();
 
     void printConsoleText(QString text);
     void printConsoleError(QString text);
