@@ -24,6 +24,9 @@ public slots:
 private slots:
     void build();
     void flash();
+    void run(bool pressed);
+
+    void programStopped();
 
     void setTargetFromMenu();
 

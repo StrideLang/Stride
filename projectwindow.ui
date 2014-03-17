@@ -265,6 +265,7 @@
    </attribute>
    <addaction name="actionBuild"/>
    <addaction name="actionUpload"/>
+   <addaction name="actionRun"/>
    <addaction name="actionSimple"/>
   </widget>
   <widget class="QMenuBar" name="menuBar">
@@ -342,6 +343,14 @@
   <action name="actionRefresh">
    <property name="text">
     <string>Refresh targets/devices</string>
+   </property>
+  </action>
+  <action name="actionRun">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Run</string>
    </property>
   </action>
  </widget>

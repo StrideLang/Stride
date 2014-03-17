@@ -20,14 +20,16 @@ SOURCES += main.cpp\
     baseproject.cpp \
     simpleproject.cpp \
     blocks/baseblock.cpp \
-    blocks/oscblock.cpp
+    blocks/oscblock.cpp \
+    blocks/outputblock.cpp
 
 HEADERS  += mainwindow.h \
     projectwindow.h \
     baseproject.h \
     simpleproject.h \
     blocks/baseblock.h \
-    blocks/oscblock.h
+    blocks/oscblock.h \
+    blocks/outputblock.h
 
 FORMS    += mainwindow.ui \
     projectwindow.ui

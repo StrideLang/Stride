@@ -15,6 +15,7 @@ ProjectWindow::ProjectWindow(QWidget *parent, QString projectDir) :
     ui->setupUi(this);
 
     m_project = new SimpleProject(projectDir);
+    m_project->setBoardId("0ontZocni8POZ");
 
     // Create QML Editor for layout panel
     QQuickView *view = new QQuickView();
@@ -50,6 +51,19 @@ void ProjectWindow::flash()
 {
     ui->consoleText->clear();
     m_project->flash();
+}
+
+void ProjectWindow::run(bool pressed)
+{
+    if (pressed) {
+        ui->consoleText->clear();
+    }
+    m_project->run(pressed);
+}
+
+void ProjectWindow::programStopped()
+{
+    ui->actionRun->setChecked(false);
 }
 
 void ProjectWindow::setTargetFromMenu()
@@ -126,11 +140,13 @@ void ProjectWindow::connectActions()
 {
     connect(ui->actionBuild, SIGNAL(triggered()), this, SLOT(build()));
     connect(ui->actionUpload, SIGNAL(triggered()), this, SLOT(flash()));
+    connect(ui->actionRun, SIGNAL(toggled(bool)), this, SLOT(run(bool)));
     connect(ui->actionSimple, SIGNAL(toggled(bool)), this, SLOT(setView(bool)));
 
     connect(ui->actionRefresh, SIGNAL(triggered()), this, SLOT(updateMenus()));
 
     connect(m_project, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
     connect(m_project, SIGNAL(errorText(QString)), this, SLOT(printConsoleError(QString)));
+    connect(m_project, SIGNAL(programStopped()), this, SLOT(programStopped()));
 
 }

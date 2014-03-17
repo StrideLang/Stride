@@ -23,6 +23,7 @@ public:
 public slots:
     virtual void build() {}
     virtual void flash() {}
+    virtual void run(bool pressed) {Q_UNUSED(pressed);}
     virtual QStringList listTargets() {return QStringList();}
     virtual QStringList listDevices() {return QStringList();}
 
@@ -36,6 +37,7 @@ protected:
 signals:
     void outputText(QString text);
     void errorText(QString text);
+    void programStopped();
 };
 
 #endif // BASEPROJECT_H

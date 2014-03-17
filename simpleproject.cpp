@@ -1,11 +1,14 @@
 #include <QFile>
 #include <QDir>
-#include <QProcess>
 #include <QDebug>
 #include <QApplication>
 #include <QStringList>
+#include <QMessageBox>
 
 #include "simpleproject.h"
+
+#include "blocks/outputblock.h"
+#include "blocks/oscblock.h"
 
 SimpleProject::SimpleProject(QString projectDir):
     BaseProject(projectDir)
@@ -39,10 +42,22 @@ SimpleProject::SimpleProject(QString projectDir):
     }
     m_target = getMakefileOption("TARGET");
     setMakefileOption("APP_NAME", m_projectDir.mid(m_projectDir.lastIndexOf("/") + 1));
+
+    m_runProcess = new QProcess(this);
+
+    connect(m_runProcess, SIGNAL(stateChanged(QProcess::ProcessState)),
+            this, SLOT(runStateChanged(QProcess::ProcessState)));
+
+
+    //FIXME: Remove these test cases
+    m_audioOutBlock = new OutputBlock("out", this);
+    OscBlock *oscBlock = new OscBlock("osc1", this);
+    m_audioOutBlock->connectToInput(0, oscBlock, 0);
 }
 
 SimpleProject::~SimpleProject()
 {
+    delete m_runProcess;
 
 }
 
@@ -109,8 +124,15 @@ QStringList SimpleProject::listDevices()
     return targetList;
 }
 
+void SimpleProject::runStateChanged(QProcess::ProcessState newState)
+{
+    Q_ASSERT(newState == QProcess::NotRunning);
+    emit programStopped();
+}
+
 void SimpleProject::build()
 {
+    generateCode();
     QProcess p(this);
     QStringList env = getBuildEnvironment();
 
@@ -119,7 +141,7 @@ void SimpleProject::build()
     // FIXME always clean before building
 //    p.execute(m_toolPath + "/bin/xmake",  QStringList() << "clean");
     p.start(m_toolPath + "/bin/xmake",  QStringList() << "all");
-    while (!p.waitForFinished(1000)) {
+    while (p.waitForReadyRead(1000) || !p.waitForFinished(1)) {
         QString out = QString(p.readAllStandardOutput());
         QString error = QString(p.readAllStandardError());
         if (!out.isEmpty()) {
@@ -151,7 +173,7 @@ void SimpleProject::flash()
     p.setWorkingDirectory(m_projectDir);
 
     QStringList flags;
-    flags << QString("--adapter-id") << QString("0ontZocni8POZ")
+    flags << QString("--adapter-id") << m_board_id
           << m_projectDir + "/bin/Release/"
              + m_projectDir.mid(m_projectDir.lastIndexOf("/") + 1) + ".xe";
 
@@ -167,7 +189,33 @@ void SimpleProject::flash()
     if (!error.isEmpty()) {
         emit errorText(error);
     }
+}
 
+void SimpleProject::run(bool pressed)
+{
+    if (pressed) {
+        flash();
+        QStringList env = getBuildEnvironment();
+
+        m_runProcess->setEnvironment(env);
+        m_runProcess->setWorkingDirectory(m_projectDir);
+
+        QStringList flags;
+        flags << QString("--adapter-id") << m_board_id
+              << QString("--io")
+              << m_projectDir + "/bin/Release/"
+                 + m_projectDir.mid(m_projectDir.lastIndexOf("/") + 1) + ".xe";
+
+        m_runProcess->execute(m_toolPath + "/bin/xrun",  flags);
+        m_runProcess->waitForStarted();
+        if (m_runProcess->state() != QProcess::NotRunning) {
+            qDebug() << "Couldn't start xrun";
+        }
+    } else {
+        if (m_runProcess->state() != QProcess::NotRunning) {
+            m_runProcess->kill();
+        }
+    }
 }
 
 QStringList SimpleProject::getBuildEnvironment()
@@ -256,4 +304,117 @@ QString SimpleProject::getMakefileOption(QString option)
         qDebug() << "SimpleProject::getMakefileOption Option not found!";
     }
     return value;
+}
+
+void SimpleProject::generateCode()
+{
+    updateCodeStrings();
+    setCodeSection("Basic Config", m_codeStrings[0]);
+    setCodeSection("Control Globals", m_codeStrings[1]);
+    setCodeSection("Shared Data", m_codeStrings[2]);
+    setCodeSection("Ugen Structs", m_codeStrings[3]);
+    // TODO : implement code processing for Control Input section
+    setCodeSection("Control Processing", m_codeStrings[4]);
+    setCodeSection("Init Ugens", m_codeStrings[6]);
+    setCodeSection("Audio Processing", m_codeStrings[7]);
+    // TODO implement parameter copy code generation
+    setCodeSection("Parameter Copy", "");
+
+}
+
+void SimpleProject::updateCodeStrings()
+{
+    m_codeStrings.clear();
+    m_codeStrings.resize(8);
+    m_codeStrings[0] = getBasicConfigCode();
+    m_codeStrings[1] = getControlGlobalsCode();
+
+    m_codeStrings[4] = getControlProcessingCode();
+//    m_codeStrings[5] = controlInput;
+
+    QVector<BlockConnector *> inputConnections = m_audioOutBlock->getInputConnectors();
+    foreach(BlockConnector *connection, inputConnections) {
+        QVector<QPair<BaseBlock *, int> > connected = connection->getConnections();
+        for (int i = 0; i < connected.size(); i++) {
+            QPair<BaseBlock *, int> connDetails = connected[i];
+            m_codeStrings[2] += connDetails.first->getGlobalVariablesCode();
+            m_codeStrings[3] += connDetails.first->getUgenStructCode();
+            m_codeStrings[6] += connDetails.first->getInitUgensCode();
+            m_codeStrings[7] += "S32_T asig;\n";
+            m_codeStrings[7] += connDetails.first->getAudioProcessingCode(QStringList() << "asig");
+        }
+    }
+    m_codeStrings[7] += "out_samps[0] = asig;";
+}
+
+QString SimpleProject::getBasicConfigCode()
+{
+    QString text;
+    text = "#define NUM_IN_CHANS 4\n#define NUM_OUT_CHANS 4\n\n#define MAX_PARAMS_PER_SAMPLE 2\n\n#define SAMPLE_RATE 44100\n";
+    return text;
+}
+
+QString SimpleProject::getUgenStructsCode()
+{
+
+    QStringList ugenStructs;
+    ugenStructs << "typedef struct {\nS32_T phs;\nS32_T att_incr;\nS32_T dec_incr;\nS32_T sus_lvl;\nS32_T rel_incr;\nunsigned char mode; //0 - attack 1 - decay 2- release\n} ENVDATA;";
+    ugenStructs << "typedef struct {\nfloat gain;\n} GAINDATA;\n";
+
+    return ugenStructs.join("\n");
+}
+
+QString SimpleProject::getControlGlobalsCode()
+{
+    QString code;
+
+    code +=  "#define NUM_CTLS " "2" "\n";
+    code += "typedef struct {\n float value;\n } ctl_t;\n";
+    code += "ctl_t controls[NUM_CTLS]; // TODO should set to some default values\n";
+
+    code += "interface control_in_if {\n    void setControl1(float val);\n  void setControl2(float val);\n};\n";
+    code += "interface param_if {\n" \
+            "[[clears_notification]] void setParam1(float val);\n" \
+            "[[clears_notification]] void setParam2(float val);\n" \
+            "[[notification]] slave void data_ready(void);\n" \
+            "};\n";
+    return code;
+}
+
+QString SimpleProject::getControlProcessingCode()
+{
+    QString code;
+
+    code +=  "case c.setControl1(float val):\n"
+            "controls[0].value = val;\n"
+            "parameter_set.setParam1(val);\n"
+            "break;\n"
+
+            "case c.setControl2(float val):\n"
+            "controls[1].value += val;\n"
+            "parameter_set.setParam2(controls[1].value);\n"
+            "break;\n";
+    return code;
+}
+
+void SimpleProject::setCodeSection(QString section, QString code)
+{
+    QFile file(m_projectDir + "/src/main.xc");
+    file.open(QIODevice::ReadOnly);
+    if (!file.isOpen()) {
+        qDebug() << "SimpleProject::setCodeSection Error! file not found: " << m_projectDir + "/Makefile/main.xc";
+        return;
+    }
+    QString text(file.readAll());
+    int startIndex = text.indexOf("//[[" + section + "]]\n");
+    Q_ASSERT(startIndex >= 0);
+    int endIndex = text.indexOf("//[[/" + section + "]]\n", startIndex);
+    Q_ASSERT(endIndex >= startIndex);
+    QString newText = "//[[" + section + "]]\n" + code;
+    text.replace(startIndex, endIndex - startIndex, newText);
+    file.close(); // close the file handle.
+
+    file.open(QIODevice::WriteOnly);
+    file.write(text.toUtf8()); // write the new text back to the file
+    file.close(); // close the file handle.
 }
