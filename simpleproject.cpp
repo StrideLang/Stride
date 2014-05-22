@@ -16,6 +16,8 @@ SimpleProject::SimpleProject(QString projectDir):
     m_projectType = "SIMPLE";
 
     m_templateBaseDir = "/home/andres/Documents/src/XMOS/Odo/OdoEdit/templates";
+
+    m_luaScriptsDir = "/home/andres/Documents/src/XMOS/Odo/OdoEdit/lua_scripts/";
     m_toolPath = "/home/andres/Documents/src/XMOS/xTIMEcomposer/Community_13.0.2";
 
     if (!QFile::exists(projectDir)) {
@@ -53,10 +55,13 @@ SimpleProject::SimpleProject(QString projectDir):
     m_audioOutBlock = new OutputBlock("out", this);
     OscBlock *oscBlock = new OscBlock("osc1", this);
     m_audioOutBlock->connectToInput(0, oscBlock, 0);
+
+    m_lua = lua_open();
 }
 
 SimpleProject::~SimpleProject()
 {
+    lua_close(m_lua);
     delete m_runProcess;
 
 }
@@ -141,6 +146,7 @@ void SimpleProject::build()
     // FIXME always clean before building
 //    p.execute(m_toolPath + "/bin/xmake",  QStringList() << "clean");
     p.start(m_toolPath + "/bin/xmake",  QStringList() << "all");
+    // FIXME this loops endlessly if build fails
     while (p.waitForReadyRead(1000) || !p.waitForFinished(1)) {
         QString out = QString(p.readAllStandardOutput());
         QString error = QString(p.readAllStandardError());
@@ -308,44 +314,104 @@ QString SimpleProject::getMakefileOption(QString option)
 
 void SimpleProject::generateCode()
 {
-    updateCodeStrings();
-    setCodeSection("Basic Config", m_codeStrings[0]);
-    setCodeSection("Control Globals", m_codeStrings[1]);
-    setCodeSection("Shared Data", m_codeStrings[2]);
-    setCodeSection("Ugen Structs", m_codeStrings[3]);
-    // TODO : implement code processing for Control Input section
-    setCodeSection("Control Processing", m_codeStrings[4]);
-    setCodeSection("Init Ugens", m_codeStrings[6]);
-    setCodeSection("Audio Processing", m_codeStrings[7]);
-    // TODO implement parameter copy code generation
-    setCodeSection("Parameter Copy", "");
+    luaL_loadfile(m_lua, QString(m_luaScriptsDir + "generator.lua").toLocal8Bit());
+    luaL_openlibs(m_lua); // Load standard libraries
+
+    if (lua_pcall(m_lua,0, LUA_MULTRET, 0)) {
+      qDebug() << "Something went wrong during execution" << endl;
+      qDebug() << lua_tostring(m_lua, -1) << endl;
+      lua_pop(m_lua,1);
+    }
+
+    lua_getglobal(m_lua, "test");
+    lua_pushnumber(m_lua, 5);
+    lua_pcall(m_lua, 1, 1, 0);
+    qDebug() << "The return value of the function was " << lua_tostring(m_lua, -1);
+    lua_pop(m_lua,1);
+//    updateCodeStrings();
+//    setCodeSection("Basic Config", m_codeStrings[0]);
+//    setCodeSection("Control Globals", m_codeStrings[1]);
+//    setCodeSection("Shared Data", m_codeStrings[2]);
+//    setCodeSection("Ugen Structs", m_codeStrings[3]);
+//    // TODO : implement code processing for Control Input section
+//    setCodeSection("Control Processing", m_codeStrings[4]);
+//    setCodeSection("Init Ugens", m_codeStrings[6]);
+//    setCodeSection("Audio Processing", m_codeStrings[7]);
+//     TODO implement parameter copy code generation
+//    setCodeSection("Parameter Copy", "");
 
 }
 
 void SimpleProject::updateCodeStrings()
 {
     m_codeStrings.clear();
-    m_codeStrings.resize(8);
-    m_codeStrings[0] = getBasicConfigCode();
-    m_codeStrings[1] = getControlGlobalsCode();
 
-    m_codeStrings[4] = getControlProcessingCode();
-//    m_codeStrings[5] = controlInput;
+//    m_codeStrings[0] = getBasicConfigCode();
+//    m_codeStrings[1] = getControlGlobalsCode();
 
-    QVector<BlockConnector *> inputConnections = m_audioOutBlock->getInputConnectors();
-    foreach(BlockConnector *connection, inputConnections) {
-        QVector<QPair<BaseBlock *, int> > connected = connection->getConnections();
-        for (int i = 0; i < connected.size(); i++) {
-            QPair<BaseBlock *, int> connDetails = connected[i];
-            m_codeStrings[2] += connDetails.first->getGlobalVariablesCode();
-            m_codeStrings[3] += connDetails.first->getUgenStructCode();
-            m_codeStrings[6] += connDetails.first->getInitUgensCode();
-            m_codeStrings[7] += "S32_T asig;\n";
-            m_codeStrings[7] += connDetails.first->getAudioProcessingCode(QStringList() << "asig");
-        }
-    }
-    m_codeStrings[7] += "out_samps[0] = asig;";
+//    m_codeStrings[4] = getControlProcessingCode();
+////    m_codeStrings[5] = controlInput;
+
+//    QVector<BlockConnector *> inputConnections = m_audioOutBlock->getInputConnectors();
+//    foreach(BlockConnector *connection, inputConnections) {
+//        QVector<QPair<BaseBlock *, int> > connected = connection->getConnections();
+//        for (int i = 0; i < connected.size(); i++) {
+//            QPair<BaseBlock *, int> connDetails = connected[i];
+//            m_codeStrings[2] += connDetails.first->getGlobalVariablesCode();
+//            m_codeStrings[3] += connDetails.first->getUgenStructCode();
+//            m_codeStrings[6] += connDetails.first->getInitUgensCode();
+//            m_codeStrings[7] += "S32_T asig;\n";
+//            m_codeStrings[7] += connDetails.first->getAudioProcessingCode(QStringList() << "asig");
+//        }
+//    }
+    //    m_codeStrings[7] += "out_samps[0] = asig;";
 }
+
+//QString SimpleProject::getComputeProcess()
+//{
+//    QString compProcText;
+
+//    foreach(Ugen ugen, ugenList) {
+//        QTextStream(&compProcText) << "    case " << QString::toUpper(ugen.name)
+//                                   << "_" << QString::number(ugen.tile) << "_"
+//                                   << QString("%1").arg(ugen.id, 2, QChar('0'))
+//                                   << "_CONTROLS:\n" << endl <<
+
+//    case BIQUAD_1_00_CONTROLS:
+//        ugen_biquad_data_t * unsafe data = (ugen_biquad_data_t *) ctr_data->data_buffer;
+//        unsafe {
+//            ctr_data->biquad_1_00_controls.cf = ctr_data->value;
+////                            printstr("gate: ");
+////                            printintln(ctr_data->env_controls.gate);
+//        }
+
+//        ugen_biquad_ctl(ctr_data->biquad_1_00_controls, data);
+
+//        break;
+//    case SINE_0_00_CONTROLS:
+//        ugen_sine_data_t * unsafe data = (ugen_sine_data_t *) ctr_data->data_buffer;
+//        unsafe {
+//            ctr_data->sine_0_00_controls.freq = ctr_data->value;
+//        }
+//        ugen_sine_ctl(ctr_data->sine_0_00_controls, data);
+
+//        break;
+//    case ENV_0_00_CONTROLS:
+//        ugen_env_data_t * unsafe data = (ugen_env_data_t *) ctr_data->data_buffer;
+//        unsafe {
+//            ctr_data->env_0_00_controls.gate = ctr_data->value;
+//        }
+//        ugen_env_ctl(ctr_data->env_0_00_controls, data);
+//        break;
+//    case NOISE_0_00_CONTROLS:
+//        ugen_noise_data_t * unsafe data = (ugen_noise_data_t *) ctr_data->data_buffer;
+//        unsafe {
+//            ctr_data->noise_0_00_controls.sampholdfreq = ctr_data->value;
+//        }
+//        ugen_noise_ctl(ctr_data->noise_0_00_controls, data);
+//        break;
+//    }
+//}
 
 QString SimpleProject::getBasicConfigCode()
 {

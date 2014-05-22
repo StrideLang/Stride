@@ -13,7 +13,6 @@ lessThan(QT_MAJOR_VERSION, 5): message("Qt 5 required!")
 TARGET = StreamStacker
 TEMPLATE = app
 
-
 SOURCES += main.cpp\
         mainwindow.cpp \
     projectwindow.cpp \
@@ -37,7 +36,8 @@ FORMS    += mainwindow.ui \
 OTHER_FILES += \
     qml/Editor.qml \
     templates/simple/Makefile \
-    templates/simple/src/main.xc
+    templates/simple/src/main.xc \
+    lua_scripts/generator.lua
 
 folder_01.source = qml
 folder_01.target = qml
@@ -45,3 +45,6 @@ DEPLOYMENTFOLDERS = folder_01
 
 RESOURCES += \
     qmlfiles.qrc
+
+LUA_LIB_PATH = /usr/lib/x86_64-linux-gnu
+unix|win32: LIBS += -L$${LUA_LIB_PATH} -lluajit-5.1

@@ -7,6 +7,10 @@
 #include <QString>
 #include <QProcess>
 
+extern "C" {
+#include "luajit-2.0/lua.hpp"
+}
+
 /* SimpleProject uses the XMOS command line tools and Makefile build system */
 class SimpleProject : public BaseProject
 {
@@ -41,11 +45,14 @@ protected:
 
 private:
     QString m_templateBaseDir;
+    QString m_luaScriptsDir;
     QString m_toolPath;
     QProcess *m_runProcess;
     BaseBlock *m_audioOutBlock;
     BaseBlock *m_audioInBlock;
     QVector<QString> m_codeStrings;
+
+    lua_State *m_lua;
 };
 
 #endif // SIMPLEPROJECT_H
