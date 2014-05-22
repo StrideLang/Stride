@@ -1,31 +1,37 @@
-/*
- * odo_basic.xc
+/******************************************************************************\
+ * File:	main.xc
  *
- *  Created on: Mar 6, 2014
- *      Author: andres
- */
+* Modified from project found here https://github.com/xcore/sw_audio_effects
+\******************************************************************************/
 
+#include "main.h"
 #include <xs1.h>
-#include <platform.h>
-#include <timer.h>
 
-#include <print.h>
+#include "audio_io.h"
+#include "switch_io.h"
+#include "dsp_server.h"
+#include "control_server.h"
+#include "server_interface.h"
+#include "compute.h"
 
-#include <limits.h>
-
-
-/*****************************************************************************/
-//#define USE_XSCOPE 1
+//[[Main DSP includes]]
+#include "dsp_0.h"
+#include "dsp_1.h"
+#include "dsp_2.h"
+#include "dsp_3.h"
+//[[/Main DSP includes]]
 
 #ifdef USE_XSCOPE
 #include <xscope.h>
-
+/*****************************************************************************/
 void xscope_user_init( void ) // 'C' constructor function (NB called before main)
 {
-    xscope_register( 1
-        ,XSCOPE_CONTINUOUS ,"Output" ,XSCOPE_INT ,"n"
-//        ,XSCOPE_CONTINUOUS ,"Left out" ,XSCOPE_INT ,"n"
-//        ,XSCOPE_CONTINUOUS ,"Mod" ,XSCOPE_FLOAT ,"n"
+    xscope_register( 4
+        ,XSCOPE_CONTINUOUS ,"Signal1" ,XSCOPE_INT ,"n"
+        ,XSCOPE_CONTINUOUS ,"Signal2" ,XSCOPE_INT ,"n"
+        ,XSCOPE_CONTINUOUS ,"Signal3" ,XSCOPE_INT ,"n"
+        ,XSCOPE_CONTINUOUS ,"Signal4" ,XSCOPE_INT ,"n"
+//        ,XSCOPE_CONTINUOUS ,"GainReduction" ,XSCOPE_INT ,"n"
     ); // xscope_register
 
     xscope_config_io( XSCOPE_IO_BASIC ); // Enable XScope printing
@@ -33,281 +39,58 @@ void xscope_user_init( void ) // 'C' constructor function (NB called before main
 #endif // ifdef USE_XSCOPE
 
 
-typedef signed int S32_T;
+// How to guarantee these are on the right tile?
+// if assigned to tile, the compiler complains:
+// ../src/main.xc:43: error: a variable declaration prefixed with on must declare an object of type port or clock
+swap_buffers dsp_buffers_A[NUM_APP_CHANS];
+swap_buffers dsp_buffers_B[NUM_APP_CHANS];
 
-//[[Basic Config]]
-#define NUM_IN_CHANS 4
-#define NUM_OUT_CHANS 4
+swap_buffers ctl_buffers_A[NUM_APP_CHANS];
+swap_buffers ctl_buffers_B[NUM_APP_CHANS];
 
-#define MAX_PARAMS_PER_SAMPLE 2
-
-#define SAMPLE_RATE 44100
-//[[/Basic Config]]
-
-// ------------------ UGENS
-
-//[[Shared Data]]
-#define TABLE1_LEN 2048
-S32_T table1[TABLE1_LEN];
-//[[/Shared Data]]
-
-//[[Ugen Structs]]
-typedef struct {
-    S32_T phs;
-    S32_T incr;
-} OSCDATA;
-
-typedef struct {
-    S32_T phs;
-    S32_T att_incr;
-    S32_T dec_incr;
-    S32_T sus_lvl;
-    S32_T rel_incr;
-    unsigned char mode; //0 - attack 1 - decay 2- release
-} ENVDATA;
-
-typedef struct {
-    float gain;
-} GAINDATA;
-
-//[[/Ugen Structs]]
-
-// ---------------------------------------- Audio I/O
-
-[[combinable]]
-void audio_io_thread(streaming chanend audio_io)
+int main (void)
 {
-    timer tmr;
-    unsigned int t;
-    unsigned int incr = XS1_TIMER_MHZ * 1000000.0/44100.0;
-//    printintln(incr);
-    tmr :> t;
-    S32_T inp_samps[NUM_IN_CHANS];
-    S32_T out_samps[NUM_OUT_CHANS];
-    S32_T chan_cnt;
+	streaming chan c_aud_I2S;
+	streaming chan c_aud_dsp[NUM_APP_CHANS];
+	interface ctl_from_dsp_if c_ctl_from_dsp;
+    interface dsp_param_if dsp_params[NUM_APP_CHANS];
+    interface computation_if comps;
+    interface server_xchange_if server_xchange;
 
-    inp_samps[0] = 10;
-    while (1) {
-        select {
-            case tmr when timerafter(t) :> void :
-#pragma loop unroll
-                for (chan_cnt = 0; chan_cnt < NUM_IN_CHANS; chan_cnt++) {
-                    audio_io <: inp_samps[chan_cnt];
-                }
-#pragma loop unroll
-                for (chan_cnt = 0; chan_cnt < NUM_OUT_CHANS; chan_cnt++) {
-                    audio_io :> out_samps[chan_cnt];
-                }
-
-#ifdef USE_XSCOPE
-                xscope_int(0,out_samps[0]);
+	par
+	{
+        // Audio
+	    on tile[DSP_TILE]: audio_io( c_aud_I2S );
+        on tile[DSP_TILE]: dsp_server(dsp_params, server_xchange, dsp_buffers_B);
+        // Audio mixing and routing
+        on tile[DSP_TILE]: switch_io( c_aud_I2S , c_aud_dsp, c_ctl_from_dsp);
+        // DSP
+//[[Main DSP]]
+        on tile[DSP_TILE]: dsp_0(c_aud_dsp[0], dsp_params[0], dsp_buffers_A[0]);
+        on tile[DSP_TILE]: dsp_1(c_aud_dsp[1], dsp_params[1], dsp_buffers_A[1]);
+        on tile[DSP_TILE]: dsp_2(c_aud_dsp[2], dsp_params[2], dsp_buffers_A[2]);
+        on tile[DSP_TILE]: dsp_3(c_aud_dsp[3], dsp_params[3], dsp_buffers_A[3]);
+//[[/Main DSP]]
+		// Control I/O
+#ifdef CONTROL_COMBINABLE
+		on tile[CTL_TILE]:
+		[[combine]]
+            par {
+                control_server(comps, server_xchange, ctl_buffers_B,
+                        c_ctl_from_dsp);
+                        // Computation of parameters from control data.
+                compute(comps, ctl_buffers_A);
+            }
+#else
+        on tile[CTL_TILE]: control_server(comps, server_xchange, ctl_buffers_B,
+                c_ctl_from_dsp);
+                        // Computation of parameters from control data.
+        on tile[CTL_TILE]: compute(comps, ctl_buffers_A);
 #endif
-                t += incr;
-                break;
-        }
-    }
-}
 
-// Control I/O processing ------------------
+	}
 
-// GPIO
-#include "startkit_gpio.h"
-
-//[[Control Globals]]
-#define NUM_CTLS 2
-
-typedef struct {
-    float value;
-    // maybe type here or an additional field for name?
-} ctl_t;
-
-ctl_t controls[NUM_CTLS]; // TODO should set to some default values
-
-interface control_in_if {
-  void setControl1(float val);
-  void setControl2(float val);
-};
-
-interface param_if {
-    [[clears_notification]] void setParam1(float val);
-    [[clears_notification]] void setParam2(float val);
-    [[notification]] slave void data_ready(void);
-};
-//[[/Control Globals]]
-
-[[distributable]]
-void process_control_in(interface control_in_if server c, interface param_if client parameter_set)
-{
-    while (1) {
-        select {
-            //[[Control Processing]]
-        case c.setControl1(float val):
-                controls[0].value = val;
-                parameter_set.setParam1(val);
-
-        break;
-        case c.setControl2(float val):
-                controls[1].value += val;
-                parameter_set.setParam2(controls[1].value);
-
-        break;
-            //[[/Control Processing]]
-        }
-    }
-}
-
-//[[Control Input]]
-
-port p = XS1_PORT_1A;
-
-void control_thread(client interface startkit_led_if i_led,
-        client interface startkit_button_if i_button,
-        client interface slider_if i_slider_x,
-        client interface slider_if i_slider_y,
-        client interface control_in_if control_conn)
-{
-    int slider_pos_x, slider_pos_y;
-
-    while(1) {
-
-      select{
-          case i_slider_y.changed_state():            //CHange frequency (ie. step size)
-              slider_pos_y = i_slider_y.get_coord();
-              i_slider_y.get_slider_state();          //necessary to clear notification
-//              printint(slider_pos_y);
-//              printstrln(" slider_pos_y");
-              break;
-
-          case i_slider_x.changed_state():            //CHange modulation depth (ie. amplitude)
-              slider_pos_x = i_slider_x.get_coord();
-              i_slider_x.get_slider_state();          //necessary to clear notification
-              float inc;
-              if ((slider_pos_x > 1000) && (slider_pos_x < 2000)) {
-                    inc = (1000 * (slider_pos_x-1000)) / 1000.0;
-              }
-//              printint((int) inc);
-//              printstrln(" inc");
-              control_conn.setControl2(inc);
-              break;
-          case i_button.changed():
-            if (i_button.get_value() == BUTTON_DOWN){
-//                printstrln("Button down");
-                control_conn.setControl1(1.0);
-                p <: 1;
-
-            }
-            if (i_button.get_value() == BUTTON_UP){
-//              printstrln("Button up");
-              control_conn.setControl1(0.0);
-              p <: 0;
-
-            }
-            break;
-      }
-    }
-}
-//[[/Control Input]]
-// -------------- Audio processing function
-
-void process(streaming chanend audio_io,
-        interface param_if server param)
-{
-    S32_T out_samps[NUM_OUT_CHANS];
-    S32_T inp_samps[NUM_OUT_CHANS];
-    S32_T chan_cnt;
-    //[[Init Ugens]]
-    for (int i = 0; i < TABLE1_LEN; i++) {
-        table1[i] = (S32_T) (i * 65530 / (float)TABLE1_LEN);
-    }
-
-    OSCDATA oscdata1;
-    oscdata1.phs = 0;
-    oscdata1.incr = 1;
-
-    ENVDATA envdata1;
-    envdata1.phs = 0;
-    envdata1.att_incr = 100;
-    envdata1.dec_incr = 100;
-    envdata1.sus_lvl = 20000 ;
-    envdata1.rel_incr = 10;
-
-    envdata1.mode = 0;
-
-    GAINDATA gaindata1;
-    gaindata1.gain = 1.0;
-
-    //[[/Init Ugens]]
-
-    while(1) {
-
-#pragma loop unroll
-        for (chan_cnt = 0; chan_cnt < NUM_IN_CHANS; chan_cnt++) { // TODO do something with audio IO
-            audio_io :> inp_samps[chan_cnt];
-        }
-        //[[Audio Processing]]
-        for (chan_cnt = 0; chan_cnt < NUM_OUT_CHANS; chan_cnt++) {
-            out_samps[chan_cnt] = table1[oscdata1.phs] * gaindata1.gain;
-            audio_io <: out_samps[chan_cnt];
-//          Tick ugens
-            oscdata1.phs += oscdata1.incr;
-            while (oscdata1.phs >= TABLE1_LEN) {
-                oscdata1.phs -= TABLE1_LEN;
-            }
-        }
-         //[[/Audio Processing]]
-        for (int i = 0;i < MAX_PARAMS_PER_SAMPLE; i++) {
-//[[Parameter Copy]]
-            select {
-                case param.setParam1(float val):
-                    gaindata1.gain = val;
-
-                break;
-
-                case param.setParam2(float val):
-                    oscdata1.incr = val;
-
-                break;
-                default:
-                break;
-            }
-            //[[/Parameter Copy]]
-        }
-    }
-}
-
-
-// ----------------------- Main
-//[[Main function]]
-#define CONTROL_TILE 0
-#define DSP_TILE 0
-
-on tile[CONTROL_TILE]: startkit_gpio_ports gpio_ports =
-  {XS1_PORT_32A, XS1_PORT_4A, XS1_PORT_4B, XS1_CLKBLK_3};
-
-int main() {
-    // Control interfaces need to be defined here:
-    startkit_led_if i_led;
-    startkit_button_if i_button;
-    slider_if i_slider_x, i_slider_y;
-
-
-    // Connection interfaces. Arrays allow connecting more flexibly between cores.
-    interface control_in_if control_io[1];
-    interface param_if param[1];
-    streaming chan audio_io;
-
-
-    par {
-        on tile[CONTROL_TILE]: audio_io_thread(audio_io);
-        on tile[CONTROL_TILE]: control_thread(i_led, i_button, i_slider_x, i_slider_y, control_io[0]);
-        on tile[CONTROL_TILE]: startkit_gpio_driver(i_led, i_button,
-                                         i_slider_x,
-                                         i_slider_y,
-                                         gpio_ports);
-        on tile[CONTROL_TILE]: [[distribute]] process_control_in(control_io[0], param[0]);
-        on tile[DSP_TILE]: process(audio_io, param[0]);
-    }
-    return 0;
-}
-
-//[[/Main function]]
+	return 0;
+} // main
+/*****************************************************************************/
+// main.xc
