@@ -64,7 +64,7 @@ void compute(interface computation_if client comps,
                     ugen_noise_ctl(ctr_data->noise_0_00_controls, data);
                     break;
                 }
-//[[//Compute Process]]
+//[[/Compute Process]]
                 comps.data_computed();
                 break;
                 }

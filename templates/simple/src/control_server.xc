@@ -61,7 +61,7 @@ void control_server(interface computation_if server comps,
 
         ugen_biquad_init_data((ugen_biquad_data_t *) buffers[0].biquad_3_00_data);
     }
-//[[Control Server Ugen Init]]
+//[[/Control Server Ugen Init]]
 
 //[[Control Server Control Init]]
     R32_T Fi = 500; // Temporary accumulator for frequency values

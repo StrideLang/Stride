@@ -1,9 +1,4 @@
 
-local ugens = {{name = "biquad", tile = 0, dspcore = 0, id = 0, ugen_data = {size = 6}},
-	       {name = "biquad", tile = 0, dspcore = 0, id = 1, ugen_data = {size = 6}},
-	       {name = "biquad", tile = 0, dspcore = 1, id = 0, ugen_data = {size = 6}}
-	    }
-
 local num_dsp_threads = 2
 
 function get_ugens()
@@ -152,7 +147,7 @@ function gen_DSP_Pointer_Swap(ugens, dsp_index)
                 ugen_id_t ugen_id = dsp_params.get_data_id();
                 unsafe {
                     switch(ugen_id) {
-		 ]]
+]]
 		 
    outstr = outstr .. part .. [[
                     }
@@ -161,7 +156,7 @@ function gen_DSP_Pointer_Swap(ugens, dsp_index)
             default:
                 break;
 	}
-	]]
+]]
    return outstr
 end
 

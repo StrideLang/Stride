@@ -32,7 +32,7 @@ typedef enum {
     //    BIQUAD_6_00_CONTROLS = 0x180,
     //    BIQUAD_7_00_CONTROLS = 0x1C0,
 } ugen_id_t;
-//[[Server Controls]]
+//[[/Server Controls]]
 
 typedef struct {
     ugen_id_t index;
