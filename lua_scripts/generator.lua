@@ -1,12 +1,8 @@
 
 local num_dsp_threads = 2
 
-function get_ugens()
-   return ugens
-end
-
 function gen_Compute_Process(ugens)
-   outstr = ''
+   local outstr = ''
    for i, ugen1 in ipairs(ugens) do
       outstr = outstr ..
 	 string.format(
@@ -29,7 +25,7 @@ function gen_Compute_Process(ugens)
 end
 
 function gen_Control_Server_Ugen_Controls(ugens)
-   outstr = ''
+   local outstr = ''
    for i, ugen1 in ipairs(ugens) do
       outstr = outstr .. string.format([[
         ugen_%s_controls_t %s_%i_%02i_controls;
@@ -40,8 +36,8 @@ function gen_Control_Server_Ugen_Controls(ugens)
 end
 
 function gen_Control_Server_Ugen_Init(ugens)
-   part1 = ''
-   part2 = ''
+   local part1 = ''
+   local part2 = ''
    for i, ugen1 in ipairs(ugens) do
       part1 = part1 .. string.format([[
       ugen_%s_init_controls(server_ctr_data.%s_%i_%02i_controls);
@@ -52,13 +48,13 @@ function gen_Control_Server_Ugen_Init(ugens)
       ugen1["name"], ugen1["name"], ugen1["dspcore"],
       ugen1["name"], ugen1["dspcore"], ugen1["id"])
    end
-   outstr = part1 .. "unsafe {\n" .. part2 .. "\n}\n"
+   local outstr = part1 .. "unsafe {\n" .. part2 .. "\n}\n"
    return outstr
 end
 
 function gen_Control_Server_Control_Process(ugens)
-   part1 = ''
-   part2 = ''
+   local part1 = ''
+   local part2 = ''
    for i, ugen1 in ipairs(ugens) do
       part1 = part1 .. string.format([[
 case %s_%i_%02i_CONTROLS:
@@ -74,7 +70,7 @@ case %s_%i_%02i_CONTROLS:
    ]], string.upper(ugen1["name"]), ugen1["dspcore"], ugen1["id"], ugen1["dspcore"],
    ugen1["name"], ugen1["dspcore"], ugen1["id"])
    end
-   outstr = "switch(control_pending) {\n" .. part1 .. "}\n"
+   local outstr = "switch(control_pending) {\n" .. part1 .. "}\n"
    outstr = outstr .. [[  memcpy(data.data, server_ctr_data.data_buffer, datasize);
   xchange_data = data;
   control_pending = -1;
@@ -92,7 +88,7 @@ case %s_%i_%02i_CONTROLS:
 end
 
 function gen_DSP_Ugen_Structs(ugens, dsp_index)
-   outstr = ''
+   local outstr = ''
    for i, ugen1 in ipairs(ugens) do
       if ugen1["dspcore"] == dsp_index then
 	 outstr = outstr .. string.format([[
@@ -128,8 +124,8 @@ function gen_DSP_Process_Ugens(ugens, dsp_index)
 end
 
 function gen_DSP_Pointer_Swap(ugens, dsp_index)
-   outstr = ''
-   part = ''
+   local outstr = ''
+   local part = ''
    for i, ugen1 in ipairs(ugens) do
       if ugen1["dspcore"] == dsp_index then
 	 part = part .. string.format([[
@@ -162,9 +158,9 @@ end
 
 
 function gen_DSP_Server_Ugen_Init(ugens)
-   part1 = ''
-   part2 = ''
-   part3 = ''
+   local part1 = ''
+   local part2 = ''
+   local part3 = ''
    for i, ugen1 in ipairs(ugens) do
       part1 = part1 .. string.format(
 	 "ugen_%s_data_t * unsafe %s_%i_%02i_data;\n",
@@ -179,14 +175,14 @@ function gen_DSP_Server_Ugen_Init(ugens)
 	 "ugen_%s_init_data(%s_%i_%02i_data);\n",
 	 ugen1["name"], ugen1["name"], ugen1["dspcore"], ugen1["id"])
    end
-   outstr = part1 .. "\n    unsafe {\n" .. part2 .. part3 .. "    }\n"
+   local outstr = part1 .. "\n    unsafe {\n" .. part2 .. part3 .. "    }\n"
    return outstr
 end
 
 function gen_DSP_Server_Process(ugens)
-   outstr = ''
-   part1 = ''
-   part4 = ''
+   local outstr = ''
+   local part1 = ''
+   local part4 = ''
    for i=0,num_dsp_threads-1 do
       part2 = ''
       part3 = ''
@@ -260,7 +256,7 @@ function gen_Main_DSP_includes()
 end
 
 function gen_Main_DSP()
-   outstr = ''
+   local outstr = ''
    for i=0, num_dsp_threads-1 do
       outstr = outstr .. 
 	 string.format('       on tile[DSP_TILE]: dsp_%i(c_aud_dsp[%i], dsp_params[%i], dsp_buffers_A[%i]);\n', i,i,i,i)
@@ -275,7 +271,7 @@ function gen_Server_Controls(ugens)
 				   string.upper(ugen1["name"]), ugen1["dspcore"], ugen1["id"])
 
    end
-   outstr = 'typedef enum {\n' .. list .. '} ugen_id_t;\n'
+   local outstr = 'typedef enum {\n' .. list .. '} ugen_id_t;\n'
    return outstr
 end
 
@@ -288,7 +284,7 @@ function gen_Server_Buffers(ugens)
 				)
 
    end
-   outstr = 'typedef struct {\n' .. list .. '} swap_buffers;\n'
+   local outstr = 'typedef struct {\n' .. list .. '} swap_buffers;\n'
    return outstr
 end
 

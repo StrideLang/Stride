@@ -11,7 +11,7 @@ APP_NAME = test
 # The USED_MODULES variable lists other module used by the application.
 # USED_MODULES = module_dsp_biquad module_dsp_utils module_i2c_single_port module_i2s_master module_startkit_gpio
 
-USED_MODULES = module_startkit_gpio
+USED_MODULES = module_i2c_single_port module_i2s_master module_random
 # The flags passed to xcc when building the application
 # You can also set the following to override flags for a particular language:
 # XCC_XC_FLAGS, XCC_C_FLAGS, XCC_ASM_FLAGS, XCC_CPP_FLAGS

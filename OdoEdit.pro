@@ -37,7 +37,9 @@ OTHER_FILES += \
     qml/Editor.qml \
     templates/simple/Makefile \
     templates/simple/src/main.xc \
-    lua_scripts/generator.lua
+    lua_scripts/generator.lua \
+    lua_scripts/process_templates.lua \
+    lua_scripts/build_project.lua
 
 folder_01.source = qml
 folder_01.target = qml

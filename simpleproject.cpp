@@ -314,20 +314,43 @@ QString SimpleProject::getMakefileOption(QString option)
 
 void SimpleProject::generateCode()
 {
-    luaL_loadfile(m_lua, QString(m_luaScriptsDir + "generator.lua").toLocal8Bit());
-    luaL_openlibs(m_lua); // Load standard libraries
+    qDebug() << "SimpleProject::generateCode()";
+    QDir::setCurrent(m_luaScriptsDir);
+    if (luaL_loadfile(m_lua, QString(m_luaScriptsDir
+                                      + "build_project.lua").toLocal8Bit()) != 0) {
+        qDebug() << "Error in luaL_loadfile: " <<  m_luaScriptsDir
+                    + "build_project.lua";
+    }
+   luaL_openlibs(m_lua); // Load standard libraries
 
     if (lua_pcall(m_lua,0, LUA_MULTRET, 0)) {
-      qDebug() << "Something went wrong during execution" << endl;
-      qDebug() << lua_tostring(m_lua, -1) << endl;
+      qDebug() << "Something went wrong during execution";
+      qDebug() << lua_tostring(m_lua, -1);
       lua_pop(m_lua,1);
     }
 
-    lua_getglobal(m_lua, "test");
-    lua_pushnumber(m_lua, 5);
-    lua_pcall(m_lua, 1, 1, 0);
-    qDebug() << "The return value of the function was " << lua_tostring(m_lua, -1);
-    lua_pop(m_lua,1);
+    lua_getglobal(m_lua, "process");
+    if(!lua_isfunction(m_lua,-1)) {
+        lua_pop(m_lua,1);
+        qDebug() << "Error in lua script.";
+        return;
+    }
+    lua_pushstring(m_lua, m_projectDir.toLocal8Bit().constData());   /* push 1st argument */
+
+    if (lua_pcall(m_lua, 1, 1, 0) != 0) {
+        printf("error running function `f': %s\n",lua_tostring(m_lua, -1));
+        return;
+    }
+
+//    /* retrieve result */
+//    if (!lua_isnumber(m_lua, -1)) {
+//        printf("function `f' must return a number\n");
+//        return;
+//    }
+//    int z = lua_tointeger(m_lua, -1);
+//    printf("Result: %i\n",z);
+    lua_pop(m_lua, 1);
+    qDebug() << "Done!";
 //    updateCodeStrings();
 //    setCodeSection("Basic Config", m_codeStrings[0]);
 //    setCodeSection("Control Globals", m_codeStrings[1]);
