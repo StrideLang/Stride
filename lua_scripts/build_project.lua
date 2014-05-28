@@ -13,4 +13,5 @@ function process(path)
    process_template(path, ugens)
    print("Done process.")
 end
--- process_template("/home/andres/StreamStack/untitled_00", ugens)
+
+process("/home/andres/StreamStack/untitled_32")

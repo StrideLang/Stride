@@ -1,5 +1,13 @@
 
-local num_dsp_threads = 2
+function gen_calculate_threads(ugens)
+   local num_threads = 0
+   for i, ugen in ipairs(ugens) do
+      if (ugen['dspcore'] + 1 > num_threads) then
+	 num_threads = ugen['dspcore'] + 1
+      end
+   end
+   return num_threads
+end
 
 function gen_Compute_Process(ugens)
    local outstr = ''
@@ -183,7 +191,7 @@ function gen_DSP_Server_Process(ugens)
    local outstr = ''
    local part1 = ''
    local part4 = ''
-   for i=0,num_dsp_threads-1 do
+   for i=0,gen_calculate_threads(ugens)-1 do
       part2 = ''
       part3 = ''
       for j, ugen1 in ipairs(ugens) do
@@ -247,17 +255,17 @@ function gen_DSP_Server_Process(ugens)
 end
 
 
-function gen_Main_DSP_includes()
+function gen_Main_DSP_includes(ugens)
    outstr = ''
-   for i=0, num_dsp_threads-1 do
+   for i=0, gen_calculate_threads(ugens)-1 do
       outstr = outstr .. '#include "dsp_' .. i .. '.h"\n'
    end
    return outstr
 end
 
-function gen_Main_DSP()
+function gen_Main_DSP(ugens)
    local outstr = ''
-   for i=0, num_dsp_threads-1 do
+   for i=0, gen_calculate_threads(ugens)-1 do
       outstr = outstr .. 
 	 string.format('       on tile[DSP_TILE]: dsp_%i(c_aud_dsp[%i], dsp_params[%i], dsp_buffers_A[%i]);\n', i,i,i,i)
    end

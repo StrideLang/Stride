@@ -7,11 +7,7 @@ function process_template(path, ugens)
    process_list["/src/control_server.xc"] = {"Control Server Ugen Init"}
    -- "Control Server Control Init", "Control Server Control Process", "Control Server Input Process"} Not implemented yet
    -- These function handle hardware control I/O
-   process_list["/src/dsp_0.xc"] = {"DSP Ugen Structs",
-				    "DSP Init Ugens",
-				    "DSP Process Ugens",
-				    "DSP Pointer Swap"}
-   -- FIXME Need to figure out how to handle passing DSP thread index
+
    process_list["/src/dsp_server.xc"] = {"DSP Server Ugen Init",
 					 "DSP Server Process"}
    process_list["/src/main.xc"] = {"Main DSP includes",
@@ -23,6 +19,48 @@ function process_template(path, ugens)
       local filename = path .. name
       print("Processing:" .. filename)
       process_file_labels(filename, ugens, labels, 0)
+   end 
+   -- Read from dsp file template
+   local dspfile = io.open(path .. "/src/dsp_0.xc", "r")
+   if not dspfile then
+      print("file not found: " .. dsp_file .. "\n")
+      error()
+   end
+   dsp_xc_text = dspfile:read("*all")
+   dspfile:close()
+   local dspfile = io.open(path .. "/src/dsp_0.h", "r")
+   if not dspfile then
+      print("file not found: " .. dspfile .. "\n")
+      error()
+   end
+   dsp_h_text = dspfile:read("*all")
+   dspfile:close()
+   -- Create additional dsp files
+   for dsp_index=1,gen_calculate_threads(ugens)-1 do
+      local dspfile = io.open(path .. "/src/dsp_" .. dsp_index .. ".xc", "w")
+      if not dspfile then
+	 error()
+      end
+      dspfile:write(string.gsub(dsp_xc_text, "dsp_0", "dsp_" .. dsp_index))
+      dspfile:close()
+
+      local dspfile = io.open(path .. "/src/dsp_" .. dsp_index .. ".h", "w")
+      if not dspfile then
+	 error()
+      end
+      dspfile:write(string.gsub(dsp_h_text, "dsp_0", "dsp_" .. dsp_index))
+      dspfile:close()
+   end
+
+   -- Process dsp files
+   for dsp_index=0,gen_calculate_threads(ugens)-1 do
+      local filename = path .. "/src/dsp_" .. dsp_index .. ".xc"
+      print("Processing DSP:" .. filename)
+      local labels = {"DSP Ugen Structs",
+		      "DSP Init Ugens",
+		      "DSP Process Ugens",
+		      "DSP Pointer Swap"}
+      process_file_labels(filename, ugens, labels, dsp_index)
    end
 end
 
@@ -52,7 +90,8 @@ function replace_section(full_text, section_text, section_name)
 
    start_index = start_index + section_name:len() + 7
    
-      local outtxt = full_text:sub(0,start_index) .. section_text .. full_text:sub(end_index)
+   print("replace: " .. full_text:sub(0,start_index))
+   local outtxt = full_text:sub(0,start_index) .. section_text .. full_text:sub(end_index)
    
    return outtxt
 end

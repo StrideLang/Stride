@@ -80,15 +80,15 @@ void control_server(interface computation_if server comps,
 //    printstrln("control_server init.");
     while (1) {
         select {
+            case comps.data_computed():
+                    server_xchange.data_ready();
+            break;
         case server_xchange.get_data() -> xchange_t xchange_data:
             xchange_t data;
             data.index = control_pending;
             unsigned int datasize;
 
-        case comps.data_computed():
-                server_xchange.data_ready();
-        break;
-//[[/Control Server Control Process]]
+//[[Control Server Control Process]]
             switch(control_pending) {
             case ENV_0_00_CONTROLS:
                 datasize = sizeof(ugen_env_data_t);
