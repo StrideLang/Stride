@@ -20,7 +20,8 @@ SOURCES += main.cpp\
     simpleproject.cpp \
     blocks/baseblock.cpp \
     blocks/oscblock.cpp \
-    blocks/outputblock.cpp
+    blocks/outputblock.cpp \
+    codeeditor.cpp
 
 HEADERS  += mainwindow.h \
     projectwindow.h \
@@ -28,7 +29,8 @@ HEADERS  += mainwindow.h \
     simpleproject.h \
     blocks/baseblock.h \
     blocks/oscblock.h \
-    blocks/outputblock.h
+    blocks/outputblock.h \
+    codeeditor.h
 
 FORMS    += mainwindow.ui \
     projectwindow.ui
@@ -38,8 +40,10 @@ OTHER_FILES += \
     templates/simple/Makefile \
     templates/simple/src/main.xc \
     lua_scripts/generator.lua \
-    lua_scripts/process_templates.lua \
-    lua_scripts/build_project.lua
+    lua_scripts/process_template.lua \
+    lua_scripts/build_project.lua \
+    lua_scripts/parse_code.lua \
+    templates/simple/code/code.st
 
 folder_01.source = qml
 folder_01.target = qml

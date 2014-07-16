@@ -1,17 +1,18 @@
 
 package.path = package.path .. ";/home/andres/Documents/src/XMOS/Odo/OdoEdit/lua_scripts/process_template.lua"
 require 'process_template'
+require 'parse_code'
 
 print("Loaded process.lua")
 
-local ugens = {{name = "biquad", tile = 0, dspcore = 0, id = 0, ugen_data = {size = 6}},
-	       {name = "biquad", tile = 0, dspcore = 0, id = 1, ugen_data = {size = 6}},
-	       {name = "biquad", tile = 0, dspcore = 1, id = 0, ugen_data = {size = 6}}
-	    }
+local ugens = {}
 
-function process(path)
-   process_template(path, ugens)
+function process(template_path)
+   
+   ugens = parse(code)
+
+   process_template(template_path, ugens)
    print("Done process.")
 end
 
-process("/home/andres/StreamStack/untitled_32")
+process("/home/andres/StreamStack/untitled_03")

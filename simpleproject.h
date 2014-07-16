@@ -21,6 +21,7 @@ public:
 
     void setPath(QString newProjectPath);
     virtual void setProjectName(QString name);
+    virtual void save();
 
 public slots:
     virtual void build();
@@ -37,11 +38,6 @@ protected:
     QString getMakefileOption(QString option);
     void generateCode();
     void updateCodeStrings();
-    QString getBasicConfigCode();
-    QString getUgenStructsCode();
-    QString getControlGlobalsCode();
-    QString getControlProcessingCode();
-    void setCodeSection(QString section, QString code);
 
 private:
     QString m_templateBaseDir;

@@ -2,6 +2,7 @@
 #define PROJECTWINDOW_H
 
 #include <QMainWindow>
+#include <QFile>
 
 #include "baseproject.h"
 
@@ -18,8 +19,9 @@ public:
     ~ProjectWindow();
 
 public slots:
-    void setView(bool simple);
     void updateMenus();
+    void setEditorText(QString code);
+    void saveProject();
 
 private slots:
     void build();
@@ -39,6 +41,7 @@ private:
     Ui::ProjectWindow *ui;
     QWidget *m_layoutContainer;
     BaseProject *m_project;
+    QFile m_codeFile;
 };
 
 #endif // PROJECTWINDOW_H

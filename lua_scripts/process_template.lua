@@ -1,6 +1,7 @@
 require 'generator'
 
 function process_template(path, ugens)
+   -- process_list is a table that describes the sections that need to be processed within each file
    local process_list = {}
    process_list["/src/compute.xc"] = {"Compute Process"}
    process_list["/src/control_server.h"] = {"Control Server Ugen Controls"}
@@ -21,35 +22,36 @@ function process_template(path, ugens)
       process_file_labels(filename, ugens, labels, 0)
    end 
    -- Read from dsp file template
-   local dspfile = io.open(path .. "/src/dsp_0.xc", "r")
-   if not dspfile then
+   local dsp_file = io.open(path .. "/src/dsp_0.xc", "r")
+   if not dsp_file then
       print("file not found: " .. dsp_file .. "\n")
       error()
    end
-   dsp_xc_text = dspfile:read("*all")
-   dspfile:close()
-   local dspfile = io.open(path .. "/src/dsp_0.h", "r")
-   if not dspfile then
-      print("file not found: " .. dspfile .. "\n")
+   local dsp_xc_text = dsp_file:read("*all")
+   dsp_file:close()
+   -- Read DSP header file
+   dsp_file = io.open(path .. "/src/dsp_0.h", "r")
+   if not dsp_file then
+      print("file not found: " .. path .. "/src/dsp_0.h" .. "\n")
       error()
    end
-   dsp_h_text = dspfile:read("*all")
-   dspfile:close()
+   local dsp_h_text = dsp_file:read("*all")
+   dsp_file:close()
    -- Create additional dsp files
    for dsp_index=1,gen_calculate_threads(ugens)-1 do
-      local dspfile = io.open(path .. "/src/dsp_" .. dsp_index .. ".xc", "w")
-      if not dspfile then
-	 error()
+      dsp_file = io.open(path .. "/src/dsp_" .. dsp_index .. ".xc", "w")
+      if not dsp_file then
+        error()
       end
-      dspfile:write(string.gsub(dsp_xc_text, "dsp_0", "dsp_" .. dsp_index))
-      dspfile:close()
+      dsp_file:write(string.gsub(dsp_xc_text, "dsp_0", "dsp_" .. dsp_index))
+      dsp_file:close()
 
-      local dspfile = io.open(path .. "/src/dsp_" .. dsp_index .. ".h", "w")
-      if not dspfile then
+      dsp_file = io.open(path .. "/src/dsp_" .. dsp_index .. ".h", "w")
+      if not dsp_file then
 	 error()
       end
-      dspfile:write(string.gsub(dsp_h_text, "dsp_0", "dsp_" .. dsp_index))
-      dspfile:close()
+      dsp_file:write(string.gsub(dsp_h_text, "dsp_0", "dsp_" .. dsp_index))
+      dsp_file:close()
    end
 
    -- Process dsp files
@@ -73,7 +75,8 @@ function process_file_labels(filename, ugens, labels, index)
    local outtxt = process_labels(file:read("*all"), ugens, labels, index)
 
    file:close()
-   local file, err = io.open(filename, "w")
+   local err
+   file, err = io.open(filename, "w")
    if not file then return print(err) end
    file:write(outtxt)
    file:close()
@@ -90,7 +93,8 @@ function replace_section(full_text, section_text, section_name)
 
    start_index = start_index + section_name:len() + 7
    
-   print("replace: " .. full_text:sub(0,start_index))
+   print("replace: " .. full_text:sub(start_index,end_index))
+   print("with: " .. section_text)
    local outtxt = full_text:sub(0,start_index) .. section_text .. full_text:sub(end_index)
    
    return outtxt
@@ -99,7 +103,7 @@ end
 function process_labels(template_txt, ugens, labels, index)
    local outtxt = template_txt
 
-   for i, label in ipairs(labels) do
+   for _, label in ipairs(labels) do
       local func_name = 'gen_' .. string.gsub(label, ' ', '_')
       print('Calling ' .. func_name)
       local new_text = _G[func_name](ugens, index) -- Call function by string name

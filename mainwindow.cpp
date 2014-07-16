@@ -4,6 +4,7 @@
 #include "projectwindow.h"
 #include <QDir>
 #include <QDebug>
+#include <QFileDialog>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -37,8 +38,9 @@ void MainWindow::newProject()
         projectDir = projectDir.left(projectDir.lastIndexOf('_') + 1)
                 + QString("%1").arg(count, 2, 10, QChar('0'));
         count++;
-        if (count == 9999) {
+        if (count == 99999) {
             qDebug() << "Warning! Too many untitled projects, overwriting.";
+            break;
         }
     }
 
@@ -46,8 +48,16 @@ void MainWindow::newProject()
     pw->show();
 }
 
+void MainWindow::loadProject()
+{
+    QString path = QFileDialog::getExistingDirectory(this);
+    ProjectWindow *pw = new ProjectWindow(this, path);
+    pw->show();
+}
+
 void MainWindow::connectActions()
 {
     connect(ui->actionNew_project, SIGNAL(triggered()), this, SLOT(newProject()));
+    connect(ui->actionLoad_Project, SIGNAL(triggered()), this, SLOT(loadProject()));
 }
 

@@ -18,7 +18,8 @@ public:
     void setTarget(QString target) {m_target = target;}
     void setBoardId(QString id) {m_board_id = id;}
 
-    virtual void setProjectName(QString name) {Q_UNUSED(name)}
+    virtual void setProjectName(QString name) = 0;
+    virtual void save() = 0;
 
 public slots:
     virtual void build() {}

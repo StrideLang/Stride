@@ -17,6 +17,7 @@ public:
 
 private slots:
     void newProject();
+    void loadProject();
 
 private:
 

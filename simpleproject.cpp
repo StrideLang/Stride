@@ -56,6 +56,8 @@ SimpleProject::SimpleProject(QString projectDir):
     OscBlock *oscBlock = new OscBlock("osc1", this);
     m_audioOutBlock->connectToInput(0, oscBlock, 0);
 
+
+
     m_lua = lua_open();
 }
 
@@ -73,6 +75,11 @@ void SimpleProject::setPath(QString newProjectPath)
 }
 
 void SimpleProject::setProjectName(QString name)
+{
+
+}
+
+void SimpleProject::save()
 {
 
 }
@@ -321,7 +328,7 @@ void SimpleProject::generateCode()
         qDebug() << "Error in luaL_loadfile: " <<  m_luaScriptsDir
                     + "build_project.lua";
     }
-   luaL_openlibs(m_lua); // Load standard libraries
+    luaL_openlibs(m_lua); // Load standard libraries
 
     if (lua_pcall(m_lua,0, LUA_MULTRET, 0)) {
       qDebug() << "Something went wrong during execution";
@@ -388,122 +395,4 @@ void SimpleProject::updateCodeStrings()
 //        }
 //    }
     //    m_codeStrings[7] += "out_samps[0] = asig;";
-}
-
-//QString SimpleProject::getComputeProcess()
-//{
-//    QString compProcText;
-
-//    foreach(Ugen ugen, ugenList) {
-//        QTextStream(&compProcText) << "    case " << QString::toUpper(ugen.name)
-//                                   << "_" << QString::number(ugen.tile) << "_"
-//                                   << QString("%1").arg(ugen.id, 2, QChar('0'))
-//                                   << "_CONTROLS:\n" << endl <<
-
-//    case BIQUAD_1_00_CONTROLS:
-//        ugen_biquad_data_t * unsafe data = (ugen_biquad_data_t *) ctr_data->data_buffer;
-//        unsafe {
-//            ctr_data->biquad_1_00_controls.cf = ctr_data->value;
-////                            printstr("gate: ");
-////                            printintln(ctr_data->env_controls.gate);
-//        }
-
-//        ugen_biquad_ctl(ctr_data->biquad_1_00_controls, data);
-
-//        break;
-//    case SINE_0_00_CONTROLS:
-//        ugen_sine_data_t * unsafe data = (ugen_sine_data_t *) ctr_data->data_buffer;
-//        unsafe {
-//            ctr_data->sine_0_00_controls.freq = ctr_data->value;
-//        }
-//        ugen_sine_ctl(ctr_data->sine_0_00_controls, data);
-
-//        break;
-//    case ENV_0_00_CONTROLS:
-//        ugen_env_data_t * unsafe data = (ugen_env_data_t *) ctr_data->data_buffer;
-//        unsafe {
-//            ctr_data->env_0_00_controls.gate = ctr_data->value;
-//        }
-//        ugen_env_ctl(ctr_data->env_0_00_controls, data);
-//        break;
-//    case NOISE_0_00_CONTROLS:
-//        ugen_noise_data_t * unsafe data = (ugen_noise_data_t *) ctr_data->data_buffer;
-//        unsafe {
-//            ctr_data->noise_0_00_controls.sampholdfreq = ctr_data->value;
-//        }
-//        ugen_noise_ctl(ctr_data->noise_0_00_controls, data);
-//        break;
-//    }
-//}
-
-QString SimpleProject::getBasicConfigCode()
-{
-    QString text;
-    text = "#define NUM_IN_CHANS 4\n#define NUM_OUT_CHANS 4\n\n#define MAX_PARAMS_PER_SAMPLE 2\n\n#define SAMPLE_RATE 44100\n";
-    return text;
-}
-
-QString SimpleProject::getUgenStructsCode()
-{
-
-    QStringList ugenStructs;
-    ugenStructs << "typedef struct {\nS32_T phs;\nS32_T att_incr;\nS32_T dec_incr;\nS32_T sus_lvl;\nS32_T rel_incr;\nunsigned char mode; //0 - attack 1 - decay 2- release\n} ENVDATA;";
-    ugenStructs << "typedef struct {\nfloat gain;\n} GAINDATA;\n";
-
-    return ugenStructs.join("\n");
-}
-
-QString SimpleProject::getControlGlobalsCode()
-{
-    QString code;
-
-    code +=  "#define NUM_CTLS " "2" "\n";
-    code += "typedef struct {\n float value;\n } ctl_t;\n";
-    code += "ctl_t controls[NUM_CTLS]; // TODO should set to some default values\n";
-
-    code += "interface control_in_if {\n    void setControl1(float val);\n  void setControl2(float val);\n};\n";
-    code += "interface param_if {\n" \
-            "[[clears_notification]] void setParam1(float val);\n" \
-            "[[clears_notification]] void setParam2(float val);\n" \
-            "[[notification]] slave void data_ready(void);\n" \
-            "};\n";
-    return code;
-}
-
-QString SimpleProject::getControlProcessingCode()
-{
-    QString code;
-
-    code +=  "case c.setControl1(float val):\n"
-            "controls[0].value = val;\n"
-            "parameter_set.setParam1(val);\n"
-            "break;\n"
-
-            "case c.setControl2(float val):\n"
-            "controls[1].value += val;\n"
-            "parameter_set.setParam2(controls[1].value);\n"
-            "break;\n";
-    return code;
-}
-
-void SimpleProject::setCodeSection(QString section, QString code)
-{
-    QFile file(m_projectDir + "/src/main.xc");
-    file.open(QIODevice::ReadOnly);
-    if (!file.isOpen()) {
-        qDebug() << "SimpleProject::setCodeSection Error! file not found: " << m_projectDir + "/Makefile/main.xc";
-        return;
-    }
-    QString text(file.readAll());
-    int startIndex = text.indexOf("//[[" + section + "]]\n");
-    Q_ASSERT(startIndex >= 0);
-    int endIndex = text.indexOf("//[[/" + section + "]]\n", startIndex);
-    Q_ASSERT(endIndex >= startIndex);
-    QString newText = "//[[" + section + "]]\n" + code;
-    text.replace(startIndex, endIndex - startIndex, newText);
-    file.close(); // close the file handle.
-
-    file.open(QIODevice::WriteOnly);
-    file.write(text.toUtf8()); // write the new text back to the file
-    file.close(); // close the file handle.
 }

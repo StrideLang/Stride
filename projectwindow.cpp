@@ -3,35 +3,37 @@
 
 #include <QProcess>
 #include <QDebug>
-#include <QQuickView>
 #include <QActionGroup>
+#include <QMessageBox>
+
+#include "codeeditor.h"
 
 #include "simpleproject.h"
 
 ProjectWindow::ProjectWindow(QWidget *parent, QString projectDir) :
     QMainWindow(parent),
-    ui(new Ui::ProjectWindow)
+    ui(new Ui::ProjectWindow),
+    m_codeFile(projectDir + "/code/code.st")
 {
     ui->setupUi(this);
 
     m_project = new SimpleProject(projectDir);
     m_project->setBoardId("0ontZocni8POZ");
 
-    // Create QML Editor for layout panel
-    QQuickView *view = new QQuickView();
-    m_layoutContainer = QWidget::createWindowContainer(view, this);
-    m_layoutContainer->setMinimumSize(200, 200);
-//    m_layoutContainer->setMaximumSize(200, 200);
-//    m_layoutContainer->setFocusPolicy(Qt::TabFocus);
-    view->setSource(QUrl("qrc:/qml/Editor.qml"));
-    ui->layoutDockWidget->setWidget(m_layoutContainer);
-
     connectActions();
 
     QString name = projectDir.mid(projectDir.lastIndexOf("/") + 1);
     setWindowTitle(name);
     updateMenus();
+    ui->projectDockWidget->setVisible(false);
 
+    ui->tabWidget->addTab(new CodeEditor(this), "code");
+
+    if (!m_codeFile.open(QIODevice::ReadWrite)) {
+        qDebug() << "Error opening code file!";
+        throw;
+    }
+    setEditorText(m_codeFile.readAll());
 }
 
 ProjectWindow::~ProjectWindow()
@@ -87,24 +89,6 @@ void ProjectWindow::printConsoleError(QString text)
     ui->consoleText->append(text);
 }
 
-void ProjectWindow::setView(bool simple)
-{
-
-    ui->consoleDockWidget->setVisible(!simple);
-    ui->projectDockWidget->setVisible(!simple);
-    ui->documentationDockWidget->setVisible(!simple);
-    ui->objectTabWidget->setVisible(!simple);
-    ui->layoutDockWidget->setVisible(!simple);
-    if (simple) {
-//        ui->layoutDockWidget->setWidget(NULL);
-        m_layoutContainer->setParent(ui->centralwidget);
-        ui->verticalLayout_3->addWidget(m_layoutContainer);
-//        m_layoutContainer->setVisible(true);
-    } else {
-        ui->layoutDockWidget->setWidget(m_layoutContainer);
-    }
-}
-
 void ProjectWindow::updateMenus()
 {
     QStringList deviceList = m_project->listDevices();
@@ -136,17 +120,29 @@ void ProjectWindow::updateMenus()
     }
 }
 
+void ProjectWindow::setEditorText(QString code)
+{
+    QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
+    editor->setPlainText(code);
+}
+
+void ProjectWindow::saveProject()
+{
+    QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
+    QString code = editor->toPlainText();
+    m_codeFile.reset();
+    m_codeFile.write(code.toLocal8Bit());
+}
+
 void ProjectWindow::connectActions()
 {
     connect(ui->actionBuild, SIGNAL(triggered()), this, SLOT(build()));
     connect(ui->actionUpload, SIGNAL(triggered()), this, SLOT(flash()));
     connect(ui->actionRun, SIGNAL(toggled(bool)), this, SLOT(run(bool)));
-    connect(ui->actionSimple, SIGNAL(toggled(bool)), this, SLOT(setView(bool)));
-
     connect(ui->actionRefresh, SIGNAL(triggered()), this, SLOT(updateMenus()));
+    connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(saveProject()));
 
     connect(m_project, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
     connect(m_project, SIGNAL(errorText(QString)), this, SLOT(printConsoleError(QString)));
     connect(m_project, SIGNAL(programStopped()), this, SLOT(programStopped()));
-
 }
