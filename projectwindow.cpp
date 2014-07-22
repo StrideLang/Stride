@@ -136,6 +136,7 @@ void ProjectWindow::saveProject()
 
 void ProjectWindow::connectActions()
 {
+    connect(ui->actionNew_Project, SIGNAL(triggered()), parent(), SLOT(newProject()));
     connect(ui->actionBuild, SIGNAL(triggered()), this, SLOT(build()));
     connect(ui->actionUpload, SIGNAL(triggered()), this, SLOT(flash()));
     connect(ui->actionRun, SIGNAL(toggled(bool)), this, SLOT(run(bool)));
