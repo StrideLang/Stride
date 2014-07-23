@@ -50,3 +50,13 @@ UgenInterface::UgenInterface(QObject *parent) :
         }
     }
 }
+
+bool UgenInterface::isUgen(QString token)
+{
+    foreach(Ugen ugen, ugens) {
+        if (ugen.name == token) {
+            return true;
+        }
+    }
+    return false;
+}
