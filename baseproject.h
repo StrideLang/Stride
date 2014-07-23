@@ -5,6 +5,8 @@
 #include <QString>
 #include <QStringList>
 
+#include "ugeninterface.h"
+
 class BaseProject : public QObject
 {
     Q_OBJECT
@@ -34,6 +36,8 @@ protected:
     QString m_projectType;
     QString m_target;
     QString m_board_id;
+
+    UgenInterface ugens;
 
 signals:
     void outputText(QString text);

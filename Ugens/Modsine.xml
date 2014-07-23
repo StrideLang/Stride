@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<ugen version="1.0">
+<name>Modsine</name>
+<diskname>modsine</diskname>
+<inputs>
+  <name>modulator</name>
+  <name>depth</name>
+</inputs>
+<outputs>
+  <name>output</name>
+</outputs>
+<parameters>
+  <param>
+    <name>frequency</name>
+    <min>0</min>
+    <max>20000</max>
+    <type></type>
+  </param>
+</parameters>
+<cost>0</cost>
+<doc>
+<short>A sine oscillator with phase modulation input</short>
+<long>A sine oscillator with phase modulation input</long>
+</doc>
+</ugen>
