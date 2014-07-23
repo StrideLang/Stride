@@ -23,6 +23,7 @@ MainWindow::MainWindow(QWidget *parent) :
         dir.mkpath(m_baseProjectDir);
     }
     setWindowTitle("StreamStacker");
+    newProject();
 }
 
 MainWindow::~MainWindow()
