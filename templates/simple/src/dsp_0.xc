@@ -18,6 +18,7 @@ ugen_sine_state_t sine_0_00;
 ugen_env_state_t env_0_00;
 ugen_noise_state_t noise_0_00;
 ugen_comp_state_t comp_0_00;
+ugen_modsine_state_t modsine_0_00;
 //[[/DSP Ugen Structs]]
 
 
@@ -29,6 +30,7 @@ void dsp_0_init_ugens(swap_buffers& buffer)
         ugen_env_init(env_0_00, (ugen_env_data_t *) &(buffer.env_0_00_data[0]));
         ugen_noise_init(noise_0_00, (ugen_noise_data_t *) &(buffer.noise_0_00_data[0]));
         ugen_comp_init(comp_0_00, (ugen_comp_data_t *) &(buffer.comp_0_00_data[0]));
+        ugen_modsine_init(modsine_0_00, (ugen_modsine_data_t *) &(buffer.modsine_0_00_data[0]));
 //[[/DSP Init Ugens]]
     }
 }
@@ -36,11 +38,13 @@ void dsp_0_init_ugens(swap_buffers& buffer)
 inline void dsp_0_process_ugens(S32_T &inp_samp, S32_T &out_samp)
 {
 //[[DSP Process Ugens]]
-//    out_samp = ugen_sine_tick(sine_0_00);
+//    out_samp = fixp_mult(ugen_sine_tick(sine_0_00),ugen_env_tick(env_0_00)) ;
+    out_samp = ugen_sine_tick(sine_0_00) ;
+    out_samp = ugen_modsine_tick(modsine_0_00, out_samp, ugen_env_tick(env_0_00));
 //    out_samp = ugen_noise_tick(noise_0_00);
-    out_samp = fixp_mult(ugen_noise_tick(noise_0_00), ugen_env_tick(env_0_00));
+//    out_samp = fixp_mult(ugen_noise_tick(noise_0_00), ugen_env_tick(env_0_00));
 
-    out_samp = ugen_comp_tick(comp_0_00, out_samp);
+//    out_samp = ugen_comp_tick(comp_0_00, out_samp);
 //[[/DSP Process Ugens]]
 }
 
@@ -77,6 +81,9 @@ void dsp_0(streaming chanend c_dsp, interface dsp_param_if client dsp_params, sw
                         break;
                     case COMP_0_00_CONTROLS:
                         comp_0_00.data = dsp_params.get_data(comp_0_00.data);
+                        break;
+                    case MODSINE_0_00_CONTROLS:
+                        modsine_0_00.data = dsp_params.get_data(modsine_0_00.data);
                         break;
                     }
                 }

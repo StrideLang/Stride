@@ -10,8 +10,6 @@
 
 #include "types64bit.h"
 
-#define UGEN_SINE_CST_MAXLEN 0x1000000
-#define UGEN_SINE_PHMASK 0x0FFFFFF
 #define UGEN_SINE_TAB_LEN 1024
 
 #define UGEN_SINE_DEFAULT_FREQ 440.0
@@ -33,7 +31,6 @@ typedef struct {
     ugen_sine_data_t * unsafe data;
     S32_T table[UGEN_SINE_TAB_LEN]; // TODO ideally share this table and only fill it once
     S32_T phase;
-    S32_T lenmask;
     S32_T lobits;
     S32_T lomask;
     S32_T maxlen;

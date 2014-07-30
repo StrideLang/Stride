@@ -15,5 +15,6 @@
 #include "ugen_noise.h"
 #include "ugen_comp.h"
 #include "ugen_blosc.h"
+#include "ugen_modsine.h"
 
 #endif /* UGEN_INCLUDES_H_ */

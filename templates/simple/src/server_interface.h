@@ -18,6 +18,7 @@ typedef enum {
     ENV_0_00_CONTROLS,
     NOISE_0_00_CONTROLS,
     COMP_0_00_CONTROLS,
+    MODSINE_0_00_CONTROLS,
 
     BIQUAD_1_00_CONTROLS = 0x40, // 6 bits to encode number (0-64) -> 64 controls per core
     BLOSC_1_00_CONTROLS,
@@ -63,6 +64,7 @@ typedef struct {
     S32_T env_0_00_data[6];
     S32_T noise_0_00_data[1];
     S32_T comp_0_00_data[6];
+    S32_T modsine_0_00_data[2];
 
     S32_T biquad_1_00_data[5];
     S32_T blosc_1_00_data[2];
