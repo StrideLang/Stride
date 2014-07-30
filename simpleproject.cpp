@@ -23,10 +23,12 @@ SimpleProject::SimpleProject(QString projectDir):
     if (!QFile::exists(projectDir)) {
         QDir().mkpath(projectDir);
         QDir templateDir(m_templateBaseDir + "/simple");
+        QDir ugenDir(m_templateBaseDir + "/simple/Ugens");
         QStringList fileList = templateDir.entryList(QDir::NoDotAndDotDot | QDir::Files);
 
         QStringList dirList = templateDir.entryList(QDir::NoDotAndDotDot | QDir::AllDirs);
 
+        QStringList ugenList = ugenDir.entryList(QDir::NoDotAndDotDot | QDir::AllDirs);
 
         foreach(QString entry, fileList) {
             QFile::copy(m_templateBaseDir + "/simple/" + entry,
@@ -41,6 +43,14 @@ SimpleProject::SimpleProject(QString projectDir):
                             projectDir + "/" + dir + "/" + entry);
             }
         }
+        foreach(QString dir, ugenList) {
+            QDir subdir(ugenDir.absolutePath() + "/" + dir);
+            subdir.mkpath(projectDir + "/Ugens/" + dir);
+            foreach(QString entry, subdir.entryList(QDir::NoDotAndDotDot | QDir::Files)) {
+                QFile::copy(m_templateBaseDir + "/simple/Ugens/" + dir + "/" + entry,
+                            projectDir + "/Ugens/" + dir + "/" + entry);
+            }
+        }
     }
     m_target = getMakefileOption("TARGET");
     setMakefileOption("APP_NAME", m_projectDir.mid(m_projectDir.lastIndexOf("/") + 1));
@@ -50,15 +60,12 @@ SimpleProject::SimpleProject(QString projectDir):
     connect(m_runProcess, SIGNAL(stateChanged(QProcess::ProcessState)),
             this, SLOT(runStateChanged(QProcess::ProcessState)));
 
-
-    //FIXME: Remove these test cases
-    m_audioOutBlock = new OutputBlock("out", this);
-    OscBlock *oscBlock = new OscBlock("osc1", this);
-    m_audioOutBlock->connectToInput(0, oscBlock, 0);
-
-
+//    m_audioOutBlock = new OutputBlock("out", this);
+//    OscBlock *oscBlock = new OscBlock("osc1", this);
+//    m_audioOutBlock->connectToInput(0, oscBlock, 0);
 
     m_lua = lua_open();
+    m_ugens.setUgenPath(m_projectDir + QDir::separator() + "Ugens");
 }
 
 SimpleProject::~SimpleProject()

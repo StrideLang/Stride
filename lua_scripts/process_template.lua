@@ -1,6 +1,6 @@
 require 'generator'
 
-function process_template(path, ugens)
+function process_template(path, ugen_graph)
    -- process_list is a table that describes the sections that need to be processed within each file
    local process_list = {}
    process_list["/src/compute.xc"] = {"Compute Process"}
@@ -19,7 +19,7 @@ function process_template(path, ugens)
    for name, labels in pairs(process_list) do
       local filename = path .. name
       print("Processing:" .. filename)
-      process_file_labels(filename, ugens, labels, 0)
+      process_file_labels(filename, ugen_graph, labels, 0)
    end 
    -- Read from dsp file template
    local dsp_file = io.open(path .. "/src/dsp_0.xc", "r")
@@ -38,7 +38,7 @@ function process_template(path, ugens)
    local dsp_h_text = dsp_file:read("*all")
    dsp_file:close()
    -- Create additional dsp files
-   for dsp_index=1,gen_calculate_threads(ugens)-1 do
+   for dsp_index=1,gen_calculate_threads(ugen_graph)-1 do
       dsp_file = io.open(path .. "/src/dsp_" .. dsp_index .. ".xc", "w")
       if not dsp_file then
         error()
@@ -55,24 +55,24 @@ function process_template(path, ugens)
    end
 
    -- Process dsp files
-   for dsp_index=0,gen_calculate_threads(ugens)-1 do
+   for dsp_index=0,gen_calculate_threads(ugen_graph)-1 do
       local filename = path .. "/src/dsp_" .. dsp_index .. ".xc"
       print("Processing DSP:" .. filename)
       local labels = {"DSP Ugen Structs",
 		      "DSP Init Ugens",
 		      "DSP Process Ugens",
 		      "DSP Pointer Swap"}
-      process_file_labels(filename, ugens, labels, dsp_index)
+      process_file_labels(filename, ugen_graph, labels, dsp_index)
    end
 end
 
-function process_file_labels(filename, ugens, labels, index)
+function process_file_labels(filename, ugen_graph, labels, index)
    local file = io.open(filename, "r")
    if not file then
       print("file not found\n")
       error()
    end
-   local outtxt = process_labels(file:read("*all"), ugens, labels, index)
+   local outtxt = process_labels(file:read("*all"), ugen_graph, labels, index)
 
    file:close()
    local err
@@ -100,13 +100,13 @@ function replace_section(full_text, section_text, section_name)
    return outtxt
 end
 
-function process_labels(template_txt, ugens, labels, index)
+function process_labels(template_txt, ugen_graph, labels, index)
    local outtxt = template_txt
 
    for _, label in ipairs(labels) do
       local func_name = 'gen_' .. string.gsub(label, ' ', '_')
       print('Calling ' .. func_name)
-      local new_text = _G[func_name](ugens, index) -- Call function by string name
+      local new_text = _G[func_name](ugen_graph, index) -- Call function by string name
       outtxt = replace_section(outtxt, new_text, label)
    end
 

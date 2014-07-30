@@ -6,17 +6,20 @@
 #include <QDebug>
 
 UgenInterface::UgenInterface(QString type, QObject *parent) :
-    QObject(parent)
+    QObject(parent), m_type(type)
 {
-    QString ugenPath = "/home/andres/Documents/src/XMOS/Odo/OdoEdit/Ugens";
+
+}
+
+void UgenInterface::setUgenPath(QString ugenPath)
+{
     QDir ugenBaseDir(ugenPath);
     QStringList ugenDirs = ugenBaseDir.entryList(QDir::Dirs | QDir::NoDot | QDir::NoDotDot);
 
+    qDebug() << "UgenInterface intialize: " << ugenPath;
     foreach(QString dir, ugenDirs) {
         QDir ugenDir(ugenPath + QDir::separator() + dir);
         QStringList ugenFiles = ugenDir.entryList(QStringList() << "*.xml", QDir::Files);
-
-        qDebug() << "UgenInterface intialize";
 
         foreach(QString file, ugenFiles) {
             qDebug() << "Parsing folder " << dir;
@@ -53,7 +56,7 @@ UgenInterface::UgenInterface(QString type, QObject *parent) :
                 }
             }
             if (xml.error() == QXmlStreamReader::NoError) {
-                if (newugen.type == type) {
+                if (newugen.type == m_type) {
                     ugens.append(newugen);
                     qDebug() << "Added ugen: " << newugen.name;
                 } else {

@@ -9,9 +9,9 @@ local ugens = {}
 
 function process(template_path)
    
-   ugens = parse(code)
+   ugen_graph = parse(code)
 
-   process_template(template_path, ugens)
+   process_template(template_path, ugen_graph)
    print("Done process.")
 end
 
