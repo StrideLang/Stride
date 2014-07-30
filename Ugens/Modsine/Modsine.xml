@@ -1,20 +1,21 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <ugen version="1.0">
 <name>Modsine</name>
+<type>xmos</type>
 <diskname>modsine</diskname>
 <inputs>
-  <name>modulator</name>
-  <name>depth</name>
+  <inputname>modulator</inputname>
+  <inputname>depth</inputname>
 </inputs>
 <outputs>
-  <name>output</name>
+  <outputname>output</outputname>
 </outputs>
 <parameters>
   <param>
-    <name>frequency</name>
+    <paramname>frequency</paramname>
     <min>0</min>
     <max>20000</max>
-    <type></type>
+    <paramtype></paramtype>
   </param>
 </parameters>
 <cost>0</cost>

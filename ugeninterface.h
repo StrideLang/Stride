@@ -8,8 +8,8 @@ class UgenInterface : public QObject
 {
     Q_OBJECT
 public:
-    explicit UgenInterface(QObject *parent = 0);
-
+    explicit UgenInterface(QString type = "xmos", QObject *parent = 0);
+    bool isUgen(QString token);
 signals:
 
 public slots:

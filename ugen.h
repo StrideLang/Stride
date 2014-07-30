@@ -11,6 +11,7 @@ class Ugen
 public:
     Ugen();
     QString name;
+    QString type;
     QString diskname;
     QStringList inputs;
     QStringList outputs;

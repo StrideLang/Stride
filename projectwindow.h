@@ -5,6 +5,7 @@
 #include <QFile>
 
 #include "baseproject.h"
+#include "languagehighlighter.h"
 
 namespace Ui {
 class ProjectWindow;
@@ -42,6 +43,7 @@ private:
     QWidget *m_layoutContainer;
     BaseProject *m_project;
     QFile m_codeFile;
+    LanguageHighlighter *m_highlighter;
 };
 
 #endif // PROJECTWINDOW_H

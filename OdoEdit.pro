@@ -23,7 +23,8 @@ SOURCES += main.cpp\
     blocks/outputblock.cpp \
     codeeditor.cpp \
     ugeninterface.cpp \
-    ugen.cpp
+    ugen.cpp \
+    languagehighlighter.cpp
 
 HEADERS  += mainwindow.h \
     projectwindow.h \
@@ -34,7 +35,8 @@ HEADERS  += mainwindow.h \
     blocks/outputblock.h \
     codeeditor.h \
     ugeninterface.h \
-    ugen.h
+    ugen.h \
+    languagehighlighter.h
 
 FORMS    += mainwindow.ui \
     projectwindow.ui

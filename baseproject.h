@@ -20,6 +20,8 @@ public:
     void setTarget(QString target) {m_target = target;}
     void setBoardId(QString id) {m_board_id = id;}
 
+    UgenInterface *getUgens() {return &m_ugens;}
+
     virtual void setProjectName(QString name) = 0;
     virtual void save() = 0;
 
@@ -37,7 +39,7 @@ protected:
     QString m_target;
     QString m_board_id;
 
-    UgenInterface ugens;
+    UgenInterface m_ugens;
 
 signals:
     void outputText(QString text);

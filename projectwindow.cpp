@@ -7,7 +7,6 @@
 #include <QMessageBox>
 
 #include "codeeditor.h"
-
 #include "simpleproject.h"
 
 ProjectWindow::ProjectWindow(QWidget *parent, QString projectDir) :
@@ -27,7 +26,11 @@ ProjectWindow::ProjectWindow(QWidget *parent, QString projectDir) :
     updateMenus();
     ui->projectDockWidget->setVisible(false);
 
-    ui->tabWidget->addTab(new CodeEditor(this), "code");
+    CodeEditor *editor = new CodeEditor;
+    m_highlighter = new LanguageHighlighter(editor->document(), m_project->getUgens());
+    m_highlighter->setDocument(editor->document()); // Not sure why, but this is required for highlighter to work.
+
+    ui->tabWidget->addTab(editor, "code");
 
     if (!m_codeFile.open(QIODevice::ReadWrite)) {
         qDebug() << "Error opening code file!";
