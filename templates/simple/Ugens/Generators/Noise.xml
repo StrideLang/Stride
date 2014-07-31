@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<ugen version="1.0">
+<name>Noise</name>
+<type>xmos</type>
+<diskname>noise</diskname>
+<outputs>
+  <outputname>noise</outputname>
+</outputs>
+<parameters>
+  <param>
+<!--    <paramname>frequency</paramname>
+    <min>0</min>
+    <max>20000</max>
+    <paramtype></paramtype>-->
+  </param>
+</parameters>
+<cost>0</cost>
+<doc>
+<short>A white noise generator</short>
+<long>A white noise generator</long>
+</doc>
+</ugen>
