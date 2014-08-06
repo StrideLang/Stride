@@ -1,9 +1,18 @@
 
 function parse(code)
 
-   local ugens = {{name = "biquad", tile = 0, dspcore = 0, id = 0, ugen_data = {size = 6}},
-                  {name = "biquad", tile = 0, dspcore = 0, id = 1, ugen_data = {size = 6}},
-                  {name = "biquad", tile = 0, dspcore = 1, id = 0, ugen_data = {size = 6}}
-                  }   
+   local chain1 = { output = {0},
+      ugens = { {name = "noise", id = 0},
+         { name = "biquad", id = 1, input = {0} } }
+      }
+         
+--   local chain2 = { output = {1}, ugens = {
+--         {name = "noise", id = 2},
+--         {name = "biquad", id = 3},
+--         {name = ":add", id= 4, input = {2,3} }
+--         }
+--      }
+
+   local ugens = { chain1, chain2 }   
    return ugens
 end

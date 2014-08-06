@@ -9,11 +9,12 @@ If there is cross-talk between two channels, they will need to be rendered in th
 
 		ugen_tree = { channels1_2 }
 
-Each chain is a table with one or more ugens table. Each "ugen" can have the following members:
+Each chain is a table with one or more ugens tables. Each "ugen" table can have the following members:
 
 * ugen: The name of the ugen
 * token: A number that uniquely identifies each one of the outputs of the ugen
 * input: If the ugen takes input signals, this table identifies the tokens that are used as its input
+* ctltoken: A number that uniquely identifies each of the control outputs of the ugen
 
 Builtin operations are prefixed in their ugen name by ":". These operations do not require a "token" member, unless it's needed (e.g. for :adcin that needs to pass the signal to another ugen). The available operations are:
 
