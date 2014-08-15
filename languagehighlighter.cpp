@@ -44,4 +44,15 @@ void LanguageHighlighter::highlightBlock(const QString &text)
         setFormat(index, length, myClassFormat);
         index = text.indexOf(expression, index + length);
     }
+
+    myClassFormat.setFontWeight(QFont::Bold);
+    myClassFormat.setForeground(Qt::green);
+    pattern = "\\#.*";
+    expression.setPattern(pattern);
+    index = text.indexOf(expression);
+    while (index >= 0) {
+        int length = expression.matchedLength();
+        setFormat(index, length, myClassFormat);
+        index = text.indexOf(expression, index + length);
+    }
 }
