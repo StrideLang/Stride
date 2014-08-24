@@ -19,6 +19,7 @@ public:
     QString getBoardId() {return m_target;}
     void setTarget(QString target) {m_target = target;}
     void setBoardId(QString id) {m_board_id = id;}
+    void setCode(QString code) {m_code = code;}
 
     UgenInterface *getUgens() {return &m_ugens;}
 
@@ -32,12 +33,12 @@ public slots:
     virtual QStringList listTargets() {return QStringList();}
     virtual QStringList listDevices() {return QStringList();}
 
-
 protected:
     QString m_projectDir;
     QString m_projectType;
     QString m_target;
     QString m_board_id;
+    QString m_code;
 
     UgenInterface m_ugens;
 

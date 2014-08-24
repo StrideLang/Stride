@@ -2,10 +2,11 @@
 #define SIMPLEPROJECT_H
 
 #include "baseproject.h"
-#include "blocks/baseblock.h"
+//#include "blocks/baseblock.h"
 
 #include <QString>
 #include <QProcess>
+#include <QMutex>
 
 extern "C" {
 #include "luajit-2.0/lua.hpp"
@@ -38,15 +39,17 @@ protected:
     QString getMakefileOption(QString option);
     void generateCode();
     void updateCodeStrings();
+    QString getEditorCode();
 
 private:
     QString m_templateBaseDir;
     QString m_luaScriptsDir;
     QString m_toolPath;
     QProcess *m_runProcess;
-    BaseBlock *m_audioOutBlock;
-    BaseBlock *m_audioInBlock;
+//    BaseBlock *m_audioOutBlock;
+//    BaseBlock *m_audioInBlock;
     QVector<QString> m_codeStrings;
+    QMutex m_codeMutex;
 
     lua_State *m_lua;
 };

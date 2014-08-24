@@ -18,9 +18,6 @@ SOURCES += main.cpp\
     projectwindow.cpp \
     baseproject.cpp \
     simpleproject.cpp \
-    blocks/baseblock.cpp \
-    blocks/oscblock.cpp \
-    blocks/outputblock.cpp \
     codeeditor.cpp \
     ugeninterface.cpp \
     ugen.cpp \
@@ -30,9 +27,6 @@ HEADERS  += mainwindow.h \
     projectwindow.h \
     baseproject.h \
     simpleproject.h \
-    blocks/baseblock.h \
-    blocks/oscblock.h \
-    blocks/outputblock.h \
     codeeditor.h \
     ugeninterface.h \
     ugen.h \

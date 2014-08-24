@@ -39,7 +39,7 @@ void MainWindow::newProject()
         projectDir = projectDir.left(projectDir.lastIndexOf('_') + 1)
                 + QString("%1").arg(count, 2, 10, QChar('0'));
         count++;
-        if (count == 99999) {
+        if (count == 999999) {
             qDebug() << "Warning! Too many untitled projects, overwriting.";
             break;
         }

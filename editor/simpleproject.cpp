@@ -7,17 +7,17 @@
 
 #include "simpleproject.h"
 
-#include "blocks/outputblock.h"
-#include "blocks/oscblock.h"
+//#include "blocks/outputblock.h"
+//#include "blocks/oscblock.h"
 
 SimpleProject::SimpleProject(QString projectDir):
     BaseProject(projectDir)
 {
     m_projectType = "SIMPLE";
 
-    m_templateBaseDir = "/home/andres/Documents/src/XMOS/Odo/OdoEdit/templates";
+    m_templateBaseDir = "/home/andres/Documents/src/XMOS/Odo/OdoEdit/editor/templates";
 
-    m_luaScriptsDir = "/home/andres/Documents/src/XMOS/Odo/OdoEdit/lua_scripts/";
+    m_luaScriptsDir = "/home/andres/Documents/src/XMOS/Odo/OdoEdit/editor/lua_scripts/";
     m_toolPath = "/home/andres/Documents/src/XMOS/xTIMEcomposer/Community_13.0.2";
 
     if (!QFile::exists(projectDir)) {
@@ -151,6 +151,7 @@ void SimpleProject::runStateChanged(QProcess::ProcessState newState)
 
 void SimpleProject::build()
 {
+    QMutexLocker mutexLocker(&m_codeMutex);
     generateCode();
     QProcess p(this);
     QStringList env = getBuildEnvironment();
@@ -350,8 +351,9 @@ void SimpleProject::generateCode()
         return;
     }
     lua_pushstring(m_lua, m_projectDir.toLocal8Bit().constData());   /* push 1st argument */
+    lua_pushstring(m_lua, m_code.toLocal8Bit().constData());   /* push 2nd argument */
 
-    if (lua_pcall(m_lua, 1, 1, 0) != 0) {
+    if (lua_pcall(m_lua, 2, 0, 0) != 0) {
         printf("error running function `f': %s\n",lua_tostring(m_lua, -1));
         return;
     }
@@ -402,4 +404,9 @@ void SimpleProject::updateCodeStrings()
 //        }
 //    }
     //    m_codeStrings[7] += "out_samps[0] = asig;";
+}
+
+QString SimpleProject::getEditorCode()
+{
+
 }

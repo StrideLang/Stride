@@ -60,7 +60,7 @@ void ugen_sine_init_data(ugen_sine_data_t * unsafe data)
 
 void ugen_sine_init_controls(ugen_sine_controls_t &controls)
 {
-    controls.freq = UGEN_SINE_DEFAULT_FREQ;
+    controls.freq = 440;
 }
 
 void ugen_sine_init(ugen_sine_state_t &state,  ugen_sine_data_t * unsafe data)

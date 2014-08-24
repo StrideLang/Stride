@@ -7,7 +7,7 @@ print("Loaded process.lua")
 
 local ugens = {}
 
-function process(template_path)
+function process(template_path, code)
    
    ugen_graph = parse(code)
 
@@ -15,4 +15,4 @@ function process(template_path)
    print("Done process.")
 end
 
-process("/home/andres/StreamStack/untitled_03")
+-- process("/home/andres/StreamStack/untitled_03")

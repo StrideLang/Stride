@@ -48,13 +48,16 @@ ProjectWindow::~ProjectWindow()
 void ProjectWindow::build()
 {
     ui->consoleText->clear();
+    QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
+    m_project->setCode(editor->toPlainText());
     m_project->build();
-
 }
 
 void ProjectWindow::flash()
 {
     ui->consoleText->clear();
+    QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
+    m_project->setCode(editor->toPlainText());
     m_project->flash();
 }
 
@@ -63,6 +66,8 @@ void ProjectWindow::run(bool pressed)
     if (pressed) {
         ui->consoleText->clear();
     }
+    QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
+    m_project->setCode(editor->toPlainText());
     m_project->run(pressed);
 }
 
