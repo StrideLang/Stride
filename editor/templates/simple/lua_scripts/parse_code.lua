@@ -1,4 +1,20 @@
 
+local re = require "re"
+
+-- find the position of the first numeral in a string
+print(re.find("the number 423 is odd", "[0-9]+"))  --> 12    14
+
+-- returns all words in a string
+print(re.match("the number 423 is odd", "({%a+} / .)*"))
+--> the    number    is    odd
+
+-- returns the first numeral in a string
+print(re.match("the number 423 is odd", "s <- {%d+} / . s"))
+--> 423
+
+print(re.gsub("hello World", "[aeiou]", "."))
+--> h.ll. W.rld
+
 function parse(code)
    print("Start parsing.")
    print(code)

@@ -39,10 +39,11 @@ OTHER_FILES += \
     qml/Editor.qml \
     templates/simple/Makefile \
     templates/simple/src/main.xc \
-    lua_scripts/generator.lua \
-    lua_scripts/process_template.lua \
-    lua_scripts/build_project.lua \
-    lua_scripts/parse_code.lua \
+    templates/simple/lua_scripts/generator.lua \
+    templates/simple/lua_scripts/process_template.lua \
+    templates/simple/lua_scripts/build_project.lua \
+    templates/simple/lua_scripts/parse_code.lua \
+    templates/simple/lua_scripts/re.lua \
     templates/simple/code/code.st
 
 folder_01.source = qml

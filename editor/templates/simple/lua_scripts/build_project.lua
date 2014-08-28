@@ -1,5 +1,5 @@
 
-package.path = package.path .. ";/home/andres/Documents/src/XMOS/Odo/OdoEdit/lua_scripts/process_template.lua"
+--package.path = package.path .. ";/home/andres/Documents/src/XMOS/Odo/StreamStack/lua_scripts/process_template.lua"
 require 'process_template'
 require 'parse_code'
 

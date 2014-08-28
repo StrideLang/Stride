@@ -15,9 +15,9 @@ SimpleProject::SimpleProject(QString projectDir):
 {
     m_projectType = "SIMPLE";
 
-    m_templateBaseDir = "/home/andres/Documents/src/XMOS/Odo/OdoEdit/editor/templates";
+    m_templateBaseDir = "../../StreamStack/editor/templates";
 
-    m_luaScriptsDir = "/home/andres/Documents/src/XMOS/Odo/OdoEdit/editor/lua_scripts/";
+    m_luaScriptsDir = m_templateBaseDir + "/simple/lua_scripts/";
     m_toolPath = "/home/andres/Documents/src/XMOS/xTIMEcomposer/Community_13.0.2";
 
     if (!QFile::exists(projectDir)) {
@@ -64,7 +64,11 @@ SimpleProject::SimpleProject(QString projectDir):
 //    OscBlock *oscBlock = new OscBlock("osc1", this);
 //    m_audioOutBlock->connectToInput(0, oscBlock, 0);
 
+    QDir::setCurrent(m_luaScriptsDir);
     m_lua = lua_open();
+
+    luaL_openlibs(m_lua); // Load standard libraries
+
     m_ugens.setUgenPath(m_projectDir + QDir::separator() + "Ugens");
 }
 
@@ -330,13 +334,10 @@ QString SimpleProject::getMakefileOption(QString option)
 void SimpleProject::generateCode()
 {
     qDebug() << "SimpleProject::generateCode()";
-    QDir::setCurrent(m_luaScriptsDir);
-    if (luaL_loadfile(m_lua, QString(m_luaScriptsDir
-                                      + "build_project.lua").toLocal8Bit()) != 0) {
+    if (luaL_loadfile(m_lua, QString("build_project.lua").toLocal8Bit()) != 0) {
         qDebug() << "Error in luaL_loadfile: " <<  m_luaScriptsDir
                     + "build_project.lua";
     }
-    luaL_openlibs(m_lua); // Load standard libraries
 
     if (lua_pcall(m_lua,0, LUA_MULTRET, 0)) {
       qDebug() << "Something went wrong during execution";
