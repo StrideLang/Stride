@@ -10,6 +10,8 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 lessThan(QT_MAJOR_VERSION, 5): message("Qt 5 required!")
 
+include(../config.pri)
+
 TARGET = StreamStacker
 TEMPLATE = app
 
