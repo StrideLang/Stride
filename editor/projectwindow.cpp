@@ -16,7 +16,7 @@ ProjectWindow::ProjectWindow(QWidget *parent, QString projectDir) :
 {
     ui->setupUi(this);
 
-    m_project = new SimpleProject(projectDir);
+    m_project = new XmosProject(projectDir);
     m_project->setBoardId("0ontZocni8POZ");
 
     connectActions();
@@ -41,7 +41,7 @@ ProjectWindow::ProjectWindow(QWidget *parent, QString projectDir) :
 
 ProjectWindow::~ProjectWindow()
 {
-    delete static_cast<SimpleProject *>(m_project);
+    delete static_cast<XmosProject *>(m_project);
     delete ui;
 }
 

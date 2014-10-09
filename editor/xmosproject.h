@@ -13,12 +13,12 @@ extern "C" {
 }
 
 /* SimpleProject uses the XMOS command line tools and Makefile build system */
-class SimpleProject : public BaseProject
+class XmosProject : public BaseProject
 {
     Q_OBJECT
 public:
-    SimpleProject(QString projectDir);
-    virtual ~SimpleProject();
+    XmosProject(QString projectDir);
+    virtual ~XmosProject();
 
     void setPath(QString newProjectPath);
     virtual void setProjectName(QString name);

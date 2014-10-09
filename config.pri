@@ -1,4 +1,4 @@
-include(../config.pri)
+
 unix {
     INCLUDEPATH += /usr/include/luajit-2.0
     LUA_LIB_PATH = /usr/lib/x86_64-linux-gnu

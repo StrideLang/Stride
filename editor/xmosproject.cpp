@@ -5,12 +5,12 @@
 #include <QStringList>
 #include <QMessageBox>
 
-#include "simpleproject.h"
+#include "xmosproject.h"
 
 //#include "blocks/outputblock.h"
 //#include "blocks/oscblock.h"
 
-SimpleProject::SimpleProject(QString projectDir):
+XmosProject::XmosProject(QString projectDir):
     BaseProject(projectDir)
 {
     m_projectType = "SIMPLE";
@@ -72,31 +72,31 @@ SimpleProject::SimpleProject(QString projectDir):
     m_ugens.setUgenPath(m_projectDir + QDir::separator() + "Ugens");
 }
 
-SimpleProject::~SimpleProject()
+XmosProject::~XmosProject()
 {
     lua_close(m_lua);
     delete m_runProcess;
 
 }
 
-void SimpleProject::setPath(QString newProjectPath)
+void XmosProject::setPath(QString newProjectPath)
 {
     Q_ASSERT(!m_projectDir.isEmpty());
 
 }
 
-void SimpleProject::setProjectName(QString name)
+void XmosProject::setProjectName(QString name)
 {
 
 }
 
-void SimpleProject::save()
+void XmosProject::save()
 {
 
 }
 
 
-QStringList SimpleProject::listTargets()
+QStringList XmosProject::listTargets()
 {
     QStringList targetList;
     QProcess p(this);
@@ -114,7 +114,7 @@ QStringList SimpleProject::listTargets()
     return targetList;
 }
 
-QStringList SimpleProject::listDevices()
+QStringList XmosProject::listDevices()
 {
     QStringList targetList;
     QProcess p(this);
@@ -147,13 +147,13 @@ QStringList SimpleProject::listDevices()
     return targetList;
 }
 
-void SimpleProject::runStateChanged(QProcess::ProcessState newState)
+void XmosProject::runStateChanged(QProcess::ProcessState newState)
 {
     Q_ASSERT(newState == QProcess::NotRunning);
     emit programStopped();
 }
 
-void SimpleProject::build()
+void XmosProject::build()
 {
     QMutexLocker mutexLocker(&m_codeMutex);
     generateCode();
@@ -187,7 +187,7 @@ void SimpleProject::build()
     }
 }
 
-void SimpleProject::flash()
+void XmosProject::flash()
 {
     build();
 
@@ -216,7 +216,7 @@ void SimpleProject::flash()
     }
 }
 
-void SimpleProject::run(bool pressed)
+void XmosProject::run(bool pressed)
 {
     if (pressed) {
         flash();
@@ -243,7 +243,7 @@ void SimpleProject::run(bool pressed)
     }
 }
 
-QStringList SimpleProject::getBuildEnvironment()
+QStringList XmosProject::getBuildEnvironment()
 {
     QStringList env = QProcess::systemEnvironment();
 
@@ -284,7 +284,7 @@ QStringList SimpleProject::getBuildEnvironment()
     return env;
 }
 
-void SimpleProject::setMakefileOption(QString option, QString value)
+void XmosProject::setMakefileOption(QString option, QString value)
 {
     QFile file(m_projectDir + "/Makefile");
     file.open(QIODevice::ReadWrite);
@@ -309,7 +309,7 @@ void SimpleProject::setMakefileOption(QString option, QString value)
     }
 }
 
-QString SimpleProject::getMakefileOption(QString option)
+QString XmosProject::getMakefileOption(QString option)
 {
     QString value;
     QFile file(m_projectDir + "/Makefile");
@@ -331,7 +331,7 @@ QString SimpleProject::getMakefileOption(QString option)
     return value;
 }
 
-void SimpleProject::generateCode()
+void XmosProject::generateCode()
 {
     qDebug() << "SimpleProject::generateCode()";
     if (luaL_loadfile(m_lua, QString("build_project.lua").toLocal8Bit()) != 0) {
@@ -382,7 +382,7 @@ void SimpleProject::generateCode()
 
 }
 
-void SimpleProject::updateCodeStrings()
+void XmosProject::updateCodeStrings()
 {
     m_codeStrings.clear();
 
@@ -407,7 +407,7 @@ void SimpleProject::updateCodeStrings()
     //    m_codeStrings[7] += "out_samps[0] = asig;";
 }
 
-QString SimpleProject::getEditorCode()
+QString XmosProject::getEditorCode()
 {
 
 }

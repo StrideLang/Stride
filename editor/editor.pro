@@ -19,20 +19,20 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     projectwindow.cpp \
     baseproject.cpp \
-    simpleproject.cpp \
     codeeditor.cpp \
     ugeninterface.cpp \
     ugen.cpp \
-    languagehighlighter.cpp
+    languagehighlighter.cpp \
+    xmosproject.cpp
 
 HEADERS  += mainwindow.h \
     projectwindow.h \
     baseproject.h \
-    simpleproject.h \
     codeeditor.h \
     ugeninterface.h \
     ugen.h \
-    languagehighlighter.h
+    languagehighlighter.h \
+    xmosproject.h
 
 FORMS    += mainwindow.ui \
     projectwindow.ui
