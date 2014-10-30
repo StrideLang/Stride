@@ -7,7 +7,7 @@
 #include <QMessageBox>
 
 #include "codeeditor.h"
-#include "simpleproject.h"
+#include "xmosproject.h"
 
 ProjectWindow::ProjectWindow(QWidget *parent, QString projectDir) :
     QMainWindow(parent),

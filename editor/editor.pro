@@ -55,5 +55,5 @@ DEPLOYMENTFOLDERS = folder_01
 RESOURCES += \
     qmlfiles.qrc
 
-LUA_LIB_PATH = /usr/lib/x86_64-linux-gnu
-unix|win32: LIBS += -L$${LUA_LIB_PATH} -lluajit-5.1
+INCLUDEPATH += $${LUA_INCLUDE_PATH}
+unix|win32: LIBS += -L$${LUA_LIB_PATH} -l$${LUA_LIB}

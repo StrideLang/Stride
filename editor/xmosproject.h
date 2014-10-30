@@ -9,7 +9,8 @@
 #include <QMutex>
 
 extern "C" {
-#include "luajit-2.0/lua.hpp"
+// #include "luajit-2.0/lua.hpp"
+#include "lua.hpp"
 }
 
 /* SimpleProject uses the XMOS command line tools and Makefile build system */
