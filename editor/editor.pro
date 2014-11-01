@@ -23,7 +23,8 @@ SOURCES += main.cpp\
     ugeninterface.cpp \
     ugen.cpp \
     languagehighlighter.cpp \
-    xmosproject.cpp
+    xmosproject.cpp \
+    platform.cpp
 
 HEADERS  += mainwindow.h \
     projectwindow.h \
@@ -32,7 +33,8 @@ HEADERS  += mainwindow.h \
     ugeninterface.h \
     ugen.h \
     languagehighlighter.h \
-    xmosproject.h
+    xmosproject.h \
+    platform.h
 
 FORMS    += mainwindow.ui \
     projectwindow.ui

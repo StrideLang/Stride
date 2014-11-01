@@ -1,8 +1,7 @@
-#ifndef SIMPLEPROJECT_H
-#define SIMPLEPROJECT_H
+#ifndef XMOSPROJECT_H
+#define XMOSPROJECT_H
 
 #include "baseproject.h"
-//#include "blocks/baseblock.h"
 
 #include <QString>
 #include <QProcess>
@@ -18,7 +17,7 @@ class XmosProject : public BaseProject
 {
     Q_OBJECT
 public:
-    XmosProject(QString projectDir);
+    XmosProject(QString projectDir, QString platformRoot, QString xmosToolchainRoot);
     virtual ~XmosProject();
 
     void setPath(QString newProjectPath);
@@ -43,10 +42,8 @@ protected:
     QString getEditorCode();
 
 private:
-    QString m_templateBaseDir;
-    QString m_luaScriptsDir;
-    QString m_toolPath;
     QProcess *m_runProcess;
+    QString m_xmosToolchainRoot;
 //    BaseBlock *m_audioOutBlock;
 //    BaseBlock *m_audioInBlock;
     QVector<QString> m_codeStrings;
@@ -55,4 +52,4 @@ private:
     lua_State *m_lua;
 };
 
-#endif // SIMPLEPROJECT_H
+#endif // XMOSPROJECT_H

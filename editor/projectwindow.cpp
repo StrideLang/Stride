@@ -16,7 +16,9 @@ ProjectWindow::ProjectWindow(QWidget *parent, QString projectDir) :
 {
     ui->setupUi(this);
 
-    m_project = new XmosProject(projectDir);
+    QString platformsRootDir = "../../StreamStack/editor/templates";
+    QString xmosToolChainRoot = "/home/andres/Documents/src/XMOS/xTIMEcomposer/Community_13.0.2";
+    m_project = new XmosProject(projectDir, platformsRootDir, xmosToolChainRoot);
     m_project->setBoardId("0ontZocni8POZ");
 
     connectActions();

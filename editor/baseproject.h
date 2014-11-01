@@ -6,6 +6,7 @@
 #include <QStringList>
 
 #include "ugeninterface.h"
+#include "platform.h"
 
 class BaseProject : public QObject
 {
@@ -14,7 +15,7 @@ public:
     BaseProject(QString dir);
     virtual ~BaseProject();
 
-    QString getType() {return m_projectType;}
+    QString getType() {return m_platform->getPlatformName();}
     QString getTarget() {return m_target;}
     QString getBoardId() {return m_target;}
     void setTarget(QString target) {m_target = target;}
@@ -35,12 +36,12 @@ public slots:
 
 protected:
     QString m_projectDir;
-    QString m_projectType;
     QString m_target;
     QString m_board_id;
     QString m_code;
 
-    UgenInterface m_ugens;
+    UgenInterface m_ugens; // TODO move UgenInterface to Platform
+    Platform *m_platform;
 
 signals:
     void outputText(QString text);
