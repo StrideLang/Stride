@@ -7,7 +7,7 @@ using namespace std;
 extern "C" int yylex();
 extern "C" FILE *yyin;
 
-
+int parse(const char* fileName);
 int yyerror(const char *s);
 %}
 
@@ -83,17 +83,16 @@ int yyerror(const char *s) {
   return 0;
 }
 
-int parse()
+int parse(const char* fileName)
 {
-	char const * fileName = "lexar.txt";
 	FILE *myfile = fopen(fileName, "r");
 	// make sure it's valid:
 	if (!myfile) {
 		printf("I can't open %s!\n", fileName);
 		return -1;
 	}
-	// set lex to read from it instead of defaulting to STDIN:
-	yyin = myfile;
+        // set lex to read from it instead of defaulting to STDIN:
+        yyin = myfile;
 	yyparse();
 	
 	printf("Completed Analysing: %s!\n", fileName);
