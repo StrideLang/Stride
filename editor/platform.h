@@ -3,6 +3,21 @@
 
 #include <QString>
 
+#include <string>
+#include <vector>
+
+struct TypeProperty {
+    std::string name;
+    std::vector<std::string> types;
+    std::string defaultValue;
+};
+
+struct PlatformType {
+    std::string typeName;
+    std::vector<TypeProperty> properties;
+    std::vector<TypeProperty> privateProperties;
+};
+
 class Platform
 {
 public:

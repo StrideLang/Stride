@@ -1,0 +1,57 @@
+{"types": [
+        {
+            "typeName": "object",
+            "properties": [{"name": "meta", "validTypes": ["string"], "default": "none"}]
+        },
+        {
+            "typeName": "switch",
+            "properties": [{"name": "source", "validTypes" : [ "serial", "midi", "none", "function" ], "default": "none"},
+                {"name": "default", "validTypes": ["string"], "default": "none"}]
+        },
+        {
+            "typeName": "signal",
+            "properties": [{"name": "source", "validTypes" : [ "hwIo", "none" ], "default": "none"},
+                {"name": "rate", "validTypes": ["data"], "default": "none"}]
+        },
+        {
+            "typeName": "data",
+            "properties": [{"name": "value", "validTypes" : [ "int", "real", "string" ], "default": "none"}],
+            "private": [ {"type": [ "int", "real", "string" ]}]
+        },
+        {
+            "typeName": "control",
+            "properties": [{"name": "source", "validTypes" : [ "data", "analogIn", "function" ], "default": "none"}]
+        },
+        {
+            "typeName": "patch",
+            "properties": [{"name": "source", "validTypes" : [ "numberList" ], "default": "none"},
+                {"name": "bypass", "validTypes" : [ "switch", "digitalIn" ], "default": "none"},
+                {"name": "output", "validTypes" : [ "functionStream" ], "default": "none"}
+            ]
+        },
+        {
+            "typeName": "sequence",
+            "properties": [{"name": "variableList", "validTypes" : [ "controlList" ], "default": "none"},
+                {"name": "random", "validTypes" : [ "switch" ], "default": "on"},
+                {"name": "wrap", "validTypes" : [ "switch" ], "default": "on"}
+            ]
+        },
+        {
+            "typeName": "instrument",
+            "properties": [
+                {"name": "id", "validTypes" : [ "string", "none" ], "default": "none"},
+                {"name": "channelsIn", "validTypes" : [ "int" ], "default": "0"},
+                {"name": "channelsOut", "validTypes" : [ "int" ], "default": "1"},
+                {"name": "polyphony", "validTypes" : [ "int" ], "default": "8"},
+                {"name": "variableList", "validTypes" : [ "controlList" ], "default": "none"},
+                {"name": "trigger", "validTypes" : [ "switch" ], "default": "none"},
+                {"name": "sustain", "validTypes" : [ "switch" ], "default": "none"},
+                {"name": "bypass", "validTypes" : [ "switch", "digitalIn" ], "default": "none"},
+                {"name": "output", "validTypes" : [ "functionStreamList" ], "default": "none"}
+            ]
+        }
+    ]
+}
+
+
+
