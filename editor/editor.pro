@@ -52,6 +52,9 @@ FLEXSOURCES = parser/lang_stream.l
 
 include(parser.pri)
 
+win32 {
+LIBS += -L${FLEX_LIB_PATH}
+}
 LIBS += -lfl
 
 OTHER_FILES += \
