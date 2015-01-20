@@ -7,6 +7,7 @@
 
 #include "xmosproject.h"
 
+extern int parse(const char* fileName);
 //#include "blocks/outputblock.h"
 //#include "blocks/oscblock.h"
 
@@ -19,6 +20,7 @@ XmosProject::XmosProject(QString projectDir, QString platformRoot, QString xmosT
 
     if (!QFile::exists(projectDir)) {
         QDir().mkpath(projectDir);
+        QDir().mkpath(projectDir + "/code");
         QDir templateDir(m_platform->getPlatformPath());
         QDir ugenDir(m_platform->getPlatformPath() + "/Ugens");
         QStringList fileList = templateDir.entryList(QDir::NoDotAndDotDot | QDir::Files);
@@ -154,6 +156,9 @@ void XmosProject::runStateChanged(QProcess::ProcessState newState)
 void XmosProject::build()
 {
     QMutexLocker mutexLocker(&m_codeMutex);
+
+    char const * fileName = m_code.toLocal8Bit().constData();
+    parse(fileName);
     generateCode();
     QProcess p(this);
     QStringList env = getBuildEnvironment();
@@ -163,8 +168,8 @@ void XmosProject::build()
     // FIXME always clean before building
 //    p.execute(m_platform->getToolchainPath() + "/bin/xmake",  QStringList() << "clean");
     p.start(m_platform->getToolchainPath() + "/bin/xmake",  QStringList() << "all");
-    // FIXME this loops endlessly if build fails
-    while (p.waitForReadyRead(1000) || !p.waitForFinished(1)) {
+    while (p.state() == QProcess::Running) {
+        p.waitForReadyRead(100);
         QString out = QString(p.readAllStandardOutput());
         QString error = QString(p.readAllStandardError());
         if (!out.isEmpty()) {
