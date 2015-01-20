@@ -24,7 +24,11 @@ SOURCES += main.cpp\
     ugen.cpp \
     languagehighlighter.cpp \
     xmosproject.cpp \
-    platform.cpp
+    platform.cpp \
+    parser/ast.cpp \
+    parser/objectnode.cpp \
+    parser/platformnode.cpp \
+    parser/streamnode.cpp
 
 HEADERS  += mainwindow.h \
     projectwindow.h \
@@ -34,7 +38,11 @@ HEADERS  += mainwindow.h \
     ugen.h \
     languagehighlighter.h \
     xmosproject.h \
-    platform.h
+    platform.h \
+    parser/ast.h \
+    parser/objectnode.h \
+    parser/platformnode.h \
+    parser/streamnode.h
 
 FORMS    += mainwindow.ui \
     projectwindow.ui
