@@ -1,7 +1,7 @@
 %{
 #include <iostream>
 #include <stdio.h>
-#include "streamParser.hpp"
+#include "lang_stream.parser.hpp"
 #define YY_DECL extern "C" int yylex()
 
 using namespace std;

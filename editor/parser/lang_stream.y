@@ -11,6 +11,8 @@ extern "C" FILE *yyin;
 extern int yylineno;
 void yyerror(char *s, ...);
 
+int parse(const char *filename);
+
 int error = 0;
 %}
 
@@ -186,24 +188,10 @@ void yyerror(char *s, ...){
 	error++;
 }
 
-int main(int argc, char *argv[]){
-	int count;
+int parse(const char *filename){
 	FILE * file;
-	char const * fileName;
+        char const * fileName = filename;
 
-	cout << "Called with \"" << argv[0] << "\"" << endl;
-
-	if (argc > 1) {
-		for (count = 1; count < argc; count++) {
-			cout << "Argument " << count << ": " << argv[count] << endl;
-		}
-	}
-	else
-    {
-      cout << "The requires at least file name argument!" << endl;
-    }
-
-	fileName = argv[1];
 	file = fopen(fileName, "r");
 
 	if (!file){
