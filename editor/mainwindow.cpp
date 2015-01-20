@@ -5,6 +5,7 @@
 #include <QDir>
 #include <QDebug>
 #include <QFileDialog>
+#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -46,14 +47,24 @@ void MainWindow::newProject()
     }
 
     ProjectWindow *pw = new ProjectWindow(this, projectDir);
+    pw->setWindowFlags(pw->windowFlags() | Qt::Window);
     pw->show();
 }
 
 void MainWindow::loadProject()
 {
+    // TODO should there be an actual project file to load? Having to select a directory is unintuitive
     QString path = QFileDialog::getExistingDirectory(this);
-    ProjectWindow *pw = new ProjectWindow(this, path);
-    pw->show();
+    if(!path.isEmpty()) {
+        try {
+            ProjectWindow *pw = new ProjectWindow(this, path);
+            pw->setWindowFlags(pw->windowFlags() | Qt::Window);
+            pw->show();
+        }
+        catch (...) {
+            QMessageBox::critical(this, tr("Project Error"), tr("Error opening project."));
+        }
+    }
 }
 
 void MainWindow::connectActions()
