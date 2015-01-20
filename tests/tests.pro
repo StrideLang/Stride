@@ -23,6 +23,10 @@ BISONSOURCES = ../editor/parser/lang_stream.y
 FLEXSOURCES = ../editor/parser/lang_stream.l
 include("../editor/parser.pri")
 
+win32 {
+LIBS += -L${FLEX_LIB_PATH}
+}
+
 LIBS += -lfl
 
 folder_01.source = data/
