@@ -14,6 +14,7 @@ void yyerror(char *s, ...);
 int parse(const char *filename);
 
 int error = 0;
+
 %}
 
 %union {
@@ -25,16 +26,17 @@ int error = 0;
 /* declare tokens */
 %token 	<ival> 	INT
 %token 	<fval> 	FLOAT
-%left 	<sval> 	UVAR
+%token	<sval> 	UVAR
 %token 	<sval> 	WORD
 %token 	<sval> 	STRING
 %token 	<sval> 	ERROR
 
-%token '{' '}' '[' ']'
+%token '{' '}'
 %token COMMA COLON SEMICOLON 
-%token USE NONE ON OFF 
+%token USE VERSION NONE ON OFF
 
 %left STREAM
+%left '[' ']'
 %left '+' '-' 
 %left '*' '/'
 %left '(' ')'
@@ -45,145 +47,252 @@ int error = 0;
 entry: 
 		/*epsilon*/		{}
 	| 	entry start		{ cout << endl << "Grabbing Next ..." << endl ; }
-	| 	entry SEMICOLON	{ cout << "Ignore SEMICOLON!" << endl ; }	
+	| 	entry SEMICOLON	{ cout << "Ignoring Semicolon!" << endl ; }	
 	;
 
 start:
-		blockDef		{ cout << "Block Resolved!" << endl; }
-	|	streamDef		{ cout << "Stream Resolved!" << endl; }
-	|	signalDef		{ cout << "Signal Chain Resolved!" << endl; }
-        |	ERROR			{ yyerror("Unrecognised Character: ", $1); }
+		platformDef		{ cout << "Platform Definition Resolved!" << endl; }
+	|	blockDef		{ cout << "Block Resolved!" << endl; }
+	|	streamDef		{}
+	|	ERROR			{ yyerror("Unrecognised Character: ", $1) }
 	;
+
+// ================================= 
+//	PLATFORM DEFINITION
+// =================================
+	
+platformDef:
+		USE UVAR VERSION FLOAT { cout << "Platform: " << $2 << endl << "Version: " << $4 << endl; }
+	;
+
+// ================================= 
+//	BLOCK DEFINITION
+// =================================
 	
 blockDef: 	
-		WORD UVAR blockBody 			{ cout << "Block: " << $1 << ", Called: " << $2 << endl; }
-	|	WORD UVAR arrayDef blockBody 	{ cout << "Block: " << $1 << ", Called: " << $2 << endl; }
+		WORD UVAR blockType 		{ cout << "Block: " << $1 << ", Labelled: " << $2 << endl; }
+	|	WORD bundleDef blockType		{ cout << "Block Bundle ..." << endl;  }
 	;
 
-blockBody: 	
-		'{' '}'					{ cout << "Default values assigned!" << endl; }
-	|	'{' propertyList '}' 	{}
+blockType: 	
+		'{' '}'				{ cout << "Default values assigned!" << endl; }
+	|	'{' properties '}' 	{}
 	;
 
-signalDef:
-		UVAR STREAM UVAR					{ cout << $1 << " -> " << $3 << endl; }			
-	|	UVAR STREAM streamDef				{ cout << $1 << " -> Stream" << endl; }	
-	|	UVAR STREAM streamDef STREAM UVAR	{ cout << $1 << " -> Stream -> " << $5 << endl; }	
-	|	streamDef STREAM UVAR				{ cout << "Stream -> " << $3 << endl; }
-	;
+// ================================= 
+//	STREAM DEFINITION
+// =================================
 	
 streamDef:
-		functionDef						{}
-	|	streamDef STREAM functionDef	{ cout << "STREAMing" << endl; }
-	;
-	
-functionDef: 	
-		WORD '(' ')'					{ cout << "Blank Platform Function: " << $1 << endl; }
-	|	WORD '(' propertyList ')'		{ cout << "Properties () ..." << endl << "Platform Function: " << $1 << endl; }
-	|	UVAR '(' ')'					{ cout << "Blank User Function: " << $1 << endl; }
-	|	UVAR '(' propertyList ')' 		{ cout << "Properties () ..." << endl << "User Function: " << $1 << endl; }
-	|	functionDef '+' functionDef		{ cout << "ADDing" << endl; }
-	|	functionDef '-' functionDef		{ cout << "SUBing" << endl; }
-	|	functionDef '*' functionDef		{ cout << "MULing" << endl; }
-	|	functionDef '/' functionDef		{ cout << "DIVing" << endl; }
-	|	'(' functionDef ')'				{}
+		streamType SEMICOLON			{}
 	;
 
-propertyList: 	
-		propertyList property	{ cout << "Property Resolved!" << endl; }
-	|	property				{ cout << "Property Resolved!" << endl; }
+streamType:
+		valueExp STREAM streamExp  		{ cout << "Stream Resolved!" << endl; }
+	|	valueListExp STREAM streamExp	{ cout << "Stream Resolved!" << endl; }
+	;
+	
+// ================================= 
+//	ARRAY DEFINITION
+// =================================
+
+bundleDef:
+		UVAR '[' indexExp ']'	{ cout << "Bundle name: " << $1 << endl; }
+	;
+
+// ================================= 
+//	FUNCTION DEFINITION
+// =================================
+
+functionDef:
+		WORD '(' ')'				{ cout << "Platform function: " << $1 << endl; }
+	|	WORD '(' properties ')'		{ cout << "Properties () ..." << endl << "Platform function: " << $1 << endl; }
+	|	UVAR '(' ')'				{ cout << "User function: " << $1 << endl; }
+	|	UVAR '(' properties ')' 	{ cout << "Properties () ..." << endl << "User function: " << $1 << endl; }
+	;	
+	
+// ================================= 
+//	PROPERTIES DEFINITION
+// =================================
+	
+properties: 	
+		properties property		{}
+	|	property				{}
 	;
 	
 property: 	
-		WORD COLON propertyType 	{ cout << "Property: " << $1 << endl; }
-	|	UVAR COLON propertyType 	{ cout << "Property: " << $1 << endl; }
-	;
-
-arrayDef:
-		'[' INT ']'		{ cout << "Elements :" << $2 << endl; }
-	;
-
-listDef:
-		'[' listType ']'	{}
-	;
-	
-listType:
-		integerList			{}	
-	|	floatList 			{}
-	|	stringList			{}
-	|	blockList			{}
-	|	variableList		{}
-	| 	streamList			{}
-	|	listList			{}
-	;
-	
-integerList:
-		INT							{ cout << "Integer: " << $1 << endl; }		
-	|	integerList COMMA INT		{ cout << "Integer: " << $3 << endl; }	
-	;
-
-floatList:
-		FLOAT						{ cout << "Float: " << $1 << endl; }	
-	|	floatList COMMA FLOAT		{ cout << "Float: " << $3 << endl; }
-	;
-
-stringList:
-		STRING						{ cout << "String: " << $1 << endl; }	
-	|	stringList COMMA STRING		{ cout << "String: " << $3 << endl; }
-	;
-
-variableList:
-		UVAR						{ cout << "Variable: " << $1 << endl; }	
-	|	variableList COMMA UVAR		{ cout << "Variable: " << $3 << endl; }
-	
-blockList:
-		blockDef					{ cout << "Block Definition... " << endl; }	
-	|	blockList COMMA blockDef	{ cout << "Block Definition... " << endl; }
-	;
-	
-streamList:
-		streamDef					{ cout << "Stream Definition... " << endl; }	
-	|	streamList COMMA streamDef	{ cout << "stream Definition... " << endl; }
-
-listList:
-		listDef					{ cout << "SubList...:" << endl; }	
-	|	listList COMMA listDef	{ cout << "SubList...:" << endl;}
-	;
-	
-valueDef:
-		valueDef '+' valueDef 		{ cout << "Adding... " << endl; }
-	|	valueDef '-' valueDef 		{ cout << "Subtracting... " << endl; }
-	|	valueDef '*' valueDef 		{ cout << "Multiplying... " << endl; }
-	|	valueDef '/' valueDef 		{ cout << "Dividing... " << endl; }
-	|	'(' valueDef ')' 			{ cout << "Enclosure..." << endl; }
-	| 	'-' valueDef %prec UMINUS 	{ cout << "UMINUS" << endl; }
-	| 	INT							{ cout << $1 << endl; }
-	|	FLOAT						{ cout << $1 << endl; }
-	|	UVAR						{ cout << $1 << endl; }
+		WORD COLON propertyType 	{ cout << "Property: " << $1 << endl << "New property ... " << endl; }
 	;
 	
 propertyType: 	
 		NONE termination			{ cout << "Keyword: none" << endl; }
 	|	ON termination				{ cout << "Keyword: on" << endl; }
 	|	OFF termination				{ cout << "Keyword: off" << endl; }
-	|	STRING termination			{ cout << $1 << endl; }
-	|	valueDef termination		{ cout << "Value Expression as Property Values!" << endl; }
-	|	UVAR arrayDef termination	{ cout << "Array: " << $1 << endl; }
-	|	blockBody termination		{ cout << "Default Values for Block!" << endl; }
-	|	streamDef termination		{ cout << "Stream as Property Value!" << endl; }
-	|	listDef termination			{ cout << "List as Property Value!" << endl; }
+	|	STRING termination			{ cout << "String: " << $1 << endl; }
+	|	valueExp termination		{ cout << "Value expression as property value!" << endl; }
+	|	blockType termination		{ cout << "Block as property value!" << endl; }
+	|	streamType termination		{ cout << "Stream as property value!" << endl; }
+	|	listDef termination			{}
+	|	valueListExp termination	{ cout << "List expression as property value!" << endl; }
 	;
 
-termination:
-		/*epsilon*/					{}
-	|	SEMICOLON					{}
+// ================================= 
+//	REGULAR LIST DEFINITION
+// =================================
+
+listDef:
+		'[' stringList ']'	{}
+	|	'[' switchList ']'	{}
+	|	'[' blockList  ']'	{}
+	|	'[' streamList ']'	{}
+	|	'[' listList   ']'	{}
+	;
+
+stringList:
+		stringList COMMA STRING		{ cout << "String: " << $3 << endl << "New list item ... " << endl; }
+	|	STRING						{ cout << "String: " << $1 << endl << "New list item ... " << endl; }
+	;
+
+switchList:
+		switchList COMMA ON		{ cout << "switch: ON" << endl << "New list item ... " << endl; }
+	|	switchList COMMA OFF	{ cout << "switch: OFF" << endl << "New list item ... " << endl; }
+	|	ON						{ cout << "switch: ON" << endl << "New list item ... " << endl; }
+	|	OFF						{ cout << "switch: OFF" << endl << "New list item ... " << endl; }
 	;
 	
+blockList:
+		blockList COMMA blockDef	{ cout << "Block definition ... " << endl << "New list item ... " << endl; }
+	|	blockDef					{ cout << "Block definition ... " << endl << "New list item ... " << endl; }
+	;
+	
+streamList:
+		streamList COMMA streamType	{ cout << "Stream definition ... " << endl << "New list item ... " << endl; }
+	|	streamType					{ cout << "Stream definition ... " << endl << "New list item ... " << endl; }
+	;
+	
+listList:
+		listList COMMA listDef		{ cout << "List of lists ..." << endl << "New list item ... " << endl; }
+	|	listDef						{ cout << "List of lists ..." << endl << "New list item ... " << endl; }
+	;
+	
+// ================================= 
+//	VALUE LIST DEFINITION
+// =================================
+	
+valueListDef:
+		'[' valueList ']'		{}
+	|	'[' valueListList ']'	{}	
+	;
+	
+valueList:
+		valueList COMMA valueExp	{ cout << "Value expression ..." << endl << "New list item ... " << endl; }
+	|	valueExp					{ cout << "Value expression ..." << endl << "New list item ... " << endl; }
+	;	
+
+valueListList:
+		valueListList COMMA valueListDef	{ cout << "List of lists ..." << endl << "New list item ... " << endl; }
+	|	valueListDef						{ cout << "List of lists ..." << endl << "New list item ... " << endl; }
+	;
+
+// ================================= 
+//	INDEX EXPRESSION
+// =================================
+	
+indexExp:
+		indexExp '+' indexExp 	{ cout << "Index/Size adding ... " << endl; }
+	|	indexExp '-' indexExp 	{ cout << "Index/Size subtracting ... " << endl; }
+	|	indexExp '*' indexExp 	{ cout << "Index/Size multiplying ... " << endl; }
+	|	indexExp '/' indexExp 	{ cout << "Index/Size dividing ... " << endl; }
+	|	'(' indexExp ')' 		{ cout << "Index/Size enclosure ..." << endl; }
+	|	indexComp				{}
+	;
+
+// ================================= 
+//	VALUE LIST EXPRESSION
+// =================================
+
+valueListExp:
+		valueListDef '+' valueExp	{ cout << "Adding ... " << endl; }
+	|	valueListDef '-' valueExp	{ cout << "Subtracting ... " << endl; }
+	|	valueListDef '*' valueExp	{ cout << "Multiplying ... " << endl; }
+	|	valueListDef '/' valueExp	{ cout << "Dividing ... " << endl; }
+	|	valueExp '+' valueListDef	{ cout << "Adding ... " << endl; }
+	|	valueExp '-' valueListDef	{ cout << "Subtracting ... " << endl; }
+	|	valueExp '*' valueListDef	{ cout << "Multiplying ... " << endl; }
+	|	valueExp '/' valueListDef	{ cout << "Dividing ... " << endl; }
+	|	valueListDef				{ }
+	;
+
+// ================================= 
+//	VALUE EXPRESSION
+// =================================
+	
+valueExp:
+		valueExp '+' valueExp 		{ cout << "Adding ... " << endl; }
+	|	valueExp '-' valueExp 		{ cout << "Subtracting ... " << endl; }
+	|	valueExp '*' valueExp 		{ cout << "Multiplying ... " << endl; }
+	|	valueExp '/' valueExp 		{ cout << "Dividing ... " << endl; }
+	|	'(' valueExp ')' 			{ cout << "Enclosure ..." << endl; }
+	| 	'-' valueExp %prec UMINUS 	{ cout << "Unary minus ... " << endl; }
+	| 	valueComp					{}
+	;
+
+// ================================= 
+//	STREAM EXPRESSION
+// =================================
+	
+streamExp:
+		streamComp STREAM streamExp	{}
+	|	streamComp					{}
+	;
+
+// ================================= 
+//	INDEX COMPONENTS
+// =================================
+	
+indexComp:
+		INT				{ cout << "Index/Size Integer: " << $1 << endl; }
+	|	UVAR			{ cout << "Index/Size User variable: " << $1 << endl; }
+	|	bundleDef		{ cout << "Resolving indexed array ..." << endl; }
+	;
+
+// ================================= 
+//	STREAM COMPONENTS
+// =================================
+	
+streamComp:
+		UVAR			{ cout << "User variable: " << $1 << endl << "Streaming ... " << endl; }
+	|	bundleDef		{ cout << "Resolving indexed array ..." << endl << "Streaming ... " << endl; }
+	|	functionDef		{ cout << "Resolving function definition ... " << endl << "Streaming ... " << endl; }
+	|	valueListDef	{ cout << "Resolving list definition ... " << endl << "Streaming ... " << endl;}
+	;
+
+// ================================= 
+//	VALUE COMPONENTS
+// =================================
+
+valueComp:
+		INT				{ cout << "Integer: " << $1 << endl; } 
+	|	FLOAT			{ cout << "Real: " << $1 << endl; }
+	|	UVAR			{ cout << "User variable: " << $1 << endl; }
+	|	bundleDef		{ cout << "Resolving indexed array ..." << endl; }
+	|	functionDef		{ cout << "Resolving function definition ..." << endl; }
+	;
+
+// ================================= 
+//	TERMINATION
+// =================================
+
+termination:
+		/*epsilon*/		{}
+	|	SEMICOLON		{ cout << "Ignoring semicolon!" << endl ; }
+	;
+		
 %%
 void yyerror(char *s, ...){
 	va_list ap;
 	va_start(ap, s);
-	cout << "ERROR: " << s << va_arg(ap, char*) << " @ line " <<  yylineno << endl;
+	cout << "ERROR: " << s << " => " << va_arg(ap, char*) << " @ line " <<  yylineno << endl;
 	va_end(ap);
 	error++;
 }

@@ -9,9 +9,9 @@ using namespace std;
 
 %option noyywrap nodefault yylineno
 
-DIGIT [0-9]
-LETTER [a-z]
-CLETTER [A-Z]
+DIGIT	[0-9]
+LETTER	[a-z]
+CLETTER	[A-Z]
 
 %%
 "("	|
@@ -31,6 +31,7 @@ CLETTER [A-Z]
 ">>"				{ return STREAM; }
 
 "use"				{ return USE; }
+"version"			{ return VERSION; }
 "none"				{ return NONE; }
 "on"				{ return ON; }
 "off"				{ return OFF; }
@@ -42,8 +43,8 @@ CLETTER [A-Z]
 {CLETTER}({LETTER}|{CLETTER}|{DIGIT}|_)*	{ yylval.sval = strdup(yytext); return UVAR;}
 {LETTER}({LETTER}|{CLETTER}|{DIGIT})*		{ yylval.sval = strdup(yytext); return WORD;}
 
-"'".+"'"			{ yylval.sval = strdup(yytext); return STRING; }
-"\"".+"\""			{ yylval.sval = strdup(yytext); return STRING; } 
+'[^'\t\n]*'			{ yylval.sval = strdup(yytext); return STRING; }
+\"[^"]*\"			{ yylval.sval = strdup(yytext); return STRING; } 
 
 [ \t\n]				{ /* Skip white spaces */ }
 "#".*				{ /* Ignore Comments */ } 
