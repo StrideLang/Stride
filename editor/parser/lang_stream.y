@@ -56,7 +56,7 @@ start:
 		platformDef		{ cout << "Platform Definition Resolved!" << endl; }
 	|	blockDef		{ cout << "Block Resolved!" << endl; }
 	|	streamDef		{}
-	|	ERROR			{ yyerror("Unrecognised Character: ", $1) }
+        |	ERROR			{ yyerror("Unrecognised Character: ", $1); }
 	;
 
 // ================================= 
