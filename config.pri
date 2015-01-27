@@ -9,8 +9,8 @@ unix {
 
 }
 win32 { # These need to be revised for windows.
-    LUA_INCLUDE_PATH += ../../lua-5.1.5/src ../../lua-5.1.5/etc
-    LUA_LIB_PATH = ../../lua-5.1.5/src
+    LUA_INCLUDE_PATH += C:\Tools\Lua\5.1\include
+    LUA_LIB_PATH = C:\Tools\Lua\5.1\lib
     LUA_LIB = lua51
 
     FLEX_BIN_PATH = C:\Tools\flex-2.5.4\bin
