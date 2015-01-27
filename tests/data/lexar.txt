@@ -1,28 +1,5 @@
-( ) { } [ ]
-, : ; >>
-none
-on
-off
-use
-2.
-.22
-2.22
-33.33
-2
-33
-a
-az
-'hello'
-"Hello"
-VarOne_22
-Var_one34
-listView
-# COMMENT
+# Load the 'PufferFish' platform
+use PufferFish version 0.0
 
-
-# Comment
-block Name_24 {
-	propOne: 2.4;
-	propTwo: none;
-	varList: [1,2,3,];
-}
+# Stream audio input 1 to audio output 1
+AudioIn_1 >> AudioOut_1;
