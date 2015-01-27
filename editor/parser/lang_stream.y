@@ -56,7 +56,7 @@ start:
 		platformDef		{ cout << "Platform Definition Resolved!" << endl; }
 	|	blockDef		{ cout << "Block Resolved!" << endl; }
 	|	streamDef		{}
-        |	ERROR			{ yyerror("Unrecognised Character: ", $1); }
+	|	ERROR			{ yyerror("Unrecognised Character: ", $1); }
 	;
 
 // ================================= 
@@ -73,7 +73,7 @@ platformDef:
 	
 blockDef: 	
 		WORD UVAR blockType 		{ cout << "Block: " << $1 << ", Labelled: " << $2 << endl; }
-	|	WORD bundleDef blockType		{ cout << "Block Bundle ..." << endl;  }
+	|	WORD bundleDef blockType	{ cout << "Block Bundle ..." << endl;  }
 	;
 
 blockType: 	
@@ -118,8 +118,9 @@ functionDef:
 // =================================
 	
 properties: 	
-		properties property				{}
-	|	properties SEMICOLON property	{ cout << "Ignoring semicolon!" << endl ; }
+		properties property SEMICOLON	{ cout << "Ignoring semicolon!" << endl ; }
+	|	properties property				{}
+	|	property SEMICOLON				{ cout << "Ignoring semicolon!" << endl ; }
 	|	property						{}
 	;
 	
@@ -223,7 +224,7 @@ valueListExp:
 	|	valueExp '-' valueListDef	{ cout << "Subtracting ... " << endl; }
 	|	valueExp '*' valueListDef	{ cout << "Multiplying ... " << endl; }
 	|	valueExp '/' valueListDef	{ cout << "Dividing ... " << endl; }
-	|	valueListDef				{ }
+	|	valueListDef				{}
 	;
 
 // ================================= 
