@@ -30,11 +30,19 @@ CLETTER	[A-Z]
 ";"					{ return SEMICOLON; }
 ">>"				{ return STREAM; }
 
+"&"					{ return AND; }
+"|"					{ return OR; }
+"!"					{ return NOT; }
+
 "use"				{ return USE; }
 "version"			{ return VERSION; }
 "none"				{ return NONE; }
 "on"				{ return ON; }
 "off"				{ return OFF; }
+
+"and"				{ return AND; }
+"or"				{ return OR; }
+"not"				{ return NOT; }
 
 {DIGIT}+\.{DIGIT}*	{ yylval.fval = atof(yytext); return FLOAT; }
 {DIGIT}*\.{DIGIT}+	{ yylval.fval = atof(yytext); return FLOAT; }

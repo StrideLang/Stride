@@ -31,15 +31,17 @@ int error = 0;
 %token 	<sval> 	STRING
 %token 	<sval> 	ERROR
 
-%token '{' '}'
+%token '[' ']' '{' '}'
 %token COMMA COLON SEMICOLON 
 %token USE VERSION NONE ON OFF
 
 %left STREAM
-%left '[' ']'
+%left OR
+%left AND
 %left '+' '-' 
 %left '*' '/'
 %left '(' ')'
+%nonassoc NOT
 %nonassoc UMINUS
 
 %%
@@ -116,8 +118,9 @@ functionDef:
 // =================================
 	
 properties: 	
-		properties property		{}
-	|	property				{}
+		properties property				{}
+	|	properties SEMICOLON property	{ cout << "Ignoring semicolon!" << endl ; }
+	|	property						{}
 	;
 	
 property: 	
@@ -125,15 +128,15 @@ property:
 	;
 	
 propertyType: 	
-		NONE termination			{ cout << "Keyword: none" << endl; }
-	|	ON termination				{ cout << "Keyword: on" << endl; }
-	|	OFF termination				{ cout << "Keyword: off" << endl; }
-	|	STRING termination			{ cout << "String: " << $1 << endl; }
-	|	valueExp termination		{ cout << "Value expression as property value!" << endl; }
-	|	blockType termination		{ cout << "Block as property value!" << endl; }
-	|	streamType termination		{ cout << "Stream as property value!" << endl; }
-	|	listDef termination			{}
-	|	valueListExp termination	{ cout << "List expression as property value!" << endl; }
+		NONE			{ cout << "Keyword: none" << endl; }
+	|	ON				{ cout << "Keyword: on" << endl; }
+	|	OFF				{ cout << "Keyword: off" << endl; }
+	|	STRING			{ cout << "String: " << $1 << endl; }
+	|	valueExp		{ cout << "Value expression as property value!" << endl; }
+	|	blockType		{ cout << "Block as property value!" << endl; }
+	|	streamType		{ cout << "Stream as property value!" << endl; }
+	|	listDef			{}
+	|	valueListExp	{ cout << "List expression as property value!" << endl; }
 	;
 
 // ================================= 
@@ -232,8 +235,11 @@ valueExp:
 	|	valueExp '-' valueExp 		{ cout << "Subtracting ... " << endl; }
 	|	valueExp '*' valueExp 		{ cout << "Multiplying ... " << endl; }
 	|	valueExp '/' valueExp 		{ cout << "Dividing ... " << endl; }
+	|	valueExp AND valueExp 		{ cout << "Logical AND ... " << endl; }
+	|	valueExp OR valueExp 		{ cout << "Logical OR ... " << endl; }
 	|	'(' valueExp ')' 			{ cout << "Enclosure ..." << endl; }
 	| 	'-' valueExp %prec UMINUS 	{ cout << "Unary minus ... " << endl; }
+	| 	NOT valueExp %prec NOT 		{ cout << "Logical NOT ... " << endl; }
 	| 	valueComp					{}
 	;
 
@@ -278,16 +284,7 @@ valueComp:
 	|	bundleDef		{ cout << "Resolving indexed array ..." << endl; }
 	|	functionDef		{ cout << "Resolving function definition ..." << endl; }
 	;
-
-// ================================= 
-//	TERMINATION
-// =================================
-
-termination:
-		/*epsilon*/		{}
-	|	SEMICOLON		{ cout << "Ignoring semicolon!" << endl ; }
-	;
-		
+	
 %%
 void yyerror(char *s, ...){
 	va_list ap;
