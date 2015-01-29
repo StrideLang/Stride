@@ -1,5 +1,0 @@
-# Load the 'PufferFish' platform
-use PufferFish version 0.0
-
-# Stream audio input 1 to audio output 1
-AudioIn_1 >> AudioOut_1;

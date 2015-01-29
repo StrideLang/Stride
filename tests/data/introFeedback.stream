@@ -1,0 +1,121 @@
+	mix (
+		signalList:	[ AudioIn_1, Feedback ]
+		biasList: 	[ 0.0, 0.0 ]
+		gainList: 	[ 0.50, -0.45 ]
+	) 
+	>> AudioOut_1
+	>> delay (samples: 32)
+	>> Feedback;
+	
+	#Automatically generate prefix code
+	signal Feedback {}
+	
+	# Feedforward Comb Filter Implementation
+	AudioIn_1
+	>> delay (samples: 32)
+	>> level(
+		bias:	0.0
+		gain: 	0.45
+	)
+	>> mix (
+		signalList:	AudioIn_1
+		biasList:	0.0
+		gainList:	0.5
+	)
+	>> AudioOut_1;
+	
+	# Allpass Filter Implementation 
+	AudioIn_1
+	>> mix (
+		signalList:	Feedback
+		biasList:	0.0
+		gainList:	-0.90
+	)
+	>> Feedforward
+	>> delay (samples: 32)
+	>> Feedback
+	>> mix (
+		signalList:	FeedForward
+		biasList: 	0.0
+		gainList:	0.90
+
+	)
+	>> level (
+		bias:	0.0
+		gain: 	0.5
+	)
+	>> AudioOut_1;
+	
+	constant A [2] {
+		value:	[ 0.0, 0.0 ]
+		meta:	'Pole coefficients.'
+	}
+	
+	constant B [3] {
+		value:	[ 1.0, 0.0, 0.0 ]
+		meta:	'Zero coefficients.'
+	}
+	
+	AudioIn_1
+	>> mix (
+		signalList:	[ Z[2], Z[3] ]
+		biasList:		[ 0.0, 0.0 ]
+		gainList:		[ -A[1], -A[2] ]
+	)
+	>> Z[1]
+	>> delay (samples: 1)
+	>> Z[2]
+	>> delay (samples: 1)
+	>> Z[3]
+	>> level (
+		bias:	0.0
+		gain: 	B[3]
+	)
+	>> mix (
+		signalList:	[ Z[2], Z[1] ]
+		biasList:		[ 0.0, 0.0 ]
+		gainList:		[ B[2], B[1] ]
+
+	)
+	>> AudioOut_1;
+	
+	#Automatically generate prefix code
+	signal Z [3] {}
+
+	processor Biquad {
+		channelsIn:	1
+		channelsOut:	1
+		aliasList:	[ 'poles', 'zeros' ]
+		propertyBlocks: [ constant P [2] {}, constant Z [3] {} ]
+		internalBlocks:	[ signal J [3] {} ]
+		processes:	ChannelIn
+				>> mix (
+					signalList:	[ J[2], J[3] ]
+					biasList:	[ 0.0, 0.0 ]
+					gainList:	[ -P[1], -P[2] ]
+				)
+				>> Z[1]
+				>> delay (samples: 1)
+				>> Z[2]
+				>> delay (samples: 1)
+				>> Z[3]
+				>> level (bias:	0.0; gain: Z[3])
+				>> mix (
+					signalList:	[ J[2], J[1] ]
+					biasList:	[ 0.0, 0.0 ]
+					gainList:	[ Z[2], Z[1] ]
+				)
+				>> ChannelOut
+	}
+
+	constant Poles [2] {
+		value:	[ 0.0, 0.0 ]
+		meta:	'Pole coefficients.'
+	}
+	
+	constant Zeros [3] {
+		value:	[ 1.0, 0.0, 0.0 ]
+		meta:	'Zero coefficients.'
+	}
+	
+	AudioIn_1 >> Biquad (poles: Poles; zeros: Zeros; bypass: off) >>  AudioOut_1;

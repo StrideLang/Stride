@@ -1,0 +1,231 @@
+	use PufferFish version 0.0
+
+	# Declare an oscillator
+	# Connect its output to audio output 1 using a stream operator
+	oscillator (
+		type: 		'sine'
+		amplitude: 	1.0
+		frequency: 	440.0
+		phase: 		0.0 
+	) 
+	>> AudioOut_1;
+	
+	use PufferFish version 0.0
+	
+	constant Frequency {
+		value:	220.0
+		meta:	none
+	}
+
+	oscillator (
+		type: 		'sine'
+		amplitude: 	0.5
+		frequency: 	Frequency
+		phase: 		0.0 
+	)
+	+ oscillator (
+		type: 		'sine'
+		amplitude: 	0.4
+		frequency: 	Frequency * 1.5
+		phase: 		0.0 
+	)
+	>> [ AudioOut_1, AudioOut_2 ];
+
+	use PufferFish version 0.0
+	
+	constant Frequency {
+		input:	220.0
+		meta:	none
+	}
+
+	oscillator (
+		type: 		[ 'sine', 'sine' ]
+		amplitude: 	[ 0.5, 0.4 ]
+		frequency: 	[ Frequency, Frequency * 1.5 ]
+		phase: 		[ 0.0, 0.0 ] 
+	)
+	>> [ AudioOut_1, AudioOut_2 ];
+	
+	use PufferFish version 0.0
+	
+	constant Frequency {
+		input:	220.0
+		meta:	none
+	}
+	
+	signal SineWaveUnision {
+		rate:	AudioRate
+		meta:	'Sine wave oscillator with base frequency.'
+	}
+	
+	signal SineWaveFifth {
+		rate:	AudioRate
+		meta:	'Sine wave oscillator with relative frequency.'
+	}
+	
+	oscillator (
+		type: 		'sine'
+		amplitude: 	1.0
+		frequency: 	Frequency
+		phase: 		0.0 
+	)	
+	>> SineWaveUnision;
+	
+	oscillator (
+		type: 		'sine'
+		amplitude: 	1.0
+		frequency: 	Frequency * 1.5
+		phase: 		0.0 
+	)
+	>> SineWaveFifth;
+	
+	mix ( 
+		signalList:	[ SineWaveUnision, SineWaveFifth ]
+		biasList: 	0.0
+		gainList: 	[ 0.5, 0.4 ]
+	) 
+	>> [ AudioOut_1, AudioOut_2 ];
+	
+	constant Range {
+		value: 	0.75
+		meta:	'Panning limits.'
+	}
+
+	control PanPosition {
+		mapping:	{
+			mode:		'linear'
+			default:	0.0
+			minimum:	-Range
+			maximum:	Range
+			increment:	0.01
+			rounding:	'truncate'
+			meta:		none
+		}
+		rate:	1024
+		meta:	'Pan position control'
+	}
+	
+	oscillator (
+		type: 		'triangle'
+		amplitude: 	1.0
+		frequency: 	2.0
+		phase: 		0.0 
+	)
+	>> PanPosition;
+	
+	mix ( 
+		signalList:	[ SineWaveUnision, SineWaveFifth ]
+		biasList: 	0.0
+		gainList: 	[ 0.5, 0.4 ]
+	)
+	>> pan (
+		position:	PanPosition
+		bypass:		off	
+	)
+	>> [ AudioOut_1, AudioOut_2 ];	
+
+	use PufferFish version 0.0
+	
+	signal ThreeSineWaves {
+		rate:	AudioRate
+		meta:	'Three sine wave oscillators.'
+	}
+	
+	oscillator (
+		type: 		'sine'
+		amplitude: 	[ 1.0, 0.66, 0.33 ]
+		frequency: 	[ 220.0, 440.0, 880.0 ]
+		phase: 		0.0 
+	)
+	>> ThreeSineWaves;
+	
+	# The amplitude of 'ThreeSineWaves' is 2.0
+	# The amplitude should be limited to 1.0 to avoid clipping at the DAC.
+	ThreeSineWaves * 0.5 >> AudioOut_1;
+	
+use PufferFish version 0.0
+	
+	# Declare an osc block
+	osc OSC {
+		hostIP:		'192.168.1.1'
+		incomingPort:	8000
+		outgoingPort:	9000
+		meta:			none
+	}
+	
+	# Declare a map for the fundamental frequency
+	map FrequencyMap {
+		mode:		'clip'
+		default:	110.0
+		minimum:	22.5
+		maximum:	7040.0
+		increment:	0.01
+		rounding:	'floor'
+		meta:		'Limit range of incoming values for the frequency over osc.'
+	}
+	
+	# Declare a control block
+	# The rate is set to none since OSC messages are asynchronous
+	control Fundamental {
+		mapping:	FrequencyMap
+		rate:		none
+		meta:		'Fundamental frequency change over OSC.'  
+	}
+	
+	# Connect the 'OSC' block to the 'Fundamental' control block
+	OSC >> Fundamental;
+	
+	signal ThreeSineWave {
+		rate:	AudioRate
+		meta:	'Three sine wave oscillators with controllable frequencies.'
+	}
+
+	oscillator (
+		type: 		'sine'
+		amplitude: 	[ 1.0, 0.66, 0.33 ]
+		frequency: 	[ 1.0 , 2.0, 3.0 ] * Fundamental
+		phase: 		0.0 
+	) 
+	* 0.5
+	>> ThreeSineWave;
+
+	ThreeSineWave >> AudioOut_1;
+	
+constant Fundamental {
+		value: 55.0
+		meta: 'Fundamental frequency.'
+	}
+
+	generator ThreeHarmonicPartials {
+		aliasList:	[ 'fundamental', 'level' ]
+		propertyBlocks:	[ 
+					constant FundamentalFrequency { 
+						value:	440.0
+						meta:	'Default frequency.'
+					}, 
+					constant Level { 
+						value:	0.5
+						meta:	'Default level.' 
+					}
+				]
+		internalBlocks:	none
+		process:	oscillator (
+					type: 		'sine'
+					amplitude: 	[ 1.0, 0.66, 0.33 ]
+					frequency: 	[ 1.0 , 2.0, 3.0 ] * FundamentalFrequency  
+					phase: 		0.0 
+				) 
+				* Level
+		meta:		'Three harmonic partials with fundamental frequency and level control.'	
+	}
+	
+	signal HarmonicPartialsPlusFifths {
+		rate:	AudioRate
+		meta:	'Sum of three harmonic partials and their fifths'
+	}
+	
+	ThreeHarmonicPartials (
+		fundamental:	[ 1.0, 1.5 ] * Fundamental
+		level:		[ 0.45, 0.35 ]
+	)
+	>> HarmonicPartialsPlusFifths;

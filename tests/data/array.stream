@@ -1,0 +1,38 @@
+#========
+# ARRAYS 
+#========
+
+# Value shouSld resolve to an INTEGER
+# User variable should be of type 'constant'
+
+constant CONST {
+	value: 16
+	meta: 	'Array Size.'
+}
+
+constant SIZE [4] {
+	value: [ 16, 32, 64, 128 ]
+	meta: 	'Array Sizes.'
+}
+
+# Decelerations
+constant Array [1] {}
+constant Array [1+1] {}
+constant Array [ CONST + 1] {}
+constant Array [ CONST * 2] {}
+constant Array [ ( CONST * 2 ) + 1 ] {}
+constant Array [ CONST / 4 ] {}
+
+constant Array [ SIZE [1] + SIZE [1 * 2] ] {}
+constant Array [ SIZE [1] / SIZE [1 * 2] ] {}
+
+# Properties
+
+constant ONE [SIZE [4]] {}
+constant TWO [SIZE [3]] {}
+constant THREE [SIZE [2]] {}
+constant FOUR [SIZE [1]] {}
+
+constant TEST {
+	value: ONE [ TWO [ SIZE[1] / 2] + THREE [ 16 + 32 ] ] + FOUR [64] * 2
+}

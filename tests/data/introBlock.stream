@@ -1,0 +1,84 @@
+	# Load the 'PufferFish' platform
+	use PufferFish version 0.0
+
+	# Stream audio input 1 to audio output 1
+	AudioIn_1 >> AudioOut_1;
+	
+	# Stream audio input 1 to audio output 1
+	AudioIn_1 >> AudioOut_1;
+	# Stream audio input 1 to audio output 2
+	AudioIn_1 >> AudioOut_2;
+	
+	# Stream audio input 1 to audio output 1 and audio output 2
+	AudioIn_1 >> [ AudioOut_1, AudioOut_2 ];
+	
+	# Stream audio input 1 to audio output 1
+	# Stream audio input 2 to audio output 2
+	[ AudioIn_1, AudioIn_2 ] >> [ AudioOut_1, AudioOut_2 ];
+
+	# Stream audio input 1 to audio output 1
+	AudioIn_1 >> AudioOut_1;
+	# Stream audio input 2 to audio output 2
+	AudioIn_2 >> AudioOut_2;
+	
+		# Declare a signal block called 'GuitarIn'
+	signal GuitarIn {
+		rate:	AudioRate
+		meta:	'Guitar input.'
+	}
+	
+	# Declare a signal block bundle called 'MainOutput'
+	signal MainOutput [2] {
+		rate:	AudioRate
+		meta:	'Main stereo output.'
+	}	
+	
+	# Stream 'AudioIn_1' to 'GuitarIn'
+	AudioIn_1 >> GuitarIn;
+	
+	# Stream 'MainOutput' to 'AudioOut_1' and 'AudioOut_2'
+	MainOutput >> [ AudioOut_1, AudioOut_2 ];
+	
+	# Stream 'GuitarIn' to 'MainOutput'
+	GuitarIn >> MainOutput;
+	
+	# Declare a signal block called 'GuitarIn'
+	signal GuitarIn {
+		rate:	AudioRate
+		meta:	'Guitar input'
+	}
+	
+	# Stream audio input 1 to 'GuitarIn'
+	AudioIn_1 >> GuitarIn;
+	
+	signal Microphone {}
+
+	signal MainOutput [2] {}
+	
+		signal GuitarIn {
+		rate:	AudioRate
+		meta:	none
+	}
+	
+	signal MainOutput [2] {
+		rate:	AudioRate
+		meta:	none
+	}
+	
+	# Sample 1
+	signal GuitarIn {
+		rate:	AudioRate
+		meta:	'Guitar input.'
+	}
+	
+	# Sample 2
+	signal GuitarIn {rate: AudioRate meta: 'Guitar input.'}
+	
+	# Sample 3
+	signal GuitarIn {
+		rate:	AudioRate
+		meta:	'Guitar input.'
+	};
+	
+	# Sample 4
+	signal GuitarIn { rate:	AudioRate; meta: 'Guitar input.' };
