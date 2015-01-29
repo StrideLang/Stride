@@ -313,7 +313,8 @@ int parse(const char *filename){
 	yyparse();
 	
 	if (error > 0){
-		cout << endl << "Number of Errors: " << error << endl; 
+                cout << endl << "Number of Errors: " << error << endl;
+                return -1;
 	}
 	
 	cout << "Completed Analysing: " << fileName << endl;
