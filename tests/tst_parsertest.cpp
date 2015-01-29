@@ -28,7 +28,7 @@ void ParserTest::testCase1()
     files << "simple.stream" << "array.stream" << "list.stream"
           << "introBlock.stream"
           << "introConverter.stream" << "introFeedback.stream"
-          << "introGenerator.stream";
+          << "introGenerator.stream" << "introProcessor.stream";
     foreach (QString file, files) {
         tree = parse(QString(path + file).toStdString().c_str());
         QVERIFY2(tree != NULL, "Failure");

@@ -16,20 +16,20 @@
 		invert:		off
 	) 
 	>> Gate
-	>> invert()
+	>> invertSwitch()
 	>> InvertedGate;
 	
 	
-	AudioIn_1
+	AudioIn[1]
 	>> gainDB (
 			levelDB:        -96.0
 			bypass:         Gate
 	)
-	>> AudioOut_1;
+	>> AudioOut[1];
 	
-	AudioIn_1
+	AudioIn[1]
 	>> gainDB (
 			levelDB:        -96.0
 			bypass:         InvertedGate
 	)
-	>> AudioOut_2;
+	>> AudioOut[2];

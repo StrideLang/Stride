@@ -8,7 +8,7 @@
 		frequency: 	440.0
 		phase: 		0.0 
 	) 
-	>> AudioOut_1;
+	>> AudioOut[1];
 	
 	use PufferFish version 0.0
 	
@@ -29,7 +29,7 @@
 		frequency: 	Frequency * 1.5
 		phase: 		0.0 
 	)
-	>> [ AudioOut_1, AudioOut_2 ];
+	>> [ AudioOut[1], AudioOut[2] ];
 
 	use PufferFish version 0.0
 	
@@ -44,7 +44,7 @@
 		frequency: 	[ Frequency, Frequency * 1.5 ]
 		phase: 		[ 0.0, 0.0 ] 
 	)
-	>> [ AudioOut_1, AudioOut_2 ];
+	>> [ AudioOut[1], AudioOut[2] ];
 	
 	use PufferFish version 0.0
 	
@@ -84,7 +84,7 @@
 		biasList: 	0.0
 		gainList: 	[ 0.5, 0.4 ]
 	) 
-	>> [ AudioOut_1, AudioOut_2 ];
+	>> [ AudioOut[1], AudioOut[2] ];
 	
 	constant Range {
 		value: 	0.75
@@ -122,7 +122,7 @@
 		position:	PanPosition
 		bypass:		off	
 	)
-	>> [ AudioOut_1, AudioOut_2 ];	
+	>> [ AudioOut[1], AudioOut[2] ];	
 
 	use PufferFish version 0.0
 	
@@ -141,7 +141,7 @@
 	
 	# The amplitude of 'ThreeSineWaves' is 2.0
 	# The amplitude should be limited to 1.0 to avoid clipping at the DAC.
-	ThreeSineWaves * 0.5 >> AudioOut_1;
+	ThreeSineWaves * 0.5 >> AudioOut[1];
 	
 use PufferFish version 0.0
 	
@@ -189,9 +189,9 @@ use PufferFish version 0.0
 	* 0.5
 	>> ThreeSineWave;
 
-	ThreeSineWave >> AudioOut_1;
+	ThreeSineWave >> AudioOut[1];
 	
-constant Fundamental {
+	constant Fundamental {
 		value: 55.0
 		meta: 'Fundamental frequency.'
 	}
@@ -229,3 +229,242 @@ constant Fundamental {
 		level:		[ 0.45, 0.35 ]
 	)
 	>> HarmonicPartialsPlusFifths;
+	
+	sequence Frequencies {
+		valueList:	[ 220.0, 261.63, 329.63, 440.0 ]
+		mode:		'down'
+		repeat:		on
+		reset:		none
+		meta:		'Minor A chord notes.'
+	}
+	
+	signal Pulse {
+		rate:	512
+		meta:	'Signal used for trigger generation.'
+	}
+	
+	pulse (
+		dutyCycle: 	0.25
+		amplitude: 	1.0
+		frequency: 	3.0
+		phase: 		0.0 
+	)
+	>> Pulse
+	>> signal2switch ( 
+		threshold:	0.5
+		edge:		'rising'
+		invert:		off
+	)
+	>> Frequencies;
+	
+	oscillator (
+		type: 		'saw'
+		amplitude: 	1.0
+		frequency: 	Frequencies
+		phase: 		0.0 
+	)	
+	>> AudioOut[1];
+	
+
+	sequence Frequencies {
+		valueList:	[ 220.0, 261.63, 329.63, 440.0 ]
+		mode:		'ping-pong'
+		repeat:		on
+		reset:		none
+		meta:		'Minor A chord notes.'
+	}
+
+	DigitalIn[1] >> Frequencies;
+	
+	oscillator (
+		type: 		'saw'
+		amplitude: 	1.0
+		frequency: 	Frequencies
+		phase: 		0.0 
+	)	
+	>> AudioOut[1];
+
+
+	sequence Frequencies {
+		valueList:	[ 220.0, 261.63, 329.63, 440.0 ]
+		mode:		'ping-pong'
+		repeat:		on
+		reset:		none
+		meta:		'Minor A chord notes.'
+	}
+
+	DigitalIn[1] >> onTransition () >> Frequencies;
+	
+	oscillator (
+		type: 		'saw'
+		amplitude: 	1.0
+		frequency: 	Frequencies
+		phase: 		0.0 
+	)	
+	>> AudioOut[1];
+
+
+	sequence Frequencies {
+		valueList:	[ 220.0, 261.63, 329.63, 440.0 ]
+		mode:		'random'
+		repeat:		on
+		reset:		none
+		meta:		'Minor A chord notes.'
+	}		
+	
+	AnalogIn[1] 
+	>> control2switch ( 
+		threshold:	5.0
+		edge:		'both'
+		invert:		off 
+	) 
+	>> Frequencies;
+	
+	oscillator (
+		type: 		'square'
+		amplitude: 	1.0
+		frequency: 	Frequencies
+		phase: 		0.0 
+	)	
+	>> AudioOut[1];
+	
+
+	constant OscType [5] {
+		value:	[ 'Sine' , 'Saw', 'Sine', 'Saw', 'Triangle' ]
+		meta: 	none
+	}
+
+	control OscTypeSelect {
+		mapping:	{
+			type: 		'linear'
+			default:	3
+			minimum:	1
+			maximum:	6
+			increment:	1
+			rounding:	'floor'
+			meta:		none
+		}
+		rate:	2048
+		meta:	none
+	}
+		
+	AnalogIn[1] >> OscTypeSelect;
+	
+	oscillator (
+		type: 		OscType[OscTypeSelect]
+		amplitude: 	1.0
+		frequency: 	440.0
+		phase: 		0.0 
+	)
+	>> AudioOut[1];
+
+
+	constant Size {
+		value:	5
+		meta:	'Size of OscType.'
+	}
+
+	constant OscType [Size] {
+		value:	[ 'Sine' , 'Saw', 'Sine', 'Saw', 'Triangle' ]
+		meta: 	none
+	}
+	
+	control Index {
+		mapping:	{
+			type: 'linear'
+			default: 3
+			minimum: 1
+			maximum: Size + 1
+			increment: 1
+			rounding: 'floor'
+			meta: 'Map values to integers in the rage of 1 to Size.'
+		}
+		rate:	2048
+		meta:	'Translate analog input 1 to an integer through a linear mapping.'
+	}
+	
+	control OscTypeSelect {
+		mapping:	{
+			type:		'clip'
+			default: 	3
+			minimum:	1
+			maximum:	5
+			increment:	1
+			rounding:	'truncate' 
+			meta: none
+		}
+		rate:	none
+		meta:	'Asynchronous control to index OscType' 
+	}
+	
+	AnalogIn[1] >> Index >> onChange() >> OscTypeSelect;
+	
+	oscillator (
+		type: 		OscType[OscTypeSelect]
+		amplitude: 	1.0
+		frequency: 	440.0
+		phase: 		0.0 
+	)
+	>> AudioOut[1];
+	
+
+	signal MyOsc {
+		rate:	AudioRate
+		meta:	none
+	}
+
+	constant Size {
+		value:	256
+		meta:	none
+	}
+
+	constant Values [Size] {
+		value:  [ 0.0, 0.49, 0.99, 0.49, 0.0 ]
+		meta: 	none
+	}
+
+	switch AsynchGate {
+		default: 	off
+		meta:		none
+	}
+
+	sequence Frequencies {
+		valueList:      [ 220.0, 261.63, 329.63, 440.0 ]
+		mode:           'up'
+		repeat:			on
+		reset:          none
+		meta:           'Minor A chord notes.'
+	}
+
+	control Index {
+		mapping:        {
+			type:		'linear'
+			default:	128
+			minimum:	1
+			maximum:	Size + 1 
+			increment:	1
+			rounding:	'floor'
+			meta:		none
+		}
+		rate:		256
+		meta:		none
+	}
+	
+	AnalogIn[1] 
+	>> Index 
+	>> onChange() 
+	>> control2switch ( 
+		threshold:	0.1
+		edge:		'rising'
+		invert:		off
+	)
+	>> AsynchGate 
+	>> Frequencies;
+
+	oscillator (
+		type:		'Sine'
+		amplitude:	Values[Index]
+		frequency:	Frequencies
+		phase:		0.0
+	)
+	>> MyOsc;

@@ -2,24 +2,24 @@
 	use PufferFish version 0.0
 
 	# Stream audio input 1 to audio output 1
-	AudioIn_1 >> AudioOut_1;
+	AudioIn[1] >> AudioOut[1];
 	
 	# Stream audio input 1 to audio output 1
-	AudioIn_1 >> AudioOut_1;
+	AudioIn[1] >> AudioOut[1];
 	# Stream audio input 1 to audio output 2
-	AudioIn_1 >> AudioOut_2;
+	AudioIn[1] >> AudioOut[2];
 	
 	# Stream audio input 1 to audio output 1 and audio output 2
-	AudioIn_1 >> [ AudioOut_1, AudioOut_2 ];
+	AudioIn[1] >> [ AudioOut[1], AudioOut[2] ];
 	
 	# Stream audio input 1 to audio output 1
 	# Stream audio input 2 to audio output 2
-	[ AudioIn_1, AudioIn_2 ] >> [ AudioOut_1, AudioOut_2 ];
+	[ AudioIn[1], AudioIn[2] ] >> [ AudioOut[1], AudioOut[2] ];
 
 	# Stream audio input 1 to audio output 1
-	AudioIn_1 >> AudioOut_1;
+	AudioIn[1] >> AudioOut[1];
 	# Stream audio input 2 to audio output 2
-	AudioIn_2 >> AudioOut_2;
+	AudioIn[2] >> AudioOut[2];
 	
 		# Declare a signal block called 'GuitarIn'
 	signal GuitarIn {
@@ -33,11 +33,11 @@
 		meta:	'Main stereo output.'
 	}	
 	
-	# Stream 'AudioIn_1' to 'GuitarIn'
-	AudioIn_1 >> GuitarIn;
+	# Stream 'AudioIn[1]' to 'GuitarIn'
+	AudioIn[1] >> GuitarIn;
 	
-	# Stream 'MainOutput' to 'AudioOut_1' and 'AudioOut_2'
-	MainOutput >> [ AudioOut_1, AudioOut_2 ];
+	# Stream 'MainOutput' to 'AudioOut[1]' and 'AudioOut[2]'
+	MainOutput >> [ AudioOut[1], AudioOut[2] ];
 	
 	# Stream 'GuitarIn' to 'MainOutput'
 	GuitarIn >> MainOutput;
@@ -49,7 +49,7 @@
 	}
 	
 	# Stream audio input 1 to 'GuitarIn'
-	AudioIn_1 >> GuitarIn;
+	AudioIn[1] >> GuitarIn;
 	
 	signal Microphone {}
 

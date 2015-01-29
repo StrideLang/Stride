@@ -1,0 +1,52 @@
+	use PufferFish version 0.0
+	 
+	signal GuitarIn {
+		rate:	AudioRate
+		meta:	'Guitar input.'
+	}
+	
+	signal MainOutput [2] {
+		rate:	AudioRate
+		meta:	'Main stereo output.'
+	}
+	
+	AudioIn[1] >> GuitarIn;
+	MainOutput >> [AudioOut[1], AudioOut[2]];
+	
+	# Add level control to the output signal
+	GuitarIn >> gainDB(levelDB: 3.0; bypass: off) >> MainOutput;
+	
+		#Add variables to control the behaviour of gainDB  
+	GuitarIn 
+	>> gainDB (
+		levelDB:	3.0
+		bypass:		DigitalIn_1
+	) 
+	>> MainOutput;
+	
+		#Declare a control block called 'GainLevelDB'
+
+	control GainLevelDB {
+		mapping:	{
+					mode:		'linear'
+					default:	-96.0
+					minimum:	-96.0
+					maximum:	6.0
+					increment:	0.5
+					rounding:	'truncate'
+					meta:		'Linear mapping of analog input to -96dB to 6dB' 
+				}
+		rate:		ControlRate
+		meta:		'Gain level control with potentiometer at analog input 1.'
+	}
+	
+	# Connect 'AnalogInput_1' to input of 'GainLevelDB'
+	AnalogIn[1] >> GainLevelDB;
+	
+	#Add variables to control the behaviour of gainDB  
+	GuitarIn 
+	>> gainDB (
+		levelDB:	GainLevelDB
+		bypass:		DigitalIn_1
+	) 
+	>> MainOutput;
