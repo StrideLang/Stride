@@ -1,7 +1,9 @@
 #include <QString>
 #include <QtTest>
 
-extern int parse(const char* fileName);
+#include "ast.h"
+
+extern AST *parse(const char* fileName);
 
 class ParserTest : public QObject
 {
@@ -20,7 +22,7 @@ ParserTest::ParserTest()
 
 void ParserTest::testCase1()
 {
-    int error;
+    AST *tree;
     QString path = "../../StreamStack/tests/data/";
     QStringList files;
     files << "simple.stream" << "array.stream" << "list.stream"
@@ -28,8 +30,8 @@ void ParserTest::testCase1()
           << "introConverter.stream" << "introFeedback.stream"
           << "introGenerator.stream";
     foreach (QString file, files) {
-        error = parse(QString(path + file).toStdString().c_str());
-        QVERIFY2(error == 0, "Failure");
+        tree = parse(QString(path + file).toStdString().c_str());
+        QVERIFY2(tree != NULL, "Failure");
     }
 }
 

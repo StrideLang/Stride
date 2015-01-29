@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#include "ast.h"
+#include "platformnode.h"
+
 using namespace std;
 
 extern "C" int yylex();
@@ -11,7 +14,7 @@ extern "C" FILE *yyin;
 extern int yylineno;
 void yyerror(char *s, ...);
 
-int parse(const char *filename);
+AST * parse(const char *filename);
 
 int error = 0;
 
@@ -295,15 +298,16 @@ void yyerror(char *s, ...){
 	error++;
 }
 
-int parse(const char *filename){
+AST *parse(const char *filename){
 	FILE * file;
+        AST *ast = NULL;
         char const * fileName = filename;
 
 	file = fopen(fileName, "r");
 
 	if (!file){
 		cout << "Can't open " << fileName << endl;;
-		return -1;
+                return NULL;
 	}
 	
 	cout << "Analysing: " << fileName << endl;
@@ -314,10 +318,11 @@ int parse(const char *filename){
 	
 	if (error > 0){
                 cout << endl << "Number of Errors: " << error << endl;
-                return -1;
+                return NULL;
 	}
+        ast = new AST;
 	
 	cout << "Completed Analysing: " << fileName << endl;
-	return 0;
+        return ast;
 }
 
