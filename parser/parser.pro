@@ -17,8 +17,8 @@ HEADERS += ast.h \
 BISONSOURCES = lang_stream.y
 FLEXSOURCES = lang_stream.l
 
-include(parser.pri)
 include(../config.pri)
+include(parser.pri)
 
 win32 {
 LIBS += -L${FLEX_LIB_PATH}
