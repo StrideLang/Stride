@@ -23,7 +23,7 @@ void ParserTest::testCase1()
     int error;
     QString path = "../../StreamStack/tests/data/";
     QStringList files;
-    files << "simple.stream" << "array.stream" << " list.stream"
+    files << "simple.stream" << "array.stream" << "list.stream"
           << "introBlock.stream"
           << "introConverter.stream" << "introFeedback.stream"
           << "introGenerator.stream";
