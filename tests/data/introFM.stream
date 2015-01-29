@@ -1,0 +1,51 @@
+	use PufferFish version 0.0
+
+	AudioIn[1] * AudioIn[2] >> AudioOut[1];
+
+	use PufferFish version 0.0
+	
+	(AudioIn[1] * 0.5 + 1) * AudioIn[2] >> AudioOut[1];
+	
+	use PufferFish version 0.0
+
+	map ModTranform {
+		mode:		'linear'
+		default: 	-94.0
+		minimum:	-94.0
+		maximum:	3.0
+		increment:	1.0
+		rounding:	'floor'
+		meta:		'Transform audio from +/- 1.0 to 3.0/-94.0'
+	}
+	
+	control Modulator {
+		mapping:	ModTranform
+		rate:		AudioRate
+		meta:		none 
+	}
+
+	AudioIn[1] >> Modulator;
+	
+	AudioIn[2]
+	>> gainDB (
+		levelDB:	Modulator
+		bypass:		off
+	) 
+	>> AudioOut[1];
+	
+	# Change the rate to control rate
+	control Modulator {
+		mapping:	ModTranform
+		rate:		ControlRate
+		meta:		none
+	}
+
+	# Stream analog in 1 to the modulation control
+	AnalogIn[1] >> Modulator;
+	
+	AudioIn[1]
+	>> gainDB (
+		levelDB:	Modulator
+		bypass:		off
+	) 
+	>> AudioOut[1];

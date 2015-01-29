@@ -1,0 +1,82 @@
+	use PufferFish version 0.0
+	
+	# Declare 'GuitarIn' signal block
+	signal GuitarIn {
+		rate:	AudioRate
+		meta:	'Guitar input.'
+	}
+	
+	# Declare 'MainOutput' signal block
+	signal MainOutput [2] {
+		rate:	AudioRate
+		meta:	'Main stereo output.'
+	}
+	
+	# Declare 'Serial' serial block to enable communication over RS-232
+	serial Serial {
+		port:		'COM1'
+		baud:		115200
+		parity:		'none' 
+		dataBits:	8 
+		stopBits:	1
+		meta:		none
+	}
+	
+	switch LowShelfEnable {
+		default:	off
+		meta:		'Low shelf bypass over serial communication.'
+	}
+	
+	map LowShelfFrequencyMap {
+		mode:			'clip'
+		default:		100 
+		minimum:		80 
+		maximum:		2000 
+		increment:	5
+		rounding:		'truncate'
+		meta: 			'Clipping for low shelf cut-off frequency.' 
+	}	
+	
+	control LowShelfCutoff {
+		mapping: 	LowShelfFrequencyMap
+		rate:		none
+		meta:		'Low shelf cut-off frequency.'
+	}
+	
+	map LowShelfGainMap {
+		mode:			'clip'
+		default:		0.0 
+		minimum:		-20.0
+		maximum:		20.0
+		increment:		0.1
+		rounding:		'truncate'
+		meta: 			'Clipping for low shelf gain.' 
+	}
+
+	control LowShelfGain {
+		mapping: 	LowShelfGainMap
+		rate:		none
+		meta:		'Low shelf gain.'
+	}
+	
+	AudioIn[1] >> GuitarIn;
+
+	MainOutput >> [AudioOut[1], AudioOut[2]];
+	
+	# Alternate syntax
+	# Serial >> [ LowShelfEnable, LowShelfCutoff, LowShelfGain ];
+	
+	Serial >> LowShelfEnable;
+	Serial >> LowShelfCutoff;
+	Serial >> LowShelfGain;
+	
+	# Process the 
+	GuitarIn 
+	>> lowShelf (
+		cutOff:		LowShelfCutoff
+		levelDB:	LowShelfGain
+		bypass:		LowShelfEnable
+	)
+	>> MainOutput;
+
+	
