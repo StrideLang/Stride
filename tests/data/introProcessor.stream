@@ -20,7 +20,7 @@
 	GuitarIn 
 	>> gainDB (
 		levelDB:	3.0
-		bypass:		DigitalIn_1
+		bypass:		DigitalIn[1]
 	) 
 	>> MainOutput;
 	
@@ -47,6 +47,6 @@
 	GuitarIn 
 	>> gainDB (
 		levelDB:	GainLevelDB
-		bypass:		DigitalIn_1
+		bypass:		DigitalIn[1]
 	) 
 	>> MainOutput;
