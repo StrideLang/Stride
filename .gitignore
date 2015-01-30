@@ -1,1 +1,9 @@
-templates/simple/.metadata
+parser/lang_stream.lexer.cpp
+parser/lang_stream.parser.cpp
+parser/lang_stream.parser.hpp
+parser/lang_stream.parser.output
+
+StreamStack.pro.user
+
+editor/templates/simple/lua_scripts/liblpeg.a
+editor/templates/simple/lua_scripts/lpeg.dll
