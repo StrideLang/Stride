@@ -17,22 +17,21 @@ public:
     ParserTest();
 
 private:
-    QString path;
 
 private Q_SLOTS:
-    void testTreeBuilding();
+    void testTreeBuildBasic();
     void testParser();
 };
 
 ParserTest::ParserTest()
 {
-    path = "../../StreamStack/tests/data/";
+
 }
 
-void ParserTest::testTreeBuilding()
+void ParserTest::testTreeBuildBasic()
 {
     AST *tree;
-    tree = parse(QString(path + "platform.stream").toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/platform.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
     vector<AST *> nodes = tree->getChildren();
     QVERIFY(nodes.size() == 1);
@@ -41,7 +40,7 @@ void ParserTest::testTreeBuilding()
     QVERIFY(node->platformName() == "PufferFish");
     QVERIFY(node->version() == 1.1f);
 
-    tree = parse(QString(path + "simple.stream").toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/simple.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
     nodes = tree->getChildren();
     QVERIFY(nodes.size() == 2);
@@ -59,20 +58,20 @@ void ParserTest::testTreeBuilding()
     QVERIFY(bundle->name() == "AudioOut");
     leafnode = bundle->index();
     QVERIFY(leafnode->getNodeType() == AST::Int);
-    QVERIFY(static_cast<ValueNode *>(leafnode)->getIntValue() == 1);
+    QVERIFY(static_cast<ValueNode *>(leafnode)->getIntValue() == 2);
 }
 
 void ParserTest::testParser()
 {
     AST *tree;
     QStringList files;
-    files << "platform.stream" << "simple.stream" << "array.stream" << "list.stream"
-          << "introBlock.stream"
-          << "introConverter.stream" << "introFeedback.stream"
-          << "introGenerator.stream" << "introProcessor.stream"
-          << "introFM.stream" << "introRemote.stream";
+    files << "data/platform.stream" << "data/simple.stream" << "data/array.stream" << "data/list.stream"
+          << "data/introBlock.stream"
+          << "data/introConverter.stream" << "data/introFeedback.stream"
+          << "data/introGenerator.stream" << "data/introProcessor.stream"
+          << "data/introFM.stream" << "data/introRemote.stream";
     foreach (QString file, files) {
-        tree = parse(QString(path + file).toStdString().c_str());
+        tree = parse(QString(QFINDTESTDATA(file)).toStdString().c_str());
         QVERIFY(tree != NULL);
     }
 }

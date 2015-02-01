@@ -2,4 +2,4 @@
 use PufferFish version 1.1
 
 # Stream audio input 1 to audio output 1
-AudioIn[1] >> AudioOut[1];
+AudioIn[1] >> AudioOut[2];
