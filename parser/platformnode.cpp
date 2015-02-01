@@ -1,15 +1,15 @@
+#include <sstream>
+#include <iostream>
+#include <vector>
+#include <cstdlib>
+
 #include "platformnode.h"
 
-PlatformNode::PlatformNode()
+PlatformNode::PlatformNode(string platformName, float version) :
+    AST(AST::Platform)
 {
-
-}
-
-PlatformNode::PlatformNode(int majorVersion, int minorVersion, string platformName)
-{
-    m_majorVersion = majorVersion;
-    m_minorVersion = minorVersion;
     m_platformName = platformName;
+    m_version = version;
 }
 
 PlatformNode::~PlatformNode()
@@ -17,24 +17,14 @@ PlatformNode::~PlatformNode()
 
 }
 
-int PlatformNode::majorVersion() const
+float PlatformNode::version() const
 {
-    return m_majorVersion;
+    return m_version;
 }
 
-void PlatformNode::setMajorVersion(int majorVersion)
+void PlatformNode::setVersion(float version)
 {
-    m_majorVersion = majorVersion;
-}
-
-int PlatformNode::minorVersion() const
-{
-    return m_minorVersion;
-}
-
-void PlatformNode::setMinorVersion(int minorVersion)
-{
-    m_minorVersion = minorVersion;
+    m_version = version;
 }
 
 string PlatformNode::platformName() const
@@ -46,3 +36,4 @@ void PlatformNode::setPlatformName(const string &platformName)
 {
     m_platformName = platformName;
 }
+

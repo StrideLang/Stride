@@ -2,7 +2,7 @@
 
 AST::AST()
 {
-    m_token = NONE;
+    m_token = AST::None;
 }
 
 AST::AST(Token token)
@@ -10,17 +10,21 @@ AST::AST(Token token)
     m_token = token;
 }
 
-AST::AST(int tokenType)
-{
-    m_token = (Token) tokenType;
-}
-
 AST::~AST()
 {
 
 }
 
-void AST::addChild(AST t) {
+void AST::addChild(AST *t) {
     m_children.push_back(t);
+}
+
+void AST::pushParent(AST *p)
+{
+    for(int i = 0; i < (int) m_children.size(); i++) {
+        p->addChild(m_children.at(i));
+    }
+    m_children.clear();
+    addChild(p);
 }
 

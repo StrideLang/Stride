@@ -1,10 +1,14 @@
 %{
 #include <iostream>
-#include <stdio.h>
-#include <stdarg.h>
+
+#include <cstdio>  // for fopen
+#include <cstdarg>  //for var args
 
 #include "ast.h"
 #include "platformnode.h"
+#include "valuenode.h"
+#include "bundlenode.h"
+#include "streamnode.h"
 
 using namespace std;
 
@@ -12,9 +16,11 @@ extern "C" int yylex();
 extern "C" FILE *yyin;
 
 extern int yylineno;
-void yyerror(char *s, ...);
+void yyerror(const char *s, ...);
 
-AST * parse(const char *filename);
+AST *tree_head;
+
+AST *parse(const char *filename);
 
 int error = 0;
 
@@ -24,7 +30,21 @@ int error = 0;
 	int 	ival;
 	float 	fval;
 	char *	sval;
+        void *   aval;
 }
+
+/* declare types for nodes */
+%type <aval> platformDef
+%type <aval> streamDef
+%type <aval> streamType
+%type <aval> streamExp
+%type <aval> streamComp
+%type <aval> valueExp
+%type <aval> valueComp
+%type <aval> indexExp
+%type <aval> indexComp
+%type <aval> bundleDef
+
 
 /* declare tokens */
 %token 	<ival> 	INT
@@ -51,23 +71,28 @@ int error = 0;
 
 entry: 
 		/*epsilon*/		{}
-	| 	entry start		{ cout << endl << "Grabbing Next ..." << endl ; }
+        | 	entry start		{ cout << endl << "Grabbing Next ..." << endl ; }
 	| 	entry SEMICOLON	{ cout << "Ignoring Semicolon!" << endl ; }	
 	;
 
 start:
-		platformDef		{ cout << "Platform Definition Resolved!" << endl; }
+                platformDef		{  tree_head->addChild((AST *) $1);
+                                           cout << "Platform Definition Resolved!" << endl; }
 	|	blockDef		{ cout << "Block Resolved!" << endl; }
-	|	streamDef		{}
+        |	streamDef		{ tree_head->addChild((AST *) $1);
+                                          cout << "Stream Definition Resolved!" << endl;}
 	|	ERROR			{ yyerror("Unrecognised Character: ", $1); }
 	;
 
 // ================================= 
 //	PLATFORM DEFINITION
 // =================================
-	
+
 platformDef:
-		USE UVAR VERSION FLOAT { cout << "Platform: " << $2 << endl << "Version: " << $4 << endl; }
+                USE UVAR VERSION FLOAT {
+                cout << "Platform: " << $2 << endl << "Version: " << $4 << endl;
+                $$ = new PlatformNode(string($2), $4);
+                }
 	;
 
 // ================================= 
@@ -89,12 +114,13 @@ blockType:
 // =================================
 	
 streamDef:
-		streamType SEMICOLON			{}
+                streamType SEMICOLON			{ $$ = $1; }
 	;
 
 streamType:
-		valueExp STREAM streamExp  		{ cout << "Stream Resolved!" << endl; }
-	|	valueListExp STREAM streamExp	{ cout << "Stream Resolved!" << endl; }
+                valueExp STREAM streamExp  	{ $$ = new StreamNode((AST *) $1,(AST *)  $3);
+                                                  cout << "Stream Resolved!" << endl; }
+        |	valueListExp STREAM streamExp	{ cout << "Stream Resolved!" << endl; }
 	;
 	
 // ================================= 
@@ -102,7 +128,8 @@ streamType:
 // =================================
 
 bundleDef:
-		UVAR '[' indexExp ']'	{ cout << "Bundle name: " << $1 << endl; }
+                UVAR '[' indexExp ']'	{ $$ = new BundleNode($1,(AST *)  $3);
+                                          cout << "Bundle name: " << $1 << endl; }
 	;
 
 // ================================= 
@@ -110,9 +137,9 @@ bundleDef:
 // =================================
 
 functionDef:
-		WORD '(' ')'				{ cout << "Platform function: " << $1 << endl; }
+                WORD '(' ')'			{ cout << "Platform function: " << $1 << endl; }
 	|	WORD '(' properties ')'		{ cout << "Properties () ..." << endl << "Platform function: " << $1 << endl; }
-	|	UVAR '(' ')'				{ cout << "User function: " << $1 << endl; }
+        |	UVAR '(' ')'			{ cout << "User function: " << $1 << endl; }
 	|	UVAR '(' properties ')' 	{ cout << "Properties () ..." << endl << "User function: " << $1 << endl; }
 	;	
 	
@@ -211,7 +238,7 @@ indexExp:
 	|	indexExp '*' indexExp 	{ cout << "Index/Size multiplying ... " << endl; }
 	|	indexExp '/' indexExp 	{ cout << "Index/Size dividing ... " << endl; }
 	|	'(' indexExp ')' 		{ cout << "Index/Size enclosure ..." << endl; }
-	|	indexComp				{}
+        |	indexComp		{  $$ = $1; }
 	;
 
 // ================================= 
@@ -244,7 +271,7 @@ valueExp:
 	|	'(' valueExp ')' 			{ cout << "Enclosure ..." << endl; }
 	| 	'-' valueExp %prec UMINUS 	{ cout << "Unary minus ... " << endl; }
 	| 	NOT valueExp %prec NOT 		{ cout << "Logical NOT ... " << endl; }
-	| 	valueComp					{}
+        | 	valueComp			{ $$ = $1; }
 	;
 
 // ================================= 
@@ -252,8 +279,8 @@ valueExp:
 // =================================
 	
 streamExp:
-		streamComp STREAM streamExp	{}
-	|	streamComp					{}
+                streamComp STREAM streamExp	{ $$ = new StreamNode((AST *) $1, (AST *) $3); }
+        |	streamComp			{ $$ = $1; }
 	;
 
 // ================================= 
@@ -261,9 +288,10 @@ streamExp:
 // =================================
 	
 indexComp:
-		INT				{ cout << "Index/Size Integer: " << $1 << endl; }
-	|	UVAR			{ cout << "Index/Size User variable: " << $1 << endl; }
-	|	bundleDef		{ cout << "Resolving indexed array ..." << endl; }
+                INT		{ $$ = new ValueNode($1);
+                                  cout << "Index/Size Integer: " << $1 << endl; }
+        |	UVAR		{ cout << "Index/Size User variable: " << $1 << endl; }
+        |	bundleDef	{ cout << "Resolving indexed array ..." << endl; }
 	;
 
 // ================================= 
@@ -271,9 +299,10 @@ indexComp:
 // =================================
 	
 streamComp:
-		UVAR			{ cout << "User variable: " << $1 << endl << "Streaming ... " << endl; }
-	|	bundleDef		{ cout << "Resolving indexed array ..." << endl << "Streaming ... " << endl; }
-	|	functionDef		{ cout << "Resolving function definition ... " << endl << "Streaming ... " << endl; }
+                UVAR		{ cout << "User variable: " << $1 << endl << "Streaming ... " << endl; }
+        |	bundleDef	{ $$ = $1;
+                                  cout << "Resolving indexed array ..." << endl << "Streaming ... " << endl; }
+        |	functionDef	{ cout << "Resolving function definition ... " << endl << "Streaming ... " << endl; }
 	|	valueListDef	{ cout << "Resolving list definition ... " << endl << "Streaming ... " << endl;}
 	;
 
@@ -282,15 +311,19 @@ streamComp:
 // =================================
 
 valueComp:
-		INT				{ cout << "Integer: " << $1 << endl; } 
-	|	FLOAT			{ cout << "Real: " << $1 << endl; }
-	|	UVAR			{ cout << "User variable: " << $1 << endl; }
-	|	bundleDef		{ cout << "Resolving indexed array ..." << endl; }
-	|	functionDef		{ cout << "Resolving function definition ..." << endl; }
+                INT	{ $$ = new ValueNode($1);
+                          cout << "Integer: " << $1 << endl; }
+        |	FLOAT	{ $$ = new ValueNode($1);
+                          cout << "Real: " << $1 << endl; }
+        |	UVAR	{ $$ = new ValueNode($1);
+                          cout << "User variable: " << $1 << endl; }
+        |	bundleDef	{ $$ = $1;
+                                  cout << "Resolving indexed array ..." << endl; }
+        |	functionDef	{ cout << "Resolving function definition ..." << endl; }
 	;
 	
 %%
-void yyerror(char *s, ...){
+void yyerror(const char *s, ...){
 	va_list ap;
 	va_start(ap, s);
 	cout << "ERROR: " << s << " => " << va_arg(ap, char*) << " @ line " <<  yylineno << endl;
@@ -313,15 +346,16 @@ AST *parse(const char *filename){
 	cout << "Analysing: " << fileName << endl;
 	cout << "===========" << endl;
 
+        tree_head = new AST;
 	yyin = file;
 	yyparse();
 	
 	if (error > 0){
                 cout << endl << "Number of Errors: " << error << endl;
-                return NULL;
-	}
-        ast = new AST;
-	
+                //TODO: free AST if error
+                return ast;
+        }
+        ast = tree_head;
 	cout << "Completed Analysing: " << fileName << endl;
         return ast;
 }

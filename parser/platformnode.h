@@ -10,22 +10,18 @@ using namespace std;
 class PlatformNode : public AST
 {
 public:
-    PlatformNode();
-    PlatformNode(int majorVersion, int minorVersion, string platformName);
+    PlatformNode(string platformName, float version);
+
     ~PlatformNode();
-
-    int majorVersion() const;
-    void setMajorVersion(int majorVersion);
-
-    int minorVersion() const;
-    void setMinorVersion(int minorVersion);
 
     string platformName() const;
     void setPlatformName(const string &platformName);
 
+    float version() const;
+    void setVersion(float version);
+
 private:
-    int m_majorVersion;
-    int m_minorVersion;
+    float m_version;
     string m_platformName;
 };
 
