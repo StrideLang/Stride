@@ -11,7 +11,8 @@ SOURCES += ast.cpp \
     valuenode.cpp \
     bundlenode.cpp \
     propertynode.cpp \
-    namenode.cpp
+    namenode.cpp \
+    functionnode.cpp
 
 HEADERS += ast.h \
            objectnode.h \
@@ -20,7 +21,8 @@ HEADERS += ast.h \
     valuenode.h \
     bundlenode.h \
     propertynode.h \
-    namenode.h
+    namenode.h \
+    functionnode.h
 
 BISONSOURCES = lang_stream.y
 FLEXSOURCES = lang_stream.l

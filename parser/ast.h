@@ -23,7 +23,8 @@ public:
         Int,
         Float,
         Name,
-        String
+        String,
+        Function
     } Token;
 
     AST(Token token);

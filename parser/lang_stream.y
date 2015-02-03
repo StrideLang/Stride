@@ -29,6 +29,7 @@ int error = 0;
 %code requires { #include "bundlenode.h" }
 %code requires { #include "valuenode.h" }
 %code requires { #include "namenode.h" }
+%code requires { #include "functionnode.h" }
 
 %union {
 	int 	ival;
@@ -40,6 +41,7 @@ int error = 0;
         StreamNode *streamNode;
         PropertyNode *propertyNode;
         BundleNode *bundleNode;
+        FunctionNode *functionNode;
 }
 
 /* declare types for nodes */
@@ -58,6 +60,7 @@ int error = 0;
 %type <ast> indexExp
 %type <ast> indexComp
 %type <bundleNode> bundleDef
+%type <functionNode> functionDef
 
 
 /* declare tokens */
@@ -156,10 +159,18 @@ bundleDef:
 // =================================
 
 functionDef:
-                WORD '(' ')'			{ cout << "Platform function: " << $1 << endl; }
-	|	WORD '(' properties ')'		{ cout << "Properties () ..." << endl << "Platform function: " << $1 << endl; }
-        |	UVAR '(' ')'			{ cout << "User function: " << $1 << endl; }
-	|	UVAR '(' properties ')' 	{ cout << "Properties () ..." << endl << "User function: " << $1 << endl; }
+                WORD '(' ')'		{
+                                          $$ = new FunctionNode($1, NULL, FunctionNode::BuiltIn);
+                                          cout << "Platform function: " << $1 << endl; }
+        |	WORD '(' properties ')'	{
+                                          $$ = new FunctionNode($1, $3, FunctionNode::BuiltIn);
+                                          cout << "Properties () ..." << endl << "Platform function: " << $1 << endl; }
+        |	UVAR '(' ')'		{
+                                          $$ = new FunctionNode($1, NULL, FunctionNode::UserDefined);
+                                          cout << "User function: " << $1 << endl; }
+        |	UVAR '(' properties ')' {
+                                          $$ = new FunctionNode($1, $3, FunctionNode::UserDefined);
+                                          cout << "Properties () ..." << endl << "User function: " << $1 << endl; }
 	;	
 	
 // ================================= 

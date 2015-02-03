@@ -15,3 +15,8 @@ block Object {
         value:	{ prop1: 5; prop2: "hello"; }
         meta:	"Block as Property"
 }
+
+generator ThreeHarmonicPartials {
+        process:	oscillator ()  >> AudioOut[1]
+        meta:		'Stream property'
+}

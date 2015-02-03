@@ -83,7 +83,7 @@ void ParserTest::testTreeBuildBlocks()
     tree = parse(QString(QFINDTESTDATA("data/block.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
     vector<AST *> nodes = tree->getChildren();
-    QVERIFY(nodes.size() == 4);
+    QVERIFY(nodes.size() == 5);
     AST *node = nodes.at(0);
     QVERIFY(node->getNodeType() == AST::Object);
     vector<AST *> properties = node->getChildren();
@@ -119,11 +119,13 @@ void ParserTest::testTreeBuildBlocks()
     QVERIFY(propertyValue->getNodeType() == AST::String);
     QVERIFY(static_cast<ValueNode *>(propertyValue)->getStringValue() == "Integer Value.");
 
+    // No properties
     node = nodes.at(2);
     QVERIFY(node->getNodeType() == AST::Object);
     properties = node->getChildren();
     QVERIFY(properties.size() == 0);
 
+    // Property is an object
     node = nodes.at(3);
     QVERIFY(node->getNodeType() == AST::Object);
     properties = node->getChildren();
@@ -150,13 +152,32 @@ void ParserTest::testTreeBuildBlocks()
     propertyValue = property->getChildren().at(0);
     QVERIFY(propertyValue->getNodeType() == AST::String);
     QVERIFY(static_cast<ValueNode *>(propertyValue)->getStringValue() == "hello");
-
     property = properties.at(1);
     QVERIFY(property != NULL && property->getChildren().size() == 1);
     QVERIFY(static_cast<PropertyNode *>(property)->getName() == "meta");
     propertyValue = property->getChildren().at(0);
     QVERIFY(propertyValue->getNodeType() == AST::String);
     QVERIFY(static_cast<ValueNode *>(propertyValue)->getStringValue() == "Block as Property");
+
+    node = nodes.at(4);
+    QVERIFY(node->getNodeType() == AST::Object);
+    properties = node->getChildren();
+    QVERIFY(properties.size() == 2);
+    property = properties.at(0);
+    QVERIFY(property != NULL && property->getChildren().size() == 1);
+    QVERIFY(static_cast<PropertyNode *>(property)->getName() == "process");
+    propertyValue = property->getChildren().at(0);
+    QVERIFY(propertyValue->getNodeType() == AST::Stream);
+    StreamNode *streamNode = static_cast<StreamNode *>(propertyValue);
+    QVERIFY(streamNode->getChildren().size() == 2);
+    QVERIFY(streamNode->getChildren().at(0)->getNodeType() == AST::Function);
+    QVERIFY(streamNode->getChildren().at(1)->getNodeType() == AST::Bundle);
+    property = properties.at(1);
+    QVERIFY(property != NULL && property->getChildren().size() == 1);
+    QVERIFY(static_cast<PropertyNode *>(property)->getName() == "meta");
+    propertyValue = property->getChildren().at(0);
+    QVERIFY(propertyValue->getNodeType() == AST::String);
+    QVERIFY(static_cast<ValueNode *>(propertyValue)->getStringValue() == "Stream property");
 
     delete tree;
 }
