@@ -34,24 +34,30 @@ int error = 0;
 	float 	fval;
 	char *	sval;
         void *   aval;
+        AST  *  ast;
+        PlatformNode *platformNode;
+        ObjectNode *objectNode;
+        StreamNode *streamNode;
+        PropertyNode *propertyNode;
+        BundleNode *bundleNode;
 }
 
 /* declare types for nodes */
-%type <aval> platformDef
-%type <aval> blockDef
-%type <aval> blockType
-%type <aval> properties
-%type <aval> property
-%type <aval> propertyType
-%type <aval> streamDef
-%type <aval> streamType
-%type <aval> streamExp
-%type <aval> streamComp
-%type <aval> valueExp
-%type <aval> valueComp
-%type <aval> indexExp
-%type <aval> indexComp
-%type <aval> bundleDef
+%type <platformNode> platformDef
+%type <objectNode> blockDef
+%type <ast> blockType
+%type <ast> properties
+%type <propertyNode> property
+%type <ast> propertyType
+%type <streamNode> streamDef
+%type <streamNode> streamType
+%type <ast> streamExp
+%type <ast> streamComp
+%type <ast> valueExp
+%type <ast> valueComp
+%type <ast> indexExp
+%type <ast> indexComp
+%type <bundleNode> bundleDef
 
 
 /* declare tokens */
@@ -84,11 +90,11 @@ entry:
 	;
 
 start:
-                platformDef		{  tree_head->addChild((AST *) $1);
+                platformDef		{  tree_head->addChild($1);
                                            cout << "Platform Definition Resolved!" << endl; }
-        |	blockDef		{ tree_head->addChild((AST *) $1);
+        |	blockDef		{ tree_head->addChild($1);
                                           cout << "Block Resolved!" << endl; }
-        |	streamDef		{ tree_head->addChild((AST *) $1);
+        |	streamDef		{ tree_head->addChild($1);
                                           cout << "Stream Definition Resolved!" << endl;}
 	|	ERROR			{ yyerror("Unrecognised Character: ", $1); }
 	;
@@ -110,8 +116,8 @@ platformDef:
 	
 blockDef: 	
                 WORD UVAR blockType 		{
-                                                  $$ = new ObjectNode($2, $1, (AST *)$3);
-                                                  // AST *props = (AST *)$3;
+                                                  $$ = new ObjectNode($2, $1, $3);
+                                                  // AST *props = $3;
                                                   // delete props;  // FIXME this leaks!
                                                   cout << "Block: " << $1 << ", Labelled: " << $2 << endl; }
 	|	WORD bundleDef blockType	{ cout << "Block Bundle ..." << endl;  }
@@ -131,7 +137,7 @@ streamDef:
 	;
 
 streamType:
-                valueExp STREAM streamExp  	{ $$ = new StreamNode((AST *) $1,(AST *)  $3);
+                valueExp STREAM streamExp  	{ $$ = new StreamNode( $1, $3);
                                                   cout << "Stream Resolved!" << endl; }
         |	valueListExp STREAM streamExp	{ cout << "Stream Resolved!" << endl; }
 	;
@@ -141,7 +147,7 @@ streamType:
 // =================================
 
 bundleDef:
-                UVAR '[' indexExp ']'	{ $$ = new BundleNode($1,(AST *)  $3);
+                UVAR '[' indexExp ']'	{ $$ = new BundleNode($1, $3);
                                           cout << "Bundle name: " << $1 << endl; }
 	;
 
@@ -162,33 +168,33 @@ functionDef:
 	
 properties: 	
                 properties property SEMICOLON	{ AST *temp = new AST();
-                                                  AST *props = (AST *)$1;
+                                                  AST *props = $1;
                                                   props->pushParent(temp);
-                                                  temp->addChild((AST *)$2);
+                                                  temp->addChild($2);
                                                   $$ = temp;
                                                   // delete props;  // FIXME this leaks!
                                                   cout << "Ignoring semicolon!" << endl ; }
         |	properties property		{
                                                   AST *temp = new AST();
-                                                  AST *props = (AST *)$1;
+                                                  AST *props = $1;
                                                   props->pushParent(temp);
-                                                  temp->addChild((AST *)$2);
+                                                  temp->addChild($2);
                                                   $$ = temp;
                                                   // delete props;  // FIXME this leaks!
                                                   }
         |	property SEMICOLON		{
                                                   AST *temp = new AST();
-                                                  temp->addChild((AST *)$1);
+                                                  temp->addChild($1);
                                                   $$ = temp;
                                                   cout << "Ignoring semicolon!" << endl ; }
         |	property			{
                                                   AST *temp = new AST();
-                                                  temp->addChild((AST *)$1);
+                                                  temp->addChild($1);
                                                   $$ = temp;}
 	;
 	
 property: 	
-                WORD COLON propertyType 	{ $$ = new PropertyNode($1, (AST *)$3);
+                WORD COLON propertyType 	{ $$ = new PropertyNode($1, $3);
                                                   cout << "Property: " << $1 << endl << "New property ... " << endl; }
 	;
 	
@@ -302,7 +308,7 @@ valueExp:
 	|	valueExp '/' valueExp 		{ cout << "Dividing ... " << endl; }
 	|	valueExp AND valueExp 		{ cout << "Logical AND ... " << endl; }
 	|	valueExp OR valueExp 		{ cout << "Logical OR ... " << endl; }
-	|	'(' valueExp ')' 			{ cout << "Enclosure ..." << endl; }
+        |	'(' valueExp ')' 		{ cout << "Enclosure ..." << endl; }
 	| 	'-' valueExp %prec UMINUS 	{ cout << "Unary minus ... " << endl; }
 	| 	NOT valueExp %prec NOT 		{ cout << "Logical NOT ... " << endl; }
         | 	valueComp			{ $$ = $1; }
@@ -313,7 +319,7 @@ valueExp:
 // =================================
 	
 streamExp:
-                streamComp STREAM streamExp	{ $$ = new StreamNode((AST *) $1, (AST *) $3); }
+                streamComp STREAM streamExp	{ $$ = new StreamNode($1, $3); }
         |	streamComp			{ $$ = $1; }
 	;
 

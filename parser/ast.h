@@ -3,8 +3,6 @@
 
 #include <vector>
 
-#include "lang_stream.parser.hpp"
-
 using namespace std;
 
 class AST
