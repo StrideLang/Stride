@@ -15,7 +15,7 @@ ValueNode::ValueNode(float value) :
 }
 
 ValueNode::ValueNode(string value) :
-    AST(AST::Name)
+    AST(AST::String)
 {
     m_stringValue = value;
 }
@@ -39,7 +39,7 @@ float ValueNode::getFloatValue() const
 
 string ValueNode::getStringValue() const
 {
-    assert(m_token == AST::Name);
+    assert(m_token == AST::String);
     return m_stringValue;
 }
 

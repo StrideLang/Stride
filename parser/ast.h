@@ -18,6 +18,7 @@ public:
         Bundle,
         Object,
         Stream,
+        Property,
         Value,
 
         // Built-in types (leaf nodes)
@@ -36,7 +37,6 @@ public:
     bool isNil() { return m_token == AST::None; }
 
     vector<AST *> getChildren() const {return m_children;}
-
 
 protected:
     Token m_token; // From which token did we create node?

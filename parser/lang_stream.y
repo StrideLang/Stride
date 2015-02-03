@@ -9,6 +9,9 @@
 #include "valuenode.h"
 #include "bundlenode.h"
 #include "streamnode.h"
+#include "objectnode.h"
+#include "namenode.h"
+#include "propertynode.h"
 
 using namespace std;
 
@@ -35,6 +38,11 @@ int error = 0;
 
 /* declare types for nodes */
 %type <aval> platformDef
+%type <aval> blockDef
+%type <aval> blockType
+%type <aval> properties
+%type <aval> property
+%type <aval> propertyType
 %type <aval> streamDef
 %type <aval> streamType
 %type <aval> streamExp
@@ -78,7 +86,8 @@ entry:
 start:
                 platformDef		{  tree_head->addChild((AST *) $1);
                                            cout << "Platform Definition Resolved!" << endl; }
-	|	blockDef		{ cout << "Block Resolved!" << endl; }
+        |	blockDef		{ tree_head->addChild((AST *) $1);
+                                          cout << "Block Resolved!" << endl; }
         |	streamDef		{ tree_head->addChild((AST *) $1);
                                           cout << "Stream Definition Resolved!" << endl;}
 	|	ERROR			{ yyerror("Unrecognised Character: ", $1); }
@@ -100,13 +109,17 @@ platformDef:
 // =================================
 	
 blockDef: 	
-		WORD UVAR blockType 		{ cout << "Block: " << $1 << ", Labelled: " << $2 << endl; }
+                WORD UVAR blockType 		{
+                                                  $$ = new ObjectNode($2, $1, (AST *)$3);
+                                                  // AST *props = (AST *)$3;
+                                                  // delete props;  // FIXME this leaks!
+                                                  cout << "Block: " << $1 << ", Labelled: " << $2 << endl; }
 	|	WORD bundleDef blockType	{ cout << "Block Bundle ..." << endl;  }
 	;
 
 blockType: 	
-		'{' '}'				{ cout << "Default values assigned!" << endl; }
-	|	'{' properties '}' 	{}
+                '{' '}'			{ $$ = NULL; cout << "Default values assigned!" << endl; }
+        |	'{' properties '}' 	{ $$ = $2; }
 	;
 
 // ================================= 
@@ -148,22 +161,43 @@ functionDef:
 // =================================
 	
 properties: 	
-		properties property SEMICOLON	{ cout << "Ignoring semicolon!" << endl ; }
-	|	properties property				{}
-	|	property SEMICOLON				{ cout << "Ignoring semicolon!" << endl ; }
-	|	property						{}
+                properties property SEMICOLON	{ AST *temp = new AST();
+                                                  AST *props = (AST *)$1;
+                                                  props->pushParent(temp);
+                                                  temp->addChild((AST *)$2);
+                                                  $$ = temp;
+                                                  // delete props;  // FIXME this leaks!
+                                                  cout << "Ignoring semicolon!" << endl ; }
+        |	properties property		{
+                                                  AST *temp = new AST();
+                                                  AST *props = (AST *)$1;
+                                                  props->pushParent(temp);
+                                                  temp->addChild((AST *)$2);
+                                                  $$ = temp;
+                                                  // delete props;  // FIXME this leaks!
+                                                  }
+        |	property SEMICOLON		{
+                                                  AST *temp = new AST();
+                                                  temp->addChild((AST *)$1);
+                                                  $$ = temp;
+                                                  cout << "Ignoring semicolon!" << endl ; }
+        |	property			{
+                                                  AST *temp = new AST();
+                                                  temp->addChild((AST *)$1);
+                                                  $$ = temp;}
 	;
 	
 property: 	
-		WORD COLON propertyType 	{ cout << "Property: " << $1 << endl << "New property ... " << endl; }
+                WORD COLON propertyType 	{ $$ = new PropertyNode($1, (AST *)$3);
+                                                  cout << "Property: " << $1 << endl << "New property ... " << endl; }
 	;
 	
 propertyType: 	
 		NONE			{ cout << "Keyword: none" << endl; }
 	|	ON				{ cout << "Keyword: on" << endl; }
 	|	OFF				{ cout << "Keyword: off" << endl; }
-	|	STRING			{ cout << "String: " << $1 << endl; }
-	|	valueExp		{ cout << "Value expression as property value!" << endl; }
+        |	STRING			{ $$ = new ValueNode($1); cout << "String: " << $1 << endl; }
+        |	valueExp		{ $$ = $1; cout << "Value expression as property value!" << endl; }
 	|	blockType		{ cout << "Block as property value!" << endl; }
 	|	streamType		{ cout << "Stream as property value!" << endl; }
 	|	listDef			{}
@@ -315,7 +349,7 @@ valueComp:
                           cout << "Integer: " << $1 << endl; }
         |	FLOAT	{ $$ = new ValueNode($1);
                           cout << "Real: " << $1 << endl; }
-        |	UVAR	{ $$ = new ValueNode($1);
+        |	UVAR	{ $$ = new NameNode($1);
                           cout << "User variable: " << $1 << endl; }
         |	bundleDef	{ $$ = $1;
                                   cout << "Resolving indexed array ..." << endl; }

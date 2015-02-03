@@ -1,0 +1,12 @@
+
+signal GuitarIn {
+        rate:	AudioRate
+        meta:	'Guitar input.'
+}
+
+constant Integer {
+        value:	5
+        meta:	"Integer Value."
+}
+
+constant Integer { } # Defaults

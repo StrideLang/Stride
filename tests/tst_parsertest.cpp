@@ -6,6 +6,8 @@
 #include "streamnode.h"
 #include "bundlenode.h"
 #include "valuenode.h"
+#include "propertynode.h"
+#include "namenode.h"
 
 extern AST *parse(const char* fileName);
 
@@ -19,6 +21,8 @@ public:
 private:
 
 private Q_SLOTS:
+    void testTreeBuildLists();
+    void testTreeBuildBlocks();
     void testTreeBuildBasic();
     void testParser();
 };
@@ -39,6 +43,7 @@ void ParserTest::testTreeBuildBasic()
     PlatformNode *node = static_cast<PlatformNode *>(nodes.at(0));
     QVERIFY(node->platformName() == "PufferFish");
     QVERIFY(node->version() == 1.1f);
+    delete tree;
 
     tree = parse(QString(QFINDTESTDATA("data/simple.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
@@ -59,6 +64,66 @@ void ParserTest::testTreeBuildBasic()
     leafnode = bundle->index();
     QVERIFY(leafnode->getNodeType() == AST::Int);
     QVERIFY(static_cast<ValueNode *>(leafnode)->getIntValue() == 2);
+    delete tree;
+}
+
+void ParserTest::testTreeBuildLists()
+{
+//    AST *tree;
+//    tree = parse(QString(QFINDTESTDATA("data/list.stream")).toStdString().c_str());
+//    QVERIFY(tree != NULL);
+//    vector<AST *> nodes = tree->getChildren();
+//    QVERIFY(nodes.size() == 9);
+}
+
+void ParserTest::testTreeBuildBlocks()
+{
+    AST *tree;
+    tree = parse(QString(QFINDTESTDATA("data/block.stream")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    vector<AST *> nodes = tree->getChildren();
+    QVERIFY(nodes.size() == 3);
+    AST *node = nodes.at(0);
+    QVERIFY(node->getNodeType() == AST::Object);
+    vector<AST *> properties = node->getChildren();
+    QVERIFY(properties.size() == 2);
+    AST *property = properties.at(0);
+    QVERIFY(property != NULL && property->getChildren().size() == 1);
+    QVERIFY(static_cast<PropertyNode *>(property)->getName() == "rate");
+    AST *propertyValue = property->getChildren().at(0);
+    QVERIFY(propertyValue->getNodeType() == AST::Name);
+    QVERIFY(static_cast<NameNode *>(propertyValue)->getName() == "AudioRate");
+    property = properties.at(1);
+    QVERIFY(property != NULL && property->getChildren().size() == 1);
+    QVERIFY(static_cast<PropertyNode *>(property)->getName() == "meta");
+    propertyValue = property->getChildren().at(0);
+    QVERIFY(propertyValue->getNodeType() == AST::String);
+    QVERIFY(static_cast<ValueNode *>(propertyValue)->getStringValue() == "'Guitar input.'"); // FIXME remove quotes
+
+
+    node = nodes.at(1);
+    QVERIFY(node->getNodeType() == AST::Object);
+    properties = node->getChildren();
+    QVERIFY(properties.size() == 2);
+    property = properties.at(0);
+    QVERIFY(property != NULL && property->getChildren().size() == 1);
+    QVERIFY(static_cast<PropertyNode *>(property)->getName() == "value");
+    propertyValue = property->getChildren().at(0);
+    QVERIFY(propertyValue->getNodeType() == AST::Int);
+    QVERIFY(static_cast<ValueNode *>(propertyValue)->getIntValue() == 5);
+    property = properties.at(1);
+    QVERIFY(property != NULL && property->getChildren().size() == 1);
+    QVERIFY(static_cast<PropertyNode *>(property)->getName() == "meta");
+    propertyValue = property->getChildren().at(0);
+    QVERIFY(propertyValue->getNodeType() == AST::String);
+    QVERIFY(static_cast<ValueNode *>(propertyValue)->getStringValue() == "\"Integer Value.\""); // FIXME remove quotes
+
+    node = nodes.at(2);
+    QVERIFY(node->getNodeType() == AST::Object);
+    properties = node->getChildren();
+    QVERIFY(properties.size() == 0);
+
+    delete tree;
 }
 
 void ParserTest::testParser()
@@ -73,6 +138,7 @@ void ParserTest::testParser()
     foreach (QString file, files) {
         tree = parse(QString(QFINDTESTDATA(file)).toStdString().c_str());
         QVERIFY(tree != NULL);
+//        delete tree; // FIXME this leaks
     }
 }
 

@@ -12,7 +12,10 @@ AST::AST(Token token)
 
 AST::~AST()
 {
-
+    for(int i = 0; i < (int) m_children.size(); i++) {
+        delete m_children.at(i);
+    }
+//    m_children.clear();
 }
 
 void AST::addChild(AST *t) {
