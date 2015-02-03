@@ -156,7 +156,7 @@ void ParserTest::testTreeBuildBlocks()
     QVERIFY(static_cast<PropertyNode *>(property)->getName() == "meta");
     propertyValue = property->getChildren().at(0);
     QVERIFY(propertyValue->getNodeType() == AST::String);
-    QVERIFY(static_cast<ValueNode *>(propertyValue)->getStringValue() == "Block as Prosperty");
+    QVERIFY(static_cast<ValueNode *>(propertyValue)->getStringValue() == "Block as Property");
 
     delete tree;
 }
