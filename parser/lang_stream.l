@@ -53,15 +53,15 @@ CLETTER	[A-Z]
 {LETTER}({LETTER}|{CLETTER}|{DIGIT})*		{ yylval.sval = strdup(yytext); return WORD;}
 
 '[^'\t\n]*'			{	buffer = strdup(yytext);
-                        buffer++;
                         buffer[strlen(buffer)-1] = '\0';
-                        yylval.sval = strdup(buffer);
+                        yylval.sval = strdup(buffer + 1);
+                        free(buffer);
                         return STRING; }
 
 \"[^"]*\"			{ 	buffer = strdup(yytext);
-                        buffer++;
                         buffer[strlen(buffer)-1] = '\0';
-                        yylval.sval = strdup(buffer);
+                        yylval.sval = strdup(buffer + 1);
+                        free(buffer);
                         return STRING; }
 
 [ \t\n]				{ /* Skip white spaces */ }
