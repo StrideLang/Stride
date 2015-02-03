@@ -5,6 +5,7 @@
 #include "platformnode.h"
 #include "streamnode.h"
 #include "bundlenode.h"
+#include "objectnode.h"
 #include "valuenode.h"
 #include "propertynode.h"
 #include "namenode.h"
@@ -69,9 +70,9 @@ void ParserTest::testTreeBuildBasic()
 
 void ParserTest::testTreeBuildLists()
 {
-//    AST *tree;
-//    tree = parse(QString(QFINDTESTDATA("data/list.stream")).toStdString().c_str());
-//    QVERIFY(tree != NULL);
+    AST *tree;
+    tree = parse(QString(QFINDTESTDATA("data/list.stream")).toStdString().c_str());
+    QVERIFY(tree != NULL);
 //    vector<AST *> nodes = tree->getChildren();
 //    QVERIFY(nodes.size() == 9);
 }
@@ -82,7 +83,7 @@ void ParserTest::testTreeBuildBlocks()
     tree = parse(QString(QFINDTESTDATA("data/block.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
     vector<AST *> nodes = tree->getChildren();
-    QVERIFY(nodes.size() == 3);
+    QVERIFY(nodes.size() == 4);
     AST *node = nodes.at(0);
     QVERIFY(node->getNodeType() == AST::Object);
     vector<AST *> properties = node->getChildren();
@@ -122,6 +123,40 @@ void ParserTest::testTreeBuildBlocks()
     QVERIFY(node->getNodeType() == AST::Object);
     properties = node->getChildren();
     QVERIFY(properties.size() == 0);
+
+    node = nodes.at(3);
+    QVERIFY(node->getNodeType() == AST::Object);
+    properties = node->getChildren();
+    QVERIFY(properties.size() == 2);
+    property = properties.at(0);
+    QVERIFY(property != NULL && property->getChildren().size() == 1);
+    QVERIFY(static_cast<PropertyNode *>(property)->getName() == "value");
+    propertyValue = property->getChildren().at(0);
+    QVERIFY(propertyValue->getNodeType() == AST::Object);
+    ObjectNode *object = static_cast<ObjectNode *>(propertyValue);
+    QVERIFY(object->getName() == "");
+    QVERIFY(object->getObjectType() == "");
+    vector<AST *> objProperties = object->getChildren();
+    QVERIFY(objProperties.size() == 2);
+    property = objProperties.at(0);
+    QVERIFY(property != NULL && property->getChildren().size() == 1);
+    QVERIFY(static_cast<PropertyNode *>(property)->getName() == "prop1");
+    propertyValue = property->getChildren().at(0);
+    QVERIFY(propertyValue->getNodeType() == AST::Int);
+    QVERIFY(static_cast<ValueNode *>(propertyValue)->getIntValue() == 5);
+    property = objProperties.at(1);
+    QVERIFY(property != NULL && property->getChildren().size() == 1);
+    QVERIFY(static_cast<PropertyNode *>(property)->getName() == "prop2");
+    propertyValue = property->getChildren().at(0);
+    QVERIFY(propertyValue->getNodeType() == AST::String);
+    QVERIFY(static_cast<ValueNode *>(propertyValue)->getStringValue() == "hello");
+
+    property = properties.at(1);
+    QVERIFY(property != NULL && property->getChildren().size() == 1);
+    QVERIFY(static_cast<PropertyNode *>(property)->getName() == "meta");
+    propertyValue = property->getChildren().at(0);
+    QVERIFY(propertyValue->getNodeType() == AST::String);
+    QVERIFY(static_cast<ValueNode *>(propertyValue)->getStringValue() == "Block as Prosperty");
 
     delete tree;
 }

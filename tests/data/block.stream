@@ -10,3 +10,8 @@ constant Integer {
 }
 
 constant Integer { } # Defaults
+
+block Object {
+        value:	{ prop1: 5; prop2: "hello"; }
+        meta:	"Block as Property"
+}

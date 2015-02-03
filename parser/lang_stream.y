@@ -33,8 +33,7 @@ int error = 0;
 %union {
 	int 	ival;
 	float 	fval;
-	char *	sval;
-        void *   aval;
+        char *	sval;
         AST  *  ast;
         PlatformNode *platformNode;
         ObjectNode *objectNode;
@@ -91,7 +90,7 @@ entry:
 	;
 
 start:
-                platformDef		{  tree_head->addChild($1);
+                platformDef		{ tree_head->addChild($1);
                                            cout << "Platform Definition Resolved!" << endl; }
         |	blockDef		{ tree_head->addChild($1);
                                           cout << "Block Resolved!" << endl; }
@@ -205,10 +204,13 @@ propertyType:
 	|	OFF				{ cout << "Keyword: off" << endl; }
         |	STRING			{ $$ = new ValueNode($1); cout << "String: " << $1 << endl; }
         |	valueExp		{ $$ = $1; cout << "Value expression as property value!" << endl; }
-	|	blockType		{ cout << "Block as property value!" << endl; }
-	|	streamType		{ cout << "Stream as property value!" << endl; }
-	|	listDef			{}
-	|	valueListExp	{ cout << "List expression as property value!" << endl; }
+        |	blockType		{ $$ = new ObjectNode("", "" , $1);
+                                          // AST *props = $1;
+                                          // delete props;  // FIXME this leaks!
+                                          cout << "Block as property value!" << endl; }
+        |	streamType		{ $$ = $1; cout << "Stream as property value!" << endl; }
+        |	listDef			{ }
+        |	valueListExp	{ cout << "List expression as property value!" << endl; }
 	;
 
 // ================================= 

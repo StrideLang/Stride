@@ -14,4 +14,13 @@ ObjectNode::~ObjectNode()
 {
 
 }
+string ObjectNode::getName() const
+{
+    return m_name;
+}
+string ObjectNode::getObjectType() const
+{
+    return m_objectType;
+}
+
 

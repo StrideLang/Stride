@@ -11,6 +11,10 @@ public:
     ObjectNode(string name, string objectType, AST *propertiesList);
     ~ObjectNode();
 
+    string getName() const;
+
+    string getObjectType() const;
+
 private:
     string m_name;
     string m_objectType;
