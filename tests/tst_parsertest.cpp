@@ -98,7 +98,7 @@ void ParserTest::testTreeBuildBlocks()
     QVERIFY(static_cast<PropertyNode *>(property)->getName() == "meta");
     propertyValue = property->getChildren().at(0);
     QVERIFY(propertyValue->getNodeType() == AST::String);
-    QVERIFY(static_cast<ValueNode *>(propertyValue)->getStringValue() == "Guitar input."); // FIXME remove quotes
+    QVERIFY(static_cast<ValueNode *>(propertyValue)->getStringValue() == "Guitar input.");
 
 
     node = nodes.at(1);
@@ -116,7 +116,7 @@ void ParserTest::testTreeBuildBlocks()
     QVERIFY(static_cast<PropertyNode *>(property)->getName() == "meta");
     propertyValue = property->getChildren().at(0);
     QVERIFY(propertyValue->getNodeType() == AST::String);
-    QVERIFY(static_cast<ValueNode *>(propertyValue)->getStringValue() == "Integer Value."); // FIXME remove quotes
+    QVERIFY(static_cast<ValueNode *>(propertyValue)->getStringValue() == "Integer Value.");
 
     node = nodes.at(2);
     QVERIFY(node->getNodeType() == AST::Object);
