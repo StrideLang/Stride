@@ -1,10 +1,11 @@
 %{
-#include <iostream>
 #include <stdio.h>
 #include "lang_stream.parser.hpp"
 #define YY_DECL extern "C" int yylex()
 
 using namespace std;
+
+char * buffer;
 %}
 
 %option noyywrap nodefault yylineno
@@ -51,8 +52,17 @@ CLETTER	[A-Z]
 {CLETTER}({LETTER}|{CLETTER}|{DIGIT}|_)*	{ yylval.sval = strdup(yytext); return UVAR;}
 {LETTER}({LETTER}|{CLETTER}|{DIGIT})*		{ yylval.sval = strdup(yytext); return WORD;}
 
-'[^'\t\n]*'			{ yylval.sval = strdup(yytext); return STRING; }
-\"[^"]*\"			{ yylval.sval = strdup(yytext); return STRING; } 
+'[^'\t\n]*'			{	buffer = strdup(yytext);
+                        buffer++;
+                        buffer[strlen(buffer)-1] = '\0';
+                        yylval.sval = strdup(buffer);
+                        return STRING; }
+
+\"[^"]*\"			{ 	buffer = strdup(yytext);
+                        buffer++;
+                        buffer[strlen(buffer)-1] = '\0';
+                        yylval.sval = strdup(buffer);
+                        return STRING; }
 
 [ \t\n]				{ /* Skip white spaces */ }
 "#".*				{ /* Ignore Comments */ } 
