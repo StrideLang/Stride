@@ -5,13 +5,6 @@
 #include <cstdarg>  //for var args
 
 #include "ast.h"
-#include "platformnode.h"
-#include "valuenode.h"
-#include "bundlenode.h"
-#include "streamnode.h"
-#include "objectnode.h"
-#include "namenode.h"
-#include "propertynode.h"
 
 using namespace std;
 
@@ -28,6 +21,14 @@ AST *parse(const char *filename);
 int error = 0;
 
 %}
+%code requires { #include "ast.h" }
+%code requires { #include "platformnode.h" }
+%code requires { #include "objectnode.h" }
+%code requires { #include "streamnode.h" }
+%code requires { #include "propertynode.h" }
+%code requires { #include "bundlenode.h" }
+%code requires { #include "valuenode.h" }
+%code requires { #include "namenode.h" }
 
 %union {
 	int 	ival;
