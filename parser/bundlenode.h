@@ -8,10 +8,10 @@
 class BundleNode : public AST
 {
 public:
-    BundleNode(string name, AST *indexExp);
+    BundleNode(string getName, AST *indexExp);
     ~BundleNode();
 
-    string name() const;
+    string getName() const;
     AST *index() const { return m_children.at(0); }
 
 private:

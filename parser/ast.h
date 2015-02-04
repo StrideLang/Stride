@@ -24,6 +24,7 @@ public:
         Float,
         Name,
         String,
+        Expression,
         Function
     } Token;
 

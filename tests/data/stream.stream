@@ -1,0 +1,10 @@
+Val1 >> Val2 ;
+Func1() >> Func2() ;
+# Multiline stream
+Val1 >> Func1()
+>> Func2() >>
+Val2 ;
+
+Bundle1[1] >> Bundle2[2];
+Val1 * 3 >> Bundle[2];
+Bundle1[1] * 0.5 >> Bundle2[2];

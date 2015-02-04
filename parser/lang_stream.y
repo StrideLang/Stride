@@ -30,6 +30,7 @@ int error = 0;
 %code requires { #include "valuenode.h" }
 %code requires { #include "namenode.h" }
 %code requires { #include "functionnode.h" }
+%code requires { #include "expressionnode.h" }
 
 %union {
 	int 	ival;
@@ -42,6 +43,7 @@ int error = 0;
         PropertyNode *propertyNode;
         BundleNode *bundleNode;
         FunctionNode *functionNode;
+/*        ExpressionNode *expressionNode;*/
 }
 
 /* declare types for nodes */
@@ -316,12 +318,24 @@ valueListExp:
 // =================================
 	
 valueExp:
-		valueExp '+' valueExp 		{ cout << "Adding ... " << endl; }
-	|	valueExp '-' valueExp 		{ cout << "Subtracting ... " << endl; }
-	|	valueExp '*' valueExp 		{ cout << "Multiplying ... " << endl; }
-	|	valueExp '/' valueExp 		{ cout << "Dividing ... " << endl; }
-	|	valueExp AND valueExp 		{ cout << "Logical AND ... " << endl; }
-	|	valueExp OR valueExp 		{ cout << "Logical OR ... " << endl; }
+                valueExp '+' valueExp 		{
+                                                  $$ = new ExpressionNode(ExpressionNode::Add, $1, $3);
+                                                  cout << "Adding ... " << endl; }
+        |	valueExp '-' valueExp 		{
+                                                  $$ = new ExpressionNode(ExpressionNode::Subtract, $1, $3);
+                                                  cout << "Subtracting ... " << endl; }
+        |	valueExp '*' valueExp 		{
+                                                  $$ = new ExpressionNode(ExpressionNode::Multiply, $1, $3);
+                                                  cout << "Multiplying ... " << endl; }
+        |	valueExp '/' valueExp 		{
+                                                  $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3);
+                                                  cout << "Dividing ... " << endl; }
+        |	valueExp AND valueExp 		{
+                                                  $$ = new ExpressionNode(ExpressionNode::And, $1, $3);
+                                                  cout << "Logical AND ... " << endl; }
+        |	valueExp OR valueExp 		{
+                                                  $$ = new ExpressionNode(ExpressionNode::Or, $1, $3);
+                                                  cout << "Logical OR ... " << endl; }
         |	'(' valueExp ')' 		{ cout << "Enclosure ..." << endl; }
 	| 	'-' valueExp %prec UMINUS 	{ cout << "Unary minus ... " << endl; }
 	| 	NOT valueExp %prec NOT 		{ cout << "Logical NOT ... " << endl; }
@@ -353,7 +367,8 @@ indexComp:
 // =================================
 	
 streamComp:
-                UVAR		{ cout << "User variable: " << $1 << endl << "Streaming ... " << endl; }
+                UVAR		{ $$ = new NameNode($1);
+                                  cout << "User variable: " << $1 << endl << "Streaming ... " << endl; }
         |	bundleDef	{ $$ = $1;
                                   cout << "Resolving indexed array ..." << endl << "Streaming ... " << endl; }
         |	functionDef	{ cout << "Resolving function definition ... " << endl << "Streaming ... " << endl; }

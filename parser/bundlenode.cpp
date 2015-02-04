@@ -11,7 +11,7 @@ BundleNode::~BundleNode()
 {
 
 }
-string BundleNode::name() const
+string BundleNode::getName() const
 {
     return m_name;
 }
