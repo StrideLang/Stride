@@ -1,6 +1,6 @@
-#include "objectnode.h"
+#include "blocknode.h"
 
-ObjectNode::ObjectNode(string name, string objectType, AST *propertiesList):
+BlockNode::BlockNode(string name, string objectType, AST *propertiesList):
     AST(AST::Object)
 {
     m_name = name;
@@ -10,15 +10,15 @@ ObjectNode::ObjectNode(string name, string objectType, AST *propertiesList):
     }
 }
 
-ObjectNode::~ObjectNode()
+BlockNode::~BlockNode()
 {
 
 }
-string ObjectNode::getName() const
+string BlockNode::getName() const
 {
     return m_name;
 }
-string ObjectNode::getObjectType() const
+string BlockNode::getObjectType() const
 {
     return m_objectType;
 }

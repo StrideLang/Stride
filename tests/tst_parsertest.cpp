@@ -5,7 +5,7 @@
 #include "platformnode.h"
 #include "streamnode.h"
 #include "bundlenode.h"
-#include "objectnode.h"
+#include "blocknode.h"
 #include "valuenode.h"
 #include "propertynode.h"
 #include "namenode.h"
@@ -193,8 +193,10 @@ void ParserTest::testTreeBuildLists()
     AST *tree;
     tree = parse(QString(QFINDTESTDATA("data/list.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
-//    vector<AST *> nodes = tree->getChildren();
-//    QVERIFY(nodes.size() == 9);
+    vector<AST *> nodes = tree->getChildren();
+    QVERIFY(nodes.size() == 9);
+
+
 //    tree->deleteChildren();
 //    delete tree;
 }
@@ -256,7 +258,7 @@ void ParserTest::testTreeBuildBlocks()
     QVERIFY(static_cast<PropertyNode *>(property)->getName() == "value");
     propertyValue = property->getChildren().at(0);
     QVERIFY(propertyValue->getNodeType() == AST::Object);
-    ObjectNode *object = static_cast<ObjectNode *>(propertyValue);
+    BlockNode *object = static_cast<BlockNode *>(propertyValue);
     QVERIFY(object->getName() == "");
     QVERIFY(object->getObjectType() == "");
     vector<AST *> objProperties = object->getChildren();

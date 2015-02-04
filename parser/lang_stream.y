@@ -23,7 +23,7 @@ int error = 0;
 %}
 %code requires { #include "ast.h" }
 %code requires { #include "platformnode.h" }
-%code requires { #include "objectnode.h" }
+%code requires { #include "blocknode.h" }
 %code requires { #include "streamnode.h" }
 %code requires { #include "propertynode.h" }
 %code requires { #include "bundlenode.h" }
@@ -38,7 +38,7 @@ int error = 0;
         char *	sval;
         AST  *  ast;
         PlatformNode *platformNode;
-        ObjectNode *objectNode;
+        BlockNode *blockNode;
         StreamNode *streamNode;
         PropertyNode *propertyNode;
         BundleNode *bundleNode;
@@ -48,7 +48,7 @@ int error = 0;
 
 /* declare types for nodes */
 %type <platformNode> platformDef
-%type <objectNode> blockDef
+%type <blockNode> blockDef
 %type <ast> blockType
 %type <ast> properties
 %type <propertyNode> property
@@ -122,7 +122,7 @@ platformDef:
 	
 blockDef: 	
                 WORD UVAR blockType 		{
-                                                  $$ = new ObjectNode($2, $1, $3);
+                                                  $$ = new BlockNode($2, $1, $3);
                                                   AST *props = $3;
                                                   delete props;
                                                   cout << "Block: " << $1 << ", Labelled: " << $2 << endl;
@@ -228,7 +228,7 @@ propertyType:
 	|	OFF				{ cout << "Keyword: off" << endl; }
         |	STRING			{ $$ = new ValueNode($1); cout << "String: " << $1 << endl; free($1); }
         |	valueExp		{ $$ = $1; cout << "Value expression as property value!" << endl; }
-        |	blockType		{ $$ = new ObjectNode("", "" , $1);
+        |	blockType		{ $$ = new BlockNode("", "" , $1);
                                           AST *props = $1;
                                           delete props;
                                           cout << "Block as property value!" << endl; }

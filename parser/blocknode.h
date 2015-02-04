@@ -5,11 +5,11 @@
 
 #include "ast.h"
 
-class ObjectNode : public AST
+class BlockNode : public AST
 {
 public:
-    ObjectNode(string name, string objectType, AST *propertiesList);
-    ~ObjectNode();
+    BlockNode(string name, string objectType, AST *propertiesList);
+    ~BlockNode();
 
     string getName() const;
 
