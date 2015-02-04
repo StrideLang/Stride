@@ -112,6 +112,7 @@ platformDef:
                 USE UVAR VERSION FLOAT {
                 cout << "Platform: " << $2 << endl << "Version: " << $4 << endl;
                 $$ = new PlatformNode(string($2), $4);
+                free($2);
                 }
 	;
 
@@ -122,10 +123,13 @@ platformDef:
 blockDef: 	
                 WORD UVAR blockType 		{
                                                   $$ = new ObjectNode($2, $1, $3);
-                                                  // AST *props = $3;
-                                                  // delete props;  // FIXME this leaks!
-                                                  cout << "Block: " << $1 << ", Labelled: " << $2 << endl; }
-	|	WORD bundleDef blockType	{ cout << "Block Bundle ..." << endl;  }
+                                                  AST *props = $3;
+                                                  delete props;
+                                                  cout << "Block: " << $1 << ", Labelled: " << $2 << endl;
+                                                  free($1);
+                                                  free($2);
+                                                  }
+        |	WORD bundleDef blockType	{ cout << "Block Bundle ..." << endl; free($1);  }
 	;
 
 blockType: 	
@@ -153,7 +157,8 @@ streamType:
 
 bundleDef:
                 UVAR '[' indexExp ']'	{ $$ = new BundleNode($1, $3);
-                                          cout << "Bundle name: " << $1 << endl; }
+                                          cout << "Bundle name: " << $1 << endl;
+                                          free($1);}
 	;
 
 // ================================= 
@@ -163,16 +168,20 @@ bundleDef:
 functionDef:
                 WORD '(' ')'		{
                                           $$ = new FunctionNode($1, NULL, FunctionNode::BuiltIn);
-                                          cout << "Platform function: " << $1 << endl; }
+                                          cout << "Platform function: " << $1 << endl;
+                                          free($1); }
         |	WORD '(' properties ')'	{
                                           $$ = new FunctionNode($1, $3, FunctionNode::BuiltIn);
-                                          cout << "Properties () ..." << endl << "Platform function: " << $1 << endl; }
+                                          cout << "Properties () ..." << endl << "Platform function: " << $1 << endl;
+                                          free($1);}
         |	UVAR '(' ')'		{
                                           $$ = new FunctionNode($1, NULL, FunctionNode::UserDefined);
-                                          cout << "User function: " << $1 << endl; }
+                                          cout << "User function: " << $1 << endl;
+                                          free($1); }
         |	UVAR '(' properties ')' {
                                           $$ = new FunctionNode($1, $3, FunctionNode::UserDefined);
-                                          cout << "Properties () ..." << endl << "User function: " << $1 << endl; }
+                                          cout << "Properties () ..." << endl << "User function: " << $1 << endl;
+                                          free($1); }
 	;	
 	
 // ================================= 
@@ -182,18 +191,18 @@ functionDef:
 properties: 	
                 properties property SEMICOLON	{ AST *temp = new AST();
                                                   AST *props = $1;
-                                                  props->pushParent(temp);
+                                                  props->giveChildren(temp);
                                                   temp->addChild($2);
                                                   $$ = temp;
-                                                  // delete props;  // FIXME this leaks!
+                                                  delete props;
                                                   cout << "Ignoring semicolon!" << endl ; }
         |	properties property		{
                                                   AST *temp = new AST();
                                                   AST *props = $1;
-                                                  props->pushParent(temp);
+                                                  props->giveChildren(temp);
                                                   temp->addChild($2);
                                                   $$ = temp;
-                                                  // delete props;  // FIXME this leaks!
+                                                  delete props;
                                                   }
         |	property SEMICOLON		{
                                                   AST *temp = new AST();
@@ -208,18 +217,20 @@ properties:
 	
 property: 	
                 WORD COLON propertyType 	{ $$ = new PropertyNode($1, $3);
-                                                  cout << "Property: " << $1 << endl << "New property ... " << endl; }
+                                                  cout << "Property: " << $1 << endl << "New property ... " << endl;
+                                                  free($1);
+                                                  }
 	;
 	
 propertyType: 	
 		NONE			{ cout << "Keyword: none" << endl; }
 	|	ON				{ cout << "Keyword: on" << endl; }
 	|	OFF				{ cout << "Keyword: off" << endl; }
-        |	STRING			{ $$ = new ValueNode($1); cout << "String: " << $1 << endl; }
+        |	STRING			{ $$ = new ValueNode($1); cout << "String: " << $1 << endl; free($1); }
         |	valueExp		{ $$ = $1; cout << "Value expression as property value!" << endl; }
         |	blockType		{ $$ = new ObjectNode("", "" , $1);
-                                          // AST *props = $1;
-                                          // delete props;  // FIXME this leaks!
+                                          AST *props = $1;
+                                          delete props;
                                           cout << "Block as property value!" << endl; }
         |	streamType		{ $$ = $1; cout << "Stream as property value!" << endl; }
         |	listDef			{ }
@@ -239,8 +250,8 @@ listDef:
 	;
 
 stringList:
-		stringList COMMA STRING		{ cout << "String: " << $3 << endl << "New list item ... " << endl; }
-	|	STRING						{ cout << "String: " << $1 << endl << "New list item ... " << endl; }
+                stringList COMMA STRING		{ cout << "String: " << $3 << endl << "New list item ... " << endl; free($3); }
+        |	STRING				{ cout << "String: " << $1 << endl << "New list item ... " << endl; free($1); }
 	;
 
 switchList:
@@ -358,7 +369,7 @@ streamExp:
 indexComp:
                 INT		{ $$ = new ValueNode($1);
                                   cout << "Index/Size Integer: " << $1 << endl; }
-        |	UVAR		{ cout << "Index/Size User variable: " << $1 << endl; }
+        |	UVAR		{ cout << "Index/Size User variable: " << $1 << endl; free($1); }
         |	bundleDef	{ cout << "Resolving indexed array ..." << endl; }
 	;
 
@@ -368,9 +379,9 @@ indexComp:
 	
 streamComp:
                 UVAR		{ $$ = new NameNode($1);
-                                  cout << "User variable: " << $1 << endl << "Streaming ... " << endl; }
-        |	bundleDef	{ $$ = $1;
-                                  cout << "Resolving indexed array ..." << endl << "Streaming ... " << endl; }
+                                  cout << "User variable: " << $1 << endl << "Streaming ... " << endl;
+                                  free($1); }
+        |	bundleDef	{ cout << "Resolving indexed array ..." << endl << "Streaming ... " << endl; }
         |	functionDef	{ cout << "Resolving function definition ... " << endl << "Streaming ... " << endl; }
 	|	valueListDef	{ cout << "Resolving list definition ... " << endl << "Streaming ... " << endl;}
 	;
@@ -385,7 +396,9 @@ valueComp:
         |	FLOAT	{ $$ = new ValueNode($1);
                           cout << "Real: " << $1 << endl; }
         |	UVAR	{ $$ = new NameNode($1);
-                          cout << "User variable: " << $1 << endl; }
+                          cout << "User variable: " << $1 << endl;
+                          free($1);
+                          }
         |	bundleDef	{ $$ = $1;
                                   cout << "Resolving indexed array ..." << endl; }
         |	functionDef	{ cout << "Resolving function definition ..." << endl; }

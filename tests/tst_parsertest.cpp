@@ -147,9 +147,8 @@ void ParserTest::testTreeBuildStream()
     QVERIFY(leafnode->getNodeType() == AST::Int);
     QVERIFY(static_cast<ValueNode *>(leafnode)->getIntValue() == 2);
 
-
+    tree->deleteChildren();
     delete tree;
-
 }
 
 void ParserTest::testTreeBuildBasic()
@@ -163,6 +162,7 @@ void ParserTest::testTreeBuildBasic()
     PlatformNode *node = static_cast<PlatformNode *>(nodes.at(0));
     QVERIFY(node->platformName() == "PufferFish");
     QVERIFY(node->version() == 1.1f);
+    tree->deleteChildren();
     delete tree;
 
     tree = parse(QString(QFINDTESTDATA("data/simple.stream")).toStdString().c_str());
@@ -184,6 +184,7 @@ void ParserTest::testTreeBuildBasic()
     leafnode = bundle->index();
     QVERIFY(leafnode->getNodeType() == AST::Int);
     QVERIFY(static_cast<ValueNode *>(leafnode)->getIntValue() == 2);
+    tree->deleteChildren();
     delete tree;
 }
 
@@ -194,6 +195,8 @@ void ParserTest::testTreeBuildLists()
     QVERIFY(tree != NULL);
 //    vector<AST *> nodes = tree->getChildren();
 //    QVERIFY(nodes.size() == 9);
+//    tree->deleteChildren();
+//    delete tree;
 }
 
 void ParserTest::testTreeBuildBlocks()
@@ -219,7 +222,6 @@ void ParserTest::testTreeBuildBlocks()
     propertyValue = property->getChildren().at(0);
     QVERIFY(propertyValue->getNodeType() == AST::String);
     QVERIFY(static_cast<ValueNode *>(propertyValue)->getStringValue() == "Guitar input.");
-
 
     node = nodes.at(1);
     QVERIFY(node->getNodeType() == AST::Object);
@@ -298,6 +300,7 @@ void ParserTest::testTreeBuildBlocks()
     QVERIFY(propertyValue->getNodeType() == AST::String);
     QVERIFY(static_cast<ValueNode *>(propertyValue)->getStringValue() == "Stream property");
 
+    tree->deleteChildren();
     delete tree;
 }
 
@@ -305,15 +308,17 @@ void ParserTest::testParser()
 {
     AST *tree;
     QStringList files;
-    files << "data/platform.stream" << "data/simple.stream" << "data/array.stream" << "data/list.stream"
-          << "data/introBlock.stream"
-          << "data/introConverter.stream" << "data/introFeedback.stream"
-          << "data/introGenerator.stream" << "data/introProcessor.stream"
-          << "data/introFM.stream" << "data/introRemote.stream";
+//    files << "data/platform.stream" << "data/simple.stream" << "data/array.stream" << "data/list.stream"
+//          << "data/stream.stream" << "data/block.stream"
+//          << "data/introBlock.stream"
+//          << "data/introConverter.stream" << "data/introFeedback.stream"
+//          << "data/introGenerator.stream" << "data/introProcessor.stream"
+//          << "data/introFM.stream" << "data/introRemote.stream";
     foreach (QString file, files) {
         tree = parse(QString(QFINDTESTDATA(file)).toStdString().c_str());
         QVERIFY(tree != NULL);
-//        delete tree; // FIXME this leaks
+//        tree->deleteChildren(); // FIXME this leaks
+        delete tree;
     }
 }
 

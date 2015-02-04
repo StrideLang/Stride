@@ -5,7 +5,7 @@ FunctionNode::FunctionNode(string name, AST *propertiesList, FunctionType type) 
 {
     m_name = name;
     if (propertiesList) {
-        propertiesList->pushParent(this);
+        propertiesList->giveChildren(this);
     }
     m_type = type;
 }

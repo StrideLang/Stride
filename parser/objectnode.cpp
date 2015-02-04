@@ -6,7 +6,7 @@ ObjectNode::ObjectNode(string name, string objectType, AST *propertiesList):
     m_name = name;
     m_objectType = objectType;
     if (propertiesList) {
-        propertiesList->pushParent(this);
+        propertiesList->giveChildren(this);
     }
 }
 
