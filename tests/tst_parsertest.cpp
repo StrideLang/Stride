@@ -310,12 +310,12 @@ void ParserTest::testParser()
 {
     AST *tree;
     QStringList files;
-//    files << "data/platform.stream" << "data/simple.stream" << "data/array.stream" << "data/list.stream"
-//          << "data/stream.stream" << "data/block.stream"
-//          << "data/introBlock.stream"
-//          << "data/introConverter.stream" << "data/introFeedback.stream"
-//          << "data/introGenerator.stream" << "data/introProcessor.stream"
-//          << "data/introFM.stream" << "data/introRemote.stream";
+    files << "data/platform.stream" << "data/simple.stream" << "data/array.stream" << "data/list.stream"
+          << "data/stream.stream" << "data/block.stream"
+          << "data/introBlock.stream"
+          << "data/introConverter.stream" << "data/introFeedback.stream"
+          << "data/introGenerator.stream" << "data/introProcessor.stream"
+          << "data/introFM.stream" << "data/introRemote.stream";
     foreach (QString file, files) {
         tree = parse(QString(QFINDTESTDATA(file)).toStdString().c_str());
         QVERIFY(tree != NULL);
