@@ -13,7 +13,8 @@ SOURCES += ast.cpp \
     namenode.cpp \
     functionnode.cpp \
     expressionnode.cpp \
-    blocknode.cpp
+    blocknode.cpp \
+    listnode.cpp
 
 HEADERS += ast.h \
            platformnode.h \
@@ -24,7 +25,8 @@ HEADERS += ast.h \
     namenode.h \
     functionnode.h \
     expressionnode.h \
-    blocknode.h
+    blocknode.h \
+    listnode.h
 
 BISONSOURCES = lang_stream.y
 FLEXSOURCES = lang_stream.l

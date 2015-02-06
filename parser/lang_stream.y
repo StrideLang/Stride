@@ -31,6 +31,7 @@ int error = 0;
 %code requires { #include "namenode.h" }
 %code requires { #include "functionnode.h" }
 %code requires { #include "expressionnode.h" }
+%code requires { #include "listnode.h" }
 
 %union {
 	int 	ival;
@@ -43,6 +44,7 @@ int error = 0;
         PropertyNode *propertyNode;
         BundleNode *bundleNode;
         FunctionNode *functionNode;
+        ListNode *listNode;
 /*        ExpressionNode *expressionNode;*/
 }
 
@@ -63,6 +65,16 @@ int error = 0;
 %type <ast> indexComp
 %type <bundleNode> bundleDef
 %type <functionNode> functionDef
+%type <listNode> listDef
+%type <listNode> valueListList
+%type <listNode> valueListExp
+%type <listNode> valueList
+%type <listNode> valueListDef
+%type <listNode> stringList
+%type <listNode> switchList
+%type <listNode> blockList
+%type <listNode> streamList
+%type <listNode> listList
 
 
 /* declare tokens */
@@ -129,7 +141,12 @@ blockDef:
                                                   free($1);
                                                   free($2);
                                                   }
-        |	WORD bundleDef blockType	{ cout << "Block Bundle ..." << endl; free($1);  }
+        |	WORD bundleDef blockType	{
+                                                  $$ = new BlockNode($2, $1, $3);
+                                                  AST *props = $3;
+                                                  delete props;
+                                                  cout << "Block Bundle ..." << endl;
+                                                  free($1);  }
 	;
 
 blockType: 	
@@ -194,6 +211,7 @@ properties:
                                                   props->giveChildren(temp);
                                                   temp->addChild($2);
                                                   $$ = temp;
+                                                  props->deleteChildren();
                                                   delete props;
                                                   cout << "Ignoring semicolon!" << endl ; }
         |	properties property		{
@@ -202,6 +220,7 @@ properties:
                                                   props->giveChildren(temp);
                                                   temp->addChild($2);
                                                   $$ = temp;
+                                                  props->deleteChildren();
                                                   delete props;
                                                   }
         |	property SEMICOLON		{
@@ -224,8 +243,8 @@ property:
 	
 propertyType: 	
 		NONE			{ cout << "Keyword: none" << endl; }
-	|	ON				{ cout << "Keyword: on" << endl; }
-	|	OFF				{ cout << "Keyword: off" << endl; }
+        |	ON			{ cout << "Keyword: on" << endl; }
+        |	OFF			{ cout << "Keyword: off" << endl; }
         |	STRING			{ $$ = new ValueNode($1); cout << "String: " << $1 << endl; free($1); }
         |	valueExp		{ $$ = $1; cout << "Value expression as property value!" << endl; }
         |	blockType		{ $$ = new BlockNode("", "" , $1);
@@ -233,8 +252,8 @@ propertyType:
                                           delete props;
                                           cout << "Block as property value!" << endl; }
         |	streamType		{ $$ = $1; cout << "Stream as property value!" << endl; }
-        |	listDef			{ }
-        |	valueListExp	{ cout << "List expression as property value!" << endl; }
+        |	listDef			{ $$ = $1; }
+        |	valueListExp	{ $$ = $1; cout << "List expression as property value!" << endl; }
 	;
 
 // ================================= 
@@ -242,16 +261,26 @@ propertyType:
 // =================================
 
 listDef:
-		'[' stringList ']'	{}
-	|	'[' switchList ']'	{}
-	|	'[' blockList  ']'	{}
-	|	'[' streamList ']'	{}
-	|	'[' listList   ']'	{}
+                '[' stringList ']'	{ $$ = $2; }
+        |	'[' switchList ']'	{ $$ = $2; }
+        |	'[' blockList  ']'	{ $$ = $2; }
+        |	'[' streamList ']'	{ $$ = $2; }
+        |	'[' listList   ']'	{ $$ = $2; }
 	;
 
 stringList:
-                stringList COMMA STRING		{ cout << "String: " << $3 << endl << "New list item ... " << endl; free($3); }
-        |	STRING				{ cout << "String: " << $1 << endl << "New list item ... " << endl; free($1); }
+                stringList COMMA STRING		{
+                                                  ListNode *list = new ListNode(NULL);
+                                                  list->stealMembers($1);
+                                                  ListNode *oldList = $1;
+                                                  oldList->deleteChildren();
+                                                  delete oldList;
+                                                  list->addChild(new ValueNode($3));
+                                                  $$ = list;
+                                                  cout << "String: " << $3 << endl << "New list item ... " << endl; free($3); }
+        |	STRING				{
+                                                  $$ = new ListNode(new ValueNode($1));
+                                                  cout << "String: " << $1 << endl << "New list item ... " << endl; free($1); }
 	;
 
 switchList:
@@ -262,18 +291,43 @@ switchList:
 	;
 	
 blockList:
-		blockList COMMA blockDef	{ cout << "Block definition ... " << endl << "New list item ... " << endl; }
-	|	blockDef					{ cout << "Block definition ... " << endl << "New list item ... " << endl; }
+                blockList COMMA blockDef	{
+                                                  ListNode *list = new ListNode(NULL);
+                                                  list->stealMembers($1);
+                                                  ListNode *oldList = $1;
+                                                  oldList->deleteChildren();
+                                                  delete oldList;
+                                                  list->addChild($3);
+                                                  $$ = list;
+                                                  cout << "Block definition ... " << endl << "New list item ... " << endl; }
+        |	blockDef			{ $$ = new ListNode($1); cout << "Block definition ... " << endl << "New list item ... " << endl; }
 	;
 	
 streamList:
-		streamList COMMA streamType	{ cout << "Stream definition ... " << endl << "New list item ... " << endl; }
-	|	streamType					{ cout << "Stream definition ... " << endl << "New list item ... " << endl; }
+                streamList COMMA streamType	{
+                                                  ListNode *list = new ListNode(NULL);
+                                                  list->stealMembers($1);
+                                                  ListNode *oldList = $1;
+                                                  oldList->deleteChildren();
+                                                  delete oldList;
+                                                  list->addChild($3);
+                                                  $$ = list;
+                                                  cout << "Stream definition ... " << endl << "New list item ... " << endl; }
+        |	streamType			{ $$ = new ListNode($1); cout << "Stream definition ... " << endl << "New list item ... " << endl; }
 	;
 	
 listList:
-		listList COMMA listDef		{ cout << "List of lists ..." << endl << "New list item ... " << endl; }
-	|	listDef						{ cout << "List of lists ..." << endl << "New list item ... " << endl; }
+                listList COMMA listDef		{
+                                                  ListNode *list = new ListNode(NULL);
+                                                  list->stealMembers($1);
+                                                  ListNode *oldList = $1;
+                                                  oldList->deleteChildren();
+                                                  delete oldList;
+                                                  list->addChild($3);
+                                                  $$ = list;
+                                                  cout << "List of lists ..." << endl << "New list item ... " << endl; }
+        |	listDef				{
+                                                  $$ = new ListNode($1); cout << "List of lists ..." << endl << "New list item ... " << endl; }
 	;
 	
 // ================================= 
@@ -281,18 +335,36 @@ listList:
 // =================================
 	
 valueListDef:
-		'[' valueList ']'		{}
-	|	'[' valueListList ']'	{}	
+                '[' valueList ']'	{ $$ = $2; }
+        |	'[' valueListList ']'	{ $$ = $2; }
 	;
 	
 valueList:
-		valueList COMMA valueExp	{ cout << "Value expression ..." << endl << "New list item ... " << endl; }
-	|	valueExp					{ cout << "Value expression ..." << endl << "New list item ... " << endl; }
+                valueList COMMA valueExp	{
+                                                  ListNode *list = new ListNode(NULL);
+                                                  list->stealMembers($1);
+                                                  ListNode *oldList = $1;
+                                                  oldList->deleteChildren();
+                                                  delete oldList;
+                                                  list->addChild($3);
+                                                  $$ = list;
+                                                  cout << "Value expression ..." << endl << "New list item ... " << endl; }
+        |	valueExp			{
+                                                  $$ = new ListNode($1);
+                                                  cout << "Value expression ..." << endl << "New list item ... " << endl; }
 	;	
 
 valueListList:
-		valueListList COMMA valueListDef	{ cout << "List of lists ..." << endl << "New list item ... " << endl; }
-	|	valueListDef						{ cout << "List of lists ..." << endl << "New list item ... " << endl; }
+                valueListList COMMA valueListDef	{
+                                                          ListNode *list = new ListNode(NULL);
+                                                          list->stealMembers($1);
+                                                          ListNode *oldList = $1;
+                                                          oldList->deleteChildren();
+                                                          delete oldList;
+                                                          list->addChild($3);
+                                                          $$ = list;
+                                                          cout << "List of lists ..." << endl << "New list item ... " << endl; }
+        |	valueListDef				{ $$ = new ListNode($1);  cout << "List of lists ..." << endl << "New list item ... " << endl; }
 	;
 
 // ================================= 
@@ -321,7 +393,7 @@ valueListExp:
 	|	valueExp '-' valueListDef	{ cout << "Subtracting ... " << endl; }
 	|	valueExp '*' valueListDef	{ cout << "Multiplying ... " << endl; }
 	|	valueExp '/' valueListDef	{ cout << "Dividing ... " << endl; }
-	|	valueListDef				{}
+        |	valueListDef			{ $$ = $1; }
 	;
 
 // ================================= 
@@ -348,8 +420,12 @@ valueExp:
                                                   $$ = new ExpressionNode(ExpressionNode::Or, $1, $3);
                                                   cout << "Logical OR ... " << endl; }
         |	'(' valueExp ')' 		{ cout << "Enclosure ..." << endl; }
-	| 	'-' valueExp %prec UMINUS 	{ cout << "Unary minus ... " << endl; }
-	| 	NOT valueExp %prec NOT 		{ cout << "Logical NOT ... " << endl; }
+        | 	'-' valueExp %prec UMINUS 	{
+                                                  $$ = new ExpressionNode(ExpressionNode::UnaryMinus, $2);
+                                                  cout << "Unary minus ... " << endl; }
+        | 	NOT valueExp %prec NOT 		{
+                                                  $$ = new ExpressionNode(ExpressionNode::UnaryMinus, $2);
+                                                  cout << "Logical NOT ... " << endl; }
         | 	valueComp			{ $$ = $1; }
 	;
 

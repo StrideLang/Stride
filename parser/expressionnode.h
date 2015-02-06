@@ -12,14 +12,19 @@ public:
         Add,
         Subtract,
         And,
-        Or
+        Or,
+        UnaryMinus,
+        LogicalNot
     } ExpressionType;
 
     ExpressionNode(ExpressionType type, AST *left, AST *right);
+    ExpressionNode(ExpressionType type, AST *value);
     ~ExpressionNode();
 
     AST *getLeft() const {return m_children.at(0); }
     AST *getRight() const { return m_children.at(1); }
+
+    AST *getValue() const;
 
     ExpressionType getExpressionType() const { return m_type; }
 

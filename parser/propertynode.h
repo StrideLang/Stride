@@ -12,6 +12,7 @@ public:
     ~PropertyNode();
 
     string getName() const { return m_name; }
+    AST *getValue() const { return m_children[0]; }
 
 private:
     string m_name;

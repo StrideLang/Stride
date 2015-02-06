@@ -14,9 +14,11 @@ public:
         None,
         Platform,
         Bundle,
-        Object,
+        BlockBundle,
+        Block,
         Stream,
         Property,
+        List,
         Value,
 
         // Built-in types (leaf nodes)
