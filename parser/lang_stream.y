@@ -45,7 +45,7 @@ int error = 0;
         BundleNode *bundleNode;
         FunctionNode *functionNode;
         ListNode *listNode;
-/*        ExpressionNode *expressionNode;*/
+        ExpressionNode *expressionNode;
 }
 
 /* declare types for nodes */
@@ -59,7 +59,6 @@ int error = 0;
 %type <streamNode> streamType
 %type <ast> streamExp
 %type <ast> streamComp
-%type <ast> valueExp
 %type <ast> valueComp
 %type <ast> indexExp
 %type <ast> indexComp
@@ -67,7 +66,6 @@ int error = 0;
 %type <functionNode> functionDef
 %type <listNode> listDef
 %type <listNode> valueListList
-%type <listNode> valueListExp
 %type <listNode> valueList
 %type <listNode> valueListDef
 %type <listNode> stringList
@@ -75,6 +73,9 @@ int error = 0;
 %type <listNode> blockList
 %type <listNode> streamList
 %type <listNode> listList
+
+%type <ast> valueExp
+%type <ast> valueListExp
 
 
 /* declare tokens */
@@ -101,19 +102,19 @@ int error = 0;
 %%
 
 entry: 
-		/*epsilon*/		{}
-        | 	entry start		{ cout << endl << "Grabbing Next ..." << endl ; }
+                /*epsilon*/	{}
+        | 	entry start	{ cout << endl << "Grabbing Next ..." << endl ; }
 	| 	entry SEMICOLON	{ cout << "Ignoring Semicolon!" << endl ; }	
 	;
 
 start:
-                platformDef		{ tree_head->addChild($1);
+                platformDef	{ tree_head->addChild($1);
                                            cout << "Platform Definition Resolved!" << endl; }
-        |	blockDef		{ tree_head->addChild($1);
+        |	blockDef	{ tree_head->addChild($1);
                                           cout << "Block Resolved!" << endl; }
-        |	streamDef		{ tree_head->addChild($1);
+        |	streamDef	{ tree_head->addChild($1);
                                           cout << "Stream Definition Resolved!" << endl;}
-	|	ERROR			{ yyerror("Unrecognised Character: ", $1); }
+        |	ERROR		{ yyerror("Unrecognised Character: ", $1); }
 	;
 
 // ================================= 
@@ -122,9 +123,11 @@ start:
 
 platformDef:
                 USE UVAR VERSION FLOAT {
-                cout << "Platform: " << $2 << endl << "Version: " << $4 << endl;
-                $$ = new PlatformNode(string($2), $4);
-                free($2);
+                        cout << "Platform: " << $2 << endl << "Version: " << $4 << endl;
+                        string s;
+                        s.append($2); /* string constructor leaks otherwise! */
+                        $$ = new PlatformNode(s, $4);
+                        free($2);
                 }
 	;
 
@@ -134,7 +137,11 @@ platformDef:
 	
 blockDef: 	
                 WORD UVAR blockType 		{
-                                                  $$ = new BlockNode($2, $1, $3);
+                                                  string word;
+                                                  word.append($1); /* string constructor leaks otherwise! */
+                                                  string uvar;
+                                                  uvar.append($2); /* string constructor leaks otherwise! */
+                                                  $$ = new BlockNode(uvar, word, $3);
                                                   AST *props = $3;
                                                   delete props;
                                                   cout << "Block: " << $1 << ", Labelled: " << $2 << endl;
@@ -142,7 +149,9 @@ blockDef:
                                                   free($2);
                                                   }
         |	WORD bundleDef blockType	{
-                                                  $$ = new BlockNode($2, $1, $3);
+                                                  string s;
+                                                  s.append($1); /* string constructor leaks otherwise! */
+                                                  $$ = new BlockNode($2, s, $3);
                                                   AST *props = $3;
                                                   delete props;
                                                   cout << "Block Bundle ..." << endl;
@@ -163,7 +172,7 @@ streamDef:
 	;
 
 streamType:
-                valueExp STREAM streamExp  	{ $$ = new StreamNode( $1, $3);
+                valueExp STREAM streamExp  	{ $$ = new StreamNode($1, $3);
                                                   cout << "Stream Resolved!" << endl; }
         |	valueListExp STREAM streamExp	{ cout << "Stream Resolved!" << endl; }
 	;
@@ -173,7 +182,10 @@ streamType:
 // =================================
 
 bundleDef:
-                UVAR '[' indexExp ']'	{ $$ = new BundleNode($1, $3);
+                UVAR '[' indexExp ']'	{
+                                          string s;
+                                          s.append($1); /* string constructor leaks otherwise! */
+                                          $$ = new BundleNode(s, $3);
                                           cout << "Bundle name: " << $1 << endl;
                                           free($1);}
 	;
@@ -184,19 +196,27 @@ bundleDef:
 
 functionDef:
                 WORD '(' ')'		{
-                                          $$ = new FunctionNode($1, NULL, FunctionNode::BuiltIn);
+                                          string s;
+                                          s.append($1); /* string constructor leaks otherwise! */
+                                          $$ = new FunctionNode(s, NULL, FunctionNode::BuiltIn);
                                           cout << "Platform function: " << $1 << endl;
                                           free($1); }
         |	WORD '(' properties ')'	{
-                                          $$ = new FunctionNode($1, $3, FunctionNode::BuiltIn);
+                                          string s;
+                                          s.append($1); /* string constructor leaks otherwise! */
+                                          $$ = new FunctionNode(s, $3, FunctionNode::BuiltIn);
                                           cout << "Properties () ..." << endl << "Platform function: " << $1 << endl;
                                           free($1);}
         |	UVAR '(' ')'		{
-                                          $$ = new FunctionNode($1, NULL, FunctionNode::UserDefined);
+                                          string s;
+                                          s.append($1); /* string constructor leaks otherwise! */
+                                          $$ = new FunctionNode(s, NULL, FunctionNode::UserDefined);
                                           cout << "User function: " << $1 << endl;
                                           free($1); }
         |	UVAR '(' properties ')' {
-                                          $$ = new FunctionNode($1, $3, FunctionNode::UserDefined);
+                                          string s;
+                                          s.append($1); /* string constructor leaks otherwise! */
+                                          $$ = new FunctionNode(s, $3, FunctionNode::UserDefined);
                                           cout << "Properties () ..." << endl << "User function: " << $1 << endl;
                                           free($1); }
 	;	
@@ -235,7 +255,10 @@ properties:
 	;
 	
 property: 	
-                WORD COLON propertyType 	{ $$ = new PropertyNode($1, $3);
+                WORD COLON propertyType 	{
+                                                  string s;
+                                                  s.append($1); /* string constructor leaks otherwise! */
+                                                  $$ = new PropertyNode(s, $3);
                                                   cout << "Property: " << $1 << endl << "New property ... " << endl;
                                                   free($1);
                                                   }
@@ -245,7 +268,10 @@ propertyType:
 		NONE			{ cout << "Keyword: none" << endl; }
         |	ON			{ cout << "Keyword: on" << endl; }
         |	OFF			{ cout << "Keyword: off" << endl; }
-        |	STRING			{ $$ = new ValueNode($1); cout << "String: " << $1 << endl; free($1); }
+        |	STRING			{
+                                          string s;
+                                          s.append($1); /* string constructor leaks otherwise! */
+                                          $$ = new ValueNode(s); cout << "String: " << $1 << endl; free($1); }
         |	valueExp		{ $$ = $1; cout << "Value expression as property value!" << endl; }
         |	blockType		{ $$ = new BlockNode("", "" , $1);
                                           AST *props = $1;
@@ -275,11 +301,15 @@ stringList:
                                                   ListNode *oldList = $1;
                                                   oldList->deleteChildren();
                                                   delete oldList;
-                                                  list->addChild(new ValueNode($3));
+                                                  string s;
+                                                  s.append($3);  /* string constructor leaks otherwise! */
+                                                  list->addChild(new ValueNode(s));
                                                   $$ = list;
                                                   cout << "String: " << $3 << endl << "New list item ... " << endl; free($3); }
         |	STRING				{
-                                                  $$ = new ListNode(new ValueNode($1));
+                                                  string s;
+                                                  s.append($1);
+                                                  $$ = new ListNode(new ValueNode(s));
                                                   cout << "String: " << $1 << endl << "New list item ... " << endl; free($1); }
 	;
 
@@ -372,12 +402,20 @@ valueListList:
 // =================================
 	
 indexExp:
-		indexExp '+' indexExp 	{ cout << "Index/Size adding ... " << endl; }
-	|	indexExp '-' indexExp 	{ cout << "Index/Size subtracting ... " << endl; }
-	|	indexExp '*' indexExp 	{ cout << "Index/Size multiplying ... " << endl; }
-	|	indexExp '/' indexExp 	{ cout << "Index/Size dividing ... " << endl; }
-	|	'(' indexExp ')' 		{ cout << "Index/Size enclosure ..." << endl; }
-        |	indexComp		{  $$ = $1; }
+                indexExp '+' indexExp 	{
+                                          $$ = new ExpressionNode(ExpressionNode::Add, $1, $3);
+                                          cout << "Index/Size adding ... " << endl; }
+        |	indexExp '-' indexExp 	{
+                                          $$ = new ExpressionNode(ExpressionNode::Subtract, $1, $3);
+                                          cout << "Index/Size subtracting ... " << endl; }
+        |	indexExp '*' indexExp 	{
+                                          $$ = new ExpressionNode(ExpressionNode::Multiply , $1, $3);
+                                          cout << "Index/Size multiplying ... " << endl; }
+        |	indexExp '/' indexExp 	{
+                                          $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3);
+                                          cout << "Index/Size dividing ... " << endl; }
+        |	'(' indexExp ')' 	{ $$ = $2; cout << "Index/Size enclosure ..." << endl; }
+        |	indexComp		{ $$ = $1; }
 	;
 
 // ================================= 
@@ -385,14 +423,30 @@ indexExp:
 // =================================
 
 valueListExp:
-		valueListDef '+' valueExp	{ cout << "Adding ... " << endl; }
-	|	valueListDef '-' valueExp	{ cout << "Subtracting ... " << endl; }
-	|	valueListDef '*' valueExp	{ cout << "Multiplying ... " << endl; }
-	|	valueListDef '/' valueExp	{ cout << "Dividing ... " << endl; }
-	|	valueExp '+' valueListDef	{ cout << "Adding ... " << endl; }
-	|	valueExp '-' valueListDef	{ cout << "Subtracting ... " << endl; }
-	|	valueExp '*' valueListDef	{ cout << "Multiplying ... " << endl; }
-	|	valueExp '/' valueListDef	{ cout << "Dividing ... " << endl; }
+                valueListDef '+' valueExp	{
+                                                  $$ = new ExpressionNode(ExpressionNode::Add, $1, $3);
+                                                  cout << "Adding ... " << endl; }
+        |	valueListDef '-' valueExp	{
+                                                  $$ = new ExpressionNode(ExpressionNode::Subtract, $1, $3);
+                                                  cout << "Subtracting ... " << endl; }
+        |	valueListDef '*' valueExp	{
+                                                  $$ = new ExpressionNode(ExpressionNode::Multiply, $1, $3);
+                                                  cout << "Multiplying ... " << endl; }
+        |	valueListDef '/' valueExp	{
+                                                  $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3);
+                                                  cout << "Dividing ... " << endl; }
+        |	valueExp '+' valueListDef	{
+                                                  $$ = new ExpressionNode(ExpressionNode::Add , $1, $3);
+                                                  cout << "Adding ... " << endl; }
+        |	valueExp '-' valueListDef	{
+                                                  $$ = new ExpressionNode(ExpressionNode::Subtract, $1, $3);
+                                                  cout << "Subtracting ... " << endl; }
+        |	valueExp '*' valueListDef	{
+                                                  $$ = new ExpressionNode(ExpressionNode::Multiply, $1, $3);
+                                                  cout << "Multiplying ... " << endl; }
+        |	valueExp '/' valueListDef	{
+                                                  $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3);
+                                                  cout << "Dividing ... " << endl; }
         |	valueListDef			{ $$ = $1; }
 	;
 
@@ -419,7 +473,7 @@ valueExp:
         |	valueExp OR valueExp 		{
                                                   $$ = new ExpressionNode(ExpressionNode::Or, $1, $3);
                                                   cout << "Logical OR ... " << endl; }
-        |	'(' valueExp ')' 		{ cout << "Enclosure ..." << endl; }
+        |	'(' valueExp ')' 		{ $$ = $2; cout << "Enclosure ..." << endl; }
         | 	'-' valueExp %prec UMINUS 	{
                                                   $$ = new ExpressionNode(ExpressionNode::UnaryMinus, $2);
                                                   cout << "Unary minus ... " << endl; }
@@ -445,7 +499,11 @@ streamExp:
 indexComp:
                 INT		{ $$ = new ValueNode($1);
                                   cout << "Index/Size Integer: " << $1 << endl; }
-        |	UVAR		{ cout << "Index/Size User variable: " << $1 << endl; free($1); }
+        |	UVAR		{
+                                  string s;
+                                  s.append($1); /* string constructor leaks otherwise! */
+                                  $$ = new NameNode(s);
+                                  cout << "Index/Size User variable: " << $1 << endl; free($1); }
         |	bundleDef	{ cout << "Resolving indexed array ..." << endl; }
 	;
 
@@ -454,7 +512,10 @@ indexComp:
 // =================================
 	
 streamComp:
-                UVAR		{ $$ = new NameNode($1);
+                UVAR		{
+                                  string s;
+                                  s.append($1); /* string constructor leaks otherwise! */
+                                  $$ = new NameNode(s);
                                   cout << "User variable: " << $1 << endl << "Streaming ... " << endl;
                                   free($1); }
         |	bundleDef	{ cout << "Resolving indexed array ..." << endl << "Streaming ... " << endl; }
@@ -471,7 +532,10 @@ valueComp:
                           cout << "Integer: " << $1 << endl; }
         |	FLOAT	{ $$ = new ValueNode($1);
                           cout << "Real: " << $1 << endl; }
-        |	UVAR	{ $$ = new NameNode($1);
+        |	UVAR	{
+                          string s;
+                          s.append($1); /* string constructor leaks otherwise! */
+                          $$ = new NameNode(s);
                           cout << "User variable: " << $1 << endl;
                           free($1);
                           }
@@ -510,7 +574,8 @@ AST *parse(const char *filename){
 	
 	if (error > 0){
                 cout << endl << "Number of Errors: " << error << endl;
-                //TODO: free AST if error
+                tree_head->deleteChildren();
+                delete tree_head;
                 return ast;
         }
         ast = tree_head;

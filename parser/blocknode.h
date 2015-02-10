@@ -21,7 +21,6 @@ public:
 private:
     string m_name;
     string m_objectType;
-    BundleNode * m_bundle;
 };
 
 #endif // OBJECTNODE_H

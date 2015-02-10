@@ -2,7 +2,7 @@
 # ARRAYS 
 #========
 
-# Value shouSld resolve to an INTEGER
+# Value should resolve to an INTEGER
 # User variable should be of type 'constant'
 
 constant CONST {
@@ -15,16 +15,16 @@ constant SIZE [4] {
 	meta: 	'Array Sizes.'
 }
 
-# Decelerations
+# Declarations
 constant Array [1] {}
 constant Array [1+1] {}
 constant Array [ CONST + 1] {}
 constant Array [ CONST * 2] {}
-constant Array [ ( CONST * 2 ) + 1 ] {}
+constant Array_Parens [ ( CONST * 2 ) + 1 ] {}
 constant Array [ CONST / 4 ] {}
 
-constant Array [ SIZE [1] + SIZE [1 * 2] ] {}
-constant Array [ SIZE [1] / SIZE [1 * 2] ] {}
+constant Array_Expr [ SIZE [1] + SIZE [1 * 2] ] {}
+constant Array_Expr2 [ SIZE [1] / SIZE [1 - 2] ] {}
 
 # Properties
 

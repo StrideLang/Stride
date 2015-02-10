@@ -15,7 +15,7 @@ BlockNode::BlockNode(string name, string objectType, AST *propertiesList):
 BlockNode::BlockNode(BundleNode *bundle, string objectType, AST *propertiesList) :
     AST(AST::BlockBundle)
 {
-    m_bundle = bundle;
+    addChild(bundle);
     m_objectType = objectType;
     if (propertiesList) {
         propertiesList->giveChildren(this);
@@ -24,8 +24,8 @@ BlockNode::BlockNode(BundleNode *bundle, string objectType, AST *propertiesList)
 
 BlockNode::~BlockNode()
 {
-
 }
+
 string BlockNode::getName() const
 {
     assert(getNodeType() == AST::Block);
@@ -35,8 +35,9 @@ string BlockNode::getName() const
 BundleNode *BlockNode::getBundle() const
 {
     assert(getNodeType() == AST::BlockBundle);
-    return m_bundle;
+    return static_cast<BundleNode *>(m_children.at(0));
 }
+
 string BlockNode::getObjectType() const
 {
     return m_objectType;
