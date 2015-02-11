@@ -8,9 +8,11 @@
 class ValueNode : public AST
 {
 public:
+    ValueNode();
     ValueNode(int value);
     ValueNode(float value);
     ValueNode(string value);
+    ValueNode(bool value);
     ~ValueNode();
 
     int getIntValue() const;
@@ -19,10 +21,13 @@ public:
 
     string getStringValue() const;
 
+    bool getSwitchValue() const;
+
 private:
     int m_intValue;
     float m_floatValue;
     string m_stringValue;
+    bool m_switch;
 };
 
 #endif // VALUENODE_H

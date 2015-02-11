@@ -5,6 +5,7 @@
 
 #include "ast.h"
 #include "bundlenode.h"
+#include "propertynode.h"
 
 class BlockNode : public AST
 {
@@ -15,12 +16,14 @@ public:
 
     string getName() const;
     BundleNode *getBundle() const;
+    vector<PropertyNode *> getProperties() const;
 
     string getObjectType() const;
 
 private:
     string m_name;
     string m_objectType;
+    vector<PropertyNode *> m_properties;
 };
 
 #endif // OBJECTNODE_H

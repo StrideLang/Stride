@@ -2,6 +2,12 @@
 
 #include "valuenode.h"
 
+ValueNode::ValueNode() :
+    AST(AST::None)
+{
+
+}
+
 ValueNode::ValueNode(int value) :
     AST(AST::Int)
 {
@@ -18,6 +24,12 @@ ValueNode::ValueNode(string value) :
     AST(AST::String)
 {
     m_stringValue = value;
+}
+
+ValueNode::ValueNode(bool value) :
+    AST(AST::Switch)
+{
+    m_switch = value;
 }
 
 ValueNode::~ValueNode()
@@ -41,6 +53,12 @@ string ValueNode::getStringValue() const
 {
     assert(m_token == AST::String);
     return m_stringValue;
+}
+
+bool ValueNode::getSwitchValue() const
+{
+    assert(m_token == AST::Switch);
+    return m_switch;
 }
 
 

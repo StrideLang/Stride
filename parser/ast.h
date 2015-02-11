@@ -27,7 +27,8 @@ public:
         Name,
         String,
         Expression,
-        Function
+        Function,
+        Switch
     } Token;
 
     AST(Token token);

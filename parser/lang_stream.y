@@ -265,9 +265,9 @@ property:
 	;
 	
 propertyType: 	
-		NONE			{ cout << "Keyword: none" << endl; }
-        |	ON			{ cout << "Keyword: on" << endl; }
-        |	OFF			{ cout << "Keyword: off" << endl; }
+                NONE			{ $$ = new ValueNode(); cout << "Keyword: none" << endl; }
+        |	ON			{ $$ = new ValueNode(true); cout << "Keyword: on" << endl; }
+        |	OFF			{ $$ = new ValueNode(false); cout << "Keyword: off" << endl; }
         |	STRING			{
                                           string s;
                                           s.append($1); /* string constructor leaks otherwise! */
@@ -314,10 +314,26 @@ stringList:
 	;
 
 switchList:
-		switchList COMMA ON		{ cout << "switch: ON" << endl << "New list item ... " << endl; }
-	|	switchList COMMA OFF	{ cout << "switch: OFF" << endl << "New list item ... " << endl; }
-	|	ON						{ cout << "switch: ON" << endl << "New list item ... " << endl; }
-	|	OFF						{ cout << "switch: OFF" << endl << "New list item ... " << endl; }
+                switchList COMMA ON	{
+                                          ListNode *list = new ListNode(NULL);
+                                          list->stealMembers($1);
+                                          ListNode *oldList = $1;
+                                          oldList->deleteChildren();
+                                          delete oldList;
+                                          list->addChild(new ValueNode(true));
+                                          $$ = list;
+                                          cout << "switch: ON" << endl << "New list item ... " << endl; }
+        |	switchList COMMA OFF	{
+                                          ListNode *list = new ListNode(NULL);
+                                          list->stealMembers($1);
+                                          ListNode *oldList = $1;
+                                          oldList->deleteChildren();
+                                          delete oldList;
+                                          list->addChild(new ValueNode(false));
+                                          $$ = list;
+                                          cout << "switch: OFF" << endl << "New list item ... " << endl; }
+        |	ON			{ $$ = new ListNode(new ValueNode(true)); cout << "switch: ON" << endl << "New list item ... " << endl; }
+        |	OFF			{ $$ = new ListNode(new ValueNode(false)); cout << "switch: OFF" << endl << "New list item ... " << endl; }
 	;
 	
 blockList:

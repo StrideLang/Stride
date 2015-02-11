@@ -59,9 +59,9 @@ void ParserTest::testTreeBuildArray()
     ValueNode *value = static_cast<ValueNode *>(bundle->getChildren().at(0));
     QVERIFY(value->getNodeType() == AST::Int);
     QVERIFY(value->getIntValue() == 4);
-    QVERIFY(block->getChildren().size() == 2);
-    QVERIFY(block->getChildren().at(0)->getNodeType() == AST::Property);
-    PropertyNode *property = static_cast<PropertyNode *>(block->getChildren().at(0));
+    QVERIFY(block->getProperties().size() == 2);
+    QVERIFY(block->getProperties().at(0)->getNodeType() == AST::Property);
+    PropertyNode *property = static_cast<PropertyNode *>(block->getProperties().at(0));
     ListNode * listnode = static_cast<ListNode *>(property->getValue());
     QVERIFY(listnode->getNodeType() == AST::List);
     QVERIFY(listnode->getChildren().size() == 4);
@@ -316,9 +316,8 @@ void ParserTest::testTreeBuildLists()
     ValueNode *valueNode = static_cast<ValueNode *>(bundle->getChildren().at(0));
     QVERIFY(valueNode->getNodeType() == AST::Int);
     QVERIFY(valueNode->getIntValue() == 3);
-    QVERIFY(block->getChildren().size() == 2);
-    QVERIFY(block->getChildren().at(0)->getNodeType() == AST::Property);
-    PropertyNode *property = static_cast<PropertyNode *>(block->getChildren().at(0));
+    QVERIFY(block->getProperties().size() == 2);
+    PropertyNode *property = block->getProperties().at(0);
     QVERIFY(property->getName() == "value");
     AST *propertyValue = property->getValue();
     QVERIFY(propertyValue->getNodeType() == AST::List);
@@ -327,8 +326,7 @@ void ParserTest::testTreeBuildLists()
     QVERIFY(listValues.at(0)->getNodeType() == AST::Int);
     QVERIFY(listValues.at(1)->getNodeType() == AST::Expression);
     QVERIFY(listValues.at(2)->getNodeType() == AST::Int);
-    QVERIFY(block->getChildren().at(1)->getNodeType() == AST::Property);
-    property = static_cast<PropertyNode *>(block->getChildren().at(1));
+    property = block->getProperties().at(1);
     QVERIFY(property->getName() == "meta");
 
     // Next Block - Float list
@@ -340,9 +338,8 @@ void ParserTest::testTreeBuildLists()
     valueNode = static_cast<ValueNode *>(bundle->getChildren().at(0));
     QVERIFY(valueNode->getNodeType() == AST::Int);
     QVERIFY(valueNode->getIntValue() == 4);
-    QVERIFY(block->getChildren().size() == 2);
-    QVERIFY(block->getChildren().at(0)->getNodeType() == AST::Property);
-    property = static_cast<PropertyNode *>(block->getChildren().at(0));
+    QVERIFY(block->getProperties().size() == 2);
+    property = block->getProperties().at(0);
     QVERIFY(property->getName() == "value");
     propertyValue = property->getValue();
     QVERIFY(propertyValue->getNodeType() == AST::List);
@@ -353,7 +350,7 @@ void ParserTest::testTreeBuildLists()
     QVERIFY(listValues.at(2)->getNodeType() == AST::Float);
     QVERIFY(listValues.at(3)->getNodeType() == AST::Float);
     QVERIFY(block->getChildren().at(1)->getNodeType() == AST::Property);
-    property = static_cast<PropertyNode *>(block->getChildren().at(1));
+    property = static_cast<PropertyNode *>(block->getProperties().at(1));
     QVERIFY(property->getName() == "meta");
 
     // Next Block - String list
@@ -365,9 +362,8 @@ void ParserTest::testTreeBuildLists()
     valueNode = static_cast<ValueNode *>(bundle->getChildren().at(0));
     QVERIFY(valueNode->getNodeType() == AST::Int);
     QVERIFY(valueNode->getIntValue() == 5);
-    QVERIFY(block->getChildren().size() == 2);
-    QVERIFY(block->getChildren().at(0)->getNodeType() == AST::Property);
-    property = static_cast<PropertyNode *>(block->getChildren().at(0));
+    QVERIFY(block->getProperties().size() == 2);
+    property = block->getProperties().at(0);
     QVERIFY(property->getName() == "value");
     propertyValue = property->getValue();
     QVERIFY(propertyValue->getNodeType() == AST::List);
@@ -378,8 +374,7 @@ void ParserTest::testTreeBuildLists()
     QVERIFY(listValues.at(2)->getNodeType() == AST::String);
     QVERIFY(listValues.at(3)->getNodeType() == AST::String);
     QVERIFY(listValues.at(4)->getNodeType() == AST::String);
-    QVERIFY(block->getChildren().at(1)->getNodeType() == AST::Property);
-    property = static_cast<PropertyNode *>(block->getChildren().at(1));
+    property = block->getProperties().at(1);
     QVERIFY(property->getName() == "meta");
 
     // Next Block - UVar list
@@ -391,9 +386,8 @@ void ParserTest::testTreeBuildLists()
     valueNode = static_cast<ValueNode *>(bundle->getChildren().at(0));
     QVERIFY(valueNode->getNodeType() == AST::Int);
     QVERIFY(valueNode->getIntValue() == 7);
-    QVERIFY(block->getChildren().size() == 2);
-    QVERIFY(block->getChildren().at(0)->getNodeType() == AST::Property);
-    property = static_cast<PropertyNode *>(block->getChildren().at(0));
+    QVERIFY(block->getProperties().size() == 2);
+    property = block->getProperties().at(0);
     QVERIFY(property->getName() == "value");
     propertyValue = property->getValue();
     QVERIFY(propertyValue->getNodeType() == AST::List);
@@ -406,8 +400,7 @@ void ParserTest::testTreeBuildLists()
     QVERIFY(listValues.at(4)->getNodeType() == AST::Name);
     QVERIFY(listValues.at(5)->getNodeType() == AST::Name);
     QVERIFY(listValues.at(6)->getNodeType() == AST::Name);
-    QVERIFY(block->getChildren().at(1)->getNodeType() == AST::Property);
-    property = static_cast<PropertyNode *>(block->getChildren().at(1));
+    property = block->getProperties().at(1);
     QVERIFY(property->getName() == "meta");
 
     // Next Block - ArrayList list
@@ -419,9 +412,8 @@ void ParserTest::testTreeBuildLists()
     valueNode = static_cast<ValueNode *>(bundle->getChildren().at(0));
     QVERIFY(valueNode->getNodeType() == AST::Int);
     QVERIFY(valueNode->getIntValue() == 2);
-    QVERIFY(block->getChildren().size() == 2);
-    QVERIFY(block->getChildren().at(0)->getNodeType() == AST::Property);
-    property = static_cast<PropertyNode *>(block->getChildren().at(0));
+    QVERIFY(block->getProperties().size() == 2);
+    property = block->getProperties().at(0);
     QVERIFY(property->getName() == "value");
     propertyValue = property->getValue();
     QVERIFY(propertyValue->getNodeType() == AST::List);
@@ -429,8 +421,7 @@ void ParserTest::testTreeBuildLists()
     QVERIFY(listValues.size() == 2);
     QVERIFY(listValues.at(0)->getNodeType() == AST::Bundle);
     QVERIFY(listValues.at(1)->getNodeType() == AST::Bundle);
-    QVERIFY(block->getChildren().at(1)->getNodeType() == AST::Property);
-    property = static_cast<PropertyNode *>(block->getChildren().at(1));
+    property = block->getProperties().at(1);
     QVERIFY(property->getName() == "meta");
 
     // Next Block - BlockList list
@@ -442,9 +433,8 @@ void ParserTest::testTreeBuildLists()
     valueNode = static_cast<ValueNode *>(bundle->getChildren().at(0));
     QVERIFY(valueNode->getNodeType() == AST::Int);
     QVERIFY(valueNode->getIntValue() == 3);
-    QVERIFY(block->getChildren().size() == 2);
-    QVERIFY(block->getChildren().at(0)->getNodeType() == AST::Property);
-    property = static_cast<PropertyNode *>(block->getChildren().at(0));
+    QVERIFY(block->getProperties().size() == 2);
+    property = block->getProperties().at(0);
     QVERIFY(property->getName() == "value");
     propertyValue = property->getValue();
     QVERIFY(propertyValue->getNodeType() == AST::List);
@@ -452,8 +442,7 @@ void ParserTest::testTreeBuildLists()
     QVERIFY(listValues.size() == 3);
     QVERIFY(listValues.at(0)->getNodeType() == AST::Block);
     QVERIFY(listValues.at(1)->getNodeType() == AST::Block);
-    QVERIFY(block->getChildren().at(1)->getNodeType() == AST::Property);
-    property = static_cast<PropertyNode *>(block->getChildren().at(1));
+    property = static_cast<PropertyNode *>(block->getProperties().at(1));
     QVERIFY(property->getName() == "meta");
 
     // Next Block - BlockBundleList list
@@ -465,9 +454,8 @@ void ParserTest::testTreeBuildLists()
     valueNode = static_cast<ValueNode *>(bundle->getChildren().at(0));
     QVERIFY(valueNode->getNodeType() == AST::Int);
     QVERIFY(valueNode->getIntValue() == 3);
-    QVERIFY(block->getChildren().size() == 2);
-    QVERIFY(block->getChildren().at(0)->getNodeType() == AST::Property);
-    property = static_cast<PropertyNode *>(block->getChildren().at(0));
+    QVERIFY(block->getProperties().size() == 2);
+    property = block->getProperties().at(0);
     QVERIFY(property->getName() == "value");
     propertyValue = property->getValue();
     QVERIFY(propertyValue->getNodeType() == AST::List);
@@ -476,8 +464,7 @@ void ParserTest::testTreeBuildLists()
     QVERIFY(listValues.at(0)->getNodeType() == AST::BlockBundle);
     QVERIFY(listValues.at(1)->getNodeType() == AST::BlockBundle);
     QVERIFY(listValues.at(2)->getNodeType() == AST::BlockBundle);
-    QVERIFY(block->getChildren().at(1)->getNodeType() == AST::Property);
-    property = static_cast<PropertyNode *>(block->getChildren().at(1));
+    property = block->getProperties().at(1);
     QVERIFY(property->getName() == "meta");
 
     // Next Block - IntegerList list
@@ -489,9 +476,8 @@ void ParserTest::testTreeBuildLists()
     valueNode = static_cast<ValueNode *>(bundle->getChildren().at(0));
     QVERIFY(valueNode->getNodeType() == AST::Int);
     QVERIFY(valueNode->getIntValue() == 3);
-    QVERIFY(block->getChildren().size() == 2);
-    QVERIFY(block->getChildren().at(0)->getNodeType() == AST::Property);
-    property = static_cast<PropertyNode *>(block->getChildren().at(0));
+    QVERIFY(block->getProperties().size() == 2);
+    property = block->getProperties().at(0);
     QVERIFY(property->getName() == "value");
     propertyValue = property->getValue();
     QVERIFY(propertyValue->getNodeType() == AST::List);
@@ -500,8 +486,7 @@ void ParserTest::testTreeBuildLists()
     QVERIFY(listValues.at(0)->getNodeType() == AST::List);
     QVERIFY(listValues.at(1)->getNodeType() == AST::List);
     QVERIFY(listValues.at(2)->getNodeType() == AST::List);
-    QVERIFY(block->getChildren().at(1)->getNodeType() == AST::Property);
-    property = static_cast<PropertyNode *>(block->getChildren().at(1));
+    property = block->getProperties().at(1);
     QVERIFY(property->getName() == "meta");
 
     // Next Block - IntegerList list
@@ -513,9 +498,8 @@ void ParserTest::testTreeBuildLists()
     valueNode = static_cast<ValueNode *>(bundle->getChildren().at(0));
     QVERIFY(valueNode->getNodeType() == AST::Int);
     QVERIFY(valueNode->getIntValue() == 3);
-    QVERIFY(block->getChildren().size() == 2);
-    QVERIFY(block->getChildren().at(0)->getNodeType() == AST::Property);
-    property = static_cast<PropertyNode *>(block->getChildren().at(0));
+    QVERIFY(block->getProperties().size() == 2);
+    property = block->getProperties().at(0);
     QVERIFY(property->getName() == "value");
     propertyValue = property->getValue();
     QVERIFY(propertyValue->getNodeType() == AST::List);
@@ -524,8 +508,7 @@ void ParserTest::testTreeBuildLists()
     QVERIFY(listValues.at(0)->getNodeType() == AST::List);
     QVERIFY(listValues.at(1)->getNodeType() == AST::List);
     QVERIFY(listValues.at(2)->getNodeType() == AST::List);
-    QVERIFY(block->getChildren().at(1)->getNodeType() == AST::Property);
-    property = static_cast<PropertyNode *>(block->getChildren().at(1));
+    property = block->getProperties().at(1);
     QVERIFY(property->getName() == "meta");
 
     tree->deleteChildren();
@@ -541,34 +524,34 @@ void ParserTest::testTreeBuildBlocks()
     QVERIFY(nodes.size() == 5);
     AST *node = nodes.at(0);
     QVERIFY(node->getNodeType() == AST::Block);
-    vector<AST *> properties = node->getChildren();
+    vector<PropertyNode *> properties = static_cast<BlockNode *>(node)->getProperties();
     QVERIFY(properties.size() == 2);
-    AST *property = properties.at(0);
+    PropertyNode *property = properties.at(0);
     QVERIFY(property != NULL && property->getChildren().size() == 1);
-    QVERIFY(static_cast<PropertyNode *>(property)->getName() == "rate");
+    QVERIFY(property->getName() == "rate");
     AST *propertyValue = property->getChildren().at(0);
     QVERIFY(propertyValue->getNodeType() == AST::Name);
     QVERIFY(static_cast<NameNode *>(propertyValue)->getName() == "AudioRate");
     property = properties.at(1);
     QVERIFY(property != NULL && property->getChildren().size() == 1);
-    QVERIFY(static_cast<PropertyNode *>(property)->getName() == "meta");
+    QVERIFY(property->getName() == "meta");
     propertyValue = property->getChildren().at(0);
     QVERIFY(propertyValue->getNodeType() == AST::String);
     QVERIFY(static_cast<ValueNode *>(propertyValue)->getStringValue() == "Guitar input.");
 
     node = nodes.at(1);
     QVERIFY(node->getNodeType() == AST::Block);
-    properties = node->getChildren();
+    properties = static_cast<BlockNode *>(node)->getProperties();
     QVERIFY(properties.size() == 2);
     property = properties.at(0);
     QVERIFY(property != NULL && property->getChildren().size() == 1);
-    QVERIFY(static_cast<PropertyNode *>(property)->getName() == "value");
+    QVERIFY(property->getName() == "value");
     propertyValue = property->getChildren().at(0);
     QVERIFY(propertyValue->getNodeType() == AST::Int);
     QVERIFY(static_cast<ValueNode *>(propertyValue)->getIntValue() == 5);
     property = properties.at(1);
     QVERIFY(property != NULL && property->getChildren().size() == 1);
-    QVERIFY(static_cast<PropertyNode *>(property)->getName() == "meta");
+    QVERIFY(property->getName() == "meta");
     propertyValue = property->getChildren().at(0);
     QVERIFY(propertyValue->getNodeType() == AST::String);
     QVERIFY(static_cast<ValueNode *>(propertyValue)->getStringValue() == "Integer Value.");
@@ -576,50 +559,50 @@ void ParserTest::testTreeBuildBlocks()
     // No properties
     node = nodes.at(2);
     QVERIFY(node->getNodeType() == AST::Block);
-    properties = node->getChildren();
+    properties = static_cast<BlockNode *>(node)->getProperties();
     QVERIFY(properties.size() == 0);
 
     // Property is an object
     node = nodes.at(3);
     QVERIFY(node->getNodeType() == AST::Block);
-    properties = node->getChildren();
+    properties = static_cast<BlockNode *>(node)->getProperties();
     QVERIFY(properties.size() == 2);
     property = properties.at(0);
     QVERIFY(property != NULL && property->getChildren().size() == 1);
-    QVERIFY(static_cast<PropertyNode *>(property)->getName() == "value");
+    QVERIFY(property->getName() == "value");
     propertyValue = property->getChildren().at(0);
     QVERIFY(propertyValue->getNodeType() == AST::Block);
     BlockNode *object = static_cast<BlockNode *>(propertyValue);
     QVERIFY(object->getName() == "");
     QVERIFY(object->getObjectType() == "");
-    vector<AST *> objProperties = object->getChildren();
+    vector<PropertyNode *> objProperties = static_cast<BlockNode *>(object)->getProperties();
     QVERIFY(objProperties.size() == 2);
     property = objProperties.at(0);
     QVERIFY(property != NULL && property->getChildren().size() == 1);
-    QVERIFY(static_cast<PropertyNode *>(property)->getName() == "prop1");
+    QVERIFY(property->getName() == "prop1");
     propertyValue = property->getChildren().at(0);
     QVERIFY(propertyValue->getNodeType() == AST::Int);
     QVERIFY(static_cast<ValueNode *>(propertyValue)->getIntValue() == 5);
     property = objProperties.at(1);
     QVERIFY(property != NULL && property->getChildren().size() == 1);
-    QVERIFY(static_cast<PropertyNode *>(property)->getName() == "prop2");
+    QVERIFY(property->getName() == "prop2");
     propertyValue = property->getChildren().at(0);
     QVERIFY(propertyValue->getNodeType() == AST::String);
     QVERIFY(static_cast<ValueNode *>(propertyValue)->getStringValue() == "hello");
     property = properties.at(1);
     QVERIFY(property != NULL && property->getChildren().size() == 1);
-    QVERIFY(static_cast<PropertyNode *>(property)->getName() == "meta");
+    QVERIFY(property->getName() == "meta");
     propertyValue = property->getChildren().at(0);
     QVERIFY(propertyValue->getNodeType() == AST::String);
     QVERIFY(static_cast<ValueNode *>(propertyValue)->getStringValue() == "Block as Property");
 
     node = nodes.at(4);
     QVERIFY(node->getNodeType() == AST::Block);
-    properties = node->getChildren();
+    properties = static_cast<BlockNode *>(node)->getProperties();
     QVERIFY(properties.size() == 2);
     property = properties.at(0);
     QVERIFY(property != NULL && property->getChildren().size() == 1);
-    QVERIFY(static_cast<PropertyNode *>(property)->getName() == "process");
+    QVERIFY(property->getName() == "process");
     propertyValue = property->getChildren().at(0);
     QVERIFY(propertyValue->getNodeType() == AST::Stream);
     StreamNode *streamNode = static_cast<StreamNode *>(propertyValue);
@@ -628,7 +611,7 @@ void ParserTest::testTreeBuildBlocks()
     QVERIFY(streamNode->getChildren().at(1)->getNodeType() == AST::Bundle);
     property = properties.at(1);
     QVERIFY(property != NULL && property->getChildren().size() == 1);
-    QVERIFY(static_cast<PropertyNode *>(property)->getName() == "meta");
+    QVERIFY(property->getName() == "meta");
     propertyValue = property->getChildren().at(0);
     QVERIFY(propertyValue->getNodeType() == AST::String);
     QVERIFY(static_cast<ValueNode *>(propertyValue)->getStringValue() == "Stream property");
