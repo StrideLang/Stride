@@ -4,6 +4,7 @@
 #include <string>
 
 #include "ast.h"
+#include "propertynode.h"
 
 class FunctionNode : public AST
 {
@@ -17,10 +18,12 @@ public:
     ~FunctionNode();
 
     string getName() const { return m_name; }
+    vector<PropertyNode *> getProperties() const;
 
 private:
     string m_name;
     FunctionType m_type;
+    vector<PropertyNode *> m_properties;
 };
 
 #endif // FUNCTIONNODE_H

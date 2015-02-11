@@ -25,6 +25,7 @@ public:
 private:
 
 private Q_SLOTS:
+    void testTreeBuildNoneSwitch();
     void testTreeBuildArray();
     void testTreeBuildStream();
     void testTreeBuildLists();
@@ -36,6 +37,53 @@ private Q_SLOTS:
 ParserTest::ParserTest()
 {
 
+}
+
+void ParserTest::testTreeBuildNoneSwitch()
+{
+    AST *tree;
+    tree = parse(QString(QFINDTESTDATA("data/noneswitch.stream")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    vector<AST *> nodes = tree->getChildren();
+    QVERIFY(nodes.size() == 2);
+
+    QVERIFY(nodes.at(0)->getNodeType() == AST::Block);
+    BlockNode *block = static_cast<BlockNode *>(nodes.at(0));
+    QVERIFY(block->getObjectType() == "object");
+    vector<PropertyNode *> properties = block->getProperties();
+    QVERIFY(properties.size() == 3);
+    QVERIFY(properties.at(0)->getName() == "prop1");
+    ValueNode *value = static_cast<ValueNode *>(properties.at(0)->getValue());
+    QVERIFY(value->getNodeType() == AST::Switch);
+    QVERIFY(value->getSwitchValue() == true);
+    QVERIFY(properties.at(1)->getName() == "prop2");
+    value = static_cast<ValueNode *>(properties.at(1)->getValue());
+    QVERIFY(value->getNodeType() == AST::Switch);
+    QVERIFY(value->getSwitchValue() == false);
+    QVERIFY(properties.at(2)->getName() == "prop3");
+    value = static_cast<ValueNode *>(properties.at(2)->getValue());
+    QVERIFY(value->getNodeType() == AST::None);
+
+    QVERIFY(nodes.at(1)->getNodeType() == AST::Stream);
+    StreamNode *stream = static_cast<StreamNode *>(nodes.at(1));
+    FunctionNode *func = static_cast<FunctionNode *>(stream->getLeft());
+    QVERIFY(func->getNodeType() == AST::Function);
+    properties = func->getProperties();
+    QVERIFY(properties.size() == 3);
+    QVERIFY(properties.at(0)->getName() == "propf1");
+    value = static_cast<ValueNode *>(properties.at(0)->getValue());
+    QVERIFY(value->getNodeType() == AST::Switch);
+    QVERIFY(value->getSwitchValue() == true);
+    QVERIFY(properties.at(1)->getName() == "propf2");
+    value = static_cast<ValueNode *>(properties.at(1)->getValue());
+    QVERIFY(value->getNodeType() == AST::Switch);
+    QVERIFY(value->getSwitchValue() == false);
+    QVERIFY(properties.at(2)->getName() == "propf3");
+    value = static_cast<ValueNode *>(properties.at(2)->getValue());
+    QVERIFY(value->getNodeType() == AST::None);
+
+    tree->deleteChildren();
+    delete tree;
 }
 
 void ParserTest::testTreeBuildArray()

@@ -1,0 +1,8 @@
+
+object Obj {
+    prop1: on
+    prop2: off
+    prop3: none
+}
+
+func(propf1: on; propf2: off; propf3: none) >> Out;

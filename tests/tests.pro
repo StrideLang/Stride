@@ -63,6 +63,7 @@ DISTFILES += \
     data/simple.stream \
     data/introConverter.stream \
     data/introRemote.stream \
-    data/test.stream
+    data/test.stream \
+    data/noneswitch.stream
 
 
