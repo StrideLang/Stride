@@ -9,9 +9,10 @@
 using namespace std;
 
 extern "C" int yylex();
+extern "C" int yylineno;
+extern "C" char * yytext;
 extern "C" FILE *yyin;
 
-extern int yylineno;
 void yyerror(const char *s, ...);
 
 AST *tree_head;
@@ -561,10 +562,12 @@ valueComp:
 	;
 	
 %%
+
 void yyerror(const char *s, ...){
 	va_list ap;
 	va_start(ap, s);
-	cout << "ERROR: " << s << " => " << va_arg(ap, char*) << " @ line " <<  yylineno << endl;
+        cout << endl << endl << "ERROR: " << s << " => " << va_arg(ap, char*) << endl;
+        cout << "Unexpected token: \"" << yytext << "\" on line: " <<  yylineno << endl;
 	va_end(ap);
 	error++;
 }
