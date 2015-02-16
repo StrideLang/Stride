@@ -2,8 +2,8 @@
 
 #include "expressionnode.h"
 
-ExpressionNode::ExpressionNode(ExpressionType type, AST *left, AST *right) :
-    AST(AST::Expression)
+ExpressionNode::ExpressionNode(ExpressionType type, AST *left, AST *right, int line) :
+    AST(AST::Expression, line)
 {
     m_type = type;
     assert(m_type != ExpressionNode::UnaryMinus && m_type != ExpressionNode::LogicalNot);
@@ -11,8 +11,8 @@ ExpressionNode::ExpressionNode(ExpressionType type, AST *left, AST *right) :
     addChild(right);
 }
 
-ExpressionNode::ExpressionNode(ExpressionNode::ExpressionType type, AST *value) :
-    AST(AST::Expression)
+ExpressionNode::ExpressionNode(ExpressionNode::ExpressionType type, AST *value, int line) :
+    AST(AST::Expression, line)
 {
     m_type = type;
     assert(m_type == ExpressionNode::UnaryMinus || m_type == ExpressionNode::LogicalNot);

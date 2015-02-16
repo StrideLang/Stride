@@ -2,32 +2,32 @@
 
 #include "valuenode.h"
 
-ValueNode::ValueNode() :
-    AST(AST::None)
+ValueNode::ValueNode(int line) :
+    AST(AST::None, line)
 {
 
 }
 
-ValueNode::ValueNode(int value) :
-    AST(AST::Int)
+ValueNode::ValueNode(int value, int line) :
+    AST(AST::Int, line)
 {
     m_intValue = value;
 }
 
-ValueNode::ValueNode(float value) :
-    AST(AST::Float)
+ValueNode::ValueNode(float value, int line) :
+    AST(AST::Float, line)
 {
     m_floatValue = value;
 }
 
-ValueNode::ValueNode(string value) :
-    AST(AST::String)
+ValueNode::ValueNode(string value, int line) :
+    AST(AST::String, line)
 {
     m_stringValue = value;
 }
 
-ValueNode::ValueNode(bool value) :
-    AST(AST::Switch)
+ValueNode::ValueNode(bool value, int line) :
+    AST(AST::Switch, line)
 {
     m_switch = value;
 }

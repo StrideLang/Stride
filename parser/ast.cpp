@@ -3,11 +3,13 @@
 AST::AST()
 {
     m_token = AST::None;
+    m_line = -1;
 }
 
-AST::AST(Token token)
+AST::AST(Token token, int line)
 {
     m_token = token;
+    m_line = line;
 }
 
 AST::~AST()

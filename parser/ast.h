@@ -31,7 +31,7 @@ public:
         Switch
     } Token;
 
-    AST(Token token);
+    AST(Token token, int line = -1);
     ~AST();
 
     Token getNodeType() const { return m_token; }
@@ -40,12 +40,14 @@ public:
     bool isNil() { return m_token == AST::None; }
 
     vector<AST *> getChildren() const {return m_children;}
+    int getLine() const {return m_line;}
 
     void deleteChildren();
 
 protected:
     Token m_token; // From which token did we create node?
     vector<AST *> m_children; // normalized list of children
+    int m_line;
 };
 
 #endif // AST_H

@@ -6,9 +6,12 @@
 using namespace std;
 
 char * buffer;
+#define YY_USER_ACTION yylloc.first_line = yylloc.last_line = yylineno;
+
 %}
 
-%option noyywrap nodefault yylineno
+%option noyywrap nodefault
+%option yylineno
 
 DIGIT	[0-9]
 LETTER	[a-z]

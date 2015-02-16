@@ -8,7 +8,7 @@
 class BundleNode : public AST
 {
 public:
-    BundleNode(string getName, AST *indexExp);
+    BundleNode(string getName, AST *indexExp, int line);
     ~BundleNode();
 
     string getName() const;

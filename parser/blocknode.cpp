@@ -2,8 +2,9 @@
 
 #include "blocknode.h"
 
-BlockNode::BlockNode(string name, string objectType, AST *propertiesList):
-    AST(AST::Block)
+
+BlockNode::BlockNode(string name, string objectType, AST *propertiesList, int line):
+    AST(AST::Block, line)
 {
     m_name = name;
     m_objectType = objectType;
@@ -16,8 +17,8 @@ BlockNode::BlockNode(string name, string objectType, AST *propertiesList):
     }
 }
 
-BlockNode::BlockNode(BundleNode *bundle, string objectType, AST *propertiesList) :
-    AST(AST::BlockBundle)
+BlockNode::BlockNode(BundleNode *bundle, string objectType, AST *propertiesList, int line) :
+    AST(AST::BlockBundle, line)
 {
     addChild(bundle);
     m_objectType = objectType;

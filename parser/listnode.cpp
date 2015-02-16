@@ -1,7 +1,7 @@
 #include "listnode.h"
 
-ListNode::ListNode(AST *newMember) :
-    AST(AST::List)
+ListNode::ListNode(AST *newMember, int line) :
+    AST(AST::List, line)
 {
     if (newMember) {
         addChild(newMember);

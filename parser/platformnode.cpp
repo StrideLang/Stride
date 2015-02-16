@@ -5,8 +5,8 @@
 
 #include "platformnode.h"
 
-PlatformNode::PlatformNode(string platformName, float version) :
-    AST(AST::Platform)
+PlatformNode::PlatformNode(string platformName, float version, int line) :
+    AST(AST::Platform, line)
 {
     m_platformName = platformName;
     m_version = version;

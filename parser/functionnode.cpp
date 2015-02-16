@@ -2,8 +2,8 @@
 
 #include "functionnode.h"
 
-FunctionNode::FunctionNode(string name, AST *propertiesList, FunctionType type) :
-    AST(AST::Function)
+FunctionNode::FunctionNode(string name, AST *propertiesList, FunctionType type, int line) :
+    AST(AST::Function, line)
 {
     m_name = name;
     if (propertiesList) {

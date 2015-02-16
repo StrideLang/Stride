@@ -3,8 +3,8 @@
 
 #include "streamnode.h"
 
-StreamNode::StreamNode(AST *left, AST *right) :
-    AST(AST::Stream)
+StreamNode::StreamNode(AST *left, AST *right, int line) :
+    AST(AST::Stream, line)
 {
 //    assert(left); assert(right);
     addChild(left);

@@ -97,60 +97,75 @@ void ParserTest::testTreeBuildArray()
     QVERIFY(nodes.at(0)->getNodeType() == AST::Block);
     BlockNode *block = static_cast<BlockNode *>(nodes.at(0));
     QVERIFY(block->getObjectType() == "constant");
+    QVERIFY(block->getLine() == 8);
 
     QVERIFY(nodes.at(1)->getNodeType() == AST::BlockBundle);
     block = static_cast<BlockNode *>(nodes.at(1));
     QVERIFY(block->getObjectType() == "constant");
+    QVERIFY(block->getLine() == 13);
     BundleNode *bundle = block->getBundle();
     QVERIFY(bundle->getName() == "SIZE");
     QVERIFY(bundle->getChildren().size() == 1);
+    QVERIFY(bundle->getLine() == 13);
     ValueNode *value = static_cast<ValueNode *>(bundle->getChildren().at(0));
     QVERIFY(value->getNodeType() == AST::Int);
     QVERIFY(value->getIntValue() == 4);
+    QVERIFY(value->getLine() == 13);
     QVERIFY(block->getProperties().size() == 2);
     QVERIFY(block->getProperties().at(0)->getNodeType() == AST::Property);
     PropertyNode *property = static_cast<PropertyNode *>(block->getProperties().at(0));
     ListNode * listnode = static_cast<ListNode *>(property->getValue());
     QVERIFY(listnode->getNodeType() == AST::List);
     QVERIFY(listnode->getChildren().size() == 4);
+    QVERIFY(listnode->getLine() == 14);
     value = static_cast<ValueNode *>(listnode->getChildren().at(0));
     QVERIFY(value->getNodeType() == AST::Int);
     QVERIFY(value->getIntValue() == 16);
+    QVERIFY(value->getLine() == 14);
     value = static_cast<ValueNode *>(listnode->getChildren().at(1));
     QVERIFY(value->getNodeType() == AST::Int);
     QVERIFY(value->getIntValue() == 32);
+    QVERIFY(value->getLine() == 14);
     value = static_cast<ValueNode *>(listnode->getChildren().at(2));
     QVERIFY(value->getNodeType() == AST::Int);
     QVERIFY(value->getIntValue() == 64);
+    QVERIFY(value->getLine() == 14);
     value = static_cast<ValueNode *>(listnode->getChildren().at(3));
     QVERIFY(value->getNodeType() == AST::Int);
     QVERIFY(value->getIntValue() == 128);
+    QVERIFY(value->getLine() == 14);
 
-    // constant Array [ ( CONST * 2 ) + 1 ] {}
+    // constant Array_Parens [ ( CONST * 2 ) + 1 ] {}
     block = static_cast<BlockNode *>(nodes.at(6));
     QVERIFY(block->getNodeType() == AST::BlockBundle);
     QVERIFY(block->getObjectType() == "constant");
+    QVERIFY(block->getLine() == 23);
     bundle = block->getBundle();
     QVERIFY(bundle->getName() == "Array_Parens");
     QVERIFY(bundle->getChildren().size() == 1);
     ExpressionNode *expr = static_cast<ExpressionNode *>(bundle->getChildren().at(0));
     QVERIFY(expr->getNodeType() == AST::Expression);
     QVERIFY(expr->getExpressionType() == ExpressionNode::Add);
+    QVERIFY(expr->getLine() == 23);
     ExpressionNode *expr2 = static_cast<ExpressionNode *>(expr->getLeft());
     QVERIFY(expr2->getExpressionType() == ExpressionNode::Multiply);
     QVERIFY(expr2->getLeft()->getNodeType() == AST::Name);
     QVERIFY(expr2->getRight()->getNodeType() == AST::Int);
+    QVERIFY(expr2->getLine() == 23);
 
     // constant Array_Expr [ SIZE [1] + SIZE [1 * 2] ] {}
     block = static_cast<BlockNode *>(nodes.at(8));
     QVERIFY(block->getNodeType() == AST::BlockBundle);
+    QVERIFY(block->getLine() == 26);
     QVERIFY(block->getObjectType() == "constant");
     bundle = block->getBundle();
     QVERIFY(bundle->getName() == "Array_Expr");
+    QVERIFY(bundle->getLine() == 26);
     QVERIFY(bundle->getChildren().size() == 1);
     expr = static_cast<ExpressionNode *>(bundle->getChildren().at(0));
     QVERIFY(expr->getNodeType() == AST::Expression);
     QVERIFY(expr->getExpressionType() == ExpressionNode::Add);
+    QVERIFY(expr->getLine() == 26);
     bundle = static_cast<BundleNode *>(expr->getLeft());
     QVERIFY(bundle->getNodeType() == AST::Bundle);
     QVERIFY(bundle->getName() == "SIZE");
@@ -165,31 +180,39 @@ void ParserTest::testTreeBuildArray()
     QVERIFY(expr->getExpressionType() == ExpressionNode::Multiply);
     QVERIFY(expr->getLeft()->getNodeType() == AST::Int);
     QVERIFY(expr->getRight()->getNodeType() == AST::Int);
+    QVERIFY(expr->getLine() == 26);
 
     // constant Array_Expr2 [ SIZE [1] / SIZE [1 - 2] ] {}
     block = static_cast<BlockNode *>(nodes.at(9));
     QVERIFY(block->getNodeType() == AST::BlockBundle);
     QVERIFY(block->getObjectType() == "constant");
+    QVERIFY(block->getLine() == 27);
     bundle = block->getBundle();
     QVERIFY(bundle->getName() == "Array_Expr2");
     QVERIFY(bundle->getChildren().size() == 1);
+    QVERIFY(bundle->getLine() == 27);
     expr = static_cast<ExpressionNode *>(bundle->getChildren().at(0));
     QVERIFY(expr->getNodeType() == AST::Expression);
     QVERIFY(expr->getExpressionType() == ExpressionNode::Divide);
+    QVERIFY(expr->getLine() == 27);
     bundle = static_cast<BundleNode *>(expr->getLeft());
     QVERIFY(bundle->getNodeType() == AST::Bundle);
     QVERIFY(bundle->getName() == "SIZE");
     QVERIFY(bundle->getChildren().size() == 1);
+    QVERIFY(bundle->getLine() == 27);
     value = static_cast<ValueNode *>(bundle->getChildren().at(0));
     QVERIFY(value->getNodeType() == AST::Int);
     QVERIFY(value->getIntValue() == 1);
+    QVERIFY(value->getLine() == 27);
     bundle = static_cast<BundleNode *>(expr->getRight());
     QVERIFY(bundle->getNodeType() == AST::Bundle);
+    QVERIFY(bundle->getLine() == 27);
     expr = static_cast<ExpressionNode *>(bundle->getChildren()[0]);
     QVERIFY(expr->getNodeType() == AST::Expression);
     QVERIFY(expr->getExpressionType() == ExpressionNode::Subtract);
     QVERIFY(expr->getLeft()->getNodeType() == AST::Int);
     QVERIFY(expr->getRight()->getNodeType() == AST::Int);
+    QVERIFY(expr->getLine() == 27);
 
     tree->deleteChildren();
     delete tree;
@@ -206,68 +229,92 @@ void ParserTest::testTreeBuildStream()
     // Val1 >> Val2 ;
     QVERIFY(nodes.at(0)->getNodeType() == AST::Stream);
     StreamNode *node = static_cast<StreamNode *>(nodes.at(0));
+    QVERIFY(node->getLine() == 1);
     vector<AST *>streamParts = node->getChildren();
     QVERIFY(streamParts.size() == 2);
     AST *streamComp = streamParts.at(0);
     QVERIFY(streamComp->getNodeType() == AST::Name);
+    QVERIFY(streamComp->getLine() == 1);
     NameNode *nameNode = static_cast<NameNode *>(streamComp);
     QVERIFY(nameNode->getName() == "Val1");
+    QVERIFY(nameNode->getLine() == 1);
     streamComp = streamParts.at(1);
     QVERIFY(streamComp->getNodeType() == AST::Name);
+    QVERIFY(streamComp->getLine() == 1);
     nameNode = static_cast<NameNode *>(streamComp);
     QVERIFY(nameNode->getName() == "Val2");
+    QVERIFY(nameNode->getLine() == 1);
 
     // Func1() >> Func2() ;
     QVERIFY(nodes.at(1)->getNodeType() == AST::Stream);
     node = static_cast<StreamNode *>(nodes.at(1));
+    QVERIFY(node->getLine() == 2);
     streamParts = node->getChildren();
     QVERIFY(streamParts.size() == 2);
     streamComp = streamParts.at(0);
+    QVERIFY(streamComp->getLine() == 2);
     QVERIFY(streamComp->getNodeType() == AST::Function);
     FunctionNode *functionNode = static_cast<FunctionNode *>(streamComp);
     QVERIFY(functionNode->getName() == "Func1");
+    QVERIFY(functionNode->getLine() == 2);
     streamComp = streamParts.at(1);
     QVERIFY(streamComp->getNodeType() == AST::Function);
+    QVERIFY(streamComp->getLine() == 2);
     functionNode = static_cast<FunctionNode *>(streamComp);
     QVERIFY(functionNode->getName() == "Func2");
+    QVERIFY(functionNode->getLine() == 2);
 
     // Val1 >> Func1() >> Func2() >> Val2 ;
     QVERIFY(nodes.at(2)->getNodeType() == AST::Stream);
     node = static_cast<StreamNode *>(nodes.at(2));
+    QVERIFY(node->getLine() == 4);
     streamComp = node->getLeft();
     QVERIFY(streamComp->getNodeType() == AST::Name);
+    QVERIFY(streamComp->getLine() == 4);
     nameNode = static_cast<NameNode *>(streamComp);
     QVERIFY(nameNode->getName() == "Val1");
+    QVERIFY(nameNode->getLine() == 4);
     QVERIFY(node->getRight()->getNodeType() == AST::Stream);
     node = static_cast<StreamNode *>(node->getRight());
     streamComp = node->getLeft();
+    QVERIFY(streamComp->getLine() == 4);
     QVERIFY(streamComp->getNodeType() == AST::Function);
     functionNode = static_cast<FunctionNode *>(streamComp);
     QVERIFY(functionNode->getName() == "Func1");
+    QVERIFY(functionNode->getLine() == 4);
     QVERIFY(node->getRight()->getNodeType() == AST::Stream);
     node = static_cast<StreamNode *>(node->getRight());
+    QVERIFY(node->getLine() == 5);
     streamComp = node->getLeft();
     QVERIFY(streamComp->getNodeType() == AST::Function);
+    QVERIFY(streamComp->getLine() == 5);
     functionNode = static_cast<FunctionNode *>(streamComp);
     QVERIFY(functionNode->getName() == "Func2");
+    QVERIFY(functionNode->getLine() == 5);
     QVERIFY(node->getRight()->getNodeType() == AST::Name);
     nameNode = static_cast<NameNode *>(node->getRight());
     QVERIFY(nameNode->getName() == "Val2");
+    QVERIFY(nameNode->getLine() == 6);
 
 //    Bundle1[1] >> Bundle2[2];
     QVERIFY(nodes.at(3)->getNodeType() == AST::Stream);
     node = static_cast<StreamNode *>(nodes.at(3));
+    QVERIFY(node->getLine() == 8);
     QVERIFY(node->getLeft()->getNodeType() == AST::Bundle);
     QVERIFY(node->getRight()->getNodeType() == AST::Bundle);
     BundleNode *bundle = static_cast<BundleNode *>(node->getLeft());
     QVERIFY(bundle->getName() == "Bundle1");
+    QVERIFY(bundle->getLine() == 8);
     AST *leafnode = bundle->index();
     QVERIFY(leafnode->getNodeType() == AST::Int);
+    QVERIFY(leafnode->getLine() == 8);
     QVERIFY(static_cast<ValueNode *>(leafnode)->getIntValue() == 1);
     bundle = static_cast<BundleNode *>(node->getRight());
     QVERIFY(bundle->getName() == "Bundle2");
+    QVERIFY(bundle->getLine() == 8);
     leafnode = bundle->index();
     QVERIFY(leafnode->getNodeType() == AST::Int);
+    QVERIFY(leafnode->getLine() == 8);
     QVERIFY(static_cast<ValueNode *>(leafnode)->getIntValue() == 2);
 
 //    Val1 * 3 >> Bundle[2];
@@ -275,17 +322,22 @@ void ParserTest::testTreeBuildStream()
     node = static_cast<StreamNode *>(nodes.at(4));
     QVERIFY(node->getLeft()->getNodeType() == AST::Expression);
     QVERIFY(node->getRight()->getNodeType() == AST::Bundle);
+    QVERIFY(node->getLine() == 9);
     ExpressionNode *expression = static_cast<ExpressionNode *>(node->getLeft());
     QVERIFY(expression->getExpressionType() == ExpressionNode::Multiply);
     QVERIFY(expression->getLeft()->getNodeType() == AST::Name);
+    QVERIFY(expression->getLine() == 9);
     nameNode = static_cast<NameNode *>(expression->getLeft());
     QVERIFY(nameNode->getName() == "Val1");
+    QVERIFY(nameNode->getLine() == 9);
     QVERIFY(expression->getRight()->getNodeType() == AST::Int);
     QVERIFY(static_cast<ValueNode *>(expression->getRight())->getIntValue() == 3);
     bundle = static_cast<BundleNode *>(node->getRight());
     QVERIFY(bundle->getName() == "Bundle");
+    QVERIFY(bundle->getLine() == 9);
     leafnode = bundle->index();
     QVERIFY(leafnode->getNodeType() == AST::Int);
+    QVERIFY(leafnode->getLine() == 9);
     QVERIFY(static_cast<ValueNode *>(leafnode)->getIntValue() == 2);
 
 //    Bundle1[1] * 0.5 >> Bundle2[2];
@@ -293,17 +345,22 @@ void ParserTest::testTreeBuildStream()
     node = static_cast<StreamNode *>(nodes.at(5));
     QVERIFY(node->getLeft()->getNodeType() == AST::Expression);
     QVERIFY(node->getRight()->getNodeType() == AST::Bundle);
+    QVERIFY(node->getLine() == 10);
     expression = static_cast<ExpressionNode *>(node->getLeft());
     QVERIFY(expression->getExpressionType() == ExpressionNode::Multiply);
     QVERIFY(expression->getLeft()->getNodeType() == AST::Bundle);
+    QVERIFY(expression->getLine() == 10);
     bundle = static_cast<BundleNode *>(expression->getLeft());
     QVERIFY(bundle->getName() == "Bundle1");
+    QVERIFY(bundle->getLine() == 10);
     QVERIFY(expression->getRight()->getNodeType() == AST::Float);
     QVERIFY(static_cast<ValueNode *>(expression->getRight())->getFloatValue() == 0.5f);
     bundle = static_cast<BundleNode *>(node->getRight());
     QVERIFY(bundle->getName() == "Bundle2");
+    QVERIFY(bundle->getLine() == 10);
     leafnode = bundle->index();
     QVERIFY(leafnode->getNodeType() == AST::Int);
+    QVERIFY(leafnode->getLine() == 10);
     QVERIFY(static_cast<ValueNode *>(leafnode)->getIntValue() == 2);
 
     tree->deleteChildren();
@@ -321,6 +378,7 @@ void ParserTest::testTreeBuildBasic()
     PlatformNode *node = static_cast<PlatformNode *>(nodes.at(0));
     QVERIFY(node->platformName() == "PufferFish");
     QVERIFY(node->version() == 1.1f);
+    QVERIFY(node->getLine() == 4);
     tree->deleteChildren();
     delete tree;
 
@@ -330,18 +388,22 @@ void ParserTest::testTreeBuildBasic()
     QVERIFY(nodes.size() == 2);
     QVERIFY(nodes.at(1)->getNodeType() == AST::Stream);
     StreamNode *stream_node = static_cast<StreamNode *>(nodes.at(1));
+    QVERIFY(stream_node->getLine() == 5);
     QVERIFY(stream_node->getLeft()->getNodeType() == AST::Bundle);
     QVERIFY(stream_node->getRight()->getNodeType() == AST::Bundle);
     BundleNode *bundle = static_cast<BundleNode *>(stream_node->getLeft());
     QVERIFY(bundle->getName() == "AudioIn");
+    QVERIFY(bundle->getLine() == 5);
     AST *leafnode = bundle->index();
     QVERIFY(leafnode->getNodeType() == AST::Int);
+    QVERIFY(leafnode->getLine() == 5);
     QVERIFY(static_cast<ValueNode *>(leafnode)->getIntValue() == 1);
 
     bundle = static_cast<BundleNode *>(stream_node->getRight());
     QVERIFY(bundle->getName() == "AudioOut");
     leafnode = bundle->index();
     QVERIFY(leafnode->getNodeType() == AST::Int);
+    QVERIFY(leafnode->getLine() == 5);
     QVERIFY(static_cast<ValueNode *>(leafnode)->getIntValue() == 2);
 
     tree->deleteChildren();
@@ -358,12 +420,15 @@ void ParserTest::testTreeBuildLists()
     QVERIFY(nodes.at(0)->getNodeType() == AST::BlockBundle);
     BlockNode *block = static_cast<BlockNode *>(nodes.at(0));
     QVERIFY(block->getObjectType() == "constant");
+    QVERIFY(block->getLine() == 7);
     BundleNode *bundle = block->getBundle();
     QVERIFY(bundle->getName() == "Integer");
+    QVERIFY(bundle->getLine() == 7);
     QVERIFY(bundle->getChildren().size() == 1);
     ValueNode *valueNode = static_cast<ValueNode *>(bundle->getChildren().at(0));
     QVERIFY(valueNode->getNodeType() == AST::Int);
     QVERIFY(valueNode->getIntValue() == 3);
+    QVERIFY(bundle->getLine() == 7);
     QVERIFY(block->getProperties().size() == 2);
     PropertyNode *property = block->getProperties().at(0);
     QVERIFY(property->getName() == "value");
@@ -380,8 +445,10 @@ void ParserTest::testTreeBuildLists()
     // Next Block - Float list
     block = static_cast<BlockNode *>(nodes.at(1));
     QVERIFY(block->getObjectType() == "constant");
+    QVERIFY(block->getLine() == 12);
     bundle = block->getBundle();
     QVERIFY(bundle->getName() == "Float");
+    QVERIFY(bundle->getLine() == 12);
     QVERIFY(bundle->getChildren().size() == 1);
     valueNode = static_cast<ValueNode *>(bundle->getChildren().at(0));
     QVERIFY(valueNode->getNodeType() == AST::Int);
@@ -404,8 +471,10 @@ void ParserTest::testTreeBuildLists()
     // Next Block - String list
     block = static_cast<BlockNode *>(nodes.at(2));
     QVERIFY(block->getObjectType() == "constant");
+    QVERIFY(block->getLine() == 17);
     bundle = block->getBundle();
     QVERIFY(bundle->getName() == "String");
+    QVERIFY(bundle->getLine() == 17);
     QVERIFY(bundle->getChildren().size() == 1);
     valueNode = static_cast<ValueNode *>(bundle->getChildren().at(0));
     QVERIFY(valueNode->getNodeType() == AST::Int);
@@ -428,8 +497,10 @@ void ParserTest::testTreeBuildLists()
     // Next Block - UVar list
     block = static_cast<BlockNode *>(nodes.at(3));
     QVERIFY(block->getObjectType() == "constant");
+    QVERIFY(block->getLine() == 23);
     bundle = block->getBundle();
     QVERIFY(bundle->getName() == "UVar");
+    QVERIFY(bundle->getLine() == 23);
     QVERIFY(bundle->getChildren().size() == 1);
     valueNode = static_cast<ValueNode *>(bundle->getChildren().at(0));
     QVERIFY(valueNode->getNodeType() == AST::Int);
@@ -454,8 +525,10 @@ void ParserTest::testTreeBuildLists()
     // Next Block - ArrayList list
     block = static_cast<BlockNode *>(nodes.at(4));
     QVERIFY(block->getObjectType() == "constant");
+    QVERIFY(block->getLine() == 28);
     bundle = block->getBundle();
     QVERIFY(bundle->getName() == "ArrayList");
+    QVERIFY(bundle->getLine() == 28);
     QVERIFY(bundle->getChildren().size() == 1);
     valueNode = static_cast<ValueNode *>(bundle->getChildren().at(0));
     QVERIFY(valueNode->getNodeType() == AST::Int);
@@ -475,8 +548,10 @@ void ParserTest::testTreeBuildLists()
     // Next Block - BlockList list
     block = static_cast<BlockNode *>(nodes.at(5));
     QVERIFY(block->getObjectType() == "constant");
+    QVERIFY(block->getLine() == 33);
     bundle = block->getBundle();
     QVERIFY(bundle->getName() == "BlockList");
+    QVERIFY(bundle->getLine() == 33);
     QVERIFY(bundle->getChildren().size() == 1);
     valueNode = static_cast<ValueNode *>(bundle->getChildren().at(0));
     QVERIFY(valueNode->getNodeType() == AST::Int);
@@ -496,8 +571,10 @@ void ParserTest::testTreeBuildLists()
     // Next Block - BlockBundleList list
     block = static_cast<BlockNode *>(nodes.at(6));
     QVERIFY(block->getObjectType() == "constant");
+    QVERIFY(block->getLine() == 38);
     bundle = block->getBundle();
     QVERIFY(bundle->getName() == "BlockBundleList");
+    QVERIFY(bundle->getLine() == 38);
     QVERIFY(bundle->getChildren().size() == 1);
     valueNode = static_cast<ValueNode *>(bundle->getChildren().at(0));
     QVERIFY(valueNode->getNodeType() == AST::Int);
@@ -518,8 +595,10 @@ void ParserTest::testTreeBuildLists()
     // Next Block - IntegerList list
     block = static_cast<BlockNode *>(nodes.at(7));
     QVERIFY(block->getObjectType() == "constant");
+    QVERIFY(block->getLine() == 46);
     bundle = block->getBundle();
     QVERIFY(bundle->getName() == "IntegerList");
+    QVERIFY(bundle->getLine() == 46);
     QVERIFY(bundle->getChildren().size() == 1);
     valueNode = static_cast<ValueNode *>(bundle->getChildren().at(0));
     QVERIFY(valueNode->getNodeType() == AST::Int);
@@ -540,8 +619,10 @@ void ParserTest::testTreeBuildLists()
     // Next Block - IntegerList list
     block = static_cast<BlockNode *>(nodes.at(8));
     QVERIFY(block->getObjectType() == "constant");
+    QVERIFY(block->getLine() == 52);
     bundle = block->getBundle();
     QVERIFY(bundle->getName() == "IntegerList");
+    QVERIFY(bundle->getLine() == 53);
     QVERIFY(bundle->getChildren().size() == 1);
     valueNode = static_cast<ValueNode *>(bundle->getChildren().at(0));
     QVERIFY(valueNode->getNodeType() == AST::Int);
@@ -681,7 +762,7 @@ void ParserTest::testParser()
     foreach (QString file, files) {
         tree = parse(QString(QFINDTESTDATA(file)).toStdString().c_str());
         QVERIFY(tree != NULL);
-        tree->deleteChildren(); // FIXME this leaks, but still crashes...
+        tree->deleteChildren();
         delete tree;
     }
 }

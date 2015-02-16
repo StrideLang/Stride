@@ -17,8 +17,8 @@ public:
         LogicalNot
     } ExpressionType;
 
-    ExpressionNode(ExpressionType type, AST *left, AST *right);
-    ExpressionNode(ExpressionType type, AST *value);
+    ExpressionNode(ExpressionType type, AST *left, AST *right, int line);
+    ExpressionNode(ExpressionType type, AST *value, int line);
     ~ExpressionNode();
 
     AST *getLeft() const {return m_children.at(0); }

@@ -8,11 +8,11 @@
 class ValueNode : public AST
 {
 public:
-    ValueNode();
-    ValueNode(int value);
-    ValueNode(float value);
-    ValueNode(string value);
-    ValueNode(bool value);
+    ValueNode(int line);
+    ValueNode(int value, int line);
+    ValueNode(float value, int line);
+    ValueNode(string value, int line);
+    ValueNode(bool value, int line);
     ~ValueNode();
 
     int getIntValue() const;

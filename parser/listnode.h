@@ -6,7 +6,7 @@
 class ListNode : public AST
 {
 public:
-    ListNode(AST *newMember);
+    ListNode(AST *newMember, int line);
     ~ListNode();
 
     void stealMembers(ListNode *list);

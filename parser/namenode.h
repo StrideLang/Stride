@@ -8,7 +8,7 @@
 class NameNode : public AST
 {
 public:
-    NameNode(string name);
+    NameNode(string name, int line);
     ~NameNode();
 
     string getName() const {return m_name;}

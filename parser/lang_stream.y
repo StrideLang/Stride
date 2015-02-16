@@ -22,6 +22,7 @@ AST *parse(const char *filename);
 int error = 0;
 
 %}
+
 %code requires { #include "ast.h" }
 %code requires { #include "platformnode.h" }
 %code requires { #include "blocknode.h" }
@@ -100,6 +101,8 @@ int error = 0;
 %nonassoc NOT
 %nonassoc UMINUS
 
+%locations
+
 %%
 
 entry: 
@@ -124,10 +127,10 @@ start:
 
 platformDef:
                 USE UVAR VERSION FLOAT {
-                        cout << "Platform: " << $2 << endl << "Version: " << $4 << endl;
+                        cout << "Platform: " << $2 << endl << "Version: " << $4 << " line " << yylineno << endl;
                         string s;
                         s.append($2); /* string constructor leaks otherwise! */
-                        $$ = new PlatformNode(s, $4);
+                        $$ = new PlatformNode(s, $4, yyloc.first_line);
                         free($2);
                 }
 	;
@@ -142,7 +145,7 @@ blockDef:
                                                   word.append($1); /* string constructor leaks otherwise! */
                                                   string uvar;
                                                   uvar.append($2); /* string constructor leaks otherwise! */
-                                                  $$ = new BlockNode(uvar, word, $3);
+                                                  $$ = new BlockNode(uvar, word, $3, yyloc.first_line);
                                                   AST *props = $3;
                                                   delete props;
                                                   cout << "Block: " << $1 << ", Labelled: " << $2 << endl;
@@ -152,7 +155,7 @@ blockDef:
         |	WORD bundleDef blockType	{
                                                   string s;
                                                   s.append($1); /* string constructor leaks otherwise! */
-                                                  $$ = new BlockNode($2, s, $3);
+                                                  $$ = new BlockNode($2, s, $3, yyloc.first_line);
                                                   AST *props = $3;
                                                   delete props;
                                                   cout << "Block Bundle ..." << endl;
@@ -173,7 +176,7 @@ streamDef:
 	;
 
 streamType:
-                valueExp STREAM streamExp  	{ $$ = new StreamNode($1, $3);
+                valueExp STREAM streamExp  	{ $$ = new StreamNode($1, $3, yyloc.first_line);
                                                   cout << "Stream Resolved!" << endl; }
         |	valueListExp STREAM streamExp	{ cout << "Stream Resolved!" << endl; }
 	;
@@ -186,7 +189,7 @@ bundleDef:
                 UVAR '[' indexExp ']'	{
                                           string s;
                                           s.append($1); /* string constructor leaks otherwise! */
-                                          $$ = new BundleNode(s, $3);
+                                          $$ = new BundleNode(s, $3, yyloc.first_line);
                                           cout << "Bundle name: " << $1 << endl;
                                           free($1);}
 	;
@@ -199,25 +202,25 @@ functionDef:
                 WORD '(' ')'		{
                                           string s;
                                           s.append($1); /* string constructor leaks otherwise! */
-                                          $$ = new FunctionNode(s, NULL, FunctionNode::BuiltIn);
+                                          $$ = new FunctionNode(s, NULL, FunctionNode::BuiltIn, yyloc.first_line);
                                           cout << "Platform function: " << $1 << endl;
                                           free($1); }
         |	WORD '(' properties ')'	{
                                           string s;
                                           s.append($1); /* string constructor leaks otherwise! */
-                                          $$ = new FunctionNode(s, $3, FunctionNode::BuiltIn);
+                                          $$ = new FunctionNode(s, $3, FunctionNode::BuiltIn, yyloc.first_line);
                                           cout << "Properties () ..." << endl << "Platform function: " << $1 << endl;
                                           free($1);}
         |	UVAR '(' ')'		{
                                           string s;
                                           s.append($1); /* string constructor leaks otherwise! */
-                                          $$ = new FunctionNode(s, NULL, FunctionNode::UserDefined);
+                                          $$ = new FunctionNode(s, NULL, FunctionNode::UserDefined, yyloc.first_line);
                                           cout << "User function: " << $1 << endl;
                                           free($1); }
         |	UVAR '(' properties ')' {
                                           string s;
                                           s.append($1); /* string constructor leaks otherwise! */
-                                          $$ = new FunctionNode(s, $3, FunctionNode::UserDefined);
+                                          $$ = new FunctionNode(s, $3, FunctionNode::UserDefined, yyloc.first_line);
                                           cout << "Properties () ..." << endl << "User function: " << $1 << endl;
                                           free($1); }
 	;	
@@ -266,15 +269,15 @@ property:
 	;
 	
 propertyType: 	
-                NONE			{ $$ = new ValueNode(); cout << "Keyword: none" << endl; }
-        |	ON			{ $$ = new ValueNode(true); cout << "Keyword: on" << endl; }
-        |	OFF			{ $$ = new ValueNode(false); cout << "Keyword: off" << endl; }
+                NONE			{ $$ = new ValueNode(yyloc.first_line); cout << "Keyword: none" << endl; }
+        |	ON			{ $$ = new ValueNode(true, yyloc.first_line); cout << "Keyword: on" << endl; }
+        |	OFF			{ $$ = new ValueNode(false, yyloc.first_line); cout << "Keyword: off" << endl; }
         |	STRING			{
                                           string s;
                                           s.append($1); /* string constructor leaks otherwise! */
-                                          $$ = new ValueNode(s); cout << "String: " << $1 << endl; free($1); }
+                                          $$ = new ValueNode(s, yyloc.first_line); cout << "String: " << $1 << endl; free($1); }
         |	valueExp		{ $$ = $1; cout << "Value expression as property value!" << endl; }
-        |	blockType		{ $$ = new BlockNode("", "" , $1);
+        |	blockType		{ $$ = new BlockNode("", "" , $1, yyloc.first_line);
                                           AST *props = $1;
                                           delete props;
                                           cout << "Block as property value!" << endl; }
@@ -297,49 +300,49 @@ listDef:
 
 stringList:
                 stringList COMMA STRING		{
-                                                  ListNode *list = new ListNode(NULL);
+                                                  ListNode *list = new ListNode(NULL, yyloc.first_line);
                                                   list->stealMembers($1);
                                                   ListNode *oldList = $1;
                                                   oldList->deleteChildren();
                                                   delete oldList;
                                                   string s;
                                                   s.append($3);  /* string constructor leaks otherwise! */
-                                                  list->addChild(new ValueNode(s));
+                                                  list->addChild(new ValueNode(s, yyloc.first_line));
                                                   $$ = list;
                                                   cout << "String: " << $3 << endl << "New list item ... " << endl; free($3); }
         |	STRING				{
                                                   string s;
                                                   s.append($1);
-                                                  $$ = new ListNode(new ValueNode(s));
+                                                  $$ = new ListNode(new ValueNode(s, yyloc.first_line), yyloc.first_line);
                                                   cout << "String: " << $1 << endl << "New list item ... " << endl; free($1); }
 	;
 
 switchList:
                 switchList COMMA ON	{
-                                          ListNode *list = new ListNode(NULL);
+                                          ListNode *list = new ListNode(NULL, yyloc.first_line);
                                           list->stealMembers($1);
                                           ListNode *oldList = $1;
                                           oldList->deleteChildren();
                                           delete oldList;
-                                          list->addChild(new ValueNode(true));
+                                          list->addChild(new ValueNode(true, yyloc.first_line));
                                           $$ = list;
                                           cout << "switch: ON" << endl << "New list item ... " << endl; }
         |	switchList COMMA OFF	{
-                                          ListNode *list = new ListNode(NULL);
+                                          ListNode *list = new ListNode(NULL, yyloc.first_line);
                                           list->stealMembers($1);
                                           ListNode *oldList = $1;
                                           oldList->deleteChildren();
                                           delete oldList;
-                                          list->addChild(new ValueNode(false));
+                                          list->addChild(new ValueNode(false, yyloc.first_line));
                                           $$ = list;
                                           cout << "switch: OFF" << endl << "New list item ... " << endl; }
-        |	ON			{ $$ = new ListNode(new ValueNode(true)); cout << "switch: ON" << endl << "New list item ... " << endl; }
-        |	OFF			{ $$ = new ListNode(new ValueNode(false)); cout << "switch: OFF" << endl << "New list item ... " << endl; }
+        |	ON			{ $$ = new ListNode(new ValueNode(true, yyloc.first_line), yyloc.first_line); cout << "switch: ON" << endl << "New list item ... " << endl; }
+        |	OFF			{ $$ = new ListNode(new ValueNode(false, yyloc.first_line), yyloc.first_line); cout << "switch: OFF" << endl << "New list item ... " << endl; }
 	;
 	
 blockList:
                 blockList COMMA blockDef	{
-                                                  ListNode *list = new ListNode(NULL);
+                                                  ListNode *list = new ListNode(NULL, yyloc.first_line);
                                                   list->stealMembers($1);
                                                   ListNode *oldList = $1;
                                                   oldList->deleteChildren();
@@ -347,12 +350,12 @@ blockList:
                                                   list->addChild($3);
                                                   $$ = list;
                                                   cout << "Block definition ... " << endl << "New list item ... " << endl; }
-        |	blockDef			{ $$ = new ListNode($1); cout << "Block definition ... " << endl << "New list item ... " << endl; }
+        |	blockDef			{ $$ = new ListNode($1, yyloc.first_line); cout << "Block definition ... " << endl << "New list item ... " << endl; }
 	;
 	
 streamList:
                 streamList COMMA streamType	{
-                                                  ListNode *list = new ListNode(NULL);
+                                                  ListNode *list = new ListNode(NULL, yyloc.first_line);
                                                   list->stealMembers($1);
                                                   ListNode *oldList = $1;
                                                   oldList->deleteChildren();
@@ -360,12 +363,12 @@ streamList:
                                                   list->addChild($3);
                                                   $$ = list;
                                                   cout << "Stream definition ... " << endl << "New list item ... " << endl; }
-        |	streamType			{ $$ = new ListNode($1); cout << "Stream definition ... " << endl << "New list item ... " << endl; }
+        |	streamType			{ $$ = new ListNode($1, yyloc.first_line); cout << "Stream definition ... " << endl << "New list item ... " << endl; }
 	;
 	
 listList:
                 listList COMMA listDef		{
-                                                  ListNode *list = new ListNode(NULL);
+                                                  ListNode *list = new ListNode(NULL, yyloc.first_line);
                                                   list->stealMembers($1);
                                                   ListNode *oldList = $1;
                                                   oldList->deleteChildren();
@@ -374,7 +377,7 @@ listList:
                                                   $$ = list;
                                                   cout << "List of lists ..." << endl << "New list item ... " << endl; }
         |	listDef				{
-                                                  $$ = new ListNode($1); cout << "List of lists ..." << endl << "New list item ... " << endl; }
+                                                  $$ = new ListNode($1, yyloc.first_line); cout << "List of lists ..." << endl << "New list item ... " << endl; }
 	;
 	
 // ================================= 
@@ -388,7 +391,7 @@ valueListDef:
 	
 valueList:
                 valueList COMMA valueExp	{
-                                                  ListNode *list = new ListNode(NULL);
+                                                  ListNode *list = new ListNode(NULL, yyloc.first_line);
                                                   list->stealMembers($1);
                                                   ListNode *oldList = $1;
                                                   oldList->deleteChildren();
@@ -397,13 +400,13 @@ valueList:
                                                   $$ = list;
                                                   cout << "Value expression ..." << endl << "New list item ... " << endl; }
         |	valueExp			{
-                                                  $$ = new ListNode($1);
+                                                  $$ = new ListNode($1, yyloc.first_line);
                                                   cout << "Value expression ..." << endl << "New list item ... " << endl; }
 	;	
 
 valueListList:
                 valueListList COMMA valueListDef	{
-                                                          ListNode *list = new ListNode(NULL);
+                                                          ListNode *list = new ListNode(NULL, yyloc.first_line);
                                                           list->stealMembers($1);
                                                           ListNode *oldList = $1;
                                                           oldList->deleteChildren();
@@ -411,7 +414,7 @@ valueListList:
                                                           list->addChild($3);
                                                           $$ = list;
                                                           cout << "List of lists ..." << endl << "New list item ... " << endl; }
-        |	valueListDef				{ $$ = new ListNode($1);  cout << "List of lists ..." << endl << "New list item ... " << endl; }
+        |	valueListDef				{ $$ = new ListNode($1, yyloc.first_line);  cout << "List of lists ..." << endl << "New list item ... " << endl; }
 	;
 
 // ================================= 
@@ -420,16 +423,16 @@ valueListList:
 	
 indexExp:
                 indexExp '+' indexExp 	{
-                                          $$ = new ExpressionNode(ExpressionNode::Add, $1, $3);
+                                          $$ = new ExpressionNode(ExpressionNode::Add, $1, $3, yyloc.first_line);
                                           cout << "Index/Size adding ... " << endl; }
         |	indexExp '-' indexExp 	{
-                                          $$ = new ExpressionNode(ExpressionNode::Subtract, $1, $3);
+                                          $$ = new ExpressionNode(ExpressionNode::Subtract, $1, $3, yyloc.first_line);
                                           cout << "Index/Size subtracting ... " << endl; }
         |	indexExp '*' indexExp 	{
-                                          $$ = new ExpressionNode(ExpressionNode::Multiply , $1, $3);
+                                          $$ = new ExpressionNode(ExpressionNode::Multiply , $1, $3, yyloc.first_line);
                                           cout << "Index/Size multiplying ... " << endl; }
         |	indexExp '/' indexExp 	{
-                                          $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3);
+                                          $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3, yyloc.first_line);
                                           cout << "Index/Size dividing ... " << endl; }
         |	'(' indexExp ')' 	{ $$ = $2; cout << "Index/Size enclosure ..." << endl; }
         |	indexComp		{ $$ = $1; }
@@ -441,28 +444,28 @@ indexExp:
 
 valueListExp:
                 valueListDef '+' valueExp	{
-                                                  $$ = new ExpressionNode(ExpressionNode::Add, $1, $3);
+                                                  $$ = new ExpressionNode(ExpressionNode::Add, $1, $3, yyloc.first_line);
                                                   cout << "Adding ... " << endl; }
         |	valueListDef '-' valueExp	{
-                                                  $$ = new ExpressionNode(ExpressionNode::Subtract, $1, $3);
+                                                  $$ = new ExpressionNode(ExpressionNode::Subtract, $1, $3, yyloc.first_line);
                                                   cout << "Subtracting ... " << endl; }
         |	valueListDef '*' valueExp	{
-                                                  $$ = new ExpressionNode(ExpressionNode::Multiply, $1, $3);
+                                                  $$ = new ExpressionNode(ExpressionNode::Multiply, $1, $3, yyloc.first_line);
                                                   cout << "Multiplying ... " << endl; }
         |	valueListDef '/' valueExp	{
-                                                  $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3);
+                                                  $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3, yyloc.first_line);
                                                   cout << "Dividing ... " << endl; }
         |	valueExp '+' valueListDef	{
-                                                  $$ = new ExpressionNode(ExpressionNode::Add , $1, $3);
+                                                  $$ = new ExpressionNode(ExpressionNode::Add , $1, $3, yyloc.first_line);
                                                   cout << "Adding ... " << endl; }
         |	valueExp '-' valueListDef	{
-                                                  $$ = new ExpressionNode(ExpressionNode::Subtract, $1, $3);
+                                                  $$ = new ExpressionNode(ExpressionNode::Subtract, $1, $3, yyloc.first_line);
                                                   cout << "Subtracting ... " << endl; }
         |	valueExp '*' valueListDef	{
-                                                  $$ = new ExpressionNode(ExpressionNode::Multiply, $1, $3);
+                                                  $$ = new ExpressionNode(ExpressionNode::Multiply, $1, $3, yyloc.first_line);
                                                   cout << "Multiplying ... " << endl; }
         |	valueExp '/' valueListDef	{
-                                                  $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3);
+                                                  $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3, yyloc.first_line);
                                                   cout << "Dividing ... " << endl; }
         |	valueListDef			{ $$ = $1; }
 	;
@@ -473,29 +476,29 @@ valueListExp:
 	
 valueExp:
                 valueExp '+' valueExp 		{
-                                                  $$ = new ExpressionNode(ExpressionNode::Add, $1, $3);
+                                                  $$ = new ExpressionNode(ExpressionNode::Add, $1, $3, yyloc.first_line);
                                                   cout << "Adding ... " << endl; }
         |	valueExp '-' valueExp 		{
-                                                  $$ = new ExpressionNode(ExpressionNode::Subtract, $1, $3);
+                                                  $$ = new ExpressionNode(ExpressionNode::Subtract, $1, $3, yyloc.first_line);
                                                   cout << "Subtracting ... " << endl; }
         |	valueExp '*' valueExp 		{
-                                                  $$ = new ExpressionNode(ExpressionNode::Multiply, $1, $3);
+                                                  $$ = new ExpressionNode(ExpressionNode::Multiply, $1, $3, yyloc.first_line);
                                                   cout << "Multiplying ... " << endl; }
         |	valueExp '/' valueExp 		{
-                                                  $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3);
+                                                  $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3, yyloc.first_line);
                                                   cout << "Dividing ... " << endl; }
         |	valueExp AND valueExp 		{
-                                                  $$ = new ExpressionNode(ExpressionNode::And, $1, $3);
+                                                  $$ = new ExpressionNode(ExpressionNode::And, $1, $3, yyloc.first_line);
                                                   cout << "Logical AND ... " << endl; }
         |	valueExp OR valueExp 		{
-                                                  $$ = new ExpressionNode(ExpressionNode::Or, $1, $3);
+                                                  $$ = new ExpressionNode(ExpressionNode::Or, $1, $3, yyloc.first_line);
                                                   cout << "Logical OR ... " << endl; }
         |	'(' valueExp ')' 		{ $$ = $2; cout << "Enclosure ..." << endl; }
         | 	'-' valueExp %prec UMINUS 	{
-                                                  $$ = new ExpressionNode(ExpressionNode::UnaryMinus, $2);
+                                                  $$ = new ExpressionNode(ExpressionNode::UnaryMinus, $2, yyloc.first_line);
                                                   cout << "Unary minus ... " << endl; }
         | 	NOT valueExp %prec NOT 		{
-                                                  $$ = new ExpressionNode(ExpressionNode::UnaryMinus, $2);
+                                                  $$ = new ExpressionNode(ExpressionNode::UnaryMinus, $2, yyloc.first_line);
                                                   cout << "Logical NOT ... " << endl; }
         | 	valueComp			{ $$ = $1; }
 	;
@@ -505,7 +508,7 @@ valueExp:
 // =================================
 	
 streamExp:
-                streamComp STREAM streamExp	{ $$ = new StreamNode($1, $3); }
+                streamComp STREAM streamExp	{ $$ = new StreamNode($1, $3, yyloc.first_line); }
         |	streamComp			{ $$ = $1; }
 	;
 
@@ -514,12 +517,12 @@ streamExp:
 // =================================
 	
 indexComp:
-                INT		{ $$ = new ValueNode($1);
+                INT		{ $$ = new ValueNode($1, yyloc.first_line);
                                   cout << "Index/Size Integer: " << $1 << endl; }
         |	UVAR		{
                                   string s;
                                   s.append($1); /* string constructor leaks otherwise! */
-                                  $$ = new NameNode(s);
+                                  $$ = new NameNode(s, yyloc.first_line);
                                   cout << "Index/Size User variable: " << $1 << endl; free($1); }
         |	bundleDef	{ cout << "Resolving indexed array ..." << endl; }
 	;
@@ -532,7 +535,7 @@ streamComp:
                 UVAR		{
                                   string s;
                                   s.append($1); /* string constructor leaks otherwise! */
-                                  $$ = new NameNode(s);
+                                  $$ = new NameNode(s, yyloc.first_line);
                                   cout << "User variable: " << $1 << endl << "Streaming ... " << endl;
                                   free($1); }
         |	bundleDef	{ cout << "Resolving indexed array ..." << endl << "Streaming ... " << endl; }
@@ -545,14 +548,14 @@ streamComp:
 // =================================
 
 valueComp:
-                INT	{ $$ = new ValueNode($1);
+                INT	{ $$ = new ValueNode($1, yyloc.first_line);
                           cout << "Integer: " << $1 << endl; }
-        |	FLOAT	{ $$ = new ValueNode($1);
+        |	FLOAT	{ $$ = new ValueNode($1, yyloc.first_line);
                           cout << "Real: " << $1 << endl; }
         |	UVAR	{
                           string s;
                           s.append($1); /* string constructor leaks otherwise! */
-                          $$ = new NameNode(s);
+                          $$ = new NameNode(s, yyloc.first_line);
                           cout << "User variable: " << $1 << endl;
                           free($1);
                           }
@@ -589,6 +592,7 @@ AST *parse(const char *filename){
 
         tree_head = new AST;
 	yyin = file;
+        yylineno = 1;
 	yyparse();
 	
 	if (error > 0){

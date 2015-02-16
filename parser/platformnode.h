@@ -10,7 +10,7 @@ using namespace std;
 class PlatformNode : public AST
 {
 public:
-    PlatformNode(string platformName, float version);
+    PlatformNode(string platformName, float version, int line);
 
     ~PlatformNode();
 

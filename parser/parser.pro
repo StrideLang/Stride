@@ -26,7 +26,8 @@ HEADERS += ast.h \
     functionnode.h \
     expressionnode.h \
     blocknode.h \
-    listnode.h
+    listnode.h \
+    streamparser.h
 
 BISONSOURCES = lang_stream.y
 FLEXSOURCES = lang_stream.l
