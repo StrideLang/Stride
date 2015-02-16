@@ -1,17 +1,8 @@
 #include <QString>
 #include <QtTest>
 
-#include "ast.h"
-#include "platformnode.h"
-#include "streamnode.h"
-#include "bundlenode.h"
-#include "blocknode.h"
-#include "valuenode.h"
-#include "propertynode.h"
-#include "namenode.h"
-#include "functionnode.h"
-#include "expressionnode.h"
-#include "listnode.h"
+#include "streamparser.h"
+#include "streamplatform.h"
 
 extern AST *parse(const char* fileName);
 
@@ -25,6 +16,10 @@ public:
 private:
 
 private Q_SLOTS:
+    //Platform
+    void testPlatform();
+
+    // Parser
     void testTreeBuildNoneSwitch();
     void testTreeBuildArray();
     void testTreeBuildStream();
@@ -36,6 +31,12 @@ private Q_SLOTS:
 
 ParserTest::ParserTest()
 {
+
+}
+
+void ParserTest::testPlatform()
+{
+    StreamPlatform platform;
 
 }
 
