@@ -34,20 +34,6 @@ folder_01.source = data/
 folder_01.target = data/
 DEPLOYMENTFOLDERS += folder_01
 
-# Link to parser library
-win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../parser/release/ -lStreamParser
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../parser/debug/ -lStreamParser
-else:unix: LIBS += -L$$OUT_PWD/../parser/ -lStreamParser
-
-INCLUDEPATH += $$PWD/../parser
-DEPENDPATH += $$PWD/../parser
-
-win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../parser/release/libStreamParser.a
-else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../parser/debug/libStreamParser.a
-else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../parser/release/StreamParser.lib
-else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../parser/debug/StreamParser.lib
-else:unix: PRE_TARGETDEPS += $$OUT_PWD/../parser/libStreamParser.a
-
 DISTFILES += \
     data/stream.stream \
     data/block.stream \
@@ -66,6 +52,20 @@ DISTFILES += \
     data/test.stream \
     data/noneswitch.stream
 
+
+# Link to parser library
+win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../parser/release/ -lStreamParser
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../parser/debug/ -lStreamParser
+else:unix: LIBS += -L$$OUT_PWD/../parser/ -lStreamParser
+
+INCLUDEPATH += $$PWD/../parser
+DEPENDPATH += $$PWD/../parser
+
+win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../parser/release/libStreamParser.a
+else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../parser/debug/libStreamParser.a
+else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../parser/release/StreamParser.lib
+else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../parser/debug/StreamParser.lib
+else:unix: PRE_TARGETDEPS += $$OUT_PWD/../parser/libStreamParser.a
 
 # Link to codegen library
 win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../codegen/release/ -lcodegen

@@ -5,8 +5,8 @@ CONFIG += ordered
 SUBDIRS = lpeg-0.12 \
           parser \
           editor \
-          tests \
-    codegen
+          codegen \
+          tests
 
 editor.depends = lpeg-0.12 parser codegen
 codegen.depends = parser

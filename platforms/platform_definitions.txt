@@ -13,11 +13,9 @@ real
 list
 string
 function
-none
 default
 stream
 none
-
 
 
 private types:

@@ -5,16 +5,25 @@
 #-------------------------------------------------
 
 QT       -= gui
+QT += core
 
 TARGET = codegen
 TEMPLATE = lib
 CONFIG += staticlib
 
+message(Building $${TARGET})
+
 SOURCES += codegen.cpp \
-    streamplatform.cpp
+    streamplatform.cpp \
+    platformtype.cpp \
+    platformfunction.cpp \
+    platformobject.cpp
 
 HEADERS += codegen.h \
-    streamplatform.h
+    streamplatform.h \
+    platformtype.h \
+    platformfunction.h \
+    platformobject.h
 
 #unix {
 #    target.path = /usr/local/lib

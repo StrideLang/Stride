@@ -36,8 +36,12 @@ ParserTest::ParserTest()
 
 void ParserTest::testPlatform()
 {
-    StreamPlatform platform;
+    StreamPlatform platform(QFINDTESTDATA("/../platforms"), "PufferFish");
 
+    AST *tree;
+    tree = parse(QString(QFINDTESTDATA("data/platform.stream")).toStdString().c_str());
+
+//    platform.
 }
 
 void ParserTest::testTreeBuildNoneSwitch()
