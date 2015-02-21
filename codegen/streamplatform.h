@@ -17,12 +17,15 @@ public:
     ~StreamPlatform();
 
 //    void setHardwarePlatform(HardwarePlatform &platform);
-    void parseJson(QString jsonText);
+    void parseBuiltinTypesJson(QString jsonText);
+    QList<PlatformType> parseTypesJson(QString jsonText);
 
     bool isValidType(QString typeName);
 
 private:
     void initBasicTypes();
+
+    QString m_platformPath;
 
     QString m_platformName;
     QList<PlatformType> m_platformTypes;

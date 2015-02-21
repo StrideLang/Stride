@@ -2,11 +2,16 @@
 #define PLATFORMTYPE_H
 
 #include <QList>
-#include <QHash>
+#include <QMap>
 #include <QString>
+#include <QVariant>
 
-// TODO properties should have defaults
-typedef QHash<QString, QList<QString> > Property;
+class Property {
+public:
+    QString name;
+    QStringList validTypes;
+    QVariant defaultValue;
+};
 
 class PlatformType
 {
@@ -15,7 +20,7 @@ public:
     ~PlatformType();
 
     QString getName();
-    bool isValidProperty(QString propertyName);
+    bool hasProperty(QString propertyName);
 
 private:
     QString m_name;

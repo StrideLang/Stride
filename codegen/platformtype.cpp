@@ -15,10 +15,10 @@ QString PlatformType::getName()
     return m_name;
 }
 
-bool PlatformType::isValidProperty(QString propertyName)
+bool PlatformType::hasProperty(QString propertyName)
 {
     foreach(Property property, m_properties) {
-        if (property.contains(propertyName)) {
+        if (property.name == propertyName) {
             return true;
         }
     }
