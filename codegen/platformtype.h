@@ -21,6 +21,7 @@ public:
 
     QString getName();
     bool hasProperty(QString propertyName);
+    bool isValidPropertyType(QString propertyName, QString type);
 
 private:
     QString m_name;

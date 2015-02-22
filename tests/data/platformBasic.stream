@@ -1,0 +1,50 @@
+use PufferFish version 1.1
+
+invalid InvalidType {
+
+}
+
+object Name {
+    meta: "hello"
+}
+
+object WrongObject {
+    meta: 34
+}
+
+switch Switch {
+    source: none
+    default: none
+}
+
+switch WrongSwitch {
+    source: none
+    default: 35
+}
+
+signal Signal {
+    source: none
+    rate: none
+}
+
+# Wrong properties for type
+signal Signal {
+    source: none
+    badproperty: none
+}
+
+constant Const {
+    value: "string"
+}
+
+#constant WrongConst {
+#    value: object {property: "hello"}
+#}
+
+control Control {
+    source: none
+}
+
+control WrongControl {
+    source: "hello"
+}

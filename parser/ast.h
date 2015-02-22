@@ -23,7 +23,7 @@ public:
 
         // Built-in types (leaf nodes)
         Int,
-        Float,
+        Real,
         Name,
         String,
         Expression,

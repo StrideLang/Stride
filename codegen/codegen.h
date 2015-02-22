@@ -11,11 +11,13 @@ public:
     typedef enum {
         Syntax,
         UnknownType,
-        InvalidType
+        InvalidType,
+        InvalidProperty,
+        InvalidPropertyType
     } ErrorType;
 
     ErrorType type;
-    QString errorToken;
+    QStringList errorTokens;
     int lineNumber;
 };
 
@@ -31,6 +33,7 @@ public:
 private:
     void validate();
     void checkTypeNames(AST *node);
+    void checkProperties(AST *node);
 
     StreamPlatform m_platform;
     AST *m_tree;

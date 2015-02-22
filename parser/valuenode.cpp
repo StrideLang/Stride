@@ -15,7 +15,7 @@ ValueNode::ValueNode(int value, int line) :
 }
 
 ValueNode::ValueNode(float value, int line) :
-    AST(AST::Float, line)
+    AST(AST::Real, line)
 {
     m_floatValue = value;
 }
@@ -45,7 +45,7 @@ int ValueNode::getIntValue() const
 
 float ValueNode::getFloatValue() const
 {
-    assert(m_token == AST::Float);
+    assert(m_token == AST::Real);
     return m_floatValue;
 }
 

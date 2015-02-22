@@ -3,6 +3,7 @@
 
 #include "streamparser.h"
 #include "streamplatform.h"
+#include "codegen.h"
 
 extern AST *parse(const char* fileName);
 
@@ -18,6 +19,7 @@ private:
 private Q_SLOTS:
     //Platform
     void testPlatform();
+    void testPlatformCommonObjects();
 
     // Parser
     void testTreeBuildNoneSwitch();
@@ -36,12 +38,64 @@ ParserTest::ParserTest()
 
 void ParserTest::testPlatform()
 {
-    StreamPlatform platform(QFINDTESTDATA("/../platforms"), "PufferFish");
+    StreamPlatform platform(QFINDTESTDATA("/../platforms"), "PufferFish", "1.1");
 
     AST *tree;
     tree = parse(QString(QFINDTESTDATA("data/platform.stream")).toStdString().c_str());
 
-//    platform.
+    QVERIFY(tree != NULL);
+    Codegen generator(platform, tree);
+    QVERIFY(generator.isValid());
+}
+
+void ParserTest::testPlatformCommonObjects()
+{
+
+    AST *tree;
+    tree = parse(QString(QFINDTESTDATA("data/platformBasic.stream")).toStdString().c_str());
+
+    vector<AST *> nodes = tree->getChildren();
+    QVERIFY(nodes.at(0)->getNodeType() == AST::Platform);
+    PlatformNode *node = static_cast<PlatformNode *>(nodes.at(0));
+    QVERIFY(node->platformName() == "PufferFish");
+    QVERIFY(node->version() == 1.1f);
+
+    StreamPlatform platform(QFINDTESTDATA("/../platforms"),
+                            QString::fromStdString(node->platformName()), QString::number(node->version(),'g',  1));
+    QVERIFY(tree != NULL);
+    Codegen generator(platform, tree);
+    QVERIFY(!generator.isValid());
+    QList<LangError> errors = generator.getErrors();
+
+//    QVERIFY(errors.size() == 14);
+
+    QVERIFY(errors[0].type == LangError::UnknownType);
+    QVERIFY(errors[0].lineNumber == 3);
+    QVERIFY(errors[0].errorTokens[0] == "invalid");
+
+    QVERIFY(errors[1].type == LangError::InvalidPropertyType);
+    QVERIFY(errors[1].lineNumber == 11);
+    QVERIFY(errors[1].errorTokens[0]  == "object");
+    QVERIFY(errors[1].errorTokens[1]  == "meta");
+    QVERIFY(errors[1].errorTokens[2]  == "int");
+
+    QVERIFY(errors[2].type == LangError::InvalidPropertyType);
+    QVERIFY(errors[2].lineNumber == 20);
+    QVERIFY(errors[2].errorTokens[0]  == "switch");
+    QVERIFY(errors[2].errorTokens[1]  == "default");
+    QVERIFY(errors[2].errorTokens[2]  == "int");
+
+    QVERIFY(errors[3].type == LangError::InvalidProperty);
+    QVERIFY(errors[3].lineNumber == 31);
+    QVERIFY(errors[3].errorTokens[0]  == "signal");
+    QVERIFY(errors[3].errorTokens[1]  == "badproperty");
+
+    QVERIFY(errors[4].type == LangError::InvalidPropertyType);
+    QVERIFY(errors[4].lineNumber == 48);
+    QVERIFY(errors[4].errorTokens[0]  == "control");
+    QVERIFY(errors[4].errorTokens[1]  == "source");
+    QVERIFY(errors[4].errorTokens[2]  == "string");
+
 }
 
 void ParserTest::testTreeBuildNoneSwitch()
@@ -358,7 +412,7 @@ void ParserTest::testTreeBuildStream()
     bundle = static_cast<BundleNode *>(expression->getLeft());
     QVERIFY(bundle->getName() == "Bundle1");
     QVERIFY(bundle->getLine() == 10);
-    QVERIFY(expression->getRight()->getNodeType() == AST::Float);
+    QVERIFY(expression->getRight()->getNodeType() == AST::Real);
     QVERIFY(static_cast<ValueNode *>(expression->getRight())->getFloatValue() == 0.5f);
     bundle = static_cast<BundleNode *>(node->getRight());
     QVERIFY(bundle->getName() == "Bundle2");
@@ -465,10 +519,10 @@ void ParserTest::testTreeBuildLists()
     QVERIFY(propertyValue->getNodeType() == AST::List);
     listValues = propertyValue->getChildren();
     QVERIFY(listValues.size() == 4);
-    QVERIFY(listValues.at(0)->getNodeType() == AST::Float);
+    QVERIFY(listValues.at(0)->getNodeType() == AST::Real);
     QVERIFY(listValues.at(1)->getNodeType() == AST::Expression);
-    QVERIFY(listValues.at(2)->getNodeType() == AST::Float);
-    QVERIFY(listValues.at(3)->getNodeType() == AST::Float);
+    QVERIFY(listValues.at(2)->getNodeType() == AST::Real);
+    QVERIFY(listValues.at(3)->getNodeType() == AST::Real);
     QVERIFY(block->getChildren().at(1)->getNodeType() == AST::Property);
     property = static_cast<PropertyNode *>(block->getProperties().at(1));
     QVERIFY(property->getName() == "meta");

@@ -6,21 +6,21 @@
         {
             "typeName": "switch",
             "properties": [{"name": "source", "validTypes" : [ "serial", "midi", "none", "function" ], "default": "none"},
-                {"name": "default", "validTypes": ["string"], "default": "none"}]
+                {"name": "default", "validTypes": ["string", "none"], "default": "none"}]
         },
         {
             "typeName": "signal",
             "properties": [{"name": "source", "validTypes" : [ "hwIo", "none" ], "default": "none"},
-                {"name": "rate", "validTypes": ["data"], "default": "none"}]
+                {"name": "rate", "validTypes": ["constant", "none"], "default": "none"}]
         },
         {
-            "typeName": "data",
+            "typeName": "constant",
             "properties": [{"name": "value", "validTypes" : [ "int", "real", "string" ], "default": "none"}],
             "private": [ {"type": [ "int", "real", "string" ]}]
         },
         {
             "typeName": "control",
-            "properties": [{"name": "source", "validTypes" : [ "data", "analogIn", "function" ], "default": "none"}]
+            "properties": [{"name": "source", "validTypes" : [ "constant", "analogIn", "function", "none" ], "default": "none"}]
         },
         {
             "typeName": "patch",

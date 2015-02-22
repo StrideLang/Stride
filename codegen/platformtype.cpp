@@ -25,3 +25,13 @@ bool PlatformType::hasProperty(QString propertyName)
     return false;
 }
 
+bool PlatformType::isValidPropertyType(QString propertyName, QString type)
+{
+    foreach(Property property, m_properties) {
+        if (property.name == propertyName && property.validTypes.contains(type)) {
+            return true;
+        }
+    }
+
+}
+
