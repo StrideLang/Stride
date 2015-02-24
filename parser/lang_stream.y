@@ -194,6 +194,14 @@ bundleDef:
                                           free($1);}
 	;
 
+// =================================
+//	ARRAY RANGE ACCESS
+// =================================
+
+bundleRangeDef:
+                UVAR '[' indexExp COLON indexExp']'     { cout << "Bundle name: " << $1 << endl; }
+        ;
+
 // ================================= 
 //	FUNCTION DEFINITION
 // =================================
@@ -539,6 +547,7 @@ streamComp:
                                   cout << "User variable: " << $1 << endl << "Streaming ... " << endl;
                                   free($1); }
         |	bundleDef	{ cout << "Resolving indexed array ..." << endl << "Streaming ... " << endl; }
+        |       bundleRangeDef  { cout << "Resolving indexed array range ..." << endl << "Streaming ... " << endl; }
         |	functionDef	{ cout << "Resolving function definition ... " << endl << "Streaming ... " << endl; }
 	|	valueListDef	{ cout << "Resolving list definition ... " << endl << "Streaming ... " << endl;}
 	;
@@ -561,6 +570,7 @@ valueComp:
                           }
         |	bundleDef	{ $$ = $1;
                                   cout << "Resolving indexed array ..." << endl; }
+        |       bundleRangeDef  { cout << "Resolving indexed array range ..." << endl; }
         |	functionDef	{ cout << "Resolving function definition ..." << endl; }
 	;
 	
