@@ -283,7 +283,7 @@ void ParserTest::testTreeBuildStream()
     tree = parse(QString(QFINDTESTDATA("data/stream.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
     vector<AST *> nodes = tree->getChildren();
-    QVERIFY(nodes.size() == 6);
+    QVERIFY(nodes.size() == 7);
 
     // Val1 >> Val2 ;
     QVERIFY(nodes.at(0)->getNodeType() == AST::Stream);
@@ -421,6 +421,36 @@ void ParserTest::testTreeBuildStream()
     QVERIFY(leafnode->getNodeType() == AST::Int);
     QVERIFY(leafnode->getLine() == 10);
     QVERIFY(static_cast<ValueNode *>(leafnode)->getIntValue() == 2);
+
+    //    BundleRange[1:2] >> BundleRange2[3:4];
+    QVERIFY(nodes.at(6)->getNodeType() == AST::Stream);
+    node = static_cast<StreamNode *>(nodes.at(6));
+    QVERIFY(node->getLeft()->getNodeType() == AST::BundleRange);
+    QVERIFY(node->getRight()->getNodeType() == AST::BundleRange);
+    QVERIFY(node->getLine() == 12);
+    bundle = static_cast<BundleNode *>(node->getLeft());
+    QVERIFY(bundle->getName() == "BundleRange");
+    QVERIFY(bundle->getLine() == 12);
+    leafnode = bundle->startIndex();
+    QVERIFY(leafnode->getNodeType() == AST::Int);
+    QVERIFY(leafnode->getLine() == 12);
+    QVERIFY(static_cast<ValueNode *>(leafnode)->getIntValue() == 1);
+    leafnode = bundle->endIndex();
+    QVERIFY(leafnode->getNodeType() == AST::Int);
+    QVERIFY(leafnode->getLine() == 12);
+    QVERIFY(static_cast<ValueNode *>(leafnode)->getIntValue() == 2);
+
+    bundle = static_cast<BundleNode *>(node->getRight());
+    QVERIFY(bundle->getName() == "BundleRange2");
+    QVERIFY(bundle->getLine() == 12);
+    leafnode = bundle->startIndex();
+    QVERIFY(leafnode->getNodeType() == AST::Int);
+    QVERIFY(leafnode->getLine() == 12);
+    QVERIFY(static_cast<ValueNode *>(leafnode)->getIntValue() == 3);
+    leafnode = bundle->endIndex();
+    QVERIFY(leafnode->getNodeType() == AST::Int);
+    QVERIFY(leafnode->getLine() == 12);
+    QVERIFY(static_cast<ValueNode *>(leafnode)->getIntValue() == 4);
 
     tree->deleteChildren();
     delete tree;

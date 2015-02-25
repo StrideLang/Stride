@@ -65,6 +65,7 @@ int error = 0;
 %type <ast> indexExp
 %type <ast> indexComp
 %type <bundleNode> bundleDef
+%type <bundleNode> bundleRangeDef
 %type <functionNode> functionDef
 %type <listNode> listDef
 %type <listNode> valueListList
@@ -199,7 +200,12 @@ bundleDef:
 // =================================
 
 bundleRangeDef:
-                UVAR '[' indexExp COLON indexExp']'     { cout << "Bundle name: " << $1 << endl; }
+                UVAR '[' indexExp COLON indexExp']'     {
+                                                          string s;
+                                                          s.append($1); /* string constructor leaks otherwise! */
+                                                          $$ = new BundleNode(s, $3, $5, yyloc.first_line);
+                                                          cout << "Bundle Range name: " << $1 << endl;
+                                                          free($1); }
         ;
 
 // ================================= 

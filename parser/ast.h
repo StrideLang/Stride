@@ -14,6 +14,7 @@ public:
         None,
         Platform,
         Bundle,
+        BundleRange,
         BlockBundle,
         Block,
         Stream,

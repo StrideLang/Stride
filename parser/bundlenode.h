@@ -8,11 +8,14 @@
 class BundleNode : public AST
 {
 public:
-    BundleNode(string getName, AST *indexExp, int line);
+    BundleNode(string name, AST *indexExp, int line);
+    BundleNode(string name, AST *indexStartExp, AST *indexEndExp, int line);
     ~BundleNode();
 
     string getName() const;
-    AST *index() const { return m_children.at(0); }
+    AST *index() const;
+    AST *startIndex() const;
+    AST *endIndex() const;
 
 private:
     string m_name;
