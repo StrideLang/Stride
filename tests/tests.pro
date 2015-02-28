@@ -52,8 +52,17 @@ DISTFILES += \
     data/test.stream \
     data/noneswitch.stream \
     data/platfromBasic.stream \
-    data/platformBasic.stream
+    data/platformBasic.stream \
+    data/bundleResolution.stream
 
+# Link to codegen library
+unix|win32: LIBS += -L$$OUT_PWD/../codegen/ -lcodegen
+
+INCLUDEPATH += $$PWD/../codegen
+DEPENDPATH += $$PWD/../codegen
+
+win32:!win32-g++: PRE_TARGETDEPS += $$OUT_PWD/../codegen/codegen.lib
+else:unix|win32-g++: PRE_TARGETDEPS += $$OUT_PWD/../codegen/libcodegen.a
 
 # Link to parser library
 win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../parser/release/ -lStreamParser
@@ -69,11 +78,3 @@ else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PW
 else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../parser/debug/StreamParser.lib
 else:unix: PRE_TARGETDEPS += $$OUT_PWD/../parser/libStreamParser.a
 
-# Link to codegen library
-unix|win32: LIBS += -L$$OUT_PWD/../codegen/ -lcodegen
-
-INCLUDEPATH += $$PWD/../codegen
-DEPENDPATH += $$PWD/../codegen
-
-win32:!win32-g++: PRE_TARGETDEPS += $$OUT_PWD/../codegen/codegen.lib
-else:unix|win32-g++: PRE_TARGETDEPS += $$OUT_PWD/../codegen/libcodegen.a

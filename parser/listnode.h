@@ -10,6 +10,7 @@ public:
     ~ListNode();
 
     void stealMembers(ListNode *list);
+    Token getListType();
 };
 
 #endif // LISTNODE_H

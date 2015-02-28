@@ -8,7 +8,7 @@
 class PropertyNode : public AST
 {
 public:
-    PropertyNode(string name, AST *value);
+    PropertyNode(string name, AST *value, int line);
     ~PropertyNode();
 
     string getName() const { return m_name; }

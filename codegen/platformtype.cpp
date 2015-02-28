@@ -1,7 +1,7 @@
 #include "platformtype.h"
 
 PlatformType::PlatformType(QString name, QList<Property> properties) :
-    m_name(name), m_properties(properties)
+    m_name(name), m_ports(properties)
 {
 }
 
@@ -15,23 +15,29 @@ QString PlatformType::getName()
     return m_name;
 }
 
-bool PlatformType::hasProperty(QString propertyName)
+bool PlatformType::hasPort(QString portName)
 {
-    foreach(Property property, m_properties) {
-        if (property.name == propertyName) {
+    foreach(Property property, m_ports) {
+        if (property.name == portName) {
             return true;
         }
     }
     return false;
 }
 
-bool PlatformType::isValidPropertyType(QString propertyName, QString type)
+bool PlatformType::isValidPortType(QString portName, QString type)
 {
-    foreach(Property property, m_properties) {
-        if (property.name == propertyName && property.validTypes.contains(type)) {
+    foreach(Property property, m_ports) {
+        if (property.name == portName && property.types.contains(type)) {
             return true;
         }
     }
-
+    return false;
 }
+
+QList<Property> PlatformType::ports() const
+{
+    return m_ports;
+}
+
 

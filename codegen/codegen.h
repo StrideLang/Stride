@@ -12,8 +12,12 @@ public:
         Syntax,
         UnknownType,
         InvalidType,
-        InvalidProperty,
-        InvalidPropertyType
+        InvalidPort,
+        InvalidPortType,
+        IndexMustBeInteger,
+        BundleSizeMismatch,
+        ArrayIndexOutOfRange,
+        None
     } ErrorType;
 
     ErrorType type;
@@ -25,15 +29,51 @@ class Codegen
 {
 public:
     Codegen(StreamPlatform &platform, AST * tree);
+    Codegen(QString platformRootDir, AST * tree);
+
 
     bool isValid();
+    bool platformIsValid();
 
     QList<LangError> getErrors();
+    QStringList getPlatformErrors();
 
 private:
+    typedef enum {
+        Audio,
+        ControlReal,
+        ControlInt,
+        ControlBoolean,
+        ControlString,
+        ConstReal,
+        ConstInt,
+        ConstBoolean,
+        ConstString,
+        None,
+        Invalid
+    } PortType;
+
     void validate();
-    void checkTypeNames(AST *node);
-    void checkProperties(AST *node);
+    void validateTypeNames(AST *node);
+    void validateProperties(AST *node, QVector<AST *> scope);
+    void validateBundleIndeces(AST *node, QVector<AST *> scope);
+    void validateBundleSizes(AST *node, QVector<AST *> scope);
+    void sortErrors();
+
+    BlockNode *findDeclaration(QString bundleName, QVector<AST *> scope);
+    int getBlockBundleDeclaredSize(BlockNode *block, QVector<AST *> scope, QList<LangError> &errors);
+    int getConstBlockDataSize(BlockNode *block, QVector<AST *> scope, QList<LangError> &errors);
+
+    PortType resolveBundleType(BundleNode *bundle, QVector<AST *> scope);
+    PortType resolveNodeOutType(AST *node, QVector<AST *> scope);
+    PortType resolveListType(ListNode *listnode, QVector<AST *> scope);
+    PortType resolveExpressionType(ExpressionNode *exprnode, QVector<AST *> scope);
+
+    int evaluateConstInteger(AST *node, QVector<AST *> scope, QList<LangError> &errors);
+    AST *getMemberfromBlockBundle(BlockNode *node, int index, QList<LangError> &errors);
+    AST *getMemberFromList(ListNode *node, int index, QList<LangError> &errors);
+
+    QString getPortTypeName(PortType type);
 
     StreamPlatform m_platform;
     AST *m_tree;

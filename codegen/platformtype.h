@@ -8,9 +8,19 @@
 
 class Property {
 public:
+    typedef enum {
+        PropertyAccess,
+        Stream_in,
+        Stream_out,
+        None
+    } AccessType;
+
     QString name;
-    QStringList validTypes;
+    QStringList types;
     QVariant defaultValue;
+    bool required;
+    int maxconnections;
+    AccessType access;
 };
 
 class PlatformType
@@ -20,12 +30,15 @@ public:
     ~PlatformType();
 
     QString getName();
-    bool hasProperty(QString propertyName);
-    bool isValidPropertyType(QString propertyName, QString type);
+    bool hasPort(QString portName);
+    bool isValidPortType(QString portName, QString type);
+
+    QList<Property> ports() const;
 
 private:
     QString m_name;
-    QList<Property> m_properties;
+    QList<Property> m_ports;
+    QStringList m_inherits;
 };
 
 #endif // PLATFORMTYPE_H

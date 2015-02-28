@@ -13,38 +13,46 @@ object WrongObject {
 }
 
 switch Switch {
-    source: none
-    default: none
+    default: off
 }
 
+
 switch WrongSwitch {
-    source: none
     default: 35
 }
 
+
 signal Signal {
-    source: none
-    rate: none
+    rate: 44100
+    meta: "signal"
 }
 
 # Wrong properties for type
 signal Signal {
-    source: none
     badproperty: none
+    meta: "badproperty"
 }
 
 constant Const {
-    value: "string"
+    value: 3.1
 }
 
 #constant WrongConst {
-#    value: object {property: "hello"}
+#    value: {property: "hello"}
 #}
 
 control Control {
-    source: none
+default:        0.0
+#rate:           ControlRate
+enableMapping:  on
+mappingMode:    'linear'
+minimum:        0.0
+maximum:        1.0
+increment:      none
+rounding:       'truncate'
+meta:           none
 }
 
 control WrongControl {
-    source: "hello"
+    maximum: "hello"
 }

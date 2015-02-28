@@ -1,54 +1,70 @@
 {"types": [
         {
             "typeName": "object",
-            "properties": [{"name": "meta", "validTypes": ["string"], "default": "none"}]
+            "ports": [{"name": "meta", "types": ["CSP", "none"], "default": "none", "required" : "no", "maxconnections" : 1, "access": "property"}],
+            "private": {"inherits" : []}
         },
         {
             "typeName": "switch",
-            "properties": [{"name": "source", "validTypes" : [ "serial", "midi", "none", "function" ], "default": "none"},
-                {"name": "default", "validTypes": ["string", "none"], "default": "none"}]
+            "ports": [
+                {"name": "input", "types" : ["CSBP"], "default": "none", "required" : "no", "maxconnections" : 1, "access": "stream_in"},
+                {"name": "output", "types" : ["CSBP"], "default": "none", "required" : "no", "maxconnections" : -1, "access": "stream_out"},
+                {"name": "default", "types" : ["CBP"], "default": "off", "required" : "yes", "maxconnections" : 1, "access": "property"}
+            ],
+            "private": {"inherits" : ["object"]}
         },
         {
             "typeName": "signal",
-            "properties": [{"name": "source", "validTypes" : [ "hwIo", "none" ], "default": "none"},
-                {"name": "rate", "validTypes": ["constant", "none"], "default": "none"}]
+            "ports": [
+                {"name": "input", "types" : ["CSBP"], "default": "none", "required" : "no", "maxconnections" : 1, "access": "stream_in"},
+                {"name": "output", "types" : ["CSBP"], "default": "none", "required" : "no", "maxconnections" : -1, "access": "stream_out"},
+                {"name": "rate", "types" : ["CIP"], "default": "AudioRate", "required" : "yes", "maxconnections" : 1, "access": "property"}
+            ],
+            "private": {"inherits" : ["object"]}
         },
         {
             "typeName": "constant",
-            "properties": [{"name": "value", "validTypes" : [ "int", "real", "string" ], "default": "none"}],
-            "private": [ {"type": [ "int", "real", "string" ]}]
+            "ports": [
+                {"name": "output", "types" : ["CIP", "CRP" , "CSP"], "default": "none", "required" : "no", "maxconnections" : -1, "access": "stream_out"},
+                {"name": "value", "types": ["CIP", "CRP" , "CSP", "none"], "default": "none", "required" : "yes", "maxconnections" : 1, "access": "property"}
+            ],
+            "private": {"inherits" : ["object"]}
         },
         {
             "typeName": "control",
-            "properties": [{"name": "source", "validTypes" : [ "constant", "analogIn", "function", "none" ], "default": "none"}]
+            "ports": [
+                {"name": "input", "types" : ["ASP", "CSIP", "CSRP"], "default": "none", "required" : "no", "maxconnections" : 1, "access": "stream_in"},
+                {"name": "output", "types" : ["CSIP", "CSRP"], "default": "none", "required" : "no", "maxconnections" : -1, "access": "stream_out"},
+                {"name": "default", "types" : ["CIP", "CRP"], "default": 0.0, "required" : "yes", "maxconnections" : 1, "access": "property"},
+                {"name": "rate", "types" : ["CIP"], "default": "ControlRate", "required" : "yes", "maxconnections" : 1, "access": "property"},
+                {"name": "enableMapping", "types" : ["CBP"], "default": "on", "required" : "yes", "maxconnections" : 1, "access": "property"},
+                {"name": "mappingMode", "types" : ["CSP"], "default": "'linear'", "required" : "yes", "maxconnections" : 1, "access": "property"},
+                {"name": "minimum", "types" : ["CIP", "CRP"], "default": 0.0, "required" : "yes", "maxconnections" : 1, "access": "property"},
+                {"name": "maximum", "types" : ["CIP", "CRP"], "default": 1.0, "required" : "yes", "maxconnections" : 1, "access": "property"},
+                {"name": "increment", "types" : ["CIP", "CRP", "none"], "default": "none", "required" : "yes", "maxconnections" : 1, "access": "property"},
+                {"name": "rounding", "types" : ["CSP"], "default": "'truncate'", "required" : "yes", "maxconnections" : 1, "access": "property"}
+            ],
+            "private": {"inherits" : ["object"]}
         },
         {
             "typeName": "patch",
-            "properties": [{"name": "source", "validTypes" : [ "numberList" ], "default": "none"},
-                {"name": "bypass", "validTypes" : [ "switch", "digitalIn" ], "default": "none"},
-                {"name": "output", "validTypes" : [ "functionStream" ], "default": "none"}
-            ]
+            "ports": [
+
+            ],
+            "private": {"inherits" : ["object"]}
         },
         {
             "typeName": "sequence",
-            "properties": [{"name": "variableList", "validTypes" : [ "controlList" ], "default": "none"},
-                {"name": "random", "validTypes" : [ "switch" ], "default": "on"},
-                {"name": "wrap", "validTypes" : [ "switch" ], "default": "on"}
-            ]
+            "ports": [
+
+            ],
+            "private": {"inherits" : ["object"]}
         },
         {
             "typeName": "instrument",
-            "properties": [
-                {"name": "id", "validTypes" : [ "string", "none" ], "default": "none"},
-                {"name": "channelsIn", "validTypes" : [ "int" ], "default": "0"},
-                {"name": "channelsOut", "validTypes" : [ "int" ], "default": "1"},
-                {"name": "polyphony", "validTypes" : [ "int" ], "default": "8"},
-                {"name": "variableList", "validTypes" : [ "controlList" ], "default": "none"},
-                {"name": "trigger", "validTypes" : [ "switch" ], "default": "none"},
-                {"name": "sustain", "validTypes" : [ "switch" ], "default": "none"},
-                {"name": "bypass", "validTypes" : [ "switch", "digitalIn" ], "default": "none"},
-                {"name": "output", "validTypes" : [ "functionStreamList" ], "default": "none"}
-            ]
+            "ports": [
+            ],
+            "private": {"inherits" : ["object"]}
         }
     ]
 }

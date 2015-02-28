@@ -20,7 +20,6 @@ public:
         Stream,
         Property,
         List,
-        Value,
 
         // Built-in types (leaf nodes)
         Int,
@@ -29,7 +28,10 @@ public:
         String,
         Expression,
         Function,
-        Switch
+        Switch,
+
+        // Invalid
+        Invalid
     } Token;
 
     AST(Token token, int line = -1);
@@ -42,6 +44,7 @@ public:
 
     vector<AST *> getChildren() const {return m_children;}
     int getLine() const {return m_line;}
+
 
     void deleteChildren();
 

@@ -1,7 +1,7 @@
 #include "propertynode.h"
 
-PropertyNode::PropertyNode(string name, AST *value):
-    AST(AST::Property)
+PropertyNode::PropertyNode(string name, AST *value, int line):
+    AST(AST::Property, line)
 {
     m_name = name;
     addChild(value);

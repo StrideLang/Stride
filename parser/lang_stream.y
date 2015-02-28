@@ -276,7 +276,7 @@ property:
                 WORD COLON propertyType 	{
                                                   string s;
                                                   s.append($1); /* string constructor leaks otherwise! */
-                                                  $$ = new PropertyNode(s, $3);
+                                                  $$ = new PropertyNode(s, $3, yyloc.first_line);
                                                   cout << "Property: " << $1 << endl << "New property ... " << endl;
                                                   free($1);
                                                   }
@@ -596,6 +596,7 @@ AST *parse(const char *filename){
         AST *ast = NULL;
         char const * fileName = filename;
 
+        error = 0;
 	file = fopen(fileName, "r");
 
 	if (!file){
