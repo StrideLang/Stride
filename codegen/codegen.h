@@ -17,6 +17,7 @@ public:
         IndexMustBeInteger,
         BundleSizeMismatch,
         ArrayIndexOutOfRange,
+        DuplicateSymbol,
         None
     } ErrorType;
 
@@ -58,6 +59,7 @@ private:
     void validateProperties(AST *node, QVector<AST *> scope);
     void validateBundleIndeces(AST *node, QVector<AST *> scope);
     void validateBundleSizes(AST *node, QVector<AST *> scope);
+    void validateSymbolUniqueness(AST *node, QVector<AST *> scope);
     void sortErrors();
 
     BlockNode *findDeclaration(QString bundleName, QVector<AST *> scope);

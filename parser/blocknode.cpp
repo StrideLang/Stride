@@ -37,8 +37,13 @@ BlockNode::~BlockNode()
 
 string BlockNode::getName() const
 {
-    assert(getNodeType() == AST::Block);
-    return m_name;
+    if(getNodeType() == AST::Block) {
+        return m_name;
+    } else if(getNodeType() == AST::BlockBundle) {
+        return static_cast<BundleNode *>(m_children.at(0))->getName();
+    }
+    assert(0 == 1);
+    return string();
 }
 
 BundleNode *BlockNode::getBundle() const

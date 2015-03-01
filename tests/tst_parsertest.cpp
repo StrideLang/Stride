@@ -23,6 +23,7 @@ private Q_SLOTS:
     void testPlatformCommonObjects();
     void testValueTypeBundleResolution();
     void testValueTypeExpressionResolution();
+    void testDuplicates();
 
     // Parser
     void testTreeBuildNoneSwitch();
@@ -247,6 +248,28 @@ void ParserTest::testValueTypeBundleResolution()
 void ParserTest::testValueTypeExpressionResolution()
 {
 
+}
+
+void ParserTest::testDuplicates()
+{
+    AST *tree;
+    tree = parse(QString(QFINDTESTDATA("data/errorDuplicate.stream")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    Codegen generator(QFINDTESTDATA("/../platforms"), tree);
+    QVERIFY(!generator.isValid());
+    QList<LangError> errors = generator.getErrors();
+
+//    QVERIFY(errors.size() == 14);
+
+    QVERIFY(errors[0].type == LangError::DuplicateSymbol);
+    QVERIFY(errors[0].lineNumber == 3);
+    QVERIFY(errors[0].errorTokens[0] == "Const");
+    QVERIFY(errors[0].errorTokens[1] == "12");
+
+    QVERIFY(errors[1].type == LangError::DuplicateSymbol);
+    QVERIFY(errors[1].lineNumber == 7);
+    QVERIFY(errors[1].errorTokens[0] == "Size");
+    QVERIFY(errors[1].errorTokens[1] == "18");
 }
 
 void ParserTest::testTreeBuildNoneSwitch()

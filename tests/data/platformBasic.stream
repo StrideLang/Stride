@@ -28,7 +28,7 @@ signal Signal {
 }
 
 # Wrong properties for type
-signal Signal {
+signal Signal2 {
     badproperty: none
     meta: "badproperty"
 }

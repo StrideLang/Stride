@@ -54,6 +54,7 @@ DISTFILES += \
     data/platfromBasic.stream \
     data/platformBasic.stream \
     data/bundleResolution.stream
+    data/errorDuplicate.stream
 
 # Link to codegen library
 unix|win32: LIBS += -L$$OUT_PWD/../codegen/ -lcodegen

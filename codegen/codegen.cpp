@@ -56,7 +56,7 @@ void Codegen::validate()
     validateProperties(m_tree, QVector<AST *>());
     validateBundleIndeces(m_tree, QVector<AST *>());
     validateBundleSizes(m_tree, QVector<AST *>());
-    // TODO: Validate bundle size consistency (declared size vs. list sizes)
+    validateSymbolUniqueness(m_tree, QVector<AST *>());
     // TODO: Check for duplicate symbols
     // TODO: Validate list consistency
     // TODO: validate expression type consistency
@@ -167,6 +167,42 @@ void Codegen::validateBundleSizes(AST *node, QVector<AST *> scope)
     QVector<AST *> children = QVector<AST *>::fromStdVector(node->getChildren());
     foreach(AST *node, children) {
         validateBundleSizes(node, children);
+    }
+}
+
+void Codegen::validateSymbolUniqueness(AST *node, QVector<AST *> scope)
+{
+    // TODO: This only checks symbol uniqueness within its scope...
+
+    while (!scope.isEmpty() && scope.takeFirst() != node) { ; }
+
+    foreach(AST *sibling, scope) {
+        if(node != sibling) {
+            QString nodeName, siblingName;
+            if (sibling->getNodeType() == AST::Block
+                    || sibling->getNodeType() == AST::BlockBundle) {
+                siblingName = QString::fromStdString(static_cast<BlockNode *>(sibling)->getName());
+            }
+            if (node->getNodeType() == AST::Block
+                    || node->getNodeType() == AST::BlockBundle) {
+                nodeName = QString::fromStdString(static_cast<BlockNode *>(node)->getName());
+            }
+            if (!nodeName.isEmpty() && nodeName == siblingName) {
+                LangError error;
+                error.type = LangError::DuplicateSymbol;
+                error.lineNumber = node->getLine();
+                error.errorTokens << nodeName
+                                  << QString::number(sibling->getLine());
+                m_errors << error;
+            }
+        }
+    }
+
+
+
+    QVector<AST *> children = QVector<AST *>::fromStdVector(node->getChildren());
+    foreach(AST *node, children) {
+        validateSymbolUniqueness(node, children);
     }
 }
 
