@@ -47,7 +47,7 @@ void MainWindow::newProject()
     }
 
     ProjectWindow *pw = new ProjectWindow(this, projectDir);
-    pw->setWindowFlags(pw->windowFlags() | Qt::Window);
+//    pw->setWindowFlags(pw->windowFlags() | Qt::Window);
     pw->show();
 }
 
@@ -58,7 +58,7 @@ void MainWindow::loadProject()
     if(!path.isEmpty()) {
         try {
             ProjectWindow *pw = new ProjectWindow(this, path);
-            pw->setWindowFlags(pw->windowFlags() | Qt::Window);
+//            pw->setWindowFlags(pw->windowFlags() | Qt::Window);
             pw->show();
         }
         catch (...) {

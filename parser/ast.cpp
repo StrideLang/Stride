@@ -1,5 +1,7 @@
 #include "ast.h"
 
+extern AST *parse(const char* fileName);
+
 AST::AST()
 {
     m_token = AST::None;
@@ -36,4 +38,6 @@ void AST::deleteChildren()
     }
     m_children.clear();
 }
+
+AST *AST::parseFile(const char *fileName) {return parse(fileName);}
 

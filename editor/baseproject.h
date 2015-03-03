@@ -6,7 +6,7 @@
 #include <QStringList>
 
 #include "ugeninterface.h"
-#include "platform.h"
+#include "streamplatform.h"
 
 class BaseProject : public QObject
 {
@@ -15,7 +15,7 @@ public:
     BaseProject(QString dir);
     virtual ~BaseProject();
 
-    QString getType() {return m_platform->getPlatformName();}
+//    QString getType() {return m_platform->getPlatformName();}
     QString getTarget() {return m_target;}
     QString getBoardId() {return m_target;}
     void setTarget(QString target) {m_target = target;}
@@ -41,7 +41,7 @@ protected:
     QString m_code;
 
     UgenInterface m_ugens; // TODO move UgenInterface to Platform
-    Platform *m_platform;
+    StreamPlatform *m_platform;
 
 signals:
     void outputText(QString text);

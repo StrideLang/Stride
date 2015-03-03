@@ -18,12 +18,14 @@ public:
         BundleSizeMismatch,
         ArrayIndexOutOfRange,
         DuplicateSymbol,
+        InconsistentList,
         None
     } ErrorType;
 
     ErrorType type;
     QStringList errorTokens;
     int lineNumber;
+    QString getErrorText();
 };
 
 class Codegen
@@ -60,6 +62,7 @@ private:
     void validateBundleIndeces(AST *node, QVector<AST *> scope);
     void validateBundleSizes(AST *node, QVector<AST *> scope);
     void validateSymbolUniqueness(AST *node, QVector<AST *> scope);
+    void validateListConsistency(AST *node, QVector<AST *> scope);
     void sortErrors();
 
     BlockNode *findDeclaration(QString bundleName, QVector<AST *> scope);

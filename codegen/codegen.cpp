@@ -57,8 +57,7 @@ void Codegen::validate()
     validateBundleIndeces(m_tree, QVector<AST *>());
     validateBundleSizes(m_tree, QVector<AST *>());
     validateSymbolUniqueness(m_tree, QVector<AST *>());
-    // TODO: Check for duplicate symbols
-    // TODO: Validate list consistency
+//    validateListConsistency(m_tree, QVector<AST *>());
     // TODO: validate expression type consistency
     // TODO: validate expression list operations
 
@@ -203,6 +202,27 @@ void Codegen::validateSymbolUniqueness(AST *node, QVector<AST *> scope)
     QVector<AST *> children = QVector<AST *>::fromStdVector(node->getChildren());
     foreach(AST *node, children) {
         validateSymbolUniqueness(node, children);
+    }
+}
+
+void Codegen::validateListConsistency(AST *node, QVector<AST *> scope)
+{
+
+    if (node->getNodeType() == AST::List) {
+        PortType type = resolveListType(static_cast<ListNode *>(node), scope);
+        if (type == Invalid) {
+            LangError error;
+            error.type = LangError::InconsistentList;
+            error.lineNumber = node->getLine();
+            // TODO: provide more information on inconsistent list
+//            error.errorTokens <<
+            m_errors << error;
+        }
+    }
+
+    QVector<AST *> children = QVector<AST *>::fromStdVector(node->getChildren());
+    foreach(AST *node, children) {
+        validateListConsistency(node, children);
     }
 }
 
@@ -462,3 +482,46 @@ QString Codegen::getPortTypeName(Codegen::PortType type)
     return "";
 }
 
+
+
+QString LangError::getErrorText() {
+    QString errorText;
+    switch(type) {
+    case Syntax:
+        errorText = "Syntax Error";
+        break;
+    case UnknownType:
+        errorText = "Unknown Type Error";
+        break;
+    case InvalidType:
+        errorText = "Invalid Type Error";
+        break;
+    case InvalidPort:
+        errorText = "Invalid port Error";
+        break;
+    case InvalidPortType:
+        errorText = "Invalid port type Error";
+        break;
+    case IndexMustBeInteger:
+        errorText = "Index to array must be integer ";
+        break;
+    case BundleSizeMismatch:
+        errorText = "Syntax Error";
+        break;
+    case ArrayIndexOutOfRange:
+        errorText = "Syntax Error";
+        break;
+    case DuplicateSymbol:
+        errorText = "Syntax Error";
+        break;
+    case InconsistentList:
+        errorText = "Syntax Error";
+        break;
+    case None:
+    default:
+        break;
+    }
+
+    errorText += " in line " + QString::number(lineNumber);
+    return errorText;
+}

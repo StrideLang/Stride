@@ -24,6 +24,7 @@ private Q_SLOTS:
     void testValueTypeBundleResolution();
     void testValueTypeExpressionResolution();
     void testDuplicates();
+    void testListConsistency();
 
     // Parser
     void testTreeBuildNoneSwitch();
@@ -49,6 +50,9 @@ void ParserTest::testPlatform()
     Codegen generator(QFINDTESTDATA("/../platforms"), tree);
     QVERIFY(generator.isValid());
     QVERIFY(generator.platformIsValid());
+
+    tree->deleteChildren();
+    delete tree;
 }
 
 void ParserTest::testPlatformCommonObjects()
@@ -88,6 +92,9 @@ void ParserTest::testPlatformCommonObjects()
     QVERIFY(errors[4].errorTokens[0]  == "control");
     QVERIFY(errors[4].errorTokens[1]  == "maximum");
     QVERIFY(errors[4].errorTokens[2]  == "CSP");
+
+    tree->deleteChildren();
+    delete tree;
 }
 
 void ParserTest::testValueTypeBundleResolution()
@@ -243,6 +250,9 @@ void ParserTest::testValueTypeBundleResolution()
     QVERIFY(error.lineNumber == 51);
     QVERIFY(error.errorTokens[0] == "Array_String");
     QVERIFY(error.errorTokens[1] == "CSP");
+
+    tree->deleteChildren();
+    delete tree;
 }
 
 void ParserTest::testValueTypeExpressionResolution()
@@ -259,17 +269,38 @@ void ParserTest::testDuplicates()
     QVERIFY(!generator.isValid());
     QList<LangError> errors = generator.getErrors();
 
-//    QVERIFY(errors.size() == 14);
+//    QVERIFY(errors.size() > 1);
+    LangError error = errors.takeFirst();
+    QVERIFY(error.type == LangError::DuplicateSymbol);
+    QVERIFY(error.lineNumber == 3);
+    QVERIFY(error.errorTokens[0] == "Const");
+    QVERIFY(error.errorTokens[1] == "12");
 
-    QVERIFY(errors[0].type == LangError::DuplicateSymbol);
-    QVERIFY(errors[0].lineNumber == 3);
-    QVERIFY(errors[0].errorTokens[0] == "Const");
-    QVERIFY(errors[0].errorTokens[1] == "12");
+    error = errors.takeFirst();
+    QVERIFY(error.type == LangError::DuplicateSymbol);
+    QVERIFY(error.lineNumber == 7);
+    QVERIFY(error.errorTokens[0] == "Size");
+    QVERIFY(error.errorTokens[1] == "18");
 
-    QVERIFY(errors[1].type == LangError::DuplicateSymbol);
-    QVERIFY(errors[1].lineNumber == 7);
-    QVERIFY(errors[1].errorTokens[0] == "Size");
-    QVERIFY(errors[1].errorTokens[1] == "18");
+    tree->deleteChildren();
+    delete tree;
+}
+
+void ParserTest::testListConsistency()
+{
+    AST *tree;
+    // FIXME: List consistency is checked by the parser, should be caught here.
+//    tree = parse(QString(QFINDTESTDATA("data/errorLists.stream")).toStdString().c_str());
+//    QVERIFY(tree == NULL);
+//    Codegen generator(QFINDTESTDATA("/../platforms"), tree);
+//    QVERIFY(!generator.isValid());
+//    QList<LangError> errors = generator.getErrors();
+
+//    LangError error = errors.takeFirst();
+//    QVERIFY(error.type == LangError::DuplicateSymbol);
+//    QVERIFY(error.lineNumber == 3);
+//    QVERIFY(error.errorTokens[0] == "Const");
+//    QVERIFY(error.errorTokens[1] == "12");
 }
 
 void ParserTest::testTreeBuildNoneSwitch()

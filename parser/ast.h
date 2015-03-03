@@ -45,8 +45,9 @@ public:
     vector<AST *> getChildren() const {return m_children;}
     int getLine() const {return m_line;}
 
-
     void deleteChildren();
+
+    static AST * parseFile(const char *fileName);
 
 protected:
     Token m_token; // From which token did we create node?

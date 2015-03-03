@@ -18,7 +18,7 @@ void LanguageHighlighter::highlightBlock(const QString &text)
     int index = text.indexOf(expression);
     while (index >= 0) {
         int length = expression.matchedLength();
-        if (m_ugens_ptr->isUgen(expression.capturedTexts()[0])) {
+        if (m_ugens_ptr && m_ugens_ptr->isUgen(expression.capturedTexts()[0])) {
             setFormat(index, length, myClassFormat);
         }
         index = text.indexOf(expression, index + length);
