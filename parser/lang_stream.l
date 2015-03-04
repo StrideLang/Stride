@@ -34,8 +34,8 @@ CLETTER	[A-Z]
 ";"					{ return SEMICOLON; }
 ">>"				{ return STREAM; }
 
-"&"					{ return AND; }
-"|"					{ return OR; }
+"&&"				{ return AND; }
+"||"				{ return OR; }
 "!"					{ return NOT; }
 
 "use"				{ return USE; }

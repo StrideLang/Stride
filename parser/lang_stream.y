@@ -98,9 +98,9 @@ int error = 0;
 %left AND
 %left '+' '-' 
 %left '*' '/'
+%right NOT
+%right UMINUS
 %left '(' ')'
-%nonassoc NOT
-%nonassoc UMINUS
 
 %locations
 
