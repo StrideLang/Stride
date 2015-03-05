@@ -25,6 +25,7 @@ SOURCES += main.cpp\
     languagehighlighter.cpp \
 #    xmosproject.cpp \
 #    platform.cpp
+    linenumberarea.cpp
 
 HEADERS  += mainwindow.h \
     projectwindow.h \
@@ -35,6 +36,7 @@ HEADERS  += mainwindow.h \
     languagehighlighter.h \
 #    xmosproject.h \
 #    platform.h
+    linenumberarea.h
 
 FORMS    += mainwindow.ui \
     projectwindow.ui

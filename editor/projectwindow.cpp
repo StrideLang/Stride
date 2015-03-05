@@ -73,6 +73,9 @@ void ProjectWindow::build()
     Codegen generator(m_platformsRootDir, tree);
 //    QVERIFY(!generator.isValid());
     QList<LangError> errors = generator.getErrors();
+
+    CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+    editor->setErrors(errors);
     foreach(LangError error, errors) {
         ui->consoleText->insertPlainText(error.getErrorText() + "\n");
     }

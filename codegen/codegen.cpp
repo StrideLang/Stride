@@ -189,9 +189,9 @@ void Codegen::validateSymbolUniqueness(AST *node, QVector<AST *> scope)
             if (!nodeName.isEmpty() && nodeName == siblingName) {
                 LangError error;
                 error.type = LangError::DuplicateSymbol;
-                error.lineNumber = node->getLine();
+                error.lineNumber = sibling->getLine();
                 error.errorTokens << nodeName
-                                  << QString::number(sibling->getLine());
+                                  << QString::number(node->getLine());
                 m_errors << error;
             }
         }
@@ -506,16 +506,16 @@ QString LangError::getErrorText() {
         errorText = "Index to array must be integer ";
         break;
     case BundleSizeMismatch:
-        errorText = "Syntax Error";
+        errorText = "Bundle Size Mismatch Error";
         break;
     case ArrayIndexOutOfRange:
-        errorText = "Syntax Error";
+        errorText = "Array Index out of Range Error";
         break;
     case DuplicateSymbol:
-        errorText = "Syntax Error";
+        errorText = "Duplicate Symbol Error";
         break;
     case InconsistentList:
-        errorText = "Syntax Error";
+        errorText = "Inconsistent List Error";
         break;
     case None:
     default:
