@@ -2,6 +2,7 @@
 #define LANGUAGEHIGHLIGHTER_H
 
 #include <QSyntaxHighlighter>
+#include <QMap>
 
 #include "ugeninterface.h"
 
@@ -20,6 +21,8 @@ public slots:
 
 private:
     UgenInterface *m_ugens_ptr;
+    QMap<QString, QTextCharFormat> m_formats;
+    QStringList m_keywords;
 };
 
 #endif // LANGUAGEHIGHLIGHTER_H

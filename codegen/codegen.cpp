@@ -17,14 +17,16 @@ Codegen::Codegen(QString platformRootDir, AST *tree):
     m_platform(platformRootDir), m_tree(tree)
 {
     TreeWalker walker(tree);
-    QVector<AST *> platforms = QVector<AST *>::fromStdVector(walker.findPlatform());
-    if (platforms.size() > 0) {
-        PlatformNode *platformNode = static_cast<PlatformNode *>(platforms.at(0));
-        // FIXME add error if more than one platform?
-        StreamPlatform platform(platformRootDir,
-                                QString::fromStdString(platformNode->platformName()),
-                                QString::number(platformNode->version(),'f',  1));
-        m_platform = platform;
+    if(tree) {
+        QVector<AST *> platforms = QVector<AST *>::fromStdVector(walker.findPlatform());
+        if (platforms.size() > 0) {
+            PlatformNode *platformNode = static_cast<PlatformNode *>(platforms.at(0));
+            // FIXME add error if more than one platform?
+            StreamPlatform platform(platformRootDir,
+                                    QString::fromStdString(platformNode->platformName()),
+                                    QString::number(platformNode->version(),'f',  1));
+            m_platform = platform;
+        }
     }
     validate();
 }
@@ -52,16 +54,18 @@ QStringList Codegen::getPlatformErrors()
 void Codegen::validate()
 {
     m_errors.clear();
-    validateTypeNames(m_tree);
-    validateProperties(m_tree, QVector<AST *>());
-    validateBundleIndeces(m_tree, QVector<AST *>());
-    validateBundleSizes(m_tree, QVector<AST *>());
-    validateSymbolUniqueness(m_tree, QVector<AST *>());
-//    validateListConsistency(m_tree, QVector<AST *>());
-    // TODO: validate expression type consistency
-    // TODO: validate expression list operations
+    if(m_tree) {
+        validateTypeNames(m_tree);
+        validateProperties(m_tree, QVector<AST *>());
+        validateBundleIndeces(m_tree, QVector<AST *>());
+        validateBundleSizes(m_tree, QVector<AST *>());
+        validateSymbolUniqueness(m_tree, QVector<AST *>());
+        //    validateListConsistency(m_tree, QVector<AST *>());
+        // TODO: validate expression type consistency
+        // TODO: validate expression list operations
 
-    // TODO: resolve constants (and store the results of the resolution (maybe replace the tree nodes?) - should this be done in the tree walker?
+        // TODO: resolve constants (and store the results of the resolution (maybe replace the tree nodes?) - should this be done in the tree walker?
+    }
     sortErrors();
 }
 
