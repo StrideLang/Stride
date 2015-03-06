@@ -279,6 +279,7 @@
     <addaction name="actionRename"/>
     <addaction name="menuTarget"/>
     <addaction name="actionRefresh"/>
+    <addaction name="actionOptions"/>
    </widget>
    <widget class="QMenu" name="menuBuild">
     <property name="title">
@@ -329,6 +330,11 @@
   <action name="actionNew_Project">
    <property name="text">
     <string>New Project</string>
+   </property>
+  </action>
+  <action name="actionOptions">
+   <property name="text">
+    <string>Options</string>
    </property>
   </action>
  </widget>

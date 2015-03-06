@@ -7,11 +7,13 @@
 #include <QFile>
 #include <QDir>
 #include <QMenuBar>
+#include <QSettings>
 
 #include "codeeditor.h"
 //#include "xmosproject.h"
 #include "ast.h"
 #include "codegen.h"
+#include "configdialog.h"
 
 ProjectWindow::ProjectWindow(QWidget *parent, QString projectDir) :
     QMainWindow(parent),
@@ -51,6 +53,8 @@ ProjectWindow::ProjectWindow(QWidget *parent, QString projectDir) :
     }
     setEditorText(m_codeFile.readAll());
     m_codeFile.close();
+
+    readSettings();
 
 }
 
@@ -185,6 +189,30 @@ void ProjectWindow::saveProject()
     m_codeFile.close();
 }
 
+void ProjectWindow::openOptionsDialog()
+{
+    ConfigDialog config(this);
+    config.setFont(
+                QFont(m_options["editor.fontFamily"].toString(),
+                      m_options["editor.fontSize"].toFloat(),
+            m_options["editor.fontWeight"].toInt(),
+            m_options["editor.fontItalic"].toBool()
+            )
+            );
+    int result = config.exec();
+    if (result == QDialog::Accepted) {
+        // TODO apply to all editors
+        QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
+        QFont font = config.font();
+        editor->setFont(font);
+        m_options["editor.fontFamily"] = font.family();
+        m_options["editor.fontSize"] = font.pointSizeF();
+        m_options["editor.fontWeight"] = font.weight();
+        m_options["editor.fontItalic"] = font.italic();
+        writeSettings();
+    }
+}
+
 void ProjectWindow::connectActions()
 {
 
@@ -194,6 +222,7 @@ void ProjectWindow::connectActions()
     connect(ui->actionRun, SIGNAL(toggled(bool)), this, SLOT(run(bool)));
     connect(ui->actionRefresh, SIGNAL(triggered()), this, SLOT(updateMenus()));
     connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(saveProject()));
+    connect(ui->actionOptions, SIGNAL(triggered()), this, SLOT(openOptionsDialog()));
 
 //    connect(ui->buildButton, SIGNAL(clicked()), this, SLOT(build()));
 //    connect(ui->uploadButton, SIGNAL(clicked()), this, SLOT(flash()));
@@ -202,5 +231,38 @@ void ProjectWindow::connectActions()
 
 //    connect(m_project, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
 //    connect(m_project, SIGNAL(errorText(QString)), this, SLOT(printConsoleError(QString)));
-//    connect(m_project, SIGNAL(programStopped()), this, SLOT(programStopped()));
+    //    connect(m_project, SIGNAL(programStopped()), this, SLOT(programStopped()));
+}
+
+void ProjectWindow::readSettings()
+{
+    QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
+    QSettings settings("StreamStack", "StreamStackEdit", this);
+    settings.beginGroup("project");
+
+    QString fontFamily = settings.value("editor.fontFamily", "Courier").toString();
+    qreal fontSize = settings.value("editor.fontSize", 10.0).toFloat();
+    int fontWeight = settings.value("editor.fontSize", QFont::Normal).toInt();
+    bool fontItalic = settings.value("editor.fontItalic", false).toBool();
+    QFont font(fontFamily, fontSize, fontWeight, fontItalic);
+    font.setPointSizeF(fontSize);
+    editor->setFont(font);
+    m_options["editor.fontFamily"] = fontFamily;
+    m_options["editor.fontSize"] = font.pointSizeF();
+    m_options["editor.fontWeight"] = font.weight();
+    m_options["editor.fontItalic"] = font.italic();
+
+    settings.endGroup();
+}
+
+void ProjectWindow::writeSettings()
+{
+    QSettings settings("StreamStack", "StreamStackEdit", this);
+    settings.beginGroup("project");
+    QStringList keys = m_options.keys();
+     foreach(QString key, keys) {
+         settings.setValue(key, m_options[key]);
+     }
+     settings.endGroup();
+
 }

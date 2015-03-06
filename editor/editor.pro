@@ -25,7 +25,8 @@ SOURCES += main.cpp\
     languagehighlighter.cpp \
 #    xmosproject.cpp \
 #    platform.cpp
-    linenumberarea.cpp
+    linenumberarea.cpp \
+    configdialog.cpp
 
 HEADERS  += mainwindow.h \
     projectwindow.h \
@@ -36,10 +37,12 @@ HEADERS  += mainwindow.h \
     languagehighlighter.h \
 #    xmosproject.h \
 #    platform.h
-    linenumberarea.h
+    linenumberarea.h \
+    configdialog.h
 
 FORMS    += mainwindow.ui \
-    projectwindow.ui
+    projectwindow.ui \
+    configdialog.ui
 
 #win32 {
 #LIBS += -L${FLEX_LIB_PATH}

@@ -23,6 +23,7 @@ public slots:
     void updateMenus();
     void setEditorText(QString code);
     void saveProject();
+    void openOptionsDialog();
 
 private slots:
     void build();
@@ -40,6 +41,9 @@ private:
 //    void createMenus();
     void connectActions();
 
+    void readSettings();
+    void writeSettings();
+
     Ui::ProjectWindow *ui;
     QWidget *m_layoutContainer;
 //    QToolBar *m_toolBar;
@@ -50,6 +54,7 @@ private:
 
     QString m_projectDir;
     QString m_platformsRootDir;
+    QMap<QString, QVariant> m_options;
 };
 
 #endif // PROJECTWINDOW_H
