@@ -53,11 +53,21 @@ void CodeEditor::updateLineNumberArea(const QRect &rect, int dy)
     if (rect.contains(viewport()->rect()))
         updateLineNumberAreaWidth(0);
 }
+QString CodeEditor::filename() const
+{
+    return m_filename;
+}
+
+void CodeEditor::setFilename(const QString &filename)
+{
+    m_filename = filename;
+}
+
 
 void CodeEditor::resizeEvent(QResizeEvent *e)
 {
     QPlainTextEdit::resizeEvent(e);
-
+    
     QRect cr = contentsRect();
     m_lineNumberArea->setGeometry(QRect(cr.left(), cr.top(), lineNumberAreaWidth(), cr.height()));
 }

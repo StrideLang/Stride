@@ -1,5 +1,7 @@
 #include <QDebug>
 
+#include <QMutexLocker>
+
 #include "languagehighlighter.h"
 
 LanguageHighlighter::LanguageHighlighter(QObject *parent, UgenInterface *ugens) :
@@ -47,6 +49,7 @@ LanguageHighlighter::LanguageHighlighter(QObject *parent, UgenInterface *ugens) 
 
 void LanguageHighlighter::highlightBlock(const QString &text)
 {
+    QMutexLocker locker(&m_highlighterLock);
     QString pattern = "\\b[A-Z]\\w+\\b";
 
     QRegExp expression(pattern);
@@ -88,3 +91,18 @@ void LanguageHighlighter::highlightBlock(const QString &text)
         index = text.indexOf(expression, index + length);
     }
 }
+
+QMap<QString, QTextCharFormat> LanguageHighlighter::formats()
+{
+    QMutexLocker locker(&m_highlighterLock);
+    return m_formats;
+}
+
+void LanguageHighlighter::setFormats(const QMap<QString, QTextCharFormat> &formats)
+{
+    m_highlighterLock.lock();
+    m_formats = formats;
+    m_highlighterLock.unlock();
+    rehighlight();
+}
+

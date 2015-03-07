@@ -3,6 +3,8 @@
 
 #include <QDialog>
 #include <QFont>
+#include <QTextCharFormat>
+
 
 namespace Ui {
 class ConfigDialog;
@@ -19,12 +21,20 @@ public:
     QFont font() const;
     void setFont(const QFont &font);
 
+    QMap<QString, QTextCharFormat> highlighterFormats() const;
+    void setHighlighterFormats(const QMap<QString, QTextCharFormat> &highlighterFormats);
+
 private:
     Ui::ConfigDialog *ui;
     QFont m_font;
+    QMap<QString, QTextCharFormat> m_highlighterFormats;
 
 private slots:
     void selectEditorFont();
+    void cellClicked(int row, int col);
+    void cellChanged(int row, int col);
 };
+
+
 
 #endif // CONFIGDIALOG_H

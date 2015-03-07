@@ -18,6 +18,9 @@ public:
 
     void setErrors(QList<LangError> errors);
 
+    QString filename() const;
+    void setFilename(const QString &filename);
+
 protected:
     void resizeEvent(QResizeEvent *event);
 
@@ -29,6 +32,7 @@ private slots:
 private:
     QWidget *m_lineNumberArea;
     QList<LangError> m_errors;
+    QString m_filename;
 
 signals:
 

@@ -585,7 +585,7 @@ valueComp:
 void yyerror(const char *s, ...){
 	va_list ap;
 	va_start(ap, s);
-        cout << endl << endl << "ERROR: " << s << " => " << va_arg(ap, char*) << endl;
+        cout << endl << endl << "ERROR: " << s ; // << " => " << va_arg(ap, char*) << endl;
         cout << "Unexpected token: \"" << yytext << "\" on line: " <<  yylineno << endl;
 	va_end(ap);
 	error++;

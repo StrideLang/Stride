@@ -8,6 +8,7 @@
 #include <QDir>
 #include <QMenuBar>
 #include <QSettings>
+#include <QTemporaryFile>
 
 #include "codeeditor.h"
 //#include "xmosproject.h"
@@ -19,7 +20,8 @@ ProjectWindow::ProjectWindow(QWidget *parent, QString projectDir) :
     QMainWindow(parent),
     ui(new Ui::ProjectWindow),
     m_codeFile(projectDir + "/code/code.st"),
-    m_projectDir(projectDir)
+    m_projectDir(projectDir),
+    m_timer(this)
 {
     ui->setupUi(this);
 
@@ -36,6 +38,7 @@ ProjectWindow::ProjectWindow(QWidget *parent, QString projectDir) :
     ui->projectDockWidget->setVisible(false);
 
     CodeEditor *editor = new CodeEditor;
+    editor->setFilename(m_projectDir + "/code/code.st");
 //    m_highlighter = new LanguageHighlighter(editor->document(), m_project->getUgens());
     m_highlighter = new LanguageHighlighter(editor->document(), NULL);
     m_highlighter->setDocument(editor->document()); // Not sure why, but this is required for highlighter to work.
@@ -56,6 +59,8 @@ ProjectWindow::ProjectWindow(QWidget *parent, QString projectDir) :
 
     readSettings();
 
+    connect(&m_timer, SIGNAL(timeout()), this, SLOT(updateCodeAnalysis()));
+    m_timer.start(2000);
 }
 
 ProjectWindow::~ProjectWindow()
@@ -71,19 +76,21 @@ void ProjectWindow::build()
     saveProject();
 //    m_project->setCode(editor->toPlainText());
 //    m_project->build();
-
+    CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     AST *tree;
-    tree = AST::parseFile(QString(m_projectDir + "/code/code.st").toLocal8Bit().constData());
+    tree = AST::parseFile(editor->filename().toLocal8Bit().constData());
     Codegen generator(m_platformsRootDir, tree);
 //    QVERIFY(!generator.isValid());
     QList<LangError> errors = generator.getErrors();
 
-    CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     editor->setErrors(errors);
+
     foreach(LangError error, errors) {
         ui->consoleText->insertPlainText(error.getErrorText() + "\n");
     }
-
+    if (tree) {
+        delete tree;
+    }
 }
 
 void ProjectWindow::flash()
@@ -199,6 +206,9 @@ void ProjectWindow::openOptionsDialog()
             m_options["editor.fontItalic"].toBool()
             )
             );
+
+    config.setHighlighterFormats(m_highlighter->formats());
+
     int result = config.exec();
     if (result == QDialog::Accepted) {
         // TODO apply to all editors
@@ -209,7 +219,30 @@ void ProjectWindow::openOptionsDialog()
         m_options["editor.fontSize"] = font.pointSizeF();
         m_options["editor.fontWeight"] = font.weight();
         m_options["editor.fontItalic"] = font.italic();
+        m_highlighter->setFormats(config.highlighterFormats());
         writeSettings();
+    }
+}
+
+void ProjectWindow::updateCodeAnalysis()
+{
+    if (QApplication::activeWindow() == this) {
+        CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+        QTemporaryFile tmpFile;
+        if (tmpFile.open()) {
+            tmpFile.write(editor->document()->toPlainText().toLocal8Bit());
+            tmpFile.close();
+            AST *tree;
+            tree = AST::parseFile(tmpFile.fileName().toLocal8Bit().constData());
+            Codegen generator(m_platformsRootDir, tree);
+            //    QVERIFY(!generator.isValid());
+            QList<LangError> errors = generator.getErrors();
+
+            editor->setErrors(errors);
+            if (tree) {
+                delete tree;
+            }
+        }
     }
 }
 
@@ -253,6 +286,23 @@ void ProjectWindow::readSettings()
     m_options["editor.fontItalic"] = font.italic();
 
     settings.endGroup();
+    settings.beginGroup("highlighter");
+    QMap<QString, QTextCharFormat> formats;
+    QStringList keys = settings.childGroups();
+    foreach(QString key, keys) {
+        settings.beginGroup(key);
+        QTextCharFormat format;
+        format.setForeground(settings.value("foreground").value<QBrush>());
+        format.setBackground(settings.value("background").value<QBrush>());
+        format.setFontWeight(settings.value("bold").toInt());
+        format.setFontItalic(settings.value("italic").toBool());
+        settings.endGroup();
+        formats[key] = format;
+    }
+    if (!formats.isEmpty()) {
+        m_highlighter->setFormats(formats);
+    }
+    settings.endGroup();
 }
 
 void ProjectWindow::writeSettings()
@@ -264,5 +314,17 @@ void ProjectWindow::writeSettings()
          settings.setValue(key, m_options[key]);
      }
      settings.endGroup();
-
+     settings.beginGroup("highlighter");
+     QMapIterator<QString, QTextCharFormat> i(m_highlighter->formats());
+     while(i.hasNext()) {
+         i.next();
+         settings.beginGroup(i.key());
+         QTextCharFormat format = i.value();
+         settings.setValue("foreground", format.foreground());
+         settings.setValue("background", format.background());
+         settings.setValue("bold", format.fontWeight());
+         settings.setValue("italic", format.fontItalic());
+         settings.endGroup();
+     }
+     settings.endGroup();
 }

@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QFile>
+#include <QTimer>
 
 #include "baseproject.h"
 #include "languagehighlighter.h"
@@ -24,6 +25,7 @@ public slots:
     void setEditorText(QString code);
     void saveProject();
     void openOptionsDialog();
+    void updateCodeAnalysis();
 
 private slots:
     void build();
@@ -55,6 +57,7 @@ private:
     QString m_projectDir;
     QString m_platformsRootDir;
     QMap<QString, QVariant> m_options;
+    QTimer m_timer;
 };
 
 #endif // PROJECTWINDOW_H
