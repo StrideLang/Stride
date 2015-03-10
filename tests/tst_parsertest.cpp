@@ -4,7 +4,6 @@
 #include "streamparser.h"
 #include "streamplatform.h"
 #include "codegen.h"
-#include "treewalker.h"
 
 extern AST *parse(const char* fileName);
 
@@ -272,15 +271,15 @@ void ParserTest::testDuplicates()
 //    QVERIFY(errors.size() > 1);
     LangError error = errors.takeFirst();
     QVERIFY(error.type == LangError::DuplicateSymbol);
-    QVERIFY(error.lineNumber == 3);
+    QVERIFY(error.lineNumber == 12);
     QVERIFY(error.errorTokens[0] == "Const");
-    QVERIFY(error.errorTokens[1] == "12");
+    QVERIFY(error.errorTokens[1] == "3");
 
     error = errors.takeFirst();
     QVERIFY(error.type == LangError::DuplicateSymbol);
-    QVERIFY(error.lineNumber == 7);
+    QVERIFY(error.lineNumber == 18);
     QVERIFY(error.errorTokens[0] == "Size");
-    QVERIFY(error.errorTokens[1] == "18");
+    QVERIFY(error.errorTokens[1] == "7");
 
     tree->deleteChildren();
     delete tree;
