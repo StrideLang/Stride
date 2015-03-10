@@ -35,7 +35,7 @@ MainWindow::~MainWindow()
 void MainWindow::newProject()
 {
     ProjectWindow *pw = new ProjectWindow(this, m_baseProjectDir);
-    pw->newFile();
+//    pw->newFile();
 //    pw->setWindowFlags(pw->windowFlags() | Qt::Window);
     pw->show();
 }

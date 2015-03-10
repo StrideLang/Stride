@@ -39,6 +39,10 @@ ProjectWindow::ProjectWindow(QWidget *parent, QString baseProjectDir) :
 
     readSettings();
 
+    if (ui->tabWidget->count() == 0) {
+        newFile(); // No files from previous session
+    }
+
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(updateCodeAnalysis()));
     m_timer.start(2000);
     connect(ui->tabWidget, SIGNAL(currentChanged(int)), this, SLOT(tabChanged(int)));
@@ -46,6 +50,7 @@ ProjectWindow::ProjectWindow(QWidget *parent, QString baseProjectDir) :
 
 ProjectWindow::~ProjectWindow()
 {
+    writeSettings();
     delete ui;
 }
 
@@ -207,12 +212,11 @@ void ProjectWindow::loadFile(QString fileName)
     QFile codeFile(fileName);
     if (!codeFile.open(QIODevice::ReadWrite)) { // ReadWrite creates the file if it doesn't exist
         qDebug() << "Error opening code file!";
-//        throw;
         return;
     }
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     setEditorText(codeFile.readAll());
-    editor->setFilename(QFileInfo(fileName).fileName());
+    editor->setFilename(QFileInfo(fileName).absoluteFilePath());
     ui->tabWidget->setTabText(ui->tabWidget->currentIndex(),
                               QFileInfo(fileName).fileName());
     codeFile.close();
@@ -318,6 +322,31 @@ void ProjectWindow::readSettings()
         m_highlighter->setFormats(formats);
     }
     settings.endGroup();
+
+    settings.beginGroup("GUI");
+    int size = settings.beginReadArray("openDocuments");
+    for(int i = 0; i < ui->tabWidget->count(); i++) {
+        CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->widget(i));
+        settings.setArrayIndex(i);
+        settings.setValue("ServerItem", editor->filename());
+    }
+    for (int i = 0; i < size; ++i) {
+        settings.setArrayIndex(i);
+        QString fileName = settings.value("fileName").toString();
+        if (fileName.isEmpty()) {
+            newFile();
+        } else {
+            if (QFile::exists(fileName)) {
+                loadFile(fileName);
+            } else {
+                QMessageBox::warning(this, tr("File not found"),
+                                     tr("Previously open file %1 not found.").arg(fileName));
+            }
+        }
+    }
+    settings.endArray();
+    ui->tabWidget->setCurrentIndex(settings.value("lastIndex", -1).toInt());
+    settings.endGroup();
 }
 
 void ProjectWindow::writeSettings()
@@ -329,6 +358,7 @@ void ProjectWindow::writeSettings()
          settings.setValue(key, m_options[key]);
      }
      settings.endGroup();
+
      settings.beginGroup("highlighter");
      QMapIterator<QString, QTextCharFormat> i(m_highlighter->formats());
      while(i.hasNext()) {
@@ -341,6 +371,18 @@ void ProjectWindow::writeSettings()
          settings.setValue("italic", format.fontItalic());
          settings.endGroup();
      }
+     settings.endGroup();
+
+     settings.beginGroup("GUI");
+     settings.setValue("lastIndex", ui->tabWidget->currentIndex());
+     settings.beginWriteArray("openDocuments");
+     for(int i = 0; i < ui->tabWidget->count(); i++) {
+         CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->widget(i));
+         settings.setArrayIndex(i);
+         settings.setValue("fileName", editor->filename());
+     }
+     settings.endArray();
+
      settings.endGroup();
 }
 
