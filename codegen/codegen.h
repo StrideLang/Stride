@@ -38,6 +38,8 @@ public:
     bool isValid();
     bool platformIsValid();
 
+    QVector<PlatformNode *> getPlatform();
+
     QList<LangError> getErrors();
     QStringList getPlatformErrors();
 

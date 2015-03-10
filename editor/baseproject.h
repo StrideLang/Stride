@@ -5,6 +5,11 @@
 #include <QString>
 #include <QStringList>
 
+extern "C" {
+// #include "luajit-2.0/lua.hpp"
+#include "lua.hpp"
+}
+
 #include "ugeninterface.h"
 #include "streamplatform.h"
 
@@ -43,6 +48,7 @@ protected:
     UgenInterface m_ugens; // TODO move UgenInterface to Platform
     StreamPlatform *m_platform;
 
+    lua_State *m_lua;
 signals:
     void outputText(QString text);
     void errorText(QString text);

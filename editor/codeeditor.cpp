@@ -53,6 +53,7 @@ void CodeEditor::updateLineNumberArea(const QRect &rect, int dy)
     if (rect.contains(viewport()->rect()))
         updateLineNumberAreaWidth(0);
 }
+
 QString CodeEditor::filename() const
 {
     return m_filename;

@@ -34,19 +34,8 @@ MainWindow::~MainWindow()
 
 void MainWindow::newProject()
 {
-    QString projectDir = m_baseProjectDir + "/untitled_00";
-    int count = 1;
-    while (QFile::exists(projectDir)) {
-        projectDir = projectDir.left(projectDir.lastIndexOf('_') + 1)
-                + QString("%1").arg(count, 2, 10, QChar('0'));
-        count++;
-        if (count == 999999) {
-            qDebug() << "Warning! Too many untitled projects, overwriting.";
-            break;
-        }
-    }
-
-    ProjectWindow *pw = new ProjectWindow(this, projectDir);
+    ProjectWindow *pw = new ProjectWindow(this, m_baseProjectDir);
+    pw->newFile();
 //    pw->setWindowFlags(pw->windowFlags() | Qt::Window);
     pw->show();
 }

@@ -9,6 +9,8 @@
 #include <QMenuBar>
 #include <QSettings>
 #include <QTemporaryFile>
+#include <QFileDialog>
+#include <QFileInfo>
 
 #include "codeeditor.h"
 //#include "xmosproject.h"
@@ -16,88 +18,64 @@
 #include "codegen.h"
 #include "configdialog.h"
 
-ProjectWindow::ProjectWindow(QWidget *parent, QString projectDir) :
+ProjectWindow::ProjectWindow(QWidget *parent, QString baseProjectDir) :
     QMainWindow(parent),
     ui(new Ui::ProjectWindow),
-    m_codeFile(projectDir + "/code/code.st"),
-    m_projectDir(projectDir),
     m_timer(this)
 {
     ui->setupUi(this);
 
     m_platformsRootDir = "../../StreamStack/platforms";
-    QString xmosToolChainRoot = "/home/andres/Documents/src/XMOS/xTIMEcomposer/Community_13.0.2";
+//    QString xmosToolChainRoot = "/home/andres/Documents/src/XMOS/xTIMEcomposer/Community_13.0.2";
 //    m_project = new XmosProject(projectDir, platformsRootDir, xmosToolChainRoot);
 //    m_project->setBoardId("0ontZocni8POZ");
 
     connectActions();
 
-    QString name = projectDir.mid(projectDir.lastIndexOf("/") + 1);
-    setWindowTitle(name);
+    setWindowTitle("StreamStack");
     updateMenus();
     ui->projectDockWidget->setVisible(false);
-
-    CodeEditor *editor = new CodeEditor;
-    editor->setFilename(m_projectDir + "/code/code.st");
-//    m_highlighter = new LanguageHighlighter(editor->document(), m_project->getUgens());
-    m_highlighter = new LanguageHighlighter(editor->document(), NULL);
-    m_highlighter->setDocument(editor->document()); // Not sure why, but this is required for highlighter to work.
-
-    ui->tabWidget->addTab(editor, "code");
-
-    if (!QFile::exists(projectDir)) {
-        QDir().mkpath(projectDir);
-        QDir().mkpath(projectDir + "/code");
-    }
-
-    if (!m_codeFile.open(QIODevice::ReadWrite)) { // ReadWrite creates the file if it doesn't exist
-        qDebug() << "Error opening code file!";
-        throw;
-    }
-    setEditorText(m_codeFile.readAll());
-    m_codeFile.close();
+    m_highlighter = new LanguageHighlighter(this, NULL);
 
     readSettings();
 
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(updateCodeAnalysis()));
     m_timer.start(2000);
+    connect(ui->tabWidget, SIGNAL(currentChanged(int)), this, SLOT(tabChanged(int)));
 }
 
 ProjectWindow::~ProjectWindow()
 {
-//    delete static_cast<XmosProject *>(m_project);
     delete ui;
 }
 
 void ProjectWindow::build()
 {
     ui->consoleText->clear();
-//    QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
-    saveProject();
-//    m_project->setCode(editor->toPlainText());
-//    m_project->build();
+    saveFile();
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     AST *tree;
     tree = AST::parseFile(editor->filename().toLocal8Bit().constData());
     Codegen generator(m_platformsRootDir, tree);
 //    QVERIFY(!generator.isValid());
     QList<LangError> errors = generator.getErrors();
-
     editor->setErrors(errors);
 
     foreach(LangError error, errors) {
         ui->consoleText->insertPlainText(error.getErrorText() + "\n");
     }
     if (tree) {
+        makeProjectForCurrent();
+
         delete tree;
     }
+    //    m_project->build();
 }
 
 void ProjectWindow::flash()
 {
     ui->consoleText->clear();
     QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
-//    m_project->setCode(editor->toPlainText());
 //    m_project->flash();
 }
 
@@ -107,8 +85,14 @@ void ProjectWindow::run(bool pressed)
         ui->consoleText->clear();
     }
     QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
-//    m_project->setCode(editor->toPlainText());
-//    m_project->run(pressed);
+    //    m_project->run(pressed);
+}
+
+void ProjectWindow::tabChanged(int index)
+{
+    Q_UNUSED(index);
+    QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
+    m_highlighter->setDocument(editor->document()); // Not sure why, but this is required for highlighter to work.
 }
 
 void ProjectWindow::programStopped()
@@ -116,19 +100,10 @@ void ProjectWindow::programStopped()
     ui->actionRun->setChecked(false);
 }
 
-void ProjectWindow::setTargetFromMenu()
-{
-    QAction *act = static_cast<QAction *>(sender());
-    Q_ASSERT(act);
-
-//    m_project->setTarget(act->text());
-}
-
 void ProjectWindow::printConsoleText(QString text)
 {
     ui->consoleText->setTextColor(Qt::black);
     ui->consoleText->append(text);
-
 }
 
 void ProjectWindow::printConsoleError(QString text)
@@ -136,16 +111,6 @@ void ProjectWindow::printConsoleError(QString text)
     ui->consoleText->setTextColor(Qt::red);
     ui->consoleText->append(text);
 }
-
-//void ProjectWindow::createMenus()
-//{
-//    QMenu *fileMenu = new QMenu("File");
-//    fileMenu->addAction(tr("New"),parent(), SLOT(newProject()));
-
-//    //    connect(ui->actionNew_Project, SIGNAL(triggered()), );
-//    //    connect(ui->actionLoad, SIGNAL(triggered()), parent(), SLOT(loadProject()));
-//        //    connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(saveProject()));
-//}
 
 void ProjectWindow::updateMenus()
 {
@@ -184,16 +149,56 @@ void ProjectWindow::setEditorText(QString code)
     editor->setPlainText(code);
 }
 
-void ProjectWindow::saveProject()
+void ProjectWindow::saveFile()
 {
-    QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
+    CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+    if (editor->filename().isEmpty()) {
+        if (!saveFileAs()) {
+            return;
+        }
+    }
     QString code = editor->toPlainText();
-    if (!m_codeFile.open(QIODevice::WriteOnly)) {
+    QFile codeFile(editor->filename());
+    if (!codeFile.open(QIODevice::WriteOnly)) {
         qDebug() << "Error opening code file for writing!";
         throw;
     }
-    m_codeFile.write(code.toLocal8Bit());
-    m_codeFile.close();
+    codeFile.write(code.toLocal8Bit());
+    codeFile.close();
+}
+
+bool ProjectWindow::saveFileAs()
+{
+    CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save file as:"));
+    if (!fileName.isEmpty()) {
+        QFile codeFile(fileName);
+        if (!codeFile.open(QIODevice::ReadWrite)) {
+            QMessageBox::critical(this, tr("Error writing file"),
+                                  tr("Can't open file for writing."));
+            return false;
+        }
+        codeFile.close();
+        editor->setFilename(fileName);
+        ui->tabWidget->setTabText(ui->tabWidget->currentIndex(),
+                                  QFileInfo(fileName).fileName());
+    }
+    return true;
+}
+
+void ProjectWindow::loadFile(QString fileName)
+{
+    CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+    newFile();
+    QFile codeFile(fileName);
+    if (!codeFile.open(QIODevice::ReadWrite)) { // ReadWrite creates the file if it doesn't exist
+        qDebug() << "Error opening code file!";
+//        throw;
+        return;
+    }
+    setEditorText(codeFile.readAll());
+    editor->setFilename(QFileInfo(fileName).fileName());
+    codeFile.close();
 }
 
 void ProjectWindow::openOptionsDialog()
@@ -234,12 +239,12 @@ void ProjectWindow::updateCodeAnalysis()
             tmpFile.close();
             AST *tree;
             tree = AST::parseFile(tmpFile.fileName().toLocal8Bit().constData());
-            Codegen generator(m_platformsRootDir, tree);
-            //    QVERIFY(!generator.isValid());
-            QList<LangError> errors = generator.getErrors();
 
-            editor->setErrors(errors);
             if (tree) {
+                Codegen generator(m_platformsRootDir, tree);
+                //    QVERIFY(!generator.isValid());
+                QList<LangError> errors = generator.getErrors();
+                editor->setErrors(errors);
                 delete tree;
             }
         }
@@ -249,18 +254,13 @@ void ProjectWindow::updateCodeAnalysis()
 void ProjectWindow::connectActions()
 {
 
-    connect(ui->actionNew_Project, SIGNAL(triggered()), parent(), SLOT(newProject()));
+    connect(ui->actionNew_Project, SIGNAL(triggered()), parent(), SLOT(newFile()));
     connect(ui->actionBuild, SIGNAL(triggered()), this, SLOT(build()));
     connect(ui->actionUpload, SIGNAL(triggered()), this, SLOT(flash()));
     connect(ui->actionRun, SIGNAL(toggled(bool)), this, SLOT(run(bool)));
     connect(ui->actionRefresh, SIGNAL(triggered()), this, SLOT(updateMenus()));
-    connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(saveProject()));
+    connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(saveFile()));
     connect(ui->actionOptions, SIGNAL(triggered()), this, SLOT(openOptionsDialog()));
-
-//    connect(ui->buildButton, SIGNAL(clicked()), this, SLOT(build()));
-//    connect(ui->uploadButton, SIGNAL(clicked()), this, SLOT(flash()));
-//    connect(ui->runButton, SIGNAL(toggled(bool)), this, SLOT(run(bool)));
-//    connect(ui->actionRefresh, SIGNAL(triggered()), this, SLOT(updateMenus()));
 
 //    connect(m_project, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
 //    connect(m_project, SIGNAL(errorText(QString)), this, SLOT(printConsoleError(QString)));
@@ -269,7 +269,6 @@ void ProjectWindow::connectActions()
 
 void ProjectWindow::readSettings()
 {
-    QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
     QSettings settings("StreamStack", "StreamStackEdit", this);
     settings.beginGroup("project");
 
@@ -277,13 +276,13 @@ void ProjectWindow::readSettings()
     qreal fontSize = settings.value("editor.fontSize", 10.0).toFloat();
     int fontWeight = settings.value("editor.fontSize", QFont::Normal).toInt();
     bool fontItalic = settings.value("editor.fontItalic", false).toBool();
-    QFont font(fontFamily, fontSize, fontWeight, fontItalic);
-    font.setPointSizeF(fontSize);
-    editor->setFont(font);
+    m_font = QFont(fontFamily, fontSize, fontWeight, fontItalic);
+    m_font.setPointSizeF(fontSize);
+    updateEditorFont();
     m_options["editor.fontFamily"] = fontFamily;
-    m_options["editor.fontSize"] = font.pointSizeF();
-    m_options["editor.fontWeight"] = font.weight();
-    m_options["editor.fontItalic"] = font.italic();
+    m_options["editor.fontSize"] = m_font.pointSizeF();
+    m_options["editor.fontWeight"] = m_font.weight();
+    m_options["editor.fontItalic"] = m_font.italic();
 
     settings.endGroup();
     settings.beginGroup("highlighter");
@@ -327,4 +326,37 @@ void ProjectWindow::writeSettings()
          settings.endGroup();
      }
      settings.endGroup();
+}
+
+void ProjectWindow::updateEditorFont()
+{
+    for(int i = 0; i < ui->tabWidget->count(); i++) {
+        QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->widget(i));
+        editor->setFont(m_font);
+    }
+}
+
+
+void ProjectWindow::makeProjectForCurrent()
+{
+    CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+    Q_ASSERT(!editor->filename().isEmpty());
+    QFileInfo info(editor->filename());
+    QString dirName = info.absolutePath() + QDir::separator()
+            + info.fileName() + "_Products";
+    if (!QFile::exists(dirName)) {
+        if (!QDir().mkpath(dirName)) {
+            qDebug() << "Error creating project path";
+        }
+    }
+}
+
+void ProjectWindow::newFile()
+{
+    // Create editor tab
+    CodeEditor *editor = new CodeEditor(this);
+    editor->setFilename("");
+//    m_highlighter = new LanguageHighlighter(editor->document(), m_project->getUgens());
+    ui->tabWidget->addTab(editor, "untitled");
+    updateEditorFont();
 }

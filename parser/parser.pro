@@ -14,8 +14,7 @@ SOURCES += ast.cpp \
     functionnode.cpp \
     expressionnode.cpp \
     blocknode.cpp \
-    listnode.cpp \
-    treewalker.cpp
+    listnode.cpp
 
 HEADERS += ast.h \
            platformnode.h \
@@ -28,8 +27,7 @@ HEADERS += ast.h \
     expressionnode.h \
     blocknode.h \
     listnode.h \
-    streamparser.h \
-    treewalker.h
+    streamparser.h
 
 BISONSOURCES = lang_stream.y
 FLEXSOURCES = lang_stream.l

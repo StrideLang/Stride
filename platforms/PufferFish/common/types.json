@@ -1,9 +1,4 @@
-{"types": [
-        {
-            "typeName": "puffer",
-            "properties": [{"name": "meta", "validTypes": ["string"], "default": "none"}]
-        }
-    ]
+{"types": []
 }
 
 

@@ -1,11 +1,6 @@
 #include <QVector>
 
 #include "codegen.h"
-#include "treewalker.h"
-
-// FIXME check what here should be moved to the parser/TreeWalker class
-// Little can be moved as tree walker doesn't know about the platform...
-// Maybe move treewalker here instead?
 
 Codegen::Codegen(StreamPlatform &platform, AST *tree) :
     m_platform(platform), m_tree(tree)
@@ -16,11 +11,10 @@ Codegen::Codegen(StreamPlatform &platform, AST *tree) :
 Codegen::Codegen(QString platformRootDir, AST *tree):
     m_platform(platformRootDir), m_tree(tree)
 {
-    TreeWalker walker(tree);
     if(tree) {
-        QVector<AST *> platforms = QVector<AST *>::fromStdVector(walker.findPlatform());
+        QVector<PlatformNode *> platforms = getPlatform();
         if (platforms.size() > 0) {
-            PlatformNode *platformNode = static_cast<PlatformNode *>(platforms.at(0));
+            PlatformNode *platformNode = platforms.at(0);
             // FIXME add error if more than one platform?
             StreamPlatform platform(platformRootDir,
                                     QString::fromStdString(platformNode->platformName()),
@@ -39,6 +33,22 @@ bool Codegen::isValid()
 bool Codegen::platformIsValid()
 {
     return m_platform.getErrors().size() == 0;
+}
+
+QVector<PlatformNode *> Codegen::getPlatform()
+{
+    Q_ASSERT(m_tree);
+//    if (!m_tree) {
+//        return QVector<PlatformNode *>();
+//    }
+    QVector<PlatformNode *> platformNodes;
+    vector<AST *> nodes = m_tree->getChildren();
+    for(unsigned int i = 0; i < nodes.size(); i++) {
+        if (nodes.at(i)->getNodeType() == AST::Platform) {
+            platformNodes.push_back(static_cast<PlatformNode *>(nodes.at(i)));
+        }
+    }
+    return platformNodes;
 }
 
 QList<LangError> Codegen::getErrors()

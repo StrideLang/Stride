@@ -1,14 +1,9 @@
-#-------------------------------------------------
-#
-# Project created by QtCreator 2014-02-21T06:00:39
-#
-#-------------------------------------------------
 
 QT       += core gui qml quick
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-lessThan(QT_MAJOR_VERSION, 5): message("Qt 5 required!")
+lessThan(QT_MAJOR_VERSION, 5): error("Qt 5 required!")
 
 include(../config.pri)
 
