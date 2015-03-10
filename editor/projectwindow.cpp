@@ -63,9 +63,13 @@ void ProjectWindow::build()
 
     foreach(LangError error, errors) {
         ui->consoleText->insertPlainText(error.getErrorText() + "\n");
+        return;
     }
     if (tree) {
-        makeProjectForCurrent();
+        QString projectDir = makeProjectForCurrent();
+        QVector<PlatformNode *> platforms = generator.getPlatform();
+        Q_ASSERT(platforms.size() > 0);
+//        QDir().mkpath(projectDir + QDir::separator() + platforms.at(0)->platformName());
 
         delete tree;
     }
@@ -171,24 +175,34 @@ bool ProjectWindow::saveFileAs()
 {
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save file as:"));
-    if (!fileName.isEmpty()) {
-        QFile codeFile(fileName);
-        if (!codeFile.open(QIODevice::ReadWrite)) {
-            QMessageBox::critical(this, tr("Error writing file"),
-                                  tr("Can't open file for writing."));
-            return false;
-        }
-        codeFile.close();
-        editor->setFilename(fileName);
-        ui->tabWidget->setTabText(ui->tabWidget->currentIndex(),
-                                  QFileInfo(fileName).fileName());
+    if  (fileName.isEmpty()) {
+        return false;
     }
+    QFile codeFile(fileName);
+    if (!codeFile.open(QIODevice::ReadWrite)) {
+        QMessageBox::critical(this, tr("Error writing file"),
+                              tr("Can't open file for writing."));
+        return false;
+    }
+    codeFile.close();
+    editor->setFilename(fileName);
+    ui->tabWidget->setTabText(ui->tabWidget->currentIndex(),
+                              QFileInfo(fileName).fileName());
     return true;
+}
+
+void ProjectWindow::loadFile()
+{
+    QStringList fileNames = QFileDialog::getOpenFileNames(this, tr("LoadFile"));
+    if (!fileNames.isEmpty()) {
+        foreach(QString fileName, fileNames) {
+            loadFile(fileName);
+        }
+    }
 }
 
 void ProjectWindow::loadFile(QString fileName)
 {
-    CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     newFile();
     QFile codeFile(fileName);
     if (!codeFile.open(QIODevice::ReadWrite)) { // ReadWrite creates the file if it doesn't exist
@@ -196,8 +210,11 @@ void ProjectWindow::loadFile(QString fileName)
 //        throw;
         return;
     }
+    CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     setEditorText(codeFile.readAll());
     editor->setFilename(QFileInfo(fileName).fileName());
+    ui->tabWidget->setTabText(ui->tabWidget->currentIndex(),
+                              QFileInfo(fileName).fileName());
     codeFile.close();
 }
 
@@ -216,14 +233,12 @@ void ProjectWindow::openOptionsDialog()
 
     int result = config.exec();
     if (result == QDialog::Accepted) {
-        // TODO apply to all editors
-        QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
-        QFont font = config.font();
-        editor->setFont(font);
-        m_options["editor.fontFamily"] = font.family();
-        m_options["editor.fontSize"] = font.pointSizeF();
-        m_options["editor.fontWeight"] = font.weight();
-        m_options["editor.fontItalic"] = font.italic();
+        m_font = config.font();
+        updateEditorFont();
+        m_options["editor.fontFamily"] = m_font.family();
+        m_options["editor.fontSize"] = m_font.pointSizeF();
+        m_options["editor.fontWeight"] = m_font.weight();
+        m_options["editor.fontItalic"] = m_font.italic();
         m_highlighter->setFormats(config.highlighterFormats());
         writeSettings();
     }
@@ -254,13 +269,14 @@ void ProjectWindow::updateCodeAnalysis()
 void ProjectWindow::connectActions()
 {
 
-    connect(ui->actionNew_Project, SIGNAL(triggered()), parent(), SLOT(newFile()));
+    connect(ui->actionNew_Project, SIGNAL(triggered()), this, SLOT(newFile()));
     connect(ui->actionBuild, SIGNAL(triggered()), this, SLOT(build()));
     connect(ui->actionUpload, SIGNAL(triggered()), this, SLOT(flash()));
     connect(ui->actionRun, SIGNAL(toggled(bool)), this, SLOT(run(bool)));
     connect(ui->actionRefresh, SIGNAL(triggered()), this, SLOT(updateMenus()));
     connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(saveFile()));
     connect(ui->actionOptions, SIGNAL(triggered()), this, SLOT(openOptionsDialog()));
+    connect(ui->actionLoad_File, SIGNAL(triggered()), this, SLOT(loadFile()));
 
 //    connect(m_project, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
 //    connect(m_project, SIGNAL(errorText(QString)), this, SLOT(printConsoleError(QString)));
@@ -337,7 +353,7 @@ void ProjectWindow::updateEditorFont()
 }
 
 
-void ProjectWindow::makeProjectForCurrent()
+QString ProjectWindow::makeProjectForCurrent()
 {
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     Q_ASSERT(!editor->filename().isEmpty());
@@ -347,8 +363,10 @@ void ProjectWindow::makeProjectForCurrent()
     if (!QFile::exists(dirName)) {
         if (!QDir().mkpath(dirName)) {
             qDebug() << "Error creating project path";
+            return QString();
         }
     }
+    return dirName;
 }
 
 void ProjectWindow::newFile()
@@ -357,6 +375,7 @@ void ProjectWindow::newFile()
     CodeEditor *editor = new CodeEditor(this);
     editor->setFilename("");
 //    m_highlighter = new LanguageHighlighter(editor->document(), m_project->getUgens());
-    ui->tabWidget->addTab(editor, "untitled");
+    int index = ui->tabWidget->insertTab(ui->tabWidget->currentIndex() + 1, editor, "untitled");
+    ui->tabWidget->setCurrentIndex(index);
     updateEditorFont();
 }

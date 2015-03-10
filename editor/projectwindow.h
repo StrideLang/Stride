@@ -25,6 +25,7 @@ public slots:
     void setEditorText(QString code);
     void saveFile();
     bool saveFileAs();
+    void loadFile();
     void loadFile(QString fileName);
     void openOptionsDialog();
     void updateCodeAnalysis();
@@ -50,7 +51,7 @@ private:
 
     void updateEditorFont();
 
-    void makeProjectForCurrent();
+    QString makeProjectForCurrent();
 
     Ui::ProjectWindow *ui;
     QWidget *m_layoutContainer;

@@ -265,20 +265,11 @@
    </property>
    <widget class="QMenu" name="menuProject">
     <property name="title">
-     <string>Project</string>
+     <string>File</string>
     </property>
-    <widget class="QMenu" name="menuTarget">
-     <property name="title">
-      <string>Target</string>
-     </property>
-     <addaction name="separator"/>
-     <addaction name="separator"/>
-    </widget>
     <addaction name="actionNew_Project"/>
+    <addaction name="actionLoad_File"/>
     <addaction name="actionSave"/>
-    <addaction name="actionRename"/>
-    <addaction name="menuTarget"/>
-    <addaction name="actionRefresh"/>
     <addaction name="actionOptions"/>
    </widget>
    <widget class="QMenu" name="menuBuild">
@@ -287,6 +278,8 @@
     </property>
     <addaction name="actionBuild"/>
     <addaction name="actionUpload"/>
+    <addaction name="actionRename"/>
+    <addaction name="actionRefresh"/>
    </widget>
    <addaction name="menuProject"/>
    <addaction name="menuBuild"/>
@@ -324,17 +317,22 @@
   </action>
   <action name="actionSave">
    <property name="text">
-    <string>Save</string>
+    <string>Save File</string>
    </property>
   </action>
   <action name="actionNew_Project">
    <property name="text">
-    <string>New Project</string>
+    <string>New File</string>
    </property>
   </action>
   <action name="actionOptions">
    <property name="text">
     <string>Options</string>
+   </property>
+  </action>
+  <action name="actionLoad_File">
+   <property name="text">
+    <string>Load File</string>
    </property>
   </action>
  </widget>
