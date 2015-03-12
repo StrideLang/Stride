@@ -11,8 +11,8 @@ class PythonProject : public QObject
     Q_OBJECT
 public:
     explicit PythonProject(QObject *parent = 0,
-                           AST *m_tree,
-                           QString pythonExecutable);
+                           AST *m_tree = NULL,
+                           QString pythonExecutable = QString());
     ~PythonProject();
 
 signals:
