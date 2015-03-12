@@ -20,8 +20,7 @@ SOURCES += main.cpp\
 #    xmosproject.cpp \
 #    platform.cpp
     linenumberarea.cpp \
-    configdialog.cpp \
-    pythonproject.cpp
+    configdialog.cpp
 
 HEADERS  += \
     projectwindow.h \
@@ -33,8 +32,7 @@ HEADERS  += \
 #    xmosproject.h \
 #    platform.h
     linenumberarea.h \
-    configdialog.h \
-    pythonproject.h
+    configdialog.h
 
 FORMS    += \
     projectwindow.ui \

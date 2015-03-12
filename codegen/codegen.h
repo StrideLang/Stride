@@ -38,10 +38,10 @@ public:
     bool isValid();
     bool platformIsValid();
 
-    QVector<PlatformNode *> getPlatform();
-
     QList<LangError> getErrors();
     QStringList getPlatformErrors();
+
+    StreamPlatform getPlatform();
 
 private:
     typedef enum {
@@ -57,6 +57,8 @@ private:
         None,
         Invalid
     } PortType;
+
+    QVector<PlatformNode *> getPlatformNodes();
 
     void validate();
     void validateTypeNames(AST *node);

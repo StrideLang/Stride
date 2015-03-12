@@ -12,7 +12,7 @@ Codegen::Codegen(QString platformRootDir, AST *tree):
     m_platform(platformRootDir), m_tree(tree)
 {
     if(tree) {
-        QVector<PlatformNode *> platforms = getPlatform();
+        QVector<PlatformNode *> platforms = getPlatformNodes();
         if (platforms.size() > 0) {
             PlatformNode *platformNode = platforms.at(0);
             // FIXME add error if more than one platform?
@@ -35,7 +35,7 @@ bool Codegen::platformIsValid()
     return m_platform.getErrors().size() == 0;
 }
 
-QVector<PlatformNode *> Codegen::getPlatform()
+QVector<PlatformNode *> Codegen::getPlatformNodes()
 {
     Q_ASSERT(m_tree);
 //    if (!m_tree) {
@@ -59,6 +59,11 @@ QList<LangError> Codegen::getErrors()
 QStringList Codegen::getPlatformErrors()
 {
     return m_platform.getErrors();
+}
+
+StreamPlatform Codegen::getPlatform()
+{
+    return m_platform;
 }
 
 void Codegen::validate()

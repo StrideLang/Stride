@@ -76,12 +76,9 @@ void ProjectWindow::build()
     }
     if (tree) {
         QString projectDir = makeProjectForCurrent();
-        QVector<PlatformNode *> platforms = generator.getPlatform();
-        Q_ASSERT(platforms.size() > 0);
-//        QDir().mkpath(projectDir + QDir::separator() + platforms.at(0)->platformName());
-
-        PythonProject project();
-//        project.build();
+        QString pythonExec = "python";
+        PythonProject project(this, tree, generator.getPlatform(), projectDir, pythonExec);
+        project.build();
         delete tree;
     }
     //    m_project->build();
@@ -107,7 +104,7 @@ void ProjectWindow::tabChanged(int index)
 {
     Q_UNUSED(index);
     QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
-    m_highlighter->setDocument(editor->document()); // Not sure why, but this is required for highlighter to work.
+    m_highlighter->setDocument(editor->document());
 }
 
 void ProjectWindow::programStopped()

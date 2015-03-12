@@ -24,6 +24,8 @@ public:
     bool typeHasPort(QString typeName, QString propertyName);
     bool isValidPortType(QString typeName, QString propertyName, QString propType);
 
+    QString getPlatformPath(); // Path for the specific platform
+
 private:
     void initBasicTypes();
     void parsePlatformCommonTypes();
@@ -32,7 +34,7 @@ private:
 
     QList<Property> getPortsForType(QString typeName);
 
-    QString m_platformPath;
+    QString m_platformRootPath;
     QString m_platformName;
     QString m_version;
 

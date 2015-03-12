@@ -17,13 +17,15 @@ SOURCES += codegen.cpp \
     streamplatform.cpp \
     platformtype.cpp \
     platformfunction.cpp \
-    platformobject.cpp
+    platformobject.cpp \
+    pythonproject.cpp
 
 HEADERS += codegen.h \
     streamplatform.h \
     platformtype.h \
     platformfunction.h \
-    platformobject.h
+    platformobject.h \
+    pythonproject.h
 
 #unix {
 #    target.path = /usr/local/lib

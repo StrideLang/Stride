@@ -10,13 +10,13 @@
 #include "streamplatform.h"
 
 StreamPlatform::StreamPlatform(QString platformPath) :
-    m_platformPath(platformPath)
+    m_platformRootPath(platformPath)
 {
     initBasicTypes();
 }
 
 StreamPlatform::StreamPlatform(QString platformPath, QString platform, QString version) :
-    m_platformPath(platformPath), m_platformName(platform), m_version(version)
+    m_platformRootPath(platformPath), m_platformName(platform), m_version(version)
 {
     initBasicTypes();
     parsePlatformTypes();
@@ -31,7 +31,7 @@ StreamPlatform::~StreamPlatform()
 
 void StreamPlatform::parsePlatformTypes()
 {
-    QString platformFile = m_platformPath + QDir::separator() + m_platformName
+    QString platformFile = m_platformRootPath + QDir::separator() + m_platformName
             + QDir::separator() + m_version
             + QDir::separator() + "types.json";
     QFile f(platformFile);
@@ -66,9 +66,15 @@ QList<Property> StreamPlatform::getPortsForType(QString typeName)
     return QList<Property>();
 }
 
+QString StreamPlatform::getPlatformPath()
+{
+    return m_platformRootPath + QDir::separator() + m_platformName
+            + QDir::separator() + m_version;
+}
+
 void StreamPlatform::parsePlatformCommonTypes()
 {
-    QString platformFile = m_platformPath + QDir::separator() + "common"
+    QString platformFile = m_platformRootPath + QDir::separator() + "common"
             + QDir::separator() + "builtin_types.json";
     QFile f(platformFile);
     if (!f.open(QFile::ReadOnly | QFile::Text)) {
@@ -84,7 +90,7 @@ void StreamPlatform::parsePlatformCommonTypes()
 
 void StreamPlatform::parseCommonTypes()
 {
-    QString platformFile = m_platformPath + QDir::separator() + m_platformName
+    QString platformFile = m_platformRootPath + QDir::separator() + m_platformName
             + QDir::separator() + "common/types.json";
     QFile f(platformFile);
     if (!f.open(QFile::ReadOnly | QFile::Text)) {
