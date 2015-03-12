@@ -403,6 +403,10 @@ void ProjectWindow::updateEditorFont()
     for(int i = 0; i < ui->tabWidget->count(); i++) {
         QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->widget(i));
         editor->setFont(m_font);
+
+        const int tabStop = 4;  // 4 characters
+        QFontMetrics metrics(m_font);
+        editor->setTabStopWidth(tabStop * metrics.width(' '));
     }
 }
 
@@ -432,4 +436,5 @@ void ProjectWindow::newFile()
     int index = ui->tabWidget->insertTab(ui->tabWidget->currentIndex() + 1, editor, "untitled");
     ui->tabWidget->setCurrentIndex(index);
     updateEditorFont();
+    m_highlighter->setDocument(editor->document());
 }
