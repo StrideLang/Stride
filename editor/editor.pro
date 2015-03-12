@@ -11,7 +11,6 @@ TARGET = StreamStacker
 TEMPLATE = app
 
 SOURCES += main.cpp\
-        mainwindow.cpp \
     projectwindow.cpp \
     baseproject.cpp \
     codeeditor.cpp \
@@ -21,9 +20,10 @@ SOURCES += main.cpp\
 #    xmosproject.cpp \
 #    platform.cpp
     linenumberarea.cpp \
-    configdialog.cpp
+    configdialog.cpp \
+    pythonproject.cpp
 
-HEADERS  += mainwindow.h \
+HEADERS  += \
     projectwindow.h \
     baseproject.h \
     codeeditor.h \
@@ -33,9 +33,10 @@ HEADERS  += mainwindow.h \
 #    xmosproject.h \
 #    platform.h
     linenumberarea.h \
-    configdialog.h
+    configdialog.h \
+    pythonproject.h
 
-FORMS    += mainwindow.ui \
+FORMS    += \
     projectwindow.ui \
     configdialog.ui
 

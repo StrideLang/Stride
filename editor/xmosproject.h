@@ -42,12 +42,10 @@ protected:
     QString getEditorCode();
 
 private:
-    QProcess *m_runProcess;
     QString m_xmosToolchainRoot;
 //    BaseBlock *m_audioOutBlock;
 //    BaseBlock *m_audioInBlock;
     QVector<QString> m_codeStrings;
-    QMutex m_codeMutex;
 
     lua_State *m_lua;
 };

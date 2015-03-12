@@ -7,7 +7,6 @@
 LanguageHighlighter::LanguageHighlighter(QObject *parent, UgenInterface *ugens) :
     QSyntaxHighlighter(parent), m_ugens_ptr(ugens)
 {
-
     QTextCharFormat keywordFormat;
     keywordFormat.setFontWeight(QFont::Normal);
     keywordFormat.setForeground(QColor(Qt::yellow).darker());

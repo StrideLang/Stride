@@ -5,7 +5,6 @@
 #include <QFile>
 #include <QTimer>
 
-#include "baseproject.h"
 #include "languagehighlighter.h"
 
 namespace Ui {
@@ -17,7 +16,7 @@ class ProjectWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit ProjectWindow(QWidget *parent = 0, QString baseProjectDir = QString());
+    explicit ProjectWindow(QWidget *parent = 0);
     ~ProjectWindow();
 
 public slots:

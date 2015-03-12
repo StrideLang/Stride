@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QString>
 #include <QStringList>
+#include <QProcess>
+#include <QMutex>
 
 extern "C" {
 // #include "luajit-2.0/lua.hpp"
@@ -17,7 +19,7 @@ class BaseProject : public QObject
 {
     Q_OBJECT
 public:
-    BaseProject(QString dir);
+    BaseProject(QString projectDir);
     virtual ~BaseProject();
 
 //    QString getType() {return m_platform->getPlatformName();}
@@ -29,11 +31,11 @@ public:
 
     UgenInterface *getUgens() {return &m_ugens;}
 
-    virtual void setProjectName(QString name) = 0;
-    virtual void save() = 0;
+    virtual void setProjectName(QString name) {};
+    virtual void save() {};
 
 public slots:
-    virtual void build() {}
+    virtual void build();
     virtual void flash() {}
     virtual void run(bool pressed) {Q_UNUSED(pressed);}
     virtual QStringList listTargets() {return QStringList();}
@@ -48,6 +50,8 @@ protected:
     UgenInterface m_ugens; // TODO move UgenInterface to Platform
     StreamPlatform *m_platform;
 
+    QProcess *m_runProcess;
+    QMutex m_codeMutex;
     lua_State *m_lua;
 signals:
     void outputText(QString text);

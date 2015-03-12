@@ -2,9 +2,9 @@ TARGET = lpeg
 TEMPLATE = lib
 CONFIG += plugin no_plugin_name_prefix
 
-include(../config.pri)
+include(../../config.pri)
 
-DESTDIR = ../../StreamStack/editor/templates/simple/lua_scripts
+DESTDIR = ../../../StreamStack/editor/templates/simple/lua_scripts
 INCLUDEPATH += $${LUA_INCLUDE_PATH}
 LIBS += -L$${LUA_LIB_PATH} -l$${LUA_LIB}
 

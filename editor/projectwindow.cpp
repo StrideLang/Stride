@@ -1,5 +1,3 @@
-#include "projectwindow.h"
-#include "ui_projectwindow.h"
 
 #include <QProcess>
 #include <QDebug>
@@ -12,13 +10,19 @@
 #include <QFileDialog>
 #include <QFileInfo>
 
+#include "projectwindow.h"
+#include "ui_projectwindow.h"
+
+
+#include "pythonproject.h"
+
 #include "codeeditor.h"
 //#include "xmosproject.h"
 #include "ast.h"
 #include "codegen.h"
 #include "configdialog.h"
 
-ProjectWindow::ProjectWindow(QWidget *parent, QString baseProjectDir) :
+ProjectWindow::ProjectWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::ProjectWindow),
     m_timer(this)
@@ -76,6 +80,8 @@ void ProjectWindow::build()
         Q_ASSERT(platforms.size() > 0);
 //        QDir().mkpath(projectDir + QDir::separator() + platforms.at(0)->platformName());
 
+        PythonProject project();
+//        project.build();
         delete tree;
     }
     //    m_project->build();
