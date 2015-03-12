@@ -239,7 +239,13 @@ void ProjectWindow::openOptionsDialog()
             )
             );
 
-    config.setHighlighterFormats(m_highlighter->formats());
+    QMap<QString, QTextCharFormat> formats = m_highlighter->formats();
+    config.setHighlighterFormats(formats);
+
+    connect(&config, SIGNAL(requestHighlighterPreset(int)),
+            m_highlighter, SLOT(setFormatPreset(int)));
+    connect(m_highlighter, SIGNAL(currentHighlightingChanged(QMap<QString,QTextCharFormat> &)),
+            &config, SLOT(setHighlighterFormats(QMap<QString,QTextCharFormat> &)));
 
     int result = config.exec();
     if (result == QDialog::Accepted) {

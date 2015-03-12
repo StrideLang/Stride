@@ -15,6 +15,8 @@ ConfigDialog::ConfigDialog(QWidget *parent) :
             this, SLOT(cellClicked(int,int)));
     connect(ui->colorsTableWidget, SIGNAL(cellChanged(int,int)),
             this, SLOT(cellChanged(int,int)));
+    connect(ui->editorPresetComboBox, SIGNAL(currentIndexChanged(int)),
+            this, SLOT(setHighlighterPreset(int)));
 }
 
 ConfigDialog::~ConfigDialog()
@@ -39,7 +41,7 @@ QMap<QString, QTextCharFormat> ConfigDialog::highlighterFormats() const
     return m_highlighterFormats;
 }
 
-void ConfigDialog::setHighlighterFormats(const QMap<QString, QTextCharFormat> &highlighterFormats)
+void ConfigDialog::setHighlighterFormats(QMap<QString, QTextCharFormat> &highlighterFormats)
 {
     m_highlighterFormats = highlighterFormats;
     QStringList keys = m_highlighterFormats.keys();
@@ -65,6 +67,11 @@ void ConfigDialog::setHighlighterFormats(const QMap<QString, QTextCharFormat> &h
         ui->colorsTableWidget->setItem(row, 4, italicItem);
         row++;
     }
+}
+
+void ConfigDialog::setHighlighterPreset(int index)
+{
+    emit requestHighlighterPreset(index);
 }
 
 void ConfigDialog::selectEditorFont()

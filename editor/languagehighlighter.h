@@ -15,11 +15,14 @@ public:
 
     QMap<QString, QTextCharFormat> formats();
     void setFormats(const QMap<QString, QTextCharFormat> &formats);
+public slots:
+    void setFormatPreset(int index);
 
 protected:
     virtual void highlightBlock(const QString &text);
 
 signals:
+    void currentHighlightingChanged(QMap<QString, QTextCharFormat> &formats);
 
 public slots:
 

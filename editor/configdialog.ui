@@ -115,6 +115,20 @@
          </column>
         </widget>
        </item>
+       <item row="1" column="1">
+        <widget class="QComboBox" name="editorPresetComboBox">
+         <item>
+          <property name="text">
+           <string>Default</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>None</string>
+          </property>
+         </item>
+        </widget>
+       </item>
       </layout>
      </widget>
     </widget>
@@ -140,8 +154,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>248</x>
-     <y>254</y>
+     <x>257</x>
+     <y>447</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -156,8 +170,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>316</x>
-     <y>260</y>
+     <x>325</x>
+     <y>447</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>

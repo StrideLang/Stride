@@ -22,7 +22,10 @@ public:
     void setFont(const QFont &font);
 
     QMap<QString, QTextCharFormat> highlighterFormats() const;
-    void setHighlighterFormats(const QMap<QString, QTextCharFormat> &highlighterFormats);
+
+public slots:
+    void setHighlighterFormats(QMap<QString, QTextCharFormat> &highlighterFormats);
+    void setHighlighterPreset(int index);
 
 private:
     Ui::ConfigDialog *ui;
@@ -33,6 +36,9 @@ private slots:
     void selectEditorFont();
     void cellClicked(int row, int col);
     void cellChanged(int row, int col);
+
+signals:
+    void requestHighlighterPreset(int index);
 };
 
 

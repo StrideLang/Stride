@@ -7,43 +7,9 @@
 LanguageHighlighter::LanguageHighlighter(QObject *parent, UgenInterface *ugens) :
     QSyntaxHighlighter(parent), m_ugens_ptr(ugens)
 {
-    QTextCharFormat keywordFormat;
-    keywordFormat.setFontWeight(QFont::Normal);
-    keywordFormat.setForeground(QColor(Qt::yellow).darker());
-    keywordFormat.setBackground(Qt::white);
-    m_formats["keywords"] = keywordFormat;
-
-    QTextCharFormat commentsFormat;
-    commentsFormat.setFontWeight(QFont::Normal);
-    commentsFormat.setForeground(Qt::black);
-    commentsFormat.setBackground(Qt::green);
-    m_formats["comments"] = commentsFormat;
-
-    QTextCharFormat typeFormat;
-    typeFormat.setFontWeight(QFont::Normal);
-    typeFormat.setForeground(Qt::black);
-    typeFormat.setBackground(Qt::green);
-    m_formats["type"] = typeFormat;
-
-    QTextCharFormat userFormat;
-    userFormat.setFontWeight(QFont::Normal);
-    userFormat.setForeground(Qt::blue);
-    userFormat.setBackground(Qt::white);
-    m_formats["user"] = userFormat;
-
-    QTextCharFormat propertiesFormat;
-    propertiesFormat.setFontWeight(QFont::Bold);
-    propertiesFormat.setForeground(Qt::darkGreen);
-    propertiesFormat.setBackground(Qt::white);
-    m_formats["properties"] = propertiesFormat;
-
-    QTextCharFormat builtinFormat;
-    builtinFormat.setFontWeight(QFont::Normal);
-    builtinFormat.setForeground(Qt::red);
-    builtinFormat.setBackground(Qt::white);
-    m_formats["builtin"] = builtinFormat;
-
-    m_keywords << "none" << "on" << "off" << "streamRate";
+    setFormatPreset(0);
+    m_keywords << "none" << "on" << "off" << "streamRate"
+               << "use" << "version";
 }
 
 void LanguageHighlighter::highlightBlock(const QString &text)
@@ -103,5 +69,52 @@ void LanguageHighlighter::setFormats(const QMap<QString, QTextCharFormat> &forma
     m_formats = formats;
     m_highlighterLock.unlock();
     rehighlight();
+}
+
+void LanguageHighlighter::setFormatPreset(int index)
+{
+    QTextCharFormat keywordFormat;
+    QTextCharFormat commentsFormat;
+    QTextCharFormat typeFormat;
+    QTextCharFormat userFormat;
+    QTextCharFormat propertiesFormat;
+    QTextCharFormat builtinFormat;
+
+    if (index == 0) {
+        keywordFormat.setFontWeight(QFont::Bold);
+        keywordFormat.setForeground(QColor("#ff9900"));
+        keywordFormat.setBackground(Qt::white);
+
+        commentsFormat.setFontWeight(QFont::Normal);
+        commentsFormat.setForeground(Qt::black);
+        commentsFormat.setBackground(Qt::green);
+
+        typeFormat.setFontWeight(QFont::Normal);
+        typeFormat.setForeground(QColor("#cc0000"));
+        typeFormat.setBackground(Qt::white);
+
+        userFormat.setFontWeight(QFont::Normal);
+        userFormat.setForeground(Qt::blue);
+        userFormat.setBackground(Qt::white);
+
+        propertiesFormat.setFontWeight(QFont::Bold);
+        propertiesFormat.setForeground(Qt::darkGreen);
+        propertiesFormat.setBackground(Qt::white);
+
+        builtinFormat.setFontWeight(QFont::Normal);
+        builtinFormat.setForeground(Qt::red);
+        builtinFormat.setBackground(Qt::white);
+    } else {
+        return;
+    }
+
+    m_formats["keywords"] = keywordFormat;
+    m_formats["comments"] = commentsFormat;
+    m_formats["type"] = typeFormat;
+    m_formats["user"] = userFormat;
+    m_formats["properties"] = propertiesFormat;
+    m_formats["builtin"] = builtinFormat;
+
+    emit currentHighlightingChanged(m_formats);
 }
 
