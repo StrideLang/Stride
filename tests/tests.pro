@@ -55,7 +55,8 @@ DISTFILES += \
     data/platformBasic.stream \
     data/bundleResolution.stream \
     data/errorDuplicate.stream \
-    data/errorLists.stream
+    data/errorLists.stream \
+    data/functions.stream
 
 # Link to codegen library
 

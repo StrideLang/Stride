@@ -28,6 +28,7 @@ private Q_SLOTS:
     // Parser
     void testTreeBuildNoneSwitch();
     void testTreeBuildArray();
+    void testTreeBuildFunctions();
     void testTreeBuildStream();
     void testTreeBuildLists();
     void testTreeBuildBlocks();
@@ -479,6 +480,80 @@ void ParserTest::testTreeBuildArray()
 
     tree->deleteChildren();
     delete tree;
+}
+
+void ParserTest::testTreeBuildFunctions()
+{
+    AST *tree;
+    tree = parse(QString(QFINDTESTDATA("data/functions.stream")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    vector<AST *> nodes = tree->getChildren();
+
+    QVERIFY(nodes.at(0)->getNodeType() == AST::Stream);
+    StreamNode *node = static_cast<StreamNode *>(nodes.at(0));
+    FunctionNode *function = static_cast<FunctionNode *>(node->getLeft());
+    QVERIFY(function->getNodeType() == AST::Function);
+    QVERIFY(function->getName() == "function1");
+    vector<PropertyNode *> properties = function->getProperties();
+    PropertyNode *property = properties.at(0);
+    QVERIFY(property->getName() == "propReal");
+    ValueNode *value = static_cast<ValueNode *>(property->getValue());
+    QVERIFY(value->getNodeType() == AST::Real);
+    QVERIFY(value->getFloatValue() == 1.1f);
+    property = properties.at(1);
+    QVERIFY(property->getName() == "propInt");
+    value = static_cast<ValueNode *>(property->getValue());
+    QVERIFY(value->getNodeType() == AST::Int);
+    QVERIFY(value->getIntValue() == 23);
+    property = properties.at(2);
+    QVERIFY(property->getName() == "propString");
+    value = static_cast<ValueNode *>(property->getValue());
+    QVERIFY(value->getNodeType() == AST::String);
+    QVERIFY(value->getStringValue() == "hello");
+
+    node = static_cast<StreamNode *>(node->getRight());
+    QVERIFY(node->getNodeType() == AST::Stream);
+
+    function = static_cast<FunctionNode *>(node->getLeft());
+    QVERIFY(function->getNodeType() == AST::Function);
+    QVERIFY(function->getName() == "function2");
+    properties = function->getProperties();
+    property = properties.at(0);
+    QVERIFY(property->getName() == "propReal");
+    value = static_cast<ValueNode *>(property->getValue());
+    QVERIFY(value->getNodeType() == AST::Real);
+    QVERIFY(value->getFloatValue() == 1.2f);
+    property = properties.at(1);
+    QVERIFY(property->getName() == "propInt");
+    value = static_cast<ValueNode *>(property->getValue());
+    QVERIFY(value->getNodeType() == AST::Int);
+    QVERIFY(value->getIntValue() == 123);
+    property = properties.at(2);
+    QVERIFY(property->getName() == "propString");
+    value = static_cast<ValueNode *>(property->getValue());
+    QVERIFY(value->getNodeType() == AST::String);
+    QVERIFY(value->getStringValue() == "function");
+
+    function = static_cast<FunctionNode *>(node->getRight());
+    QVERIFY(function->getNodeType() == AST::Function);
+    QVERIFY(function->getName() == "function3");
+    properties = function->getProperties();
+    property = properties.at(0);
+    QVERIFY(property->getName() == "propReal");
+    value = static_cast<ValueNode *>(property->getValue());
+    QVERIFY(value->getNodeType() == AST::Real);
+    QVERIFY(value->getFloatValue() == 1.3f);
+    property = properties.at(1);
+    QVERIFY(property->getName() == "propInt");
+    value = static_cast<ValueNode *>(property->getValue());
+    QVERIFY(value->getNodeType() == AST::Int);
+    QVERIFY(value->getIntValue() == 1123);
+    property = properties.at(2);
+    QVERIFY(property->getName() == "propString");
+    value = static_cast<ValueNode *>(property->getValue());
+    QVERIFY(value->getNodeType() == AST::String);
+    QVERIFY(value->getStringValue() == "lines");
+
 }
 
 void ParserTest::testTreeBuildStream()
@@ -1057,7 +1132,8 @@ void ParserTest::testParser()
           << "data/introBlock.stream"
           << "data/introConverter.stream" << "data/introFeedback.stream"
           << "data/introGenerator.stream" << "data/introProcessor.stream"
-          << "data/introFM.stream" << "data/introRemote.stream";
+          << "data/introFM.stream" << "data/introRemote.stream"
+          << "data/functions.stream";
     foreach (QString file, files) {
         tree = parse(QString(QFINDTESTDATA(file)).toStdString().c_str());
         QVERIFY2(tree != NULL, QString("file:" + file).toStdString().c_str());
