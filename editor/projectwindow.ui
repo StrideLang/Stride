@@ -253,6 +253,7 @@
    <addaction name="actionBuild"/>
    <addaction name="actionUpload"/>
    <addaction name="actionRun"/>
+   <addaction name="actionStop"/>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
@@ -333,6 +334,11 @@
   <action name="actionLoad_File">
    <property name="text">
     <string>Load File</string>
+   </property>
+  </action>
+  <action name="actionStop">
+   <property name="text">
+    <string>Stop</string>
    </property>
   </action>
  </widget>

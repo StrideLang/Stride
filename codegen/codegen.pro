@@ -47,4 +47,5 @@ else:unix: PRE_TARGETDEPS += $$OUT_PWD/../parser/libStreamParser.a
 
 DISTFILES += \
     ../platforms/common/builtin_types.json \
-    ../platforms/PufferFish/common/types.json
+    ../platforms/PufferFish/common/types.json \
+    ../platforms/Gamma/1.0/scripts/run.py

@@ -79,6 +79,8 @@ void ProjectWindow::build()
         QString pythonExec = "python";
         PythonProject project(this, tree, generator.getPlatform(), projectDir, pythonExec);
         project.build();
+        connect(ui->actionStop, SIGNAL(triggered()), &project, SLOT(stopRunning()));
+        project.run();
         delete tree;
     }
     //    m_project->build();
