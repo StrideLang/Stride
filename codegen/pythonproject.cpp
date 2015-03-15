@@ -83,9 +83,9 @@ void PythonProject::writeAST()
         if (node->getNodeType() == AST::Platform) {
             nodeObject["platform"] = QString::fromStdString(static_cast<PlatformNode *>(node)->platformName());
         } else if (node->getNodeType() == AST::Stream) {
-            QJsonArray streamArray;
-            streamToJson(static_cast<StreamNode *>(node), streamArray);
-            nodeObject["stream"] = streamArray;
+            m_curStreamArray = QJsonArray();
+            streamToJsonArray(static_cast<StreamNode *>(node));
+            nodeObject["stream"] = m_curStreamArray;
         }
         treeObject.append(nodeObject);
     }
@@ -93,33 +93,66 @@ void PythonProject::writeAST()
     saveFile.write(saveDoc.toJson());
 }
 
-QJsonArray PythonProject::streamToJson(StreamNode *node, QJsonArray &array)
-{
-    AST *left = node->getLeft();
-    AST *right = node->getRight();
-
-    addNodeToStreamArray(left, array);
-    addNodeToStreamArray(right, array);
-
-    return array;
-}
-
-void PythonProject::addNodeToStreamArray(AST *node, QJsonArray &array)
+void PythonProject::astToJson(AST *node, QJsonObject &obj)
 {
     if (node->getNodeType() == AST::Bundle) {
-        QJsonObject member;
-        member["type"] = "Bundle";
-        member["name"] = QString::fromStdString(static_cast<BundleNode *>(node)->getName());
+        obj["type"] = "Bundle";
+        obj["name"] = QString::fromStdString(static_cast<BundleNode *>(node)->getName());
         AST *indexNode = static_cast<BundleNode *>(node)->index();
         if (indexNode->getNodeType() == AST::Int) {
-            member["index"] = static_cast<ValueNode *>(indexNode)->getIntValue();
+            obj["index"] = static_cast<ValueNode *>(indexNode)->getIntValue();
         }
-        array.append(member);
     } else if (node->getNodeType() == AST::Name) {
-        QJsonObject member;
-        member["type"] = "Name";
-        member["name"] = QString::fromStdString(static_cast<BundleNode *>(node)->getName());
-        array.append(member);
+        obj["type"] = "Name";
+        obj["name"] = QString::fromStdString(static_cast<BundleNode *>(node)->getName());
+    } else if (node->getNodeType() == AST::Expression) {
+        obj["type"] = "Expression";
+    } else if (node->getNodeType() == AST::Function) {
+        obj["type"] = "Function";
+        functionToJson(static_cast<FunctionNode *>(node), obj);
+    } else if (node->getNodeType() == AST::Stream) {
+        obj = QJsonObject();
+        streamToJsonArray(static_cast<StreamNode *>(node));
+    } else if (node->getNodeType() == AST::Int) {
+        obj["type"] = "Value";
+        obj["value"] = static_cast<ValueNode *>(node)->getIntValue();
+    } else if (node->getNodeType() == AST::Real) {
+        obj["type"] = "Value";
+        obj["value"] = (qreal) static_cast<ValueNode *>(node)->getFloatValue();
+        qDebug() << obj["value"].isDouble() << obj["value"].toDouble();
+
+    } else if (node->getNodeType() == AST::String) {
+        obj["type"] = "Value";
+        obj["value"] = QString::fromStdString(static_cast<ValueNode *>(node)->getStringValue());
+    } else {
+        obj["type"] = "Unsupported";
     }
 }
 
+void PythonProject::streamToJsonArray(StreamNode *node)
+{
+    addNodeToStreamArray(node->getLeft());
+    addNodeToStreamArray(node->getRight());
+}
+
+void PythonProject::functionToJson(FunctionNode *node, QJsonObject &obj)
+{
+    obj["name"] = QString::fromStdString(node->getName());
+    vector<PropertyNode *> properties = node->getProperties();
+    QJsonObject propObject;
+    foreach(PropertyNode *property, properties) {
+        QJsonObject propValue;
+        astToJson(property->getValue(), propValue);
+        propObject[QString::fromStdString(property->getName())] = propValue;
+    }
+    obj["properties"] = propObject;
+}
+
+void PythonProject::addNodeToStreamArray(AST *node)
+{
+    QJsonObject obj;
+    astToJson(node, obj);
+    if(!obj.isEmpty()) {
+        m_curStreamArray.append(obj);
+    }
+}

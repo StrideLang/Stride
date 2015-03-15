@@ -59,6 +59,15 @@ stream_index = 0;
 dsp_code = ''
 num_chnls = 2;
 
+def get_function_code(function_name, properties, token):
+    print(properties)
+    init_code = '';
+    dsp_code = '';
+    if function_name == 'level':
+        dsp_code = token + ' = ' + token + ' * ' + str(properties['gain']['value']) + ';\n'
+
+    return init_code, dsp_code
+
 for node in tree:
     if 'stream' in node:
         for parts in node['stream']:
@@ -67,17 +76,19 @@ for node in tree:
                     chan_index = parts['index'] - 1;
                     dsp_code += 'float sig_%02i = io.in(%i);\n'%(stream_index, chan_index)
 
-                if parts['name'] == 'AudioOut':
+                elif parts['name'] == 'AudioOut':
                     chan_index = parts['index'] - 1;
                     dsp_code += 'io.out(%i) = sig_%02i;\n'%(chan_index, stream_index)
-            if parts['type'] == 'Name':
+            elif parts['type'] == 'Name':
                 if parts['name'] == 'AudioIn':
                     for chan_index in range(num_chnls):
                         dsp_code += 'float sig_%02i_%02i = io.in(%i);\n'%(stream_index, chan_index, chan_index)
-                if parts['name'] == 'AudioIn':
+                elif parts['name'] == 'AudioIn':
                     for chan_index in range(num_chnls):
                         dsp_code += 'io.out(%i) = sig_%02i_%02i;\n'%(chan_index, stream_index, chan_index)
-
+            elif parts['type'] == 'Function':
+                new_init_code, new_dsp_code = get_function_code(parts['name'], parts["properties"], 'sig_%02i'%stream_index)
+                dsp_code += new_dsp_code
         stream_index += 1
 
 #log(dsp_code)

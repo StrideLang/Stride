@@ -14,6 +14,7 @@
 #include "bundlenode.h"
 #include "streamnode.h"
 #include "valuenode.h"
+#include "functionnode.h"
 
 class PythonProject : public QObject
 {
@@ -35,10 +36,13 @@ public slots:
 
 private:
     void writeAST();
-    QJsonArray streamToJson(StreamNode *node, QJsonArray &array);
-    void addNodeToStreamArray(AST *node, QJsonArray &array);
+    void astToJson(AST *node, QJsonObject &obj);
+    void streamToJsonArray(StreamNode *node);
+    void functionToJson(FunctionNode *node, QJsonObject &obj);
+    void addNodeToStreamArray(AST *node);
 
     AST * m_tree;
+    QJsonArray m_curStreamArray;
     StreamPlatform m_platform;
     QString m_projectDir;
     QString m_pythonExecutable;
