@@ -19,7 +19,7 @@
 #include "codeeditor.h"
 //#include "xmosproject.h"
 #include "ast.h"
-#include "codegen.h"
+#include "codevalidator.h"
 #include "configdialog.h"
 
 ProjectWindow::ProjectWindow(QWidget *parent) :
@@ -65,7 +65,7 @@ void ProjectWindow::build()
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     AST *tree;
     tree = AST::parseFile(editor->filename().toLocal8Bit().constData());
-    Codegen generator(m_platformsRootDir, tree);
+    CodeValidator generator(m_platformsRootDir, tree);
 //    QVERIFY(!generator.isValid());
     QList<LangError> errors = generator.getErrors();
     editor->setErrors(errors);
@@ -271,7 +271,7 @@ void ProjectWindow::updateCodeAnalysis()
             tree = AST::parseFile(tmpFile.fileName().toLocal8Bit().constData());
 
             if (tree) {
-                Codegen generator(m_platformsRootDir, tree);
+                CodeValidator generator(m_platformsRootDir, tree);
                 //    QVERIFY(!generator.isValid());
                 QList<LangError> errors = generator.getErrors();
                 editor->setErrors(errors);

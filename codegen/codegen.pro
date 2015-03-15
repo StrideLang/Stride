@@ -13,19 +13,21 @@ CONFIG += staticlib
 
 message(Building $${TARGET})
 
-SOURCES += codegen.cpp \
+SOURCES += \
     streamplatform.cpp \
     platformtype.cpp \
     platformfunction.cpp \
     platformobject.cpp \
-    pythonproject.cpp
+    pythonproject.cpp \
+    codevalidator.cpp
 
-HEADERS += codegen.h \
+HEADERS += \
     streamplatform.h \
     platformtype.h \
     platformfunction.h \
     platformobject.h \
-    pythonproject.h
+    pythonproject.h \
+    codevalidator.h
 
 #unix {
 #    target.path = /usr/local/lib

@@ -28,11 +28,11 @@ public:
     QString getErrorText();
 };
 
-class Codegen
+class CodeValidator
 {
 public:
-    Codegen(StreamPlatform &platform, AST * tree);
-    Codegen(QString platformRootDir, AST * tree);
+    CodeValidator(StreamPlatform &platform, AST * tree);
+    CodeValidator(QString platformRootDir, AST * tree);
 
 
     bool isValid();

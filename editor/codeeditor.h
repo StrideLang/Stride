@@ -5,7 +5,7 @@
 #include <QList>
 
 //FIXME move lang error out of codegen
-#include "codegen.h"
+#include "codevalidator.h"
 
 class CodeEditor : public QPlainTextEdit
 {

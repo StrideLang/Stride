@@ -1,14 +1,14 @@
 #include <QVector>
 
-#include "codegen.h"
+#include "codevalidator.h"
 
-Codegen::Codegen(StreamPlatform &platform, AST *tree) :
+CodeValidator::CodeValidator(StreamPlatform &platform, AST *tree) :
     m_platform(platform), m_tree(tree)
 {
     validate();
 }
 
-Codegen::Codegen(QString platformRootDir, AST *tree):
+CodeValidator::CodeValidator(QString platformRootDir, AST *tree):
     m_platform(platformRootDir), m_tree(tree)
 {
     if(tree) {
@@ -25,17 +25,17 @@ Codegen::Codegen(QString platformRootDir, AST *tree):
     validate();
 }
 
-bool Codegen::isValid()
+bool CodeValidator::isValid()
 {
     return m_errors.size() == 0;
 }
 
-bool Codegen::platformIsValid()
+bool CodeValidator::platformIsValid()
 {
     return m_platform.getErrors().size() == 0;
 }
 
-QVector<PlatformNode *> Codegen::getPlatformNodes()
+QVector<PlatformNode *> CodeValidator::getPlatformNodes()
 {
     Q_ASSERT(m_tree);
 //    if (!m_tree) {
@@ -51,22 +51,22 @@ QVector<PlatformNode *> Codegen::getPlatformNodes()
     return platformNodes;
 }
 
-QList<LangError> Codegen::getErrors()
+QList<LangError> CodeValidator::getErrors()
 {
     return m_errors;
 }
 
-QStringList Codegen::getPlatformErrors()
+QStringList CodeValidator::getPlatformErrors()
 {
     return m_platform.getErrors();
 }
 
-StreamPlatform Codegen::getPlatform()
+StreamPlatform CodeValidator::getPlatform()
 {
     return m_platform;
 }
 
-void Codegen::validate()
+void CodeValidator::validate()
 {
     m_errors.clear();
     if(m_tree) {
@@ -84,7 +84,7 @@ void Codegen::validate()
     sortErrors();
 }
 
-void Codegen::validateTypeNames(AST *node)
+void CodeValidator::validateTypeNames(AST *node)
 {
     if (node->getNodeType() == AST::BlockBundle
             || node->getNodeType() == AST::Block) {
@@ -104,7 +104,7 @@ void Codegen::validateTypeNames(AST *node)
     }
 }
 
-void Codegen::validateProperties(AST *node, QVector<AST *> scope)
+void CodeValidator::validateProperties(AST *node, QVector<AST *> scope)
 {
     if (node->getNodeType() == AST::BlockBundle
             || node->getNodeType() == AST::Block) {
@@ -141,7 +141,7 @@ void Codegen::validateProperties(AST *node, QVector<AST *> scope)
     }
 }
 
-void Codegen::validateBundleIndeces(AST *node, QVector<AST *> scope)
+void CodeValidator::validateBundleIndeces(AST *node, QVector<AST *> scope)
 {
     if (node->getNodeType() == AST::Bundle) {
         BundleNode *bundle = static_cast<BundleNode *>(node);
@@ -162,7 +162,7 @@ void Codegen::validateBundleIndeces(AST *node, QVector<AST *> scope)
     }
 }
 
-void Codegen::validateBundleSizes(AST *node, QVector<AST *> scope)
+void CodeValidator::validateBundleSizes(AST *node, QVector<AST *> scope)
 {
     if (node->getNodeType() == AST::BlockBundle) {
         QList<LangError> errors;
@@ -188,7 +188,7 @@ void Codegen::validateBundleSizes(AST *node, QVector<AST *> scope)
     }
 }
 
-void Codegen::validateSymbolUniqueness(AST *node, QVector<AST *> scope)
+void CodeValidator::validateSymbolUniqueness(AST *node, QVector<AST *> scope)
 {
     // TODO: This only checks symbol uniqueness within its scope...
 
@@ -224,7 +224,7 @@ void Codegen::validateSymbolUniqueness(AST *node, QVector<AST *> scope)
     }
 }
 
-void Codegen::validateListConsistency(AST *node, QVector<AST *> scope)
+void CodeValidator::validateListConsistency(AST *node, QVector<AST *> scope)
 {
 
     if (node->getNodeType() == AST::List) {
@@ -250,12 +250,12 @@ bool errorLineIsLower(const LangError &err1, const LangError &err2)
     return err1.lineNumber < err2.lineNumber;
 }
 
-void Codegen::sortErrors()
+void CodeValidator::sortErrors()
 {
     std::sort(m_errors.begin(), m_errors.end(), errorLineIsLower);
 }
 
-int Codegen::getBlockBundleDeclaredSize(BlockNode *block, QVector<AST *> scope, QList<LangError> &errors)
+int CodeValidator::getBlockBundleDeclaredSize(BlockNode *block, QVector<AST *> scope, QList<LangError> &errors)
 {
     Q_ASSERT(block->getNodeType() == AST::BlockBundle);
     BundleNode *bundle = static_cast<BundleNode *>(block->getBundle());
@@ -269,7 +269,7 @@ int Codegen::getBlockBundleDeclaredSize(BlockNode *block, QVector<AST *> scope, 
     return -1;
 }
 
-int Codegen::getConstBlockDataSize(BlockNode *block, QVector<AST *> scope, QList<LangError> &errors)
+int CodeValidator::getConstBlockDataSize(BlockNode *block, QVector<AST *> scope, QList<LangError> &errors)
 {
     if (block->getObjectType() == "constant") {
         QVector<PropertyNode *> ports = QVector<PropertyNode *>::fromStdVector(block->getProperties());
@@ -304,7 +304,7 @@ int Codegen::getConstBlockDataSize(BlockNode *block, QVector<AST *> scope, QList
     return -1;
 }
 
-BlockNode *Codegen::findDeclaration(QString bundleName, QVector<AST *>scope)
+BlockNode *CodeValidator::findDeclaration(QString bundleName, QVector<AST *>scope)
 {
     QVector<AST *> globalAndLocal;
     globalAndLocal << scope << QVector<AST *>::fromStdVector(m_tree->getChildren());
@@ -327,7 +327,7 @@ BlockNode *Codegen::findDeclaration(QString bundleName, QVector<AST *>scope)
     return NULL;
 }
 
-Codegen::PortType Codegen::resolveBundleType(BundleNode *bundle, QVector<AST *>scope)
+CodeValidator::PortType CodeValidator::resolveBundleType(BundleNode *bundle, QVector<AST *>scope)
 {
     QString bundleName = QString::fromStdString(bundle->getName());
     BlockNode *declaration = findDeclaration(bundleName, scope);
@@ -346,7 +346,7 @@ Codegen::PortType Codegen::resolveBundleType(BundleNode *bundle, QVector<AST *>s
     return None;
 }
 
-Codegen::PortType Codegen::resolveNodeOutType(AST *node, QVector<AST *> scope)
+CodeValidator::PortType CodeValidator::resolveNodeOutType(AST *node, QVector<AST *> scope)
 {
     if (node->getNodeType() == AST::Int) {
         return ConstInt;
@@ -367,7 +367,7 @@ Codegen::PortType Codegen::resolveNodeOutType(AST *node, QVector<AST *> scope)
     return None;
 }
 
-Codegen::PortType Codegen::resolveListType(ListNode *listnode, QVector<AST *> scope)
+CodeValidator::PortType CodeValidator::resolveListType(ListNode *listnode, QVector<AST *> scope)
 {
     QVector<AST *> members = QVector<AST *>::fromStdVector(listnode->getChildren());
     if (members.isEmpty()) {
@@ -392,13 +392,13 @@ Codegen::PortType Codegen::resolveListType(ListNode *listnode, QVector<AST *> sc
     return type;
 }
 
-Codegen::PortType Codegen::resolveExpressionType(ExpressionNode *exprnode, QVector<AST *> scope)
+CodeValidator::PortType CodeValidator::resolveExpressionType(ExpressionNode *exprnode, QVector<AST *> scope)
 {
     // TODO: implement expression node type resolution
     return None;
 }
 
-int Codegen::evaluateConstInteger(AST *node, QVector<AST *> scope, QList<LangError> &errors)
+int CodeValidator::evaluateConstInteger(AST *node, QVector<AST *> scope, QList<LangError> &errors)
 {
     int result = 0;
     if (node->getNodeType() == AST::Int) {
@@ -424,7 +424,7 @@ int Codegen::evaluateConstInteger(AST *node, QVector<AST *> scope, QList<LangErr
     return result;
 }
 
-AST *Codegen::getMemberfromBlockBundle(BlockNode *node, int index, QList<LangError> &errors)
+AST *CodeValidator::getMemberfromBlockBundle(BlockNode *node, int index, QList<LangError> &errors)
 {
     AST *out = NULL;
     if (node->getObjectType() == "constant") {
@@ -446,7 +446,7 @@ AST *Codegen::getMemberfromBlockBundle(BlockNode *node, int index, QList<LangErr
     return out;
 }
 
-AST *Codegen::getMemberFromList(ListNode *node, int index, QList<LangError> &errors)
+AST *CodeValidator::getMemberFromList(ListNode *node, int index, QList<LangError> &errors)
 {
     if (index < 1 || index > (int) node->getChildren().size()) {
         LangError error;
@@ -459,7 +459,7 @@ AST *Codegen::getMemberFromList(ListNode *node, int index, QList<LangError> &err
     return node->getChildren()[index - 1];
 }
 
-QString Codegen::getPortTypeName(Codegen::PortType type)
+QString CodeValidator::getPortTypeName(CodeValidator::PortType type)
 {
     switch (type) {
     case Audio:

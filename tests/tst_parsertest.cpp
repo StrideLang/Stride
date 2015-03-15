@@ -3,7 +3,7 @@
 
 #include "streamparser.h"
 #include "streamplatform.h"
-#include "codegen.h"
+#include "codevalidator.h"
 
 extern AST *parse(const char* fileName);
 
@@ -47,7 +47,7 @@ void ParserTest::testPlatform()
     tree = parse(QString(QFINDTESTDATA("data/platform.stream")).toStdString().c_str());
 
     QVERIFY(tree != NULL);
-    Codegen generator(QFINDTESTDATA("/../platforms"), tree);
+    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
     QVERIFY(generator.isValid());
     QVERIFY(generator.platformIsValid());
 
@@ -60,7 +60,7 @@ void ParserTest::testPlatformCommonObjects()
     AST *tree;
     tree = parse(QString(QFINDTESTDATA("data/platformBasic.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    Codegen generator(QFINDTESTDATA("/../platforms"), tree);
+    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
     QVERIFY(!generator.isValid());
     QList<LangError> errors = generator.getErrors();
 
@@ -102,7 +102,7 @@ void ParserTest::testValueTypeBundleResolution()
     AST *tree;
     tree = parse(QString(QFINDTESTDATA("data/bundleResolution.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    Codegen generator(QFINDTESTDATA("/../platforms"), tree);
+    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
     QVERIFY(generator.platformIsValid());
     QVERIFY(!generator.isValid());
     QList<LangError> errors = generator.getErrors();
@@ -265,7 +265,7 @@ void ParserTest::testDuplicates()
     AST *tree;
     tree = parse(QString(QFINDTESTDATA("data/errorDuplicate.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    Codegen generator(QFINDTESTDATA("/../platforms"), tree);
+    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
     QVERIFY(!generator.isValid());
     QList<LangError> errors = generator.getErrors();
 
