@@ -4,8 +4,8 @@
 
 #include "languagehighlighter.h"
 
-LanguageHighlighter::LanguageHighlighter(QObject *parent, UgenInterface *ugens) :
-    QSyntaxHighlighter(parent), m_ugens_ptr(ugens)
+LanguageHighlighter::LanguageHighlighter(QObject *parent) :
+    QSyntaxHighlighter(parent)
 {
     setFormatPreset(0);
     m_keywords << "none" << "on" << "off" << "streamRate"
@@ -19,11 +19,11 @@ void LanguageHighlighter::highlightBlock(const QString &text)
 
     QRegExp expression(pattern);
     int index = text.indexOf(expression);
-    while (index >= 0) {
-        int length = expression.matchedLength();
-        setFormat(index, length, m_formats["user"]);
-        index = text.indexOf(expression, index + length);
-    }
+//    while (index >= 0) {
+//        int length = expression.matchedLength();
+//        setFormat(index, length, m_formats["user"]);
+//        index = text.indexOf(expression, index + length);
+//    }
 
     pattern = "\\b\\w+\\s*:";
 
@@ -44,6 +44,48 @@ void LanguageHighlighter::highlightBlock(const QString &text)
             setFormat(index, length, m_formats["keywords"]);
             index = text.indexOf(expression, index + length);
         }
+    }
+
+    foreach(QString blockType, m_blockTypes) {
+        pattern = QString("\\b%1\\b").arg(blockType);
+        expression.setPattern(pattern);
+        index = text.indexOf(expression);
+        while (index >= 0) {
+            int length = expression.matchedLength();
+            setFormat(index, length, m_formats["type"]);
+            index = text.indexOf(expression, index + length);
+        }
+    }
+
+    foreach(QString objectName, m_builtinNames) {
+        pattern = QString("\\b%1\\b").arg(objectName);
+        expression.setPattern(pattern);
+        index = text.indexOf(expression);
+        while (index >= 0) {
+            int length = expression.matchedLength();
+            setFormat(index, length, m_formats["builtin"]);
+            index = text.indexOf(expression, index + length);
+        }
+    }
+
+    foreach(QString functionName, m_functionNames) {
+        pattern = QString("\\b%1\\b").arg(functionName);
+        expression.setPattern(pattern);
+        index = text.indexOf(expression);
+        while (index >= 0) {
+            int length = expression.matchedLength();
+            setFormat(index, length, m_formats["type"]);
+            index = text.indexOf(expression, index + length);
+        }
+    }
+
+    pattern = "\\\"(\\.|[^\"])*\\\"";
+    expression.setPattern(pattern);
+    index = text.indexOf(expression);
+    while (index >= 0) {
+        int length = expression.matchedLength();
+        setFormat(index, length, m_formats["strings"]);
+        index = text.indexOf(expression, index + length);
     }
 
     // Leave comments for last
@@ -71,6 +113,31 @@ void LanguageHighlighter::setFormats(const QMap<QString, QTextCharFormat> &forma
     rehighlight();
 }
 
+void LanguageHighlighter::setBlockTypes(QStringList &blockTypes)
+{
+    m_highlighterLock.lock();
+    m_blockTypes = blockTypes;
+    m_highlighterLock.unlock();
+    rehighlight();
+}
+
+void LanguageHighlighter::setFunctions(QStringList &functionNames)
+{
+    m_highlighterLock.lock();
+    m_functionNames = functionNames;
+    m_highlighterLock.unlock();
+    rehighlight();
+
+}
+
+void LanguageHighlighter::setBuiltinObjects(QStringList &builtinNames)
+{
+    m_highlighterLock.lock();
+    m_builtinNames = builtinNames;
+    m_highlighterLock.unlock();
+    rehighlight();
+}
+
 void LanguageHighlighter::setFormatPreset(int index)
 {
     QTextCharFormat keywordFormat;
@@ -79,6 +146,7 @@ void LanguageHighlighter::setFormatPreset(int index)
     QTextCharFormat userFormat;
     QTextCharFormat propertiesFormat;
     QTextCharFormat builtinFormat;
+    QTextCharFormat stringFormat;
 
     if (index == 0) {
         keywordFormat.setFontWeight(QFont::Bold);
@@ -89,7 +157,7 @@ void LanguageHighlighter::setFormatPreset(int index)
         commentsFormat.setForeground(Qt::black);
         commentsFormat.setBackground(Qt::green);
 
-        typeFormat.setFontWeight(QFont::Normal);
+        typeFormat.setFontWeight(QFont::Bold);
         typeFormat.setForeground(QColor("#cc0000"));
         typeFormat.setBackground(Qt::white);
 
@@ -97,13 +165,17 @@ void LanguageHighlighter::setFormatPreset(int index)
         userFormat.setForeground(Qt::blue);
         userFormat.setBackground(Qt::white);
 
-        propertiesFormat.setFontWeight(QFont::Bold);
-        propertiesFormat.setForeground(Qt::darkGreen);
+        propertiesFormat.setFontWeight(QFont::Normal);
+        propertiesFormat.setForeground(QColor("#0066BB"));
         propertiesFormat.setBackground(Qt::white);
 
-        builtinFormat.setFontWeight(QFont::Normal);
-        builtinFormat.setForeground(Qt::red);
+        builtinFormat.setFontWeight(QFont::Bold);
+        builtinFormat.setForeground(QColor("#cc0000"));
         builtinFormat.setBackground(Qt::white);
+
+        stringFormat.setFontWeight(QFont::Bold);
+        stringFormat.setForeground(QColor("#33CC00"));
+        stringFormat.setBackground(Qt::white);
     } else {
         return;
     }
@@ -114,6 +186,7 @@ void LanguageHighlighter::setFormatPreset(int index)
     m_formats["user"] = userFormat;
     m_formats["properties"] = propertiesFormat;
     m_formats["builtin"] = builtinFormat;
+    m_formats["strings"] = stringFormat;
 
     emit currentHighlightingChanged(m_formats);
 }

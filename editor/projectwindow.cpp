@@ -39,7 +39,7 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
     setWindowTitle("StreamStack");
     updateMenus();
     ui->projectDockWidget->setVisible(false);
-    m_highlighter = new LanguageHighlighter(this, NULL);
+    m_highlighter = new LanguageHighlighter(this);
 
     readSettings();
 
@@ -65,9 +65,9 @@ void ProjectWindow::build()
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     AST *tree;
     tree = AST::parseFile(editor->filename().toLocal8Bit().constData());
-    CodeValidator generator(m_platformsRootDir, tree);
+    CodeValidator validator(m_platformsRootDir, tree);
 //    QVERIFY(!generator.isValid());
-    QList<LangError> errors = generator.getErrors();
+    QList<LangError> errors = validator.getErrors();
     editor->setErrors(errors);
 
     foreach(LangError error, errors) {
@@ -77,7 +77,7 @@ void ProjectWindow::build()
     if (tree) {
         QString projectDir = makeProjectForCurrent();
         QString pythonExec = "python";
-        PythonProject project(this, tree, generator.getPlatform(), projectDir, pythonExec);
+        PythonProject project(this, tree, validator.getPlatform(), projectDir, pythonExec);
         project.build();
         connect(ui->actionStop, SIGNAL(triggered()), &project, SLOT(stopRunning()));
         project.run();
@@ -261,7 +261,7 @@ void ProjectWindow::openOptionsDialog()
 
 void ProjectWindow::updateCodeAnalysis()
 {
-    if (QApplication::activeWindow() == this) {
+    if (QApplication::activeWindow() == this) { // FIXME check if document has been modified to avoid doing this unnecessarily
         CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
         QTemporaryFile tmpFile;
         if (tmpFile.open()) {
@@ -271,9 +271,15 @@ void ProjectWindow::updateCodeAnalysis()
             tree = AST::parseFile(tmpFile.fileName().toLocal8Bit().constData());
 
             if (tree) {
-                CodeValidator generator(m_platformsRootDir, tree);
+                CodeValidator validator(m_platformsRootDir, tree);
                 //    QVERIFY(!generator.isValid());
-                QList<LangError> errors = generator.getErrors();
+                QStringList types = validator.getPlatform().getPlatformTypes();
+                m_highlighter->setBlockTypes(types);
+                QStringList funcs = validator.getPlatform().getFunctions();
+                m_highlighter->setFunctions(funcs);
+                QStringList objects = validator.getPlatform().getBuiltinObjects();
+                m_highlighter->setBuiltinObjects(objects);
+                QList<LangError> errors = validator.getErrors();
                 editor->setErrors(errors);
                 delete tree;
             }

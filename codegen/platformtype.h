@@ -16,7 +16,9 @@ public:
     } AccessType;
 
     QString name;
-    QStringList types;
+    QStringList types; // For types
+    QStringList in_types; // in/out for functions
+    QStringList out_types;
     QVariant defaultValue;
     bool required;
     int maxconnections;
@@ -26,7 +28,7 @@ public:
 class PlatformType
 {
 public:
-    PlatformType(QString name, QList<Property> properties);
+    PlatformType(QString name, QList<Property> &properties);
     ~PlatformType();
 
     QString getName();

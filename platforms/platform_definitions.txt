@@ -2,9 +2,22 @@
 Block definitions:
 
 {"typeName": "string_here",
- "properties":  [{"name": "string", "validTypes" : [ "string", "string" ...   ], "default": "string" }, ....    ],
+ "properties":  [{"name": "string", "types" : [ "string", "string" ...   ], "default": "string"
+ "required" : false, "maxconnections" : 1, "access": "stream_in" },
+....    ],
  "private": ["parent": "string", "type": [ "int", "real", "string" ]]
 }
+
+Function Definitions:
+{"functionName": "string",
+ "properties" : [
+     {"name": "string", "in_types" : ["string", "string" ...], "out_types" : [ "string", "string" ... ], "default" : "value"},
+     {"name": "string", "in_types" : ["string", "string" ...], "out_types" : [ "string", "string" ... ], "default" : "value"},
+     ],
+ "in_types" : ["string", "string" ...],
+ "out_types" : [ "string", "string" ... ],
+ "code" : [{"name":"init_code", "code": "string code"}, {"name":"dsp_code", "code": "string code"}]
+ }
 
 
 basic types:

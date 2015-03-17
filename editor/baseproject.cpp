@@ -6,7 +6,7 @@
 //                     const char* ugen_graph, const char* configuration);
 
 BaseProject::BaseProject(QString projectDir) :
-    QObject(), m_projectDir(projectDir), m_ugens("xmos", this)
+    QObject(), m_projectDir(projectDir)
 {
     m_runProcess = new QProcess(this);
     m_lua = lua_open();

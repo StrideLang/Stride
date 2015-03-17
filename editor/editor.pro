@@ -14,8 +14,6 @@ SOURCES += main.cpp\
     projectwindow.cpp \
     baseproject.cpp \
     codeeditor.cpp \
-    ugeninterface.cpp \
-    ugen.cpp \
     languagehighlighter.cpp \
 #    xmosproject.cpp \
 #    platform.cpp
@@ -26,8 +24,6 @@ HEADERS  += \
     projectwindow.h \
     baseproject.h \
     codeeditor.h \
-    ugeninterface.h \
-    ugen.h \
     languagehighlighter.h \
 #    xmosproject.h \
 #    platform.h

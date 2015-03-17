@@ -1,0 +1,19 @@
+{"functions": [
+        {"functionName": "level",
+            "properties" : [
+                {"name": "gain", "in_types" : ["AS", "CSR", "CSI", "CR", "CI"], "out_types" : [], "default" : 1.0},
+                {"name": "bias", "in_types" : ["AS", "CSR", "CSI", "CR", "CI"], "out_types" : [], "default" : 0.0},
+                {"name": "bypass", "in_types" : ["CSB", "CB"], "out_types" : [], "default": false }
+            ],
+            "in_types" : ["AS", "CSR"],
+            "out_types" : [ "AS", "CSR"],
+            "code" : [
+                {"name":"init_code", "code": ""},
+                {"name":"dsp_code", "code": "%%token%% = %%property:bias%% + %%token%%  * %%property:gain%% ;\n"}
+            ]
+        }
+    ]
+}
+
+
+

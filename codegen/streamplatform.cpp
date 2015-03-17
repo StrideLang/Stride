@@ -21,7 +21,9 @@ StreamPlatform::StreamPlatform(QString platformPath, QString platform, QString v
     initBasicTypes();
     parsePlatformTypes();
     parsePlatformCommonTypes();
+    parsePlatformFunction();
     parseCommonTypes();
+    parsePlatformObjects();
 }
 
 StreamPlatform::~StreamPlatform()
@@ -46,6 +48,40 @@ void StreamPlatform::parsePlatformTypes()
     }
 }
 
+void StreamPlatform::parsePlatformFunction()
+{
+    QString platformFile = m_platformRootPath + QDir::separator() + m_platformName
+            + QDir::separator() + m_version
+            + QDir::separator() + "functions.json";
+    QFile f(platformFile);
+    if (!f.open(QFile::ReadOnly | QFile::Text)) {
+        QString errorText = "Can't open platform file: " +  f.fileName();
+        m_errors << errorText;
+        qDebug() << errorText;
+    } else {
+        Q_ASSERT(m_platformFunctions.isEmpty());
+        parseFunctionsJson(f.readAll(), m_platformFunctions);
+        f.close();
+    }
+}
+
+void StreamPlatform::parsePlatformObjects()
+{
+    QString platformFile = m_platformRootPath + QDir::separator() + m_platformName
+            + QDir::separator() + m_version
+            + QDir::separator() + "objects.json";
+    QFile f(platformFile);
+    if (!f.open(QFile::ReadOnly | QFile::Text)) {
+        QString errorText = "Can't open platform file for objects: " +  f.fileName();
+        m_errors << errorText;
+        qDebug() << errorText;
+    } else {
+        Q_ASSERT(m_platformObjects.isEmpty());
+        parseObjectsJson(f.readAll(), m_platformObjects);
+        f.close();
+    }
+}
+
 QList<Property> StreamPlatform::getPortsForType(QString typeName)
 {
     foreach(PlatformType type, m_platformTypes) {
@@ -61,6 +97,16 @@ QList<Property> StreamPlatform::getPortsForType(QString typeName)
     foreach(PlatformType type, m_commonTypes) {
         if (type.getName() == typeName) {
             return type.ports();
+        }
+    }
+    return QList<Property>();
+}
+
+QList<Property> StreamPlatform::getPortsForFunction(QString typeName)
+{
+    foreach(PlatformFunction function, m_platformFunctions) {
+        if (function.getName() == typeName) {
+            return function.ports();
         }
     }
     return QList<Property>();
@@ -104,18 +150,17 @@ void StreamPlatform::parseCommonTypes()
     }
 }
 
-void StreamPlatform::parseTypesJson(QString jsonText, QList<PlatformType> &m_types)
+void StreamPlatform::parseTypesJson(QString jsonText, QList<PlatformType> &types)
 {
-    QList<PlatformType> newTypes;
     QJsonDocument jdoc = QJsonDocument::fromJson(jsonText.toLocal8Bit());
     QJsonObject obj = jdoc.object();
-    QJsonValue types = obj.take("types");
-    if(!types.isArray()) {
-        QString errorText = "Error in JSON format.";
+    QJsonValue typesJson = obj.take("types");
+    if(!typesJson.isArray()) {
+        QString errorText = "Error in JSON format parsing types.";
         m_errors << errorText;
         qDebug() << errorText;
     }
-    QJsonArray typesArray = types.toArray();
+    QJsonArray typesArray = typesJson.toArray();
 
     foreach(QJsonValue type, typesArray) {
         QJsonObject typeObj = type.toObject();
@@ -133,6 +178,7 @@ void StreamPlatform::parseTypesJson(QString jsonText, QList<PlatformType> &m_typ
                 qDebug() << errorText;
             }
             newPort.defaultValue = portMap.take("default");
+            newPort.required = portMap.take("required").toBool();
             foreach(QVariant propertyType, portMap.take("types").toList()) {
                 newPort.types << propertyType.toString();
             }
@@ -166,13 +212,183 @@ void StreamPlatform::parseTypesJson(QString jsonText, QList<PlatformType> &m_typ
 
         //.toVariantMap();
         PlatformType newType(typeName, ports);
-        m_types.append(newType);
+        types.append(newType);
+    }
+}
+
+void StreamPlatform::parseFunctionsJson(QString jsonText, QList<PlatformFunction> &functions)
+{
+    QJsonDocument jdoc = QJsonDocument::fromJson(jsonText.toLocal8Bit());
+    QJsonObject obj = jdoc.object();
+    QJsonValue funcs = obj.take("functions");
+    if(!funcs.isArray()) {
+        QString errorText = "Error in JSON format parsing functions.";
+        m_errors << errorText;
+        qDebug() << errorText;
+    }
+    QJsonArray funcsArray = funcs.toArray();
+
+    foreach(QJsonValue func, funcsArray) {
+        QJsonObject funcObj = func.toObject();
+        QJsonValue val = funcObj.take("functionName");
+        QString funcName = val.toString();
+        QVariantList propList = funcObj.take("properties").toVariant().toList();
+        QList<Property> ports;
+        foreach(QVariant prop, propList) {
+            Property newPort;
+            QMap<QString, QVariant> portMap = prop.toMap();
+            newPort.name = portMap.take("name").toString();
+            if (newPort.name.isEmpty()) {
+                QString errorText = "Empty name for port in function: " + funcName;
+                m_errors << errorText;
+                qDebug() << errorText;
+            }
+            newPort.defaultValue = portMap.take("default");
+            foreach(QVariant propertyType, portMap.take("in_types").toList()) {
+                newPort.in_types << propertyType.toString();
+            }
+            foreach(QVariant propertyType, portMap.take("out_types").toList()) {
+                newPort.out_types << propertyType.toString();
+            }
+//            newPort.maxconnections = portMap.take("maxconnections").toInt();
+//            QString accessString = portMap.take("access").toString();
+//            if (accessString == "property") {
+//                newPort.access = Property::PropertyAccess;
+//            } else if (accessString == "stream_in") {
+//                newPort.access = Property::Stream_in;
+//            } else if (accessString == "stream_out") {
+//                newPort.access = Property::Stream_out;
+//            } else {
+//                newPort.access = Property::None;
+//                QString errorText = "Invalid port access: " + accessString + " for type " + funcName;
+//                m_errors << errorText;
+//                qDebug() << errorText;
+//            }
+            ports.append(newPort);
+        }
+        if (isValidType(funcName)) {
+            QString errorText = "Shadowing duplicated type: " + funcName;
+            m_errors << errorText;
+            qDebug() << errorText;
+        }
+
+        QJsonObject privateMap = funcObj.take("private").toObject();
+        QVariantList inhertitsList = privateMap.take("inherits").toArray().toVariantList();
+        foreach(QVariant member, inhertitsList) {
+            ports.append(getPortsForType(member.toString()));
+        }
+
+        //.toVariantMap();
+        PlatformFunction newType(funcName, ports);
+        functions.append(newType);
+    }
+}
+
+void StreamPlatform::parseObjectsJson(QString jsonText, QList<PlatformObject> &objects)
+{
+    QJsonDocument jdoc = QJsonDocument::fromJson(jsonText.toLocal8Bit());
+    QJsonObject obj = jdoc.object();
+    QJsonValue objectsValue = obj.take("objects");
+    if(!objectsValue.isArray()) {
+        QString errorText = "Error in JSON format parsing objects.";
+        m_errors << errorText;
+        qDebug() << errorText;
+    }
+    QJsonArray objectsArray = objectsValue.toArray();
+
+    foreach(QJsonValue objectsValues, objectsArray) {
+        QJsonObject objectObj = objectsValues.toObject();
+        QJsonValue val = objectObj.take("objectName");
+        QString objectName = val.toString();
+//        QVariantList propList = objectObj.take("properties").toVariant().toList();
+//        QList<Property> ports;
+//        foreach(QVariant prop, propList) {
+//            Property newPort;
+//            QMap<QString, QVariant> portMap = prop.toMap();
+//            newPort.name = portMap.take("name").toString();
+//            if (newPort.name.isEmpty()) {
+//                QString errorText = "Empty name for port in function: " + objectName;
+//                m_errors << errorText;
+//                qDebug() << errorText;
+//            }
+//            newPort.defaultValue = portMap.take("default");
+//            foreach(QVariant propertyType, portMap.take("in_types").toList()) {
+//                newPort.in_types << propertyType.toString();
+//            }
+//            foreach(QVariant propertyType, portMap.take("out_types").toList()) {
+//                newPort.out_types << propertyType.toString();
+//            }
+//            newPort.maxconnections = portMap.take("maxconnections").toInt();
+//            QString accessString = portMap.take("access").toString();
+//            if (accessString == "property") {
+//                newPort.access = Property::PropertyAccess;
+//            } else if (accessString == "stream_in") {
+//                newPort.access = Property::Stream_in;
+//            } else if (accessString == "stream_out") {
+//                newPort.access = Property::Stream_out;
+//            } else {
+//                newPort.access = Property::None;
+//                QString errorText = "Invalid port access: " + accessString + " for type " + funcName;
+//                m_errors << errorText;
+//                qDebug() << errorText;
+//            }
+//            ports.append(newPort);
+//        }
+//        if (isValidType(objectName)) {
+//            QString errorText = "Shadowing duplicated type: " + objectName;
+//            m_errors << errorText;
+//            qDebug() << errorText;
+//        }
+
+//        QJsonObject privateMap = objectObj.take("private").toObject();
+//        QVariantList inhertitsList = privateMap.take("inherits").toArray().toVariantList();
+//        foreach(QVariant member, inhertitsList) {
+//            ports.append(getPortsForType(member.toString()));
+//        }
+
+        PlatformObject newType(objectName);
+        objects.append(newType);
     }
 }
 
 QStringList StreamPlatform::getErrors()
 {
     return m_errors;
+}
+
+QStringList StreamPlatform::getPlatformTypes()
+{
+    QStringList typeNames;
+    foreach(PlatformType type, m_platformTypes) {
+        typeNames << type.getName();
+    }
+    foreach(PlatformType type, m_platformCommonTypes) {
+        typeNames << type.getName();
+    }
+    foreach(PlatformType type, m_commonTypes) {
+        typeNames << type.getName();
+    }
+    return typeNames;
+}
+
+QStringList StreamPlatform::getFunctions()
+{
+    QStringList functionNames;
+    foreach(PlatformFunction func, m_platformFunctions) {
+        functionNames << func.getName();
+    }
+    return functionNames;
+
+}
+
+QStringList StreamPlatform::getBuiltinObjects()
+{
+    QStringList objectNames;
+    foreach(PlatformObject func, m_platformObjects) {
+        objectNames << func.getName();
+    }
+    return objectNames;
+
 }
 
 bool StreamPlatform::isValidType(QString typeName)

@@ -1,11 +1,12 @@
 #ifndef PLATFORMFUNCTION_H
 #define PLATFORMFUNCTION_H
 
+#include "platformtype.h"
 
-class PlatformFunction
+class PlatformFunction : public PlatformType
 {
 public:
-    PlatformFunction();
+    PlatformFunction(QString name, QList<Property> &properties);
     ~PlatformFunction();
 };
 

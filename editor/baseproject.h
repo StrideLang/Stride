@@ -12,7 +12,6 @@ extern "C" {
 #include "lua.hpp"
 }
 
-#include "ugeninterface.h"
 #include "streamplatform.h"
 
 class BaseProject : public QObject
@@ -28,8 +27,6 @@ public:
     void setTarget(QString target) {m_target = target;}
     void setBoardId(QString id) {m_board_id = id;}
     void setCode(QString code) {m_code = code;}
-
-    UgenInterface *getUgens() {return &m_ugens;}
 
     virtual void setProjectName(QString name) {};
     virtual void save() {};
@@ -47,7 +44,6 @@ protected:
     QString m_board_id;
     QString m_code;
 
-    UgenInterface m_ugens; // TODO move UgenInterface to Platform
     StreamPlatform *m_platform;
 
     QProcess *m_runProcess;

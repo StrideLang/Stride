@@ -17,8 +17,14 @@ public:
     ~StreamPlatform();
 
 //    void setHardwarePlatform(HardwarePlatform &platform);
-    void parseTypesJson(QString jsonText, QList<PlatformType> &m_types);
+    void parseTypesJson(QString jsonText, QList<PlatformType> &types);
+    void parseFunctionsJson(QString jsonText, QList<PlatformFunction> &functions);
+    void parseObjectsJson(QString jsonText, QList<PlatformObject> &objects);
+
     QStringList getErrors();
+    QStringList getPlatformTypes();
+    QStringList getFunctions();
+    QStringList getBuiltinObjects();
 
     bool isValidType(QString typeName);
     bool typeHasPort(QString typeName, QString propertyName);
@@ -31,8 +37,11 @@ private:
     void parsePlatformCommonTypes();
     void parseCommonTypes();
     void parsePlatformTypes();
+    void parsePlatformFunction();
+    void parsePlatformObjects();
 
     QList<Property> getPortsForType(QString typeName);
+    QList<Property> getPortsForFunction(QString typeName);
 
     QString m_platformRootPath;
     QString m_platformName;

@@ -5,16 +5,18 @@
 #include <QMap>
 #include <QMutex>
 
-#include "ugeninterface.h"
-
 class LanguageHighlighter : public QSyntaxHighlighter
 {
     Q_OBJECT
 public:
-    explicit LanguageHighlighter(QObject *parent = 0, UgenInterface *ugens = 0);
+    explicit LanguageHighlighter(QObject *parent = 0);
 
     QMap<QString, QTextCharFormat> formats();
     void setFormats(const QMap<QString, QTextCharFormat> &formats);
+    void setBlockTypes(QStringList &blockTypes);
+    void setFunctions(QStringList &functionNames);
+    void setBuiltinObjects(QStringList &builtinNames);
+
 public slots:
     void setFormatPreset(int index);
 
@@ -27,9 +29,11 @@ signals:
 public slots:
 
 private:
-    UgenInterface *m_ugens_ptr;
     QMap<QString, QTextCharFormat> m_formats;
     QStringList m_keywords;
+    QStringList m_blockTypes;
+    QStringList m_functionNames;
+    QStringList m_builtinNames;
     QMutex m_highlighterLock;
 };
 

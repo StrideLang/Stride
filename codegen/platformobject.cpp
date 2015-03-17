@@ -1,6 +1,7 @@
 #include "platformobject.h"
 
-PlatformObject::PlatformObject()
+PlatformObject::PlatformObject(QString &name) :
+    m_name(name)
 {
 
 }
@@ -8,5 +9,10 @@ PlatformObject::PlatformObject()
 PlatformObject::~PlatformObject()
 {
 
+}
+
+QString PlatformObject::getName()
+{
+    return m_name;
 }
 

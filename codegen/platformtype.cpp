@@ -1,6 +1,6 @@
 #include "platformtype.h"
 
-PlatformType::PlatformType(QString name, QList<Property> properties) :
+PlatformType::PlatformType(QString name, QList<Property> &properties) :
     m_name(name), m_ports(properties)
 {
 }
