@@ -44,3 +44,14 @@ AST *BundleNode::endIndex() const
     assert(getNodeType() == AST::BundleRange);
     return m_children.at(1);
 }
+
+int BundleNode::getBundleSize()
+{
+    if (getNodeType() == AST::Bundle) {
+        return 1;
+    } else if (getNodeType() == AST::BundleRange) {
+
+
+        return 1;
+    }
+}

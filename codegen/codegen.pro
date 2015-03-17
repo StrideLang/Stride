@@ -19,7 +19,8 @@ SOURCES += \
     platformfunction.cpp \
     platformobject.cpp \
     pythonproject.cpp \
-    codevalidator.cpp
+    codevalidator.cpp \
+    coderesolver.cpp
 
 HEADERS += \
     streamplatform.h \
@@ -27,7 +28,8 @@ HEADERS += \
     platformfunction.h \
     platformobject.h \
     pythonproject.h \
-    codevalidator.h
+    codevalidator.h \
+    coderesolver.h
 
 #unix {
 #    target.path = /usr/local/lib

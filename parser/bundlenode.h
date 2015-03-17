@@ -17,6 +17,8 @@ public:
     AST *startIndex() const;
     AST *endIndex() const;
 
+    int getBundleSize();
+
 private:
     string m_name;
 };

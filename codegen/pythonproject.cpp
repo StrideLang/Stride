@@ -5,6 +5,7 @@
 #include <QCoreApplication>
 
 #include "pythonproject.h"
+#include "coderesolver.h"
 
 
 PythonProject::PythonProject(QObject *parent,
@@ -29,6 +30,8 @@ PythonProject::~PythonProject()
 
 void PythonProject::build()
 {
+    CodeResolver resolver(m_platform, m_tree);
+    resolver.process();
     writeAST();
     QProcess pythonProcess(this);
     QStringList arguments;
