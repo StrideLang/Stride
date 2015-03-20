@@ -35,7 +35,7 @@ public:
     } Token;
 
     AST(Token token, int line = -1);
-    ~AST();
+    virtual ~AST();
 
     Token getNodeType() const { return m_token; }
     void addChild(AST *t);
@@ -43,9 +43,13 @@ public:
     bool isNil() { return m_token == AST::None; }
 
     vector<AST *> getChildren() const {return m_children;}
+    void setChildren(vector<AST *> &newChildren);
+
     int getLine() const {return m_line;}
 
     void deleteChildren();
+
+    virtual AST *deepCopy();
 
     static AST * parseFile(const char *fileName);
 

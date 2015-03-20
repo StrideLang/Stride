@@ -1,11 +1,21 @@
 {"objects": [
         {
             "objectName": "AudioIn",
-            "size" : 2
+            "size" : 2,
+            "type" : "_hwInput",
+            "code" : [
+                {"name":"init_code", "code": ""},
+                {"name":"dsp_code", "code": "%%token%% = io.in(%%bundle_index%%);\n"}
+            ]
         },
         {
             "objectName": "AudioOut",
-            "size" : 2
+            "size" : 2,
+            "type" : "_hwOutput",
+            "code" : [
+                {"name":"init_code", "code": ""},
+                {"name":"dsp_code", "code": "io.out(%%bundle_index%%) = %%token%%;\n"}
+            ]
         }
     ]
 }

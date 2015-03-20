@@ -13,8 +13,12 @@ public:
 
     string getName() const {return m_name;}
 
+    AST *deepCopy();
+
 private:
     string m_name;
 };
+
+
 
 #endif // NAMENODE_H

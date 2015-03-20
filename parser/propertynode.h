@@ -14,6 +14,8 @@ public:
     string getName() const { return m_name; }
     AST *getValue() const { return m_children[0]; }
 
+    AST *deepCopy();
+
 private:
     string m_name;
 };

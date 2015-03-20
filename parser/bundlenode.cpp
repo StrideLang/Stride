@@ -55,3 +55,13 @@ int BundleNode::getBundleSize()
         return 1;
     }
 }
+
+AST *BundleNode::deepCopy()
+{
+    assert(getNodeType() == AST::BundleRange || getNodeType() == AST::Bundle);
+    if(getNodeType() == AST::Bundle) {
+        return new BundleNode(m_name, m_children.at(0)->deepCopy(), m_line);
+    } else if(getNodeType() == AST::Bundle)  {
+        return new BundleNode(m_name, startIndex()->deepCopy(), endIndex()->deepCopy(), m_line);
+    }
+}

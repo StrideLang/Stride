@@ -21,12 +21,13 @@ public:
     ExpressionNode(ExpressionType type, AST *value, int line);
     ~ExpressionNode();
 
-    AST *getLeft() const {return m_children.at(0); }
-    AST *getRight() const { return m_children.at(1); }
+    AST *getLeft() const;
+    AST *getRight() const;
 
     AST *getValue() const;
 
-    ExpressionType getExpressionType() const { return m_type; }
+    ExpressionType getExpressionType() const;
+    AST *deepCopy();
 
 private:
     ExpressionType m_type;

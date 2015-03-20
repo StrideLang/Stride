@@ -17,14 +17,14 @@ public:
     void process();
 
 private:
+    void expandBuiltinObjects();
     void resolveConstants();
     void expandStreamBundles();
     void expandTypeBundles();
 
-    QVector<StreamNode *> expandBundleStream(StreamNode *stream);
-    int largestBundleSize(StreamNode *stream);
-    int getBundleSize(AST *node);
+    QVector<StreamNode *> expandBundleStream(StreamNode *stream, int size = -1);
 
+    AST *expandStreamMember(AST *node, int i);
     StreamPlatform m_platform;
     AST *m_tree;
 };

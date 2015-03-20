@@ -25,7 +25,7 @@ PythonProject::PythonProject(QObject *parent,
 
 PythonProject::~PythonProject()
 {
-
+    m_running.store(0);
 }
 
 void PythonProject::build()
@@ -121,7 +121,7 @@ void PythonProject::astToJson(AST *node, QJsonObject &obj)
         obj["value"] = static_cast<ValueNode *>(node)->getIntValue();
     } else if (node->getNodeType() == AST::Real) {
         obj["type"] = "Value";
-        obj["value"] = (qreal) static_cast<ValueNode *>(node)->getFloatValue();
+        obj["value"] = (qreal) static_cast<ValueNode *>(node)->getRealValue();
         qDebug() << obj["value"].isDouble() << obj["value"].toDouble();
 
     } else if (node->getNodeType() == AST::String) {

@@ -19,6 +19,7 @@ public:
     vector<PropertyNode *> getProperties() const;
 
     string getObjectType() const;
+    AST *deepCopy();
 
 private:
     string m_name;

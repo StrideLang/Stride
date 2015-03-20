@@ -1,3 +1,18 @@
 use Gamma version 1.0
 
-AudioIn[1] >> level(gain: 1.5) >> AudioOut[1];
+constant String {
+value: "hello"
+}
+
+
+control Test[2] {
+	default: [1,2]
+}
+
+control Out[2] {
+	default: [1,2]
+}
+
+AudioIn >> level(gain: 0.1) >> AudioOut;
+
+Test >> Out;

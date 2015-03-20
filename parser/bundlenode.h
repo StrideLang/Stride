@@ -10,7 +10,7 @@ class BundleNode : public AST
 public:
     BundleNode(string name, AST *indexExp, int line);
     BundleNode(string name, AST *indexStartExp, AST *indexEndExp, int line);
-    ~BundleNode();
+    virtual ~BundleNode();
 
     string getName() const;
     AST *index() const;
@@ -18,6 +18,7 @@ public:
     AST *endIndex() const;
 
     int getBundleSize();
+    AST *deepCopy();
 
 private:
     string m_name;

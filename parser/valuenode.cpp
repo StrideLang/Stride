@@ -20,6 +20,12 @@ ValueNode::ValueNode(float value, int line) :
     m_floatValue = value;
 }
 
+ValueNode::ValueNode(double value, int line) :
+    AST(AST::Real, line)
+{
+    m_floatValue = value;
+}
+
 ValueNode::ValueNode(string value, int line) :
     AST(AST::String, line)
 {
@@ -39,26 +45,41 @@ ValueNode::~ValueNode()
 
 int ValueNode::getIntValue() const
 {
-    assert(m_token == AST::Int);
+    assert(getNodeType() == AST::Int);
     return m_intValue;
 }
 
-float ValueNode::getFloatValue() const
+double ValueNode::getRealValue() const
 {
-    assert(m_token == AST::Real);
+    assert(getNodeType() == AST::Real);
     return m_floatValue;
 }
 
 string ValueNode::getStringValue() const
 {
-    assert(m_token == AST::String);
+    assert(getNodeType() == AST::String);
     return m_stringValue;
 }
 
 bool ValueNode::getSwitchValue() const
 {
-    assert(m_token == AST::Switch);
+    assert(getNodeType() == AST::Switch);
     return m_switch;
+}
+
+AST *ValueNode::deepCopy()
+{
+    if (getNodeType() == AST::Int) {
+        return new ValueNode(getIntValue(), getLine());
+    } else if (getNodeType() == AST::Real) {
+        return new ValueNode(getRealValue(), getLine());
+    } else if (getNodeType() == AST::String) {
+        return new ValueNode(getStringValue(), getLine());
+    } else if (getNodeType() == AST::Switch) {
+        return new ValueNode(getSwitchValue(), getLine());
+    } else {
+        assert(0); // Invalid type
+    }
 }
 
 

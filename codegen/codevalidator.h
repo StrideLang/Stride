@@ -56,7 +56,7 @@ public:
 
     StreamPlatform getPlatform();
 
-    static BlockNode *findDeclaration(QString bundleName, QVector<AST *> &scope, AST *tree);
+    static BlockNode *findDeclaration(QString bundleName, QVector<AST *> scope, AST *tree);
     static PortType resolveBundleType(BundleNode *bundle, QVector<AST *> scope, AST *tree);
     static PortType resolveNodeOutType(AST *node, QVector<AST *> scope, AST *tree);
     static PortType resolveListType(ListNode *listnode, QVector<AST *> scope, AST *tree);
@@ -65,6 +65,9 @@ public:
     static int evaluateConstInteger(AST *node, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
     static AST *getMemberfromBlockBundle(BlockNode *node, int index, QList<LangError> &errors);
     static AST *getMemberFromList(ListNode *node, int index, QList<LangError> &errors);
+
+    static int largestBundleSize(StreamNode *stream, AST *tree);
+    static int getBundleSize(AST *node, AST *tree);
 
     static QString getPortTypeName(PortType type);
 
@@ -79,11 +82,13 @@ private:
     void validateBundleIndeces(AST *node, QVector<AST *> scope);
     void validateBundleSizes(AST *node, QVector<AST *> scope);
     void validateSymbolUniqueness(AST *node, QVector<AST *> scope);
-    void validateListConsistency(AST *node, QVector<AST *> scope);
+    void validateListTypeConsistency(AST *node, QVector<AST *> scope);
+    void validateStreamSizes(AST *tree);
     void sortErrors();
 
     int getBlockBundleDeclaredSize(BlockNode *block, QVector<AST *> scope, QList<LangError> &errors);
-    int getConstBlockDataSize(BlockNode *block, QVector<AST *> scope, QList<LangError> &errors);
+    int getBlockDataSize(BlockNode *block, QVector<AST *> scope, QList<LangError> &errors);
+    int getNodeSize(AST *property, QVector<AST *> &scope, QList<LangError> &errors);
 
     StreamPlatform m_platform;
     AST *m_tree;

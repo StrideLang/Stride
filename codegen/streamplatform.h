@@ -24,7 +24,7 @@ public:
     QStringList getErrors();
     QStringList getPlatformTypes();
     QStringList getFunctions();
-    QStringList getBuiltinObjects();
+    QList<PlatformObject> getBuiltinObjects();
 
     bool isValidType(QString typeName);
     bool typeHasPort(QString typeName, QString propertyName);

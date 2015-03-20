@@ -27,6 +27,11 @@ void PlatformNode::setVersion(float version)
     m_version = version;
 }
 
+AST *PlatformNode::deepCopy()
+{
+    return new PlatformNode(m_platformName, m_version, m_line);
+}
+
 string PlatformNode::platformName() const
 {
     return m_platformName;

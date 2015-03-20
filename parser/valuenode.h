@@ -11,21 +11,24 @@ public:
     ValueNode(int line);
     ValueNode(int value, int line);
     ValueNode(float value, int line);
+    ValueNode(double value, int line);
     ValueNode(string value, int line);
     ValueNode(bool value, int line);
     ~ValueNode();
 
     int getIntValue() const;
 
-    float getFloatValue() const;
+    double getRealValue() const;
 
     string getStringValue() const;
 
     bool getSwitchValue() const;
 
+    AST *deepCopy();
+
 private:
     int m_intValue;
-    float m_floatValue;
+    double m_floatValue;
     string m_stringValue;
     bool m_switch;
 };

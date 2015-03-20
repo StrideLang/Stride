@@ -4,6 +4,7 @@
 #include "streamparser.h"
 #include "streamplatform.h"
 #include "codevalidator.h"
+#include "coderesolver.h"
 
 extern AST *parse(const char* fileName);
 
@@ -17,6 +18,10 @@ public:
 private:
 
 private Q_SLOTS:
+
+    //Expansion
+    void testStreamExpansion();
+
     //Platform
     void testPlatform();
     void testPlatformCommonObjects();
@@ -38,7 +43,71 @@ private Q_SLOTS:
 
 ParserTest::ParserTest()
 {
+}
 
+void ParserTest::testStreamExpansion()
+{
+    AST *tree;
+    tree = parse(QString(QFINDTESTDATA("data/expansions.stream")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    QVERIFY(generator.isValid());
+    QVERIFY(generator.platformIsValid());
+
+    StreamPlatform platform = generator.getPlatform();
+    CodeResolver resolver(platform, tree);
+    resolver.process();
+
+    vector<AST *> nodes = tree->getChildren();
+    QVERIFY(nodes.size() > 3);
+    StreamNode *stream = static_cast<StreamNode *>(nodes.at(1));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+
+    BundleNode *bundle = static_cast<BundleNode *>(stream->getLeft());
+    QVERIFY(bundle->getNodeType() == AST::Bundle);
+    QVERIFY(bundle->getName() == "AudioIn");
+    ValueNode *index = static_cast<ValueNode *>(bundle->index());
+    QVERIFY(index->getNodeType() == AST::Int);
+    QVERIFY(index->getIntValue() == 1);
+
+    StreamNode *right = static_cast<StreamNode *>(stream->getRight());
+    QVERIFY(right->getNodeType() == AST::Stream);
+    FunctionNode *func = static_cast<FunctionNode *>(right->getLeft());
+    QVERIFY(func->getNodeType() == AST::Function);
+    QVERIFY(func->getName() == "level");
+
+    bundle = static_cast<BundleNode *>(right->getRight());
+    QVERIFY(bundle->getNodeType() == AST::Bundle);
+    QVERIFY(bundle->getName() == "AudioOut");
+    index = static_cast<ValueNode *>(bundle->index());
+    QVERIFY(index->getNodeType() == AST::Int);
+    QVERIFY(index->getIntValue() == 1);
+
+    stream = static_cast<StreamNode *>(nodes.at(2));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+
+    bundle = static_cast<BundleNode *>(stream->getLeft());
+    QVERIFY(bundle->getNodeType() == AST::Bundle);
+    QVERIFY(bundle->getName() == "AudioIn");
+    index = static_cast<ValueNode *>(bundle->index());
+    QVERIFY(index->getNodeType() == AST::Int);
+    QVERIFY(index->getIntValue() == 2);
+
+    right = static_cast<StreamNode *>(stream->getRight());
+    QVERIFY(right->getNodeType() == AST::Stream);
+    func = static_cast<FunctionNode *>(right->getLeft());
+    QVERIFY(func->getNodeType() == AST::Function);
+    QVERIFY(func->getName() == "level");
+
+    bundle = static_cast<BundleNode *>(right->getRight());
+    QVERIFY(bundle->getNodeType() == AST::Bundle);
+    QVERIFY(bundle->getName() == "AudioOut");
+    index = static_cast<ValueNode *>(bundle->index());
+    QVERIFY(index->getNodeType() == AST::Int);
+    QVERIFY(index->getIntValue() == 2);
+
+    tree->deleteChildren();
+    delete tree;
 }
 
 void ParserTest::testPlatform()
@@ -499,7 +568,7 @@ void ParserTest::testTreeBuildFunctions()
     QVERIFY(property->getName() == "propReal");
     ValueNode *value = static_cast<ValueNode *>(property->getValue());
     QVERIFY(value->getNodeType() == AST::Real);
-    QVERIFY(value->getFloatValue() == 1.1f);
+    QVERIFY(value->getRealValue() == 1.1f);
     property = properties.at(1);
     QVERIFY(property->getName() == "propInt");
     value = static_cast<ValueNode *>(property->getValue());
@@ -522,7 +591,7 @@ void ParserTest::testTreeBuildFunctions()
     QVERIFY(property->getName() == "propReal");
     value = static_cast<ValueNode *>(property->getValue());
     QVERIFY(value->getNodeType() == AST::Real);
-    QVERIFY(value->getFloatValue() == 1.2f);
+    QVERIFY(value->getRealValue() == 1.2f);
     property = properties.at(1);
     QVERIFY(property->getName() == "propInt");
     value = static_cast<ValueNode *>(property->getValue());
@@ -542,7 +611,7 @@ void ParserTest::testTreeBuildFunctions()
     QVERIFY(property->getName() == "propReal");
     value = static_cast<ValueNode *>(property->getValue());
     QVERIFY(value->getNodeType() == AST::Real);
-    QVERIFY(value->getFloatValue() == 1.3f);
+    QVERIFY(value->getRealValue() == 1.3f);
     property = properties.at(1);
     QVERIFY(property->getName() == "propInt");
     value = static_cast<ValueNode *>(property->getValue());
@@ -559,10 +628,10 @@ void ParserTest::testTreeBuildFunctions()
 void ParserTest::testTreeBuildStream()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/stream.stream")).toStdString().c_str());
+    tree = AST::parseFile(QString(QFINDTESTDATA("data/stream.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
     vector<AST *> nodes = tree->getChildren();
-    QVERIFY(nodes.size() == 7);
+    QVERIFY(nodes.size() == 8);
 
     // Val1 >> Val2 ;
     QVERIFY(nodes.at(0)->getNodeType() == AST::Stream);
@@ -692,7 +761,7 @@ void ParserTest::testTreeBuildStream()
     QVERIFY(bundle->getName() == "Bundle1");
     QVERIFY(bundle->getLine() == 10);
     QVERIFY(expression->getRight()->getNodeType() == AST::Real);
-    QVERIFY(static_cast<ValueNode *>(expression->getRight())->getFloatValue() == 0.5f);
+    QVERIFY(static_cast<ValueNode *>(expression->getRight())->getRealValue() == 0.5f);
     bundle = static_cast<BundleNode *>(node->getRight());
     QVERIFY(bundle->getName() == "Bundle2");
     QVERIFY(bundle->getLine() == 10);
@@ -730,6 +799,25 @@ void ParserTest::testTreeBuildStream()
     QVERIFY(leafnode->getNodeType() == AST::Int);
     QVERIFY(leafnode->getLine() == 12);
     QVERIFY(static_cast<ValueNode *>(leafnode)->getIntValue() == 4);
+
+
+    //    AudioIn[1] >> level(gain: 1.5) >> AudioOut[1];
+    QVERIFY(nodes.at(7)->getNodeType() == AST::Stream);
+    node = static_cast<StreamNode *>(nodes.at(7));
+    QVERIFY(node->getLeft()->getNodeType() == AST::Bundle);
+    QVERIFY(node->getRight()->getNodeType() == AST::Stream);
+    QVERIFY(node->getLine() == 14);
+    node = static_cast<StreamNode *>(node->getRight());
+    QVERIFY(node->getLeft()->getNodeType() == AST::Function);
+    functionNode = static_cast<FunctionNode *>(node->getLeft());
+    QVERIFY(functionNode->getName() == "level");
+    vector<PropertyNode *> properties = functionNode->getProperties();
+    QVERIFY(properties.size() == 1);
+    PropertyNode *prop = properties[0];
+    QVERIFY(prop->getName() == "gain");
+    ValueNode *value = static_cast<ValueNode *>(prop->getValue());
+    QVERIFY(value->getNodeType() == AST::Real);
+    QVERIFY(value->getRealValue() == 1.5);
 
     tree->deleteChildren();
     delete tree;
@@ -1133,7 +1221,7 @@ void ParserTest::testParser()
           << "data/introConverter.stream" << "data/introFeedback.stream"
           << "data/introGenerator.stream" << "data/introProcessor.stream"
           << "data/introFM.stream" << "data/introRemote.stream"
-          << "data/functions.stream";
+          << "data/functions.stream" << "data/test.stream" << "data/expansions.stream";
     foreach (QString file, files) {
         tree = parse(QString(QFINDTESTDATA(file)).toStdString().c_str());
         QVERIFY2(tree != NULL, QString("file:" + file).toStdString().c_str());

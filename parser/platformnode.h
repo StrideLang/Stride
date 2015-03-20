@@ -20,6 +20,8 @@ public:
     float version() const;
     void setVersion(float version);
 
+    AST *deepCopy();
+
 private:
     float m_version;
     string m_platformName;

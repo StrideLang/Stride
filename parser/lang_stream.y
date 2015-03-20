@@ -596,8 +596,13 @@ AST *parse(const char *filename){
         AST *ast = NULL;
         char const * fileName = filename;
 
+        char *lc;
+        if (!(lc =setlocale (LC_ALL, "C"))) {
+                cout << "Error C setting locale.";
+        }
+
         error = 0;
-	file = fopen(fileName, "r");
+        file = fopen(fileName, "r");
 
 	if (!file){
 		cout << "Can't open " << fileName << endl;;

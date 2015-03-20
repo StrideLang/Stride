@@ -300,6 +300,11 @@ void StreamPlatform::parseObjectsJson(QString jsonText, QList<PlatformObject> &o
         QJsonObject objectObj = objectsValues.toObject();
         QJsonValue val = objectObj.take("objectName");
         QString objectName = val.toString();
+        val = objectObj.take("size");
+        int size = val.toInt(-1);
+        val = objectObj.take("type");
+        QString type = val.toString();
+        QVector<CodeGenData> codeList;
 //        QVariantList propList = objectObj.take("properties").toVariant().toList();
 //        QList<Property> ports;
 //        foreach(QVariant prop, propList) {
@@ -346,7 +351,7 @@ void StreamPlatform::parseObjectsJson(QString jsonText, QList<PlatformObject> &o
 //            ports.append(getPortsForType(member.toString()));
 //        }
 
-        PlatformObject newType(objectName);
+        PlatformObject newType(objectName, size, type, codeList);
         objects.append(newType);
     }
 }
@@ -381,14 +386,9 @@ QStringList StreamPlatform::getFunctions()
 
 }
 
-QStringList StreamPlatform::getBuiltinObjects()
+QList<PlatformObject> StreamPlatform::getBuiltinObjects()
 {
-    QStringList objectNames;
-    foreach(PlatformObject func, m_platformObjects) {
-        objectNames << func.getName();
-    }
-    return objectNames;
-
+    return m_platformObjects;
 }
 
 bool StreamPlatform::isValidType(QString typeName)

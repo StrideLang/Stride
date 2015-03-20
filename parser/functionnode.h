@@ -20,6 +20,8 @@ public:
     string getName() const { return m_name; }
     vector<PropertyNode *> getProperties() const;
 
+    AST *deepCopy();
+
 private:
     string m_name;
     FunctionType m_type;

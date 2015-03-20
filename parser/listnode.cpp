@@ -39,3 +39,12 @@ AST::Token ListNode::getListType()
     return type;
 }
 
+AST *ListNode::deepCopy()
+{
+    vector<AST *> children = getChildren();
+    ListNode *newList = new ListNode(children.at(0)->deepCopy(), m_line);
+    for(unsigned int i = 1; i < children.size(); i++) {
+        newList->addChild(children.at(i)->deepCopy());
+    }
+}
+

@@ -65,6 +65,7 @@ void ProjectWindow::build()
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     AST *tree;
     tree = AST::parseFile(editor->filename().toLocal8Bit().constData());
+//    tree = AST::parseFile(editor->filename().toStdString().c_str());
     CodeValidator validator(m_platformsRootDir, tree);
 //    QVERIFY(!generator.isValid());
     QList<LangError> errors = validator.getErrors();
@@ -277,8 +278,12 @@ void ProjectWindow::updateCodeAnalysis()
                 m_highlighter->setBlockTypes(types);
                 QStringList funcs = validator.getPlatform().getFunctions();
                 m_highlighter->setFunctions(funcs);
-                QStringList objects = validator.getPlatform().getBuiltinObjects();
-                m_highlighter->setBuiltinObjects(objects);
+                QList<PlatformObject> objects = validator.getPlatform().getBuiltinObjects();
+                QStringList objectNames;
+                foreach (PlatformObject platObject, objects) {
+                    objectNames << platObject.getName();
+                }
+                m_highlighter->setBuiltinObjects(objectNames);
                 QList<LangError> errors = validator.getErrors();
                 editor->setErrors(errors);
                 delete tree;

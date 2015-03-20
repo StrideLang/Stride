@@ -1,3 +1,5 @@
+#include <cassert>
+
 #include "ast.h"
 
 extern AST *parse(const char* fileName);
@@ -16,6 +18,7 @@ AST::AST(Token token, int line)
 
 AST::~AST()
 {
+
 }
 
 void AST::addChild(AST *t) {
@@ -30,6 +33,12 @@ void AST::giveChildren(AST *p)
     m_children.clear();
 }
 
+void AST::setChildren(vector<AST *> &newChildren)
+{
+//    deleteChildren();
+    m_children = newChildren;
+}
+
 void AST::deleteChildren()
 {
     for(int i = 0; i < (int) m_children.size(); i++) {
@@ -39,5 +48,14 @@ void AST::deleteChildren()
     m_children.clear();
 }
 
-AST *AST::parseFile(const char *fileName) {return parse(fileName);}
+AST *AST::deepCopy()
+{
+    assert(0 == 1); // can't deep copy base AST
+    return 0;
+}
+
+AST *AST::parseFile(const char *fileName)
+{
+    return parse(fileName);
+}
 

@@ -24,10 +24,25 @@ ExpressionNode::~ExpressionNode()
 
 }
 
+AST *ExpressionNode::getLeft() const {return m_children.at(0); }
+
+AST *ExpressionNode::getRight() const { return m_children.at(1); }
+
 AST *ExpressionNode::getValue() const
 {
     assert(m_type == ExpressionNode::UnaryMinus || m_type == ExpressionNode::LogicalNot);
     return m_children.at(0);
+}
+
+ExpressionNode::ExpressionType ExpressionNode::getExpressionType() const { return m_type; }
+
+AST *ExpressionNode::deepCopy()
+{
+    if (m_type == ExpressionNode::UnaryMinus || m_type == ExpressionNode::LogicalNot) {
+        return new ExpressionNode(m_type, m_children.at(0)->deepCopy(), m_line);
+    } else {
+        return new ExpressionNode(m_type, m_children.at(0)->deepCopy(), m_children.at(1)->deepCopy(), m_line);
+    }
 }
 
 

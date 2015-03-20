@@ -27,3 +27,12 @@ vector<PropertyNode *> FunctionNode::getProperties() const
     return m_properties;
 }
 
+AST *FunctionNode::deepCopy()
+{
+    AST * newProps = new AST();
+    for(unsigned int i = 0; i< m_properties.size(); i++) {
+        newProps->addChild(m_properties[i]->deepCopy());
+    }
+    return new FunctionNode(m_name, newProps, m_type, m_line);
+}
+

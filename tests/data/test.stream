@@ -1,13 +1,13 @@
 block BLOCK {
-	propOne: One
-	propTwo: Two
-	propThree: Three
+        propOne: One
+        propTwo: Two
+        propThree: Three
 }
 
 block BLOCK {
-	propOne: One;
-	propTwo: Two;
-	propThree: Three;
+        propOne: One;
+        propTwo: Two;
+        propThree: Three;
 }
 
 block BLOCK { propOne: One; propTwo: Two; propThree: Three}
