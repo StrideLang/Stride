@@ -7,10 +7,10 @@
             ],
             "in_types" : ["AS", "CSR"],
             "out_types" : [ "AS", "CSR"],
-            "code" : [
-                {"name":"init_code", "code": ""},
-                {"name":"dsp_code", "code": "%%token%% = %%property:bias%% + %%token%%  * %%property:gain%% ;\n"}
-            ]
+            "code" : {
+                "init_code": {"code": ""},
+                "dsp_code": {"code": "%%token%% = %%token%%  * %%property:gain%% ;\n"}
+            }
         }
     ]
 }
