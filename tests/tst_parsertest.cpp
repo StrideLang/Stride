@@ -623,6 +623,8 @@ void ParserTest::testTreeBuildFunctions()
     QVERIFY(value->getNodeType() == AST::String);
     QVERIFY(value->getStringValue() == "lines");
 
+    tree->deleteChildren();
+    delete tree;
 }
 
 void ParserTest::testTreeBuildStream()

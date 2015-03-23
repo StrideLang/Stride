@@ -224,7 +224,10 @@ functionDef:
                                           s.append($1); /* string constructor leaks otherwise! */
                                           $$ = new FunctionNode(s, $3, FunctionNode::BuiltIn, yyloc.first_line);
                                           cout << "Properties () ..." << endl << "Platform function: " << $1 << endl;
-                                          free($1);}
+                                          free($1);
+                                          AST *props = $3;
+                                          delete props;
+                                          }
         |	UVAR '(' ')'		{
                                           string s;
                                           s.append($1); /* string constructor leaks otherwise! */
@@ -236,7 +239,10 @@ functionDef:
                                           s.append($1); /* string constructor leaks otherwise! */
                                           $$ = new FunctionNode(s, $3, FunctionNode::UserDefined, yyloc.first_line);
                                           cout << "Properties () ..." << endl << "User function: " << $1 << endl;
-                                          free($1); }
+                                          free($1);
+                                          AST *props = $3;
+                                          delete props;
+                                          }
 	;	
 	
 // ================================= 

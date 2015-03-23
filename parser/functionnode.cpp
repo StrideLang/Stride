@@ -33,6 +33,9 @@ AST *FunctionNode::deepCopy()
     for(unsigned int i = 0; i< m_properties.size(); i++) {
         newProps->addChild(m_properties[i]->deepCopy());
     }
-    return new FunctionNode(m_name, newProps, m_type, m_line);
+    AST *output = new FunctionNode(m_name, newProps, m_type, m_line);
+    newProps->deleteChildren();
+    delete newProps;
+    return output;
 }
 
