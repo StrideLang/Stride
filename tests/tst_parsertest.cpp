@@ -1219,6 +1219,9 @@ void ParserTest::testParser()
     QStringList files;
     files << "data/platform.stream" << "data/simple.stream" << "data/array.stream" << "data/list.stream"
           << "data/stream.stream" << "data/block.stream"
+             // FIXME This line in introBlock.stream
+             // [ AudioIn[1], AudioIn[2] ] >> [ AudioOut[1], AudioOut[2] ];
+             // causes a memory leak. Haven't been able to find why...
           << "data/introBlock.stream"
           << "data/introConverter.stream" << "data/introFeedback.stream"
           << "data/introGenerator.stream" << "data/introProcessor.stream"
