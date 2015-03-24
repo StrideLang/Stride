@@ -6,6 +6,7 @@
 #include <QTimer>
 
 #include "languagehighlighter.h"
+#include "pythonproject.h"
 
 namespace Ui {
 class ProjectWindow;
@@ -34,6 +35,7 @@ private slots:
     void build();
     void flash();
     void run(bool pressed);
+    void stop();
     void tabChanged(int index);
 
     void programStopped();
@@ -42,7 +44,6 @@ private slots:
     void printConsoleError(QString text);
 
 private:
-//    void createMenus();
     void connectActions();
 
     void readSettings();
@@ -54,16 +55,14 @@ private:
 
     Ui::ProjectWindow *ui;
     QWidget *m_layoutContainer;
-//    QToolBar *m_toolBar;
 
-//    BaseProject *m_project;
-//    QFile m_codeFile;
     LanguageHighlighter *m_highlighter;
 
     QString m_platformsRootDir;
     QMap<QString, QVariant> m_options;
     QTimer m_timer;
     QFont m_font;
+    PythonProject *m_project;
 };
 
 #endif // PROJECTWINDOW_H

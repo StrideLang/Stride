@@ -2,8 +2,9 @@
 Block definitions:
 
 {"typeName": "string_here",
- "properties":  [{"name": "string", "types" : [ "string", "string" ...   ], "default": "string"
+ "properties":  [{"name": "string", "types" : [ "string", "string" ...   ], "default": "string",
  "required" : false, "maxconnections" : 1, "access": "stream_in" },
+ "code" : [{"name":"init_code", "code": "string code"}, {"name":"dsp_code", "code": "string code"}
 ....    ],
  "private": ["parent": "string", "type": [ "int", "real", "string" ]]
 }

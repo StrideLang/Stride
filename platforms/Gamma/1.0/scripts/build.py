@@ -54,11 +54,12 @@ import json
 jsonfile = open(out_dir + '/tree.json')
 tree = json.load(jsonfile)
 
-stream_index = 0;
-
+includes_code = ''
 init_code = ''
 dsp_code = ''
+
 num_chnls = 2;
+
 platform_funcs = json.load(open(platform_dir + '/functions.json'))['functions']
 platform_objs = json.load(open(platform_dir + '/objects.json'))['objects']
 # --------------------- Common platform functions
@@ -73,7 +74,7 @@ def find_builtin_object(platform_objs, name):
         if obj['objectName'] == name:
             return obj
 
-def get_function_code(function_name, properties, token):
+def get_function_code(function_name, properties, token, ugen_name):
     code = {}
     new_init_code = '';
     new_dsp_code = '';
@@ -83,10 +84,12 @@ def get_function_code(function_name, properties, token):
         raise ValueError("Function not found.")
 
     new_init_code = obj["code"]["init_code"]["code"]
-    new_init_code = new_init_code.replace("%%token%%", var_name)
+    new_init_code = new_init_code.replace("%%token%%", token)
+    new_init_code = new_init_code.replace("%%identifier%%", ugen_name)
 
     new_dsp_code = obj["code"]["dsp_code"]["code"]
-    new_dsp_code = new_dsp_code.replace("%%token%%", var_name)
+    new_dsp_code = new_dsp_code.replace("%%token%%", token)
+    new_dsp_code = new_dsp_code.replace("%%identifier%%", ugen_name)
 
     for prop_name, prop_value in properties.iteritems():
         template = '%%property:' + prop_name + '%%'
@@ -97,6 +100,9 @@ def get_function_code(function_name, properties, token):
 
     code["dsp_code"] = new_dsp_code
     code["init_code"] = new_init_code
+    if "includes" in obj["code"]:
+        if len(obj["code"]["includes"]["code"]) > 0:
+            code["includes"] = "#include <%s>"%obj["code"]["includes"]["code"]
     return code
 
 def get_builtin_obj_code(obj_name, var_name):
@@ -118,9 +124,18 @@ def get_builtin_obj_code(obj_name, var_name):
 
     code["dsp_code"] = new_dsp_code
     code["init_code"] = new_init_code
+    if "includes" in obj["code"]:
+        if len(obj["code"]["includes"]["code"]) > 0:
+            code["includes"] = "#include <%s>"%obj["code"]["includes"]["code"]
     return code
 
 # ---------------------
+
+
+stream_index = 0;
+ugen_index = 0;
+includes_list = []
+
 for node in tree:
     if 'stream' in node:
         for parts in node['stream']:
@@ -131,28 +146,32 @@ for node in tree:
                 init_code += new_code["init_code"]
             elif parts['type'] == 'Name':
                 pass
-#                if parts['name'] == 'AudioIn':
-#                    for chan_index in range(num_chnls):
-#                        dsp_code += 'float sig_%02i_%02i = io.in(%i);\n'%(stream_index, chan_index, chan_index)
-#                elif parts['name'] == 'AudioIn':
-#                    for chan_index in range(num_chnls):
-#                        dsp_code += 'io.out(%i) = sig_%02i_%02i;\n'%(chan_index, stream_index, chan_index)
             elif parts['type'] == 'Function':
                 func = find_function(platform_funcs, parts["name"])
                 if not func:
                     raise ValueError("Function not found")
                 var_name = "sig_%02i"%(stream_index)
+                ugen_name = "ugen_%02i"%(ugen_index)
 
-                new_code = get_function_code(parts['name'], parts["properties"], 'sig_%02i'%stream_index)
+                new_code = get_function_code(parts['name'], parts["properties"], var_name, ugen_name)
 
                 dsp_code += new_code["dsp_code"]
                 init_code += new_code["init_code"]
+                print("**************---------" + str(new_code))
+                if "includes" in new_code:
+                    includes_list.append(new_code["includes"])
+                ugen_index += 1
         stream_index += 1
 
-#log(dsp_code)
+var_declaration = ''.join(['float sig_%02i;\n'%i for i in range(stream_index)])
+dsp_code = var_declaration + dsp_code
 
+includes_code = '\n'.join(set(includes_list))
+write_section('Includes', includes_code)
+write_section('Init Code', init_code)
 write_section('Dsp Code', dsp_code)
 
+# Compile --------------------------
 cpp_compiler = "/usr/bin/c++"
 
 flags = "-I"+ platform_dir +"/include -O3 -DNDEBUG -o "+ out_dir +"/main.cpp.o -c "+ out_dir +"/main.cpp"
@@ -160,6 +179,8 @@ args = [cpp_compiler] + flags.split()
 outtext = ck_out(args)
 
 log(outtext)
+
+# Link ------------------------
 flags = "-O3 -DNDEBUG "+ out_dir +"/main.cpp.o -o "+ out_dir +"/app -rdynamic -L " + platform_dir + "/lib -lGamma -lpthread -lportaudio -lsndfile -lpthread -lportaudio -lsndfile"
 args = [cpp_compiler] + flags.split()
 outtext = ck_out(args)

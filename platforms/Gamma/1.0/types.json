@@ -1,10 +1,8 @@
 {"types": [
         {
-            "typeName": "gamma10",
-            "properties": [{"name": "meta", "validTypes": ["string"], "default": "none"}]
+            "typeName": "config",
+            "properties": [{"name": "channels", "validTypes": ["CIP"], "default": "none"}]
         }
     ]
 }
-
-
 

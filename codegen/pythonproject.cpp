@@ -1,5 +1,4 @@
 
-#include <QProcess>
 #include <QDebug>
 #include <QDir>
 #include <QCoreApplication>
@@ -13,7 +12,8 @@ PythonProject::PythonProject(QObject *parent,
                              StreamPlatform platform,
                              QString projectDir,
                              QString pythonExecutable) :
-    QObject(parent), m_tree(tree), m_platform(platform), m_projectDir(projectDir)
+    QObject(parent), m_tree(tree), m_platform(platform), m_projectDir(projectDir),
+    m_runningProcess(this)
 
 {
     if(pythonExecutable.isEmpty()) {
@@ -26,6 +26,8 @@ PythonProject::PythonProject(QObject *parent,
 PythonProject::~PythonProject()
 {
     m_running.store(0);
+    m_runningProcess.waitForFinished(1000);
+    m_runningProcess.kill();
 }
 
 void PythonProject::build()
@@ -49,21 +51,27 @@ void PythonProject::build()
 
 void PythonProject::run()
 {
-    QProcess pythonProcess(this);
     QStringList arguments;
-    pythonProcess.setWorkingDirectory(m_platform.getPlatformPath() + QDir::separator() + "scripts");
+    if (m_runningProcess.state() == QProcess::Running) {
+       m_runningProcess.close();
+       if (!m_runningProcess.waitForFinished(5000)) {
+           qDebug() << "Could not stop running process. Not starting again.";
+           return;
+       }
+    }
+    m_runningProcess.setWorkingDirectory(m_platform.getPlatformPath() + QDir::separator() + "scripts");
     arguments << "run.py" << m_projectDir;
-    pythonProcess.start(m_pythonExecutable, arguments);
+    m_runningProcess.start(m_pythonExecutable, arguments);
     m_running.store(1);
     while(m_running.load() == 1) {
-        if(pythonProcess.waitForFinished(50)) {
+        if(m_runningProcess.waitForFinished(50)) {
             m_running.store(0);
-            pythonProcess.close();
         }
         qApp->processEvents();
     }
-    qDebug() << pythonProcess.readAllStandardOutput();
-    qDebug() << pythonProcess.readAllStandardError();
+    m_runningProcess.close();
+    qDebug() << m_runningProcess.readAllStandardOutput();
+    qDebug() << m_runningProcess.readAllStandardError();
 }
 
 void PythonProject::stopRunning()
@@ -89,6 +97,39 @@ void PythonProject::writeAST()
             m_curStreamArray = QJsonArray();
             streamToJsonArray(static_cast<StreamNode *>(node));
             nodeObject["stream"] = m_curStreamArray;
+        } else if (node->getNodeType() == AST::Block) {
+            QJsonObject blockObj;
+            BlockNode *block = static_cast<BlockNode *>(node);
+            blockObj["name"] = QString::fromStdString(block->getName());
+            blockObj["type"] = QString::fromStdString(block->getObjectType());
+            vector<PropertyNode *> props = block->getProperties();
+            QJsonObject propertiesObj;
+            foreach(PropertyNode *prop, props) {
+                AST *propValue = prop->getValue();
+                if (propValue->getNodeType() == AST::Int) {
+                    propertiesObj[QString::fromStdString(prop->getName())]
+                            = static_cast<ValueNode *>(propValue)->getIntValue();
+                }
+            }
+            blockObj["properties"] = propertiesObj;
+            nodeObject["block"] = blockObj;
+        } else if (node->getNodeType() == AST::BlockBundle) {
+            QJsonObject blockObj;
+            BlockNode *block = static_cast<BlockNode *>(node);
+            BundleNode *bundle = block->getBundle();
+            blockObj["name"] = QString::fromStdString(bundle->getName());
+            blockObj["type"] = QString::fromStdString(block->getObjectType());
+            vector<PropertyNode *> props = block->getProperties();
+            QJsonObject propertiesObj;
+            foreach(PropertyNode *prop, props) {
+                AST *propValue = prop->getValue();
+                if (propValue->getNodeType() == AST::Int) {
+                    propertiesObj[QString::fromStdString(prop->getName())]
+                            = static_cast<ValueNode *>(propValue)->getIntValue();
+                }
+            }
+            blockObj["properties"] = propertiesObj;
+            nodeObject["blockbundle"] = blockObj;
         }
         treeObject.append(nodeObject);
     }

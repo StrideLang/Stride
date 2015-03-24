@@ -8,8 +8,24 @@
             "in_types" : ["AS", "CSR"],
             "out_types" : [ "AS", "CSR"],
             "code" : {
+                "includes" : {"code": ""},
                 "init_code": {"code": ""},
                 "dsp_code": {"code": "%%token%% = %%token%%  * %%property:gain%% ;\n"}
+            }
+        },
+        {
+            "functionName": "lowPass",
+            "properties": [
+                {"name": "cutOff", "in_types": ["CIP", "CFP"], "out_types" : [], "default": 1000},
+                {"name": "reset", "in_types": ["CIP", "CFP"], "out_types" : [], "default": "none"},
+                {"name": "bypass", "in_types": ["CBP"], "out_types" : [], "default": "none"}
+            ],
+            "in_types" : ["AS", "CSR"],
+            "out_types" : [ "AS", "CSR"],
+            "code" : {
+                "includes": {"code": "Gamma/Filter.h"},
+                "init_code": {"code": "Biquad<> %%identifier%%(%%property:cutOff%%, 1, LOW_PASS);\n"},
+                "dsp_code": {"code": "%%token%% = %%identifier%%(%%token%%);\n"}
             }
         }
     ]

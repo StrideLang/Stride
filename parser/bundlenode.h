@@ -17,7 +17,6 @@ public:
     AST *startIndex() const;
     AST *endIndex() const;
 
-    int getBundleSize();
     AST *deepCopy();
 
 private:

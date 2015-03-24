@@ -7,11 +7,13 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QProcess>
 
 #include "streamplatform.h"
 #include "ast.h"
 #include "platformnode.h"
 #include "bundlenode.h"
+#include "blocknode.h"
 #include "streamnode.h"
 #include "valuenode.h"
 #include "functionnode.h"
@@ -47,6 +49,7 @@ private:
     QString m_projectDir;
     QString m_pythonExecutable;
     QAtomicInteger<short> m_running;
+    QProcess m_runningProcess;
 };
 
 #endif // PYTHONPROJECT_H

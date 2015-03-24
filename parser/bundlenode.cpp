@@ -45,17 +45,6 @@ AST *BundleNode::endIndex() const
     return m_children.at(1);
 }
 
-int BundleNode::getBundleSize()
-{
-    if (getNodeType() == AST::Bundle) {
-        return 1;
-    } else if (getNodeType() == AST::BundleRange) {
-
-
-        return 1;
-    }
-}
-
 AST *BundleNode::deepCopy()
 {
     assert(getNodeType() == AST::BundleRange || getNodeType() == AST::Bundle);

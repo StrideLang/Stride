@@ -4,8 +4,9 @@
             "size" : 2,
             "type" : "_hwInput",
             "code" : {
+                "includes": {"code": ""},
                 "init_code": {"code": ""},
-                "dsp_code": {"code": "float %%token%% = io.in(%%bundle_index%%);\n"}
+                "dsp_code": {"code": "%%token%% = io.in(%%bundle_index%%);\n"}
             }
         },
         {
@@ -13,6 +14,7 @@
             "size" : 2,
             "type" : "_hwOutput",
             "code" : {
+                "includes": {"code": ""},
                 "init_code": {"code": ""},
                 "dsp_code": {"code": "io.out(%%bundle_index%%) = %%token%%;\n"}
             }

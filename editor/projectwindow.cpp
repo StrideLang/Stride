@@ -13,9 +13,6 @@
 #include "projectwindow.h"
 #include "ui_projectwindow.h"
 
-
-#include "pythonproject.h"
-
 #include "codeeditor.h"
 //#include "xmosproject.h"
 #include "ast.h"
@@ -25,7 +22,8 @@
 ProjectWindow::ProjectWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::ProjectWindow),
-    m_timer(this)
+    m_timer(this),
+    m_project(NULL)
 {
     ui->setupUi(this);
 
@@ -55,6 +53,10 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
 ProjectWindow::~ProjectWindow()
 {
     writeSettings();
+    if (m_project) {
+        m_project->stopRunning();
+        delete m_project;
+    }
     delete ui;
 }
 
@@ -67,7 +69,6 @@ void ProjectWindow::build()
     tree = AST::parseFile(editor->filename().toLocal8Bit().constData());
 //    tree = AST::parseFile(editor->filename().toStdString().c_str());
     CodeValidator validator(m_platformsRootDir, tree);
-//    QVERIFY(!generator.isValid());
     QList<LangError> errors = validator.getErrors();
     editor->setErrors(errors);
 
@@ -76,12 +77,13 @@ void ProjectWindow::build()
         return;
     }
     if (tree) {
+        if (m_project) {
+            delete m_project;
+        }
         QString projectDir = makeProjectForCurrent();
         QString pythonExec = "python";
-        PythonProject project(this, tree, validator.getPlatform(), projectDir, pythonExec);
-        project.build();
-        connect(ui->actionStop, SIGNAL(triggered()), &project, SLOT(stopRunning()));
-        project.run();
+        m_project = new PythonProject(this, tree, validator.getPlatform(), projectDir, pythonExec);
+        m_project->build();
         delete tree;
     }
     //    m_project->build();
@@ -90,17 +92,26 @@ void ProjectWindow::build()
 void ProjectWindow::flash()
 {
     ui->consoleText->clear();
-    QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
-//    m_project->flash();
 }
 
 void ProjectWindow::run(bool pressed)
 {
+    //    QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
     if (pressed) {
+        build();
         ui->consoleText->clear();
+        m_project->run();
+    } else {
+        m_project->stopRunning();
     }
-    QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
-    //    m_project->run(pressed);
+}
+
+void ProjectWindow::stop()
+{
+    if (m_project) {
+        m_project->stopRunning();
+    }
+    ui->actionRun->setChecked(false);
 }
 
 void ProjectWindow::tabChanged(int index)
@@ -303,6 +314,7 @@ void ProjectWindow::connectActions()
     connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(saveFile()));
     connect(ui->actionOptions, SIGNAL(triggered()), this, SLOT(openOptionsDialog()));
     connect(ui->actionLoad_File, SIGNAL(triggered()), this, SLOT(loadFile()));
+    connect(ui->actionStop, SIGNAL(triggered()), this, SLOT(stop()));
 
 //    connect(m_project, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
 //    connect(m_project, SIGNAL(errorText(QString)), this, SLOT(printConsoleError(QString)));
