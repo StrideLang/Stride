@@ -289,6 +289,9 @@
    <property name="text">
     <string>Build</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+B</string>
+   </property>
   </action>
   <action name="actionUpload">
    <property name="text">
@@ -296,6 +299,9 @@
    </property>
    <property name="toolTip">
     <string>Upload to board</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+U</string>
    </property>
   </action>
   <action name="actionRename">
@@ -315,15 +321,24 @@
    <property name="text">
     <string>Run</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+R</string>
+   </property>
   </action>
   <action name="actionSave">
    <property name="text">
     <string>Save File</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
   </action>
   <action name="actionNew_Project">
    <property name="text">
     <string>New File</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
    </property>
   </action>
   <action name="actionOptions">
@@ -335,10 +350,16 @@
    <property name="text">
     <string>Load File</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
   </action>
   <action name="actionStop">
    <property name="text">
     <string>Stop</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Space</string>
    </property>
   </action>
  </widget>
