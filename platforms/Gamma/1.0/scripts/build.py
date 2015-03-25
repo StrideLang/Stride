@@ -6,6 +6,7 @@ from __future__ import division
 import sys
 import os
 import shutil
+import re
 from subprocess import check_output as ck_out
 
 def log(text):
@@ -69,12 +70,46 @@ def find_function(platform_funcs, name):
         if func['functionName'] == name:
             return func
 
+def find_function_property(func, property_name):
+    return func["properties"][property_name]
+
 def find_builtin_object(platform_objs, name):
     for obj in platform_objs:
         if obj['objectName'] == name:
             return obj
 
-def get_function_code(function_name, properties, token, ugen_name):
+def bool_to_str(bool_val):
+    if not type(bool_val) == bool:
+        raise ValueError("Only boolean values accepted.")
+    elif bool_val:
+        return "true"
+    else:
+        return "false"
+
+def put_property_values(template_code, properties, func):
+    final_code = template_code
+
+    p = re.compile(r"%%property:[a-zA-Z]+%%")
+    for match in p.findall(final_code):
+        prop_name = match[match.rindex(':') + 1: -2]
+
+        if prop_name in properties:
+            prop_value = properties[prop_name]
+            if type(prop_value["value"]) == bool:
+                value = bool_to_str(prop_value["value"])
+            else:
+                value = str(prop_value["value"])
+        else:
+            default_value = find_function_property(func, prop_name)["default"]
+            if type(default_value) == bool:
+                value = bool_to_str(default_value)
+            else:
+                value = str(default_value)
+        print(match + '     ' + value)
+        final_code = final_code.replace(match, value)
+    return final_code
+
+def get_function_code(function_name, properties, token, ugen_name, func):
     code = {}
     new_init_code = '';
     new_dsp_code = '';
@@ -91,12 +126,22 @@ def get_function_code(function_name, properties, token, ugen_name):
     new_dsp_code = new_dsp_code.replace("%%token%%", token)
     new_dsp_code = new_dsp_code.replace("%%identifier%%", ugen_name)
 
-    for prop_name, prop_value in properties.iteritems():
-        template = '%%property:' + prop_name + '%%'
-        if template in new_init_code:
-            new_init_code = new_init_code.replace(template, str(prop_value["value"]))
-        if template in new_dsp_code:
-            new_dsp_code = new_dsp_code.replace(template, str(prop_value["value"]))
+    new_init_code = put_property_values(new_init_code, properties, func)
+    new_dsp_code = put_property_values(new_dsp_code, properties, func)
+
+
+#    for prop_name, prop_value in properties.iteritems():
+#        template = '%%property:' + prop_name + '%%'
+#        if template in new_init_code:
+#            if type(prop_value["value"]) == bool:
+#                new_init_code = new_init_code.replace(template, bool_to_str(prop_value["value"]))
+#            else:
+#                new_init_code = new_init_code.replace(template, str(prop_value["value"]))
+#        if template in new_dsp_code:
+#            if type(prop_value["value"]) == bool:
+#                new_dsp_code = new_dsp_code.replace(template, bool_to_str(prop_value["value"]))
+#            else:
+#                new_dsp_code = new_dsp_code.replace(template, str(prop_value["value"]))
 
     code["dsp_code"] = new_dsp_code
     code["init_code"] = new_init_code
@@ -153,11 +198,10 @@ for node in tree:
                 var_name = "sig_%02i"%(stream_index)
                 ugen_name = "ugen_%02i"%(ugen_index)
 
-                new_code = get_function_code(parts['name'], parts["properties"], var_name, ugen_name)
+                new_code = get_function_code(parts['name'], parts["properties"], var_name, ugen_name, func)
 
                 dsp_code += new_code["dsp_code"]
                 init_code += new_code["init_code"]
-                print("**************---------" + str(new_code))
                 if "includes" in new_code:
                     includes_list.append(new_code["includes"])
                 ugen_index += 1

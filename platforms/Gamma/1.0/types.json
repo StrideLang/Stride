@@ -1,7 +1,9 @@
 {"types": [
         {
             "typeName": "config",
-            "properties": [{"name": "channels", "validTypes": ["CIP"], "default": "none"}]
+            "properties": {
+                "channels" : {"validTypes": ["CIP"], "default": "none"}
+            }
         }
     ]
 }

@@ -232,12 +232,13 @@ void StreamPlatform::parseFunctionsJson(QString jsonText, QList<PlatformFunction
         QJsonObject funcObj = func.toObject();
         QJsonValue val = funcObj.take("functionName");
         QString funcName = val.toString();
-        QVariantList propList = funcObj.take("properties").toVariant().toList();
+        QJsonObject propList = funcObj.take("properties").toObject();
+        QStringList keys = propList.keys();
         QList<Property> ports;
-        foreach(QVariant prop, propList) {
+        foreach(QString key, keys) {
             Property newPort;
-            QMap<QString, QVariant> portMap = prop.toMap();
-            newPort.name = portMap.take("name").toString();
+            QMap<QString, QVariant> portMap = propList.value(key).toVariant().toMap();
+            newPort.name = key;
             if (newPort.name.isEmpty()) {
                 QString errorText = "Empty name for port in function: " + funcName;
                 m_errors << errorText;
