@@ -18,7 +18,8 @@ SOURCES += main.cpp\
 #    xmosproject.cpp \
 #    platform.cpp
     linenumberarea.cpp \
-    configdialog.cpp
+    configdialog.cpp \
+    savechangeddialog.cpp
 
 HEADERS  += \
     projectwindow.h \
@@ -28,11 +29,13 @@ HEADERS  += \
 #    xmosproject.h \
 #    platform.h
     linenumberarea.h \
-    configdialog.h
+    configdialog.h \
+    savechangeddialog.h
 
 FORMS    += \
     projectwindow.ui \
-    configdialog.ui
+    configdialog.ui \
+    savechangeddialog.ui
 
 #win32 {
 #LIBS += -L${FLEX_LIB_PATH}

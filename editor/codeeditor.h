@@ -15,11 +15,15 @@ public:
 
     void lineNumberAreaPaintEvent(QPaintEvent *event);
     int lineNumberAreaWidth();
+    bool isChanged();
 
     void setErrors(QList<LangError> errors);
 
     QString filename() const;
     void setFilename(const QString &filename);
+
+public slots:
+    void markChanged(bool changed = true);
 
 protected:
     void resizeEvent(QResizeEvent *event);

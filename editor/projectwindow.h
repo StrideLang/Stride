@@ -23,7 +23,7 @@ public:
 public slots:
     void updateMenus();
     void setEditorText(QString code);
-    void saveFile();
+    void saveFile(int index = -1);
     bool saveFileAs();
     void loadFile();
     void loadFile(QString fileName);
@@ -31,12 +31,16 @@ public slots:
     void updateCodeAnalysis();
     void newFile();
 
+protected:
+    virtual void closeEvent(QCloseEvent *event);
+
 private slots:
     void build();
     void flash();
     void run(bool pressed);
     void stop();
     void tabChanged(int index);
+    bool maybeSave();
 
     void programStopped();
 

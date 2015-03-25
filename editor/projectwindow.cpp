@@ -18,6 +18,7 @@
 #include "ast.h"
 #include "codevalidator.h"
 #include "configdialog.h"
+#include "savechangeddialog.h"
 
 ProjectWindow::ProjectWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -48,15 +49,12 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(updateCodeAnalysis()));
     m_timer.start(2000);
     connect(ui->tabWidget, SIGNAL(currentChanged(int)), this, SLOT(tabChanged(int)));
+
+    updateCodeAnalysis();
 }
 
 ProjectWindow::~ProjectWindow()
 {
-    writeSettings();
-    if (m_project) {
-        m_project->stopRunning();
-        delete m_project;
-    }
     delete ui;
 }
 
@@ -121,6 +119,35 @@ void ProjectWindow::tabChanged(int index)
     m_highlighter->setDocument(editor->document());
 }
 
+bool ProjectWindow::maybeSave()
+{
+    QStringList modifiedFiles;
+    QList<int> modifiedFilesTabs;
+    for(int i = 0; i < ui->tabWidget->count(); i++) {
+        CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->widget(i));
+        if(editor->isChanged()) {
+            modifiedFiles << editor->filename();
+            modifiedFilesTabs << i;
+        }
+    }
+
+    if(modifiedFiles.isEmpty()) {
+        return true;
+    }
+    SaveChangedDialog d(this);
+    d.setListContents(modifiedFiles);
+
+    int but = d.exec();
+    if (but == QDialog::Accepted) {
+        foreach(int index, d.getSelected()) {
+            saveFile(modifiedFilesTabs[index]);
+        }
+        return true;
+    } else {
+        return false;
+    }
+}
+
 void ProjectWindow::programStopped()
 {
     ui->actionRun->setChecked(false);
@@ -175,9 +202,15 @@ void ProjectWindow::setEditorText(QString code)
     editor->setPlainText(code);
 }
 
-void ProjectWindow::saveFile()
+void ProjectWindow::saveFile(int index)
 {
-    CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+    CodeEditor *editor;
+    if (index == -1) {
+        editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+    } else {
+        editor = static_cast<CodeEditor *>(ui->tabWidget->widget(index));
+    }
+    Q_ASSERT(editor);
     if (editor->filename().isEmpty()) {
         if (!saveFileAs()) {
             return;
@@ -189,6 +222,7 @@ void ProjectWindow::saveFile()
         qDebug() << "Error opening code file for writing!";
         throw;
     }
+    editor->markChanged(false);
     codeFile.write(code.toLocal8Bit());
     codeFile.close();
 }
@@ -206,8 +240,9 @@ bool ProjectWindow::saveFileAs()
                               tr("Can't open file for writing."));
         return false;
     }
-    codeFile.close();
     editor->setFilename(fileName);
+    editor->markChanged(false);
+    codeFile.close();
     ui->tabWidget->setTabText(ui->tabWidget->currentIndex(),
                               QFileInfo(fileName).fileName());
     return true;
@@ -234,6 +269,7 @@ void ProjectWindow::loadFile(QString fileName)
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     setEditorText(codeFile.readAll());
     editor->setFilename(QFileInfo(fileName).absoluteFilePath());
+    editor->markChanged(false);
     ui->tabWidget->setTabText(ui->tabWidget->currentIndex(),
                               QFileInfo(fileName).fileName());
     codeFile.close();
@@ -315,6 +351,7 @@ void ProjectWindow::connectActions()
     connect(ui->actionOptions, SIGNAL(triggered()), this, SLOT(openOptionsDialog()));
     connect(ui->actionLoad_File, SIGNAL(triggered()), this, SLOT(loadFile()));
     connect(ui->actionStop, SIGNAL(triggered()), this, SLOT(stop()));
+    connect(ui->actionQuit, SIGNAL(triggered()), this, SLOT(close()));
 
 //    connect(m_project, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
 //    connect(m_project, SIGNAL(errorText(QString)), this, SLOT(printConsoleError(QString)));
@@ -459,4 +496,18 @@ void ProjectWindow::newFile()
     ui->tabWidget->setCurrentIndex(index);
     updateEditorFont();
     m_highlighter->setDocument(editor->document());
+}
+
+void ProjectWindow::closeEvent(QCloseEvent *event)
+{
+    if (maybeSave()) {
+        writeSettings();
+        if (m_project) {
+            m_project->stopRunning();
+            delete m_project;
+        }
+        event->accept();
+    } else {
+        event->ignore();
+    }
 }

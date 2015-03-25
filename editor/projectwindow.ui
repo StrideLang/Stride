@@ -272,6 +272,7 @@
     <addaction name="actionLoad_File"/>
     <addaction name="actionSave"/>
     <addaction name="actionOptions"/>
+    <addaction name="actionQuit"/>
    </widget>
    <widget class="QMenu" name="menuBuild">
     <property name="title">
@@ -360,6 +361,11 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Space</string>
+   </property>
+  </action>
+  <action name="actionQuit">
+   <property name="text">
+    <string>Quit</string>
    </property>
   </action>
  </widget>

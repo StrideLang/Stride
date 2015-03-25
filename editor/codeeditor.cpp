@@ -32,6 +32,11 @@ int CodeEditor::lineNumberAreaWidth()
     return space;
 }
 
+bool CodeEditor::isChanged()
+{
+    return document()->isModified();
+}
+
 void CodeEditor::setErrors(QList<LangError> errors)
 {
     m_errors = errors;
@@ -54,6 +59,11 @@ void CodeEditor::updateLineNumberArea(const QRect &rect, int dy)
         updateLineNumberAreaWidth(0);
 }
 
+void CodeEditor::markChanged(bool changed)
+{
+    document()->setModified(changed);
+}
+
 QString CodeEditor::filename() const
 {
     return m_filename;
@@ -63,7 +73,6 @@ void CodeEditor::setFilename(const QString &filename)
 {
     m_filename = filename;
 }
-
 
 void CodeEditor::resizeEvent(QResizeEvent *e)
 {
