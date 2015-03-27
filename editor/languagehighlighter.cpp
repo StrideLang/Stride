@@ -88,6 +88,15 @@ void LanguageHighlighter::highlightBlock(const QString &text)
         index = text.indexOf(expression, index + length);
     }
 
+    pattern = "'(\\.|[^'])*'";
+    expression.setPattern(pattern);
+    index = text.indexOf(expression);
+    while (index >= 0) {
+        int length = expression.matchedLength();
+        setFormat(index, length, m_formats["strings"]);
+        index = text.indexOf(expression, index + length);
+    }
+
     // Leave comments for last
     pattern = "\\#.*";
     expression.setPattern(pattern);
