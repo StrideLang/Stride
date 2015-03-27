@@ -28,6 +28,23 @@
                 "init_code": {"code": "Biquad<> %%identifier%%(%%property:cutOff%%, 1, LOW_PASS);\n"},
                 "dsp_code": {"code": "if (!%%property:bypass%%) %%token%% = %%identifier%%(%%token%%);\n"}
             }
+        },
+        {
+            "functionName": "oscillator",
+            "properties": {
+                "type" : {"in_types": ["CSP", "CS"], "out_types" : [], "default": "sine"},
+                "amplitude" : {"in_types": ["CIP", "CFP"], "out_types" : [], "default": 1.0},
+                "frequency" : {"in_types": ["CIP", "CFP"], "out_types" : [], "default": 440.0},
+                "phase" : {"in_types": ["CIP", "CFP"], "out_types" : [], "default": 0.0},
+                "reset" : {"in_types": ["CBP"], "out_types" : [], "default": false}
+            },
+            "in_types" : [],
+            "out_types" : [ "AS", "CSR"],
+            "code" : {
+                "includes": {"code": "Gamma/Oscillator.h"},
+                "init_code": {"code": "Sine<> %%identifier%%(%%property:frequency%%, %%property:phase%%);\n"},
+                "dsp_code": {"code": "%%token%% = %%identifier%%();\n"}
+            }
         }
     ]
 }

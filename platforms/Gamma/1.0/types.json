@@ -1,9 +1,70 @@
 {"types": [
         {
-            "typeName": "config",
-            "properties": {
-                "channels" : {"validTypes": ["CIP"], "default": "none"}
+            "typeName": "control",
+            "ports": [
+                {"name": "input", "types" : ["ASP", "CSIP", "CSRP"], "default": "none", "required" : false, "maxconnections" : 1, "access": "stream_in"},
+                {"name": "output", "types" : ["CSIP", "CSRP"], "default": "none", "required" : false, "maxconnections" : -1, "access": "stream_out"},
+                {"name": "default", "types" : ["CIP", "CRP"], "default": 0.0, "required" : true, "maxconnections" : 1, "access": "property"},
+                {"name": "rate", "types" : ["CIP"], "default": "ControlRate", "required" : true, "maxconnections" : 1, "access": "property"},
+                {"name": "enableMapping", "types" : ["CBP"], "default": "on", "required" : true, "maxconnections" : 1, "access": "property"},
+                {"name": "mappingMode", "types" : ["CSP"], "default": "'linear'", "required" : true, "maxconnections" : 1, "access": "property"},
+                {"name": "minimum", "types" : ["CIP", "CRP"], "default": 0.0, "required" : true, "maxconnections" : 1, "access": "property"},
+                {"name": "maximum", "types" : ["CIP", "CRP"], "default": 1.0, "required" : true, "maxconnections" : 1, "access": "property"},
+                {"name": "increment", "types" : ["CIP", "CRP", "none"], "default": "none", "required" : true, "maxconnections" : 1, "access": "property"},
+                {"name": "rounding", "types" : ["CSP"], "default": "'truncate'", "required" : true, "maxconnections" : 1, "access": "property"}
+            ],
+            "in_types" : ["AS", "CSR"],
+            "out_types" : [ "AS", "CSR"],
+            "code" : {
+                "includes": {"code": ""},
+                "init_code": {"code": ""},
+                "dsp_code": {"code": "%%token%% = %%port:minimum%% + %%token%% * (%%port:maximum%% - %%port:minimum%%);\n"}
             }
+            ,
+            "private": {"inherits" : ["object"]}
+        },
+        {
+            "typeName": "config",
+            "ports": [
+                {"name": "inChannels" , "types": ["CIP"], "default": 2, "required" : false, "maxconnections" : 1, "access": "property"},
+                {"name": "outChannels" , "types": ["CIP"], "default": 2, "required" : false, "maxconnections" : 1, "access": "property"},
+                {"name": "sampleRate" , "types": ["CIP"], "default": 44100.0, "required" : false, "maxconnections" : 1, "access": "property"},
+                {"name": "blockSize" , "types": ["CIP"], "default": 256, "required" : false, "maxconnections" : 1, "access": "property"}
+            ],
+            "in_types" : [],
+            "out_types" : [],
+            "code" : {
+                "includes": {"code": ""},
+                "init_code": {"code": ""},
+                "dsp_code": {"code": ""}
+            },
+            "private": {"inherits" : ["object"]}
+        },
+        {
+            "typeName": "_hwInput",
+            "ports": [
+            ],
+            "in_types" : [],
+            "out_types" : [],
+            "code" : {
+                "includes": {"code": ""},
+                "init_code": {"code": ""},
+                "dsp_code": {"code": ""}
+            },
+            "private": {"inherits" : ["object"]}
+        },
+        {
+            "typeName": "_hwOutput",
+            "ports": [
+            ],
+            "in_types" : [],
+            "out_types" : [],
+            "code" : {
+                "includes": {"code": ""},
+                "init_code": {"code": ""},
+                "dsp_code": {"code": ""}
+            },
+            "private": {"inherits" : ["object"]}
         }
     ]
 }

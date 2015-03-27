@@ -1,0 +1,12 @@
+use Gamma version 1.0 
+
+config Gamma {
+	inChannels: 2
+	outChannels: 2
+	sampleRate: 22050
+	blockSize: 64
+}
+
+AudioIn >> SigTest;
+
+SigTest >> AudioOut;
