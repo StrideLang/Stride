@@ -84,6 +84,8 @@ private:
     void validateSymbolUniqueness(AST *node, QVector<AST *> scope);
     void validateListTypeConsistency(AST *node, QVector<AST *> scope);
     void validateStreamSizes(AST *tree);
+    void declareUnknownStreamSymbols(StreamNode *stream, AST *tree);
+    void validateStreamSymbols(AST *tree);
     void sortErrors();
 
     int getBlockBundleDeclaredSize(BlockNode *block, QVector<AST *> scope, QList<LangError> &errors);

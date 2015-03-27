@@ -1,6 +1,7 @@
 #include <QVector>
 
 #include "codevalidator.h"
+#include "coderesolver.h"
 
 CodeValidator::CodeValidator(StreamPlatform &platform, AST *tree) :
     m_platform(platform), m_tree(tree)
@@ -70,11 +71,14 @@ void CodeValidator::validate()
 {
     m_errors.clear();
     if(m_tree) {
+        CodeResolver resolver(m_platform, m_tree);
+        resolver.process();
         validateTypeNames(m_tree);
         validateProperties(m_tree, QVector<AST *>());
         validateBundleIndeces(m_tree, QVector<AST *>());
         validateBundleSizes(m_tree, QVector<AST *>());
         validateSymbolUniqueness(m_tree, QVector<AST *>());
+        validateStreamSymbols(m_tree);
         //    validateListConsistency(m_tree, QVector<AST *>());
         // TODO: validate expression type consistency
         // TODO: validate expression list operations
@@ -250,10 +254,48 @@ void CodeValidator::validateStreamSizes(AST *tree)
     foreach(AST *node, children) {
         if(node->getNodeType() == AST:: Stream) {
             StreamNode *stream = static_cast<StreamNode *>(node);
+            //TODO finish validating
+        }
+    }
+}
 
+
+void CodeValidator::declareUnknownStreamSymbols(StreamNode *stream, AST * tree)
+{
+    AST *left = stream->getLeft();
+
+    if (left->getNodeType() == AST::Name) {
+        NameNode *name = static_cast<NameNode *>(left);
+        BlockNode *block = findDeclaration(QString::fromStdString(name->getName()), QVector<AST *>(), tree);
+        if (!block) {
+            BlockNode *block = new BlockNode(name->getName(), "signal", NULL, -1);
+            tree->addChild(block);
         }
     }
 
+    AST *right = stream->getRight();
+    if (right->getNodeType() == AST::Stream) {
+        declareUnknownStreamSymbols(static_cast<StreamNode *>(right), tree);
+    } else if (right->getNodeType() == AST::Name) {
+        NameNode *name = static_cast<NameNode *>(right);
+        BlockNode *block = findDeclaration(QString::fromStdString(name->getName()), QVector<AST *>(), tree);
+        if (!block) {
+            BlockNode *block = new BlockNode(name->getName(), "signal", NULL, -1);
+            tree->addChild(block);
+        }
+    }
+
+}
+
+void CodeValidator::validateStreamSymbols(AST *tree)
+{
+    QVector<AST *> children = QVector<AST *>::fromStdVector(tree->getChildren());
+    foreach(AST *node, children) {
+        if(node->getNodeType() == AST:: Stream) {
+            StreamNode *stream = static_cast<StreamNode *>(node);
+            declareUnknownStreamSymbols(stream, tree);
+        }
+    }
 }
 
 bool errorLineIsLower(const LangError &err1, const LangError &err2)
@@ -597,7 +639,8 @@ QString LangError::getErrorText() {
         errorText = "Syntax Error";
         break;
     case UnknownType:
-        errorText = "Unknown Type Error";
+        errorText = QString("Unknown Type Error. Type '%1' not recognized.")
+                .arg(errorTokens[0]);
         break;
     case InvalidType:
         errorText = "Invalid Type Error";
@@ -606,7 +649,8 @@ QString LangError::getErrorText() {
         errorText = "Invalid port Error";
         break;
     case InvalidPortType:
-        errorText = "Invalid port type Error";
+        errorText = QString("Invalid port type Error. Port '%1' in Block '%2' expects '%3'")
+                .arg(errorTokens[0]).arg(errorTokens[1]).arg(errorTokens[2]);
         break;
     case IndexMustBeInteger:
         errorText = "Index to array must be integer ";

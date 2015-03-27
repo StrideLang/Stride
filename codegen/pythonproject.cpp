@@ -4,7 +4,6 @@
 #include <QCoreApplication>
 
 #include "pythonproject.h"
-#include "coderesolver.h"
 
 
 PythonProject::PythonProject(QObject *parent,
@@ -32,8 +31,6 @@ PythonProject::~PythonProject()
 
 void PythonProject::build()
 {
-    CodeResolver resolver(m_platform, m_tree);
-    resolver.process();
     writeAST();
     QProcess pythonProcess(this);
     QStringList arguments;
@@ -109,6 +106,12 @@ void PythonProject::writeAST()
                 if (propValue->getNodeType() == AST::Int) {
                     propertiesObj[QString::fromStdString(prop->getName())]
                             = static_cast<ValueNode *>(propValue)->getIntValue();
+                } else if (propValue->getNodeType() == AST::Real) {
+                    propertiesObj[QString::fromStdString(prop->getName())]
+                            = static_cast<ValueNode *>(propValue)->getRealValue();
+                } else if (propValue->getNodeType() == AST::String) {
+                    propertiesObj[QString::fromStdString(prop->getName())]
+                            = QString::fromStdString(static_cast<ValueNode *>(propValue)->getStringValue());
                 }
             }
             blockObj["properties"] = propertiesObj;

@@ -63,12 +63,32 @@ num_chnls = 2;
 
 platform_funcs = json.load(open(platform_dir + '/functions.json'))['functions']
 platform_objs = json.load(open(platform_dir + '/objects.json'))['objects']
+platform_types = json.load(open(platform_dir + '/types.json'))['types']
+
 # --------------------- Common platform functions
 
 def find_function(platform_funcs, name):
     for func in platform_funcs:
         if func['functionName'] == name:
             return func
+
+def find_definition_in_tree(block_name, tree):
+    for node in tree:
+        if 'block' in node:
+            if node["block"]["name"] == block_name:
+                return node["block"]
+    return None
+
+def find_block(platform_types, name, tree):
+    block_declaration = find_definition_in_tree(name, tree)
+
+    block_type = None
+    for platform_type in platform_types:
+        print(str(block_declaration))
+        if block_declaration and platform_type['typeName'] == block_declaration["type"]:
+            block_type = platform_type
+            break
+    return block_type, block_declaration
 
 def find_function_property(func, property_name):
     return func["properties"][property_name]
@@ -181,7 +201,40 @@ stream_index = 0;
 ugen_index = 0;
 includes_list = []
 
+config_code = '''
+AudioDevice adevi = AudioDevice::defaultInput();
+AudioDevice adevo = AudioDevice::defaultOutput();
+//AudioDevice adevi = AudioDevice("firewire_pcm");
+//AudioDevice adevo = AudioDevice("firewire_pcm");
+
+//int maxOChans = adevo.channelsOutMax();
+//int maxIChans = adevi.channelsOutMax();
+//printf("Max input channels:  %d\\n", maxIChans);
+//printf("Max output channels: %d\\n", maxOChans);
+
+// To open the maximum number of channels, we can hand in the queried values...
+//AudioIO io(256, 44100., audioCB, NULL, maxOChans, maxIChans);
+
+// ... or just use -1
+
+AudioIO io(%%block_size%%, %%sample_rate%%, audioCB, NULL, %%num_out_chnls%%, %%num_in_chnls%%);
+'''
+
 for node in tree:
+    if 'block' in node:
+        if node['block']['type'] == 'config':
+            block_size = 256
+            sample_rate = 44100.
+            num_out_chnls = 2
+            num_in_chnls = 2
+
+
+            config_code = config_code.replace("%%block_size%%", str(block_size))
+            config_code = config_code.replace("%%sample_rate%%", str(sample_rate))
+            config_code = config_code.replace("%%num_out_chnls%%", str(num_out_chnls))
+            config_code = config_code.replace("%%num_in_chnls%%", str(num_in_chnls))
+
+            write_section('Config Code', config_code)
     if 'stream' in node:
         for parts in node['stream']:
             if parts['type'] == 'Bundle':
@@ -190,13 +243,15 @@ for node in tree:
                 dsp_code += new_code["dsp_code"]
                 init_code += new_code["init_code"]
             elif parts['type'] == 'Name':
+                block_type, declaration = find_block(platform_types, parts["name"], tree)
+                print(str(block_type) + " ----- " + str(declaration))
                 pass
             elif parts['type'] == 'Function':
                 func = find_function(platform_funcs, parts["name"])
                 if not func:
                     raise ValueError("Function not found")
                 var_name = "sig_%02i"%(stream_index)
-                ugen_name = "ugen_%02i"%(ugen_index)
+                ugen_name = "sig_%02i"%(ugen_index)
 
                 new_code = get_function_code(parts['name'], parts["properties"], var_name, ugen_name, func)
 
