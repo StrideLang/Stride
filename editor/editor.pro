@@ -19,7 +19,8 @@ SOURCES += main.cpp\
 #    platform.cpp
     linenumberarea.cpp \
     configdialog.cpp \
-    savechangeddialog.cpp
+    savechangeddialog.cpp \
+    errormarker.cpp
 
 HEADERS  += \
     projectwindow.h \
@@ -30,7 +31,8 @@ HEADERS  += \
 #    platform.h
     linenumberarea.h \
     configdialog.h \
-    savechangeddialog.h
+    savechangeddialog.h \
+    errormarker.h
 
 FORMS    += \
     projectwindow.ui \

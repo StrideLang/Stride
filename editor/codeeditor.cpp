@@ -39,7 +39,18 @@ bool CodeEditor::isChanged()
 
 void CodeEditor::setErrors(QList<LangError> errors)
 {
-    m_errors = errors;
+//    m_errors = errors;
+
+    // TODO check if errors have changed to avoid having to do all this below unnecessarily
+    foreach(ErrorMarker *marker, m_errorMarkers) {
+        delete marker;
+    }
+    m_errorMarkers.clear();
+
+    foreach(LangError error, errors) {
+        m_errorMarkers.push_back(new ErrorMarker(m_lineNumberArea, error.lineNumber,
+                                                 error.getErrorText()));
+    }
     m_lineNumberArea->repaint();
 }
 
@@ -109,23 +120,21 @@ void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
     int blockNumber = block.blockNumber();
     int top = (int) blockBoundingGeometry(block).translated(contentOffset()).top();
     int bottom = top + (int) blockBoundingRect(block).height();
+    foreach(ErrorMarker *marker, m_errorMarkers) {
+        marker->hide();
+    }
     while (block.isValid() && top <= event->rect().bottom()) {
         if (block.isVisible() && bottom >= event->rect().top()) {
-            bool errorFlag = false;
-            foreach(LangError error, m_errors) {
-                if(error.lineNumber == blockNumber + 1) {
-                    errorFlag = true;
-                }
-            }
-
             QString number = QString::number(blockNumber + 1);
             painter.setPen(Qt::black);
             painter.drawText(0, top, m_lineNumberArea->width(), fontMetrics().height(),
                              Qt::AlignRight, number);
-            if(errorFlag) {
-                painter.setPen(Qt::red);
-                painter.setBrush(Qt::red);
-                painter.drawRect(0, top, fontMetrics().width("9")/2, fontMetrics().height());
+
+            foreach(ErrorMarker *marker, m_errorMarkers) {
+                if (marker->getLineNumber() == blockNumber + 1) {
+                    marker->setGeometry(0, top, fontMetrics().width("9"), fontMetrics().height());
+                    marker->show();
+                }
             }
         }
 

@@ -4,8 +4,9 @@
 #include <QPlainTextEdit>
 #include <QList>
 
-//FIXME move lang error out of codegen
+//FIXME move lang error out of codevalidator
 #include "codevalidator.h"
+#include "errormarker.h"
 
 class CodeEditor : public QPlainTextEdit
 {
@@ -35,7 +36,8 @@ private slots:
 
 private:
     QWidget *m_lineNumberArea;
-    QList<LangError> m_errors;
+    QVector<ErrorMarker *> m_errorMarkers;
+//    QList<LangError> m_errors;
     QString m_filename;
 
 signals:
