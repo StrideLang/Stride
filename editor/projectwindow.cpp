@@ -417,6 +417,7 @@ void ProjectWindow::readSettings()
     }
     settings.endArray();
     ui->tabWidget->setCurrentIndex(settings.value("lastIndex", -1).toInt());
+    tabChanged(settings.value("lastIndex", -1).toInt()); // Should be triggered automatically but isn't...
     settings.endGroup();
 }
 
