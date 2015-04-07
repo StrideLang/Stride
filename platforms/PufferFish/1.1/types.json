@@ -1,7 +1,29 @@
 {"types": [
         {
-            "typeName": "pufferfish",
-            "properties": [{"name": "meta", "validTypes": ["string"], "default": "none"}]
+            "typeName": "_hwInput",
+            "ports": [
+            ],
+            "in_types" : [],
+            "out_types" : [],
+            "code" : {
+                "includes": {"code": ""},
+                "init_code": {"code": ""},
+                "dsp_code": {"code": ""}
+            },
+            "private": {"inherits" : ["object"]}
+        },
+        {
+            "typeName": "_hwOutput",
+            "ports": [
+            ],
+            "in_types" : [],
+            "out_types" : [],
+            "code" : {
+                "includes": {"code": ""},
+                "init_code": {"code": ""},
+                "dsp_code": {"code": ""}
+            },
+            "private": {"inherits" : ["object"]}
         }
     ]
 }

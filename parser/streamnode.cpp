@@ -18,6 +18,8 @@ StreamNode::~StreamNode()
 
 AST *StreamNode::deepCopy()
 {
-    return new StreamNode(m_children.at(0)->deepCopy(), m_children.at(1)->deepCopy(), m_line);
+    AST * stream = new StreamNode(m_children.at(0)->deepCopy(), m_children.at(1)->deepCopy(), m_line);
+    stream->setRate(m_rate);
+    return stream;
 }
 

@@ -3,21 +3,18 @@
             "objectName": "AudioIn",
             "size" : 2,
             "type" : "_hwInput",
-            "code" : {
-                "includes": {"code": ""},
-                "init_code": {"code": ""},
-                "dsp_code": {"code": "%%token%% = io.in(%%bundle_index%%);\n"}
-            }
+            "rate" : {"name": "AudioRate"}
         },
         {
             "objectName": "AudioOut",
             "size" : 2,
             "type" : "_hwOutput",
-            "code" : {
-                "includes": {"code": ""},
-                "init_code": {"code": ""},
-                "dsp_code": {"code": "io.out(%%bundle_index%%) = %%token%%;\n"}
-            }
+            "rate" : {"name": "AudioRate"}
+        },
+        {
+            "objectName": "AudioRate",
+            "type" : "constant",
+            "value" : 44100
         }
     ]
 }

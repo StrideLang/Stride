@@ -20,6 +20,7 @@ private:
 private Q_SLOTS:
 
     //Expansion
+    void testStreamRates();
     void testStreamExpansion();
 
     //Platform
@@ -45,6 +46,32 @@ ParserTest::ParserTest()
 {
 }
 
+void ParserTest::testStreamRates()
+{
+    AST *tree;
+    tree = parse(QString(QFINDTESTDATA("data/rates.stream")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    QVERIFY(generator.isValid());
+    QVERIFY(generator.platformIsValid());
+
+    vector<AST *> nodes = tree->getChildren();
+
+    StreamNode *stream = static_cast<StreamNode *>(nodes.at(1));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    QVERIFY(stream->getRate() == 44100);
+
+    stream = static_cast<StreamNode *>(stream->getRight());
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    QVERIFY(stream->getRate() == 44100);
+
+    BundleNode *bundle = static_cast<BundleNode *>(stream->getRight());
+    QVERIFY(bundle->getNodeType() == AST::Bundle);
+    QVERIFY(bundle->getRate() == 44100);
+
+    delete tree;
+}
+
 void ParserTest::testStreamExpansion()
 {
     AST *tree;
@@ -53,10 +80,6 @@ void ParserTest::testStreamExpansion()
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
     QVERIFY(generator.isValid());
     QVERIFY(generator.platformIsValid());
-
-    StreamPlatform platform = generator.getPlatform();
-    CodeResolver resolver(platform, tree);
-    resolver.process();
 
     vector<AST *> nodes = tree->getChildren();
     QVERIFY(nodes.size() > 3);
@@ -357,7 +380,7 @@ void ParserTest::testDuplicates()
 
 void ParserTest::testListConsistency()
 {
-    AST *tree;
+//    AST *tree;
     // FIXME: List consistency is checked by the parser, should be caught here.
 //    tree = parse(QString(QFINDTESTDATA("data/errorLists.stream")).toStdString().c_str());
 //    QVERIFY(tree == NULL);

@@ -49,8 +49,14 @@ AST *BundleNode::deepCopy()
 {
     assert(getNodeType() == AST::BundleRange || getNodeType() == AST::Bundle);
     if(getNodeType() == AST::Bundle) {
-        return new BundleNode(m_name, m_children.at(0)->deepCopy(), m_line);
-    } else if(getNodeType() == AST::Bundle)  {
-        return new BundleNode(m_name, startIndex()->deepCopy(), endIndex()->deepCopy(), m_line);
+        AST *bundle = new BundleNode(m_name, m_children.at(0)->deepCopy(), m_line);
+        bundle->setRate(m_rate);
+        return bundle;
+    } else if(getNodeType() == AST::BundleRange)  {
+        AST *bundle = new BundleNode(m_name, startIndex()->deepCopy(), endIndex()->deepCopy(), m_line);
+        bundle->setRate(m_rate);
+        return bundle;
     }
+    assert(0 == 1);
+    return 0;
 }

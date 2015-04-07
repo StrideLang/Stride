@@ -22,6 +22,7 @@ public:
     void parseObjectsJson(QString jsonText, QList<PlatformObject> &objects);
 
     QStringList getErrors();
+    QStringList getWarnings();
     QStringList getPlatformTypes();
     QStringList getFunctions();
     QList<PlatformObject> getBuiltinObjects();
@@ -48,6 +49,7 @@ private:
     QString m_version;
 
     QStringList m_errors;
+    QStringList m_warnings;
 
     QList<PlatformType> m_commonTypes;
     QList<PlatformType> m_platformCommonTypes;

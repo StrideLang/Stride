@@ -8,12 +8,14 @@ AST::AST()
 {
     m_token = AST::None;
     m_line = -1;
+    m_rate = -1;
 }
 
 AST::AST(Token token, int line)
 {
     m_token = token;
     m_line = line;
+    m_rate = -1;
 }
 
 AST::~AST()
@@ -58,4 +60,15 @@ AST *AST::parseFile(const char *fileName)
 {
     return parse(fileName);
 }
+
+double AST::getRate() const
+{
+    return m_rate;
+}
+
+void AST::setRate(double rate)
+{
+    m_rate = rate;
+}
+
 

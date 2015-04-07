@@ -78,7 +78,6 @@ void CodeValidator::validate()
         validateBundleIndeces(m_tree, QVector<AST *>());
         validateBundleSizes(m_tree, QVector<AST *>());
         validateSymbolUniqueness(m_tree, QVector<AST *>());
-        validateStreamSymbols(m_tree);
         //    validateListConsistency(m_tree, QVector<AST *>());
         // TODO: validate expression type consistency
         // TODO: validate expression list operations
@@ -173,7 +172,7 @@ void CodeValidator::validateBundleSizes(AST *node, QVector<AST *> scope)
         BlockNode *block = static_cast<BlockNode *>(node);
         int size = getBlockBundleDeclaredSize(block, scope, errors);
         int datasize = getBlockDataSize(block, scope, errors);
-        if(size != datasize && datasize != 0) {
+        if(size != datasize && datasize > 0) {
             LangError error;
             error.type = LangError::BundleSizeMismatch;
             error.lineNumber = node->getLine();
@@ -209,7 +208,7 @@ void CodeValidator::validateSymbolUniqueness(AST *node, QVector<AST *> scope)
                     || node->getNodeType() == AST::BlockBundle) {
                 nodeName = QString::fromStdString(static_cast<BlockNode *>(node)->getName());
             }
-            if (!nodeName.isEmpty() && nodeName == siblingName) {
+            if (!nodeName.isEmpty() && !siblingName.isEmpty() && nodeName == siblingName) {
                 LangError error;
                 error.type = LangError::DuplicateSymbol;
                 error.lineNumber = sibling->getLine();
@@ -259,44 +258,6 @@ void CodeValidator::validateStreamSizes(AST *tree)
     }
 }
 
-
-void CodeValidator::declareUnknownStreamSymbols(StreamNode *stream, AST * tree)
-{
-    AST *left = stream->getLeft();
-
-    if (left->getNodeType() == AST::Name) {
-        NameNode *name = static_cast<NameNode *>(left);
-        BlockNode *block = findDeclaration(QString::fromStdString(name->getName()), QVector<AST *>(), tree);
-        if (!block) {
-            BlockNode *block = new BlockNode(name->getName(), "signal", NULL, -1);
-            tree->addChild(block);
-        }
-    }
-
-    AST *right = stream->getRight();
-    if (right->getNodeType() == AST::Stream) {
-        declareUnknownStreamSymbols(static_cast<StreamNode *>(right), tree);
-    } else if (right->getNodeType() == AST::Name) {
-        NameNode *name = static_cast<NameNode *>(right);
-        BlockNode *block = findDeclaration(QString::fromStdString(name->getName()), QVector<AST *>(), tree);
-        if (!block) {
-            BlockNode *block = new BlockNode(name->getName(), "signal", NULL, -1);
-            tree->addChild(block);
-        }
-    }
-
-}
-
-void CodeValidator::validateStreamSymbols(AST *tree)
-{
-    QVector<AST *> children = QVector<AST *>::fromStdVector(tree->getChildren());
-    foreach(AST *node, children) {
-        if(node->getNodeType() == AST:: Stream) {
-            StreamNode *stream = static_cast<StreamNode *>(node);
-            declareUnknownStreamSymbols(stream, tree);
-        }
-    }
-}
 
 bool errorLineIsLower(const LangError &err1, const LangError &err2)
 {
@@ -360,7 +321,11 @@ int CodeValidator::getNodeSize(AST *value, QVector<AST *> &scope, QList<LangErro
     } else if (value->getNodeType() == AST::Name) {
         NameNode *name = static_cast<NameNode *>(value);
         BlockNode *block = findDeclaration(QString::fromStdString(name->getName()), scope, m_tree);
-        return getBlockBundleDeclaredSize(block, scope, errors);
+        if (block->getNodeType() == AST::BlockBundle) {
+            return getBlockBundleDeclaredSize(block, scope, errors);
+        } else {
+            return -1; // Not a bundle
+        }
     } else if (value->getNodeType() == AST::BundleRange) {
         BundleNode *bundle = static_cast<BundleNode *>(value);
         if (resolveNodeOutType(bundle->endIndex(), scope, m_tree) == ConstInt
@@ -372,7 +337,7 @@ int CodeValidator::getNodeSize(AST *value, QVector<AST *> &scope, QList<LangErro
     return -1;
 }
 
-BlockNode *CodeValidator::findDeclaration(QString bundleName, QVector<AST *> scope, AST *tree)
+BlockNode *CodeValidator::findDeclaration(QString objectName, QVector<AST *> scope, AST *tree)
 {
     QVector<AST *> globalAndLocal;
     globalAndLocal << scope << QVector<AST *>::fromStdVector(tree->getChildren());
@@ -381,13 +346,13 @@ BlockNode *CodeValidator::findDeclaration(QString bundleName, QVector<AST *> sco
             BlockNode *block = static_cast<BlockNode *>(node);
             BundleNode *bundle = block->getBundle();
             QString name = QString::fromStdString(bundle->getName());
-            if (name == bundleName) {
+            if (name == objectName) {
                 return block;
             }
         } else if (node->getNodeType() == AST::Block) {
             BlockNode *block = static_cast<BlockNode *>(node);
             QString name = QString::fromStdString(block->getName());
-            if (name == bundleName) {
+            if (name == objectName) {
                 return block;
             }
         }
@@ -399,6 +364,25 @@ CodeValidator::PortType CodeValidator::resolveBundleType(BundleNode *bundle, QVe
 {
     QString bundleName = QString::fromStdString(bundle->getName());
     BlockNode *declaration = findDeclaration(bundleName, scope, tree);
+    if(declaration) {
+        if (declaration->getObjectType() == "constant") {
+            vector<PropertyNode *> properties = declaration->getProperties();
+            foreach(PropertyNode *property, properties)  {
+                if(property->getName() == "value") {
+                    return resolveNodeOutType(property->getValue(), scope, tree);
+                }
+            }
+        } else {
+//            return QString::fromStdString(declaration->getObjectType());
+        }
+    }
+    return None;
+}
+
+CodeValidator::PortType CodeValidator::resolveNameType(NameNode *name, QVector<AST *>scope, AST *tree)
+{
+    QString nodeName = QString::fromStdString(name->getName());
+    BlockNode *declaration = findDeclaration(nodeName, scope, tree);
     if(declaration) {
         if (declaration->getObjectType() == "constant") {
             vector<PropertyNode *> properties = declaration->getProperties();
@@ -430,6 +414,8 @@ CodeValidator::PortType CodeValidator::resolveNodeOutType(AST *node, QVector<AST
         return resolveBundleType(static_cast<BundleNode *>(node), scope, tree);
     } else if (node->getNodeType() == AST::Expression) {
         return resolveExpressionType(static_cast<ExpressionNode *>(node), scope, tree);
+    } else if (node->getNodeType() == AST::Name) {
+        return resolveNameType(static_cast<NameNode *>(node), scope, tree);
     }
     return None;
 }
@@ -478,6 +464,32 @@ int CodeValidator::evaluateConstInteger(AST *node, QVector<AST *> scope, AST *tr
         if(declaration && declaration->getNodeType() == AST::BlockBundle) {
             AST *member = getMemberfromBlockBundle(declaration, index, errors);
             return evaluateConstInteger(member, scope, tree, errors);
+        }
+    } else if (node->getNodeType() == AST::Expression) {
+        // TODO: check expression out
+    } else {
+        LangError error;
+        error.type = LangError::InvalidType;
+        error.lineNumber = node->getLine();
+        error.errorTokens << getPortTypeName(resolveNodeOutType(node, scope, tree));
+        errors << error;
+    }
+    return result;
+}
+
+double CodeValidator::evaluateConstReal(AST *node, QVector<AST *> scope, AST *tree, QList<LangError> &errors)
+{
+    double result = 0;
+    if (node->getNodeType() == AST::Real) {
+        return static_cast<ValueNode *>(node)->getRealValue();
+    } else if (node->getNodeType() == AST::Bundle) {
+        BundleNode *bundle = static_cast<BundleNode *>(node);
+        QString bundleName = QString::fromStdString(bundle->getName());
+        BlockNode *declaration = findDeclaration(bundleName, scope, tree);
+        int index = evaluateConstInteger(bundle->index(), scope, tree, errors);
+        if(declaration && declaration->getNodeType() == AST::BlockBundle) {
+            AST *member = getMemberfromBlockBundle(declaration, index, errors);
+            return evaluateConstReal(member, scope, tree, errors);
         }
     } else if (node->getNodeType() == AST::Expression) {
         // TODO: check expression out

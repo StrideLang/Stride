@@ -17,7 +17,12 @@ public:
     void process();
 
 private:
+    void resolveRates();
+    void resolveStreamRates(StreamNode *stream);
+    double getNodeRate(AST *node, QVector<AST *> scope, AST *tree);
     void expandBuiltinObjects();
+    void declareUnknownStreamSymbols(StreamNode *stream, AST *tree);
+    void resolveStreamSymbols();
     void resolveConstants();
     void expandStreamBundles();
     void expandTypeBundles();

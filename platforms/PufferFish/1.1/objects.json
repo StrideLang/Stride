@@ -1,11 +1,13 @@
 {"objects": [
         {
             "objectName": "AudioIn",
-            "size" : 2
+            "size" : 2,
+            "type" : "_hwInput"
         },
         {
             "objectName": "AudioOut",
-            "size" : 2
+            "size" : 2,
+            "type" : "_hwOutput"
         }
     ]
 }

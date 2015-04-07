@@ -1,5 +1,22 @@
 {"types": [
         {
+            "typeName": "signal",
+            "ports": [
+                {"name": "input", "types" : ["CSBP"], "default": "none", "required" : false, "maxconnections" : 1, "access": "stream_in"},
+                {"name": "output", "types" : ["CSBP"], "default": "none", "required" : false, "maxconnections" : -1, "access": "stream_out"},
+                {"name": "rate", "types" : ["CIP", "CRP"], "default": "AudioRate", "required" : true, "maxconnections" : 1, "access": "property"}
+            ],
+            "in_types" : ["AS", "CSR"],
+            "out_types" : [ "AS", "CSR"],
+            "code" : {
+                "includes": {"code": ""},
+                "init_code": {"code": ""},
+                "dsp_code": {"code": "%%token%% = %%intoken%%;\n"}
+            }
+            ,
+            "private": {"inherits" : ["object"]}
+        },
+        {
             "typeName": "control",
             "ports": [
                 {"name": "input", "types" : ["ASP", "CSIP", "CSRP"], "default": "none", "required" : false, "maxconnections" : 1, "access": "stream_in"},
@@ -49,9 +66,9 @@
             "code" : {
                 "includes": {"code": ""},
                 "init_code": {"code": ""},
-                "dsp_code": {"code": ""}
+                "dsp_code": {"code": "%%token%% = io.in(%%bundle_index%%);\n"}
             },
-            "private": {"inherits" : ["object"]}
+            "private": {"inherits" : ["signal"]}
         },
         {
             "typeName": "_hwOutput",
@@ -62,9 +79,9 @@
             "code" : {
                 "includes": {"code": ""},
                 "init_code": {"code": ""},
-                "dsp_code": {"code": ""}
+                "dsp_code": {"code": "io.out(%%bundle_index%%) = %%token%%;\n"}
             },
-            "private": {"inherits" : ["object"]}
+            "private": {"inherits" : ["signal"]}
         }
     ]
 }

@@ -10,7 +10,7 @@ ErrorMarker::ErrorMarker(QWidget *parent, int lineNumber, QString text) :
     m_text = new QLabel(m_errorText, this);
     m_text->move(this->x(), this->y());
     m_text->hide();
-//    m_text->adjustSize();
+    m_text->adjustSize();
 //    m_text->resize(100, 100);
 }
 
@@ -24,7 +24,7 @@ void ErrorMarker::paintEvent(QPaintEvent *)
     QPainter painter(this);
 //    painter.setPen(Qt::black);
     painter.setBrush(Qt::red);
-    painter.drawRect(rect());
+    painter.drawRect(0, 0, 20, this->height());
 }
 
 void ErrorMarker::enterEvent(QEvent *event)

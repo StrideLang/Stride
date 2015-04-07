@@ -200,7 +200,7 @@ void StreamPlatform::parseTypesJson(QString jsonText, QList<PlatformType> &types
         }
         if (isValidType(typeName)) {
             QString errorText = "Shadowing duplicated type: " + typeName;
-            m_errors << errorText;
+            m_warnings << errorText;
             qDebug() << errorText;
         }
 
@@ -305,61 +305,21 @@ void StreamPlatform::parseObjectsJson(QString jsonText, QList<PlatformObject> &o
         int size = val.toInt(-1);
         val = objectObj.take("type");
         QString type = val.toString();
-        QVector<CodeGenData> codeList;
-//        QVariantList propList = objectObj.take("properties").toVariant().toList();
-//        QList<Property> ports;
-//        foreach(QVariant prop, propList) {
-//            Property newPort;
-//            QMap<QString, QVariant> portMap = prop.toMap();
-//            newPort.name = portMap.take("name").toString();
-//            if (newPort.name.isEmpty()) {
-//                QString errorText = "Empty name for port in function: " + objectName;
-//                m_errors << errorText;
-//                qDebug() << errorText;
-//            }
-//            newPort.defaultValue = portMap.take("default");
-//            foreach(QVariant propertyType, portMap.take("in_types").toList()) {
-//                newPort.in_types << propertyType.toString();
-//            }
-//            foreach(QVariant propertyType, portMap.take("out_types").toList()) {
-//                newPort.out_types << propertyType.toString();
-//            }
-//            newPort.maxconnections = portMap.take("maxconnections").toInt();
-//            QString accessString = portMap.take("access").toString();
-//            if (accessString == "property") {
-//                newPort.access = Property::PropertyAccess;
-//            } else if (accessString == "stream_in") {
-//                newPort.access = Property::Stream_in;
-//            } else if (accessString == "stream_out") {
-//                newPort.access = Property::Stream_out;
-//            } else {
-//                newPort.access = Property::None;
-//                QString errorText = "Invalid port access: " + accessString + " for type " + funcName;
-//                m_errors << errorText;
-//                qDebug() << errorText;
-//            }
-//            ports.append(newPort);
-//        }
-//        if (isValidType(objectName)) {
-//            QString errorText = "Shadowing duplicated type: " + objectName;
-//            m_errors << errorText;
-//            qDebug() << errorText;
-//        }
+        // The remaining keys in the json object are considered properties
 
-//        QJsonObject privateMap = objectObj.take("private").toObject();
-//        QVariantList inhertitsList = privateMap.take("inherits").toArray().toVariantList();
-//        foreach(QVariant member, inhertitsList) {
-//            ports.append(getPortsForType(member.toString()));
-//        }
-
-        PlatformObject newType(objectName, size, type, codeList);
-        objects.append(newType);
+        PlatformObject newObj(objectName, size, type, objectObj.toVariantMap());
+        objects.append(newObj);
     }
 }
 
 QStringList StreamPlatform::getErrors()
 {
     return m_errors;
+}
+
+QStringList StreamPlatform::getWarnings()
+{
+    return m_warnings;
 }
 
 QStringList StreamPlatform::getPlatformTypes()

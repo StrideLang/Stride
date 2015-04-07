@@ -51,12 +51,17 @@ public:
 
     virtual AST *deepCopy();
 
+
     static AST * parseFile(const char *fileName);
+
+    double getRate() const;
+    void setRate(double rate);
 
 protected:
     Token m_token; // From which token did we create node?
     vector<AST *> m_children; // normalized list of children
     int m_line;
+    double m_rate;
 };
 
 #endif // AST_H

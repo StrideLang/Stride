@@ -50,7 +50,7 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
     m_timer.start(2000);
     connect(ui->tabWidget, SIGNAL(currentChanged(int)), this, SLOT(tabChanged(int)));
 
-    updateCodeAnalysis();
+    QTimer::singleShot(200, this, SLOT(updateCodeAnalysis()));
 }
 
 ProjectWindow::~ProjectWindow()
