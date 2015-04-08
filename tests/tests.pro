@@ -57,7 +57,8 @@ DISTFILES += \
     data/errorDuplicate.stream \
     data/errorLists.stream \
     data/functions.stream \
-    data/expansions.stream
+    data/expansions.stream \
+    data/rates.stream
 
 # Link to codegen library
 

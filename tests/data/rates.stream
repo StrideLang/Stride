@@ -4,4 +4,16 @@ use Gamma version 1.0
 AudioIn[1] >> Signal >> AudioOut[1];
 
 
+signal Rate1 {
+    rate: 22050
+}
+
+signal Rate2 {
+    rate: 11025
+}
+
+Rate1 >> Rate2 >> AudioOut[1];
+
+GetRate1 >> Rate1 >> GetRate2 >> Rate2 >> GetAudioRate >> AudioOut[1];
+
 

@@ -64,12 +64,13 @@ string BlockNode::getObjectType() const
 
 AST *BlockNode::deepCopy()
 {
-    AST * newProps;
+    AST * newProps = new AST();
     for(unsigned int i = 0; i< m_properties.size(); i++) {
         newProps->addChild(m_properties[i]->deepCopy());
     }
     AST *node = new BlockNode(m_name, m_objectType, newProps, m_line);
     node->setRate(m_rate);
+    delete newProps;
     return node;
 }
 

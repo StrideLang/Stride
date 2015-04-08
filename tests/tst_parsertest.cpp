@@ -57,6 +57,7 @@ void ParserTest::testStreamRates()
 
     vector<AST *> nodes = tree->getChildren();
 
+    // AudioIn[1] >> Signal >> AudioOut[1];
     StreamNode *stream = static_cast<StreamNode *>(nodes.at(1));
     QVERIFY(stream->getNodeType() == AST::Stream);
     QVERIFY(stream->getRate() == 44100);
@@ -66,6 +67,44 @@ void ParserTest::testStreamRates()
     QVERIFY(stream->getRate() == 44100);
 
     BundleNode *bundle = static_cast<BundleNode *>(stream->getRight());
+    QVERIFY(bundle->getNodeType() == AST::Bundle);
+    QVERIFY(bundle->getRate() == 44100);
+
+    // Rate1 >> Rate2 >> AudioOut[1];
+    stream = static_cast<StreamNode *>(nodes.at(4));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    QVERIFY(stream->getLeft()->getRate() == 22050);
+
+    stream = static_cast<StreamNode *>(stream->getRight());
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    QVERIFY(stream->getLeft()->getRate() == 11025);
+
+    bundle = static_cast<BundleNode *>(stream->getRight());
+    QVERIFY(bundle->getNodeType() == AST::Bundle);
+    QVERIFY(bundle->getRate() == 44100);
+
+    // Rate1 >> Rate2 >> AudioOut[1];
+    stream = static_cast<StreamNode *>(nodes.at(5));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    QVERIFY(stream->getLeft()->getRate() == 22050);
+
+    stream = static_cast<StreamNode *>(stream->getRight());
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    QVERIFY(stream->getLeft()->getRate() == 22050);
+
+    stream = static_cast<StreamNode *>(stream->getRight());
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    QVERIFY(stream->getLeft()->getRate() == 11025);
+
+    stream = static_cast<StreamNode *>(stream->getRight());
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    QVERIFY(stream->getLeft()->getRate() == 11025);
+
+    stream = static_cast<StreamNode *>(stream->getRight());
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    QVERIFY(stream->getLeft()->getRate() == 44100);
+
+    bundle = static_cast<BundleNode *>(stream->getRight());
     QVERIFY(bundle->getNodeType() == AST::Bundle);
     QVERIFY(bundle->getRate() == 44100);
 
