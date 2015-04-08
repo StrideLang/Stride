@@ -66,9 +66,14 @@ double CodeResolver::getNodeRate(AST *node, QVector<AST *> scope, AST *tree)
         vector<PropertyNode *> properties = declaration->getProperties();
         foreach(PropertyNode *property, properties) {
             if (property->getName() == "rate") { // FIXME this assumes that a property named rate always applies to stream rate...
-                AST *value = property->getValue();
+                AST *propertyValue = property->getValue();
                 QList<LangError> errors;
-                int rate = CodeValidator::evaluateConstInteger(value, QVector<AST *>(), tree, errors); // TODO what to set here as scope?
+                int rate = -1;
+                if (propertyValue->getNodeType() == AST::Int) {
+                    rate = CodeValidator::evaluateConstInteger(propertyValue, QVector<AST *>(), tree, errors);
+                } else if (propertyValue->getNodeType() ==AST::Real) {
+                    rate = CodeValidator::evaluateConstReal(propertyValue, QVector<AST *>(), tree, errors);
+                }
                 if (errors.size() == 0) {
                     name->setRate(rate);
                     return rate;
@@ -288,6 +293,7 @@ AST *CodeResolver::expandStreamMember(AST *node, int i)
         AST * left = expandStreamMember(streamNode->getLeft(), i);
         AST * right = expandStreamMember(streamNode->getRight(), i);
         newNode = new StreamNode(left, right, streamNode->getLine());
+        newNode->setRate(node->getRate());
     } else if (node->getNodeType() == AST::Bundle) {
         newNode = static_cast<BundleNode *>(node)->deepCopy(); // TODO must check how many connections the type supports
     } else {

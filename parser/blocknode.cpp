@@ -68,7 +68,9 @@ AST *BlockNode::deepCopy()
     for(unsigned int i = 0; i< m_properties.size(); i++) {
         newProps->addChild(m_properties[i]->deepCopy());
     }
-    return new BlockNode(m_name, m_objectType, newProps, m_line);
+    AST *node = new BlockNode(m_name, m_objectType, newProps, m_line);
+    node->setRate(m_rate);
+    return node;
 }
 
 

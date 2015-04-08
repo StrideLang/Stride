@@ -15,5 +15,7 @@ NameNode::~NameNode()
 
 AST *NameNode::deepCopy()
 {
-    return new NameNode(m_name, m_line);
+    NameNode *node = new NameNode(m_name, m_line);
+    node->setRate(m_rate);
+    return node;
 }
