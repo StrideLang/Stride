@@ -54,6 +54,41 @@ void CodeResolver::resolveStreamRates(StreamNode *stream)
     stream->setRate(rate);
 }
 
+void CodeResolver::fillDefaultProperties()
+{
+    vector<AST *> nodes = m_tree->getChildren();
+    for(unsigned int i = 0; i < nodes.size(); i++) {
+        AST* node = nodes.at(i);
+        if (node->getNodeType() == AST::Block || node->getNodeType() == AST::Block) {
+            BlockNode *block = static_cast<BlockNode *>(node);
+            vector<PropertyNode *> blockProperties = block->getProperties();
+            QList<Property> typeProperties = m_platform.getPortsForType(QString::fromStdString(block->getObjectType()));
+            foreach(Property typeProperty, typeProperties) {
+                bool propertySet = false;
+                foreach(PropertyNode *blockProperty, blockProperties) {
+                    if (blockProperty->getName() == typeProperty.name.toStdString()) {
+                        propertySet = true;
+                        break;
+                    }
+                }
+                if (!propertySet) {
+                    ValueNode *value = NULL;
+                    if (typeProperty.defaultValue.type() == QVariant::Int) {
+                        value = new ValueNode(typeProperty.defaultValue.toInt(), -1);
+                    } else if (typeProperty.defaultValue.type() == QVariant::Double) {
+                        value = new ValueNode(typeProperty.defaultValue.toDouble(), -1);
+                    } else if (typeProperty.defaultValue.type() == QVariant::String) {
+                        value = new ValueNode(typeProperty.defaultValue.toString().toStdString(), -1);
+                    }
+                    Q_ASSERT(value);
+                    PropertyNode *newProperty = new PropertyNode(typeProperty.name.toStdString(), value, -1);
+                    block->addProperty(newProperty);
+                }
+            }
+        }
+    }
+}
+
 double CodeResolver::getNodeRate(AST *node, QVector<AST *> scope, AST *tree)
 {
     Q_ASSERT(node->getRate() == -1); // Make sure rate hasn't been set

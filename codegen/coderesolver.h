@@ -19,6 +19,7 @@ public:
 private:
     void resolveRates();
     void resolveStreamRates(StreamNode *stream);
+    void fillDefaultProperties(); // This should be called when required, but not generally. Otherwise it's hard to tell which are default and which are set by the user.
     double getNodeRate(AST *node, QVector<AST *> scope, AST *tree);
     void expandBuiltinObjects();
     void declareUnknownStreamSymbols(StreamNode *stream, AST *tree);
