@@ -1,0 +1,5 @@
+use Gamma version 1.0
+
+signal Sig {}
+
+Sig >> AudioOut[0];

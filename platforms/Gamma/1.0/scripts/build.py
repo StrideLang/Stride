@@ -61,9 +61,9 @@ dsp_code = ''
 
 num_chnls = 2;
 
-platform_funcs = json.load(open(platform_dir + '/functions.json'))['functions']
-platform_objs = json.load(open(platform_dir + '/objects.json'))['objects']
-platform_types = json.load(open(platform_dir + '/types.json'))['types']
+_platform_funcs = json.load(open(platform_dir + '/functions.json'))['functions']
+#_platform_objs = json.load(open(platform_dir + '/objects.json'))['objects']
+_platform_types = json.load(open(platform_dir + '/types.json'))['types']
 
 # --------------------- Common platform functions
 
@@ -80,30 +80,43 @@ def find_definition_in_tree(block_name, tree):
         if 'blockbundle' in node:
             if node["blockbundle"]["name"] == block_name:
                 return node["blockbundle"]
+    print("Declaration not found for " + block_name)
     return None
+
+def find_platform_type(type_name, platform_types):
+    for platform_type in platform_types:
+        if platform_type['typeName'] == type_name:
+            platform_type = platform_type
+            break
+    if not platform_type:
+        print("Declaration not found for " + name + ' of type ' + type_name)
+    return platform_type
 
 def find_block(platform_types, name, tree):
     block_declaration = find_definition_in_tree(name, tree)
-    if not block_declaration:
-        print("Declaration not found for " + name)
-    block_type = None
-    for platform_type in platform_types:
-#        print(str(block_declaration))
-        if block_declaration and platform_type['typeName'] == block_declaration["type"]:
-            block_type = platform_type
-            break
-    if not block_type:
-        print("Declaration not found for " + name + ' of type ' + block_declaration["type"])
-#        print(str(platform_types))
-    return block_type, block_declaration
+    platform_type = find_platform_type(block_declaration["type"], platform_types)
+    return platform_type, block_declaration
+
+def find_port_value(object_name, port_name, platform_types, tree):
+    platform_type, block_declaration = find_block(platform_types, object_name, tree)
+    # first look in declaration
+    for port in block_declaration["ports"]:
+        if port == port_name:
+            return block_declaration["ports"][port]["value"]
+    #then in type for default values
+#    for type in platform_type:
+#        for key in type["ports"]:
+#            if key == "name" and type["ports"]["name"] == port_name:
+#                return type[
+    return None
 
 def find_function_property(func, property_name):
     return func["properties"][property_name]
 
-def find_builtin_object(platform_objs, name):
-    for obj in platform_objs:
-        if obj['objectName'] == name:
-            return obj
+#def find_builtin_object(platform_objs, name):
+#    for obj in platform_objs:
+#        if obj['objectName'] == name:
+#            return obj
 
 def bool_to_str(bool_val):
     if not type(bool_val) == bool:
@@ -112,6 +125,8 @@ def bool_to_str(bool_val):
         return "true"
     else:
         return "false"
+
+# ------------------------- Text processing functions
 
 def put_property_values(template_code, properties, func):
     final_code = template_code
@@ -136,23 +151,56 @@ def put_property_values(template_code, properties, func):
         final_code = final_code.replace(match, value)
     return final_code
 
-def get_type_code(block_type, var_name, intoken, bundle_index = -1):
+def put_port_values(template_code, ports):
+    final_code = template_code
+
+    p = re.compile(r"%%port:[a-zA-Z]+%%")
+    for match in p.findall(final_code):
+        port_name = match[match.rindex(':') + 1: -2]
+
+        if port_name in ports:
+            port_value = ports[port_name]
+            if "value" in port_value:
+                if type(port_value["value"]) == bool:
+                    value = bool_to_str(port_value["value"])
+                else:
+                    value = str(port_value["value"])
+                final_code = final_code.replace(match, value)
+        else:
+            raise ValueError("Property in code not matched")
+    return final_code
+
+
+def get_obj_code(obj_name, platform_types, var_name, intoken, bundle_index = -1):
+    platform_type, declaration = find_block(platform_types, obj_name, tree)
+    if not declaration:
+        raise ValueError("Declaration not found.")
+    new_code = get_type_code(platform_type, var_name, intoken, bundle_index)
+
+    ports = platform_type["ports"].copy()
+    ports.update(declaration["ports"])
+
+    print(declaration)
+    new_code["init_code"] = put_port_values(new_code["init_code"], ports)
+    new_code["dsp_code"] = put_port_values(new_code["dsp_code"], ports)
+    return new_code
+
+def get_type_code(platform_type, var_name, intoken, bundle_index = -1):
     code = {}
     new_init_code = '';
     new_dsp_code = '';
 
-    print(block_type)
-    new_init_code = block_type["code"]["init_code"]["code"]
+    new_init_code = platform_type["code"]["init_code"]["code"]
     if "%%token%%" in new_init_code:
         new_init_code = new_init_code.replace("%%token%%", var_name)
     if "%%intoken%%" in new_init_code:
         new_init_code = new_init_code.replace("%%intoken%%", intoken)
-    if bundle_index > 0:
+    if bundle_index >= 0:
         new_init_code = new_init_code.replace("%%bundle_index%%", str(bundle_index - 1))
 #    if ugen_name:
 #        new_init_code = new_init_code.replace("%%identifier%%", ugen_name)
 
-    new_dsp_code = block_type['code']['dsp_code']['code']
+    new_dsp_code = platform_type['code']['dsp_code']['code']
     if "%%token%%" in new_dsp_code:
         new_dsp_code = new_dsp_code.replace("%%token%%", var_name)
     if "%%intoken%%" in new_dsp_code:
@@ -164,27 +212,23 @@ def get_type_code(block_type, var_name, intoken, bundle_index = -1):
 
     code["dsp_code"] = new_dsp_code
     code["init_code"] = new_init_code
-    if "includes" in block_type["code"]:
-        if len(block_type["code"]["includes"]["code"]) > 0:
-            code["includes"] = "#include <%s>"%block_type["code"]["includes"]["code"]
+    if "includes" in platform_type["code"]:
+        if len(platform_type["code"]["includes"]["code"]) > 0:
+            code["includes"] = "#include <%s>"%platform_type["code"]["includes"]["code"]
 
     return code
 
-def get_function_code(function_name, properties, token, intoken, ugen_name, func):
+def get_function_code(func, properties, token, intoken, ugen_name):
     code = {}
     new_init_code = '';
     new_dsp_code = '';
 
-    obj = find_function(platform_funcs, function_name)
-    if not obj:
-        raise ValueError("Function not found.")
-
-    new_init_code = obj["code"]["init_code"]["code"]
+    new_init_code = func["code"]["init_code"]["code"]
     new_init_code = new_init_code.replace("%%token%%", token)
     new_init_code = new_init_code.replace("%%intoken%%", intoken)
     new_init_code = new_init_code.replace("%%identifier%%", ugen_name)
 
-    new_dsp_code = obj["code"]["dsp_code"]["code"]
+    new_dsp_code = func["code"]["dsp_code"]["code"]
     new_dsp_code = new_dsp_code.replace("%%token%%", token)
     new_dsp_code = new_dsp_code.replace("%%intoken%%", intoken)
     new_dsp_code = new_dsp_code.replace("%%identifier%%", ugen_name)
@@ -192,47 +236,12 @@ def get_function_code(function_name, properties, token, intoken, ugen_name, func
     new_init_code = put_property_values(new_init_code, properties, func)
     new_dsp_code = put_property_values(new_dsp_code, properties, func)
 
-
-#    for prop_name, prop_value in properties.iteritems():
-#        template = '%%property:' + prop_name + '%%'
-#        if template in new_init_code:
-#            if type(prop_value["value"]) == bool:
-#                new_init_code = new_init_code.replace(template, bool_to_str(prop_value["value"]))
-#            else:
-#                new_init_code = new_init_code.replace(template, str(prop_value["value"]))
-#        if template in new_dsp_code:
-#            if type(prop_value["value"]) == bool:
-#                new_dsp_code = new_dsp_code.replace(template, bool_to_str(prop_value["value"]))
-#            else:
-#                new_dsp_code = new_dsp_code.replace(template, str(prop_value["value"]))
-
     code["dsp_code"] = new_dsp_code
     code["init_code"] = new_init_code
-    if "includes" in obj["code"]:
-        if len(obj["code"]["includes"]["code"]) > 0:
-            code["includes"] = "#include <%s>"%obj["code"]["includes"]["code"]
+    if "includes" in func["code"]:
+        if len(func["code"]["includes"]["code"]) > 0:
+            code["includes"] = "#include <%s>"%func["code"]["includes"]["code"]
     return code
-
-def get_obj_code(obj_name, var_name, intoken, bundle_index = -1):
-    code = {}
-    new_init_code = '';
-    new_dsp_code = '';
-
-    obj = find_builtin_object(platform_objs, obj_name)
-    if not obj:
-        obj = find_definition_in_tree(obj_name, tree)
-        block_type, declaration = find_block(platform_types, obj_name, tree)
-        if not declaration:
-            raise ValueError("Declaration not found.")
-        new_code = get_type_code(block_type, var_name, intoken)
-        return new_code
-
-    if not obj:
-        raise ValueError("Object declaration not found.")
-
-    block_type, declaration = find_block(platform_types, obj_name, tree)
-    new_code = get_type_code(block_type, var_name, intoken)
-    return new_code
 
 # ---------------------
 
@@ -260,6 +269,9 @@ AudioDevice adevo = AudioDevice::defaultOutput();
 AudioIO io(%%block_size%%, %%sample_rate%%, audioCB, NULL, %%num_out_chnls%%, %%num_in_chnls%%);
 '''
 
+dsp_code = ''
+init_code = ''
+
 for node in tree:
     if 'block' in node:
         if node['block']['type'] == 'config':
@@ -281,19 +293,19 @@ for node in tree:
             intoken = "stream_%02i"%(stream_index-1) if stream_index > 0 else ''
 
             if parts['type'] == 'Bundle':
-                new_code = get_obj_code(parts["name"], var_name, intoken, parts["index"])
+                new_code = get_obj_code(parts["name"], _platform_types, var_name, intoken, parts["index"])
                 dsp_code += new_code["dsp_code"]
                 init_code += new_code["init_code"]
             elif parts['type'] == 'Name':
-                new_code = get_obj_code(parts["name"], var_name, intoken)
+                new_code = get_obj_code(parts["name"], _platform_types, var_name, intoken)
                 dsp_code += new_code["dsp_code"]
                 init_code += new_code["init_code"]
             elif parts['type'] == 'Function':
-                func = find_function(platform_funcs, parts["name"])
+                func = find_function(_platform_funcs, parts["name"])
                 if not func:
                     raise ValueError("Function not found")
                 ugen_name = "ugen_%02i"%(ugen_index)
-                new_code = get_function_code(parts['name'], parts["properties"], var_name, intoken, ugen_name, func)
+                new_code = get_function_code(func, parts["properties"], var_name, intoken, ugen_name)
 
                 dsp_code += new_code["dsp_code"]
                 init_code += new_code["init_code"]

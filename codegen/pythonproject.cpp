@@ -114,7 +114,7 @@ void PythonProject::writeAST()
                             = QString::fromStdString(static_cast<ValueNode *>(propValue)->getStringValue());
                 }
             }
-            blockObj["properties"] = propertiesObj;
+            blockObj["ports"] = propertiesObj;
             nodeObject["block"] = blockObj;
         } else if (node->getNodeType() == AST::BlockBundle) {
             QJsonObject blockObj;
@@ -131,7 +131,7 @@ void PythonProject::writeAST()
                             = static_cast<ValueNode *>(propValue)->getIntValue();
                 }
             }
-            blockObj["properties"] = propertiesObj;
+            blockObj["ports"] = propertiesObj;
             nodeObject["blockbundle"] = blockObj;
         }
         treeObject.append(nodeObject);

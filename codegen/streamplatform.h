@@ -27,6 +27,9 @@ public:
     QStringList getFunctions();
     QList<PlatformObject> getBuiltinObjects();
 
+    QList<Property> getPortsForType(QString typeName);
+    QList<Property> getPortsForFunction(QString typeName);
+
     bool isValidType(QString typeName);
     bool typeHasPort(QString typeName, QString propertyName);
     bool isValidPortType(QString typeName, QString propertyName, QString propType);
@@ -41,8 +44,6 @@ private:
     void parsePlatformFunction();
     void parsePlatformObjects();
 
-    QList<Property> getPortsForType(QString typeName);
-    QList<Property> getPortsForFunction(QString typeName);
 
     QString m_platformRootPath;
     QString m_platformName;

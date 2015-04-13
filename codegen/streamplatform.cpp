@@ -19,8 +19,8 @@ StreamPlatform::StreamPlatform(QString platformPath, QString platform, QString v
     m_platformRootPath(platformPath), m_platformName(platform), m_version(version)
 {
     initBasicTypes();
-    parsePlatformTypes();
     parsePlatformCommonTypes();
+    parsePlatformTypes();
     parsePlatformFunction();
     parseCommonTypes();
     parsePlatformObjects();
@@ -164,26 +164,21 @@ void StreamPlatform::parseTypesJson(QString jsonText, QList<PlatformType> &types
 
     foreach(QJsonValue type, typesArray) {
         QJsonObject typeObj = type.toObject();
-        QJsonValue val = typeObj.take("typeName");
-        QString typeName = val.toString();
-        QVariantList portsList = typeObj.take("ports").toVariant().toList();
+        QString typeName = typeObj.take("typeName").toString();
+        QVariantMap portsMap = typeObj.take("ports").toObject().toVariantMap();
+        QStringList portNames = portsMap.keys();
         QList<Property> ports;
-        foreach(QVariant port, portsList) {
+        foreach(QString portName, portNames) {
+            QVariantMap port = portsMap.value(portName).toMap();
             Property newPort;
-            QMap<QString, QVariant> portMap = port.toMap();
-            newPort.name = portMap.take("name").toString();
-            if (newPort.name.isEmpty()) {
-                QString errorText = "Empty name for port in: " + typeName;
-                m_errors << errorText;
-                qDebug() << errorText;
-            }
-            newPort.defaultValue = portMap.take("default");
-            newPort.required = portMap.take("required").toBool();
-            foreach(QVariant propertyType, portMap.take("types").toList()) {
+            newPort.name = portName;
+            newPort.defaultValue = port.take("default");
+            newPort.required = port.take("required").toBool();
+            foreach(QVariant propertyType, port.take("types").toList()) {
                 newPort.types << propertyType.toString();
             }
-            newPort.maxconnections = portMap.take("maxconnections").toInt();
-            QString accessString = portMap.take("access").toString();
+            newPort.maxconnections = port.take("maxconnections").toInt();
+            QString accessString = port.take("access").toString();
             if (accessString == "property") {
                 newPort.access = Property::PropertyAccess;
             } else if (accessString == "stream_in") {
@@ -204,7 +199,7 @@ void StreamPlatform::parseTypesJson(QString jsonText, QList<PlatformType> &types
             qDebug() << errorText;
         }
 
-        QJsonObject privateMap = typeObj.take("private").toObject();
+        QJsonObject privateMap = typeObj.take("privateports").toObject();
         QVariantList inhertitsList = privateMap.take("inherits").toArray().toVariantList();
         foreach(QVariant member, inhertitsList) {
             ports.append(getPortsForType(member.toString()));

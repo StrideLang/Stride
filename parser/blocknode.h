@@ -17,6 +17,7 @@ public:
     string getName() const;
     BundleNode *getBundle() const;
     vector<PropertyNode *> getProperties() const;
+    void addProperty(PropertyNode *newProperty);
 
     string getObjectType() const;
     AST *deepCopy();

@@ -83,7 +83,7 @@ void ParserTest::testStreamRates()
     QVERIFY(bundle->getNodeType() == AST::Bundle);
     QVERIFY(bundle->getRate() == 44100);
 
-    // Rate1 >> Rate2 >> AudioOut[1];
+    // GetRate1 >> Rate1 >> GetRate2 >> Rate2 >> GetAudioRate >> AudioOut[1];
     stream = static_cast<StreamNode *>(nodes.at(5));
     QVERIFY(stream->getNodeType() == AST::Stream);
     QVERIFY(stream->getLeft()->getRate() == 22050);
@@ -108,6 +108,7 @@ void ParserTest::testStreamRates()
     QVERIFY(bundle->getNodeType() == AST::Bundle);
     QVERIFY(bundle->getRate() == 44100);
 
+    tree->deleteChildren();
     delete tree;
 }
 

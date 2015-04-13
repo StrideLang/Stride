@@ -58,7 +58,8 @@ DISTFILES += \
     data/errorLists.stream \
     data/functions.stream \
     data/expansions.stream \
-    data/rates.stream
+    data/rates.stream \
+    data/defaultProperties.stream
 
 # Link to codegen library
 

@@ -40,7 +40,7 @@ string BlockNode::getName() const
     if(getNodeType() == AST::Block) {
         return m_name;
     } else if(getNodeType() == AST::BlockBundle) {
-        return static_cast<BundleNode *>(m_children.at(0))->getName();
+        return getBundle()->getName();
     }
     assert(0 == 1);
     return string();
@@ -55,6 +55,12 @@ BundleNode *BlockNode::getBundle() const
 vector<PropertyNode *> BlockNode::getProperties() const
 {
     return m_properties;
+}
+
+void BlockNode::addProperty(PropertyNode *newProperty)
+{
+    addChild(newProperty);
+    m_properties.push_back(newProperty);
 }
 
 string BlockNode::getObjectType() const

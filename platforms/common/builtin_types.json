@@ -1,70 +1,74 @@
 {"types": [
         {
             "typeName": "object",
-            "ports": [{"name": "meta", "types": ["CSP", "none"], "default": "none", "required" : false, "maxconnections" : 1, "access": "property"}],
-            "private": {"inherits" : []}
+            "ports": {
+                "meta": {"types": ["CSP", "none"], "default": "none", "required" : false, "maxconnections" : 1, "access": "property"}
+            },
+            "privateports": {
+                "inherits" : []
+            }
         },
         {
             "typeName": "switch",
-            "ports": [
-                {"name": "input", "types" : ["CSBP"], "default": "none", "required" : false, "maxconnections" : 1, "access": "stream_in"},
-                {"name": "output", "types" : ["CSBP"], "default": "none", "required" : false, "maxconnections" : -1, "access": "stream_out"},
-                {"name": "default", "types" : ["CBP"], "default": "off", "required" : true, "maxconnections" : 1, "access": "property"}
-            ],
-            "private": {"inherits" : ["object"]}
+            "ports": {
+                "input": {"types" : ["CSBP"], "default": "none", "required" : false, "maxconnections" : 1, "access": "stream_in"},
+                "output": {"types" : ["CSBP"], "default": "none", "required" : false, "maxconnections" : -1, "access": "stream_out"},
+                "default": {"types" : ["CBP"], "default": "off", "required" : true, "maxconnections" : 1, "access": "property"}
+            },
+            "privateports": {
+                "inherits" : ["object"]
+            }
         },
         {
             "typeName": "signal",
-            "ports": [
-                {"name": "input", "types" : ["CSBP"], "default": "none", "required" : false, "maxconnections" : 1, "access": "stream_in"},
-                {"name": "output", "types" : ["CSBP"], "default": "none", "required" : false, "maxconnections" : -1, "access": "stream_out"},
-                {"name": "rate", "types" : ["CIP"], "default": "AudioRate", "required" : true, "maxconnections" : 1, "access": "property"}
-            ],
-            "private": {"inherits" : ["object"]}
+            "ports": {
+                "input": {"types" : ["CSBP"], "default": "none", "required" : false, "maxconnections" : 1, "access": "stream_in"},
+                "output": {"types" : ["CSBP"], "default": "none", "required" : false, "maxconnections" : -1, "access": "stream_out"},
+                "rate": {"types" : ["CIP", "CRP"], "default": "AudioRate", "required" : true, "maxconnections" : 1, "access": "property"}
+            },
+            "privateports": {"inherits" : ["object"]}
         },
         {
             "typeName": "constant",
-            "ports": [
-                {"name": "output", "types" : ["CIP", "CRP" , "CSP"], "default": "none", "required" : false, "maxconnections" : -1, "access": "stream_out"},
-                {"name": "value", "types": ["CIP", "CRP" , "CSP", "none"], "default": "none", "required" : true, "maxconnections" : 1, "access": "property"}
-            ],
-            "private": {"inherits" : ["object"]}
+            "ports": {
+                "output": {"types" : ["CIP", "CRP" , "CSP"], "default": "none", "required" : false, "maxconnections" : -1, "access": "stream_out"},
+                "value": {"types": ["CIP", "CRP" , "CSP", "none"], "default": "none", "required" : true, "maxconnections" : 1, "access": "property"}
+            },
+            "privateports": {"inherits" : ["object"]}
         },
         {
             "typeName": "control",
-            "ports": [
-                {"name": "input", "types" : ["ASP", "CSIP", "CSRP"], "default": "none", "required" : false, "maxconnections" : 1, "access": "stream_in"},
-                {"name": "output", "types" : ["CSIP", "CSRP"], "default": "none", "required" : false, "maxconnections" : -1, "access": "stream_out"},
-                {"name": "default", "types" : ["CIP", "CRP"], "default": 0.0, "required" : true, "maxconnections" : 1, "access": "property"},
-                {"name": "rate", "types" : ["CIP"], "default": "ControlRate", "required" : true, "maxconnections" : 1, "access": "property"},
-                {"name": "enableMapping", "types" : ["CBP"], "default": "on", "required" : true, "maxconnections" : 1, "access": "property"},
-                {"name": "mappingMode", "types" : ["CSP"], "default": "'linear'", "required" : true, "maxconnections" : 1, "access": "property"},
-                {"name": "minimum", "types" : ["CIP", "CRP"], "default": 0.0, "required" : true, "maxconnections" : 1, "access": "property"},
-                {"name": "maximum", "types" : ["CIP", "CRP"], "default": 1.0, "required" : true, "maxconnections" : 1, "access": "property"},
-                {"name": "increment", "types" : ["CIP", "CRP", "none"], "default": "none", "required" : true, "maxconnections" : 1, "access": "property"},
-                {"name": "rounding", "types" : ["CSP"], "default": "'truncate'", "required" : true, "maxconnections" : 1, "access": "property"}
-            ],
-            "private": {"inherits" : ["object"]}
+            "ports": {
+                "input": {"types" : ["ASP", "CSIP", "CSRP"], "default": "none", "required" : false, "maxconnections" : 1, "access": "stream_in"},
+                "output": {"types" : ["CSIP", "CSRP"], "default": "none", "required" : false, "maxconnections" : -1, "access": "stream_out"},
+                "default": {"types" : ["CIP", "CRP"], "default": 0.0, "required" : true, "maxconnections" : 1, "access": "property"},
+                "rate": {"types" : ["CIP"], "default": "ControlRate", "required" : true, "maxconnections" : 1, "access": "property"},
+                "enableMapping": {"types" : ["CBP"], "default": "on", "required" : true, "maxconnections" : 1, "access": "property"},
+                "mappingMode": {"types" : ["CSP"], "default": "'linear'", "required" : true, "maxconnections" : 1, "access": "property"},
+                "minimum": {"types" : ["CIP", "CRP"], "default": 0.0, "required" : true, "maxconnections" : 1, "access": "property"},
+                "maximum": {"types" : ["CIP", "CRP"], "default": 1.0, "required" : true, "maxconnections" : 1, "access": "property"},
+                "increment": {"types" : ["CIP", "CRP", "none"], "default": "none", "required" : true, "maxconnections" : 1, "access": "property"},
+                "rounding": {"types" : ["CSP"], "default": "'truncate'", "required" : true, "maxconnections" : 1, "access": "property"}
+            },
+            "privateports": {"inherits" : ["object"]}
         },
         {
             "typeName": "patch",
-            "ports": [
-
-            ],
-            "private": {"inherits" : ["object"]}
+            "ports": {
+            },
+            "privateports": {"inherits" : ["object"]}
         },
         {
             "typeName": "sequence",
-            "ports": [
-
-            ],
-            "private": {"inherits" : ["object"]}
+            "ports": {
+            },
+            "privateports": {"inherits" : ["object"]}
         },
         {
             "typeName": "instrument",
-            "ports": [
-            ],
-            "private": {"inherits" : ["object"]}
+            "ports": {
+            },
+            "privateports": {"inherits" : ["object"]}
         }
     ]
 }
