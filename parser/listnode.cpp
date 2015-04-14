@@ -46,5 +46,6 @@ AST *ListNode::deepCopy()
     for(unsigned int i = 1; i < children.size(); i++) {
         newList->addChild(children.at(i)->deepCopy());
     }
+    return newList;
 }
 
