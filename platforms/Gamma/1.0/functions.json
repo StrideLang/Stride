@@ -43,7 +43,10 @@
             "code" : {
                 "includes": {"code": "Gamma/Oscillator.h"},
                 "init_code": {"code": "Sine<> %%identifier%%(%%property:frequency%%, %%property:phase%%);\n"},
-                "dsp_code": {"code": "%%token%% = %%identifier%%();\n"}
+                "dsp_code": {
+                    "code": "%%token%% = %%identifier%%();\n",
+                    "frequency": "%%identifier%%.freq(%%intoken%%);\n"
+                }
             }
         }
     ]

@@ -1,17 +1,20 @@
 use Gamma version 1.0
 
+constant CarrierFreq {
+	value: 440
+}
+
+
 control Modulator {
         default:        100.0
         enableMapping:  on
         mappingMode:    'linear'
-        minimum:        50.0
-        maximum:        1000.0
+        minimum:        220
+        maximum:        660
         increment:      none
         rounding:       'truncate'
         meta:           none
 }
-
-
 
 oscillator (
         type:           'sine'
@@ -24,9 +27,7 @@ oscillator (
 oscillator (
         type:           'sine'
         amplitude:      1.0
-        frequency:      440.0
+        frequency:      Modulator
         phase:          0.0
         reset:          off
 ) >> level(gain: 0.2) >> AudioOut;
- 
-#AudioIn >> level(gain: 2) >> lowPass(cutOff: 100) >> AudioOut;
