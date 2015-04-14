@@ -9,18 +9,22 @@ BaseProject::BaseProject(QString projectDir) :
     QObject(), m_projectDir(projectDir)
 {
     m_runProcess = new QProcess(this);
+    QDir::setCurrent("/home/andres/Documents/src/XMOS/Odo/Streamstack/platforms/Gamma/1.0/scripts");
+
+#ifdef USE_LUA
     m_lua = lua_open();
 
-    QDir::setCurrent("/home/andres/Documents/src/XMOS/Odo/Streamstack/platforms/Gamma/1.0/scripts");
     m_lua = lua_open();
     luaL_openlibs(m_lua); // Load standard libraries
+#endif
 }
 
 BaseProject::~BaseProject()
 {
     delete m_runProcess;
-
+#ifdef USE_LUA
     lua_close(m_lua);
+#endif
 }
 
 void BaseProject::build()

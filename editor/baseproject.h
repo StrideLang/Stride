@@ -7,10 +7,12 @@
 #include <QProcess>
 #include <QMutex>
 
+#ifdef USE_LUA
 extern "C" {
 // #include "luajit-2.0/lua.hpp"
 #include "lua.hpp"
 }
+#endif
 
 #include "streamplatform.h"
 
@@ -28,8 +30,8 @@ public:
     void setBoardId(QString id) {m_board_id = id;}
     void setCode(QString code) {m_code = code;}
 
-    virtual void setProjectName(QString name) {};
-    virtual void save() {};
+    virtual void setProjectName(QString name) {}
+    virtual void save() {}
 
 public slots:
     virtual void build();
@@ -48,7 +50,11 @@ protected:
 
     QProcess *m_runProcess;
     QMutex m_codeMutex;
+
+#ifdef USE_LUA
     lua_State *m_lua;
+#endif
+
 signals:
     void outputText(QString text);
     void errorText(QString text);
