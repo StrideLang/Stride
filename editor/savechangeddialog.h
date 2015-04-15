@@ -18,6 +18,9 @@ public:
     void setListContents(QStringList fileNames);
     QList<int> getSelected();
 
+private slots:
+    void selectionChanged();
+
 private:
     Ui::SaveChangedDialog *ui;
 };

@@ -10,6 +10,10 @@ SaveChangedDialog::SaveChangedDialog(QWidget *parent) :
     ui->setupUi(this);
     QPushButton *button = ui->buttonBox->button(QDialogButtonBox::Save);
     button->setDefault(true);
+    connect(ui->listWidget,SIGNAL(itemSelectionChanged()),
+            this, SLOT(selectionChanged()));
+
+    ui->listWidget->setSelectionMode(QAbstractItemView::MultiSelection);
 }
 
 SaveChangedDialog::~SaveChangedDialog()
@@ -34,4 +38,14 @@ QList<int> SaveChangedDialog::getSelected()
         selected.append(ui->listWidget->row(item));
     }
     return selected;
+}
+
+void SaveChangedDialog::selectionChanged()
+{
+    QList<QListWidgetItem *> selected = ui->listWidget->selectedItems();
+    if (selected.size() == 0) {
+        ui->buttonBox->button(QDialogButtonBox::Save)->setText(tr("Quit"));
+    } else {
+        ui->buttonBox->button(QDialogButtonBox::Save)->setText(tr("Save"));
+    }
 }
