@@ -4,6 +4,7 @@
 #include <QCoreApplication>
 
 #include "pythonproject.h"
+#include "codevalidator.h"
 
 
 PythonProject::PythonProject(QObject *parent,
@@ -112,6 +113,8 @@ void PythonProject::writeAST()
                 } else if (propValue->getNodeType() == AST::String) {
                     propertiesObj[QString::fromStdString(prop->getName())]
                             = QString::fromStdString(static_cast<ValueNode *>(propValue)->getStringValue());
+                } else if (propValue->getNodeType() == AST::Expression) {
+                        // TODO complete this
                 }
             }
             blockObj["ports"] = propertiesObj;

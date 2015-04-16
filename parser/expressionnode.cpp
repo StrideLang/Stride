@@ -24,17 +24,59 @@ ExpressionNode::~ExpressionNode()
 
 }
 
-AST *ExpressionNode::getLeft() const {return m_children.at(0); }
-
-AST *ExpressionNode::getRight() const { return m_children.at(1); }
-
-AST *ExpressionNode::getValue() const
+bool ExpressionNode::isUnary() const
 {
-    assert(m_type == ExpressionNode::UnaryMinus || m_type == ExpressionNode::LogicalNot);
+    return (m_type == ExpressionNode::UnaryMinus || m_type == ExpressionNode::LogicalNot);
+}
+
+AST *ExpressionNode::getLeft() const
+{
+    assert(!this->isUnary());
     return m_children.at(0);
 }
 
-ExpressionNode::ExpressionType ExpressionNode::getExpressionType() const { return m_type; }
+AST *ExpressionNode::getRight() const
+{
+    assert(!this->isUnary());
+    return m_children.at(1);
+}
+
+void ExpressionNode::replaceLeft(AST *newLeft)
+{
+    AST *right = getRight();
+    getLeft()->deleteChildren();
+    delete getLeft();
+    m_children.clear();
+    addChild(newLeft);
+    addChild(right);
+}
+
+void ExpressionNode::replaceRight(AST *newRight)
+{
+    AST *left = getLeft();
+    getRight()->deleteChildren();
+    delete getRight();
+    m_children.clear();
+    addChild(left);
+    addChild(newRight);
+}
+
+void ExpressionNode::replaceValue(AST *newValue)
+{
+    deleteChildren();
+    m_children.push_back(newValue);
+}
+
+AST *ExpressionNode::getValue() const
+{
+    assert(isUnary());
+    return m_children.at(0);
+}
+
+ExpressionNode::ExpressionType ExpressionNode::getExpressionType() const
+{
+    return m_type;
+}
 
 AST *ExpressionNode::deepCopy()
 {

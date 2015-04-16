@@ -172,7 +172,7 @@ void CodeValidator::validateBundleSizes(AST *node, QVector<AST *> scope)
         BlockNode *block = static_cast<BlockNode *>(node);
         int size = getBlockBundleDeclaredSize(block, scope, errors);
         int datasize = getBlockDataSize(block, scope, errors);
-        if(size != datasize && datasize > 0) {
+        if(size != datasize && datasize > 1) {
             LangError error;
             error.type = LangError::BundleSizeMismatch;
             error.lineNumber = node->getLine();
@@ -257,7 +257,6 @@ void CodeValidator::validateStreamSizes(AST *tree)
         }
     }
 }
-
 
 bool errorLineIsLower(const LangError &err1, const LangError &err2)
 {
@@ -447,7 +446,23 @@ CodeValidator::PortType CodeValidator::resolveListType(ListNode *listnode, QVect
 
 CodeValidator::PortType CodeValidator::resolveExpressionType(ExpressionNode *exprnode, QVector<AST *> scope, AST *tree)
 {
-    // TODO: implement expression node type resolution
+    if (!exprnode->isUnary()) {
+        AST *left = exprnode->getLeft();
+        AST *right = exprnode->getRight();
+        PortType leftType = resolveNodeOutType(left, scope, tree);
+        PortType rightType = resolveNodeOutType(right, scope, tree);
+        if (leftType == rightType) {
+            return leftType;
+        }
+        // TODO implement toleraces between ints and reals
+
+
+
+    } else {
+        // TODO implement for unary
+    }
+
+
     return None;
 }
 
@@ -482,6 +497,8 @@ double CodeValidator::evaluateConstReal(AST *node, QVector<AST *> scope, AST *tr
     double result = 0;
     if (node->getNodeType() == AST::Real) {
         return static_cast<ValueNode *>(node)->getRealValue();
+    } else if (node->getNodeType() == AST::Int) {
+        return static_cast<ValueNode *>(node)->getIntValue();
     } else if (node->getNodeType() == AST::Bundle) {
         BundleNode *bundle = static_cast<BundleNode *>(node);
         QString bundleName = QString::fromStdString(bundle->getName());
@@ -491,8 +508,18 @@ double CodeValidator::evaluateConstReal(AST *node, QVector<AST *> scope, AST *tr
             AST *member = getMemberfromBlockBundle(declaration, index, errors);
             return evaluateConstReal(member, scope, tree, errors);
         }
-    } else if (node->getNodeType() == AST::Expression) {
-        // TODO: check expression out
+    } else if (node->getNodeType() == AST::Name) {
+        NameNode *nameNode = static_cast<NameNode *>(node);
+        QString name = QString::fromStdString(nameNode->getName());
+        BlockNode *declaration = findDeclaration(name, scope, tree);
+        if(declaration && declaration->getNodeType() == AST::Block) {
+            AST *value = getValueFromConstBlock(declaration);
+            if(value->getNodeType() == AST::Int || value->getNodeType() == AST::Real) {
+                return static_cast<ValueNode *>(value)->toReal();
+            } else {
+                // Do something?
+            }
+        }
     } else {
         LangError error;
         error.type = LangError::InvalidType;
@@ -503,11 +530,10 @@ double CodeValidator::evaluateConstReal(AST *node, QVector<AST *> scope, AST *tr
     return result;
 }
 
-AST *CodeValidator::getMemberfromBlockBundle(BlockNode *node, int index, QList<LangError> &errors)
+AST *CodeValidator::getMemberfromBlockBundle(BlockNode *block, int index, QList<LangError> &errors)
 {
     AST *out = NULL;
-    if (node->getObjectType() == "constant") {
-        BlockNode *block = static_cast<BlockNode *>(node);
+    if (block->getObjectType() == "constant") {
         QVector<PropertyNode *> ports = QVector<PropertyNode *>::fromStdVector(block->getProperties());
         foreach(PropertyNode *port, ports) {
             if(port->getName() == "value") {
@@ -521,6 +547,22 @@ AST *CodeValidator::getMemberfromBlockBundle(BlockNode *node, int index, QList<L
         }
     } else {
         // TODO: What to do with other cases?
+    }
+    return out;
+}
+
+AST *CodeValidator::getValueFromConstBlock(BlockNode *block)
+{
+    AST *out = NULL;
+    if (block->getObjectType() == "constant") {
+        QVector<PropertyNode *> ports = QVector<PropertyNode *>::fromStdVector(block->getProperties());
+        foreach(PropertyNode *port, ports) {
+            if(port->getName() == "value") {
+                return port->getValue();
+            }
+        }
+    } else {
+        // Should something else be done?
     }
     return out;
 }

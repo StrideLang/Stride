@@ -21,8 +21,14 @@ public:
     ExpressionNode(ExpressionType type, AST *value, int line);
     ~ExpressionNode();
 
+    bool isUnary() const;
+
     AST *getLeft() const;
     AST *getRight() const;
+
+    void replaceLeft(AST *newLeft);
+    void replaceRight(AST *newRight);
+    void replaceValue(AST *newValue);
 
     AST *getValue() const;
 

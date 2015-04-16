@@ -20,6 +20,8 @@ public:
 
     double getRealValue() const;
 
+    double toReal() const;
+
     string getStringValue() const;
 
     bool getSwitchValue() const;

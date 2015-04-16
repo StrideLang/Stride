@@ -13,6 +13,7 @@ public:
 
     string getName() const { return m_name; }
     AST *getValue() const { return m_children[0]; }
+    void replaceValue(AST *newValue);
 
     AST *deepCopy();
 

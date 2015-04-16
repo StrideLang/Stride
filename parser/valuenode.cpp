@@ -5,7 +5,6 @@
 ValueNode::ValueNode(int line) :
     AST(AST::None, line)
 {
-
 }
 
 ValueNode::ValueNode(int value, int line) :
@@ -53,6 +52,16 @@ double ValueNode::getRealValue() const
 {
     assert(getNodeType() == AST::Real);
     return m_floatValue;
+}
+
+double ValueNode::toReal() const
+{
+    if (getNodeType() == AST::Real) {
+        return m_floatValue;
+    } else if (getNodeType() == AST::Int) {
+        return m_intValue;
+    }
+    return 0;
 }
 
 string ValueNode::getStringValue() const

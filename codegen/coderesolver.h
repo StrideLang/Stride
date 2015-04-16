@@ -7,6 +7,7 @@
 #include "ast.h"
 #include "streamnode.h"
 #include "bundlenode.h"
+#include "expressionnode.h"
 
 class CodeResolver
 {
@@ -27,6 +28,9 @@ private:
     void resolveConstants();
     void expandStreamBundles();
     void expandTypeBundles();
+
+    void reduceExpressions();
+    bool reduceConstExpression(ExpressionNode *expr, QVector<AST *> scope, AST *tree, double &expressionResult);
 
     QVector<StreamNode *> expandBundleStream(StreamNode *stream, int size = -1);
 

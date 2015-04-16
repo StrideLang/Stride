@@ -15,6 +15,12 @@ PropertyNode::~PropertyNode()
 
 }
 
+void PropertyNode::replaceValue(AST *newValue)
+{
+    deleteChildren();
+    addChild(newValue);
+}
+
 AST *PropertyNode::deepCopy()
 {
     return new PropertyNode(m_name, m_children.at(0)->deepCopy(), m_line);

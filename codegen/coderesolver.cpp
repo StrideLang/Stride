@@ -259,7 +259,42 @@ void CodeResolver::resolveStreamSymbols()
 
 void CodeResolver::resolveConstants()
 {
+    QVector<AST *> children = QVector<AST *>::fromStdVector(m_tree->getChildren());
+    foreach(AST *node, children) {
+        if(node->getNodeType() == AST::Stream) {
+            // TODO reduce expressions for streams
+        } else if(node->getNodeType() == AST::Block
+                  || node->getNodeType() == AST::BlockBundle) {
+            BlockNode *block = static_cast<BlockNode *>(node);
+            vector<PropertyNode *> properties = block->getProperties();
+            foreach(PropertyNode *property, properties) {
+                AST *value = property->getValue();
+                if(value->getNodeType() == AST::Expression) {
+                    ExpressionNode *expr = static_cast<ExpressionNode *>(value);
+                    double expressionValue = 0;
+                    bool isConstant =
+                            reduceConstExpression(expr, children, node, expressionValue);
+                    if (isConstant) {
+                        ValueNode *newValue = new ValueNode(expressionValue, expr->getLine());
+                        property->replaceValue(newValue);
+                    }
+                } else if(value->getNodeType() == AST::Name) {
+                    QList<LangError> errors;
+                    NameNode *name = static_cast<NameNode *>(value);
+                    BlockNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), QVector<AST *>(), m_tree);
+                    if (block->getNodeType() == AST::Block) {
+                        double resolvedValue = CodeValidator::evaluateConstReal(value, QVector<AST *>(), m_tree, errors);
+                        if (errors.size() == 0) {
+                            ValueNode *newValue = new ValueNode(resolvedValue, value->getLine());
+                            property->replaceValue(newValue);
+                        }
+                    }
+                } else if (value->getNodeType() == AST::Bundle) {
 
+                }
+            }
+        }
+    }
 }
 
 void CodeResolver::expandStreamBundles()
@@ -286,6 +321,70 @@ void CodeResolver::expandStreamBundles()
 void CodeResolver::expandTypeBundles()
 {
 
+}
+
+bool CodeResolver::reduceConstExpression(ExpressionNode *expr, QVector<AST *> scope, AST *tree, double &expressionResult)
+{
+    bool isConstant = false;
+    if (!expr->isUnary()) {
+        AST *left = expr->getLeft();
+        AST *right = expr->getRight();
+
+        if (left->getNodeType() == AST::Expression) {
+            double expressionValue = 0;
+            bool isConstant =
+                    reduceConstExpression(static_cast<ExpressionNode *>(left), scope, m_tree, expressionValue);
+            if (isConstant) {
+                ValueNode *newValue = new ValueNode(expressionValue, left->getLine());
+                expr->replaceLeft(newValue);
+            }
+        }
+        if (right->getNodeType() == AST::Expression) {
+            double expressionValue = 0;
+            bool isConstant =
+                    reduceConstExpression(static_cast<ExpressionNode *>(right), scope, tree, expressionValue);
+            if (isConstant) {
+                ValueNode *newValue = new ValueNode(expressionValue, right->getLine());
+                expr->replaceLeft(newValue);
+            }
+        }
+        QList<LangError> errorsLeft;
+        QList<LangError> errorsRight;
+        double leftValue = CodeValidator::evaluateConstReal(expr->getLeft(), scope, tree, errorsLeft);
+        double rightValue = CodeValidator::evaluateConstReal(expr->getRight(), scope, tree, errorsRight);
+        if ( errorsLeft.size() == 0 && errorsRight.size() == 0 ) {
+            switch (expr->getExpressionType()) {
+            case ExpressionNode::Multiply:
+                expressionResult = leftValue * rightValue;
+                break;
+            case ExpressionNode::Divide:
+                expressionResult = leftValue / rightValue;
+                break;
+            case ExpressionNode::Add:
+                expressionResult = leftValue + rightValue;
+                break;
+            case ExpressionNode::Subtract:
+                expressionResult = leftValue - rightValue;
+                break;
+            case ExpressionNode::And:
+                expressionResult = (int) leftValue & (int) rightValue;
+                break;
+            case ExpressionNode::Or:
+                expressionResult = (int) leftValue | (int) rightValue;
+                break;
+            case ExpressionNode::UnaryMinus:
+            case ExpressionNode::LogicalNot:
+                assert(0 == 1); // Should never get here
+                break;
+            }
+            return true;
+        } else {
+            // Not a constant expression, can't resolve;
+        }
+    } else {
+// TODO implement for unary
+    }
+    return isConstant;
 }
 
 QVector<StreamNode *> CodeResolver::expandBundleStream(StreamNode *stream, int size)
