@@ -1,0 +1,7 @@
+use Gamma version 1.0
+
+constant Const1 {value: 2.0}
+constant Const2 {value: 3.1}
+constant Const3 {value: 0.1}
+
+constant Const4 {value: Const1 + (Const2 * Const3)}

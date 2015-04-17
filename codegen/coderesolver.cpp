@@ -261,39 +261,7 @@ void CodeResolver::resolveConstants()
 {
     QVector<AST *> children = QVector<AST *>::fromStdVector(m_tree->getChildren());
     foreach(AST *node, children) {
-        if(node->getNodeType() == AST::Stream) {
-            // TODO reduce expressions for streams
-        } else if(node->getNodeType() == AST::Block
-                  || node->getNodeType() == AST::BlockBundle) {
-            BlockNode *block = static_cast<BlockNode *>(node);
-            vector<PropertyNode *> properties = block->getProperties();
-            foreach(PropertyNode *property, properties) {
-                AST *value = property->getValue();
-                if(value->getNodeType() == AST::Expression) {
-                    ExpressionNode *expr = static_cast<ExpressionNode *>(value);
-                    double expressionValue = 0;
-                    bool isConstant =
-                            reduceConstExpression(expr, children, node, expressionValue);
-                    if (isConstant) {
-                        ValueNode *newValue = new ValueNode(expressionValue, expr->getLine());
-                        property->replaceValue(newValue);
-                    }
-                } else if(value->getNodeType() == AST::Name) {
-                    QList<LangError> errors;
-                    NameNode *name = static_cast<NameNode *>(value);
-                    BlockNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), QVector<AST *>(), m_tree);
-                    if (block->getNodeType() == AST::Block) {
-                        double resolvedValue = CodeValidator::evaluateConstReal(value, QVector<AST *>(), m_tree, errors);
-                        if (errors.size() == 0) {
-                            ValueNode *newValue = new ValueNode(resolvedValue, value->getLine());
-                            property->replaceValue(newValue);
-                        }
-                    }
-                } else if (value->getNodeType() == AST::Bundle) {
-
-                }
-            }
-        }
+        resolveConstantsInNode(node, children);
     }
 }
 
@@ -345,7 +313,7 @@ bool CodeResolver::reduceConstExpression(ExpressionNode *expr, QVector<AST *> sc
                     reduceConstExpression(static_cast<ExpressionNode *>(right), scope, tree, expressionValue);
             if (isConstant) {
                 ValueNode *newValue = new ValueNode(expressionValue, right->getLine());
-                expr->replaceLeft(newValue);
+                expr->replaceRight(newValue);
             }
         }
         QList<LangError> errorsLeft;
@@ -385,6 +353,57 @@ bool CodeResolver::reduceConstExpression(ExpressionNode *expr, QVector<AST *> sc
 // TODO implement for unary
     }
     return isConstant;
+}
+
+void CodeResolver::resolveConstantInProperty(PropertyNode *property, QVector<AST *> scope)
+{
+    AST *value = property->getValue();
+    if(value->getNodeType() == AST::Expression) {
+        ExpressionNode *expr = static_cast<ExpressionNode *>(value);
+        double expressionValue = 0;
+        bool isConstant =
+                reduceConstExpression(expr, scope, m_tree, expressionValue);
+        if (isConstant) {
+            ValueNode *newValue = new ValueNode(expressionValue, expr->getLine());
+            property->replaceValue(newValue);
+        }
+    } else if(value->getNodeType() == AST::Name) {
+        QList<LangError> errors;
+        NameNode *name = static_cast<NameNode *>(value);
+        BlockNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), QVector<AST *>(), m_tree);
+        if (block && block->getNodeType() == AST::Block && block->getObjectType() == "constant") { // Size == 1
+            double resolvedValue = CodeValidator::evaluateConstReal(value, QVector<AST *>(), m_tree, errors);
+            if (errors.size() == 0) {
+                ValueNode *newValue = new ValueNode(resolvedValue, value->getLine());
+                property->replaceValue(newValue);
+            }
+        }
+    } else if (value->getNodeType() == AST::Bundle) {
+
+    }
+}
+
+void CodeResolver::resolveConstantsInNode(AST *node, QVector<AST *> scope)
+{
+    if (node->getNodeType() == AST::Stream) {
+        StreamNode *stream = static_cast<StreamNode *>(node);
+        resolveConstantsInNode(stream->getLeft(), scope);
+        resolveConstantsInNode(stream->getRight(), scope);
+    } if (node->getNodeType() == AST::Function) {
+        FunctionNode *func = static_cast<FunctionNode *>(node);
+        vector<PropertyNode *> properties = func->getProperties();
+        foreach(PropertyNode *property, properties) {
+            resolveConstantInProperty(property, scope);
+        }
+
+    } else if(node->getNodeType() == AST::Block
+              || node->getNodeType() == AST::BlockBundle) {
+        BlockNode *block = static_cast<BlockNode *>(node);
+        vector<PropertyNode *> properties = block->getProperties();
+        foreach(PropertyNode *property, properties) {
+            resolveConstantInProperty(property, scope);
+        }
+    }
 }
 
 QVector<StreamNode *> CodeResolver::expandBundleStream(StreamNode *stream, int size)

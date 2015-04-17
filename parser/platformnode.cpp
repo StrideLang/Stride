@@ -5,7 +5,7 @@
 
 #include "platformnode.h"
 
-PlatformNode::PlatformNode(string platformName, float version, int line) :
+PlatformNode::PlatformNode(string platformName, double version, int line) :
     AST(AST::Platform, line)
 {
     m_platformName = platformName;
@@ -17,12 +17,12 @@ PlatformNode::~PlatformNode()
 
 }
 
-float PlatformNode::version() const
+double PlatformNode::version() const
 {
     return m_version;
 }
 
-void PlatformNode::setVersion(float version)
+void PlatformNode::setVersion(double version)
 {
     m_version = version;
 }

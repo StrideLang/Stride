@@ -59,7 +59,8 @@ DISTFILES += \
     data/functions.stream \
     data/expansions.stream \
     data/rates.stream \
-    data/defaultProperties.stream
+    data/defaultProperties.stream \
+    data/constantRes.stream
 
 # Link to codegen library
 

@@ -59,8 +59,19 @@ vector<PropertyNode *> BlockNode::getProperties() const
 
 void BlockNode::addProperty(PropertyNode *newProperty)
 {
+    // TODO check that property name is not there already
     addChild(newProperty);
     m_properties.push_back(newProperty);
+}
+
+AST *BlockNode::getPropertyValue(string propertyName)
+{
+    for (unsigned int i = 0; i < m_properties.size(); i++) {
+        if (m_properties.at(i)->getName() == propertyName) {
+            return m_properties.at(i)->getValue();
+        }
+    }
+    return NULL;
 }
 
 string BlockNode::getObjectType() const

@@ -37,7 +37,7 @@ int error = 0;
 
 %union {
 	int 	ival;
-	float 	fval;
+        double 	fval;
         char *	sval;
         AST  *  ast;
         PlatformNode *platformNode;

@@ -20,6 +20,7 @@ private:
 private Q_SLOTS:
 
     //Expansion
+    void testConstantResolution();
     void testStreamRates();
     void testStreamExpansion();
 
@@ -44,6 +45,27 @@ private Q_SLOTS:
 
 ParserTest::ParserTest()
 {
+}
+
+void ParserTest::testConstantResolution()
+{
+
+    AST *tree;
+    tree = parse(QString(QFINDTESTDATA("data/constantRes.stream")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    QVERIFY(generator.isValid());
+
+    BlockNode *block = static_cast<BlockNode *>(tree->getChildren().at(4));
+    QVERIFY(block->getNodeType() == AST::Block);
+    ValueNode *value = static_cast<ValueNode *>(block->getPropertyValue("value"));
+    QVERIFY(value != NULL);
+    QVERIFY(value->getNodeType() == AST::Real);
+
+    QVERIFY(qFuzzyCompare(value->getRealValue(), 2.0 + (3.1 * 0.1)));
+
+    tree->deleteChildren();
+    delete tree;
 }
 
 void ParserTest::testStreamRates()
@@ -631,7 +653,7 @@ void ParserTest::testTreeBuildFunctions()
     QVERIFY(property->getName() == "propReal");
     ValueNode *value = static_cast<ValueNode *>(property->getValue());
     QVERIFY(value->getNodeType() == AST::Real);
-    QVERIFY(value->getRealValue() == 1.1f);
+    QVERIFY(value->getRealValue() == 1.1);
     property = properties.at(1);
     QVERIFY(property->getName() == "propInt");
     value = static_cast<ValueNode *>(property->getValue());
@@ -654,7 +676,7 @@ void ParserTest::testTreeBuildFunctions()
     QVERIFY(property->getName() == "propReal");
     value = static_cast<ValueNode *>(property->getValue());
     QVERIFY(value->getNodeType() == AST::Real);
-    QVERIFY(value->getRealValue() == 1.2f);
+    QVERIFY(value->getRealValue() == 1.2);
     property = properties.at(1);
     QVERIFY(property->getName() == "propInt");
     value = static_cast<ValueNode *>(property->getValue());
@@ -674,7 +696,7 @@ void ParserTest::testTreeBuildFunctions()
     QVERIFY(property->getName() == "propReal");
     value = static_cast<ValueNode *>(property->getValue());
     QVERIFY(value->getNodeType() == AST::Real);
-    QVERIFY(value->getRealValue() == 1.3f);
+    QVERIFY(value->getRealValue() == 1.3);
     property = properties.at(1);
     QVERIFY(property->getName() == "propInt");
     value = static_cast<ValueNode *>(property->getValue());
@@ -826,7 +848,7 @@ void ParserTest::testTreeBuildStream()
     QVERIFY(bundle->getName() == "Bundle1");
     QVERIFY(bundle->getLine() == 10);
     QVERIFY(expression->getRight()->getNodeType() == AST::Real);
-    QVERIFY(static_cast<ValueNode *>(expression->getRight())->getRealValue() == 0.5f);
+    QVERIFY(static_cast<ValueNode *>(expression->getRight())->getRealValue() == 0.5);
     bundle = static_cast<BundleNode *>(node->getRight());
     QVERIFY(bundle->getName() == "Bundle2");
     QVERIFY(bundle->getLine() == 10);
@@ -898,7 +920,7 @@ void ParserTest::testTreeBuildBasic()
     QVERIFY(nodes.at(0)->getNodeType() == AST::Platform);
     PlatformNode *node = static_cast<PlatformNode *>(nodes.at(0));
     QVERIFY(node->platformName() == "PufferFish");
-    QVERIFY(node->version() == 1.1f);
+    QVERIFY(node->version() == 1.1);
     QVERIFY(node->getLine() == 4);
     tree->deleteChildren();
     delete tree;

@@ -10,20 +10,20 @@ using namespace std;
 class PlatformNode : public AST
 {
 public:
-    PlatformNode(string platformName, float version, int line);
+    PlatformNode(string platformName, double version, int line);
 
     ~PlatformNode();
 
     string platformName() const;
     void setPlatformName(const string &platformName);
 
-    float version() const;
-    void setVersion(float version);
+    double version() const;
+    void setVersion(double version);
 
     AST *deepCopy();
 
 private:
-    float m_version;
+    double m_version;
     string m_platformName;
 };
 
