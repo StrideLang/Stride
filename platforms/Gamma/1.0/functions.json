@@ -18,7 +18,7 @@
             "functionName": "lowPass",
             "properties": {
                 "cutOff" : {"in_types": ["CIP", "CFP"], "out_types" : [], "default": 1000},
-                "reset" : {"in_types": ["CIP", "CFP"], "out_types" : [], "default": "none"},
+                "reset" : {"in_types": ["CIP", "CFP"], "out_types" : [], "default": {"type": "none"}},
                 "bypass" : {"in_types": ["CBP"], "out_types" : [], "default": false}
             },
             "in_types" : ["AS", "CSR"],

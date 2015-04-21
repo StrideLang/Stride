@@ -14,6 +14,6 @@ signal Rate2 {
 
 Rate1 >> Rate2 >> AudioOut[1];
 
-GetRate1 >> Rate1 >> GetRate2 >> Rate2 >> GetAudioRate >> AudioOut[1];
+Signal1 >> Rate1 >> Signal2 >> Rate2 >> GetAudioRate >> AudioOut[1];
 
 

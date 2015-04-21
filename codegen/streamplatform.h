@@ -29,6 +29,7 @@ public:
 
     QList<Property> getPortsForType(QString typeName);
     QList<Property> getPortsForFunction(QString typeName);
+    QVariant getDefaultPortValueForType(QString typeName, QString portName);
 
     bool isValidType(QString typeName);
     bool typeHasPort(QString typeName, QString propertyName);

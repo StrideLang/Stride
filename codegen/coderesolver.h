@@ -24,6 +24,7 @@ private:
     void fillDefaultProperties(); // This should be called when required, but not generally. Otherwise it's hard to tell which are default and which are set by the user.
     double getNodeRate(AST *node, QVector<AST *> scope, AST *tree);
     void expandBuiltinObjects();
+    void createSignalDeclaration(QString name, StreamNode *parentStream, AST *tree);
     void declareUnknownStreamSymbols(StreamNode *stream, AST *tree);
     void resolveStreamSymbols();
     void resolveConstants();

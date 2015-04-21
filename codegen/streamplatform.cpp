@@ -112,6 +112,17 @@ QList<Property> StreamPlatform::getPortsForFunction(QString typeName)
     return QList<Property>();
 }
 
+QVariant StreamPlatform::getDefaultPortValueForType(QString typeName, QString portName)
+{
+    QList<Property> ports = getPortsForType(typeName);
+    foreach(Property port, ports) {
+        if (port.name == portName) {
+            return port.defaultValue;
+        }
+    }
+    return QVariant();
+}
+
 QString StreamPlatform::getPlatformPath()
 {
     return m_platformRootPath + QDir::separator() + m_platformName

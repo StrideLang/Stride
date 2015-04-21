@@ -2,8 +2,8 @@
         {
             "typeName": "signal",
             "ports": {
-                "input": {"types" : ["CSBP"], "default": "none", "required" : false, "maxconnections" : 1, "access": "stream_in"},
-                "output": {"types" : ["CSBP"], "default": "none", "required" : false, "maxconnections" : -1, "access": "stream_out"},
+                "input": {"types" : ["CSBP"], "default": {"type": "none"}, "required" : false, "maxconnections" : 1, "access": "stream_in"},
+                "output": {"types" : ["CSBP"], "default": {"type": "none"}, "required" : false, "maxconnections" : -1, "access": "stream_out"},
                 "rate": {"types" : ["CIP", "CRP"], "default": "AudioRate", "required" : true, "maxconnections" : 1, "access": "property"}
             },
             "in_types" : ["AS", "CSR"],
@@ -19,15 +19,15 @@
         {
             "typeName": "control",
             "ports": {
-                "input": {"types" : ["ASP", "CSIP", "CSRP"], "default": "none", "required" : false, "maxconnections" : 1, "access": "stream_in"},
-                "output": {"types" : ["CSIP", "CSRP"], "default": "none", "required" : false, "maxconnections" : -1, "access": "stream_out"},
+                "input": {"types" : ["ASP", "CSIP", "CSRP"], "default": {"type": "none"}, "required" : false, "maxconnections" : 1, "access": "stream_in"},
+                "output": {"types" : ["CSIP", "CSRP"], "default": {"type": "none"}, "required" : false, "maxconnections" : -1, "access": "stream_out"},
                 "default": {"types" : ["CIP", "CRP"], "default": 0.0, "required" : true, "maxconnections" : 1, "access": "property"},
                 "rate": {"types" : ["CIP"], "default": "ControlRate", "required" : true, "maxconnections" : 1, "access": "property"},
                 "enableMapping": {"types" : ["CBP"], "default": "on", "required" : true, "maxconnections" : 1, "access": "property"},
                 "mappingMode": {"types" : ["CSP"], "default": "'linear'", "required" : true, "maxconnections" : 1, "access": "property"},
                 "minimum": {"types" : ["CIP", "CRP"], "default": 0.0, "required" : true, "maxconnections" : 1, "access": "property"},
                 "maximum": {"types" : ["CIP", "CRP"], "default": 1.0, "required" : true, "maxconnections" : 1, "access": "property"},
-                "increment": {"types" : ["CIP", "CRP", "none"], "default": "none", "required" : true, "maxconnections" : 1, "access": "property"},
+                "increment": {"types" : ["CIP", "CRP", "none"], "default": {"type": "none"}, "required" : true, "maxconnections" : 1, "access": "property"},
                 "rounding": {"types" : ["CSP"], "default": "'truncate'", "required" : true, "maxconnections" : 1, "access": "property"}
             },
             "in_types" : ["AS", "CSR"],
@@ -41,12 +41,29 @@
             "privateports": {"inherits" : ["object"]}
         },
         {
+            "typeName": "oscIn",
+            "ports": {
+                "hostIp": {"types" : ["CSP"], "default": "localhost", "required" : false, "maxconnections" : 1, "access": "property"},
+                "incomingPort": {"types" : ["CIP"], "default": 8000, "required" : false, "maxconnections" : 1, "access": "property"},
+                "address": {"types" : ["CSP"], "default": {"type": "none"}, "required" : false, "maxconnections" : 1, "access": "property"}
+            },
+            "in_types" : [],
+            "out_types" : ["CSR", "CSI", "CSS"],
+            "code" : {
+                "includes": {"code": ""},
+                "init_code": {"code": ""},
+                "dsp_code": {"code": ""}
+            }
+            ,
+            "privateports": {"inherits" : ["object"]}
+        },
+        {
             "typeName": "config",
             "ports": {
                 "inChannels": {"types": ["CIP"], "default": 2, "required" : false, "maxconnections" : 1, "access": "property"},
                 "outChannels": {"types": ["CIP"], "default": 2, "required" : false, "maxconnections" : 1, "access": "property"},
                 "sampleRate": {"types": ["CIP"], "default": 44100.0, "required" : false, "maxconnections" : 1, "access": "property"},
-                "blockSize": {"types": ["CIP"], "default": 256, "required" : false, "maxconnections" : 1, "access": "property"}
+                "blockSize": {"types": ["CIP"], "default": 16, "required" : false, "maxconnections" : 1, "access": "property"}
             },
             "in_types" : [],
             "out_types" : [],
