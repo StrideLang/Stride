@@ -78,7 +78,9 @@ void CodeValidator::validate()
         validateBundleIndeces(m_tree, QVector<AST *>());
         validateBundleSizes(m_tree, QVector<AST *>());
         validateSymbolUniqueness(m_tree, QVector<AST *>());
-        //    validateListConsistency(m_tree, QVector<AST *>());
+//        validateListTypeConsistency(m_tree, QVector<AST *>());
+        validateStreamSizes(m_tree, QVector<AST *>());
+
         // TODO: validate expression type consistency
         // TODO: validate expression list operations
 
@@ -247,13 +249,12 @@ void CodeValidator::validateListTypeConsistency(AST *node, QVector<AST *> scope)
     }
 }
 
-void CodeValidator::validateStreamSizes(AST *tree)
+void CodeValidator::validateStreamSizes(AST *tree, QVector<AST *> scope)
 {
     QVector<AST *> children = QVector<AST *>::fromStdVector(tree->getChildren());
     foreach(AST *node, children) {
         if(node->getNodeType() == AST:: Stream) {
-            StreamNode *stream = static_cast<StreamNode *>(node);
-            //TODO finish validating
+            getNodeSize(node, scope, m_errors);
         }
     }
 }
@@ -305,33 +306,51 @@ int CodeValidator::getBlockDataSize(BlockNode *block, QVector<AST *> scope, QLis
     return size;
 }
 
-int CodeValidator::getNodeSize(AST *value, QVector<AST *> &scope, QList<LangError> &errors)
+int CodeValidator::getNodeSize(AST *node, QVector<AST *> &scope, QList<LangError> &errors)
 {
-    if (value->getNodeType() == AST::List) {
-        return value->getChildren().size();
-    } else if (value->getNodeType() == AST::Bundle) {
+    if (node->getNodeType() == AST::List) {
+        return node->getChildren().size();
+    } else if (node->getNodeType() == AST::Bundle) {
         return 1;
-    } else if (value->getNodeType() == AST::Int
-               || value->getNodeType() == AST::Real
-               || value->getNodeType() == AST::String) {
+    } else if (node->getNodeType() == AST::Int
+               || node->getNodeType() == AST::Real
+               || node->getNodeType() == AST::String) {
         return 1;
-    } else if (value->getNodeType() == AST::Expression) {
+    } else if (node->getNodeType() == AST::Expression) {
         // TODO: evaluate
-    } else if (value->getNodeType() == AST::Name) {
-        NameNode *name = static_cast<NameNode *>(value);
+    } else if (node->getNodeType() == AST::Name) {
+        NameNode *name = static_cast<NameNode *>(node);
         BlockNode *block = findDeclaration(QString::fromStdString(name->getName()), scope, m_tree);
         if (block->getNodeType() == AST::BlockBundle) {
             return getBlockBundleDeclaredSize(block, scope, errors);
         } else {
             return -1; // Not a bundle
         }
-    } else if (value->getNodeType() == AST::BundleRange) {
-        BundleNode *bundle = static_cast<BundleNode *>(value);
+    } else if (node->getNodeType() == AST::BundleRange) {
+        BundleNode *bundle = static_cast<BundleNode *>(node);
         if (resolveNodeOutType(bundle->endIndex(), scope, m_tree) == ConstInt
                 && resolveNodeOutType(bundle->endIndex(), scope, m_tree) == ConstInt) {
             return evaluateConstInteger(bundle->endIndex(), scope, m_tree, errors)
                     - evaluateConstInteger(bundle->startIndex(), scope, m_tree, errors) + 1;
         }
+    } else if (node->getNodeType() == AST::Stream) {
+        StreamNode *stream = static_cast<StreamNode *>(node);
+        AST *left = stream->getLeft();
+        AST *right = stream->getRight();
+        int leftSize = getNodeSize(left, scope, m_errors);
+        int rightSize = getNodeSize(right, scope, m_errors);
+
+        if (leftSize != rightSize
+                && ((int) (rightSize/ (double) leftSize)) != (rightSize/ (double) leftSize) ) {
+            LangError error;
+            error.type = LangError::StreamMemberSizeMismatch;
+            error.lineNumber = right->getLine();
+            error.errorTokens << QString::number(leftSize) << QString::number(rightSize);
+            m_errors << error;
+        } else {
+            return leftSize > rightSize ? leftSize : rightSize;
+        }
+
     }
     return -1;
 }

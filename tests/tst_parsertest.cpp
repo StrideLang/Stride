@@ -20,7 +20,7 @@ private:
 private Q_SLOTS:
 
     //Expansion
-    void testConstantResolution();
+//    void testConstantResolution();
     void testStreamRates();
     void testStreamExpansion();
 
@@ -47,26 +47,26 @@ ParserTest::ParserTest()
 {
 }
 
-void ParserTest::testConstantResolution()
-{
+//void ParserTest::testConstantResolution()
+//{
 
-    AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/constantRes.stream")).toStdString().c_str());
-    QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
-    QVERIFY(generator.isValid());
+//    AST *tree;
+//    tree = parse(QString(QFINDTESTDATA("data/constantRes.stream")).toStdString().c_str());
+//    QVERIFY(tree != NULL);
+//    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+//    QVERIFY(generator.isValid());
 
-    BlockNode *block = static_cast<BlockNode *>(tree->getChildren().at(4));
-    QVERIFY(block->getNodeType() == AST::Block);
-    ValueNode *value = static_cast<ValueNode *>(block->getPropertyValue("value"));
-    QVERIFY(value != NULL);
-    QVERIFY(value->getNodeType() == AST::Real);
+//    BlockNode *block = static_cast<BlockNode *>(tree->getChildren().at(4));
+//    QVERIFY(block->getNodeType() == AST::Block);
+//    ValueNode *value = static_cast<ValueNode *>(block->getPropertyValue("value"));
+//    QVERIFY(value != NULL);
+//    QVERIFY(value->getNodeType() == AST::Real);
 
-    QVERIFY(qFuzzyCompare(value->getRealValue(), 2.0 + (3.1 * 0.1)));
+//    QVERIFY(qFuzzyCompare(value->getRealValue(), 2.0 + (3.1 * 0.1)));
 
-    tree->deleteChildren();
-    delete tree;
-}
+//    tree->deleteChildren();
+//    delete tree;
+//}
 
 void ParserTest::testStreamRates()
 {
@@ -88,6 +88,10 @@ void ParserTest::testStreamRates()
     QVERIFY(stream->getNodeType() == AST::Stream);
     QVERIFY(stream->getRate() == 44100);
 
+    NameNode *name = static_cast<NameNode *>(stream->getLeft());
+    QVERIFY(name->getNodeType() == AST::Name);
+    QVERIFY(name->getRate() == 44100);
+
     BundleNode *bundle = static_cast<BundleNode *>(stream->getRight());
     QVERIFY(bundle->getNodeType() == AST::Bundle);
     QVERIFY(bundle->getRate() == 44100);
@@ -101,9 +105,9 @@ void ParserTest::testStreamRates()
     QVERIFY(stream->getNodeType() == AST::Stream);
     QVERIFY(stream->getLeft()->getRate() == 11025);
 
-    bundle = static_cast<BundleNode *>(stream->getRight());
-    QVERIFY(bundle->getNodeType() == AST::Bundle);
-    QVERIFY(bundle->getRate() == 44100);
+    NameNode *nameNode = static_cast<NameNode *>(stream->getRight());
+    QVERIFY(nameNode->getNodeType() == AST::Name);
+    QVERIFY(nameNode->getRate() == 44100);
 
     // GetRate1 >> Rate1 >> GetRate2 >> Rate2 >> GetAudioRate >> AudioOut[1];
     stream = static_cast<StreamNode *>(nodes.at(5));
@@ -126,9 +130,9 @@ void ParserTest::testStreamRates()
     QVERIFY(stream->getNodeType() == AST::Stream);
     QVERIFY(stream->getLeft()->getRate() == 44100);
 
-    bundle = static_cast<BundleNode *>(stream->getRight());
-    QVERIFY(bundle->getNodeType() == AST::Bundle);
-    QVERIFY(bundle->getRate() == 44100);
+    name = static_cast<NameNode *>(stream->getRight());
+    QVERIFY(name->getNodeType() == AST::Name);
+    QVERIFY(name->getRate() == 44100);
 
     tree->deleteChildren();
     delete tree;

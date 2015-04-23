@@ -19,6 +19,7 @@ public:
         ArrayIndexOutOfRange,
         DuplicateSymbol,
         InconsistentList,
+        StreamMemberSizeMismatch,
         None
     } ErrorType;
 
@@ -86,13 +87,13 @@ private:
     void validateBundleSizes(AST *node, QVector<AST *> scope);
     void validateSymbolUniqueness(AST *node, QVector<AST *> scope);
     void validateListTypeConsistency(AST *node, QVector<AST *> scope);
-    void validateStreamSizes(AST *tree);
+    void validateStreamSizes(AST *tree, QVector<AST *> scope);
 
     void sortErrors();
 
     int getBlockBundleDeclaredSize(BlockNode *block, QVector<AST *> scope, QList<LangError> &errors);
     int getBlockDataSize(BlockNode *block, QVector<AST *> scope, QList<LangError> &errors);
-    int getNodeSize(AST *property, QVector<AST *> &scope, QList<LangError> &errors);
+    int getNodeSize(AST *node, QVector<AST *> &scope, QList<LangError> &errors);
 
     StreamPlatform m_platform;
     AST *m_tree;

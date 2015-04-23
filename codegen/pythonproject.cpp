@@ -152,11 +152,14 @@ void PythonProject::astToJson(AST *node, QJsonObject &obj)
         if (indexNode->getNodeType() == AST::Int) {
             obj["index"] = static_cast<ValueNode *>(indexNode)->getIntValue();
         }
+        obj["rate"] = node->getRate();
     } else if (node->getNodeType() == AST::Name) {
         obj["type"] = "Name";
         obj["name"] = QString::fromStdString(static_cast<BundleNode *>(node)->getName());
+        obj["rate"] = node->getRate();
     } else if (node->getNodeType() == AST::Expression) {
         obj["type"] = "Expression";
+        obj["rate"] = node->getRate();
     } else if (node->getNodeType() == AST::Function) {
         obj["type"] = "Function";
         functionToJson(static_cast<FunctionNode *>(node), obj);
@@ -196,6 +199,7 @@ void PythonProject::functionToJson(FunctionNode *node, QJsonObject &obj)
         propObject[QString::fromStdString(property->getName())] = propValue;
     }
     obj["properties"] = propObject;
+    obj["rate"] = node->getRate();
 }
 
 void PythonProject::addNodeToStreamArray(AST *node)

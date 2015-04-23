@@ -94,7 +94,9 @@ void CodeResolver::fillDefaultProperties()
 
 double CodeResolver::getNodeRate(AST *node, QVector<AST *> scope, AST *tree)
 {
-    Q_ASSERT(node->getRate() == -1); // Make sure rate hasn't been set
+    if (node->getRate() != -1) {
+        return node->getRate();
+    }
     if (node->getNodeType() == AST::Name) {
         NameNode *name = static_cast<NameNode *>(node);
         BlockNode* declaration =  CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scope, tree);
@@ -208,11 +210,14 @@ void CodeResolver::expandBuiltinObjects()
     }
 }
 
-void CodeResolver::createSignalDeclaration(QString name, StreamNode *parentStream, AST *tree)
+int CodeResolver::createSignalDeclaration(QString name, StreamNode *parentStream, AST *tree)
 {
     BlockNode *newBlock;
+    double nameRate = -1;
     int size = CodeValidator::largestBundleSize(parentStream, tree);
-    Q_ASSERT(size > 0);
+    if (size <= 0) { // None of the elements in the stream have size
+        size = 1;
+    }
     if (size == 1) {
         newBlock = new BlockNode(name.toStdString(), "signal", NULL, -1);
     } else if (size > 1) {
@@ -220,25 +225,29 @@ void CodeResolver::createSignalDeclaration(QString name, StreamNode *parentStrea
                                             new ValueNode(size, -1), -1);
         newBlock = new BlockNode(bundle, "signal", NULL, -1);
     }
-    tree->addChild(newBlock);
     QVariant defaultRate = m_platform.getDefaultPortValueForType("signal", "rate");
     if (defaultRate.type() != QVariant::String) {
         ValueNode *value = new ValueNode(defaultRate.toDouble(), -1);
         newBlock->addProperty(new PropertyNode("rate", value, -1));
+        nameRate = defaultRate.toDouble();
     } else {
         BlockNode *block = CodeValidator::findDeclaration(defaultRate.toString(),
                                                           QVector<AST *>(), tree);
         if (block && block->getObjectType() == "constant") {
-            AST *value = block->getPropertyValue("value");
+            AST *propValue = block->getPropertyValue("value");
             QList<LangError> errors;
-            double rate = CodeValidator::evaluateConstReal(value, QVector<AST *>(),
+            double rate = CodeValidator::evaluateConstReal(propValue, QVector<AST *>(),
                                                            tree, errors);
             if (errors.size() == 0) {
-                ValueNode *value = new ValueNode(rate, -1);
-                newBlock->addProperty(new PropertyNode("rate", value, -1));
+                ValueNode *valueNode = new ValueNode(rate, -1);
+                PropertyNode *propNode = new PropertyNode("rate", valueNode, -1);
+//                newBlock->addProperty(propNode);
             }
+            nameRate = rate;
         }
     }
+    tree->addChild(newBlock);
+    return nameRate;
 }
 
 void CodeResolver::declareUnknownStreamSymbols(StreamNode *stream, AST * tree)
@@ -249,7 +258,8 @@ void CodeResolver::declareUnknownStreamSymbols(StreamNode *stream, AST * tree)
         NameNode *name = static_cast<NameNode *>(left);
         BlockNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), QVector<AST *>(), tree);
         if (!block) {
-            createSignalDeclaration(QString::fromStdString(name->getName()), stream, tree);
+            int rate = createSignalDeclaration(QString::fromStdString(name->getName()), stream, tree);
+            name->setRate(rate);
         }
     }
 
@@ -260,7 +270,8 @@ void CodeResolver::declareUnknownStreamSymbols(StreamNode *stream, AST * tree)
         NameNode *name = static_cast<NameNode *>(right);
         BlockNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), QVector<AST *>(), tree);
         if (!block) {
-            createSignalDeclaration(QString::fromStdString(name->getName()), stream, tree);
+            int rate = createSignalDeclaration(QString::fromStdString(name->getName()), stream, tree);
+            name->setRate(rate);
         }
     }
 }

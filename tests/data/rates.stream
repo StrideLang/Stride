@@ -12,8 +12,9 @@ signal Rate2 {
     rate: 11025
 }
 
-Rate1 >> Rate2 >> AudioOut[1];
+Rate1 >> Rate2 >> Output1;
 
-Signal1 >> Rate1 >> Signal2 >> Rate2 >> GetAudioRate >> AudioOut[1];
+Signal1 >> Rate1 >> Signal2 >> Rate2 >> GetAudioRate >> Output2;
 
+oscillator() >> Rate1 >> lowPass() >> Output3;
 
