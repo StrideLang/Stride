@@ -78,7 +78,7 @@ void CodeValidator::validate()
         validateBundleIndeces(m_tree, QVector<AST *>());
         validateBundleSizes(m_tree, QVector<AST *>());
         validateSymbolUniqueness(m_tree, QVector<AST *>());
-//        validateListTypeConsistency(m_tree, QVector<AST *>());
+        validateListTypeConsistency(m_tree, QVector<AST *>());
         validateStreamSizes(m_tree, QVector<AST *>());
 
         // TODO: validate expression type consistency

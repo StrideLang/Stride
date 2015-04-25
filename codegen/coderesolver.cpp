@@ -241,7 +241,7 @@ int CodeResolver::createSignalDeclaration(QString name, StreamNode *parentStream
             if (errors.size() == 0) {
                 ValueNode *valueNode = new ValueNode(rate, -1);
                 PropertyNode *propNode = new PropertyNode("rate", valueNode, -1);
-//                newBlock->addProperty(propNode);
+                newBlock->addProperty(propNode);
             }
             nameRate = rate;
         }
@@ -298,22 +298,20 @@ void CodeResolver::resolveConstants()
 void CodeResolver::expandStreamBundles()
 {
     vector<AST *> nodes = m_tree->getChildren();
+    vector<AST *> newNodes;
     for(unsigned int i = 0; i < nodes.size(); i++) {
         AST* node = nodes.at(i);
         if (node->getNodeType() == AST::Stream) {
-            QVector<StreamNode *> streams = expandBundleStream(static_cast<StreamNode *>(node));
-            node->deleteChildren();
             StreamNode *oldNode = static_cast<StreamNode *>(node);
-            nodes.erase(nodes.begin() + i);
+            QVector<StreamNode *> newStreams = expandBundleStream(oldNode);
+            oldNode->deleteChildren();
             delete oldNode;
-            foreach(StreamNode *stream, streams) {
-                nodes.insert(nodes.begin() + i, stream);
-                i++;
-            }
-            i--;
+            newNodes.insert(newNodes.end(), newStreams.begin(), newStreams.end());
+        } else {
+            newNodes.push_back(node);
         }
     }
-    m_tree->setChildren(nodes); // FIXME This probably leaks
+    m_tree->setChildren(newNodes); // FIXME This probably leaks
 }
 
 void CodeResolver::expandTypeBundles()

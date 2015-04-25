@@ -179,7 +179,8 @@ streamDef:
 streamType:
                 valueExp STREAM streamExp  	{ $$ = new StreamNode($1, $3, yyloc.first_line);
                                                   cout << "Stream Resolved!" << endl; }
-        |	valueListExp STREAM streamExp	{ cout << "Stream Resolved!" << endl; }
+        |	valueListExp STREAM streamExp	{ $$ = new StreamNode($1, $3, yyloc.first_line);
+                                                  cout << "Stream Resolved!" << endl; }
 	;
 	
 // ================================= 
@@ -434,8 +435,11 @@ valueListList:
                                                           list->addChild($3);
                                                           $$ = list;
                                                           cout << "List of lists ..." << endl << "New list item ... " << endl; }
-        |	valueListDef				{ $$ = new ListNode($1, yyloc.first_line);  cout << "List of lists ..." << endl << "New list item ... " << endl; }
-	;
+        |	valueListDef		{
+                                          $$ = new ListNode($1, yyloc.first_line);
+                                          cout << "List of lists ..." << endl << "New list item ... " << endl;
+                                        }
+        ;
 
 // ================================= 
 //	INDEX EXPRESSION

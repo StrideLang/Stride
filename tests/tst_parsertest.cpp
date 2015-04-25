@@ -20,7 +20,7 @@ private:
 private Q_SLOTS:
 
     //Expansion
-//    void testConstantResolution();
+    void testConstantResolution();
     void testStreamRates();
     void testStreamExpansion();
 
@@ -47,26 +47,26 @@ ParserTest::ParserTest()
 {
 }
 
-//void ParserTest::testConstantResolution()
-//{
+void ParserTest::testConstantResolution()
+{
 
-//    AST *tree;
-//    tree = parse(QString(QFINDTESTDATA("data/constantRes.stream")).toStdString().c_str());
-//    QVERIFY(tree != NULL);
-//    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
-//    QVERIFY(generator.isValid());
+    AST *tree;
+    tree = parse(QString(QFINDTESTDATA("data/constantRes.stream")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    QVERIFY(generator.isValid());
 
-//    BlockNode *block = static_cast<BlockNode *>(tree->getChildren().at(4));
-//    QVERIFY(block->getNodeType() == AST::Block);
-//    ValueNode *value = static_cast<ValueNode *>(block->getPropertyValue("value"));
-//    QVERIFY(value != NULL);
-//    QVERIFY(value->getNodeType() == AST::Real);
+    BlockNode *block = static_cast<BlockNode *>(tree->getChildren().at(4));
+    QVERIFY(block->getNodeType() == AST::Block);
+    ValueNode *value = static_cast<ValueNode *>(block->getPropertyValue("value"));
+    QVERIFY(value != NULL);
+    QVERIFY(value->getNodeType() == AST::Real);
 
-//    QVERIFY(qFuzzyCompare(value->getRealValue(), 2.0 + (3.1 * 0.1)));
+    QVERIFY(qFuzzyCompare(value->getRealValue(), 2.0 + (3.1 * 0.1)));
 
-//    tree->deleteChildren();
-//    delete tree;
-//}
+    tree->deleteChildren();
+    delete tree;
+}
 
 void ParserTest::testStreamRates()
 {
@@ -914,49 +914,6 @@ void ParserTest::testTreeBuildStream()
     delete tree;
 }
 
-void ParserTest::testTreeBuildBasic()
-{
-    AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/platform.stream")).toStdString().c_str());
-    QVERIFY(tree != NULL);
-    vector<AST *> nodes = tree->getChildren();
-    QVERIFY(nodes.size() == 1);
-    QVERIFY(nodes.at(0)->getNodeType() == AST::Platform);
-    PlatformNode *node = static_cast<PlatformNode *>(nodes.at(0));
-    QVERIFY(node->platformName() == "PufferFish");
-    QVERIFY(node->version() == 1.1);
-    QVERIFY(node->getLine() == 4);
-    tree->deleteChildren();
-    delete tree;
-
-    tree = parse(QString(QFINDTESTDATA("data/simple.stream")).toStdString().c_str());
-    QVERIFY(tree != NULL);
-    nodes = tree->getChildren();
-    QVERIFY(nodes.size() == 2);
-    QVERIFY(nodes.at(1)->getNodeType() == AST::Stream);
-    StreamNode *stream_node = static_cast<StreamNode *>(nodes.at(1));
-    QVERIFY(stream_node->getLine() == 5);
-    QVERIFY(stream_node->getLeft()->getNodeType() == AST::Bundle);
-    QVERIFY(stream_node->getRight()->getNodeType() == AST::Bundle);
-    BundleNode *bundle = static_cast<BundleNode *>(stream_node->getLeft());
-    QVERIFY(bundle->getName() == "AudioIn");
-    QVERIFY(bundle->getLine() == 5);
-    AST *leafnode = bundle->index();
-    QVERIFY(leafnode->getNodeType() == AST::Int);
-    QVERIFY(leafnode->getLine() == 5);
-    QVERIFY(static_cast<ValueNode *>(leafnode)->getIntValue() == 1);
-
-    bundle = static_cast<BundleNode *>(stream_node->getRight());
-    QVERIFY(bundle->getName() == "AudioOut");
-    leafnode = bundle->index();
-    QVERIFY(leafnode->getNodeType() == AST::Int);
-    QVERIFY(leafnode->getLine() == 5);
-    QVERIFY(static_cast<ValueNode *>(leafnode)->getIntValue() == 2);
-
-    tree->deleteChildren();
-    delete tree;
-}
-
 void ParserTest::testTreeBuildLists()
 {
     AST *tree;
@@ -1302,15 +1259,55 @@ void ParserTest::testTreeBuildBlocks()
     delete tree;
 }
 
+void ParserTest::testTreeBuildBasic()
+{
+    AST *tree;
+    tree = parse(QString(QFINDTESTDATA("data/platform.stream")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    vector<AST *> nodes = tree->getChildren();
+    QVERIFY(nodes.size() == 1);
+    QVERIFY(nodes.at(0)->getNodeType() == AST::Platform);
+    PlatformNode *node = static_cast<PlatformNode *>(nodes.at(0));
+    QVERIFY(node->platformName() == "PufferFish");
+    QVERIFY(node->version() == 1.1);
+    QVERIFY(node->getLine() == 4);
+    tree->deleteChildren();
+    delete tree;
+
+    tree = parse(QString(QFINDTESTDATA("data/simple.stream")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    nodes = tree->getChildren();
+    QVERIFY(nodes.size() == 2);
+    QVERIFY(nodes.at(1)->getNodeType() == AST::Stream);
+    StreamNode *stream_node = static_cast<StreamNode *>(nodes.at(1));
+    QVERIFY(stream_node->getLine() == 5);
+    QVERIFY(stream_node->getLeft()->getNodeType() == AST::Bundle);
+    QVERIFY(stream_node->getRight()->getNodeType() == AST::Bundle);
+    BundleNode *bundle = static_cast<BundleNode *>(stream_node->getLeft());
+    QVERIFY(bundle->getName() == "AudioIn");
+    QVERIFY(bundle->getLine() == 5);
+    AST *leafnode = bundle->index();
+    QVERIFY(leafnode->getNodeType() == AST::Int);
+    QVERIFY(leafnode->getLine() == 5);
+    QVERIFY(static_cast<ValueNode *>(leafnode)->getIntValue() == 1);
+
+    bundle = static_cast<BundleNode *>(stream_node->getRight());
+    QVERIFY(bundle->getName() == "AudioOut");
+    leafnode = bundle->index();
+    QVERIFY(leafnode->getNodeType() == AST::Int);
+    QVERIFY(leafnode->getLine() == 5);
+    QVERIFY(static_cast<ValueNode *>(leafnode)->getIntValue() == 2);
+
+    tree->deleteChildren();
+    delete tree;
+}
+
 void ParserTest::testParser()
 {
     AST *tree;
     QStringList files;
     files << "data/platform.stream" << "data/simple.stream" << "data/array.stream" << "data/list.stream"
           << "data/stream.stream" << "data/block.stream"
-             // FIXME This line in introBlock.stream
-             // [ AudioIn[1], AudioIn[2] ] >> [ AudioOut[1], AudioOut[2] ];
-             // causes a memory leak. Haven't been able to find why...
           << "data/introBlock.stream"
           << "data/introConverter.stream" << "data/introFeedback.stream"
           << "data/introGenerator.stream" << "data/introProcessor.stream"
