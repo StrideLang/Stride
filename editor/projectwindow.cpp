@@ -48,7 +48,13 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
 
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(updateCodeAnalysis()));
     m_timer.start(2000);
-    connect(ui->tabWidget, SIGNAL(currentChanged(int)), this, SLOT(tabChanged(int)));
+    ui->tabWidget->setDocumentMode(true);
+    ui->tabWidget->setTabBarAutoHide(true);
+    ui->tabWidget->setTabsClosable(true);
+    connect(ui->tabWidget, SIGNAL(tabCloseRequested(int)),
+            this, SLOT(closeTab(int)));
+    connect(ui->tabWidget, SIGNAL(currentChanged(int)),
+            this, SLOT(tabChanged(int)));
 
     QTimer::singleShot(200, this, SLOT(updateCodeAnalysis()));
 }
@@ -497,6 +503,14 @@ void ProjectWindow::newFile()
     ui->tabWidget->setCurrentIndex(index);
     updateEditorFont();
     m_highlighter->setDocument(editor->document());
+}
+
+void ProjectWindow::closeTab(int index)
+{
+    CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+    qDebug() << "Close";
+    ui->tabWidget->removeTab(ui->tabWidget->currentIndex());
+    delete editor;
 }
 
 void ProjectWindow::closeEvent(QCloseEvent *event)

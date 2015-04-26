@@ -30,6 +30,7 @@ public slots:
     void openOptionsDialog();
     void updateCodeAnalysis();
     void newFile();
+    void closeTab(int index);
 
 protected:
     virtual void closeEvent(QCloseEvent *event);
