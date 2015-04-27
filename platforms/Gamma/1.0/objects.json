@@ -15,6 +15,11 @@
             "objectName": "AudioRate",
             "type" : "constant",
             "value" : 44100
+        },
+        {
+            "objectName": "ControlRate",
+            "type" : "constant",
+            "value" : 441
         }
     ]
 }

@@ -36,6 +36,7 @@ AST *FunctionNode::deepCopy()
     AST *output = new FunctionNode(m_name, newProps, m_type, m_line);
     newProps->deleteChildren();
     delete newProps;
+    output->setRate(m_rate);
     return output;
 }
 

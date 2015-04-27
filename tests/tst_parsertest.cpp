@@ -134,6 +134,18 @@ void ParserTest::testStreamRates()
     QVERIFY(name->getNodeType() == AST::Name);
     QVERIFY(name->getRate() == 44100);
 
+//    oscillator() >> Rate1 >> lowPass() >> Output3;
+    stream = static_cast<StreamNode *>(nodes.at(6));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    QVERIFY(stream->getLeft()->getRate() == 22050);
+    stream = static_cast<StreamNode *>(stream->getRight());
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    QVERIFY(stream->getLeft()->getRate() == 22050);
+    stream = static_cast<StreamNode *>(stream->getRight());
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    QVERIFY(stream->getLeft()->getRate() == 44100);
+    QVERIFY(stream->getRight()->getRate() == 44100);
+
     tree->deleteChildren();
     delete tree;
 }

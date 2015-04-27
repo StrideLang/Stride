@@ -22,7 +22,7 @@
                 "input": {"types" : ["ASP", "CSIP", "CSRP"], "default": {"type": "none"}, "required" : false, "maxconnections" : 1, "access": "stream_in"},
                 "output": {"types" : ["CSIP", "CSRP"], "default": {"type": "none"}, "required" : false, "maxconnections" : -1, "access": "stream_out"},
                 "default": {"types" : ["CIP", "CRP"], "default": 0.0, "required" : true, "maxconnections" : 1, "access": "property"},
-                "rate": {"types" : ["CIP"], "default": "ControlRate", "required" : true, "maxconnections" : 1, "access": "property"},
+                "rate": {"types" : ["CIP", "CRP"], "default": "ControlRate", "required" : true, "maxconnections" : 1, "access": "property"},
                 "enableMapping": {"types" : ["CBP"], "default": "on", "required" : true, "maxconnections" : 1, "access": "property"},
                 "mappingMode": {"types" : ["CSP"], "default": "'linear'", "required" : true, "maxconnections" : 1, "access": "property"},
                 "minimum": {"types" : ["CIP", "CRP"], "default": 0.0, "required" : true, "maxconnections" : 1, "access": "property"},
