@@ -174,11 +174,11 @@ def put_port_values(template_code, ports):
     return final_code
 
 
-def get_obj_code(obj_name, platform_types, var_name, bundle_index = -1):
+def get_obj_code(obj_name, platform_types, var_name, intokens, bundle_index = -1):
     platform_type, declaration = find_block(platform_types, obj_name, tree)
     if not declaration:
         raise ValueError("Declaration not found.")
-    new_code = get_type_code(platform_type, var_name, bundle_index)
+    new_code = get_type_code(platform_type, var_name, intokens, bundle_index)
 
     ports = platform_type["ports"].copy()
     ports.update(declaration["ports"])
@@ -187,7 +187,7 @@ def get_obj_code(obj_name, platform_types, var_name, bundle_index = -1):
     new_code["dsp_code"] = put_port_values(new_code["dsp_code"], ports)
     return new_code
 
-def get_type_code(platform_type, var_name, bundle_index = -1):
+def get_type_code(platform_type, var_name, intokens, bundle_index = -1):
     code = {}
     new_init_code = '';
     new_dsp_code = '';
@@ -195,6 +195,8 @@ def get_type_code(platform_type, var_name, bundle_index = -1):
     new_init_code = platform_type["code"]["init_code"]["code"]
     if "%%token%%" in new_init_code:
         new_init_code = new_init_code.replace("%%token%%", var_name)
+    if "%%intoken%%" in new_init_code:
+        new_init_code = new_init_code.replace("%%intoken%%", intokens)
     if bundle_index >= 0:
         new_init_code = new_init_code.replace("%%bundle_index%%", str(bundle_index - 1))
 #    if ugen_name:
@@ -203,6 +205,8 @@ def get_type_code(platform_type, var_name, bundle_index = -1):
     new_dsp_code = platform_type['code']['dsp_code']['code']
     if "%%token%%" in new_dsp_code:
         new_dsp_code = new_dsp_code.replace("%%token%%", var_name)
+    if "%%intoken%%" in new_dsp_code:
+        new_dsp_code = new_dsp_code.replace("%%intoken%%", intokens)
     if bundle_index > 0:
         new_dsp_code = new_dsp_code.replace("%%bundle_index%%", str(bundle_index - 1))
 #    if ugen_name:
@@ -259,7 +263,7 @@ stream_index = 0;
 ugen_index = 0;
 includes_list = []
 
-config_code = '''
+config_template_code = '''
 AudioDevice adevi = AudioDevice::defaultInput();
 AudioDevice adevo = AudioDevice::defaultOutput();
 //AudioDevice adevi = AudioDevice("firewire_pcm");
@@ -278,31 +282,64 @@ AudioDevice adevo = AudioDevice::defaultOutput();
 AudioIO io(%%block_size%%, %%sample_rate%%, audioCB, NULL, %%num_out_chnls%%, %%num_in_chnls%%);
 '''
 
+config_code = ''
 dsp_code = ''
 init_code = ''
 _intokens = {}
+_rates = []
+_rated_ugens = {}
+intermediate_signals = set()
+
+block_size = 16
+sample_rate = 44100.
+num_out_chnls = 2
+num_in_chnls = 2
 
 for node in tree:
     if 'block' in node:
         if node['block']['type'] == 'config':
-            block_size = 256
+            block_size = 16
             sample_rate = 44100.
             num_out_chnls = 2
             num_in_chnls = 2
 
-
-            config_code = config_code.replace("%%block_size%%", str(block_size))
-            config_code = config_code.replace("%%sample_rate%%", str(sample_rate))
-            config_code = config_code.replace("%%num_out_chnls%%", str(num_out_chnls))
-            config_code = config_code.replace("%%num_in_chnls%%", str(num_in_chnls))
-
-            write_section('Config Code', config_code)
     if 'stream' in node:
+        previous_rate = -1
+        stream_start_pos_dsp = len(dsp_code)
         for parts in node['stream']:
             var_name = "stream_%02i"%(stream_index)
+            intoken = '%%%%%%%'
 
+            # Check rates and rate changes
+            rate = parts["rate"]
+            if previous_rate == -1:
+                previous_rate = rate
+                dsp_code += '{// Starting rate: %i\n'%(rate)
+                intoken = var_name
+            if (not rate in _rates) and not rate == sample_rate:
+                _rates.append(rate)
+            if not rate == previous_rate:
+                #print("Rate changed from %f to %f"%(previous_rate, rate))
+                dsp_code += '}  // Close %i \n %s = stream_%02i_rate_%02i;\n'%(previous_rate, var_name, stream_index, rate_index)
+                dsp_code += '{ // New Rate %i\n'%rate;
+            if not rate in _rates:
+                rate_index = -1
+            else:
+                rate_index = _rates.index(rate)
+            if not rate_index == -1:
+                var_name += '_rate_%02i'%rate_index
+                intermediate_signals.add(var_name)
+            # To connect components within the same rate, the input token must be the internal rate token
+            if rate == previous_rate:
+                intoken = var_name
+            else:
+                intoken = "stream_%02i"%(stream_index)
+            #print("%s - %i %i"%(parts["name"], rate_index, rate))
+            previous_rate = rate
+
+            # Now insert generated code
             if parts['type'] == 'Bundle':
-                new_code = get_obj_code(parts["name"], _platform_types, var_name, parts["index"])
+                new_code = get_obj_code(parts["name"], _platform_types, var_name, intoken, parts["index"])
                 dsp_code += new_code["dsp_code"]
                 init_code += new_code["init_code"]
             elif parts['type'] == 'Name':
@@ -313,7 +350,7 @@ for node in tree:
 
                 intoken = _intokens[parts["name"]]
 
-                new_code = get_obj_code(parts["name"], _platform_types, var_name)
+                new_code = get_obj_code(parts["name"], _platform_types, var_name, intoken)
                 init_code += new_code["init_code"]
                 dsp_code += new_code["dsp_code"]
                 dsp_code += "%s = %s;\n"%(token_name, var_name)
@@ -329,15 +366,42 @@ for node in tree:
                 if "includes" in new_code:
                     includes_list.append(new_code["includes"])
                 ugen_index += 1
+                if not rate == sample_rate:
+                    _rated_ugens[ugen_name] = rate_index
+
+        dsp_code += '} // Final Stream close \n'
         stream_index += 1
 
 var_declaration = ''.join(['float stream_%02i;\n'%i for i in range(stream_index)])
 dsp_code = var_declaration + dsp_code
 
+config_code = config_template_code
+config_code = config_code.replace("%%block_size%%", str(block_size))
+config_code = config_code.replace("%%sample_rate%%", str(sample_rate))
+config_code = config_code.replace("%%num_out_chnls%%", str(num_out_chnls))
+config_code = config_code.replace("%%num_in_chnls%%", str(num_in_chnls))
+
+domain_code = ''
+domain_config_code = ''
+for i, rate in enumerate(_rates):
+    domain_code += "Domain rate%02i(%f);\n"%(i, rate)
+
+interm_sig_code = ''
+for name in intermediate_signals:
+    interm_sig_code += 'double %s;\n'%name
+
+for rated_ugen in _rated_ugens:
+    domain_config_code += "%s.domain(rate%02i); // Rate %.2f\n"%(rated_ugen, _rated_ugens[rated_ugen], _rates[_rated_ugens[rated_ugen]])
+
+init_code = interm_sig_code + domain_code + init_code
+config_code = domain_config_code + config_code
+
+
 includes_code = '\n'.join(set(includes_list))
 write_section('Includes', includes_code)
 write_section('Init Code', init_code)
 write_section('Dsp Code', dsp_code)
+write_section('Config Code', config_code)
 
 # Compile --------------------------
 cpp_compiler = "/usr/bin/c++"
