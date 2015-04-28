@@ -20,6 +20,7 @@ public:
         DuplicateSymbol,
         InconsistentList,
         StreamMemberSizeMismatch,
+        UndeclaredSymbol,
         None
     } ErrorType;
 

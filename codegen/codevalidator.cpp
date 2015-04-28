@@ -531,6 +531,13 @@ double CodeValidator::evaluateConstReal(AST *node, QVector<AST *> scope, AST *tr
         NameNode *nameNode = static_cast<NameNode *>(node);
         QString name = QString::fromStdString(nameNode->getName());
         BlockNode *declaration = findDeclaration(name, scope, tree);
+        if (!declaration) {
+            LangError error;
+            error.type = LangError::UndeclaredSymbol;
+            error.lineNumber = node->getLine();
+            error.errorTokens << name;
+            errors << error;
+        }
         if(declaration && declaration->getNodeType() == AST::Block) {
             AST *value = getValueFromConstBlock(declaration);
             if(value->getNodeType() == AST::Int || value->getNodeType() == AST::Real) {
@@ -739,6 +746,10 @@ QString LangError::getErrorText() {
         break;
     case InconsistentList:
         errorText = "Inconsistent List Error";
+        break;
+    case UndeclaredSymbol:
+        errorText = QString("Undeclared Symbol '%1'")
+                .arg(errorTokens[0]);
         break;
     case None:
     default:
