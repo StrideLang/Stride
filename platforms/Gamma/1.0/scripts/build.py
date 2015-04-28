@@ -306,6 +306,7 @@ for node in tree:
     if 'stream' in node:
         previous_rate = -1
         stream_start_pos_dsp = len(dsp_code)
+        dsp_code += '// Starting stream %02i -------------------------\n'%stream_index
         for parts in node['stream']:
             var_name = "stream_%02i"%(stream_index)
             intoken = '%%%%%%%'
@@ -401,7 +402,7 @@ for name in intermediate_signals:
 
 for i, rated_ugen in enumerate(_rated_ugens):
     domain_config_code += "%s.domain(rate%02i); // Rate %.2f\n"%(rated_ugen, _rated_ugens[rated_ugen], _rates[_rated_ugens[rated_ugen]])
-    domain_config_code += 'counter_%02i = %i;\n'%(i, counter_start[i])
+    domain_config_code += 'counter_%02i = 0;\n'%i
 
 init_code = interm_sig_code + domain_code + init_code
 config_code = domain_config_code + config_code
