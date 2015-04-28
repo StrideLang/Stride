@@ -20,6 +20,7 @@ private:
 private Q_SLOTS:
 
     //Expansion
+    void testMultichannelUgens();
     void testConstantResolution();
     void testStreamRates();
     void testStreamExpansion();
@@ -47,9 +48,21 @@ ParserTest::ParserTest()
 {
 }
 
+void ParserTest::testMultichannelUgens()
+{
+    AST *tree;
+    tree = parse(QString(QFINDTESTDATA("data/pan.stream")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    QVERIFY(generator.isValid());
+
+
+    tree->deleteChildren();
+    delete tree;
+}
+
 void ParserTest::testConstantResolution()
 {
-
     AST *tree;
     tree = parse(QString(QFINDTESTDATA("data/constantRes.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
@@ -63,6 +76,13 @@ void ParserTest::testConstantResolution()
     QVERIFY(value->getNodeType() == AST::Real);
 
     QVERIFY(qFuzzyCompare(value->getRealValue(), 2.0 + (3.1 * 0.1)));
+
+    block = static_cast<BlockNode *>(tree->getChildren().at(5));
+    QVERIFY(block->getNodeType() == AST::Block);
+    value = static_cast<ValueNode *>(block->getPropertyValue("value"));
+    QVERIFY(value != NULL);
+    QVERIFY(value->getNodeType() == AST::Real);
+    QVERIFY(qFuzzyCompare(value->getRealValue(), -0.1));
 
     tree->deleteChildren();
     delete tree;

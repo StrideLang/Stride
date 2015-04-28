@@ -1,0 +1,12 @@
+use Gamma version 1.0
+
+control PanMod {
+    minimum: -1
+    maximum: 1
+    rate: 4000
+}
+
+oscillator(freq: 5) >> PanMod;
+
+oscillator(freq: 440) >> pan(position: PanMod) >> AudioOut;
+

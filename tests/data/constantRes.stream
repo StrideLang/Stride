@@ -5,3 +5,5 @@ constant Const2 {value: 3.1}
 constant Const3 {value: 0.1}
 
 constant Const4 {value: Const1 + (Const2 * Const3)}
+
+constant Const5 {value: -Const3}

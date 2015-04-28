@@ -311,63 +311,74 @@ void CodeResolver::expandTypeBundles()
 bool CodeResolver::reduceConstExpression(ExpressionNode *expr, QVector<AST *> scope, AST *tree, double &expressionResult)
 {
     bool isConstant = false;
-    if (!expr->isUnary()) {
-        AST *left = expr->getLeft();
-        AST *right = expr->getRight();
+    QList<LangError> errorsLeft;
+    QList<LangError> errorsRight;
 
-        if (left->getNodeType() == AST::Expression) {
-            double expressionValue = 0;
-            bool isConstant =
-                    reduceConstExpression(static_cast<ExpressionNode *>(left), scope, m_tree, expressionValue);
-            if (isConstant) {
-                ValueNode *newValue = new ValueNode(expressionValue, left->getLine());
-                expr->replaceLeft(newValue);
-            }
+    AST *left;
+
+    if (!expr->isUnary()) {
+        left = expr->getLeft();
+    } else {
+        left = expr->getValue();
+    }
+
+    if (left->getNodeType() == AST::Expression) {
+        double expressionValue = 0;
+        isConstant =
+                reduceConstExpression(static_cast<ExpressionNode *>(left), scope, m_tree, expressionValue);
+        if (isConstant) {
+            ValueNode *newValue = new ValueNode(expressionValue, left->getLine());
+            expr->replaceLeft(newValue);
         }
+    }
+    double leftValue = CodeValidator::evaluateConstReal(left, scope, tree, errorsLeft);
+    double rightValue;
+    if (!expr->isUnary()) {
+        AST *right = expr->getRight();
         if (right->getNodeType() == AST::Expression) {
             double expressionValue = 0;
-            bool isConstant =
+            isConstant =
                     reduceConstExpression(static_cast<ExpressionNode *>(right), scope, tree, expressionValue);
             if (isConstant) {
                 ValueNode *newValue = new ValueNode(expressionValue, right->getLine());
                 expr->replaceRight(newValue);
             }
         }
-        QList<LangError> errorsLeft;
-        QList<LangError> errorsRight;
-        double leftValue = CodeValidator::evaluateConstReal(expr->getLeft(), scope, tree, errorsLeft);
-        double rightValue = CodeValidator::evaluateConstReal(expr->getRight(), scope, tree, errorsRight);
-        if ( errorsLeft.size() == 0 && errorsRight.size() == 0 ) {
-            switch (expr->getExpressionType()) {
-            case ExpressionNode::Multiply:
-                expressionResult = leftValue * rightValue;
-                break;
-            case ExpressionNode::Divide:
-                expressionResult = leftValue / rightValue;
-                break;
-            case ExpressionNode::Add:
-                expressionResult = leftValue + rightValue;
-                break;
-            case ExpressionNode::Subtract:
-                expressionResult = leftValue - rightValue;
-                break;
-            case ExpressionNode::And:
-                expressionResult = (int) leftValue & (int) rightValue;
-                break;
-            case ExpressionNode::Or:
-                expressionResult = (int) leftValue | (int) rightValue;
-                break;
-            case ExpressionNode::UnaryMinus:
-            case ExpressionNode::LogicalNot:
-                assert(0 == 1); // Should never get here
-                break;
-            }
-            return true;
-        } else {
-            // Not a constant expression, can't resolve;
+        rightValue = CodeValidator::evaluateConstReal(expr->getRight(), scope, tree, errorsRight);
+    }
+    if ( errorsLeft.size() == 0 && errorsRight.size() == 0 ) {
+        switch (expr->getExpressionType()) {
+        case ExpressionNode::Multiply:
+            expressionResult = leftValue * rightValue;
+            break;
+        case ExpressionNode::Divide:
+            expressionResult = leftValue / rightValue;
+            break;
+        case ExpressionNode::Add:
+            expressionResult = leftValue + rightValue;
+            break;
+        case ExpressionNode::Subtract:
+            expressionResult = leftValue - rightValue;
+            break;
+        case ExpressionNode::And:
+            expressionResult = (int) leftValue & (int) rightValue;
+            break;
+        case ExpressionNode::Or:
+            expressionResult = (int) leftValue | (int) rightValue;
+            break;
+        case ExpressionNode::UnaryMinus:
+            expressionResult = -leftValue;
+            break;
+        case ExpressionNode::LogicalNot:
+            expressionResult = ~((int) leftValue);
+            break;
+        default:
+            assert(0 == 1); // Should never get here
+            break;
         }
+        return true;
     } else {
-// TODO implement for unary
+        // Not a constant expression, can't resolve;
     }
     return isConstant;
 }

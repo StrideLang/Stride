@@ -60,7 +60,8 @@ DISTFILES += \
     data/expansions.stream \
     data/rates.stream \
     data/defaultProperties.stream \
-    data/constantRes.stream
+    data/constantRes.stream \
+    data/pan.stream
 
 # Link to codegen library
 
