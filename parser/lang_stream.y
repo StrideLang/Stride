@@ -91,7 +91,7 @@ int error = 0;
 
 %token '[' ']' '{' '}'
 %token COMMA COLON SEMICOLON 
-%token USE VERSION NONE ON OFF
+%token USE VERSION WITH NONE ON OFF
 
 %left STREAM
 %left OR
@@ -127,14 +127,22 @@ start:
 // =================================
 
 platformDef:
-                USE UVAR VERSION FLOAT {
+                USE UVAR { cout << "Platform: " << $2 << endl << " Using latest version!" << endl; }
+        |       USE UVAR VERSION FLOAT {
                         cout << "Platform: " << $2 << endl << "Version: " << $4 << " line " << yylineno << endl;
                         string s;
                         s.append($2); /* string constructor leaks otherwise! */
                         $$ = new PlatformNode(s, $4, yyloc.first_line);
                         free($2);
                 }
+        |	USE UVAR WITH auxPlatformDef { cout << "Platform: " << $2 << endl; }
+        |	USE UVAR VERSION FLOAT WITH auxPlatformDef { cout << "Platform: " << $2 << endl << "Version: " << $4 << endl; }
 	;
+
+auxPlatformDef:
+                UVAR				{ cout << "With additional platform: " << $1 << endl; }
+        |	auxPlatformDef AND UVAR 	{ cout << "With additional platform: " << $3 << endl; }
+        ;
 
 // ================================= 
 //	BLOCK DEFINITION
