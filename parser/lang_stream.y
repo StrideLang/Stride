@@ -181,19 +181,25 @@ blockType:
 // =================================
 	
 streamDef:
-                streamType SEMICOLON			{ $$ = $1; }
-	;
+            streamType SEMICOLON			{ $$ = $1; }
+        |	shorthandStreamType SEMICOLON	{}
+    ;
 
 streamType:
-                valueExp STREAM streamExp  	{ $$ = new StreamNode($1, $3, yyloc.first_line);
+            valueExp STREAM streamExp   	{ $$ = new StreamNode($1, $3, yyloc.first_line);
                                                   cout << "Stream Resolved!" << endl; }
         |	valueListExp STREAM streamExp	{ $$ = new StreamNode($1, $3, yyloc.first_line);
                                                   cout << "Stream Resolved!" << endl; }
-        |	STRING STREAM streamExp		{ cout << "String: " << $1 << endl << "Streaming ... " << endl << "Stream Resolved!" << endl;  }
-        |	ON STREAM streamExp		{ cout << "Keyword: on" << endl << "Streaming ... " << endl << "Stream Resolved!" << endl; }
-        |	OFF STREAM streamExp            { cout << "Keyword: off" << endl << "Streaming ... " << endl << "Stream Resolved!" << endl; }
-        |	basicList STREAM streamExp	{ cout << "stream Resolved!" << endl; }
-        ;
+    ;
+
+
+shorthandStreamType:
+            STRING STREAM UVAR		{ cout << "String: " << $1 << endl << "User variable: " << $3 << endl << "Streaming ... " << endl << "Stream Resolved!" << endl;  }
+        |	ON STREAM UVAR			{ cout << "Keyword: on" << endl << "User variable: " << $3 << endl << "Streaming ... " << endl << "Stream Resolved!" << endl; }
+        |	OFF STREAM UVAR			{ cout << "Keyword: off" << endl << "User variable: " << $3 << endl << "Streaming ... " << endl << "Stream Resolved!" << endl; }
+        |	'[' switchList ']' STREAM UVAR		{ cout << "User variable: " << $5 << endl << "Streaming ... " << endl << "Stream Resolved!" << endl; }
+        |	'[' stringList ']' STREAM UVAR		{ cout << "User variable: " << $5 << endl << "Streaming ... " << endl << "Stream Resolved!" << endl; }
+    ;
 	
 // ================================= 
 //	ARRAY DEFINITION
@@ -324,16 +330,12 @@ propertyType:
 // =================================
 
 listDef:
-                basicList               {}
+            '[' stringList ']'	{ $$ = $2; }
+        |	'[' switchList ']'	{ $$ = $2; }
         |	'[' blockList  ']'	{ $$ = $2; }
         |	'[' streamList ']'	{ $$ = $2; }
         |	'[' listList   ']'	{ $$ = $2; }
 	;
-
-basicList:
-                '[' stringList ']'	{ $$ = $2; }
-        |	'[' switchList ']'	{ $$ = $2; }
-        ;
 
 stringList:
                 stringList COMMA STRING		{
