@@ -40,6 +40,7 @@ CLETTER	[A-Z]
 
 "use"				{ return USE; }
 "version"			{ return VERSION; }
+"with"              { return WITH; }
 "none"				{ return NONE; }
 "on"				{ return ON; }
 "off"				{ return OFF; }
