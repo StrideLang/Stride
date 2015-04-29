@@ -1,0 +1,23 @@
+use Pufferfish version 1.1
+
+1 >> One;
+[1,1] >> OneList;
+1+1 >> Two;
+[1+1,1+1] >> TwoList;
+
+1. >> One;
+[1.,1.] >> OneList;
+1.+1. >> Two;
+[1.+1.,1.+1.] >> TwoList;
+
+[1.,1.] + 1.>> OneListAddOne;
+[1.,1.] + [1.,1.]>> OneListAddOneList;
+
+'one' >> One;
+['one','two'] >> OneTwo;
+
+on >> On;
+[on,on] >> OnOn;
+
+off >> Off;
+[off,off] >> OffOff;
