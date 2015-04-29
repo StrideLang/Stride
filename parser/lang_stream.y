@@ -189,7 +189,11 @@ streamType:
                                                   cout << "Stream Resolved!" << endl; }
         |	valueListExp STREAM streamExp	{ $$ = new StreamNode($1, $3, yyloc.first_line);
                                                   cout << "Stream Resolved!" << endl; }
-	;
+        |	STRING STREAM streamExp		{ cout << "String: " << $1 << endl << "Streaming ... " << endl << "Stream Resolved!" << endl;  }
+        |	ON STREAM streamExp		{ cout << "Keyword: on" << endl << "Streaming ... " << endl << "Stream Resolved!" << endl; }
+        |	OFF STREAM streamExp            { cout << "Keyword: off" << endl << "Streaming ... " << endl << "Stream Resolved!" << endl; }
+        |	basicList STREAM streamExp	{ cout << "stream Resolved!" << endl; }
+        ;
 	
 // ================================= 
 //	ARRAY DEFINITION
@@ -320,12 +324,16 @@ propertyType:
 // =================================
 
 listDef:
-                '[' stringList ']'	{ $$ = $2; }
-        |	'[' switchList ']'	{ $$ = $2; }
+                basicList               {}
         |	'[' blockList  ']'	{ $$ = $2; }
         |	'[' streamList ']'	{ $$ = $2; }
         |	'[' listList   ']'	{ $$ = $2; }
 	;
+
+basicList:
+                '[' stringList ']'	{ $$ = $2; }
+        |	'[' switchList ']'	{ $$ = $2; }
+        ;
 
 stringList:
                 stringList COMMA STRING		{
@@ -499,6 +507,10 @@ valueListExp:
         |	valueExp '/' valueListDef	{
                                                   $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3, yyloc.first_line);
                                                   cout << "Dividing ... " << endl; }
+        |	valueListDef '+' valueListDef	{ cout << "Adding Lists ... " << endl; }
+        |	valueListDef '-' valueListDef	{ cout << "Subtracting Lists ... " << endl; }
+        |	valueListDef '*' valueListDef	{ cout << "Multiplying Lists ... " << endl; }
+        |	valueListDef '/' valueListDef	{ cout << "Dividing Lists ... " << endl; }
         |	valueListDef			{ $$ = $1; }
 	;
 
