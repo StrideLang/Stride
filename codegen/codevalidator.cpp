@@ -221,8 +221,6 @@ void CodeValidator::validateSymbolUniqueness(AST *node, QVector<AST *> scope)
         }
     }
 
-
-
     QVector<AST *> children = QVector<AST *>::fromStdVector(node->getChildren());
     foreach(AST *node, children) {
         validateSymbolUniqueness(node, children);

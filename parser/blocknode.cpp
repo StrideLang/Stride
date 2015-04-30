@@ -82,10 +82,16 @@ string BlockNode::getObjectType() const
 AST *BlockNode::deepCopy()
 {
     AST * newProps = new AST();
+    AST *node;
     for(unsigned int i = 0; i< m_properties.size(); i++) {
         newProps->addChild(m_properties[i]->deepCopy());
     }
-    AST *node = new BlockNode(m_name, m_objectType, newProps, m_line);
+    if (getNodeType() == AST::BlockBundle) {
+        node = new BlockNode(static_cast<BundleNode *>(getBundle()->deepCopy()),
+                             m_objectType, newProps, m_line);
+    } else if (getNodeType() == AST::Block) {
+        node = new BlockNode(m_name, m_objectType, newProps, m_line);
+    }
     node->setRate(m_rate);
     delete newProps;
     return node;

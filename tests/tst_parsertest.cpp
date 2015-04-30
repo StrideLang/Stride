@@ -486,11 +486,8 @@ void ParserTest::testListConsistency()
 //    QVERIFY(!generator.isValid());
 //    QList<LangError> errors = generator.getErrors();
 
-//    LangError error = errors.takeFirst();
-//    QVERIFY(error.type == LangError::DuplicateSymbol);
-//    QVERIFY(error.lineNumber == 3);
-//    QVERIFY(error.errorTokens[0] == "Const");
-//    QVERIFY(error.errorTokens[1] == "12");
+//    tree->deleteChildren();
+//    delete tree;
 }
 
 void ParserTest::testTreeBuildNoneSwitch()
