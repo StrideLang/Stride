@@ -318,14 +318,14 @@ for node in tree:
             if previous_rate == -1:
                 previous_rate = rate
                 if not rate == sample_rate:
-                    dsp_code += 'if (counter_%02i == 0)\n'%_rates.index(rate)
+                    dsp_code += 'if (counter_%02i_trig == 1)\n'%_rates.index(rate)
                 dsp_code += '{// Starting rate: %i\n'%(rate)
                 intoken = var_name
             if not rate == previous_rate:
                 #print("Rate changed from %f to %f"%(previous_rate, rate))
                 dsp_code += '\n}  // Close %i \n %s = stream_%02i_rate_%02i;\n'%(previous_rate, var_name, stream_index, rate_index)
                 if not rate == sample_rate:
-                    dsp_code += 'if (counter_%02i == 0)\n'%_rates.index(rate)
+                    dsp_code += 'if (counter_%02i_trig == 1)\n'%_rates.index(rate)
                 dsp_code += '{ // New Rate %i\n'%rate;
             if not rate in _rates:
                 rate_index = -1
@@ -377,7 +377,7 @@ for node in tree:
         dsp_code += '} // Stream End \n'
         stream_index += 1
 
-var_declaration = ''.join(['float stream_%02i;\n'%i for i in range(stream_index)])
+var_declaration = ''.join(['double stream_%02i;\n'%i for i in range(stream_index)])
 dsp_code = var_declaration + dsp_code
 
 config_code = config_template_code
@@ -389,12 +389,12 @@ config_code = config_code.replace("%%num_in_chnls%%", str(num_in_chnls))
 domain_code = ''
 domain_config_code = ''
 rate_counter_inc = ''
-counter_start = []
+
 for i, rate in enumerate(_rates):
     domain_code += "Domain rate%02i(%f);\n"%(i, rate)
-    domain_code += 'int counter_%02i;\n'%i
-    counter_start.append(int(sample_rate/rate)) # Counter is truncated. Use float counter instead?
-    rate_counter_inc += 'counter_%02i--;\nif (counter_%02i < 0) { counter_%02i = %i;}\n'%(i,i,i,counter_start[-1])
+    domain_code += 'double counter_%02i;\nint counter_%02i_trig;\n'%(i,i)
+    counter_inc = rate/sample_rate # Float division
+    rate_counter_inc += 'counter_%02i_trig = 0;\ncounter_%02i += %f;\nif (counter_%02i >= 1.0) { counter_%02i -= 1.0; counter_%02i_trig = 1;}\n'%(i, i, counter_inc, i,i, i)
 
 interm_sig_code = ''
 for name in intermediate_signals:
@@ -402,7 +402,7 @@ for name in intermediate_signals:
 
 for i, rated_ugen in enumerate(_rated_ugens):
     domain_config_code += "%s.domain(rate%02i); // Rate %.2f\n"%(rated_ugen, _rated_ugens[rated_ugen], _rates[_rated_ugens[rated_ugen]])
-    domain_config_code += 'counter_%02i = 0;\n'%i
+    domain_config_code += 'counter_%02i = 0;\ncounter_%02i_trig = 0;\n'%(i, i)
 
 init_code = interm_sig_code + domain_code + init_code
 config_code = domain_config_code + config_code
