@@ -86,7 +86,9 @@ AST *ValueNode::deepCopy()
         return new ValueNode(getStringValue(), getLine());
     } else if (getNodeType() == AST::Switch) {
         return new ValueNode(getSwitchValue(), getLine());
-    } else {
+    } else if (getNodeType() == AST::None) {
+        return new ValueNode(getLine());
+    }  else {
         assert(0); // Invalid type
     }
 }

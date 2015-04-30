@@ -287,20 +287,20 @@ void CodeResolver::resolveConstants()
 void CodeResolver::expandStreamBundles()
 {
     vector<AST *> nodes = m_tree->getChildren();
-    vector<AST *> newNodes;
+    QVector<AST *> newNodes;
     for(unsigned int i = 0; i < nodes.size(); i++) {
         AST* node = nodes.at(i);
         if (node->getNodeType() == AST::Stream) {
             StreamNode *oldNode = static_cast<StreamNode *>(node);
-            QVector<StreamNode *> newStreams = expandBundleStream(oldNode);
-            oldNode->deleteChildren();
-            delete oldNode;
-            newNodes.insert(newNodes.end(), newStreams.begin(), newStreams.end());
+            QVector<AST *> newStreams = expandBundleStream(oldNode);
+            newNodes << newStreams;
         } else {
-            newNodes.push_back(node);
+            newNodes << node->deepCopy();
         }
     }
-    m_tree->setChildren(newNodes); // FIXME This probably leaks
+    m_tree->deleteChildren();
+    vector<AST *> newNodesStl = newNodes.toStdVector();
+    m_tree->setChildren(newNodesStl);
 }
 
 void CodeResolver::expandTypeBundles()
@@ -456,15 +456,15 @@ double CodeResolver::getDefaultForTypeAsDouble(QString type, QString port)
     return outValue;
 }
 
-QVector<StreamNode *> CodeResolver::expandBundleStream(StreamNode *stream, int size)
+QVector<AST *> CodeResolver::expandBundleStream(StreamNode *stream, int size)
 {
-    QVector<StreamNode *> streams;
+    QVector<AST *> streams;
     if (size == -1) {
         size = CodeValidator::largestBundleSize(stream, m_tree);
         Q_ASSERT(size > 0);
     }
     if (size == 1) {
-        streams << static_cast<StreamNode *>(stream->deepCopy());
+        streams << stream->deepCopy();
         return streams;
     }
     for (int i = 0; i<size; i++) {
@@ -498,7 +498,7 @@ AST *CodeResolver::expandStreamMember(AST *node, int i)
         newNode = new StreamNode(left, right, streamNode->getLine());
         newNode->setRate(node->getRate());
     } else if (node->getNodeType() == AST::Bundle) {
-        newNode = static_cast<BundleNode *>(node)->deepCopy(); // TODO must check how many connections the type supports
+        newNode = node->deepCopy(); // TODO must check how many connections the type supports
     } else {
         qFatal("Node type not supported in CodeResolver::expandStreamMember");
     }

@@ -321,7 +321,7 @@ int CodeValidator::getNodeSize(AST *node, QVector<AST *> &scope, QList<LangError
     } else if (node->getNodeType() == AST::Name) {
         NameNode *name = static_cast<NameNode *>(node);
         BlockNode *block = findDeclaration(QString::fromStdString(name->getName()), scope, m_tree);
-        if (block->getNodeType() == AST::BlockBundle) {
+        if (block && block->getNodeType() == AST::BlockBundle) {
             return getBlockBundleDeclaredSize(block, scope, errors);
         } else {
             return -1; // Not a bundle

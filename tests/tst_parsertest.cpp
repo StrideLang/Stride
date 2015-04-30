@@ -459,7 +459,7 @@ void ParserTest::testDuplicates()
     QVERIFY(!generator.isValid());
     QList<LangError> errors = generator.getErrors();
 
-//    QVERIFY(errors.size() > 1);
+    QVERIFY(errors.size() == 2);
     LangError error = errors.takeFirst();
     QVERIFY(error.type == LangError::DuplicateSymbol);
     QVERIFY(error.lineNumber == 12);

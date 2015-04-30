@@ -40,7 +40,7 @@ private:
     void resolveConstantsInNode(AST *node, QVector<AST *> scope);
     double getDefaultForTypeAsDouble(QString type, QString port);
 
-    QVector<StreamNode *> expandBundleStream(StreamNode *stream, int size = -1);
+    QVector<AST *> expandBundleStream(StreamNode *stream, int size = -1);
 
     AST *expandStreamMember(AST *node, int i);
     StreamPlatform m_platform;
