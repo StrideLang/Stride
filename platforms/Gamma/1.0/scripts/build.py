@@ -422,17 +422,56 @@ write_section('Dsp Code', dsp_code)
 write_section('Config Code', config_code)
 
 # Compile --------------------------
-cpp_compiler = "/usr/bin/c++"
 
-flags = "-I"+ platform_dir +"/include -O3 -DNDEBUG -o "+ out_dir +"/main.cpp.o -c "+ out_dir +"/main.cpp"
-args = [cpp_compiler] + flags.split()
-outtext = ck_out(args)
+import platform
 
-log(outtext)
+if platform.system() == "Windows":
+    cpp_compiler = "/usr/bin/c++"
 
-# Link ------------------------
-flags = "-O3 -DNDEBUG "+ out_dir +"/main.cpp.o -o "+ out_dir +"/app -rdynamic -L " + platform_dir + "/lib -lGamma -lpthread -lportaudio -lsndfile -lpthread -lportaudio -lsndfile"
-args = [cpp_compiler] + flags.split()
-outtext = ck_out(args)
+    flags = "-I"+ platform_dir +"/include -O3 -DNDEBUG -o "+ out_dir +"/main.cpp.o -c "+ out_dir +"/main.cpp"
+    args = [cpp_compiler] + flags.split()
+    outtext = ck_out(args)
 
-log(outtext)
+    log(outtext)
+
+    # Link ------------------------
+    flags = "-O3 -DNDEBUG "+ out_dir +"/main.cpp.o -o "+ out_dir +"/app -rdynamic -L " + platform_dir + "/lib -lGamma -lpthread -lportaudio -lsndfile -lpthread -lportaudio -lsndfile"
+    args = [cpp_compiler] + flags.split()
+    outtext = ck_out(args)
+
+    log(outtext)
+
+    elif
+elif platform.system() == "Linux":
+    cpp_compiler = "/usr/bin/c++"
+
+    flags = "-I"+ platform_dir +"/include -O3 -DNDEBUG -o "+ out_dir +"/main.cpp.o -c "+ out_dir +"/main.cpp"
+    args = [cpp_compiler] + flags.split()
+    outtext = ck_out(args)
+
+    log(outtext)
+
+    # Link ------------------------
+    flags = "-O3 -DNDEBUG "+ out_dir +"/main.cpp.o -o "+ out_dir +"/app -rdynamic -L " + platform_dir + "/lib -lGamma -lpthread -lportaudio -lsndfile -lpthread -lportaudio -lsndfile"
+    args = [cpp_compiler] + flags.split()
+    outtext = ck_out(args)
+
+    log(outtext)
+
+elif platform.system() == "Darwin":
+    cpp_compiler = "/usr/bin/c++"
+
+    flags = "-I"+ platform_dir +"/include -O3 -DNDEBUG -o "+ out_dir +"/main.cpp.o -c "+ out_dir +"/main.cpp"
+    args = [cpp_compiler] + flags.split()
+    outtext = ck_out(args)
+
+    log(outtext)
+
+    # Link ------------------------
+    flags = "-O3 -DNDEBUG "+ out_dir +"/main.cpp.o -o "+ out_dir +"/app -rdynamic -L " + platform_dir + "/lib -lGamma -lpthread -lportaudio -lsndfile -lpthread -lportaudio -lsndfile"
+    args = [cpp_compiler] + flags.split()
+    outtext = ck_out(args)
+
+    log(outtext)
+else:
+    print("Platform '%s' not supported!"%platform.system())
