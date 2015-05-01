@@ -1,4 +1,22 @@
 {"types": [
+        
+        {
+            "typeName": "object",
+            "ports": {
+                "meta": {"types": ["CSP", "none"], "default": "none", "required" : false, "maxconnections" : 1, "access": "property"}
+            },
+            "privateports": {
+                "inherits" : []
+            }
+        },
+        {
+            "typeName": "constant",
+            "ports": {
+                "output": {"types" : ["CIP", "CRP" , "CSP"], "default": "none", "required" : false, "maxconnections" : -1, "access": "stream_out"},
+                "value": {"types": ["CIP", "CRP" , "CSP", "none"], "default": "none", "required" : true, "maxconnections" : 1, "access": "property"}
+            },
+            "privateports": {"inherits" : ["object"]}
+        },
         {
             "typeName": "signal",
             "ports": {
@@ -38,6 +56,35 @@
                 "dsp_code": {"code": "%%token%% = %%port:minimum%% + (%%intoken%% + 1.0) * 0.5 * (%%port:maximum%% - %%port:minimum%%);\n"}
             }
             ,
+            "privateports": {"inherits" : ["object"]}
+        },
+        {
+            "typeName": "switch",
+            "ports": {
+                "input": {"types" : ["CSBP"], "default": "none", "required" : false, "maxconnections" : 1, "access": "stream_in"},
+                "output": {"types" : ["CSBP"], "default": "none", "required" : false, "maxconnections" : -1, "access": "stream_out"},
+                "default": {"types" : ["CBP"], "default": "off", "required" : true, "maxconnections" : 1, "access": "property"}
+            },
+            "privateports": {
+                "inherits" : ["object"]
+            }
+        },
+        {
+            "typeName": "patch",
+            "ports": {
+            },
+            "privateports": {"inherits" : ["object"]}
+        },
+        {
+            "typeName": "sequence",
+            "ports": {
+            },
+            "privateports": {"inherits" : ["object"]}
+        },
+        {
+            "typeName": "instrument",
+            "ports": {
+            },
             "privateports": {"inherits" : ["object"]}
         },
         {

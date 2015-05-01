@@ -327,9 +327,9 @@ void ProjectWindow::updateCodeAnalysis()
             if (tree) {
                 CodeValidator validator(m_platformsRootDir, tree);
                 //    QVERIFY(!generator.isValid());
-                QStringList types = validator.getPlatform().getPlatformTypes();
+                QStringList types = validator.getPlatform().getPlatformTypeNames();
                 m_highlighter->setBlockTypes(types);
-                QStringList funcs = validator.getPlatform().getFunctions();
+                QStringList funcs = validator.getPlatform().getFunctionNames();
                 m_highlighter->setFunctions(funcs);
                 QList<PlatformObject> objects = validator.getPlatform().getBuiltinObjects();
                 QStringList objectNames;
@@ -511,7 +511,7 @@ void ProjectWindow::closeTab(int index)
 {
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     qDebug() << "Close";
-    ui->tabWidget->removeTab(ui->tabWidget->currentIndex());
+    ui->tabWidget->removeTab(index);
     delete editor;
 }
 

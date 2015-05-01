@@ -1,33 +1,26 @@
 use Gamma version 1.0
 
-constant CarrierFreq {
-	value: 440
-}
+constant CarrierFreq { value: 440}
 
+constant CMRatio { 	value: 0.5 }
+
+constant ModFreq {	value: CarrierFreq * CMRatio }
+
+constant ModIndex {	value: 1 }
 
 control Modulator {
-        default:        100.0
         enableMapping:  on
-        mappingMode:    'linear'
-        minimum:        220
-        maximum:        660
-        increment:      none
-        rounding:       'truncate'
-        meta:           none
+        minimum:        CarrierFreq - (ModIndex * ModFreq)
+        maximum:        CarrierFreq + (ModIndex * ModFreq)
+		rate: AudioRate
 }
 
 oscillator (
         type:           'sine'
-        amplitude:      1.0
-        frequency:      440.0
-        phase:          0.0
-        reset:          off
+        frequency:      ModFreq
 ) >> Modulator;
 
 oscillator (
         type:           'sine'
-        amplitude:      1.0
         frequency:      Modulator
-        phase:          0.0
-        reset:          off
-) >> level(gain: 0.2) >> AudioOut;
+) >> level(gain: 0.1) >> AudioOut;

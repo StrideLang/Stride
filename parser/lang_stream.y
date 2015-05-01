@@ -73,6 +73,7 @@ int error = 0;
 %type <listNode> valueListDef
 %type <listNode> stringList
 %type <listNode> switchList
+%type <listNode> basicList
 %type <listNode> blockList
 %type <listNode> streamList
 %type <listNode> listList

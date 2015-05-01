@@ -12,17 +12,13 @@
 StreamPlatform::StreamPlatform(QString platformPath) :
     m_platformRootPath(platformPath)
 {
-    initBasicTypes();
 }
 
 StreamPlatform::StreamPlatform(QString platformPath, QString platform, QString version) :
     m_platformRootPath(platformPath), m_platformName(platform), m_version(version)
 {
-    initBasicTypes();
-    parsePlatformCommonTypes();
     parsePlatformTypes();
-    parsePlatformFunction();
-    parseCommonTypes();
+    parsePlatformFunctions();
     parsePlatformObjects();
 }
 
@@ -48,7 +44,7 @@ void StreamPlatform::parsePlatformTypes()
     }
 }
 
-void StreamPlatform::parsePlatformFunction()
+void StreamPlatform::parsePlatformFunctions()
 {
     QString platformFile = m_platformRootPath + QDir::separator() + m_platformName
             + QDir::separator() + m_version
@@ -123,42 +119,21 @@ QVariant StreamPlatform::getDefaultPortValueForType(QString typeName, QString po
     return QVariant();
 }
 
+PlatformFunction StreamPlatform::getFunction(QString functionName)
+{
+    foreach(PlatformFunction func, m_platformFunctions) {
+        if (func.getName() == functionName) {
+            return func;
+        }
+    }
+    QList<Property> properties;
+    return PlatformFunction("", properties, 0, 0);
+}
+
 QString StreamPlatform::getPlatformPath()
 {
     return m_platformRootPath + QDir::separator() + m_platformName
             + QDir::separator() + m_version;
-}
-
-void StreamPlatform::parsePlatformCommonTypes()
-{
-    QString platformFile = m_platformRootPath + QDir::separator() + "common"
-            + QDir::separator() + "builtin_types.json";
-    QFile f(platformFile);
-    if (!f.open(QFile::ReadOnly | QFile::Text)) {
-        QString errorText = "Can't open common platform file: " +  f.fileName();
-        m_errors << errorText;
-        qDebug() << errorText;
-    } else {
-        Q_ASSERT(m_platformCommonTypes.isEmpty());
-        parseTypesJson(f.readAll(), m_platformCommonTypes);
-        f.close();
-    }
-}
-
-void StreamPlatform::parseCommonTypes()
-{
-    QString platformFile = m_platformRootPath + QDir::separator() + m_platformName
-            + QDir::separator() + "common/types.json";
-    QFile f(platformFile);
-    if (!f.open(QFile::ReadOnly | QFile::Text)) {
-        QString errorText = "Can't open platform types: " +  f.fileName();
-        m_errors << errorText;
-        qDebug() << errorText;
-    } else {
-        Q_ASSERT(m_commonTypes.isEmpty());
-        parseTypesJson(f.readAll(), m_commonTypes);
-        f.close();
-    }
 }
 
 void StreamPlatform::parseTypesJson(QString jsonText, QList<PlatformType> &types)
@@ -286,7 +261,10 @@ void StreamPlatform::parseFunctionsJson(QString jsonText, QList<PlatformFunction
         }
 
         //.toVariantMap();
-        PlatformFunction newType(funcName, ports);
+
+        int numInputs = funcObj.take("num_inputs").toInt(0);
+        int numOutputs = funcObj.take("num_outputs").toInt(0);
+        PlatformFunction newType(funcName, ports, numInputs, numOutputs);
         functions.append(newType);
     }
 }
@@ -328,7 +306,7 @@ QStringList StreamPlatform::getWarnings()
     return m_warnings;
 }
 
-QStringList StreamPlatform::getPlatformTypes()
+QStringList StreamPlatform::getPlatformTypeNames()
 {
     QStringList typeNames;
     foreach(PlatformType type, m_platformTypes) {
@@ -343,7 +321,7 @@ QStringList StreamPlatform::getPlatformTypes()
     return typeNames;
 }
 
-QStringList StreamPlatform::getFunctions()
+QStringList StreamPlatform::getFunctionNames()
 {
     QStringList functionNames;
     foreach(PlatformFunction func, m_platformFunctions) {
@@ -422,10 +400,5 @@ bool StreamPlatform::isValidPortType(QString typeName, QString propertyName, QSt
         }
     }
     return false;
-}
-
-void StreamPlatform::initBasicTypes()
-{
-    m_basicTypes << "int" << "real" << "list" << "string" << "stream";
 }
 

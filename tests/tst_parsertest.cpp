@@ -54,8 +54,13 @@ void ParserTest::testMultichannelUgens()
     tree = parse(QString(QFINDTESTDATA("data/pan.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
-    QVERIFY(generator.isValid());
+    QVERIFY(!generator.isValid());
 
+
+    QList<LangError> errors = generator.getErrors();
+//    QVERIFY(errors[0].type == LangError::StreamMemberSizeMismatch);
+//    QVERIFY(errors[0].lineNumber == 3);
+//    QVERIFY(errors[0].errorTokens[0] == "invalid");
 
     tree->deleteChildren();
     delete tree;

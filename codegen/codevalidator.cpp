@@ -252,7 +252,8 @@ void CodeValidator::validateStreamSizes(AST *tree, QVector<AST *> scope)
     QVector<AST *> children = QVector<AST *>::fromStdVector(tree->getChildren());
     foreach(AST *node, children) {
         if(node->getNodeType() == AST:: Stream) {
-            getNodeSize(node, scope, m_errors);
+            StreamNode *stream = static_cast<StreamNode *>(node);
+            validateStreamInputSize(stream, scope, m_errors);
         }
     }
 }
@@ -265,6 +266,28 @@ bool errorLineIsLower(const LangError &err1, const LangError &err2)
 void CodeValidator::sortErrors()
 {
     std::sort(m_errors.begin(), m_errors.end(), errorLineIsLower);
+}
+
+void CodeValidator::validateStreamInputSize(StreamNode *stream, QVector<AST *> scope, QList<LangError> &errors)
+{
+    AST *left = stream->getLeft();
+    AST *right = stream->getRight();
+
+    int leftOutSize = getNodeOutputSize(left, scope, errors);
+    int rightInSize = getNodeInputSize(right, scope, errors);
+
+    if (leftOutSize != rightInSize
+            && ((int) (rightInSize/ (double) leftOutSize)) != (rightInSize/ (double) leftOutSize) ) {
+        LangError error;
+        error.type = LangError::StreamMemberSizeMismatch;
+        error.lineNumber = right->getLine();
+        error.errorTokens << QString::number(leftOutSize) << QString::number(rightInSize);
+        errors << error;
+    }
+    if (right->getNodeType() == AST::Stream) {
+        validateStreamInputSize(static_cast<StreamNode *>(right), scope, errors);
+    }
+
 }
 
 int CodeValidator::getBlockBundleDeclaredSize(BlockNode *block, QVector<AST *> scope, QList<LangError> &errors)
@@ -287,10 +310,10 @@ int CodeValidator::getBlockDataSize(BlockNode *block, QVector<AST *> scope, QLis
     if (ports.size() == 0) {
         return 0;
     }
-    int size = getNodeSize(ports.at(0)->getValue(), scope, errors);
+    int size = getNodeOutputSize(ports.at(0)->getValue(), scope, errors);
     foreach(PropertyNode *port, ports) {
         AST *value = port->getValue();
-        int newSize = getNodeSize(value, scope, errors);
+        int newSize = getNodeOutputSize(value, scope, errors);
         if (size != newSize) {
             if (size == 1) {
                 size = newSize;
@@ -304,11 +327,13 @@ int CodeValidator::getBlockDataSize(BlockNode *block, QVector<AST *> scope, QLis
     return size;
 }
 
-int CodeValidator::getNodeSize(AST *node, QVector<AST *> &scope, QList<LangError> &errors)
+int CodeValidator::getNodeOutputSize(AST *node, QVector<AST *> &scope, QList<LangError> &errors)
 {
+    Q_ASSERT(node->getNodeType() != AST::Stream); // Stream nodes should not be on the left...
     if (node->getNodeType() == AST::List) {
         return node->getChildren().size();
     } else if (node->getNodeType() == AST::Bundle) {
+//        BundleNode *name = static_cast<NameNode *>(node);
         return 1;
     } else if (node->getNodeType() == AST::Int
                || node->getNodeType() == AST::Real
@@ -331,24 +356,28 @@ int CodeValidator::getNodeSize(AST *node, QVector<AST *> &scope, QList<LangError
             return evaluateConstInteger(bundle->endIndex(), scope, m_tree, errors)
                     - evaluateConstInteger(bundle->startIndex(), scope, m_tree, errors) + 1;
         }
+    } else if (node->getNodeType() == AST::Function) {
+        FunctionNode *func = static_cast<FunctionNode *>(node);
+        PlatformFunction platformFunc = m_platform.getFunction(QString::fromStdString(func->getName()));
+        return platformFunc.numOutputs();
+    }
+    return -1;
+}
+
+int CodeValidator::getNodeInputSize(AST *node, QVector<AST *> &scope, QList<LangError> &errors)
+{
+    if (node->getNodeType() == AST::Function) {
+        FunctionNode *func = static_cast<FunctionNode *>(node);
+        PlatformFunction platformFunc = m_platform.getFunction(QString::fromStdString(func->getName()));
+        return platformFunc.numInputs();
     } else if (node->getNodeType() == AST::Stream) {
         StreamNode *stream = static_cast<StreamNode *>(node);
         AST *left = stream->getLeft();
-        AST *right = stream->getRight();
-        int leftSize = getNodeSize(left, scope, m_errors);
-        int rightSize = getNodeSize(right, scope, m_errors);
-
-        if (leftSize != rightSize
-                && ((int) (rightSize/ (double) leftSize)) != (rightSize/ (double) leftSize) ) {
-            LangError error;
-            error.type = LangError::StreamMemberSizeMismatch;
-            error.lineNumber = right->getLine();
-            error.errorTokens << QString::number(leftSize) << QString::number(rightSize);
-            m_errors << error;
-        } else {
-            return leftSize > rightSize ? leftSize : rightSize;
-        }
-
+//        AST *right = stream->getRight();
+        int leftSize = getNodeInputSize(left, scope, m_errors);
+        return leftSize;
+    } else {
+        return getNodeOutputSize(node, scope, errors);
     }
     return -1;
 }

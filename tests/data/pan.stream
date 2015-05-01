@@ -6,7 +6,17 @@ control PanMod {
     rate: 4000
 }
 
+signal DummyOut2 {}
+signal DummyStereo[2] {}
+signal DummyStereo2[2] {}
+
 oscillator(freq: 5) >> PanMod;
 
 oscillator(freq: 440) >> pan(position: PanMod) >> AudioOut;
+
+# This line should throw an error (pan has two outputs)
+oscillator(freq: 440) >> pan(position: PanMod) >> DummyOut;
+
+# This line should throw an error (pan has one input)
+DummyStereo >> pan(position: PanMod) >> DummyStereo2;
 

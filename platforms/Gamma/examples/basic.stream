@@ -2,7 +2,7 @@ use Gamma version 1.0
 
 constant String {
 value: "hello"
-}
+} 
 
 
 control Test[2] {

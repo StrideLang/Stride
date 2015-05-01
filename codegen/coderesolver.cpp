@@ -109,7 +109,7 @@ double CodeResolver::findRateInProperties(vector<PropertyNode *> properties, QVe
             } else if (propertyValue->getNodeType() == AST::Name) {
                 BlockNode* valueDeclaration =  CodeValidator::findDeclaration(
                             QString::fromStdString(static_cast<NameNode *>(propertyValue)->getName()), scope, tree);
-                if (valueDeclaration->getObjectType() == "constant") {
+                if (valueDeclaration && valueDeclaration->getObjectType() == "constant") {
                     vector<PropertyNode *> valueProperties = valueDeclaration->getProperties();
                     foreach(PropertyNode *property, valueProperties) {
                         if (property->getName() == "value") {
@@ -456,13 +456,10 @@ double CodeResolver::getDefaultForTypeAsDouble(QString type, QString port)
     return outValue;
 }
 
-QVector<AST *> CodeResolver::expandBundleStream(StreamNode *stream, int size)
+QVector<AST *> CodeResolver::expandBundleStream(StreamNode *stream)
 {
+    int size = CodeValidator::largestBundleSize(stream, m_tree);
     QVector<AST *> streams;
-    if (size == -1) {
-        size = CodeValidator::largestBundleSize(stream, m_tree);
-        Q_ASSERT(size > 0);
-    }
     if (size == 1) {
         streams << stream->deepCopy();
         return streams;

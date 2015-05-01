@@ -92,9 +92,12 @@ private:
 
     void sortErrors();
 
+    void validateStreamInputSize(StreamNode *stream, QVector<AST *> scope, QList<LangError> &errors);
+
     int getBlockBundleDeclaredSize(BlockNode *block, QVector<AST *> scope, QList<LangError> &errors);
     int getBlockDataSize(BlockNode *block, QVector<AST *> scope, QList<LangError> &errors);
-    int getNodeSize(AST *node, QVector<AST *> &scope, QList<LangError> &errors);
+    int getNodeOutputSize(AST *node, QVector<AST *> &scope, QList<LangError> &errors);
+    int getNodeInputSize(AST *node, QVector<AST *> &scope, QList<LangError> &errors);
 
     StreamPlatform m_platform;
     AST *m_tree;

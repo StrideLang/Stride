@@ -56,7 +56,7 @@ jsonfile = open(out_dir + '/tree.json')
 tree = json.load(jsonfile)
 
 includes_code = ''
-init_code = ''
+global_code = ''
 dsp_code = ''
 
 num_chnls = 2;
@@ -184,6 +184,7 @@ def get_obj_code(obj_name, platform_types, var_name, intokens, bundle_index = -1
     new_code = get_type_code(platform_type, var_name, intokens, bundle_index)
 
     ports = platform_type["ports"].copy()
+
     ports.update(declaration["ports"])
 
     new_code["init_code"] = put_port_values(new_code["init_code"], ports)
@@ -192,18 +193,18 @@ def get_obj_code(obj_name, platform_types, var_name, intokens, bundle_index = -1
 
 def get_type_code(platform_type, var_name, intokens, bundle_index = -1):
     code = {}
-    new_init_code = '';
+    new_global_code = '';
     new_dsp_code = '';
 
-    new_init_code = platform_type["code"]["init_code"]["code"]
-    if "%%token%%" in new_init_code:
-        new_init_code = new_init_code.replace("%%token%%", var_name)
-    if "%%intoken%%" in new_init_code:
-        new_init_code = new_init_code.replace("%%intoken%%", intokens)
+    new_global_code = platform_type["code"]["init_code"]["code"]
+    if "%%token%%" in new_global_code:
+        new_global_code = new_global_code.replace("%%token%%", var_name)
+    if "%%intoken%%" in new_global_code:
+        new_global_code = new_global_code.replace("%%intoken%%", intokens)
     if bundle_index >= 0:
-        new_init_code = new_init_code.replace("%%bundle_index%%", str(bundle_index - 1))
+        new_global_code = new_global_code.replace("%%bundle_index%%", str(bundle_index - 1))
 #    if ugen_name:
-#        new_init_code = new_init_code.replace("%%identifier%%", ugen_name)
+#        new_global_code = new_global_code.replace("%%identifier%%", ugen_name)
 
     new_dsp_code = platform_type['code']['dsp_code']['code']
     if "%%token%%" in new_dsp_code:
@@ -216,21 +217,28 @@ def get_type_code(platform_type, var_name, intokens, bundle_index = -1):
 #        new_dsp_code = new_dsp_code.replace("%%identifier%%", ugen_name)
 
     code["dsp_code"] = new_dsp_code
-    code["init_code"] = new_init_code
+    code["init_code"] = new_global_code
     if "includes" in platform_type["code"]:
         if len(platform_type["code"]["includes"]["code"]) > 0:
             code["includes"] = "#include <%s>"%platform_type["code"]["includes"]["code"]
 
     return code
 
+def get_function_property_config_code(func, prop_name, token, intoken, ugen_name):
+    new_dsp_code_control = func["code"]["dsp_code"][prop_name]
+    new_dsp_code_control = new_dsp_code_control.replace("%%token%%", token)
+    new_dsp_code_control = new_dsp_code_control.replace("%%intoken%%", intoken)
+    new_dsp_code_control = new_dsp_code_control.replace("%%identifier%%", ugen_name)
+    return new_dsp_code_control
+
 def get_function_code(func, properties, token, intokens, ugen_name):
     code = {}
-    new_init_code = '';
+    new_global_code = '';
     new_dsp_code = '';
 
-    new_init_code = func["code"]["init_code"]["code"]
-    new_init_code = new_init_code.replace("%%token%%", token)
-    new_init_code = new_init_code.replace("%%identifier%%", ugen_name)
+    new_global_code = func["code"]["init_code"]["code"]
+    new_global_code = new_global_code.replace("%%token%%", token)
+    new_global_code = new_global_code.replace("%%identifier%%", ugen_name)
 
     # Insert code for variable (non-constant) properties
     new_dsp_code_control = ''
@@ -240,22 +248,17 @@ def get_function_code(func, properties, token, intokens, ugen_name):
         if prop_type == "Name":
             intoken = intokens[prop_value["name"]][-1] # FIXME: What to do with multiple inputs
             if prop_name in func["code"]["dsp_code"]:
-                new_dsp_code_control += func["code"]["dsp_code"][prop_name]
-                print(new_dsp_code_control)
-                print(token, intoken, prop_value["name"])
-                new_dsp_code_control = new_dsp_code_control.replace("%%token%%", token)
-                new_dsp_code_control = new_dsp_code_control.replace("%%intoken%%", intoken)
-                new_dsp_code_control = new_dsp_code_control.replace("%%identifier%%", ugen_name)
+                new_dsp_code_control += get_function_property_config_code(func, prop_name, token, intoken, ugen_name)
 
     new_dsp_code = new_dsp_code_control + func["code"]["dsp_code"]["code"]
     new_dsp_code = new_dsp_code.replace("%%token%%", token)
     new_dsp_code = new_dsp_code.replace("%%identifier%%", ugen_name)
 
-    new_init_code = put_property_values(new_init_code, properties, func)
+    new_global_code = put_property_values(new_global_code, properties, func)
     new_dsp_code = put_property_values(new_dsp_code, properties, func)
 
     code["dsp_code"] = new_dsp_code
-    code["init_code"] = new_init_code
+    code["init_code"] = new_global_code
     if "includes" in func["code"]:
         if len(func["code"]["includes"]["code"]) > 0:
             code["includes"] = "#include <%s>"%func["code"]["includes"]["code"]
@@ -287,9 +290,12 @@ AudioDevice adevo = AudioDevice::defaultOutput();
 AudioIO io(%%block_size%%, %%sample_rate%%, audioCB, NULL, %%num_out_chnls%%, %%num_in_chnls%%);
 '''
 
+# FIXME fix nomenclature
 config_code = ''
 dsp_code = ''
-init_code = ''
+global_code = ''
+setup_code = ''
+
 _intokens = {}
 _rates = []
 _rated_ugens = {}
@@ -351,11 +357,11 @@ for node in tree:
             if parts['type'] == 'Bundle':
                 new_code = get_obj_code(parts["name"], _platform_types, var_name, intoken, parts["index"])
                 dsp_code += new_code["dsp_code"]
-                init_code += new_code["init_code"]
+                global_code += new_code["init_code"]
             elif parts['type'] == 'Name':
                 token_name = 'ctl_%s'%parts["name"]
                 if not parts["name"] in _intokens:
-                    init_code += "double %s;\n"%token_name;
+                    global_code += "double %s;\n"%token_name;
                     _intokens[parts["name"]] = [var_name]
                 else:
                     _intokens[parts["name"]].append(var_name)
@@ -363,7 +369,7 @@ for node in tree:
                 intoken = _intokens[parts["name"]][-1]
 
                 new_code = get_obj_code(parts["name"], _platform_types, var_name, intoken)
-                init_code += new_code["init_code"]
+                global_code += new_code["init_code"]
                 dsp_code += new_code["dsp_code"]
                 dsp_code += "%s = %s;\n"%(token_name, var_name)
             elif parts['type'] == 'Function':
@@ -374,12 +380,20 @@ for node in tree:
                 new_code = get_function_code(func, parts["properties"], var_name, _intokens, ugen_name)
 
                 dsp_code += new_code["dsp_code"]
-                init_code += new_code["init_code"]
+                global_code += new_code["init_code"]
                 if "includes" in new_code:
                     includes_list.append(new_code["includes"])
                 ugen_index += 1
                 if not rate == sample_rate:
                     _rated_ugens[ugen_name] = rate_index
+                properties = parts["properties"]
+                for property in properties:
+                    prop_value = properties[property]
+                    prop_type = prop_value["type"]
+                    if prop_type == "Value":
+#                        intoken = intokens[prop_value["name"]]
+                        if property in func["code"]["dsp_code"]:
+                            setup_code += get_function_property_config_code(func, property, var_name, str(prop_value["value"]), ugen_name)
 
         dsp_code += '} // Stream End \n'
         stream_index += 1
@@ -395,6 +409,7 @@ config_code = config_code.replace("%%num_in_chnls%%", str(num_in_chnls))
 
 domain_code = ''
 domain_config_code = ''
+rate_config_code = ''
 rate_counter_inc = ''
 
 for i, rate in enumerate(_rates):
@@ -408,16 +423,17 @@ interm_sig_code = ''
 for name in intermediate_signals:
     interm_sig_code += 'double %s;\n'%name
 
-for i, rated_ugen in enumerate(_rated_ugens):
+for rated_ugen in _rated_ugens:
     domain_config_code += "%s.domain(rate%02i); // Rate %.2f\n"%(rated_ugen, _rated_ugens[rated_ugen], _rates[_rated_ugens[rated_ugen]])
 
-init_code = interm_sig_code + domain_code + init_code
-config_code = domain_config_code + config_code
+
+global_code = interm_sig_code + domain_code + global_code
+config_code = rate_config_code + domain_config_code + setup_code + config_code
 dsp_code += rate_counter_inc
 
 includes_code = '\n'.join(set(includes_list))
 write_section('Includes', includes_code)
-write_section('Init Code', init_code)
+write_section('Init Code', global_code)
 write_section('Dsp Code', dsp_code)
 write_section('Config Code', config_code)
 
@@ -441,7 +457,7 @@ if platform.system() == "Windows":
 
     log(outtext)
 
-    elif
+
 elif platform.system() == "Linux":
     cpp_compiler = "/usr/bin/c++"
 
