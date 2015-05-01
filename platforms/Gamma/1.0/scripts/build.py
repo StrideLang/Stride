@@ -167,7 +167,10 @@ def put_port_values(template_code, ports):
         port_name = match[match.rindex(':') + 1: -2]
 
         if port_name in ports:
-            port_value = ports[port_name]
+            if type(ports[port_name]) == dict:
+                port_value = ports[port_name]['default']
+            else:
+                port_value = ports[port_name]
             final_code = final_code.replace(match, str(port_value))
         else:
             raise ValueError("Property in code not matched")
@@ -235,9 +238,11 @@ def get_function_code(func, properties, token, intokens, ugen_name):
         prop_value = properties[prop_name]
         prop_type = prop_value["type"]
         if prop_type == "Name":
-            intoken = intokens[prop_value["name"]]
+            intoken = intokens[prop_value["name"]][-1] # FIXME: What to do with multiple inputs
             if prop_name in func["code"]["dsp_code"]:
                 new_dsp_code_control += func["code"]["dsp_code"][prop_name]
+                print(new_dsp_code_control)
+                print(token, intoken, prop_value["name"])
                 new_dsp_code_control = new_dsp_code_control.replace("%%token%%", token)
                 new_dsp_code_control = new_dsp_code_control.replace("%%intoken%%", intoken)
                 new_dsp_code_control = new_dsp_code_control.replace("%%identifier%%", ugen_name)
@@ -351,9 +356,11 @@ for node in tree:
                 token_name = 'ctl_%s'%parts["name"]
                 if not parts["name"] in _intokens:
                     init_code += "double %s;\n"%token_name;
-                    _intokens[parts["name"]] = token_name
+                    _intokens[parts["name"]] = [var_name]
+                else:
+                    _intokens[parts["name"]].append(var_name)
 
-                intoken = _intokens[parts["name"]]
+                intoken = _intokens[parts["name"]][-1]
 
                 new_code = get_obj_code(parts["name"], _platform_types, var_name, intoken)
                 init_code += new_code["init_code"]
@@ -393,8 +400,9 @@ rate_counter_inc = ''
 for i, rate in enumerate(_rates):
     domain_code += "Domain rate%02i(%f);\n"%(i, rate)
     domain_code += 'double counter_%02i;\nint counter_%02i_trig;\n'%(i,i)
+    domain_config_code += 'counter_%02i = 0;\ncounter_%02i_trig = 0;\n'%(i, i)
     counter_inc = rate/sample_rate # Float division
-    rate_counter_inc += 'counter_%02i_trig = 0;\ncounter_%02i += %f;\nif (counter_%02i >= 1.0) { counter_%02i -= 1.0; counter_%02i_trig = 1;}\n'%(i, i, counter_inc, i,i, i)
+    rate_counter_inc += 'counter_%02i_trig = 0;\ncounter_%02i += %.24f;\nif (counter_%02i >= 1.0) { counter_%02i -= 1.0; counter_%02i_trig = 1;}\n'%(i, i, counter_inc, i,i, i)
 
 interm_sig_code = ''
 for name in intermediate_signals:
@@ -402,7 +410,6 @@ for name in intermediate_signals:
 
 for i, rated_ugen in enumerate(_rated_ugens):
     domain_config_code += "%s.domain(rate%02i); // Rate %.2f\n"%(rated_ugen, _rated_ugens[rated_ugen], _rates[_rated_ugens[rated_ugen]])
-    domain_config_code += 'counter_%02i = 0;\ncounter_%02i_trig = 0;\n'%(i, i)
 
 init_code = interm_sig_code + domain_code + init_code
 config_code = domain_config_code + config_code

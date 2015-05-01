@@ -1,17 +1,8 @@
 use Gamma version 1.0
 
 control Rate1 {
-        enableMapping:  on
-        minimum:        CarrierFreq - (ModIndex * ModFreq)
-        maximum:        CarrierFreq + (ModIndex * ModFreq)
-		rate: 4410
+		rate: 22045
 }
 
-control Rate2 {
-        enableMapping:  on
-        minimum:        CarrierFreq - (ModIndex * ModFreq)
-        maximum:        CarrierFreq + (ModIndex * ModFreq)
-		rate: 2205
-}
 
-oscillator(frequency: 880) >> Rate1 >> Rate2 >> AudioOut;
+oscillator(frequency: 880) >> Rate1 >> AudioOut;
