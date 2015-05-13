@@ -10,58 +10,15 @@ BaseProject::BaseProject(QString projectDir) :
 {
     m_runProcess = new QProcess(this);
     QDir::setCurrent("/home/andres/Documents/src/XMOS/Odo/Streamstack/platforms/Gamma/1.0/scripts");
-
-#ifdef USE_LUA
-    m_lua = lua_open();
-
-    m_lua = lua_open();
-    luaL_openlibs(m_lua); // Load standard libraries
-#endif
 }
 
 BaseProject::~BaseProject()
 {
     delete m_runProcess;
-#ifdef USE_LUA
-    lua_close(m_lua);
-#endif
 }
 
 void BaseProject::build()
 {
-    QMutexLocker mutexLocker(&m_codeMutex);
 
-    char const * fileName = m_code.toLocal8Bit().constData();
-//    lua_build("","","","");
-//    parse(fileName);
-//    generateCode();
-    QProcess p(this);
-//    QStringList env = getBuildEnvironment();
-
-//    p.setEnvironment(env);
-//    p.setWorkingDirectory(m_projectDir);
-//    // FIXME always clean before building
-////    p.execute(m_platform->getToolchainPath() + "/bin/xmake",  QStringList() << "clean");
-//    p.start(m_platform->getToolchainPath() + "/bin/xmake",  QStringList() << "all");
-//    while (p.state() == QProcess::Running) {
-//        p.waitForReadyRead(100);
-//        QString out = QString(p.readAllStandardOutput());
-//        QString error = QString(p.readAllStandardError());
-//        if (!out.isEmpty()) {
-//            emit outputText(out);
-//        }
-//        if (!error.isEmpty()) {
-//            emit errorText(error);
-//        }
-//        qApp->processEvents();
-//    }
-//    QString out = QString(p.readAllStandardOutput());
-//    QString error = QString(p.readAllStandardError());
-//    if (!out.isEmpty()) {
-//        emit outputText(out);
-//    }
-//    if (!error.isEmpty()) {
-//        emit errorText(error);
-//    }
 
 }

@@ -29,7 +29,8 @@ HEADERS += \
     platformobject.h \
     pythonproject.h \
     codevalidator.h \
-    coderesolver.h
+    coderesolver.h \
+    baseproject.h
 
 #unix {
 #    target.path = /usr/local/lib
