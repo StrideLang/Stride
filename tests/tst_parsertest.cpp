@@ -19,6 +19,7 @@ private:
 
 private Q_SLOTS:
 
+
     //Expansion
     void testMultichannelUgens();
     void testConstantResolution();
@@ -58,9 +59,19 @@ void ParserTest::testMultichannelUgens()
 
 
     QList<LangError> errors = generator.getErrors();
-//    QVERIFY(errors[0].type == LangError::StreamMemberSizeMismatch);
-//    QVERIFY(errors[0].lineNumber == 3);
-//    QVERIFY(errors[0].errorTokens[0] == "invalid");
+    LangError error = errors.takeFirst();
+    QVERIFY(error.type == LangError::StreamMemberSizeMismatch);
+    QVERIFY(error.lineNumber == 22);
+    QVERIFY(error.errorTokens[0] == "2");
+    QVERIFY(error.errorTokens[1] == "pan");
+    QVERIFY(error.errorTokens[2] == "1");
+
+    error = errors.takeFirst();
+    QVERIFY(error.type == LangError::StreamMemberSizeMismatch);
+    QVERIFY(error.lineNumber == 25);
+    QVERIFY(error.errorTokens[0] == "2");
+    QVERIFY(error.errorTokens[1] == "DummyStereo");
+    QVERIFY(error.errorTokens[2] == "1");
 
     tree->deleteChildren();
     delete tree;
@@ -171,6 +182,9 @@ void ParserTest::testStreamRates()
     QVERIFY(stream->getLeft()->getRate() == 44100);
     QVERIFY(stream->getRight()->getRate() == 44100);
 
+//    InSignal >> pan() >> OutSignal;
+
+//    InSignal2 >> [pan(), pan()] >> OutSignal2;
     tree->deleteChildren();
     delete tree;
 }

@@ -5,7 +5,7 @@
 #include "codevalidator.h"
 
 CodeResolver::CodeResolver(StreamPlatform &platform, AST *tree) :
-    m_platform(platform), m_tree(tree)
+    m_platform(platform), m_tree(tree), m_connectorCounter(0)
 {
 
 }
@@ -15,14 +15,14 @@ CodeResolver::~CodeResolver()
 
 }
 
-void CodeResolver::process()
+void CodeResolver::preProcess()
 {
     insertBuiltinObjects();
     resolveStreamSymbols();
     resolveRates();
     resolveConstants();
-    expandStreamBundles();
-    expandTypeBundles();
+    expandStreamMembers();
+//    sliceStreams();
 }
 
 void CodeResolver::resolveRates()
@@ -215,14 +215,11 @@ void CodeResolver::insertBuiltinObjects()
     }
 }
 
-double CodeResolver::createSignalDeclaration(QString name, StreamNode *parentStream, AST *tree)
+double CodeResolver::createSignalDeclaration(QString name, int size, AST *tree)
 {
     BlockNode *newBlock;
     double nameRate = -1;
-    int size = CodeValidator::largestBundleSize(parentStream, tree);
-    if (size <= 0) { // None of the elements in the stream have size
-        size = 1;
-    }
+    Q_ASSERT(size > 0);
     if (size == 1) {
         newBlock = new BlockNode(name.toStdString(), "signal", NULL, -1);
     } else if (size > 1) {
@@ -239,27 +236,52 @@ double CodeResolver::createSignalDeclaration(QString name, StreamNode *parentStr
     return nameRate;
 }
 
-void CodeResolver::declareUnknownStreamSymbols(StreamNode *stream, AST * tree)
+void CodeResolver::declareUnknownStreamSymbols(StreamNode *stream, AST *previousStreamMember, AST * tree)
 {
     AST *left = stream->getLeft();
+    AST *right = stream->getRight();
+
+    AST * nextStreamMember;
+    if (right->getNodeType() != AST::Stream) {
+        nextStreamMember = right;
+    } else {
+        nextStreamMember = static_cast<StreamNode *>(right)->getLeft();
+    }
 
     if (left->getNodeType() == AST::Name) {
         NameNode *name = static_cast<NameNode *>(left);
         BlockNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), QVector<AST *>(), tree);
-        if (!block) {
-            double rate = createSignalDeclaration(QString::fromStdString(name->getName()), stream, tree);
+        if (!block) { // Not declared, so make declaration
+            QList<LangError> errors;
+            QVector<AST *> scope;
+            int size = -1;
+            if (previousStreamMember) {
+                size = CodeValidator::getNodeNumOutputs(previousStreamMember, m_platform, scope, m_tree, errors);
+            }
+            if (size <= 0) {
+                size = CodeValidator::getNodeNumInputs(nextStreamMember, m_platform, scope, m_tree, errors);
+            }
+            if (size <= 0) { // None of the elements in the stream have size
+                size = 1;
+            }
+            double rate = createSignalDeclaration(QString::fromStdString(name->getName()), size, tree);
             name->setRate(rate);
         }
     }
 
-    AST *right = stream->getRight();
     if (right->getNodeType() == AST::Stream) {
-        declareUnknownStreamSymbols(static_cast<StreamNode *>(right), tree);
+        declareUnknownStreamSymbols(static_cast<StreamNode *>(right), left, tree);
     } else if (right->getNodeType() == AST::Name) {
         NameNode *name = static_cast<NameNode *>(right);
         BlockNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), QVector<AST *>(), tree);
-        if (!block) {
-            double rate = createSignalDeclaration(QString::fromStdString(name->getName()), stream, tree);
+        if (!block) { // Not declared, so make declaration
+            QList<LangError> errors;
+            QVector<AST *> scope;
+            int size = CodeValidator::getNodeNumOutputs(left, m_platform, scope, m_tree, errors);
+            if (size <= 0) { // None of the elements in the stream have size
+                size = 1;
+            }
+            double rate = createSignalDeclaration(QString::fromStdString(name->getName()), size, tree);
             name->setRate(rate);
         }
     }
@@ -271,7 +293,7 @@ void CodeResolver::resolveStreamSymbols()
     foreach(AST *node, children) {
         if(node->getNodeType() == AST:: Stream) {
             StreamNode *stream = static_cast<StreamNode *>(node);
-            declareUnknownStreamSymbols(stream, m_tree);
+            declareUnknownStreamSymbols(stream, NULL, m_tree);
         }
     }
 }
@@ -284,15 +306,47 @@ void CodeResolver::resolveConstants()
     }
 }
 
-void CodeResolver::expandStreamBundles()
+void CodeResolver::expandStreamMembers()
+{
+    vector<AST *> nodes = m_tree->getChildren();
+    QVector<AST *> newReversedNodes;
+    QVector<AST *> newNodes;
+
+    // Need to traverse streams in reverse order to resolve later streams first.
+    vector<AST *>::reverse_iterator rit = nodes.rbegin();
+    for (; rit!= nodes.rend(); ++rit) {
+        AST *node = *rit;
+        if (node->getNodeType() == AST::Stream) {
+            StreamNode *oldNode = static_cast<StreamNode *>(node);
+            QVector<AST *> newStreams = expandStreamFromMemberSizes(oldNode);
+            for(int i = 0; i < newStreams.size(); i++) {
+                newReversedNodes << newStreams[newStreams.size() - i - 1];
+            }
+        } else {
+            newReversedNodes << node->deepCopy();
+        }
+    }
+    // Now reverse vectors to put them back.
+    for(int k = 0; k < newReversedNodes.size(); k++) {
+        newNodes << newReversedNodes[newReversedNodes.size() - k -1];
+    }
+    m_tree->deleteChildren();
+    vector<AST *> newNodesStl = newNodes.toStdVector();
+    m_tree->setChildren(newNodesStl);
+}
+
+void CodeResolver::sliceStreams()
 {
     vector<AST *> nodes = m_tree->getChildren();
     QVector<AST *> newNodes;
-    for(unsigned int i = 0; i < nodes.size(); i++) {
-        AST* node = nodes.at(i);
+
+    // Need to traverse streams in reverse order to resolve later streams first.
+    vector<AST *>::reverse_iterator rit = nodes.rbegin();
+    for (; rit!= nodes.rend(); ++rit) {
+        AST *node = *rit;
         if (node->getNodeType() == AST::Stream) {
             StreamNode *oldNode = static_cast<StreamNode *>(node);
-            QVector<AST *> newStreams = expandBundleStream(oldNode);
+            QVector<AST *> newStreams = sliceStream(oldNode);
             newNodes << newStreams;
         } else {
             newNodes << node->deepCopy();
@@ -301,11 +355,6 @@ void CodeResolver::expandStreamBundles()
     m_tree->deleteChildren();
     vector<AST *> newNodesStl = newNodes.toStdVector();
     m_tree->setChildren(newNodesStl);
-}
-
-void CodeResolver::expandTypeBundles()
-{
-
 }
 
 bool CodeResolver::reduceConstExpression(ExpressionNode *expr, QVector<AST *> scope, AST *tree, double &expressionResult)
@@ -456,46 +505,158 @@ double CodeResolver::getDefaultForTypeAsDouble(QString type, QString port)
     return outValue;
 }
 
-QVector<AST *> CodeResolver::expandBundleStream(StreamNode *stream)
+QVector<AST *> CodeResolver::expandStreamFromMemberSizes(StreamNode *stream)
 {
-    int size = CodeValidator::largestBundleSize(stream, m_tree);
+    QList<LangError> errors;
+    QVector<AST *> scope;
+    int size = CodeValidator::numParallelStreams(stream, m_platform, scope, m_tree, errors);
     QVector<AST *> streams;
-    if (size == 1) {
+    if (size <= 1) {
         streams << stream->deepCopy();
         return streams;
     }
-    for (int i = 0; i<size; i++) {
+    for (int i = 0; i < size; i++) {
         AST *left = stream->getLeft();
         AST *right = stream->getRight();
         AST *newLeft,*newRight;
-        newLeft = expandStreamMember(left, i);
-        newRight = expandStreamMember(right, i);
+        newLeft = expandStreamFromMemberSizes(left, i);
+        newRight = expandStreamFromMemberSizes(right, i);
         StreamNode *newStream = new StreamNode(newLeft, newRight, stream->getLine());
         streams << newStream;
     }
     return streams;
 }
 
-AST *CodeResolver::expandStreamMember(AST *node, int i)
+QVector<AST *> CodeResolver::sliceStream(StreamNode *stream)
+{
+    int size = CodeValidator::largestNodeSize(stream, m_tree);
+    QVector<AST *> streams;
+    if (size == 1) {
+        // FIXME: This check should be not for single channel but for single path (e.g. chain of 2 stereo ugens)
+        streams << stream->deepCopy();
+        return streams;
+    }
+    AST *left = stream->getLeft();
+//    AST *marker = stream->getLeft(); // To mark where last split occured
+    QList<LangError> errors;
+    QVector<AST *> scope;
+    size = CodeValidator::getNodeNumOutputs(left, m_platform, scope, m_tree, errors)
+            * CodeValidator::getNodeSize(left, m_tree);
+    Q_ASSERT(size >= 0);
+    AST *nextNode = stream->getRight();
+    while (nextNode) {
+        if (nextNode->getNodeType() == AST::Stream) {
+            StreamNode *rightStream = static_cast<StreamNode *>(nextNode);
+            int nextSize = CodeValidator::getNodeNumInputs(rightStream->getLeft(), m_platform, scope, m_tree, errors)
+                    * CodeValidator::getNodeSize(rightStream->getLeft(), m_tree);
+            Q_ASSERT(nextSize != -1);
+//            Q_ASSERT(nextSize >=)
+            if (nextSize > size) {
+                QVector<AST *> nextStreams = expandStreamFromMemberSizes(rightStream);
+                foreach(AST * stream, nextStreams) {
+                    // Now prepend the new connection symbol
+                    QString nodeName = QString("__Connector%1").arg(m_connectorCounter++, 2);
+                    NameNode *newConnectionName = new NameNode(nodeName.toStdString(), -1);
+                    streams << new StreamNode(newConnectionName, stream->deepCopy(), -1);
+                    stream->deleteChildren();
+                    delete stream;
+                }
+                nextNode = NULL;
+                continue;
+            } else if (nextSize == size) {
+                // Just keep going if size hasn't changed
+            } else {
+//                qFatal("Error, stream size shouldn't have decreased");
+            }
+            nextNode = rightStream->getRight();
+        } else { // Last member of the stream (any node that is not StreamNode *)
+
+            int nextSize = CodeValidator::getNodeNumInputs(nextNode, m_platform, scope, m_tree, errors)
+                    * CodeValidator::getNodeSize(nextNode, m_tree);
+            if (nextSize > size) {
+                // TODO expand up to here and add new signal to connect
+//                QVector<AST *> nextStreams = expandStreamFromMemberSizes(rightStream);
+//                foreach(AST * stream, nextStreams) {
+//                    // Now prepend the new connection symbol
+//                    QString nodeName = QString("__Connector%1").arg(m_connectorCounter++, 2);
+//                    NameNode *newConnectionName = new NameNode(nodeName.toStdString(), -1);
+//                    streams << new StreamNode(newConnectionName, stream, -1);
+//                }
+                nextNode = NULL;
+                continue;
+            } else if (nextSize == size) { // All streams are parallel and of the same size
+
+                AST *left = stream->getLeft();
+                AST *right = stream->getRight();
+
+                for (int i = 0; i < size; i++) {
+                    AST *newLeft, *newRight;
+                    newLeft = expandStreamFromMemberSizes(left, i);
+                    newRight = expandStreamFromMemberSizes(right, i);
+                    StreamNode *newStream = new StreamNode(newLeft, newRight, stream->getLine());
+                    streams << newStream;
+                }
+            } else {
+//                qFatal("Error, stream size shouldn't have decreased");
+            }
+            nextNode = NULL;
+        }
+    }
+    return streams;
+}
+
+StreamNode *CodeResolver::splitStream(StreamNode *stream, AST *closingNode, AST *endNode)
+{
+    StreamNode *outStream;
+    AST * left = stream->getLeft();
+    AST * right = stream->getRight();
+    if (right == endNode) { // endNode is the last node in the stream, just append closingNode
+        StreamNode *lastStream = new StreamNode(right->deepCopy(), closingNode, -1);
+        StreamNode *outStream = new StreamNode(left->deepCopy(), lastStream, -1);
+        return outStream;
+    } else if (left == endNode) { // There is more stream, but we have reached the split point
+        StreamNode *outStream = new StreamNode(left->deepCopy(), closingNode, -1);
+        return outStream;
+    }
+    if  (right != endNode) {
+        Q_ASSERT(right->getNodeType() == AST::Stream); // Shouldn't reach the end of the stream before reaching endNode
+        outStream = splitStream(static_cast<StreamNode *>(right), closingNode, endNode);
+        StreamNode *finalStream = new StreamNode(left, outStream->deepCopy(), -1);
+        outStream->deleteChildren();
+        delete outStream;
+        return finalStream;
+    }
+    qFatal("Shouldn't get here");
+    return outStream;
+}
+
+AST *CodeResolver::expandStreamFromMemberSizes(AST *node, int index)
 {
     AST *newNode;
     if (node->getNodeType() == AST::Function) {
         newNode = static_cast<FunctionNode *>(node)->deepCopy();
     } else if (node->getNodeType() == AST::Name) {
         NameNode *nameNode = static_cast<NameNode *>(node);
-        ValueNode *indexNode = new ValueNode(i + 1, nameNode->getLine());
+        ValueNode *indexNode = new ValueNode(index + 1, nameNode->getLine());
         newNode = new BundleNode(nameNode->getName(), indexNode ,nameNode->getLine());
         newNode->setRate(node->getRate());
     } else if (node->getNodeType() == AST::BundleRange) {
         assert(0==1); //TODO implement here
     } else if (node->getNodeType() == AST::Stream) {
         StreamNode *streamNode = static_cast<StreamNode *>(node);
-        AST * left = expandStreamMember(streamNode->getLeft(), i);
-        AST * right = expandStreamMember(streamNode->getRight(), i);
+        AST * left = expandStreamFromMemberSizes(streamNode->getLeft(), index);
+        AST * right = expandStreamFromMemberSizes(streamNode->getRight(), index);
         newNode = new StreamNode(left, right, streamNode->getLine());
         newNode->setRate(node->getRate());
     } else if (node->getNodeType() == AST::Bundle) {
         newNode = node->deepCopy(); // TODO must check how many connections the type supports
+    } else if (node->getNodeType() == AST::Function) {
+        newNode = node->deepCopy(); // TODO must check how many connections the type supports
+    } else if (node->getNodeType() == AST::List) {
+        QList<LangError> errors;
+        CodeValidator::getMemberFromList(static_cast<ListNode *>(node),
+                                         index + 1, errors);
+        Q_ASSERT(errors.size() == 0);
     } else {
         qFatal("Node type not supported in CodeResolver::expandStreamMember");
     }

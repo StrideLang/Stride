@@ -71,8 +71,13 @@ public:
     static AST *getValueFromConstBlock(BlockNode *block);
     static AST *getMemberFromList(ListNode *node, int index, QList<LangError> &errors);
 
-    static int largestBundleSize(StreamNode *stream, AST *tree);
-    static int getBundleSize(AST *node, AST *tree);
+    static int largestNodeSize(StreamNode *stream, AST *tree);
+    static int numParallelStreams(StreamNode *stream, StreamPlatform &platform, QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
+    static int getNodeSize(AST *node, AST *tree);
+    static int getNodeNumOutputs(AST *node, StreamPlatform &platform, QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
+    static int getNodeNumInputs(AST *node, StreamPlatform &platform, QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
+    static int getBlockBundleDeclaredSize(BlockNode *block, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
+    static int getMaximumPropertySize(vector<PropertyNode *> &properties, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
 
     static QString getPortTypeName(PortType type);
 
@@ -94,10 +99,9 @@ private:
 
     void validateStreamInputSize(StreamNode *stream, QVector<AST *> scope, QList<LangError> &errors);
 
-    int getBlockBundleDeclaredSize(BlockNode *block, QVector<AST *> scope, QList<LangError> &errors);
     int getBlockDataSize(BlockNode *block, QVector<AST *> scope, QList<LangError> &errors);
-    int getNodeOutputSize(AST *node, QVector<AST *> &scope, QList<LangError> &errors);
-    int getNodeInputSize(AST *node, QVector<AST *> &scope, QList<LangError> &errors);
+
+    QString getNodeText(AST *node);
 
     StreamPlatform m_platform;
     AST *m_tree;

@@ -11,3 +11,7 @@ control Out[2] {
 }
 
 In >> Out;
+
+InSignal >> pan() >> OutSignal;
+
+#InSignal2 >> [pan(), pan()] >> OutSignal2;

@@ -69,7 +69,7 @@
                 "includes": {"code": "Gamma/Effects.h"},
                 "init_code": {"code": "Pan<> %%identifier%%(%%property:position%%);\n"},
                 "dsp_code": {
-                    "code": "%%identifier%%(%%intoken%%,%%token:1%%, %token:2%);\n",
+                    "code": "%%identifier%%(%%intoken%%,%%token:1%%, %%token:2%%);\n",
                     "position": "%%identifier%%.pos(%%intoken%%);\n"
                 }
             }

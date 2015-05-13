@@ -4,13 +4,13 @@ from __future__ import print_function
 from __future__ import division
 
 import sys
-import os
 import shutil
 import re
 from subprocess import check_output as ck_out
 
 def log(text):
     print(text)
+
 
 gamma_directory = '/home/andres/Documents/src/Allostuff/Gamma'
 platform_dir = '/home/andres/Documents/src/XMOS/Odo/StreamStack/platforms/Gamma/1.0'
@@ -22,15 +22,39 @@ project_dir = platform_dir + '/project'
 # What about secondary deps like portaudio and libsndfile?
 log("Building Gamma project")
 
-out_dir = sys.argv[1]
+
+# TODO: move this to bottom
+if __name__ == "__main__":
+    out_dir = platform_dir + '/test'
+else:
+    out_dir = sys.argv[1]
+
 log("Buiding in directory: " + out_dir)
-
-#shutil.rmtree(out_dir)
-#shutil.copytree(gamma_directory, out_dir)
-
+    
 shutil.copyfile(project_dir + "/template.cpp", out_dir + "/main.cpp")
 
-def write_section(sec_name, code):
+# Load tree in json format
+import json
+
+jsonfile = open(out_dir + '/tree.json')
+tree = json.load(jsonfile)
+
+# Generate code from tree
+
+
+includes_code = ''
+global_code = ''
+dsp_code = ''
+
+num_chnls = 2;
+
+_platform_funcs = json.load(open(platform_dir + '/functions.json'))['functions']
+#_platform_objs = json.load(open(platform_dir + '/objects.json'))['objects']
+_platform_types = json.load(open(platform_dir + '/types.json'))['types']
+
+# --------------------- Common platform functions
+
+def write_section_in_file(sec_name, code):
     filename = out_dir + "/main.cpp"
     f = open(filename, 'r')
     text = f.read()
@@ -46,26 +70,6 @@ def write_section(sec_name, code):
     f = open(filename, 'w')
     f.write(text)
     f.close()
-
-# Generate code from tree
-
-# Load tree in json format
-import json
-
-jsonfile = open(out_dir + '/tree.json')
-tree = json.load(jsonfile)
-
-includes_code = ''
-global_code = ''
-dsp_code = ''
-
-num_chnls = 2;
-
-_platform_funcs = json.load(open(platform_dir + '/functions.json'))['functions']
-#_platform_objs = json.load(open(platform_dir + '/objects.json'))['objects']
-_platform_types = json.load(open(platform_dir + '/types.json'))['types']
-
-# --------------------- Common platform functions
 
 def find_function(platform_funcs, name):
     for func in platform_funcs:
@@ -208,7 +212,10 @@ def get_type_code(platform_type, var_name, intokens, bundle_index = -1):
 
     new_dsp_code = platform_type['code']['dsp_code']['code']
     if "%%token%%" in new_dsp_code:
-        new_dsp_code = new_dsp_code.replace("%%token%%", var_name)
+        if bundle_index > 0:
+            new_dsp_code = new_dsp_code.replace("%%token%%", var_name + '_%02i'%(bundle_index - 1))
+        else:
+            new_dsp_code = new_dsp_code.replace("%%token%%", var_name)
     if "%%intoken%%" in new_dsp_code:
         new_dsp_code = new_dsp_code.replace("%%intoken%%", intokens)
     if bundle_index > 0:
@@ -236,8 +243,9 @@ def get_function_code(func, properties, token, intokens, ugen_name):
     new_global_code = '';
     new_dsp_code = '';
 
+    print(token, intokens)
     new_global_code = func["code"]["init_code"]["code"]
-    new_global_code = new_global_code.replace("%%token%%", token)
+    new_global_code = new_global_code.replace("%%intoken%%", token)
     new_global_code = new_global_code.replace("%%identifier%%", ugen_name)
 
     # Insert code for variable (non-constant) properties
@@ -247,12 +255,19 @@ def get_function_code(func, properties, token, intokens, ugen_name):
         prop_type = prop_value["type"]
         if prop_type == "Name":
             intoken = intokens[prop_value["name"]][-1] # FIXME: What to do with multiple inputs
+            print ("------------" + intoken)
             if prop_name in func["code"]["dsp_code"]:
                 new_dsp_code_control += get_function_property_config_code(func, prop_name, token, intoken, ugen_name)
 
     new_dsp_code = new_dsp_code_control + func["code"]["dsp_code"]["code"]
-    new_dsp_code = new_dsp_code.replace("%%token%%", token)
+
+    if func["num_outputs"] == 1:
+        new_dsp_code = new_dsp_code.replace("%%token%%", token)
+    else:
+        for i in range(func["num_outputs"]):
+            new_dsp_code = new_dsp_code.replace("%%%%token:%i%%%%"%(i + 1), token + '_%02i'%i)
     new_dsp_code = new_dsp_code.replace("%%identifier%%", ugen_name)
+    new_dsp_code = new_dsp_code.replace("%%intoken%%", token)
 
     new_global_code = put_property_values(new_global_code, properties, func)
     new_dsp_code = put_property_values(new_dsp_code, properties, func)
@@ -359,24 +374,39 @@ for node in tree:
                 dsp_code += new_code["dsp_code"]
                 global_code += new_code["init_code"]
             elif parts['type'] == 'Name':
-                token_name = 'ctl_%s'%parts["name"]
-                if not parts["name"] in _intokens:
-                    global_code += "double %s;\n"%token_name;
-                    _intokens[parts["name"]] = [var_name]
+                platform_type, declaration = find_block(_platform_types, parts["name"], tree)
+                token_name = None
+                print(declaration)
+                if declaration["type"] == "signal" or declaration["type"] == "control":
+                    token_name = 'ctl_%s'%parts["name"]
+                    if not parts["name"] in _intokens:
+                        global_code += "double %s;\n"%token_name;
+                        _intokens[parts["name"]] = [token_name]
+                    else:
+                        _intokens[parts["name"]].append(var_name)
+                    intoken = var_name
+
+                if not "size" in declaration or declaration["size"] == 1:
+                    new_code = get_obj_code(parts["name"], _platform_types, var_name, intoken)
+                    global_code += new_code["init_code"]
+                    dsp_code += new_code["dsp_code"]
+                    if token_name:
+                        dsp_code += "%s = %s;\n"%(token_name, var_name)
                 else:
-                    _intokens[parts["name"]].append(var_name)
+                    for i in range(declaration["size"]):
+                        global_code += "double %s;\n"%(var_name + '_%02i'%i);
+#                        _intokens[parts["name"]] = [var_name]
+                        new_code = get_obj_code(parts["name"], _platform_types, var_name, intoken, i+ 1)
+                        global_code += new_code["init_code"]
+                        dsp_code += new_code["dsp_code"]
+                        #dsp_code += "%s = %s;\n"%(token_name, var_name)
 
-                intoken = _intokens[parts["name"]][-1]
-
-                new_code = get_obj_code(parts["name"], _platform_types, var_name, intoken)
-                global_code += new_code["init_code"]
-                dsp_code += new_code["dsp_code"]
-                dsp_code += "%s = %s;\n"%(token_name, var_name)
             elif parts['type'] == 'Function':
                 func = find_function(_platform_funcs, parts["name"])
                 if not func:
                     raise ValueError("Function not found")
                 ugen_name = "ugen_%02i"%(ugen_index)
+
                 new_code = get_function_code(func, parts["properties"], var_name, _intokens, ugen_name)
 
                 dsp_code += new_code["dsp_code"]
@@ -399,7 +429,7 @@ for node in tree:
         stream_index += 1
 
 var_declaration = ''.join(['double stream_%02i;\n'%i for i in range(stream_index)])
-dsp_code = var_declaration + dsp_code
+global_code = var_declaration + global_code
 
 config_code = config_template_code
 config_code = config_code.replace("%%block_size%%", str(block_size))
@@ -432,10 +462,10 @@ config_code = rate_config_code + domain_config_code + setup_code + config_code
 dsp_code += rate_counter_inc
 
 includes_code = '\n'.join(set(includes_list))
-write_section('Includes', includes_code)
-write_section('Init Code', global_code)
-write_section('Dsp Code', dsp_code)
-write_section('Config Code', config_code)
+write_section_in_file('Includes', includes_code)
+write_section_in_file('Init Code', global_code)
+write_section_in_file('Dsp Code', dsp_code)
+write_section_in_file('Config Code', config_code)
 
 # Compile --------------------------
 
@@ -491,3 +521,5 @@ elif platform.system() == "Darwin":
     log(outtext)
 else:
     print("Platform '%s' not supported!"%platform.system())
+
+   

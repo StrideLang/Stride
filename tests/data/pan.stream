@@ -9,14 +9,21 @@ control PanMod {
 signal DummyOut2 {}
 signal DummyStereo[2] {}
 signal DummyStereo2[2] {}
+signal DummyQuad[4] {}
 
 oscillator(freq: 5) >> PanMod;
 
 oscillator(freq: 440) >> pan(position: PanMod) >> AudioOut;
 
-# This line should throw an error (pan has two outputs)
+# This line is correct as DummyOut should be auto-declared stereo
 oscillator(freq: 440) >> pan(position: PanMod) >> DummyOut;
 
 # This line should throw an error (pan has one input)
+oscillator(freq: 440) >> pan(position: PanMod) >> DummyOut2;
+
+# This line should throw an error, output of pan should provide 4 channels
 DummyStereo >> pan(position: PanMod) >> DummyStereo2;
+
+# This line should work (pan is expanded to two copies)
+DummyStereo >> pan(position: PanMod) >> DummyQuad;
 

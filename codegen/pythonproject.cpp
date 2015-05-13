@@ -125,6 +125,9 @@ void PythonProject::writeAST()
             BundleNode *bundle = block->getBundle();
             blockObj["name"] = QString::fromStdString(bundle->getName());
             blockObj["type"] = QString::fromStdString(block->getObjectType());
+            AST *bundleIndex = bundle->index();
+            Q_ASSERT(bundleIndex->getNodeType() == AST::Int || bundleIndex->getNodeType() == AST::Real);
+            blockObj["size"] = static_cast<ValueNode *>(bundleIndex)->getIntValue();
             vector<PropertyNode *> props = block->getProperties();
             QJsonObject propertiesObj;
             foreach(PropertyNode *prop, props) {

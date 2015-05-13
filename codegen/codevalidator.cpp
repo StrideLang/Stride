@@ -72,7 +72,7 @@ void CodeValidator::validate()
     m_errors.clear();
     if(m_tree) {
         CodeResolver resolver(m_platform, m_tree);
-        resolver.process();
+        resolver.preProcess();
         validateTypeNames(m_tree);
         validateProperties(m_tree, QVector<AST *>());
         validateBundleIndeces(m_tree, QVector<AST *>());
@@ -172,7 +172,7 @@ void CodeValidator::validateBundleSizes(AST *node, QVector<AST *> scope)
     if (node->getNodeType() == AST::BlockBundle) {
         QList<LangError> errors;
         BlockNode *block = static_cast<BlockNode *>(node);
-        int size = getBlockBundleDeclaredSize(block, scope, errors);
+        int size = getBlockBundleDeclaredSize(block, scope, m_tree, errors);
         int datasize = getBlockDataSize(block, scope, errors);
         if(size != datasize && datasize > 1) {
             LangError error;
@@ -273,31 +273,30 @@ void CodeValidator::validateStreamInputSize(StreamNode *stream, QVector<AST *> s
     AST *left = stream->getLeft();
     AST *right = stream->getRight();
 
-    int leftOutSize = getNodeOutputSize(left, scope, errors);
-    int rightInSize = getNodeInputSize(right, scope, errors);
+    int leftOutSize = getNodeNumOutputs(left, m_platform, scope, m_tree, errors);
+    int rightInSize = getNodeNumInputs(right, m_platform, scope, m_tree, errors);
 
     if (leftOutSize != rightInSize
             && ((int) (rightInSize/ (double) leftOutSize)) != (rightInSize/ (double) leftOutSize) ) {
         LangError error;
         error.type = LangError::StreamMemberSizeMismatch;
         error.lineNumber = right->getLine();
-        error.errorTokens << QString::number(leftOutSize) << QString::number(rightInSize);
+        error.errorTokens << QString::number(leftOutSize) << getNodeText(left) <<  QString::number(rightInSize) ;
         errors << error;
     }
     if (right->getNodeType() == AST::Stream) {
         validateStreamInputSize(static_cast<StreamNode *>(right), scope, errors);
     }
-
 }
 
-int CodeValidator::getBlockBundleDeclaredSize(BlockNode *block, QVector<AST *> scope, QList<LangError> &errors)
+int CodeValidator::getBlockBundleDeclaredSize(BlockNode *block, QVector<AST *> scope, AST *tree, QList<LangError> &errors)
 {
     Q_ASSERT(block->getNodeType() == AST::BlockBundle);
     BundleNode *bundle = static_cast<BundleNode *>(block->getBundle());
     if (bundle->getNodeType() == AST::Bundle) { // BundleRange not acceptable here (in declaration)
-        PortType type = resolveNodeOutType(bundle->index(), scope, m_tree);
+        PortType type = CodeValidator::resolveNodeOutType(bundle->index(), scope, tree);
         if (type == ConstInt) {
-            int size = evaluateConstInteger(bundle->index(), scope, m_tree, errors);
+            int size = CodeValidator::evaluateConstInteger(bundle->index(), scope, tree, errors);
             return size;
         }
     }
@@ -310,10 +309,10 @@ int CodeValidator::getBlockDataSize(BlockNode *block, QVector<AST *> scope, QLis
     if (ports.size() == 0) {
         return 0;
     }
-    int size = getNodeOutputSize(ports.at(0)->getValue(), scope, errors);
+    int size = getNodeNumOutputs(ports.at(0)->getValue(), m_platform, scope, m_tree, errors);
     foreach(PropertyNode *port, ports) {
         AST *value = port->getValue();
-        int newSize = getNodeOutputSize(value, scope, errors);
+        int newSize = getNodeNumOutputs(value, m_platform, scope, m_tree, errors);
         if (size != newSize) {
             if (size == 1) {
                 size = newSize;
@@ -327,7 +326,65 @@ int CodeValidator::getBlockDataSize(BlockNode *block, QVector<AST *> scope, QLis
     return size;
 }
 
-int CodeValidator::getNodeOutputSize(AST *node, QVector<AST *> &scope, QList<LangError> &errors)
+QString CodeValidator::getNodeText(AST *node)
+{
+    QString outText;
+    if(node->getNodeType() == AST::Name) {
+        outText = QString::fromStdString(static_cast<NameNode *>(node)->getName());
+    } else if(node->getNodeType() == AST::Bundle
+              || node->getNodeType() == AST::BundleRange) {
+        outText = QString::fromStdString(static_cast<BundleNode *>(node)->getName());
+    } else if(node->getNodeType() == AST::Function) {
+         outText = QString::fromStdString(static_cast<FunctionNode *>(node)->getName());
+     } else if(node->getNodeType() == AST::List) {
+        outText = "[ List ]";
+    } else {
+        qFatal("Unsupported type in getNodeText(AST *node)");
+    }
+    return outText;
+}
+
+int CodeValidator::getMaximumPropertySize(vector<PropertyNode *> &properties, QVector<AST *> scope, AST *tree, QList<LangError> &errors)
+{
+    int maxSize = 1;
+    foreach(PropertyNode *property, properties) {
+        AST *value = property->getValue();
+        if (value->getNodeType() == AST::Name) {
+            NameNode *name = static_cast<NameNode *>(value);
+            BlockNode *block = findDeclaration(QString::fromStdString(name->getName()), scope, tree);
+            if (block) {
+                if (block->getNodeType() == AST::Block) {
+                    if (maxSize < 1) {
+                        maxSize = 1;
+                    }
+                } else if (block->getNodeType() == AST::BlockBundle) {
+                    AST *index = block->getBundle()->index();
+                    int newSize = evaluateConstInteger(index, QVector<AST *>(), tree, errors);
+                    if (newSize > maxSize) {
+                        maxSize = newSize;
+                    }
+                }
+            }
+        } else if (value->getNodeType() == AST::List) {
+            ListNode *list = static_cast<ListNode *>(value);
+            int newSize = list->getChildren().size();
+            if (newSize > maxSize) {
+                maxSize = newSize;
+            }
+
+        } else if (value->getNodeType() == AST::Int
+                   || value->getNodeType() == AST::Real
+                   || value->getNodeType() == AST::String
+                   ) {
+            if (maxSize < 1) {
+                maxSize = 1;
+            }
+        }
+    }
+    return maxSize;
+}
+
+int CodeValidator::getNodeNumOutputs(AST *node, StreamPlatform &platform, QVector<AST *> &scope, AST *tree, QList<LangError> &errors)
 {
     Q_ASSERT(node->getNodeType() != AST::Stream); // Stream nodes should not be on the left...
     if (node->getNodeType() == AST::List) {
@@ -343,41 +400,50 @@ int CodeValidator::getNodeOutputSize(AST *node, QVector<AST *> &scope, QList<Lan
         // TODO: evaluate
     } else if (node->getNodeType() == AST::Name) {
         NameNode *name = static_cast<NameNode *>(node);
-        BlockNode *block = findDeclaration(QString::fromStdString(name->getName()), scope, m_tree);
+        BlockNode *block = findDeclaration(QString::fromStdString(name->getName()), scope, tree);
         if (block && block->getNodeType() == AST::BlockBundle) {
-            return getBlockBundleDeclaredSize(block, scope, errors);
+            return CodeValidator::getBlockBundleDeclaredSize(block, scope, tree, errors);
         } else {
             return -1; // Not a bundle
         }
     } else if (node->getNodeType() == AST::BundleRange) {
         BundleNode *bundle = static_cast<BundleNode *>(node);
-        if (resolveNodeOutType(bundle->endIndex(), scope, m_tree) == ConstInt
-                && resolveNodeOutType(bundle->endIndex(), scope, m_tree) == ConstInt) {
-            return evaluateConstInteger(bundle->endIndex(), scope, m_tree, errors)
-                    - evaluateConstInteger(bundle->startIndex(), scope, m_tree, errors) + 1;
+        if (CodeValidator::resolveNodeOutType(bundle->endIndex(), scope, tree) == ConstInt
+                && CodeValidator::resolveNodeOutType(bundle->endIndex(), scope, tree) == ConstInt) {
+            return CodeValidator::evaluateConstInteger(bundle->endIndex(), scope, tree, errors)
+                    - CodeValidator::evaluateConstInteger(bundle->startIndex(), scope, tree, errors) + 1;
         }
     } else if (node->getNodeType() == AST::Function) {
         FunctionNode *func = static_cast<FunctionNode *>(node);
-        PlatformFunction platformFunc = m_platform.getFunction(QString::fromStdString(func->getName()));
+        PlatformFunction platformFunc = platform.getFunction(QString::fromStdString(func->getName()));
         return platformFunc.numOutputs();
     }
     return -1;
 }
 
-int CodeValidator::getNodeInputSize(AST *node, QVector<AST *> &scope, QList<LangError> &errors)
+int CodeValidator::getNodeNumInputs(AST *node, StreamPlatform &platform, QVector<AST *> &scope, AST *tree, QList<LangError> &errors)
 {
     if (node->getNodeType() == AST::Function) {
         FunctionNode *func = static_cast<FunctionNode *>(node);
-        PlatformFunction platformFunc = m_platform.getFunction(QString::fromStdString(func->getName()));
+        PlatformFunction platformFunc = platform.getFunction(QString::fromStdString(func->getName()));
         return platformFunc.numInputs();
     } else if (node->getNodeType() == AST::Stream) {
         StreamNode *stream = static_cast<StreamNode *>(node);
         AST *left = stream->getLeft();
 //        AST *right = stream->getRight();
-        int leftSize = getNodeInputSize(left, scope, m_errors);
+        int leftSize = CodeValidator::getNodeNumInputs(left, platform, scope, tree, errors);
         return leftSize;
+    } else if (node->getNodeType() == AST::Name) {
+        NameNode *name = static_cast<NameNode *>(node);
+        BlockNode *block = findDeclaration(QString::fromStdString(name->getName()), scope, tree);
+        if (block && block->getNodeType() == AST::BlockBundle) {
+            return getBlockBundleDeclaredSize(block, scope, tree, errors);
+        } else {
+            return 1;
+        }
     } else {
-        return getNodeOutputSize(node, scope, errors);
+        return 1;
+//        return CodeValidator::getNodeNumOutputs(node, platform, scope, tree, errors);
     }
     return -1;
 }
@@ -633,22 +699,85 @@ AST *CodeValidator::getMemberFromList(ListNode *node, int index, QList<LangError
     return node->getChildren()[index - 1];
 }
 
-int CodeValidator::largestBundleSize(StreamNode *stream, AST *tree)
+int CodeValidator::largestNodeSize(StreamNode *stream, AST *tree)
 {
     AST *left = stream->getLeft();
-    int maxleft = getBundleSize(left, tree);
+    int maxleft = getNodeSize(left, tree);
 
     AST *right = stream->getRight();
     int maxright = 1;
     if (right->getNodeType() == AST::Stream) {
-        maxright = largestBundleSize(static_cast<StreamNode *>(right), tree);
+        maxright = largestNodeSize(static_cast<StreamNode *>(right), tree);
     } else {
-        maxright = getBundleSize(right, tree);
+        maxright = getNodeSize(right, tree);
     }
     return (maxleft > maxright? maxleft : maxright);
 }
 
-int CodeValidator::getBundleSize(AST *node, AST *tree)
+int CodeValidator::numParallelStreams(StreamNode *stream, StreamPlatform &platform, QVector<AST *> &scope, AST *tree, QList<LangError> &errors)
+{
+    AST *left = stream->getLeft();
+    AST *right = stream->getRight();
+    int numParallel = 0;
+
+    int leftSize;
+    int rightSize;
+
+    if (left->getNodeType() == AST::Name
+            || left->getNodeType() == AST::List
+            || left->getNodeType() == AST::BundleRange) {
+        leftSize = getNodeSize(left, tree);
+    } else {
+        leftSize = getNodeNumOutputs(left, platform, scope, tree, errors);
+    }
+    if (right->getNodeType() == AST::Name
+            || right->getNodeType() == AST::List) {
+        rightSize = getNodeSize(right, tree);
+    } else if (right->getNodeType() == AST::Function) {
+        int functionNodeSize = getNodeSize(right, tree);
+        if (functionNodeSize == 1) {
+            rightSize = leftSize;
+        }
+    } else if (right->getNodeType() == AST::Stream) {
+        StreamNode *rightStream = static_cast<StreamNode *>(right);
+        numParallel = numParallelStreams(rightStream, platform, scope, tree, errors);
+        AST *firstMember = rightStream->getLeft();
+        if (firstMember->getNodeType() == AST::Name
+                || firstMember->getNodeType() == AST::List) {
+            rightSize = getNodeSize(firstMember, tree);
+        } else {
+            rightSize = getNodeNumInputs(firstMember, platform, scope, tree, errors);
+        }
+        if (firstMember->getNodeType() == AST::Function) {
+            int functionNodeSize = getNodeSize(firstMember, tree);
+            if (functionNodeSize == 1) {
+                rightSize = getNodeNumInputs(firstMember, platform, scope, tree, errors);;
+            }
+        }
+    } else {
+        rightSize = getNodeNumInputs(right, platform, scope, tree, errors);
+    }
+    int thisParallel;
+    if (leftSize == rightSize ||
+            (rightSize/(float)leftSize) == (int)(rightSize/(float)leftSize)){
+        thisParallel = rightSize/leftSize;
+    }
+    if (leftSize == 1) {
+        thisParallel = rightSize;
+    } else if (rightSize == 1) {
+        thisParallel = leftSize;
+    }
+    if (thisParallel != numParallel  && numParallel > 0) {
+        if (rightSize == 1)
+        numParallel = -1;
+    } else {
+        numParallel = thisParallel;
+    }
+
+    return numParallel;
+}
+
+int CodeValidator::getNodeSize(AST *node, AST *tree)
 {
     int size = 1;
     if (node->getNodeType() == AST::Bundle) {
@@ -676,24 +805,31 @@ int CodeValidator::getBundleSize(AST *node, AST *tree)
         return end - start;
     } else if (node->getNodeType() == AST::Expression) {
 
-        qFatal("implement Expression parsing in getBundleSize");
+        qFatal("implement Expression parsing in getNodeSize");
     } else if (node->getNodeType() == AST::Name) {
         NameNode *nameNode = static_cast<NameNode *>(node);
         BlockNode *block = findDeclaration(QString::fromStdString(nameNode->getName()), QVector<AST *>(), tree);
         if (!block) {
             size = -1; // Block not declared
         } else if (block->getNodeType() == AST::BlockBundle) {
-            size = CodeValidator::getBundleSize(block->getBundle(), tree);
+            size = CodeValidator::getNodeSize(block->getBundle(), tree);
         } else  if (block->getNodeType() == AST::Block) {
             size = 1;
         } else {
             Q_ASSERT(0 == 1);
         }
-
+    } else if (node->getNodeType() == AST::Function) {
+        vector<PropertyNode *> properties = static_cast<FunctionNode *>(node)->getProperties();
+        QList<LangError> errors;
+        size = getMaximumPropertySize(properties, QVector<AST *>(), tree, errors);
+    } else if (node->getNodeType() == AST::List) {
+        size = node->getChildren().size();
+    } else if (node->getNodeType() == AST::Stream) {
+        qFatal("implement Stream parsing in getNodeSize");
     }
+
     return size;
 }
-
 
 QString CodeValidator::getPortTypeName(CodeValidator::PortType type)
 {

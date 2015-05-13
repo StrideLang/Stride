@@ -7,6 +7,7 @@ StreamNode::StreamNode(AST *left, AST *right, int line) :
     AST(AST::Stream, line)
 {
 //    assert(left); assert(right);
+    assert(left->getNodeType() != AST:: Stream); // This is not allowed
     addChild(left);
     addChild(right);
 }

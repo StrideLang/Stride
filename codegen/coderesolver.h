@@ -10,6 +10,7 @@
 #include "expressionnode.h"
 #include "propertynode.h"
 #include "blocknode.h"
+#include "namenode.h"
 
 class CodeResolver
 {
@@ -17,7 +18,7 @@ public:
     CodeResolver(StreamPlatform &platform, AST *tree);
     ~CodeResolver();
 
-    void process();
+    void preProcess();
 
 private:
     void resolveRates();
@@ -27,12 +28,12 @@ private:
     double findRateInProperties(vector<PropertyNode *> properties, QVector<AST *> scope, AST *tree);
     double getNodeRate(AST *node, QVector<AST *> scope, AST *tree);
     void insertBuiltinObjects();
-    double createSignalDeclaration(QString name, StreamNode *parentStream, AST *tree);
-    void declareUnknownStreamSymbols(StreamNode *stream, AST *tree);
+    double createSignalDeclaration(QString name, int size, AST *tree);
+    void declareUnknownStreamSymbols(StreamNode *stream, AST *previousStreamMember, AST *tree);
     void resolveStreamSymbols();
     void resolveConstants();
-    void expandStreamBundles();
-    void expandTypeBundles();
+    void expandStreamMembers();
+    void sliceStreams();
 
 //    void reduceExpressions();
     bool reduceConstExpression(ExpressionNode *expr, QVector<AST *> scope, AST *tree, double &expressionResult);
@@ -40,11 +41,14 @@ private:
     void resolveConstantsInNode(AST *node, QVector<AST *> scope);
     double getDefaultForTypeAsDouble(QString type, QString port);
 
-    QVector<AST *> expandBundleStream(StreamNode *stream);
+    QVector<AST *> expandStreamFromMemberSizes(StreamNode *stream);
+    QVector<AST *> sliceStream(StreamNode *stream);
+    StreamNode *splitStream(StreamNode *stream, AST *closingNode, AST *endNode);
 
-    AST *expandStreamMember(AST *node, int i);
+    AST *expandStreamFromMemberSizes(AST *node, int index);
     StreamPlatform m_platform;
     AST *m_tree;
+    int m_connectorCounter;
 };
 
 #endif // CODERESOLVER_H
