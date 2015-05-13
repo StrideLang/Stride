@@ -49,7 +49,6 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(updateCodeAnalysis()));
     m_timer.start(2000);
     ui->tabWidget->setDocumentMode(true);
-    ui->tabWidget->setTabBarAutoHide(true);
     ui->tabWidget->setTabsClosable(true);
     connect(ui->tabWidget, SIGNAL(tabCloseRequested(int)),
             this, SLOT(closeTab(int)));
