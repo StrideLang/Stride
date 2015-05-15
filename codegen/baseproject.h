@@ -4,14 +4,15 @@
 #include <QObject>
 #include <QString>
 
-#include "streamplatform.h"
+class StreamPlatform;
 
 class BaseProject : public QObject
 {
     Q_OBJECT
 public:
-    BaseProject(QString projectDir);
-    virtual ~BaseProject();
+    BaseProject(QString projectDir, StreamPlatform *platform)
+        : m_projectDir(projectDir), m_platform(platform) {}
+    virtual ~BaseProject() {}
 
 //    QString getTarget() {return m_target;}
 //    QString getBoardId() {return m_target;}
@@ -22,11 +23,15 @@ public:
 public slots:
     virtual void build() = 0;
     virtual void flash() = 0;
-    virtual void run(bool pressed) = 0;
+    virtual void run(bool pressed = true) = 0;
 //    virtual QStringList listTargets() {return QStringList();}
 //    virtual QStringList listDevices() {return QStringList();}
 
 protected:
+    QString m_projectDir;
+    StreamPlatform *m_platform;
+
+private:
 
 signals:
     void outputText(QString text);

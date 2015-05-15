@@ -6,7 +6,7 @@
 #include <QTimer>
 
 #include "languagehighlighter.h"
-#include "pythonproject.h"
+#include "baseproject.h"
 
 namespace Ui {
 class ProjectWindow;
@@ -67,7 +67,7 @@ private:
     QMap<QString, QVariant> m_options;
     QTimer m_timer;
     QFont m_font;
-    PythonProject *m_project;
+    BaseProject *m_project;
 };
 
 #endif // PROJECTWINDOW_H

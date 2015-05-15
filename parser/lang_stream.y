@@ -127,7 +127,13 @@ start:
 // =================================
 
 platformDef:
-                USE UVAR { cout << "Platform: " << $2 << endl << " Using latest version!" << endl; }
+                USE UVAR {
+                        cout << "Platform: " << $2 << endl << " Using latest version!" << endl; ;
+                        string s;
+                        s.append($2); /* string constructor leaks otherwise! */
+                        $$ = new PlatformNode(s, -1, yyloc.first_line);
+                        free($2);
+                        }
         |       USE UVAR VERSION FLOAT {
                         cout << "Platform: " << $2 << endl << "Version: " << $4 << " line " << yylineno << endl;
                         string s;
@@ -135,8 +141,12 @@ platformDef:
                         $$ = new PlatformNode(s, $4, yyloc.first_line);
                         free($2);
                 }
-        |	USE UVAR WITH auxPlatformDef { cout << "Platform: " << $2 << endl; }
-        |	USE UVAR VERSION FLOAT WITH auxPlatformDef { cout << "Platform: " << $2 << endl << "Version: " << $4 << endl; }
+        |	USE UVAR WITH auxPlatformDef {
+                        cout << "Platform: " << $2 << endl;
+                        }
+        |	USE UVAR VERSION FLOAT WITH auxPlatformDef {
+                        cout << "Platform: " << $2 << endl << "Version: " << $4 << endl;
+                        }
 	;
 
 auxPlatformDef:

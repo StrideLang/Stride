@@ -9,6 +9,8 @@
 #include <QJsonObject>
 #include <QProcess>
 
+#include "baseproject.h"
+
 #include "streamplatform.h"
 #include "ast.h"
 #include "platformnode.h"
@@ -18,22 +20,24 @@
 #include "valuenode.h"
 #include "functionnode.h"
 
-class PythonProject : public QObject
+class PythonProject : public BaseProject
 {
     Q_OBJECT
 public:
     explicit PythonProject(QObject *parent = 0,
                            AST *tree = NULL,
-                           StreamPlatform platform = StreamPlatform(""),
+                           StreamPlatform *platform = NULL,
                            QString projectDir = QString(),
                            QString pythonExecutable = QString());
-    ~PythonProject();
+    virtual ~PythonProject();
 
 signals:
 
 public slots:
-    void build();
-    void run();
+    virtual void build();
+    virtual void flash() {}
+    virtual void run(bool pressed = true);
+
     void stopRunning();
 
 private:
@@ -45,8 +49,6 @@ private:
 
     AST * m_tree;
     QJsonArray m_curStreamArray;
-    StreamPlatform m_platform;
-    QString m_projectDir;
     QString m_pythonExecutable;
     QAtomicInteger<short> m_running;
     QProcess m_runningProcess;

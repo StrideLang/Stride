@@ -20,6 +20,8 @@
 #include "configdialog.h"
 #include "savechangeddialog.h"
 
+#include "pythonproject.h"
+
 ProjectWindow::ProjectWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::ProjectWindow),
@@ -83,9 +85,17 @@ void ProjectWindow::build()
         if (m_project) {
             delete m_project;
         }
+        StreamPlatform *platform = validator.getPlatform();
         QString projectDir = makeProjectForCurrent();
-        QString pythonExec = "python";
-        m_project = new PythonProject(this, tree, validator.getPlatform(), projectDir, pythonExec);
+
+        if (platform->getAPI() == StreamPlatform::PythonPlatform) {
+            QString pythonExec = "python";
+            m_project = new PythonProject(this, tree, validator.getPlatform(), projectDir, pythonExec);
+        } else if(platform->getAPI() == StreamPlatform::PluginPlatform) {
+//            QLibrary l()
+//            m_project = new PythonProject(this, tree, validator.getPlatform(), projectDir);
+
+        }
         m_project->build();
         delete tree;
     }
@@ -105,14 +115,14 @@ void ProjectWindow::run(bool pressed)
         ui->consoleText->clear();
         m_project->run();
     } else {
-        m_project->stopRunning();
+        m_project->run(false);
     }
 }
 
 void ProjectWindow::stop()
 {
     if (m_project) {
-        m_project->stopRunning();
+        m_project->run(false);
     }
     ui->actionRun->setChecked(false);
 }
@@ -326,11 +336,11 @@ void ProjectWindow::updateCodeAnalysis()
             if (tree) {
                 CodeValidator validator(m_platformsRootDir, tree);
                 //    QVERIFY(!generator.isValid());
-                QStringList types = validator.getPlatform().getPlatformTypeNames();
+                QStringList types = validator.getPlatform()->getPlatformTypeNames();
                 m_highlighter->setBlockTypes(types);
-                QStringList funcs = validator.getPlatform().getFunctionNames();
+                QStringList funcs = validator.getPlatform()->getFunctionNames();
                 m_highlighter->setFunctions(funcs);
-                QList<PlatformObject> objects = validator.getPlatform().getBuiltinObjects();
+                QList<PlatformObject> objects = validator.getPlatform()->getBuiltinObjects();
                 QStringList objectNames;
                 foreach (PlatformObject platObject, objects) {
                     objectNames << platObject.getName();
@@ -519,7 +529,7 @@ void ProjectWindow::closeEvent(QCloseEvent *event)
     if (maybeSave()) {
         writeSettings();
         if (m_project) {
-            m_project->stopRunning();
+            m_project->run(false);
             delete m_project;
         }
         event->accept();

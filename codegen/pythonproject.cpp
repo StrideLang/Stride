@@ -9,10 +9,11 @@
 
 PythonProject::PythonProject(QObject *parent,
                              AST *tree,
-                             StreamPlatform platform,
+                             StreamPlatform *platform,
                              QString projectDir,
                              QString pythonExecutable) :
-    QObject(parent), m_tree(tree), m_platform(platform), m_projectDir(projectDir),
+    BaseProject(projectDir, platform),
+    m_tree(tree),
     m_runningProcess(this)
 
 {
@@ -35,7 +36,7 @@ void PythonProject::build()
     writeAST();
     QProcess pythonProcess(this);
     QStringList arguments;
-    pythonProcess.setWorkingDirectory(m_platform.getPlatformPath() + QDir::separator() + "scripts");
+    pythonProcess.setWorkingDirectory(m_platform->getPlatformPath() + QDir::separator() + "scripts");
     arguments << "build.py" << m_projectDir;
     pythonProcess.start(m_pythonExecutable, arguments);
     if(!pythonProcess.waitForFinished()) {
@@ -47,8 +48,12 @@ void PythonProject::build()
     qDebug() << stdErr;
 }
 
-void PythonProject::run()
+void PythonProject::run(bool pressed)
 {
+    if (!pressed) {
+        stopRunning();
+        return;
+    }
     QStringList arguments;
     if (m_runningProcess.state() == QProcess::Running) {
        m_runningProcess.close();
@@ -57,7 +62,7 @@ void PythonProject::run()
            return;
        }
     }
-    m_runningProcess.setWorkingDirectory(m_platform.getPlatformPath() + QDir::separator() + "scripts");
+    m_runningProcess.setWorkingDirectory(m_platform->getPlatformPath() + QDir::separator() + "scripts");
     arguments << "run.py" << m_projectDir;
     m_runningProcess.start(m_pythonExecutable, arguments);
     m_running.store(1);

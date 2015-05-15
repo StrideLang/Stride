@@ -8,6 +8,7 @@
 #include <QJsonArray>
 
 #include "streamplatform.h"
+#include "baseproject.h"
 
 StreamPlatform::StreamPlatform(QString platformPath) :
     m_platformRootPath(platformPath)
@@ -15,8 +16,54 @@ StreamPlatform::StreamPlatform(QString platformPath) :
 }
 
 StreamPlatform::StreamPlatform(QString platformPath, QString platform, QString version) :
-    m_platformRootPath(platformPath), m_platformName(platform), m_version(version)
+    m_platformRootPath(platformPath), m_platformName(platform), m_version(version),
+    m_pluginLibrary(NULL)
 {
+    // FIXME validate platform existence
+
+    QString pluginPath = m_platformRootPath + QDir::separator() + m_platformName
+            + QDir::separator() + m_version + QDir::separator() + "plugins";
+    pluginPath = "/home/andres/Documents/src/XMOS/Odo/StreamStack/plugins";
+    if (QFile::exists(pluginPath)) {
+        // FIXME move loading somewhere else where it's done less often
+        QStringList pluginFiles = QDir(pluginPath).entryList(QDir::Files | QDir::NoDotAndDotDot);
+        foreach (QString file, pluginFiles) {
+//            qDebug() << file;
+            QLibrary pluginLibrary(pluginPath + QDir::separator() + file);
+            if (!pluginLibrary.load()) {
+                qDebug() << pluginLibrary.errorString();
+                continue;
+            }
+            typedef BaseProject* (*create_object)(const char *projectDir, StreamPlatform platform, const char *xmosToolchainRoot);
+            typedef void (*platform_name)(char *projectDir);
+            typedef double (*platform_version)();
+
+            create_object create = (create_object) pluginLibrary.resolve("create_object");
+            platform_name get_name = (platform_name) pluginLibrary.resolve("platform_name");
+            platform_version get_version = (platform_version) pluginLibrary.resolve("platform_version");
+            if (create && get_name && get_version) {
+                char name[32];
+                get_name(name);
+                double libversion = get_version();
+//                qDebug() << "Loaded platform " << name << " version " << QString::number(libversion, 'f', 1);
+                if (platform == QString(name) && (QString::number(libversion, 'f', 1) == version or version == "-1.0")) {
+                    qDebug() << "Using Platform " << name << " version " << QString::number(libversion, 'f', 1);
+                    QString projectDir = "/home/andres";
+                    QString xmosRoot = "/home/andres/Documents/src/XMOS/xTIMEcomposer/Community_13.0.2";
+                    BaseProject *m_project = create(projectDir.toLocal8Bit(), *this, xmosRoot.toLocal8Bit());
+                }
+            }
+
+        }
+//        m_type = PluginPlatform;
+//        m_pluginLibrary = new QLibrary(m_platformRootPath + QDir::separator() + m_platformName
+//                                    + QDir::separator() + m_version + QDir::separator() + "plugins/"
+//                                    + m_platformName);
+//        m_pluginLibrary->load();
+    } else {
+
+//        m_type = PythonPlatform;
+    }
     parsePlatformTypes();
     parsePlatformFunctions();
     parsePlatformObjects();

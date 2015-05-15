@@ -56,7 +56,7 @@ public:
     QList<LangError> getErrors();
     QStringList getPlatformErrors();
 
-    StreamPlatform getPlatform();
+    StreamPlatform *getPlatform();
 
     static BlockNode *findDeclaration(QString objectName, QVector<AST *> scope, AST *tree);
     static PortType resolveBundleType(BundleNode *bundle, QVector<AST *> scope, AST *tree);

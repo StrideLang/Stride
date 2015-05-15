@@ -12,7 +12,6 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
     projectwindow.cpp \
-    baseproject.cpp \
     codeeditor.cpp \
     languagehighlighter.cpp \
 #    xmosproject.cpp \
@@ -24,7 +23,6 @@ SOURCES += main.cpp\
 
 HEADERS  += \
     projectwindow.h \
-    baseproject.h \
     codeeditor.h \
     languagehighlighter.h \
 #    xmosproject.h \

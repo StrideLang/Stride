@@ -62,9 +62,9 @@ QStringList CodeValidator::getPlatformErrors()
     return m_platform.getErrors();
 }
 
-StreamPlatform CodeValidator::getPlatform()
+StreamPlatform *CodeValidator::getPlatform()
 {
-    return m_platform;
+    return &m_platform;
 }
 
 void CodeValidator::validate()

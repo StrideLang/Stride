@@ -4,10 +4,12 @@
 #include <QList>
 #include <QString>
 #include <QStringList>
+#include <QLibrary>
 
 #include "platformfunction.h"
 #include "platformtype.h"
 #include "platformobject.h"
+#include "baseproject.h"
 
 class StreamPlatform
 {
@@ -16,10 +18,16 @@ public:
     StreamPlatform(QString platformPath, QString platform, QString version);
     ~StreamPlatform();
 
+    typedef enum {
+        PythonPlatform,
+        PluginPlatform
+    } PlatformAPI;
+
     QStringList getErrors();
     QStringList getWarnings();
     QStringList getPlatformTypeNames();
     QStringList getFunctionNames();
+    PlatformAPI getAPI() {return m_type;}
 
     QList<Property> getPortsForType(QString typeName);
     QList<Property> getPortsForFunction(QString typeName);
@@ -49,6 +57,10 @@ private:
 
     QStringList m_errors;
     QStringList m_warnings;
+
+    PlatformAPI m_type;
+    QLibrary *m_pluginLibrary;
+    BaseProject *m_project;
 
     QList<PlatformType> m_commonTypes;
     QList<PlatformType> m_platformCommonTypes;
