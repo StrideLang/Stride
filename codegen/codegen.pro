@@ -30,7 +30,7 @@ HEADERS += \
     pythonproject.h \
     codevalidator.h \
     coderesolver.h \
-    baseproject.h
+    builder.h
 
 #unix {
 #    target.path = /usr/local/lib

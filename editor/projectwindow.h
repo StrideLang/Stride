@@ -6,7 +6,7 @@
 #include <QTimer>
 
 #include "languagehighlighter.h"
-#include "baseproject.h"
+#include "builder.h"
 
 namespace Ui {
 class ProjectWindow;
@@ -67,7 +67,7 @@ private:
     QMap<QString, QVariant> m_options;
     QTimer m_timer;
     QFont m_font;
-    BaseProject *m_project;
+    Builder *m_builder;
 };
 
 #endif // PROJECTWINDOW_H

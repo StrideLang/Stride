@@ -8,121 +8,93 @@
 #include <QJsonArray>
 
 #include "streamplatform.h"
-#include "baseproject.h"
+#include "builder.h"
+#include "pythonproject.h"
 
 StreamPlatform::StreamPlatform(QString platformPath) :
     m_platformRootPath(platformPath)
 {
 }
 
-StreamPlatform::StreamPlatform(QString platformPath, QString platform, QString version) :
-    m_platformRootPath(platformPath), m_platformName(platform), m_version(version),
-    m_pluginLibrary(NULL)
+StreamPlatform::StreamPlatform(QStringList platformPaths, QString platform, QString version) :
+    m_platformName(platform), m_version(version), m_api(NullPlatform)
 {
-    // FIXME validate platform existence
+    QString objectsJson;
+    QString typesJson;
+    QString functionsJson;
+//    QString platformPath = m_platformRootPath + QDir::separator() + m_platformName
+//            + QDir::separator() + m_version + QDir::separator() + "plugins";
+    platformPaths << "/home/andres/Documents/src/XMOS/Odo/StreamStack/plugins"; // TODO: un hard-code this
+    foreach(QString path, platformPaths) {
+        if (m_api != NullPlatform) {
+            break; // Stop looking if platform has been found.
+        }
+        // FIXME move loading somewhere else where it's done less often (Or don't create a new StreamPlatform every time you parse)
+        QString fullPath = path + QDir::separator() + m_platformName
+                + QDir::separator() + m_version;
+        if (QFile::exists(fullPath)) {
+            // First try to find library platforms
+            QStringList pluginFiles = QDir(fullPath).entryList(QDir::Files | QDir::NoDotAndDotDot);
+            foreach (QString file, pluginFiles) {
+                if (QLibrary::isLibrary(file)) {
+                    QLibrary pluginLibrary(fullPath + QDir::separator() + file);
+                    if (!pluginLibrary.load()) {
+                        qDebug() << pluginLibrary.errorString();
+                        continue;
+                    }
+                    create_object_t create = (create_object_t) pluginLibrary.resolve("create_object");
+                    platform_name_t get_name = (platform_name_t) pluginLibrary.resolve("platform_name");
+                    platform_version_t get_version = (platform_version_t) pluginLibrary.resolve("platform_version");
+                    if (create && get_name && get_version) {
+                        char name[32];
+                        get_name(name);
+                        double platformVersion = get_version();
+                        //                qDebug() << "Loaded platform " << name << " version " << QString::number(libversion, 'f', 1);
+                        if (m_platformName == QString(name) && (QString::number(platformVersion, 'f', 1) == m_version || m_version == "-1.0")) {
+                            qDebug() << "Using Plugin Platform " << name << " version " << QString::number(platformVersion, 'f', 1);
+                            m_platformPath = fullPath;
+                            m_api = PluginPlatform;
+                            m_pluginName = fullPath + QDir::separator() + file;
+                            QString xmosToolChainRoot = "/home/andres/Documents/src/XMOS/xTIMEcomposer/Community_13.0.2";
+                            Builder *builder = create(this, "", xmosToolChainRoot.toLocal8Bit() );
 
-    QString pluginPath = m_platformRootPath + QDir::separator() + m_platformName
-            + QDir::separator() + m_version + QDir::separator() + "plugins";
-    pluginPath = "/home/andres/Documents/src/XMOS/Odo/StreamStack/plugins";
-    if (QFile::exists(pluginPath)) {
-        // FIXME move loading somewhere else where it's done less often
-        QStringList pluginFiles = QDir(pluginPath).entryList(QDir::Files | QDir::NoDotAndDotDot);
-        foreach (QString file, pluginFiles) {
-//            qDebug() << file;
-            QLibrary pluginLibrary(pluginPath + QDir::separator() + file);
-            if (!pluginLibrary.load()) {
-                qDebug() << pluginLibrary.errorString();
-                continue;
-            }
-            typedef BaseProject* (*create_object)(const char *projectDir, StreamPlatform platform, const char *xmosToolchainRoot);
-            typedef void (*platform_name)(char *projectDir);
-            typedef double (*platform_version)();
-
-            create_object create = (create_object) pluginLibrary.resolve("create_object");
-            platform_name get_name = (platform_name) pluginLibrary.resolve("platform_name");
-            platform_version get_version = (platform_version) pluginLibrary.resolve("platform_version");
-            if (create && get_name && get_version) {
-                char name[32];
-                get_name(name);
-                double libversion = get_version();
-//                qDebug() << "Loaded platform " << name << " version " << QString::number(libversion, 'f', 1);
-                if (platform == QString(name) && (QString::number(libversion, 'f', 1) == version or version == "-1.0")) {
-                    qDebug() << "Using Platform " << name << " version " << QString::number(libversion, 'f', 1);
-                    QString projectDir = "/home/andres";
-                    QString xmosRoot = "/home/andres/Documents/src/XMOS/xTIMEcomposer/Community_13.0.2";
-                    BaseProject *m_project = create(projectDir.toLocal8Bit(), *this, xmosRoot.toLocal8Bit());
+                            typesJson = builder->requestTypesJson();
+                            functionsJson = builder->requestFunctionsJson();
+                            objectsJson = builder->requestObjectsJson();
+                            break;
+                        }
+                    }
+                    pluginLibrary.unload();
+                }
+                if (m_api != NullPlatform) {
+                    break; // Stop looking if platform has been found.
+                }
+                // Now try to find Python platform
+                if (QFile::exists(fullPath)) {
+                    typesJson = readFile(fullPath + QDir::separator() + "types.json");
+                    functionsJson = readFile(fullPath + QDir::separator() + "functions.json");
+                    objectsJson = readFile(fullPath + QDir::separator() + "objects.json");
+                    if (m_errors.size() == 0) {
+                        m_api = PythonPlatform;
+                        m_platformPath = fullPath;
+                    }
                 }
             }
-
         }
-//        m_type = PluginPlatform;
-//        m_pluginLibrary = new QLibrary(m_platformRootPath + QDir::separator() + m_platformName
-//                                    + QDir::separator() + m_version + QDir::separator() + "plugins/"
-//                                    + m_platformName);
-//        m_pluginLibrary->load();
-    } else {
-
-//        m_type = PythonPlatform;
     }
-    parsePlatformTypes();
-    parsePlatformFunctions();
-    parsePlatformObjects();
+
+    if (m_api == NullPlatform) {
+        qDebug() << "Platform not found!";
+    }
+
+    parseTypesJson(typesJson, m_platformTypes);
+    parseFunctionsJson(functionsJson, m_platformFunctions);
+    parseObjectsJson(objectsJson,m_platformObjects);
 }
 
 StreamPlatform::~StreamPlatform()
 {
 
-}
-
-void StreamPlatform::parsePlatformTypes()
-{
-    QString platformFile = m_platformRootPath + QDir::separator() + m_platformName
-            + QDir::separator() + m_version
-            + QDir::separator() + "types.json";
-    QFile f(platformFile);
-    if (!f.open(QFile::ReadOnly | QFile::Text)) {
-        QString errorText = "Can't open platform file: " +  f.fileName();
-        m_errors << errorText;
-        qDebug() << errorText;
-    } else {
-        Q_ASSERT(m_platformTypes.isEmpty());
-        parseTypesJson(f.readAll(), m_platformTypes);
-        f.close();
-    }
-}
-
-void StreamPlatform::parsePlatformFunctions()
-{
-    QString platformFile = m_platformRootPath + QDir::separator() + m_platformName
-            + QDir::separator() + m_version
-            + QDir::separator() + "functions.json";
-    QFile f(platformFile);
-    if (!f.open(QFile::ReadOnly | QFile::Text)) {
-        QString errorText = "Can't open platform file: " +  f.fileName();
-        m_errors << errorText;
-        qDebug() << errorText;
-    } else {
-        Q_ASSERT(m_platformFunctions.isEmpty());
-        parseFunctionsJson(f.readAll(), m_platformFunctions);
-        f.close();
-    }
-}
-
-void StreamPlatform::parsePlatformObjects()
-{
-    QString platformFile = m_platformRootPath + QDir::separator() + m_platformName
-            + QDir::separator() + m_version
-            + QDir::separator() + "objects.json";
-    QFile f(platformFile);
-    if (!f.open(QFile::ReadOnly | QFile::Text)) {
-        QString errorText = "Can't open platform file for objects: " +  f.fileName();
-        m_errors << errorText;
-        qDebug() << errorText;
-    } else {
-        Q_ASSERT(m_platformObjects.isEmpty());
-        parseObjectsJson(f.readAll(), m_platformObjects);
-        f.close();
-    }
 }
 
 QList<Property> StreamPlatform::getPortsForType(QString typeName)
@@ -179,8 +151,7 @@ PlatformFunction StreamPlatform::getFunction(QString functionName)
 
 QString StreamPlatform::getPlatformPath()
 {
-    return m_platformRootPath + QDir::separator() + m_platformName
-            + QDir::separator() + m_version;
+    return m_platformPath;
 }
 
 void StreamPlatform::parseTypesJson(QString jsonText, QList<PlatformType> &types)
@@ -343,6 +314,21 @@ void StreamPlatform::parseObjectsJson(QString jsonText, QList<PlatformObject> &o
     }
 }
 
+QString StreamPlatform::readFile(QString fileName)
+{
+    QString text;
+    QFile f(fileName);
+    if (!f.open(QFile::ReadOnly | QFile::Text)) {
+        QString errorText = "Error opening platform file: " +  f.fileName();
+        m_errors << errorText;
+        qDebug() << errorText;
+    } else {
+        text = f.readAll();
+        f.close();
+    }
+    return text;
+}
+
 QStringList StreamPlatform::getErrors()
 {
     return m_errors;
@@ -376,6 +362,33 @@ QStringList StreamPlatform::getFunctionNames()
     }
     return functionNames;
 
+}
+
+Builder *StreamPlatform::createBuilder(QString projectDir)
+{
+    Builder *builder = NULL;
+    if (m_api == StreamPlatform::PythonPlatform) {
+        QString pythonExec = "python";
+        builder = new PythonProject(this, projectDir, pythonExec);
+    } else if(m_api == StreamPlatform::PluginPlatform) {
+        QString xmosRoot = "/home/andres/Documents/src/XMOS/xTIMEcomposer/Community_13.0.2";
+
+        QLibrary pluginLibrary(m_pluginName);
+        if (!pluginLibrary.load()) {
+            qDebug() << pluginLibrary.errorString();
+            return NULL;
+        }
+        create_object_t create = (create_object_t) pluginLibrary.resolve("create_object");
+        if (create) {
+            builder = create(this, projectDir.toLocal8Bit(), xmosRoot.toLocal8Bit());
+            }
+        pluginLibrary.unload();
+    }
+    if (!builder->isValid()) {
+        delete builder;
+        builder = NULL;
+    }
+    return builder;
 }
 
 QList<PlatformObject> StreamPlatform::getBuiltinObjects()

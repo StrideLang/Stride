@@ -26,7 +26,7 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::ProjectWindow),
     m_timer(this),
-    m_project(NULL)
+    m_builder(NULL)
 {
     ui->setupUi(this);
 
@@ -82,22 +82,19 @@ void ProjectWindow::build()
         return;
     }
     if (tree) {
-        if (m_project) {
-            delete m_project;
+        if (m_builder) {
+            delete m_builder;
         }
         StreamPlatform *platform = validator.getPlatform();
         QString projectDir = makeProjectForCurrent();
-
-        if (platform->getAPI() == StreamPlatform::PythonPlatform) {
-            QString pythonExec = "python";
-            m_project = new PythonProject(this, tree, validator.getPlatform(), projectDir, pythonExec);
-        } else if(platform->getAPI() == StreamPlatform::PluginPlatform) {
-//            QLibrary l()
-//            m_project = new PythonProject(this, tree, validator.getPlatform(), projectDir);
-
+        m_builder = platform->createBuilder(projectDir);
+        if (m_builder) {
+            m_builder->build(tree);
+            delete tree;
+        } else {
+            qDebug() << "Can't create builder";
+            Q_ASSERT(false);
         }
-        m_project->build();
-        delete tree;
     }
     //    m_project->build();
 }
@@ -113,16 +110,18 @@ void ProjectWindow::run(bool pressed)
     if (pressed) {
         build();
         ui->consoleText->clear();
-        m_project->run();
+        m_builder->run();
     } else {
-        m_project->run(false);
+        m_builder->run(false);
+        delete m_builder;
+        m_builder = NULL;
     }
 }
 
 void ProjectWindow::stop()
 {
-    if (m_project) {
-        m_project->run(false);
+    if (m_builder) {
+        m_builder->run(false);
     }
     ui->actionRun->setChecked(false);
 }
@@ -528,9 +527,9 @@ void ProjectWindow::closeEvent(QCloseEvent *event)
 {
     if (maybeSave()) {
         writeSettings();
-        if (m_project) {
-            m_project->run(false);
-            delete m_project;
+        if (m_builder) {
+            m_builder->run(false);
+            delete m_builder;
         }
         event->accept();
     } else {

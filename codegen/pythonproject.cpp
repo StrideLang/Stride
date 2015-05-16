@@ -7,13 +7,10 @@
 #include "codevalidator.h"
 
 
-PythonProject::PythonProject(QObject *parent,
-                             AST *tree,
-                             StreamPlatform *platform,
+PythonProject::PythonProject(StreamPlatform *platform,
                              QString projectDir,
                              QString pythonExecutable) :
-    BaseProject(projectDir, platform),
-    m_tree(tree),
+    Builder(projectDir, platform),
     m_runningProcess(this)
 
 {
@@ -31,9 +28,9 @@ PythonProject::~PythonProject()
     m_runningProcess.kill();
 }
 
-void PythonProject::build()
+void PythonProject::build(AST *tree)
 {
-    writeAST();
+    writeAST(tree);
     QProcess pythonProcess(this);
     QStringList arguments;
     pythonProcess.setWorkingDirectory(m_platform->getPlatformPath() + QDir::separator() + "scripts");
@@ -82,7 +79,7 @@ void PythonProject::stopRunning()
     m_running.store(0);
 }
 
-void PythonProject::writeAST()
+void PythonProject::writeAST(AST *tree)
 {
     QFile saveFile(m_projectDir + QDir::separator() + "tree.json");
 
@@ -92,7 +89,7 @@ void PythonProject::writeAST()
     }
 
     QJsonArray treeObject;
-    foreach(AST *node, m_tree->getChildren()) {
+    foreach(AST *node, tree->getChildren()) {
         QJsonObject nodeObject;
         if (node->getNodeType() == AST::Platform) {
             nodeObject["platform"] = QString::fromStdString(static_cast<PlatformNode *>(node)->platformName());
@@ -217,4 +214,10 @@ void PythonProject::addNodeToStreamArray(AST *node)
     if(!obj.isEmpty()) {
         m_curStreamArray.append(obj);
     }
+}
+
+
+bool PythonProject::isValid()
+{
+    return true;
 }

@@ -17,7 +17,9 @@ CodeValidator::CodeValidator(QString platformRootDir, AST *tree):
         if (platforms.size() > 0) {
             PlatformNode *platformNode = platforms.at(0);
             // FIXME add error if more than one platform?
-            StreamPlatform platform(platformRootDir,
+            QStringList platformRoots;
+            platformRoots << platformRootDir;
+            StreamPlatform platform(platformRoots,
                                     QString::fromStdString(platformNode->platformName()),
                                     QString::number(platformNode->version(),'f',  1));
             m_platform = platform;

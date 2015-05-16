@@ -9,25 +9,29 @@
 #include "platformfunction.h"
 #include "platformtype.h"
 #include "platformobject.h"
-#include "baseproject.h"
+#include "builder.h"
+
+
 
 class StreamPlatform
 {
 public:
     StreamPlatform(QString platformPath);
-    StreamPlatform(QString platformPath, QString platform, QString version);
+    StreamPlatform(QStringList platformPaths, QString platform, QString version);
     ~StreamPlatform();
 
     typedef enum {
         PythonPlatform,
-        PluginPlatform
+        PluginPlatform,
+        NullPlatform
     } PlatformAPI;
 
     QStringList getErrors();
     QStringList getWarnings();
     QStringList getPlatformTypeNames();
     QStringList getFunctionNames();
-    PlatformAPI getAPI() {return m_type;}
+    PlatformAPI getAPI() {return m_api;}
+    Builder *createBuilder(QString projectDir);
 
     QList<Property> getPortsForType(QString typeName);
     QList<Property> getPortsForFunction(QString typeName);
@@ -47,20 +51,17 @@ private:
     void parseFunctionsJson(QString jsonText, QList<PlatformFunction> &functions);
     void parseObjectsJson(QString jsonText, QList<PlatformObject> &objects);
 
-    void parsePlatformTypes();
-    void parsePlatformFunctions();
-    void parsePlatformObjects();
+    QString readFile(QString fileName);
 
     QString m_platformRootPath;
+    QString m_platformPath;
     QString m_platformName;
     QString m_version;
+    QString m_pluginName;
+    PlatformAPI m_api;
 
     QStringList m_errors;
     QStringList m_warnings;
-
-    PlatformAPI m_type;
-    QLibrary *m_pluginLibrary;
-    BaseProject *m_project;
 
     QList<PlatformType> m_commonTypes;
     QList<PlatformType> m_platformCommonTypes;
