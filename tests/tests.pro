@@ -62,7 +62,7 @@ DISTFILES += \
     data/defaultProperties.stream \
     data/constantRes.stream \
     data/shorthand.stream \
-    data/pan.stream
+    data/multichn.stream
 
 # Link to codegen library
 

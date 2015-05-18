@@ -24,7 +24,7 @@ class PythonProject : public Builder
 {
     Q_OBJECT
 public:
-    explicit PythonProject(StreamPlatform *platform = NULL,
+    explicit PythonProject(QString platformPath,
                            QString projectDir = QString(),
                            QString pythonExecutable = QString());
     virtual ~PythonProject();

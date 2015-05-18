@@ -6,11 +6,9 @@
 #include <QLibrary>
 
 class AST;
-class StreamPlatform;
 class Builder;
 
-
-typedef Builder* (*create_object_t)(StreamPlatform *platform, const char *projectDir, const char *xmosToolchainRoot);
+typedef Builder* (*create_object_t)(QString platformPath, const char *projectDir, const char *xmosToolchainRoot);
 typedef void (*platform_name_t)(char *name);
 typedef double (*platform_version_t)();
 
@@ -24,8 +22,8 @@ class Builder : public QObject
 {
     Q_OBJECT
 public:
-    Builder(QString projectDir, StreamPlatform *platform)
-        : m_projectDir(projectDir), m_platform(platform) {}
+    Builder(QString projectDir, QString platformPath)
+        : m_projectDir(projectDir), m_platformPath(platformPath) {}
     virtual ~Builder() {}
 
 public slots:
@@ -40,7 +38,7 @@ public slots:
 
 protected:
     QString m_projectDir;
-    StreamPlatform *m_platform;
+    QString m_platformPath;
 
 private:
 

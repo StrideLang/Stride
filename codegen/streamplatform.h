@@ -11,8 +11,6 @@
 #include "platformobject.h"
 #include "builder.h"
 
-
-
 class StreamPlatform
 {
 public:

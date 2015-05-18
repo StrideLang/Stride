@@ -30,8 +30,8 @@ StreamPlatform::StreamPlatform(QStringList platformPaths, QString platform, QStr
             break; // Stop looking if platform has been found.
         }
         // FIXME move loading somewhere else where it's done less often (Or don't create a new StreamPlatform every time you parse)
-        QString fullPath = path + QDir::separator() + m_platformName
-                + QDir::separator() + m_version;
+        QString fullPath = QDir(path + QDir::separator() + m_platformName
+                + QDir::separator() + m_version).absolutePath();
         if (QFile::exists(fullPath)) {
             // First try to find library platforms
             QStringList pluginFiles = QDir(fullPath).entryList(QDir::Files | QDir::NoDotAndDotDot);
@@ -55,8 +55,8 @@ StreamPlatform::StreamPlatform(QStringList platformPaths, QString platform, QStr
                             m_platformPath = fullPath;
                             m_api = PluginPlatform;
                             m_pluginName = fullPath + QDir::separator() + file;
-                            QString xmosToolChainRoot = "/home/andres/Documents/src/XMOS/xTIMEcomposer/Community_13.0.2";
-                            Builder *builder = create(this, "", xmosToolChainRoot.toLocal8Bit() );
+//                            QString xmosToolChainRoot = "/home/andres/Documents/src/XMOS/xTIMEcomposer/Community_14.0.1";
+                            Builder *builder = create("", "", "" );
 
                             typesJson = builder->requestTypesJson();
                             functionsJson = builder->requestFunctionsJson();
@@ -66,18 +66,19 @@ StreamPlatform::StreamPlatform(QStringList platformPaths, QString platform, QStr
                     }
                     pluginLibrary.unload();
                 }
-                if (m_api != NullPlatform) {
-                    break; // Stop looking if platform has been found.
-                }
-                // Now try to find Python platform
-                if (QFile::exists(fullPath)) {
-                    typesJson = readFile(fullPath + QDir::separator() + "types.json");
-                    functionsJson = readFile(fullPath + QDir::separator() + "functions.json");
-                    objectsJson = readFile(fullPath + QDir::separator() + "objects.json");
-                    if (m_errors.size() == 0) {
-                        m_api = PythonPlatform;
-                        m_platformPath = fullPath;
-                    }
+            }
+            if (m_api != NullPlatform) {
+                break; // Stop looking if platform has been found.
+            }
+            // Now try to find Python platform
+            if (QFile::exists(fullPath)) {
+                typesJson = readFile(fullPath + QDir::separator() + "types.json");
+                functionsJson = readFile(fullPath + QDir::separator() + "functions.json");
+                objectsJson = readFile(fullPath + QDir::separator() + "objects.json");
+                if (m_errors.size() == 0) {
+                    m_api = PythonPlatform;
+                    m_platformPath = fullPath;
+                    break;
                 }
             }
         }
@@ -369,7 +370,7 @@ Builder *StreamPlatform::createBuilder(QString projectDir)
     Builder *builder = NULL;
     if (m_api == StreamPlatform::PythonPlatform) {
         QString pythonExec = "python";
-        builder = new PythonProject(this, projectDir, pythonExec);
+        builder = new PythonProject(m_platformPath, projectDir, pythonExec);
     } else if(m_api == StreamPlatform::PluginPlatform) {
         QString xmosRoot = "/home/andres/Documents/src/XMOS/xTIMEcomposer/Community_13.0.2";
 
@@ -380,7 +381,7 @@ Builder *StreamPlatform::createBuilder(QString projectDir)
         }
         create_object_t create = (create_object_t) pluginLibrary.resolve("create_object");
         if (create) {
-            builder = create(this, projectDir.toLocal8Bit(), xmosRoot.toLocal8Bit());
+            builder = create(m_platformPath, projectDir.toLocal8Bit(), xmosRoot.toLocal8Bit());
             }
         pluginLibrary.unload();
     }

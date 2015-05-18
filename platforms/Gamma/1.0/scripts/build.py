@@ -22,12 +22,8 @@ project_dir = platform_dir + '/project'
 # What about secondary deps like portaudio and libsndfile?
 log("Building Gamma project")
 
-
-# TODO: move this to bottom
-if __name__ == "__main__":
-    out_dir = platform_dir + '/test'
-else:
-    out_dir = sys.argv[1]
+#out_dir = platform_dir + '/test'
+out_dir = sys.argv[1]
 
 log("Buiding in directory: " + out_dir)
     

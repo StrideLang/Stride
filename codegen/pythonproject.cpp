@@ -7,10 +7,10 @@
 #include "codevalidator.h"
 
 
-PythonProject::PythonProject(StreamPlatform *platform,
+PythonProject::PythonProject(QString platformPath,
                              QString projectDir,
                              QString pythonExecutable) :
-    Builder(projectDir, platform),
+    Builder(projectDir, platformPath),
     m_runningProcess(this)
 
 {
@@ -33,7 +33,7 @@ void PythonProject::build(AST *tree)
     writeAST(tree);
     QProcess pythonProcess(this);
     QStringList arguments;
-    pythonProcess.setWorkingDirectory(m_platform->getPlatformPath() + QDir::separator() + "scripts");
+    pythonProcess.setWorkingDirectory(m_platformPath + QDir::separator() + "scripts");
     arguments << "build.py" << m_projectDir;
     pythonProcess.start(m_pythonExecutable, arguments);
     if(!pythonProcess.waitForFinished()) {
@@ -59,7 +59,7 @@ void PythonProject::run(bool pressed)
            return;
        }
     }
-    m_runningProcess.setWorkingDirectory(m_platform->getPlatformPath() + QDir::separator() + "scripts");
+    m_runningProcess.setWorkingDirectory(m_platformPath + QDir::separator() + "scripts");
     arguments << "run.py" << m_projectDir;
     m_runningProcess.start(m_pythonExecutable, arguments);
     m_running.store(1);
@@ -69,9 +69,9 @@ void PythonProject::run(bool pressed)
         }
         qApp->processEvents();
     }
-    m_runningProcess.close();
     qDebug() << m_runningProcess.readAllStandardOutput();
     qDebug() << m_runningProcess.readAllStandardError();
+    m_runningProcess.close();
 }
 
 void PythonProject::stopRunning()

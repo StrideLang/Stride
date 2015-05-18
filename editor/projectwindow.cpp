@@ -88,13 +88,15 @@ void ProjectWindow::build()
         StreamPlatform *platform = validator.getPlatform();
         QString projectDir = makeProjectForCurrent();
         m_builder = platform->createBuilder(projectDir);
+        connect(m_builder, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
+        connect(m_builder, SIGNAL(errorText(QString)), this, SLOT(printConsoleError(QString)));
         if (m_builder) {
             m_builder->build(tree);
-            delete tree;
         } else {
             qDebug() << "Can't create builder";
             Q_ASSERT(false);
         }
+        delete tree;
     }
     //    m_project->build();
 }

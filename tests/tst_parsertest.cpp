@@ -52,11 +52,10 @@ ParserTest::ParserTest()
 void ParserTest::testMultichannelUgens()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/pan.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/multichn.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
     QVERIFY(!generator.isValid());
-
 
     QList<LangError> errors = generator.getErrors();
     LangError error = errors.takeFirst();
