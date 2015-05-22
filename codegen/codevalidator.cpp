@@ -743,6 +743,7 @@ int CodeValidator::numParallelStreams(StreamNode *stream, StreamPlatform &platfo
     } else if (right->getNodeType() == AST::Stream) {
         StreamNode *rightStream = static_cast<StreamNode *>(right);
         numParallel = numParallelStreams(rightStream, platform, scope, tree, errors);
+
         AST *firstMember = rightStream->getLeft();
         if (firstMember->getNodeType() == AST::Name
                 || firstMember->getNodeType() == AST::List) {
@@ -754,6 +755,8 @@ int CodeValidator::numParallelStreams(StreamNode *stream, StreamPlatform &platfo
             int functionNodeSize = getNodeSize(firstMember, tree);
             if (functionNodeSize == 1) {
                 rightSize = getNodeNumInputs(firstMember, platform, scope, tree, errors);;
+            } else {
+
             }
         }
     } else {
@@ -827,7 +830,8 @@ int CodeValidator::getNodeSize(AST *node, AST *tree)
     } else if (node->getNodeType() == AST::List) {
         size = node->getChildren().size();
     } else if (node->getNodeType() == AST::Stream) {
-        qFatal("implement Stream parsing in getNodeSize");
+        StreamNode *st = static_cast<StreamNode *>(node);
+        size = getNodeSize(st->getLeft(), tree);
     }
 
     return size;

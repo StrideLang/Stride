@@ -19,11 +19,14 @@ public:
 
     string getName() const { return m_name; }
     vector<PropertyNode *> getProperties() const;
+    int getParallelInstances() { return m_parallelInstances; }
+    void setParallelInstances(int number) { m_parallelInstances = number; }
 
     AST *deepCopy();
 
 private:
     string m_name;
+    int m_parallelInstances; // number of parallel instances according to stream neighbors
     FunctionType m_type;
     vector<PropertyNode *> m_properties;
 };

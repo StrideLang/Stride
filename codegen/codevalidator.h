@@ -81,7 +81,6 @@ public:
 
     static QString getPortTypeName(PortType type);
 
-
 private:
 
     QVector<PlatformNode *> getPlatformNodes();

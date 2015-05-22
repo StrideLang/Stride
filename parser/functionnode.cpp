@@ -15,6 +15,7 @@ FunctionNode::FunctionNode(string name, AST *propertiesList, FunctionType type, 
         assert(m_children.at(i)->getNodeType() == AST::Property);
         m_properties.push_back(static_cast<PropertyNode *>(m_children.at(i)));
     }
+    m_parallelInstances = 0;
 }
 
 FunctionNode::~FunctionNode()

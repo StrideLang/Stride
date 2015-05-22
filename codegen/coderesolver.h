@@ -41,11 +41,11 @@ private:
     void resolveConstantsInNode(AST *node, QVector<AST *> scope);
     double getDefaultForTypeAsDouble(QString type, QString port);
 
-    QVector<AST *> expandStreamFromMemberSizes(StreamNode *stream);
+    QVector<AST *> expandStreamNode(StreamNode *stream);
+    AST *expandStream(AST *node, int index, int rightNumInputs = 1, int leftNumOutputs = 1);
     QVector<AST *> sliceStream(StreamNode *stream);
     StreamNode *splitStream(StreamNode *stream, AST *closingNode, AST *endNode);
 
-    AST *expandStreamFromMemberSizes(AST *node, int index);
     StreamPlatform m_platform;
     AST *m_tree;
     int m_connectorCounter;
