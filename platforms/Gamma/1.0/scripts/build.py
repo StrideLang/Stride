@@ -515,6 +515,7 @@ class Generator:
                 pass
         
             self.log(outtext)
+            self.log("Done.")
         
         
         elif platform.system() == "Linux":
@@ -539,6 +540,7 @@ class Generator:
             outtext = ck_out(args)
         
             self.log(outtext)
+            self.log("Done.")
         
         elif platform.system() == "Darwin":
             cpp_compiler = "/usr/bin/c++"
@@ -563,6 +565,7 @@ class Generator:
                 pass
         
             self.log(outtext)
+            self.log("Done.")
         else:
             self.log("Platform '%s' not supported!"%platform.system())
 

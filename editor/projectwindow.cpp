@@ -109,11 +109,14 @@ void ProjectWindow::flash()
 void ProjectWindow::run(bool pressed)
 {
     //    QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
+
     if (pressed) {
         build();
+        Q_ASSERT(m_builder);
         ui->consoleText->clear();
         m_builder->run();
     } else {
+        disconnect(m_builder, 0,0,0);
         m_builder->run(false);
         delete m_builder;
         m_builder = NULL;
@@ -125,7 +128,10 @@ void ProjectWindow::stop()
     if (m_builder) {
         m_builder->run(false);
     }
+    // For some reason setChecked triggers the run action the wrong way... so need to disbale these signals
+    ui->actionRun->blockSignals(true);
     ui->actionRun->setChecked(false);
+    ui->actionRun->blockSignals(false);
 }
 
 void ProjectWindow::tabChanged(int index)
@@ -171,14 +177,18 @@ void ProjectWindow::programStopped()
 
 void ProjectWindow::printConsoleText(QString text)
 {
-    ui->consoleText->setTextColor(Qt::black);
-    ui->consoleText->append(text);
+    if (!text.isEmpty()) {
+        ui->consoleText->setTextColor(Qt::black);
+        ui->consoleText->append(text);
+    }
 }
 
 void ProjectWindow::printConsoleError(QString text)
 {
-    ui->consoleText->setTextColor(Qt::red);
-    ui->consoleText->append(text);
+    if (!text.isEmpty()) {
+        ui->consoleText->setTextColor(Qt::red);
+        ui->consoleText->append(text);
+    }
 }
 
 void ProjectWindow::updateMenus()

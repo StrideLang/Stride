@@ -24,8 +24,8 @@ PythonProject::PythonProject(QString platformPath,
 PythonProject::~PythonProject()
 {
     m_running.store(0);
-    m_runningProcess.waitForFinished(1000);
     m_runningProcess.kill();
+    m_runningProcess.waitForFinished();
 }
 
 void PythonProject::build(AST *tree)
@@ -41,8 +41,10 @@ void PythonProject::build(AST *tree)
     }
     QByteArray stdOut = pythonProcess.readAllStandardOutput();
     QByteArray stdErr = pythonProcess.readAllStandardError();
-    qDebug() << stdOut;
-    qDebug() << stdErr;
+    emit outputText(stdOut);
+    emit errorText(stdErr);
+//    qDebug() << stdOut;
+//    qDebug() << stdErr;
 }
 
 void PythonProject::run(bool pressed)
@@ -67,10 +69,19 @@ void PythonProject::run(bool pressed)
         if(m_runningProcess.waitForFinished(50)) {
             m_running.store(0);
         }
+        QByteArray stdOut = m_runningProcess.readAllStandardOutput();
+        QByteArray stdErr = m_runningProcess.readAllStandardError();
+        emit outputText(stdOut);
+        emit errorText(stdErr);
         qApp->processEvents();
     }
-    qDebug() << m_runningProcess.readAllStandardOutput();
-    qDebug() << m_runningProcess.readAllStandardError();
+    QByteArray stdOut = m_runningProcess.readAllStandardOutput();
+    QByteArray stdErr = m_runningProcess.readAllStandardError();
+    emit outputText(stdOut);
+    emit errorText(stdErr);
+//    qDebug() << m_runningProcess.readAllStandardOutput();
+//    qDebug() << m_runningProcess.readAllStandardError();
+    emit outputText("Done.");
     m_runningProcess.close();
 }
 
