@@ -62,7 +62,7 @@ class PlatformFunctions:
         return None
     
     def find_function_property(self, func, property_name):
-        return func["properties"][property_name]
+        return func["ports"][property_name]
     
     #def find_builtin_object(platform_objs, name):
     #    for obj in platform_objs:
@@ -422,7 +422,7 @@ class Generator:
                             raise ValueError("Function not found")
                         ugen_name = "ugen_%02i"%(ugen_index)
         
-                        new_code = self.platform.get_function_code(func, parts["properties"], out_var_name, ugen_name, self._intokens)
+                        new_code = self.platform.get_function_code(func, parts["ports"], out_var_name, ugen_name, self._intokens)
         
                         dsp_code += new_code["dsp_code"]
                         global_code += new_code["init_code"]
@@ -431,7 +431,7 @@ class Generator:
                         ugen_index += 1
                         if not rate == sample_rate:
                             _rated_ugens[ugen_name] = rate_index
-                        properties = parts["properties"]
+                        properties = parts["ports"]
                         for prop in properties:
                             prop_value = properties[prop]
                             prop_type = prop_value["type"]

@@ -232,7 +232,7 @@ void StreamPlatform::parseFunctionsJson(QString jsonText, QList<PlatformFunction
         QJsonObject funcObj = func.toObject();
         QJsonValue val = funcObj.take("functionName");
         QString funcName = val.toString();
-        QJsonObject propList = funcObj.take("properties").toObject();
+        QJsonObject propList = funcObj.take("ports").toObject();
         QStringList keys = propList.keys();
         QList<Property> ports;
         foreach(QString key, keys) {

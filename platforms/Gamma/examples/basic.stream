@@ -5,11 +5,11 @@ value: "hello"
 } 
 
 
-control Test[2] {
+signal Test[2] {
 	default: [1,2]
 }
 
-control Out[2] {
+signal Out[2] {
 	default: [1,2]
 }
 

@@ -31,7 +31,7 @@ void LanguageHighlighter::highlightBlock(const QString &text)
     index = text.indexOf(expression);
     while (index >= 0) {
         int length = expression.matchedLength();
-        setFormat(index, length, m_formats["properties"]);
+        setFormat(index, length, m_formats["ports"]);
         index = text.indexOf(expression, index + length);
     }
 
@@ -193,7 +193,7 @@ void LanguageHighlighter::setFormatPreset(int index)
     m_formats["comments"] = commentsFormat;
     m_formats["type"] = typeFormat;
     m_formats["user"] = userFormat;
-    m_formats["properties"] = propertiesFormat;
+    m_formats["ports"] = propertiesFormat;
     m_formats["builtin"] = builtinFormat;
     m_formats["strings"] = stringFormat;
 

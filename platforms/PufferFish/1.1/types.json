@@ -24,7 +24,8 @@
             "ports": {
                 "input": {"types" : ["CSBP"], "default": "none", "required" : false, "maxconnections" : 1, "access": "stream_in"},
                 "output": {"types" : ["CSBP"], "default": "none", "required" : false, "maxconnections" : -1, "access": "stream_out"},
-                "rate": {"types" : ["CIP", "CRP"], "default": "AudioRate", "required" : true, "maxconnections" : 1, "access": "property"}
+                "rate": {"types" : ["CIP", "CRP"], "default": "AudioRate", "required" : true, "maxconnections" : 1, "access": "property"},
+                "default": {"types" : ["CIP", "CRP"], "default": 0.0, "required" : false, "maxconnections" : 1, "access": "property"}
             },
             "privateports": {"inherits" : ["object"]}
         },

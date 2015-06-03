@@ -1,5 +1,5 @@
 {"types": [
-        
+
         {
             "typeName": "object",
             "ports": {
@@ -22,7 +22,8 @@
             "ports": {
                 "input": {"types" : ["CSBP"], "default": {"type": "none"}, "required" : false, "maxconnections" : 1, "access": "stream_in"},
                 "output": {"types" : ["CSBP"], "default": {"type": "none"}, "required" : false, "maxconnections" : -1, "access": "stream_out"},
-                "rate": {"types" : ["CIP", "CRP"], "default": "AudioRate", "required" : true, "maxconnections" : 1, "access": "property"}
+                "rate": {"types" : ["CIP", "CRP"], "default": "AudioRate", "required" : true, "maxconnections" : 1, "access": "property"},
+                "default": {"types" : ["CIP", "CRP"], "default": 0.0, "required" : false, "maxconnections" : 1, "access": "property"}
             },
             "in_types" : ["AS", "CSR"],
             "out_types" : [ "AS", "CSR"],
@@ -30,30 +31,6 @@
                 "includes": {"code": ""},
                 "init_code": {"code": ""},
                 "dsp_code": {"code": "%%token%% = %%intoken%%;\n"}
-            }
-            ,
-            "privateports": {"inherits" : ["object"]}
-        },
-        {
-            "typeName": "control",
-            "ports": {
-                "input": {"types" : ["ASP", "CSIP", "CSRP"], "default": {"type": "none"}, "required" : false, "maxconnections" : 1, "access": "stream_in"},
-                "output": {"types" : ["CSIP", "CSRP"], "default": {"type": "none"}, "required" : false, "maxconnections" : -1, "access": "stream_out"},
-                "default": {"types" : ["CIP", "CRP"], "default": 0.0, "required" : true, "maxconnections" : 1, "access": "property"},
-                "rate": {"types" : ["CIP", "CRP"], "default": "ControlRate", "required" : true, "maxconnections" : 1, "access": "property"},
-                "enableMapping": {"types" : ["CBP"], "default": "on", "required" : true, "maxconnections" : 1, "access": "property"},
-                "mappingMode": {"types" : ["CSP"], "default": "'linear'", "required" : true, "maxconnections" : 1, "access": "property"},
-                "minimum": {"types" : ["CIP", "CRP"], "default": 0.0, "required" : true, "maxconnections" : 1, "access": "property"},
-                "maximum": {"types" : ["CIP", "CRP"], "default": 1.0, "required" : true, "maxconnections" : 1, "access": "property"},
-                "increment": {"types" : ["CIP", "CRP", "none"], "default": {"type": "none"}, "required" : true, "maxconnections" : 1, "access": "property"},
-                "rounding": {"types" : ["CSP"], "default": "'truncate'", "required" : true, "maxconnections" : 1, "access": "property"}
-            },
-            "in_types" : ["AS", "CSR"],
-            "out_types" : [ "AS", "CSR"],
-            "code" : {
-                "includes": {"code": ""},
-                "init_code": {"code": ""},
-                "dsp_code": {"code": "%%token%% = %%port:minimum%% + (%%intoken%% + 1.0) * 0.5 * (%%port:maximum%% - %%port:minimum%%);\n"}
             }
             ,
             "privateports": {"inherits" : ["object"]}

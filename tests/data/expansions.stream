@@ -2,11 +2,11 @@ use Gamma version 1.0
 
 AudioIn >> level(gain: 1.5) >> AudioOut;
 
-control In[2] {
+signal In[2] {
     default: [3,4.5]
 }
 
-control Out[2] {
+signal Out[2] {
     default: [5,6.5]
 }
 

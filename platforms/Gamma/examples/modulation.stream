@@ -8,17 +8,17 @@ constant ModFreq {	value: CarrierFreq * CMRatio }
 
 constant ModIndex {	value: 1 }
 
-control Modulator {
-        enableMapping:  on
-        minimum:        CarrierFreq - (ModIndex * ModFreq)
-        maximum:        CarrierFreq + (ModIndex * ModFreq)
-		rate: AudioRate
-}
+#signal Modulator {
+#		rate: AudioRate
+#}
 
 oscillator (
         type:           'sine'
         frequency:      ModFreq
-) >> Modulator;
+) >> map(        enableMapping:  on
+        minimum:        CarrierFreq - (ModIndex * ModFreq)
+        maximum:        CarrierFreq + (ModIndex * ModFreq)
+		rate: AudioRate) >> Modulator;
 
 oscillator (
         type:           'sine'

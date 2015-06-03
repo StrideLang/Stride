@@ -60,14 +60,14 @@ void ParserTest::testMultichannelUgens()
     QList<LangError> errors = generator.getErrors();
     LangError error = errors.takeFirst();
     QVERIFY(error.type == LangError::StreamMemberSizeMismatch);
-    QVERIFY(error.lineNumber == 22);
+    QVERIFY(error.lineNumber == 20);
     QVERIFY(error.errorTokens[0] == "2");
     QVERIFY(error.errorTokens[1] == "pan");
     QVERIFY(error.errorTokens[2] == "1");
 
     error = errors.takeFirst();
     QVERIFY(error.type == LangError::StreamMemberSizeMismatch);
-    QVERIFY(error.lineNumber == 25);
+    QVERIFY(error.lineNumber == 23);
     QVERIFY(error.errorTokens[0] == "2");
     QVERIFY(error.errorTokens[1] == "DummyStereo");
     QVERIFY(error.errorTokens[2] == "1");

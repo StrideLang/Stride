@@ -32,7 +32,7 @@ Platform::Platform(QString name) :
     foreach(QVariant type, builtinTypes) {
         PlatformType type_stl;
         type_stl.typeName = type.toMap().value("typeName").toString().toStdString();
-        foreach(QVariant property, type.toMap().value("properties").toList()) {
+        foreach(QVariant property, type.toMap().value("ports").toList()) {
             TypeProperty property_stl;
             property_stl.name = property.toMap().value("name").toString().toStdString();
             property_stl.defaultValue = property.toMap().value("default").toString().toStdString();

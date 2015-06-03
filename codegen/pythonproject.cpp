@@ -214,7 +214,7 @@ void PythonProject::functionToJson(FunctionNode *node, QJsonObject &obj)
         astToJson(property->getValue(), propValue);
         propObject[QString::fromStdString(property->getName())] = propValue;
     }
-    obj["properties"] = propObject;
+    obj["ports"] = propObject;
     obj["rate"] = node->getRate();
 }
 

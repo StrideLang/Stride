@@ -1,8 +1,6 @@
 use Gamma version 1.0
 
-control PanMod {
-    minimum: -1
-    maximum: 1
+signal PanMod {
     rate: 4000
 }
 
@@ -11,7 +9,7 @@ signal DummyStereo[2] {}
 signal DummyStereo2[2] {}
 signal DummyQuad[4] {}
 
-oscillator(freq: 5) >> PanMod;
+oscillator(freq: 5) >> map(minimum: -1 maximum: 1) >> PanMod;
 
 oscillator(freq: 440) >> pan(position: PanMod) >> AudioOut;
 

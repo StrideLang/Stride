@@ -1,8 +1,11 @@
 use Gamma version 1.0
 
-control Rate1 {
+signal Rate1 {
 		rate: 22045
 }
 
+signal Rate2 {
+		rate: 11025
+}
 
-oscillator(frequency: 880) >> Rate1 >> AudioOut;
+oscillator(frequency: 880) >> Rate1 >> Rate2 >> AudioOut;
