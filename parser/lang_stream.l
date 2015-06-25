@@ -29,7 +29,8 @@ CLETTER	[A-Z]
 "*"	|
 "/"					{ return yytext[0]; }
 
-","					{ return COMMA; }		
+","					{ return COMMA; }
+"."					{ return DOT; }
 ":"					{ return COLON; }
 ";"					{ return SEMICOLON; }
 ">>"				{ return STREAM; }
@@ -41,6 +42,8 @@ CLETTER	[A-Z]
 "use"				{ return USE; }
 "version"			{ return VERSION; }
 "with"              { return WITH; }
+"import"			{ return IMPORT; }
+"as"				{ return AS; }
 "none"				{ return NONE; }
 "on"				{ return ON; }
 "off"				{ return OFF; }
@@ -48,6 +51,8 @@ CLETTER	[A-Z]
 "and"				{ return AND; }
 "or"				{ return OR; }
 "not"				{ return NOT; }
+
+"streamRate"		{ return STREAMRATE; }
 
 {DIGIT}+\.{DIGIT}*	{ yylval.fval = atof(yytext); return FLOAT; }
 {DIGIT}*\.{DIGIT}+	{ yylval.fval = atof(yytext); return FLOAT; }
