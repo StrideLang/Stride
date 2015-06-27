@@ -44,6 +44,7 @@ CLETTER	[A-Z]
 "with"              { return WITH; }
 "import"			{ return IMPORT; }
 "as"				{ return AS; }
+"for"               { return FOR; }
 "none"				{ return NONE; }
 "on"				{ return ON; }
 "off"				{ return OFF; }
