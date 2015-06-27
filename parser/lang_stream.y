@@ -37,17 +37,17 @@ int error = 0;
 
 %union {
 	int 	ival;
-        double 	fval;
-        char *	sval;
-        AST  *  ast;
-        PlatformNode *platformNode;
-        BlockNode *blockNode;
-        StreamNode *streamNode;
-        PropertyNode *propertyNode;
-        BundleNode *bundleNode;
-        FunctionNode *functionNode;
-        ListNode *listNode;
-        ExpressionNode *expressionNode;
+    double 	fval;
+    char *	sval;
+    AST  *  ast;
+    PlatformNode *platformNode;
+    BlockNode *blockNode;
+    StreamNode *streamNode;
+    PropertyNode *propertyNode;
+    BundleNode *bundleNode;
+    FunctionNode *functionNode;
+    ListNode *listNode;
+    ExpressionNode *expressionNode;
 }
 
 /* declare types for nodes */
@@ -59,7 +59,6 @@ int error = 0;
 %type <propertyNode> property
 %type <ast> propertyType
 %type <streamNode> streamDef
-%type <streamNode> streamType
 %type <ast> streamExp
 %type <ast> streamComp
 %type <ast> valueComp
@@ -72,12 +71,9 @@ int error = 0;
 %type <listNode> valueListList
 %type <listNode> valueList
 %type <listNode> valueListDef
-%type <listNode> stringList
-%type <listNode> switchList
 %type <listNode> blockList
 %type <listNode> streamList
 %type <listNode> listList
-
 %type <ast> valueExp
 %type <ast> valueListExp
 
@@ -92,7 +88,7 @@ int error = 0;
 
 %token '[' ']' '{' '}'
 %token COMMA COLON SEMICOLON 
-%token USE VERSION WITH IMPORT AS NONE ON OFF
+%token USE VERSION WITH IMPORT AS FOR NONE ON OFF
 %token STREAMRATE
 
 %left STREAM
@@ -123,10 +119,14 @@ start:
     |	importDef   {
                         cout << "Import Definition Resolved!" << endl;
                     }
+    |   forDef		{
+                        cout << "For Definition Resolved!" << endl;
+                    }
     |	blockDef	{
                         tree_head->addChild($1);
                         cout << "Block Resolved!" << endl;
                     }
+
     |	streamDef	{
                         tree_head->addChild($1);
                         cout << "Stream Definition Resolved!" << endl;
@@ -142,7 +142,7 @@ start:
 
 platformDef:
         languagePlatform targetPlatform						{}
-    |	languagePlatform WITH auxPlatformDef targetPlatform	{}
+    |	languagePlatform targetPlatform	WITH auxPlatformDef {}
     ;
 
 languagePlatform:
@@ -162,14 +162,14 @@ languagePlatform:
                                 }
     ;
 
-auxPlatformDef:
-        UVAR                    { cout << "With additional platform: " << $1 << endl; }
-    |	auxPlatformDef AND UVAR { cout << "With additional platform: " << $3 << endl; }
-    ;
-
 targetPlatform:
         ON UVAR					{ cout << "Target platform: " << $2 << endl << "Target Version: Current!" << endl; }
     |	ON UVAR VERSION FLOAT	{ cout << "Target platform: " << $2 << endl << "Target Version: " << $4 << endl; }
+    ;
+
+auxPlatformDef:
+        UVAR                    { cout << "With additional platform: " << $1 << endl; }
+    |	auxPlatformDef AND UVAR { cout << "With additional platform: " << $3 << endl; }
     ;
 
 // =================================
@@ -180,6 +180,19 @@ importDef:
         IMPORT WORD 		{ cout << "Importing: " << $2 << endl; }
     |	IMPORT WORD AS WORD { cout << "Importing: " << $2 << " as " << $4 << endl; }
     |	IMPORT UVAR AS WORD { cout << "Importing: " << $2 << " as " << $4 << endl; }
+    ;
+
+// =================================
+//	FOR DEFINITION
+// =================================
+
+forDef:
+        FOR forPlatformDef		{}
+    ;
+
+forPlatformDef:
+        UVAR 					{ cout << "For platform: " << $1 << endl; }
+    |	forPlatformDef AND UVAR	{ cout << "For platform: " << $3 << endl; }
     ;
 
 // ================================= 
@@ -225,11 +238,6 @@ blockType:
 // =================================
 	
 streamDef:
-        streamType 			{ $$ = $1; }
-    |	shorthandStreamType {}
-    ;
-
-streamType:
         valueExp STREAM streamExp SEMICOLON  	{
                                                     $$ = new StreamNode($1, $3, yyloc.first_line);
                                                     cout << "Stream Resolved!" << endl;
@@ -240,37 +248,6 @@ streamType:
                                                 }
     ;
 
-
-shorthandStreamType:
-        STRING STREAM UVAR SEMICOLON                {
-                                                        cout << "String: " << $1 << endl;
-                                                        cout << "User variable: " << $3 << endl;
-                                                        cout << "Streaming ... " << endl;
-                                                        cout << "Stream Resolved!" << endl;
-                                                    }
-    |	ON STREAM UVAR SEMICOLON                    {
-                                                        cout << "Keyword: on" << endl;
-                                                        cout << "User variable: " << $3 << endl;
-                                                        cout << "Streaming ... " << endl;
-                                                        cout << "Stream Resolved!" << endl;
-                                                    }
-    |	OFF STREAM UVAR	SEMICOLON                   {
-                                                        cout << "Keyword: off" << endl;
-                                                        cout << "User variable: " << $3 << endl;
-                                                        cout << "Streaming ... " << endl;
-                                                        cout << "Stream Resolved!" << endl;
-                                                    }
-    |	'[' switchList ']' STREAM UVAR SEMICOLON	{
-                                                        cout << "User variable: " << $5 << endl;
-                                                        cout << "Streaming ... " << endl;
-                                                        cout << "Stream Resolved!" << endl;
-                                                    }
-    |	'[' stringList ']' STREAM UVAR SEMICOLON	{
-                                                        cout << "User variable: " << $5 << endl;
-                                                        cout << "Streaming ... " << endl;
-                                                        cout << "Stream Resolved!" << endl;
-                                                    }
-    ;
 	
 // ================================= 
 //	ARRAY DEFINITION
@@ -385,176 +362,33 @@ property:
 	;
 	
 propertyType: 	
-            NONE			{
-                                $$ = new ValueNode(yyloc.first_line);
-                                cout << "Keyword: none" << endl;
-                            }
-        |	ON              {   $$ = new ValueNode(true, yyloc.first_line);
-                                cout << "Keyword: on" << endl;
-                            }
-        |	OFF             {
-                                $$ = new ValueNode(false, yyloc.first_line);
-                                cout << "Keyword: off" << endl;
-                            }
-        |	STRING			{
-                                string s;
-                                s.append($1); /* string constructor leaks otherwise! */
-                                $$ = new ValueNode(s, yyloc.first_line);
-                                cout << "String: " << $1 << endl;
-                                free($1);
-                            }
-        |	valueExp		{
-                                $$ = $1;
-                                cout << "Value expression as property value!" << endl;
-                            }
-        |	blockType		{
-                                $$ = new BlockNode("", "" , $1, yyloc.first_line);
-                                AST *props = $1;
-                                delete props;
-                                cout << "Block as property value!" << endl;
-                            }
-        |	listDef			{
-                                $$ = $1;
-                            }
-        |	valueListExp	{
-                                $$ = $1;
-                                cout << "List expression as property value!" << endl;
-                            }
+        NONE			{
+                            $$ = new ValueNode(yyloc.first_line);
+                            cout << "Keyword: none" << endl;
+                        }
+    |	valueExp		{
+                            $$ = $1;
+                            cout << "Value expression as property value!" << endl;
+                        }
+    |	blockType		{
+                            $$ = new BlockNode("", "" , $1, yyloc.first_line);
+                            AST *props = $1;
+                            delete props;
+                            cout << "Block as property value!" << endl;
+                        }
+    |	listDef			{
+                            $$ = $1;
+                        }
+    |	valueListExp	{
+                            $$ = $1;
+                            cout << "List expression as property value!" << endl;
+                        }
 	;
 
-// ================================= 
-//	REGULAR LIST DEFINITION
 // =================================
-
-listDef:
-        '[' stringList ']'	{ $$ = $2; }
-    |	'[' switchList ']'	{ $$ = $2; }
-    |	'[' blockList  ']'	{ $$ = $2; }
-    |	'[' streamList ']'	{ $$ = $2; }
-    |	'[' listList   ']'	{ $$ = $2; }
-	;
-
-stringList:
-        stringList COMMA STRING {
-                                    ListNode *list = new ListNode(NULL, yyloc.first_line);
-                                    list->stealMembers($1);
-                                    ListNode *oldList = $1;
-                                    oldList->deleteChildren();
-                                    delete oldList;
-                                    string s;
-                                    s.append($3);  /* string constructor leaks otherwise! */
-                                    list->addChild(new ValueNode(s, yyloc.first_line));
-                                    $$ = list;
-                                    cout << "String: " << $3 << endl;
-                                    cout << "New list item ... " << endl;
-                                    free($3);
-                                }
-    |	STRING                  {
-                                    string s;
-                                    s.append($1);
-                                    $$ = new ListNode(new ValueNode(s, yyloc.first_line), yyloc.first_line);
-                                    cout << "String: " << $1 << endl;
-                                    cout << "New list item ... " << endl;
-                                    free($1);
-                                }
-    ;
-
-switchList:
-        switchList COMMA ON     {
-                                    ListNode *list = new ListNode(NULL, yyloc.first_line);
-                                    list->stealMembers($1);
-                                    ListNode *oldList = $1;
-                                    oldList->deleteChildren();
-                                    delete oldList;
-                                    list->addChild(new ValueNode(true, yyloc.first_line));
-                                    $$ = list;
-                                    cout << "switch: ON" << endl;
-                                    cout << "New list item ... " << endl;
-                                }
-    |	switchList COMMA OFF    {
-                                    ListNode *list = new ListNode(NULL, yyloc.first_line);
-                                    list->stealMembers($1);
-                                    ListNode *oldList = $1;
-                                    oldList->deleteChildren();
-                                    delete oldList;
-                                    list->addChild(new ValueNode(false, yyloc.first_line));
-                                    $$ = list;
-                                    cout << "switch: OFF" << endl;
-                                    cout << "New list item ... " << endl;
-                                }
-    |	ON                      {
-                                    $$ = new ListNode(new ValueNode(true, yyloc.first_line), yyloc.first_line);
-                                    cout << "switch: ON" << endl;
-                                    cout << "New list item ... " << endl;
-                                }
-    |	OFF                     {
-                                    $$ = new ListNode(new ValueNode(false, yyloc.first_line), yyloc.first_line);
-                                    cout << "switch: OFF" << endl;
-                                    cout << "New list item ... " << endl;
-                                }
-	;
-	
-blockList:
-        blockList COMMA blockDef	{
-                                        ListNode *list = new ListNode(NULL, yyloc.first_line);
-                                        list->stealMembers($1);
-                                        ListNode *oldList = $1;
-                                        oldList->deleteChildren();
-                                        delete oldList;
-                                        list->addChild($3);
-                                        $$ = list;
-                                        cout << "Block definition ... " << endl;
-                                        cout << "New list item ... " << endl;
-                                    }
-    |	blockDef                    {
-                                        $$ = new ListNode($1, yyloc.first_line);
-                                        cout << "Block definition ... " << endl;
-                                        cout << "New list item ... " << endl;
-                                    }
-	;
-	
-streamList:
-        streamList COMMA streamType	{
-                                        ListNode *list = new ListNode(NULL, yyloc.first_line);
-                                        list->stealMembers($1);
-                                        ListNode *oldList = $1;
-                                        oldList->deleteChildren();
-                                        delete oldList;
-                                        list->addChild($3);
-                                        $$ = list;
-                                        cout << "Stream definition ... " << endl;
-                                        cout << "New list item ... " << endl;
-                                    }
-    |	streamType                  {
-                                        $$ = new ListNode($1, yyloc.first_line);
-                                        cout << "Stream definition ... " << endl;
-                                        cout << "New list item ... " << endl;
-                                    }
-	;
-	
-listList:
-        listList COMMA listDef  {
-                                    ListNode *list = new ListNode(NULL, yyloc.first_line);
-                                    list->stealMembers($1);
-                                    ListNode *oldList = $1;
-                                    oldList->deleteChildren();
-                                    delete oldList;
-                                    list->addChild($3);
-                                    $$ = list;
-                                    cout << "List of lists ..." << endl;
-                                    cout << "New list item ... " << endl;
-                                }
-    |	listDef                 {
-                                    $$ = new ListNode($1, yyloc.first_line);
-                                    cout << "List of lists ..." << endl;
-                                    cout << "New list item ... " << endl;
-                                }
-	;
-	
-// ================================= 
 //	VALUE LIST DEFINITION
 // =================================
-	
+
 valueListDef:
         '[' valueList ']'       {
                                     $$ = $2;
@@ -562,8 +396,8 @@ valueListDef:
     |	'[' valueListList ']'	{
                                     $$ = $2;
                                 }
-	;
-	
+    ;
+
 valueList:
         valueList COMMA valueExp	{
                                         ListNode *list = new ListNode(NULL, yyloc.first_line);
@@ -601,6 +435,75 @@ valueListList:
                                                 cout << "New list item ... " << endl;
                                             }
     ;
+
+// ================================= 
+//	LIST DEFINITION
+// =================================
+
+listDef:
+        '[' blockList  ']'	{ $$ = $2; }
+    |	'[' streamList ']'	{ $$ = $2; }
+    |	'[' listList   ']'	{ $$ = $2; }
+	;
+	
+blockList:
+        blockList COMMA blockDef	{
+                                        ListNode *list = new ListNode(NULL, yyloc.first_line);
+                                        list->stealMembers($1);
+                                        ListNode *oldList = $1;
+                                        oldList->deleteChildren();
+                                        delete oldList;
+                                        list->addChild($3);
+                                        $$ = list;
+                                        cout << "Block definition ... " << endl;
+                                        cout << "New list item ... " << endl;
+                                    }
+    |	blockDef                    {
+                                        $$ = new ListNode($1, yyloc.first_line);
+                                        cout << "Block definition ... " << endl;
+                                        cout << "New list item ... " << endl;
+                                    }
+	;
+	
+streamList:
+        streamList COMMA streamDef	{
+                                        ListNode *list = new ListNode(NULL, yyloc.first_line);
+                                        list->stealMembers($1);
+                                        ListNode *oldList = $1;
+                                        oldList->deleteChildren();
+                                        delete oldList;
+                                        list->addChild($3);
+                                        $$ = list;
+                                        cout << "Stream definition ... " << endl;
+                                        cout << "New list item ... " << endl;
+                                    }
+    |	streamDef                   {
+                                        $$ = new ListNode($1, yyloc.first_line);
+                                        cout << "Stream definition ... " << endl;
+                                        cout << "New list item ... " << endl;
+                                    }
+	;
+	
+listList:
+        listList COMMA listDef  {
+                                    ListNode *list = new ListNode(NULL, yyloc.first_line);
+                                    list->stealMembers($1);
+                                    ListNode *oldList = $1;
+                                    oldList->deleteChildren();
+                                    delete oldList;
+                                    list->addChild($3);
+                                    $$ = list;
+                                    cout << "List of lists ..." << endl;
+                                    cout << "New list item ... " << endl;
+                                }
+    |	listDef                 {
+                                    $$ = new ListNode($1, yyloc.first_line);
+                                    cout << "List of lists ..." << endl;
+                                    cout << "New list item ... " << endl;
+                                }
+	;
+	
+
 
 // ================================= 
 //	INDEX EXPRESSION
@@ -723,7 +626,7 @@ valueExp:
                                         cout << "Unary minus ... " << endl;
                                     }
     | 	NOT valueExp %prec NOT 		{
-                                        $$ = new ExpressionNode(ExpressionNode::UnaryMinus, $2, yyloc.first_line);
+                                        $$ = new ExpressionNode(ExpressionNode::LogicalNot, $2, yyloc.first_line);
                                         cout << "Logical NOT ... " << endl;
                                     }
     | 	valueComp                   {
@@ -749,23 +652,23 @@ streamExp:
 // =================================
 	
 indexComp:
-            INT             {
-                                $$ = new ValueNode($1, yyloc.first_line);
-                                cout << "Index/Size Integer: " << $1 << endl;
-                            }
-        |	UVAR            {
-                                string s;
-                                s.append($1); /* string constructor leaks otherwise! */
-                                $$ = new NameNode(s, yyloc.first_line);
-                                cout << "Index/Size User variable: " << $1 << endl;
-                                free($1);
-                            }
-        |	WORD DOT UVAR	{
-                                cout << "Index/Size User variable: " << $3 << " in NameSpace: " << $1 << endl;
-                            }
-        |	bundleDef       {
-                                cout << "Resolving indexed array ..." << endl;
-                            }
+        INT             {
+                            $$ = new ValueNode($1, yyloc.first_line);
+                            cout << "Index/Size Integer: " << $1 << endl;
+                        }
+    |	UVAR            {
+                            string s;
+                            s.append($1); /* string constructor leaks otherwise! */
+                            $$ = new NameNode(s, yyloc.first_line);
+                            cout << "Index/Size User variable: " << $1 << endl;
+                            free($1);
+                        }
+    |	WORD DOT UVAR	{
+                            cout << "Index/Size User variable: " << $3 << " in NameSpace: " << $1 << endl;
+                        }
+    |	bundleDef       {
+                            cout << "Resolving indexed array ..." << endl;
+                        }
 	;
 
 // ================================= 
@@ -815,14 +718,33 @@ valueComp:
     |	FLOAT           {
                             $$ = new ValueNode($1, yyloc.first_line);
                             cout << "Real: " << $1 << endl; }
+    |	ON              {
+                            $$ = new ValueNode(true, yyloc.first_line);
+                            cout << "Keyword: on" << endl;
+                        }
+    |	OFF             {
+                            $$ = new ValueNode(false, yyloc.first_line);
+                            cout << "Keyword: off" << endl;
+                        }
+    |	STRING			{
+                            string s;
+                            s.append($1); /* string constructor leaks otherwise! */
+                            $$ = new ValueNode(s, yyloc.first_line);
+                            cout << "String: " << $1 << endl;
+                            free($1);
+                        }
+    |   NONE            {
+                            $$ = new ValueNode(yyloc.first_line);
+                            cout << "Keyword: none" << endl;
+                        }
+    |	STREAMRATE      {
+                            cout << "Rate: streamRate" << endl;
+                        }
     |	UVAR            {
                             string s;
                             s.append($1); /* string constructor leaks otherwise! */
                             cout << "User variable: " << $1 << endl;
                             free($1);
-                        }
-    |	STREAMRATE      {
-                            cout << "Rate: streamRate" << endl;
                         }
     |	WORD DOT UVAR	{
                             cout << "User variable: " << $3 << " in NameSpace: " << $1 << endl;
