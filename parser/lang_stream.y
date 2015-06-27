@@ -362,11 +362,7 @@ property:
 	;
 	
 propertyType: 	
-        NONE			{
-                            $$ = new ValueNode(yyloc.first_line);
-                            cout << "Keyword: none" << endl;
-                        }
-    |	valueExp		{
+        valueExp		{
                             $$ = $1;
                             cout << "Value expression as property value!" << endl;
                         }
