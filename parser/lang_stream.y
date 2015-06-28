@@ -388,9 +388,11 @@ propertyType:
 valueListDef:
         '[' valueList ']'       {
                                     $$ = $2;
+                                    cout << "New list ... " << endl;
                                 }
     |	'[' valueListList ']'	{
                                     $$ = $2;
+                                    cout << "New list of lists ... " << endl;
                                 }
     ;
 
@@ -422,13 +424,9 @@ valueListList:
                                                 delete oldList;
                                                 list->addChild($3);
                                                 $$ = list;
-                                                cout << "List of lists ..." << endl;
-                                                cout << "New list item ... " << endl;
                                             }
     |	valueListDef                        {
                                                 $$ = new ListNode($1, yyloc.first_line);
-                                                cout << "List of lists ..." << endl;
-                                                cout << "New list item ... " << endl;
                                             }
     ;
 
