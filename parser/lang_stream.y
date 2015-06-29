@@ -553,6 +553,12 @@ valueListExp:
                                             $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3, yyloc.first_line);
                                             cout << "Dividing ... " << endl;
                                         }
+    |	valueListDef AND valueExp       {
+                                            cout << "Logical AND ..." << endl;
+                                        }
+    |	valueListDef OR valueExp        {
+                                            cout << "Logical OR ... " << endl;
+                                        }
     |	valueExp '+' valueListDef       {
                                             $$ = new ExpressionNode(ExpressionNode::Add , $1, $3, yyloc.first_line);
                                             cout << "Adding ... " << endl;
@@ -569,6 +575,12 @@ valueListExp:
                                             $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3, yyloc.first_line);
                                             cout << "Dividing ... " << endl;
                                         }
+    |	valueExp AND valueListDef       {
+                                            cout << "Logical AND ..." << endl;
+                                        }
+    |	valueExp OR valueListDef        {
+                                            cout << "Logical OR ... " << endl;
+                                        }
     |	valueListDef '+' valueListDef   {
                                             cout << "Adding Lists ... " << endl;
                                         }
@@ -580,6 +592,12 @@ valueListExp:
                                         }
     |	valueListDef '/' valueListDef	{
                                             cout << "Dividing Lists ... " << endl;
+                                        }
+    |	valueListDef AND valueListDef	{
+                                            cout << "Logical AND Lists ... " << endl;
+                                        }
+    |	valueListDef OR valueListDef	{
+                                            cout << "Logical OR Lists ... " << endl;
                                         }
     |	valueListDef                    {
                                             $$ = $1;
