@@ -361,8 +361,12 @@ property:
                                 }
 	;
 	
-propertyType: 	
-        valueExp		{
+propertyType:
+        NONE            {
+                            $$ = new ValueNode(yyloc.first_line);
+                            cout << "Keyword: none" << endl;
+                        }
+    |   valueExp		{
                             $$ = $1;
                             cout << "Value expression as property value!" << endl;
                         }
@@ -726,10 +730,6 @@ valueComp:
                             $$ = new ValueNode(s, yyloc.first_line);
                             cout << "String: " << $1 << endl;
                             free($1);
-                        }
-    |   NONE            {
-                            $$ = new ValueNode(yyloc.first_line);
-                            cout << "Keyword: none" << endl;
                         }
     |	STREAMRATE      {
                             cout << "Rate: streamRate" << endl;
