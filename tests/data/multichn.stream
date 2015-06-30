@@ -1,4 +1,4 @@
-use Gamma version 1.0
+use Gamma version 1.0 on PC
 
 signal PanMod {
     rate: 4000
@@ -9,19 +9,19 @@ signal DummyStereo[2] {}
 signal DummyStereo2[2] {}
 signal DummyQuad[4] {}
 
-oscillator(freq: 5) >> map(minimum: -1 maximum: 1) >> PanMod;
+Oscillator(freq: 5) >> Map(minimum: -1 maximum: 1) >> PanMod;
 
-oscillator(freq: 440) >> pan(position: PanMod) >> AudioOut;
+Oscillator(freq: 440) >> Pan(position: PanMod) >> AudioOut;
 
 # This line is correct as DummyOut should be auto-declared stereo
-oscillator(freq: 440) >> pan(position: PanMod) >> DummyOut;
+Oscillator(freq: 440) >> Pan(position: PanMod) >> DummyOut;
 
-# This line should throw an error (pan has one input)
-oscillator(freq: 440) >> pan(position: PanMod) >> DummyOut2;
+# This line should throw an error (Pan has one input)
+Oscillator(freq: 440) >> Pan(position: PanMod) >> DummyOut2;
 
-# This line should throw an error, output of pan should provide 4 channels
-DummyStereo >> pan(position: PanMod) >> DummyStereo2;
+# This line should throw an error, output of Pan should provide 4 channels
+DummyStereo >> Pan(position: PanMod) >> DummyStereo2;
 
-# This line should work (pan is expanded to two copies)
-DummyStereo >> pan(position: PanMod) >> DummyQuad;
+# This line should work (Pan is exPanded to two copies)
+DummyStereo >> Pan(position: PanMod) >> DummyQuad;
 

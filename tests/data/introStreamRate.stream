@@ -1,0 +1,26 @@
+signal Value {
+default: 	0.0
+rate:		ControlRate
+reset:		MasterReset
+meta:		none
+}
+
+Oscillator (
+type: 		Square
+amplitude:	1.0
+frequency:	10.0
+phase:		0.0
+reset:		off
+)
+>> LowPass (
+cutOff:	streamRate / 20.0
+reset:	off
+bypass:	off
+)
+>> Map (
+mode:		Linear
+minimum:	-1.0
+maximum:	1.0
+bypass:		off
+)
+>> Value;

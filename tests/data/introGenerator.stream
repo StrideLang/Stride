@@ -1,470 +1,390 @@
-	use PufferFish version 0.0
 
-	# Declare an oscillator
-	# Connect its output to audio output 1 using a stream operator
-	oscillator (
-		type: 		'sine'
-		amplitude: 	1.0
-		frequency: 	440.0
-		phase: 		0.0 
-	) 
-	>> AudioOut[1];
-	
-	use PufferFish version 0.0
-	
-	constant Frequency {
-		value:	220.0
-		meta:	none
-	}
-
-	oscillator (
-		type: 		'sine'
-		amplitude: 	0.5
-		frequency: 	Frequency
-		phase: 		0.0 
-	)
-	+ oscillator (
-		type: 		'sine'
-		amplitude: 	0.4
-		frequency: 	Frequency * 1.5
-		phase: 		0.0 
-	)
-	>> [ AudioOut[1], AudioOut[2] ];
-
-	use PufferFish version 0.0
-	
-	constant Frequency {
-		input:	220.0
-		meta:	none
-	}
-
-	oscillator (
-		type: 		[ 'sine', 'sine' ]
-		amplitude: 	[ 0.5, 0.4 ]
-		frequency: 	[ Frequency, Frequency * 1.5 ]
-		phase: 		[ 0.0, 0.0 ] 
-	)
-	>> [ AudioOut[1], AudioOut[2] ];
-	
-	use PufferFish version 0.0
-	
-	constant Frequency {
-		input:	220.0
-		meta:	none
-	}
-	
-	signal SineWaveUnision {
-		rate:	AudioRate
-		meta:	'Sine wave oscillator with base frequency.'
-	}
-	
-	signal SineWaveFifth {
-		rate:	AudioRate
-		meta:	'Sine wave oscillator with relative frequency.'
-	}
-	
-	oscillator (
-		type: 		'sine'
-		amplitude: 	1.0
-		frequency: 	Frequency
-		phase: 		0.0 
-	)	
-	>> SineWaveUnision;
-	
-	oscillator (
-		type: 		'sine'
-		amplitude: 	1.0
-		frequency: 	Frequency * 1.5
-		phase: 		0.0 
-	)
-	>> SineWaveFifth;
-	
-	mix ( 
-		signalList:	[ SineWaveUnision, SineWaveFifth ]
-		biasList: 	0.0
-		gainList: 	[ 0.5, 0.4 ]
-	) 
-	>> [ AudioOut[1], AudioOut[2] ];
-	
-	constant Range {
-		value: 	0.75
-		meta:	'Panning limits.'
-	}
-
-	control PanPosition {
-		mapping:	{
-			mode:		'linear'
-			default:	0.0
-			minimum:	-Range
-			maximum:	Range
-			increment:	0.01
-			rounding:	'truncate'
-			meta:		none
-		}
-		rate:	1024
-		meta:	'Pan position control'
-	}
-	
-	oscillator (
-		type: 		'triangle'
-		amplitude: 	1.0
-		frequency: 	2.0
-		phase: 		0.0 
-	)
-	>> PanPosition;
-	
-	mix ( 
-		signalList:	[ SineWaveUnision, SineWaveFifth ]
-		biasList: 	0.0
-		gainList: 	[ 0.5, 0.4 ]
-	)
-	>> pan (
-		position:	PanPosition
-		bypass:		off	
-	)
-	>> [ AudioOut[1], AudioOut[2] ];	
-
-	use PufferFish version 0.0
-	
-	signal ThreeSineWaves {
-		rate:	AudioRate
-		meta:	'Three sine wave oscillators.'
-	}
-	
-	oscillator (
-		type: 		'sine'
-		amplitude: 	[ 1.0, 0.66, 0.33 ]
-		frequency: 	[ 220.0, 440.0, 880.0 ]
-		phase: 		0.0 
-	)
-	>> ThreeSineWaves;
-	
-	# The amplitude of 'ThreeSineWaves' is 2.0
-	# The amplitude should be limited to 1.0 to avoid clipping at the DAC.
-	ThreeSineWaves * 0.5 >> AudioOut[1];
-	
-use PufferFish version 0.0
-	
-	# Declare an osc block
-	osc OSC {
-		hostIP:		'192.168.1.1'
-		incomingPort:	8000
-		outgoingPort:	9000
-		meta:			none
-	}
-	
-	# Declare a map for the fundamental frequency
-	map FrequencyMap {
-		mode:		'clip'
-		default:	110.0
-		minimum:	22.5
-		maximum:	7040.0
-		increment:	0.01
-		rounding:	'floor'
-		meta:		'Limit range of incoming values for the frequency over osc.'
-	}
-	
-	# Declare a control block
-	# The rate is set to none since OSC messages are asynchronous
-	control Fundamental {
-		mapping:	FrequencyMap
-		rate:		none
-		meta:		'Fundamental frequency change over OSC.'  
-	}
-	
-	# Connect the 'OSC' block to the 'Fundamental' control block
-	OSC >> Fundamental;
-	
-	signal ThreeSineWave {
-		rate:	AudioRate
-		meta:	'Three sine wave oscillators with controllable frequencies.'
-	}
-
-	oscillator (
-		type: 		'sine'
-		amplitude: 	[ 1.0, 0.66, 0.33 ]
-		frequency: 	[ 1.0 , 2.0, 3.0 ] * Fundamental
-		phase: 		0.0 
-	) 
-	* 0.5
-	>> ThreeSineWave;
-
-	ThreeSineWave >> AudioOut[1];
-	
-	constant Fundamental {
-		value: 55.0
-		meta: 'Fundamental frequency.'
-	}
-
-	generator ThreeHarmonicPartials {
-		aliasList:	[ 'fundamental', 'level' ]
-		propertyBlocks:	[ 
-					constant FundamentalFrequency { 
-						value:	440.0
-						meta:	'Default frequency.'
-					}, 
-					constant Level { 
-						value:	0.5
-						meta:	'Default level.' 
-					}
-				]
-		internalBlocks:	none
-		process:	oscillator (
-					type: 		'sine'
-					amplitude: 	[ 1.0, 0.66, 0.33 ]
-					frequency: 	[ 1.0 , 2.0, 3.0 ] * FundamentalFrequency  
-					phase: 		0.0 
-				) 
-				* Level
-		meta:		'Three harmonic partials with fundamental frequency and level control.'	
-	}
-	
-	signal HarmonicPartialsPlusFifths {
-		rate:	AudioRate
-		meta:	'Sum of three harmonic partials and their fifths'
-	}
-	
-	ThreeHarmonicPartials (
-		fundamental:	[ 1.0, 1.5 ] * Fundamental
-		level:		[ 0.45, 0.35 ]
-	)
-	>> HarmonicPartialsPlusFifths;
-	
-	sequence Frequencies {
-		valueList:	[ 220.0, 261.63, 329.63, 440.0 ]
-		mode:		'down'
-		repeat:		on
-		reset:		none
-		meta:		'Minor A chord notes.'
-	}
-	
-	signal Pulse {
-		rate:	512
-		meta:	'Signal used for trigger generation.'
-	}
-	
-	pulse (
-		dutyCycle: 	0.25
-		amplitude: 	1.0
-		frequency: 	3.0
-		phase: 		0.0 
-	)
-	>> Pulse
-	>> signal2switch ( 
-		threshold:	0.5
-		edge:		'rising'
-		invert:		off
-	)
-	>> Frequencies;
-	
-	oscillator (
-		type: 		'saw'
-		amplitude: 	1.0
-		frequency: 	Frequencies
-		phase: 		0.0 
-	)	
-	>> AudioOut[1];
-	
-
-	sequence Frequencies {
-		valueList:	[ 220.0, 261.63, 329.63, 440.0 ]
-		mode:		'ping-pong'
-		repeat:		on
-		reset:		none
-		meta:		'Minor A chord notes.'
-	}
-
-	DigitalIn[1] >> Frequencies;
-	
-	oscillator (
-		type: 		'saw'
-		amplitude: 	1.0
-		frequency: 	Frequencies
-		phase: 		0.0 
-	)	
-	>> AudioOut[1];
+# Declare an Oscillator
+# Connect its output to audio output 1 using a stream operator
+Oscillator (
+type: 		Sine
+amplitude: 	1.0
+frequency: 	440.0
+phase: 		0.0
+reset:		off
+) 
+>> AudioOut[1:2];
 
 
-	sequence Frequencies {
-		valueList:	[ 220.0, 261.63, 329.63, 440.0 ]
-		mode:		'ping-pong'
-		repeat:		on
-		reset:		none
-		meta:		'Minor A chord notes.'
-	}
-
-	DigitalIn[1] >> onTransition () >> Frequencies;
-	
-	oscillator (
-		type: 		'saw'
-		amplitude: 	1.0
-		frequency: 	Frequencies
-		phase: 		0.0 
-	)	
-	>> AudioOut[1];
 
 
-	sequence Frequencies {
-		valueList:	[ 220.0, 261.63, 329.63, 440.0 ]
-		mode:		'random'
-		repeat:		on
-		reset:		none
-		meta:		'Minor A chord notes.'
-	}		
-	
-	AnalogIn[1] 
-	>> control2switch ( 
-		threshold:	5.0
-		edge:		'both'
-		invert:		off 
-	) 
-	>> Frequencies;
-	
-	oscillator (
-		type: 		'square'
-		amplitude: 	1.0
-		frequency: 	Frequencies
-		phase: 		0.0 
-	)	
-	>> AudioOut[1];
-	
+constant Frequency {
+value:	220.0
+meta:	none
+}
 
-	constant OscType [5] {
-		value:	[ 'Sine' , 'Saw', 'Sine', 'Saw', 'Triangle' ]
-		meta: 	none
-	}
-
-	control OscTypeSelect {
-		mapping:	{
-			type: 		'linear'
-			default:	3
-			minimum:	1
-			maximum:	6
-			increment:	1
-			rounding:	'floor'
-			meta:		none
-		}
-		rate:	2048
-		meta:	none
-	}
-		
-	AnalogIn[1] >> OscTypeSelect;
-	
-	oscillator (
-		type: 		OscType[OscTypeSelect]
-		amplitude: 	1.0
-		frequency: 	440.0
-		phase: 		0.0 
-	)
-	>> AudioOut[1];
+Oscillator (
+type: 		Sine
+amplitude: 	0.5
+frequency: 	Frequency
+phase: 		0.0
+reset:		off
+)
++ Oscillator (
+type: 		Sine
+amplitude: 	0.4
+frequency: 	Frequency * 1.5
+phase: 		0.0
+reset:		off
+)
+>> AudioOut[1:2];
 
 
-	constant Size {
-		value:	5
-		meta:	'Size of OscType.'
-	}
+constant Frequency {
+value:	220.0
+meta:	none
+}
 
-	constant OscType [Size] {
-		value:	[ 'Sine' , 'Saw', 'Sine', 'Saw', 'Triangle' ]
-		meta: 	none
-	}
-	
-	control Index {
-		mapping:	{
-			type: 'linear'
-			default: 3
-			minimum: 1
-			maximum: Size + 1
-			increment: 1
-			rounding: 'floor'
-			meta: 'Map values to integers in the rage of 1 to Size.'
-		}
-		rate:	2048
-		meta:	'Translate analog input 1 to an integer through a linear mapping.'
-	}
-	
-	control OscTypeSelect {
-		mapping:	{
-			type:		'clip'
-			default: 	3
-			minimum:	1
-			maximum:	5
-			increment:	1
-			rounding:	'truncate' 
-			meta: none
-		}
-		rate:	none
-		meta:	'Asynchronous control to index OscType' 
-	}
-	
-	AnalogIn[1] >> Index >> onChange() >> OscTypeSelect;
-	
-	oscillator (
-		type: 		OscType[OscTypeSelect]
-		amplitude: 	1.0
-		frequency: 	440.0
-		phase: 		0.0 
-	)
-	>> AudioOut[1];
-	
+Oscillator (
+type: 		[ Sine, Sine ]
+amplitude: 	[ 0.5, 0.4 ]
+frequency: 	[ Frequency , Frequency * 1.5]
+phase: 		[ 0.0, 0.0 ]
+reset:		[ off, off]
+)
+>> Mix ()
+>> AudioOut[1:2];
 
-	signal MyOsc {
-		rate:	AudioRate
-		meta:	none
-	}
+constant Frequency {
+value:	220.0
+meta:	none
+}
 
-	constant Size {
-		value:	256
-		meta:	none
-	}
+Oscillator (
+type: 		Sine
+amplitude: 	[ 0.5, 0.4 ]
+frequency: 	[ 1.0 , 1.5] * Frequency
+phase: 		0.0
+reset:		off
+)
+>> Mix ()
+>> AudioOut[1:2];
 
-	constant Values [Size] {
-		value:  [ 0.0, 0.49, 0.99, 0.49, 0.0 ]
-		meta: 	none
-	}
+constant Frequency {
+value:	220.0
+meta:	none
+}
 
-	switch AsynchGate {
-		default: 	off
-		meta:		none
-	}
+signal SineWaveUnison {
+default:	0.0
+rate:		AudioRate
+reset:		MasterReset
+meta:		'Sine wave Oscillator with base frequency.'
+}
 
-	sequence Frequencies {
-		valueList:      [ 220.0, 261.63, 329.63, 440.0 ]
-		mode:           'up'
-		repeat:			on
-		reset:          none
-		meta:           'Minor A chord notes.'
-	}
+signal SineWaveFifth {
+default:	0.0
+rate:		AudioRate
+reset:		MasterReset
+meta:		'Sine wave Oscillator with relative frequency.'
+}
 
-	control Index {
-		mapping:        {
-			type:		'linear'
-			default:	128
-			minimum:	1
-			maximum:	Size + 1 
-			increment:	1
-			rounding:	'floor'
-			meta:		none
-		}
-		rate:		256
-		meta:		none
-	}
-	
-	AnalogIn[1] 
-	>> Index 
-	>> onChange() 
-	>> control2switch ( 
-		threshold:	0.1
-		edge:		'rising'
-		invert:		off
-	)
-	>> AsynchGate 
-	>> Frequencies;
+Oscillator (
+type: 		Sine
+amplitude: 	1.0
+frequency: 	Frequency
+phase: 		0.0
+reset:		off
+)	
+>> SineWaveUnison;
 
-	oscillator (
-		type:		'Sine'
-		amplitude:	Values[Index]
-		frequency:	Frequencies
-		phase:		0.0
-	)
-	>> MyOsc;
+Oscillator (
+type: 		Sine
+amplitude: 	1.0
+frequency: 	Frequency * 1.5
+phase: 		0.0
+reset:		off
+)
+>> SineWaveFifth;
+
+SineWaveUnison * 0.5 + SineWaveFifth * 0.4 >> AudioOut[1:2];
+
+constant Range {
+value: 	0.75
+meta:	'Panning limits.'
+}
+
+signal PanPosition {
+default:	0.0
+rate:		1024
+reset:		MasterReset
+meta:		'Pan position control'
+}
+
+Oscillator (
+type: 		Triangle
+amplitude: 	1.0
+frequency: 	2.0
+phase: 		0.0
+reset:		off
+)
+>> Map (
+mode:		Linear
+minimum:	-Range
+maximum:	Range
+bypass:		off
+)
+>> Round (
+mode:		Truncate
+increment:	0.01
+bypass:		off
+)
+>> PanPosition;
+
+Mix ( 
+signalList:	[SineWaveUnison, SineWaveFifth]
+biasList: 	0.0
+gainList: 	[0.5, 0.4]
+bypass:		off
+)
+>> Pan (
+position:	PanPosition
+bypass:		off	
+)
+>> AudioOut[1:2];	
+
+
+signal ThreeSineWaves {
+default: 	0.0
+rate:		AudioRate
+reset:		MasterReset
+meta:		'Three sine wave Oscillators.'
+}
+
+Oscillator (
+type: 		Sine
+amplitude: 	[ 1.0, 0.66, 0.33 ]
+frequency: 	[ 220.0, 440.0, 880.0 ]
+phase: 		0.0
+reset:		off
+)
+>> Mix ()
+>> ThreeSineWaves; 
+
+# The amplitude of 'ThreeSineWaves' is 2.0
+# The amplitude should be limited to 1.0 to avoid Clipping at the DAC.
+ThreeSineWaves * 0.5 >> AudioOut[1];
+
+
+# Declare an osc block
+oscIn OSC {
+hostIP:		'192.168.1.1'
+incomingPort:	8000
+incomingList:	['Fundamental']
+meta:		none
+}
+
+# Declare a control block
+# The rate is set to none since OSC messages are asynchronous
+signal Fundamental {
+default:	110.0
+rate:		none
+reset:		MasterReset
+meta:		'Fundamental frequency change over OSC.'  
+}
+
+# Connect the 'OSC' block to the 'Fundamental' control block
+OSC 
+>> Clip (
+minimum:	22.5
+maximum:	7040.0
+bypass:		off
+)
+>> Round (
+mode:		Floor
+increment:	0.01
+bypass:		off
+)
+>> Fundamental;
+
+Oscillator (
+type: 		Sine
+amplitude: 	[ 1.0, 0.66, 0.33 ]
+frequency: 	[ 1.0 , 2.0, 3.0 ] * Fundamental
+phase: 		0.0
+reset:		off
+) 
+* 0.45
+>> Mix ()
+>> AudioOut[1];
+
+constant Fundamental {
+value: 55.0
+meta: 'Fundamental frequency.'
+}
+
+generator ThreeHarmonicPartials {
+channelsOut:	1
+aliasList:	[ 'fundamental', 'outputLevel' ]
+propertyBlocks:	[ 
+constant FundamentalFrequency { 
+value:	440.0
+meta:	'Default frequency.'
+}, 
+constant Level { 
+value:	0.5
+meta:	'Default level.' 
+}
+]
+internalBlocks:	none
+setup:		none
+connections:
+[
+Oscillator (
+type: 		Sine
+amplitude: 	[ 1.0, 0.66, 0.33 ]
+frequency: 	[ 1.0 , 2.0, 3.0 ] * FundamentalFrequency  
+phase: 		0.0
+reset:		off
+) 
+* Level
+>> Mix ()
+>> ChannelOut[1];
+]
+meta:		'Three harmonic partials with fundamental frequency and level control.'	
+}
+
+signal HarmonicPartialsPlusFifths {
+default:	0.0
+rate:		AudioRate
+reset:		MasterReset
+meta:		'Sum of three harmonic partials and their fifths'
+}
+
+ThreeHarmonicPartials (
+fundamental:	[ 1.0, 1.5 ] * Fundamental
+outputLevel:	[ 0.45, 0.35 ]
+reset:		off
+)
+>> Mix ()
+>> HarmonicPartialsPlusFifths;
+
+generator AlarmPatch {
+channelsOut:	1
+aliasList:	[ 'carFreq', 'modFreq', 'modPhase' ]
+propertyBlocks:	[ 	constant CFreq {
+value:	440.0
+meta:	none
+}, 
+constant MFreq {
+value: 2.0
+meta:	none
+}, 
+constant MPhase {
+value: 0.0
+meta:	none
+}
+]
+internalBlocks:	[signal Amplitude {
+default:	0.0
+rate:		2048
+reset:		MasterReset
+meta:		none
+}]
+setup:		none				
+connections:	[	Oscillator (
+type: 		Square
+amplitude:	1.0
+frequency:	MFreq
+phase:		MPhase
+reset:		off
+)
+>> LowPass( 					
+cutOff: 50
+reset:	off
+bypass:	off
+)
+>> Map (
+mode:		Linear
+minimum:	0.0
+maximum:	1.0
+bypass:		off
+)
+>> Amplitude; 
+,
+Oscillator (
+type: 		Sine
+amplitude:	Amplitude
+frequency:	CFreq
+phase:		0.0
+reset:		off						
+)
+>> ChannelOut[1];
+]
+meta:		none
+}
+
+
+AlarmPatch ( 
+carFreq:	[600.0, 800.0]		
+modFreq:	2.0
+modPhase:	[0.0, 180.0]
+reset:		off
+)
+>> Mix ()
+>> AudioOut[1:2];
+
+constant UpdateRate {
+value:	10.0
+meta:	none
+}
+
+constant Pi {
+value:	3.14159265359
+meta:	none
+}
+
+signal CutOffFreqValue {
+default:	0.0
+rate: 		UpdateRate
+reset:		MasterReset
+meta:		'BiQuad CutOff Frequency Control.'
+}
+
+Oscillator (
+type:		Sine
+amplitude:	1.0
+frequency:	1.0 / 2.0 * Pi * UpdateRate
+phase:		0.0
+reset:		off
+)
+>> Rectify (
+mode: 	'full'
+bypass:	off
+)
+>> Map (
+mode:		Linear
+minimum:	0.0
+maximum:	4000.0
+bypass:		off
+)
+>> CutOffFreqValue;
+
+ImpulseTrain (
+amplitude:	1.0
+frequency: 	UpdateRate
+phase:		0.0
+count:		none
+reset:		off
+start:		none
+stop:		none
+) 
+>> BiQuad (
+type:			LowPass
+centerFrequency:	CutOffFreqValue	
+resonance:		2.0
+reset:			off
+bypass:			off
+)
+>> Level(
+gainType:	Linear
+gain: 		0.5
+bias:		0.0
+bypass:		off
+)
+>> AudioOut[1:2];

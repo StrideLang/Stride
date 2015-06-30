@@ -1,52 +1,97 @@
-	use PufferFish version 0.0
-	 
-	signal GuitarIn {
-		rate:	AudioRate
-		meta:	'Guitar input.'
-	}
-	
-	signal MainOutput [2] {
-		rate:	AudioRate
-		meta:	'Main stereo output.'
-	}
-	
-	AudioIn[1] >> GuitarIn;
-	MainOutput >> [AudioOut[1], AudioOut[2]];
-	
-	# Add level control to the output signal
-	GuitarIn >> gainDB(levelDB: 3.0; bypass: off) >> MainOutput;
-	
-		#Add variables to control the behaviour of gainDB  
-	GuitarIn 
-	>> gainDB (
-		levelDB:	3.0
-		bypass:		DigitalIn[1]
-	) 
-	>> MainOutput;
-	
-		#Declare a control block called 'GainLevelDB'
+signal Microphone {
+default:	0.0
+rate:		AudioRate
+reset:		MasterReset
+meta:		'Microphone input'
+}
 
-	control GainLevelDB {
-		mapping:	{
-					mode:		'linear'
-					default:	-96.0
-					minimum:	-96.0
-					maximum:	6.0
-					increment:	0.5
-					rounding:	'truncate'
-					meta:		'Linear mapping of analog input to -96dB to 6dB' 
-				}
-		rate:		ControlRate
-		meta:		'Gain level control with potentiometer at analog input 1.'
-	}
-	
-	# Connect 'AnalogInput_1' to input of 'GainLevelDB'
-	AnalogIn[1] >> GainLevelDB;
-	
-	#Add variables to control the behaviour of gainDB  
-	GuitarIn 
-	>> gainDB (
-		levelDB:	GainLevelDB
-		bypass:		DigitalIn[1]
-	) 
-	>> MainOutput;
+signal MainOutput [2] {
+default:	0.0
+rate:		AudioRate
+reset:		MasterReset
+meta:		'Main stereo output'
+}
+
+AudioIn[1] >> Microphone;
+
+MainOutput >> AudioOut[1:2];
+
+# Amplify the microphone signal 3.98 times (12 dB) using the level() processor
+Microphone
+>> Level (
+gainType:	Linear
+gain:		3.98
+bias:		0.0
+bypass: 	off
+) 
+>> MainOutput;
+
+# Property assignment to control the behaviour of level()
+Microphone 
+>> Level (
+gainType:	Linear
+gain:		3.98
+bias:		0.0
+bypass: 	DigitalIn[1]
+) 
+>> MainOutput;
+
+#Declare a control block labeled 'GainValue'
+
+signal GainValue {
+default:	0.0
+rate:		ControlRate
+reset:		MasterReset
+meta:		'Gain level control with potentiometer at analog input 1'
+}
+
+# Connect 'AnalogIn[1]' to input of 'GainValue' after value mapping
+AnalogIn[1] 
+>> Map (
+mode:		Linear
+minimum:	0.0
+maximum:	3.98
+bypass:		off
+)
+>> GainValue;
+
+#Add variables to control the behaviour of gainDB  
+Microphone 
+>> Level (
+gainType:	Linear
+gain:		GainValue
+bias:		0.0
+bypass:		DigitalIn[1]
+)  
+>> MainOutput;
+
+signal GainValueDB {
+default:	-96.0
+rate:		ControlRate
+reset:		MasterReset
+meta:		'Gain level control with potentiometer at analog input 1'
+}
+
+AnalogIn[1]
+>> Map (
+mode:		Linear
+minimum:	-96.0
+maximum:	12.0
+bypass:		off
+) 
+>> Round (
+mode:		Truncate		
+increment:	0.1	
+bypass:		off
+)
+>> GainValueDB;
+
+Microphone 
+>> Level (
+gainType:	Decibel
+gain:		GainValueDB
+bias:		0.0
+bypass: 	DigitalIn[1]
+)  
+>> MainOutput;
+

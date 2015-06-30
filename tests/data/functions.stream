@@ -1,10 +1,10 @@
 
 
-function1(propReal: 1.1 propInt: 23 propString: "hello")
+Function1(propReal: 1.1 propInt: 23 propString: "hello")
 >>
-function2(propReal: 1.2; propInt: 123; propString: "function";)
+Function2(propReal: 1.2; propInt: 123; propString: "function";)
 >>
-function3(
+Function3(
     propReal: 1.3
     propInt: 1123
     propString: "lines"

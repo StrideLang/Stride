@@ -1,4 +1,4 @@
-use PufferFish version 1.1
+use PufferFish version 1.1 on PC
 
 invalid InvalidType {
 
@@ -40,19 +40,3 @@ constant Const {
 #constant WrongConst {
 #    value: {property: "hello"}
 #}
-
-control Control {
-default:        0.0
-#rate:           ControlRate
-enableMapping:  on
-mappingMode:    'linear'
-minimum:        0.0
-maximum:        1.0
-increment:      none
-rounding:       'truncate'
-meta:           none
-}
-
-control WrongControl {
-    maximum: "hello"
-}

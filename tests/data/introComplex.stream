@@ -1,0 +1,101 @@
+###
+# LINES 29 and 30 commented out pending parser fix
+###
+
+constant Real {
+value:		1	
+meta:		'Real part of complex block C'
+}
+
+constant Imag {
+value:		1	
+meta:		'Imaginary part of complex block C'
+}
+
+complex Complex {
+default:	[ Real , Imag ]
+rate:		AudioRate
+reset:		MasterReset
+meta:		'A complex number in Stream'
+}
+
+# Shorthand notation
+complex C {}
+[ Real, Imag ] >> C;
+
+# Shorthand getter notation
+C >> CxReal () >> Real;
+C >> CxImag () >> Imag;
+
+# Properties
+C >> CxMagnitude () >> Magnitude;
+C >> CxPhase () >> Phase;
+
+# complex bundle
+complex ComplexBundle [2] {
+default:		[[R1,I1], [R2,I2]]
+rate:			AudioRate
+reset:			MasterReset
+meta:			'Bundle of two complex numbers'
+}
+
+ComplexBundle[1] >> CxReal () >> R1;
+ComplexBundle[1] >> CxImag () >> I1;
+ComplexBundle[2] >> CxReal () >> R2;
+ComplexBundle[2] >> CxImag () >> I2;
+
+# Arithmetic Operations
+[C1,C2] >> CxAdd () >> C3;		
+[C1,C2] >> CxMultiply () >> C3;
+
+signal SineReal {
+default:	0.0
+rate:		AudioRate
+reset:		MasterReset
+meta:		'A Sine wave at 1000Hz'
+}
+
+Oscillator (
+type:			Sine
+amplitude:		1.0
+frequency:		1000.0
+phase:			0.0
+reset:			off
+)
+>> SineReal;
+
+signal SineComplex {
+default:	[0.0, 0.0]
+rate:		AudioRate
+reset:		MasterReset
+meta:		'A complex sinusoid at 1000Hz'
+}
+
+CxOscillator (
+amplitude:		1.0
+frequency:		1000.0
+phase:			0.0
+reset:			off
+)
+>> SineComplex;
+
+complex ComplexSinusoid [2] {
+default:	[0.0, 0.0]
+rate:		AudioRate
+reset:		MasterReset
+meta:		'Sum of two complex sinusoids'	
+}
+
+CxOscillator (
+amplitude:	0.5
+frequency:	[1000.0, -1000.0]
+phase:		[-90.0, 90.0]
+reset:		off
+)
+>> ComplexSinusoid;
+
+# Use complex oscillators to produce a sine wave
+ComplexSinusoid
+>> CxAdd()
+>> CxReal()
+>> RealSinusiod;

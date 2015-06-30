@@ -2,55 +2,16 @@
 # LISTS
 #=======
 
-# Elements of a list should be of the same type
-
-constant Integer [3] {
-	value: [ 1, -2, 3 ] #comment
-	meta: 	'Integers'
-}
-
-constant Float [4] {
-        value: [ 1.0, -2.0, 3.0, 4.0 ]
-	meta: 	'Floats'
-}
-
-constant String [5] {
-        value: [ "one" , 'two' , 'three', 'four', "five" ]
-	meta: 	"Multi-	Line
-	String with ' character"
-}
-
-constant UVar [7] {
-        value: [A, B, C, D, E, F, G]
-	meta: 	'User Variable.'
-}
-
-constant ArrayList [2] {
-        value: [ A[1], B[1] ]
-	meta: 	'List of Array Elements.'
-}
-
-constant BlockList [3] {
-	value: [ signal A {}, signal B {}, signal C {}]
-	meta: 	'List of Blocks.'
-}
-
-constant BlockBundleList [3] {
-	value: [ signal A[2] {}, signal B[2] {}, signal C[2] {} ]
-	meta: 	'List of Block Bundles.'
-}
-
 
 # List of lists will parse
 # The following should work. All lists are integer lists.
-constant IntegerList [3] {
+list IntegerList [3] {
         value: [[ 9, 8, 7 ] , [ 6, 5, 4 ] , [ 3, 2, 1 ] ]
 	meta:	'List of lists'
 }
 
 # The following should FAIL. Integer and Float lists mixed.
-constant
-         IntegerList [3] {
+list IntegerList [3] {
 	value: [ [ 1, 2, 3 ], [ 4.0, 5.0, 6.0 ], [ 7, 8, 9 ] ]
 	meta:	'List of lists'
 }

@@ -1,35 +1,52 @@
-	use PufferFish version 1.1
-	
-	switch Gate {
-		default:	off
-		meta:		'Gate is ON when the value of analog input 1 is above 5.0.'
-	}
-	
-	switch InvertedGate {
-		default:	on
-		meta:		' Inverted value of Gate.'
-	}
-	
-	AnalogIn_1 
-	>> control2switch ( 
-		threshold:	5.0
-		invert:		off
-	) 
-	>> Gate
-	>> invertSwitch()
-	>> InvertedGate;
-	
-	
-	AudioIn[1]
-	>> gainDB (
-			levelDB:        -96.0
-			bypass:         Gate
-	)
-	>> AudioOut[1];
-	
-	AudioIn[1]
-	>> gainDB (
-			levelDB:        -96.0
-			bypass:         InvertedGate
-	)
-	>> AudioOut[2];
+switch Gate {
+default:	off
+reset:		MasterReset
+meta:		"On, when analog in 1 is greater than or equal to 5"
+}
+
+AnalogIn[1] 
+>> Convert2switch (
+mode:		Threshold
+value:		0.5
+operator:	GreaterOrEqual
+)
+>> OnChange(
+bypass:	off
+)
+>> Gate;
+
+AudioIn[1]
+>> Level (
+gainType:	Linear
+gain:		0.0
+bias:		0.0
+bypass: 	Gate
+)
+>> AudioOut[1];
+
+AudioIn[2]
+>> Level (
+gainType:	Linear
+gain:		0.0
+bias:		0.0
+bypass: 	not Gate
+)
+>> AudioOut[2];
+
+AudioIn[1:2]
+>> Level (
+gainType:	[ Linear, Linear]
+gain:		[ 0.0, 0.0 ]
+bias:		[ 0.0, 0.0 ]
+bypass: 	[ Gate, not Gate]
+)
+>> AudioOut[1:2];
+
+AudioIn[1:2]
+>> Level (
+gainType:	Linear
+gain:		0.0
+bias:		0.0
+bypass: 	[ Gate, not Gate]
+)
+>> AudioOut[1:2];

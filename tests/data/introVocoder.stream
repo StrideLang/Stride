@@ -1,0 +1,72 @@
+signal Amplitude [8] {
+default:	0.0
+rate:		AudioRate
+reset:		MasterReset
+meta:		'Envelope tracker - Synthesis level control'
+}
+
+constant CarrierFundamental {
+value:	440
+meta:	'Carrier oscillator frequency'
+}
+
+constant Analysis_BP_Freq [8] {
+value:	[200, 275, 425, 675, 1025, 1475, 2025, 2675]
+meta:	'Center frequencies - analysis BP filters'
+}
+
+constant Synthesis_BP_Freq [8] {
+value:	[200, 300, 400, 600, 1000, 2000, 4000, 8000]
+meta:	'Center frequencies - synthesis BP filters'
+}
+
+constant Analysis_Q_Factor [8] {
+value:	[4.0, 2.8, 2.1, 2.3, 2.6, 3.0, 3.4, 3.9]
+meta:	'Q factor - analysis BP filters'
+}
+
+constant Synthesis_Q_Factor [8] {
+value:	[4.0,3.0,2.2, 2.4, 2.8, 3.2, 3.4, 3.6]
+meta:	'Q factor - synthesis BP filters'
+}
+
+AudioIn[1]
+>> BandPass (
+centerFrequency:	Analysis_BP_Freq
+qFactor:		Analysis_Q_Factor 
+reset:			off
+bypass:			off
+)
+>> Rectify (
+mode:	Full
+bypass:	off
+)
+>> LowPass (
+cutOff:	5
+reset:	off
+bypass:	off
+)
+>> Amplitude;
+
+
+Oscillator (
+type:		Saw
+amplitude:	1.0
+frequency:	CarrierFundamental
+phase:		0.0
+reset:		off
+)
+>> BandPass (
+centerFrequency:	Synthesis_BP_Freq
+qFactor:		Synthesis_Q_Factor
+reset:			off
+bypass:			off
+)	
+>> Level (
+gainType:	Linear
+gain:		Amplitude
+bias:		0.0
+bypass:		off
+)
+>> Mix()
+>> AudioOut[1:2];

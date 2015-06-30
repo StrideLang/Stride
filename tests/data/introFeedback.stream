@@ -1,121 +1,216 @@
-	mix (
-		signalList:	[ AudioIn[1], Feedback ]
-		biasList: 	[ 0.0, 0.0 ]
-		gainList: 	[ 0.50, -0.45 ]
-	) 
-	>> AudioOut[1]
-	>> delay (samples: 32)
-	>> Feedback;
-	
-	#Automatically generate prefix code
-	signal Feedback {}
-	
-	# Feedforward Comb Filter Implementation
-	AudioIn[1]
-	>> delay (samples: 32)
-	>> level(
-		bias:	0.0
-		gain: 	0.45
-	)
-	>> mix (
-		signalList:	AudioIn[1]
-		biasList:	0.0
-		gainList:	0.5
-	)
-	>> AudioOut[1];
-	
-	# Allpass Filter Implementation 
-	AudioIn[1]
-	>> mix (
-		signalList:	Feedback
-		biasList:	0.0
-		gainList:	-0.90
-	)
-	>> Feedforward
-	>> delay (samples: 32)
-	>> Feedback
-	>> mix (
-		signalList:	FeedForward
-		biasList: 	0.0
-		gainList:	0.90
+# Feedforward Comb Filter Implementation
+AudioIn[1]
+>> Delay (
+samples:	32
+default:	0.0
+reset:		off
+bypass:		off
+)
+>> Level(
+gainType:	Linear	
+gain: 		0.45
+bias:		0.0
+bypass:		off
+)
+>> Mix (
+signalList:	AudioIn[1]
+gainType:	Linear	
+gainList:	0.5
+biasList:	0.0
+bypass:		off
+)
+>> AudioOut[1];
 
-	)
-	>> level (
-		bias:	0.0
-		gain: 	0.5
-	)
-	>> AudioOut[1];
-	
-	constant A [2] {
-		value:	[ 0.0, 0.0 ]
-		meta:	'Pole coefficients.'
-	}
-	
-	constant B [3] {
-		value:	[ 1.0, 0.0, 0.0 ]
-		meta:	'Zero coefficients.'
-	}
-	
-	AudioIn[1]
-	>> mix (
-		signalList:	[ Z[2], Z[3] ]
-		biasList:		[ 0.0, 0.0 ]
-		gainList:		[ -A[1], -A[2] ]
-	)
-	>> Z[1]
-	>> delay (samples: 1)
-	>> Z[2]
-	>> delay (samples: 1)
-	>> Z[3]
-	>> level (
-		bias:	0.0
-		gain: 	B[3]
-	)
-	>> mix (
-		signalList:	[ Z[2], Z[1] ]
-		biasList:		[ 0.0, 0.0 ]
-		gainList:		[ B[2], B[1] ]
 
-	)
-	>> AudioOut[1];
-	
-	#Automatically generate prefix code
-	signal Z [3] {}
+signal Feedback {
+default:	0.0
+rate:		AudioRate
+reset:		MasterReset
+meta:		none
+}
 
-	processor Biquad {
-		channelsIn:	1
-		channelsOut:	1
-		aliasList:	[ 'poles', 'zeros' ]
-		propertyBlocks: [ constant P [2] {}, constant Z [3] {} ]
-		internalBlocks:	[ signal J [3] {} ]
-		processList:	ChannelIn[1]
-				>> mix (
-					signalList:	[ J[2], J[3] ]
-					biasList:	[ 0.0, 0.0 ]
-					gainList:	[ -P[1], -P[2] ]
-				)
-				>> Z[1]
-				>> delay (samples: 1)
-				>> Z[2]
-				>> delay (samples: 1)
-				>> Z[3]
-				>> level (bias:	0.0; gain: Z[3])
-				>> mix (
-					signalList:	[ J[2], J[1] ]
-					biasList:	[ 0.0, 0.0 ]
-					gainList:	[ Z[2], Z[1] ]
-				)
-				>> ChannelOut[1]
-	}
+# Feedback Comb Filter Implementation
+Mix (
+signalList:	[AudioIn[1], Feedback]
+gainType:	Linear
+gainList: 	[0.50, -0.45]
+biasList: 	[0.0, 0.0] 
+bypass:		off
+) 
+>> AudioOut[1]
+>> Delay (
+samples:	32
+default:	0.0
+reset:		off
+bypass:		off
+)
+>> Feedback;
 
-	constant Poles [2] {
-		value:	[ 0.0, 0.0 ]
-		meta:	'Pole coefficients.'
-	}
-	
-	constant Zeros [3] {
-		value:	[ 1.0, 0.0, 0.0 ]
-		meta:	'Zero coefficients.'
-	}
-	
-	AudioIn[1] >> Biquad (poles: Poles; zeros: Zeros; bypass: off) >>  AudioOut[1];
+signal FeedForward {
+default:	0.0
+rate:		AudioRate
+reset:		MasterReset
+meta:		none
+}
+
+signal Feedback {
+default:	0.0
+rate:		AudioRate
+reset:		MasterReset
+meta:		none
+}
+
+# Allpass Filter Implementation 
+AudioIn[1]
+>> Mix (
+signalList:	Feedback
+gainType:	Linear
+gainList:	-0.90
+biasList:	0.0
+bypass:		off
+)
+>> Feedforward
+>> Delay (
+samples:	32
+default:	0.0
+reset:		off
+bypass:		off
+)
+>> Feedback
+>> Mix (
+signalList:	FeedForward
+gainType:	Linear
+gainList:	0.90
+biasList: 	0.0
+bypass:		off
+)
+>> Level (
+gainType:	Linear	
+gain: 		0.5
+bias:		0.0
+bypass:		off
+)
+>> AudioOut[1];
+
+constant A [2] {
+value:	[0.0, 0.0]
+meta:	'Output difference polynomial coefficients.'
+}
+
+constant B [3] {
+value:	[1.0, 0.0, 0.0]
+meta:	'Input difference polynomial coefficients.'
+}
+
+signal Z [3] {
+default:	0.0
+rate:		AudioRate
+reset:		MasterReset
+meta:		none
+}
+
+AudioIn[1]
+>> Mix (
+signalList:	[Z[2], Z[3]]
+gainType:	Linear
+gainList:	[-A[1], -A[2]]
+biasList:	[0.0, 0.0]
+bypass:		off
+)
+>> Z[1]
+>> Delay (
+samples:	1
+default:	0.0
+reset:		off
+bypass:		off
+)
+>> Z[2]
+>> Delay (
+samples:	1
+default:	0.0
+reset:		off
+bypass:		off
+)
+>> Z[3]
+>> Level (
+gainType:	Linear
+gain: 		B[3]
+bias:		0.0
+bypass:		off
+)
+>> Mix (
+signalList:	[Z[2], Z[1]]
+gainType:	Linear		
+gainList:	[B[2], B[1]]
+biasList:	[0.0, 0.0]
+bypass:		off
+)
+>> AudioOut[1];
+
+
+processor Biquad {
+channelsIn:	1
+channelsOut:	1
+aliasList:	[ 'inputCoefficients', 'outputCoefficients' ]
+propertyBlocks: [ constant B [3] {}, constant A [2] {}]
+internalBlocks:	[ signal Z [3] {}]
+setup:		none
+connections:	[ChannelIn[1]
+>> Mix (
+signalList:	[Z[2], Z[3]]
+gainType:	Linear
+gainList:	[-A[1], -A[2]]
+biasList:	[0.0, 0.0]
+bypass:		off
+)
+>> Z[1]
+>> Delay (
+samples:	1
+default:	0.0
+reset:		off
+bypass:		off
+)
+>> Z[2]
+>> Delay (
+samples:	1
+default:	0.0
+reset:		off
+bypass:		off
+)
+>> Z[3]
+>> Level (
+gainType:	Linear
+gain: 		B[3]
+bias:		0.0
+bypass:		off
+)
+>> Mix (
+signalList:	[Z[2], Z[1]]
+gainType:	Linear		
+gainList:	[B[2], B[1]]
+biasList:	[0.0, 0.0]
+bypass:		off
+)
+>> ChannelOut[1];
+]
+meta:		none
+}
+
+constant Y [2] {
+value:	[0.0, 0.0]
+meta:	'Output difference polynomial coefficients.'
+}
+
+constant X [3] {
+value:	[1.0, 0.0, 0.0]
+meta:	'Input difference polynomial coefficients.'
+}
+
+AudioIn[1] 
+>> Biquad (
+inputCoefficients: 	X
+outputCoefficients:	Y
+reset:			off
+bypass: 		off
+)
+>>  AudioOut[1];

@@ -1,0 +1,58 @@
+Oscillator (
+type:		Sine
+frequency:	Random ( frequency: 10.0 ) * 970.0 + 30.0
+)
+>> AudioOut[1:2];
+
+Oscillator (
+type:		Sine
+frequency:	[ Random ( frequency: 10.0 ) * 970.0 + 30.0, Random ( frequency: 10.0 ) * 970.0 + 30.0 ]
+)
+>> AudioOut[1:2];
+
+
+
+Oscillator (
+type:		Sine
+frequency:	Random ( frequency: [10.0, 10.0] ) * 970.0 + 30.0
+)
+>> AudioOut[1:2];
+
+constant NumberOfChannels  {
+value:	2
+}
+
+constant RandomGenerationFrequency [NumberOfChannels] {
+value:	10.0
+}
+
+signal RandomFrequencyValue [NumberOfChannels] {}
+
+Random ( frequency: RandomGenerationFrequency ) * 970.0 + 30.0 >> RandomFrequencyValue;
+
+Oscillator (
+type:		Sine
+frequency:	RandomFrequencyValue
+)
+>> AudioOut[1:NumberOfChannels];
+
+
+constant NumberOfChannels {
+value:	4
+}
+
+constant RandomGenerationFrequency [NumberOfChannels] {
+value:	10.0
+}
+
+signal RandomFrequencyValue [NumberOfChannels] {
+rate:		RandomGenerationFrequency
+}
+
+Random ( frequency: RandomGenerationFrequency ) * 970.0 + 30.0 >> RandomFrequencyValue;
+
+Oscillator (
+type:		Sine
+frequency:	RandomFrequencyValue
+)
+>> AudioOut[1:NumberOfChannels];

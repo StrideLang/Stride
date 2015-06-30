@@ -17,6 +17,6 @@ block Object {
 }
 
 generator ThreeHarmonicPartials {
-        process:	oscillator ()  >> AudioOut[1]
+        process:	[ Oscillator ()  >> AudioOut[1]; ]
         meta:		'Stream property'
 }

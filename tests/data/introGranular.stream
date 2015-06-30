@@ -1,0 +1,85 @@
+50		>> GrainNumber;		# Total number of grains 
+440	>> GrainRate;		# Grain generation rate
+4	 	>> GrainLength;		# Grain length in milliseconds
+15		>> GrainIntFreq;	# Internal grain frequency
+
+switch ActivateGrain [GrainNumber] {}	# ActivateGrain triggers the next available grain
+switch NodeActive[GrainNumber] {}		# NodeActive tracks if all nodes are currently active
+off 	>> RequestGrain;					# Request a new grain
+off 	>> FreeGrainFound;					# When free grain found, reset grain serach and counter
+
+signal GrainRateControl {			# Sampling rate for GrainRate
+rate:	8192
+}
+signal FindAvailableGrain {		# Sampling rate for finding available grain
+rate:	8192
+}
+signal CounterOutput {				# Counter output control
+default:	1
+rate:		none
+}
+signal GrainIndex {					# Grain index control
+default:	1
+rate:		GrainRate * GrainNumber * 2
+}
+
+# Grain request generation
+ImpulseTrain (
+frequency:	GrainRate
+)
+>> GrainRateControl
+>> Convert2switch ()
+>> OnChange ()
+>> StreamControl (
+blockCondition:	LogicExpression (
+valueList:	NodeActive 
+operatorList:	'and'
+)
+outputOnBlock:	off
+)
+>> RequestGrain;
+
+# Finding next free grain and triggering window and oscillator
+ImpulseTrain (
+frequency:	GrainRate * GrainNumber
+count:		GrainNumber
+reset:		RequestGrain
+start:		RequestGrain
+stop:		FreeGrainFound
+)
+>> FindAvailableGrain
+>> Counter (
+startValue:	0
+stopValue:	GrainNumber
+increment:	1
+fold:		none
+reset:		FreeGrainFound
+)
+>> CounterOutput
+>> StreamControl (
+blockCondition:	NodeActive[CounterOutput]
+outputOnBlock:	none
+)
+>> GrainIndex
+>> Convert2switch (
+mode:	Difference
+) 
+>> [ActivateGrain[GrainIndex], FreeGrainFound];
+
+# Grain shape
+Oscillator (
+type:		Sine
+frequency:	GrainIntFreq
+reset:		ActivateGrain
+)
+>> Window (
+type:		Gaussian	
+length: 	GrainLength * AudioRate / 1000.0
+trigger:	ActivateGrain
+status: 	NodeActive
+)
+>> Mix ()
+>> Level (
+gain:	0.01
+)
+>> AudioOut[1:2];

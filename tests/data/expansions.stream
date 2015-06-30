@@ -1,6 +1,6 @@
-use Gamma version 1.0
+use Gamma version 1.0 on PC
 
-AudioIn >> level(gain: 1.5) >> AudioOut;
+AudioIn >> Level(gain: 1.5) >> AudioOut;
 
 signal In[2] {
     default: [3,4.5]
@@ -12,6 +12,6 @@ signal Out[2] {
 
 In >> Out;
 
-InSignal >> pan() >> OutSignal;
+InSignal >> Pan() >> OutSignal;
 
-#InSignal2 >> [pan(), pan()] >> OutSignal2;
+#InSignal2 >> [Pan(), Pan()] >> OutSignal2;

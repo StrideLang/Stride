@@ -36,3 +36,24 @@ constant FOUR [SIZE [1]] {}
 constant TEST {
 	value: ONE [ TWO [ SIZE[1] / 2] + THREE [ 16 + 32 ] ] + FOUR [64] * 2
 }
+
+
+AudioIn[1:2] >> AudioOut[1:2];
+
+AudioIn[One:Two] >> AudioOut[One:Two];
+
+AudioIn[A[1]:A[2]] >> AudioOut[A[1]:A[2]];
+
+AudioIn[A[1]:A[1*2]] >> AudioOut[A[1]:A[1*2]];
+
+#AudioIn[a():b()] >> AudioOut[a():b()];
+
+#AudioIn[A[1:2]:A[3:4]] >> AudioOut[A[1:2]:A[3:4]];
+
+AudioIn[1:2] >> Test () >> AudioOut[1:2];
+
+Test () >> AudioOut[1:2];
+
+AudioIn[1:2] >> Test ();
+
+AudioIn[1:2] >>[ AudioOut[1:2], AudioOut[3:4]];

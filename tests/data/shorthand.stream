@@ -1,23 +1,49 @@
-use Pufferfish version 1.1
+use PufferFish version 1.1 on Pufferfish
 
+# One is constant (integer)
 1 >> One;
-[1,1] >> OneList;
+# OneBundle is constant bundle (integer)
+[1,1] >> OneBundle;
+# Two is constant (integer)
 1+1 >> Two;
-[1+1,1+1] >> TwoList;
+# TwoBundle is constant bundle (integer)
+[1+1,1+1] >> TwoBundle;
 
+# One is constant (float)
 1. >> One;
-[1.,1.] >> OneList;
+# OneBundle is constant bundle(float)
+[1.,1.] >> OneBundle;
+# Two is constant (float)
 1.+1. >> Two;
-[1.+1.,1.+1.] >> TwoList;
+# TwoBundle is constant bundle(float)
+[1.+1.,1.+1.] >> TwoBundle;
 
-[1.,1.] + 1.>> OneListAddOne;
-[1.,1.] + [1.,1.]>> OneListAddOneList;
+# OneBundleAddOne is constant bundle(float)
+[1.,1.] + 1.>> OneBundleAddOne;
+# OneBundleAddOneBundle is constant bundle(float)
+[1.,1.] + [1.,1.]>> OneBundleAddOneList;
 
+# One is constant
 'one' >> One;
+# OneTwo is a constant bundle
 ['one','two'] >> OneTwo;
 
+# On is switch
 on >> On;
+# OnOn is switch bundle
 [on,on] >> OnOn;
 
+# Off is switch
 off >> Off;
+# OffOff is switch bundle
 [off,off] >> OffOff;
+
+# One and Two are list
+['one', 1, 1.0] >> One;
+['two', 2, 2.0] >> Two;
+
+# OneTwo is list bundle
+[['one', 1, 1.0], ['two', 2, 2.0]] >> OneTwo;
+
+# All is list
+['one', 1, 1.0, on, off,  One, One[1], One()] >> All;

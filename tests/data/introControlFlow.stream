@@ -1,0 +1,47 @@
+switch PositiveLimitSwitch {
+default:	off
+reset:		MasterReset
+meta:		'Is ON when positive limit is crossed'
+}
+
+switch NegativeLimitSwitch {
+default:	off
+reset:		MasterReset
+meta:		'Is ON when negative limit is crossed'
+}
+
+signal SineWave {
+default:	0.0
+rate:		AudioRate
+reset:		MasterReset
+meta:		'Sine wave at 10 Hz amplitude at 1.2'
+}
+
+Oscillator (
+type:		Sine
+amplitude:	1.2
+frequency:	10.0
+phase:		0.0
+reset:		off
+)
+>> SineWave;
+
+SineWave
+>> Convert2switch (
+mode:		Threshold
+value:		[ 1.0, -1.0]
+operator:	[Greater, Less]
+)
+>> [ PositiveLimitSwitch, NegativeLimitSwitch ]
+>> DigitalOut[1:2];
+
+SineWave 
+>> StreamControl (
+blockCondition:	PositiveLimitSwitch
+outputOnBlock:	1.0
+)
+>> StreamControl (
+blockCondition:	NegativeLimitSwitch
+outputOnBlock:	-1.0
+)
+>> AudioOut[1:2];

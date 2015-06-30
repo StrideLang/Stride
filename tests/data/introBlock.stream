@@ -1,9 +1,106 @@
-# Load the 'PufferFish' platform
-use PufferFish version 0.0
-
-# Stream two channels two both AudioOut channels
-[ AudioIn[1], AudioIn[2] ] >> AudioOut;
+# Load platform version 0.0 on target version 0.0
+use Platform version 0.0 on Hardware version 0.0
 
 # Stream audio input 1 to audio output 1
-# Stream audio input 2 to audio output 2
-[ AudioIn[1], AudioIn[2] ] >> [ AudioOut[1], AudioOut[2] ];
+AudioIn[1] >> AudioOut[1];
+
+# Stream audio input 1 to audio output 1
+AudioIn[1] >> AudioOut[1];
+# Stream audio input 1 to audio output 2
+AudioIn[1] >> AudioOut[2];
+
+# Stream audio input 1 to audio output 1 and audio output 2
+AudioIn[1] >> [AudioOut[1], AudioOut[2]];
+
+# Stream audio input 1 and 2 to audio output 1 and 2 (one to one)
+[AudioIn[1], AudioIn[2]] >> [AudioOut[1], AudioOut[2]];
+
+# Stream audio input 1 and 2 to audio output 1 and 2 (one to one) using range indexing
+AudioIn[1:2] >> AudioOut[1:2];
+
+# Declare a signal block labeled 'Microphone'
+signal Microphone {
+default:	0.0
+rate:		AudioRate
+reset:		MasterReset
+meta:		'Microphone input.'
+}
+
+# Declare a signal block bundle labeled 'MainOutput'
+signal MainOutput [2] {
+default:	0.0
+rate:		AudioRate
+reset:		MasterReset
+meta:		'Main stereo output.'
+}	
+
+# Stream 'AudioIn[1]' to 'Microphone'
+AudioIn[1] >> Microphone;
+
+# Stream 'MainOutput' to 'AudioOut[1]' and 'AudioOut[2]'
+MainOutput >> AudioOut[1:2];
+
+# Stream 'Microphone' to 'MainOutput'
+Microphone >> MainOutput;
+
+# Declare a signal block labeled 'Microphone'
+signal Microphone {
+default:	0.0
+rate:		AudioRate
+reset:		MasterReset
+meta:		'Microphone input'
+}
+
+# Stream audio input 1 to 'Microphone'
+AudioIn[1] >> Microphone;
+
+use Language version 0.0 on Hardware
+
+# Stream 'AudioIn[1]' to 'Microphone'
+AudioIn[1] >> Microphone;
+
+# Stream 'MainOutput' to 'AudioOut[1]' and 'AudioOut[2]'
+MainOutput >> AudioOut[1:2];
+
+# Stream 'Microphone' to 'MainOutput'
+Microphone >> MainOutput;
+
+signal Microphone {}
+
+signal MainOutput [2] {}
+
+signal Microphone {
+default:	0.0
+rate:		AudioRate
+reset:		MasterReset
+meta:		none
+}
+
+signal MainOutput [2] {
+default:	0.0
+rate:		AudioRate
+reset:		MasterReset
+meta:		none
+}
+
+# Sample 1
+signal Microphone {
+default:	0.0
+rate:		AudioRate
+reset:		MasterReset
+meta:		'Microphone input.'
+}
+
+# Sample 2
+signal Microphone {default: 0.0 rate: AudioRate reset: MasterReset meta: 'Microphone input.'}
+
+# Sample 3
+signal Microphone {
+default:	0.0;
+rate:		AudioRate;
+reset:		MasterReset;
+meta:		'Microphone input.';
+};
+
+# Sample 4
+signal Microphone { default: 0.0; rate:	AudioRate; reset: MasterReset; meta: 'Microphone input.'; };

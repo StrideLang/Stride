@@ -1,0 +1,35 @@
+use Platform on Hardware
+
+import namespace
+import namespace as ns
+import NameSpace as ns
+
+ns.Value >> Constant;
+
+ns.Value_1 + 1.0 >> Constant;
+
+1.0 + ns.Value_1 >> Constant;
+
+ns.Value_1 + ns.Value_2 >> Constant;
+
+ns.Bundle[1] + ns.Bundle[2] >> Constant;
+
+[ns.Value_1, ns.Value_2] >> Constants;
+ 
+[ns.Bundle[1], ns.Bundle[2]] >> Constants;
+ 
+ns.Block_1 >> ns.Block_2;
+
+ns.Block_1[ns.Index_1] >> ns.Block_2 [ns.Index_1];
+
+ns.Block_1[ns.Bundle[1]] >> ns.Block_2 [ns.Bundle[1]];
+
+ns.Block_1[ns.Index_1:ns.Index_2] >> ns.Block_2 [ns.Index_1:ns.Index_2];
+
+ns.Block_1[ns.Bundle[1]:ns.Bundle[2]] >> ns.Block_2 [ns.Bundle[1]:ns.Bundle[2]];
+
+Input
+>> ns.Function (
+	property:		ns.Value
+)
+>> Output;

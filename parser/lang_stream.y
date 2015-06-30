@@ -755,6 +755,7 @@ valueComp:
     |	UVAR            {
                             string s;
                             s.append($1); /* string constructor leaks otherwise! */
+                            $$ = new NameNode(s,yyloc.first_line);
                             cout << "User variable: " << $1 << endl;
                             free($1);
                         }

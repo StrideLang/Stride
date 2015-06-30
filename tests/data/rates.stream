@@ -1,5 +1,5 @@
 
-use Gamma version 1.0
+use Gamma version 1.0 on PC
 
 AudioIn[1] >> Signal >> AudioOut[1];
 
@@ -16,5 +16,5 @@ Rate1 >> Rate2 >> Output1;
 
 Signal1 >> Rate1 >> Signal2 >> Rate2 >> GetAudioRate >> Output2;
 
-oscillator() >> Rate1 >> lowPass() >> Output3;
+Oscillator() >> Rate1 >> LowPass() >> Output3;
 

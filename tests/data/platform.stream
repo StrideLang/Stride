@@ -1,5 +1,20 @@
-# Load the 'PufferFish' platform
+use PufferFish version 1.1 on PufferFish
 
+use Gamma on PC
+use Gamma version 1.0 on PC
+use Gamma version 1.0 on PC version 1.0
 
-use PufferFish version 1.1
+use Gamma on PC with Arduino
+use Gamma version 1.0 on PC with Arduino
+use Gamma version 1.0 on PC version 1.0 with Arduino
 
+use Gamma on PC with Arduino and RPi
+use Gamma version 1.0  on PC with Arduino and RPi
+use Gamma version 1.0  on PC version 1.0 with Arduino and RPi
+
+import file
+import file as file
+import File as file
+
+for Gamma
+for Gamma and PufferFish

@@ -1,0 +1,240 @@
+sequencer FrequencyValues {
+valueList:	[ 220.0, 261.63, 329.63, 440.0 ]
+mode:		PingPong
+repeat:		on
+reset:		off
+meta:		'Minor A chord notes.'
+}
+
+DigitalIn[1] >> FrequencyValues;
+
+Oscillator (
+type: 		Saw
+amplitude: 	1.0
+frequency: 	FrequencyValues
+phase: 		0.0
+reset:		off
+)	
+>> AudioOut[1:2];
+
+sequencer FrequencyValues {
+valueList:	[ 220.0, 261.63, 329.63, 440.0 ]
+mode:		Random
+repeat:		on
+reset:		off
+meta:		'Minor A chord notes.'
+}		
+
+AnalogIn[1]
+>> Convert2switch ( 
+mode:		Threshold
+value:		0.5
+operator:	Greater
+)
+>> OnChange(
+bypass:	off
+)
+>> FrequencyValues;
+
+Oscillator (
+type: 		Square
+amplitude: 	1.0
+frequency: 	FrequencyValues
+phase: 		0.0
+reset:		off
+)	
+>> AudioOut[1:2];
+
+sequencer FrequencyValues {
+valueList:	[ 220.0, 261.63, 329.63, 440.0 ]
+mode:		Backward
+repeat:		on
+reset:		off
+meta:		'Minor A chord notes.'
+}
+
+signal Pulse {
+default:	0.0
+rate:		512
+reset:		MasterReset
+meta:		'Control used for trig generation.'
+}
+
+PulseTrain (
+dutyCycle: 	0.25
+amplitude: 	1.0
+frequency: 	3.0
+phase: 		0.0
+count:		none
+reset:		off
+start:		none
+stop:		none
+)
+>> Pulse
+>> OnChange(
+bypass:	off
+)
+>> Map (
+mode:		Linear
+minimum:	0.0
+maximum:	1.0
+bypass:		off
+)
+>> FrequencyValues;
+
+Oscillator (
+type: 		Saw
+amplitude: 	1.0
+frequency: 	FrequencyValues
+phase: 		0.0
+reset:		off
+)	
+>> AudioOut[1:2];
+
+constant OscillatorType [5] {
+value:	[Sine, Saw, Sine, Saw, Triangle]
+meta: 	none
+}
+
+signal OscillatorTypeSelect {
+default:	3
+rate:		1
+reset:		MasterReset
+meta:		'Control used for trig generation.'
+}
+
+# Indexed at the rate of 1 Hz
+# This will force the Oscillator to evaluate it's "type" every second.
+AnalogIn[1] 
+>> Map (
+mode:		Linear
+minimum:	1
+maximum:	6
+bypass:		off
+)
+>> Round (
+mode:		Floor
+increment:	1
+bypass:		off
+)
+>>OscillatorTypeSelect; 
+
+Oscillator (
+type: 		OscillatorType[OscillatorTypeSelect]
+amplitude: 	1.0
+frequency: 	440.0
+phase: 		0.0
+reset:		off
+)
+>> AudioOut[1:2];
+
+constant Size {
+value:	5
+meta:	'Size of OscillatorType.'
+}
+
+constant OscillatorType [Size] {
+value:	[Sine, Saw, Sine, Saw, Triangle]
+meta: 	none
+}
+
+signal Index {
+default:	3
+rate:		2048
+reset:		MasterReset
+meta:		'Translate analog input 1 to an integer through a linear Mapping.'
+}
+
+signal OscillatorTypeSelect {
+default: 	3
+rate:		none
+reset:		MasterReset
+meta:		'Asynchronous control to index OscillatorType' 
+}
+
+# OscillatorTypeSelect rate set to NONE
+# The Oscillator will only evaluate if OscillatorTypeSelect changes (event) 
+
+AnalogIn[1]
+>> Map (
+mode:		Linear
+minimum:	1
+maximum:	Size + 1
+bypass:		off
+)
+>> Round (
+mode:		Floor
+increment:	1
+bypass:		off
+)
+>> Index 
+>> OnChange(
+bypass:		off
+)
+>> OscillatorTypeSelect; 
+
+Oscillator (
+type: 		OscillatorType[OscillatorTypeSelect]
+amplitude: 	1.0
+frequency: 	440.0
+phase: 		0.0
+reset:		off
+)
+>> AudioOut[1:2];
+
+constant Size {
+value:	256
+meta:	none
+}
+
+constant Values [Size] {
+value:  [ 0.0, 0.99, 0.0 ] #A lookup table
+meta: 	none
+}
+
+sequencer FrequencyValues {
+valueList:	[ 220.0, 261.63, 329.63, 440.0 ]
+mode:		Forward
+repeat:		on
+reset:		off
+meta:		'Minor A chord notes.'
+}
+
+signal Index {
+default:	128
+rate:		256
+reset:		MasterReset
+meta:		none
+}
+
+AnalogIn[1]
+>> Map (
+mode:		Linear
+minimum:	1
+maximum:	Size + 1
+bypass:		off
+)
+>> Round (
+mode:		Floor
+increment:	1
+bypass:		off
+)
+>> Index
+>> OnChange(
+bypass:		off
+)
+>> Convert2switch (
+mode:		Difference
+value:		0
+operator:	NotEqual
+)
+>> FrequencyValues;
+
+Oscillator (
+type:		Sine
+amplitude:	Values[Index]
+frequency:	FrequencyValues
+phase:		0.0
+reset:		none
+)
+>> AudioOut[1:2];

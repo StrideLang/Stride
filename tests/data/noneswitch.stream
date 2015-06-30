@@ -5,4 +5,4 @@ object Obj {
     prop3: none
 }
 
-func(propf1: on; propf2: off; propf3: none) >> Out;
+Func(propf1: on; propf2: off; propf3: none) >> Out;

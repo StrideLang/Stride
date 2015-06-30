@@ -1,0 +1,107 @@
+constant Coefficients [4] {
+value:	[0.25, 0.25, 0.25, 0.25]
+meta:	'Coefficients of FIR filter'
+}
+
+signal Taps [4] {
+default:	0.0
+rate:		AudioRate
+reset:		MasterReset
+meta:		'Taps holds a single sample Delayed value'
+}
+
+AudioIn [1]
+>> Delay (
+samples:	[ 0, 1, 2, 3 ]
+default: 	0.0
+reset:		off
+bypass:	off
+)
+>> Taps;
+
+Taps * Coefficients
+>> Mix ()
+>> AudioOut [1:2];
+
+AudioIn[1] >> Delay ( samples: 0) >> Taps[1];
+AudioIn[1] >> Delay ( samples: 1) >> Taps[2];
+AudioIn[1] >> Delay ( samples: 2) >> Taps[3];
+AudioIn[1] >> Delay ( samples: 3) >> Taps[4];
+
+signal Intermediate [4] {
+default:	0.0
+rate:		AudioRate
+reset:		MasterReset
+meta:		'Holds intermediate values of Taps * Coefs'
+}
+
+signal Sum {
+default:	0.0
+rate:		AudioRate
+reset:		MasterReset
+meta:		'Holds Sum of Taps * Coefs'
+}
+
+Taps[1] * Coefficients[1] >> Intermediate[1];
+Taps[2] * Coefficients[2] >> Intermediate[2];
+Taps[3] * Coefficients[3] >> Intermediate[3];
+Taps[4] * Coefficients[4] >> Intermediate[4];
+
+Intermediate[1] + Intermediate[2] + Intermediate[3] + Intermediate[4] >> Sum;
+
+Sum >> AudioOut[1:2];
+
+processor FIR {
+channelsIn:	1
+channelsOut:	1
+aliasList:	[ 'length' , 'coefficients' ]
+propertyBlocks: [ 	constant Length {}, 
+constant Coefficients [Length]{} 
+]
+internalBlocks:	[ 	constant Delays [Length] {},
+signal Taps [Length] {} 
+]
+setup:		[
+Range (
+start:		0
+stop:		Length - 1
+increment:	1
+)
+>> Delays;
+]	
+connections:	[
+ChannelIn[1]
+>> Delay (
+samples:	Delays
+default: 	0.0
+reset:		off
+bypass:		off
+)
+>> Taps;
+,
+Taps * Coefficients
+>> Mix ()
+>> ChannelOut[1];
+]
+meta:		'Generic FIR Filter'
+}
+
+constant FIR_Length {
+value:	8
+meta:	'Length of FIR Filter'
+}
+
+
+constant FIR_Coef [FIR_Length] {
+value: 	1.0 / FIR_Length
+meta:	'FIR Filter Coefficients'
+}
+
+AudioIn[1]
+>> FIR (
+length:		FIR_Length
+coefficients:	FIR_Coef
+reset:		off
+bypass:		off
+)
+>> AudioOut[1:2];
