@@ -41,7 +41,6 @@ DISTFILES += \
     data/introFeedback.stream \
     data/list.stream \
     data/block.stream \
-    data/introFM.stream \
     data/platform.stream \
     data/introGenerator.stream \
     data/introBlock.stream \
@@ -72,7 +71,8 @@ DISTFILES += \
     data/introRandom.stream \
     data/introSequencer.stream \
     data/introStreamRate.stream \
-    data/introVocoder.stream
+    data/introVocoder.stream \
+    data/introModulation.stream
 
 # Link to codegen library
 
