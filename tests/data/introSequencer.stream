@@ -26,7 +26,7 @@ meta:		'Minor A chord notes.'
 }		
 
 AnalogIn[1]
->> Convert2switch ( 
+>> Compare ( 
 mode:		Threshold
 value:		0.5
 operator:	Greater
@@ -223,7 +223,7 @@ bypass:		off
 >> OnChange(
 bypass:		off
 )
->> Convert2switch (
+>> Compare (
 mode:		Difference
 value:		0
 operator:	NotEqual

@@ -28,7 +28,7 @@ ImpulseTrain (
 frequency:	GrainRate
 )
 >> GrainRateControl
->> Convert2switch ()
+>> Compare ()
 >> OnChange ()
 >> StreamControl (
 blockCondition:	LogicExpression (
@@ -61,7 +61,7 @@ blockCondition:	NodeActive[CounterOutput]
 outputOnBlock:	none
 )
 >> GrainIndex
->> Convert2switch (
+>> Compare (
 mode:	Difference
 ) 
 >> [ActivateGrain[GrainIndex], FreeGrainFound];

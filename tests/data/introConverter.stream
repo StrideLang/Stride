@@ -5,7 +5,7 @@ meta:		"On, when analog in 1 is greater than or equal to 5"
 }
 
 AnalogIn[1] 
->> Convert2switch (
+>> Compare (
 mode:		Threshold
 value:		0.5
 operator:	GreaterOrEqual

@@ -27,7 +27,7 @@ reset:		off
 >> SineWave;
 
 SineWave
->> Convert2switch (
+>> Compare (
 mode:		Threshold
 value:		[ 1.0, -1.0]
 operator:	[Greater, Less]
