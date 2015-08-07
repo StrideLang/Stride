@@ -1,4 +1,4 @@
-use Gamma version 1.0
+use Gamma version 1.0 on PC
 
 signal Rate1 {
 		rate: 22045
@@ -8,4 +8,4 @@ signal Rate2 {
 		rate: 11025
 }
 
-oscillator(frequency: 880) >> Rate1 >> Rate2 >> AudioOut;
+Oscillator(frequency: 880) >> Rate1 >> Rate2 >> AudioOut;
