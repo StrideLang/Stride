@@ -16,6 +16,8 @@ public:
   string importAlias() const;
   void setImportAlias(const string &importAlias);
 
+  AST *deepCopy();
+
 private:
   string m_importName;
   string m_importAlias;

@@ -27,12 +27,12 @@ private Q_SLOTS:
 //    void testStreamExpansion();
 
     //Platform
-//    void testPlatform();
-//    void testPlatformCommonObjects();
-//    void testValueTypeBundleResolution();
-//    void testValueTypeExpressionResolution();
-//    void testDuplicates();
-//    void testListConsistency();
+    void testPlatform();
+    void testPlatformCommonObjects();
+    void testValueTypeBundleResolution();
+    void testValueTypeExpressionResolution();
+    void testDuplicates();
+    void testListConsistency();
 
     // Parser
     void testTreeBuildNoneSwitch();
@@ -249,264 +249,264 @@ ParserTest::ParserTest()
 //    delete tree;
 //}
 
-//void ParserTest::testPlatform()
-//{
+void ParserTest::testPlatform()
+{
+    AST *tree;
+    tree = parse(QString(QFINDTESTDATA("data/platform.stream")).toStdString().c_str());
+
+    QVERIFY(tree != NULL);
+    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    QVERIFY(generator.isValid());
+    QVERIFY(generator.platformIsValid());
+
+    tree->deleteChildren();
+    delete tree;
+}
+
+void ParserTest::testPlatformCommonObjects()
+{
+    AST *tree;
+    tree = parse(QString(QFINDTESTDATA("data/platformBasic.stream")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    QVERIFY(!generator.isValid());
+    QList<LangError> errors = generator.getErrors();
+
+    QVERIFY(errors.size() == 5);
+
+    QVERIFY(errors[0].type == LangError::UnknownType);
+    QVERIFY(errors[0].lineNumber == 3);
+    QVERIFY(errors[0].errorTokens[0] == "invalid");
+
+    QVERIFY(errors[1].type == LangError::InvalidPortType);
+    QVERIFY(errors[1].lineNumber == 11);
+    QVERIFY(errors[1].errorTokens[0]  == "object");
+    QVERIFY(errors[1].errorTokens[1]  == "meta");
+    QVERIFY(errors[1].errorTokens[2]  == "CIP");
+
+    QVERIFY(errors[2].type == LangError::InvalidPortType);
+    QVERIFY(errors[2].lineNumber == 20);
+    QVERIFY(errors[2].errorTokens[0]  == "switch");
+    QVERIFY(errors[2].errorTokens[1]  == "default");
+    QVERIFY(errors[2].errorTokens[2]  == "CIP");
+
+    QVERIFY(errors[3].type == LangError::InvalidPort);
+    QVERIFY(errors[3].lineNumber == 31);
+    QVERIFY(errors[3].errorTokens[0]  == "signal");
+    QVERIFY(errors[3].errorTokens[1]  == "badproperty");
+
+    QVERIFY(errors[4].type == LangError::InvalidPortType);
+    QVERIFY(errors[4].lineNumber == 56);
+    QVERIFY(errors[4].errorTokens[0]  == "control");
+    QVERIFY(errors[4].errorTokens[1]  == "maximum");
+    QVERIFY(errors[4].errorTokens[2]  == "CSP");
+
+    tree->deleteChildren();
+    delete tree;
+}
+
+void ParserTest::testValueTypeBundleResolution()
+{
+    AST *tree;
+    tree = parse(QString(QFINDTESTDATA("data/bundleResolution.stream")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    QVERIFY(generator.platformIsValid());
+    QVERIFY(!generator.isValid());
+    QList<LangError> errors = generator.getErrors();
+
+    vector<AST *> nodes = tree->getChildren();
+    QVERIFY(nodes.at(1)->getNodeType() == AST::BlockBundle);
+    BlockNode *block = static_cast<BlockNode *>(nodes.at(1));
+    QVERIFY(block->getObjectType() == "constant");
+    BundleNode *bundle = block->getBundle();
+    QVERIFY(bundle->getName() == "Integers");
+    QVERIFY(bundle->index()->getNodeType() == AST::Int);
+    ValueNode *valueNode = static_cast<ValueNode *>(bundle->index());
+    QVERIFY(valueNode->getIntValue() == 4);
+    QVERIFY(block->getProperties().size() == 2);
+    PropertyNode *property = block->getProperties().at(0);
+    QVERIFY(property->getName() == "value");
+    AST *propertyValue = property->getValue();
+    QVERIFY(propertyValue->getNodeType() == AST::List);
+    ListNode *listnode = static_cast<ListNode *>(propertyValue);
+    QVERIFY(listnode->getListType() == AST::Int);
+    vector<AST *>listValues = listnode->getChildren();
+    QVERIFY(listValues.size() == 4);
+
+    QVERIFY(nodes.at(2)->getNodeType() == AST::BlockBundle);
+    block = static_cast<BlockNode *>(nodes.at(2));
+    QVERIFY(block->getObjectType() == "constant");
+    bundle = block->getBundle();
+    QVERIFY(bundle->getName() == "Floats");
+    QVERIFY(bundle->index()->getNodeType() == AST::Int);
+    valueNode = static_cast<ValueNode *>(bundle->index());
+    QVERIFY(valueNode->getIntValue() == 4);
+    QVERIFY(block->getProperties().size() == 2);
+    property = block->getProperties().at(0);
+    QVERIFY(property->getName() == "value");
+    propertyValue = property->getValue();
+    QVERIFY(propertyValue->getNodeType() == AST::List);
+    listnode = static_cast<ListNode *>(propertyValue);
+    QVERIFY(listnode->getListType() == AST::Real);
+    listValues = listnode->getChildren();
+    QVERIFY(listValues.size() == 4);
+
+    QVERIFY(nodes.at(3)->getNodeType() == AST::BlockBundle);
+    block = static_cast<BlockNode *>(nodes.at(3));
+    QVERIFY(block->getObjectType() == "constant");
+    bundle = block->getBundle();
+    QVERIFY(bundle->getName() == "Strings");
+    QVERIFY(bundle->index()->getNodeType() == AST::Int);
+    valueNode = static_cast<ValueNode *>(bundle->index());
+    QVERIFY(valueNode->getIntValue() == 4);
+    QVERIFY(block->getProperties().size() == 2);
+    property = block->getProperties().at(0);
+    QVERIFY(property->getName() == "value");
+    propertyValue = property->getValue();
+    QVERIFY(propertyValue->getNodeType() == AST::List);
+    listnode = static_cast<ListNode *>(propertyValue);
+    QVERIFY(listnode->getListType() == AST::String);
+    listValues = listnode->getChildren();
+    QVERIFY(listValues.size() == 4);
+
+    QVERIFY(nodes.at(4)->getNodeType() == AST::BlockBundle);
+    block = static_cast<BlockNode *>(nodes.at(4));
+    QVERIFY(block->getObjectType() == "constant");
+    bundle = block->getBundle();
+    QVERIFY(bundle->getName() == "Array_Int");
+
+    QVERIFY(nodes.at(5)->getNodeType() == AST::Block);
+    block = static_cast<BlockNode *>(nodes.at(5));
+    QVERIFY(block->getObjectType() == "constant");
+    QVERIFY(block->getName() == "Value_Meta");
+
+    QVERIFY(nodes.at(6)->getNodeType() == AST::BlockBundle);
+    block = static_cast<BlockNode *>(nodes.at(6));
+    QVERIFY(block->getObjectType() == "constant");
+    bundle = block->getBundle();
+    QVERIFY(bundle->getName() == "Value_Meta_1");
+
+    QVERIFY(nodes.at(7)->getNodeType() == AST::BlockBundle);
+    block = static_cast<BlockNode *>(nodes.at(7));
+    QVERIFY(block->getObjectType() == "constant");
+    bundle = block->getBundle();
+    QVERIFY(bundle->getName() == "Values_1");
+
+    QVERIFY(nodes.at(8)->getNodeType() == AST::BlockBundle);
+    block = static_cast<BlockNode *>(nodes.at(8));
+    QVERIFY(block->getObjectType() == "constant");
+    bundle = block->getBundle();
+    QVERIFY(bundle->getName() == "Values_2");
+
+    // The following cases should produce errors
+
+    QVERIFY(nodes.at(9)->getNodeType() == AST::Block);
+    block = static_cast<BlockNode *>(nodes.at(9));
+    QVERIFY(block->getObjectType() == "constant");
+    QVERIFY(block->getName() == "Bad_Value_Meta");
+
+    LangError error = errors.takeFirst();
+    QVERIFY(error.type == LangError::InvalidPortType);
+    QVERIFY(error.lineNumber == 39);
+    QVERIFY(error.errorTokens[0] == "constant");
+    QVERIFY(error.errorTokens[1] == "meta");
+    QVERIFY(error.errorTokens[2] == "CRP");
+
+    QVERIFY(nodes.at(10)->getNodeType() == AST::BlockBundle);
+    block = static_cast<BlockNode *>(nodes.at(10));
+    QVERIFY(block->getObjectType() == "constant");
+    bundle = block->getBundle();
+    QVERIFY(bundle->getName() == "Values_Mismatch");
+    error = errors.takeFirst();
+    QVERIFY(error.type == LangError::BundleSizeMismatch);
+    QVERIFY(error.lineNumber == 44);
+    QVERIFY(error.errorTokens[0] == "Values_Mismatch");
+    QVERIFY(error.errorTokens[1] == "3");
+    QVERIFY(error.errorTokens[2] == "4");
+
+
+    QVERIFY(nodes.at(11)->getNodeType() == AST::BlockBundle);
+    block = static_cast<BlockNode *>(nodes.at(11));
+    QVERIFY(block->getObjectType() == "constant");
+    bundle = block->getBundle();
+    QVERIFY(bundle->getName() == "Values_Mismatch_2");
+    error = errors.takeFirst();
+    QVERIFY(error.lineNumber == 48);
+    QVERIFY(error.errorTokens[0] == "Values_Mismatch_2");
+    QVERIFY(error.errorTokens[1] == "3");
+    QVERIFY(error.errorTokens[2] == "2");
+
+    QVERIFY(nodes.at(12)->getNodeType() == AST::BlockBundle);
+    block = static_cast<BlockNode *>(nodes.at(12));
+    QVERIFY(block->getObjectType() == "constant");
+    bundle = block->getBundle();
+    QVERIFY(bundle->getName() == "Array_Float");
+    error = errors.takeFirst();
+    QVERIFY(error.type == LangError::IndexMustBeInteger);
+    QVERIFY(error.lineNumber == 52);
+    QVERIFY(error.errorTokens[0] == "Array_Float");
+    QVERIFY(error.errorTokens[1] == "CRP");
+
+    QVERIFY(nodes.at(13)->getNodeType() == AST::BlockBundle);
+    block = static_cast<BlockNode *>(nodes.at(13));
+    QVERIFY(block->getObjectType() == "constant");
+    bundle = block->getBundle();
+    QVERIFY(bundle->getName() == "Array_String");
+    error = errors.takeFirst();
+    QVERIFY(error.type == LangError::IndexMustBeInteger);
+    QVERIFY(error.lineNumber == 53);
+    QVERIFY(error.errorTokens[0] == "Array_String");
+    QVERIFY(error.errorTokens[1] == "CSP");
+
+    tree->deleteChildren();
+    delete tree;
+}
+
+void ParserTest::testValueTypeExpressionResolution()
+{
+
+}
+
+void ParserTest::testDuplicates()
+{
+    AST *tree;
+    tree = parse(QString(QFINDTESTDATA("data/errorDuplicate.stream")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    QVERIFY(!generator.isValid());
+    QList<LangError> errors = generator.getErrors();
+
+    QVERIFY(errors.size() == 2);
+    LangError error = errors.takeFirst();
+    QVERIFY(error.type == LangError::DuplicateSymbol);
+    QVERIFY(error.lineNumber == 12);
+    QVERIFY(error.errorTokens[0] == "Const");
+    QVERIFY(error.errorTokens[1] == "3");
+
+    error = errors.takeFirst();
+    QVERIFY(error.type == LangError::DuplicateSymbol);
+    QVERIFY(error.lineNumber == 18);
+    QVERIFY(error.errorTokens[0] == "Size");
+    QVERIFY(error.errorTokens[1] == "7");
+
+    tree->deleteChildren();
+    delete tree;
+}
+
+void ParserTest::testListConsistency()
+{
 //    AST *tree;
-//    tree = parse(QString(QFINDTESTDATA("data/platform.stream")).toStdString().c_str());
-
-//    QVERIFY(tree != NULL);
-//    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
-//    QVERIFY(generator.isValid());
-//    QVERIFY(generator.platformIsValid());
-
-//    tree->deleteChildren();
-//    delete tree;
-//}
-
-//void ParserTest::testPlatformCommonObjects()
-//{
-//    AST *tree;
-//    tree = parse(QString(QFINDTESTDATA("data/platformBasic.stream")).toStdString().c_str());
-//    QVERIFY(tree != NULL);
-//    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    // FIXME: List consistency is checked by the parser, should be caught here.
+//    tree = parse(QString(QFINDTESTDATA("data/errorLists.stream")).toStdString().c_str());
+//    QVERIFY(tree == NULL);
+//    Codegen generator(QFINDTESTDATA("/../platforms"), tree);
 //    QVERIFY(!generator.isValid());
 //    QList<LangError> errors = generator.getErrors();
 
-////    QVERIFY(errors.size() == 14);
-
-//    QVERIFY(errors[0].type == LangError::UnknownType);
-//    QVERIFY(errors[0].lineNumber == 3);
-//    QVERIFY(errors[0].errorTokens[0] == "invalid");
-
-//    QVERIFY(errors[1].type == LangError::InvalidPortType);
-//    QVERIFY(errors[1].lineNumber == 11);
-//    QVERIFY(errors[1].errorTokens[0]  == "object");
-//    QVERIFY(errors[1].errorTokens[1]  == "meta");
-//    QVERIFY(errors[1].errorTokens[2]  == "CIP");
-
-//    QVERIFY(errors[2].type == LangError::InvalidPortType);
-//    QVERIFY(errors[2].lineNumber == 20);
-//    QVERIFY(errors[2].errorTokens[0]  == "switch");
-//    QVERIFY(errors[2].errorTokens[1]  == "default");
-//    QVERIFY(errors[2].errorTokens[2]  == "CIP");
-
-//    QVERIFY(errors[3].type == LangError::InvalidPort);
-//    QVERIFY(errors[3].lineNumber == 31);
-//    QVERIFY(errors[3].errorTokens[0]  == "signal");
-//    QVERIFY(errors[3].errorTokens[1]  == "badproperty");
-
-//    QVERIFY(errors[4].type == LangError::InvalidPortType);
-//    QVERIFY(errors[4].lineNumber == 56);
-//    QVERIFY(errors[4].errorTokens[0]  == "control");
-//    QVERIFY(errors[4].errorTokens[1]  == "maximum");
-//    QVERIFY(errors[4].errorTokens[2]  == "CSP");
-
 //    tree->deleteChildren();
 //    delete tree;
-//}
-
-//void ParserTest::testValueTypeBundleResolution()
-//{
-//    AST *tree;
-//    tree = parse(QString(QFINDTESTDATA("data/bundleResolution.stream")).toStdString().c_str());
-//    QVERIFY(tree != NULL);
-//    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
-//    QVERIFY(generator.platformIsValid());
-//    QVERIFY(!generator.isValid());
-//    QList<LangError> errors = generator.getErrors();
-
-//    vector<AST *> nodes = tree->getChildren();
-//    QVERIFY(nodes.at(1)->getNodeType() == AST::BlockBundle);
-//    BlockNode *block = static_cast<BlockNode *>(nodes.at(1));
-//    QVERIFY(block->getObjectType() == "constant");
-//    BundleNode *bundle = block->getBundle();
-//    QVERIFY(bundle->getName() == "Integers");
-//    QVERIFY(bundle->index()->getNodeType() == AST::Int);
-//    ValueNode *valueNode = static_cast<ValueNode *>(bundle->index());
-//    QVERIFY(valueNode->getIntValue() == 4);
-//    QVERIFY(block->getProperties().size() == 2);
-//    PropertyNode *property = block->getProperties().at(0);
-//    QVERIFY(property->getName() == "value");
-//    AST *propertyValue = property->getValue();
-//    QVERIFY(propertyValue->getNodeType() == AST::List);
-//    ListNode *listnode = static_cast<ListNode *>(propertyValue);
-//    QVERIFY(listnode->getListType() == AST::Int);
-//    vector<AST *>listValues = listnode->getChildren();
-//    QVERIFY(listValues.size() == 4);
-
-//    QVERIFY(nodes.at(2)->getNodeType() == AST::BlockBundle);
-//    block = static_cast<BlockNode *>(nodes.at(2));
-//    QVERIFY(block->getObjectType() == "constant");
-//    bundle = block->getBundle();
-//    QVERIFY(bundle->getName() == "Floats");
-//    QVERIFY(bundle->index()->getNodeType() == AST::Int);
-//    valueNode = static_cast<ValueNode *>(bundle->index());
-//    QVERIFY(valueNode->getIntValue() == 4);
-//    QVERIFY(block->getProperties().size() == 2);
-//    property = block->getProperties().at(0);
-//    QVERIFY(property->getName() == "value");
-//    propertyValue = property->getValue();
-//    QVERIFY(propertyValue->getNodeType() == AST::List);
-//    listnode = static_cast<ListNode *>(propertyValue);
-//    QVERIFY(listnode->getListType() == AST::Real);
-//    listValues = listnode->getChildren();
-//    QVERIFY(listValues.size() == 4);
-
-//    QVERIFY(nodes.at(3)->getNodeType() == AST::BlockBundle);
-//    block = static_cast<BlockNode *>(nodes.at(3));
-//    QVERIFY(block->getObjectType() == "constant");
-//    bundle = block->getBundle();
-//    QVERIFY(bundle->getName() == "Strings");
-//    QVERIFY(bundle->index()->getNodeType() == AST::Int);
-//    valueNode = static_cast<ValueNode *>(bundle->index());
-//    QVERIFY(valueNode->getIntValue() == 4);
-//    QVERIFY(block->getProperties().size() == 2);
-//    property = block->getProperties().at(0);
-//    QVERIFY(property->getName() == "value");
-//    propertyValue = property->getValue();
-//    QVERIFY(propertyValue->getNodeType() == AST::List);
-//    listnode = static_cast<ListNode *>(propertyValue);
-//    QVERIFY(listnode->getListType() == AST::String);
-//    listValues = listnode->getChildren();
-//    QVERIFY(listValues.size() == 4);
-
-//    QVERIFY(nodes.at(4)->getNodeType() == AST::BlockBundle);
-//    block = static_cast<BlockNode *>(nodes.at(4));
-//    QVERIFY(block->getObjectType() == "constant");
-//    bundle = block->getBundle();
-//    QVERIFY(bundle->getName() == "Array_Int");
-
-//    QVERIFY(nodes.at(5)->getNodeType() == AST::Block);
-//    block = static_cast<BlockNode *>(nodes.at(5));
-//    QVERIFY(block->getObjectType() == "constant");
-//    QVERIFY(block->getName() == "Value_Meta");
-
-//    QVERIFY(nodes.at(6)->getNodeType() == AST::BlockBundle);
-//    block = static_cast<BlockNode *>(nodes.at(6));
-//    QVERIFY(block->getObjectType() == "constant");
-//    bundle = block->getBundle();
-//    QVERIFY(bundle->getName() == "Value_Meta_1");
-
-//    QVERIFY(nodes.at(7)->getNodeType() == AST::BlockBundle);
-//    block = static_cast<BlockNode *>(nodes.at(7));
-//    QVERIFY(block->getObjectType() == "constant");
-//    bundle = block->getBundle();
-//    QVERIFY(bundle->getName() == "Values_1");
-
-//    QVERIFY(nodes.at(8)->getNodeType() == AST::BlockBundle);
-//    block = static_cast<BlockNode *>(nodes.at(8));
-//    QVERIFY(block->getObjectType() == "constant");
-//    bundle = block->getBundle();
-//    QVERIFY(bundle->getName() == "Values_2");
-
-//    // The following cases should produce errors
-
-//    QVERIFY(nodes.at(9)->getNodeType() == AST::Block);
-//    block = static_cast<BlockNode *>(nodes.at(9));
-//    QVERIFY(block->getObjectType() == "constant");
-//    QVERIFY(block->getName() == "Bad_Value_Meta");
-
-//    LangError error = errors.takeFirst();
-//    QVERIFY(error.type == LangError::InvalidPortType);
-//    QVERIFY(error.lineNumber == 37);
-//    QVERIFY(error.errorTokens[0] == "constant");
-//    QVERIFY(error.errorTokens[1] == "meta");
-//    QVERIFY(error.errorTokens[2] == "CRP");
-
-//    QVERIFY(nodes.at(10)->getNodeType() == AST::BlockBundle);
-//    block = static_cast<BlockNode *>(nodes.at(10));
-//    QVERIFY(block->getObjectType() == "constant");
-//    bundle = block->getBundle();
-//    QVERIFY(bundle->getName() == "Values_Mismatch");
-//    error = errors.takeFirst();
-//    QVERIFY(error.type == LangError::BundleSizeMismatch);
-//    QVERIFY(error.lineNumber == 42);
-//    QVERIFY(error.errorTokens[0] == "Values_Mismatch");
-//    QVERIFY(error.errorTokens[1] == "3");
-//    QVERIFY(error.errorTokens[2] == "4");
-
-
-//    QVERIFY(nodes.at(11)->getNodeType() == AST::BlockBundle);
-//    block = static_cast<BlockNode *>(nodes.at(11));
-//    QVERIFY(block->getObjectType() == "constant");
-//    bundle = block->getBundle();
-//    QVERIFY(bundle->getName() == "Values_Mismatch_2");
-//    error = errors.takeFirst();
-//    QVERIFY(error.lineNumber == 46);
-//    QVERIFY(error.errorTokens[0] == "Values_Mismatch_2");
-//    QVERIFY(error.errorTokens[1] == "3");
-//    QVERIFY(error.errorTokens[2] == "2");
-
-//    QVERIFY(nodes.at(12)->getNodeType() == AST::BlockBundle);
-//    block = static_cast<BlockNode *>(nodes.at(12));
-//    QVERIFY(block->getObjectType() == "constant");
-//    bundle = block->getBundle();
-//    QVERIFY(bundle->getName() == "Array_Float");
-//    error = errors.takeFirst();
-//    QVERIFY(error.type == LangError::IndexMustBeInteger);
-//    QVERIFY(error.lineNumber == 50);
-//    QVERIFY(error.errorTokens[0] == "Array_Float");
-//    QVERIFY(error.errorTokens[1] == "CRP");
-
-//    QVERIFY(nodes.at(13)->getNodeType() == AST::BlockBundle);
-//    block = static_cast<BlockNode *>(nodes.at(13));
-//    QVERIFY(block->getObjectType() == "constant");
-//    bundle = block->getBundle();
-//    QVERIFY(bundle->getName() == "Array_String");
-//    error = errors.takeFirst();
-//    QVERIFY(error.type == LangError::IndexMustBeInteger);
-//    QVERIFY(error.lineNumber == 51);
-//    QVERIFY(error.errorTokens[0] == "Array_String");
-//    QVERIFY(error.errorTokens[1] == "CSP");
-
-//    tree->deleteChildren();
-//    delete tree;
-//}
-
-//void ParserTest::testValueTypeExpressionResolution()
-//{
-
-//}
-
-//void ParserTest::testDuplicates()
-//{
-//    AST *tree;
-//    tree = parse(QString(QFINDTESTDATA("data/errorDuplicate.stream")).toStdString().c_str());
-//    QVERIFY(tree != NULL);
-//    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
-//    QVERIFY(!generator.isValid());
-//    QList<LangError> errors = generator.getErrors();
-
-//    QVERIFY(errors.size() == 2);
-//    LangError error = errors.takeFirst();
-//    QVERIFY(error.type == LangError::DuplicateSymbol);
-//    QVERIFY(error.lineNumber == 12);
-//    QVERIFY(error.errorTokens[0] == "Const");
-//    QVERIFY(error.errorTokens[1] == "3");
-
-//    error = errors.takeFirst();
-//    QVERIFY(error.type == LangError::DuplicateSymbol);
-//    QVERIFY(error.lineNumber == 18);
-//    QVERIFY(error.errorTokens[0] == "Size");
-//    QVERIFY(error.errorTokens[1] == "7");
-
-//    tree->deleteChildren();
-//    delete tree;
-//}
-
-//void ParserTest::testListConsistency()
-//{
-////    AST *tree;
-//    // FIXME: List consistency is checked by the parser, should be caught here.
-////    tree = parse(QString(QFINDTESTDATA("data/errorLists.stream")).toStdString().c_str());
-////    QVERIFY(tree == NULL);
-////    Codegen generator(QFINDTESTDATA("/../platforms"), tree);
-////    QVERIFY(!generator.isValid());
-////    QList<LangError> errors = generator.getErrors();
-
-////    tree->deleteChildren();
-////    delete tree;
-//}
+}
 
 void ParserTest::testTreeBuildNoneSwitch()
 {

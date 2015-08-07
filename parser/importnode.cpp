@@ -26,5 +26,13 @@ void ImportNode::setImportAlias(const string &importAlias)
   m_importAlias = importAlias;
 }
 
+AST *ImportNode::deepCopy()
+{
+  AST* newNode = new ImportNode(m_importName, getLine(), m_importAlias);
+//  vector<AST *> children = getChildren();
+//  newNode->setChildren(children);
+  return newNode;
+}
+
 
 

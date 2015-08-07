@@ -7,6 +7,8 @@ class ForNode : public AST
 {
 public:
   ForNode(int line);
+
+  AST *deepCopy();
 };
 
 #endif // FORNODE_H
