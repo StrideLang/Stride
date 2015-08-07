@@ -21,10 +21,10 @@ private Q_SLOTS:
 
 
     //Expansion
-//    void testMultichannelUgens();
-//    void testConstantResolution();
-//    void testStreamRates();
-//    void testStreamExpansion();
+    void testMultichannelUgens();
+    void testConstantResolution();
+    void testStreamRates();
+    void testStreamExpansion();
 
     //Platform
     void testPlatform();
@@ -49,205 +49,205 @@ ParserTest::ParserTest()
 {
 }
 
-//void ParserTest::testMultichannelUgens()
-//{
-//    AST *tree;
-//    tree = parse(QString(QFINDTESTDATA("data/multichn.stream")).toStdString().c_str());
-//    QVERIFY(tree != NULL);
-//    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
-//    QVERIFY(!generator.isValid());
+void ParserTest::testMultichannelUgens()
+{
+    AST *tree;
+    tree = parse(QString(QFINDTESTDATA("data/multichn.stream")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    QVERIFY(!generator.isValid());
 
-//    QList<LangError> errors = generator.getErrors();
-//    LangError error = errors.takeFirst();
-//    QVERIFY(error.type == LangError::StreamMemberSizeMismatch);
-//    QVERIFY(error.lineNumber == 20);
-//    QVERIFY(error.errorTokens[0] == "2");
-//    QVERIFY(error.errorTokens[1] == "pan");
-//    QVERIFY(error.errorTokens[2] == "1");
+    QList<LangError> errors = generator.getErrors();
+    LangError error = errors.takeFirst();
+    QVERIFY(error.type == LangError::StreamMemberSizeMismatch);
+    QVERIFY(error.lineNumber == 20);
+    QVERIFY(error.errorTokens[0] == "2");
+    QVERIFY(error.errorTokens[1] == "pan");
+    QVERIFY(error.errorTokens[2] == "1");
 
-//    error = errors.takeFirst();
-//    QVERIFY(error.type == LangError::StreamMemberSizeMismatch);
-//    QVERIFY(error.lineNumber == 23);
-//    QVERIFY(error.errorTokens[0] == "2");
-//    QVERIFY(error.errorTokens[1] == "DummyStereo");
-//    QVERIFY(error.errorTokens[2] == "1");
+    error = errors.takeFirst();
+    QVERIFY(error.type == LangError::StreamMemberSizeMismatch);
+    QVERIFY(error.lineNumber == 23);
+    QVERIFY(error.errorTokens[0] == "2");
+    QVERIFY(error.errorTokens[1] == "DummyStereo");
+    QVERIFY(error.errorTokens[2] == "1");
 
-//    tree->deleteChildren();
-//    delete tree;
-//}
+    tree->deleteChildren();
+    delete tree;
+}
 
-//void ParserTest::testConstantResolution()
-//{
-//    AST *tree;
-//    tree = parse(QString(QFINDTESTDATA("data/constantRes.stream")).toStdString().c_str());
-//    QVERIFY(tree != NULL);
-//    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
-//    QVERIFY(generator.isValid());
+void ParserTest::testConstantResolution()
+{
+    AST *tree;
+    tree = parse(QString(QFINDTESTDATA("data/constantRes.stream")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    QVERIFY(generator.isValid());
 
-//    BlockNode *block = static_cast<BlockNode *>(tree->getChildren().at(4));
-//    QVERIFY(block->getNodeType() == AST::Block);
-//    ValueNode *value = static_cast<ValueNode *>(block->getPropertyValue("value"));
-//    QVERIFY(value != NULL);
-//    QVERIFY(value->getNodeType() == AST::Real);
+    BlockNode *block = static_cast<BlockNode *>(tree->getChildren().at(4));
+    QVERIFY(block->getNodeType() == AST::Block);
+    ValueNode *value = static_cast<ValueNode *>(block->getPropertyValue("value"));
+    QVERIFY(value != NULL);
+    QVERIFY(value->getNodeType() == AST::Real);
 
-//    QVERIFY(qFuzzyCompare(value->getRealValue(), 2.0 + (3.1 * 0.1)));
+    QVERIFY(qFuzzyCompare(value->getRealValue(), 2.0 + (3.1 * 0.1)));
 
-//    block = static_cast<BlockNode *>(tree->getChildren().at(5));
-//    QVERIFY(block->getNodeType() == AST::Block);
-//    value = static_cast<ValueNode *>(block->getPropertyValue("value"));
-//    QVERIFY(value != NULL);
-//    QVERIFY(value->getNodeType() == AST::Real);
-//    QVERIFY(qFuzzyCompare(value->getRealValue(), -0.1));
+    block = static_cast<BlockNode *>(tree->getChildren().at(5));
+    QVERIFY(block->getNodeType() == AST::Block);
+    value = static_cast<ValueNode *>(block->getPropertyValue("value"));
+    QVERIFY(value != NULL);
+    QVERIFY(value->getNodeType() == AST::Real);
+    QVERIFY(qFuzzyCompare(value->getRealValue(), -0.1));
 
-//    tree->deleteChildren();
-//    delete tree;
-//}
+    tree->deleteChildren();
+    delete tree;
+}
 
-//void ParserTest::testStreamRates()
-//{
-//    AST *tree;
-//    tree = parse(QString(QFINDTESTDATA("data/rates.stream")).toStdString().c_str());
-//    QVERIFY(tree != NULL);
-//    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
-//    QVERIFY(generator.isValid());
-//    QVERIFY(generator.platformIsValid());
+void ParserTest::testStreamRates()
+{
+    AST *tree;
+    tree = parse(QString(QFINDTESTDATA("data/rates.stream")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    QVERIFY(generator.isValid());
+    QVERIFY(generator.platformIsValid());
 
-//    vector<AST *> nodes = tree->getChildren();
+    vector<AST *> nodes = tree->getChildren();
 
-//    // AudioIn[1] >> Signal >> AudioOut[1];
-//    StreamNode *stream = static_cast<StreamNode *>(nodes.at(1));
-//    QVERIFY(stream->getNodeType() == AST::Stream);
-//    QVERIFY(stream->getRate() == 44100);
+    // AudioIn[1] >> Signal >> AudioOut[1];
+    StreamNode *stream = static_cast<StreamNode *>(nodes.at(1));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    QVERIFY(stream->getRate() == 44100);
 
-//    stream = static_cast<StreamNode *>(stream->getRight());
-//    QVERIFY(stream->getNodeType() == AST::Stream);
-//    QVERIFY(stream->getRate() == 44100);
+    stream = static_cast<StreamNode *>(stream->getRight());
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    QVERIFY(stream->getRate() == 44100);
 
-//    NameNode *name = static_cast<NameNode *>(stream->getLeft());
-//    QVERIFY(name->getNodeType() == AST::Name);
-//    QVERIFY(name->getRate() == 44100);
+    NameNode *name = static_cast<NameNode *>(stream->getLeft());
+    QVERIFY(name->getNodeType() == AST::Name);
+    QVERIFY(name->getRate() == 44100);
 
-//    BundleNode *bundle = static_cast<BundleNode *>(stream->getRight());
-//    QVERIFY(bundle->getNodeType() == AST::Bundle);
-//    QVERIFY(bundle->getRate() == 44100);
+    BundleNode *bundle = static_cast<BundleNode *>(stream->getRight());
+    QVERIFY(bundle->getNodeType() == AST::Bundle);
+    QVERIFY(bundle->getRate() == 44100);
 
-//    // Rate1 >> Rate2 >> AudioOut[1];
-//    stream = static_cast<StreamNode *>(nodes.at(4));
-//    QVERIFY(stream->getNodeType() == AST::Stream);
-//    QVERIFY(stream->getLeft()->getRate() == 22050);
+    // Rate1 >> Rate2 >> AudioOut[1];
+    stream = static_cast<StreamNode *>(nodes.at(4));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    QVERIFY(stream->getLeft()->getRate() == 22050);
 
-//    stream = static_cast<StreamNode *>(stream->getRight());
-//    QVERIFY(stream->getNodeType() == AST::Stream);
-//    QVERIFY(stream->getLeft()->getRate() == 11025);
+    stream = static_cast<StreamNode *>(stream->getRight());
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    QVERIFY(stream->getLeft()->getRate() == 11025);
 
-//    NameNode *nameNode = static_cast<NameNode *>(stream->getRight());
-//    QVERIFY(nameNode->getNodeType() == AST::Name);
-//    QVERIFY(nameNode->getRate() == 44100);
+    NameNode *nameNode = static_cast<NameNode *>(stream->getRight());
+    QVERIFY(nameNode->getNodeType() == AST::Name);
+    QVERIFY(nameNode->getRate() == 44100);
 
-//    // GetRate1 >> Rate1 >> GetRate2 >> Rate2 >> GetAudioRate >> AudioOut[1];
-//    stream = static_cast<StreamNode *>(nodes.at(5));
-//    QVERIFY(stream->getNodeType() == AST::Stream);
-//    QVERIFY(stream->getLeft()->getRate() == 44100);
+    // GetRate1 >> Rate1 >> GetRate2 >> Rate2 >> GetAudioRate >> AudioOut[1];
+    stream = static_cast<StreamNode *>(nodes.at(5));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    QVERIFY(stream->getLeft()->getRate() == 44100);
 
-//    stream = static_cast<StreamNode *>(stream->getRight());
-//    QVERIFY(stream->getNodeType() == AST::Stream);
-//    QVERIFY(stream->getLeft()->getRate() == 22050);
+    stream = static_cast<StreamNode *>(stream->getRight());
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    QVERIFY(stream->getLeft()->getRate() == 22050);
 
-//    stream = static_cast<StreamNode *>(stream->getRight());
-//    QVERIFY(stream->getNodeType() == AST::Stream);
-//    QVERIFY(stream->getLeft()->getRate() == 44100);
+    stream = static_cast<StreamNode *>(stream->getRight());
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    QVERIFY(stream->getLeft()->getRate() == 44100);
 
-//    stream = static_cast<StreamNode *>(stream->getRight());
-//    QVERIFY(stream->getNodeType() == AST::Stream);
-//    QVERIFY(stream->getLeft()->getRate() == 11025);
+    stream = static_cast<StreamNode *>(stream->getRight());
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    QVERIFY(stream->getLeft()->getRate() == 11025);
 
-//    stream = static_cast<StreamNode *>(stream->getRight());
-//    QVERIFY(stream->getNodeType() == AST::Stream);
-//    QVERIFY(stream->getLeft()->getRate() == 44100);
+    stream = static_cast<StreamNode *>(stream->getRight());
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    QVERIFY(stream->getLeft()->getRate() == 44100);
 
-//    name = static_cast<NameNode *>(stream->getRight());
-//    QVERIFY(name->getNodeType() == AST::Name);
-//    QVERIFY(name->getRate() == 44100);
+    name = static_cast<NameNode *>(stream->getRight());
+    QVERIFY(name->getNodeType() == AST::Name);
+    QVERIFY(name->getRate() == 44100);
 
-////    oscillator() >> Rate1 >> lowPass() >> Output3;
-//    stream = static_cast<StreamNode *>(nodes.at(6));
-//    QVERIFY(stream->getNodeType() == AST::Stream);
-//    QVERIFY(stream->getLeft()->getRate() == 22050);
-//    stream = static_cast<StreamNode *>(stream->getRight());
-//    QVERIFY(stream->getNodeType() == AST::Stream);
-//    QVERIFY(stream->getLeft()->getRate() == 22050);
-//    stream = static_cast<StreamNode *>(stream->getRight());
-//    QVERIFY(stream->getNodeType() == AST::Stream);
-//    QVERIFY(stream->getLeft()->getRate() == 44100);
-//    QVERIFY(stream->getRight()->getRate() == 44100);
+//    oscillator() >> Rate1 >> lowPass() >> Output3;
+    stream = static_cast<StreamNode *>(nodes.at(6));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    QVERIFY(stream->getLeft()->getRate() == 22050);
+    stream = static_cast<StreamNode *>(stream->getRight());
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    QVERIFY(stream->getLeft()->getRate() == 22050);
+    stream = static_cast<StreamNode *>(stream->getRight());
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    QVERIFY(stream->getLeft()->getRate() == 44100);
+    QVERIFY(stream->getRight()->getRate() == 44100);
 
-////    InSignal >> pan() >> OutSignal;
+//    InSignal >> pan() >> OutSignal;
 
-////    InSignal2 >> [pan(), pan()] >> OutSignal2;
-//    tree->deleteChildren();
-//    delete tree;
-//}
+//    InSignal2 >> [pan(), pan()] >> OutSignal2;
+    tree->deleteChildren();
+    delete tree;
+}
 
-//void ParserTest::testStreamExpansion()
-//{
-//    AST *tree;
-//    tree = parse(QString(QFINDTESTDATA("data/expansions.stream")).toStdString().c_str());
-//    QVERIFY(tree != NULL);
-//    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
-//    QVERIFY(generator.isValid());
-//    QVERIFY(generator.platformIsValid());
+void ParserTest::testStreamExpansion()
+{
+    AST *tree;
+    tree = parse(QString(QFINDTESTDATA("data/expansions.stream")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    QVERIFY(generator.isValid());
+    QVERIFY(generator.platformIsValid());
 
-//    vector<AST *> nodes = tree->getChildren();
-//    QVERIFY(nodes.size() > 3);
-//    StreamNode *stream = static_cast<StreamNode *>(nodes.at(1));
-//    QVERIFY(stream->getNodeType() == AST::Stream);
+    vector<AST *> nodes = tree->getChildren();
+    QVERIFY(nodes.size() > 3);
+    StreamNode *stream = static_cast<StreamNode *>(nodes.at(1));
+    QVERIFY(stream->getNodeType() == AST::Stream);
 
-//    BundleNode *bundle = static_cast<BundleNode *>(stream->getLeft());
-//    QVERIFY(bundle->getNodeType() == AST::Bundle);
-//    QVERIFY(bundle->getName() == "AudioIn");
-//    ValueNode *index = static_cast<ValueNode *>(bundle->index());
-//    QVERIFY(index->getNodeType() == AST::Int);
-//    QVERIFY(index->getIntValue() == 1);
+    BundleNode *bundle = static_cast<BundleNode *>(stream->getLeft());
+    QVERIFY(bundle->getNodeType() == AST::Bundle);
+    QVERIFY(bundle->getName() == "AudioIn");
+    ValueNode *index = static_cast<ValueNode *>(bundle->index());
+    QVERIFY(index->getNodeType() == AST::Int);
+    QVERIFY(index->getIntValue() == 1);
 
-//    StreamNode *right = static_cast<StreamNode *>(stream->getRight());
-//    QVERIFY(right->getNodeType() == AST::Stream);
-//    FunctionNode *func = static_cast<FunctionNode *>(right->getLeft());
-//    QVERIFY(func->getNodeType() == AST::Function);
-//    QVERIFY(func->getName() == "level");
+    StreamNode *right = static_cast<StreamNode *>(stream->getRight());
+    QVERIFY(right->getNodeType() == AST::Stream);
+    FunctionNode *func = static_cast<FunctionNode *>(right->getLeft());
+    QVERIFY(func->getNodeType() == AST::Function);
+    QVERIFY(func->getName() == "level");
 
-//    bundle = static_cast<BundleNode *>(right->getRight());
-//    QVERIFY(bundle->getNodeType() == AST::Bundle);
-//    QVERIFY(bundle->getName() == "AudioOut");
-//    index = static_cast<ValueNode *>(bundle->index());
-//    QVERIFY(index->getNodeType() == AST::Int);
-//    QVERIFY(index->getIntValue() == 1);
+    bundle = static_cast<BundleNode *>(right->getRight());
+    QVERIFY(bundle->getNodeType() == AST::Bundle);
+    QVERIFY(bundle->getName() == "AudioOut");
+    index = static_cast<ValueNode *>(bundle->index());
+    QVERIFY(index->getNodeType() == AST::Int);
+    QVERIFY(index->getIntValue() == 1);
 
-//    stream = static_cast<StreamNode *>(nodes.at(2));
-//    QVERIFY(stream->getNodeType() == AST::Stream);
+    stream = static_cast<StreamNode *>(nodes.at(2));
+    QVERIFY(stream->getNodeType() == AST::Stream);
 
-//    bundle = static_cast<BundleNode *>(stream->getLeft());
-//    QVERIFY(bundle->getNodeType() == AST::Bundle);
-//    QVERIFY(bundle->getName() == "AudioIn");
-//    index = static_cast<ValueNode *>(bundle->index());
-//    QVERIFY(index->getNodeType() == AST::Int);
-//    QVERIFY(index->getIntValue() == 2);
+    bundle = static_cast<BundleNode *>(stream->getLeft());
+    QVERIFY(bundle->getNodeType() == AST::Bundle);
+    QVERIFY(bundle->getName() == "AudioIn");
+    index = static_cast<ValueNode *>(bundle->index());
+    QVERIFY(index->getNodeType() == AST::Int);
+    QVERIFY(index->getIntValue() == 2);
 
-//    right = static_cast<StreamNode *>(stream->getRight());
-//    QVERIFY(right->getNodeType() == AST::Stream);
-//    func = static_cast<FunctionNode *>(right->getLeft());
-//    QVERIFY(func->getNodeType() == AST::Function);
-//    QVERIFY(func->getName() == "level");
+    right = static_cast<StreamNode *>(stream->getRight());
+    QVERIFY(right->getNodeType() == AST::Stream);
+    func = static_cast<FunctionNode *>(right->getLeft());
+    QVERIFY(func->getNodeType() == AST::Function);
+    QVERIFY(func->getName() == "level");
 
-//    bundle = static_cast<BundleNode *>(right->getRight());
-//    QVERIFY(bundle->getNodeType() == AST::Bundle);
-//    QVERIFY(bundle->getName() == "AudioOut");
-//    index = static_cast<ValueNode *>(bundle->index());
-//    QVERIFY(index->getNodeType() == AST::Int);
-//    QVERIFY(index->getIntValue() == 2);
+    bundle = static_cast<BundleNode *>(right->getRight());
+    QVERIFY(bundle->getNodeType() == AST::Bundle);
+    QVERIFY(bundle->getName() == "AudioOut");
+    index = static_cast<ValueNode *>(bundle->index());
+    QVERIFY(index->getNodeType() == AST::Int);
+    QVERIFY(index->getIntValue() == 2);
 
-//    tree->deleteChildren();
-//    delete tree;
-//}
+    tree->deleteChildren();
+    delete tree;
+}
 
 void ParserTest::testPlatform()
 {
