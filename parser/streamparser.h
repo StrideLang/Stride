@@ -12,6 +12,8 @@
 #include "propertynode.h"
 #include "streamnode.h"
 #include "valuenode.h"
+#include "importnode.h"
+#include "fornode.h"
 
 
 #endif // STREAMPARSER_H

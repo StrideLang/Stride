@@ -20,6 +20,8 @@ public:
         Stream,
         Property,
         List,
+        Import,
+        For,
 
         // Built-in types (leaf nodes)
         Int,

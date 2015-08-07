@@ -72,7 +72,8 @@ DISTFILES += \
     data/introSequencer.stream \
     data/introStreamRate.stream \
     data/introVocoder.stream \
-    data/introModulation.stream
+    data/introModulation.stream \
+    data/bundle.stream
 
 # Link to codegen library
 

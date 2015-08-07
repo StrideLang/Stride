@@ -30,7 +30,9 @@ public:
     void setFile() { /* no-op */ }
     template<typename TPrintable>
     NullStream& operator<<(TPrintable const&)
-    { /* no-op */ }
+    { /* no-op */
+      return *this;
+    }
 };
 NullStream nstream;
 #define COUT nstream
@@ -50,6 +52,8 @@ NullStream nstream;
 %code requires { #include "functionnode.h" }
 %code requires { #include "expressionnode.h" }
 %code requires { #include "listnode.h" }
+%code requires { #include "importnode.h" }
+%code requires { #include "fornode.h" }
 
 %union {
 	int 	ival;
@@ -57,6 +61,7 @@ NullStream nstream;
     char *	sval;
     AST  *  ast;
     PlatformNode *platformNode;
+    HwPlatform *hwPlatform;
     BlockNode *blockNode;
     StreamNode *streamNode;
     PropertyNode *propertyNode;
@@ -64,11 +69,18 @@ NullStream nstream;
     FunctionNode *functionNode;
     ListNode *listNode;
     ExpressionNode *expressionNode;
+    ImportNode *importNode;
+    ForNode *forNode;
 }
 
 /* declare types for nodes */
-%type <platformNode> platformDef        // THIS NEEDS TO CHANGE
-%type <platformNode> languagePlatform   // THIS NEEDS TO CHANGE
+%type <platformNode> platformDef
+%type <platformNode> languagePlatform
+%type <ast> auxPlatformDef
+%type <hwPlatform> targetPlatform
+%type <importNode> importDef
+%type <forNode> forDef
+%type <ast> forPlatformDef
 %type <blockNode> blockDef
 %type <ast> blockType
 %type <ast> properties
@@ -133,9 +145,11 @@ start:
                         COUT << "Platform Definition Resolved!" << ENDL;
                     }
     |	importDef   {
+                        tree_head->addChild($1);
                         COUT << "Import Definition Resolved!" << ENDL;
                     }
     |   forDef		{
+                        tree_head->addChild($1);
                         COUT << "For Definition Resolved!" << ENDL;
                     }
     |	blockDef	{
@@ -157,8 +171,26 @@ start:
 // =================================
 
 platformDef:
-        languagePlatform targetPlatform						{}
-    |	languagePlatform targetPlatform	WITH auxPlatformDef {}
+        languagePlatform targetPlatform						{
+          PlatformNode *platformNode = $1;
+          HwPlatform *hwPlatform = $2;
+          platformNode->setHwPlatform(hwPlatform->name);
+          platformNode->setHwVersion(hwPlatform->version);
+          delete $2;
+          $$ = platformNode;
+        }
+    |	languagePlatform targetPlatform	WITH auxPlatformDef {
+          PlatformNode *platformNode = $1;
+          HwPlatform *hwPlatform = $2;
+          AST *aux = $4;
+          platformNode->setHwPlatform(hwPlatform->name);
+          platformNode->setHwVersion(hwPlatform->version);
+          vector<AST *> children = aux->getChildren();
+          platformNode->setChildren(children);
+          delete $2;
+          delete $4;
+          $$ = platformNode;
+        }
     ;
 
 languagePlatform:
@@ -179,13 +211,45 @@ languagePlatform:
     ;
 
 targetPlatform:
-        ON UVAR					{ COUT << "Target platform: " << $2 << ENDL << "Target Version: Current!" << ENDL; }
-    |	ON UVAR VERSION FLOAT	{ COUT << "Target platform: " << $2 << ENDL << "Target Version: " << $4 << ENDL; }
+        ON UVAR					{
+                                     HwPlatform *hwPlatform = new HwPlatform;
+                                     hwPlatform->name = $2;
+                                     hwPlatform->version = -1;
+                                     $$ = hwPlatform;
+                                     COUT << "Target platform: " << $2 << ENDL << "Target Version: Current!" << ENDL;
+                                }
+    |	ON UVAR VERSION FLOAT	{
+                                    HwPlatform *hwPlatform = new HwPlatform;
+                                    hwPlatform->name = $2;
+                                    hwPlatform->version = $4;
+                                    $$ = hwPlatform;
+                                    COUT << "Target platform: " << $2 << ENDL << "Target Version: " << $4 << ENDL;
+                                 }
     ;
 
 auxPlatformDef:
-        UVAR                    { COUT << "With additional platform: " << $1 << ENDL; }
-    |	auxPlatformDef AND UVAR { COUT << "With additional platform: " << $3 << ENDL; }
+        UVAR                    {
+          string word;
+          word.append($1); /* string constructor leaks otherwise! */
+          AST *temp = new AST();
+          temp->addChild(new NameNode(word, yyloc.first_line));
+          $$ = temp;
+          COUT << "With additional platform: " << $1 << ENDL;
+          free($1);
+        }
+    |	auxPlatformDef AND UVAR {
+          AST *temp = new AST();
+          AST *aux = $1;
+          aux->giveChildren(temp);
+          string word;
+          word.append($3); /* string constructor leaks otherwise! */
+          temp->addChild(new NameNode(word, yyloc.first_line));
+          $$ = temp;
+          aux->deleteChildren();
+          delete aux;
+          COUT << "With additional platform: " << $3 << ENDL;
+          free($3);
+        }
     ;
 
 // =================================
@@ -193,9 +257,33 @@ auxPlatformDef:
 // =================================
 
 importDef:
-        IMPORT WORD 		{ COUT << "Importing: " << $2 << ENDL; }
-    |	IMPORT WORD AS WORD { COUT << "Importing: " << $2 << " as " << $4 << ENDL; }
-    |	IMPORT UVAR AS WORD { COUT << "Importing: " << $2 << " as " << $4 << ENDL; }
+        IMPORT WORD 		{
+          string word;
+          word.append($2); /* string constructor leaks otherwise! */
+          $$ = new ImportNode(word, yyloc.first_line);
+          COUT << "Importing: " << $2 << ENDL;
+          free($2);
+        }
+    |	IMPORT WORD AS WORD {
+          string word;
+          word.append($2); /* string constructor leaks otherwise! */
+          string alias;
+          alias.append($4); /* string constructor leaks otherwise! */
+          $$ = new ImportNode(word, yyloc.first_line, alias);
+          COUT << "Importing: " << $2 << " as " << $4 << ENDL;
+          free($2);
+          free($4);
+        }
+    |	IMPORT UVAR AS WORD {
+          string word;
+          word.append($2); /* string constructor leaks otherwise! */
+          string alias;
+          alias.append($4); /* string constructor leaks otherwise! */
+          $$ = new ImportNode(word, yyloc.first_line, alias);
+          COUT << "Importing: " << $2 << " as " << $4 << ENDL;
+          free($2);
+          free($4);
+        }
     ;
 
 // =================================
@@ -203,12 +291,39 @@ importDef:
 // =================================
 
 forDef:
-        FOR forPlatformDef		{}
+        FOR forPlatformDef		{
+          AST* aux = $2;
+          ForNode *fornode = new ForNode(yyloc.first_line);
+          vector<AST *> children = aux->getChildren();
+          fornode->setChildren(children);
+          $$ = fornode;
+          delete $2;
+        }
     ;
 
 forPlatformDef:
-        UVAR 					{ COUT << "For platform: " << $1 << ENDL; }
-    |	forPlatformDef AND UVAR	{ COUT << "For platform: " << $3 << ENDL; }
+        UVAR 					{
+          string word;
+          word.append($1); /* string constructor leaks otherwise! */
+          AST *temp = new AST();
+          temp->addChild(new NameNode(word, yyloc.first_line));
+          $$ = temp;
+          COUT << "For platform: " << $1 << ENDL;
+          free($1);
+        }
+    |	forPlatformDef AND UVAR	{
+          AST *temp = new AST();
+          AST *aux = $1;
+          aux->giveChildren(temp);
+          string word;
+          word.append($3); /* string constructor leaks otherwise! */
+          temp->addChild(new NameNode(word, yyloc.first_line));
+          $$ = temp;
+          aux->deleteChildren();
+          delete aux;
+          COUT << "For platform: " << $3 << ENDL;
+          free($3);
+          }
     ;
 
 // ================================= 
