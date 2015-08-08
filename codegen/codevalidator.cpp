@@ -762,7 +762,7 @@ int CodeValidator::numParallelStreams(StreamNode *stream, StreamPlatform &platfo
     } else {
         rightSize = getNodeNumInputs(right, platform, scope, tree, errors);
     }
-    int thisParallel;
+    int thisParallel = -1;
 
     if (leftSize == rightSize ||
             (rightSize/(float)leftSize) == (int)(rightSize/(float)leftSize)){

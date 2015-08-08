@@ -31,7 +31,7 @@ public:
     template<typename TPrintable>
     NullStream& operator<<(TPrintable const&)
     { /* no-op */
-      return *this;
+        return *this;
     }
 };
 NullStream nstream;
@@ -217,6 +217,7 @@ targetPlatform:
                                      hwPlatform->version = -1;
                                      $$ = hwPlatform;
                                      COUT << "Target platform: " << $2 << ENDL << "Target Version: Current!" << ENDL;
+                                     free($2);
                                 }
     |	ON UVAR VERSION FLOAT	{
                                     HwPlatform *hwPlatform = new HwPlatform;
@@ -224,6 +225,7 @@ targetPlatform:
                                     hwPlatform->version = $4;
                                     $$ = hwPlatform;
                                     COUT << "Target platform: " << $2 << ENDL << "Target Version: " << $4 << ENDL;
+                                    free($2);
                                  }
     ;
 
@@ -394,6 +396,7 @@ bundleDef:
                                         }
     |	WORD DOT UVAR '[' indexExp ']'	{
                                             COUT << "Bundle name: " << $3  << " in NameSpace: " << $1 << ENDL;
+                                            free($3);
                                         }
 	;
 
@@ -411,6 +414,7 @@ bundleRangeDef:
                                                         }
     |	WORD DOT UVAR '[' indexExp COLON indexExp']'	{
                                                             COUT << "Bundle name: " << $3 << " in NameSpace: " << $1 << ENDL;
+                                                            free($3);
                                                         }
     ;
 
@@ -438,10 +442,14 @@ functionDef:
                                             }
     |	WORD DOT UVAR '(' ')' 				{
                                                 COUT << "Function: " << $3 << " in NameSpace: " << $1 << ENDL;
+                                                free($1);
+                                                free($3);
                                             }
     |	WORD DOT UVAR '(' properties ')' 	{
                                                 COUT << "Properties () ..." << ENDL;
                                                 COUT << "Function: " << $3 << " in NameSpace: " << $1 << ENDL;
+                                                free($1);
+                                                free($3);
                                             }
     ;
 	
@@ -908,48 +916,48 @@ valueComp:
 %%
 
 void yyerror(const char *s, ...){
-	va_list ap;
-	va_start(ap, s);
-        COUT << ENDL << ENDL << "ERROR: " << s ; // << " => " << va_arg(ap, char*) << ENDL;
-        COUT << "Unexpected token: \"" << yytext << "\" on line: " <<  yylineno << ENDL;
-	va_end(ap);
-	error++;
+    va_list ap;
+    va_start(ap, s);
+    COUT << ENDL << ENDL << "ERROR: " << s ; // << " => " << va_arg(ap, char*) << ENDL;
+    COUT << "Unexpected token: \"" << yytext << "\" on line: " <<  yylineno << ENDL;
+    va_end(ap);
+    error++;
 }
 
 AST *parse(const char *filename){
-	FILE * file;
-        AST *ast = NULL;
-        char const * fileName = filename;
+    FILE * file;
+    AST *ast = NULL;
+    char const * fileName = filename;
 
-        char *lc;
-        if (!(lc =setlocale (LC_ALL, "C"))) {
-                COUT << "Error C setting locale.";
-        }
+    char *lc;
+    if (!(lc =setlocale (LC_ALL, "C"))) {
+        COUT << "Error C setting locale.";
+    }
 
-        error = 0;
-        file = fopen(fileName, "r");
+    error = 0;
+    file = fopen(fileName, "r");
 
-	if (!file){
+    if (!file){
         COUT << "Can't open " << fileName << ENDL;;
-                return NULL;
-	}
+        return NULL;
+    }
 	
     COUT << "Analysing: " << fileName << ENDL;
     COUT << "===========" << ENDL;
 
-        tree_head = new AST;
-	yyin = file;
-        yylineno = 1;
-	yyparse();
-	
-	if (error > 0){
-                COUT << ENDL << "Number of Errors: " << error << ENDL;
-                tree_head->deleteChildren();
-                delete tree_head;
-                return ast;
-        }
-        ast = tree_head;
-    COUT << "Completed Analysing: " << fileName << ENDL;
+    tree_head = new AST;
+    yyin = file;
+    yylineno = 1;
+    yyparse();
+
+    if (error > 0){
+        COUT << ENDL << "Number of Errors: " << error << ENDL;
+        tree_head->deleteChildren();
+        delete tree_head;
         return ast;
+    }
+    ast = tree_head;
+    COUT << "Completed Analysing: " << fileName << ENDL;
+    return ast;
 }
 
