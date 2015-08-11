@@ -345,15 +345,18 @@ blockDef:
                                         free($1);
                                         free($2);
                                     }
-    |	WORD bundleDef blockType	{
-                                        string s;
-                                        s.append($1); /* string constructor leaks otherwise! */
-                                        $$ = new BlockNode($2, s, $3, yyloc.first_line);
-                                        AST *props = $3;
-                                        delete props;
-                                        COUT << "Block Bundle ..." << ENDL;
-                                        free($1);
+      | WORD UVAR '[' indexExp ']' blockType    {
+                                        cout << "Block Bundle: " << $1 << ", Labelled: " << $2 << endl;
                                     }
+//    |	WORD bundleDef blockType	{
+//                                        string s;
+//                                        s.append($1); /* string constructor leaks otherwise! */
+//                                        $$ = new BlockNode($2, s, $3, yyloc.first_line);
+//                                        AST *props = $3;
+//                                        delete props;
+//                                        COUT << "Block Bundle ..." << ENDL;
+//                                        free($1);
+//                                    }
 	;
 
 blockType: 	
@@ -383,40 +386,47 @@ streamDef:
 
 	
 // ================================= 
-//	ARRAY DEFINITION
+//	BUNDLE DEFINITION
 // =================================
 
 bundleDef:
-        UVAR '[' indexExp ']'           {
-                                            string s;
-                                            s.append($1); /* string constructor leaks otherwise! */
-                                            $$ = new BundleNode(s, $3, yyloc.first_line);
-                                            COUT << "Bundle name: " << $1 << ENDL;
-                                            free($1);
+        UVAR '[' indexList ']'          {
+                                            cout << "Bundle name: " << $1 << endl;
                                         }
-    |	WORD DOT UVAR '[' indexExp ']'	{
-                                            COUT << "Bundle name: " << $3  << " in NameSpace: " << $1 << ENDL;
-                                            free($3);
+    |	WORD DOT UVAR '[' indexList ']'	{
+                                            cout << "Bundle name: " << $3  << " in NameSpace: " << $1 << endl;
                                         }
-	;
+//bundleDef:
+//        UVAR '[' indexExp ']'           {
+//                                            string s;
+//                                            s.append($1); /* string constructor leaks otherwise! */
+//                                            $$ = new BundleNode(s, $3, yyloc.first_line);
+//                                            COUT << "Bundle name: " << $1 << ENDL;
+//                                            free($1);
+//                                        }
+//    |	WORD DOT UVAR '[' indexExp ']'	{
+//                                            COUT << "Bundle name: " << $3  << " in NameSpace: " << $1 << ENDL;
+//                                            free($3);
+//                                        }
+//	;
 
 // =================================
 //	ARRAY RANGE ACCESS
 // =================================
 
-bundleRangeDef:
-        UVAR '[' indexExp COLON indexExp']'             {
-                                                            string s;
-                                                            s.append($1); /* string constructor leaks otherwise! */
-                                                            $$ = new BundleNode(s, $3, $5, yyloc.first_line);
-                                                            COUT << "Bundle Range name: " << $1 << ENDL;
-                                                            free($1);
-                                                        }
-    |	WORD DOT UVAR '[' indexExp COLON indexExp']'	{
-                                                            COUT << "Bundle name: " << $3 << " in NameSpace: " << $1 << ENDL;
-                                                            free($3);
-                                                        }
-    ;
+//bundleRangeDef:
+//        UVAR '[' indexExp COLON indexExp']'             {
+//                                                            string s;
+//                                                            s.append($1); /* string constructor leaks otherwise! */
+//                                                            $$ = new BundleNode(s, $3, $5, yyloc.first_line);
+//                                                            COUT << "Bundle Range name: " << $1 << ENDL;
+//                                                            free($1);
+//                                                        }
+//    |	WORD DOT UVAR '[' indexExp COLON indexExp']'	{
+//                                                            COUT << "Bundle name: " << $3 << " in NameSpace: " << $1 << ENDL;
+//                                                            free($3);
+//                                                        }
+//    ;
 
 // ================================= 
 //	FUNCTION DEFINITION
@@ -640,7 +650,30 @@ listList:
                                 }
 	;
 	
+// =================================
+//	BUNDLE INDEX DEFINITION
+// =================================
 
+indexList:
+        indexList COMMA indexExp		{
+                                            cout << "Resolving Index List Element ..." << endl;
+                                        }
+    |	indexList COMMA indexRange		{
+                                            cout << "Resolving Index List Element ..." << endl;
+                                        }
+    |	indexExp						{
+                                            cout << "Resolving Index List Element ..." << endl;
+                                        }
+    |	indexRange						{
+                                            cout << "Resolving Index List Element ..." << endl;
+                                        }
+    ;
+
+indexRange:
+    indexExp COLON indexExp				{
+                                            cout << "Resolving Index Range ..." << endl;
+                                        }
+    ;
 
 // ================================= 
 //	INDEX EXPRESSION
@@ -822,7 +855,7 @@ indexComp:
                             COUT << "Index/Size User variable: " << $3 << " in NameSpace: " << $1 << ENDL;
                         }
     |	bundleDef       {
-                            COUT << "Resolving indexed array ..." << ENDL;
+                            COUT << "Resolving indexed bundle ..." << ENDL;
                         }
 	;
 
@@ -844,12 +877,9 @@ streamComp:
                             COUT << "Streaming ... " << ENDL;
                         }
     |	bundleDef       {
-                            COUT << "Resolving indexed array ..." << ENDL;
+                            COUT << "Resolving indexed bundle ..." << ENDL;
                             COUT << "Streaming ... " << ENDL;
                         }
-    |   bundleRangeDef  {
-                            COUT << "Resolving indexed array range ..." << ENDL;
-                            COUT << "Streaming ... " << ENDL;
                         }
 	|	functionDef     {
                             COUT << "Resolving function definition ... " << ENDL;
@@ -903,10 +933,8 @@ valueComp:
                         }
     |	bundleDef       {
                             $$ = $1;
-                            COUT << "Resolving indexed array ..." << ENDL;
+                            COUT << "Resolving indexed bundle ..." << ENDL;
                         }
-    |   bundleRangeDef  {
-                            COUT << "Resolving indexed array range ..." << ENDL;
                         }
 	|	functionDef     {
                             COUT << "Resolving function definition ..." << ENDL;
