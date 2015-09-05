@@ -4,15 +4,16 @@
 #include <string>
 
 #include "ast.h"
+#include "listnode.h"
 
 class BundleNode : public AST
 {
 public:
-    BundleNode(string name, AST *indexList, int line);
+    BundleNode(string name, ListNode *indexList, int line);
     virtual ~BundleNode();
 
     string getName() const;
-    AST *index() const;
+    ListNode *index() const;
 
     AST *deepCopy();
 

@@ -12,6 +12,8 @@ public:
     void stealMembers(ListNode *list);
     Token getListType();
 
+    int size();
+
     AST *deepCopy();
 };
 

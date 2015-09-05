@@ -200,8 +200,8 @@ void CodeResolver::insertBuiltinObjects()
             }
         }
         if (size >= 0) {
-            BundleNode *bundle = new BundleNode(object.getName().toStdString(),
-                                                new ValueNode(object.getSize(), -1), -1);
+            ListNode *indexList = new ListNode(new ValueNode(object.getSize(), -1), -1);
+            BundleNode *bundle = new BundleNode(object.getName().toStdString(),indexList, -1);
 
             BlockNode *child = new BlockNode(bundle, object.getType().toStdString(),
                                   propertiesTree, -1);
@@ -223,8 +223,8 @@ double CodeResolver::createSignalDeclaration(QString name, int size, AST *tree)
     if (size == 1) {
         newBlock = new BlockNode(name.toStdString(), "signal", NULL, -1);
     } else if (size > 1) {
-        BundleNode *bundle = new BundleNode(name.toStdString(),
-                                            new ValueNode(size, -1), -1);
+        ListNode *indexList = new ListNode(new ValueNode(size, -1), -1);
+        BundleNode *bundle = new BundleNode(name.toStdString(),indexList, -1);
         newBlock = new BlockNode(bundle, "signal", NULL, -1);
     }
 
@@ -647,8 +647,8 @@ AST *CodeResolver::expandStream(AST *node, int index, int rightNumInputs, int le
     } else if (node->getNodeType() == AST::Name) {
         NameNode *nameNode = static_cast<NameNode *>(node);
         if (rightNumInputs == 1) {
-            ValueNode *indexNode = new ValueNode(index + 1, nameNode->getLine());
-            newNode = new BundleNode(nameNode->getName(), indexNode ,nameNode->getLine());
+            ListNode *indexList = new ListNode(new ValueNode(index + 1, nameNode->getLine()), -1);
+            newNode = new BundleNode(nameNode->getName(), indexList ,nameNode->getLine());
             newNode->setRate(node->getRate());
         } else {
             int startIndex = index * leftNumOutputs;

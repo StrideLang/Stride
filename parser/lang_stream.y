@@ -351,7 +351,8 @@ blockDef:
       | WORD UVAR '[' indexExp ']' blockType    {
              string name;
              name.append($2); /* string constructor leaks otherwise! */
-             BundleNode *bundle = new BundleNode(name, $4, yyloc.first_line);
+             ListNode *list = new ListNode($4, yyloc.first_line);
+             BundleNode *bundle = new BundleNode(name, list, yyloc.first_line);
              COUT << "Bundle name: " << name << ENDL;
              string type;
              type.append($1); /* string constructor leaks otherwise! */
@@ -671,11 +672,13 @@ indexList:
     |	indexExp						{
             ListNode *list = new ListNode(NULL, yyloc.first_line);
             list->addChild($1);
+            $$ = list;
             COUT << "Resolving Index List Element ..." << ENDL;
         }
     |	indexRange						{
             ListNode *list = new ListNode(NULL, yyloc.first_line);
             list->addChild($1);
+            $$ = list;
             COUT << "Resolving Index List Range ..." << ENDL;
         }
     ;
@@ -709,7 +712,8 @@ indexExp:
                                     COUT << "Index/Size dividing ... " << ENDL;
                                 }
     |	'(' indexExp ')'        {
-                                    $$ = $2; COUT << "Index/Size enclosure ..." << ENDL;
+                                    $$ = $2;
+                                    COUT << "Index/Size enclosure ..." << ENDL;
                                 }
     |	indexComp               {
                                     $$ = $1;
@@ -867,8 +871,9 @@ indexComp:
                             COUT << "Index/Size User variable: " << $3 << " in NameSpace: " << $1 << ENDL;
                         }
     |	bundleDef       {
-                            COUT << "Resolving indexed bundle ..." << ENDL;
-                        }
+            BundleNode *bundle = $1;
+            COUT << "Resolving indexed bundle ..." << bundle->getName() << ENDL;
+        }
 	;
 
 // ================================= 

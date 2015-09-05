@@ -2,7 +2,7 @@
 
 #include "bundlenode.h"
 
-BundleNode::BundleNode(string name, AST *indexList, int line) :
+BundleNode::BundleNode(string name, ListNode *indexList, int line) :
     AST(AST::Bundle, line)
 {
     addChild(indexList);
@@ -27,17 +27,16 @@ string BundleNode::getName() const
     return m_name;
 }
 
-AST *BundleNode::index() const
+ListNode *BundleNode::index() const
 {
-    assert(getNodeType() == AST::Bundle);
-    return m_children.at(0);
+    return static_cast<ListNode *>(m_children.at(0));
 }
 
 AST *BundleNode::deepCopy()
 {
     assert(getNodeType() == AST::Bundle);
     if(getNodeType() == AST::Bundle) {
-        AST *bundle = new BundleNode(m_name, m_children.at(0)->deepCopy(), m_line);
+        AST *bundle = new BundleNode(m_name, static_cast<ListNode *>(index()->deepCopy()), m_line);
         bundle->setRate(m_rate);
         return bundle;
     }

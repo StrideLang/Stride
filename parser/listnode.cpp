@@ -39,6 +39,11 @@ AST::Token ListNode::getListType()
     return type;
 }
 
+int ListNode::size()
+{
+    return m_children.size();
+}
+
 AST *ListNode::deepCopy()
 {
     vector<AST *> children = getChildren();

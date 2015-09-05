@@ -584,13 +584,22 @@ int CodeValidator::evaluateConstInteger(AST *node, QVector<AST *> scope, AST *tr
         return static_cast<ValueNode *>(node)->getIntValue();
     } else if (node->getNodeType() == AST::Bundle) {
         BundleNode *bundle = static_cast<BundleNode *>(node);
-        QString bundleName = QString::fromStdString(bundle->getName());
-        BlockNode *declaration = findDeclaration(bundleName, scope, tree);
-        int index = evaluateConstInteger(bundle->index(), scope, tree, errors);
-        if(declaration && declaration->getNodeType() == AST::BlockBundle) {
-            AST *member = getMemberfromBlockBundle(declaration, index, errors);
-            return evaluateConstInteger(member, scope, tree, errors);
+        ListNode *index = bundle->index();
+        if (index->size() == 1) {
+            int index = evaluateConstInteger(bundle->index(), scope, tree, errors);
+
+            QString bundleName = QString::fromStdString(bundle->getName());
+            BlockNode *declaration = findDeclaration(bundleName, scope, tree);
+            if(declaration && declaration->getNodeType() == AST::BlockBundle) {
+                AST *member = getMemberfromBlockBundle(declaration, index, errors);
+                return evaluateConstInteger(member, scope, tree, errors);
+            }
         }
+        LangError error;
+        error.type = LangError::InvalidType;
+        error.lineNumber = bundle->getLine();
+        error.errorTokens << QString::fromStdString(bundle->getName());
+        errors << error;
     } else if (node->getNodeType() == AST::Expression) {
         // TODO: check expression out
     } else {
@@ -793,7 +802,7 @@ int CodeValidator::getNodeSize(AST *node, AST *tree)
                                     QVector<AST *>(),
                                     tree,
                                     errors);
-        Q_ASSERT(errors.size() ==0);
+//        Q_ASSERT(errors.size() ==0);
 
 //    } else if (node->getNodeType() == AST::BundleRange) {
 //        BundleNode *bundle = static_cast<BundleNode *>(node);
