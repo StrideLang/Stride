@@ -11,6 +11,7 @@
 #include "propertynode.h"
 #include "blocknode.h"
 #include "namenode.h"
+#include "rangenode.h"
 
 class CodeResolver
 {

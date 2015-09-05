@@ -14,3 +14,6 @@ Bundle1[1] * 0.5 >> Bundle2[2];
 BundleRange[1:2] >> BundleRange2[3:4];
 
 AudioIn[1] >> Level(gain: 1.5) >> AudioOut[1];
+
+A[1:2,3,4] >> B[1,2,3:4] >> C[1,2:3,4] >> D[1,2,3,4];
+

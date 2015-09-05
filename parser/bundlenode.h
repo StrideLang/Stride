@@ -8,14 +8,11 @@
 class BundleNode : public AST
 {
 public:
-    BundleNode(string name, AST *indexExp, int line);
-    BundleNode(string name, AST *indexStartExp, AST *indexEndExp, int line);
+    BundleNode(string name, AST *indexList, int line);
     virtual ~BundleNode();
 
     string getName() const;
     AST *index() const;
-    AST *startIndex() const;
-    AST *endIndex() const;
 
     AST *deepCopy();
 

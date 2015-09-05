@@ -2,20 +2,20 @@
 
 #include "bundlenode.h"
 
-BundleNode::BundleNode(string name, AST *indexExp, int line) :
+BundleNode::BundleNode(string name, AST *indexList, int line) :
     AST(AST::Bundle, line)
 {
-    addChild(indexExp);
+    addChild(indexList);
     m_name = name;
 }
 
-BundleNode::BundleNode(string name, AST *indexStartExp, AST *indexEndExp, int line):
-    AST(AST::BundleRange, line)
-{
-    addChild(indexStartExp);
-    addChild(indexEndExp);
-    m_name = name;
-}
+//BundleNode::BundleNode(string name, AST *indexStartExp, AST *indexEndExp, int line):
+//    AST(AST::BundleRange, line)
+//{
+//    addChild(indexStartExp);
+//    addChild(indexEndExp);
+//    m_name = name;
+//}
 
 BundleNode::~BundleNode()
 {
@@ -33,27 +33,11 @@ AST *BundleNode::index() const
     return m_children.at(0);
 }
 
-AST *BundleNode::startIndex() const
-{
-    assert(getNodeType() == AST::BundleRange);
-    return m_children.at(0);
-}
-
-AST *BundleNode::endIndex() const
-{
-    assert(getNodeType() == AST::BundleRange);
-    return m_children.at(1);
-}
-
 AST *BundleNode::deepCopy()
 {
-    assert(getNodeType() == AST::BundleRange || getNodeType() == AST::Bundle);
+    assert(getNodeType() == AST::Bundle);
     if(getNodeType() == AST::Bundle) {
         AST *bundle = new BundleNode(m_name, m_children.at(0)->deepCopy(), m_line);
-        bundle->setRate(m_rate);
-        return bundle;
-    } else if(getNodeType() == AST::BundleRange)  {
-        AST *bundle = new BundleNode(m_name, startIndex()->deepCopy(), endIndex()->deepCopy(), m_line);
         bundle->setRate(m_rate);
         return bundle;
     }

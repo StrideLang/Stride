@@ -54,6 +54,7 @@ NullStream nstream;
 %code requires { #include "listnode.h" }
 %code requires { #include "importnode.h" }
 %code requires { #include "fornode.h" }
+%code requires { #include "rangenode.h" }
 
 %union {
 	int 	ival;
@@ -71,6 +72,7 @@ NullStream nstream;
     ExpressionNode *expressionNode;
     ImportNode *importNode;
     ForNode *forNode;
+    RangeNode *rangeNode;
 }
 
 /* declare types for nodes */
@@ -93,7 +95,8 @@ NullStream nstream;
 %type <ast> indexExp
 %type <ast> indexComp
 %type <bundleNode> bundleDef
-%type <bundleNode> bundleRangeDef
+%type <listNode> indexList
+%type <rangeNode> indexRange
 %type <functionNode> functionDef
 %type <listNode> listDef
 %type <listNode> valueListList
@@ -346,17 +349,17 @@ blockDef:
                                         free($2);
                                     }
       | WORD UVAR '[' indexExp ']' blockType    {
-                                        cout << "Block Bundle: " << $1 << ", Labelled: " << $2 << endl;
-                                    }
-//    |	WORD bundleDef blockType	{
-//                                        string s;
-//                                        s.append($1); /* string constructor leaks otherwise! */
-//                                        $$ = new BlockNode($2, s, $3, yyloc.first_line);
-//                                        AST *props = $3;
-//                                        delete props;
-//                                        COUT << "Block Bundle ..." << ENDL;
-//                                        free($1);
-//                                    }
+             string name;
+             name.append($2); /* string constructor leaks otherwise! */
+             BundleNode *bundle = new BundleNode(name, $4, yyloc.first_line);
+             COUT << "Bundle name: " << name << ENDL;
+             string type;
+             type.append($1); /* string constructor leaks otherwise! */
+             $$ = new BlockNode(bundle, type, $6, yyloc.first_line);
+             COUT << "Block Bundle: " << $1 << ", Labelled: " << $2 << ENDL;
+             free($2);
+             free($1);
+         }
 	;
 
 blockType: 	
@@ -391,10 +394,14 @@ streamDef:
 
 bundleDef:
         UVAR '[' indexList ']'          {
-                                            cout << "Bundle name: " << $1 << endl;
-                                        }
+            string s;
+            s.append($1); /* string constructor leaks otherwise! */
+            $$ = new BundleNode(s, $3, yyloc.first_line);
+            COUT << "Bundle name: " << $1 << ENDL;
+            free($1);
+        }
     |	WORD DOT UVAR '[' indexList ']'	{
-                                            cout << "Bundle name: " << $3  << " in NameSpace: " << $1 << endl;
+                                            COUT << "Bundle name: " << $3  << " in NameSpace: " << $1 << ENDL;
                                         }
 //bundleDef:
 //        UVAR '[' indexExp ']'           {
@@ -656,23 +663,28 @@ listList:
 
 indexList:
         indexList COMMA indexExp		{
-                                            cout << "Resolving Index List Element ..." << endl;
+                                            COUT << "Resolving Index List Element ..." << ENDL;
                                         }
     |	indexList COMMA indexRange		{
-                                            cout << "Resolving Index List Element ..." << endl;
+                                            COUT << "Resolving Index List Element ..." << ENDL;
                                         }
     |	indexExp						{
-                                            cout << "Resolving Index List Element ..." << endl;
-                                        }
+            ListNode *list = new ListNode(NULL, yyloc.first_line);
+            list->addChild($1);
+            COUT << "Resolving Index List Element ..." << ENDL;
+        }
     |	indexRange						{
-                                            cout << "Resolving Index List Element ..." << endl;
-                                        }
+            ListNode *list = new ListNode(NULL, yyloc.first_line);
+            list->addChild($1);
+            COUT << "Resolving Index List Range ..." << ENDL;
+        }
     ;
 
 indexRange:
     indexExp COLON indexExp				{
-                                            cout << "Resolving Index Range ..." << endl;
-                                        }
+        $$ = new RangeNode($1, $3, yyloc.first_line);
+        COUT << "Resolving Index Range ..." << ENDL;
+    }
     ;
 
 // ================================= 
@@ -880,7 +892,6 @@ streamComp:
                             COUT << "Resolving indexed bundle ..." << ENDL;
                             COUT << "Streaming ... " << ENDL;
                         }
-                        }
 	|	functionDef     {
                             COUT << "Resolving function definition ... " << ENDL;
                             COUT << "Streaming ... " << ENDL;
@@ -934,7 +945,6 @@ valueComp:
     |	bundleDef       {
                             $$ = $1;
                             COUT << "Resolving indexed bundle ..." << ENDL;
-                        }
                         }
 	|	functionDef     {
                             COUT << "Resolving function definition ..." << ENDL;

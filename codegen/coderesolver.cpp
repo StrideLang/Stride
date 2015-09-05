@@ -655,11 +655,11 @@ AST *CodeResolver::expandStream(AST *node, int index, int rightNumInputs, int le
             int endIndex = (index + 1) * leftNumOutputs ;
             ValueNode *startIndexNode = new ValueNode(startIndex + 1, nameNode->getLine());
             ValueNode *endIndexNode = new ValueNode(endIndex + 1, nameNode->getLine());
-            newNode = new BundleNode(nameNode->getName(), startIndexNode, endIndexNode, nameNode->getLine());
+            RangeNode *range = new RangeNode(startIndexNode, endIndexNode, nameNode->getLine());
+            ListNode *list = new ListNode(range, nameNode->getLine());
+            newNode = new BundleNode(nameNode->getName(), list, nameNode->getLine());
             newNode->setRate(node->getRate());
         }
-    } else if (node->getNodeType() == AST::BundleRange) {
-        qFatal("AST::BundleRange not supported in CodeResolver::expandStreamMember");
     } else if (node->getNodeType() == AST::Stream) {
         QList<LangError> errors;
         QVector<AST *> scope;

@@ -16,7 +16,8 @@ SOURCES += ast.cpp \
     blocknode.cpp \
     listnode.cpp \
     importnode.cpp \
-    fornode.cpp
+    fornode.cpp \
+    rangenode.cpp
 
 HEADERS += ast.h \
            platformnode.h \
@@ -31,7 +32,8 @@ HEADERS += ast.h \
     listnode.h \
     streamparser.h \
     importnode.h \
-    fornode.h
+    fornode.h \
+    rangenode.h
 
 BISONSOURCES = lang_stream.y
 FLEXSOURCES = lang_stream.l

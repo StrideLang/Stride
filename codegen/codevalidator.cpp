@@ -160,8 +160,6 @@ void CodeValidator::validateBundleIndeces(AST *node, QVector<AST *> scope)
             error.errorTokens << QString::fromStdString(bundle->getName()) << getPortTypeName(type);
             m_errors << error;
         }
-    } else if (node->getNodeType() == AST::BundleRange) {
-
     }
     QVector<AST *> children = QVector<AST *>::fromStdVector(node->getChildren());
     foreach(AST *node, children) {
@@ -333,8 +331,7 @@ QString CodeValidator::getNodeText(AST *node)
     QString outText;
     if(node->getNodeType() == AST::Name) {
         outText = QString::fromStdString(static_cast<NameNode *>(node)->getName());
-    } else if(node->getNodeType() == AST::Bundle
-              || node->getNodeType() == AST::BundleRange) {
+    } else if(node->getNodeType() == AST::Bundle) {
         outText = QString::fromStdString(static_cast<BundleNode *>(node)->getName());
     } else if(node->getNodeType() == AST::Function) {
          outText = QString::fromStdString(static_cast<FunctionNode *>(node)->getName());
@@ -408,13 +405,13 @@ int CodeValidator::getNodeNumOutputs(AST *node, StreamPlatform &platform, QVecto
         } else {
             return -1; // Not a bundle
         }
-    } else if (node->getNodeType() == AST::BundleRange) {
-        BundleNode *bundle = static_cast<BundleNode *>(node);
-        if (CodeValidator::resolveNodeOutType(bundle->endIndex(), scope, tree) == ConstInt
-                && CodeValidator::resolveNodeOutType(bundle->endIndex(), scope, tree) == ConstInt) {
-            return CodeValidator::evaluateConstInteger(bundle->endIndex(), scope, tree, errors)
-                    - CodeValidator::evaluateConstInteger(bundle->startIndex(), scope, tree, errors) + 1;
-        }
+//    } else if (node->getNodeType() == AST::BundleRange) {
+//        BundleNode *bundle = static_cast<BundleNode *>(node);
+//        if (CodeValidator::resolveNodeOutType(bundle->endIndex(), scope, tree) == ConstInt
+//                && CodeValidator::resolveNodeOutType(bundle->endIndex(), scope, tree) == ConstInt) {
+//            return CodeValidator::evaluateConstInteger(bundle->endIndex(), scope, tree, errors)
+//                    - CodeValidator::evaluateConstInteger(bundle->startIndex(), scope, tree, errors) + 1;
+//        }
     } else if (node->getNodeType() == AST::Function) {
         FunctionNode *func = static_cast<FunctionNode *>(node);
         PlatformFunction platformFunc = platform.getFunction(QString::fromStdString(func->getName()));
@@ -726,8 +723,7 @@ int CodeValidator::numParallelStreams(StreamNode *stream, StreamPlatform &platfo
     int rightSize;
 
     if (left->getNodeType() == AST::Name
-            || left->getNodeType() == AST::List
-            || left->getNodeType() == AST::BundleRange) {
+            || left->getNodeType() == AST::List) {
         leftSize = getNodeSize(left, tree);
     } else {
         leftSize = getNodeNumOutputs(left, platform, scope, tree, errors);
@@ -799,20 +795,20 @@ int CodeValidator::getNodeSize(AST *node, AST *tree)
                                     errors);
         Q_ASSERT(errors.size() ==0);
 
-    } else if (node->getNodeType() == AST::BundleRange) {
-        BundleNode *bundle = static_cast<BundleNode *>(node);
-        AST *startIndex = bundle->startIndex();
-        AST *endIndex = bundle->endIndex();
-        QList<LangError> errors;
-        int start = CodeValidator::evaluateConstInteger(startIndex, QVector<AST *>(), tree, errors);
-        if (errors.size() > 0) {
-            return -1;
-        }
-        int end = CodeValidator::evaluateConstInteger(endIndex, QVector<AST *>(), tree, errors);
-        if (errors.size() > 0) {
-            return -1;
-        }
-        return end - start;
+//    } else if (node->getNodeType() == AST::BundleRange) {
+//        BundleNode *bundle = static_cast<BundleNode *>(node);
+//        AST *startIndex = bundle->startIndex();
+//        AST *endIndex = bundle->endIndex();
+//        QList<LangError> errors;
+//        int start = CodeValidator::evaluateConstInteger(startIndex, QVector<AST *>(), tree, errors);
+//        if (errors.size() > 0) {
+//            return -1;
+//        }
+//        int end = CodeValidator::evaluateConstInteger(endIndex, QVector<AST *>(), tree, errors);
+//        if (errors.size() > 0) {
+//            return -1;
+//        }
+//        return end - start;
     } else if (node->getNodeType() == AST::Expression) {
 
         qFatal("implement Expression parsing in getNodeSize");
