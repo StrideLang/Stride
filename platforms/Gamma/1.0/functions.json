@@ -1,5 +1,5 @@
 {"functions": [
-        {"functionName": "level",
+        {"functionName": "Level",
             "ports" : {
                 "gainType" : {"in_types" : ["CSS", "CS"], "out_types" : [], "default" : "linear"},
                 "gain" : {"in_types" : ["AS", "CSR", "CSI", "CR", "CI"], "out_types" : [], "default" : 1.0},
@@ -17,7 +17,7 @@
             }
         },
         {
-            "functionName": "lowPass",
+            "functionName": "LowPass",
             "ports": {
                 "cutOff" : {"in_types": ["CIP", "CFP"], "out_types" : [], "default": 1000},
                 "reset" : {"in_types": ["CIP", "CFP"], "out_types" : [], "default": {"type": "none"}},
@@ -34,7 +34,7 @@
             }
         },
         {
-            "functionName": "oscillator",
+            "functionName": "Oscillator",
             "ports": {
                 "type" : {"in_types": ["CSP", "CS"], "out_types" : [], "default": "sine"},
                 "amplitude" : {"in_types": ["CIP", "CFP"], "out_types" : [], "default": 1.0},
@@ -56,7 +56,7 @@
             }
         },
         {
-            "functionName": "map",
+            "functionName": "Map",
             "ports": {
                 "input": {"in_types" : ["ASP", "CSIP", "CSRP"], "out_types" : [], "default": {"type": "none"}},
                 "output": {"in_types" : ["CSIP", "CSRP"], "out_types" : [], "default": {"type": "none"}, "required" : false, "maxconnections" : -1, "access": "stream_out"},
@@ -84,7 +84,7 @@
 
 
         {
-            "functionName": "pan",
+            "functionName": "Pan",
             "ports": {
                 "position" : {"in_types": ["CIP", "CFP"], "out_types" : [], "default": 0.0},
                 "bypass" : {"in_types": ["CBP"], "out_types" : [], "default": false}

@@ -22,7 +22,7 @@ void CodeResolver::preProcess()
     resolveRates();
     resolveConstants();
     expandStreamMembers();
-//    sliceStreams();
+    sliceStreams();
 }
 
 void CodeResolver::resolveRates()
@@ -258,7 +258,7 @@ void CodeResolver::declareUnknownStreamSymbols(StreamNode *stream, AST *previous
             if (previousStreamMember) {
                 size = CodeValidator::getNodeNumOutputs(previousStreamMember, m_platform, scope, m_tree, errors);
             }
-            if (size <= 0) {
+            if (size <= 0) { // Look to the right if can't resolve from the left
                 size = CodeValidator::getNodeNumInputs(nextStreamMember, m_platform, scope, m_tree, errors);
             }
             if (size <= 0) { // None of the elements in the stream have size
@@ -353,7 +353,12 @@ void CodeResolver::sliceStreams()
         }
     }
     m_tree->deleteChildren();
-    vector<AST *> newNodesStl = newNodes.toStdVector();
+    vector<AST *> newNodesStl;
+    QVector<AST *>::iterator i = newNodes.end();
+    while (i != newNodes.begin()) {
+        --i;
+        newNodesStl.push_back(*i);
+    }
     m_tree->setChildren(newNodesStl);
 }
 
@@ -640,7 +645,8 @@ AST *CodeResolver::expandStream(AST *node, int index, int rightNumInputs, int le
         FunctionNode *func = static_cast<FunctionNode *>(node);
         int numOutputs = CodeValidator::getNodeNumOutputs(node, m_platform, scope, m_tree, errors);
         if (numOutputs != rightNumInputs) {
-            func->setParallelInstances((int) (rightNumInputs/ numOutputs));
+            int numInstances = (numOutputs == 0? rightNumInputs:(int) (rightNumInputs/ numOutputs));
+            func->setParallelInstances(numInstances);
         }
         func->setParallelInstances(func->getParallelInstances() + 1);
         newNode = static_cast<FunctionNode *>(node)->deepCopy();

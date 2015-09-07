@@ -14,6 +14,7 @@
 #include "valuenode.h"
 #include "importnode.h"
 #include "fornode.h"
+#include "rangenode.h"
 
 
 #endif // STREAMPARSER_H

@@ -64,6 +64,7 @@ public:
     static PortType resolveNodeOutType(AST *node, QVector<AST *> scope, AST *tree);
     static PortType resolveListType(ListNode *listnode, QVector<AST *> scope, AST *tree);
     static PortType resolveExpressionType(ExpressionNode *exprnode, QVector<AST *> scope, AST *tree);
+    static PortType resolveRangeType(RangeNode *rangenode, QVector<AST *> scope, AST *tree);
 
     static int evaluateConstInteger(AST *node, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
     static double evaluateConstReal(AST *node, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
@@ -99,6 +100,7 @@ private:
     void validateStreamInputSize(StreamNode *stream, QVector<AST *> scope, QList<LangError> &errors);
 
     int getBlockDataSize(BlockNode *block, QVector<AST *> scope, QList<LangError> &errors);
+    static int getBundleSize(BundleNode *bundle, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
 
     QString getNodeText(AST *node);
 
