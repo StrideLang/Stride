@@ -166,7 +166,10 @@ void PythonProject::astToJson(AST *node, QJsonObject &obj)
     if (node->getNodeType() == AST::Bundle) {
         obj["type"] = "Bundle";
         obj["name"] = QString::fromStdString(static_cast<BundleNode *>(node)->getName());
-        AST *indexNode = static_cast<BundleNode *>(node)->index();
+
+        ListNode *indexList = static_cast<BundleNode *>(node)->index();
+        Q_ASSERT(indexList->size() == 1);
+        AST *indexNode = indexList->getChildren().at(0);
         if (indexNode->getNodeType() == AST::Int) {
             obj["index"] = static_cast<ValueNode *>(indexNode)->getIntValue();
         }

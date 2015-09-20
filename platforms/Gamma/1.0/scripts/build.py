@@ -332,7 +332,7 @@ class Generator:
         for node in self.tree:
             if 'block' in node:
                 if node['block']['type'] == 'config':
-                    block_size = 16
+                    block_size = 256
                     sample_rate = 44100.
                     num_out_chnls = 2
                     num_in_chnls = 2
