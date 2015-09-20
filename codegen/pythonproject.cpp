@@ -138,7 +138,9 @@ void PythonProject::writeAST(AST *tree)
             BundleNode *bundle = block->getBundle();
             blockObj["name"] = QString::fromStdString(bundle->getName());
             blockObj["type"] = QString::fromStdString(block->getObjectType());
-            AST *bundleIndex = bundle->index();
+            ListNode *indexList = bundle->index();
+            Q_ASSERT(indexList->size() == 1);
+            AST *bundleIndex = indexList->getChildren().at(0);
             Q_ASSERT(bundleIndex->getNodeType() == AST::Int || bundleIndex->getNodeType() == AST::Real);
             blockObj["size"] = static_cast<ValueNode *>(bundleIndex)->getIntValue();
             vector<PropertyNode *> props = block->getProperties();

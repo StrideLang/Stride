@@ -49,7 +49,7 @@ void CodeEditor::setErrors(QList<LangError> errors)
 
     foreach(LangError error, errors) {
         m_errorMarkers.push_back(new ErrorMarker(m_lineNumberArea, error.lineNumber,
-                                                 error.getErrorText()));
+                                                 QString::fromStdString(error.getErrorText())));
     }
     m_lineNumberArea->repaint();
 }

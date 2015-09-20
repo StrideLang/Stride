@@ -100,7 +100,7 @@ void CodeValidator::validateTypeNames(AST *node)
             LangError error;
             error.type = LangError::UnknownType;
             error.lineNumber = block->getLine();
-            error.errorTokens << QString::fromStdString(block->getObjectType());
+            error.errorTokens.push_back(block->getObjectType());
             m_errors << error;
         }
     }
@@ -125,7 +125,8 @@ void CodeValidator::validateProperties(AST *node, QVector<AST *> scope)
                 LangError error;
                 error.type = LangError::InvalidPort;
                 error.lineNumber = block->getLine();
-                error.errorTokens << blockType << portName;
+                error.errorTokens.push_back(blockType.toStdString());
+                error.errorTokens.push_back(portName.toStdString());
                 m_errors << error;
             } else {
                 AST *portValue = port->getValue();
@@ -135,7 +136,9 @@ void CodeValidator::validateProperties(AST *node, QVector<AST *> scope)
                     LangError error;
                     error.type = LangError::InvalidPortType;
                     error.lineNumber = block->getLine();
-                    error.errorTokens << blockType << portName << portTypeName;
+                    error.errorTokens.push_back(blockType.toStdString());
+                    error.errorTokens.push_back(portName.toStdString());
+                    error.errorTokens.push_back(portTypeName.toStdString());
                     m_errors << error;
                 }
             }
@@ -157,7 +160,8 @@ void CodeValidator::validateBundleIndeces(AST *node, QVector<AST *> scope)
             LangError error;
             error.type = LangError::IndexMustBeInteger;
             error.lineNumber = bundle->getLine();
-            error.errorTokens << QString::fromStdString(bundle->getName()) << getPortTypeName(type);
+            error.errorTokens.push_back(bundle->getName());
+            error.errorTokens.push_back(getPortTypeName(type).toStdString());
             m_errors << error;
         }
     }
@@ -178,8 +182,9 @@ void CodeValidator::validateBundleSizes(AST *node, QVector<AST *> scope)
             LangError error;
             error.type = LangError::BundleSizeMismatch;
             error.lineNumber = node->getLine();
-            error.errorTokens << QString::fromStdString(block->getBundle()->getName())
-                              << QString::number(size) << QString::number(datasize);
+            error.errorTokens.push_back(block->getBundle()->getName());
+            error.errorTokens.push_back(QString::number(size).toStdString());
+            error.errorTokens.push_back(QString::number(datasize).toStdString());
             m_errors << error;
         }
 
@@ -214,8 +219,8 @@ void CodeValidator::validateSymbolUniqueness(AST *node, QVector<AST *> scope)
                 LangError error;
                 error.type = LangError::DuplicateSymbol;
                 error.lineNumber = sibling->getLine();
-                error.errorTokens << nodeName
-                                  << QString::number(node->getLine());
+                error.errorTokens.push_back(nodeName.toStdString());
+                error.errorTokens.push_back(QString::number(node->getLine()).toStdString());
                 m_errors << error;
             }
         }
@@ -281,7 +286,9 @@ void CodeValidator::validateStreamInputSize(StreamNode *stream, QVector<AST *> s
         LangError error;
         error.type = LangError::StreamMemberSizeMismatch;
         error.lineNumber = right->getLine();
-        error.errorTokens << QString::number(leftOutSize) << getNodeText(left) <<  QString::number(rightInSize) ;
+        error.errorTokens.push_back(QString::number(leftOutSize).toStdString());
+        error.errorTokens.push_back(getNodeText(left).toStdString());
+        error.errorTokens.push_back(QString::number(rightInSize).toStdString());
         errors << error;
     }
     if (right->getNodeType() == AST::Stream) {
@@ -664,7 +671,7 @@ int CodeValidator::evaluateConstInteger(AST *node, QVector<AST *> scope, AST *tr
         LangError error;
         error.type = LangError::InvalidType;
         error.lineNumber = bundle->getLine();
-        error.errorTokens << QString::fromStdString(bundle->getName());
+        error.errorTokens.push_back(bundle->getName());
         errors << error;
     } else if (node->getNodeType() == AST::Expression) {
         // TODO: check expression out
@@ -672,7 +679,7 @@ int CodeValidator::evaluateConstInteger(AST *node, QVector<AST *> scope, AST *tr
         LangError error;
         error.type = LangError::InvalidType;
         error.lineNumber = node->getLine();
-        error.errorTokens << getPortTypeName(resolveNodeOutType(node, scope, tree));
+        error.errorTokens.push_back(getPortTypeName(resolveNodeOutType(node, scope, tree)).toStdString());
         errors << error;
     }
     return result;
@@ -702,7 +709,7 @@ double CodeValidator::evaluateConstReal(AST *node, QVector<AST *> scope, AST *tr
             LangError error;
             error.type = LangError::UndeclaredSymbol;
             error.lineNumber = node->getLine();
-            error.errorTokens << name;
+            error.errorTokens.push_back(name.toStdString());
             errors << error;
         }
         if(declaration && declaration->getNodeType() == AST::Block) {
@@ -717,7 +724,7 @@ double CodeValidator::evaluateConstReal(AST *node, QVector<AST *> scope, AST *tr
         LangError error;
         error.type = LangError::InvalidType;
         error.lineNumber = node->getLine();
-        error.errorTokens << getPortTypeName(resolveNodeOutType(node, scope, tree));
+        error.errorTokens.push_back(getPortTypeName(resolveNodeOutType(node, scope, tree)).toStdString());
         errors << error;
     }
     return result;
@@ -766,7 +773,7 @@ AST *CodeValidator::getMemberFromList(ListNode *node, int index, QList<LangError
         LangError error;
         error.type = LangError::ArrayIndexOutOfRange;
         error.lineNumber = node->getLine();
-        error.errorTokens << QString::number(index);
+        error.errorTokens.push_back(QString::number(index).toStdString());
         errors << error;
         return NULL;
     }
@@ -929,52 +936,3 @@ QString CodeValidator::getPortTypeName(CodeValidator::PortType type)
     return "";
 }
 
-
-
-QString LangError::getErrorText() {
-    QString errorText;
-    switch(type) {
-    case Syntax:
-        errorText = "Syntax Error";
-        break;
-    case UnknownType:
-        errorText = QString("Unknown Type Error. Type '%1' not recognized.")
-                .arg(errorTokens[0]);
-        break;
-    case InvalidType:
-        errorText = "Invalid Type Error";
-        break;
-    case InvalidPort:
-        errorText = "Invalid port Error";
-        break;
-    case InvalidPortType:
-        errorText = QString("Invalid port type Error. Port '%1' in Block '%2' expects '%3'")
-                .arg(errorTokens[0]).arg(errorTokens[1]).arg(errorTokens[2]);
-        break;
-    case IndexMustBeInteger:
-        errorText = "Index to array must be integer ";
-        break;
-    case BundleSizeMismatch:
-        errorText = "Bundle Size Mismatch Error";
-        break;
-    case ArrayIndexOutOfRange:
-        errorText = "Array Index out of Range Error";
-        break;
-    case DuplicateSymbol:
-        errorText = "Duplicate Symbol Error";
-        break;
-    case InconsistentList:
-        errorText = "Inconsistent List Error";
-        break;
-    case UndeclaredSymbol:
-        errorText = QString("Undeclared Symbol '%1'")
-                .arg(errorTokens[0]);
-        break;
-    case None:
-    default:
-        break;
-    }
-
-    errorText += " in line " + QString::number(lineNumber);
-    return errorText;
-}

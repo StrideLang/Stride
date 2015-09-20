@@ -1,5 +1,7 @@
 %{
 #include <iostream>
+#include <string>
+#include <vector>
 
 #include <cstdio>  // for fopen
 #include <cstdarg>  //for var args
@@ -13,13 +15,17 @@ extern "C" int yylineno;
 extern "C" char * yytext;
 extern "C" FILE *yyin;
 
+std::vector<LangError> parseErrors;
+
 void yyerror(const char *s, ...);
 
 AST *tree_head;
 
 AST *parse(const char *filename);
 
-int error = 0;
+std::vector<LangError> getErrors();
+
+//#define DEBUG
 
 #ifdef DEBUG
 #define COUT cout
@@ -165,7 +171,7 @@ start:
                         COUT << "Stream Definition Resolved!" << ENDL;
                     }
     |	ERROR		{
-                        yyerror("Unrecognised Character: ", $1);
+                        yyerror("Unrecognized character", $1);
                     }
 ;
 
@@ -961,10 +967,18 @@ valueComp:
 void yyerror(const char *s, ...){
     va_list ap;
     va_start(ap, s);
-    COUT << ENDL << ENDL << "ERROR: " << s ; // << " => " << va_arg(ap, char*) << ENDL;
+    COUT << ENDL << ENDL << "ERROR: "; // << s << " => " << va_arg(ap, char*) << ENDL;
     COUT << "Unexpected token: \"" << yytext << "\" on line: " <<  yylineno << ENDL;
     va_end(ap);
-    error++;
+    LangError newError;
+    newError.type = LangError::Syntax;
+    newError.errorTokens.push_back(std::string(yytext));
+    newError.lineNumber = yylineno;
+    parseErrors.push_back(newError);
+}
+
+std::vector<LangError> getErrors() {
+    return parseErrors;
 }
 
 AST *parse(const char *filename){
@@ -977,7 +991,7 @@ AST *parse(const char *filename){
         COUT << "Error C setting locale.";
     }
 
-    error = 0;
+    parseErrors.clear();
     file = fopen(fileName, "r");
 
     if (!file){
@@ -993,8 +1007,8 @@ AST *parse(const char *filename){
     yylineno = 1;
     yyparse();
 
-    if (error > 0){
-        COUT << ENDL << "Number of Errors: " << error << ENDL;
+    if (parseErrors.size() > 0){
+        COUT << ENDL << "Number of Errors: " << parseErrors.size() << ENDL;
         tree_head->deleteChildren();
         delete tree_head;
         return ast;

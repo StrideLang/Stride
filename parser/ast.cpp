@@ -3,6 +3,7 @@
 #include "ast.h"
 
 extern AST *parse(const char* fileName);
+extern std::vector<LangError> getErrors();
 
 AST::AST()
 {
@@ -59,6 +60,11 @@ AST *AST::deepCopy()
 AST *AST::parseFile(const char *fileName)
 {
     return parse(fileName);
+}
+
+vector<LangError> AST::getParseErrors()
+{
+    return getErrors();
 }
 
 double AST::getRate() const

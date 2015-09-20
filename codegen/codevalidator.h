@@ -6,30 +6,6 @@
 #include "streamparser.h"
 #include "streamplatform.h"
 
-class LangError {
-public:
-    typedef enum {
-        Syntax,
-        UnknownType,
-        InvalidType,
-        InvalidPort,
-        InvalidPortType,
-        IndexMustBeInteger,
-        BundleSizeMismatch,
-        ArrayIndexOutOfRange,
-        DuplicateSymbol,
-        InconsistentList,
-        StreamMemberSizeMismatch,
-        UndeclaredSymbol,
-        None
-    } ErrorType;
-
-    ErrorType type;
-    QStringList errorTokens;
-    int lineNumber;
-    QString getErrorText();
-};
-
 class CodeValidator
 {
 public:

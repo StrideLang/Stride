@@ -71,14 +71,21 @@ void ProjectWindow::build()
     saveFile();
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     AST *tree;
+    QList<LangError> errors;
     tree = AST::parseFile(editor->filename().toLocal8Bit().constData());
 //    tree = AST::parseFile(editor->filename().toStdString().c_str());
+    if (!tree) {
+        vector<LangError> syntaxErrors = AST::getParseErrors();
+        for (unsigned int i = 0; i < syntaxErrors.size(); i++) {
+            errors << syntaxErrors[i];
+        }
+    }
     CodeValidator validator(m_platformsRootDir, tree);
-    QList<LangError> errors = validator.getErrors();
+    errors << validator.getErrors();
     editor->setErrors(errors);
 
     foreach(LangError error, errors) {
-        ui->consoleText->insertPlainText(error.getErrorText() + "\n");
+        ui->consoleText->insertPlainText(QString::fromStdString(error.getErrorText()) + "\n");
         return;
     }
     if (tree) {

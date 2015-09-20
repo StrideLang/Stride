@@ -2,6 +2,7 @@
 #define AST_H
 
 #include <vector>
+#include "langerror.h"
 
 using namespace std;
 
@@ -55,6 +56,7 @@ public:
 
 
     static AST * parseFile(const char *fileName);
+    static vector<LangError> getParseErrors();
 
     double getRate() const;
     void setRate(double rate);
