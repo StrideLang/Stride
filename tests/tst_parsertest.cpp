@@ -21,8 +21,8 @@ private Q_SLOTS:
 
 
     //Expansion
-    void testStreamExpansion();
-    void testMultichannelUgens();
+	void testStreamExpansion();
+	void testMultichannelUgens();
     void testConstantResolution();
     void testStreamRates();
 

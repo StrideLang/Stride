@@ -72,13 +72,20 @@ public:
     static AST *getValueFromConstBlock(BlockNode *block);
     static AST *getMemberFromList(ListNode *node, int index, QList<LangError> &errors);
 
-    static int largestNodeSize(StreamNode *stream, AST *tree);
+    /// Number of parallel streams that a single stream can be broken up into
     static int numParallelStreams(StreamNode *stream, StreamPlatform &platform, QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
+
+    /// Get the number of parallel nodes implicit in node. i.e. into how many parallel streams
+    /// can the node be broken up.
     static int getNodeSize(AST *node, AST *tree);
+
+
     static int getNodeNumOutputs(AST *node, StreamPlatform &platform, QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
     static int getNodeNumInputs(AST *node, StreamPlatform &platform, QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
-    static int getBlockBundleDeclaredSize(BlockNode *block, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
-    static int getMaximumPropertySize(vector<PropertyNode *> &properties, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
+
+    static int getBlockDeclaredSize(BlockNode *block, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
+
+    static int getLargestPropertySize(vector<PropertyNode *> &properties, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
 
     static QString getPortTypeName(PortType type);
 

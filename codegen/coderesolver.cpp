@@ -355,7 +355,7 @@ void CodeResolver::sliceStreams()
     m_tree->deleteChildren();
     vector<AST *> newNodesStl;
     QVector<AST *>::iterator i = newNodes.end();
-    while (i != newNodes.begin()) {
+    while (i != newNodes.begin()) { // Now reverse again while putting in STL vector
         --i;
         newNodesStl.push_back(*i);
     }
@@ -535,26 +535,24 @@ QVector<AST *> CodeResolver::expandStreamNode(StreamNode *stream)
 
 QVector<AST *> CodeResolver::sliceStream(StreamNode *stream)
 {
-    int size = CodeValidator::largestNodeSize(stream, m_tree);
+    QList<LangError> errors;
+    QVector<AST *> scope;
+    int size = CodeValidator::numParallelStreams(stream, m_platform, scope, m_tree, errors);
+
     QVector<AST *> streams;
-    if (size == 1) {
-        // FIXME: This check should be not for single channel but for single path (e.g. chain of 2 stereo ugens)
+    if (size == 1 || size == -1) {
         streams << stream->deepCopy();
         return streams;
     }
     AST *left = stream->getLeft();
 //    AST *marker = stream->getLeft(); // To mark where last split occured
-    QList<LangError> errors;
-    QVector<AST *> scope;
-    size = CodeValidator::getNodeNumOutputs(left, m_platform, scope, m_tree, errors)
-            * CodeValidator::getNodeSize(left, m_tree);
-    Q_ASSERT(size >= 0);
+    int numOutputs = CodeValidator::getNodeNumOutputs(left, m_platform, scope, m_tree, errors);
+    Q_ASSERT(numOutputs >= 0);
     AST *nextNode = stream->getRight();
     while (nextNode) {
         if (nextNode->getNodeType() == AST::Stream) {
             StreamNode *rightStream = static_cast<StreamNode *>(nextNode);
-            int nextSize = CodeValidator::getNodeNumInputs(rightStream->getLeft(), m_platform, scope, m_tree, errors)
-                    * CodeValidator::getNodeSize(rightStream->getLeft(), m_tree);
+            int nextSize = CodeValidator::getNodeSize(rightStream->getLeft(), m_tree);
             Q_ASSERT(nextSize != -1);
 //            Q_ASSERT(nextSize >=)
             if (nextSize > size) {
