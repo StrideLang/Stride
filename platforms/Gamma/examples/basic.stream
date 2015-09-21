@@ -1,4 +1,4 @@
-use Gamma version 1.0
+use Gamma version 1.0 on PC
 
 constant String {
 value: "hello"
@@ -13,6 +13,6 @@ signal Out[2] {
 	default: [1,2]
 }
 
-AudioIn >> level(gain: 0.1) >> AudioOut;
+AudioIn >> Level(gain: 0.1) >> AudioOut;
 
 Test >> Out;

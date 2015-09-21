@@ -1,8 +1,8 @@
-use Gamma version 1.0
+use Gamma version 1.0 on PC
 
-constant CarrierFreq { value: 440}
+constant CarrierFreq { value: 220}
 
-constant CMRatio { 	value: 0.5 }
+constant CMRatio { 	value: 3 }
 
 constant ModFreq {	value: CarrierFreq * CMRatio }
 
@@ -12,15 +12,15 @@ constant ModIndex {	value: 1 }
 #		rate: AudioRate
 #}
 
-oscillator (
+Oscillator (
         type:           'sine'
         frequency:      ModFreq
-) >> map(        enableMapping:  on
+) >> Map(        enableMapping:  on
         minimum:        CarrierFreq - (ModIndex * ModFreq)
         maximum:        CarrierFreq + (ModIndex * ModFreq)
 		rate: AudioRate) >> Modulator;
 
-oscillator (
+Oscillator (
         type:           'sine'
         frequency:      Modulator
-) >> level(gain: 0.1) >> AudioOut;
+) >> Level(gain: 0.1) >> AudioOut;
