@@ -51,7 +51,6 @@ DISTFILES += \
     data/test.stream \
     data/noneswitch.stream \
     data/platfromBasic.stream \
-    data/platformBasic.stream \
     data/bundleResolution.stream \
     data/errorDuplicate.stream \
     data/errorLists.stream \
@@ -73,7 +72,8 @@ DISTFILES += \
     data/introStreamRate.stream \
     data/introVocoder.stream \
     data/introModulation.stream \
-    data/bundle.stream
+    data/bundle.stream \
+    data/platformObjects.stream
 
 # Link to codegen library
 

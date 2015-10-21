@@ -278,7 +278,7 @@ void ParserTest::testPlatform()
 void ParserTest::testPlatformCommonObjects()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/platformBasic.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/platformObjects.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
     QVERIFY(!generator.isValid());
@@ -814,7 +814,6 @@ void ParserTest::testTreeBuildStream()
     tree = AST::parseFile(QString(QFINDTESTDATA("data/stream.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
     vector<AST *> nodes = tree->getChildren();
-    QVERIFY(nodes.size() == 10);
 
     // Val1 >> Val2 ;
     StreamNode *node = static_cast<StreamNode *>(nodes.at(1));
@@ -1041,6 +1040,24 @@ void ParserTest::testTreeBuildStream()
     QVERIFY(list->getNodeType() == AST::List);
     QVERIFY(list->getLine() == 18);
 
+    node = static_cast<StreamNode *>(nodes.at(10));
+    QVERIFY(node->getNodeType() == AST::Stream);
+    QVERIFY(node->getLeft()->getNodeType() == AST::List);
+    QVERIFY(node->getRight()->getNodeType() == AST::List);
+    ListNode *l = static_cast<ListNode *>(node->getLeft());
+    QVERIFY(l->size() == 2);
+    vector<AST *> elements = l->getChildren();
+    QVERIFY(elements.size() == 2);
+    QVERIFY(elements.at(0)->getNodeType() == AST::Bundle);
+    QVERIFY(elements.at(1)->getNodeType() == AST::Bundle);
+    l = static_cast<ListNode *>(node->getRight());
+    QVERIFY(l->size() == 2);
+    elements = l->getChildren();
+    QVERIFY(elements.size() == 2);
+    QVERIFY(elements.at(0)->getNodeType() == AST::Bundle);
+    QVERIFY(elements.at(1)->getNodeType() == AST::Bundle);
+
+    QVERIFY(l->getLine() == 20);
 
     tree->deleteChildren();
     delete tree;
