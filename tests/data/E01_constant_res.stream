@@ -11,3 +11,25 @@ constant Const5 {value: -Const3}
 constant ConstInt1 {value: 2}
 
 constant ConstInt2 {value: ConstInt1 + 1}
+constant ConstInt3 {value: ConstInt1 - 3}
+constant ConstInt4 {value: ConstInt1 * 4}
+constant ConstInt5 {value: ConstInt1 / 2}
+
+# Float and int operations in expressions
+constant ConstFloat1 {value: Const1 + 1}
+constant ConstFloat2 {value: Const1 - 3}
+constant ConstFloat3 {value: Const1 * 4}
+constant ConstFloat4 {value: Const1 / 2}
+
+# Float and float operations in expressions
+constant ConstFloat5 {value: Const1 + 1.0}
+constant ConstFloat6 {value: Const1 - 3.0}
+constant ConstFloat7 {value: Const1 * 4.0}
+constant ConstFloat8 {value: Const1 / 2.0}
+
+# Unary operators
+constant ConstInt6 {value: -ConstInt1}
+#constant ConstInt7 {value: (ConstInt1 * 15) | 16}
+#constant ConstInt8 {value: (ConstInt1 * 15) & 8}
+#constant ConstInt9 {value: ~(ConstInt1 * 15)}
+

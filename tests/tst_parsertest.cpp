@@ -76,7 +76,6 @@ void ParserTest::testMultichannelUgens()
 
 void ParserTest::testConstantResolution()
 {
-    // TODO: Add checks for operators working and integer/real handling
     AST *tree;
     tree = parse(QString(QFINDTESTDATA("data/E01_constant_res.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
@@ -111,6 +110,107 @@ void ParserTest::testConstantResolution()
     QVERIFY(value != NULL);
     QVERIFY(value->getNodeType() == AST::Int);
     QVERIFY(value->getIntValue() == 3);
+
+//    constant ConstInt3 {value: ConstInt1 - 3}
+//    constant ConstInt4 {value: ConstInt1 * 4}
+//    constant ConstInt5 {value: ConstInt1 / 2}
+
+    block = static_cast<BlockNode *>(tree->getChildren().at(8));
+    QVERIFY(block->getNodeType() == AST::Block);
+    value = static_cast<ValueNode *>(block->getPropertyValue("value"));
+    QVERIFY(value != NULL);
+    QVERIFY(value->getNodeType() == AST::Int);
+    QVERIFY(value->getIntValue() == -1);
+
+    block = static_cast<BlockNode *>(tree->getChildren().at(9));
+    QVERIFY(block->getNodeType() == AST::Block);
+    value = static_cast<ValueNode *>(block->getPropertyValue("value"));
+    QVERIFY(value != NULL);
+    QVERIFY(value->getNodeType() == AST::Int);
+    QVERIFY(value->getIntValue() == 8);
+
+    block = static_cast<BlockNode *>(tree->getChildren().at(10));
+    QVERIFY(block->getNodeType() == AST::Block);
+    value = static_cast<ValueNode *>(block->getPropertyValue("value"));
+    QVERIFY(value != NULL);
+    QVERIFY(value->getNodeType() == AST::Int);
+    QVERIFY(value->getIntValue() == 1);
+
+//# Float and int operations in expressions
+//constant ConstFloat1 {value: Const1 + 1}
+//constant ConstFloat2 {value: Const1 - 3}
+//constant ConstFloat3 {value: Const1 * 4}
+//constant ConstFloat4 {value: Const1 / 2}
+
+    block = static_cast<BlockNode *>(tree->getChildren().at(11));
+    QVERIFY(block->getNodeType() == AST::Block);
+    value = static_cast<ValueNode *>(block->getPropertyValue("value"));
+    QVERIFY(value != NULL);
+    QVERIFY(value->getNodeType() == AST::Real);
+    QVERIFY(value->getRealValue() == 3.0);
+
+    block = static_cast<BlockNode *>(tree->getChildren().at(12));
+    QVERIFY(block->getNodeType() == AST::Block);
+    value = static_cast<ValueNode *>(block->getPropertyValue("value"));
+    QVERIFY(value != NULL);
+    QVERIFY(value->getNodeType() == AST::Real);
+    QVERIFY(value->getRealValue() == -1.0);
+
+    block = static_cast<BlockNode *>(tree->getChildren().at(13));
+    QVERIFY(block->getNodeType() == AST::Block);
+    value = static_cast<ValueNode *>(block->getPropertyValue("value"));
+    QVERIFY(value != NULL);
+    QVERIFY(value->getNodeType() == AST::Real);
+    QVERIFY(value->getRealValue() == 8.0);
+
+    block = static_cast<BlockNode *>(tree->getChildren().at(14));
+    QVERIFY(block->getNodeType() == AST::Block);
+    value = static_cast<ValueNode *>(block->getPropertyValue("value"));
+    QVERIFY(value != NULL);
+    QVERIFY(value->getNodeType() == AST::Real);
+    QVERIFY(value->getRealValue() == 1.0);
+
+//# Float and float operations in expressions
+//constant ConstFloat5 {value: Const1 + 1.0}
+//constant ConstFloat6 {value: Const1 - 3.0}
+//constant ConstFloat7 {value: Const1 * 4.0}
+//constant ConstFloat8 {value: Const1 / 2.0}
+
+    block = static_cast<BlockNode *>(tree->getChildren().at(15));
+    QVERIFY(block->getNodeType() == AST::Block);
+    value = static_cast<ValueNode *>(block->getPropertyValue("value"));
+    QVERIFY(value != NULL);
+    QVERIFY(value->getNodeType() == AST::Real);
+    QVERIFY(value->getRealValue() == 3.0);
+
+    block = static_cast<BlockNode *>(tree->getChildren().at(16));
+    QVERIFY(block->getNodeType() == AST::Block);
+    value = static_cast<ValueNode *>(block->getPropertyValue("value"));
+    QVERIFY(value != NULL);
+    QVERIFY(value->getNodeType() == AST::Real);
+    QVERIFY(value->getRealValue() == -1.0);
+
+    block = static_cast<BlockNode *>(tree->getChildren().at(17));
+    QVERIFY(block->getNodeType() == AST::Block);
+    value = static_cast<ValueNode *>(block->getPropertyValue("value"));
+    QVERIFY(value != NULL);
+    QVERIFY(value->getNodeType() == AST::Real);
+    QVERIFY(value->getRealValue() == 8.0);
+
+    block = static_cast<BlockNode *>(tree->getChildren().at(18));
+    QVERIFY(block->getNodeType() == AST::Block);
+    value = static_cast<ValueNode *>(block->getPropertyValue("value"));
+    QVERIFY(value != NULL);
+    QVERIFY(value->getNodeType() == AST::Real);
+    QVERIFY(value->getRealValue() == 1.0);
+
+
+//# Unary operators
+//constant ConstInt6 {value: -ConstInt1}
+//#constant ConstInt7 {value: (ConstInt1 * 15) | 16}
+//#constant ConstInt8 {value: (ConstInt1 * 15) & 8}
+//#constant ConstInt9 {value: ~(ConstInt1 * 15)}
+
 
     tree->deleteChildren();
     delete tree;
