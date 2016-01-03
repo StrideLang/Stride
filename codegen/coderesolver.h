@@ -12,6 +12,7 @@
 #include "blocknode.h"
 #include "namenode.h"
 #include "rangenode.h"
+#include "valuenode.h"
 
 class CodeResolver
 {
@@ -37,10 +38,21 @@ private:
     void sliceStreams();
 
 //    void reduceExpressions();
-    bool reduceConstExpression(ExpressionNode *expr, QVector<AST *> scope, AST *tree, double &expressionResult);
-    void resolveConstantInProperty(PropertyNode *property, QVector<AST *> scope);
+    ValueNode *reduceConstExpression(ExpressionNode *expr, QVector<AST *> scope, AST *tree);
+    ValueNode *resolveConstant(AST *value, QVector<AST *> scope);
     void resolveConstantsInNode(AST *node, QVector<AST *> scope);
     double getDefaultForTypeAsDouble(QString type, QString port);
+
+    // Operators
+    ValueNode *multiply(ValueNode *left, ValueNode *right);
+    ValueNode *divide(ValueNode *left, ValueNode *right);
+    ValueNode *add(ValueNode *left, ValueNode *right);
+    ValueNode *subtract(ValueNode *left, ValueNode *right);
+    ValueNode *unaryMinus(ValueNode *value);
+    ValueNode *logicalAnd(ValueNode *left, ValueNode *right);
+    ValueNode *logicalOr(ValueNode *left, ValueNode *right);
+    ValueNode *logicalNot(ValueNode *left);
+
 
     QVector<AST *> expandStreamNode(StreamNode *stream);
     AST *expandStream(AST *node, int index, int rightNumInputs = 1, int leftNumOutputs = 1);

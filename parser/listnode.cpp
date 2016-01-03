@@ -44,6 +44,19 @@ int ListNode::size()
     return m_children.size();
 }
 
+void ListNode::replaceMember(AST *replacement, AST *member)
+{
+    vector<AST *> children = getChildren();
+    for(unsigned int i = 1; i < children.size(); i++) {
+        if (children.at(i) == member) {
+            children.at(i) = replacement;
+            member->deleteChildren();
+            delete member;
+            return;
+        }
+    }
+}
+
 AST *ListNode::deepCopy()
 {
     vector<AST *> children = getChildren();

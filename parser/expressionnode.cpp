@@ -43,6 +43,7 @@ AST *ExpressionNode::getRight() const
 
 void ExpressionNode::replaceLeft(AST *newLeft)
 {
+    assert(!this->isUnary());
     AST *right = getRight();
     getLeft()->deleteChildren();
     delete getLeft();
@@ -53,6 +54,7 @@ void ExpressionNode::replaceLeft(AST *newLeft)
 
 void ExpressionNode::replaceRight(AST *newRight)
 {
+    assert(!this->isUnary());
     AST *left = getLeft();
     getRight()->deleteChildren();
     delete getRight();
@@ -63,6 +65,7 @@ void ExpressionNode::replaceRight(AST *newRight)
 
 void ExpressionNode::replaceValue(AST *newValue)
 {
+	assert(this->isUnary());
     deleteChildren();
     m_children.push_back(newValue);
 }

@@ -14,6 +14,8 @@ public:
 
     int size();
 
+    void replaceMember(AST *replacement, AST *member);
+
     AST *deepCopy();
 };
 

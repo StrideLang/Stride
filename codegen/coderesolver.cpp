@@ -362,13 +362,10 @@ void CodeResolver::sliceStreams()
     m_tree->setChildren(newNodesStl);
 }
 
-bool CodeResolver::reduceConstExpression(ExpressionNode *expr, QVector<AST *> scope, AST *tree, double &expressionResult)
+ValueNode *CodeResolver::reduceConstExpression(ExpressionNode *expr, QVector<AST *> scope, AST *tree)
 {
-    bool isConstant = false;
-    QList<LangError> errorsLeft;
-    QList<LangError> errorsRight;
-
-    AST *left;
+    AST *left, *right;
+    bool isConstant;
 
     if (!expr->isUnary()) {
         left = expr->getLeft();
@@ -376,93 +373,87 @@ bool CodeResolver::reduceConstExpression(ExpressionNode *expr, QVector<AST *> sc
         left = expr->getValue();
     }
 
-    if (left->getNodeType() == AST::Expression) {
-        double expressionValue = 0;
-        isConstant =
-                reduceConstExpression(static_cast<ExpressionNode *>(left), scope, m_tree, expressionValue);
-        if (isConstant) {
-            ValueNode *newValue = new ValueNode(expressionValue, left->getLine());
+    ValueNode *newValue = resolveConstant(left, scope);
+    if (newValue) {
+        if (expr->isUnary()) {
+            expr->replaceValue(newValue);
+        } else {
             expr->replaceLeft(newValue);
         }
+        left = newValue;
     }
-    double leftValue = CodeValidator::evaluateConstReal(left, scope, tree, errorsLeft);
-    double rightValue;
     if (!expr->isUnary()) {
-        AST *right = expr->getRight();
-        if (right->getNodeType() == AST::Expression) {
-            double expressionValue = 0;
-            isConstant =
-                    reduceConstExpression(static_cast<ExpressionNode *>(right), scope, tree, expressionValue);
-            if (isConstant) {
-                ValueNode *newValue = new ValueNode(expressionValue, right->getLine());
-                expr->replaceRight(newValue);
-            }
+        right = expr->getRight();
+        newValue = resolveConstant(right, scope);
+        if (newValue) {
+            expr->replaceRight(newValue);
+            right = newValue;
         }
-        rightValue = CodeValidator::evaluateConstReal(expr->getRight(), scope, tree, errorsRight);
+        isConstant = (left->getNodeType() == AST::Int || left->getNodeType() == AST::Real) && (right->getNodeType() == AST::Int || right->getNodeType() == AST::Real);
+    } else {
+        isConstant = (left->getNodeType() == AST::Int || left->getNodeType() == AST::Real);
     }
-    if ( errorsLeft.size() == 0 && errorsRight.size() == 0 ) {
+
+    if (isConstant) {
+        ValueNode *result = NULL;
         switch (expr->getExpressionType()) {
         case ExpressionNode::Multiply:
-            expressionResult = leftValue * rightValue;
+            result = multiply(static_cast<ValueNode *>(left), static_cast<ValueNode *>(right));
             break;
         case ExpressionNode::Divide:
-            expressionResult = leftValue / rightValue;
+            result = divide(static_cast<ValueNode *>(left), static_cast<ValueNode *>(right));
             break;
         case ExpressionNode::Add:
-            expressionResult = leftValue + rightValue;
+            result = add(static_cast<ValueNode *>(left), static_cast<ValueNode *>(right));
             break;
         case ExpressionNode::Subtract:
-            expressionResult = leftValue - rightValue;
+            result = subtract(static_cast<ValueNode *>(left), static_cast<ValueNode *>(right));
             break;
         case ExpressionNode::And:
-            expressionResult = (int) leftValue & (int) rightValue;
+            result = logicalAnd(static_cast<ValueNode *>(left), static_cast<ValueNode *>(right));
             break;
         case ExpressionNode::Or:
-            expressionResult = (int) leftValue | (int) rightValue;
+            result = logicalOr(static_cast<ValueNode *>(left), static_cast<ValueNode *>(right));
             break;
         case ExpressionNode::UnaryMinus:
-            expressionResult = -leftValue;
+            result = unaryMinus(static_cast<ValueNode *>(left));
             break;
         case ExpressionNode::LogicalNot:
-            expressionResult = ~((int) leftValue);
+            result = logicalNot(static_cast<ValueNode *>(left));
             break;
         default:
             Q_ASSERT(0 == 1); // Should never get here
             break;
         }
-        return true;
-    } else {
-        // Not a constant expression, can't resolve;
+        if(result) {
+            return result;
+        }
     }
-    return isConstant;
+    return NULL;
 }
 
-void CodeResolver::resolveConstantInProperty(PropertyNode *property, QVector<AST *> scope)
+ValueNode *CodeResolver::resolveConstant(AST* value, QVector<AST *> scope)
 {
-    AST *value = property->getValue();
+    ValueNode *newValue = NULL;
     if(value->getNodeType() == AST::Expression) {
         ExpressionNode *expr = static_cast<ExpressionNode *>(value);
-        double expressionValue = 0;
-        bool isConstant =
-                reduceConstExpression(expr, scope, m_tree, expressionValue);
-        if (isConstant) {
-            ValueNode *newValue = new ValueNode(expressionValue, expr->getLine());
-            property->replaceValue(newValue);
-        }
+        newValue = reduceConstExpression(expr, scope, m_tree);
+        return newValue;
     } else if(value->getNodeType() == AST::Name) {
-        QList<LangError> errors;
         NameNode *name = static_cast<NameNode *>(value);
         BlockNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), QVector<AST *>(), m_tree);
         if (block && block->getNodeType() == AST::Block && block->getObjectType() == "constant") { // Size == 1
-            double resolvedValue = CodeValidator::evaluateConstReal(value, QVector<AST *>(), m_tree, errors);
-            if (errors.size() == 0) {
-                ValueNode *newValue = new ValueNode(resolvedValue, value->getLine());
-                property->replaceValue(newValue);
+            AST *blockValue = block->getPropertyValue("value");
+            if (blockValue->getNodeType() == AST::Int || blockValue->getNodeType() == AST::Real ) {
+                return static_cast<ValueNode *>(blockValue->deepCopy());
             }
+            newValue = resolveConstant(block->getPropertyValue("value"), scope);
+            return newValue;
         }
     } else if (value->getNodeType() == AST::Bundle) {
 
     }
+    return NULL;
 }
 
 void CodeResolver::resolveConstantsInNode(AST *node, QVector<AST *> scope)
@@ -471,19 +462,46 @@ void CodeResolver::resolveConstantsInNode(AST *node, QVector<AST *> scope)
         StreamNode *stream = static_cast<StreamNode *>(node);
         resolveConstantsInNode(stream->getLeft(), scope);
         resolveConstantsInNode(stream->getRight(), scope);
-    } if (node->getNodeType() == AST::Function) {
+    } else if (node->getNodeType() == AST::Function) {
         FunctionNode *func = static_cast<FunctionNode *>(node);
         vector<PropertyNode *> properties = func->getProperties();
         foreach(PropertyNode *property, properties) {
-            resolveConstantInProperty(property, scope);
+            ValueNode *newValue = resolveConstant(property->getValue(), scope);
+            if (newValue) {
+                property->replaceValue(newValue);
+            }
         }
-
-    } else if(node->getNodeType() == AST::Block
-              || node->getNodeType() == AST::BlockBundle) {
+    } else if(node->getNodeType() == AST::Block) {
         BlockNode *block = static_cast<BlockNode *>(node);
         vector<PropertyNode *> properties = block->getProperties();
         foreach(PropertyNode *property, properties) {
-            resolveConstantInProperty(property, scope);
+            ValueNode *newValue = resolveConstant(property->getValue(), scope);
+            if (newValue) {
+                property->replaceValue(newValue);
+            }
+        }
+    } else if(node->getNodeType() == AST::BlockBundle) {
+        BlockNode *block = static_cast<BlockNode *>(node);
+        vector<PropertyNode *> properties = block->getProperties();
+        foreach(PropertyNode *property, properties) {
+            ValueNode *newValue = resolveConstant(property->getValue(), scope);
+            if (newValue) {
+                property->replaceValue(newValue);
+            }
+        }
+        BundleNode *bundle = block->getBundle();
+        ListNode *indexList = bundle->index();
+        vector<AST *> elements = indexList->getChildren();
+        foreach(AST *element, elements) {
+            if (element->getNodeType() == AST::Expression) {
+                ExpressionNode *expr = static_cast<ExpressionNode *>(element);
+                ValueNode *newValue = reduceConstExpression(expr, scope, m_tree);
+                if (newValue) {
+                    indexList->replaceMember(newValue, element);
+                    element->deleteChildren();
+                    delete element;
+                }
+            }
         }
     }
 }
@@ -508,6 +526,92 @@ double CodeResolver::getDefaultForTypeAsDouble(QString type, QString port)
         }
     }
     return outValue;
+}
+
+ValueNode *CodeResolver::multiply(ValueNode *left, ValueNode *right)
+{
+    if (left->getNodeType() == AST::Int && right->getNodeType() == AST::Int) {
+        return new ValueNode(left->getIntValue() * right->getIntValue(), left->getLine());
+    } else { // Automatic casting from int to real
+        Q_ASSERT((left->getNodeType() == AST::Real &&  right->getNodeType() == AST::Int)
+                 || (left->getNodeType() == AST::Int &&  right->getNodeType() == AST::Real)
+                 || (left->getNodeType() == AST::Real &&  right->getNodeType() == AST::Real));
+        return new ValueNode(left->toReal() * right->toReal(), left->getLine());
+    }
+    return NULL;
+}
+
+ValueNode *CodeResolver::divide(ValueNode *left, ValueNode *right)
+{
+    if (left->getNodeType() == AST::Int && right->getNodeType() == AST::Int) {
+        return new ValueNode(left->getIntValue() / right->getIntValue(), left->getLine());
+    } else { // Automatic casting from int to real
+        Q_ASSERT((left->getNodeType() == AST::Real &&  right->getNodeType() == AST::Int)
+                 || (left->getNodeType() == AST::Int &&  right->getNodeType() == AST::Real)
+                 || (left->getNodeType() == AST::Real &&  right->getNodeType() == AST::Real));
+        return new ValueNode(left->toReal() / right->toReal(), left->getLine());
+    }
+    return NULL;
+}
+
+ValueNode *CodeResolver::add(ValueNode *left, ValueNode *right)
+{
+    if (left->getNodeType() == AST::Int && right->getNodeType() == AST::Int) {
+        return new ValueNode(left->getIntValue() + right->getIntValue(), left->getLine());
+    } else { // Automatic casting from int to real
+        Q_ASSERT((left->getNodeType() == AST::Real &&  right->getNodeType() == AST::Int)
+                 || (left->getNodeType() == AST::Int &&  right->getNodeType() == AST::Real)
+                 || (left->getNodeType() == AST::Real &&  right->getNodeType() == AST::Real));
+        return new ValueNode(left->toReal() + right->toReal(), left->getLine());
+    }
+    return NULL;
+}
+
+ValueNode *CodeResolver::subtract(ValueNode *left, ValueNode *right)
+{
+    if (left->getNodeType() == AST::Int && right->getNodeType() == AST::Int) {
+        return new ValueNode(left->getIntValue() - right->getIntValue(), left->getLine());
+    } else { // Automatic casting from int to real
+        Q_ASSERT((left->getNodeType() == AST::Real &&  right->getNodeType() == AST::Int)
+                 || (left->getNodeType() == AST::Int &&  right->getNodeType() == AST::Real)
+                 || (left->getNodeType() == AST::Real &&  right->getNodeType() == AST::Real));
+        return new ValueNode(left->toReal() - right->toReal(), left->getLine());
+    }
+    return NULL;
+}
+
+ValueNode *CodeResolver::unaryMinus(ValueNode *value)
+{
+    if (value->getNodeType() == AST::Int) {
+        return new ValueNode(- value->getIntValue(), value->getLine());
+    } else if (value->getNodeType() == AST::Real){
+        return new ValueNode(- value->getRealValue(), value->getLine());
+    }
+    return NULL;
+}
+
+ValueNode *CodeResolver::logicalAnd(ValueNode *left, ValueNode *right)
+{
+    if (left->getNodeType() == AST::Int && right->getNodeType() == AST::Int) {
+        return new ValueNode(left->getIntValue() & right->getIntValue(), left->getLine());
+    }
+    return NULL;
+}
+
+ValueNode *CodeResolver::logicalOr(ValueNode *left, ValueNode *right)
+{
+    if (left->getNodeType() == AST::Int && right->getNodeType() == AST::Int) {
+        return new ValueNode(left->getIntValue() | right->getIntValue(), left->getLine());
+    }
+    return NULL;
+}
+
+ValueNode *CodeResolver::logicalNot(ValueNode *value)
+{
+    if (value->getNodeType() == AST::Int) {
+        return new ValueNode(~ (value->getIntValue()), value->getLine());
+    }
+    return NULL;
 }
 
 QVector<AST *> CodeResolver::expandStreamNode(StreamNode *stream)
