@@ -19,29 +19,27 @@ private:
 
 private Q_SLOTS:
 
-
     //Expansion
-	void testStreamExpansion();
-	void testMultichannelUgens();
     void testConstantResolution();
+	void testStreamExpansion();
+    void testMultichannelUgens();
     void testStreamRates();
 
     //Platform
-    void testPlatform();
     void testPlatformCommonObjects();
+    void testDuplicates();
     void testValueTypeBundleResolution();
     void testValueTypeExpressionResolution();
-    void testDuplicates();
     void testListConsistency();
 
     // Parser
-    void testTreeBuildNoneSwitch();
-    void testTreeBuildArray();
-    void testTreeBuildFunctions();
-    void testTreeBuildStream();
-    void testTreeBuildBundles();
-    void testTreeBuildBlocks();
-    void testTreeBuildBasic();
+    void testBundleIndeces();
+    void testBasicNoneSwitch();
+    void testBasicFunctions();
+    void testBasicStream();
+    void testBasicBundle();
+    void testBasicBlocks();
+    void testHeader();
     void testParser();
 };
 
@@ -78,8 +76,9 @@ void ParserTest::testMultichannelUgens()
 
 void ParserTest::testConstantResolution()
 {
+    // TODO: Add checks for operators working and integer/real handling
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/constantRes.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/E01_constant_res.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
     QVERIFY(generator.isValid());
@@ -98,6 +97,20 @@ void ParserTest::testConstantResolution()
     QVERIFY(value != NULL);
     QVERIFY(value->getNodeType() == AST::Real);
     QVERIFY(qFuzzyCompare(value->getRealValue(), -0.1));
+
+    block = static_cast<BlockNode *>(tree->getChildren().at(6));
+    QVERIFY(block->getNodeType() == AST::Block);
+    value = static_cast<ValueNode *>(block->getPropertyValue("value"));
+    QVERIFY(value != NULL);
+    QVERIFY(value->getNodeType() == AST::Int);
+    QVERIFY(value->getIntValue() == 2);
+
+    block = static_cast<BlockNode *>(tree->getChildren().at(7));
+    QVERIFY(block->getNodeType() == AST::Block);
+    value = static_cast<ValueNode *>(block->getPropertyValue("value"));
+    QVERIFY(value != NULL);
+    QVERIFY(value->getNodeType() == AST::Int);
+    QVERIFY(value->getIntValue() == 3);
 
     tree->deleteChildren();
     delete tree;
@@ -261,28 +274,15 @@ void ParserTest::testStreamExpansion()
     delete tree;
 }
 
-void ParserTest::testPlatform()
-{
-    AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/platform.stream")).toStdString().c_str());
-
-    QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
-    QVERIFY(generator.isValid());
-    QVERIFY(generator.platformIsValid());
-
-    tree->deleteChildren();
-    delete tree;
-}
-
 void ParserTest::testPlatformCommonObjects()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/platformObjects.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/P01_platform_objects.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
     QVERIFY(!generator.isValid());
     QList<LangError> errors = generator.getErrors();
+    QVERIFY(generator.platformIsValid());
 
 //    QVERIFY(errors.size() == 5);
 
@@ -320,7 +320,7 @@ void ParserTest::testPlatformCommonObjects()
 void ParserTest::testValueTypeBundleResolution()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/bundleResolution.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/P03_bundle_resolution.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
     QVERIFY(generator.platformIsValid());
@@ -492,7 +492,7 @@ void ParserTest::testValueTypeExpressionResolution()
 void ParserTest::testDuplicates()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/errorDuplicate.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/P02_check_duplicates.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
     QVERIFY(!generator.isValid());
@@ -529,10 +529,10 @@ void ParserTest::testListConsistency()
 //    delete tree;
 }
 
-void ParserTest::testTreeBuildNoneSwitch()
+void ParserTest::testBasicNoneSwitch()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/noneswitch.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/06_basic_noneswitch.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
     vector<AST *> nodes = tree->getChildren();
     QVERIFY(nodes.size() == 2);
@@ -576,10 +576,10 @@ void ParserTest::testTreeBuildNoneSwitch()
     delete tree;
 }
 
-void ParserTest::testTreeBuildArray()
+void ParserTest::testBundleIndeces()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/array.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/07_bundle_indeces.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
     vector<AST *> nodes = tree->getChildren();
     QVERIFY(nodes.size() == 23);
@@ -732,10 +732,10 @@ void ParserTest::testTreeBuildArray()
     delete tree;
 }
 
-void ParserTest::testTreeBuildFunctions()
+void ParserTest::testBasicFunctions()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/functions.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/05_basic_functions.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
     vector<AST *> nodes = tree->getChildren();
 
@@ -808,10 +808,10 @@ void ParserTest::testTreeBuildFunctions()
     delete tree;
 }
 
-void ParserTest::testTreeBuildStream()
+void ParserTest::testBasicStream()
 {
     AST *tree;
-    tree = AST::parseFile(QString(QFINDTESTDATA("data/stream.stream")).toStdString().c_str());
+    tree = AST::parseFile(QString(QFINDTESTDATA("data/04_basic_stream.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
     vector<AST *> nodes = tree->getChildren();
 
@@ -1063,10 +1063,10 @@ void ParserTest::testTreeBuildStream()
     delete tree;
 }
 
-void ParserTest::testTreeBuildBundles()
+void ParserTest::testBasicBundle()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/bundle.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/03_basic_bundle.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
     vector<AST *> nodes = tree->getChildren();
     QVERIFY(nodes.size() == 8);
@@ -1324,10 +1324,10 @@ void ParserTest::testTreeBuildBundles()
     delete tree;
 }
 
-void ParserTest::testTreeBuildBlocks()
+void ParserTest::testBasicBlocks()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/block.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/02_basic_blocks.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
     vector<AST *> nodes = tree->getChildren();
     QVERIFY(nodes.size() == 5);
@@ -1432,10 +1432,11 @@ void ParserTest::testTreeBuildBlocks()
     delete tree;
 }
 
-void ParserTest::testTreeBuildBasic()
+void ParserTest::testHeader()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/platform.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/01_header.stream")).toStdString().c_str());
+
     QVERIFY(tree != NULL);
     vector<AST *> nodes = tree->getChildren();
     QVERIFY(nodes.size() == 15);
@@ -1594,52 +1595,27 @@ void ParserTest::testTreeBuildBasic()
 
     tree->deleteChildren();
     delete tree;
-
-    tree = parse(QString(QFINDTESTDATA("data/simple.stream")).toStdString().c_str());
-    QVERIFY(tree != NULL);
-    nodes = tree->getChildren();
-    QVERIFY(nodes.size() == 2);
-    QVERIFY(nodes.at(1)->getNodeType() == AST::Stream);
-    StreamNode *stream_node = static_cast<StreamNode *>(nodes.at(1));
-    QVERIFY(stream_node->getLine() == 5);
-    QVERIFY(stream_node->getLeft()->getNodeType() == AST::Bundle);
-    QVERIFY(stream_node->getRight()->getNodeType() == AST::Bundle);
-    BundleNode *bundle = static_cast<BundleNode *>(stream_node->getLeft());
-    QVERIFY(bundle->getName() == "AudioIn");
-    QVERIFY(bundle->getLine() == 5);
-    ListNode *leafnode = bundle->index();
-    QVERIFY(leafnode->getNodeType() == AST::List);
-    QVERIFY(leafnode->getLine() == 5);
-    QVERIFY(leafnode->size() == 1);
-    ValueNode *value = static_cast<ValueNode *>(leafnode->getChildren().at(0));
-    QVERIFY(value->getNodeType() == AST::Int);
-    QVERIFY(value->getIntValue() == 1);
-
-    bundle = static_cast<BundleNode *>(stream_node->getRight());
-    QVERIFY(bundle->getName() == "AudioOut");
-    leafnode = bundle->index();
-    QVERIFY(leafnode->getNodeType() == AST::List);
-    QVERIFY(leafnode->getLine() == 5);
-    QVERIFY(leafnode->size() == 1);
-    value = static_cast<ValueNode *>(leafnode->getChildren().at(0));
-    QVERIFY(value->getNodeType() == AST::Int);
-    QVERIFY(value->getIntValue() == 2);
-
-    tree->deleteChildren();
-    delete tree;
 }
 
 void ParserTest::testParser()
 {
+    // TODO: This test can probably ne removed as it is covered in the individual tests above.
+    // Could be used perhaps to test parsing errors?
     AST *tree;
     QStringList files;
-    files << "data/platform.stream" << "data/simple.stream" << "data/array.stream" << "data/list.stream"
-          << "data/stream.stream" << "data/block.stream"
+    files << "data/01_header.stream" << "data/02_basic_blocks.stream" << "data/03_basic_bundle.stream"
+          << "data/04_basic_stream.stream" << "data/05_basic_functions.stream"
+          << "data/06_basic_noneswitch.stream" << "data/07_bundle_indeces.stream"
+
+          << "data/P01_platform_objects.stream" << "data/P02_check_duplicates.stream"
+          << "data/P03_bundle_resolution.stream"
+
+          << "data/E01_constant_res.stream"
+          << "data/list.stream"
           << "data/introBlock.stream"
           << "data/introConverter.stream" << "data/introFeedback.stream"
           << "data/introGenerator.stream" << "data/introProcessor.stream"
-          << "data/introRemote.stream"
-          << "data/functions.stream" << "data/test.stream" << "data/expansions.stream";
+          << "data/introRemote.stream"<< "data/test.stream" << "data/expansions.stream";
     foreach (QString file, files) {
         tree = parse(QString(QFINDTESTDATA(file)).toStdString().c_str());
         QVERIFY2(tree != NULL, QString("file:" + file).toStdString().c_str());

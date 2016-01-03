@@ -8,3 +8,6 @@ constant Const4 {value: Const1 + (Const2 * Const3)}
 
 constant Const5 {value: -Const3}
 
+constant ConstInt1 {value: 2}
+
+constant ConstInt2 {value: ConstInt1 + 1}

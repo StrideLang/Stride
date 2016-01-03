@@ -35,30 +35,19 @@ folder_01.target = data/
 DEPLOYMENTFOLDERS += folder_01
 
 DISTFILES += \
-    data/stream.stream \
-    data/block.stream \
-    data/array.stream \
     data/introFeedback.stream \
     data/list.stream \
-    data/block.stream \
-    data/platform.stream \
     data/introGenerator.stream \
     data/introBlock.stream \
     data/introProcessor.stream \
-    data/simple.stream \
     data/introConverter.stream \
     data/introRemote.stream \
     data/test.stream \
-    data/noneswitch.stream \
     data/platfromBasic.stream \
-    data/bundleResolution.stream \
-    data/errorDuplicate.stream \
     data/errorLists.stream \
-    data/functions.stream \
     data/expansions.stream \
     data/rates.stream \
     data/defaultProperties.stream \
-    data/constantRes.stream \
     data/shorthand.stream \
     data/multichn.stream \
     data/namespace.stream \
@@ -72,8 +61,17 @@ DISTFILES += \
     data/introStreamRate.stream \
     data/introVocoder.stream \
     data/introModulation.stream \
-    data/bundle.stream \
-    data/platformObjects.stream
+    data/01_header.stream \
+    data/02_basic_blocks.stream \
+    data/03_basic_bundle.stream \
+    data/04_basic_stream.stream \
+    data/05_basic_functions.stream \
+    data/07_bundle_indeces.stream \
+    data/06_basic_noneswitch.stream \
+    data/P01_platform_objects.stream \
+    data/P02_check_duplicates.stream \
+    data/P03_bundle_resolution.stream \
+    data/E01_constant_res.stream
 
 # Link to codegen library
 
