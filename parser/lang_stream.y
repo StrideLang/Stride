@@ -171,7 +171,7 @@ start:
                         COUT << "Stream Definition Resolved!" << ENDL;
                     }
     |	ERROR		{
-                        yyerror("Unrecognized character", $1);
+                        yyerror("Unrecognized character", $1, yyloc.first_line);
                     }
 ;
 
@@ -408,7 +408,15 @@ bundleDef:
             free($1);
         }
     |	WORD DOT UVAR '[' indexList ']'	{
-                                            COUT << "Bundle name: " << $3  << " in NameSpace: " << $1 << ENDL;
+            string ns;
+            ns.append($1); /* string constructor leaks otherwise! */
+            string s;
+            s.append($3); /* string constructor leaks otherwise! */
+            $$ = new BundleNode(s, ns, $5, yyloc.first_line);
+            COUT << "Bundle name: " << $3  << " in NameSpace: " << $1 << ENDL;
+            free($1);
+            free($3);
+
                                         }
 //bundleDef:
 //        UVAR '[' indexExp ']'           {
@@ -874,7 +882,14 @@ indexComp:
                             free($1);
                         }
     |	WORD DOT UVAR	{
-                            COUT << "Index/Size User variable: " << $3 << " in NameSpace: " << $1 << ENDL;
+            string ns;
+            ns.append($1); /* string constructor leaks otherwise! */
+            string s;
+            s.append($3); /* string constructor leaks otherwise! */
+            $$ = new NameNode(s, ns, yyloc.first_line);
+            COUT << "Index/Size User variable: " << $3 << " in NameSpace: " << $1 << ENDL;
+            free($1);
+            free($3);
                         }
     |	bundleDef       {
             BundleNode *bundle = $1;
@@ -896,8 +911,15 @@ streamComp:
                             free($1);
                         }
     |	WORD DOT UVAR	{
+                            string ns;
+                            ns.append($1); /* string constructor leaks otherwise! */
+                            string s;
+                            s.append($3); /* string constructor leaks otherwise! */
+                            $$ = new NameNode(s, ns, yyloc.first_line);
                             COUT << "User variable: " << $3 << " in NameSpace: " << $1 << ENDL;
                             COUT << "Streaming ... " << ENDL;
+                            free($1);
+                            free($3);
                         }
     |	bundleDef       {
                             COUT << "Resolving indexed bundle ..." << ENDL;
@@ -951,7 +973,14 @@ valueComp:
                             free($1);
                         }
     |	WORD DOT UVAR	{
+                            string ns;
+                            ns.append($1); /* string constructor leaks otherwise! */
+                            string s;
+                            s.append($3); /* string constructor leaks otherwise! */
+                            $$ = new NameNode(s, ns, yyloc.first_line);
                             COUT << "User variable: " << $3 << " in NameSpace: " << $1 << ENDL;
+                            free($1);
+                            free($3);
                         }
     |	bundleDef       {
                             $$ = $1;
@@ -967,13 +996,15 @@ valueComp:
 void yyerror(const char *s, ...){
     va_list ap;
     va_start(ap, s);
-    COUT << ENDL << ENDL << "ERROR: "; // << s << " => " << va_arg(ap, char*) << ENDL;
-    COUT << "Unexpected token: \"" << yytext << "\" on line: " <<  yylineno << ENDL;
+    const char *errorString = va_arg(ap, char*);
+    int line = va_arg(ap, int);
+    COUT << ENDL << ENDL << "ERROR: " << s ; //<< " => " << errorString << ENDL;
+    COUT << "Unexpected token: \"" << yytext << "\" on line: " <<  line << ENDL;
     va_end(ap);
     LangError newError;
     newError.type = LangError::Syntax;
     newError.errorTokens.push_back(std::string(yytext));
-    newError.lineNumber = yylineno;
+    newError.lineNumber = line;
     parseErrors.push_back(newError);
 }
 

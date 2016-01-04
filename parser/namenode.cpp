@@ -2,9 +2,16 @@
 
 
 NameNode::NameNode(string name, int line) :
+    AST(AST::Name, line), m_namespace("")
+{
+    m_name = name;
+}
+
+NameNode::NameNode(string name, string namespace_, int line) :
     AST(AST::Name, line)
 {
     m_name = name;
+    m_namespace = namespace_;
 }
 
 NameNode::~NameNode()

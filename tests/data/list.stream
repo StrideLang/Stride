@@ -2,9 +2,29 @@
 # LISTS
 #=======
 
+constant List_Integer [4] {
+        value: [ 16, 32, 64, 128 ]
+}
+
+constant List_Real [4] {
+        value: [ 16., 32.1, 64., 128. ]
+}
+
+constant List_Strings [4] {
+        value: [ '16', "32.1", '64', "128" ]
+}
+
+#These should trigger inconsistent constant errors
+
+constant List_Inconsistent [4] {
+        value: [ '16', "32.1", '64', 1 ]
+}
+
+constant List_Inconsistent2 [4] {
+        value: [ '16', "32.1", '64', 1.1 ]
+}
 
 # List of lists will parse
-# The following should work. All lists are integer lists.
 list IntegerList [3] {
         value: [[ 9, 8, 7 ] , [ 6, 5, 4 ] , [ 3, 2, 1 ] ]
 	meta:	'List of lists'

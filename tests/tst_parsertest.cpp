@@ -19,6 +19,8 @@ private:
 
 private Q_SLOTS:
 
+    void testNamespaces();
+
     //Expansion
     void testConstantResolution();
 	void testStreamExpansion();
@@ -50,7 +52,7 @@ ParserTest::ParserTest()
 void ParserTest::testMultichannelUgens()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/multichn.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/E03_multichn_streams.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
     QVERIFY(!generator.isValid());
@@ -219,7 +221,7 @@ void ParserTest::testConstantResolution()
 void ParserTest::testStreamRates()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/rates.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/E04_rates.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
     QVERIFY(generator.isValid());
@@ -304,7 +306,7 @@ void ParserTest::testStreamRates()
 void ParserTest::testStreamExpansion()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/expansions.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/E02_stream_expansions.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
     QVERIFY(generator.isValid());
@@ -626,51 +628,210 @@ void ParserTest::testListConsistency()
 //    QList<LangError> errors = generator.getErrors();
 
 //    tree->deleteChildren();
-//    delete tree;
+    //    delete tree;
 }
 
-void ParserTest::testBasicNoneSwitch()
+void ParserTest::testNamespaces()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/06_basic_noneswitch.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/08_namespace.stream")).toStdString().c_str());
     QVERIFY(tree != NULL);
     vector<AST *> nodes = tree->getChildren();
-    QVERIFY(nodes.size() == 2);
 
-    QVERIFY(nodes.at(0)->getNodeType() == AST::Block);
-    BlockNode *block = static_cast<BlockNode *>(nodes.at(0));
-    QVERIFY(block->getObjectType() == "object");
-    vector<PropertyNode *> properties = block->getProperties();
-    QVERIFY(properties.size() == 3);
-    QVERIFY(properties.at(0)->getName() == "prop1");
-    ValueNode *value = static_cast<ValueNode *>(properties.at(0)->getValue());
-    QVERIFY(value->getNodeType() == AST::Switch);
-    QVERIFY(value->getSwitchValue() == true);
-    QVERIFY(properties.at(1)->getName() == "prop2");
-    value = static_cast<ValueNode *>(properties.at(1)->getValue());
-    QVERIFY(value->getNodeType() == AST::Switch);
-    QVERIFY(value->getSwitchValue() == false);
-    QVERIFY(properties.at(2)->getName() == "prop3");
-    value = static_cast<ValueNode *>(properties.at(2)->getValue());
-    QVERIFY(value->getNodeType() == AST::None);
+//    import namespace
+//    import namespace as ns
+//    import NameSpace as ns
+    ImportNode *import = static_cast<ImportNode *>(nodes.at(0));
+    QVERIFY(import->getNodeType() == AST::Import);
+    QVERIFY(import->importName() == "namespace");
+    QVERIFY(import->importAlias() == "");
 
-    QVERIFY(nodes.at(1)->getNodeType() == AST::Stream);
-    StreamNode *stream = static_cast<StreamNode *>(nodes.at(1));
+    import = static_cast<ImportNode *>(nodes.at(1));
+    QVERIFY(import->getNodeType() == AST::Import);
+    QVERIFY(import->importName() == "namespace");
+    QVERIFY(import->importAlias() == "ns");
+
+    import = static_cast<ImportNode *>(nodes.at(2));
+    QVERIFY(import->getNodeType() == AST::Import);
+    QVERIFY(import->importName() == "NameSpace");
+    QVERIFY(import->importAlias() == "ns");
+
+//    ns.Value >> Constant;
+//    ns.Value_1 + 1.0 >> Constant;
+//    1.0 + ns.Value_1 >> Constant;
+//    ns.Value_1 + ns.Value_2 >> Constant;
+//    ns.Block_1 >> ns.Block_2;
+
+    StreamNode *stream = static_cast<StreamNode *>(nodes.at(3));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    NameNode *node = static_cast<NameNode *>(stream->getLeft());
+    QVERIFY(node->getNodeType() == AST::Name);
+    QVERIFY(node->getName() == "Value");
+    QVERIFY(node->getNamespace() == "ns");
+
+    stream = static_cast<StreamNode *>(nodes.at(4));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    ExpressionNode *expr = static_cast<ExpressionNode *>(stream->getLeft());
+    QVERIFY(expr->getNodeType() == AST::Expression);
+    node = static_cast<NameNode *>(expr->getLeft());
+    QVERIFY(node->getName() == "Value_1");
+    QVERIFY(node->getNamespace() == "ns");
+
+    stream = static_cast<StreamNode *>(nodes.at(5));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    expr = static_cast<ExpressionNode *>(stream->getLeft());
+    QVERIFY(expr->getNodeType() == AST::Expression);
+    node = static_cast<NameNode *>(expr->getRight());
+    QVERIFY(node->getName() == "Value_1");
+    QVERIFY(node->getNamespace() == "ns");
+
+    stream = static_cast<StreamNode *>(nodes.at(6));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    expr = static_cast<ExpressionNode *>(stream->getLeft());
+    QVERIFY(expr->getNodeType() == AST::Expression);
+    node = static_cast<NameNode *>(expr->getLeft());
+    QVERIFY(node->getName() == "Value_1");
+    QVERIFY(node->getNamespace() == "ns");
+    node = static_cast<NameNode *>(expr->getRight());
+    QVERIFY(node->getName() == "Value_2");
+    QVERIFY(node->getNamespace() == "ns");
+
+    stream = static_cast<StreamNode *>(nodes.at(7));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    node = static_cast<NameNode *>(stream->getLeft());
+    QVERIFY(node->getNodeType() == AST::Name);
+    QVERIFY(node->getName() == "Block_1");
+    QVERIFY(node->getNamespace() == "ns");
+    node = static_cast<NameNode *>(stream->getRight());
+    QVERIFY(node->getNodeType() == AST::Name);
+    QVERIFY(node->getName() == "Block_2");
+    QVERIFY(node->getNamespace() == "ns");
+
+//    ns.Bundle[1] + ns.Bundle[2] >> Constant;
+
+    stream = static_cast<StreamNode *>(nodes.at(8));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    expr = static_cast<ExpressionNode *>(stream->getLeft());
+    QVERIFY(expr->getNodeType() == AST::Expression);
+    BundleNode *bundle = static_cast<BundleNode *>(expr->getLeft());
+    QVERIFY(bundle->getNodeType() == AST::Bundle);
+    QVERIFY(bundle->getName() == "Bundle");
+    QVERIFY(bundle->getNamespace() == "ns");
+    QVERIFY(static_cast<ValueNode *>(bundle->index()->getChildren().at(0))->getIntValue() == 1);
+    bundle = static_cast<BundleNode *>(expr->getRight());
+    QVERIFY(bundle->getNodeType() == AST::Bundle);
+    QVERIFY(bundle->getName() == "Bundle");
+    QVERIFY(bundle->getNamespace() == "ns");
+    QVERIFY(static_cast<ValueNode *>(bundle->index()->getChildren().at(0))->getIntValue() == 2);
+
+//    [ns.Value_1, ns.Value_2] >> Constants;
+//    [ns.Bundle[1], ns.Bundle[2]] >> Constants;
+
+    stream = static_cast<StreamNode *>(nodes.at(9));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    ListNode *list = static_cast<ListNode *>(stream->getLeft());
+    QVERIFY(list->getNodeType() == AST::List);
+    node = static_cast<NameNode *>(list->getChildren().at(0));
+    QVERIFY(node->getName() == "Value_1");
+    QVERIFY(node->getNamespace() == "ns");
+    node = static_cast<NameNode *>(list->getChildren().at(1));
+    QVERIFY(node->getName() == "Value_2");
+    QVERIFY(node->getNamespace() == "ns");
+
+    stream = static_cast<StreamNode *>(nodes.at(10));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    list = static_cast<ListNode *>(stream->getLeft());
+    QVERIFY(list->getNodeType() == AST::List);
+    bundle = static_cast<BundleNode *>(list->getChildren().at(0));
+    QVERIFY(bundle->getNodeType() == AST::Bundle);
+    QVERIFY(bundle->getName() == "Bundle");
+    QVERIFY(bundle->getNamespace() == "ns");
+    QVERIFY(static_cast<ValueNode *>(bundle->index()->getChildren().at(0))->getIntValue() == 1);
+    bundle = static_cast<BundleNode *>(list->getChildren().at(1));
+    QVERIFY(bundle->getNodeType() == AST::Bundle);
+    QVERIFY(bundle->getName() == "Bundle");
+    QVERIFY(bundle->getNamespace() == "ns");
+    QVERIFY(static_cast<ValueNode *>(bundle->index()->getChildren().at(0))->getIntValue() == 2);
+
+//    ns.Block_1[ns.Index_1] >> ns.Block_2 [ns.Index_2];
+//    ns.Block_1[ns.Bundle[1]] >> ns.Block_2 [ns.Bundle[2]];
+
+    stream = static_cast<StreamNode *>(nodes.at(11));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    bundle = static_cast<BundleNode *>(stream->getLeft());
+    QVERIFY(bundle->getNodeType() == AST::Bundle);
+    QVERIFY(bundle->getName() == "Block_1");
+    QVERIFY(bundle->getNamespace() == "ns");
+    list = static_cast<ListNode *>(bundle->index());
+    node = static_cast<NameNode *>(list->getChildren().at(0));
+    QVERIFY(node->getNodeType() == AST::Name);
+    QVERIFY(node->getName() == "Index_1");
+    QVERIFY(node->getNamespace() == "ns");
+    bundle = static_cast<BundleNode *>(stream->getRight());
+    QVERIFY(bundle->getNodeType() == AST::Bundle);
+    QVERIFY(bundle->getName() == "Block_2");
+    QVERIFY(bundle->getNamespace() == "ns");
+    node = static_cast<NameNode *>(bundle->index()->getChildren().at(0));
+    QVERIFY(node->getNodeType() == AST::Name);
+    QVERIFY(node->getName() == "Index_2");
+    QVERIFY(node->getNamespace() == "ns");
+
+    stream = static_cast<StreamNode *>(nodes.at(12));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+
+//    ns.Block_1[ns.Index_1:ns.Index_2] >> ns.Block_2 [ns.Index_1:ns.Index_2];
+
+    stream = static_cast<StreamNode *>(nodes.at(13));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+//    bundle = static_cast<BundleNode *>(stream->getLeft());
+//    QVERIFY(bundle->getNodeType() == AST::Bundle);
+//    QVERIFY(bundle->getName() == "Block_1");
+//    QVERIFY(bundle->getNamespace() == "ns");
+//    list = static_cast<ListNode *>(bundle->index());
+//    RangeNode *range = static_cast<RangeNode *>(list->getChildren().at(0));
+//    QVERIFY(range->getNodeType() == AST::Range);
+//    node = static_cast<NameNode *>(range->startIndex());
+//    QVERIFY(node->getNodeType() == AST::Name);
+//    QVERIFY(node->getName() == "Index_1");
+//    QVERIFY(node->getNamespace() == "ns");
+//    node = static_cast<NameNode *>(range->endIndex());
+//    QVERIFY(node->getNodeType() == AST::Name);
+//    QVERIFY(node->getName() == "Index_2");
+//    QVERIFY(node->getNamespace() == "ns");
+//    bundle = static_cast<BundleNode *>(stream->getRight());
+//    QVERIFY(bundle->getNodeType() == AST::Bundle);
+//    QVERIFY(bundle->getName() == "Block_2");
+//    QVERIFY(bundle->getNamespace() == "ns");
+//    list = static_cast<ListNode *>(bundle->index());
+//    RangeNode *range = static_cast<RangeNode *>(list->getChildren().at(0));
+//    QVERIFY(range->getNodeType() == AST::Range);
+//    node = static_cast<NameNode *>(range->startIndex());
+//    QVERIFY(node->getNodeType() == AST::Name);
+//    QVERIFY(node->getName() == "Index_1");
+//    QVERIFY(node->getNamespace() == "ns");
+//    node = static_cast<NameNode *>(range->endIndex());
+//    QVERIFY(node->getNodeType() == AST::Name);
+//    QVERIFY(node->getName() == "Index_2");
+//    QVERIFY(node->getNamespace() == "ns");
+
+    //    ns.Block_1[ns.Bundle[1]:ns.Bundle[2]] >> ns.Block_2 [ns.Bundle[1]:ns.Bundle[2]];
+
+    stream = static_cast<StreamNode *>(nodes.at(14));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+
+// Input
+// >> ns.Function (
+//	property:		ns.Value
+// )
+// >> Output;
+
+    stream = static_cast<StreamNode *>(nodes.at(15));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    stream = static_cast<StreamNode *>(stream->getRight());
+    QVERIFY(stream->getNodeType() == AST::Stream);
     FunctionNode *func = static_cast<FunctionNode *>(stream->getLeft());
-    QVERIFY(func->getNodeType() == AST::Function);
-    properties = func->getProperties();
-    QVERIFY(properties.size() == 3);
-    QVERIFY(properties.at(0)->getName() == "propf1");
-    value = static_cast<ValueNode *>(properties.at(0)->getValue());
-    QVERIFY(value->getNodeType() == AST::Switch);
-    QVERIFY(value->getSwitchValue() == true);
-    QVERIFY(properties.at(1)->getName() == "propf2");
-    value = static_cast<ValueNode *>(properties.at(1)->getValue());
-    QVERIFY(value->getNodeType() == AST::Switch);
-    QVERIFY(value->getSwitchValue() == false);
-    QVERIFY(properties.at(2)->getName() == "propf3");
-    value = static_cast<ValueNode *>(properties.at(2)->getValue());
-    QVERIFY(value->getNodeType() == AST::None);
+//    QVERIFY(func->getNodeType() == AST::Function);
+
 
     tree->deleteChildren();
     delete tree;
@@ -827,6 +988,53 @@ void ParserTest::testBundleIndeces()
     QVERIFY(expr->getLeft()->getNodeType() == AST::Int);
     QVERIFY(expr->getRight()->getNodeType() == AST::Int);
     QVERIFY(expr->getLine() == 27);
+
+    tree->deleteChildren();
+    delete tree;
+}
+
+void ParserTest::testBasicNoneSwitch()
+{
+    AST *tree;
+    tree = parse(QString(QFINDTESTDATA("data/06_basic_noneswitch.stream")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    vector<AST *> nodes = tree->getChildren();
+    QVERIFY(nodes.size() == 2);
+
+    QVERIFY(nodes.at(0)->getNodeType() == AST::Block);
+    BlockNode *block = static_cast<BlockNode *>(nodes.at(0));
+    QVERIFY(block->getObjectType() == "object");
+    vector<PropertyNode *> properties = block->getProperties();
+    QVERIFY(properties.size() == 3);
+    QVERIFY(properties.at(0)->getName() == "prop1");
+    ValueNode *value = static_cast<ValueNode *>(properties.at(0)->getValue());
+    QVERIFY(value->getNodeType() == AST::Switch);
+    QVERIFY(value->getSwitchValue() == true);
+    QVERIFY(properties.at(1)->getName() == "prop2");
+    value = static_cast<ValueNode *>(properties.at(1)->getValue());
+    QVERIFY(value->getNodeType() == AST::Switch);
+    QVERIFY(value->getSwitchValue() == false);
+    QVERIFY(properties.at(2)->getName() == "prop3");
+    value = static_cast<ValueNode *>(properties.at(2)->getValue());
+    QVERIFY(value->getNodeType() == AST::None);
+
+    QVERIFY(nodes.at(1)->getNodeType() == AST::Stream);
+    StreamNode *stream = static_cast<StreamNode *>(nodes.at(1));
+    FunctionNode *func = static_cast<FunctionNode *>(stream->getLeft());
+    QVERIFY(func->getNodeType() == AST::Function);
+    properties = func->getProperties();
+    QVERIFY(properties.size() == 3);
+    QVERIFY(properties.at(0)->getName() == "propf1");
+    value = static_cast<ValueNode *>(properties.at(0)->getValue());
+    QVERIFY(value->getNodeType() == AST::Switch);
+    QVERIFY(value->getSwitchValue() == true);
+    QVERIFY(properties.at(1)->getName() == "propf2");
+    value = static_cast<ValueNode *>(properties.at(1)->getValue());
+    QVERIFY(value->getNodeType() == AST::Switch);
+    QVERIFY(value->getSwitchValue() == false);
+    QVERIFY(properties.at(2)->getName() == "propf3");
+    value = static_cast<ValueNode *>(properties.at(2)->getValue());
+    QVERIFY(value->getNodeType() == AST::None);
 
     tree->deleteChildren();
     delete tree;
@@ -1703,19 +1911,22 @@ void ParserTest::testParser()
     // Could be used perhaps to test parsing errors?
     AST *tree;
     QStringList files;
-    files << "data/01_header.stream" << "data/02_basic_blocks.stream" << "data/03_basic_bundle.stream"
-          << "data/04_basic_stream.stream" << "data/05_basic_functions.stream"
-          << "data/06_basic_noneswitch.stream" << "data/07_bundle_indeces.stream"
+    files
+//            << "data/01_header.stream" << "data/02_basic_blocks.stream" << "data/03_basic_bundle.stream"
+//          << "data/04_basic_stream.stream" << "data/05_basic_functions.stream"
+//          << "data/06_basic_noneswitch.stream" << "data/07_bundle_indeces.stream"
 
-          << "data/P01_platform_objects.stream" << "data/P02_check_duplicates.stream"
-          << "data/P03_bundle_resolution.stream"
+//          << "data/P01_platform_objects.stream" << "data/P02_check_duplicates.stream"
+//          << "data/P03_bundle_resolution.stream"
 
-          << "data/E01_constant_res.stream"
+//          << "data/E01_constant_res.stream" << "data/E02_stream_expansions.stream"
+//          << "data/E03_multichn_streams.stream" << "data/E03_rates.stream"
+
           << "data/list.stream"
           << "data/introBlock.stream"
           << "data/introConverter.stream" << "data/introFeedback.stream"
           << "data/introGenerator.stream" << "data/introProcessor.stream"
-          << "data/introRemote.stream"<< "data/test.stream" << "data/expansions.stream";
+          << "data/introRemote.stream";
     foreach (QString file, files) {
         tree = parse(QString(QFINDTESTDATA(file)).toStdString().c_str());
         QVERIFY2(tree != NULL, QString("file:" + file).toStdString().c_str());

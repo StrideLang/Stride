@@ -42,15 +42,9 @@ DISTFILES += \
     data/introProcessor.stream \
     data/introConverter.stream \
     data/introRemote.stream \
-    data/test.stream \
     data/platfromBasic.stream \
-    data/errorLists.stream \
-    data/expansions.stream \
-    data/rates.stream \
     data/defaultProperties.stream \
     data/shorthand.stream \
-    data/multichn.stream \
-    data/namespace.stream \
     data/introComplex.stream \
     data/introControlFlow.stream \
     data/introEnvelope.stream \
@@ -71,7 +65,11 @@ DISTFILES += \
     data/P01_platform_objects.stream \
     data/P02_check_duplicates.stream \
     data/P03_bundle_resolution.stream \
-    data/E01_constant_res.stream
+    data/E01_constant_res.stream \
+    data/E02_stream_expansions.stream \
+    data/E03_multichn_streams.stream \
+    data/E04_rates.stream \
+    data/08_namespace.stream
 
 # Link to codegen library
 
