@@ -472,13 +472,26 @@ functionDef:
                                                 COUT << "User function: " << $1 << ENDL;
                                                 free($1);
                                             }
-    |	WORD DOT UVAR '(' ')' 				{
+    |	WORD DOT UVAR '(' ')'               {
+                                                string ns;
+                                                ns.append($1); /* string constructor leaks otherwise! */
+                                                string s;
+                                                s.append($3); /* string constructor leaks otherwise! */
+                                                $$ = new FunctionNode(s, ns, NULL, FunctionNode::UserDefined, yyloc.first_line);
                                                 COUT << "Function: " << $3 << " in NameSpace: " << $1 << ENDL;
                                                 free($1);
                                                 free($3);
                                             }
     |	WORD DOT UVAR '(' properties ')' 	{
                                                 COUT << "Properties () ..." << ENDL;
+                                                string ns;
+                                                ns.append($1); /* string constructor leaks otherwise! */
+                                                string s;
+                                                s.append($3); /* string constructor leaks otherwise! */
+                                                $$ = new FunctionNode(s, ns, $5, FunctionNode::UserDefined, yyloc.first_line);
+                                                AST *props = $5;
+                                                delete props;
+
                                                 COUT << "Function: " << $3 << " in NameSpace: " << $1 << ENDL;
                                                 free($1);
                                                 free($3);
@@ -996,7 +1009,7 @@ valueComp:
 void yyerror(const char *s, ...){
     va_list ap;
     va_start(ap, s);
-    const char *errorString = va_arg(ap, char*);
+//    const char *errorString = va_arg(ap, char*);
     int line = va_arg(ap, int);
     COUT << ENDL << ENDL << "ERROR: " << s ; //<< " => " << errorString << ENDL;
     COUT << "Unexpected token: \"" << yytext << "\" on line: " <<  line << ENDL;

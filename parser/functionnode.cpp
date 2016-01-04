@@ -18,6 +18,12 @@ FunctionNode::FunctionNode(string name, AST *propertiesList, FunctionType type, 
     m_parallelInstances = 0;
 }
 
+FunctionNode::FunctionNode(string name, string namespace_, AST *propertiesList, FunctionNode::FunctionType type, int line) :
+    FunctionNode::FunctionNode(name, propertiesList, type, line)
+{
+    m_namespace = namespace_;
+}
+
 FunctionNode::~FunctionNode()
 {
 

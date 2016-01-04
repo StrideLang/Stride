@@ -830,7 +830,14 @@ void ParserTest::testNamespaces()
     stream = static_cast<StreamNode *>(stream->getRight());
     QVERIFY(stream->getNodeType() == AST::Stream);
     FunctionNode *func = static_cast<FunctionNode *>(stream->getLeft());
-//    QVERIFY(func->getNodeType() == AST::Function);
+    QVERIFY(func->getNodeType() == AST::Function);
+    QVERIFY(func->getName() == "Function");
+    QVERIFY(func->getNamespace() == "ns");
+    vector<PropertyNode *> props = func->getProperties();
+    node = static_cast<NameNode *>(props.at(0)->getValue());
+    QVERIFY(node->getNodeType() == AST::Name);
+    QVERIFY(node->getName() == "Value");
+    QVERIFY(node->getNamespace() == "ns");
 
 
     tree->deleteChildren();
