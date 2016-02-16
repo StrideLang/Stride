@@ -1,7 +1,7 @@
 #include <QString>
 #include <QtTest>
 
-#include "streamparser.h"
+#include "strideparser.h"
 #include "streamplatform.h"
 #include "codevalidator.h"
 #include "coderesolver.h"
@@ -52,7 +52,7 @@ ParserTest::ParserTest()
 void ParserTest::testMultichannelUgens()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/E03_multichn_streams.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/E03_multichn_streams.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
     QVERIFY(!generator.isValid());
@@ -79,7 +79,7 @@ void ParserTest::testMultichannelUgens()
 void ParserTest::testConstantResolution()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/E01_constant_res.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/E01_constant_res.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
     QVERIFY(generator.isValid());
@@ -221,7 +221,7 @@ void ParserTest::testConstantResolution()
 void ParserTest::testStreamRates()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/E04_rates.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/E04_rates.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
     QVERIFY(generator.isValid());
@@ -306,7 +306,7 @@ void ParserTest::testStreamRates()
 void ParserTest::testStreamExpansion()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/E02_stream_expansions.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/E02_stream_expansions.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
     QVERIFY(generator.isValid());
@@ -379,7 +379,7 @@ void ParserTest::testStreamExpansion()
 void ParserTest::testPlatformCommonObjects()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/P01_platform_objects.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/P01_platform_objects.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
     QVERIFY(!generator.isValid());
@@ -422,7 +422,7 @@ void ParserTest::testPlatformCommonObjects()
 void ParserTest::testValueTypeBundleResolution()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/P03_bundle_resolution.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/P03_bundle_resolution.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
     QVERIFY(generator.platformIsValid());
@@ -594,7 +594,7 @@ void ParserTest::testValueTypeExpressionResolution()
 void ParserTest::testDuplicates()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/P02_check_duplicates.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/P02_check_duplicates.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
     QVERIFY(!generator.isValid());
@@ -621,7 +621,7 @@ void ParserTest::testListConsistency()
 {
 //    AST *tree;
     // FIXME: List consistency is checked by the parser, should be caught here.
-//    tree = parse(QString(QFINDTESTDATA("data/errorLists.stream")).toStdString().c_str());
+//    tree = parse(QString(QFINDTESTDATA("data/errorLists.stride")).toStdString().c_str());
 //    QVERIFY(tree == NULL);
 //    Codegen generator(QFINDTESTDATA("/../platforms"), tree);
 //    QVERIFY(!generator.isValid());
@@ -634,7 +634,7 @@ void ParserTest::testListConsistency()
 void ParserTest::testNamespaces()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/08_namespace.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/08_namespace.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     vector<AST *> nodes = tree->getChildren();
 
@@ -881,7 +881,7 @@ void ParserTest::testNamespaces()
 void ParserTest::testBundleIndeces()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/07_bundle_indeces.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/07_bundle_indeces.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     vector<AST *> nodes = tree->getChildren();
     QVERIFY(nodes.size() == 23);
@@ -1037,7 +1037,7 @@ void ParserTest::testBundleIndeces()
 void ParserTest::testBasicNoneSwitch()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/06_basic_noneswitch.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/06_basic_noneswitch.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     vector<AST *> nodes = tree->getChildren();
     QVERIFY(nodes.size() == 2);
@@ -1084,7 +1084,7 @@ void ParserTest::testBasicNoneSwitch()
 void ParserTest::testBasicFunctions()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/05_basic_functions.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/05_basic_functions.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     vector<AST *> nodes = tree->getChildren();
 
@@ -1160,7 +1160,7 @@ void ParserTest::testBasicFunctions()
 void ParserTest::testBasicStream()
 {
     AST *tree;
-    tree = AST::parseFile(QString(QFINDTESTDATA("data/04_basic_stream.stream")).toStdString().c_str());
+    tree = AST::parseFile(QString(QFINDTESTDATA("data/04_basic_stream.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     vector<AST *> nodes = tree->getChildren();
 
@@ -1415,7 +1415,7 @@ void ParserTest::testBasicStream()
 void ParserTest::testBasicBundle()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/03_basic_bundle.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/03_basic_bundle.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     vector<AST *> nodes = tree->getChildren();
     QVERIFY(nodes.size() == 8);
@@ -1676,7 +1676,7 @@ void ParserTest::testBasicBundle()
 void ParserTest::testBasicBlocks()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/02_basic_blocks.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/02_basic_blocks.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     vector<AST *> nodes = tree->getChildren();
     QVERIFY(nodes.size() == 5);
@@ -1784,7 +1784,7 @@ void ParserTest::testBasicBlocks()
 void ParserTest::testHeader()
 {
     AST *tree;
-    tree = parse(QString(QFINDTESTDATA("data/01_header.stream")).toStdString().c_str());
+    tree = parse(QString(QFINDTESTDATA("data/01_header.stride")).toStdString().c_str());
 
     QVERIFY(tree != NULL);
     vector<AST *> nodes = tree->getChildren();
@@ -1953,21 +1953,21 @@ void ParserTest::testParser()
     AST *tree;
     QStringList files;
     files
-//            << "data/01_header.stream" << "data/02_basic_blocks.stream" << "data/03_basic_bundle.stream"
-//          << "data/04_basic_stream.stream" << "data/05_basic_functions.stream"
-//          << "data/06_basic_noneswitch.stream" << "data/07_bundle_indeces.stream"
+//            << "data/01_header.stride" << "data/02_basic_blocks.stride" << "data/03_basic_bundle.stride"
+//          << "data/04_basic_stream.stride" << "data/05_basic_functions.stride"
+//          << "data/06_basic_noneswitch.stride" << "data/07_bundle_indeces.stride"
 
-//          << "data/P01_platform_objects.stream" << "data/P02_check_duplicates.stream"
-//          << "data/P03_bundle_resolution.stream"
+//          << "data/P01_platform_objects.stride" << "data/P02_check_duplicates.stride"
+//          << "data/P03_bundle_resolution.stride"
 
-//          << "data/E01_constant_res.stream" << "data/E02_stream_expansions.stream"
-//          << "data/E03_multichn_streams.stream" << "data/E03_rates.stream"
+//          << "data/E01_constant_res.stride" << "data/E02_stream_expansions.stride"
+//          << "data/E03_multichn_streams.stride" << "data/E03_rates.stride"
 
-          << "data/list.stream"
-          << "data/introBlock.stream"
-          << "data/introConverter.stream" << "data/introFeedback.stream"
-          << "data/introGenerator.stream" << "data/introProcessor.stream"
-          << "data/introRemote.stream";
+          << "data/list.stride"
+          << "data/introBlock.stride"
+          << "data/introConverter.stride" << "data/introFeedback.stride"
+          << "data/introGenerator.stride" << "data/introProcessor.stride"
+          << "data/introRemote.stride";
     foreach (QString file, files) {
         tree = parse(QString(QFINDTESTDATA(file)).toStdString().c_str());
         QVERIFY2(tree != NULL, QString("file:" + file).toStdString().c_str());

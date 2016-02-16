@@ -1,0 +1,2873 @@
+Grammar
+
+    0 $accept: entry $end
+
+    1 entry: /* empty */
+    2      | entry start
+    3      | entry SEMICOLON
+
+    4 start: platformDef
+    5      | importDef
+    6      | forDef
+    7      | blockDef
+    8      | streamDef
+    9      | ERROR
+
+   10 platformDef: languagePlatform targetPlatform
+   11            | languagePlatform targetPlatform WITH auxPlatformDef
+
+   12 languagePlatform: USE UVAR
+   13                 | USE UVAR VERSION FLOAT
+
+   14 targetPlatform: ON UVAR
+   15               | ON UVAR VERSION FLOAT
+
+   16 auxPlatformDef: UVAR
+   17               | auxPlatformDef AND UVAR
+
+   18 importDef: IMPORT WORD
+   19          | IMPORT WORD AS WORD
+   20          | IMPORT UVAR AS WORD
+
+   21 forDef: FOR forPlatformDef
+
+   22 forPlatformDef: UVAR
+   23               | forPlatformDef AND UVAR
+
+   24 blockDef: WORD UVAR blockType
+   25         | WORD UVAR '[' indexExp ']' blockType
+
+   26 blockType: '{' '}'
+   27          | '{' properties '}'
+
+   28 streamDef: valueExp STREAM streamExp SEMICOLON
+   29          | valueListExp STREAM streamExp SEMICOLON
+
+   30 bundleDef: UVAR '[' indexList ']'
+   31          | WORD DOT UVAR '[' indexList ']'
+
+   32 functionDef: UVAR '(' ')'
+   33            | UVAR '(' properties ')'
+   34            | WORD DOT UVAR '(' ')'
+   35            | WORD DOT UVAR '(' properties ')'
+
+   36 properties: properties property SEMICOLON
+   37           | properties property
+   38           | property SEMICOLON
+   39           | property
+
+   40 property: WORD COLON propertyType
+
+   41 propertyType: NONE
+   42             | valueExp
+   43             | blockType
+   44             | listDef
+   45             | valueListExp
+
+   46 valueListDef: '[' valueList ']'
+   47             | '[' valueListList ']'
+
+   48 valueList: valueList COMMA valueExp
+   49          | valueExp
+
+   50 valueListList: valueListList COMMA valueListDef
+   51              | valueListDef
+
+   52 listDef: '[' blockList ']'
+   53        | '[' streamList ']'
+   54        | '[' listList ']'
+
+   55 blockList: blockList COMMA blockDef
+   56          | blockDef
+
+   57 streamList: streamList COMMA streamDef
+   58           | streamDef
+
+   59 listList: listList COMMA listDef
+   60         | listDef
+
+   61 indexList: indexList COMMA indexExp
+   62          | indexList COMMA indexRange
+   63          | indexExp
+   64          | indexRange
+
+   65 indexRange: indexExp COLON indexExp
+
+   66 indexExp: indexExp '+' indexExp
+   67         | indexExp '-' indexExp
+   68         | indexExp '*' indexExp
+   69         | indexExp '/' indexExp
+   70         | '(' indexExp ')'
+   71         | indexComp
+
+   72 valueListExp: valueListDef '+' valueExp
+   73             | valueListDef '-' valueExp
+   74             | valueListDef '*' valueExp
+   75             | valueListDef '/' valueExp
+   76             | valueListDef AND valueExp
+   77             | valueListDef OR valueExp
+   78             | valueExp '+' valueListDef
+   79             | valueExp '-' valueListDef
+   80             | valueExp '*' valueListDef
+   81             | valueExp '/' valueListDef
+   82             | valueExp AND valueListDef
+   83             | valueExp OR valueListDef
+   84             | valueListDef '+' valueListDef
+   85             | valueListDef '-' valueListDef
+   86             | valueListDef '*' valueListDef
+   87             | valueListDef '/' valueListDef
+   88             | valueListDef AND valueListDef
+   89             | valueListDef OR valueListDef
+   90             | valueListDef
+
+   91 valueExp: valueExp '+' valueExp
+   92         | valueExp '-' valueExp
+   93         | valueExp '*' valueExp
+   94         | valueExp '/' valueExp
+   95         | valueExp AND valueExp
+   96         | valueExp OR valueExp
+   97         | '(' valueExp ')'
+   98         | '-' valueExp
+   99         | NOT valueExp
+  100         | valueComp
+
+  101 streamExp: streamComp STREAM streamExp
+  102          | streamComp
+
+  103 indexComp: INT
+  104          | UVAR
+  105          | WORD DOT UVAR
+  106          | bundleDef
+
+  107 streamComp: UVAR
+  108           | WORD DOT UVAR
+  109           | bundleDef
+  110           | functionDef
+  111           | valueListDef
+
+  112 valueComp: INT
+  113          | FLOAT
+  114          | ON
+  115          | OFF
+  116          | STRING
+  117          | STREAMRATE
+  118          | UVAR
+  119          | WORD DOT UVAR
+  120          | bundleDef
+  121          | functionDef
+
+
+Terminals, with rules where they appear
+
+$end (0) 0
+'(' (40) 32 33 34 35 70 97
+')' (41) 32 33 34 35 70 97
+'*' (42) 68 74 80 86 93
+'+' (43) 66 72 78 84 91
+'-' (45) 67 73 79 85 92 98
+'/' (47) 69 75 81 87 94
+'[' (91) 25 30 31 46 47 52 53 54
+']' (93) 25 30 31 46 47 52 53 54
+'{' (123) 26 27
+'}' (125) 26 27
+error (256)
+INT (258) 103 112
+FLOAT (259) 13 15 113
+UVAR (260) 12 13 14 15 16 17 20 22 23 24 25 30 31 32 33 34 35 104 105
+    107 108 118 119
+WORD (261) 18 19 20 24 25 31 34 35 40 105 108 119
+STRING (262) 116
+ERROR (263) 9
+COMMA (264) 48 50 55 57 59 61 62
+COLON (265) 40 65
+SEMICOLON (266) 3 28 29 36 38
+USE (267) 12 13
+VERSION (268) 13 15
+WITH (269) 11
+IMPORT (270) 18 19 20
+AS (271) 19 20
+FOR (272) 21
+NONE (273) 41
+ON (274) 14 15 114
+OFF (275) 115
+STREAMRATE (276) 117
+STREAM (277) 28 29 101
+OR (278) 77 83 89 96
+AND (279) 17 23 76 82 88 95
+NOT (280) 99
+UMINUS (281)
+DOT (282) 31 34 35 105 108 119
+
+
+Nonterminals, with rules where they appear
+
+$accept (38)
+    on left: 0
+entry (39)
+    on left: 1 2 3, on right: 0 2 3
+start (40)
+    on left: 4 5 6 7 8 9, on right: 2
+platformDef (41)
+    on left: 10 11, on right: 4
+languagePlatform (42)
+    on left: 12 13, on right: 10 11
+targetPlatform (43)
+    on left: 14 15, on right: 10 11
+auxPlatformDef (44)
+    on left: 16 17, on right: 11 17
+importDef (45)
+    on left: 18 19 20, on right: 5
+forDef (46)
+    on left: 21, on right: 6
+forPlatformDef (47)
+    on left: 22 23, on right: 21 23
+blockDef (48)
+    on left: 24 25, on right: 7 55 56
+blockType (49)
+    on left: 26 27, on right: 24 25 43
+streamDef (50)
+    on left: 28 29, on right: 8 57 58
+bundleDef (51)
+    on left: 30 31, on right: 106 109 120
+functionDef (52)
+    on left: 32 33 34 35, on right: 110 121
+properties (53)
+    on left: 36 37 38 39, on right: 27 33 35 36 37
+property (54)
+    on left: 40, on right: 36 37 38 39
+propertyType (55)
+    on left: 41 42 43 44 45, on right: 40
+valueListDef (56)
+    on left: 46 47, on right: 50 51 72 73 74 75 76 77 78 79 80 81 82
+    83 84 85 86 87 88 89 90 111
+valueList (57)
+    on left: 48 49, on right: 46 48
+valueListList (58)
+    on left: 50 51, on right: 47 50
+listDef (59)
+    on left: 52 53 54, on right: 44 59 60
+blockList (60)
+    on left: 55 56, on right: 52 55
+streamList (61)
+    on left: 57 58, on right: 53 57
+listList (62)
+    on left: 59 60, on right: 54 59
+indexList (63)
+    on left: 61 62 63 64, on right: 30 31 61 62
+indexRange (64)
+    on left: 65, on right: 62 64
+indexExp (65)
+    on left: 66 67 68 69 70 71, on right: 25 61 63 65 66 67 68 69 70
+valueListExp (66)
+    on left: 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89
+    90, on right: 29 45
+valueExp (67)
+    on left: 91 92 93 94 95 96 97 98 99 100, on right: 28 42 48 49
+    72 73 74 75 76 77 78 79 80 81 82 83 91 92 93 94 95 96 97 98 99
+streamExp (68)
+    on left: 101 102, on right: 28 29 101
+indexComp (69)
+    on left: 103 104 105 106, on right: 71
+streamComp (70)
+    on left: 107 108 109 110 111, on right: 101 102
+valueComp (71)
+    on left: 112 113 114 115 116 117 118 119 120 121, on right: 100
+
+
+state 0
+
+    0 $accept: . entry $end
+
+    $default  reduce using rule 1 (entry)
+
+    entry  go to state 1
+
+
+state 1
+
+    0 $accept: entry . $end
+    2 entry: entry . start
+    3      | entry . SEMICOLON
+
+    $end        shift, and go to state 2
+    INT         shift, and go to state 3
+    FLOAT       shift, and go to state 4
+    UVAR        shift, and go to state 5
+    WORD        shift, and go to state 6
+    STRING      shift, and go to state 7
+    ERROR       shift, and go to state 8
+    '['         shift, and go to state 9
+    SEMICOLON   shift, and go to state 10
+    USE         shift, and go to state 11
+    IMPORT      shift, and go to state 12
+    FOR         shift, and go to state 13
+    ON          shift, and go to state 14
+    OFF         shift, and go to state 15
+    STREAMRATE  shift, and go to state 16
+    '-'         shift, and go to state 17
+    NOT         shift, and go to state 18
+    '('         shift, and go to state 19
+
+    start             go to state 20
+    platformDef       go to state 21
+    languagePlatform  go to state 22
+    importDef         go to state 23
+    forDef            go to state 24
+    blockDef          go to state 25
+    streamDef         go to state 26
+    bundleDef         go to state 27
+    functionDef       go to state 28
+    valueListDef      go to state 29
+    valueListExp      go to state 30
+    valueExp          go to state 31
+    valueComp         go to state 32
+
+
+state 2
+
+    0 $accept: entry $end .
+
+    $default  accept
+
+
+state 3
+
+  112 valueComp: INT .
+
+    $default  reduce using rule 112 (valueComp)
+
+
+state 4
+
+  113 valueComp: FLOAT .
+
+    $default  reduce using rule 113 (valueComp)
+
+
+state 5
+
+   30 bundleDef: UVAR . '[' indexList ']'
+   32 functionDef: UVAR . '(' ')'
+   33            | UVAR . '(' properties ')'
+  118 valueComp: UVAR .
+
+    '['  shift, and go to state 33
+    '('  shift, and go to state 34
+
+    $default  reduce using rule 118 (valueComp)
+
+
+state 6
+
+   24 blockDef: WORD . UVAR blockType
+   25         | WORD . UVAR '[' indexExp ']' blockType
+   31 bundleDef: WORD . DOT UVAR '[' indexList ']'
+   34 functionDef: WORD . DOT UVAR '(' ')'
+   35            | WORD . DOT UVAR '(' properties ')'
+  119 valueComp: WORD . DOT UVAR
+
+    UVAR  shift, and go to state 35
+    DOT   shift, and go to state 36
+
+
+state 7
+
+  116 valueComp: STRING .
+
+    $default  reduce using rule 116 (valueComp)
+
+
+state 8
+
+    9 start: ERROR .
+
+    $default  reduce using rule 9 (start)
+
+
+state 9
+
+   46 valueListDef: '[' . valueList ']'
+   47             | '[' . valueListList ']'
+
+    INT         shift, and go to state 3
+    FLOAT       shift, and go to state 4
+    UVAR        shift, and go to state 5
+    WORD        shift, and go to state 37
+    STRING      shift, and go to state 7
+    '['         shift, and go to state 9
+    ON          shift, and go to state 14
+    OFF         shift, and go to state 15
+    STREAMRATE  shift, and go to state 16
+    '-'         shift, and go to state 17
+    NOT         shift, and go to state 18
+    '('         shift, and go to state 19
+
+    bundleDef      go to state 27
+    functionDef    go to state 28
+    valueListDef   go to state 38
+    valueList      go to state 39
+    valueListList  go to state 40
+    valueExp       go to state 41
+    valueComp      go to state 32
+
+
+state 10
+
+    3 entry: entry SEMICOLON .
+
+    $default  reduce using rule 3 (entry)
+
+
+state 11
+
+   12 languagePlatform: USE . UVAR
+   13                 | USE . UVAR VERSION FLOAT
+
+    UVAR  shift, and go to state 42
+
+
+state 12
+
+   18 importDef: IMPORT . WORD
+   19          | IMPORT . WORD AS WORD
+   20          | IMPORT . UVAR AS WORD
+
+    UVAR  shift, and go to state 43
+    WORD  shift, and go to state 44
+
+
+state 13
+
+   21 forDef: FOR . forPlatformDef
+
+    UVAR  shift, and go to state 45
+
+    forPlatformDef  go to state 46
+
+
+state 14
+
+  114 valueComp: ON .
+
+    $default  reduce using rule 114 (valueComp)
+
+
+state 15
+
+  115 valueComp: OFF .
+
+    $default  reduce using rule 115 (valueComp)
+
+
+state 16
+
+  117 valueComp: STREAMRATE .
+
+    $default  reduce using rule 117 (valueComp)
+
+
+state 17
+
+   98 valueExp: '-' . valueExp
+
+    INT         shift, and go to state 3
+    FLOAT       shift, and go to state 4
+    UVAR        shift, and go to state 5
+    WORD        shift, and go to state 37
+    STRING      shift, and go to state 7
+    ON          shift, and go to state 14
+    OFF         shift, and go to state 15
+    STREAMRATE  shift, and go to state 16
+    '-'         shift, and go to state 17
+    NOT         shift, and go to state 18
+    '('         shift, and go to state 19
+
+    bundleDef    go to state 27
+    functionDef  go to state 28
+    valueExp     go to state 47
+    valueComp    go to state 32
+
+
+state 18
+
+   99 valueExp: NOT . valueExp
+
+    INT         shift, and go to state 3
+    FLOAT       shift, and go to state 4
+    UVAR        shift, and go to state 5
+    WORD        shift, and go to state 37
+    STRING      shift, and go to state 7
+    ON          shift, and go to state 14
+    OFF         shift, and go to state 15
+    STREAMRATE  shift, and go to state 16
+    '-'         shift, and go to state 17
+    NOT         shift, and go to state 18
+    '('         shift, and go to state 19
+
+    bundleDef    go to state 27
+    functionDef  go to state 28
+    valueExp     go to state 48
+    valueComp    go to state 32
+
+
+state 19
+
+   97 valueExp: '(' . valueExp ')'
+
+    INT         shift, and go to state 3
+    FLOAT       shift, and go to state 4
+    UVAR        shift, and go to state 5
+    WORD        shift, and go to state 37
+    STRING      shift, and go to state 7
+    ON          shift, and go to state 14
+    OFF         shift, and go to state 15
+    STREAMRATE  shift, and go to state 16
+    '-'         shift, and go to state 17
+    NOT         shift, and go to state 18
+    '('         shift, and go to state 19
+
+    bundleDef    go to state 27
+    functionDef  go to state 28
+    valueExp     go to state 49
+    valueComp    go to state 32
+
+
+state 20
+
+    2 entry: entry start .
+
+    $default  reduce using rule 2 (entry)
+
+
+state 21
+
+    4 start: platformDef .
+
+    $default  reduce using rule 4 (start)
+
+
+state 22
+
+   10 platformDef: languagePlatform . targetPlatform
+   11            | languagePlatform . targetPlatform WITH auxPlatformDef
+
+    ON  shift, and go to state 50
+
+    targetPlatform  go to state 51
+
+
+state 23
+
+    5 start: importDef .
+
+    $default  reduce using rule 5 (start)
+
+
+state 24
+
+    6 start: forDef .
+
+    $default  reduce using rule 6 (start)
+
+
+state 25
+
+    7 start: blockDef .
+
+    $default  reduce using rule 7 (start)
+
+
+state 26
+
+    8 start: streamDef .
+
+    $default  reduce using rule 8 (start)
+
+
+state 27
+
+  120 valueComp: bundleDef .
+
+    $default  reduce using rule 120 (valueComp)
+
+
+state 28
+
+  121 valueComp: functionDef .
+
+    $default  reduce using rule 121 (valueComp)
+
+
+state 29
+
+   72 valueListExp: valueListDef . '+' valueExp
+   73             | valueListDef . '-' valueExp
+   74             | valueListDef . '*' valueExp
+   75             | valueListDef . '/' valueExp
+   76             | valueListDef . AND valueExp
+   77             | valueListDef . OR valueExp
+   84             | valueListDef . '+' valueListDef
+   85             | valueListDef . '-' valueListDef
+   86             | valueListDef . '*' valueListDef
+   87             | valueListDef . '/' valueListDef
+   88             | valueListDef . AND valueListDef
+   89             | valueListDef . OR valueListDef
+   90             | valueListDef .
+
+    OR   shift, and go to state 52
+    AND  shift, and go to state 53
+    '+'  shift, and go to state 54
+    '-'  shift, and go to state 55
+    '*'  shift, and go to state 56
+    '/'  shift, and go to state 57
+
+    $default  reduce using rule 90 (valueListExp)
+
+
+state 30
+
+   29 streamDef: valueListExp . STREAM streamExp SEMICOLON
+
+    STREAM  shift, and go to state 58
+
+
+state 31
+
+   28 streamDef: valueExp . STREAM streamExp SEMICOLON
+   78 valueListExp: valueExp . '+' valueListDef
+   79             | valueExp . '-' valueListDef
+   80             | valueExp . '*' valueListDef
+   81             | valueExp . '/' valueListDef
+   82             | valueExp . AND valueListDef
+   83             | valueExp . OR valueListDef
+   91 valueExp: valueExp . '+' valueExp
+   92         | valueExp . '-' valueExp
+   93         | valueExp . '*' valueExp
+   94         | valueExp . '/' valueExp
+   95         | valueExp . AND valueExp
+   96         | valueExp . OR valueExp
+
+    STREAM  shift, and go to state 59
+    OR      shift, and go to state 60
+    AND     shift, and go to state 61
+    '+'     shift, and go to state 62
+    '-'     shift, and go to state 63
+    '*'     shift, and go to state 64
+    '/'     shift, and go to state 65
+
+
+state 32
+
+  100 valueExp: valueComp .
+
+    $default  reduce using rule 100 (valueExp)
+
+
+state 33
+
+   30 bundleDef: UVAR '[' . indexList ']'
+
+    INT   shift, and go to state 66
+    UVAR  shift, and go to state 67
+    WORD  shift, and go to state 68
+    '('   shift, and go to state 69
+
+    bundleDef   go to state 70
+    indexList   go to state 71
+    indexRange  go to state 72
+    indexExp    go to state 73
+    indexComp   go to state 74
+
+
+state 34
+
+   32 functionDef: UVAR '(' . ')'
+   33            | UVAR '(' . properties ')'
+
+    WORD  shift, and go to state 75
+    ')'   shift, and go to state 76
+
+    properties  go to state 77
+    property    go to state 78
+
+
+state 35
+
+   24 blockDef: WORD UVAR . blockType
+   25         | WORD UVAR . '[' indexExp ']' blockType
+
+    '['  shift, and go to state 79
+    '{'  shift, and go to state 80
+
+    blockType  go to state 81
+
+
+state 36
+
+   31 bundleDef: WORD DOT . UVAR '[' indexList ']'
+   34 functionDef: WORD DOT . UVAR '(' ')'
+   35            | WORD DOT . UVAR '(' properties ')'
+  119 valueComp: WORD DOT . UVAR
+
+    UVAR  shift, and go to state 82
+
+
+state 37
+
+   31 bundleDef: WORD . DOT UVAR '[' indexList ']'
+   34 functionDef: WORD . DOT UVAR '(' ')'
+   35            | WORD . DOT UVAR '(' properties ')'
+  119 valueComp: WORD . DOT UVAR
+
+    DOT  shift, and go to state 36
+
+
+state 38
+
+   51 valueListList: valueListDef .
+
+    $default  reduce using rule 51 (valueListList)
+
+
+state 39
+
+   46 valueListDef: '[' valueList . ']'
+   48 valueList: valueList . COMMA valueExp
+
+    ']'    shift, and go to state 83
+    COMMA  shift, and go to state 84
+
+
+state 40
+
+   47 valueListDef: '[' valueListList . ']'
+   50 valueListList: valueListList . COMMA valueListDef
+
+    ']'    shift, and go to state 85
+    COMMA  shift, and go to state 86
+
+
+state 41
+
+   49 valueList: valueExp .
+   91 valueExp: valueExp . '+' valueExp
+   92         | valueExp . '-' valueExp
+   93         | valueExp . '*' valueExp
+   94         | valueExp . '/' valueExp
+   95         | valueExp . AND valueExp
+   96         | valueExp . OR valueExp
+
+    OR   shift, and go to state 87
+    AND  shift, and go to state 88
+    '+'  shift, and go to state 89
+    '-'  shift, and go to state 90
+    '*'  shift, and go to state 91
+    '/'  shift, and go to state 92
+
+    $default  reduce using rule 49 (valueList)
+
+
+state 42
+
+   12 languagePlatform: USE UVAR .
+   13                 | USE UVAR . VERSION FLOAT
+
+    VERSION  shift, and go to state 93
+
+    $default  reduce using rule 12 (languagePlatform)
+
+
+state 43
+
+   20 importDef: IMPORT UVAR . AS WORD
+
+    AS  shift, and go to state 94
+
+
+state 44
+
+   18 importDef: IMPORT WORD .
+   19          | IMPORT WORD . AS WORD
+
+    AS  shift, and go to state 95
+
+    $default  reduce using rule 18 (importDef)
+
+
+state 45
+
+   22 forPlatformDef: UVAR .
+
+    $default  reduce using rule 22 (forPlatformDef)
+
+
+state 46
+
+   21 forDef: FOR forPlatformDef .
+   23 forPlatformDef: forPlatformDef . AND UVAR
+
+    AND  shift, and go to state 96
+
+    $default  reduce using rule 21 (forDef)
+
+
+state 47
+
+   91 valueExp: valueExp . '+' valueExp
+   92         | valueExp . '-' valueExp
+   93         | valueExp . '*' valueExp
+   94         | valueExp . '/' valueExp
+   95         | valueExp . AND valueExp
+   96         | valueExp . OR valueExp
+   98         | '-' valueExp .
+
+    $default  reduce using rule 98 (valueExp)
+
+
+state 48
+
+   91 valueExp: valueExp . '+' valueExp
+   92         | valueExp . '-' valueExp
+   93         | valueExp . '*' valueExp
+   94         | valueExp . '/' valueExp
+   95         | valueExp . AND valueExp
+   96         | valueExp . OR valueExp
+   99         | NOT valueExp .
+
+    $default  reduce using rule 99 (valueExp)
+
+
+state 49
+
+   91 valueExp: valueExp . '+' valueExp
+   92         | valueExp . '-' valueExp
+   93         | valueExp . '*' valueExp
+   94         | valueExp . '/' valueExp
+   95         | valueExp . AND valueExp
+   96         | valueExp . OR valueExp
+   97         | '(' valueExp . ')'
+
+    OR   shift, and go to state 87
+    AND  shift, and go to state 88
+    '+'  shift, and go to state 89
+    '-'  shift, and go to state 90
+    '*'  shift, and go to state 91
+    '/'  shift, and go to state 92
+    ')'  shift, and go to state 97
+
+
+state 50
+
+   14 targetPlatform: ON . UVAR
+   15               | ON . UVAR VERSION FLOAT
+
+    UVAR  shift, and go to state 98
+
+
+state 51
+
+   10 platformDef: languagePlatform targetPlatform .
+   11            | languagePlatform targetPlatform . WITH auxPlatformDef
+
+    WITH  shift, and go to state 99
+
+    $default  reduce using rule 10 (platformDef)
+
+
+state 52
+
+   77 valueListExp: valueListDef OR . valueExp
+   89             | valueListDef OR . valueListDef
+
+    INT         shift, and go to state 3
+    FLOAT       shift, and go to state 4
+    UVAR        shift, and go to state 5
+    WORD        shift, and go to state 37
+    STRING      shift, and go to state 7
+    '['         shift, and go to state 9
+    ON          shift, and go to state 14
+    OFF         shift, and go to state 15
+    STREAMRATE  shift, and go to state 16
+    '-'         shift, and go to state 17
+    NOT         shift, and go to state 18
+    '('         shift, and go to state 19
+
+    bundleDef     go to state 27
+    functionDef   go to state 28
+    valueListDef  go to state 100
+    valueExp      go to state 101
+    valueComp     go to state 32
+
+
+state 53
+
+   76 valueListExp: valueListDef AND . valueExp
+   88             | valueListDef AND . valueListDef
+
+    INT         shift, and go to state 3
+    FLOAT       shift, and go to state 4
+    UVAR        shift, and go to state 5
+    WORD        shift, and go to state 37
+    STRING      shift, and go to state 7
+    '['         shift, and go to state 9
+    ON          shift, and go to state 14
+    OFF         shift, and go to state 15
+    STREAMRATE  shift, and go to state 16
+    '-'         shift, and go to state 17
+    NOT         shift, and go to state 18
+    '('         shift, and go to state 19
+
+    bundleDef     go to state 27
+    functionDef   go to state 28
+    valueListDef  go to state 102
+    valueExp      go to state 103
+    valueComp     go to state 32
+
+
+state 54
+
+   72 valueListExp: valueListDef '+' . valueExp
+   84             | valueListDef '+' . valueListDef
+
+    INT         shift, and go to state 3
+    FLOAT       shift, and go to state 4
+    UVAR        shift, and go to state 5
+    WORD        shift, and go to state 37
+    STRING      shift, and go to state 7
+    '['         shift, and go to state 9
+    ON          shift, and go to state 14
+    OFF         shift, and go to state 15
+    STREAMRATE  shift, and go to state 16
+    '-'         shift, and go to state 17
+    NOT         shift, and go to state 18
+    '('         shift, and go to state 19
+
+    bundleDef     go to state 27
+    functionDef   go to state 28
+    valueListDef  go to state 104
+    valueExp      go to state 105
+    valueComp     go to state 32
+
+
+state 55
+
+   73 valueListExp: valueListDef '-' . valueExp
+   85             | valueListDef '-' . valueListDef
+
+    INT         shift, and go to state 3
+    FLOAT       shift, and go to state 4
+    UVAR        shift, and go to state 5
+    WORD        shift, and go to state 37
+    STRING      shift, and go to state 7
+    '['         shift, and go to state 9
+    ON          shift, and go to state 14
+    OFF         shift, and go to state 15
+    STREAMRATE  shift, and go to state 16
+    '-'         shift, and go to state 17
+    NOT         shift, and go to state 18
+    '('         shift, and go to state 19
+
+    bundleDef     go to state 27
+    functionDef   go to state 28
+    valueListDef  go to state 106
+    valueExp      go to state 107
+    valueComp     go to state 32
+
+
+state 56
+
+   74 valueListExp: valueListDef '*' . valueExp
+   86             | valueListDef '*' . valueListDef
+
+    INT         shift, and go to state 3
+    FLOAT       shift, and go to state 4
+    UVAR        shift, and go to state 5
+    WORD        shift, and go to state 37
+    STRING      shift, and go to state 7
+    '['         shift, and go to state 9
+    ON          shift, and go to state 14
+    OFF         shift, and go to state 15
+    STREAMRATE  shift, and go to state 16
+    '-'         shift, and go to state 17
+    NOT         shift, and go to state 18
+    '('         shift, and go to state 19
+
+    bundleDef     go to state 27
+    functionDef   go to state 28
+    valueListDef  go to state 108
+    valueExp      go to state 109
+    valueComp     go to state 32
+
+
+state 57
+
+   75 valueListExp: valueListDef '/' . valueExp
+   87             | valueListDef '/' . valueListDef
+
+    INT         shift, and go to state 3
+    FLOAT       shift, and go to state 4
+    UVAR        shift, and go to state 5
+    WORD        shift, and go to state 37
+    STRING      shift, and go to state 7
+    '['         shift, and go to state 9
+    ON          shift, and go to state 14
+    OFF         shift, and go to state 15
+    STREAMRATE  shift, and go to state 16
+    '-'         shift, and go to state 17
+    NOT         shift, and go to state 18
+    '('         shift, and go to state 19
+
+    bundleDef     go to state 27
+    functionDef   go to state 28
+    valueListDef  go to state 110
+    valueExp      go to state 111
+    valueComp     go to state 32
+
+
+state 58
+
+   29 streamDef: valueListExp STREAM . streamExp SEMICOLON
+
+    UVAR  shift, and go to state 112
+    WORD  shift, and go to state 113
+    '['   shift, and go to state 9
+
+    bundleDef     go to state 114
+    functionDef   go to state 115
+    valueListDef  go to state 116
+    streamExp     go to state 117
+    streamComp    go to state 118
+
+
+state 59
+
+   28 streamDef: valueExp STREAM . streamExp SEMICOLON
+
+    UVAR  shift, and go to state 112
+    WORD  shift, and go to state 113
+    '['   shift, and go to state 9
+
+    bundleDef     go to state 114
+    functionDef   go to state 115
+    valueListDef  go to state 116
+    streamExp     go to state 119
+    streamComp    go to state 118
+
+
+state 60
+
+   83 valueListExp: valueExp OR . valueListDef
+   96 valueExp: valueExp OR . valueExp
+
+    INT         shift, and go to state 3
+    FLOAT       shift, and go to state 4
+    UVAR        shift, and go to state 5
+    WORD        shift, and go to state 37
+    STRING      shift, and go to state 7
+    '['         shift, and go to state 9
+    ON          shift, and go to state 14
+    OFF         shift, and go to state 15
+    STREAMRATE  shift, and go to state 16
+    '-'         shift, and go to state 17
+    NOT         shift, and go to state 18
+    '('         shift, and go to state 19
+
+    bundleDef     go to state 27
+    functionDef   go to state 28
+    valueListDef  go to state 120
+    valueExp      go to state 121
+    valueComp     go to state 32
+
+
+state 61
+
+   82 valueListExp: valueExp AND . valueListDef
+   95 valueExp: valueExp AND . valueExp
+
+    INT         shift, and go to state 3
+    FLOAT       shift, and go to state 4
+    UVAR        shift, and go to state 5
+    WORD        shift, and go to state 37
+    STRING      shift, and go to state 7
+    '['         shift, and go to state 9
+    ON          shift, and go to state 14
+    OFF         shift, and go to state 15
+    STREAMRATE  shift, and go to state 16
+    '-'         shift, and go to state 17
+    NOT         shift, and go to state 18
+    '('         shift, and go to state 19
+
+    bundleDef     go to state 27
+    functionDef   go to state 28
+    valueListDef  go to state 122
+    valueExp      go to state 123
+    valueComp     go to state 32
+
+
+state 62
+
+   78 valueListExp: valueExp '+' . valueListDef
+   91 valueExp: valueExp '+' . valueExp
+
+    INT         shift, and go to state 3
+    FLOAT       shift, and go to state 4
+    UVAR        shift, and go to state 5
+    WORD        shift, and go to state 37
+    STRING      shift, and go to state 7
+    '['         shift, and go to state 9
+    ON          shift, and go to state 14
+    OFF         shift, and go to state 15
+    STREAMRATE  shift, and go to state 16
+    '-'         shift, and go to state 17
+    NOT         shift, and go to state 18
+    '('         shift, and go to state 19
+
+    bundleDef     go to state 27
+    functionDef   go to state 28
+    valueListDef  go to state 124
+    valueExp      go to state 125
+    valueComp     go to state 32
+
+
+state 63
+
+   79 valueListExp: valueExp '-' . valueListDef
+   92 valueExp: valueExp '-' . valueExp
+
+    INT         shift, and go to state 3
+    FLOAT       shift, and go to state 4
+    UVAR        shift, and go to state 5
+    WORD        shift, and go to state 37
+    STRING      shift, and go to state 7
+    '['         shift, and go to state 9
+    ON          shift, and go to state 14
+    OFF         shift, and go to state 15
+    STREAMRATE  shift, and go to state 16
+    '-'         shift, and go to state 17
+    NOT         shift, and go to state 18
+    '('         shift, and go to state 19
+
+    bundleDef     go to state 27
+    functionDef   go to state 28
+    valueListDef  go to state 126
+    valueExp      go to state 127
+    valueComp     go to state 32
+
+
+state 64
+
+   80 valueListExp: valueExp '*' . valueListDef
+   93 valueExp: valueExp '*' . valueExp
+
+    INT         shift, and go to state 3
+    FLOAT       shift, and go to state 4
+    UVAR        shift, and go to state 5
+    WORD        shift, and go to state 37
+    STRING      shift, and go to state 7
+    '['         shift, and go to state 9
+    ON          shift, and go to state 14
+    OFF         shift, and go to state 15
+    STREAMRATE  shift, and go to state 16
+    '-'         shift, and go to state 17
+    NOT         shift, and go to state 18
+    '('         shift, and go to state 19
+
+    bundleDef     go to state 27
+    functionDef   go to state 28
+    valueListDef  go to state 128
+    valueExp      go to state 129
+    valueComp     go to state 32
+
+
+state 65
+
+   81 valueListExp: valueExp '/' . valueListDef
+   94 valueExp: valueExp '/' . valueExp
+
+    INT         shift, and go to state 3
+    FLOAT       shift, and go to state 4
+    UVAR        shift, and go to state 5
+    WORD        shift, and go to state 37
+    STRING      shift, and go to state 7
+    '['         shift, and go to state 9
+    ON          shift, and go to state 14
+    OFF         shift, and go to state 15
+    STREAMRATE  shift, and go to state 16
+    '-'         shift, and go to state 17
+    NOT         shift, and go to state 18
+    '('         shift, and go to state 19
+
+    bundleDef     go to state 27
+    functionDef   go to state 28
+    valueListDef  go to state 130
+    valueExp      go to state 131
+    valueComp     go to state 32
+
+
+state 66
+
+  103 indexComp: INT .
+
+    $default  reduce using rule 103 (indexComp)
+
+
+state 67
+
+   30 bundleDef: UVAR . '[' indexList ']'
+  104 indexComp: UVAR .
+
+    '['  shift, and go to state 33
+
+    $default  reduce using rule 104 (indexComp)
+
+
+state 68
+
+   31 bundleDef: WORD . DOT UVAR '[' indexList ']'
+  105 indexComp: WORD . DOT UVAR
+
+    DOT  shift, and go to state 132
+
+
+state 69
+
+   70 indexExp: '(' . indexExp ')'
+
+    INT   shift, and go to state 66
+    UVAR  shift, and go to state 67
+    WORD  shift, and go to state 68
+    '('   shift, and go to state 69
+
+    bundleDef  go to state 70
+    indexExp   go to state 133
+    indexComp  go to state 74
+
+
+state 70
+
+  106 indexComp: bundleDef .
+
+    $default  reduce using rule 106 (indexComp)
+
+
+state 71
+
+   30 bundleDef: UVAR '[' indexList . ']'
+   61 indexList: indexList . COMMA indexExp
+   62          | indexList . COMMA indexRange
+
+    ']'    shift, and go to state 134
+    COMMA  shift, and go to state 135
+
+
+state 72
+
+   64 indexList: indexRange .
+
+    $default  reduce using rule 64 (indexList)
+
+
+state 73
+
+   63 indexList: indexExp .
+   65 indexRange: indexExp . COLON indexExp
+   66 indexExp: indexExp . '+' indexExp
+   67         | indexExp . '-' indexExp
+   68         | indexExp . '*' indexExp
+   69         | indexExp . '/' indexExp
+
+    COLON  shift, and go to state 136
+    '+'    shift, and go to state 137
+    '-'    shift, and go to state 138
+    '*'    shift, and go to state 139
+    '/'    shift, and go to state 140
+
+    $default  reduce using rule 63 (indexList)
+
+
+state 74
+
+   71 indexExp: indexComp .
+
+    $default  reduce using rule 71 (indexExp)
+
+
+state 75
+
+   40 property: WORD . COLON propertyType
+
+    COLON  shift, and go to state 141
+
+
+state 76
+
+   32 functionDef: UVAR '(' ')' .
+
+    $default  reduce using rule 32 (functionDef)
+
+
+state 77
+
+   33 functionDef: UVAR '(' properties . ')'
+   36 properties: properties . property SEMICOLON
+   37           | properties . property
+
+    WORD  shift, and go to state 75
+    ')'   shift, and go to state 142
+
+    property  go to state 143
+
+
+state 78
+
+   38 properties: property . SEMICOLON
+   39           | property .
+
+    SEMICOLON  shift, and go to state 144
+
+    $default  reduce using rule 39 (properties)
+
+
+state 79
+
+   25 blockDef: WORD UVAR '[' . indexExp ']' blockType
+
+    INT   shift, and go to state 66
+    UVAR  shift, and go to state 67
+    WORD  shift, and go to state 68
+    '('   shift, and go to state 69
+
+    bundleDef  go to state 70
+    indexExp   go to state 145
+    indexComp  go to state 74
+
+
+state 80
+
+   26 blockType: '{' . '}'
+   27          | '{' . properties '}'
+
+    WORD  shift, and go to state 75
+    '}'   shift, and go to state 146
+
+    properties  go to state 147
+    property    go to state 78
+
+
+state 81
+
+   24 blockDef: WORD UVAR blockType .
+
+    $default  reduce using rule 24 (blockDef)
+
+
+state 82
+
+   31 bundleDef: WORD DOT UVAR . '[' indexList ']'
+   34 functionDef: WORD DOT UVAR . '(' ')'
+   35            | WORD DOT UVAR . '(' properties ')'
+  119 valueComp: WORD DOT UVAR .
+
+    '['  shift, and go to state 148
+    '('  shift, and go to state 149
+
+    $default  reduce using rule 119 (valueComp)
+
+
+state 83
+
+   46 valueListDef: '[' valueList ']' .
+
+    $default  reduce using rule 46 (valueListDef)
+
+
+state 84
+
+   48 valueList: valueList COMMA . valueExp
+
+    INT         shift, and go to state 3
+    FLOAT       shift, and go to state 4
+    UVAR        shift, and go to state 5
+    WORD        shift, and go to state 37
+    STRING      shift, and go to state 7
+    ON          shift, and go to state 14
+    OFF         shift, and go to state 15
+    STREAMRATE  shift, and go to state 16
+    '-'         shift, and go to state 17
+    NOT         shift, and go to state 18
+    '('         shift, and go to state 19
+
+    bundleDef    go to state 27
+    functionDef  go to state 28
+    valueExp     go to state 150
+    valueComp    go to state 32
+
+
+state 85
+
+   47 valueListDef: '[' valueListList ']' .
+
+    $default  reduce using rule 47 (valueListDef)
+
+
+state 86
+
+   50 valueListList: valueListList COMMA . valueListDef
+
+    '['  shift, and go to state 9
+
+    valueListDef  go to state 151
+
+
+state 87
+
+   96 valueExp: valueExp OR . valueExp
+
+    INT         shift, and go to state 3
+    FLOAT       shift, and go to state 4
+    UVAR        shift, and go to state 5
+    WORD        shift, and go to state 37
+    STRING      shift, and go to state 7
+    ON          shift, and go to state 14
+    OFF         shift, and go to state 15
+    STREAMRATE  shift, and go to state 16
+    '-'         shift, and go to state 17
+    NOT         shift, and go to state 18
+    '('         shift, and go to state 19
+
+    bundleDef    go to state 27
+    functionDef  go to state 28
+    valueExp     go to state 121
+    valueComp    go to state 32
+
+
+state 88
+
+   95 valueExp: valueExp AND . valueExp
+
+    INT         shift, and go to state 3
+    FLOAT       shift, and go to state 4
+    UVAR        shift, and go to state 5
+    WORD        shift, and go to state 37
+    STRING      shift, and go to state 7
+    ON          shift, and go to state 14
+    OFF         shift, and go to state 15
+    STREAMRATE  shift, and go to state 16
+    '-'         shift, and go to state 17
+    NOT         shift, and go to state 18
+    '('         shift, and go to state 19
+
+    bundleDef    go to state 27
+    functionDef  go to state 28
+    valueExp     go to state 123
+    valueComp    go to state 32
+
+
+state 89
+
+   91 valueExp: valueExp '+' . valueExp
+
+    INT         shift, and go to state 3
+    FLOAT       shift, and go to state 4
+    UVAR        shift, and go to state 5
+    WORD        shift, and go to state 37
+    STRING      shift, and go to state 7
+    ON          shift, and go to state 14
+    OFF         shift, and go to state 15
+    STREAMRATE  shift, and go to state 16
+    '-'         shift, and go to state 17
+    NOT         shift, and go to state 18
+    '('         shift, and go to state 19
+
+    bundleDef    go to state 27
+    functionDef  go to state 28
+    valueExp     go to state 125
+    valueComp    go to state 32
+
+
+state 90
+
+   92 valueExp: valueExp '-' . valueExp
+
+    INT         shift, and go to state 3
+    FLOAT       shift, and go to state 4
+    UVAR        shift, and go to state 5
+    WORD        shift, and go to state 37
+    STRING      shift, and go to state 7
+    ON          shift, and go to state 14
+    OFF         shift, and go to state 15
+    STREAMRATE  shift, and go to state 16
+    '-'         shift, and go to state 17
+    NOT         shift, and go to state 18
+    '('         shift, and go to state 19
+
+    bundleDef    go to state 27
+    functionDef  go to state 28
+    valueExp     go to state 127
+    valueComp    go to state 32
+
+
+state 91
+
+   93 valueExp: valueExp '*' . valueExp
+
+    INT         shift, and go to state 3
+    FLOAT       shift, and go to state 4
+    UVAR        shift, and go to state 5
+    WORD        shift, and go to state 37
+    STRING      shift, and go to state 7
+    ON          shift, and go to state 14
+    OFF         shift, and go to state 15
+    STREAMRATE  shift, and go to state 16
+    '-'         shift, and go to state 17
+    NOT         shift, and go to state 18
+    '('         shift, and go to state 19
+
+    bundleDef    go to state 27
+    functionDef  go to state 28
+    valueExp     go to state 129
+    valueComp    go to state 32
+
+
+state 92
+
+   94 valueExp: valueExp '/' . valueExp
+
+    INT         shift, and go to state 3
+    FLOAT       shift, and go to state 4
+    UVAR        shift, and go to state 5
+    WORD        shift, and go to state 37
+    STRING      shift, and go to state 7
+    ON          shift, and go to state 14
+    OFF         shift, and go to state 15
+    STREAMRATE  shift, and go to state 16
+    '-'         shift, and go to state 17
+    NOT         shift, and go to state 18
+    '('         shift, and go to state 19
+
+    bundleDef    go to state 27
+    functionDef  go to state 28
+    valueExp     go to state 131
+    valueComp    go to state 32
+
+
+state 93
+
+   13 languagePlatform: USE UVAR VERSION . FLOAT
+
+    FLOAT  shift, and go to state 152
+
+
+state 94
+
+   20 importDef: IMPORT UVAR AS . WORD
+
+    WORD  shift, and go to state 153
+
+
+state 95
+
+   19 importDef: IMPORT WORD AS . WORD
+
+    WORD  shift, and go to state 154
+
+
+state 96
+
+   23 forPlatformDef: forPlatformDef AND . UVAR
+
+    UVAR  shift, and go to state 155
+
+
+state 97
+
+   97 valueExp: '(' valueExp ')' .
+
+    $default  reduce using rule 97 (valueExp)
+
+
+state 98
+
+   14 targetPlatform: ON UVAR .
+   15               | ON UVAR . VERSION FLOAT
+
+    VERSION  shift, and go to state 156
+
+    $default  reduce using rule 14 (targetPlatform)
+
+
+state 99
+
+   11 platformDef: languagePlatform targetPlatform WITH . auxPlatformDef
+
+    UVAR  shift, and go to state 157
+
+    auxPlatformDef  go to state 158
+
+
+state 100
+
+   89 valueListExp: valueListDef OR valueListDef .
+
+    $default  reduce using rule 89 (valueListExp)
+
+
+state 101
+
+   77 valueListExp: valueListDef OR valueExp .
+   91 valueExp: valueExp . '+' valueExp
+   92         | valueExp . '-' valueExp
+   93         | valueExp . '*' valueExp
+   94         | valueExp . '/' valueExp
+   95         | valueExp . AND valueExp
+   96         | valueExp . OR valueExp
+
+    OR   shift, and go to state 87
+    AND  shift, and go to state 88
+    '+'  shift, and go to state 89
+    '-'  shift, and go to state 90
+    '*'  shift, and go to state 91
+    '/'  shift, and go to state 92
+
+    $default  reduce using rule 77 (valueListExp)
+
+
+state 102
+
+   88 valueListExp: valueListDef AND valueListDef .
+
+    $default  reduce using rule 88 (valueListExp)
+
+
+state 103
+
+   76 valueListExp: valueListDef AND valueExp .
+   91 valueExp: valueExp . '+' valueExp
+   92         | valueExp . '-' valueExp
+   93         | valueExp . '*' valueExp
+   94         | valueExp . '/' valueExp
+   95         | valueExp . AND valueExp
+   96         | valueExp . OR valueExp
+
+    OR   shift, and go to state 87
+    AND  shift, and go to state 88
+    '+'  shift, and go to state 89
+    '-'  shift, and go to state 90
+    '*'  shift, and go to state 91
+    '/'  shift, and go to state 92
+
+    $default  reduce using rule 76 (valueListExp)
+
+
+state 104
+
+   84 valueListExp: valueListDef '+' valueListDef .
+
+    $default  reduce using rule 84 (valueListExp)
+
+
+state 105
+
+   72 valueListExp: valueListDef '+' valueExp .
+   91 valueExp: valueExp . '+' valueExp
+   92         | valueExp . '-' valueExp
+   93         | valueExp . '*' valueExp
+   94         | valueExp . '/' valueExp
+   95         | valueExp . AND valueExp
+   96         | valueExp . OR valueExp
+
+    OR   shift, and go to state 87
+    AND  shift, and go to state 88
+    '+'  shift, and go to state 89
+    '-'  shift, and go to state 90
+    '*'  shift, and go to state 91
+    '/'  shift, and go to state 92
+
+    $default  reduce using rule 72 (valueListExp)
+
+
+state 106
+
+   85 valueListExp: valueListDef '-' valueListDef .
+
+    $default  reduce using rule 85 (valueListExp)
+
+
+state 107
+
+   73 valueListExp: valueListDef '-' valueExp .
+   91 valueExp: valueExp . '+' valueExp
+   92         | valueExp . '-' valueExp
+   93         | valueExp . '*' valueExp
+   94         | valueExp . '/' valueExp
+   95         | valueExp . AND valueExp
+   96         | valueExp . OR valueExp
+
+    OR   shift, and go to state 87
+    AND  shift, and go to state 88
+    '+'  shift, and go to state 89
+    '-'  shift, and go to state 90
+    '*'  shift, and go to state 91
+    '/'  shift, and go to state 92
+
+    $default  reduce using rule 73 (valueListExp)
+
+
+state 108
+
+   86 valueListExp: valueListDef '*' valueListDef .
+
+    $default  reduce using rule 86 (valueListExp)
+
+
+state 109
+
+   74 valueListExp: valueListDef '*' valueExp .
+   91 valueExp: valueExp . '+' valueExp
+   92         | valueExp . '-' valueExp
+   93         | valueExp . '*' valueExp
+   94         | valueExp . '/' valueExp
+   95         | valueExp . AND valueExp
+   96         | valueExp . OR valueExp
+
+    OR   shift, and go to state 87
+    AND  shift, and go to state 88
+    '+'  shift, and go to state 89
+    '-'  shift, and go to state 90
+    '*'  shift, and go to state 91
+    '/'  shift, and go to state 92
+
+    $default  reduce using rule 74 (valueListExp)
+
+
+state 110
+
+   87 valueListExp: valueListDef '/' valueListDef .
+
+    $default  reduce using rule 87 (valueListExp)
+
+
+state 111
+
+   75 valueListExp: valueListDef '/' valueExp .
+   91 valueExp: valueExp . '+' valueExp
+   92         | valueExp . '-' valueExp
+   93         | valueExp . '*' valueExp
+   94         | valueExp . '/' valueExp
+   95         | valueExp . AND valueExp
+   96         | valueExp . OR valueExp
+
+    OR   shift, and go to state 87
+    AND  shift, and go to state 88
+    '+'  shift, and go to state 89
+    '-'  shift, and go to state 90
+    '*'  shift, and go to state 91
+    '/'  shift, and go to state 92
+
+    $default  reduce using rule 75 (valueListExp)
+
+
+state 112
+
+   30 bundleDef: UVAR . '[' indexList ']'
+   32 functionDef: UVAR . '(' ')'
+   33            | UVAR . '(' properties ')'
+  107 streamComp: UVAR .
+
+    '['  shift, and go to state 33
+    '('  shift, and go to state 34
+
+    $default  reduce using rule 107 (streamComp)
+
+
+state 113
+
+   31 bundleDef: WORD . DOT UVAR '[' indexList ']'
+   34 functionDef: WORD . DOT UVAR '(' ')'
+   35            | WORD . DOT UVAR '(' properties ')'
+  108 streamComp: WORD . DOT UVAR
+
+    DOT  shift, and go to state 159
+
+
+state 114
+
+  109 streamComp: bundleDef .
+
+    $default  reduce using rule 109 (streamComp)
+
+
+state 115
+
+  110 streamComp: functionDef .
+
+    $default  reduce using rule 110 (streamComp)
+
+
+state 116
+
+  111 streamComp: valueListDef .
+
+    $default  reduce using rule 111 (streamComp)
+
+
+state 117
+
+   29 streamDef: valueListExp STREAM streamExp . SEMICOLON
+
+    SEMICOLON  shift, and go to state 160
+
+
+state 118
+
+  101 streamExp: streamComp . STREAM streamExp
+  102          | streamComp .
+
+    STREAM  shift, and go to state 161
+
+    $default  reduce using rule 102 (streamExp)
+
+
+state 119
+
+   28 streamDef: valueExp STREAM streamExp . SEMICOLON
+
+    SEMICOLON  shift, and go to state 162
+
+
+state 120
+
+   83 valueListExp: valueExp OR valueListDef .
+
+    $default  reduce using rule 83 (valueListExp)
+
+
+state 121
+
+   91 valueExp: valueExp . '+' valueExp
+   92         | valueExp . '-' valueExp
+   93         | valueExp . '*' valueExp
+   94         | valueExp . '/' valueExp
+   95         | valueExp . AND valueExp
+   96         | valueExp . OR valueExp
+   96         | valueExp OR valueExp .
+
+    AND  shift, and go to state 88
+    '+'  shift, and go to state 89
+    '-'  shift, and go to state 90
+    '*'  shift, and go to state 91
+    '/'  shift, and go to state 92
+
+    $default  reduce using rule 96 (valueExp)
+
+
+state 122
+
+   82 valueListExp: valueExp AND valueListDef .
+
+    $default  reduce using rule 82 (valueListExp)
+
+
+state 123
+
+   91 valueExp: valueExp . '+' valueExp
+   92         | valueExp . '-' valueExp
+   93         | valueExp . '*' valueExp
+   94         | valueExp . '/' valueExp
+   95         | valueExp . AND valueExp
+   95         | valueExp AND valueExp .
+   96         | valueExp . OR valueExp
+
+    '+'  shift, and go to state 89
+    '-'  shift, and go to state 90
+    '*'  shift, and go to state 91
+    '/'  shift, and go to state 92
+
+    $default  reduce using rule 95 (valueExp)
+
+
+state 124
+
+   78 valueListExp: valueExp '+' valueListDef .
+
+    $default  reduce using rule 78 (valueListExp)
+
+
+state 125
+
+   91 valueExp: valueExp . '+' valueExp
+   91         | valueExp '+' valueExp .
+   92         | valueExp . '-' valueExp
+   93         | valueExp . '*' valueExp
+   94         | valueExp . '/' valueExp
+   95         | valueExp . AND valueExp
+   96         | valueExp . OR valueExp
+
+    '*'  shift, and go to state 91
+    '/'  shift, and go to state 92
+
+    $default  reduce using rule 91 (valueExp)
+
+
+state 126
+
+   79 valueListExp: valueExp '-' valueListDef .
+
+    $default  reduce using rule 79 (valueListExp)
+
+
+state 127
+
+   91 valueExp: valueExp . '+' valueExp
+   92         | valueExp . '-' valueExp
+   92         | valueExp '-' valueExp .
+   93         | valueExp . '*' valueExp
+   94         | valueExp . '/' valueExp
+   95         | valueExp . AND valueExp
+   96         | valueExp . OR valueExp
+
+    '*'  shift, and go to state 91
+    '/'  shift, and go to state 92
+
+    $default  reduce using rule 92 (valueExp)
+
+
+state 128
+
+   80 valueListExp: valueExp '*' valueListDef .
+
+    $default  reduce using rule 80 (valueListExp)
+
+
+state 129
+
+   91 valueExp: valueExp . '+' valueExp
+   92         | valueExp . '-' valueExp
+   93         | valueExp . '*' valueExp
+   93         | valueExp '*' valueExp .
+   94         | valueExp . '/' valueExp
+   95         | valueExp . AND valueExp
+   96         | valueExp . OR valueExp
+
+    $default  reduce using rule 93 (valueExp)
+
+
+state 130
+
+   81 valueListExp: valueExp '/' valueListDef .
+
+    $default  reduce using rule 81 (valueListExp)
+
+
+state 131
+
+   91 valueExp: valueExp . '+' valueExp
+   92         | valueExp . '-' valueExp
+   93         | valueExp . '*' valueExp
+   94         | valueExp . '/' valueExp
+   94         | valueExp '/' valueExp .
+   95         | valueExp . AND valueExp
+   96         | valueExp . OR valueExp
+
+    $default  reduce using rule 94 (valueExp)
+
+
+state 132
+
+   31 bundleDef: WORD DOT . UVAR '[' indexList ']'
+  105 indexComp: WORD DOT . UVAR
+
+    UVAR  shift, and go to state 163
+
+
+state 133
+
+   66 indexExp: indexExp . '+' indexExp
+   67         | indexExp . '-' indexExp
+   68         | indexExp . '*' indexExp
+   69         | indexExp . '/' indexExp
+   70         | '(' indexExp . ')'
+
+    '+'  shift, and go to state 137
+    '-'  shift, and go to state 138
+    '*'  shift, and go to state 139
+    '/'  shift, and go to state 140
+    ')'  shift, and go to state 164
+
+
+state 134
+
+   30 bundleDef: UVAR '[' indexList ']' .
+
+    $default  reduce using rule 30 (bundleDef)
+
+
+state 135
+
+   61 indexList: indexList COMMA . indexExp
+   62          | indexList COMMA . indexRange
+
+    INT   shift, and go to state 66
+    UVAR  shift, and go to state 67
+    WORD  shift, and go to state 68
+    '('   shift, and go to state 69
+
+    bundleDef   go to state 70
+    indexRange  go to state 165
+    indexExp    go to state 166
+    indexComp   go to state 74
+
+
+state 136
+
+   65 indexRange: indexExp COLON . indexExp
+
+    INT   shift, and go to state 66
+    UVAR  shift, and go to state 67
+    WORD  shift, and go to state 68
+    '('   shift, and go to state 69
+
+    bundleDef  go to state 70
+    indexExp   go to state 167
+    indexComp  go to state 74
+
+
+state 137
+
+   66 indexExp: indexExp '+' . indexExp
+
+    INT   shift, and go to state 66
+    UVAR  shift, and go to state 67
+    WORD  shift, and go to state 68
+    '('   shift, and go to state 69
+
+    bundleDef  go to state 70
+    indexExp   go to state 168
+    indexComp  go to state 74
+
+
+state 138
+
+   67 indexExp: indexExp '-' . indexExp
+
+    INT   shift, and go to state 66
+    UVAR  shift, and go to state 67
+    WORD  shift, and go to state 68
+    '('   shift, and go to state 69
+
+    bundleDef  go to state 70
+    indexExp   go to state 169
+    indexComp  go to state 74
+
+
+state 139
+
+   68 indexExp: indexExp '*' . indexExp
+
+    INT   shift, and go to state 66
+    UVAR  shift, and go to state 67
+    WORD  shift, and go to state 68
+    '('   shift, and go to state 69
+
+    bundleDef  go to state 70
+    indexExp   go to state 170
+    indexComp  go to state 74
+
+
+state 140
+
+   69 indexExp: indexExp '/' . indexExp
+
+    INT   shift, and go to state 66
+    UVAR  shift, and go to state 67
+    WORD  shift, and go to state 68
+    '('   shift, and go to state 69
+
+    bundleDef  go to state 70
+    indexExp   go to state 171
+    indexComp  go to state 74
+
+
+state 141
+
+   40 property: WORD COLON . propertyType
+
+    INT         shift, and go to state 3
+    FLOAT       shift, and go to state 4
+    UVAR        shift, and go to state 5
+    WORD        shift, and go to state 37
+    STRING      shift, and go to state 7
+    '['         shift, and go to state 172
+    '{'         shift, and go to state 80
+    NONE        shift, and go to state 173
+    ON          shift, and go to state 14
+    OFF         shift, and go to state 15
+    STREAMRATE  shift, and go to state 16
+    '-'         shift, and go to state 17
+    NOT         shift, and go to state 18
+    '('         shift, and go to state 19
+
+    blockType     go to state 174
+    bundleDef     go to state 27
+    functionDef   go to state 28
+    propertyType  go to state 175
+    valueListDef  go to state 29
+    listDef       go to state 176
+    valueListExp  go to state 177
+    valueExp      go to state 178
+    valueComp     go to state 32
+
+
+state 142
+
+   33 functionDef: UVAR '(' properties ')' .
+
+    $default  reduce using rule 33 (functionDef)
+
+
+state 143
+
+   36 properties: properties property . SEMICOLON
+   37           | properties property .
+
+    SEMICOLON  shift, and go to state 179
+
+    $default  reduce using rule 37 (properties)
+
+
+state 144
+
+   38 properties: property SEMICOLON .
+
+    $default  reduce using rule 38 (properties)
+
+
+state 145
+
+   25 blockDef: WORD UVAR '[' indexExp . ']' blockType
+   66 indexExp: indexExp . '+' indexExp
+   67         | indexExp . '-' indexExp
+   68         | indexExp . '*' indexExp
+   69         | indexExp . '/' indexExp
+
+    ']'  shift, and go to state 180
+    '+'  shift, and go to state 137
+    '-'  shift, and go to state 138
+    '*'  shift, and go to state 139
+    '/'  shift, and go to state 140
+
+
+state 146
+
+   26 blockType: '{' '}' .
+
+    $default  reduce using rule 26 (blockType)
+
+
+state 147
+
+   27 blockType: '{' properties . '}'
+   36 properties: properties . property SEMICOLON
+   37           | properties . property
+
+    WORD  shift, and go to state 75
+    '}'   shift, and go to state 181
+
+    property  go to state 143
+
+
+state 148
+
+   31 bundleDef: WORD DOT UVAR '[' . indexList ']'
+
+    INT   shift, and go to state 66
+    UVAR  shift, and go to state 67
+    WORD  shift, and go to state 68
+    '('   shift, and go to state 69
+
+    bundleDef   go to state 70
+    indexList   go to state 182
+    indexRange  go to state 72
+    indexExp    go to state 73
+    indexComp   go to state 74
+
+
+state 149
+
+   34 functionDef: WORD DOT UVAR '(' . ')'
+   35            | WORD DOT UVAR '(' . properties ')'
+
+    WORD  shift, and go to state 75
+    ')'   shift, and go to state 183
+
+    properties  go to state 184
+    property    go to state 78
+
+
+state 150
+
+   48 valueList: valueList COMMA valueExp .
+   91 valueExp: valueExp . '+' valueExp
+   92         | valueExp . '-' valueExp
+   93         | valueExp . '*' valueExp
+   94         | valueExp . '/' valueExp
+   95         | valueExp . AND valueExp
+   96         | valueExp . OR valueExp
+
+    OR   shift, and go to state 87
+    AND  shift, and go to state 88
+    '+'  shift, and go to state 89
+    '-'  shift, and go to state 90
+    '*'  shift, and go to state 91
+    '/'  shift, and go to state 92
+
+    $default  reduce using rule 48 (valueList)
+
+
+state 151
+
+   50 valueListList: valueListList COMMA valueListDef .
+
+    $default  reduce using rule 50 (valueListList)
+
+
+state 152
+
+   13 languagePlatform: USE UVAR VERSION FLOAT .
+
+    $default  reduce using rule 13 (languagePlatform)
+
+
+state 153
+
+   20 importDef: IMPORT UVAR AS WORD .
+
+    $default  reduce using rule 20 (importDef)
+
+
+state 154
+
+   19 importDef: IMPORT WORD AS WORD .
+
+    $default  reduce using rule 19 (importDef)
+
+
+state 155
+
+   23 forPlatformDef: forPlatformDef AND UVAR .
+
+    $default  reduce using rule 23 (forPlatformDef)
+
+
+state 156
+
+   15 targetPlatform: ON UVAR VERSION . FLOAT
+
+    FLOAT  shift, and go to state 185
+
+
+state 157
+
+   16 auxPlatformDef: UVAR .
+
+    $default  reduce using rule 16 (auxPlatformDef)
+
+
+state 158
+
+   11 platformDef: languagePlatform targetPlatform WITH auxPlatformDef .
+   17 auxPlatformDef: auxPlatformDef . AND UVAR
+
+    AND  shift, and go to state 186
+
+    $default  reduce using rule 11 (platformDef)
+
+
+state 159
+
+   31 bundleDef: WORD DOT . UVAR '[' indexList ']'
+   34 functionDef: WORD DOT . UVAR '(' ')'
+   35            | WORD DOT . UVAR '(' properties ')'
+  108 streamComp: WORD DOT . UVAR
+
+    UVAR  shift, and go to state 187
+
+
+state 160
+
+   29 streamDef: valueListExp STREAM streamExp SEMICOLON .
+
+    $default  reduce using rule 29 (streamDef)
+
+
+state 161
+
+  101 streamExp: streamComp STREAM . streamExp
+
+    UVAR  shift, and go to state 112
+    WORD  shift, and go to state 113
+    '['   shift, and go to state 9
+
+    bundleDef     go to state 114
+    functionDef   go to state 115
+    valueListDef  go to state 116
+    streamExp     go to state 188
+    streamComp    go to state 118
+
+
+state 162
+
+   28 streamDef: valueExp STREAM streamExp SEMICOLON .
+
+    $default  reduce using rule 28 (streamDef)
+
+
+state 163
+
+   31 bundleDef: WORD DOT UVAR . '[' indexList ']'
+  105 indexComp: WORD DOT UVAR .
+
+    '['  shift, and go to state 148
+
+    $default  reduce using rule 105 (indexComp)
+
+
+state 164
+
+   70 indexExp: '(' indexExp ')' .
+
+    $default  reduce using rule 70 (indexExp)
+
+
+state 165
+
+   62 indexList: indexList COMMA indexRange .
+
+    $default  reduce using rule 62 (indexList)
+
+
+state 166
+
+   61 indexList: indexList COMMA indexExp .
+   65 indexRange: indexExp . COLON indexExp
+   66 indexExp: indexExp . '+' indexExp
+   67         | indexExp . '-' indexExp
+   68         | indexExp . '*' indexExp
+   69         | indexExp . '/' indexExp
+
+    COLON  shift, and go to state 136
+    '+'    shift, and go to state 137
+    '-'    shift, and go to state 138
+    '*'    shift, and go to state 139
+    '/'    shift, and go to state 140
+
+    $default  reduce using rule 61 (indexList)
+
+
+state 167
+
+   65 indexRange: indexExp COLON indexExp .
+   66 indexExp: indexExp . '+' indexExp
+   67         | indexExp . '-' indexExp
+   68         | indexExp . '*' indexExp
+   69         | indexExp . '/' indexExp
+
+    '+'  shift, and go to state 137
+    '-'  shift, and go to state 138
+    '*'  shift, and go to state 139
+    '/'  shift, and go to state 140
+
+    $default  reduce using rule 65 (indexRange)
+
+
+state 168
+
+   66 indexExp: indexExp . '+' indexExp
+   66         | indexExp '+' indexExp .
+   67         | indexExp . '-' indexExp
+   68         | indexExp . '*' indexExp
+   69         | indexExp . '/' indexExp
+
+    '*'  shift, and go to state 139
+    '/'  shift, and go to state 140
+
+    $default  reduce using rule 66 (indexExp)
+
+
+state 169
+
+   66 indexExp: indexExp . '+' indexExp
+   67         | indexExp . '-' indexExp
+   67         | indexExp '-' indexExp .
+   68         | indexExp . '*' indexExp
+   69         | indexExp . '/' indexExp
+
+    '*'  shift, and go to state 139
+    '/'  shift, and go to state 140
+
+    $default  reduce using rule 67 (indexExp)
+
+
+state 170
+
+   66 indexExp: indexExp . '+' indexExp
+   67         | indexExp . '-' indexExp
+   68         | indexExp . '*' indexExp
+   68         | indexExp '*' indexExp .
+   69         | indexExp . '/' indexExp
+
+    $default  reduce using rule 68 (indexExp)
+
+
+state 171
+
+   66 indexExp: indexExp . '+' indexExp
+   67         | indexExp . '-' indexExp
+   68         | indexExp . '*' indexExp
+   69         | indexExp . '/' indexExp
+   69         | indexExp '/' indexExp .
+
+    $default  reduce using rule 69 (indexExp)
+
+
+state 172
+
+   46 valueListDef: '[' . valueList ']'
+   47             | '[' . valueListList ']'
+   52 listDef: '[' . blockList ']'
+   53        | '[' . streamList ']'
+   54        | '[' . listList ']'
+
+    INT         shift, and go to state 3
+    FLOAT       shift, and go to state 4
+    UVAR        shift, and go to state 5
+    WORD        shift, and go to state 6
+    STRING      shift, and go to state 7
+    '['         shift, and go to state 172
+    ON          shift, and go to state 14
+    OFF         shift, and go to state 15
+    STREAMRATE  shift, and go to state 16
+    '-'         shift, and go to state 17
+    NOT         shift, and go to state 18
+    '('         shift, and go to state 19
+
+    blockDef       go to state 189
+    streamDef      go to state 190
+    bundleDef      go to state 27
+    functionDef    go to state 28
+    valueListDef   go to state 191
+    valueList      go to state 39
+    valueListList  go to state 40
+    listDef        go to state 192
+    blockList      go to state 193
+    streamList     go to state 194
+    listList       go to state 195
+    valueListExp   go to state 30
+    valueExp       go to state 196
+    valueComp      go to state 32
+
+
+state 173
+
+   41 propertyType: NONE .
+
+    $default  reduce using rule 41 (propertyType)
+
+
+state 174
+
+   43 propertyType: blockType .
+
+    $default  reduce using rule 43 (propertyType)
+
+
+state 175
+
+   40 property: WORD COLON propertyType .
+
+    $default  reduce using rule 40 (property)
+
+
+state 176
+
+   44 propertyType: listDef .
+
+    $default  reduce using rule 44 (propertyType)
+
+
+state 177
+
+   45 propertyType: valueListExp .
+
+    $default  reduce using rule 45 (propertyType)
+
+
+state 178
+
+   42 propertyType: valueExp .
+   78 valueListExp: valueExp . '+' valueListDef
+   79             | valueExp . '-' valueListDef
+   80             | valueExp . '*' valueListDef
+   81             | valueExp . '/' valueListDef
+   82             | valueExp . AND valueListDef
+   83             | valueExp . OR valueListDef
+   91 valueExp: valueExp . '+' valueExp
+   92         | valueExp . '-' valueExp
+   93         | valueExp . '*' valueExp
+   94         | valueExp . '/' valueExp
+   95         | valueExp . AND valueExp
+   96         | valueExp . OR valueExp
+
+    OR   shift, and go to state 60
+    AND  shift, and go to state 61
+    '+'  shift, and go to state 62
+    '-'  shift, and go to state 63
+    '*'  shift, and go to state 64
+    '/'  shift, and go to state 65
+
+    $default  reduce using rule 42 (propertyType)
+
+
+state 179
+
+   36 properties: properties property SEMICOLON .
+
+    $default  reduce using rule 36 (properties)
+
+
+state 180
+
+   25 blockDef: WORD UVAR '[' indexExp ']' . blockType
+
+    '{'  shift, and go to state 80
+
+    blockType  go to state 197
+
+
+state 181
+
+   27 blockType: '{' properties '}' .
+
+    $default  reduce using rule 27 (blockType)
+
+
+state 182
+
+   31 bundleDef: WORD DOT UVAR '[' indexList . ']'
+   61 indexList: indexList . COMMA indexExp
+   62          | indexList . COMMA indexRange
+
+    ']'    shift, and go to state 198
+    COMMA  shift, and go to state 135
+
+
+state 183
+
+   34 functionDef: WORD DOT UVAR '(' ')' .
+
+    $default  reduce using rule 34 (functionDef)
+
+
+state 184
+
+   35 functionDef: WORD DOT UVAR '(' properties . ')'
+   36 properties: properties . property SEMICOLON
+   37           | properties . property
+
+    WORD  shift, and go to state 75
+    ')'   shift, and go to state 199
+
+    property  go to state 143
+
+
+state 185
+
+   15 targetPlatform: ON UVAR VERSION FLOAT .
+
+    $default  reduce using rule 15 (targetPlatform)
+
+
+state 186
+
+   17 auxPlatformDef: auxPlatformDef AND . UVAR
+
+    UVAR  shift, and go to state 200
+
+
+state 187
+
+   31 bundleDef: WORD DOT UVAR . '[' indexList ']'
+   34 functionDef: WORD DOT UVAR . '(' ')'
+   35            | WORD DOT UVAR . '(' properties ')'
+  108 streamComp: WORD DOT UVAR .
+
+    '['  shift, and go to state 148
+    '('  shift, and go to state 149
+
+    $default  reduce using rule 108 (streamComp)
+
+
+state 188
+
+  101 streamExp: streamComp STREAM streamExp .
+
+    $default  reduce using rule 101 (streamExp)
+
+
+state 189
+
+   56 blockList: blockDef .
+
+    $default  reduce using rule 56 (blockList)
+
+
+state 190
+
+   58 streamList: streamDef .
+
+    $default  reduce using rule 58 (streamList)
+
+
+state 191
+
+   51 valueListList: valueListDef .
+   72 valueListExp: valueListDef . '+' valueExp
+   73             | valueListDef . '-' valueExp
+   74             | valueListDef . '*' valueExp
+   75             | valueListDef . '/' valueExp
+   76             | valueListDef . AND valueExp
+   77             | valueListDef . OR valueExp
+   84             | valueListDef . '+' valueListDef
+   85             | valueListDef . '-' valueListDef
+   86             | valueListDef . '*' valueListDef
+   87             | valueListDef . '/' valueListDef
+   88             | valueListDef . AND valueListDef
+   89             | valueListDef . OR valueListDef
+   90             | valueListDef .
+
+    OR   shift, and go to state 52
+    AND  shift, and go to state 53
+    '+'  shift, and go to state 54
+    '-'  shift, and go to state 55
+    '*'  shift, and go to state 56
+    '/'  shift, and go to state 57
+
+    STREAM    reduce using rule 90 (valueListExp)
+    $default  reduce using rule 51 (valueListList)
+
+
+state 192
+
+   60 listList: listDef .
+
+    $default  reduce using rule 60 (listList)
+
+
+state 193
+
+   52 listDef: '[' blockList . ']'
+   55 blockList: blockList . COMMA blockDef
+
+    ']'    shift, and go to state 201
+    COMMA  shift, and go to state 202
+
+
+state 194
+
+   53 listDef: '[' streamList . ']'
+   57 streamList: streamList . COMMA streamDef
+
+    ']'    shift, and go to state 203
+    COMMA  shift, and go to state 204
+
+
+state 195
+
+   54 listDef: '[' listList . ']'
+   59 listList: listList . COMMA listDef
+
+    ']'    shift, and go to state 205
+    COMMA  shift, and go to state 206
+
+
+state 196
+
+   28 streamDef: valueExp . STREAM streamExp SEMICOLON
+   49 valueList: valueExp .
+   78 valueListExp: valueExp . '+' valueListDef
+   79             | valueExp . '-' valueListDef
+   80             | valueExp . '*' valueListDef
+   81             | valueExp . '/' valueListDef
+   82             | valueExp . AND valueListDef
+   83             | valueExp . OR valueListDef
+   91 valueExp: valueExp . '+' valueExp
+   92         | valueExp . '-' valueExp
+   93         | valueExp . '*' valueExp
+   94         | valueExp . '/' valueExp
+   95         | valueExp . AND valueExp
+   96         | valueExp . OR valueExp
+
+    STREAM  shift, and go to state 59
+    OR      shift, and go to state 60
+    AND     shift, and go to state 61
+    '+'     shift, and go to state 62
+    '-'     shift, and go to state 63
+    '*'     shift, and go to state 64
+    '/'     shift, and go to state 65
+
+    $default  reduce using rule 49 (valueList)
+
+
+state 197
+
+   25 blockDef: WORD UVAR '[' indexExp ']' blockType .
+
+    $default  reduce using rule 25 (blockDef)
+
+
+state 198
+
+   31 bundleDef: WORD DOT UVAR '[' indexList ']' .
+
+    $default  reduce using rule 31 (bundleDef)
+
+
+state 199
+
+   35 functionDef: WORD DOT UVAR '(' properties ')' .
+
+    $default  reduce using rule 35 (functionDef)
+
+
+state 200
+
+   17 auxPlatformDef: auxPlatformDef AND UVAR .
+
+    $default  reduce using rule 17 (auxPlatformDef)
+
+
+state 201
+
+   52 listDef: '[' blockList ']' .
+
+    $default  reduce using rule 52 (listDef)
+
+
+state 202
+
+   55 blockList: blockList COMMA . blockDef
+
+    WORD  shift, and go to state 207
+
+    blockDef  go to state 208
+
+
+state 203
+
+   53 listDef: '[' streamList ']' .
+
+    $default  reduce using rule 53 (listDef)
+
+
+state 204
+
+   57 streamList: streamList COMMA . streamDef
+
+    INT         shift, and go to state 3
+    FLOAT       shift, and go to state 4
+    UVAR        shift, and go to state 5
+    WORD        shift, and go to state 37
+    STRING      shift, and go to state 7
+    '['         shift, and go to state 9
+    ON          shift, and go to state 14
+    OFF         shift, and go to state 15
+    STREAMRATE  shift, and go to state 16
+    '-'         shift, and go to state 17
+    NOT         shift, and go to state 18
+    '('         shift, and go to state 19
+
+    streamDef     go to state 209
+    bundleDef     go to state 27
+    functionDef   go to state 28
+    valueListDef  go to state 29
+    valueListExp  go to state 30
+    valueExp      go to state 31
+    valueComp     go to state 32
+
+
+state 205
+
+   54 listDef: '[' listList ']' .
+
+    $default  reduce using rule 54 (listDef)
+
+
+state 206
+
+   59 listList: listList COMMA . listDef
+
+    '['  shift, and go to state 210
+
+    listDef  go to state 211
+
+
+state 207
+
+   24 blockDef: WORD . UVAR blockType
+   25         | WORD . UVAR '[' indexExp ']' blockType
+
+    UVAR  shift, and go to state 35
+
+
+state 208
+
+   55 blockList: blockList COMMA blockDef .
+
+    $default  reduce using rule 55 (blockList)
+
+
+state 209
+
+   57 streamList: streamList COMMA streamDef .
+
+    $default  reduce using rule 57 (streamList)
+
+
+state 210
+
+   52 listDef: '[' . blockList ']'
+   53        | '[' . streamList ']'
+   54        | '[' . listList ']'
+
+    INT         shift, and go to state 3
+    FLOAT       shift, and go to state 4
+    UVAR        shift, and go to state 5
+    WORD        shift, and go to state 6
+    STRING      shift, and go to state 7
+    '['         shift, and go to state 172
+    ON          shift, and go to state 14
+    OFF         shift, and go to state 15
+    STREAMRATE  shift, and go to state 16
+    '-'         shift, and go to state 17
+    NOT         shift, and go to state 18
+    '('         shift, and go to state 19
+
+    blockDef      go to state 189
+    streamDef     go to state 190
+    bundleDef     go to state 27
+    functionDef   go to state 28
+    valueListDef  go to state 29
+    listDef       go to state 192
+    blockList     go to state 193
+    streamList    go to state 194
+    listList      go to state 195
+    valueListExp  go to state 30
+    valueExp      go to state 31
+    valueComp     go to state 32
+
+
+state 211
+
+   59 listList: listList COMMA listDef .
+
+    $default  reduce using rule 59 (listList)

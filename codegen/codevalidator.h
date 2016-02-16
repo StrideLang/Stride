@@ -3,7 +3,7 @@
 
 #include <QString>
 
-#include "streamparser.h"
+#include "strideparser.h"
 #include "streamplatform.h"
 
 class CodeValidator

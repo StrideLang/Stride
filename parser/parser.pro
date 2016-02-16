@@ -31,14 +31,14 @@ HEADERS += ast.h \
     expressionnode.h \
     blocknode.h \
     listnode.h \
-    streamparser.h \
     importnode.h \
     fornode.h \
     rangenode.h \
-    langerror.h
+    langerror.h \
+    strideparser.h
 
-BISONSOURCES = lang_stream.y
-FLEXSOURCES = lang_stream.l
+BISONSOURCES = lang_stride.y
+FLEXSOURCES = lang_stride.l
 
 include(../config.pri)
 include(parser.pri)
