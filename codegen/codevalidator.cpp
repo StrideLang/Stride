@@ -130,16 +130,32 @@ void CodeValidator::validateProperties(AST *node, QVector<AST *> scope)
                 m_errors << error;
             } else {
                 AST *portValue = port->getValue();
-                QString portTypeName = getPortTypeName(resolveNodeOutType(portValue, scope, m_tree));
+                if (portValue->getNodeType() == AST::List) {
+                    ListNode *list = static_cast<ListNode *>(portValue);
+                    for (int i = 0; i < list->size(); i++) {
+                        QString portTypeName = getPortTypeName(resolveNodeOutType(list->getChildren().at(i), scope, m_tree));
+                        if (!m_platform.isValidPortType(blockType, portName, portTypeName)) {
+                            LangError error;
+                            error.type = LangError::InvalidPortType;
+                            error.lineNumber = block->getLine();
+                            error.errorTokens.push_back(blockType.toStdString());
+                            error.errorTokens.push_back(portName.toStdString());
+                            error.errorTokens.push_back(portTypeName.toStdString());
+                            m_errors << error;
+                        }
+                    }
+                } else {
+                    QString portTypeName = getPortTypeName(resolveNodeOutType(portValue, scope, m_tree));
 
-                if (!m_platform.isValidPortType(blockType, portName, portTypeName)) {
-                    LangError error;
-                    error.type = LangError::InvalidPortType;
-                    error.lineNumber = block->getLine();
-                    error.errorTokens.push_back(blockType.toStdString());
-                    error.errorTokens.push_back(portName.toStdString());
-                    error.errorTokens.push_back(portTypeName.toStdString());
-                    m_errors << error;
+                    if (!m_platform.isValidPortType(blockType, portName, portTypeName)) {
+                        LangError error;
+                        error.type = LangError::InvalidPortType;
+                        error.lineNumber = block->getLine();
+                        error.errorTokens.push_back(blockType.toStdString());
+                        error.errorTokens.push_back(portName.toStdString());
+                        error.errorTokens.push_back(portTypeName.toStdString());
+                        m_errors << error;
+                    }
                 }
             }
         }

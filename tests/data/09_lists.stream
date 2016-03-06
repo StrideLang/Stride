@@ -1,0 +1,50 @@
+#=======
+# LISTS
+#=======
+use Gamma version 1.0 on PC
+
+constant List_Integer [4] {
+        value: [ 16, 32, 64, 128 ]
+}
+
+constant List_Real [4] {
+        value: [ 16., 32.1, 64., 128. ]
+}
+
+constant List_Strings [4] {
+        value: [ '16', "32.1", '64', "128" ]
+}
+
+constant List_Switches [4] {
+        value: [ on, off, on, on ]
+}
+
+constant List_Names [4] {
+        value: [ Name1, Name2, Name3, Name4 ]
+}
+
+constant List_Namespaces [4] {
+        value: [ ns.Name1, ns.Name2, ns.Name3, ns.Name4 ]
+}
+
+#These should trigger inconsistent constant errors
+
+constant List_Inconsistent [4] {
+        value: [ '16', "32.1", '64', 1 ]
+}
+
+constant List_Inconsistent2 [4] {
+        value: [ '16', "32.1", '64', 1.1 ]
+}
+
+# List of lists will parse
+list IntegerList [3] {
+        value: [[ 9, 8, 7 ] , [ 6, 5, 4 ] , [ 3, 2, 1 ] ]
+        meta:	'List of lists'
+}
+
+# The following should FAIL. Integer and Float lists mixed.
+list IntegerList [3] {
+        value: [ [ 1, 2, 3 ], [ 4.0, 5.0, 6.0 ], [ 7, 8, 9 ] ]
+        meta:	'List of lists'
+}
