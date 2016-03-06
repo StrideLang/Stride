@@ -36,7 +36,6 @@ DEPLOYMENTFOLDERS += folder_01
 
 DISTFILES += \
     data/introFeedback.stream \
-    data/list.stream \
     data/introGenerator.stream \
     data/introBlock.stream \
     data/introProcessor.stream \
@@ -69,7 +68,8 @@ DISTFILES += \
     data/E02_stream_expansions.stream \
     data/E03_multichn_streams.stream \
     data/E04_rates.stream \
-    data/08_namespace.stream
+    data/08_namespace.stream \
+    data/09_lists.stream
 
 # Link to codegen library
 

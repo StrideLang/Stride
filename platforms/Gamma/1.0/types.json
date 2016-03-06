@@ -13,7 +13,7 @@
             "typeName": "constant",
             "ports": {
                 "output": {"types" : ["CIP", "CRP" , "CSP"], "default": "none", "required" : false, "maxconnections" : -1, "access": "stream_out"},
-                "value": {"types": ["CIP", "CRP" , "CSP", "none"], "default": "none", "required" : true, "maxconnections" : 1, "access": "property"}
+                "value": {"types": ["CIP", "CRP" , "CSP", "CBP", "none"], "default": "none", "required" : true, "maxconnections" : 1, "access": "property"}
             },
             "privateports": {"inherits" : ["object"]}
         },

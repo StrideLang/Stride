@@ -477,7 +477,7 @@ functionDef:
                                                 ns.append($1); /* string constructor leaks otherwise! */
                                                 string s;
                                                 s.append($3); /* string constructor leaks otherwise! */
-                                                $$ = new FunctionNode(s, ns, NULL, FunctionNode::UserDefined, yyloc.first_line);
+                                                $$ = new FunctionNode(s, NULL, FunctionNode::UserDefined, yyloc.first_line, ns);
                                                 COUT << "Function: " << $3 << " in NameSpace: " << $1 << ENDL;
                                                 free($1);
                                                 free($3);
@@ -488,7 +488,7 @@ functionDef:
                                                 ns.append($1); /* string constructor leaks otherwise! */
                                                 string s;
                                                 s.append($3); /* string constructor leaks otherwise! */
-                                                $$ = new FunctionNode(s, ns, $5, FunctionNode::UserDefined, yyloc.first_line);
+                                                $$ = new FunctionNode(s, $5, FunctionNode::UserDefined, yyloc.first_line, ns);
                                                 AST *props = $5;
                                                 delete props;
 

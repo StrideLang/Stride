@@ -19,13 +19,14 @@ private:
 
 private Q_SLOTS:
 
-    void testNamespaces();
+    void testLists();
 
     //Expansion
     void testConstantResolution();
 	void testStreamExpansion();
     void testMultichannelUgens();
     void testStreamRates();
+    void testNamespaces();
 
     //Platform
     void testPlatformCommonObjects();
@@ -629,6 +630,132 @@ void ParserTest::testListConsistency()
 
 //    tree->deleteChildren();
     //    delete tree;
+}
+
+void ParserTest::testLists()
+{
+    AST *tree;
+    tree = parse(QString(QFINDTESTDATA("data/09_lists.stream")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    vector<AST *> nodes = tree->getChildren();
+
+//    constant List_Integer [4] {
+//            value: [ 16, 32, 64, 128 ]
+//    }
+    BlockNode *block = static_cast<BlockNode *>(nodes.at(1));
+    QVERIFY(block->getNodeType() == AST::BlockBundle);
+    vector<PropertyNode *> props =  block->getProperties();
+    ListNode *list = static_cast<ListNode *>(props.at(0)->getValue());
+    QVERIFY(list->getNodeType() == AST::List);
+    vector<AST *> members = list->getChildren();
+    QVERIFY(members.size() == 4);
+    foreach(AST * member, members) {
+        ValueNode *value = static_cast<ValueNode *>(member);
+        QVERIFY(value->getNodeType() == AST::Int);
+    }
+//    constant List_Real [4] {
+//            value: [ 16., 32.1, 64., 128. ]
+//    }
+    block = static_cast<BlockNode *>(nodes.at(2));
+    QVERIFY(block->getNodeType() == AST::BlockBundle);
+    props =  block->getProperties();
+    list = static_cast<ListNode *>(props.at(0)->getValue());
+    QVERIFY(list->getNodeType() == AST::List);
+    members = list->getChildren();
+    QVERIFY(members.size() == 4);
+    foreach(AST * member, members) {
+        ValueNode *value = static_cast<ValueNode *>(member);
+        QVERIFY(value->getNodeType() == AST::Real);
+    }
+
+//    constant List_Strings [4] {
+//            value: [ '16', "32.1", '64', "128" ]
+//    }
+    block = static_cast<BlockNode *>(nodes.at(3));
+    QVERIFY(block->getNodeType() == AST::BlockBundle);
+    props =  block->getProperties();
+    list = static_cast<ListNode *>(props.at(0)->getValue());
+    QVERIFY(list->getNodeType() == AST::List);
+    members = list->getChildren();
+    QVERIFY(members.size() == 4);
+    foreach(AST * member, members) {
+        ValueNode *value = static_cast<ValueNode *>(member);
+        QVERIFY(value->getNodeType() == AST::String);
+    }
+
+//    constant List_Switches [4] {
+//            value: [ on, off, on, on ]
+//    }
+    block = static_cast<BlockNode *>(nodes.at(4));
+    QVERIFY(block->getNodeType() == AST::BlockBundle);
+    props =  block->getProperties();
+    list = static_cast<ListNode *>(props.at(0)->getValue());
+    QVERIFY(list->getNodeType() == AST::List);
+    members = list->getChildren();
+    QVERIFY(members.size() == 4);
+    foreach(AST * member, members) {
+        ValueNode *value = static_cast<ValueNode *>(member);
+        QVERIFY(value->getNodeType() == AST::Switch);
+    }
+
+//    constant List_Names [4] {
+//            value: [ Name1, Name2, Name3, Name4 ]
+//    }
+    block = static_cast<BlockNode *>(nodes.at(5));
+    QVERIFY(block->getNodeType() == AST::BlockBundle);
+    props =  block->getProperties();
+    list = static_cast<ListNode *>(props.at(0)->getValue());
+    QVERIFY(list->getNodeType() == AST::List);
+    members = list->getChildren();
+    QVERIFY(members.size() == 4);
+    foreach(AST * member, members) {
+        NameNode *value = static_cast<NameNode *>(member);
+        QVERIFY(value->getNodeType() == AST::Name);
+    }
+
+//    constant List_Namespaces [4] {
+//            value: [ ns.Name1, ns.Name2, ns.Name3, ns.Name4 ]
+//    }
+    block = static_cast<BlockNode *>(nodes.at(6));
+    QVERIFY(block->getNodeType() == AST::BlockBundle);
+    props =  block->getProperties();
+    list = static_cast<ListNode *>(props.at(0)->getValue());
+    QVERIFY(list->getNodeType() == AST::List);
+    members = list->getChildren();
+    QVERIFY(members.size() == 4);
+    foreach(AST * member, members) {
+        NameNode *value = static_cast<NameNode *>(member);
+        QVERIFY(value->getNodeType() == AST::Name);
+        QVERIFY(value->getNamespace() == "ns");
+    }
+
+    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);\
+    QVERIFY(!generator.isValid());
+    QList<LangError> errors = generator.getErrors();
+//constant List_Inconsistent [4] {
+//        value: [ '16', "32.1", '64', 1 ]
+//}
+    LangError err = errors.at(0);
+
+    QVERIFY(err.type == LangError::InconsistentList);
+//constant List_Inconsistent2 [4] {
+//        value: [ '16', "32.1", '64', 1.1 ]
+//}
+
+//# List of lists will parse
+//list IntegerList [3] {
+//        value: [[ 9, 8, 7 ] , [ 6, 5, 4 ] , [ 3, 2, 1 ] ]
+//        meta:	'List of lists'
+//}
+
+//# The following should FAIL. Integer and Float lists mixed.
+//list IntegerList [3] {
+//        value: [ [ 1, 2, 3 ], [ 4.0, 5.0, 6.0 ], [ 7, 8, 9 ] ]
+//        meta:	'List of lists'
+//}
+
+
+
 }
 
 void ParserTest::testNamespaces()
@@ -1956,6 +2083,7 @@ void ParserTest::testParser()
 //            << "data/01_header.stream" << "data/02_basic_blocks.stream" << "data/03_basic_bundle.stream"
 //          << "data/04_basic_stream.stream" << "data/05_basic_functions.stream"
 //          << "data/06_basic_noneswitch.stream" << "data/07_bundle_indeces.stream"
+//          << "data/08_namespace.stream" << "data/09_lists.stream"
 
 //          << "data/P01_platform_objects.stream" << "data/P02_check_duplicates.stream"
 //          << "data/P03_bundle_resolution.stream"
@@ -1963,7 +2091,6 @@ void ParserTest::testParser()
 //          << "data/E01_constant_res.stream" << "data/E02_stream_expansions.stream"
 //          << "data/E03_multichn_streams.stream" << "data/E03_rates.stream"
 
-          << "data/list.stream"
           << "data/introBlock.stream"
           << "data/introConverter.stream" << "data/introFeedback.stream"
           << "data/introGenerator.stream" << "data/introProcessor.stream"

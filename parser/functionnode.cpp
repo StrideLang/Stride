@@ -2,7 +2,7 @@
 
 #include "functionnode.h"
 
-FunctionNode::FunctionNode(string name, AST *propertiesList, FunctionType type, int line) :
+FunctionNode::FunctionNode(string name, AST *propertiesList, FunctionType type, int line, string namespace_) :
     AST(AST::Function, line)
 {
     m_name = name;
@@ -16,11 +16,7 @@ FunctionNode::FunctionNode(string name, AST *propertiesList, FunctionType type, 
         m_properties.push_back(static_cast<PropertyNode *>(m_children.at(i)));
     }
     m_parallelInstances = 0;
-}
 
-FunctionNode::FunctionNode(string name, string namespace_, AST *propertiesList, FunctionNode::FunctionType type, int line) :
-    FunctionNode::FunctionNode(name, propertiesList, type, line)
-{
     m_namespace = namespace_;
 }
 
