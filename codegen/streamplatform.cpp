@@ -281,8 +281,8 @@ void StreamPlatform::parseFunctionsJson(QString jsonText, QList<PlatformFunction
 
         //.toVariantMap();
 
-        int numInputs = funcObj.take("num_inputs").toInt(0);
-        int numOutputs = funcObj.take("num_outputs").toInt(0);
+        int numInputs = funcObj.take("num_inputs").toDouble();
+        int numOutputs = funcObj.take("num_outputs").toDouble();
         PlatformFunction newType(funcName, ports, numInputs, numOutputs);
         functions.append(newType);
     }
@@ -305,7 +305,7 @@ void StreamPlatform::parseObjectsJson(QString jsonText, QList<PlatformObject> &o
         QJsonValue val = objectObj.take("objectName");
         QString objectName = val.toString();
         val = objectObj.take("size");
-        int size = val.toInt(-1);
+        int size = val.toDouble();
         val = objectObj.take("type");
         QString type = val.toString();
         // The remaining keys in the json object are considered properties

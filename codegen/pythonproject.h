@@ -3,7 +3,7 @@
 
 #include <QObject>
 #include <QString>
-#include <QAtomicInteger>
+#include <QAtomicInt>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -48,7 +48,7 @@ private:
 
     QJsonArray m_curStreamArray;
     QString m_pythonExecutable;
-    QAtomicInteger<short> m_running;
+    QAtomicInt m_running;
     QProcess m_runningProcess;
 };
 

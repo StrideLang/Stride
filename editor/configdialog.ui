@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>610</width>
-    <height>457</height>
+    <width>615</width>
+    <height>462</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -73,9 +73,6 @@
        </item>
        <item row="2" column="0" colspan="3">
         <widget class="QTableWidget" name="colorsTableWidget">
-         <property name="sizeAdjustPolicy">
-          <enum>QAbstractScrollArea::AdjustToContents</enum>
-         </property>
          <property name="selectionMode">
           <enum>QAbstractItemView::NoSelection</enum>
          </property>

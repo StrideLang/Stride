@@ -164,7 +164,7 @@ void PythonProject::writeAST(AST *tree)
 void PythonProject::astToJson(AST *node, QJsonObject &obj)
 {
     if (node->getNodeType() == AST::Bundle) {
-        obj["type"] = "Bundle";
+        obj["type"] = QString("Bundle");
         obj["name"] = QString::fromStdString(static_cast<BundleNode *>(node)->getName());
 
         ListNode *indexList = static_cast<BundleNode *>(node)->index();
@@ -175,31 +175,31 @@ void PythonProject::astToJson(AST *node, QJsonObject &obj)
         }
         obj["rate"] = node->getRate();
     } else if (node->getNodeType() == AST::Name) {
-        obj["type"] = "Name";
+        obj["type"] = QString("Name");
         obj["name"] = QString::fromStdString(static_cast<BundleNode *>(node)->getName());
         obj["rate"] = node->getRate();
     } else if (node->getNodeType() == AST::Expression) {
-        obj["type"] = "Expression";
+        obj["type"] = QString("Expression");
         obj["rate"] = node->getRate();
     } else if (node->getNodeType() == AST::Function) {
-        obj["type"] = "Function";
+        obj["type"] = QString("Function");
         functionToJson(static_cast<FunctionNode *>(node), obj);
     } else if (node->getNodeType() == AST::Stream) {
         obj = QJsonObject();
         streamToJsonArray(static_cast<StreamNode *>(node));
     } else if (node->getNodeType() == AST::Int) {
-        obj["type"] = "Value";
+        obj["type"] = QString("Value");
         obj["value"] = static_cast<ValueNode *>(node)->getIntValue();
     } else if (node->getNodeType() == AST::Real) {
-        obj["type"] = "Value";
+        obj["type"] = QString("Value");
         obj["value"] = (qreal) static_cast<ValueNode *>(node)->getRealValue();
         qDebug() << obj["value"].isDouble() << obj["value"].toDouble();
 
     } else if (node->getNodeType() == AST::String) {
-        obj["type"] = "Value";
+        obj["type"] = QString("Value");
         obj["value"] = QString::fromStdString(static_cast<ValueNode *>(node)->getStringValue());
     } else {
-        obj["type"] = "Unsupported";
+        obj["type"] = QString("Unsupported");
     }
 }
 

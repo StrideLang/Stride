@@ -71,8 +71,10 @@ OTHER_FILES += \
 RESOURCES += \
     qmlfiles.qrc
 
+use_lua {
 INCLUDEPATH += $${LUA_INCLUDE_PATH}
 unix|win32: LIBS += -L$${LUA_LIB_PATH} -l$${LUA_LIB}
+}
 
 win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../codegen/release/ -lcodegen
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../codegen/debug/ -lcodegen

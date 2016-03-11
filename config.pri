@@ -1,12 +1,21 @@
 
-unix {
+unix:!macx {
     use_lua {
-    LUA_INCLUDE_PATH += /usr/include/luajit-2.0
-    LUA_LIB_PATH = /usr/lib/x86_64-linux-gnu
-    LUA_LIB = luajit-5.1
-    QMAKE_CFLAGS += -Wall -Wextra -pedantic -Waggregate-return -Wcast-align -Wcast-qual \
- -Wdisabled-optimization -Wpointer-arith -Wshadow -Wsign-compare -Wundef -Wwrite-strings \
- -Wbad-function-cast -Wdeclaration-after-statement -Wmissing-prototypes -Wnested-externs -Wstrict-prototypes  -O2 -ansi
+      LUA_INCLUDE_PATH += /usr/include/luajit-2.0
+      LUA_LIB_PATH = /usr/lib/x86_64-linux-gnu
+      LUA_LIB = luajit-5.1
+      QMAKE_CFLAGS += -Wall -Wextra -pedantic -Waggregate-return -Wcast-align -Wcast-qual \
+        -Wdisabled-optimization -Wpointer-arith -Wshadow -Wsign-compare -Wundef -Wwrite-strings \
+        -Wbad-function-cast -Wdeclaration-after-statement -Wmissing-prototypes -Wnested-externs -Wstrict-prototypes  -O2 -ansi
+    }
+}
+
+macx: {
+    FLEX_BIN_PATH = /usr/local/opt/flex/bin
+    FLEX_LIB_PATH = /usr/local/opt/flex/
+    BISON_BIN_PATH = /usr/local/opt/bison/bin/
+    use_lua {
+        message("No lua support on OS X.")
     }
 }
 win32 {
@@ -16,11 +25,11 @@ win32 {
     BISON_BIN_PATH = C:\Tools\bison-2.4.1\bin
     use_lua {
 # These need to be revised for windows.
-    LUA_INCLUDE_PATH += C:\Tools\Lua\5.1\include
-    LUA_LIB_PATH = C:\Tools\Lua\5.1\lib
-    LUA_LIB = lua51
-    QMAKE_CFLAGS += -Wall -Wextra -pedantic -Waggregate-return -Wcast-align -Wcast-qual \
- -Wdisabled-optimization -Wpointer-arith -Wshadow -Wsign-compare -Wundef -Wwrite-strings \
- -Wbad-function-cast -Wdeclaration-after-statement -Wmissing-prototypes -Wnested-externs -Wstrict-prototypes  -O2 -ansi
-}
+      LUA_INCLUDE_PATH += C:\Tools\Lua\5.1\include
+      LUA_LIB_PATH = C:\Tools\Lua\5.1\lib
+      LUA_LIB = lua51
+      QMAKE_CFLAGS += -Wall -Wextra -pedantic -Waggregate-return -Wcast-align -Wcast-qual \
+         -Wdisabled-optimization -Wpointer-arith -Wshadow -Wsign-compare -Wundef -Wwrite-strings \
+         -Wbad-function-cast -Wdeclaration-after-statement -Wmissing-prototypes -Wnested-externs -Wstrict-prototypes  -O2 -ansi
+    }
 }
