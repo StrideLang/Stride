@@ -137,7 +137,11 @@ void ProjectWindow::commentSection()
         numComments--;
     }
     cursor.insertText(text);
-    cursor.setPosition(oldPosition);
+    if (oldPosition <= oldAnchor) {
+        cursor.setPosition(oldPosition);
+    } else {
+        cursor.setPosition(oldPosition + numComments);
+    }
     cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, oldAnchor - oldPosition + numComments);
     editor->setTextCursor(cursor);
 }
@@ -164,12 +168,15 @@ void ProjectWindow::uncomment()
         text.remove(0,1);
         numComments--;
     }
-    int start = cursor.selectionStart();
     text.replace(QChar(QChar::ParagraphSeparator), QString("\n"));
     text.replace(QString("\n" + commentChar), QString("\n")); //TODO make more robust
     cursor.insertText(text);
     cursor.setPosition(oldPosition);
-    cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, oldAnchor - oldPosition - numComments);
+    if (oldPosition > oldAnchor) {
+        cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, oldAnchor - oldPosition - numComments);
+    } else {
+        cursor.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor, oldPosition - oldAnchor - numComments);
+    }
     editor->setTextCursor(cursor);
 }
 
