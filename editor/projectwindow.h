@@ -52,6 +52,7 @@ private slots:
 
 private:
     void connectActions();
+    void connectShortcuts();
 
     void readSettings();
     void writeSettings();

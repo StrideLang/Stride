@@ -36,6 +36,7 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
 //    m_project->setBoardId("0ontZocni8POZ");
 
     connectActions();
+    connectShortcuts();
 
     setWindowTitle("StreamStack");
     updateMenus();
@@ -450,6 +451,21 @@ void ProjectWindow::connectActions()
 //    connect(m_project, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
 //    connect(m_project, SIGNAL(errorText(QString)), this, SLOT(printConsoleError(QString)));
     //    connect(m_project, SIGNAL(programStopped()), this, SLOT(programStopped()));
+}
+
+void ProjectWindow::connectShortcuts()
+{
+    ui->actionNew_Project->setShortcut(QKeySequence("Ctrl+N"));
+    ui->actionBuild->setShortcut(QKeySequence("Ctrl+B"));
+    ui->actionComment->setShortcut(QKeySequence("Ctrl+/"));
+    ui->actionUpload->setShortcut(QKeySequence("Ctrl+U"));;
+    ui->actionRun->setShortcut(QKeySequence("Ctrl+R"));
+    ui->actionRefresh->setShortcut(QKeySequence(""));
+    ui->actionSave->setShortcut(QKeySequence("Ctrl+S"));
+    ui->actionOptions->setShortcut(QKeySequence(""));
+    ui->actionLoad_File->setShortcut(QKeySequence("Ctrl+O"));
+    ui->actionStop->setShortcut(QKeySequence("Ctrl+Space"));
+    ui->actionQuit->setShortcut(QKeySequence("Ctrl+Q"));
 }
 
 void ProjectWindow::readSettings()
