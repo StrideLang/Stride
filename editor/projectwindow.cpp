@@ -108,6 +108,63 @@ void ProjectWindow::build()
     //    m_project->build();
 }
 
+void ProjectWindow::commentSection()
+{
+    CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+    QString commentChar = "#";
+    QTextCursor cursor = editor->textCursor();
+    if (cursor.position() > cursor.anchor()) {
+        int temp = cursor.anchor();
+        cursor.setPosition(cursor.position());
+        cursor.setPosition(temp, QTextCursor::KeepAnchor);
+    }
+    if (!cursor.atBlockStart()) {
+        cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
+    }
+    int start = cursor.selectionStart();
+    QString text = cursor.selectedText();
+    if (text.startsWith(commentChar)) {
+        uncomment();
+        return;
+    }
+    text.prepend(commentChar);
+    text.replace(QChar(QChar::ParagraphSeparator), QString("\n" + commentChar));
+    if (text.endsWith("\n" + commentChar) ) {
+        text.chop(1);
+    }
+    cursor.insertText(text);
+    cursor.setPosition(start);
+    cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor, text.size());
+    editor->setTextCursor(cursor);
+}
+
+void ProjectWindow::uncomment()
+{
+    CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+    QString commentChar = "#";
+    QTextCursor cursor = editor->textCursor();
+    if (cursor.position() > cursor.anchor()) {
+        int temp = cursor.anchor();
+        cursor.setPosition(cursor.position());
+        cursor.setPosition(temp, QTextCursor::KeepAnchor);
+    }
+    QString text = cursor.selectedText();
+    if (!cursor.atBlockStart() && !text.startsWith(commentChar)) {
+        cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
+        text = cursor.selectedText();
+    }
+    if (text.startsWith(commentChar)) {
+        text.remove(0,1);
+    }
+    int start = cursor.selectionStart();
+    text.replace(QChar(QChar::ParagraphSeparator), QString("\n"));
+    text.replace(QString("\n" + commentChar), QString("\n")); //TODO make more robust
+    cursor.insertText(text);
+    cursor.setPosition(start);
+    cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor, text.size());
+    editor->setTextCursor(cursor);
+}
+
 void ProjectWindow::flash()
 {
     ui->consoleText->clear();
@@ -144,8 +201,10 @@ void ProjectWindow::stop()
 void ProjectWindow::tabChanged(int index)
 {
     Q_UNUSED(index);
-    QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
-    m_highlighter->setDocument(editor->document());
+    if (index >= 0) {
+        QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
+        m_highlighter->setDocument(editor->document());
+    }
 }
 
 bool ProjectWindow::maybeSave()
@@ -377,6 +436,7 @@ void ProjectWindow::connectActions()
 
     connect(ui->actionNew_Project, SIGNAL(triggered()), this, SLOT(newFile()));
     connect(ui->actionBuild, SIGNAL(triggered()), this, SLOT(build()));
+    connect(ui->actionComment, SIGNAL(triggered(bool)), this, SLOT(commentSection()));
     connect(ui->actionUpload, SIGNAL(triggered()), this, SLOT(flash()));
     connect(ui->actionRun, SIGNAL(toggled(bool)), this, SLOT(run(bool)));
     connect(ui->actionRefresh, SIGNAL(triggered()), this, SLOT(updateMenus()));
@@ -385,6 +445,7 @@ void ProjectWindow::connectActions()
     connect(ui->actionLoad_File, SIGNAL(triggered()), this, SLOT(loadFile()));
     connect(ui->actionStop, SIGNAL(triggered()), this, SLOT(stop()));
     connect(ui->actionQuit, SIGNAL(triggered()), this, SLOT(close()));
+
 
 //    connect(m_project, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
 //    connect(m_project, SIGNAL(errorText(QString)), this, SLOT(printConsoleError(QString)));

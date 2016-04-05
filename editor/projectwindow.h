@@ -37,6 +37,8 @@ protected:
 
 private slots:
     void build();
+    void commentSection();
+    void uncomment();
     void flash();
     void run(bool pressed);
     void stop();

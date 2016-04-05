@@ -283,7 +283,14 @@
     <addaction name="actionRename"/>
     <addaction name="actionRefresh"/>
    </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="actionComment"/>
+   </widget>
    <addaction name="menuProject"/>
+   <addaction name="menuEdit"/>
    <addaction name="menuBuild"/>
   </widget>
   <action name="actionBuild">
@@ -366,6 +373,11 @@
   <action name="actionQuit">
    <property name="text">
     <string>Quit</string>
+   </property>
+  </action>
+  <action name="actionComment">
+   <property name="text">
+    <string>Toggle Comment</string>
    </property>
   </action>
  </widget>
