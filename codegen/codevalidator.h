@@ -5,11 +5,11 @@
 
 #include "strideparser.h"
 #include "streamplatform.h"
+#include "stridelibrary.hpp"
 
 class CodeValidator
 {
 public:
-    CodeValidator(StreamPlatform &platform, AST * tree);
     CodeValidator(QString platformRootDir, AST * tree);
 
     typedef enum {
@@ -88,6 +88,7 @@ private:
     QString getNodeText(AST *node);
 
     StreamPlatform m_platform;
+    StrideLibrary m_library;
     AST *m_tree;
     QList<LangError> m_errors;
 };

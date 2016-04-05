@@ -20,7 +20,8 @@ SOURCES += \
     platformobject.cpp \
     pythonproject.cpp \
     codevalidator.cpp \
-    coderesolver.cpp
+    coderesolver.cpp \
+    stridelibrary.cpp
 
 HEADERS += \
     streamplatform.h \
@@ -30,7 +31,8 @@ HEADERS += \
     pythonproject.h \
     codevalidator.h \
     coderesolver.h \
-    builder.h
+    builder.h \
+    stridelibrary.hpp
 
 #unix {
 #    target.path = /usr/local/lib

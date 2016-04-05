@@ -3,14 +3,8 @@
 #include "codevalidator.h"
 #include "coderesolver.h"
 
-CodeValidator::CodeValidator(StreamPlatform &platform, AST *tree) :
-    m_platform(platform), m_tree(tree)
-{
-    validate();
-}
-
 CodeValidator::CodeValidator(QString platformRootDir, AST *tree):
-    m_platform(platformRootDir), m_tree(tree)
+    m_platform(platformRootDir), m_library(platformRootDir), m_tree(tree)
 {
     if(tree) {
         QVector<PlatformNode *> platforms = getPlatformNodes();
@@ -521,6 +515,8 @@ int CodeValidator::getNodeNumInputs(AST *node, StreamPlatform &platform, QVector
         } else {
             return 1;
         }
+    } else if (node->getNodeType() == AST::Bundle) {
+        return getBundleSize(static_cast<BundleNode *>(node), scope, tree, errors);
     } else {
         return 1;
 //        return CodeValidator::getNodeNumOutputs(node, platform, scope, tree, errors);
