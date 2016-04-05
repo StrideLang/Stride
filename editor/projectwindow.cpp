@@ -114,6 +114,8 @@ void ProjectWindow::commentSection()
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     QString commentChar = "#";
     QTextCursor cursor = editor->textCursor();
+    int oldPosition = cursor.position();
+    int oldAnchor = cursor.anchor();
     if (cursor.position() > cursor.anchor()) {
         int temp = cursor.anchor();
         cursor.setPosition(cursor.position());
@@ -122,7 +124,6 @@ void ProjectWindow::commentSection()
     if (!cursor.atBlockStart()) {
         cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
     }
-    int start = cursor.selectionStart();
     QString text = cursor.selectedText();
     if (text.startsWith(commentChar)) {
         uncomment();
@@ -130,12 +131,14 @@ void ProjectWindow::commentSection()
     }
     text.prepend(commentChar);
     text.replace(QChar(QChar::ParagraphSeparator), QString("\n" + commentChar));
+    int numComments = text.count('\n');
     if (text.endsWith("\n" + commentChar) ) {
         text.chop(1);
+        numComments--;
     }
     cursor.insertText(text);
-    cursor.setPosition(start);
-    cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor, text.size());
+    cursor.setPosition(oldPosition);
+    cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, oldAnchor - oldPosition + numComments);
     editor->setTextCursor(cursor);
 }
 
@@ -144,6 +147,8 @@ void ProjectWindow::uncomment()
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     QString commentChar = "#";
     QTextCursor cursor = editor->textCursor();
+    int oldPosition = cursor.position();
+    int oldAnchor = cursor.anchor();
     if (cursor.position() > cursor.anchor()) {
         int temp = cursor.anchor();
         cursor.setPosition(cursor.position());
@@ -154,15 +159,17 @@ void ProjectWindow::uncomment()
         cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
         text = cursor.selectedText();
     }
+    int numComments = text.count('\n');
     if (text.startsWith(commentChar)) {
         text.remove(0,1);
+        numComments--;
     }
     int start = cursor.selectionStart();
     text.replace(QChar(QChar::ParagraphSeparator), QString("\n"));
     text.replace(QString("\n" + commentChar), QString("\n")); //TODO make more robust
     cursor.insertText(text);
-    cursor.setPosition(start);
-    cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor, text.size());
+    cursor.setPosition(oldPosition);
+    cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, oldAnchor - oldPosition - numComments);
     editor->setTextCursor(cursor);
 }
 
@@ -231,6 +238,8 @@ bool ProjectWindow::maybeSave()
         foreach(int index, d.getSelected()) {
             saveFile(modifiedFilesTabs[index]);
         }
+        return true;
+    } else if (but == 100) { // Custom code for "don't save
         return true;
     } else {
         return false;

@@ -18,11 +18,16 @@ public:
     void setListContents(QStringList fileNames);
     QList<int> getSelected();
 
+public slots:
+    virtual int exec();
+
 private slots:
     void selectionChanged();
+    void dontSaveClicked();
 
 private:
     Ui::SaveChangedDialog *ui;
+    bool m_dontSave;
 };
 
 #endif // SAVECHANGEDDIALOG_H
