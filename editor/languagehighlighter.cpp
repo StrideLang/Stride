@@ -25,8 +25,8 @@ void LanguageHighlighter::highlightBlock(const QString &text)
 //        index = text.indexOf(expression, index + length);
 //    }
 
-    pattern = "\\b\\w+\\s*:";
-
+    // Properties/ports
+    pattern ="([{,;\\s*]([a-z][a-zA-Z0-9_]*)[\\s]*:)";
     expression.setPattern(pattern);
     index = text.indexOf(expression);
     while (index >= 0) {
@@ -96,6 +96,7 @@ void LanguageHighlighter::highlightBlock(const QString &text)
         setFormat(index, length, m_formats["strings"]);
         index = text.indexOf(expression, index + length);
     }
+
 
     // Leave comments for last
     pattern = "\\#.*";
@@ -175,7 +176,7 @@ void LanguageHighlighter::setFormatPreset(int index)
         userFormat.setBackground(Qt::white);
 
         propertiesFormat.setFontWeight(QFont::Normal);
-        propertiesFormat.setForeground(QColor("#0066BB"));
+        propertiesFormat.setForeground(Qt::blue);
         propertiesFormat.setBackground(Qt::white);
 
         builtinFormat.setFontWeight(QFont::Bold);

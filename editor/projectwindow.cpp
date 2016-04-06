@@ -503,7 +503,7 @@ void ProjectWindow::readSettings()
 
     settings.endGroup();
     settings.beginGroup("highlighter");
-    QMap<QString, QTextCharFormat> formats;
+    QMap<QString, QTextCharFormat> formats = m_highlighter->formats();
     QStringList keys = settings.childGroups();
     foreach(QString key, keys) {
         settings.beginGroup(key);
@@ -513,7 +513,9 @@ void ProjectWindow::readSettings()
         format.setFontWeight(settings.value("bold").toInt());
         format.setFontItalic(settings.value("italic").toBool());
         settings.endGroup();
-        formats[key] = format;
+        if (formats.contains(key)) {
+            formats[key] = format;
+        }
     }
     if (!formats.isEmpty()) {
         m_highlighter->setFormats(formats);
