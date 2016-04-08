@@ -35,41 +35,41 @@ folder_01.target = data/
 DEPLOYMENTFOLDERS += folder_01
 
 DISTFILES += \
-    data/introFeedback.stream \
-    data/introGenerator.stream \
-    data/introBlock.stream \
-    data/introProcessor.stream \
-    data/introConverter.stream \
-    data/introRemote.stream \
-    data/platfromBasic.stream \
-    data/defaultProperties.stream \
-    data/shorthand.stream \
-    data/introComplex.stream \
-    data/introControlFlow.stream \
-    data/introEnvelope.stream \
-    data/introFIR.stream \
-    data/introGranular.stream \
-    data/introRandom.stream \
-    data/introSequencer.stream \
-    data/introStreamRate.stream \
-    data/introVocoder.stream \
-    data/introModulation.stream \
-    data/01_header.stream \
-    data/02_basic_blocks.stream \
-    data/03_basic_bundle.stream \
-    data/04_basic_stream.stream \
-    data/05_basic_functions.stream \
-    data/07_bundle_indeces.stream \
-    data/06_basic_noneswitch.stream \
-    data/P01_platform_objects.stream \
-    data/P02_check_duplicates.stream \
-    data/P03_bundle_resolution.stream \
-    data/E01_constant_res.stream \
-    data/E02_stream_expansions.stream \
-    data/E03_multichn_streams.stream \
-    data/E04_rates.stream \
-    data/08_namespace.stream \
-    data/09_lists.stream
+    data/introFeedback.stride \
+    data/introGenerator.stride \
+    data/introBlock.stride \
+    data/introProcessor.stride \
+    data/introConverter.stride \
+    data/introRemote.stride \
+    data/platfromBasic.stride \
+    data/defaultProperties.stride \
+    data/shorthand.stride \
+    data/introComplex.stride \
+    data/introControlFlow.stride \
+    data/introEnvelope.stride \
+    data/introFIR.stride \
+    data/introGranular.stride \
+    data/introRandom.stride \
+    data/introSequencer.stride \
+    data/introStreamRate.stride \
+    data/introVocoder.stride \
+    data/introModulation.stride \
+    data/01_header.stride \
+    data/02_basic_blocks.stride \
+    data/03_basic_bundle.stride \
+    data/04_basic_stream.stride \
+    data/05_basic_functions.stride \
+    data/07_bundle_indeces.stride \
+    data/06_basic_noneswitch.stride \
+    data/P01_platform_objects.stride \
+    data/P02_check_duplicates.stride \
+    data/P03_bundle_resolution.stride \
+    data/E01_constant_res.stride \
+    data/E02_stream_expansions.stride \
+    data/E03_multichn_streams.stride \
+    data/E04_rates.stride \
+    data/08_namespace.stride \
+    data/09_lists.stride
 
 # Link to codegen library
 
