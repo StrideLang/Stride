@@ -572,6 +572,10 @@ propertyType:
                             $$ = $1;
                             COUT << "List expression as property value!" << ENDL;
                         }
+     |	streamDef		{
+                            $$ = $1;
+                            COUT << "Stream as property value!" << ENDL;
+                        }
 	;
 
 // =================================
@@ -1006,6 +1010,7 @@ valueComp:
                             s.append($1);
                             $$ = new KeywordNode(s, yyloc.first_line);
                             COUT << "Word: " << $1 <<  ENDL;
+                            free($1);
                         }
     |	UVAR            {
                             string s;

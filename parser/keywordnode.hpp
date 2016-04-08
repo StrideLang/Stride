@@ -10,6 +10,10 @@ public:
 
     std::string keyword() {return m_kw;}
 
+    virtual AST *deepCopy() {
+        return new KeywordNode(keyword(), getLine());
+    }
+
 private:
     std::string m_kw;
 };
