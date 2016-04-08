@@ -1,0 +1,9 @@
+
+type Module {
+	name: "module"
+	ports: [
+		port Input {
+			name: "input"
+		}
+	]
+}

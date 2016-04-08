@@ -1,0 +1,66 @@
+
+type Type {
+	typeName: "type"
+	ports: [ 
+		port TypeName {
+			name: "typeName"
+			types: ["CSP", "none"]
+			default: none
+			required: on
+		},
+		port Ports {
+			name: "ports"
+			types: ["", "none"] # TODO how to validate object lists?
+			default: none
+			required: on
+		}
+	]
+}
+
+type Port {
+	typeName: "port"
+	ports: [
+		port Name {
+			name: "name"
+			types: ["CSP", "none"]
+			default: none
+			required: on
+		},
+		port Types {
+			name: "types"
+			types: ["CSP", "none"] # TODO how to validate object lists?
+			default: none
+			required: on
+		},
+		port Default {
+			name: "default"
+			types: ["CSP", "none"] # TODO how to handle hybrid port types?
+			default: none
+			required: on
+		},
+		port Required {
+			name: "required"
+			types: ["CBP", "none"] 
+			default: none
+			required: on
+		}
+	]
+}
+
+type Base {
+typeName: "base"
+ports: [ 
+		port Inherits {
+			name: "inherits"
+			types: ["CSP", "none"]
+			default: "base"
+			required: off
+		},
+		port Meta {
+			name: "meta"
+			types: ["CSP", "none"]
+			default: none
+			required: off
+		}
+		]
+} 
