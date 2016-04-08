@@ -20,6 +20,7 @@ public:
 private:
 
     bool isValidProperty(PropertyNode *property, BlockNode *type);
+    QList<BlockNode *> getParentTypes(BlockNode *type);
 
     void readLibrary(QString rootDir);
     void readLibraryTypes(QString rootDir);

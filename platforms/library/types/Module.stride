@@ -1,5 +1,5 @@
-type Property {
-	name: "property"
+type PortDescription {
+	typeName: "portDescription"
 	ports: [
 		port Name {
 			name: "name"
@@ -16,8 +16,27 @@ type Property {
 	]
 }
 
+type Hybrid {
+	typeName: "hybrid"
+	ports: [
+		port Name {
+			name: "type"
+			types: ["CSP"]
+			default: none
+			required: on
+		},
+		port Block {
+			name: "default"
+			types: [""]
+			default: none
+			required: on
+		}
+	]
+	inherits: "rated" # TODO could we use Rated here instead?
+}
+
 type Module {
-	name: "module"
+	typeName: "module"
 	ports: [
 		port Input {
 			name: "input"
@@ -52,3 +71,40 @@ type Module {
 
 	]
 }
+
+type Reaction {
+	typeName: "reaction"
+	ports: [
+		port Streams {
+			name: "output"
+			types: [""]
+			default: none
+			required: on
+		},
+		port OnExecution {
+			name: "onExecution"
+			types: [""]
+			default: none
+			required: on
+		},
+		port TerminateWhen {
+			name: "terminateWhen"
+			types: [""]
+			default: none
+			required: on
+		},
+		port InternalBlock {
+			name: "internalBlock"
+			types: [""]
+			default: none
+			required: on
+		},
+		port Streams {
+			name: "streams"
+			types: [""]
+			default: none
+			required: on
+		}
+	]
+}
+

@@ -59,14 +59,19 @@ bool StrideLibrary::isValidBlock(BlockNode *block)
     BlockNode *type = findTypeInLibrary(QString::fromStdString(block->getObjectType()));
     if (type) {
         foreach(PropertyNode *property, block->getProperties()) {
-            if (!isValidProperty(property, type)) {
-                return false;
+            if (isValidProperty(property, type)) {
+                return true;
             }
+            // Now check for inherited properties
+            QList<BlockNode *> parentTypes = getParentTypes(block);
+            bool propertyInParent = false;
+            foreach(BlockNode *parent, parentTypes) {
+                propertyInParent |= isValidProperty(property, parent);
+            }
+            if (propertyInParent) return true;
         }
-        return true;
-    } else {
-        return false;
     }
+    return false;
 }
 
 bool StrideLibrary::isValidProperty(PropertyNode *property, BlockNode *type)
@@ -103,6 +108,20 @@ bool StrideLibrary::isValidProperty(PropertyNode *property, BlockNode *type)
         }
     }
     return false;
+}
+
+QList<BlockNode *> StrideLibrary::getParentTypes(BlockNode *type)
+{
+    PropertyNode *inheritProperty = CodeValidator::findPropertyByName(type->getProperties(), "inherits");
+    if (inheritProperty) {
+        AST *parentType = inheritProperty->getValue();
+        if (parentType->getNodeType() == AST::String) {
+            string parentBlockName = static_cast<ValueNode *>(parentType)->getStringValue();
+            BlockNode *parentBlock = findTypeInLibrary(QString::fromStdString(parentBlockName));
+            return getParentTypes(parentBlock);
+        }
+    }
+    return QList<BlockNode *>();
 }
 
 void StrideLibrary::readLibrary(QString rootDir)
