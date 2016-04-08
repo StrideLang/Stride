@@ -135,10 +135,10 @@ void CodeValidator::validateTypes(AST *node, QVector<AST *> scope)
                     }
                 }
             }
-        } else if (typeBlock = m_library.findTypeInLibrary(blockType)) {
-            foreach(PropertyNode *properties, block->getProperties()) {
-//                foreach()
-            }
+//        } else if (typeBlock == m_library.findTypeInLibrary(blockType)) {
+//            foreach(PropertyNode *properties, block->getProperties()) {
+////                foreach()
+//            }
 
         } else { // Not platform or library type, then error
             LangError error;
@@ -785,6 +785,16 @@ AST *CodeValidator::getMemberFromList(ListNode *node, int index, QList<LangError
         return NULL;
     }
     return node->getChildren()[index - 1];
+}
+
+PropertyNode *CodeValidator::findPropertyByName(vector<PropertyNode *> properties, QString propertyName)
+{
+    foreach(PropertyNode *property, properties) {
+        if (property->getName() == propertyName.toStdString()) {
+            return property;
+        }
+    }
+    return NULL;
 }
 
 int CodeValidator::numParallelStreams(StreamNode *stream, StreamPlatform &platform, QVector<AST *> &scope, AST *tree, QList<LangError> &errors)

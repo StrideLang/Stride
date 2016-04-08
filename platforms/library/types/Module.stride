@@ -1,9 +1,54 @@
+type Property {
+	name: "property"
+	ports: [
+		port Name {
+			name: "name"
+			types: ["CSP"]
+			default: none
+			required: on
+		},
+		port Block {
+			name: "block"
+			types: ["CSP"]
+			default: none
+			required: on
+		}
+	]
+}
 
 type Module {
 	name: "module"
 	ports: [
 		port Input {
 			name: "input"
+			types: ["none"]
+			default: none
+			required: on
+		},
+		port Output {
+			name: "output"
+			types: ["none"]
+			default: none
+			required: on
+		},
+		port Properties {
+			name: "properties"
+			types: [ "" ]  # How can we define list types here?
+			default: none
+			required: on
+		},
+		port InternalBlock {
+			name: "internalBlock"
+			types: ["CSP"]
+			default: none
+			required: on
+		},
+		port Streams {
+			name: "streams"
+			types: ["none"]
+			default: none
+			required: on
 		}
+
 	]
 }

@@ -7,6 +7,7 @@
 #include "valuenode.h"
 
 #include "stridelibrary.hpp"
+#include "codevalidator.h"
 
 StrideLibrary::StrideLibrary(QString libraryPath)
 {
@@ -37,7 +38,7 @@ BlockNode *StrideLibrary::findTypeInLibrary(QString typeName)
                 }
                 foreach(PropertyNode *property, block->getProperties()) {
                     QString propertyName = QString::fromStdString(property->getName());
-                    if (propertyName == "type") {
+                    if (propertyName == "typeName") {
                         AST * value = property->getValue();
                         if (value->getNodeType()  == AST::String) {
                             QString libTypeName = QString::fromStdString(static_cast<ValueNode *>(value)->getStringValue());
@@ -51,6 +52,57 @@ BlockNode *StrideLibrary::findTypeInLibrary(QString typeName)
         }
     }
     return NULL;
+}
+
+bool StrideLibrary::isValidBlock(BlockNode *block)
+{
+    BlockNode *type = findTypeInLibrary(QString::fromStdString(block->getObjectType()));
+    if (type) {
+        foreach(PropertyNode *property, block->getProperties()) {
+            if (!isValidProperty(property, type)) {
+                return false;
+            }
+        }
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool StrideLibrary::isValidProperty(PropertyNode *property, BlockNode *type)
+{
+    Q_ASSERT(type->getObjectType() == "type");
+    PropertyNode *portsInType = CodeValidator::findPropertyByName(type->getProperties(), "ports");
+    ListNode *portList = static_cast<ListNode *>(portsInType->getValue());
+    Q_ASSERT(portList->getNodeType() == AST::List);
+    foreach(AST * port, portList->getChildren()) {
+        BlockNode *portBlock = static_cast<BlockNode *>(port);
+        Q_ASSERT(portBlock->getNodeType() == AST::Block);
+        Q_ASSERT(portBlock->getObjectType() == "port");
+        PropertyNode *portName = CodeValidator::findPropertyByName(portBlock->getProperties(), "name");
+        string portNameInType = static_cast<ValueNode *>(portName->getValue())->getStringValue();
+        if(property->getName() == portNameInType) {
+            return true;
+//            PropertyNode *validTypes = CodeValidator::findPropertyByName(portBlock->getProperties(), "types");
+//            ListNode *validTypesList = static_cast<ListNode *>(validTypes->getValue());
+//            Q_ASSERT(validTypesList->getNodeType() == AST::List);
+//            foreach(AST * validType, validTypesList->getChildren()) {
+//                Q_ASSERT(validType->getNodeType() == AST::String);
+//                QString typeCode = QString::fromStdString(static_cast<ValueNode *>(validType)->getStringValue());
+//                AST *value = property->getValue();
+//                if (value->getNodeType() == AST::String)
+//                if (typeCode == "CSP" && value->getNodeType() == AST::String) {
+//                    return true;
+//                } else if (typeCode == "CSP" && value->getNodeType() == AST::String) {
+//                    return true;
+//                } else if (value->getNodeType() == AST::Name) {
+//                    return true; // We will validate this later when we know the context
+//                }
+//            }
+
+        }
+    }
+    return false;
 }
 
 void StrideLibrary::readLibrary(QString rootDir)
