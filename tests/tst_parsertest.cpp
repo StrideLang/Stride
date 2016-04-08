@@ -44,6 +44,9 @@ private Q_SLOTS:
     void testBasicBlocks();
     void testHeader();
     void testParser();
+
+    // Library
+    void testBasicTypes();
 };
 
 ParserTest::ParserTest()
@@ -729,6 +732,28 @@ void ParserTest::testLists()
         QVERIFY(value->getNamespace() == "ns");
     }
 
+//    block BlockName {
+//    property: [ blockType1 BlockName2 { property: "value" },
+//                blockType1 BlockName3 { value: 1.0 } ]
+//    }
+    block = static_cast<BlockNode *>(nodes.at(7));
+    QVERIFY(block->getNodeType() == AST::Block);
+    props =  block->getProperties();
+    list = static_cast<ListNode *>(props.at(0)->getValue());
+    QVERIFY(list->getNodeType() == AST::List);
+    members = list->getChildren();
+    QVERIFY(members.size() == 2);
+    BlockNode *internalBlock = static_cast<BlockNode *>(members[0]);
+    QVERIFY(internalBlock->getNodeType() == AST::Block);
+    QVERIFY(internalBlock->getObjectType() == "blockType1");
+    QVERIFY(internalBlock->getName() == "BlockName2");
+
+    internalBlock = static_cast<BlockNode *>(members[1]);
+    QVERIFY(internalBlock->getNodeType() == AST::Block);
+    QVERIFY(internalBlock->getObjectType() == "blockType2");
+    QVERIFY(internalBlock->getName() == "BlockName3");
+
+
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);\
     QVERIFY(!generator.isValid());
     QList<LangError> errors = generator.getErrors();
@@ -737,7 +762,7 @@ void ParserTest::testLists()
 //}
     LangError err = errors.at(0);
 
-    QVERIFY(err.type == LangError::InconsistentList);
+//    QVERIFY(err.type == LangError::InconsistentList);
 //constant List_Inconsistent2 [4] {
 //        value: [ '16', "32.1", '64', 1.1 ]
 //}
@@ -754,6 +779,8 @@ void ParserTest::testLists()
 //        meta:	'List of lists'
 //}
 
+    tree->deleteChildren();
+    delete tree;
 
 
 }
@@ -2102,6 +2129,14 @@ void ParserTest::testParser()
         tree->deleteChildren();
         delete tree;
     }
+}
+
+void ParserTest::testBasicTypes()
+{
+//    StrideLibrary library(QFINDTESTDATA("/../platforms"));
+//    BlockNode *type = library.findTypeInLibrary("type");
+//    Q_ASSERT(type);
+
 }
 
 QTEST_APPLESS_MAIN(ParserTest)

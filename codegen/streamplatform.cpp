@@ -29,11 +29,12 @@ StreamPlatform::StreamPlatform(QStringList platformPaths, QString platform, QStr
         if (m_api != NullPlatform) {
             break; // Stop looking if platform has been found.
         }
+
         // FIXME move loading somewhere else where it's done less often (Or don't create a new StreamPlatform every time you parse)
         QString fullPath = QDir(path + QDir::separator() + m_platformName
                 + QDir::separator() + m_version).absolutePath();
         if (QFile::exists(fullPath)) {
-            // First try to find library platforms
+            // First try to find plugin platforms
             QStringList pluginFiles = QDir(fullPath).entryList(QDir::Files | QDir::NoDotAndDotDot);
             foreach (QString file, pluginFiles) {
                 if (QLibrary::isLibrary(file)) {
@@ -91,11 +92,11 @@ StreamPlatform::StreamPlatform(QStringList platformPaths, QString platform, QStr
     parseTypesJson(typesJson, m_platformTypes);
     parseFunctionsJson(functionsJson, m_platformFunctions);
     parseObjectsJson(objectsJson,m_platformObjects);
+
 }
 
 StreamPlatform::~StreamPlatform()
 {
-
 }
 
 QList<Property> StreamPlatform::getPortsForType(QString typeName)

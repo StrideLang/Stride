@@ -70,8 +70,7 @@ private:
     QVector<PlatformNode *> getPlatformNodes();
 
     void validate();
-    void validateTypeNames(AST *node);
-    void validateProperties(AST *node, QVector<AST *> scope);
+    void validateTypes(AST *node, QVector<AST *> scope);
     void validateBundleIndeces(AST *node, QVector<AST *> scope);
     void validateBundleSizes(AST *node, QVector<AST *> scope);
     void validateSymbolUniqueness(AST *node, QVector<AST *> scope);
