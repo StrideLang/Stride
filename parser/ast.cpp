@@ -54,7 +54,7 @@ void AST::deleteChildren()
 AST *AST::deepCopy()
 {
     assert(0 == 1); // can't deep copy base AST
-    return 0;
+    return NULL;
 }
 
 AST *AST::parseFile(const char *fileName)

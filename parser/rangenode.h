@@ -14,8 +14,7 @@ public:
   AST *deepCopy();
 
 private:
-  AST *m_start;
-  AST *m_end;
+
 };
 
 #endif // RANGENODE_H

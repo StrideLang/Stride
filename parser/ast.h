@@ -32,6 +32,7 @@ public:
         Expression,
         Function,
         Switch,
+        Keyword,
 
         // Invalid
         Invalid

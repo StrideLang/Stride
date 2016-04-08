@@ -61,6 +61,7 @@ NullStream nstream;
 %code requires { #include "importnode.h" }
 %code requires { #include "fornode.h" }
 %code requires { #include "rangenode.h" }
+%code requires { #include "keywordnode.hpp" }
 
 %union {
 	int 	ival;
@@ -79,6 +80,7 @@ NullStream nstream;
     ImportNode *importNode;
     ForNode *forNode;
     RangeNode *rangeNode;
+    KeywordNode *keywordNode;
 }
 
 /* declare types for nodes */
@@ -110,7 +112,7 @@ NullStream nstream;
 %type <listNode> valueListDef
 %type <listNode> blockList
 %type <listNode> streamList
-%type <listNode> listList
+%type <listNode> listList 
 %type <ast> valueExp
 %type <ast> valueListExp
 
@@ -126,7 +128,7 @@ NullStream nstream;
 %token '[' ']' '{' '}'
 %token COMMA COLON SEMICOLON 
 %token USE VERSION WITH IMPORT AS FOR NONE ON OFF
-%token STREAMRATE
+//%token STREAMRATE
 
 %left STREAM
 %left OR
@@ -349,6 +351,7 @@ blockDef:
                                         uvar.append($2); /* string constructor leaks otherwise! */
                                         $$ = new BlockNode(uvar, word, $3, yyloc.first_line);
                                         AST *props = $3;
+//                                        props->deleteChildren();
                                         delete props;
                                         COUT << "Block: " << $1 << ", Labelled: " << $2 << ENDL;
                                         free($1);
@@ -366,6 +369,8 @@ blockDef:
              COUT << "Block Bundle: " << $1 << ", Labelled: " << $2 << ENDL;
              free($2);
              free($1);
+             AST *propertyContainer = $6;
+             delete propertyContainer;
          }
 	;
 
@@ -504,23 +509,23 @@ functionDef:
 	
 properties: 	
         properties property SEMICOLON   {
-                                            AST *temp = new AST();
+//                                            AST *temp = new AST();
                                             AST *props = $1;
-                                            props->giveChildren(temp);
-                                            temp->addChild($2);
-                                            $$ = temp;
-                                            props->deleteChildren();
-                                            delete props;
+//                                            props->giveChildren(temp);
+                                            props->addChild($2);
+                                            $$ = props;
+//                                            props->deleteChildren();
+//                                            delete props;
                                             COUT << "Ignoring semicolon!" << ENDL;
                                         }
     |	properties property             {
-                                            AST *temp = new AST();
+//                                            AST *temp = new AST();
                                             AST *props = $1;
-                                            props->giveChildren(temp);
-                                            temp->addChild($2);
-                                            $$ = temp;
-                                            props->deleteChildren();
-                                            delete props;
+//                                            props->giveChildren(temp);
+                                            props->addChild($2);
+                                            $$ = props;
+//                                            props->deleteChildren();
+//                                            delete props;
                                         }
     |	property SEMICOLON              {
                                             AST *temp = new AST();
@@ -589,7 +594,7 @@ valueList:
                                         ListNode *list = new ListNode(NULL, yyloc.first_line);
                                         list->stealMembers($1);
                                         ListNode *oldList = $1;
-                                        oldList->deleteChildren();
+//                                        oldList->deleteChildren();
                                         delete oldList;
                                         list->addChild($3);
                                         $$ = list;
@@ -608,7 +613,7 @@ valueListList:
                                                 ListNode *list = new ListNode(NULL, yyloc.first_line);
                                                 list->stealMembers($1);
                                                 ListNode *oldList = $1;
-                                                oldList->deleteChildren();
+//                                                oldList->deleteChildren();
                                                 delete oldList;
                                                 list->addChild($3);
                                                 $$ = list;
@@ -633,7 +638,7 @@ blockList:
                                         ListNode *list = new ListNode(NULL, yyloc.first_line);
                                         list->stealMembers($1);
                                         ListNode *oldList = $1;
-                                        oldList->deleteChildren();
+//                                        oldList->deleteChildren();
                                         delete oldList;
                                         list->addChild($3);
                                         $$ = list;
@@ -652,9 +657,20 @@ streamList:
                                         ListNode *list = new ListNode(NULL, yyloc.first_line);
                                         list->stealMembers($1);
                                         ListNode *oldList = $1;
-                                        oldList->deleteChildren();
+//                                        oldList->deleteChildren();
                                         delete oldList;
                                         list->addChild($3);
+                                        $$ = list;
+                                        COUT << "Stream definition ... " << ENDL;
+                                        COUT << "New list item ... " << ENDL;
+                                    }
+    |   streamList streamDef        {
+                                        ListNode *list = new ListNode(NULL, yyloc.first_line);
+                                        list->stealMembers($1);
+                                        ListNode *oldList = $1;
+//                                        oldList->deleteChildren();
+                                        delete oldList;
+                                        list->addChild($2);
                                         $$ = list;
                                         COUT << "Stream definition ... " << ENDL;
                                         COUT << "New list item ... " << ENDL;
@@ -671,7 +687,7 @@ listList:
                                     ListNode *list = new ListNode(NULL, yyloc.first_line);
                                     list->stealMembers($1);
                                     ListNode *oldList = $1;
-                                    oldList->deleteChildren();
+//                                    oldList->deleteChildren();
                                     delete oldList;
                                     list->addChild($3);
                                     $$ = list;
@@ -691,10 +707,20 @@ listList:
 
 indexList:
         indexList COMMA indexExp		{
-                                            COUT << "Resolving Index List Element ..." << ENDL;
-                                        }
+                                           ListNode *list = new ListNode(NULL, yyloc.first_line);
+                                           list->stealMembers($1);
+                                           list->addChild($3);
+                                           $$ = list;
+                                           delete $1;
+                                           COUT << "Resolving Index List Element ..." << ENDL;
+        }
     |	indexList COMMA indexRange		{
                                             COUT << "Resolving Index List Element ..." << ENDL;
+                                            ListNode *list = new ListNode(NULL, yyloc.first_line);
+                                            list->stealMembers($1);
+                                            list->addChild($3);
+                                            $$ = list;
+                                            delete $1;
                                         }
     |	indexExp						{
             ListNode *list = new ListNode(NULL, yyloc.first_line);
@@ -975,8 +1001,11 @@ valueComp:
                             COUT << "String: " << $1 << ENDL;
                             free($1);
                         }
-    |	STREAMRATE      {
-                            COUT << "Rate: streamRate" << ENDL;
+    |	WORD            {
+                            string s;
+                            s.append($1);
+                            $$ = new KeywordNode(s, yyloc.first_line);
+                            COUT << "Word: " << $1 <<  ENDL;
                         }
     |	UVAR            {
                             string s;
@@ -1000,6 +1029,7 @@ valueComp:
                             COUT << "Resolving indexed bundle ..." << ENDL;
                         }
 	|	functionDef     {
+                            $$ = $1;
                             COUT << "Resolving function definition ..." << ENDL;
                         }
 	;

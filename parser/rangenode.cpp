@@ -5,23 +5,23 @@
 RangeNode::RangeNode(AST *start, AST *end, int line):
     AST(AST::Range, line)
 {
-    m_start = start;
-    m_end = end;
+	addChild(start);
+	addChild(end);
 }
 
 AST *RangeNode::startIndex() const
 {
-    return m_start;
+    return m_children.at(0);
 }
 
 AST *RangeNode::endIndex() const
 {
-    return m_end;
+    return m_children.at(1);
 }
 
 AST *RangeNode::deepCopy()
 {
-    AST *output = new RangeNode(m_start->deepCopy(), m_end->deepCopy(), m_line);
+    AST *output = new RangeNode(startIndex()->deepCopy(), endIndex()->deepCopy(), m_line);
     output->setRate(m_rate);
     return output;
 }
