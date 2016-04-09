@@ -524,6 +524,9 @@ void ProjectWindow::readSettings()
     settings.endGroup();
 
     settings.beginGroup("GUI");
+    if (settings.contains("geometry")) {
+        this->restoreGeometry(settings.value("geometry").toByteArray());
+    }
     int size = settings.beginReadArray("openDocuments");
     for(int i = 0; i < ui->tabWidget->count(); i++) {
         CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->widget(i));
@@ -577,6 +580,7 @@ void ProjectWindow::writeSettings()
      settings.endGroup();
 
      settings.beginGroup("GUI");
+     settings.setValue("geometry", saveGeometry());
      settings.setValue("lastIndex", ui->tabWidget->currentIndex());
      settings.beginWriteArray("openDocuments");
      for(int i = 0; i < ui->tabWidget->count(); i++) {
