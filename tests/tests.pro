@@ -59,8 +59,10 @@ DISTFILES += \
     data/03_basic_bundle.stride \
     data/04_basic_stream.stride \
     data/05_basic_functions.stride \
-    data/07_bundle_indeces.stride \
     data/06_basic_noneswitch.stride \
+    data/07_bundle_indeces.stride \
+    data/08_namespace.stride \
+    data/09_lists.stride \
     data/P01_platform_objects.stride \
     data/P02_check_duplicates.stride \
     data/P03_bundle_resolution.stride \
@@ -68,8 +70,7 @@ DISTFILES += \
     data/E02_stream_expansions.stride \
     data/E03_multichn_streams.stride \
     data/E04_rates.stride \
-    data/08_namespace.stride \
-    data/09_lists.stride
+    data/L01_library_types_validation.stride
 
 # Link to codegen library
 

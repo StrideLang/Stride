@@ -591,6 +591,10 @@ valueListDef:
                                     $$ = $2;
                                     COUT << "New list of lists ... " << ENDL;
                                 }
+    |	'[' ']'	{
+                                    $$ = new ListNode(NULL, yyloc.first_line);
+                                    COUT << "New empty list ...  " << ENDL;
+                                }
     ;
 
 valueList:
@@ -1052,7 +1056,8 @@ void yyerror(const char *s, ...){
     LangError newError;
     newError.type = LangError::Syntax;
     newError.errorTokens.push_back(std::string(yytext));
-    newError.lineNumber = line;
+//    newError.lineNumber = line;
+    newError.lineNumber = yylineno;
     parseErrors.push_back(newError);
 }
 

@@ -58,6 +58,9 @@ bool StrideLibrary::isValidBlock(BlockNode *block)
 {
     BlockNode *type = findTypeInLibrary(QString::fromStdString(block->getObjectType()));
     if (type) {
+        if (block->getProperties().size() == 0) {
+            return true; // FIXME we need to check if properties are required
+        }
         foreach(PropertyNode *property, block->getProperties()) {
             if (isValidProperty(property, type)) {
                 return true;

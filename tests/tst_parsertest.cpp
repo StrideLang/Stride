@@ -47,6 +47,7 @@ private Q_SLOTS:
 
     // Library
     void testLibraryBasicTypes();
+    void testLibraryValidation();
 };
 
 ParserTest::ParserTest()
@@ -2137,7 +2138,7 @@ void ParserTest::testLibraryBasicTypes()
     BlockNode *type;
     QStringList typesToCheck;
     typesToCheck << "rated" << "domainMember" << "type" << "base" << "port"
-                 << "portDescription" << "hybrid" << "module" << "reaction";
+                 << "hybrid" << "module" << "reaction";
     foreach(QString typeName, typesToCheck) {
         type = library.findTypeInLibrary(typeName);
         Q_ASSERT(type);
@@ -2145,6 +2146,15 @@ void ParserTest::testLibraryBasicTypes()
     }
 
 
+}
+
+void ParserTest::testLibraryValidation()
+{
+    AST *tree;
+    tree = parse(QString(QFINDTESTDATA("data/L01_library_types_validation.stride")).toStdString().c_str());
+    Q_ASSERT(tree);
+    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    Q_ASSERT(generator.isValid());
 }
 
 QTEST_APPLESS_MAIN(ParserTest)

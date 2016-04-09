@@ -65,9 +65,11 @@ public:
 
     static QString getPortTypeName(PortType type);
 
+
 private:
 
     QVector<PlatformNode *> getPlatformNodes();
+    QVector<AST *> getBlocksInScope(AST *root);
 
     void validate();
     void validateTypes(AST *node, QVector<AST *> scope);

@@ -60,7 +60,12 @@ void ListNode::replaceMember(AST *replacement, AST *member)
 AST *ListNode::deepCopy()
 {
     vector<AST *> children = getChildren();
-    ListNode *newList = new ListNode(children.at(0)->deepCopy(), m_line);
+    ListNode *newList;
+    if (children.size() > 0) {
+        newList = new ListNode(children.at(0)->deepCopy(), m_line);
+    } else {
+        newList = new ListNode(NULL, m_line);
+    }
     for(unsigned int i = 1; i < children.size(); i++) {
         newList->addChild(children.at(i)->deepCopy());
     }

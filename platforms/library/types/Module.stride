@@ -1,20 +1,3 @@
-type PortDescription {
-	typeName: "portDescription"
-	ports: [
-		port Name {
-			name: "name"
-			types: ["CSP"]
-			default: none
-			required: on
-		},
-		port Block {
-			name: "block"
-			types: ["CSP"]
-			default: none
-			required: on
-		}
-	]
-}
 
 type Hybrid {
 	typeName: "hybrid"

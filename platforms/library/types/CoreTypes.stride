@@ -1,0 +1,48 @@
+type Constant {
+	typeName: "constant"
+	ports: [ 
+		port TypeName {
+			name: "value"
+			types: ["CSP", "CIP", "CRP", "none"]
+			default: none
+			required: off
+		}
+	]
+}
+
+type Switch {
+	typeName: "switch"
+	ports: [ 
+		port Reset {
+			name: "reset"
+			types: ["CBP", "none"]
+			default: off # TODO: This should be MasterReset
+			required: off
+		}, 
+		port Default {
+			name: "default"
+			types: ["CBP", "none"]
+			default: off 
+			required: off
+		}
+	]
+}
+
+type Trigger {
+	typeName: "trigger"
+	ports: [ 
+	]
+}
+
+type Signal {
+	typeName: "signal"
+	ports: [
+		port Default {
+			name: "default"
+			types: ["CIP", "CRP", "none"]
+			default: off
+			required: off
+		}
+	]
+	inherits: "streamable"
+}

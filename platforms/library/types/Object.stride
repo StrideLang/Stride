@@ -1,3 +1,52 @@
+type Rated {
+	typeName: "rated"
+	ports: [ 
+		port TypeName {
+			name: "rate"
+			types: ["", "none"]
+			default: none
+			required: on
+		},
+		port TypeName {
+			name: "reset"
+			types: ["", "none"]
+			default: none
+			required: off
+		}
+	]
+	inherits: "domainMember" # TODO: Should we be able to say "DomainMember" here instead?
+}
+
+type Streamable {
+	typeName: "streamable"
+	portsPorts: [
+		port InputName {
+			name: "inputName"
+			types: ["", "none"]
+			default: none
+			required: off
+		},
+		port OutputName {
+			name: "outputName"
+			types: ["", "none"]
+			default: none
+			required: off
+		}
+	]
+	inherits: "rated"
+}
+
+type DomainMember {
+	typeName: "domainMember"
+	ports: [ 
+		port TypeName {
+			name: "domain"
+			types: ["", "none"]
+			default: none
+			required: on
+		}
+	]
+}
 
 type Type {
 	typeName: "type"
@@ -26,9 +75,15 @@ type Port {
 			default: none
 			required: on
 		},
+		port Direction {
+			name: "direction"
+			types: ["CSP", "none"]
+			default: "output"
+			required: off
+		},
 		port Types {
 			name: "types"
-			types: ["CSP", "none"] # TODO how to validate object lists?
+			types: ["CSP", "none"]
 			default: none
 			required: on
 		},

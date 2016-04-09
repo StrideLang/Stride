@@ -48,6 +48,29 @@ QVector<PlatformNode *> CodeValidator::getPlatformNodes()
     return platformNodes;
 }
 
+QVector<AST *> CodeValidator::getBlocksInScope(AST *root)
+{
+    QVector<AST *> blocks;
+    if (root->getNodeType() == AST::Block || root->getNodeType() == AST::BlockBundle) {
+        vector<PropertyNode *> properties = static_cast<BlockNode *>(root)->getProperties();
+        blocks << root;
+        foreach(PropertyNode *property, properties) {
+            blocks << getBlocksInScope(property->getValue());
+        }
+    } else if  (root->getNodeType() == AST::List) {
+        vector<AST *> elements = static_cast<ListNode *>(root)->getChildren();
+        foreach(AST* element, elements) {
+            blocks << getBlocksInScope(element);
+        }
+    } else {
+        foreach(AST * child, root->getChildren()) {
+            blocks << getBlocksInScope(child);
+        }
+    }
+
+    return blocks;
+}
+
 QList<LangError> CodeValidator::getErrors()
 {
     return m_errors;
@@ -140,6 +163,8 @@ void CodeValidator::validateTypes(AST *node, QVector<AST *> scope)
 ////                foreach()
 //            }
 
+        } else if (m_library.isValidBlock(block)) {
+            // Do nothing here
         } else { // Not platform or library type, then error
             LangError error;
             error.type = LangError::UnknownType;
@@ -172,7 +197,9 @@ void CodeValidator::validateBundleIndeces(AST *node, QVector<AST *> scope)
     }
     QVector<AST *> children = QVector<AST *>::fromStdVector(node->getChildren());
     foreach(AST *node, children) {
-        validateBundleIndeces(node, children);
+        QVector<AST *> subScope = getBlocksInScope(node);
+        scope << subScope;
+        validateBundleIndeces(node, scope);
     }
 }
 
@@ -568,10 +595,15 @@ CodeValidator::PortType CodeValidator::resolveNameType(NameNode *name, QVector<A
     if(declaration) {
         if (declaration->getObjectType() == "constant") {
             vector<PropertyNode *> properties = declaration->getProperties();
-            foreach(PropertyNode *property, properties)  {
-                if(property->getName() == "value") {
-                    return resolveNodeOutType(property->getValue(), scope, tree);
-                }
+            PropertyNode *property = CodeValidator::findPropertyByName(properties, "value");
+            if(property) {
+                return resolveNodeOutType(property->getValue(), scope, tree);
+            }
+        } else if (declaration->getObjectType() == "signal") {
+            vector<PropertyNode *> properties = declaration->getProperties();
+            PropertyNode *property = CodeValidator::findPropertyByName(properties, "default");
+            if(property) {
+                return resolveNodeOutType(property->getValue(), scope, tree);
             }
         } else {
 //            return QString::fromStdString(declaration->getObjectType());
