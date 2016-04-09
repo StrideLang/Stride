@@ -31,6 +31,7 @@ public slots:
     void updateCodeAnalysis();
     void newFile();
     void closeTab(int index);
+    void markModified();
 
 protected:
     virtual void closeEvent(QCloseEvent *event);

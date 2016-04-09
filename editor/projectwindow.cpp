@@ -369,12 +369,12 @@ void ProjectWindow::loadFile()
 
 void ProjectWindow::loadFile(QString fileName)
 {
-    newFile();
     QFile codeFile(fileName);
-    if (!codeFile.open(QIODevice::ReadWrite)) { // ReadWrite creates the file if it doesn't exist
+    if (!codeFile.open(QIODevice::ReadOnly)) { // ReadWrite creates the file if it doesn't exist
         qDebug() << "Error opening code file!";
         return;
     }
+    newFile();
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     setEditorText(codeFile.readAll());
     editor->setFilename(QFileInfo(fileName).absoluteFilePath());
@@ -382,6 +382,7 @@ void ProjectWindow::loadFile(QString fileName)
     ui->tabWidget->setTabText(ui->tabWidget->currentIndex(),
                               QFileInfo(fileName).fileName());
     codeFile.close();
+    markModified();
 }
 
 void ProjectWindow::openOptionsDialog()
@@ -622,11 +623,12 @@ void ProjectWindow::newFile()
     // Create editor tab
     CodeEditor *editor = new CodeEditor(this);
     editor->setFilename("");
-//    m_highlighter = new LanguageHighlighter(editor->document(), m_project->getUgens());
+
     int index = ui->tabWidget->insertTab(ui->tabWidget->currentIndex() + 1, editor, "untitled");
     ui->tabWidget->setCurrentIndex(index);
     updateEditorFont();
     m_highlighter->setDocument(editor->document());
+    QObject::connect(editor, SIGNAL(textChanged()), this, SLOT(markModified()));
 }
 
 void ProjectWindow::closeTab(int index)
@@ -635,6 +637,20 @@ void ProjectWindow::closeTab(int index)
     qDebug() << "Close";
     ui->tabWidget->removeTab(index);
     delete editor;
+}
+
+void ProjectWindow::markModified()
+{
+    int currentIndex = ui->tabWidget->currentIndex();
+    CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+    QColor textColor;
+    if (editor->document()->isModified()) {
+        textColor = Qt::red;
+    } else {
+        QPalette p = this->palette();
+        textColor = p.color(QPalette::Foreground);
+    }
+    ui->tabWidget->tabBar()->setTabTextColor(currentIndex, textColor);
 }
 
 void ProjectWindow::closeEvent(QCloseEvent *event)
