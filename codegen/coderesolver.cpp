@@ -755,9 +755,15 @@ AST *CodeResolver::expandStream(AST *node, int index, int rightNumInputs, int le
     } else if (node->getNodeType() == AST::Name) {
         NameNode *nameNode = static_cast<NameNode *>(node);
         if (rightNumInputs == 1) {
-            ListNode *indexList = new ListNode(new ValueNode(index + 1, nameNode->getLine()), -1);
-            newNode = new BundleNode(nameNode->getName(), indexList ,nameNode->getLine());
-            newNode->setRate(node->getRate());
+            int numOutputs = CodeValidator::getNodeNumOutputs(node, m_platform, scope, m_tree, errors);
+            Q_ASSERT(numOutputs > 0);
+            if (numOutputs == 1) {
+                newNode = node->deepCopy();
+            } else {
+                ListNode *indexList = new ListNode(new ValueNode(index + 1, nameNode->getLine()), -1);
+                newNode = new BundleNode(nameNode->getName(), indexList ,nameNode->getLine());
+                newNode->setRate(node->getRate());
+            }
         } else {
             int startIndex = index * leftNumOutputs;
             int endIndex = (index + 1) * leftNumOutputs ;
