@@ -383,10 +383,10 @@ Builder *StreamPlatform::createBuilder(QString projectDir)
         create_object_t create = (create_object_t) pluginLibrary.resolve("create_object");
         if (create) {
             builder = create(m_platformPath, projectDir.toLocal8Bit(), xmosRoot.toLocal8Bit());
-            }
+        }
         pluginLibrary.unload();
     }
-    if (!builder->isValid()) {
+    if (builder && !builder->isValid()) {
         delete builder;
         builder = NULL;
     }

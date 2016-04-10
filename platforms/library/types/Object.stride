@@ -1,13 +1,13 @@
 type Rated {
 	typeName: "rated"
 	ports: [ 
-		port TypeName {
+		port Rate {
 			name: "rate"
 			types: ["", "none"]
 			default: none
 			required: on
 		},
-		port TypeName {
+		port Reset {
 			name: "reset"
 			types: ["", "none"]
 			default: none
@@ -103,8 +103,8 @@ type Port {
 }
 
 type Base {
-typeName: "base"
-ports: [ 
+	typeName: "base"
+	ports: [ 
 		port Inherits {
 			name: "inherits"
 			types: ["CSP", "none"]
@@ -117,5 +117,5 @@ ports: [
 			default: none
 			required: off
 		}
-		]
+	]
 } 

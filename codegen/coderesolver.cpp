@@ -110,15 +110,13 @@ double CodeResolver::findRateInProperties(vector<PropertyNode *> properties, QVe
                 BlockNode* valueDeclaration =  CodeValidator::findDeclaration(
                             QString::fromStdString(static_cast<NameNode *>(propertyValue)->getName()), scope, tree);
                 if (valueDeclaration && valueDeclaration->getObjectType() == "constant") {
-                    vector<PropertyNode *> valueProperties = valueDeclaration->getProperties();
-                    foreach(PropertyNode *property, valueProperties) {
-                        if (property->getName() == "value") {
-                            ValueNode *propertyValue = static_cast<ValueNode *>(property->getValue());
-                            if (propertyValue->getNodeType() == AST::Int) {
-                                rate = CodeValidator::evaluateConstInteger(propertyValue, QVector<AST *>(), tree, errors);
-                            } else if (propertyValue->getNodeType() ==AST::Real) {
-                                rate = CodeValidator::evaluateConstReal(propertyValue, QVector<AST *>(), tree, errors);
-                            }
+                    PropertyNode *property = CodeValidator::findPropertyByName(valueDeclaration->getProperties(), "value");
+                    if (property) {
+                        ValueNode *propertyValue = static_cast<ValueNode *>(property->getValue());
+                        if (propertyValue->getNodeType() == AST::Int) {
+                            rate = CodeValidator::evaluateConstInteger(propertyValue, QVector<AST *>(), tree, errors);
+                        } else if (propertyValue->getNodeType() ==AST::Real) {
+                            rate = CodeValidator::evaluateConstReal(propertyValue, QVector<AST *>(), tree, errors);
                         }
                     }
                 }

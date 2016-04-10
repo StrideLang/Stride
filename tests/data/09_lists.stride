@@ -27,6 +27,17 @@ constant List_Namespaces [4] {
         value: [ ns.Name1, ns.Name2, ns.Name3, ns.Name4 ]
 }
 
+#Blocks inside lists in properties
+
+block BlockName {
+property: [ blockType1 BlockName2 { property: "value" },
+            blockType2 BlockName3 {
+            value: 1.0
+            value2: 2.0
+            }
+            ]
+}
+
 #These should trigger inconsistent constant errors
 
 constant List_Inconsistent [4] {
@@ -48,3 +59,4 @@ list IntegerList [3] {
         value: [ [ 1, 2, 3 ], [ 4.0, 5.0, 6.0 ], [ 7, 8, 9 ] ]
         meta:	'List of lists'
 }
+

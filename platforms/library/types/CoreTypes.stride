@@ -8,6 +8,7 @@ type Constant {
 			required: off
 		}
 	]
+	inherits: "streamable"
 }
 
 type Switch {
@@ -26,12 +27,14 @@ type Switch {
 			required: off
 		}
 	]
+	inherits: "streamable"
 }
 
 type Trigger {
 	typeName: "trigger"
 	ports: [ 
 	]
+	inherits: "streamable"
 }
 
 type Signal {

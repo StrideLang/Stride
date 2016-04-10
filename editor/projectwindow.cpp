@@ -96,13 +96,14 @@ void ProjectWindow::build()
         StreamPlatform *platform = validator.getPlatform();
         QString projectDir = makeProjectForCurrent();
         m_builder = platform->createBuilder(projectDir);
-        connect(m_builder, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
-        connect(m_builder, SIGNAL(errorText(QString)), this, SLOT(printConsoleError(QString)));
         if (m_builder) {
+            connect(m_builder, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
+            connect(m_builder, SIGNAL(errorText(QString)), this, SLOT(printConsoleError(QString)));
             m_builder->build(tree);
         } else {
+            printConsoleText(tr("Done. No builder set."));
             qDebug() << "Can't create builder";
-            Q_ASSERT(false);
+//            Q_ASSERT(false);
         }
         delete tree;
     }
@@ -191,14 +192,20 @@ void ProjectWindow::run(bool pressed)
 
     if (pressed) {
         build();
-        Q_ASSERT(m_builder);
         ui->consoleText->clear();
-        m_builder->run();
+        if (m_builder) {
+            m_builder->run();
+        } else {
+            ui->actionRun->setChecked(false);
+            printConsoleError(tr("Can't run. No builder available."));
+        }
     } else {
-        disconnect(m_builder, 0,0,0);
-        m_builder->run(false);
-        delete m_builder;
-        m_builder = NULL;
+        if (m_builder) {
+            disconnect(m_builder, 0,0,0);
+            m_builder->run(false);
+            delete m_builder;
+            m_builder = NULL;
+        }
     }
 }
 
@@ -320,6 +327,9 @@ void ProjectWindow::saveFile(int index)
         editor = static_cast<CodeEditor *>(ui->tabWidget->widget(index));
     }
     Q_ASSERT(editor);
+    if (!editor->document()->isModified()) {
+        return;
+    }
     if (editor->filename().isEmpty()) {
         if (!saveFileAs()) {
             return;
@@ -669,4 +679,5 @@ void ProjectWindow::closeEvent(QCloseEvent *event)
     } else {
         event->ignore();
     }
+//    QWidget::closeEvent(event);
 }

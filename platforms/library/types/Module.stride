@@ -1,3 +1,22 @@
+type Property {
+	typeName: "property"
+	ports: [
+		port Name {
+			name: "name"
+			types: ["CSP"]
+			default: none
+			required: on
+		},
+		port Block {
+			name: "block"
+			types: [""] # This should be made to accept 
+			default: none
+			required: on
+		}
+	]
+	meta: ""
+}
+
 
 type Hybrid {
 	typeName: "hybrid"
@@ -40,8 +59,8 @@ type Module {
 			required: on
 		},
 		port InternalBlock {
-			name: "internalBlock"
-			types: ["CSP"]
+			name: "internalBlocks"
+			types: [""]
 			default: none
 			required: on
 		},
@@ -58,7 +77,7 @@ type Module {
 type Reaction {
 	typeName: "reaction"
 	ports: [
-		port Streams {
+		port Output {
 			name: "output"
 			types: [""]
 			default: none

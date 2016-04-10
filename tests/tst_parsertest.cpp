@@ -2155,6 +2155,9 @@ void ParserTest::testLibraryValidation()
     Q_ASSERT(tree);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
     Q_ASSERT(generator.isValid());
+
+    tree->deleteChildren();
+    delete tree;
 }
 
 QTEST_APPLESS_MAIN(ParserTest)

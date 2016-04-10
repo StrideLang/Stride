@@ -103,6 +103,12 @@ void CodeValidator::validate()
         // TODO: validate expression list operations
 
         // TODO: resolve constants (and store the results of the resolution (maybe replace the tree nodes?) - should this be done in the tree walker?
+
+        // TODO this should be done earlier and then cleaned up and validated...
+        vector<AST *> nodes = m_tree->getChildren();
+        vector<AST *> libraryNodes = m_library.getNodes();
+        nodes.insert(nodes.end(), libraryNodes.begin(), libraryNodes.end());
+        m_tree->setChildren(nodes);
     }
     sortErrors();
 }
@@ -512,7 +518,11 @@ int CodeValidator::getNodeNumOutputs(AST *node, StreamPlatform &platform, QVecto
     } else if (node->getNodeType() == AST::Function) {
         FunctionNode *func = static_cast<FunctionNode *>(node);
         PlatformFunction platformFunc = platform.getFunction(QString::fromStdString(func->getName()));
-        return platformFunc.numOutputs();
+        if (platformFunc.getName() == "") { // function not in platform
+            return 1; // FIXME this needs to query the library correctly for number of outputs
+        } else {
+            return platformFunc.numOutputs();
+        }
     }
     return -1;
 }
@@ -575,11 +585,9 @@ CodeValidator::PortType CodeValidator::resolveBundleType(BundleNode *bundle, QVe
     BlockNode *declaration = findDeclaration(bundleName, scope, tree);
     if(declaration) {
         if (declaration->getObjectType() == "constant") {
-            vector<PropertyNode *> properties = declaration->getProperties();
-            foreach(PropertyNode *property, properties)  {
-                if(property->getName() == "value") {
-                    return resolveNodeOutType(property->getValue(), scope, tree);
-                }
+            PropertyNode *property = CodeValidator::findPropertyByName(declaration->getProperties(), "value");
+            if(property) {
+                return resolveNodeOutType(property->getValue(), scope, tree);
             }
         } else {
 //            return QString::fromStdString(declaration->getObjectType());
@@ -712,6 +720,8 @@ int CodeValidator::evaluateConstInteger(AST *node, QVector<AST *> scope, AST *tr
         error.lineNumber = bundle->getLine();
         error.errorTokens.push_back(bundle->getName());
         errors << error;
+    } else if (node->getNodeType() == AST::Name) {
+        // TODO: REsolve name when possible
     } else if (node->getNodeType() == AST::Expression) {
         // TODO: check expression out
     } else {

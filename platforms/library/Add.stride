@@ -1,15 +1,19 @@
 module Sum {
         input:          Inputs
         output:         Output
-        propertyName:   [  
-                'size' ,
-                'reset'
-        ]
-        propertyBlock:  [
+		properties: [
+			property SizeProperty {
+				name: "size"
+				block: Size
+			},
+			property ResetProperty {
+				name: "reset"
+				block: Reset
+			}
+		]
+        internalBlocks:  [
                 constant Size { value: 2 },
-                trigger Reset {}
-        ]
-        internalBlock:  [
+                trigger Reset {},
                 hybrid Inputs [Size] {
                         type:           [ 'Stream Real', 'Stream Integer' ]
                         default :       [ 0.0 , 0 ]

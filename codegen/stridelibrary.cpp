@@ -17,11 +17,11 @@ StrideLibrary::StrideLibrary(QString libraryPath)
 
 StrideLibrary::~StrideLibrary()
 {
-    foreach(AST * node, m_platformTrees) {
+    foreach(AST * node, m_libraryTrees) {
         node->deleteChildren();
         delete node;
     }
-    foreach(AST * node, m_platformTypes) {
+    foreach(AST * node, m_libraryTypes) {
         node->deleteChildren();
         delete node;
     }
@@ -29,7 +29,7 @@ StrideLibrary::~StrideLibrary()
 
 BlockNode *StrideLibrary::findTypeInLibrary(QString typeName)
 {
-    foreach (AST *rootNode, m_platformTypes) {
+    foreach (AST *rootNode, m_libraryTypes) {
         foreach (AST *node, rootNode->getChildren()) {
             if (node->getNodeType() == AST::Block) {
                 BlockNode *block = static_cast<BlockNode *>(node);
@@ -75,6 +75,22 @@ bool StrideLibrary::isValidBlock(BlockNode *block)
         }
     }
     return false;
+}
+
+std::vector<AST *> StrideLibrary::getNodes()
+{
+    std::vector<AST *> nodes;
+    foreach(AST *tree, m_libraryTrees) {
+        foreach(AST *node, tree->getChildren()) {
+            nodes.push_back(node->deepCopy());
+        }
+    }
+    foreach(AST *tree, m_libraryTypes) {
+        foreach(AST *node, tree->getChildren()) {
+            nodes.push_back(node->deepCopy());
+        }
+    }
+    return nodes;
 }
 
 bool StrideLibrary::isValidProperty(PropertyNode *property, BlockNode *type)
@@ -137,7 +153,7 @@ void StrideLibrary::readLibrary(QString rootDir)
         QString fileName = rootDir + subpath + QDir::separator() + file;
         AST *tree = AST::parseFile(fileName.toLocal8Bit().data());
         if(tree) {
-            m_platformTrees.append(tree);
+            m_libraryTrees.append(tree);
         }
     }
 }
@@ -152,8 +168,13 @@ void StrideLibrary::readLibraryTypes(QString rootDir)
         QString fileName = rootDir + subpath + QDir::separator() + file;
         QString cleanPath = QDir::cleanPath(fileName); // Path contains ../
         AST *tree = AST::parseFile(cleanPath.toLocal8Bit().data());
+        if (!tree) {
+            vector<LangError> errors = AST::getParseErrors();
+            errors.at(0);
+        }
+        Q_ASSERT(tree);
         if(tree) {
-            m_platformTypes.append(tree);
+            m_libraryTypes.append(tree);
         }
     }
 }

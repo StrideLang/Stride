@@ -4,6 +4,8 @@
 #include <QVector>
 
 #include "streamplatform.h"
+#include "stridelibrary.hpp"
+
 #include "ast.h"
 #include "streamnode.h"
 #include "bundlenode.h"

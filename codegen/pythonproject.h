@@ -42,11 +42,11 @@ public slots:
 private:
     void writeAST(AST *tree);
     void astToJson(AST *node, QJsonObject &obj);
-    void streamToJsonArray(StreamNode *node);
+    void listToJsonArray(ListNode *node, QJsonArray &obj);
+    void streamToJsonArray(StreamNode *node, QJsonArray &array);
     void functionToJson(FunctionNode *node, QJsonObject &obj);
-    void addNodeToStreamArray(AST *node);
+    void appendStreamToArray(AST *node, QJsonArray &array);
 
-    QJsonArray m_curStreamArray;
     QString m_pythonExecutable;
     QAtomicInt m_running;
     QProcess m_runningProcess;
