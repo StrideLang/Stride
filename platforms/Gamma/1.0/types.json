@@ -47,6 +47,14 @@
             }
         },
         {
+            "typeName": "module",
+            "code" : {
+                "includes": {"code": ""},
+                "init_code": {"code": "struct %%:name%% {\n %%?init_code%% float process() \n{%%?dsp_code%%\n}\n};"},
+                "dsp_code": {"code": "%%token%% = %%:name%%(%%intoken%%);\n"}
+            }
+        },
+        {
             "typeName": "patch",
             "ports": {
             },
