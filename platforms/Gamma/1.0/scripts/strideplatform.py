@@ -65,6 +65,60 @@ class NameAtom(Atom):
         out_tokens = [self.handle]
         return code, out_tokens
 
+class BundleAtom(Atom):
+    def __init__(self, platform_type, declaration, index, token_index):
+        ''' index indexes from 1
+        '''
+        self.name = declaration['name']
+        self.index = index - 1
+        self.handle = self.name + '_%03i'%(token_index);
+        self.platform_type = platform_type
+        self.declaration = declaration
+        
+    def get_declarations(self):
+        return {}
+    
+    def _get_token_name(self, index):
+        return '%s[%i]'%(self.handle, index)
+    
+    def get_instances(self):
+        instances = [{'bundlereal': self.handle, 'size' : self.declaration['size']}]
+        return instances
+    
+    def get_init_code(self):
+        if 'default' in self.declaration:
+            default_value = self.declaration
+        else:
+            if 'blockbundle' in self.platform_type:
+                #Stride definition
+                if 'default' in self.platform_type['blockbundle']:
+                    default_value = self.platform_type['blockbundle']['default'] # FIXME inheritance is not being handled here
+                else:
+                    default_value = 0.0
+                    
+                code = self.handle + ' = ' + str(default_value) + ';\n'
+            else:
+                # Hardware platform definition
+                code = self.platform_type['code']['init_code']['code']
+                code = code.replace('%%token%%', self._get_token_name(self.index))            
+                code = code.replace('%%bundle_index%%', str(self.index))
+                
+                
+        return code
+    
+    def get_processing_code(self, in_tokens):
+        code = ''
+        if len(in_tokens) > 0:
+            code = self._get_token_name(self.index) + ' = ' + in_tokens[0] + ';\n'
+        if 'code' in self.platform_type:
+            # Hardware platform code. This needs to be improved...
+            code += self.platform_type['code']['dsp_code']['code']
+            code = code.replace('%%token%%', self._get_token_name(self.index))            
+            code = code.replace('%%bundle_index%%', str(self.index))
+
+        out_tokens = [self._get_token_name(self.index)]
+        return code, out_tokens
+
 
 class ModuleAtom:
     def __init__(self, module, template_code, ugen_index, scoped_platform, scope = []):
@@ -520,7 +574,8 @@ class PlatformFunctions:
                 new_atom = NameAtom(platform_type, declaration, unique_id)
             elif "bundle" in member:
                 rate = member['bundle']["rate"]
-                code = self.generate_bundle_code(member['bundle'], out_var_name)
+                platform_type, declaration = self.find_block(member['bundle']['name'], self.tree)
+                new_atom = BundleAtom(platform_type, declaration, member['bundle']['index'], unique_id)
             elif "function" in member:
                 rate = member['function']["rate"]
                 code = self.generate_module_code(member['function'], out_var_name, rate)
@@ -579,6 +634,8 @@ class PlatformFunctions:
                 for inst in instances:
                     if 'real' in inst:
                         instantiation_code += 'float ' + str(inst['real']) + ';\n'
+                    elif 'bundlereal' in inst:
+                        instantiation_code += 'float ' + str(inst['bundlereal']) + '[%i];\n'%inst['size']
                     else:
                         raise ValueError('Unsupported type for instance')
                 # Process initialization code
