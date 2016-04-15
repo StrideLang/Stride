@@ -59,10 +59,6 @@ class Generator:
     def generate_code(self):
         # Generate code from tree
         
-        stream_index = 0;
-        self.ugen_index = 0;
-        self.includes_list = []
-        
         config_template_code = '''
         AudioDevice adevi = AudioDevice::defaultInput();
         AudioDevice adevo = AudioDevice::defaultOutput();
@@ -82,11 +78,6 @@ class Generator:
         AudioIO io(%%block_size%%, %%sample_rate%%, audioCB, NULL, %%num_out_chnls%%, %%num_in_chnls%%);
         '''
         
-        includes_code = ''
-        declare_code = ''
-        instantiation_code = ''
-        init_code = ''
-        processing_code = ''
         
         # TODO These defaults should be set from the platform definition file
         self.block_size = 512
@@ -94,15 +85,7 @@ class Generator:
         self.num_out_chnls = 2
         self.num_in_chnls = 2
         
-    
-        for node in self.tree:
-            if 'stream' in node: # Everything grows from streams.
-                code = self.platform.generate_stream_code(node["stream"], stream_index)
-                declare_code += code["declare_code"]
-                instantiation_code += code["instantiation_code"]
-                init_code  += code["init_code"]
-                processing_code += code["processing_code"]
-                stream_index += 1
+        code = self.platform.generate_code(self.tree)
                 
         #var_declaration = ''.join(['double stream_%02i;\n'%i for i in range(stream_index)])
         #declare_code = var_declaration + declare_code
@@ -113,13 +96,10 @@ class Generator:
         template_init_code = template_init_code.replace("%%num_out_chnls%%", str(self.num_out_chnls))
         template_init_code = template_init_code.replace("%%num_in_chnls%%", str(self.num_in_chnls))
         
-        init_code += template_init_code        
-        
-        includes_code = '\n'.join(set(self.includes_list)) + '\n'
-        self.write_section_in_file('Includes', includes_code)
-        self.write_section_in_file('Init Code', declare_code + instantiation_code)
-        self.write_section_in_file('Config Code', init_code)
-        self.write_section_in_file('Dsp Code', processing_code)
+#        self.write_section_in_file('Includes', includes_code)
+        self.write_section_in_file('Init Code', code['declare_code'] + code['instantiation_code'])
+        self.write_section_in_file('Config Code', code['init_code'] + template_init_code)
+        self.write_section_in_file('Dsp Code', code['processing_code'])
         
 # Compile --------------------------
     def compile(self):

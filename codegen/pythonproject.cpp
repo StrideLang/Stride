@@ -120,21 +120,23 @@ void PythonProject::writeAST(AST *tree)
 void PythonProject::astToJson(AST *node, QJsonObject &obj)
 {
     if (node->getNodeType() == AST::Bundle) {
-        obj["type"] = QString("Bundle");
-        obj["name"] = QString::fromStdString(static_cast<BundleNode *>(node)->getName());
+        QJsonObject newObj;
+        newObj["type"] = QString("Bundle");
+        newObj["name"] = QString::fromStdString(static_cast<BundleNode *>(node)->getName());
 
         ListNode *indexList = static_cast<BundleNode *>(node)->index();
         Q_ASSERT(indexList->size() == 1);
         AST *indexNode = indexList->getChildren().at(0);
         if (indexNode->getNodeType() == AST::Int) {
-            obj["index"] = static_cast<ValueNode *>(indexNode)->getIntValue();
+            newObj["index"] = static_cast<ValueNode *>(indexNode)->getIntValue();
         } else if (indexNode->getNodeType() == AST::List) {
             // FIXME implement support for Lists
         } else if (indexNode->getNodeType() == AST::Range) {
             // FIXME implement support for Range
             // Are ranges and lists always unraveled by the compiler?
         }
-        obj["rate"] = node->getRate();
+        newObj["rate"] = node->getRate();
+        obj["bundle"] = newObj;
     } else if (node->getNodeType() == AST::Name) {
         QJsonObject newObj;
         newObj["name"] = QString::fromStdString(static_cast<BundleNode *>(node)->getName());
@@ -145,7 +147,9 @@ void PythonProject::astToJson(AST *node, QJsonObject &obj)
         newObj["rate"] = node->getRate();
         obj["expression"] = newObj;
     } else if (node->getNodeType() == AST::Function) {
-        functionToJson(static_cast<FunctionNode *>(node), obj);
+        QJsonObject newObj;
+        functionToJson(static_cast<FunctionNode *>(node), newObj);
+        obj["function"] = newObj;
     } else if (node->getNodeType() == AST::Stream) {
         QJsonArray array;
         streamToJsonArray(static_cast<StreamNode *>(node), array);

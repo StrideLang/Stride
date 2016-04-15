@@ -172,7 +172,7 @@ void StrideLibrary::readLibraryTypes(QString rootDir)
             vector<LangError> errors = AST::getParseErrors();
             errors.at(0);
         }
-        Q_ASSERT(tree);
+        Q_ASSERT_X(tree, "readLibraryTypes ", file.toLocal8Bit().constData());
         if(tree) {
             m_libraryTypes.append(tree);
         }

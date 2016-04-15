@@ -9,7 +9,7 @@ type Property {
 		},
 		port Block {
 			name: "block"
-			types: [""] # This should be made to accept 
+			types: [""] # This should be made to accept type handles
 			default: none
 			required: on
 		}
