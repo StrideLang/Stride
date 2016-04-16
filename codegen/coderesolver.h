@@ -33,6 +33,8 @@ private:
     double getNodeRate(AST *node, QVector<AST *> scope, AST *tree);
     void insertBuiltinObjects();
     double createSignalDeclaration(QString name, int size, AST *tree);
+    void declareUnknownName(NameNode *name, int size, AST *tree);
+    void declareUnknownExpressionSymbols(ExpressionNode *expr, int size, AST * tree);
     void declareUnknownStreamSymbols(StreamNode *stream, AST *previousStreamMember, AST *tree);
     void resolveStreamSymbols();
     void resolveConstants();

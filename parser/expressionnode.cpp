@@ -81,6 +81,38 @@ ExpressionNode::ExpressionType ExpressionNode::getExpressionType() const
     return m_type;
 }
 
+string ExpressionNode::getExpressionTypeString() const
+{
+    switch (m_type) {
+    case Multiply:
+        return "Multiply";
+        break;
+    case Divide:
+        return "Divide";
+        break;
+    case Add:
+        return "Add";
+        break;
+    case Subtract:
+        return "Subtract";
+        break;
+    case And:
+        return "And";
+        break;
+    case Or:
+        return "Or";
+        break;
+    case UnaryMinus:
+        return "UnaryMinus";
+        break;
+    case LogicalNot:
+        return "LogicalNot";
+        break;
+    default:
+        return "";
+    }
+}
+
 AST *ExpressionNode::deepCopy()
 {
     if (m_type == ExpressionNode::UnaryMinus || m_type == ExpressionNode::LogicalNot) {

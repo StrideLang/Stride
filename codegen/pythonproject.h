@@ -19,6 +19,7 @@
 #include "streamnode.h"
 #include "valuenode.h"
 #include "functionnode.h"
+#include "expressionnode.h"
 
 class PythonProject : public Builder
 {
@@ -45,6 +46,7 @@ private:
     void listToJsonArray(ListNode *node, QJsonArray &obj);
     void streamToJsonArray(StreamNode *node, QJsonArray &array);
     void functionToJson(FunctionNode *node, QJsonObject &obj);
+    void expressionToJson(ExpressionNode *node, QJsonObject &obj);
     void appendStreamToArray(AST *node, QJsonArray &array);
 
     QString m_pythonExecutable;

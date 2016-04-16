@@ -24,7 +24,7 @@ StreamPlatform::StreamPlatform(QStringList platformPaths, QString platform, QStr
     QString functionsJson;
 //    QString platformPath = m_platformRootPath + QDir::separator() + m_platformName
 //            + QDir::separator() + m_version + QDir::separator() + "plugins";
-    platformPaths << "/home/andres/Documents/src/XMOS/Odo/StreamStack/plugins"; // TODO: un hard-code this
+    platformPaths << "/home/andres/Documents/src/Stride/StreamStack/plugins"; // TODO: un hard-code this
     foreach(QString path, platformPaths) {
         if (m_api != NullPlatform) {
             break; // Stop looking if platform has been found.

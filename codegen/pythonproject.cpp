@@ -145,6 +145,7 @@ void PythonProject::astToJson(AST *node, QJsonObject &obj)
     } else if (node->getNodeType() == AST::Expression) {
         QJsonObject newObj;
         newObj["rate"] = node->getRate();
+        expressionToJson(static_cast<ExpressionNode *>(node), newObj);
         obj["expression"] = newObj;
     } else if (node->getNodeType() == AST::Function) {
         QJsonObject newObj;
@@ -274,6 +275,24 @@ void PythonProject::functionToJson(FunctionNode *node, QJsonObject &obj)
     }
     obj["ports"] = propObject;
     obj["rate"] = node->getRate();
+}
+
+void PythonProject::expressionToJson(ExpressionNode *node, QJsonObject &obj)
+{
+    obj["type"] = QString::fromStdString(node->getExpressionTypeString());
+
+    if (node->isUnary()) {
+        QJsonObject value;
+        astToJson(node->getValue(), value);
+        obj["value"] = value;
+    } else {
+        QJsonObject left;
+        astToJson(node->getLeft(), left);
+        obj["left"] = left;
+        QJsonObject right;
+        astToJson(node->getRight(),right);
+        obj["right"] = right;
+    }
 }
 
 void PythonProject::appendStreamToArray(AST *node, QJsonArray &array)

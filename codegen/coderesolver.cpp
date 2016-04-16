@@ -234,6 +234,44 @@ double CodeResolver::createSignalDeclaration(QString name, int size, AST *tree)
     return nameRate;
 }
 
+void CodeResolver::declareUnknownName(NameNode *name, int size, AST *tree)
+{
+    BlockNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), QVector<AST *>(), tree);
+    if (!block) { // Not declared, so make declaration
+        double rate = createSignalDeclaration(QString::fromStdString(name->getName()), size, tree);
+        name->setRate(rate);
+    }
+}
+
+
+void CodeResolver::declareUnknownExpressionSymbols(ExpressionNode *expr, int size, AST * tree)
+{
+    if (expr->isUnary()) {
+        if (expr->getValue()->getNodeType() == AST::Name) {
+            NameNode *name = static_cast<NameNode *>(expr->getValue());
+            declareUnknownName(name, size, tree);
+        } else if (expr->getValue()->getNodeType() == AST::Expression) {
+            ExpressionNode *name = static_cast<ExpressionNode *>(expr->getValue());
+            declareUnknownExpressionSymbols(name, size, tree);
+        }
+    } else {
+        if (expr->getLeft()->getNodeType() == AST::Name) {
+            NameNode *name = static_cast<NameNode *>(expr->getLeft());
+            declareUnknownName(name, size, tree);
+        } else if (expr->getLeft()->getNodeType() == AST::Expression) {
+            ExpressionNode *inner_expr = static_cast<ExpressionNode *>(expr->getLeft());
+            declareUnknownExpressionSymbols(inner_expr, size, tree);
+        }
+        if (expr->getRight()->getNodeType() == AST::Name) {
+            NameNode *name = static_cast<NameNode *>(expr->getRight());
+            declareUnknownName(name, size, tree);
+        } else if (expr->getRight()->getNodeType() == AST::Expression) {
+            ExpressionNode *inner_expr = static_cast<ExpressionNode *>(expr->getRight());
+            declareUnknownExpressionSymbols(inner_expr, size, tree);
+        }
+    }
+}
+
 void CodeResolver::declareUnknownStreamSymbols(StreamNode *stream, AST *previousStreamMember, AST * tree)
 {
     AST *left = stream->getLeft();
@@ -248,40 +286,40 @@ void CodeResolver::declareUnknownStreamSymbols(StreamNode *stream, AST *previous
 
     if (left->getNodeType() == AST::Name) {
         NameNode *name = static_cast<NameNode *>(left);
-        BlockNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), QVector<AST *>(), tree);
-        if (!block) { // Not declared, so make declaration
-            QList<LangError> errors;
-            QVector<AST *> scope;
-            int size = -1;
-            if (previousStreamMember) {
-                size = CodeValidator::getNodeNumOutputs(previousStreamMember, m_platform, scope, m_tree, errors);
-            }
-            if (size <= 0) { // Look to the right if can't resolve from the left
-                size = CodeValidator::getNodeNumInputs(nextStreamMember, m_platform, scope, m_tree, errors);
-            }
-            if (size <= 0) { // None of the elements in the stream have size
-                size = 1;
-            }
-            double rate = createSignalDeclaration(QString::fromStdString(name->getName()), size, tree);
-            name->setRate(rate);
+        QList<LangError> errors;
+        QVector<AST *> scope;
+        int size = -1;
+        if (previousStreamMember) {
+            size = CodeValidator::getNodeNumOutputs(previousStreamMember, m_platform, scope, m_tree, errors);
         }
+        if (size <= 0) { // Look to the right if can't resolve from the left
+            size = CodeValidator::getNodeNumInputs(nextStreamMember, m_platform, scope, m_tree, errors);
+        }
+        if (size <= 0) { // None of the elements in the stream have size
+            size = 1;
+        }
+        declareUnknownName(name, size, tree);
+    } else if (left->getNodeType() == AST::Expression) {
+        int size = 1; // FIXME implement size detection for expressions
+        ExpressionNode *expr = static_cast<ExpressionNode *>(left);
+        declareUnknownExpressionSymbols(expr, size, tree);
     }
 
     if (right->getNodeType() == AST::Stream) {
         declareUnknownStreamSymbols(static_cast<StreamNode *>(right), left, tree);
     } else if (right->getNodeType() == AST::Name) {
         NameNode *name = static_cast<NameNode *>(right);
-        BlockNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), QVector<AST *>(), tree);
-        if (!block) { // Not declared, so make declaration
-            QList<LangError> errors;
-            QVector<AST *> scope;
-            int size = CodeValidator::getNodeNumOutputs(left, m_platform, scope, m_tree, errors);
-            if (size <= 0) { // None of the elements in the stream have size
-                size = 1;
-            }
-            double rate = createSignalDeclaration(QString::fromStdString(name->getName()), size, tree);
-            name->setRate(rate);
+        QList<LangError> errors;
+        QVector<AST *> scope;
+        int size = CodeValidator::getNodeNumOutputs(left, m_platform, scope, m_tree, errors);
+        if (size <= 0) { // None of the elements in the stream have size
+            size = 1;
         }
+        declareUnknownName(name, size, tree);
+    } else if (left->getNodeType() == AST::Expression) {
+        int size = 1; // FIXME implement size detection for expressions
+        ExpressionNode *expr = static_cast<ExpressionNode *>(left);
+        declareUnknownExpressionSymbols(expr, size, tree);
     }
 }
 

@@ -33,6 +33,7 @@ public:
     AST *getValue() const;
 
     ExpressionType getExpressionType() const;
+    string getExpressionTypeString() const;
     AST *deepCopy();
 
 private:
