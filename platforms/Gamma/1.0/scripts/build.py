@@ -12,8 +12,8 @@ from strideplatform import PlatformFunctions
 
 # ---------------------
 class Generator:
-    def __init__(self, out_dir = '/home/andres/Documents/src/XMOS/Odo/StreamStack/platforms/Gamma/examples/filtering.stream_Products',
-                 platform_dir = '/home/andres/Documents/src/XMOS/Odo/StreamStack/platforms/Gamma/1.0'):
+    def __init__(self, out_dir = '',
+                 platform_dir = '/home/andres/Documents/src/Stride/StreamStack/platforms/Gamma/1.0'):
         
     
         self.platform_dir = platform_dir
@@ -185,9 +185,11 @@ class Generator:
 
    
 if __name__ == '__main__':
+    platform = '/home/andres/Documents/src/Stride/StreamStack/platforms/Gamma/1.0'
     if len(sys.argv) < 2:
-        gen = Generator('/home/andres/Documents/src/XMOS/Odo/StreamStack/platforms/Gamma/examples/passthru.stride_Products')
+        gen = Generator('/home/andres/Documents/src/Stride/StreamStack/platforms/Gamma/examples/reaction.stride_Products',
+                        platform)
     else:
-        gen = Generator(sys.argv[1])
+        gen = Generator(sys.argv[1], platform)
     gen.generate_code()
 #    gen.compile()
