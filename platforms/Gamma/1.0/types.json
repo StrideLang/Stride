@@ -127,7 +127,7 @@
             "out_types" : [],
             "code" : {
                 "includes": {"code": ""},
-                "init_code": {"code": "%%token%% = 0;\n"},
+                "init_code": {"code": "// %%token%% = 0;\n"},
                 "dsp_code": {"code": "io.out(%%bundle_index%%) = %%token%%;\n"}
             },
             "privateports": {"inherits" : ["signal"]}

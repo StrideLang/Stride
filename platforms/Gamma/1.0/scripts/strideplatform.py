@@ -235,15 +235,16 @@ class BundleAtom(Atom):
                       'code' : str(default_value)
                       }]
         else:
-            # Hardware platform definition
-            code = self.platform_type['code']['init_code']['code']
-            code = code.replace('%%token%%', self._get_token_name(self.index))            
-            code = code.replace('%%bundle_index%%', str(self.index))
-            
-            inits = [{'handle' : self.handle,
-                      'code' : code
-                      }]
-                
+#            # Hardware platform definition
+#            code = self.platform_type['code']['init_code']['code']
+#            code = code.replace('%%token%%', self._get_token_name(self.index))            
+#            code = code.replace('%%bundle_index%%', str(self.index))
+#            
+#            inits = [{'handle' : self.handle,
+#                      'code' : code
+#                      }]
+#                      
+            inits = []
                 
         return inits
     
@@ -370,7 +371,7 @@ class PlatformModuleAtom(Atom):
         return out_code
 
 class ModuleAtom:
-    def __init__(self, module, platform_code, token_index, platform, scope = []):
+    def __init__(self, module, platform_code, token_index, platform):
         self.name = module["name"]
         self.handle = self.name + '_%03i'%token_index;
         self.out_tokens = [self.name + '_out_%03i'%token_index]
@@ -382,7 +383,6 @@ class ModuleAtom:
         self._output_block = None
         self._index = token_index
         self.platform = platform
-        self.scope = scope
         self.stride_type = self.platform.find_stride_type("module")
         
         for stream in self._streams:
@@ -455,9 +455,112 @@ class ModuleAtom:
         # We need to pass the name of the input block because we will handle declaration and init
         
                     #self.current_scope = module["internalBlocks"]
-        self.platform.set_current_scope(self.current_scope)
+        self.platform.push_scope(self.current_scope)
         self.code = self.platform.generate_code(tree, [], [self._input_block['name']])
-        self.platform.set_current_scope([])
+        self.platform.pop_scope()
+
+        
+    def _init_blocks(self, blocks, input_name, output_name):
+        self._blocks = []
+        for block in blocks:
+            self._blocks.append(block['block'])
+            if self._blocks[-1]['name'] == input_name["name"]:
+                self._input_block = self._blocks[-1]
+            if self._blocks[-1]['name'] == output_name["name"]:
+                self._output_block = self._blocks[-1]
+                
+    def find_internal_block(self, block_name):
+        for block in self._blocks:
+            if block['name'] == block_name:
+                return block
+
+class ReactionAtom:
+    def __init__(self, reaction, token_index, platform):
+        self.name = reaction["name"]
+        self.handle = self.name + '_%03i'%token_index;
+        self.out_tokens = [self.name + '_out_%03i'%token_index]
+        self._streams = reaction["streams"]
+        self._properties = reaction["properties"]
+        self.current_scope = reaction["internalBlocks"]
+        self._input_block = None
+        self._output_block = None
+        self._index = token_index
+        self.platform = platform
+        self.stride_type = self.platform.find_stride_type("reaction")
+        
+        for stream in self._streams:
+            print(stream)
+        
+        self._init_blocks(reaction["internalBlocks"],
+                          reaction["input"]['name'], reaction["output"]['name'])
+                          
+        self._process_reaction(reaction["streams"], reaction["internalBlocks"])
+            
+    def get_declarations(self):
+        declarations_code = self._get_internal_declarations_code()
+        
+        instantiation_code = self._get_internal_instantiation_code()
+        init_code = self._get_internal_init_code()
+        process_code = self._get_internal_processing_code()
+        
+        if self._input_block:
+            # TODO this needs to be generalized for other types apart from float
+            input_declaration = 'float %s'%self._input_block['name']
+        else:
+            input_declaration = ''
+                    
+        declaration = 'struct %s {\n %s %s() {\n%s}\nfloat process(%s) \n{%s\n}\n};'%(
+                self.name, declarations_code + instantiation_code, 
+                self.name, init_code, input_declaration, process_code)
+        return {self.handle :  declaration}
+    
+    def get_instances(self):
+        return [{'type' : 'reaction',
+                 'handle': self.handle,
+                 'moduletype' : self.name},
+                 { 'type' : 'real',
+                   'handle' : self.out_tokens[0]
+                 }]
+    
+    def get_init_list(self):
+        return []
+        
+    def get_inline_processing_code(self, in_tokens):
+        code = self.handle + '.process(' + in_tokens[0] + ')'
+        return code
+        
+    def get_processing_code(self, in_tokens):
+        code = ''
+        if len(in_tokens) > 0:
+            code = self.out_tokens[0] + ' = ' + self.get_inline_processing_code(in_tokens) +  ';\n'
+        out_tokens = self.out_tokens
+        return code, out_tokens
+        
+    def _get_internal_instantiation_code(self):
+        code = self.code['instantiation_code']
+        return code
+        
+    def _get_internal_declarations_code(self):
+        code = self.code['declare_code']
+        return code
+        
+    def _get_internal_init_code(self):
+        code = self.code['init_code']
+        return code
+        
+    def _get_internal_processing_code(self):
+        code = self.code['processing_code']
+        code += 'return %s;\n'%(self._output_block['name']) 
+        return code
+        
+    def _process_reaction(self, streams, blocks):
+        tree = streams + blocks
+        # We need to pass the name of the input block because we will handle declaration and init
+        
+                    #self.current_scope = reaction["internalBlocks"]
+        self.platform.push_scope(self.current_scope)
+        self.code = self.platform.generate_code(tree, [], [self._input_block['name']])
+        self.platform.pop_scope()
 
         
     def _init_blocks(self, blocks, input_name, output_name):
@@ -491,7 +594,7 @@ class PlatformFunctions:
         self._intokens = {}
         
         self.tree = tree
-        self.current_scope = []
+        self.scope_stack = []
         
         self.sample_rate = 44100 # This is a hack. This should be brought in from the stream's domain and rate
     
@@ -500,8 +603,11 @@ class PlatformFunctions:
             if func['functionName'] == name:
                 return func
     
-    def set_current_scope(self, scope):
-        self.current_scope = scope
+    def push_scope(self, scope):
+        self.scope_stack.append(scope)
+    
+    def pop_scope(self):
+        self.scope_stack.pop()
     
     def find_declaration_in_tree(self, block_name, tree):
         for node in tree:
@@ -511,13 +617,14 @@ class PlatformFunctions:
             if 'blockbundle' in node:
                 if node["blockbundle"]["name"] == block_name:
                     return node["blockbundle"]
-        for node in self.current_scope: # Now look within scope
-            if 'block' in node:
-                if node["block"]["name"] == block_name:
-                    return node["block"]
-            if 'blockbundle' in node:
-                if node["blockbundle"]["name"] == block_name:
-                    return node["blockbundle"]
+        for scope in self.scope_stack[::-1]:
+            for node in scope: # Now look within scope
+                if 'block' in node:
+                    if node["block"]["name"] == block_name:
+                        return node["block"]
+                if 'blockbundle' in node:
+                    if node["blockbundle"]["name"] == block_name:
+                        return node["blockbundle"]
 #        raise ValueError("Declaration not found for " + block_name)
         return None
         
@@ -806,7 +913,7 @@ class PlatformFunctions:
                     platform_type = self.find_platform_function(member['function']["name"])
                     new_atom = ModuleAtom(module, platform_type, self.unique_id, self)
                 elif module['type'] == 'reaction':
-                    new_atom = ReactionAtom(module, )
+                    new_atom = ReactionAtom(module, self.unique_id, self)
         elif "expression" in member:
             rate = member['expression']["rate"]
             if 'value' in member['expression']: # Unary expression
