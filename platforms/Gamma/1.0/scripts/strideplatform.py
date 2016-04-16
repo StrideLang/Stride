@@ -17,8 +17,14 @@ class Atom:
         self.rate = -1
         self.inline = False
         
+    def set_inline(self, inline):
+        self.inline = inline
+    
+    def is_inline(self):
+        return self.inline
+        
     def get_handle(self):
-        if self.inline:
+        if self.is_inline():
             return self.get_inline_processing_code([])
         else:
             return self.handle
@@ -63,13 +69,13 @@ class ValueAtom(Atom):
         self.inline = True
         
     def get_handle(self):
-        if self.inline:
+        if self.is_inline():
             return self.get_inline_processing_code([])
         else:
             return self.handle
             
     def get_out_tokens(self):
-        if self.inline:
+        if self.is_inline():
             return [str(self.value)]
         else:
             return [self.handle]
@@ -78,14 +84,14 @@ class ValueAtom(Atom):
         return {}
     
     def get_instances(self):
-        if self.inline:
+        if self.is_inline():
             return []
         else:
             return [{'type' : 'real',
                  'handle' : self.handle}]
     
     def get_init_list(self):
-        if self.inline:
+        if self.is_inline():
             inits = []
         else:
             inits = [{'handle' : self.handle,
@@ -110,13 +116,13 @@ class ExpressionAtom(Atom):
         self.right_atom = right_atom
         self.index = index
         self.handle = '__expr_%03i'%index
-        self.inline = False
+        self.inline = True
         self.rate = -1
         
         self._process_atoms()
         
     def get_handle(self):
-        if self.inline:
+        if self.is_inline():
             return self.get_inline_processing_code([])
         else:
             return self.handle
@@ -132,7 +138,7 @@ class ExpressionAtom(Atom):
         instances = self.left_atom.get_instances()
         if self.right_atom:
             instances += self.right_atom.get_instances()
-        if not self.inline:
+        if not self.is_inline():
             instances.append({'handle' : self.handle,
                               'type' : 'real'})
         return instances
@@ -144,7 +150,11 @@ class ExpressionAtom(Atom):
         return inits
         
     def get_inline_processing_code(self, in_tokens):
-        code = '(' + self.left_atom.get_out_tokens()[0]
+        if self.left_atom.is_inline():
+            left_token = self.left_atom.get_inline_processing_code([])
+        else:
+            left_token = self.left_atom.get_out_tokens()[0]
+        code = '(' + left_token
         if self.expr_type == 'Add':
             code += ' + '
         elif self.expr_type == 'Subtract':
@@ -161,11 +171,16 @@ class ExpressionAtom(Atom):
             code = ' - ' + code
         elif self.expr_type == 'LogicalNot':
             code += ' ~ ' + code
-        code += self.right_atom.get_out_tokens()[0] + ')'
+            
+        if self.right_atom.is_inline():
+            right_token = self.right_atom.get_inline_processing_code([])
+        else:
+            right_token = self.right_atom.get_out_tokens()[0]
+        code += right_token + ')'
         return code
     
     def get_processing_code(self, in_tokens):
-        if self.inline:
+        if self.is_inline():
             code = ''
             out_tokens = [self.get_inline_processing_code(in_tokens)]
         else:
@@ -179,6 +194,8 @@ class ExpressionAtom(Atom):
         
     def _process_atoms(self):
         
+        self.left_atom.set_inline(True)
+        self.right_atom.set_inline(True)
 #        tree = streams + blocks
         # We need to pass the name of the input block because we will handle declaration and init
 #        self.code = self.scoped_platform.generate_code(tree, [], [self._input_block['name']])
@@ -223,7 +240,7 @@ class NameAtom(Atom):
         return inits
         
     def get_inline_processing_code(self, in_tokens):
-        return in_tokens[0]
+        return self.handle
     
     def get_processing_code(self, in_tokens):
         code = ''
@@ -412,9 +429,7 @@ class ModuleAtom(Atom):
     def __init__(self, module, platform_code, token_index, platform):
         self.name = module["name"]
         self.handle = self.name + '_%03i'%token_index;
-        self.out_tokens = [self.name + '_out_%03i'%token_index]
-        self._streams = module["streams"]
-        self._properties = module["properties"]
+        self.out_tokens = [self.name + '_%03i_out'%token_index]
         self.current_scope = module["internalBlocks"]
         self._platform_code = platform_code
         self._input_block = None
@@ -422,15 +437,24 @@ class ModuleAtom(Atom):
         self._index = token_index
         self.platform = platform
         self.stride_type = self.platform.find_stride_type("module")
+        self.module = module
         self.rate = -1 # Should modules have rates?
         
-        self.inline = False
         
         self._init_blocks(module["internalBlocks"],
                           module["input"], module["output"])
                           
-        self._process_module(module["streams"], module["internalBlocks"])
+        self.set_inline(False)
+                         
             
+    def set_inline(self, inline):
+        if inline:
+            self.out_tokens = []
+        else:
+            self.out_tokens = [self.name + '_%03i_out'%self._index]
+        self._process_module(self.module["streams"], self.module["internalBlocks"])
+        self.inline = inline
+        
     def get_declarations(self):
         declarations_code = self._get_internal_declarations_code()
         
@@ -451,12 +475,18 @@ class ModuleAtom(Atom):
         return {self.name :  declaration}
     
     def get_instances(self):
-        return [{'type' : 'module',
-                 'handle': self.handle,
-                 'moduletype' : self.name},
-                 { 'type' : 'real',
-                   'handle' : self.out_tokens[0]
-                 }]
+        if len(self.out_tokens) > 0:
+            return [{'type' : 'module',
+                     'handle': self.handle,
+                     'moduletype' : self.name},
+                     { 'type' : 'real',
+                       'handle' : self.out_tokens[0]
+                     }]
+        else:
+            return [{'type' : 'module',
+                     'handle': self.handle,
+                     'moduletype' : self.name}
+                     ]
     
     def get_init_list(self):
         return []
@@ -494,7 +524,7 @@ class ModuleAtom(Atom):
         
     def _get_internal_properties_code(self):
         code = ''
-        for prop in self._properties:
+        for prop in self.module['properties']:
             if 'block' in prop:
                 code += 'void set_' + prop['block']['name'] + '(float amp) {\n'
                 code += prop['block']['block']['name']['name'] + '= amp;\n'
@@ -1099,7 +1129,7 @@ class PlatformFunctions:
                     self.push_rate(atom.rate)
                     processing_code += self.rate_begin_code%atom.rate
                     if previous_atom:
-                        previous_atom.inline = False
+                        previous_atom.set_inline(False)
                     if not atom.rate == self.sample_rate:
                         instantiation_code += 'float counter_%02i;\n'%(counters)
                         init_code +=  'counter_%02i = 1.0\n'%(counters)
