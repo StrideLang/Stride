@@ -42,13 +42,13 @@ type Module {
 	ports: [
 		port Input {
 			name: "input"
-			types: ["none"]
+			types: ["none", ""]
 			default: none
 			required: on
 		},
 		port Output {
 			name: "output"
-			types: ["none"]
+			types: ["none", ""]
 			default: none
 			required: on
 		},

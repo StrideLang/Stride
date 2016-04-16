@@ -42,8 +42,8 @@ type Signal {
 	ports: [
 		port Default {
 			name: "default"
-			types: ["CIP", "CRP", "none"]
-			default: off
+			types: ["CIP", "CRP"]
+			default: AudioRate
 			required: off
 		}
 	]

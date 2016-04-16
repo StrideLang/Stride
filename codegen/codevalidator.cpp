@@ -126,7 +126,9 @@ void CodeValidator::validateTypes(AST *node, QVector<AST *> scope)
             foreach(PropertyNode *port, ports) {
                 QString portName = QString::fromStdString(port->getName());
                 // Check if portname is valid
-                if (!m_platform.typeHasPort(blockType, portName)) {
+                // FIXME check library port validity
+                if (!m_library.isValidBlock(block)
+                        && !m_platform.typeHasPort(blockType, portName) ) {
                     LangError error;
                     error.type = LangError::InvalidPort;
                     error.lineNumber = block->getLine();
@@ -137,9 +139,11 @@ void CodeValidator::validateTypes(AST *node, QVector<AST *> scope)
                     AST *portValue = port->getValue();
                     if (portValue->getNodeType() == AST::List) {
                         ListNode *list = static_cast<ListNode *>(portValue);
+                        // FIXME check library port validity
                         for (int i = 0; i < list->size(); i++) {
                             QString portTypeName = getPortTypeName(resolveNodeOutType(list->getChildren().at(i), scope, m_tree));
-                            if (!m_platform.isValidPortType(blockType, portName, portTypeName)) {
+                            if (!m_library.isValidBlock(block)
+                                    && !m_platform.isValidPortType(blockType, portName, portTypeName)) {
                                 LangError error;
                                 error.type = LangError::InvalidPortType;
                                 error.lineNumber = block->getLine();
@@ -151,8 +155,9 @@ void CodeValidator::validateTypes(AST *node, QVector<AST *> scope)
                         }
                     } else {
                         QString portTypeName = getPortTypeName(resolveNodeOutType(portValue, scope, m_tree));
-
-                        if (!m_platform.isValidPortType(blockType, portName, portTypeName)) {
+                        // FIXME check library port validity
+                        if (!m_library.isValidBlock(block)
+                                && !m_platform.isValidPortType(blockType, portName, portTypeName)) {
                             LangError error;
                             error.type = LangError::InvalidPortType;
                             error.lineNumber = block->getLine();

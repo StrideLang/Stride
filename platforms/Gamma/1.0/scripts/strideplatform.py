@@ -14,9 +14,20 @@ import json
 class Atom:
     def __init__(self, index):
         self.index = 0
+        self.rate = -1
+        self.inline = False
         
     def get_handle(self):
-        return self.handle
+        if self.inline:
+            return self.get_inline_processing_code([])
+        else:
+            return self.handle
+
+    def get_out_tokens(self):
+        if hasattr(self, 'out_tokens'):
+            return self.out_tokens
+        else:
+            return [self.handle]
     
     def get_declarations(self):
         return {}
@@ -39,13 +50,16 @@ class Atom:
     def get_globals(self): # Global instances, declarations and includes
         return None
         
+    def get_rate(self):
+        return self.rate
         
-   
+        
 class ValueAtom(Atom):
     def __init__(self, value_node, index):
         self.index = index
         self.value = value_node['value']
         self.handle = '__value_%03i'%index
+        self.rate = 0
         self.inline = True
         
     def get_handle(self):
@@ -53,6 +67,12 @@ class ValueAtom(Atom):
             return self.get_inline_processing_code([])
         else:
             return self.handle
+            
+    def get_out_tokens(self):
+        if self.inline:
+            return [str(self.value)]
+        else:
+            return [self.handle]
     
     def get_declarations(self):
         return {}
@@ -91,6 +111,7 @@ class ExpressionAtom(Atom):
         self.index = index
         self.handle = '__expr_%03i'%index
         self.inline = False
+        self.rate = -1
         
         self._process_atoms()
         
@@ -123,7 +144,7 @@ class ExpressionAtom(Atom):
         return inits
         
     def get_inline_processing_code(self, in_tokens):
-        code = '(' + self.left_atom.get_handle() 
+        code = '(' + self.left_atom.get_out_tokens()[0]
         if self.expr_type == 'Add':
             code += ' + '
         elif self.expr_type == 'Subtract':
@@ -140,7 +161,7 @@ class ExpressionAtom(Atom):
             code = ' - ' + code
         elif self.expr_type == 'LogicalNot':
             code += ' ~ ' + code
-        code += self.right_atom.get_handle() + ')'
+        code += self.right_atom.get_out_tokens()[0] + ')'
         return code
     
     def get_processing_code(self, in_tokens):
@@ -170,6 +191,16 @@ class NameAtom(Atom):
         self.handle = self.name # + '_%03i'%token_index;
         self.platform_type = platform_type
         self.declaration = declaration
+        
+        self.inline = False
+        
+        if 'rate' in declaration:
+            if type(declaration['rate']) == dict:
+                self.rate = -1
+            else:
+                self.rate = declaration['rate']
+        else:
+            self.rate = 44100 #FIXME this should never happen... The parser should fill defaults...
         
     def get_declarations(self):
         return {}
@@ -210,6 +241,14 @@ class BundleAtom(Atom):
         self.handle = self.name  #+ '_%03i'%(token_index);
         self.platform_type = platform_type
         self.declaration = declaration
+        
+        if 'rate' in declaration:
+            if type(declaration['rate']) == dict:
+                self.rate = -1
+            else:
+                self.rate = declaration['rate']
+        else:
+            self.rate = -1
         
     def get_declarations(self):
         return {}
@@ -275,7 +314,6 @@ class PlatformModuleAtom(Atom):
         self.handle = self.name + '_%03i'%token_index;
         self.platform_type = platform_type
         self.declaration = declaration
-        
         
         ugen_name = "ugen_%02i"%(token_index)
         new_code = self.get_function_code(module, processor["ports"], out_var_name, ugen_name, self._intokens)
@@ -370,7 +408,7 @@ class PlatformModuleAtom(Atom):
         out_code['setup_code'] = ''
         return out_code
 
-class ModuleAtom:
+class ModuleAtom(Atom):
     def __init__(self, module, platform_code, token_index, platform):
         self.name = module["name"]
         self.handle = self.name + '_%03i'%token_index;
@@ -384,12 +422,12 @@ class ModuleAtom:
         self._index = token_index
         self.platform = platform
         self.stride_type = self.platform.find_stride_type("module")
+        self.rate = -1 # Should modules have rates?
         
-        for stream in self._streams:
-            print(stream)
+        self.inline = False
         
         self._init_blocks(module["internalBlocks"],
-                          module["input"]['name'], module["output"]['name'])
+                          module["input"], module["output"])
                           
         self._process_module(module["streams"], module["internalBlocks"])
             
@@ -399,6 +437,7 @@ class ModuleAtom:
         instantiation_code = self._get_internal_instantiation_code()
         init_code = self._get_internal_init_code()
         process_code = self._get_internal_processing_code()
+        properties_code = self._get_internal_properties_code()
         
         if self._input_block:
             # TODO this needs to be generalized for other types apart from float
@@ -407,9 +446,9 @@ class ModuleAtom:
             input_declaration = ''
                     
         declaration = 'struct %s {\n %s %s() {\n%s}\nfloat process(%s) \n{%s\n}\n};'%(
-                self.name, declarations_code + instantiation_code, 
+                self.name, declarations_code + instantiation_code + properties_code, 
                 self.name, init_code, input_declaration, process_code)
-        return {self.handle :  declaration}
+        return {self.name :  declaration}
     
     def get_instances(self):
         return [{'type' : 'module',
@@ -423,13 +462,15 @@ class ModuleAtom:
         return []
         
     def get_inline_processing_code(self, in_tokens):
-        code = self.handle + '.process(' + in_tokens[0] + ')'
+        if len(in_tokens) > 0:
+            code = self.handle + '.process(' + in_tokens[0] + ')'
+        else:
+            code = self.handle + '.process()'
         return code
         
     def get_processing_code(self, in_tokens):
         code = ''
-        if len(in_tokens) > 0:
-            code = self.out_tokens[0] + ' = ' + self.get_inline_processing_code(in_tokens) +  ';\n'
+        code = self.out_tokens[0] + ' = ' + self.get_inline_processing_code(in_tokens) +  ';\n'
         out_tokens = self.out_tokens
         return code, out_tokens
         
@@ -447,7 +488,17 @@ class ModuleAtom:
         
     def _get_internal_processing_code(self):
         code = self.code['processing_code']
-        code += 'return %s;\n'%(self._output_block['name']) 
+        if self._output_block:
+            code += 'return %s;\n'%(self._output_block['name']) 
+        return code
+        
+    def _get_internal_properties_code(self):
+        code = ''
+        for prop in self._properties:
+            if 'block' in prop:
+                code += 'void set_' + prop['block']['name'] + '(float amp) {\n'
+                code += prop['block']['block']['name']['name'] + '= amp;\n'
+                code += '\n}\n'
         return code
         
     def _process_module(self, streams, blocks):
@@ -456,7 +507,8 @@ class ModuleAtom:
         
                     #self.current_scope = module["internalBlocks"]
         self.platform.push_scope(self.current_scope)
-        self.code = self.platform.generate_code(tree, [], [self._input_block['name']])
+        self.code = self.platform.generate_code(tree, [],
+                                                [self._input_block['name'] if self._input_block else None])
         self.platform.pop_scope()
 
         
@@ -464,9 +516,9 @@ class ModuleAtom:
         self._blocks = []
         for block in blocks:
             self._blocks.append(block['block'])
-            if self._blocks[-1]['name'] == input_name["name"]:
+            if 'name' in input_name and self._blocks[-1]['name'] == input_name["name"]['name']:
                 self._input_block = self._blocks[-1]
-            if self._blocks[-1]['name'] == output_name["name"]:
+            if 'name' in output_name and  self._blocks[-1]['name'] == output_name["name"]["name"]:
                 self._output_block = self._blocks[-1]
                 
     def find_internal_block(self, block_name):
@@ -474,13 +526,13 @@ class ModuleAtom:
             if block['name'] == block_name:
                 return block
 
-class ReactionAtom:
+class ReactionAtom(Atom):
     def __init__(self, reaction, token_index, platform):
         self.name = reaction["name"]
         self.handle = self.name + '_%03i'%token_index;
         self.out_tokens = [self.name + '_out_%03i'%token_index]
         self._streams = reaction["streams"]
-        self._properties = reaction["properties"]
+#        self._properties = reaction["properties"]
         self.current_scope = reaction["internalBlocks"]
         self._input_block = None
         self._output_block = None
@@ -492,7 +544,7 @@ class ReactionAtom:
             print(stream)
         
         self._init_blocks(reaction["internalBlocks"],
-                          reaction["input"]['name'], reaction["output"]['name'])
+                          reaction["input"], reaction["output"])
                           
         self._process_reaction(reaction["streams"], reaction["internalBlocks"])
             
@@ -517,7 +569,7 @@ class ReactionAtom:
     def get_instances(self):
         return [{'type' : 'reaction',
                  'handle': self.handle,
-                 'moduletype' : self.name},
+                 'reactiontype' : self.name},
                  { 'type' : 'real',
                    'handle' : self.out_tokens[0]
                  }]
@@ -550,7 +602,8 @@ class ReactionAtom:
         
     def _get_internal_processing_code(self):
         code = self.code['processing_code']
-        code += 'return %s;\n'%(self._output_block['name']) 
+        if self._output_block:
+            code += 'return %s;\n'%(self._output_block['name']) 
         return code
         
     def _process_reaction(self, streams, blocks):
@@ -559,17 +612,17 @@ class ReactionAtom:
         
                     #self.current_scope = reaction["internalBlocks"]
         self.platform.push_scope(self.current_scope)
-        self.code = self.platform.generate_code(tree, [], [self._input_block['name']])
+        self.code = self.platform.generate_code(tree, [],
+                                                [self._input_block['name'] if self._input_block else None])
         self.platform.pop_scope()
-
-        
+     
     def _init_blocks(self, blocks, input_name, output_name):
         self._blocks = []
         for block in blocks:
             self._blocks.append(block['block'])
-            if self._blocks[-1]['name'] == input_name["name"]:
+            if 'name' in input_name and self._blocks[-1]['name'] == input_name["name"]['name']:
                 self._input_block = self._blocks[-1]
-            if self._blocks[-1]['name'] == output_name["name"]:
+            if 'name' in output_name and  self._blocks[-1]['name'] == output_name["name"]:
                 self._output_block = self._blocks[-1]
                 
     def find_internal_block(self, block_name):
@@ -583,20 +636,20 @@ class PlatformFunctions:
     def __init__(self, platform_dir, tree):
 
         self._platform_funcs = json.load(open(platform_dir + '/functions.json'))['functions']
-        #_platform_objs = json.load(open(platform_dir + '/objects.json'))['objects']
         self._platform_types = json.load(open(platform_dir + '/types.json'))['types']
         
         self.defined_modules =[]
-        
-        self._rates = []
-        self._rated_ugens = {}
-        self.used_signals = set()
-        self._intokens = {}
-        
+    
         self.tree = tree
         self.scope_stack = []
+        self.rate_stack = []
         
-        self.sample_rate = 44100 # This is a hack. This should be brought in from the stream's domain and rate
+        self.stream_begin_code = '// Starting stream %02i -------------------------\n{\n'
+        self.stream_end_code = '} // Stream End %02i\n'
+        self.rate_begin_code = '{ // Start new rate %i\n' 
+        self.rate_end_code = '\n}  // Close Rate %i\n' 
+        
+        self.sample_rate = 44100 # FIXME: This is a hack. This should be brought in from the stream's domain and rate
     
     def find_platform_function(self, name):
         for func in self._platform_funcs:
@@ -889,6 +942,8 @@ class PlatformFunctions:
                 code = 'float ' + instance['handle'] + '[%i];\n'%instance['size']
         elif instance['type'] == 'module':
             code = instance['moduletype'] + ' ' + instance['handle'] + ';\n'
+        elif instance['type'] == 'reaction':
+            code = instance['reactiontype'] + ' ' + instance['handle'] + ';\n'
         else:
             raise ValueError('Unsupported type for instance')
         return code
@@ -917,55 +972,50 @@ class PlatformFunctions:
         elif "expression" in member:
             rate = member['expression']["rate"]
             if 'value' in member['expression']: # Unary expression
-                left_rate, left_atom = self.make_atom(member['expression']['left'])
+                left_atom = self.make_atom(member['expression']['left'])
                 right_atom = None
             else:
-                left_rate, left_atom = self.make_atom(member['expression']['left'])
+                left_atom = self.make_atom(member['expression']['left'])
                 self.unique_id += 1
-                right_rate, right_atom = self.make_atom(member['expression']['right'])
+                right_atom = self.make_atom(member['expression']['right'])
             expression_type = member['expression']['type']
             new_atom = ExpressionAtom(expression_type, left_atom, right_atom, self.unique_id)
         elif "value" in member:
-            rate = 0
             new_atom = ValueAtom(member['value'], self.unique_id)
         else:
             raise ValueError("Unsupported type")
-        return rate, new_atom
+        return new_atom
+        
+    def push_rate(self, rate):
+        print('push_rate %i'%rate)
+        self.rate_stack.append(rate)
+        
+    def get_current_rate(self):
+        if len(self.rate_stack) > 0:
+            return self.rate_stack[-1]
+        else:
+            return None
+    
+    def pop_rate(self):
+        print('pop_rate %i'%self.rate_stack[-1])
+        if len(self.rate_stack) > 0:
+            return self.rate_stack.pop()
+        else:
+            return None
         
     def make_stream_nodes(self, stream):
-        previous_rate = -1
         self.unique_id = 0 # This uid should be further up!
         node_groups = [[]] # Nodes are grouped by rate
+        
         for member in stream: #Only instantiate whatever is used in streams. Discard the rest
             cur_group = node_groups[-1]  
             # Check rates and rate changes
-            rate, new_atom = self.make_atom(member)
+            new_atom = self.make_atom(member)
 #            if not processor["name"] in self.defined_modules:
 #                if "includes" in new_code:
 #                    self.includes_list.append(new_code["includes"])
 #                new_init_code += new_code["init_code"]
 #                self.defined_modules.appen                  
-    
-            if not rate in self._rates:
-                self._rates.append(rate) # Previously unused rate
-            rate_index = self._rates.index(rate)
-            if previous_rate == -1: # Unresolved rate
-                previous_rate = rate
-#                if not rate == self.sample_rate:
-#                    new_dsp_code += 'if (counter_%02i_trig == 1)\n'%rate_index
-#                    out_var_name += '_rate_%02i'%self._rates.index(rate)
-#                new_dsp_code += '{// Starting rate: %i\n'%(rate)
-#                intoken = out_var_name
-            if not rate == previous_rate:
-                print("Rate changed from %f to %f"%(previous_rate, rate))
-                node_groups.append([])
-                cur_group = node_groups[-1]
-#                out_var_name = "stream_%02i"%(stream_index)
-#                new_dsp_code += '\n}  // Close %i \n %s_00 = stream_%02i_rate_%02i_00;\n'%(previous_rate, out_var_name, stream_index, self._rates.index(previous_rate))
-#                if not rate == self.sample_rate:
-#                    new_dsp_code += 'if (counter_%02i_trig == 1)\n'%rate_index
-#                    out_var_name += '_rate_%02i'%self._rates.index(rate)
-#                new_dsp_code += '{ // New Rate %i\n'%rate
 
             cur_group.append(new_atom)
             # To connect components within the same rate, the input token must be the internal rate token
@@ -974,7 +1024,7 @@ class PlatformFunctions:
 #            else:
 #                intoken = "stream_%02i"%(stream_index)
             #print("%s - %i %i"%(member["name"], rate_index, rate))
-            previous_rate = rate
+            #previous_rate = rate
             self.unique_id += 1
         return node_groups
         
@@ -983,11 +1033,36 @@ class PlatformFunctions:
         instantiation_code = ''
         init_code = ''
         processing_code = ''
-        stream_begin_code = '{ // Start new rate\n' 
-        stream_end_code = '\n}  // Close Rate\n'
+        
+    
+#            if not rate in self._rates:
+#                self._rates.append(rate) # Previously unused rate
+#            rate_index = self._rates.index(rate)
+#            if previous_rate == -1: # Unresolved rate
+#                previous_rate = rate
+#                if not rate == self.sample_rate:
+#                    new_dsp_code += 'if (counter_%02i_trig == 1)\n'%rate_index
+#                    out_var_name += '_rate_%02i'%self._rates.index(rate)
+#                new_dsp_code += stream_begin_code%(rate)
+##                intoken = out_var_name
+#            if not rate == previous_rate:
+#                print("Rate changed from %f to %f"%(previous_rate, rate))
+##                node_groups.append([])
+##                cur_group = node_groups[-1]
+#                out_var_name = "stream_%02i"%(stream_index)
+#                new_dsp_code += '\n}  // Close %i \n %s_00 = stream_%02i_rate_%02i_00;\n'%(previous_rate, out_var_name, stream_index, self._rates.index(previous_rate))
+#                if not rate == self.sample_rate:
+#                    new_dsp_code += 'if (counter_%02i_trig == 1)\n'%rate_index
+#                    out_var_name += '_rate_%02i'%self._rates.index(rate)
+#                new_dsp_code += '{ // New Rate %i\n'%rate        
+        counters = 0    
+        
+        parent_rates_size = len(self.rate_stack)
+        
+        
         for group in node_groups:
             in_tokens = []
-            processing_code += stream_begin_code
+            previous_atom = None
             for atom in group:
                 #Process declaration code
                 declares = atom.get_declarations()
@@ -1010,20 +1085,61 @@ class PlatformFunctions:
                                 initialized.append(init_member['handle'])
                 # Process processing code
                 code, out_tokens = atom.get_processing_code(in_tokens)
+                if atom.rate > 0 and not atom.rate == self.get_current_rate():
+                    old_rate = self.pop_rate()
+                    if not old_rate == self.sample_rate:
+                        counter_inc = old_rate/self.sample_rate # Float division
+                        counter_number = len(self.rate_stack)
+                        processing_code += '}\n'
+                        processing_code += self.rate_end_code%old_rate
+                        processing_code += 'counter_%02i += %.10f;\n'%(counter_number,counter_inc)
+                    else:
+                        processing_code += self.rate_end_code%old_rate
+                        
+                    self.push_rate(atom.rate)
+                    processing_code += self.rate_begin_code%atom.rate
+                    if previous_atom:
+                        previous_atom.inline = False
+                    if not atom.rate == self.sample_rate:
+                        instantiation_code += 'float counter_%02i;\n'%(counters)
+                        init_code +=  'counter_%02i = 1.0\n'%(counters)
+                        processing_code += 'if (counter_%02i >= 1.0) {\ncounter_%02i -= 1.0;\n'%(counters, counters)
+
                 if code:
                     processing_code += code + '\n'
                 in_tokens = out_tokens
-            processing_code += stream_end_code
+            
+            previous_atom = atom
+              
+        while not parent_rates_size == len(self.rate_stack):
+            old_rate = self.pop_rate()
+            processing_code += self.rate_end_code%old_rate
+            if not old_rate == self.sample_rate:
+                counter_inc = old_rate/self.sample_rate # Float division
+                counter_number = len(self.rate_stack)
+                processing_code += 'counter_%02i += %.8f;\n'%(counter_number,counter_inc)
+
         return [declare_code, instantiation_code, init_code, processing_code]
         
     def generate_stream_code(self, stream, stream_index, declared, instanced, initialized):
         #out_var_name = "stream_%02i"%(stream_index)
         node_groups = self.make_stream_nodes(stream)
 
-        declare_code, instantiation_code, init_code, processing_code = self.generate_code_from_groups(node_groups, declared, instanced, initialized)
-
-        processing_code = '// Starting stream %02i -------------------------\n{\n'%stream_index + processing_code
-        processing_code += '} // Stream End \n'
+        processing_code = self.stream_begin_code%stream_index
+        
+        parent_rate = self.get_current_rate()
+        if not parent_rate == self.sample_rate:
+            self.push_rate(self.sample_rate)
+            processing_code += self.rate_begin_code%self.sample_rate
+        
+        declare_code, instantiation_code, init_code, new_processing_code = self.generate_code_from_groups(node_groups, declared, instanced, initialized)
+        processing_code += new_processing_code
+        
+        if not parent_rate == self.sample_rate:
+            processing_code += self.rate_end_code%self.get_current_rate()
+            self.pop_rate()
+            
+        processing_code += self.stream_end_code%stream_index
         
 #        domain_code = ''
 #        domain_setup_code = ''
@@ -1058,6 +1174,7 @@ class PlatformFunctions:
         instantiation_code = ''
         init_code = ''
         processing_code = ''
+
         
         for node in tree:
             if 'stream' in node: # Everything grows from streams.
@@ -1067,6 +1184,7 @@ class PlatformFunctions:
                 init_code  += code["init_code"]
                 processing_code += code["processing_code"]
                 stream_index += 1
+    
         
         return {"declare_code" : declare_code,
                 "instantiation_code" : instantiation_code,

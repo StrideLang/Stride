@@ -187,7 +187,7 @@ class Generator:
 if __name__ == '__main__':
     platform = '/home/andres/Documents/src/Stride/StreamStack/platforms/Gamma/1.0'
     if len(sys.argv) < 2:
-        gen = Generator('/home/andres/Documents/src/Stride/StreamStack/platforms/Gamma/examples/reaction.stride_Products',
+        gen = Generator('/home/andres/Documents/src/Stride/StreamStack/platforms/Gamma/examples/passthru.stride_Products',
                         platform)
     else:
         gen = Generator(sys.argv[1], platform)
