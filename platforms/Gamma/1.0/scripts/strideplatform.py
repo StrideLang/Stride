@@ -41,8 +41,8 @@ class Atom:
     def get_instances(self):
         return {}
     
-    def get_init_list(self):
-        return None
+#    def get_init_list(self):
+#        return None
         
     def get_processing_code(self, in_tokens):
         return None
@@ -88,16 +88,18 @@ class ValueAtom(Atom):
             return []
         else:
             return [{'type' : 'real',
-                 'handle' : self.handle}]
+                     'handle' : self.handle,
+                     'code' : self.get_inline_processing_code([])
+                     }]
     
-    def get_init_list(self):
-        if self.is_inline():
-            inits = []
-        else:
-            inits = [{'handle' : self.handle,
-                      'code' : self.get_inline_processing_code([])
-                      }]
-        return inits
+#    def get_init_list(self):
+#        if self.is_inline():
+#            inits = []
+#        else:
+#            inits = [{'handle' : self.handle,
+#                      'code' : self.get_inline_processing_code([])
+#                      }]
+#        return inits
         
     def get_inline_processing_code(self, in_tokens):
         return str(self.value)
@@ -116,10 +118,13 @@ class ExpressionAtom(Atom):
         self.right_atom = right_atom
         self.index = index
         self.handle = '__expr_%03i'%index
-        self.inline = True
         self.rate = -1
+        self.set_inline(True)
         
-        self._process_atoms()
+    def set_inline(self, inline):
+        self.left_atom.set_inline(inline)
+        self.right_atom.set_inline(inline)
+        self.inline = inline
         
     def get_handle(self):
         if self.is_inline():
@@ -140,14 +145,16 @@ class ExpressionAtom(Atom):
             instances += self.right_atom.get_instances()
         if not self.is_inline():
             instances.append({'handle' : self.handle,
-                              'type' : 'real'})
+                              'type' : 'real',
+                              'code' : '0.0' #TODO get this value from platform/library default
+                              })
         return instances
     
-    def get_init_list(self):
-        inits = self.left_atom.get_init_list()
-        if self.right_atom:
-            inits += self.right_atom.get_init_list()
-        return inits
+#    def get_init_list(self):
+#        inits = self.left_atom.get_init_list()
+#        if self.right_atom:
+#            inits += self.right_atom.get_init_list()
+#        return inits
         
     def get_inline_processing_code(self, in_tokens):
         if self.left_atom.is_inline():
@@ -192,15 +199,6 @@ class ExpressionAtom(Atom):
             out_tokens = [self.handle]
         return code, out_tokens
         
-    def _process_atoms(self):
-        
-        self.left_atom.set_inline(True)
-        self.right_atom.set_inline(True)
-#        tree = streams + blocks
-        # We need to pass the name of the input block because we will handle declaration and init
-#        self.code = self.scoped_platform.generate_code(tree, [], [self._input_block['name']])
-        return
-        
 
 class NameAtom(Atom):
     def __init__(self, platform_type, declaration, token_index):
@@ -223,10 +221,6 @@ class NameAtom(Atom):
         return {}
     
     def get_instances(self):
-        return [{'type' : 'real',
-                 'handle' : self.handle}]
-    
-    def get_init_list(self):
         if 'default' in self.declaration:
             default_value = self.declaration['default']
         else:
@@ -235,12 +229,30 @@ class NameAtom(Atom):
             else:
                 default_value = 0.0
         inits = [{'handle' : self.handle,
+                  'type' : 'real',
                   'code' : str(default_value)
                   }]
         return inits
+    
+#    def get_init_list(self):
+#        if 'default' in self.declaration:
+#            default_value = self.declaration['default']
+#        else:
+#            if 'default' in self.platform_type['block']:
+#                default_value = self.platform_type['block']['default'] # FIXME inheritance is not being handled here
+#            else:
+#                default_value = 0.0
+#        inits = [{'handle' : self.handle,
+#                  'type' : 'real',
+#                  'code' : str(default_value)
+#                  }]
+#        return inits
         
     def get_inline_processing_code(self, in_tokens):
-        return self.handle
+        code = self.handle
+        if len(in_tokens) > 0:
+            code = in_tokens[0]
+        return  code
     
     def get_processing_code(self, in_tokens):
         code = ''
@@ -271,13 +283,6 @@ class BundleAtom(Atom):
         return {}
     
     def get_instances(self):
-        instances = [{'type' : 'bundle',
-                      'bundletype': 'real',
-                      'handle' : self.handle,
-                      'size' : self.declaration['size']}]
-        return instances
-        
-    def get_init_list(self):
         if 'default' in self.declaration:
             default_value = self.declaration['default']
 
@@ -287,10 +292,20 @@ class BundleAtom(Atom):
                 default_value = self.platform_type['blockbundle']['default'] # FIXME inheritance is not being handled here
             else:
                 default_value = 0.0
-            inits = [{'handle' : self.handle,
-                      'code' : str(default_value)
+            instances = [{'handle' : self.handle,
+                      'code' : str(default_value),
+                      'type' : 'bundle',
+                      'bundletype' : 'real',
+                      'size' : self.declaration['size']
                       }]
         else:
+            default_value = 0.0 # TODO put actual default
+            instances = [{'handle' : self.handle,
+                      'code' : str(default_value),
+                      'type' : 'bundle',
+                      'bundletype' : 'real',
+                      'size' : self.declaration['size']
+                      }]
 #            # Hardware platform definition
 #            code = self.platform_type['code']['init_code']['code']
 #            code = code.replace('%%token%%', self._get_token_name(self.index))            
@@ -299,13 +314,13 @@ class BundleAtom(Atom):
 #            inits = [{'handle' : self.handle,
 #                      'code' : code
 #                      }]
-#                      
-            inits = []
                 
-        return inits
+        return instances
     
     def get_inline_processing_code(self, in_tokens):
-        code = in_tokens[0] 
+        code = ''
+        if len(in_tokens) > 0:
+            code = in_tokens[0] 
         return code
         
     def get_processing_code(self, in_tokens):
@@ -313,7 +328,7 @@ class BundleAtom(Atom):
         if len(in_tokens) > 0:
             code = self._get_token_name(self.index) + ' = ' + self.get_inline_processing_code(in_tokens) + ';\n'
         if 'code' in self.platform_type:
-            # Hardware platform code. This needs to be improved...
+            # FIXME Hardware platform code. This needs to be improved...
             code += self.platform_type['code']['dsp_code']['code']
             code = code.replace('%%token%%', self._get_token_name(self.index))            
             code = code.replace('%%bundle_index%%', str(self.index))
@@ -364,16 +379,16 @@ class PlatformModuleAtom(Atom):
     def get_instances(self):
         return [{'type' : 'real', 'handle' : self.handle}]
     
-    def get_init_code(self):
-        if 'default' in self.declaration:
-            default_value = self.declaration
-        else:
-            if 'default' in self.platform_type['block']:
-                default_value = self.platform_type['block']['default'] # FIXME inheritance is not being handled here
-            else:
-                default_value = 0.0
-        code = self.handle + ' = ' + str(default_value) + ';\n'
-        return code
+#    def get_init_code(self):
+#        if 'default' in self.declaration:
+#            default_value = self.declaration
+#        else:
+#            if 'default' in self.platform_type['block']:
+#                default_value = self.platform_type['block']['default'] # FIXME inheritance is not being handled here
+#            else:
+#                default_value = 0.0
+#        code = self.handle + ' = ' + str(default_value) + ';\n'
+#        return code
     
     def get_processing_code(self, in_tokens):
         code = ''
@@ -488,8 +503,8 @@ class ModuleAtom(Atom):
                      'moduletype' : self.name}
                      ]
     
-    def get_init_list(self):
-        return []
+#    def get_init_list(self):
+#        return []
         
     def get_inline_processing_code(self, in_tokens):
         if len(in_tokens) > 0:
@@ -556,6 +571,7 @@ class ModuleAtom(Atom):
             if block['name'] == block_name:
                 return block
 
+# TODO complete work on reaction block
 class ReactionAtom(Atom):
     def __init__(self, reaction, token_index, platform):
         self.name = reaction["name"]
@@ -604,8 +620,8 @@ class ReactionAtom(Atom):
                    'handle' : self.out_tokens[0]
                  }]
     
-    def get_init_list(self):
-        return []
+#    def get_init_list(self):
+#        return []
         
     def get_inline_processing_code(self, in_tokens):
         code = self.handle + '.process(' + in_tokens[0] + ')'
@@ -686,12 +702,6 @@ class PlatformFunctions:
             if func['functionName'] == name:
                 return func
     
-    def push_scope(self, scope):
-        self.scope_stack.append(scope)
-    
-    def pop_scope(self):
-        self.scope_stack.pop()
-    
     def find_declaration_in_tree(self, block_name, tree):
         for node in tree:
             if 'block' in node:
@@ -751,10 +761,6 @@ class PlatformFunctions:
     def find_function_property(self, func, property_name):
         return func["ports"][property_name]
     
-    #def find_builtin_object(platform_objs, name):
-    #    for obj in platform_objs:
-    #        if obj['objectName'] == name:
-    #            return obj
     
     def bool_to_str(self, bool_val):
         if not type(bool_val) == bool:
@@ -763,219 +769,33 @@ class PlatformFunctions:
             return "true"
         else:
             return "false"
+    
+    # Code generation functions
 
-    # ------------------------- Text processing functions
-        
-    def put_property_values(self, template_code, properties, func):
-        final_code = template_code
-    
-        p = re.compile(r"%%property:[a-zA-Z]+%%")
-        for match in p.findall(final_code):
-            prop_name = match[match.rindex(':') + 1: -2]
-    
-            if prop_name in properties:
-                prop_value = properties[prop_name]
-                prop_type = prop_value["type"]
-                if prop_type == "Value":
-                    if type(prop_value["value"]) == bool:
-                        value = self.bool_to_str(prop_value["value"])
-                    else:
-                        value = str(prop_value["value"])
-                elif prop_type == "Name":
-                    default_value = self.find_function_property(func, prop_name)["default"]
-                    if type(default_value) == bool:
-                        value = self.bool_to_str(default_value)
-                    else:
-                        value = str(default_value)
-            else:
-                default_value = self.find_function_property(func, prop_name)["default"]
-                if type(default_value) == bool:
-                    value = self.bool_to_str(default_value)
-                else:
-                    value = str(default_value)
-    #        print(match + '     ' + value)
-            final_code = final_code.replace(match, value)
-        return final_code
-    
-    def put_port_values(self, template_code, ports):
-        final_code = template_code
-    
-        p = re.compile(r"%%port:[a-zA-Z]+%%")
-        for match in p.findall(final_code):
-            port_name = match[match.rindex(':') + 1: -2]
-    
-            if port_name in ports:
-                if type(ports[port_name]) == dict:
-                    port_value = ports[port_name]['default']
-                else:
-                    port_value = ports[port_name]
-                final_code = final_code.replace(match, str(port_value))
-            else:
-                raise ValueError("Property in code not matched")
-        return final_code
-    
-    # Code generators
-    def get_obj_code(self, tree, obj_name, var_name, bundle_index = 1):
-        platform_type, declaration = self.find_block(obj_name, tree)
-        if not declaration:
-            raise ValueError("Declaration not found.")
-        new_code = self.get_type_code(platform_type, var_name, bundle_index)
-    
-        ports = platform_type["ports"].copy()
-    
-        if "ports" in declaration:
-            ports.update(declaration["ports"])
-    
-        new_code["init_code"] = self.put_port_values(new_code["init_code"], ports)
-        new_code["dsp_code"] = self.put_port_values(new_code["dsp_code"], ports)
-        new_code['setup_code'] = ''
-        return new_code
-    
-    def get_type_code(self, platform_type, var_name, bundle_index):
-        code = {}
-        new_init_code = '';
-        new_dsp_code = '';
-    
-        new_init_code = platform_type["code"]["init_code"]["code"]
-        if "%%token%%" in new_init_code:
-            new_init_code = new_init_code.replace("%%token%%", var_name)
-            
-        if "%%intoken%%" in new_init_code:
-            new_init_code = new_init_code.replace("%%intoken%%", var_name)
-        if bundle_index >= 0:
-            new_init_code = new_init_code.replace("%%bundle_index%%", str(bundle_index - 1))
-    
-        new_dsp_code = platform_type['code']['dsp_code']['code']
-        if "%%token%%" in new_dsp_code:
-            new_dsp_code = new_dsp_code.replace("%%token%%", var_name)
-        if "%%intoken%%" in new_dsp_code:
-            new_dsp_code = new_dsp_code.replace("%%intoken%%", var_name)
-        if bundle_index > 0:
-            new_dsp_code = new_dsp_code.replace("%%bundle_index%%", str(bundle_index - 1))
-    
-        code["dsp_code"] = new_dsp_code
-        code["init_code"] = new_init_code
-        code['setup_code'] = ''
-        if "includes" in platform_type["code"]:
-            if len(platform_type["code"]["includes"]["code"]) > 0:
-                code["includes"] = "#include <%s>"%platform_type["code"]["includes"]["code"]
-    
-        return code       
-    
-    def get_function_property_setup_code(self, func, prop_name, var_name, ugen_name):
-        new_dsp_code_control = func["code"]["dsp_code"][prop_name]
-        new_dsp_code_control = new_dsp_code_control.replace("%%token%%", var_name)
-        new_dsp_code_control = new_dsp_code_control.replace("%%intoken%%", var_name)
-        new_dsp_code_control = new_dsp_code_control.replace("%%identifier%%", ugen_name)
-        return new_dsp_code_control
-    
-    def get_function_code(self, func, properties, var_name, ugen_name, intokens):
-        code = {}
-        new_init_code = '';
-        new_dsp_code = '';
-
-        new_init_code = func["code"]["init_code"]["code"]
-        new_init_code = new_init_code.replace("%%intoken%%", var_name)
-        new_init_code = new_init_code.replace("%%identifier%%", ugen_name)
-    
-        # Insert code for variable (non-constant) properties
-        new_dsp_code_control = ''
-        for prop_name in properties:
-            prop_value = properties[prop_name]
-            prop_type = prop_value["type"]
-            if prop_type == "Name":
-                # FIXME This should be inserted where the intoken changes, to make sure that it is updated at the right rate
-                intoken = intokens[prop_value["name"]][-1] # FIXME: What to do with multiple inputs
-                #print ("------------" + intoken)
-                if prop_name in func["code"]["dsp_code"]:
-                    new_dsp_code_control += self.get_function_property_setup_code(func, prop_name, intoken, ugen_name)
-    
-        new_dsp_code = new_dsp_code_control + func["code"]["dsp_code"]["code"]
-    
-        if func["num_inputs"] == 1:
-            new_dsp_code = new_dsp_code.replace("%%intoken%%", var_name + '_00')
-        else:
-            for i in range(func["num_inputs"]):
-                new_dsp_code = new_dsp_code.replace("%%%%intoken:%i%%%%"%(i + 1), var_name + '_%02i'%i)
-        if func["num_outputs"] == 1:
-            new_dsp_code = new_dsp_code.replace("%%token%%", var_name + '_00')
-        else:
-            for i in range(func["num_outputs"]):
-                new_dsp_code = new_dsp_code.replace("%%%%token:%i%%%%"%(i + 1), var_name + '_%02i'%i)
-        new_dsp_code = new_dsp_code.replace("%%identifier%%", ugen_name)
-    
-        new_init_code = self.put_property_values(new_init_code, properties, func)
-        new_dsp_code = self.put_property_values(new_dsp_code, properties, func)
-    
-        code["dsp_code"] = new_dsp_code
-        code["init_code"] = new_init_code
-        code['setup_code'] = ''
-        if "includes" in func["code"]:
-            if len(func["code"]["includes"]["code"]) > 0:
-                code["includes"] = "#include <%s>"%func["code"]["includes"]["code"]
-        return code        
-        
-    def generate_bundle_code(self, bundle, out_var_name):
-        in_var_name = out_var_name + '_00'
-        self.used_signals.add(in_var_name)
-        new_code = self.get_obj_code(self.tree, bundle["name"], in_var_name, bundle["index"])
-        new_dsp_code = new_code["dsp_code"]
-        new_init_code = new_code["init_code"]
-        self.last_num_outs = 1
-        return {"init_code" : new_init_code, "dsp_code" : new_dsp_code, 'setup_code' : ''}
-    
-    def generate_name_code(self, name, out_var_name):
-        new_dsp_code = ''
-        new_init_code = ''
-        platform_type, declaration = self.find_block(name['name'], self.tree)
-        token_name = None
-        if declaration["type"] == "signal":
-            token_name = 'ctl_%s'%name["name"]
-            if not name["name"] in self._intokens:
-                new_init_code = "double %s;\n"%token_name;
-                self._intokens[name["name"]] = [token_name]
-            else:
-                self._intokens[name["name"]].append(out_var_name)
-                
-            if not "size" in declaration or declaration["size"] == 1:
-                in_var_name = out_var_name + '_00'
-                self.used_signals.add(in_var_name)
-                new_code = self.get_obj_code(self.tree, name["name"], in_var_name)
-                new_init_code += new_code["init_code"]
-                new_dsp_code += new_code["dsp_code"]
-                if token_name:
-                    new_dsp_code += "%s = %s;\n"%(token_name, in_var_name)
-                self.last_num_outs = 1
-            else:
-                out_counter = 0
-                for i in range(declaration["size"]):
-                    in_var_name = out_var_name + '_%02i'%out_counter
-                    out_counter += 1
-                    if out_counter == self.last_num_outs:
-                        out_counter = 0
-                    self.used_signals.add(in_var_name)
-    #                        _intokens[parts["name"]] = [out_var_name]
-                    new_code = self.get_obj_code(self.tree, name["name"], in_var_name, i + 1)
-                    new_init_code += new_code["init_code"]
-                    new_dsp_code += new_code["dsp_code"]
-                    #new_dsp_code += "%s = %s;\n"%(token_name, out_var_name)
-                self.last_num_outs = declaration["size"]                
-
-        return {"init_code" : new_init_code, "dsp_code": new_dsp_code, 'setup_code' : ''}
-            #intoken = out_var_name    
-        
     def get_instantiation_code(self, instance):
         if instance['type'] == 'real':
             code = 'float ' + instance['handle'] + ';\n'
         elif instance['type'] =='bundle':
             if instance['bundletype'] == 'real':
                 code = 'float ' + instance['handle'] + '[%i];\n'%instance['size']
+            else:
+                raise ValueError("Unsupported bundle type.")
         elif instance['type'] == 'module':
             code = instance['moduletype'] + ' ' + instance['handle'] + ';\n'
         elif instance['type'] == 'reaction':
             code = instance['reactiontype'] + ' ' + instance['handle'] + ';\n'
         else:
             raise ValueError('Unsupported type for instance')
+        return code
+        
+    def get_initialization_code(self, instance):
+        code = ''
+        if instance['type'] == 'real':
+            code = instance['handle'] + ' = ' + instance['code'] + ';\n'
+        elif instance['type'] == 'block':
+            code = ''
+        else:
+            ValueError("Unsupported type for initialization: " + instance['type'])
         return code
         
     def make_atom(self, member):
@@ -1032,29 +852,22 @@ class PlatformFunctions:
             return self.rate_stack.pop()
         else:
             return None
+      
+    def push_scope(self, scope):
+        self.scope_stack.append(scope)
+    
+    def pop_scope(self):
+        self.scope_stack.pop()
         
     def make_stream_nodes(self, stream):
-        self.unique_id = 0 # This uid should be further up!
         node_groups = [[]] # Nodes are grouped by rate
         
         for member in stream: #Only instantiate whatever is used in streams. Discard the rest
             cur_group = node_groups[-1]  
-            # Check rates and rate changes
-            new_atom = self.make_atom(member)
-#            if not processor["name"] in self.defined_modules:
-#                if "includes" in new_code:
-#                    self.includes_list.append(new_code["includes"])
-#                new_init_code += new_code["init_code"]
-#                self.defined_modules.appen                  
-
+            # TODO Check rates and rate changes
+            new_atom = self.make_atom(member)             
             cur_group.append(new_atom)
-            # To connect components within the same rate, the input token must be the internal rate token
-#            if rate == previous_rate:
-#                intoken = out_var_name
-#            else:
-#                intoken = "stream_%02i"%(stream_index)
-            #print("%s - %i %i"%(member["name"], rate_index, rate))
-            #previous_rate = rate
+
             self.unique_id += 1
         return node_groups
         
@@ -1062,33 +875,8 @@ class PlatformFunctions:
         declare_code = ''
         instantiation_code = ''
         init_code = ''
-        processing_code = ''
-        
-    
-#            if not rate in self._rates:
-#                self._rates.append(rate) # Previously unused rate
-#            rate_index = self._rates.index(rate)
-#            if previous_rate == -1: # Unresolved rate
-#                previous_rate = rate
-#                if not rate == self.sample_rate:
-#                    new_dsp_code += 'if (counter_%02i_trig == 1)\n'%rate_index
-#                    out_var_name += '_rate_%02i'%self._rates.index(rate)
-#                new_dsp_code += stream_begin_code%(rate)
-##                intoken = out_var_name
-#            if not rate == previous_rate:
-#                print("Rate changed from %f to %f"%(previous_rate, rate))
-##                node_groups.append([])
-##                cur_group = node_groups[-1]
-#                out_var_name = "stream_%02i"%(stream_index)
-#                new_dsp_code += '\n}  // Close %i \n %s_00 = stream_%02i_rate_%02i_00;\n'%(previous_rate, out_var_name, stream_index, self._rates.index(previous_rate))
-#                if not rate == self.sample_rate:
-#                    new_dsp_code += 'if (counter_%02i_trig == 1)\n'%rate_index
-#                    out_var_name += '_rate_%02i'%self._rates.index(rate)
-#                new_dsp_code += '{ // New Rate %i\n'%rate        
-        counters = 0    
-        
-        parent_rates_size = len(self.rate_stack)
-        
+        processing_code = ''   
+        parent_rates_size = len(self.rate_stack) # To know now much we need to pop for this stream
         
         for group in node_groups:
             in_tokens = []
@@ -1106,23 +894,18 @@ class PlatformFunctions:
                     if not inst['handle'] in instanced:
                         instantiation_code += self.get_instantiation_code(inst)
                         instanced.append(inst['handle'])
-                        
-                        init_list = atom.get_init_list()
-                        for init_member in init_list:
-                            if not init_member['handle'] in initialized:
-                            # Process initialization code only if declared
-                                init_code +=  init_member['handle'] + ' = ' + init_member['code'] + '\n'
-                                initialized.append(init_member['handle'])
+                        if 'code' in inst:
+                            init_code +=  self.get_initialization_code(inst)
                 # Process processing code
                 code, out_tokens = atom.get_processing_code(in_tokens)
                 if atom.rate > 0 and not atom.rate == self.get_current_rate():
                     old_rate = self.pop_rate()
                     if not old_rate == self.sample_rate:
                         counter_inc = old_rate/self.sample_rate # Float division
-                        counter_number = len(self.rate_stack)
                         processing_code += '}\n'
                         processing_code += self.rate_end_code%old_rate
-                        processing_code += 'counter_%02i += %.10f;\n'%(counter_number,counter_inc)
+                        processing_code += 'counter_%02i += %.10f;\n'%(self.counters,counter_inc)
+                        self.counters += 1
                     else:
                         processing_code += self.rate_end_code%old_rate
                         
@@ -1130,10 +913,11 @@ class PlatformFunctions:
                     processing_code += self.rate_begin_code%atom.rate
                     if previous_atom:
                         previous_atom.set_inline(False)
+                    atom.set_inline(False)
                     if not atom.rate == self.sample_rate:
-                        instantiation_code += 'float counter_%02i;\n'%(counters)
-                        init_code +=  'counter_%02i = 1.0\n'%(counters)
-                        processing_code += 'if (counter_%02i >= 1.0) {\ncounter_%02i -= 1.0;\n'%(counters, counters)
+                        instantiation_code += 'float counter_%02i;\n'%(self.counters)
+                        init_code +=  'counter_%02i = 1.0;\n'%(self.counters)
+                        processing_code += 'if (counter_%02i >= 1.0) {\ncounter_%02i -= 1.0;\n'%(self.counters, self.counters)
 
                 if code:
                     processing_code += code + '\n'
@@ -1141,6 +925,7 @@ class PlatformFunctions:
             
             previous_atom = atom
               
+        # Close pending rates in this stream
         while not parent_rates_size == len(self.rate_stack):
             old_rate = self.pop_rate()
             processing_code += self.rate_end_code%old_rate
@@ -1171,33 +956,15 @@ class PlatformFunctions:
             
         processing_code += self.stream_end_code%stream_index
         
-#        domain_code = ''
-#        domain_setup_code = ''
-#        rate_setup_code = ''
-#        rate_counter_inc = ''
-#        
-#        for i, rate in enumerate(self._rates):
-#            if not rate == self.sample_rate: # TODO don't call this domain as it now means something dofferent
-#                domain_code += "Domain rate%02i(%f);\n"%(i, rate)
-#                domain_code += 'double counter_%02i;\nint counter_%02i_trig;\n'%(i,i)
-#                domain_setup_code += 'counter_%02i = 0;\ncounter_%02i_trig = 0;\n'%(i, i)
-#                counter_inc = rate/self.sample_rate # Float division
-#                rate_counter_inc += 'counter_%02i_trig = 0;\ncounter_%02i += %.24f;\nif (counter_%02i >= 1.0) { counter_%02i -= 1.0; counter_%02i_trig = 1;}\n'%(i, i, counter_inc, i,i, i)
-#        
-#        for rated_ugen in self._rated_ugens:
-#            domain_setup_code += "%s.domain(rate%02i); // Rate %.2f\n"%(rated_ugen, self._rated_ugens[rated_ugen], self._rates[self._rated_ugens[rated_ugen]])
-#        
-#        declare_code += domain_code
-#        init_code += rate_setup_code + domain_setup_code
-#        processing_code += rate_counter_inc        
-        
         # TODO return global code
         return {"declare_code" : declare_code,
                 "instantiation_code" : instantiation_code,
                 "init_code" : init_code,
                 "processing_code" : processing_code}
                 
-    def generate_code(self, tree, declared = [], instanced = [], initialized = []):
+    def generate_code(self, tree, declared = [], instanced = [], initialized = []):  
+        self.unique_id = 0
+        self.counters = 0 
         stream_index = 0
         includes_code = '' # TODO: How to handle globals like includes?
         declare_code = ''
