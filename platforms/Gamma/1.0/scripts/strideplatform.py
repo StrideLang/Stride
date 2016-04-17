@@ -9,7 +9,10 @@ from __future__ import print_function
 from __future__ import division
 
 import re
-import json   
+import json
+
+from platformTemplates import templates
+  
     
 class Atom:
     def __init__(self, index):
@@ -40,9 +43,6 @@ class Atom:
     
     def get_instances(self):
         return {}
-    
-#    def get_init_list(self):
-#        return None
         
     def get_processing_code(self, in_tokens):
         return None
@@ -91,15 +91,6 @@ class ValueAtom(Atom):
                      'handle' : self.handle,
                      'code' : self.get_inline_processing_code([])
                      }]
-    
-#    def get_init_list(self):
-#        if self.is_inline():
-#            inits = []
-#        else:
-#            inits = [{'handle' : self.handle,
-#                      'code' : self.get_inline_processing_code([])
-#                      }]
-#        return inits
         
     def get_inline_processing_code(self, in_tokens):
         return str(self.value)
@@ -149,12 +140,6 @@ class ExpressionAtom(Atom):
                               'code' : '0.0' #TODO get this value from platform/library default
                               })
         return instances
-    
-#    def get_init_list(self):
-#        inits = self.left_atom.get_init_list()
-#        if self.right_atom:
-#            inits += self.right_atom.get_init_list()
-#        return inits
         
     def get_inline_processing_code(self, in_tokens):
         if self.left_atom.is_inline():
@@ -194,7 +179,7 @@ class ExpressionAtom(Atom):
             code = ''
             code += self.left_atom.get_processing_code([])[0]
             code += self.right_atom.get_processing_code([])[0]
-            code += self.handle + ' = (' + self.get_inline_processing_code(in_tokens) + ');\n'
+            code += templates.assignment(self.handle, self.get_inline_processing_code(in_tokens))
         
             out_tokens = [self.handle]
         return code, out_tokens
@@ -233,20 +218,6 @@ class NameAtom(Atom):
                   'code' : str(default_value)
                   }]
         return inits
-    
-#    def get_init_list(self):
-#        if 'default' in self.declaration:
-#            default_value = self.declaration['default']
-#        else:
-#            if 'default' in self.platform_type['block']:
-#                default_value = self.platform_type['block']['default'] # FIXME inheritance is not being handled here
-#            else:
-#                default_value = 0.0
-#        inits = [{'handle' : self.handle,
-#                  'type' : 'real',
-#                  'code' : str(default_value)
-#                  }]
-#        return inits
         
     def get_inline_processing_code(self, in_tokens):
         code = self.handle
@@ -326,7 +297,8 @@ class BundleAtom(Atom):
     def get_processing_code(self, in_tokens):
         code = ''
         if len(in_tokens) > 0:
-            code = self._get_token_name(self.index) + ' = ' + self.get_inline_processing_code(in_tokens) + ';\n'
+            code = templates.assignment(self._get_token_name(self.index),
+                                        self.get_inline_processing_code(in_tokens))
         if 'code' in self.platform_type:
             # FIXME Hardware platform code. This needs to be improved...
             code += self.platform_type['code']['dsp_code']['code']
@@ -393,7 +365,7 @@ class PlatformModuleAtom(Atom):
     def get_processing_code(self, in_tokens):
         code = ''
         if len(in_tokens) > 0:
-            code = self.handle + ' = ' + in_tokens[0] + ';\n'
+            code = templates.assignment(self.handle, in_tokens[0])
         out_tokens = [self.handle]
         return code, out_tokens
         
@@ -402,7 +374,7 @@ class PlatformModuleAtom(Atom):
         stream_index = 0
         declared = []
         instanced = []
-        for i, stream in enumerate(self._streams.itervalues()):
+        for i, stream in enumerate(self._streams.values()):
             new_code = self.platform.generate_stream_code(stream, stream_index, declared, instanced)
             stream_index += 1
 
@@ -502,9 +474,6 @@ class ModuleAtom(Atom):
                      'handle': self.handle,
                      'moduletype' : self.name}
                      ]
-    
-#    def get_init_list(self):
-#        return []
         
     def get_inline_processing_code(self, in_tokens):
         if len(in_tokens) > 0:
@@ -515,7 +484,7 @@ class ModuleAtom(Atom):
         
     def get_processing_code(self, in_tokens):
         code = ''
-        code = self.out_tokens[0] + ' = ' + self.get_inline_processing_code(in_tokens) +  ';\n'
+        code = templates.assignment(self.out_tokens[0],self.get_inline_processing_code(in_tokens))
         out_tokens = self.out_tokens
         return code, out_tokens
         
@@ -619,9 +588,6 @@ class ReactionAtom(Atom):
                  { 'type' : 'real',
                    'handle' : self.out_tokens[0]
                  }]
-    
-#    def get_init_list(self):
-#        return []
         
     def get_inline_processing_code(self, in_tokens):
         code = self.handle + '.process(' + in_tokens[0] + ')'
@@ -630,7 +596,8 @@ class ReactionAtom(Atom):
     def get_processing_code(self, in_tokens):
         code = ''
         if len(in_tokens) > 0:
-            code = self.out_tokens[0] + ' = ' + self.get_inline_processing_code(in_tokens) +  ';\n'
+            code = templates.assignment(self.out_tokens[0],
+                                        self.get_inline_processing_code(in_tokens))
         out_tokens = self.out_tokens
         return code, out_tokens
         
@@ -688,12 +655,6 @@ class PlatformFunctions:
     
         self.tree = tree
         self.scope_stack = []
-        self.rate_stack = []
-        
-        self.stream_begin_code = '// Starting stream %02i -------------------------\n{\n'
-        self.stream_end_code = '} // Stream End %02i\n'
-        self.rate_begin_code = '{ // Start new rate %i\n' 
-        self.rate_end_code = '\n}  // Close Rate %i\n' 
         
         self.sample_rate = 44100 # FIXME: This is a hack. This should be brought in from the stream's domain and rate
     
@@ -835,23 +796,6 @@ class PlatformFunctions:
         else:
             raise ValueError("Unsupported type")
         return new_atom
-        
-    def push_rate(self, rate):
-        print('push_rate %i'%rate)
-        self.rate_stack.append(rate)
-        
-    def get_current_rate(self):
-        if len(self.rate_stack) > 0:
-            return self.rate_stack[-1]
-        else:
-            return None
-    
-    def pop_rate(self):
-        print('pop_rate %i'%self.rate_stack[-1])
-        if len(self.rate_stack) > 0:
-            return self.rate_stack.pop()
-        else:
-            return None
       
     def push_scope(self, scope):
         self.scope_stack.append(scope)
@@ -875,8 +819,8 @@ class PlatformFunctions:
         declare_code = ''
         instantiation_code = ''
         init_code = ''
-        processing_code = ''   
-        parent_rates_size = len(self.rate_stack) # To know now much we need to pop for this stream
+        processing_code = '' 
+        parent_rates_size = templates.rate_stack_size() # To know now much we need to pop for this stream
         
         for group in node_groups:
             in_tokens = []
@@ -884,7 +828,7 @@ class PlatformFunctions:
             for atom in group:
                 #Process declaration code
                 declares = atom.get_declarations()
-                for dec in declares.iterkeys():
+                for dec in declares:
                     if not dec in declared:
                         declare_code += declares[dec] + '\n'
                         declared.append(dec)
@@ -898,26 +842,16 @@ class PlatformFunctions:
                             init_code +=  self.get_initialization_code(inst)
                 # Process processing code
                 code, out_tokens = atom.get_processing_code(in_tokens)
-                if atom.rate > 0 and not atom.rate == self.get_current_rate():
-                    old_rate = self.pop_rate()
-                    if not old_rate == self.sample_rate:
-                        counter_inc = old_rate/self.sample_rate # Float division
-                        processing_code += '}\n'
-                        processing_code += self.rate_end_code%old_rate
-                        processing_code += 'counter_%02i += %.10f;\n'%(self.counters,counter_inc)
-                        self.counters += 1
-                    else:
-                        processing_code += self.rate_end_code%old_rate
-                        
-                    self.push_rate(atom.rate)
-                    processing_code += self.rate_begin_code%atom.rate
+                if atom.rate > 0:
+                    processing_code += templates.rate_end_code()
+                    templates.rate_start(atom.rate)
+                    instantiation_code += templates.rate_instance_code()
+                    init_code +=  templates.rate_init_code()
+                    processing_code += templates.rate_start_code()
+                    # We want to avoid inlining across rate boundaries
                     if previous_atom:
                         previous_atom.set_inline(False)
                     atom.set_inline(False)
-                    if not atom.rate == self.sample_rate:
-                        instantiation_code += 'float counter_%02i;\n'%(self.counters)
-                        init_code +=  'counter_%02i = 1.0;\n'%(self.counters)
-                        processing_code += 'if (counter_%02i >= 1.0) {\ncounter_%02i -= 1.0;\n'%(self.counters, self.counters)
 
                 if code:
                     processing_code += code + '\n'
@@ -926,35 +860,25 @@ class PlatformFunctions:
             previous_atom = atom
               
         # Close pending rates in this stream
-        while not parent_rates_size == len(self.rate_stack):
-            old_rate = self.pop_rate()
-            processing_code += self.rate_end_code%old_rate
-            if not old_rate == self.sample_rate:
-                counter_inc = old_rate/self.sample_rate # Float division
-                counter_number = len(self.rate_stack)
-                processing_code += 'counter_%02i += %.8f;\n'%(counter_number,counter_inc)
+        while not parent_rates_size == templates.rate_stack_size():
+            processing_code += templates.rate_end_code()
 
         return [declare_code, instantiation_code, init_code, processing_code]
         
     def generate_stream_code(self, stream, stream_index, declared, instanced, initialized):
         #out_var_name = "stream_%02i"%(stream_index)
         node_groups = self.make_stream_nodes(stream)
-
-        processing_code = self.stream_begin_code%stream_index
         
-        parent_rate = self.get_current_rate()
-        if not parent_rate == self.sample_rate:
-            self.push_rate(self.sample_rate)
-            processing_code += self.rate_begin_code%self.sample_rate
+        processing_code = templates.stream_begin_code%stream_index
+#        templates.rate_start(self.sample_rate)
+#        processing_code += templates.rate_start_code()
         
         declare_code, instantiation_code, init_code, new_processing_code = self.generate_code_from_groups(node_groups, declared, instanced, initialized)
         processing_code += new_processing_code
         
-        if not parent_rate == self.sample_rate:
-            processing_code += self.rate_end_code%self.get_current_rate()
-            self.pop_rate()
+#        processing_code += templates.rate_end_code()
             
-        processing_code += self.stream_end_code%stream_index
+        processing_code += templates.stream_end_code%stream_index
         
         # TODO return global code
         return {"declare_code" : declare_code,
@@ -964,7 +888,6 @@ class PlatformFunctions:
                 
     def generate_code(self, tree, declared = [], instanced = [], initialized = []):  
         self.unique_id = 0
-        self.counters = 0 
         stream_index = 0
         includes_code = '' # TODO: How to handle globals like includes?
         declare_code = ''

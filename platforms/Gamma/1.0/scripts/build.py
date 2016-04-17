@@ -192,4 +192,4 @@ if __name__ == '__main__':
     else:
         gen = Generator(sys.argv[1], platform)
     gen.generate_code()
-#    gen.compile()
+    gen.compile()
