@@ -10,12 +10,13 @@ import json
 
 from strideplatform import PlatformFunctions
 
+from platformTemplates import templates # Perhaps we should acces this through PlatformFunctions ?
+
 # ---------------------
 class Generator:
     def __init__(self, out_dir = '',
                  platform_dir = '/home/andres/Documents/src/Stride/StreamStack/platforms/Gamma/1.0'):
         
-    
         self.platform_dir = platform_dir
         self.out_dir = out_dir
         #out_dir = '/home/andres/Documents/src/XMOS/Odo/StreamStack/platforms/Gamma/1.0/test'
@@ -58,27 +59,6 @@ class Generator:
     
     def generate_code(self):
         # Generate code from tree
-        
-        config_template_code = '''
-        AudioDevice adevi = AudioDevice::defaultInput();
-        AudioDevice adevo = AudioDevice::defaultOutput();
-        //AudioDevice adevi = AudioDevice("firewire_pcm");
-        //AudioDevice adevo = AudioDevice("firewire_pcm");
-        
-        //int maxOChans = adevo.channelsOutMax();
-        //int maxIChans = adevi.channelsOutMax();
-        //printf("Max input channels:  %d\\n", maxIChans);
-        //printf("Max output channels: %d\\n", maxOChans);
-        
-        // To open the maximum number of channels, we can hand in the queried values...
-        //AudioIO io(256, 44100., audioCB, NULL, maxOChans, maxIChans);
-        
-        // ... or just use -1
-        
-        AudioIO io(%%block_size%%, %%sample_rate%%, audioCB, NULL, %%num_out_chnls%%, %%num_in_chnls%%);
-        '''
-        
-        
         # TODO These defaults should be set from the platform definition file
         self.block_size = 512
         self.sample_rate = 44100.
@@ -90,16 +70,17 @@ class Generator:
         #var_declaration = ''.join(['double stream_%02i;\n'%i for i in range(stream_index)])
         #declare_code = var_declaration + declare_code
         
-        template_init_code = config_template_code
-        template_init_code = template_init_code.replace("%%block_size%%", str(self.block_size))
-        template_init_code = template_init_code.replace("%%sample_rate%%", str(self.sample_rate))
-        template_init_code = template_init_code.replace("%%num_out_chnls%%", str(self.num_out_chnls))
-        template_init_code = template_init_code.replace("%%num_in_chnls%%", str(self.num_in_chnls))
+        template_init_code = templates.get_config_code(self.sample_rate, self.block_size,
+                        self.num_out_chnls, self.num_in_chnls)
+
         
 #        self.write_section_in_file('Includes', includes_code)
         self.write_section_in_file('Init Code', code['declare_code'] + code['instantiation_code'])
         self.write_section_in_file('Config Code', code['init_code'] + template_init_code)
         self.write_section_in_file('Dsp Code', code['processing_code'])
+        
+        outtext = ck_out(['astyle', self.out_dir + "/main.cpp" ])
+        
         
 # Compile --------------------------
     def compile(self):

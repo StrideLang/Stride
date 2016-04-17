@@ -228,7 +228,7 @@ class NameAtom(Atom):
     def get_processing_code(self, in_tokens):
         code = ''
         if len(in_tokens) > 0:
-            code = self.handle + ' = ' + self.get_inline_processing_code(in_tokens) + ';\n'
+            code = templates.assignment(self.handle, self.get_inline_processing_code(in_tokens))
         out_tokens = [self.handle]
         return code, out_tokens
 
@@ -455,10 +455,11 @@ class ModuleAtom(Atom):
             input_declaration = 'float %s'%self._input_block['name']
         else:
             input_declaration = ''
-                    
-        declaration = 'struct %s {\n %s %s() {\n%s}\nfloat process(%s) \n{%s\n}\n};'%(
+            
+        declaration = templates.module_declaration(
                 self.name, declarations_code + instantiation_code + properties_code, 
-                self.name, init_code, input_declaration, process_code)
+                init_code, input_declaration, process_code)
+                    
         return {self.name :  declaration}
     
     def get_instances(self):
@@ -476,10 +477,7 @@ class ModuleAtom(Atom):
                      ]
         
     def get_inline_processing_code(self, in_tokens):
-        if len(in_tokens) > 0:
-            code = self.handle + '.process(' + in_tokens[0] + ')'
-        else:
-            code = self.handle + '.process()'
+        code = templates.module_processing_code(self.handle, in_tokens)
         return code
         
     def get_processing_code(self, in_tokens):
@@ -502,17 +500,16 @@ class ModuleAtom(Atom):
         
     def _get_internal_processing_code(self):
         code = self.code['processing_code']
-        if self._output_block:
-            code += 'return %s;\n'%(self._output_block['name']) 
+        code += templates.module_output_code(self._output_block) 
         return code
         
     def _get_internal_properties_code(self):
         code = ''
         for prop in self.module['properties']:
             if 'block' in prop:
-                code += 'void set_' + prop['block']['name'] + '(float amp) {\n'
-                code += prop['block']['block']['name']['name'] + '= amp;\n'
-                code += '\n}\n'
+                code += templates.module_property_setter(prop['block']['name'],
+                                         prop['block']['block']['name']['name'],
+                                         'real')
         return code
         
     def _process_module(self, streams, blocks):
@@ -615,8 +612,7 @@ class ReactionAtom(Atom):
         
     def _get_internal_processing_code(self):
         code = self.code['processing_code']
-        if self._output_block:
-            code += 'return %s;\n'%(self._output_block['name']) 
+        code += templates.module_output_code(self._output_block) 
         return code
         
     def _process_reaction(self, streams, blocks):
@@ -732,32 +728,6 @@ class PlatformFunctions:
             return "false"
     
     # Code generation functions
-
-    def get_instantiation_code(self, instance):
-        if instance['type'] == 'real':
-            code = 'float ' + instance['handle'] + ';\n'
-        elif instance['type'] =='bundle':
-            if instance['bundletype'] == 'real':
-                code = 'float ' + instance['handle'] + '[%i];\n'%instance['size']
-            else:
-                raise ValueError("Unsupported bundle type.")
-        elif instance['type'] == 'module':
-            code = instance['moduletype'] + ' ' + instance['handle'] + ';\n'
-        elif instance['type'] == 'reaction':
-            code = instance['reactiontype'] + ' ' + instance['handle'] + ';\n'
-        else:
-            raise ValueError('Unsupported type for instance')
-        return code
-        
-    def get_initialization_code(self, instance):
-        code = ''
-        if instance['type'] == 'real':
-            code = instance['handle'] + ' = ' + instance['code'] + ';\n'
-        elif instance['type'] == 'block':
-            code = ''
-        else:
-            ValueError("Unsupported type for initialization: " + instance['type'])
-        return code
         
     def make_atom(self, member):
         if "name" in member:
@@ -836,10 +806,10 @@ class PlatformFunctions:
                 instances = atom.get_instances()
                 for inst in instances:
                     if not inst['handle'] in instanced:
-                        instantiation_code += self.get_instantiation_code(inst)
+                        instantiation_code += templates.instantiation_code(inst)
                         instanced.append(inst['handle'])
                         if 'code' in inst:
-                            init_code +=  self.get_initialization_code(inst)
+                            init_code +=  templates.initialization_code(inst)
                 # Process processing code
                 code, out_tokens = atom.get_processing_code(in_tokens)
                 if atom.rate > 0:
