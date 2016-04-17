@@ -49,7 +49,10 @@ class Templates(object):
         rate = self.rate_stack[-1]
         index = self.rate_counter
         if not rate == self.domain_rate:
-            code = 'counter_%03i = 1.0;\n'%(index)
+            if rate < self.domain_rate:
+                code = 'counter_%03i = 1.0;\n'%(index)
+            else:
+                code = 'counter_%03i = 0.0;\n'%(index)
         return code
         
     def rate_instance_code(self):
@@ -68,8 +71,12 @@ class Templates(object):
         rate = self.rate_stack[-1]
         index = self.rate_counter
         if not rate == self.domain_rate:
-            code += self.str_rate_begin_code%rate
-            code += 'if (counter_%03i >= 1.0) {\ncounter_%03i -= 1.0;\n'%(index, index)
+            if rate < self.domain_rate:
+                code += self.str_rate_begin_code%rate
+                code += 'if (counter_%03i >= 1.0) {\ncounter_%03i -= 1.0;\n'%(index, index)
+            else:
+                code += self.str_rate_begin_code%rate
+                code += 'while (counter_%03i < 1.0) {\n'%(index)
         return code
         
     def rate_stack_size(self):
@@ -81,9 +88,15 @@ class Templates(object):
             rate = self.rate_stack.pop()
             index = self.rate_counter
             if not rate == self.domain_rate:
-                code += '}\n' # Closes counter check above
-                code += templates.str_rate_end_code%rate
-                code += 'counter_%03i += %.10f;\n'%(index, float(rate)/self.domain_rate) 
+                if rate < self.domain_rate:
+                    code += '}\n' # Closes counter check above
+                    code += templates.str_rate_end_code%rate
+                    code += 'counter_%03i += %.10f;\n'%(index, float(rate)/self.domain_rate)
+                else:
+                    code += 'counter_%03i += %.10f;\n'%(index, self.domain_rate/ float(rate))
+                    code += '}\n' # Closes counter check above
+                    code += 'counter_%03i -= 1.0;\n'%(index)
+                    code += templates.str_rate_end_code%rate
             self.rate_counter += 1
             return code
         else:
