@@ -653,6 +653,17 @@ blockList:
                                         COUT << "Block definition ... " << ENDL;
                                         COUT << "New list item ... " << ENDL;
                                     }
+      |  blockList blockDef	{
+                                        ListNode *list = new ListNode(NULL, yyloc.first_line);
+                                        list->stealMembers($1);
+                                        ListNode *oldList = $1;
+//                                        oldList->deleteChildren();
+                                        delete oldList;
+                                        list->addChild($2);
+                                        $$ = list;
+                                        COUT << "Block definition ... " << ENDL;
+                                        COUT << "New list item ... " << ENDL;
+                                    }
     |	blockDef                    {
                                         $$ = new ListNode($1, yyloc.first_line);
                                         COUT << "Block definition ... " << ENDL;
