@@ -79,7 +79,7 @@ class Generator:
         self.write_section_in_file('Config Code', code['init_code'] + template_init_code)
         self.write_section_in_file('Dsp Code', code['processing_code'])
         
-        outtext = ck_out(['astyle', self.out_dir + "/main.cpp" ])
+        ck_out(['astyle', self.out_dir + "/main.cpp" ])
         
         
 # Compile --------------------------
