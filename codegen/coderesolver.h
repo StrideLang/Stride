@@ -29,12 +29,17 @@ private:
     void resolveStreamRates(StreamNode *stream);
     void fillDefaultProperties(); // This should be called when required, but not generally. Otherwise it's hard to tell which are default and which are set by the user.
 
+    // TODO move these two functions to CodeValidator with the rest of querying functions
     double findRateInProperties(vector<PropertyNode *> properties, QVector<AST *> scope, AST *tree);
     double getNodeRate(AST *node, QVector<AST *> scope, AST *tree);
+
+
     void insertBuiltinObjects();
     double createSignalDeclaration(QString name, int size, AST *tree);
     void declareUnknownName(NameNode *name, int size, AST *tree);
     void declareUnknownExpressionSymbols(ExpressionNode *expr, int size, AST * tree);
+    ListNode *expandNameToList(NameNode *name, int size);
+    void expandNamesToBundles(StreamNode *stream, AST *tree);
     void declareUnknownStreamSymbols(StreamNode *stream, AST *previousStreamMember, AST *tree);
     void resolveStreamSymbols();
     void resolveConstants();
@@ -59,7 +64,7 @@ private:
 
 
     QVector<AST *> expandStreamNode(StreamNode *stream);
-    AST *expandStream(AST *node, int index, int rightNumInputs = 1, int leftNumOutputs = 1);
+    AST *expandStream(AST *node, int index, int rightNumInputs, int leftNumOutputs);
     QVector<AST *> sliceStream(StreamNode *stream);
     StreamNode *splitStream(StreamNode *stream, AST *closingNode, AST *endNode);
 

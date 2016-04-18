@@ -554,6 +554,8 @@ int CodeValidator::getNodeNumInputs(AST *node, StreamPlatform &platform, QVector
         }
     } else if (node->getNodeType() == AST::Bundle) {
         return getBundleSize(static_cast<BundleNode *>(node), scope, tree, errors);
+    } else if (node->getNodeType() == AST::List) {
+        return node->getChildren().size();
     } else {
         return 1;
 //        return CodeValidator::getNodeNumOutputs(node, platform, scope, tree, errors);
@@ -896,8 +898,11 @@ int CodeValidator::numParallelStreams(StreamNode *stream, StreamPlatform &platfo
             (rightSize/(float)leftSize) == (int)(rightSize/(float)leftSize)){
         if (leftSize == 0) {
           thisParallel = -1;
+        }
+        if (leftSize == rightSize) {
+            thisParallel = leftSize;
         } else {
-          thisParallel = rightSize/leftSize;
+          thisParallel = leftSize/rightSize;
         }
     }
     if (leftSize == 1) {

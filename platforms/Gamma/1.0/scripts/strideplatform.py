@@ -26,11 +26,11 @@ class Atom:
     def is_inline(self):
         return self.inline
         
-    def get_handle(self):
+    def get_handles(self):
         if self.is_inline():
-            return self.get_inline_processing_code([])
+            return [self.get_inline_processing_code([])]
         else:
-            return self.handle
+            return [self.handle]
 
     def get_out_tokens(self):
         if hasattr(self, 'out_tokens'):
@@ -68,11 +68,11 @@ class ValueAtom(Atom):
         self.rate = 0
         self.inline = True
         
-    def get_handle(self):
+    def get_handles(self):
         if self.is_inline():
-            return self.get_inline_processing_code([])
+            return [self.get_inline_processing_code([])]
         else:
-            return self.handle
+            return [self.handle]
             
     def get_out_tokens(self):
         if self.is_inline():
@@ -116,12 +116,6 @@ class ExpressionAtom(Atom):
         self.left_atom.set_inline(inline)
         self.right_atom.set_inline(inline)
         self.inline = inline
-        
-    def get_handle(self):
-        if self.is_inline():
-            return self.get_inline_processing_code([])
-        else:
-            return self.handle
             
     def get_declarations(self):
         declarations = self.left_atom.get_declarations()
@@ -184,6 +178,51 @@ class ExpressionAtom(Atom):
             out_tokens = [self.handle]
         return code, out_tokens
         
+class ListAtom(Atom):
+    def __init__(self, list_node):
+        #self.index = index
+        self.list_node = list_node
+        self.rate = -1
+        self.inline = True
+        
+        self.handles = [elem.get_handles() for elem in list_node] # TODO make this recursive
+        self.out_tokens = [elem.get_out_tokens() for elem in list_node]
+        self.declarations = [elem.get_declarations() for elem in list_node]
+        self.instances = [elem.get_instances() for elem in list_node]
+        
+    def get_handles(self, index = -1):
+        return self.handles
+            
+    def get_out_tokens(self, index = -1):
+        return self.out_tokens[index]
+    
+    def get_declarations(self, index = -1):
+        return self.declarations[index]
+    
+    def get_instances(self, index = -1):
+        return self.instances[index]
+        
+    def get_inline_processing_code(self, in_tokens):
+        return str(self.value)
+        
+    def get_processing_code(self, in_tokens):
+        code = ''
+        out_tokens = []
+        for i,elem in enumerate(self.list_node):
+            if len(in_tokens) > 0:
+                index = i%len(in_tokens)
+                new_code, new_out_tokens = elem.get_processing_code(in_tokens[index])
+                code += new_code
+                out_tokens += new_out_tokens
+            else:
+                 new_code, new_out_tokens = elem.get_processing_code([])
+                 code += new_code
+                 out_tokens += new_out_tokens
+        return code, out_tokens
+    
+    def get_globals(self): # Global instances, declarations and includes
+        return None
+        
 
 class NameAtom(Atom):
     def __init__(self, platform_type, declaration, token_index):
@@ -192,7 +231,7 @@ class NameAtom(Atom):
         self.platform_type = platform_type
         self.declaration = declaration
         
-        self.inline = False
+        self.set_inline(False)
         
         if 'rate' in declaration:
             if type(declaration['rate']) == dict:
@@ -208,11 +247,14 @@ class NameAtom(Atom):
     def get_instances(self):
         if 'default' in self.declaration:
             default_value = self.declaration['default']
-        else:
+        elif 'block' in self.platform_type:
             if 'default' in self.platform_type['block']:
                 default_value = self.platform_type['block']['default'] # FIXME inheritance is not being handled here
             else:
                 default_value = 0.0
+        else:
+            print("Forced default value to 0 for " + self.name)
+            default_value = 0.0
         inits = [{'handle' : self.handle,
                   'type' : 'real',
                   'code' : str(default_value)
@@ -241,6 +283,8 @@ class BundleAtom(Atom):
         self.handle = self.name  #+ '_%03i'%(token_index);
         self.platform_type = platform_type
         self.declaration = declaration
+        
+        self.set_inline(False)
         
         if 'rate' in declaration:
             if type(declaration['rate']) == dict:
@@ -296,14 +340,14 @@ class BundleAtom(Atom):
         
     def get_processing_code(self, in_tokens):
         code = ''
-        if len(in_tokens) > 0:
-            code = templates.assignment(self._get_token_name(self.index),
-                                        self.get_inline_processing_code(in_tokens))
         if 'code' in self.platform_type:
             # FIXME Hardware platform code. This needs to be improved...
             code += self.platform_type['code']['dsp_code']['code']
             code = code.replace('%%token%%', self._get_token_name(self.index))            
             code = code.replace('%%bundle_index%%', str(self.index))
+        elif len(in_tokens) > 0:
+            code = templates.assignment(self._get_token_name(self.index),
+                                        self.get_inline_processing_code(in_tokens))
 
         out_tokens = [self._get_token_name(self.index)]
         return code, out_tokens
@@ -763,6 +807,12 @@ class PlatformFunctions:
             new_atom = ExpressionAtom(expression_type, left_atom, right_atom, self.unique_id)
         elif "value" in member:
             new_atom = ValueAtom(member['value'], self.unique_id)
+        elif "list" in member:
+            list_atoms = []
+            for element in member['list']:
+                element_atom = self.make_atom(element)
+                list_atoms.append(element_atom)
+            new_atom = ListAtom(list_atoms)
         else:
             raise ValueError("Unsupported type")
         return new_atom

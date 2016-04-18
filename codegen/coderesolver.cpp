@@ -22,7 +22,6 @@ void CodeResolver::preProcess()
     resolveRates();
     resolveConstants();
     expandStreamMembers();
-    sliceStreams();
 }
 
 void CodeResolver::resolveRates()
@@ -272,6 +271,66 @@ void CodeResolver::declareUnknownExpressionSymbols(ExpressionNode *expr, int siz
     }
 }
 
+ListNode *CodeResolver::expandNameToList(NameNode *name, int size)
+{
+    ListNode *list = new ListNode(NULL, name->getLine());
+    for (int i = 0; i < size; i++) {
+        ListNode *indexList = new ListNode(new ValueNode(i + 1, name->getLine()), name->getLine());
+        BundleNode *bundle = new BundleNode(name->getName(), indexList, name->getLine());
+        list->addChild(bundle);
+    }
+    return list;
+}
+
+void CodeResolver::expandNamesToBundles(StreamNode *stream, AST *tree)
+{
+    AST *left = stream->getLeft();
+    AST *right = stream->getRight();
+    AST * nextStreamMember;
+    if (right->getNodeType() != AST::Stream) {
+        nextStreamMember = right;
+    } else {
+        nextStreamMember = static_cast<StreamNode *>(right)->getLeft();
+    }
+
+    if (left->getNodeType() == AST::Name) {
+        NameNode *name = static_cast<NameNode *>(left);
+        QVector<AST *> scope;
+        BlockNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scope, tree);
+        int size;
+        if (block) {
+            if (block->getNodeType() == AST::BlockBundle) {
+                QList<LangError> errors;
+                size = CodeValidator::getBlockDeclaredSize(block, scope, tree, errors);
+            } else if (block->getNodeType() == AST::Block ) {
+                size = 1;
+            }
+        }
+        if (size > 1) {
+            ListNode *list = expandNameToList(name, size);
+            stream->setLeft(list);
+        }
+    }
+    if (right->getNodeType() == AST::Name) {
+        NameNode *name = static_cast<NameNode *>(right);
+        QVector<AST *> scope;
+        BlockNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scope, tree);
+        int size;
+        if (block) {
+            if (block->getNodeType() == AST::BlockBundle) {
+                QList<LangError> errors;
+                size = CodeValidator::getBlockDeclaredSize(block, scope, tree, errors);
+            } else if (block->getNodeType() == AST::Block ) {
+                size = 1;
+            }
+        }
+        if (size > 1) {
+            ListNode *list = expandNameToList(name, size);
+            stream->setRight(list);
+        }
+    }
+}
+
 void CodeResolver::declareUnknownStreamSymbols(StreamNode *stream, AST *previousStreamMember, AST * tree)
 {
     AST *left = stream->getLeft();
@@ -330,6 +389,7 @@ void CodeResolver::resolveStreamSymbols()
         if(node->getNodeType() == AST:: Stream) {
             StreamNode *stream = static_cast<StreamNode *>(node);
             declareUnknownStreamSymbols(stream, NULL, m_tree);
+            expandNamesToBundles(stream, m_tree);
         }
     }
 }
@@ -368,33 +428,6 @@ void CodeResolver::expandStreamMembers()
     }
     m_tree->deleteChildren();
     vector<AST *> newNodesStl = newNodes.toStdVector();
-    m_tree->setChildren(newNodesStl);
-}
-
-void CodeResolver::sliceStreams()
-{
-    vector<AST *> nodes = m_tree->getChildren();
-    QVector<AST *> newNodes;
-
-    // Need to traverse streams in reverse order to resolve later streams first.
-    vector<AST *>::reverse_iterator rit = nodes.rbegin();
-    for (; rit!= nodes.rend(); ++rit) {
-        AST *node = *rit;
-        if (node->getNodeType() == AST::Stream) {
-            StreamNode *oldNode = static_cast<StreamNode *>(node);
-            QVector<AST *> newStreams = sliceStream(oldNode);
-            newNodes << newStreams;
-        } else {
-            newNodes << node->deepCopy();
-        }
-    }
-    m_tree->deleteChildren();
-    vector<AST *> newNodesStl;
-    QVector<AST *>::iterator i = newNodes.end();
-    while (i != newNodes.begin()) { // Now reverse again while putting in STL vector
-        --i;
-        newNodesStl.push_back(*i);
-    }
     m_tree->setChildren(newNodesStl);
 }
 
@@ -652,25 +685,20 @@ ValueNode *CodeResolver::logicalNot(ValueNode *value)
 
 QVector<AST *> CodeResolver::expandStreamNode(StreamNode *stream)
 {
+    // FIXME implement expanding streams. But do we really want to do this at this stage?
     QList<LangError> errors;
     QVector<AST *> scope;
     int size = CodeValidator::numParallelStreams(stream, m_platform, scope, m_tree, errors);
     QVector<AST *> streams;
-    if (size <= 1) {
+    if (size <= 1) { // Just copy the existing stream, no need to expand
         streams << stream->deepCopy();
         return streams;
     }
-    AST *left = stream->getLeft();
-    AST *right = stream->getRight();
-    for (int i = 0; i < size; i++) {
-        AST *newLeft,*newRight;
-        int rightNumInputs = CodeValidator::getNodeNumInputs(right, m_platform, scope, m_tree, errors);
-        newLeft = expandStream(left, i, rightNumInputs, 0);
-        newRight = expandStream(right, i, 1, CodeValidator::getNodeNumOutputs(left, m_platform, scope, m_tree, errors));
-        StreamNode *newStream = new StreamNode(newLeft, newRight, stream->getLine());
-        streams << newStream;
-    }
+    streams << stream->deepCopy();
     return streams;
+
+//    QVector<AST *> slicedStreams;
+//    return slicedStreams;
 }
 
 QVector<AST *> CodeResolver::sliceStream(StreamNode *stream)
@@ -735,10 +763,10 @@ QVector<AST *> CodeResolver::sliceStream(StreamNode *stream)
 
                 for (int i = 0; i < size; i++) {
                     AST *newLeft, *newRight;
-                    newRight = expandStream(right, i);
-                    newLeft = expandStream(left, i);
-                    StreamNode *newStream = new StreamNode(newLeft, newRight, stream->getLine());
-                    streams << newStream;
+//                    newRight = expandStream(right, i);
+//                    newLeft = expandStream(left, i);
+//                    StreamNode *newStream = new StreamNode(newLeft, newRight, stream->getLine());
+//                    streams << newStream;
                 }
             } else {
 //                qFatal("Error, stream size shouldn't have decreased");
