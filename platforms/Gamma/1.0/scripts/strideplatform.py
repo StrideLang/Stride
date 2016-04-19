@@ -211,7 +211,7 @@ class ListAtom(Atom):
         for i,elem in enumerate(self.list_node):
             if len(in_tokens) > 0:
                 index = i%len(in_tokens)
-                new_code, new_out_tokens = elem.get_processing_code(in_tokens[index])
+                new_code, new_out_tokens = elem.get_processing_code([in_tokens[index]])
                 code += new_code
                 out_tokens += new_out_tokens
             else:
@@ -340,14 +340,14 @@ class BundleAtom(Atom):
         
     def get_processing_code(self, in_tokens):
         code = ''
+        if len(in_tokens) > 0:
+            code = templates.assignment(self._get_token_name(self.index),
+                                        self.get_inline_processing_code(in_tokens))
         if 'code' in self.platform_type:
             # FIXME Hardware platform code. This needs to be improved...
             code += self.platform_type['code']['dsp_code']['code']
             code = code.replace('%%token%%', self._get_token_name(self.index))            
             code = code.replace('%%bundle_index%%', str(self.index))
-        elif len(in_tokens) > 0:
-            code = templates.assignment(self._get_token_name(self.index),
-                                        self.get_inline_processing_code(in_tokens))
 
         out_tokens = [self._get_token_name(self.index)]
         return code, out_tokens
@@ -460,7 +460,7 @@ class ModuleAtom(Atom):
     def __init__(self, module, platform_code, token_index, platform):
         self.name = module["name"]
         self.handle = self.name + '_%03i'%token_index;
-        self.out_tokens = [self.name + '_%03i_out'%token_index]
+        self.out_tokens = ['_' + self.name + '_%03i_out'%token_index]
         self.current_scope = module["internalBlocks"]
         self._platform_code = platform_code
         self._input_block = None
@@ -482,7 +482,7 @@ class ModuleAtom(Atom):
         if inline:
             self.out_tokens = []
         else:
-            self.out_tokens = [self.name + '_%03i_out'%self._index]
+            self.out_tokens = ['_' + self.name + '_%03i_out'%self._index]
         self._process_module(self.module["streams"], self.module["internalBlocks"])
         self.inline = inline
         

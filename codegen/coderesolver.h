@@ -43,8 +43,8 @@ private:
     void declareUnknownStreamSymbols(StreamNode *stream, AST *previousStreamMember, AST *tree);
     void resolveStreamSymbols();
     void resolveConstants();
-    void expandStreamMembers();
-    void sliceStreams();
+//    void expandStreamMembers();
+//    void sliceStreams();
 
 //    void reduceExpressions();
     ValueNode *reduceConstExpression(ExpressionNode *expr, QVector<AST *> scope, AST *tree);
@@ -63,9 +63,9 @@ private:
     ValueNode *logicalNot(ValueNode *left);
 
 
-    QVector<AST *> expandStreamNode(StreamNode *stream);
-    AST *expandStream(AST *node, int index, int rightNumInputs, int leftNumOutputs);
-    QVector<AST *> sliceStream(StreamNode *stream);
+//    QVector<AST *> expandStreamNode(StreamNode *stream);
+//    AST *expandStream(AST *node, int index, int rightNumInputs, int leftNumOutputs);
+//    QVector<AST *> sliceStream(StreamNode *stream);
     StreamNode *splitStream(StreamNode *stream, AST *closingNode, AST *endNode);
 
     StreamPlatform m_platform;

@@ -63,8 +63,13 @@ class Templates(object):
         code = ''
         if instance['type'] == 'real':
             code = instance['handle'] + ' = ' + instance['code'] + ';\n'
-        elif instance['type'] == 'block':
-            code = ''
+        elif instance['type'] == 'bundle':
+            for i in range(instance['size']):
+                elem_instance = {'type': instance['bundletype'] ,
+                                 'handle' : instance['handle'] + '[%i]'%i,
+                                 'code' : instance['code']
+                                 }
+                code += self.initialization_code(elem_instance)
         else:
             ValueError("Unsupported type for initialization: " + instance['type'])
         return code
@@ -76,9 +81,9 @@ class Templates(object):
         index = self.rate_counter
         if not rate == self.domain_rate:
             if rate < self.domain_rate:
-                code = 'counter_%03i = 1.0;\n'%(index)
+                code = '_counter_%03i = 1.0;\n'%(index)
             else:
-                code = 'counter_%03i = 0.0;\n'%(index)
+                code = '_counter_%03i = 0.0;\n'%(index)
         return code
         
     def rate_instance_code(self):
@@ -86,7 +91,7 @@ class Templates(object):
         rate = self.rate_stack[-1]
         index = self.rate_counter
         if not rate == self.domain_rate:
-            code = 'float counter_%03i;\n'%(index)
+            code = 'float _counter_%03i;\n'%(index)
         return code
         
     def rate_start(self, rate):
@@ -99,10 +104,10 @@ class Templates(object):
         if not rate == self.domain_rate:
             if rate < self.domain_rate:
                 code += self.str_rate_begin_code%rate
-                code += 'if (counter_%03i >= 1.0) {\ncounter_%03i -= 1.0;\n'%(index, index)
+                code += 'if (_counter_%03i >= 1.0) {\n_counter_%03i -= 1.0;\n'%(index, index)
             else:
                 code += self.str_rate_begin_code%rate
-                code += 'while (counter_%03i < 1.0) {\n'%(index)
+                code += 'while (_counter_%03i < 1.0) {\n'%(index)
         return code
         
     def rate_stack_size(self):
@@ -117,11 +122,11 @@ class Templates(object):
                 if rate < self.domain_rate:
                     code += '}\n' # Closes counter check above
                     code += templates.str_rate_end_code%rate
-                    code += 'counter_%03i += %.10f;\n'%(index, float(rate)/self.domain_rate)
+                    code += '_counter_%03i += %.10f;\n'%(index, float(rate)/self.domain_rate)
                 else:
-                    code += 'counter_%03i += %.10f;\n'%(index, self.domain_rate/ float(rate))
+                    code += '_counter_%03i += %.10f;\n'%(index, self.domain_rate/ float(rate))
                     code += '}\n' # Closes counter check above
-                    code += 'counter_%03i -= 1.0;\n'%(index)
+                    code += '_counter_%03i -= 1.0;\n'%(index)
                     code += templates.str_rate_end_code%rate
             self.rate_counter += 1
             return code
