@@ -57,8 +57,8 @@ CLETTER	[A-Z]
 {DIGIT}*\.{DIGIT}+	{ yylval.fval = atof(yytext); return FLOAT; }
 {DIGIT}+			{ yylval.ival = atoi(yytext); return INT; }
 
-{CLETTER}({LETTER}|{CLETTER}|{DIGIT}|_)*	{ yylval.sval = strdup(yytext); return UVAR;}
-{LETTER}({LETTER}|{CLETTER}|{DIGIT})*		{ yylval.sval = strdup(yytext); return WORD;}
+(_)*{CLETTER}({LETTER}|{CLETTER}|{DIGIT}|_)*	{ yylval.sval = strdup(yytext); return UVAR;}
+(_)*{LETTER}({LETTER}|{CLETTER}|{DIGIT})*		{ yylval.sval = strdup(yytext); return WORD;}
 
 '[^'\t\n]*'			{	buffer = strdup(yytext);
                         buffer[strlen(buffer)-1] = '\0';
