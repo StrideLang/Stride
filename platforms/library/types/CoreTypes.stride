@@ -1,7 +1,7 @@
-type Constant {
+type _Constant {
 	typeName: "constant"
-	ports: [ 
-		port TypeName {
+	ports: [
+		port Value {
 			name: "value"
 			types: ["CSP", "CIP", "CRP", "none"]
 			default: none
@@ -11,33 +11,87 @@ type Constant {
 	inherits: "streamable"
 }
 
-type Switch {
+type _Type {
+	typeName: "type"
+	ports: [
+		port TypeName {
+			name: "typeName"
+			types: ["CSP", "none"]
+			default: none
+			required: on
+		},
+		port Ports {
+			name: "ports"
+			types: ["", "none"] # TODO how to validate object lists?
+			default: none
+			required: on
+		}
+	]
+}
+
+type _PlatformType {
+	typeName: "platformType"
+	ports: [
+		port TypeName {
+			name: "typeName"
+			types: ["CSP"]
+			default: none
+			required: on
+		},
+		port Includes {
+			name: "includes"
+			types: ["CSP"]
+			default: none
+			required: on
+		},
+		port Declarations {
+			name: "declarations"
+			types: ["CSP"]
+			default: none
+			required: on
+		},
+		port Initialization {
+			name: "initialization"
+			types: ["CSP"]
+			default: none
+			required: on
+		},
+		port Processin {
+			name: "processing"
+			types: ["CSP"]
+			default: none
+			required: on
+		}
+	]
+}
+
+type _Switch {
 	typeName: "switch"
-	ports: [ 
+	ports: [
 		port Reset {
 			name: "reset"
 			types: ["CBP", "none"]
 			default: off # TODO: This should be MasterReset
 			required: off
-		}, 
+		},
 		port Default {
 			name: "default"
 			types: ["CBP", "none"]
-			default: off 
+			default: off
 			required: off
 		}
 	]
 	inherits: "streamable"
 }
 
-type Trigger {
+type _Trigger {
 	typeName: "trigger"
-	ports: [ 
+	ports: [
 	]
 	inherits: "streamable"
 }
 
-type Signal {
+type _Signal {
 	typeName: "signal"
 	ports: [
 		port Default {

@@ -25,14 +25,14 @@ public:
         For,
 
         // Built-in types (leaf nodes)
-        Int,
-        Real,
-        Name,
-        String,
-        Expression,
-        Function,
-        Switch,
-        Keyword,
+        Int = 0x80,
+        Real = 0x81,
+        String = 0x82,
+        Name = 0x20,
+        Expression = 0x21,
+        Function = 0x22,
+        Switch = 0x23,
+        Keyword = 0x24,
 
         // Invalid
         Invalid

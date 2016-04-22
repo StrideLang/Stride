@@ -4,7 +4,7 @@
 #include "coderesolver.h"
 #include "codevalidator.h"
 
-CodeResolver::CodeResolver(StreamPlatform &platform, AST *tree) :
+CodeResolver::CodeResolver(StreamPlatform *platform, AST *tree) :
     m_platform(platform), m_tree(tree), m_connectorCounter(0)
 {
 
@@ -19,9 +19,10 @@ void CodeResolver::preProcess()
 {
     insertBuiltinObjects();
     resolveStreamSymbols();
+    expandParallelFunctions();
+//    fillDefaultProperties();
     resolveRates();
     resolveConstants();
-//    expandStreamMembers();
 }
 
 void CodeResolver::resolveRates()
@@ -60,34 +61,44 @@ void CodeResolver::fillDefaultProperties()
     vector<AST *> nodes = m_tree->getChildren();
     for(unsigned int i = 0; i < nodes.size(); i++) {
         AST* node = nodes.at(i);
-        if (node->getNodeType() == AST::Block || node->getNodeType() == AST::Block) {
-            BlockNode *block = static_cast<BlockNode *>(node);
-            vector<PropertyNode *> blockProperties = block->getProperties();
-            QList<Property> typeProperties = m_platform.getPortsForType(QString::fromStdString(block->getObjectType()));
-            foreach(Property typeProperty, typeProperties) {
+        if (node->getNodeType() == AST::Block || node->getNodeType() == AST::BlockBundle) {
+            BlockNode *destBlock = static_cast<BlockNode *>(node);
+            vector<PropertyNode *> blockProperties = destBlock->getProperties();
+            // TODO: should also set properties for user defined types
+            ListNode *typeProperties = m_platform->getPortsForType(QString::fromStdString(destBlock->getObjectType()));
+            if (!typeProperties) {
+                qDebug() << "ERROR: fillDefaultProperties() No type definition for " << QString::fromStdString(destBlock->getObjectType());
+                return;
+            }
+            foreach(AST *propertyListMember, typeProperties->getChildren()) {
+                Q_ASSERT(propertyListMember->getNodeType() == AST::Block);
+                BlockNode *portDescription = static_cast<BlockNode *>(propertyListMember);
+                AST *propName = portDescription->getPropertyValue("name");
+                Q_ASSERT(propName->getNodeType() == AST::String);
+                string propertyName = static_cast<ValueNode *>(propName)->getStringValue();
                 bool propertySet = false;
                 foreach(PropertyNode *blockProperty, blockProperties) {
-                    if (blockProperty->getName() == typeProperty.name.toStdString()) {
+                    if (blockProperty->getName() == propertyName) {
                         propertySet = true;
                         break;
                     }
                 }
                 if (!propertySet) {
-                    ValueNode *value = NULL;
-                    if (typeProperty.defaultValue.type() == QVariant::Int) {
-                        value = new ValueNode(typeProperty.defaultValue.toInt(), -1);
-                    } else if (typeProperty.defaultValue.type() == QVariant::Double) {
-                        value = new ValueNode(typeProperty.defaultValue.toDouble(), -1);
-                    } else if (typeProperty.defaultValue.type() == QVariant::String) {
-                        value = new ValueNode(typeProperty.defaultValue.toString().toStdString(), -1);
-                    } else if (typeProperty.defaultValue.type() == QVariant::Map) {
-                        qDebug() << "Property Map";
-                    }
-                    Q_ASSERT(value);
-                    PropertyNode *newProperty = new PropertyNode(typeProperty.name.toStdString(), value, -1);
-                    block->addProperty(newProperty);
+                    AST *defaultValueNode = portDescription->getPropertyValue("default");
+                    PropertyNode *newProperty = new PropertyNode(propertyName, defaultValueNode->deepCopy(), -1);
+                    destBlock->addProperty(newProperty);
                 }
             }
+        }
+    }
+}
+
+
+void CodeResolver::expandParallelFunctions()
+{
+    foreach (AST *node, m_tree->getChildren()) {
+        if (node->getNodeType() == AST::Stream) {
+
         }
     }
 }
@@ -171,44 +182,10 @@ double CodeResolver::getNodeRate(AST *node, QVector<AST *> scope, AST *tree)
 
 void CodeResolver::insertBuiltinObjects()
 {
-    QList<PlatformObject> objects = m_platform.getBuiltinObjects();
-    foreach(PlatformObject object, objects) {
-        int size = object.getSize();
-        QVariantMap properties = object.getProperties();
-        AST *propertiesTree = new AST;
-        foreach(QString key, properties.keys()) {
-            QVariant value = properties[key];
-            if (value.type() == QVariant::Int) {
-                ValueNode *valueNode = new ValueNode(value.toInt(), -1);
-                propertiesTree->addChild(new PropertyNode(key.toStdString(), valueNode, -1));
-            } else if (value.type() == QVariant::Double)  {
-                ValueNode *valueNode = new ValueNode(value.toDouble(), -1);
-                propertiesTree->addChild(new PropertyNode(key.toStdString(), valueNode, -1));
-            } else if (value.type() == QVariant::String)  {
-                ValueNode *valueNode = new ValueNode(value.toString().toStdString(), -1);
-                propertiesTree->addChild(new PropertyNode(key.toStdString(), valueNode, -1));
-            } else if (value.type() == QVariant::Map)  {
-                QString name = value.toMap()["name"].toString();
-                NameNode *nameNode = new NameNode(name.toStdString(), -1);
-                propertiesTree->addChild(new PropertyNode(key.toStdString(), nameNode, -1));
-            }
-            else {
-                qFatal("Unsupported key type for builtin object.");
-            }
-        }
-        if (size >= 0) {
-            ListNode *indexList = new ListNode(new ValueNode(object.getSize(), -1), -1);
-            BundleNode *bundle = new BundleNode(object.getName().toStdString(),indexList, -1);
-
-            BlockNode *child = new BlockNode(bundle, object.getType().toStdString(),
-                                  propertiesTree, -1);
-            m_tree->addChild(child);
-        } else { //Not a bundle
-            BlockNode *child = new BlockNode(object.getName().toStdString(), object.getType().toStdString(),
-                                  propertiesTree, -1);
-            m_tree->addChild(child);
-        }
-        delete propertiesTree;
+    // TODO: This inserts everything. Only what is used should be inserted.
+    QList<AST *> objects = m_platform->getBuiltinObjects();
+    foreach(AST *object, objects) {
+        m_tree->addChild(object);
     }
 }
 
@@ -225,9 +202,9 @@ double CodeResolver::createSignalDeclaration(QString name, int size, AST *tree)
         newBlock = new BlockNode(bundle, "signal", NULL, -1);
     }
 
-    nameRate = getDefaultForTypeAsDouble("signal", "rate");
-//    ValueNode *value = new ValueNode(defaultRate, -1);
-//    newBlock->addProperty(new PropertyNode("rate", value, -1));
+    double defaultRate = getDefaultForTypeAsDouble("signal", "rate");
+    ValueNode *value = new ValueNode(defaultRate, -1);
+    newBlock->addProperty(new PropertyNode("rate", value, -1));
 
     tree->addChild(newBlock);
     return nameRate;
@@ -349,10 +326,10 @@ void CodeResolver::declareUnknownStreamSymbols(StreamNode *stream, AST *previous
         QVector<AST *> scope;
         int size = -1;
         if (previousStreamMember) {
-            size = CodeValidator::getNodeNumOutputs(previousStreamMember, m_platform, scope, m_tree, errors);
+            size = CodeValidator::getNodeNumOutputs(previousStreamMember, *m_platform, scope, m_tree, errors);
         }
         if (size <= 0) { // Look to the right if can't resolve from the left
-            size = CodeValidator::getNodeNumInputs(nextStreamMember, m_platform, scope, m_tree, errors);
+            size = CodeValidator::getNodeNumInputs(nextStreamMember, *m_platform, scope, m_tree, errors);
         }
         if (size <= 0) { // None of the elements in the stream have size
             size = 1;
@@ -370,7 +347,7 @@ void CodeResolver::declareUnknownStreamSymbols(StreamNode *stream, AST *previous
         NameNode *name = static_cast<NameNode *>(right);
         QList<LangError> errors;
         QVector<AST *> scope;
-        int size = CodeValidator::getNodeNumOutputs(left, m_platform, scope, m_tree, errors);
+        int size = CodeValidator::getNodeNumOutputs(left, *m_platform, scope, m_tree, errors);
         if (size <= 0) { // None of the elements in the stream have size
             size = 1;
         }
@@ -577,24 +554,34 @@ void CodeResolver::resolveConstantsInNode(AST *node, QVector<AST *> scope)
 
 double CodeResolver::getDefaultForTypeAsDouble(QString type, QString port)
 {
-    double outValue = -1;
-    QVariant defaultValue = m_platform.getDefaultPortValueForType(type, port);
-    if (defaultValue.type() != QVariant::String) {
-        outValue = defaultValue.toDouble();
-    } else {
-        BlockNode *block = CodeValidator::findDeclaration(defaultValue.toString(),
-                                                          QVector<AST *>(), m_tree);
-        if (block && block->getObjectType() == "constant") {
-            AST *propValue = block->getPropertyValue("value");
-            QList<LangError> errors;
-            double rate = CodeValidator::evaluateConstReal(propValue, QVector<AST *>(),
-                                                           m_tree, errors);
-            if (errors.size() == 0) {
-                outValue = rate;
+    double outValue = 0.0;
+    AST *value = getDefaultPortValueForType(type, port);
+    QList<LangError> errors;
+    outValue = CodeValidator::evaluateConstReal(value, QVector<AST *>(), m_tree, errors);
+    return outValue;
+}
+
+AST *CodeResolver::getDefaultPortValueForType(QString type, QString portName)
+{
+    ListNode *ports = m_platform->getPortsForType(type);
+    if (ports) {
+        foreach(AST *port, ports->getChildren()) {
+            BlockNode *block = static_cast<BlockNode *>(port);
+            Q_ASSERT(block->getNodeType() == AST::Block);
+            Q_ASSERT(block->getObjectType() == "port");
+            AST *platPortNameNode = block->getPropertyValue("name");
+            ValueNode *platPortName = static_cast<ValueNode *>(platPortNameNode);
+            Q_ASSERT(platPortName->getNodeType() == AST::String);
+            if (platPortName->getStringValue() == portName.toStdString()) {
+                AST *platPortDefault = block->getPropertyValue("default");
+                if (platPortDefault) {
+                    return platPortDefault;
+                }
             }
+            // TODO handle inheritance for platform types
         }
     }
-    return outValue;
+    return NULL;
 }
 
 ValueNode *CodeResolver::multiply(ValueNode *left, ValueNode *right)
@@ -683,9 +670,9 @@ ValueNode *CodeResolver::logicalNot(ValueNode *value)
     return NULL;
 }
 
-//QVector<AST *> CodeResolver::expandStreamNode(StreamNode *stream)
-//{
-//    // FIXME implement expanding streams. But do we really want to do this at this stage?
+
+QVector<AST *> CodeResolver::expandStream(StreamNode *stream)
+{
 //    QList<LangError> errors;
 //    QVector<AST *> scope;
 //    int size = CodeValidator::numParallelStreams(stream, m_platform, scope, m_tree, errors);
@@ -697,8 +684,14 @@ ValueNode *CodeResolver::logicalNot(ValueNode *value)
 //    streams << stream->deepCopy();
 //    return streams;
 
-////    QVector<AST *> slicedStreams;
-////    return slicedStreams;
+//    //    QVector<AST *> slicedStreams;
+//    //    return slicedStreams;
+
+
+}
+//QVector<AST *> CodeResolver::expandStreamNode(StreamNode *stream)
+//{
+
 //}
 
 //QVector<AST *> CodeResolver::sliceStream(StreamNode *stream)

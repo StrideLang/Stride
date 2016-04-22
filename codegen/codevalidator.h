@@ -11,20 +11,7 @@ class CodeValidator
 {
 public:
     CodeValidator(QString platformRootDir, AST * tree);
-
-    typedef enum {
-        Audio,
-        ControlReal,
-        ControlInt,
-        ControlBoolean,
-        ControlString,
-        ConstReal,
-        ConstInt,
-        ConstBoolean,
-        ConstString,
-        None,
-        Invalid
-    } PortType;
+    ~CodeValidator();
 
     bool isValid();
     bool platformIsValid();
@@ -65,13 +52,13 @@ public:
 
     static QString getPortTypeName(PortType type);
 
+    void validate();
 
 private:
 
     QVector<PlatformNode *> getPlatformNodes();
     QVector<AST *> getBlocksInScope(AST *root);
 
-    void validate();
     void validateTypes(AST *node, QVector<AST *> scope);
     void validateBundleIndeces(AST *node, QVector<AST *> scope);
     void validateBundleSizes(AST *node, QVector<AST *> scope);
@@ -88,8 +75,7 @@ private:
 
     QString getNodeText(AST *node);
 
-    StreamPlatform m_platform;
-    StrideLibrary m_library;
+    StreamPlatform *m_platform;
     AST *m_tree;
     QList<LangError> m_errors;
 };

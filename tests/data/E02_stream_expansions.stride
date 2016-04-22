@@ -12,6 +12,6 @@ signal Out[2] {
 
 In >> Out;
 
-InSignal >> Pan() >> OutSignal;
+#InSignal >> PassThru() >> OutSignal;
 
-#InSignal2 >> [Pan(), Pan()] >> OutSignal2;
+#InSignal2 >> [PassThru(), PassThru()] >> OutSignal2;

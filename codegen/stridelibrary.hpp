@@ -12,8 +12,11 @@
 class StrideLibrary
 {
 public:
+    StrideLibrary();
     StrideLibrary(QString libraryPath);
    ~StrideLibrary();
+
+    void setLibraryPath(QString libraryPath);
 
     BlockNode *findTypeInLibrary(QString typeName);
 
@@ -27,9 +30,7 @@ private:
     QList<BlockNode *> getParentTypes(BlockNode *type);
 
     void readLibrary(QString rootDir);
-    void readLibraryTypes(QString rootDir);
     QList<AST *> m_libraryTrees;
-    QList<AST *> m_libraryTypes;
 };
 
 #endif // STRIDELIBRARY_HPP

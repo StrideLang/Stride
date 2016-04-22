@@ -82,6 +82,7 @@ void ProjectWindow::build()
         }
     }
     CodeValidator validator(m_platformsRootDir, tree);
+    validator.validate();
     errors << validator.getErrors();
     editor->setErrors(errors);
 
@@ -440,15 +441,18 @@ void ProjectWindow::updateCodeAnalysis()
 
             if (tree) {
                 CodeValidator validator(m_platformsRootDir, tree);
+                validator.validate();
                 //    QVERIFY(!generator.isValid());
                 QStringList types = validator.getPlatform()->getPlatformTypeNames();
                 m_highlighter->setBlockTypes(types);
                 QStringList funcs = validator.getPlatform()->getFunctionNames();
                 m_highlighter->setFunctions(funcs);
-                QList<PlatformObject> objects = validator.getPlatform()->getBuiltinObjects();
+                QList<AST *> objects = validator.getPlatform()->getBuiltinObjects();
                 QStringList objectNames;
-                foreach (PlatformObject platObject, objects) {
-                    objectNames << platObject.getName();
+                foreach (AST *platObject, objects) {
+                    if (platObject->getNodeType() == AST::Name) {
+                        objectNames << QString::fromStdString(static_cast<NameNode *>(platObject)->getName());
+                    }
                 }
                 m_highlighter->setBuiltinObjects(objectNames);
                 QList<LangError> errors = validator.getErrors();

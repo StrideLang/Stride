@@ -1,7 +1,9 @@
 #ifndef CODERESOLVER_H
 #define CODERESOLVER_H
 
+
 #include <QVector>
+#include <QSharedPointer>
 
 #include "streamplatform.h"
 #include "stridelibrary.hpp"
@@ -19,7 +21,7 @@
 class CodeResolver
 {
 public:
-    CodeResolver(StreamPlatform &platform, AST *tree);
+    CodeResolver(StreamPlatform *platform, AST *tree);
     ~CodeResolver();
 
     void preProcess();
@@ -27,7 +29,11 @@ public:
 private:
     void resolveRates();
     void resolveStreamRates(StreamNode *stream);
-    void fillDefaultProperties(); // This should be called when required, but not generally. Otherwise it's hard to tell which are default and which are set by the user.
+    void fillDefaultProperties();
+    void expandParallelFunctions();
+
+
+
 
     // TODO move these two functions to CodeValidator with the rest of querying functions
     double findRateInProperties(vector<PropertyNode *> properties, QVector<AST *> scope, AST *tree);
@@ -43,6 +49,7 @@ private:
     void declareUnknownStreamSymbols(StreamNode *stream, AST *previousStreamMember, AST *tree);
     void resolveStreamSymbols();
     void resolveConstants();
+    QVector<AST *>  expandStream(StreamNode *stream);
 //    void expandStreamMembers();
 //    void sliceStreams();
 
@@ -51,6 +58,7 @@ private:
     ValueNode *resolveConstant(AST *value, QVector<AST *> scope);
     void resolveConstantsInNode(AST *node, QVector<AST *> scope);
     double getDefaultForTypeAsDouble(QString type, QString port);
+    AST *getDefaultPortValueForType(QString type, QString portName);
 
     // Operators
     ValueNode *multiply(ValueNode *left, ValueNode *right);
@@ -68,7 +76,7 @@ private:
 //    QVector<AST *> sliceStream(StreamNode *stream);
     StreamNode *splitStream(StreamNode *stream, AST *closingNode, AST *endNode);
 
-    StreamPlatform m_platform;
+    StreamPlatform *m_platform;
     AST *m_tree;
     int m_connectorCounter;
 };

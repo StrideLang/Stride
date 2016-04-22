@@ -1,4 +1,4 @@
-type Property {
+type _Property {
 	typeName: "property"
 	ports: [
 		port Name {
@@ -18,7 +18,7 @@ type Property {
 }
 
 
-type Hybrid {
+type _Hybrid {
 	typeName: "hybrid"
 	ports: [
 		port Name {
@@ -37,7 +37,7 @@ type Hybrid {
 	inherits: "rated" # TODO could we use Rated here instead?
 }
 
-type Module {
+type _Module {
 	typeName: "module"
 	ports: [
 		port Input {
@@ -74,7 +74,7 @@ type Module {
 	]
 }
 
-type Reaction {
+type _Reaction {
 	typeName: "reaction"
 	ports: [
 		port Output {
@@ -109,4 +109,3 @@ type Reaction {
 		}
 	]
 }
-

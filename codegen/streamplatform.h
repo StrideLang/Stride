@@ -5,21 +5,25 @@
 #include <QString>
 #include <QStringList>
 #include <QLibrary>
+#include <QMap>
 
-#include "platformfunction.h"
-#include "platformtype.h"
-#include "platformobject.h"
+
+#include "ast.h"
+#include "propertynode.h"
+#include "blocknode.h"
+#include "strideparser.h"
+#include "stridelibrary.hpp"
+
 #include "builder.h"
 
 class StreamPlatform
 {
 public:
-    StreamPlatform(QString platformPath);
     StreamPlatform(QStringList platformPaths, QString platform, QString version);
     ~StreamPlatform();
 
     typedef enum {
-        PythonPlatform,
+        PythonTools,
         PluginPlatform,
         NullPlatform
     } PlatformAPI;
@@ -31,23 +35,21 @@ public:
     PlatformAPI getAPI() {return m_api;}
     Builder *createBuilder(QString projectDir);
 
-    QList<Property> getPortsForType(QString typeName);
-    QList<Property> getPortsForFunction(QString typeName);
-    QVariant getDefaultPortValueForType(QString typeName, QString portName);
+    ListNode *getPortsForType(QString typeName);
+    ListNode *getPortsForTypeBlock(BlockNode *block);
 
-    PlatformFunction getFunction(QString functionName);
-    QList<PlatformObject> getBuiltinObjects();
+    ListNode *getPortsForFunction(QString typeName);
+
+    BlockNode *getFunction(QString functionName);
+    QList<AST *> getBuiltinObjects();
 
     bool isValidType(QString typeName);
     bool typeHasPort(QString typeName, QString propertyName);
-    bool isValidPortType(QString typeName, QString propertyName, QString propType);
+    bool isValidPortType(QString typeName, QString propertyName, PortType propType);
 
     QString getPlatformPath(); // Path for the specific platform
 
 private:
-    void parseTypesJson(QString jsonText, QList<PlatformType> &types);
-    void parseFunctionsJson(QString jsonText, QList<PlatformFunction> &functions);
-    void parseObjectsJson(QString jsonText, QList<PlatformObject> &objects);
 
     QString readFile(QString fileName);
 
@@ -61,11 +63,11 @@ private:
     QStringList m_errors;
     QStringList m_warnings;
 
-    QList<PlatformType> m_commonTypes;
-    QList<PlatformType> m_platformCommonTypes;
-    QList<PlatformType> m_platformTypes;
-    QList<PlatformFunction> m_platformFunctions;
-    QList<PlatformObject> m_platformObjects;
+
+    QStringList m_types;
+
+    QMap<QString, AST *> m_platform;
+    StrideLibrary m_library;
 };
 
 #endif // STREAMPLATFORM_H

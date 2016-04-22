@@ -59,6 +59,40 @@ class Atom:
     def get_rate(self):
         return self.rate
         
+         
+class PlatformTypeAtom(Atom):
+    def __init__(self, module, platform_type, token_index, platform):
+        self.module = module
+        self.platform_type = platform_type
+        self.index = token_index
+        self.platform = platform
+        
+        self.set_inline(False)
+        
+    def get_handles(self):
+        if self.is_inline():
+            return [self.get_inline_processing_code([])]
+        else:
+            return [self.handle]
+
+    def get_out_tokens(self):
+        if hasattr(self, 'out_tokens'):
+            return self.out_tokens
+        else:
+            return [self.handle]
+    
+    def get_declarations(self):
+        return {}
+    
+    def get_instances(self):
+                # Hardware platform definition
+        return {}
+        
+    def get_processing_code(self, in_tokens):
+        return 'PROC_CODEEEEE'
+        
+    def get_inline_processing_code(self, in_tokens):
+        return 'INLINE_CODEEEEE'
         
 class ValueAtom(Atom):
     def __init__(self, value_node, index):
@@ -315,20 +349,17 @@ class BundleAtom(Atom):
                       }]
         else:
             default_value = 0.0 # TODO put actual default
+            code = self.platform_type['block']['initialization']
+            code = code.replace('%%token%%', self._get_token_name(self.index))            
+            code = code.replace('%%bundle_index%%', str(self.index))
+            
             instances = [{'handle' : self.handle,
-                      'code' : str(default_value),
+                      'code' : code,
                       'type' : 'bundle',
                       'bundletype' : 'real',
                       'size' : self.declaration['size']
                       }]
-#            # Hardware platform definition
-#            code = self.platform_type['code']['init_code']['code']
-#            code = code.replace('%%token%%', self._get_token_name(self.index))            
-#            code = code.replace('%%bundle_index%%', str(self.index))
-#            
-#            inits = [{'handle' : self.handle,
-#                      'code' : code
-#                      }]
+
                 
         return instances
     
@@ -343,9 +374,9 @@ class BundleAtom(Atom):
         if len(in_tokens) > 0:
             code = templates.assignment(self._get_token_name(self.index),
                                         self.get_inline_processing_code(in_tokens))
-        if 'code' in self.platform_type:
+        if 'processing' in self.platform_type['block']:
             # FIXME Hardware platform code. This needs to be improved...
-            code += self.platform_type['code']['dsp_code']['code']
+            code += self.platform_type['block']['processing']
             code = code.replace('%%token%%', self._get_token_name(self.index))            
             code = code.replace('%%bundle_index%%', str(self.index))
 
@@ -354,64 +385,6 @@ class BundleAtom(Atom):
         
     def _get_token_name(self, index):
         return '%s[%i]'%(self.handle, index)
-
-
-class PlatformModuleAtom(Atom):
-    def __init__(self, platform_type, declaration, token_index):
-        self.name = declaration['name']
-        self.handle = self.name + '_%03i'%token_index;
-        self.platform_type = platform_type
-        self.declaration = declaration
-        
-        ugen_name = "ugen_%02i"%(token_index)
-        new_code = self.get_function_code(module, processor["ports"], out_var_name, ugen_name, self._intokens)
-
-        new_dsp_code += new_code["dsp_code"]
-        new_init_code += new_code["init_code"]
-        if "includes" in new_code:
-            self.includes_list.append(new_code["includes"])
-        
-        if not rate == self.sample_rate:
-            self._rated_ugens[ugen_name] = rate_index
-        properties = processor["ports"]
-        for prop in properties:
-            prop_value = properties[prop]
-            prop_type = prop_value["type"]
-            if prop_type == "Value":
-                if prop in module["code"]["dsp_code"]:
-                    new_setup_code += self.get_function_property_setup_code(module, prop, str(prop_value["value"]), ugen_name)
-            if prop_type == "Name":
-                pass
-                # FIXME set name token
-                #if prop in module["code"]["dsp_code"]:
-                #    setup_code += self.platform.get_function_property_setup_code(module, prop, str(prop_value["value"]), ugen_name)
-        self.last_num_outs = module["num_outputs"]
-       # return {"init_code": new_init_code, "dsp_code" : new_dsp_code, "setup_code" : new_setup_code}
-        
-        
-    def get_declarations(self):
-        return {}
-    
-    def get_instances(self):
-        return [{'type' : 'real', 'handle' : self.handle}]
-    
-#    def get_init_code(self):
-#        if 'default' in self.declaration:
-#            default_value = self.declaration
-#        else:
-#            if 'default' in self.platform_type['block']:
-#                default_value = self.platform_type['block']['default'] # FIXME inheritance is not being handled here
-#            else:
-#                default_value = 0.0
-#        code = self.handle + ' = ' + str(default_value) + ';\n'
-#        return code
-    
-    def get_processing_code(self, in_tokens):
-        code = ''
-        if len(in_tokens) > 0:
-            code = templates.assignment(self.handle, in_tokens[0])
-        out_tokens = [self.handle]
-        return code, out_tokens
         
     def get_generated_code(self):
         
@@ -687,9 +660,6 @@ class ReactionAtom(Atom):
 # --------------------- Common platform functions
 class PlatformFunctions:
     def __init__(self, platform_dir, tree):
-
-        self._platform_funcs = json.load(open(platform_dir + '/functions.json'))['functions']
-        self._platform_types = json.load(open(platform_dir + '/types.json'))['types']
         
         self.defined_modules =[]
     
@@ -697,11 +667,7 @@ class PlatformFunctions:
         self.scope_stack = []
         
         self.sample_rate = 44100 # FIXME: This is a hack. This should be brought in from the stream's domain and rate
-    
-    def find_platform_function(self, name):
-        for func in self._platform_funcs:
-            if func['functionName'] == name:
-                return func
+
     
     def find_declaration_in_tree(self, block_name, tree):
         for node in tree:
@@ -725,25 +691,22 @@ class PlatformFunctions:
     def find_stride_type(self, type_name):
         for element in self.tree:
             if 'block' in element:
+                if element['block']['type'] == 'module':
+                    if element['block']['name'] == type_name:
+                        return element
                 if element['block']['type'] == 'type':
                     if element['block']['typeName'] == type_name:
                         return element
-    
-    def find_platform_type(self, type_name):
-        found_type = None
-        for platform_type in self._platform_types:
-            if platform_type['typeName'] == type_name:
-                found_type = platform_type
-                break
-        if not found_type:
-            raise ValueError("Type " + type_name + " not found.")
-        return platform_type
+                elif element['block']['type'] == 'platformType':
+                    if element['block']['typeName'] == type_name:
+                        return element
     
     def find_block(self, name, tree):
         block_declaration = self.find_declaration_in_tree(name, tree)
-        platform_type = self.find_stride_type(block_declaration["type"])
-        if not platform_type:
-            platform_type = self.find_platform_type(block_declaration["type"])
+        if 'type' in block_declaration:
+            platform_type = self.find_stride_type(block_declaration["type"])
+        else:
+            platform_type =  self.find_stride_type(block_declaration["platformType"])
         return platform_type, block_declaration
     
     def find_port_value(self, object_name, port_name, tree):
@@ -784,16 +747,17 @@ class PlatformFunctions:
             new_atom = BundleAtom(platform_type, declaration, member['bundle']['index'], self.unique_id)
         elif "function" in member:
             rate = member['function']["rate"]
-            module = self.find_platform_function(member['function']["name"])
-            if module:
-                new_atom = PlatformModuleAtom(platform_type, declaration, self.unique_id)
-            else:
-                module = self.find_declaration_in_tree(member['function']["name"], self.tree)
-                if module['type'] == 'module':
-                    platform_type = self.find_platform_function(member['function']["name"])
+            module = self.find_declaration_in_tree(member['function']["name"], self.tree)
+            if module['type'] == 'module':
+                platform_type = self.find_stride_type(member['function']["name"])
+                if 'platformType' in platform_type['block']:
+                    new_atom = PlatformTypeAtom(module, platform_type, self.unique_id, self)
+                elif 'type' in platform_type['block']:
                     new_atom = ModuleAtom(module, platform_type, self.unique_id, self)
-                elif module['type'] == 'reaction':
-                    new_atom = ReactionAtom(module, self.unique_id, self)
+                else:
+                    raise ValueError("Invalid or unavailable platform type.")
+            elif module['type'] == 'reaction':
+                new_atom = ReactionAtom(module, self.unique_id, self)
         elif "expression" in member:
             rate = member['expression']["rate"]
             if 'value' in member['expression']: # Unary expression

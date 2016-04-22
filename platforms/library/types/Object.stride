@@ -1,10 +1,10 @@
-type Rated {
+type _Rated {
 	typeName: "rated"
-	ports: [ 
+	ports: [
 		port Rate {
 			name: "rate"
 			types: ["", "none"]
-			default: none
+			default: AudioRate
 			required: on
 		},
 		port Reset {
@@ -17,9 +17,9 @@ type Rated {
 	inherits: "domainMember" # TODO: Should we be able to say "DomainMember" here instead?
 }
 
-type Streamable {
+type _Streamable {
 	typeName: "streamable"
-	portsPorts: [
+	ports: [
 		port InputName {
 			name: "inputName"
 			types: ["", "none"]
@@ -36,9 +36,9 @@ type Streamable {
 	inherits: "rated"
 }
 
-type DomainMember {
+type _DomainMember {
 	typeName: "domainMember"
-	ports: [ 
+	ports: [
 		port TypeName {
 			name: "domain"
 			types: ["", "none"]
@@ -48,25 +48,7 @@ type DomainMember {
 	]
 }
 
-type Type {
-	typeName: "type"
-	ports: [ 
-		port TypeName {
-			name: "typeName"
-			types: ["CSP", "none"]
-			default: none
-			required: on
-		},
-		port Ports {
-			name: "ports"
-			types: ["", "none"] # TODO how to validate object lists?
-			default: none
-			required: on
-		}
-	]
-}
-
-type Port {
+type _Port {
 	typeName: "port"
 	ports: [
 		port Name {
@@ -95,16 +77,16 @@ type Port {
 		},
 		port Required {
 			name: "required"
-			types: ["CBP", "none"] 
+			types: ["CBP", "none"]
 			default: none
 			required: on
 		}
 	]
 }
 
-type Base {
+type _Base {
 	typeName: "base"
-	ports: [ 
+	ports: [
 		port Inherits {
 			name: "inherits"
 			types: ["CSP", "none"]
@@ -118,4 +100,4 @@ type Base {
 			required: off
 		}
 	]
-} 
+}

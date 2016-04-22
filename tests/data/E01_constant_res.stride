@@ -4,8 +4,6 @@ constant Const1 {value: 2.0}
 constant Const2 {value: 3.1}
 constant Const3 {value: 0.1}
 
-constant Const4 {value: Const1 + (Const2 * Const3)}
-
 constant Const5 {value: -Const3}
 
 constant ConstInt1 {value: 2}
@@ -27,9 +25,13 @@ constant ConstFloat6 {value: Const1 - 3.0}
 constant ConstFloat7 {value: Const1 * 4.0}
 constant ConstFloat8 {value: Const1 / 2.0}
 
+#Expressions
+constant ConstExpr {value: Const1 + (Const2 * Const3)}
+
 # Unary operators
 constant ConstInt6 {value: -ConstInt1}
 #constant ConstInt7 {value: (ConstInt1 * 15) | 16}
 #constant ConstInt8 {value: (ConstInt1 * 15) & 8}
 #constant ConstInt9 {value: ~(ConstInt1 * 15)}
+
 

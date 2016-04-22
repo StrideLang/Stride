@@ -1,28 +1,4 @@
 {"objects": [
-        {
-            "objectName": "AudioIn",
-            "size" : 2,
-            "type" : "_hwInput",
-            "rate" : {"name": "AudioRate"}
-        },
-        {
-            "objectName": "AudioOut",
-            "size" : 2,
-            "type" : "_hwOutput",
-            "rate" : {"name": "AudioRate"}
-        },
-        {
-            "objectName": "AudioRate",
-            "type" : "constant",
-            "value" : 44100
-        },
-        {
-            "objectName": "ControlRate",
-            "type" : "constant",
-            "value" : 441
-        }
+
     ]
 }
-
-
-

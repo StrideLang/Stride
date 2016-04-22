@@ -15,9 +15,6 @@ message(Building $${TARGET})
 
 SOURCES += \
     streamplatform.cpp \
-    platformtype.cpp \
-    platformfunction.cpp \
-    platformobject.cpp \
     pythonproject.cpp \
     codevalidator.cpp \
     coderesolver.cpp \
@@ -25,9 +22,6 @@ SOURCES += \
 
 HEADERS += \
     streamplatform.h \
-    platformtype.h \
-    platformfunction.h \
-    platformobject.h \
     pythonproject.h \
     codevalidator.h \
     coderesolver.h \

@@ -17,5 +17,20 @@
 #include "rangenode.h"
 
 
+typedef enum {
+    Audio,
+    ControlReal,
+    ControlInt,
+    ControlBoolean,
+    ControlString,
+    ConstReal,
+    ConstInt,
+    ConstBoolean,
+    ConstString,
+    None,
+    Invalid
+} PortType;
+
+
 #endif // STREAMPARSER_H
 

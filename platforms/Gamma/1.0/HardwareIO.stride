@@ -1,0 +1,33 @@
+platformType _HwInput {
+    typeName: '_hwInput'
+    includes: ''
+    declarations: ''
+    initialization: "// %%token%% = 0;"
+    processing: "%%token%% = io.in(%%bundle_index%%);"
+    inherits: 'signal'
+}
+
+platformType _HwOutput {
+    typeName: '_hwOutput'
+    includes: ''
+    declarations: ''
+    initialization: "// %%token%% = 0;"
+    processing: "io.out(%%bundle_index%%) = %%token%%;"
+    inherits: 'signal'
+}
+
+constant AudioRate {
+    value: 44100
+}
+
+_hwInput AudioIn[2] {
+    rate: AudioRate
+}
+
+_hwOutput AudioOut[2] {
+    rate: AudioRate
+}
+
+#platformModule _TestModule {
+
+#}

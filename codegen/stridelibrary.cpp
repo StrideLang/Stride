@@ -9,10 +9,13 @@
 #include "stridelibrary.hpp"
 #include "codevalidator.h"
 
+StrideLibrary::StrideLibrary()
+{
+}
+
 StrideLibrary::StrideLibrary(QString libraryPath)
 {
     readLibrary(libraryPath);
-    readLibraryTypes(libraryPath);
 }
 
 StrideLibrary::~StrideLibrary()
@@ -21,15 +24,22 @@ StrideLibrary::~StrideLibrary()
         node->deleteChildren();
         delete node;
     }
-    foreach(AST * node, m_libraryTypes) {
+}
+
+void StrideLibrary::setLibraryPath(QString libraryPath)
+{
+    foreach(AST *node, m_libraryTrees) {
         node->deleteChildren();
         delete node;
     }
+    m_libraryTrees.clear();
+
+    readLibrary(libraryPath);
 }
 
 BlockNode *StrideLibrary::findTypeInLibrary(QString typeName)
 {
-    foreach (AST *rootNode, m_libraryTypes) {
+    foreach (AST *rootNode, m_libraryTrees) {
         foreach (AST *node, rootNode->getChildren()) {
             if (node->getNodeType() == AST::Block) {
                 BlockNode *block = static_cast<BlockNode *>(node);
@@ -82,12 +92,7 @@ std::vector<AST *> StrideLibrary::getNodes()
     std::vector<AST *> nodes;
     foreach(AST *tree, m_libraryTrees) {
         foreach(AST *node, tree->getChildren()) {
-            nodes.push_back(node->deepCopy());
-        }
-    }
-    foreach(AST *tree, m_libraryTypes) {
-        foreach(AST *node, tree->getChildren()) {
-            nodes.push_back(node->deepCopy());
+            nodes.push_back(node);
         }
     }
     return nodes;
@@ -107,23 +112,16 @@ bool StrideLibrary::isValidProperty(PropertyNode *property, BlockNode *type)
         string portNameInType = static_cast<ValueNode *>(portName->getValue())->getStringValue();
         if(property->getName() == portNameInType) {
             return true;
-//            PropertyNode *validTypes = CodeValidator::findPropertyByName(portBlock->getProperties(), "types");
-//            ListNode *validTypesList = static_cast<ListNode *>(validTypes->getValue());
-//            Q_ASSERT(validTypesList->getNodeType() == AST::List);
-//            foreach(AST * validType, validTypesList->getChildren()) {
-//                Q_ASSERT(validType->getNodeType() == AST::String);
-//                QString typeCode = QString::fromStdString(static_cast<ValueNode *>(validType)->getStringValue());
-//                AST *value = property->getValue();
-//                if (value->getNodeType() == AST::String)
-//                if (typeCode == "CSP" && value->getNodeType() == AST::String) {
-//                    return true;
-//                } else if (typeCode == "CSP" && value->getNodeType() == AST::String) {
-//                    return true;
-//                } else if (value->getNodeType() == AST::Name) {
-//                    return true; // We will validate this later when we know the context
-//                }
-//            }
-
+        }
+    }
+    PropertyNode *inherits = CodeValidator::findPropertyByName(type->getProperties(), "inherits");
+    if (inherits) {
+        ValueNode *inheritedTypeName = static_cast<ValueNode *>(inherits->getValue());
+        Q_ASSERT(inheritedTypeName->getNodeType() == AST::String);
+        BlockNode *inheritedType = findTypeInLibrary(QString::fromStdString(inheritedTypeName->getStringValue()));
+        Q_ASSERT(inheritedType != NULL);
+        if (isValidProperty(property, inheritedType)) {
+            return true;
         }
     }
     return false;
@@ -147,34 +145,18 @@ void StrideLibrary::readLibrary(QString rootDir)
 {
     QStringList nameFilters;
     nameFilters << "*.stride";
-    QString subpath = "/library";
-    QStringList libraryFiles =  QDir(rootDir + subpath).entryList(nameFilters);
-    foreach (QString file, libraryFiles) {
-        QString fileName = rootDir + subpath + QDir::separator() + file;
-        AST *tree = AST::parseFile(fileName.toLocal8Bit().data());
-        if(tree) {
-            m_libraryTrees.append(tree);
+    QString basepath = "/library";
+    QStringList subPaths;
+    subPaths << "" << "types";
+    foreach(QString subPath, subPaths) {
+        QStringList libraryFiles =  QDir(rootDir + basepath + QDir::separator() + subPath).entryList(nameFilters);
+        foreach (QString file, libraryFiles) {
+            QString fileName = rootDir + basepath + QDir::separator() + subPath + QDir::separator() + file;
+            AST *tree = AST::parseFile(fileName.toLocal8Bit().data());
+            if(tree) {
+                m_libraryTrees.append(tree);
+            }
         }
     }
 }
 
-void StrideLibrary::readLibraryTypes(QString rootDir)
-{
-    QStringList nameFilters;
-    nameFilters << "*.stride";
-    QString subpath = "/library/types";
-    QStringList typeFiles =  QDir(rootDir + subpath).entryList(nameFilters);
-    foreach (QString file, typeFiles) {
-        QString fileName = rootDir + subpath + QDir::separator() + file;
-        QString cleanPath = QDir::cleanPath(fileName); // Path contains ../
-        AST *tree = AST::parseFile(cleanPath.toLocal8Bit().data());
-        if (!tree) {
-            vector<LangError> errors = AST::getParseErrors();
-            errors.at(0);
-        }
-        Q_ASSERT_X(tree, "readLibraryTypes ", file.toLocal8Bit().constData());
-        if(tree) {
-            m_libraryTypes.append(tree);
-        }
-    }
-}

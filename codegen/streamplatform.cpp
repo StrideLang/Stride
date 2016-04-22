@@ -2,19 +2,11 @@
 #include <QTextStream>
 #include <QDir>
 #include <QDebug>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonValue>
-#include <QJsonArray>
 
 #include "streamplatform.h"
 #include "builder.h"
 #include "pythonproject.h"
 
-StreamPlatform::StreamPlatform(QString platformPath) :
-    m_platformRootPath(platformPath)
-{
-}
 
 StreamPlatform::StreamPlatform(QStringList platformPaths, QString platform, QString version) :
     m_platformName(platform), m_version(version), m_api(NullPlatform)
@@ -35,52 +27,64 @@ StreamPlatform::StreamPlatform(QStringList platformPaths, QString platform, QStr
                 + QDir::separator() + m_version).absolutePath();
         if (QFile::exists(fullPath)) {
             // First try to find plugin platforms
-            QStringList pluginFiles = QDir(fullPath).entryList(QDir::Files | QDir::NoDotAndDotDot);
-            foreach (QString file, pluginFiles) {
-                if (QLibrary::isLibrary(file)) {
-                    QLibrary pluginLibrary(fullPath + QDir::separator() + file);
-                    if (!pluginLibrary.load()) {
-                        qDebug() << pluginLibrary.errorString();
-                        continue;
-                    }
-                    create_object_t create = (create_object_t) pluginLibrary.resolve("create_object");
-                    platform_name_t get_name = (platform_name_t) pluginLibrary.resolve("platform_name");
-                    platform_version_t get_version = (platform_version_t) pluginLibrary.resolve("platform_version");
-                    if (create && get_name && get_version) {
-                        char name[32];
-                        get_name(name);
-                        double platformVersion = get_version();
-                        //                qDebug() << "Loaded platform " << name << " version " << QString::number(libversion, 'f', 1);
-                        if (m_platformName == QString(name) && (QString::number(platformVersion, 'f', 1) == m_version || m_version == "-1.0")) {
-                            qDebug() << "Using Plugin Platform " << name << " version " << QString::number(platformVersion, 'f', 1);
-                            m_platformPath = fullPath;
-                            m_api = PluginPlatform;
-                            m_pluginName = fullPath + QDir::separator() + file;
-//                            QString xmosToolChainRoot = "/home/andres/Documents/src/XMOS/xTIMEcomposer/Community_14.0.1";
-                            Builder *builder = create("", "", "" );
+//            QStringList pluginFiles = QDir(fullPath).entryList(QDir::Files | QDir::NoDotAndDotDot);
+//            foreach (QString file, pluginFiles) {
+//                if (QLibrary::isLibrary(file)) {
+//                    QLibrary pluginLibrary(fullPath + QDir::separator() + file);
+//                    if (!pluginLibrary.load()) {
+//                        qDebug() << pluginLibrary.errorString();
+//                        continue;
+//                    }
+//                    create_object_t create = (create_object_t) pluginLibrary.resolve("create_object");
+//                    platform_name_t get_name = (platform_name_t) pluginLibrary.resolve("platform_name");
+//                    platform_version_t get_version = (platform_version_t) pluginLibrary.resolve("platform_version");
+//                    if (create && get_name && get_version) {
+//                        char name[32];
+//                        get_name(name);
+//                        double platformVersion = get_version();
+//                        //                qDebug() << "Loaded platform " << name << " version " << QString::number(libversion, 'f', 1);
+//                        if (m_platformName == QString(name) && (QString::number(platformVersion, 'f', 1) == m_version || m_version == "-1.0")) {
+//                            qDebug() << "Using Plugin Platform " << name << " version " << QString::number(platformVersion, 'f', 1);
+//                            m_platformPath = fullPath;
+//                            m_api = PluginPlatform;
+//                            m_pluginName = fullPath + QDir::separator() + file;
+////                            QString xmosToolChainRoot = "/home/andres/Documents/src/XMOS/xTIMEcomposer/Community_14.0.1";
+//                            Builder *builder = create("", "", "" );
 
-                            typesJson = builder->requestTypesJson();
-                            functionsJson = builder->requestFunctionsJson();
-                            objectsJson = builder->requestObjectsJson();
-                            break;
-                        }
-                    }
-                    pluginLibrary.unload();
-                }
+//                            typesJson = builder->requestTypesJson();
+//                            functionsJson = builder->requestFunctionsJson();
+//                            objectsJson = builder->requestObjectsJson();
+//                            break;
+//                        }
+//                    }
+//                    pluginLibrary.unload();
+//                }
             }
             if (m_api != NullPlatform) {
                 break; // Stop looking if platform has been found.
             }
             // Now try to find Python platform
             if (QFile::exists(fullPath)) {
-                typesJson = readFile(fullPath + QDir::separator() + "types.json");
-                functionsJson = readFile(fullPath + QDir::separator() + "functions.json");
-                objectsJson = readFile(fullPath + QDir::separator() + "objects.json");
-                if (m_errors.size() == 0) {
-                    m_api = PythonPlatform;
-                    m_platformPath = fullPath;
-                    break;
+                m_library.setLibraryPath(path);
+                QStringList nameFilters;
+                nameFilters << "*.stride";
+                QStringList libraryFiles =  QDir(fullPath).entryList(nameFilters);
+                foreach (QString file, libraryFiles) {
+                    QString fileName = fullPath + QDir::separator() + file;
+                    AST *tree = AST::parseFile(fileName.toLocal8Bit().data());
+                    if(tree) {
+                        Q_ASSERT(!m_platform.contains(file));
+                        m_platform[file] = tree;
+                    } else {
+                        vector<LangError> errors = AST::getParseErrors();
+                        foreach(LangError error, errors) {
+                            qDebug() << QString::fromStdString(error.getErrorText());
+                        }
                 }
+                m_platformPath = fullPath;
+                m_api = PythonTools;
+                m_types = getPlatformTypeNames();
+                break;
             }
         }
     }
@@ -88,247 +92,128 @@ StreamPlatform::StreamPlatform(QStringList platformPaths, QString platform, QStr
     if (m_api == NullPlatform) {
         qDebug() << "Platform not found!";
     }
-
-    parseTypesJson(typesJson, m_platformTypes);
-    parseFunctionsJson(functionsJson, m_platformFunctions);
-    parseObjectsJson(objectsJson,m_platformObjects);
-
 }
 
 StreamPlatform::~StreamPlatform()
 {
+    foreach(AST *tree, m_platform) {
+        tree->deleteChildren();
+        delete tree;
+    }
 }
 
-QList<Property> StreamPlatform::getPortsForType(QString typeName)
+ListNode *StreamPlatform::getPortsForType(QString typeName)
 {
-    foreach(PlatformType type, m_platformTypes) {
-        if (type.getName() == typeName) {
-            return type.ports();
+    foreach(AST* nodeGroup, m_platform) {
+        foreach(AST *node, nodeGroup->getChildren()) {
+            if (node->getNodeType() == AST::Block) {
+                BlockNode *block = static_cast<BlockNode *>(node);
+                if (block->getObjectType() == "platformType"
+                        || block->getObjectType() == "type") {
+                    ValueNode *name = static_cast<ValueNode*>(block->getPropertyValue("typeName"));
+                    Q_ASSERT(name->getNodeType() == AST::String);
+                    if (name->getStringValue() == typeName.toStdString()) {
+                        ListNode *portList = getPortsForTypeBlock(block);
+                        if (portList) {
+                            return portList;
+                        }
+                    }
+                }
+            }
         }
     }
-    foreach(PlatformType type, m_platformCommonTypes) {
-        if (type.getName() == typeName) {
-            return type.ports();
+
+    BlockNode * libraryType = m_library.findTypeInLibrary(typeName);
+    if (libraryType) {
+        ListNode *portList = getPortsForTypeBlock(libraryType);
+        if (portList) {
+            return portList;
         }
     }
-    foreach(PlatformType type, m_commonTypes) {
-        if (type.getName() == typeName) {
-            return type.ports();
-        }
-    }
-    return QList<Property>();
+
+    return NULL;
 }
 
-QList<Property> StreamPlatform::getPortsForFunction(QString typeName)
+ListNode *StreamPlatform::getPortsForTypeBlock(BlockNode *block)
 {
-    foreach(PlatformFunction function, m_platformFunctions) {
-        if (function.getName() == typeName) {
-            return function.ports();
+    AST *portsValue = block->getPropertyValue("ports");
+    ListNode *portList = NULL;
+    if (portsValue) {
+        Q_ASSERT(portsValue->getNodeType() == AST::List);
+        portList = static_cast<ListNode *>(portsValue);
+    }
+    AST *inheritedPortsValue = block->getPropertyValue("inherits");
+    if (inheritedPortsValue) {
+        Q_ASSERT(inheritedPortsValue->getNodeType() == AST::String);
+        ListNode *inheritedPortsList = getPortsForType(
+                    QString::fromStdString(static_cast<ValueNode *>(inheritedPortsValue)->getStringValue()));
+        if (portList) {
+            vector<AST *> ports = portList->getChildren();
+            vector<AST *> inheritedPorts = inheritedPortsList->getChildren();
+            ports.insert(ports.end(), inheritedPorts.begin(), inheritedPorts.end());
+            portList->setChildren(ports);
+        } else {
+            portList = inheritedPortsList;
         }
     }
-    return QList<Property>();
+    return portList;
 }
 
-QVariant StreamPlatform::getDefaultPortValueForType(QString typeName, QString portName)
+ListNode *StreamPlatform::getPortsForFunction(QString typeName)
 {
-    QList<Property> ports = getPortsForType(typeName);
-    foreach(Property port, ports) {
-        if (port.name == portName) {
-            return port.defaultValue;
+    foreach(AST* group, m_platform) {
+        foreach(AST *node, group->getChildren()){
+            if (node->getNodeType() == AST::Block) {
+                BlockNode *block = static_cast<BlockNode *>(node);
+                if (block->getObjectType() == "platformModule") {
+                    if (block->getObjectType() == typeName.toStdString()) {
+                        vector<PropertyNode *> ports = block->getProperties();
+                        foreach(PropertyNode *port, ports) {
+                            if (port->getName() == "ports") {
+                                ListNode *portList = static_cast<ListNode *>(port->getValue());
+                                Q_ASSERT(portList->getNodeType() == AST::List);
+                                return portList;
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
-    return QVariant();
+    return NULL;
 }
 
-PlatformFunction StreamPlatform::getFunction(QString functionName)
+BlockNode *StreamPlatform::getFunction(QString functionName)
 {
-    foreach(PlatformFunction func, m_platformFunctions) {
-        if (func.getName() == functionName) {
-            return func;
+    QStringList typeNames;
+    foreach(AST* node, m_platform) {
+        if (node->getNodeType() == AST::Block) {
+            BlockNode *block = static_cast<BlockNode *>(block);
+            if (block->getObjectType() == "platformModule"
+                    || block->getObjectType() == "module") {
+                if (block->getName() == functionName.toStdString()) {
+                    return block;
+                }
+            }
         }
     }
-    QList<Property> properties;
-    return PlatformFunction("", properties, 0, 0);
+    foreach(AST* node, m_library.getNodes()) {
+
+        if (node->getNodeType() == AST::Block) {
+            BlockNode *block = static_cast<BlockNode *>(node);
+            if (block->getObjectType() == "module") {
+                if (block->getName() == functionName.toStdString()) {
+                    return block;
+                }
+            }
+        }
+    }
+    return NULL;
 }
 
 QString StreamPlatform::getPlatformPath()
 {
     return m_platformPath;
-}
-
-void StreamPlatform::parseTypesJson(QString jsonText, QList<PlatformType> &types)
-{
-    QJsonDocument jdoc = QJsonDocument::fromJson(jsonText.toLocal8Bit());
-    QJsonObject obj = jdoc.object();
-    QJsonValue typesJson = obj.take("types");
-    if(!typesJson.isArray()) {
-        QString errorText = "Error in JSON format parsing types.";
-        m_errors << errorText;
-        qDebug() << errorText;
-    }
-    QJsonArray typesArray = typesJson.toArray();
-
-    foreach(QJsonValue type, typesArray) {
-        QJsonObject typeObj = type.toObject();
-        QString typeName = typeObj.take("typeName").toString();
-        QVariantMap portsMap = typeObj.take("ports").toObject().toVariantMap();
-        QStringList portNames = portsMap.keys();
-        QList<Property> ports;
-        foreach(QString portName, portNames) {
-            QVariantMap port = portsMap.value(portName).toMap();
-            Property newPort;
-            newPort.name = portName;
-            newPort.defaultValue = port.take("default");
-            newPort.required = port.take("required").toBool();
-            foreach(QVariant propertyType, port.take("types").toList()) {
-                newPort.types << propertyType.toString();
-            }
-            newPort.maxconnections = port.take("maxconnections").toInt();
-            QString accessString = port.take("access").toString();
-            if (accessString == "property") {
-                newPort.access = Property::PropertyAccess;
-            } else if (accessString == "stream_in") {
-                newPort.access = Property::Stream_in;
-            } else if (accessString == "stream_out") {
-                newPort.access = Property::Stream_out;
-            } else {
-                newPort.access = Property::None;
-                QString errorText = "Invalid port access: " + accessString + " for type " + typeName;
-                m_errors << errorText;
-                qDebug() << errorText;
-            }
-            ports.append(newPort);
-        }
-        if (isValidType(typeName)) {
-            QString errorText = "Shadowing duplicated type: " + typeName;
-            m_warnings << errorText;
-            qDebug() << errorText;
-        }
-
-        QJsonObject privateMap = typeObj.take("privateports").toObject();
-        QVariantList inhertitsList = privateMap.take("inherits").toArray().toVariantList();
-        foreach(QVariant member, inhertitsList) {
-            ports.append(getPortsForType(member.toString()));
-        }
-
-        //.toVariantMap();
-        PlatformType newType(typeName, ports);
-        types.append(newType);
-    }
-}
-
-void StreamPlatform::parseFunctionsJson(QString jsonText, QList<PlatformFunction> &functions)
-{
-    QJsonDocument jdoc = QJsonDocument::fromJson(jsonText.toLocal8Bit());
-    QJsonObject obj = jdoc.object();
-    QJsonValue funcs = obj.take("functions");
-    if(!funcs.isArray()) {
-        QString errorText = "Error in JSON format parsing functions.";
-        m_errors << errorText;
-        qDebug() << errorText;
-    }
-    QJsonArray funcsArray = funcs.toArray();
-
-    foreach(QJsonValue func, funcsArray) {
-        QJsonObject funcObj = func.toObject();
-        QJsonValue val = funcObj.take("functionName");
-        QString funcName = val.toString();
-        QJsonObject propList = funcObj.take("ports").toObject();
-        QStringList keys = propList.keys();
-        QList<Property> ports;
-        foreach(QString key, keys) {
-            Property newPort;
-            QMap<QString, QVariant> portMap = propList.value(key).toVariant().toMap();
-            newPort.name = key;
-            if (newPort.name.isEmpty()) {
-                QString errorText = "Empty name for port in function: " + funcName;
-                m_errors << errorText;
-                qDebug() << errorText;
-            }
-            newPort.defaultValue = portMap.take("default");
-            foreach(QVariant propertyType, portMap.take("in_types").toList()) {
-                newPort.in_types << propertyType.toString();
-            }
-            foreach(QVariant propertyType, portMap.take("out_types").toList()) {
-                newPort.out_types << propertyType.toString();
-            }
-//            newPort.maxconnections = portMap.take("maxconnections").toInt();
-//            QString accessString = portMap.take("access").toString();
-//            if (accessString == "property") {
-//                newPort.access = Property::PropertyAccess;
-//            } else if (accessString == "stream_in") {
-//                newPort.access = Property::Stream_in;
-//            } else if (accessString == "stream_out") {
-//                newPort.access = Property::Stream_out;
-//            } else {
-//                newPort.access = Property::None;
-//                QString errorText = "Invalid port access: " + accessString + " for type " + funcName;
-//                m_errors << errorText;
-//                qDebug() << errorText;
-//            }
-            ports.append(newPort);
-        }
-        if (isValidType(funcName)) {
-            QString errorText = "Shadowing duplicated type: " + funcName;
-            m_errors << errorText;
-            qDebug() << errorText;
-        }
-
-        QJsonObject privateMap = funcObj.take("private").toObject();
-        QVariantList inhertitsList = privateMap.take("inherits").toArray().toVariantList();
-        foreach(QVariant member, inhertitsList) {
-            ports.append(getPortsForType(member.toString()));
-        }
-
-        //.toVariantMap();
-
-        int numInputs = funcObj.take("num_inputs").toDouble();
-        int numOutputs = funcObj.take("num_outputs").toDouble();
-        PlatformFunction newType(funcName, ports, numInputs, numOutputs);
-        functions.append(newType);
-    }
-}
-
-void StreamPlatform::parseObjectsJson(QString jsonText, QList<PlatformObject> &objects)
-{
-    QJsonDocument jdoc = QJsonDocument::fromJson(jsonText.toLocal8Bit());
-    QJsonObject obj = jdoc.object();
-    QJsonValue objectsValue = obj.take("objects");
-    if(!objectsValue.isArray()) {
-        QString errorText = "Error in JSON format parsing objects.";
-        m_errors << errorText;
-        qDebug() << errorText;
-    }
-    QJsonArray objectsArray = objectsValue.toArray();
-
-    foreach(QJsonValue objectsValues, objectsArray) {
-        QJsonObject objectObj = objectsValues.toObject();
-        QJsonValue val = objectObj.take("objectName");
-        QString objectName = val.toString();
-        val = objectObj.take("size");
-        int size = val.toDouble();
-        val = objectObj.take("type");
-        QString type = val.toString();
-        // The remaining keys in the json object are considered properties
-
-        PlatformObject newObj(objectName, size, type, objectObj.toVariantMap());
-        objects.append(newObj);
-    }
-}
-
-QString StreamPlatform::readFile(QString fileName)
-{
-    QString text;
-    QFile f(fileName);
-    if (!f.open(QFile::ReadOnly | QFile::Text)) {
-        QString errorText = "Error opening platform file: " +  f.fileName();
-        m_errors << errorText;
-        qDebug() << errorText;
-    } else {
-        text = f.readAll();
-        f.close();
-    }
-    return text;
 }
 
 QStringList StreamPlatform::getErrors()
@@ -344,32 +229,51 @@ QStringList StreamPlatform::getWarnings()
 QStringList StreamPlatform::getPlatformTypeNames()
 {
     QStringList typeNames;
-    foreach(PlatformType type, m_platformTypes) {
-        typeNames << type.getName();
+    foreach(AST* group, m_platform) {
+        foreach(AST *node, group->getChildren()) {
+            if (node->getNodeType() == AST::Block) {
+                BlockNode *block = static_cast<BlockNode *>(node);
+                if (block->getObjectType() == "platformType") {
+                    ValueNode *name = static_cast<ValueNode *>(block->getPropertyValue("typeName"));
+                    Q_ASSERT(name->getNodeType() == AST::String);
+                    typeNames << QString::fromStdString(name->getStringValue());
+                }
+            }
+        }
     }
-    foreach(PlatformType type, m_platformCommonTypes) {
-        typeNames << type.getName();
-    }
-    foreach(PlatformType type, m_commonTypes) {
-        typeNames << type.getName();
+    vector<AST *> libObjects = m_library.getNodes();
+    foreach(AST *node, libObjects) {
+        if (node->getNodeType() == AST::Block) {
+            BlockNode *block = static_cast<BlockNode *>(node);
+            if (block->getObjectType() == "platformType"
+                    || block->getObjectType() == "type") {
+                ValueNode *name = static_cast<ValueNode *>(block->getPropertyValue("typeName"));
+                Q_ASSERT(name->getNodeType() == AST::String);
+                typeNames << QString::fromStdString(name->getStringValue());
+            }
+        }
     }
     return typeNames;
 }
 
 QStringList StreamPlatform::getFunctionNames()
 {
-    QStringList functionNames;
-    foreach(PlatformFunction func, m_platformFunctions) {
-        functionNames << func.getName();
+    QStringList typeNames;
+    foreach(AST* node, m_platform) {
+        if (node->getNodeType() == AST::Block) {
+            BlockNode *block = static_cast<BlockNode *>(block);
+            if (block->getObjectType() == "platformModule") {
+                typeNames << QString::fromStdString(block->getName());
+            }
+        }
     }
-    return functionNames;
-
+    return typeNames;
 }
 
 Builder *StreamPlatform::createBuilder(QString projectDir)
 {
     Builder *builder = NULL;
-    if (m_api == StreamPlatform::PythonPlatform) {
+    if (m_api == StreamPlatform::PythonTools) {
         QString pythonExec = "python";
         builder = new PythonProject(m_platformPath, projectDir, pythonExec);
     } else if(m_api == StreamPlatform::PluginPlatform) {
@@ -393,72 +297,78 @@ Builder *StreamPlatform::createBuilder(QString projectDir)
     return builder;
 }
 
-QList<PlatformObject> StreamPlatform::getBuiltinObjects()
+QList<AST *> StreamPlatform::getBuiltinObjects()
 {
-    return m_platformObjects;
+    QList<AST *> objects;
+    QMapIterator<QString, AST *> blockGroup(m_platform);
+    while (blockGroup.hasNext()) {
+        blockGroup.next();
+        foreach(AST *element, blockGroup.value()->getChildren()) {
+            if (element->getNodeType() == AST::Block) {
+                objects << element->deepCopy();
+            } else {
+                objects << element->deepCopy(); // TODO: This inserts everything. Only insert what is needed
+            }
+        }
+    }
+    vector<AST *> libObjects = m_library.getNodes();
+    foreach(AST *object, libObjects) {
+        objects << object->deepCopy();
+    }
+    return objects;
 }
 
 bool StreamPlatform::isValidType(QString typeName)
 {
-//    if (m_basicTypes.contains(typeName)) {
-//        return true;
-//    }
-    foreach(PlatformType type, m_platformTypes) {
-        if (type.getName() == typeName) {
-            return true;
-        }
-    }
-    foreach(PlatformType type, m_platformCommonTypes) {
-        if (type.getName() == typeName) {
-            return true;
-        }
-    }
-    foreach(PlatformType type, m_commonTypes) {
-        if (type.getName() == typeName) {
-            return true;
-        }
+    if (m_types.contains(typeName)) {
+        return true;
     }
     return false;
 }
 
 bool StreamPlatform::typeHasPort(QString typeName, QString propertyName)
 {
-    foreach(PlatformType type, m_platformTypes) {
-        if (type.getName() == typeName && type.hasPort(propertyName)) {
-            return true;
-        }
-    }
-    foreach(PlatformType type, m_platformCommonTypes) {
-        if (type.getName() == typeName && type.hasPort(propertyName)) {
-            return true;
-        }
-    }
-    foreach(PlatformType type, m_commonTypes) {
-        if (type.getName() == typeName && type.hasPort(propertyName)) {
-            return true;
+    ListNode *ports = getPortsForType(typeName);
+    if (ports) {
+        foreach(AST *port, ports->getChildren()) {
+            BlockNode *block = static_cast<BlockNode *>(port);
+            Q_ASSERT(block->getNodeType() == AST::Block);
+            ValueNode *nameValueNode = static_cast<ValueNode *>(block->getPropertyValue("name"));
+            Q_ASSERT(nameValueNode->getNodeType() == AST::String);
+            if (nameValueNode->getStringValue() == propertyName.toStdString()) {
+                return true;
+            }
         }
     }
     return false;
 }
 
-bool StreamPlatform::isValidPortType(QString typeName, QString propertyName, QString propType)
+bool StreamPlatform::isValidPortType(QString typeName, QString propertyName, PortType propType)
 {
-    foreach(PlatformType type, m_platformTypes) {
-        if (type.getName() == typeName && type.hasPort(propertyName)
-                && type.isValidPortType(propertyName, propType)) {
-            return true;
-        }
+    BlockNode *block = getFunction(typeName);
+    if (!block) {
+        return false;
     }
-    foreach(PlatformType type, m_platformCommonTypes) {
-        if (type.getName() == typeName && type.hasPort(propertyName)
-                && type.isValidPortType(propertyName, propType)) {
+    AST *value = block->getPropertyValue(propertyName.toStdString());
+    QString type;
+    switch (value->getNodeType()) {
+    case AST::Int:
+        if (propType == ConstInt) {
             return true;
+        } else {
+            return false;
         }
-    }
-    foreach(PlatformType type, m_commonTypes) {
-        if (type.getName() == typeName && type.hasPort(propertyName)
-                && type.isValidPortType(propertyName, propType)) {
+    case AST::Real:
+        if (propType == ConstReal) {
             return true;
+        } else {
+            return false;
+        }
+    case AST::String:
+        if (propType == ConstString) {
+            return true;
+        } else {
+            return false;
         }
     }
     return false;
