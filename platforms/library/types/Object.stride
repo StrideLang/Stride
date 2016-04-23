@@ -4,7 +4,7 @@ type _Rated {
 		port Rate {
 			name: "rate"
 			types: ["", "none"]
-			default: AudioRate
+			default: AudioRate # Should this be something like PlatformRate
 			required: on
 		},
 		port Reset {

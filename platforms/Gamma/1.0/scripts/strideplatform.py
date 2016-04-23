@@ -9,7 +9,6 @@ from __future__ import print_function
 from __future__ import division
 
 import re
-import json
 
 from platformTemplates import templates
   
@@ -273,7 +272,8 @@ class NameAtom(Atom):
             else:
                 self.rate = declaration['rate']
         else:
-            self.rate = 44100 #FIXME this should never happen... The parser should fill defaults...
+            raise ValueError("Parser should fill defaults.")
+            #this should never happen... The parser should fill defaults...
         
     def get_declarations(self):
         return {}
@@ -338,7 +338,7 @@ class BundleAtom(Atom):
         if 'blockbundle' in self.platform_type:
             #Stride definition
             if 'default' in self.platform_type['blockbundle']:
-                default_value = self.platform_type['blockbundle']['default'] # FIXME inheritance is not being handled here
+                default_value = self.platform_type['blockbundle']['default']
             else:
                 default_value = 0.0
             instances = [{'handle' : self.handle,
@@ -349,9 +349,10 @@ class BundleAtom(Atom):
                       }]
         else:
             default_value = 0.0 # TODO put actual default
-            code = self.platform_type['block']['initialization']
-            code = code.replace('%%token%%', self._get_token_name(self.index))            
-            code = code.replace('%%bundle_index%%', str(self.index))
+            code = str(default_value)
+#            code = self.platform_type['block']['initialization']
+#            code = code.replace('%%token%%', self._get_token_name(self.index))            
+#            code = code.replace('%%bundle_index%%', str(self.index))
             
             instances = [{'handle' : self.handle,
                       'code' : code,
@@ -727,15 +728,12 @@ class PlatformFunctions:
         
     def make_atom(self, member):
         if "name" in member:
-            rate = member['name']["rate"]
             platform_type, declaration = self.find_block(member['name']['name'], self.tree)
             new_atom = NameAtom(platform_type, declaration, self.unique_id)
         elif "bundle" in member:
-            rate = member['bundle']["rate"]
             platform_type, declaration = self.find_block(member['bundle']['name'], self.tree)
             new_atom = BundleAtom(platform_type, declaration, member['bundle']['index'], self.unique_id)
         elif "function" in member:
-            rate = member['function']["rate"]
             module = self.find_declaration_in_tree(member['function']["name"], self.tree)
             if module['type'] == 'module':
                 platform_type = self.find_stride_type(member['function']["name"])
@@ -748,7 +746,6 @@ class PlatformFunctions:
             elif module['type'] == 'reaction':
                 new_atom = ReactionAtom(module, self.unique_id, self)
         elif "expression" in member:
-            rate = member['expression']["rate"]
             if 'value' in member['expression']: # Unary expression
                 left_atom = self.make_atom(member['expression']['left'])
                 right_atom = None
@@ -781,7 +778,6 @@ class PlatformFunctions:
         
         for member in stream: #Only instantiate whatever is used in streams. Discard the rest
             cur_group = node_groups[-1]  
-            # TODO Check rates and rate changes
             new_atom = self.make_atom(member)             
             cur_group.append(new_atom)
 
@@ -839,21 +835,15 @@ class PlatformFunctions:
         return [declare_code, instantiation_code, init_code, processing_code]
         
     def generate_stream_code(self, stream, stream_index, declared, instanced, initialized):
-        #out_var_name = "stream_%02i"%(stream_index)
         node_groups = self.make_stream_nodes(stream)
         
         processing_code = templates.stream_begin_code%stream_index
-#        templates.rate_start(self.sample_rate)
-#        processing_code += templates.rate_start_code()
         
         declare_code, instantiation_code, init_code, new_processing_code = self.generate_code_from_groups(node_groups, declared, instanced, initialized)
         processing_code += new_processing_code
-        
-#        processing_code += templates.rate_end_code()
             
         processing_code += templates.stream_end_code%stream_index
         
-        # TODO return global code
         return {"declare_code" : declare_code,
                 "instantiation_code" : instantiation_code,
                 "init_code" : init_code,
