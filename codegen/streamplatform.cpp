@@ -102,7 +102,7 @@ StreamPlatform::~StreamPlatform()
     }
 }
 
-ListNode *StreamPlatform::getPortsForType(QString typeName)
+QVector<AST *> StreamPlatform::getPortsForType(QString typeName)
 {
     foreach(AST* nodeGroup, m_platform) {
         foreach(AST *node, nodeGroup->getChildren()) {
@@ -113,8 +113,8 @@ ListNode *StreamPlatform::getPortsForType(QString typeName)
                     ValueNode *name = static_cast<ValueNode*>(block->getPropertyValue("typeName"));
                     Q_ASSERT(name->getNodeType() == AST::String);
                     if (name->getStringValue() == typeName.toStdString()) {
-                        ListNode *portList = getPortsForTypeBlock(block);
-                        if (portList) {
+                        QVector<AST *> portList = getPortsForTypeBlock(block);
+                        if (!portList.isEmpty()) {
                             return portList;
                         }
                     }
@@ -125,38 +125,34 @@ ListNode *StreamPlatform::getPortsForType(QString typeName)
 
     BlockNode * libraryType = m_library.findTypeInLibrary(typeName);
     if (libraryType) {
-        ListNode *portList = getPortsForTypeBlock(libraryType);
-        if (portList) {
+        QVector<AST *> portList = getPortsForTypeBlock(libraryType);
+        if (!portList.isEmpty()) {
             return portList;
         }
     }
 
-    return NULL;
+    return QVector<AST *>();
 }
 
-ListNode *StreamPlatform::getPortsForTypeBlock(BlockNode *block)
+QVector<AST *> StreamPlatform::getPortsForTypeBlock(BlockNode *block)
 {
     AST *portsValue = block->getPropertyValue("ports");
-    ListNode *portList = NULL;
+    QVector<AST *> outList;
     if (portsValue) {
         Q_ASSERT(portsValue->getNodeType() == AST::List);
-        portList = static_cast<ListNode *>(portsValue);
+        ListNode *portList = static_cast<ListNode *>(portsValue);
+        foreach(AST *port, portList->getChildren()) {
+            outList << port;
+        }
     }
     AST *inheritedPortsValue = block->getPropertyValue("inherits");
     if (inheritedPortsValue) {
         Q_ASSERT(inheritedPortsValue->getNodeType() == AST::String);
-        ListNode *inheritedPortsList = getPortsForType(
+        QVector<AST *> inheritedPortsList = getPortsForType(
                     QString::fromStdString(static_cast<ValueNode *>(inheritedPortsValue)->getStringValue()));
-        if (portList) {
-            vector<AST *> ports = portList->getChildren();
-            vector<AST *> inheritedPorts = inheritedPortsList->getChildren();
-            ports.insert(ports.end(), inheritedPorts.begin(), inheritedPorts.end());
-            portList->setChildren(ports);
-        } else {
-            portList = inheritedPortsList;
-        }
+        outList << inheritedPortsList;
     }
-    return portList;
+    return outList;
 }
 
 ListNode *StreamPlatform::getPortsForFunction(QString typeName)
@@ -328,9 +324,9 @@ bool StreamPlatform::isValidType(QString typeName)
 
 bool StreamPlatform::typeHasPort(QString typeName, QString propertyName)
 {
-    ListNode *ports = getPortsForType(typeName);
-    if (ports) {
-        foreach(AST *port, ports->getChildren()) {
+    QVector<AST *> ports = getPortsForType(typeName);
+    if (!ports.isEmpty()) {
+        foreach(AST *port, ports) {
             BlockNode *block = static_cast<BlockNode *>(port);
             Q_ASSERT(block->getNodeType() == AST::Block);
             ValueNode *nameValueNode = static_cast<ValueNode *>(block->getPropertyValue("name"));

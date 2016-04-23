@@ -35,8 +35,8 @@ public:
     PlatformAPI getAPI() {return m_api;}
     Builder *createBuilder(QString projectDir);
 
-    ListNode *getPortsForType(QString typeName);
-    ListNode *getPortsForTypeBlock(BlockNode *block);
+    QVector<AST *> getPortsForType(QString typeName);
+    QVector<AST *> getPortsForTypeBlock(BlockNode *block);
 
     ListNode *getPortsForFunction(QString typeName);
 

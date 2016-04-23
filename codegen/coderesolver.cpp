@@ -20,7 +20,7 @@ void CodeResolver::preProcess()
     insertBuiltinObjects();
     resolveStreamSymbols();
     expandParallelFunctions();
-//    fillDefaultProperties();
+    fillDefaultProperties();
     resolveRates();
     resolveConstants();
 }
@@ -65,12 +65,12 @@ void CodeResolver::fillDefaultProperties()
             BlockNode *destBlock = static_cast<BlockNode *>(node);
             vector<PropertyNode *> blockProperties = destBlock->getProperties();
             // TODO: should also set properties for user defined types
-            ListNode *typeProperties = m_platform->getPortsForType(QString::fromStdString(destBlock->getObjectType()));
-            if (!typeProperties) {
+            QVector<AST *> typeProperties = m_platform->getPortsForType(QString::fromStdString(destBlock->getObjectType()));
+            if (typeProperties.isEmpty()) {
                 qDebug() << "ERROR: fillDefaultProperties() No type definition for " << QString::fromStdString(destBlock->getObjectType());
                 return;
             }
-            foreach(AST *propertyListMember, typeProperties->getChildren()) {
+            foreach(AST *propertyListMember, typeProperties) {
                 Q_ASSERT(propertyListMember->getNodeType() == AST::Block);
                 BlockNode *portDescription = static_cast<BlockNode *>(propertyListMember);
                 AST *propName = portDescription->getPropertyValue("name");
@@ -557,15 +557,17 @@ double CodeResolver::getDefaultForTypeAsDouble(QString type, QString port)
     double outValue = 0.0;
     AST *value = getDefaultPortValueForType(type, port);
     QList<LangError> errors;
-    outValue = CodeValidator::evaluateConstReal(value, QVector<AST *>(), m_tree, errors);
+    if (value) {
+        outValue = CodeValidator::evaluateConstReal(value, QVector<AST *>(), m_tree, errors);
+    }
     return outValue;
 }
 
 AST *CodeResolver::getDefaultPortValueForType(QString type, QString portName)
 {
-    ListNode *ports = m_platform->getPortsForType(type);
-    if (ports) {
-        foreach(AST *port, ports->getChildren()) {
+    QVector<AST *> ports = m_platform->getPortsForType(type);
+    if (!ports.isEmpty()) {
+        foreach(AST *port, ports) {
             BlockNode *block = static_cast<BlockNode *>(port);
             Q_ASSERT(block->getNodeType() == AST::Block);
             Q_ASSERT(block->getObjectType() == "port");
@@ -578,7 +580,6 @@ AST *CodeResolver::getDefaultPortValueForType(QString type, QString portName)
                     return platPortDefault;
                 }
             }
-            // TODO handle inheritance for platform types
         }
     }
     return NULL;

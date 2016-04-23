@@ -30,7 +30,14 @@ class Templates(object):
         else:
             raise ValueError(u"Unsupported type '%s' in assignment."%type(number).__name__)
         return s;
+        
     
+    def declaration_real(self, name, close=True):
+        declaration = "float %s"%name
+        if close:
+            declaration += ';\n'
+        return declaration
+
     def assignment(self, assignee, value):
         if not type(value) == str and not type(value) == unicode:
             value = self.number_to_string(value)
@@ -134,7 +141,14 @@ class Templates(object):
             return ''
         
     # Module code ------------------------------------------------------------
-    def module_declaration(self, name, declaration_code, init_code, input_declaration, process_code):
+    def module_declaration(self, name, header_code, init_code,
+                           input_block, process_code):       
+        if input_block:
+            # TODO this needs to be generalized for other types apart from float
+            input_declaration = templates.declaration_real(input_block['name'],
+                                                           close = False)
+        else:
+            input_declaration = ''
         declaration = '''struct %s {
     %s %s() {
         %s
@@ -142,8 +156,9 @@ class Templates(object):
     float process(%s) {
         %s
     }
-};'''%(name, declaration_code, name, init_code, input_declaration, process_code)
+};'''%(name, header_code, name, init_code, input_declaration, process_code)
         return declaration
+
         
     def module_processing_code(self, handle, in_tokens):
         if len(in_tokens) > 0:

@@ -17,23 +17,18 @@ public:
 
 private:
 
-    // TODO Failing tests. Put back
+private Q_SLOTS:
     //Expansion
+    void testConstantResolution();
     void testStreamRates();
     void testStreamExpansion();
     void testMultichannelUgens();
 
     //PlatformConsistency
+    void testValueTypeExpressionResolution();
     void testPlatformCommonObjects();
     void testDuplicates();
     void testValueTypeBundleResolution();
-
-private Q_SLOTS:
-    //Expansion
-    void testConstantResolution();
-
-    //PlatformConsistency
-    void testValueTypeExpressionResolution();
 
     // Parser
     void testNamespaces();
@@ -769,15 +764,15 @@ void ParserTest::testLists()
 
 
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
-//    generator.validate();
-//    QVERIFY(!generator.isValid());
-//    QList<LangError> errors = generator.getErrors();
+    generator.validate();
+    QVERIFY(!generator.isValid());
+    QList<LangError> errors = generator.getErrors();
     //constant List_Inconsistent [4] {
     //        value: [ '16', "32.1", '64', 1 ]
     //}
-//    LangError err = errors.at(0);
+    LangError err = errors.at(0);
 
-    //    QVERIFY(err.type == LangError::InconsistentList);
+    QVERIFY(err.type == LangError::InconsistentList);
     //constant List_Inconsistent2 [4] {
     //        value: [ '16', "32.1", '64', 1.1 ]
     //}
@@ -788,11 +783,17 @@ void ParserTest::testLists()
     //        meta:	'List of lists'
     //}
 
+    err = errors.at(1);
+
+    QVERIFY(err.type == LangError::InconsistentList);
     //# The following should FAIL. Integer and Float lists mixed.
     //list IntegerList [3] {
     //        value: [ [ 1, 2, 3 ], [ 4.0, 5.0, 6.0 ], [ 7, 8, 9 ] ]
     //        meta:	'List of lists'
     //}
+    err = errors.at(2);
+
+    QVERIFY(err.type == LangError::InconsistentList);
 
     tree->deleteChildren();
     delete tree;

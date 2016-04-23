@@ -466,16 +466,10 @@ class ModuleAtom(Atom):
         init_code = self._get_internal_init_code()
         process_code = self._get_internal_processing_code()
         properties_code = self._get_internal_properties_code()
-        
-        if self._input_block:
-            # TODO this needs to be generalized for other types apart from float
-            input_declaration = 'float %s'%self._input_block['name']
-        else:
-            input_declaration = ''
             
         declaration = templates.module_declaration(
                 self.name, declarations_code + instantiation_code + properties_code, 
-                init_code, input_declaration, process_code)
+                init_code, self._input_block, process_code)
                     
         return {self.name :  declaration}
     
@@ -584,15 +578,10 @@ class ReactionAtom(Atom):
         init_code = self._get_internal_init_code()
         process_code = self._get_internal_processing_code()
         
-        if self._input_block:
-            # TODO this needs to be generalized for other types apart from float
-            input_declaration = 'float %s'%self._input_block['name']
-        else:
-            input_declaration = ''
-                    
-        declaration = 'struct %s {\n %s %s() {\n%s}\nfloat process(%s) \n{%s\n}\n};'%(
+        declaration = templates.declaration_module(
                 self.name, declarations_code + instantiation_code, 
-                self.name, init_code, input_declaration, process_code)
+                init_code, self._input_block['name'], process_code)
+        
         return {self.handle :  declaration}
     
     def get_instances(self):

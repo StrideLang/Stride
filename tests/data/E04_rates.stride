@@ -1,6 +1,7 @@
 
 use Gamma version 1.0 on PC
 
+
 AudioIn[1] >> Signal >> AudioOut[1];
 
 
@@ -8,9 +9,11 @@ signal Rate1 {
     rate: 22050
 }
 
+
 signal Rate2 {
-    rate: 11025
+   rate: 11025
 }
+
 
 Rate1 >> Rate2 >> Output1;
 
