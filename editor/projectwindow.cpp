@@ -201,12 +201,7 @@ void ProjectWindow::run(bool pressed)
             printConsoleError(tr("Can't run. No builder available."));
         }
     } else {
-        if (m_builder) {
-            disconnect(m_builder, 0,0,0);
-            m_builder->run(false);
-            delete m_builder;
-            m_builder = NULL;
-        }
+        stop();
     }
 }
 
