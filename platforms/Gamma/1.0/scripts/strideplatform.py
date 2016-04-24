@@ -8,16 +8,15 @@ Created on Sat Apr  9 11:16:55 2016
 from __future__ import print_function
 from __future__ import division
 
-import re
 
 from platformTemplates import templates
   
     
-class Atom:
-    def __init__(self, index):
-        self.index = 0
+class Atom(object):
+    def __init__(self):
         self.rate = -1
         self.inline = False
+        self.globals = {}
         
     def set_inline(self, inline):
         self.inline = inline
@@ -36,6 +35,9 @@ class Atom:
             return self.out_tokens
         else:
             return [self.handle]
+            
+    def get_globals(self):
+        return self.globals
     
     def get_declarations(self):
         return {}
@@ -51,9 +53,6 @@ class Atom:
         when the output is used only once, and an intermediate symbol to 
         represent it is not needed'''
         return None
-    
-    def get_globals(self): # Global instances, declarations and includes
-        return None
         
     def get_rate(self):
         return self.rate
@@ -61,6 +60,7 @@ class Atom:
          
 class PlatformTypeAtom(Atom):
     def __init__(self, module, platform_type, token_index, platform):
+        super(PlatformTypeAtom, self).__init__()
         self.module = module
         self.platform_type = platform_type
         self.index = token_index
@@ -95,6 +95,7 @@ class PlatformTypeAtom(Atom):
         
 class ValueAtom(Atom):
     def __init__(self, value_node, index):
+        super(ValueAtom, self).__init__()
         self.index = index
         self.value = value_node['value']
         self.handle = '__value_%03i'%index
@@ -129,14 +130,11 @@ class ValueAtom(Atom):
         return str(self.value)
         
     def get_processing_code(self, in_tokens):
-        return '', in_tokens
-    
-    def get_globals(self): # Global instances, declarations and includes
-        return None
-        
+        return '', in_tokens        
 
 class ExpressionAtom(Atom):
     def __init__(self, expr_type, left_atom, right_atom, index):
+        super(ExpressionAtom, self).__init__()
         self.expr_type = expr_type
         self.left_atom = left_atom
         self.right_atom = right_atom
@@ -213,7 +211,7 @@ class ExpressionAtom(Atom):
         
 class ListAtom(Atom):
     def __init__(self, list_node):
-        #self.index = index
+        super(ListAtom, self).__init__()
         self.list_node = list_node
         self.rate = -1
         self.inline = True
@@ -228,11 +226,23 @@ class ListAtom(Atom):
             
     def get_out_tokens(self, index = -1):
         return self.out_tokens[index]
-    
+        
+    def get_globals(self):
+        self.globals = {}
+        for atom in self.list_node:
+            new_globals = atom.get_globals()
+            self.globals.update(new_globals)
+        return self.globals
+        
     def get_declarations(self, index = -1):
         return self.declarations[index]
     
     def get_instances(self, index = -1):
+        if index == -1:
+            flat_instances = []
+            for instance in self.instances:
+                flat_instances.extend(instance)
+            return flat_instances
         return self.instances[index]
         
     def get_inline_processing_code(self, in_tokens):
@@ -252,17 +262,20 @@ class ListAtom(Atom):
                  code += new_code
                  out_tokens += new_out_tokens
         return code, out_tokens
-    
-    def get_globals(self): # Global instances, declarations and includes
-        return None
         
 
 class NameAtom(Atom):
     def __init__(self, platform_type, declaration, token_index):
+        super(NameAtom, self).__init__()
         self.name = declaration['name']
         self.handle = self.name # + '_%03i'%token_index;
         self.platform_type = platform_type
         self.declaration = declaration
+        if 'include' in platform_type['block']:
+            if 'include' in self.globals:
+                self.globals['include'].extend([inc['value']['value'] for inc in platform_type['block']['include']])
+            else:
+                self.globals['include'] = [inc['value']['value'] for inc in platform_type['block']['include']]
         
         self.set_inline(False)
         
@@ -272,7 +285,7 @@ class NameAtom(Atom):
             else:
                 self.rate = declaration['rate']
         else:
-            raise ValueError("Parser should fill defaults.")
+            raise ValueError("Parser must fill defaults.")
             #this should never happen... The parser should fill defaults...
         
     def get_declarations(self):
@@ -296,28 +309,46 @@ class NameAtom(Atom):
         return inits
         
     def get_inline_processing_code(self, in_tokens):
-        code = self.handle
-        if len(in_tokens) > 0:
-            code = in_tokens[0]
+        code = ''
+        if 'processing' in self.platform_type['block']:
+            direction = self.platform_type['block']['direction']
+            code = templates.get_platform_processing_code(
+                            self.platform_type['block']['processing'],
+                            in_tokens,
+                            self.handle,
+                            direction)
+        else:
+            if len(in_tokens) > 0:
+                code = in_tokens[0]
+            else:
+                code = self.handle
+            
         return  code
     
     def get_processing_code(self, in_tokens):
         code = ''
-        if len(in_tokens) > 0:
-            code = templates.assignment(self.handle, self.get_inline_processing_code(in_tokens))
         out_tokens = [self.handle]
+        if 'processing' in self.platform_type['block']:
+            code = self.get_inline_processing_code(in_tokens)   
+        else:
+            code = templates.assignment(self.handle, self.get_inline_processing_code(in_tokens))
         return code, out_tokens
 
 class BundleAtom(Atom):
     def __init__(self, platform_type, declaration, index, token_index):
-        ''' index indexes from 1
+        ''' index indexes from 1, internal index from 0
         '''
+        super(BundleAtom, self).__init__()
         self.name = declaration['name']
         self.index = index - 1
         self.handle = self.name  #+ '_%03i'%(token_index);
         self.platform_type = platform_type
         self.declaration = declaration
-        
+        if 'include' in platform_type:
+            if 'include' in self.globals:
+                self.globals['include'].extend([inc['value']['value'] for inc in platform_type['include']])
+            else:
+                self.globals['include'] = [inc['value']['value'] for inc in platform_type['include']]
         self.set_inline(False)
         
         if 'rate' in declaration:
@@ -350,9 +381,6 @@ class BundleAtom(Atom):
         else:
             default_value = 0.0 # TODO put actual default
             code = str(default_value)
-#            code = self.platform_type['block']['initialization']
-#            code = code.replace('%%token%%', self._get_token_name(self.index))            
-#            code = code.replace('%%bundle_index%%', str(self.index))
             
             instances = [{'handle' : self.handle,
                       'code' : code,
@@ -368,6 +396,17 @@ class BundleAtom(Atom):
         code = ''
         if len(in_tokens) > 0:
             code = in_tokens[0] 
+        else:
+            code = self._get_token_name(self.index)
+            
+        if 'processing' in self.platform_type['block']:
+            direction = self.platform_type['block']['direction']
+            code = templates.get_platform_processing_code(
+                            self.platform_type['block']['processing'],
+                            in_tokens,
+                            self._get_token_name(self.index),
+                            direction,
+                            self.index)
         return code
         
     def get_processing_code(self, in_tokens):
@@ -375,63 +414,20 @@ class BundleAtom(Atom):
         if len(in_tokens) > 0:
             code = templates.assignment(self._get_token_name(self.index),
                                         self.get_inline_processing_code(in_tokens))
+                                        
         if 'processing' in self.platform_type['block']:
-            # FIXME Hardware platform code. This needs to be improved...
-            code += self.platform_type['block']['processing']
-            code = code.replace('%%token%%', self._get_token_name(self.index))            
-            code = code.replace('%%bundle_index%%', str(self.index))
-
+            code = self.get_inline_processing_code(in_tokens)
+        
         out_tokens = [self._get_token_name(self.index)]
         return code, out_tokens
         
     def _get_token_name(self, index):
         return '%s[%i]'%(self.handle, index)
-        
-    def get_generated_code(self):
-        
-        stream_index = 0
-        declared = []
-        instanced = []
-        for i, stream in enumerate(self._streams.values()):
-            new_code = self.platform.generate_stream_code(stream, stream_index, declared, instanced)
-            stream_index += 1
-
-        new_init_code = self._template_code["init_code"]["code"]
-        pattern = re.compile(r'%%:[A-Za-z]+%%')
-        for result in re.findall(pattern, new_init_code):
-            field = result[3: -2]
-            if field == "name":
-                new_init_code = new_init_code.replace(result, self.name)  
-            else:
-                print("unsupported template field :" + result)
-#        new_init_code = platform_type["code"]["init_code"]["code"]
-        
-        # Process init_code
-        pattern = re.compile(r'%%\?[A-Za-z_]+%%')
-        for result in re.findall(pattern, new_init_code):
-            field = result[3: -2]
-            if field == "init_code":
-                new_init_code = new_init_code.replace(result, new_code['init_code'])
-            if field == "dsp_code":
-                new_init_code = new_init_code.replace(result, new_code['dsp_code'])
-                
-        # Process dsp code        
-        new_dsp_code = self._template_code["dsp_code"]["code"];
-        pattern = re.compile(r'%%:[A-Za-z]+%%')
-        for result in re.findall(pattern, new_dsp_code):
-            field = result[3: -2]
-            if field == "name":
-                new_dsp_code = new_dsp_code.replace(result, self.name)  
-            else:
-                print("unsupported template field :" + result)
-        out_code = {}
-        out_code["init_code"] = new_init_code
-        out_code["dsp_code"] = new_dsp_code
-        out_code['setup_code'] = ''
-        return out_code
+    
 
 class ModuleAtom(Atom):
     def __init__(self, module, platform_code, token_index, platform):
+        super(ModuleAtom, self).__init__()
         self.name = module["name"]
         self.handle = self.name + '_%03i'%token_index;
         self.out_tokens = ['_' + self.name + '_%03i_out'%token_index]
@@ -530,9 +526,15 @@ class ModuleAtom(Atom):
         
                     #self.current_scope = module["internalBlocks"]
         self.platform.push_scope(self.current_scope)
-        self.code = self.platform.generate_code(tree, [],
-                                                [self._input_block['name'] if self._input_block else None])
+        
+        self.code = self.platform.generate_code(tree,
+                                                instanced = [self._input_block['name'] if self._input_block else None])
         self.platform.pop_scope()
+        if 'include' in self.globals and 'include' in self.code['global_groups']:
+            self.globals['include'].extend(self.code['global_groups']['include'])
+        else:
+            self.globals['include'] = self.code['global_groups']['include']
+
 
         
     def _init_blocks(self, blocks, input_name, output_name):
@@ -548,6 +550,13 @@ class ModuleAtom(Atom):
         for block in self._blocks:
             if block['name'] == block_name:
                 return block
+
+class PlatformModuleAtom(ModuleAtom):
+    def __init__(self, module, platform_code, token_index, platform):
+        super(PlatformModuleAtom, self).__init__(module, platform_code, token_index, platform)
+        
+    
+
 
 # TODO complete work on reaction block
 class ReactionAtom(Atom):
@@ -628,9 +637,13 @@ class ReactionAtom(Atom):
         
                     #self.current_scope = reaction["internalBlocks"]
         self.platform.push_scope(self.current_scope)
-        self.code = self.platform.generate_code(tree, [],
-                                                [self._input_block['name'] if self._input_block else None])
+        self.code = self.platform.generate_code(tree,
+                                                instanced = [self._input_block['name'] if self._input_block else None])
         self.platform.pop_scope()
+        if 'include' in self.globals and 'include' in self.code['global_groups']:
+            self.globals['include'].extend(self.code['include'])
+        else:
+            self.globals['include'] = self.code['include']
      
     def _init_blocks(self, blocks, input_name, output_name):
         self._blocks = []
@@ -690,6 +703,9 @@ class PlatformFunctions:
                 elif element['block']['type'] == 'platformType':
                     if element['block']['typeName'] == type_name:
                         return element
+                elif element['block']['type'] == 'platformModule':
+                    if element['block']['name'] == type_name:
+                        return element
     
     def find_block(self, name, tree):
         block_declaration = self.find_declaration_in_tree(name, tree)
@@ -745,6 +761,9 @@ class PlatformFunctions:
                     raise ValueError("Invalid or unavailable platform type.")
             elif module['type'] == 'reaction':
                 new_atom = ReactionAtom(module, self.unique_id, self)
+            elif module['type'] == 'platformModule':
+                platform_type = self.find_stride_type(member['function']["name"])
+                new_atom = PlatformModuleAtom(module, platform_type, self.unique_id, self)
         elif "expression" in member:
             if 'value' in member['expression']: # Unary expression
                 left_atom = self.make_atom(member['expression']['left'])
@@ -784,31 +803,39 @@ class PlatformFunctions:
             self.unique_id += 1
         return node_groups
         
-    def generate_code_from_groups(self, node_groups, declared, instanced, initialized):
+    def generate_code_from_groups(self, node_groups, global_groups, declared, instanced, initialized):
         declare_code = ''
-        instantiation_code = ''
         init_code = ''
         processing_code = '' 
+        instantiation_code = ''
         parent_rates_size = templates.rate_stack_size() # To know now much we need to pop for this stream
         
+        instances = []
+        declarations = {}
         for group in node_groups:
             in_tokens = []
             previous_atom = None
             for atom in group:
+                #Process Inlcudes
+                new_globals = atom.get_globals()
+                if len(new_globals) > 0:
+                    for group in new_globals:
+                        if group == 'include':
+                             global_groups['include'] += new_globals[group]
+                        elif group == 'linkTo':
+                             global_groups['linkTo']  += new_globals[group]
                 #Process declaration code
                 declares = atom.get_declarations()
-                for dec in declares:
-                    if not dec in declared:
-                        declare_code += declares[dec] + '\n'
-                        declared.append(dec)
+                for dec_name in declares:
+                    if not dec_name in declared:
+                        declared.append(dec_name)
+                        declarations[dec_name] = declares[dec_name]
                 # Process instantiation code
-                instances = atom.get_instances()
-                for inst in instances:
+                new_instances = atom.get_instances()
+                for inst in new_instances:
                     if not inst['handle'] in instanced:
-                        instantiation_code += templates.instantiation_code(inst)
                         instanced.append(inst['handle'])
-                        if 'code' in inst:
-                            init_code +=  templates.initialization_code(inst)
+                        instances.append(inst)
                 # Process processing code
                 code, out_tokens = atom.get_processing_code(in_tokens)
                 if atom.rate > 0:
@@ -827,6 +854,16 @@ class PlatformFunctions:
                 in_tokens = out_tokens
             
             previous_atom = atom
+            
+        #It might be useful in the future to process instance code and declarations 
+        # together at once, e.g. to keep them in a large memory block or struct
+        for dec_name in declarations:
+            declare_code += declarations[dec_name] + '\n'
+        
+        for inst in instances:
+            instantiation_code += templates.instantiation_code(inst)
+            if 'code' in inst:
+                init_code +=  templates.initialization_code(inst)
               
         # Close pending rates in this stream
         while not parent_rates_size == templates.rate_stack_size():
@@ -834,42 +871,43 @@ class PlatformFunctions:
 
         return [declare_code, instantiation_code, init_code, processing_code]
         
-    def generate_stream_code(self, stream, stream_index, declared, instanced, initialized):
+    def generate_stream_code(self, stream, stream_index, global_groups, declared, instanced, initialized):
         node_groups = self.make_stream_nodes(stream)
         
         processing_code = templates.stream_begin_code%stream_index
         
-        declare_code, instantiation_code, init_code, new_processing_code = self.generate_code_from_groups(node_groups, declared, instanced, initialized)
+        declare_code, instantiation_code, init_code, new_processing_code = self.generate_code_from_groups(node_groups, global_groups, declared, instanced, initialized)
         processing_code += new_processing_code
             
         processing_code += templates.stream_end_code%stream_index
         
-        return {"declare_code" : declare_code,
+        return {"global_groups" : global_groups,
+                "declare_code" : declare_code,
                 "instantiation_code" : instantiation_code,
                 "init_code" : init_code,
                 "processing_code" : processing_code}
                 
-    def generate_code(self, tree, declared = [], instanced = [], initialized = []):  
+    def generate_code(self, tree, global_groups = {'include':[], 'linkTo' : []}, declared = [], instanced = [], initialized = []):  
         self.unique_id = 0
         stream_index = 0
-        includes_code = '' # TODO: How to handle globals like includes?
         declare_code = ''
         instantiation_code = ''
         init_code = ''
         processing_code = ''
 
-        
         for node in tree:
             if 'stream' in node: # Everything grows from streams.
-                code = self.generate_stream_code(node["stream"], stream_index, declared, instanced, initialized)
+                code = self.generate_stream_code(node["stream"], stream_index,
+                                                 global_groups, declared, instanced,
+                                                 initialized)
                 declare_code += code["declare_code"]
                 instantiation_code += code["instantiation_code"]
                 init_code  += code["init_code"]
                 processing_code += code["processing_code"]
                 stream_index += 1
-    
         
-        return {"declare_code" : declare_code,
+        return {"global_groups" : code['global_groups'],
+                "declare_code" : declare_code,
                 "instantiation_code" : instantiation_code,
                 "init_code" : init_code,
                 "processing_code" : processing_code}

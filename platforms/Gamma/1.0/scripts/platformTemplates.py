@@ -31,6 +31,23 @@ class Templates(object):
             raise ValueError(u"Unsupported type '%s' in assignment."%type(number).__name__)
         return s;
         
+    def get_platform_processing_code(self, code, token_names, handle, direction, bundle_index = -1):
+        if direction == 'in':
+            code = code.replace('%%token%%', token_names[0]) 
+            if bundle_index >= 0:           
+                code = code.replace('%%bundle_index%%', str(bundle_index))
+        elif direction == 'out':
+            code = code.replace('%%token%%', handle) 
+            if bundle_index >= 0:           
+                code = code.replace('%%bundle_index%%', str(bundle_index))
+        elif direction == 'thru':
+            code = code.replace('%%token%%', handle) 
+            code = code.replace('%%intoken%%', token_names[0]) 
+            if bundle_index >= 0:           
+                code = code.replace('%%bundle_index%%', str(bundle_index))
+        
+        return code
+        
     
     def declaration_real(self, name, close=True):
         declaration = "float %s"%name
@@ -39,9 +56,11 @@ class Templates(object):
         return declaration
 
     def assignment(self, assignee, value):
+        code = ''
         if not type(value) == str and not type(value) == unicode:
             value = self.number_to_string(value)
-        code = self.str_assignment%(assignee, value)
+        if not value == assignee:
+            code = self.str_assignment%(assignee, value)
         return code
         
     def increment(self, assignee, value):
@@ -49,6 +68,22 @@ class Templates(object):
             value = self.number_to_string(value)
         code = self.str_increment%(assignee, value)
         return code
+        
+    def get_globals_code(self, global_groups):
+        code = ''
+        self.included = []
+        for group in global_groups:
+            if group == 'include':
+                code += self.includes_code(global_groups['include'])
+        return code
+    
+    def includes_code(self, includes):
+        includes_code = ''
+        for include in includes:
+            if not include in self.included: 
+                includes_code += "#include <%s>\n"%include
+                self.included.append(include)
+        return includes_code
         
     def instantiation_code(self, instance):
         if instance['type'] == 'real':
@@ -149,14 +184,16 @@ class Templates(object):
                                                            close = False)
         else:
             input_declaration = ''
-        declaration = '''struct %s {
+        declaration = '''
+struct %s {
     %s %s() {
         %s
     }
     float process(%s) {
         %s
     }
-};'''%(name, header_code, name, init_code, input_declaration, process_code)
+};
+'''%(name, header_code, name, init_code, input_declaration, process_code)
         return declaration
 
         
@@ -171,7 +208,7 @@ class Templates(object):
         code = ''
         if prop_type == 'real':
             code += 'void set_' + name + '(float value) {\n'
-            code += block_name + '= value;\n'
+            code += block_name + ' = value;\n'
             code += '\n}\n'
         return code
         

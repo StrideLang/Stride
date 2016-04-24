@@ -39,7 +39,19 @@ type _PlatformType {
 			required: on
 		},
 		port Includes {
-			name: "includes"
+			name: "include"
+			types: ["CSP"] #TODO accepts list
+			default: none
+			required: on
+		},
+		port LinkTo {
+			name: "linkTo"
+			types: ["CSP"] #TODO accepts list
+			default: none
+			required: on
+		},
+		port Direction {
+			name: "direction"
 			types: ["CSP"]
 			default: none
 			required: on
@@ -56,7 +68,7 @@ type _PlatformType {
 			default: none
 			required: on
 		},
-		port Processin {
+		port Processing {
 			name: "processing"
 			types: ["CSP"]
 			default: none

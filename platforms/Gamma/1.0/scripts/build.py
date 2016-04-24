@@ -73,8 +73,9 @@ class Generator:
         template_init_code = templates.get_config_code(self.sample_rate, self.block_size,
                         self.num_out_chnls, self.num_in_chnls)
 
+        globals_code = templates.get_globals_code(code['global_groups'])
         
-#        self.write_section_in_file('Includes', includes_code)
+        self.write_section_in_file('Includes', globals_code)
         self.write_section_in_file('Init Code', code['declare_code'] + code['instantiation_code'])
         self.write_section_in_file('Config Code', code['init_code'] + template_init_code)
         self.write_section_in_file('Dsp Code', code['processing_code'])

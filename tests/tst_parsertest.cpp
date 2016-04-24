@@ -42,7 +42,6 @@ private Q_SLOTS:
     void testParser();
 
     //PlatformConsistency
-    void testListConsistency();
     void testLists();
 
     // Library
@@ -628,20 +627,6 @@ void ParserTest::testDuplicates()
 
     tree->deleteChildren();
     delete tree;
-}
-
-void ParserTest::testListConsistency()
-{
-    //    AST *tree;
-    // FIXME: List consistency is checked by the parser, should be caught here.
-    //    tree = parse(QString(QFINDTESTDATA("data/errorLists.stride")).toStdString().c_str());
-    //    QVERIFY(tree == NULL);
-    //    Codegen generator(QFINDTESTDATA("/../platforms"), tree);
-    //    QVERIFY(!generator.isValid());
-    //    QList<LangError> errors = generator.getErrors();
-
-    //    tree->deleteChildren();
-    //    delete tree;
 }
 
 void ParserTest::testLists()

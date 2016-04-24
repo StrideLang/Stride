@@ -33,7 +33,8 @@ private:
     void expandParallelFunctions();
 
 
-
+    void expandStreamToSize(StreamNode *stream, int size);
+    void fillDefaultPropertiesForNode(AST *node);
 
     // TODO move these two functions to CodeValidator with the rest of querying functions
     double findRateInProperties(vector<PropertyNode *> properties, QVector<AST *> scope, AST *tree);

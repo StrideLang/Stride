@@ -1,6 +1,8 @@
 platformType _HwInput {
     typeName: '_hwInput'
-    includes: ''
+    direction: 'out'
+    include: []
+    linkTo: []
     declarations: ''
     initialization: "// %%token%% = 0;"
     processing: "%%token%% = io.in(%%bundle_index%%);"
@@ -9,7 +11,9 @@ platformType _HwInput {
 
 platformType _HwOutput {
     typeName: '_hwOutput'
-    includes: ''
+    direction: 'in'
+    include: []
+    linkTo: []
     declarations: ''
     initialization: "// %%token%% = 0;"
     processing: "io.out(%%bundle_index%%) = %%token%%;"
@@ -28,6 +32,36 @@ _hwOutput AudioOut[2] {
     rate: AudioRate
 }
 
-#platformModule _TestModule {
+# Sine function test
+platformType _SineType {
+    typeName: '_sineType'
+    direction: 'thru'
+    include: ["cmath"]
+    linkTo: []
+    declarations: ''
+    initialization: "// %%token%% = 0;"
+    processing: "%%token%% = std::sin(%%intoken%%);"
+    inherits: 'signal'
+}
 
-#}
+platformModule Sine {
+    input: Input
+    output: Output
+    properties: none # A property could be the type of input, (degrees, radians, etc.)
+    internalBlocks: [
+        signal Input {
+                default :       0.0
+                rate:           streamRate
+                domain:         streamDomain
+        },
+        signal Output {
+                default :       0.0
+                rate:           streamRate
+                domain:         streamDomain
+        }
+        _sineType SineBlock {}
+    ]
+    streams: [
+        Input >> SineBlock >> Output;
+    ]
+}

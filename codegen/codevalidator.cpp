@@ -272,22 +272,23 @@ void CodeValidator::validateSymbolUniqueness(AST *node, QVector<AST *> scope)
 
 void CodeValidator::validateListTypeConsistency(AST *node, QVector<AST *> scope)
 {
-    if (node->getNodeType() == AST::List) {
-        PortType type = resolveListType(static_cast<ListNode *>(node), scope, m_tree);
-        if (type == Invalid) {
-            LangError error;
-            error.type = LangError::InconsistentList;
-            error.lineNumber = node->getLine();
-            // TODO: provide more information on inconsistent list
-//            error.errorTokens <<
-            m_errors << error;
-        }
-    }
+    // Lists don't have to be consistent.
+//    if (node->getNodeType() == AST::List) {
+//        PortType type = resolveListType(static_cast<ListNode *>(node), scope, m_tree);
+//        if (type == Invalid) {
+//            LangError error;
+//            error.type = LangError::InconsistentList;
+//            error.lineNumber = node->getLine();
+//            // TODO: provide more information on inconsistent list
+////            error.errorTokens <<
+//            m_errors << error;
+//        }
+//    }
 
-    QVector<AST *> children = QVector<AST *>::fromStdVector(node->getChildren());
-    foreach(AST *node, children) {
-        validateListTypeConsistency(node, children);
-    }
+//    QVector<AST *> children = QVector<AST *>::fromStdVector(node->getChildren());
+//    foreach(AST *node, children) {
+//        validateListTypeConsistency(node, children);
+//    }
 }
 
 void CodeValidator::validateStreamSizes(AST *tree, QVector<AST *> scope)
@@ -930,8 +931,18 @@ int CodeValidator::getNodeSize(AST *node, AST *tree)
         Q_ASSERT(errors.size() ==0);
         return size;
     } else if (node->getNodeType() == AST::Expression) {
-
-        qFatal("implement Expression parsing in getNodeSize");
+        ExpressionNode * expr = static_cast<ExpressionNode *>(node);
+        if (expr->isUnary()) {
+            return getNodeSize(expr->getValue(), tree);
+        } else {
+            int leftSize = getNodeSize(expr->getLeft(), tree);
+            int rightSize = getNodeSize(expr->getLeft(), tree);
+            if (leftSize == rightSize) {
+                return leftSize;
+            } else {
+                return -1;
+            }
+        }
     } else if (node->getNodeType() == AST::Name) {
         NameNode *nameNode = static_cast<NameNode *>(node);
         BlockNode *block = findDeclaration(QString::fromStdString(nameNode->getName()), QVector<AST *>(), tree);

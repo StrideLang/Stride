@@ -58,7 +58,7 @@ type _Module {
 			default: none
 			required: on
 		},
-		port InternalBlock {
+		port InternalBlocks {
 			name: "internalBlocks"
 			types: [""]
 			default: none
@@ -95,8 +95,8 @@ type _Reaction {
 			default: none
 			required: on
 		},
-		port InternalBlock {
-			name: "internalBlock"
+		port InternalBlocks {
+			name: "internalBlocks"
 			types: [""]
 			default: none
 			required: on
@@ -108,4 +108,66 @@ type _Reaction {
 			required: on
 		}
 	]
+}
+
+type _PlatformPort {
+	typeName: "platformPort"
+	ports: [
+		port Name {
+			name: "name"
+			types: ["CSP", "none"]
+			default: none
+			required: on
+		},
+		port Types {
+			name: "types"
+			types: ["CSP", "none"]
+			default: none
+			required: on
+		},
+		port Default {
+			name: "default"
+			types: ["CSP", "none"] # TODO how to handle hybrid port types?
+			default: none
+			required: on
+		},
+		port Required {
+			name: "required"
+			types: ["CBP", "none"]
+			default: none
+			required: on
+		}
+
+	]
+}
+
+type _PlatformModule {
+	typeName: "platformModule"
+	ports: [
+		platformPort Input {
+			name: "input"
+			types: ["none", ""]
+			default: none
+			required: on
+		},
+		platformPort Output {
+			name: "output"
+			types: ["none", ""]
+			default: none
+			required: on
+		},
+		platformPort Properties {
+			name: "properties"
+			types: [ "" ]  # How can we define list types here?
+			default: none
+			required: on
+		},
+		platformPort InternalBlocks {
+			name: "internalBlocks"
+			types: [""]
+			default: none
+			required: on
+		}
+	]
+	# Can't inherit from "module" as it requires ports of type platformPort
 }

@@ -56,49 +56,102 @@ void CodeResolver::resolveStreamRates(StreamNode *stream)
     stream->setRate(rate);
 }
 
+void CodeResolver::fillDefaultPropertiesForNode(AST *node)
+{
+    if (node->getNodeType() == AST::Block || node->getNodeType() == AST::BlockBundle) {
+        BlockNode *destBlock = static_cast<BlockNode *>(node);
+        vector<PropertyNode *> blockProperties = destBlock->getProperties();
+        // TODO: should also set properties for user defined types
+        QVector<AST *> typeProperties = m_platform->getPortsForType(QString::fromStdString(destBlock->getObjectType()));
+        if (typeProperties.isEmpty()) {
+            qDebug() << "ERROR: fillDefaultProperties() No type definition for " << QString::fromStdString(destBlock->getObjectType());
+            return;
+        }
+        foreach(PropertyNode *property, blockProperties) {
+            fillDefaultPropertiesForNode(property->getValue());
+        }
+
+        foreach(AST *propertyListMember, typeProperties) {
+            Q_ASSERT(propertyListMember->getNodeType() == AST::Block);
+            BlockNode *portDescription = static_cast<BlockNode *>(propertyListMember);
+            AST *propName = portDescription->getPropertyValue("name");
+            Q_ASSERT(propName->getNodeType() == AST::String);
+            string propertyName = static_cast<ValueNode *>(propName)->getStringValue();
+            bool propertySet = false;
+            foreach(PropertyNode *blockProperty, blockProperties) {
+                if (blockProperty->getName() == propertyName) {
+                    propertySet = true;
+                    break;
+                }
+            }
+            if (!propertySet) {
+                AST *defaultValueNode = portDescription->getPropertyValue("default");
+                PropertyNode *newProperty = new PropertyNode(propertyName, defaultValueNode->deepCopy(), -1);
+                destBlock->addProperty(newProperty);
+            }
+        }
+    } else if (node->getNodeType() == AST::List) {
+        ListNode *list = static_cast<ListNode *>(node);
+        foreach(AST *listElement, list->getChildren()) {
+            fillDefaultPropertiesForNode(listElement);
+        }
+    }
+}
+
 void CodeResolver::fillDefaultProperties()
 {
     vector<AST *> nodes = m_tree->getChildren();
     for(unsigned int i = 0; i < nodes.size(); i++) {
         AST* node = nodes.at(i);
-        if (node->getNodeType() == AST::Block || node->getNodeType() == AST::BlockBundle) {
-            BlockNode *destBlock = static_cast<BlockNode *>(node);
-            vector<PropertyNode *> blockProperties = destBlock->getProperties();
-            // TODO: should also set properties for user defined types
-            QVector<AST *> typeProperties = m_platform->getPortsForType(QString::fromStdString(destBlock->getObjectType()));
-            if (typeProperties.isEmpty()) {
-                qDebug() << "ERROR: fillDefaultProperties() No type definition for " << QString::fromStdString(destBlock->getObjectType());
-                return;
-            }
-            foreach(AST *propertyListMember, typeProperties) {
-                Q_ASSERT(propertyListMember->getNodeType() == AST::Block);
-                BlockNode *portDescription = static_cast<BlockNode *>(propertyListMember);
-                AST *propName = portDescription->getPropertyValue("name");
-                Q_ASSERT(propName->getNodeType() == AST::String);
-                string propertyName = static_cast<ValueNode *>(propName)->getStringValue();
-                bool propertySet = false;
-                foreach(PropertyNode *blockProperty, blockProperties) {
-                    if (blockProperty->getName() == propertyName) {
-                        propertySet = true;
-                        break;
-                    }
-                }
-                if (!propertySet) {
-                    AST *defaultValueNode = portDescription->getPropertyValue("default");
-                    PropertyNode *newProperty = new PropertyNode(propertyName, defaultValueNode->deepCopy(), -1);
-                    destBlock->addProperty(newProperty);
-                }
-            }
-        }
+        fillDefaultPropertiesForNode(node);
     }
 }
-
 
 void CodeResolver::expandParallelFunctions()
 {
     foreach (AST *node, m_tree->getChildren()) {
         if (node->getNodeType() == AST::Stream) {
+            StreamNode *stream = static_cast<StreamNode *>(node);
+            QList<LangError> errors;
+            QVector<AST *> scope;
+            expandStreamToSize(stream, -1);
+        }
+    }
+}
 
+void CodeResolver::expandStreamToSize(StreamNode *stream, int size)
+{
+    QList<LangError> errors;
+    QVector<AST *> scope;
+//    int leftNumOuts = CodeValidator::getNodeNumOutputs(stream, *m_platform, scope, m_tree, errors);
+    AST *left = stream->getLeft();
+    int leftSize = CodeValidator::getNodeSize(left, m_tree);
+    if (left->getNodeType() == AST::Name
+            || left->getNodeType() == AST::Function) {
+        int numCopies = size/leftSize; // FIXME this is naive and only works in simple cases. Must take into account both size and number of outputs/inputs
+        if (numCopies > 1 && numCopies == (float) size/leftSize) {
+            ListNode *newLeft = new ListNode(left->deepCopy(), left->getLine());
+            for (int i = 1; i < numCopies; i++) {
+                newLeft->addChild(left->deepCopy());
+            }
+            stream->setLeft(newLeft);
+        }
+    }
+    AST *right = stream->getRight();
+    if (right->getNodeType() == AST::Stream) {
+        expandStreamToSize(static_cast<StreamNode *>(right), leftSize);
+    } else {
+        int rightSize = CodeValidator::getNodeSize(right, m_tree);
+        if (right->getNodeType() == AST::Name
+                || right->getNodeType() == AST::Function) {
+            int numCopies = leftSize/rightSize; // FIXME naive as above
+            if (numCopies > 1 && numCopies == (float) leftSize/rightSize) {
+                ListNode *newRight = new ListNode(right->deepCopy(), right->getLine());
+                for (int i = 1; i < numCopies; i++) {
+                    newRight->addChild(right->deepCopy());
+                }
+                stream->setRight(newRight);
+            }
         }
     }
 }
@@ -305,6 +358,8 @@ void CodeResolver::expandNamesToBundles(StreamNode *stream, AST *tree)
             ListNode *list = expandNameToList(name, size);
             stream->setRight(list);
         }
+    } else if (right->getNodeType() == AST::Stream) {
+        expandNamesToBundles(static_cast<StreamNode *>(right), tree);
     }
 }
 
