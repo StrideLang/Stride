@@ -349,6 +349,9 @@ bool ProjectWindow::saveFileAs()
     if  (fileName.isEmpty()) {
         return false;
     }
+    if (!fileName.endsWith(".stride")) {
+        fileName.append(".stride");
+    }
     QFile codeFile(fileName);
     if (!codeFile.open(QIODevice::ReadWrite)) {
         QMessageBox::critical(this, tr("Error writing file"),
@@ -468,6 +471,7 @@ void ProjectWindow::connectActions()
     connect(ui->actionRun, SIGNAL(toggled(bool)), this, SLOT(run(bool)));
     connect(ui->actionRefresh, SIGNAL(triggered()), this, SLOT(updateMenus()));
     connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(saveFile()));
+    connect(ui->actionSave_as, SIGNAL(triggered()), this, SLOT(saveFileAs()));
     connect(ui->actionOptions, SIGNAL(triggered()), this, SLOT(openOptionsDialog()));
     connect(ui->actionLoad_File, SIGNAL(triggered()), this, SLOT(loadFile()));
     connect(ui->actionStop, SIGNAL(triggered()), this, SLOT(stop()));

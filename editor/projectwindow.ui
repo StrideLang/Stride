@@ -271,6 +271,7 @@
     <addaction name="actionNew_Project"/>
     <addaction name="actionLoad_File"/>
     <addaction name="actionSave"/>
+    <addaction name="actionSave_as"/>
     <addaction name="actionOptions"/>
     <addaction name="actionQuit"/>
    </widget>
@@ -378,6 +379,11 @@
   <action name="actionComment">
    <property name="text">
     <string>Toggle Comment</string>
+   </property>
+  </action>
+  <action name="actionSave_as">
+   <property name="text">
+    <string>Save as ...</string>
    </property>
   </action>
  </widget>
