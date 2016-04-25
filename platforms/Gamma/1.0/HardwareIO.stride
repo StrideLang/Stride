@@ -1,3 +1,12 @@
+_domain _GammaDomain {
+    name: "audio"
+    platform: _GammaPlatform
+}
+
+_platform _GammaPlatform {
+    name: "Gamma"
+}
+
 platformType _HwInput {
     typeName: '_hwInput'
     direction: 'out'
@@ -26,10 +35,12 @@ constant AudioRate {
 
 _hwInput AudioIn[2] {
     rate: AudioRate
+    domain: _GammaDomain
 }
 
 _hwOutput AudioOut[2] {
     rate: AudioRate
+    domain: _GammaDomain
 }
 
 # Sine function test

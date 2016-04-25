@@ -60,10 +60,11 @@ class Generator:
     def generate_code(self):
         # Generate code from tree
         # TODO These defaults should be set from the platform definition file
-        self.block_size = 512
+        self.block_size = 2048
         self.sample_rate = 44100.
         self.num_out_chnls = 2
         self.num_in_chnls = 2
+        self.audio_device = 0
         
         code = self.platform.generate_code(self.tree)
                 
@@ -71,7 +72,7 @@ class Generator:
         #declare_code = var_declaration + declare_code
         
         template_init_code = templates.get_config_code(self.sample_rate, self.block_size,
-                        self.num_out_chnls, self.num_in_chnls)
+                        self.num_out_chnls, self.num_in_chnls, self.audio_device)
 
         globals_code = templates.get_globals_code(code['global_groups'])
         

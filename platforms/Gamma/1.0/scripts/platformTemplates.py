@@ -220,10 +220,9 @@ struct %s {
         
     # Configuration code -----------------------------------------------------
     def get_config_code(self, sample_rate = 44100, block_size = 512,
-                        num_out_chnls = 2, num_in_chnls = 2): 
+                        num_out_chnls = 2, num_in_chnls = 2, device = -1):
         config_template_code = '''
-    AudioDevice adevi = AudioDevice::defaultInput();
-    AudioDevice adevo = AudioDevice::defaultOutput();
+    %%device%%
     //AudioDevice adevi = AudioDevice("firewire_pcm");
     //AudioDevice adevo = AudioDevice("firewire_pcm");
     
@@ -239,6 +238,16 @@ struct %s {
     
     AudioIO io(%%block_size%%, %%sample_rate%%, audioCB, NULL, %%num_out_chnls%%, %%num_in_chnls%%);
         '''
+        device_code = '''
+    AudioDevice adevi = AudioDevice::defaultInput();
+    AudioDevice adevo = AudioDevice::defaultOutput();
+    '''
+        if device >= 0:
+            device_code = '''
+    AudioDevice adevi(%i);
+    AudioDevice adevo(%i);
+    '''%(device, device)
+        config_template_code = config_template_code.replace("%%device%%", str(device_code))
         config_template_code = config_template_code.replace("%%block_size%%", str(block_size))
         config_template_code = config_template_code.replace("%%sample_rate%%", str(sample_rate))
         config_template_code = config_template_code.replace("%%num_out_chnls%%", str(num_out_chnls))

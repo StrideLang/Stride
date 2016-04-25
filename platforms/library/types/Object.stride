@@ -1,21 +1,3 @@
-type _Rated {
-	typeName: "rated"
-	ports: [
-		port Rate {
-			name: "rate"
-			types: ["", "none"]
-			default: AudioRate # Should this be something like PlatformRate
-			required: on
-		},
-		port Reset {
-			name: "reset"
-			types: ["", "none"]
-			default: none
-			required: off
-		}
-	]
-	inherits: "domainMember" # TODO: Should we be able to say "DomainMember" here instead?
-}
 
 type _Streamable {
 	typeName: "streamable"
@@ -34,6 +16,25 @@ type _Streamable {
 		}
 	]
 	inherits: "rated"
+}
+
+type _Rated {
+	typeName: "rated"
+	ports: [
+		port Rate {
+			name: "rate"
+			types: ["", "none"]
+			default: AudioRate # Should this be something like PlatformRate?
+			required: on
+		},
+		port Reset {
+			name: "reset"
+			types: ["", "none"]
+			default: none
+			required: off
+		}
+	]
+	inherits: "domainMember" # TODO: Should we be able to say "_DomainMember" here instead?
 }
 
 type _DomainMember {

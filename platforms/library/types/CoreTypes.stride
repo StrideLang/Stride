@@ -73,6 +73,12 @@ type _PlatformType {
 			types: ["CSP"]
 			default: none
 			required: on
+		},
+		port Platform {
+			name: "platform"
+			types: [""] # _platform
+			default: none
+			required: on
 		}
 	]
 }
@@ -114,4 +120,34 @@ type _Signal {
 		}
 	]
 	inherits: "streamable"
+}
+
+type _Domain {
+	typeName: "_domain"
+	ports: [
+		port Name {
+			name: "name"
+			types: ["CSP"]
+			default: none
+			required: on
+		},
+		port Platform {
+			name: "platform"
+			types: [""]
+			default: none
+			required: on
+		}
+	]
+}
+
+type _Platform {
+	typeName: "_platform"
+	ports: [
+		port Name {
+			name: "name"
+			types: ["CSP"]
+			default: none
+			required: on
+		}
+	]
 }
