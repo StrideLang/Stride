@@ -1,0 +1,4 @@
+use Arduino version 1.0 on Uno
+
+AnalogIn[1] >> SerialOut();
+

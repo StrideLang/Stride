@@ -13,7 +13,7 @@ platformType _HwInput {
     include: []
     linkTo: []
     declarations: ''
-    initialization: "// %%token%% = 0;"
+    initialization: ["// %%token%% = 0;"]
     processing: "%%token%% = io.in(%%bundle_index%%);"
     inherits: 'signal'
 }
@@ -24,13 +24,17 @@ platformType _HwOutput {
     include: []
     linkTo: []
     declarations: ''
-    initialization: "// %%token%% = 0;"
+    initialization: ["// %%token%% = 0;"]
     processing: "io.out(%%bundle_index%%) = %%token%%;"
     inherits: 'signal'
 }
 
-constant AudioRate {
+constant PlatformRate {
     value: 44100
+}
+
+constant AudioRate {
+    value: PlatformRate
 }
 
 _hwInput AudioIn[2] {
@@ -50,7 +54,7 @@ platformType _SineType {
     include: ["cmath"]
     linkTo: []
     declarations: ''
-    initialization: "// %%token%% = 0;"
+    initialization: ["// %%token%% = 0;"]
     processing: "%%token%% = std::sin(%%intoken%%);"
     inherits: 'signal'
 }

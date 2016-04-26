@@ -1,0 +1,64 @@
+
+_platform _ArduinoPlatform {
+    name: "Arduino"
+}
+
+_domain _ArduinoDomain {
+    name: "arduino"
+    platform: _ArduinoPlatform
+}
+
+
+platformType _AnalogInput {
+    typeName: '_analogInput'
+    direction: 'out'
+    include: []
+    linkTo: []
+    declarations: ['int sensorPin = A5;']
+    initialization: ["Serial.begin(9600);"]
+    processing: "%%token%% = analogRead(sensorPin);"
+    inherits: 'signal'
+}
+
+constant PlatformRate {
+    value: 1000
+}
+
+constant AudioRate { # TODO this should be removed for this hardware as it doesn't make sense
+    value: PlatformRate
+}
+
+_analogInput AnalogIn[2] {
+    rate: PlatformRate
+    domain: _GammaDomain
+}
+
+
+# Sine function test
+platformType _SerialOutType {
+    typeName: '_serialOutType'
+    direction: 'in'
+    include: []
+    linkTo: []
+    declarations: ''
+    initialization: ["// %%token%% = 0;"]
+    processing: "Serial.println(%%intoken%%);"
+    inherits: 'signal'
+}
+
+platformModule SerialOut {
+    input: Input
+    output: none
+    properties: none # A property could be the type of input, (degrees, radians, etc.)
+    internalBlocks: [
+        signal Input {
+                default :       0.0
+                rate:           streamRate
+                domain:         streamDomain
+        },
+        _serialOutType SerialOutBlock {}
+    ]
+    streams: [
+        Input >> SerialOutBlock;
+    ]
+}

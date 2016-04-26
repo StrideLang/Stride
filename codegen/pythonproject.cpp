@@ -33,8 +33,8 @@ void PythonProject::build(AST *tree)
     writeAST(tree);
     QProcess pythonProcess(this);
     QStringList arguments;
-    pythonProcess.setWorkingDirectory(m_platformPath + QDir::separator() + "scripts");
-    arguments << "build.py" << m_projectDir;
+    pythonProcess.setWorkingDirectory(m_platformPath + "/../../library/python");
+    arguments << "build.py" << m_projectDir << m_platformPath;
     pythonProcess.start(m_pythonExecutable, arguments);
     if(!pythonProcess.waitForFinished()) {
 
@@ -61,7 +61,7 @@ void PythonProject::run(bool pressed)
            return;
        }
     }
-    m_runningProcess.setWorkingDirectory(m_platformPath + QDir::separator() + "scripts");
+    m_runningProcess.setWorkingDirectory(m_platformPath + "/../../library/python");
     arguments << "run.py" << m_projectDir;
     m_runningProcess.start(m_pythonExecutable, arguments);
     m_running.store(1);
@@ -88,6 +88,7 @@ void PythonProject::run(bool pressed)
 void PythonProject::stopRunning()
 {
     m_running.store(0);
+    //m_runningProcess.waitForFinished();
 }
 
 void PythonProject::writeAST(AST *tree)
