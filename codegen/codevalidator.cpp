@@ -180,11 +180,9 @@ void CodeValidator::validateTypes(AST *node, QVector<AST *> scope)
 
     }
 
-//    foreach(AST *childNode, node->getChildren()) {
-//        if (childNode->getNodeType() == AST::Block
-//                || childNode->getNodeType() == AST::BlockBundle)
-//        validateTypes(childNode, scope);
-//    }
+    foreach(AST *childNode, node->getChildren()) {
+        validateTypes(childNode, scope);
+    }
 }
 
 void CodeValidator::validateBundleIndeces(AST *node, QVector<AST *> scope)

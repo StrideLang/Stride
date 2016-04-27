@@ -1,5 +1,5 @@
 use PufferFish version 1.1 on PC
-
+# Should fail
 invalid InvalidType {
 
 }
@@ -7,7 +7,7 @@ invalid InvalidType {
 object Name {
     meta: "hello"
 }
-
+# Should fail
 object WrongObject {
     meta: 34
 }
@@ -16,7 +16,7 @@ switch Switch {
     default: off
 }
 
-
+# Should fail
 switch WrongSwitch {
     default: 35
 }
@@ -36,7 +36,7 @@ signal Signal2 {
 constant Const {
     value: 3.1
 }
-
-#constant WrongConst {
-#    value: {property: "hello"}
-#}
+# Should fail
+constant WrongConst {
+    value: {property: "hello"}
+}

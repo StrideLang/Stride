@@ -14,6 +14,7 @@ type _Property {
 			required: on
 		}
 	]
+	inherits: ["base"]
 	meta: ""
 }
 
@@ -167,7 +168,19 @@ type _PlatformModule {
 			types: [""]
 			default: none
 			required: on
-		}
+		},
+		port Streams {
+			name: "streams"
+			types: ["none"]
+			default: none
+			required: on
+		}#,
+		#port Inherits { # TODO should this be done differently? e.g. not as a port but through inheritance merging ports?
+#			name: "inherits"
+#			types: ["CSP"] # _platform
+#			default: []
+#			required: off
+#		}
 	]
-	# Can't inherit from "module" as it requires ports of type platformPort
+	inherits: ['base'] # Can't inherit from "module" as it requires ports of type platformPort
 }

@@ -27,6 +27,7 @@ type _Type {
 			required: on
 		}
 	]
+	inherits: ["base"]
 }
 
 type _PlatformType {
@@ -79,6 +80,12 @@ type _PlatformType {
 			types: [""] # _platform
 			default: none
 			required: on
+		},
+		port Inherits { # TODO should this be done differently? e.g. not as a port but through inheritance merging ports?
+			name: "inherits"
+			types: ["CSP"] # _platform
+			default: []
+			required: off
 		}
 	]
 }
@@ -138,6 +145,7 @@ type _Domain {
 			required: on
 		}
 	]
+	inherits: ["base"]
 }
 
 type _Platform {
@@ -150,4 +158,5 @@ type _Platform {
 			required: on
 		}
 	]
+	inherits: ["base"]
 }
