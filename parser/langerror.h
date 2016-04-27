@@ -21,6 +21,7 @@ public:
         InconsistentList,
         StreamMemberSizeMismatch,
         UndeclaredSymbol,
+        SystemError,
         None
     } ErrorType;
 

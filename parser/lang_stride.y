@@ -1090,6 +1090,13 @@ AST *parse(const char *filename){
     file = fopen(fileName, "r");
 
     if (!file){
+        LangError newError;
+        newError.type = LangError::SystemError;
+        newError.errorTokens.push_back("File Not Found.");
+        newError.errorTokens.push_back(std::string(filename));
+    //    newError.lineNumber = line;
+        newError.lineNumber = yylineno;
+        parseErrors.push_back(newError);
         COUT << "Can't open " << fileName << ENDL;;
         return NULL;
     }
@@ -1101,6 +1108,7 @@ AST *parse(const char *filename){
     yyin = file;
     yylineno = 1;
     yyparse();
+    fclose(file);
 
     if (parseErrors.size() > 0){
         COUT << ENDL << "Number of Errors: " << parseErrors.size() << ENDL;
