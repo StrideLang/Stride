@@ -8,3 +8,5 @@ StreamStack.pro.user
 editor/templates/simple/lua_scripts/liblpeg.a
 editor/templates/simple/lua_scripts/lpeg.dll
 editor/templates/simple/.metadata
+
+platforms/Arduino/1.0/arduino-1.6.8
