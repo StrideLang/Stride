@@ -1,4 +1,9 @@
 use Arduino version 1.0 on Uno
 
-AnalogIn[1] >> SerialOut();
+signal DownSample {
+	rate: 2
+}
+
+AnalogIn[1] * 4 >> DownSample >> SerialOut();
+
 

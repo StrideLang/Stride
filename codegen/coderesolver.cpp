@@ -236,7 +236,7 @@ double CodeResolver::getNodeRate(AST *node, QVector<AST *> scope, AST *tree)
 void CodeResolver::insertBuiltinObjects()
 {
     // TODO: This inserts everything. Only what is used should be inserted.
-    QList<AST *> objects = m_platform->getBuiltinObjects();
+    QList<AST *> objects = m_platform->getBuiltinObjectsCopy();
     foreach(AST *object, objects) {
         m_tree->addChild(object);
     }

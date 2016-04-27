@@ -59,12 +59,13 @@ class Atom(object):
         
          
 class PlatformTypeAtom(Atom):
-    def __init__(self, module, platform_type, token_index, platform):
+    def __init__(self, module, function, platform_type, token_index, platform):
         super(PlatformTypeAtom, self).__init__()
         self.module = module
         self.platform_type = platform_type
         self.index = token_index
         self.platform = platform
+        self.function = function
         
         self.set_inline(False)
         
@@ -197,13 +198,14 @@ class ExpressionAtom(Atom):
         return code
     
     def get_processing_code(self, in_tokens):
+        code = ''        
+        code += self.left_atom.get_processing_code([])[0]
+        code += self.right_atom.get_processing_code([])[0]
         if self.is_inline():
             code = ''
             out_tokens = [self.get_inline_processing_code(in_tokens)]
         else:
             code = ''
-            code += self.left_atom.get_processing_code([])[0]
-            code += self.right_atom.get_processing_code([])[0]
             code += templates.assignment(self.handle, self.get_inline_processing_code(in_tokens))
         
             out_tokens = [self.handle]
@@ -278,9 +280,9 @@ class NameAtom(Atom):
                 self.globals['include'] = [inc['value']['value'] for inc in platform_type['block']['include']]
         if 'initialization' in platform_type['block']:
             if 'initialization' in self.globals:
-                self.globals['initialization'].append(platform_type['block']['initialization'])
+                self.globals['initialization'] += platform_type['block']['initialization']
             else:
-                self.globals['initialization'] = [platform_type['block']['initialization']]
+                self.globals['initialization'] = platform_type['block']['initialization']
         
         self.set_inline(False)
         
@@ -294,8 +296,8 @@ class NameAtom(Atom):
             #this should never happen... The parser should fill defaults...
         
     def get_declarations(self):
-        if 'declarations' in self.platform_type:
-            return templates.get_platform_declarations(self.platform_type['declarations'])
+        if 'declarations' in self.platform_type['block']:
+            return templates.get_platform_declarations(self.platform_type['block']['declarations'])
         return {}
     
     def get_instances(self):
@@ -309,20 +311,33 @@ class NameAtom(Atom):
         else:
             print("Forced default value to 0 for " + self.name)
             default_value = 0.0
-        inits = [{'handle' : self.handle,
-                  'type' : 'real',
-                  'code' : str(default_value)
-                  }]
+        if 'type' in self.declaration and self.declaration['type'] == 'signal':
+            inits = [{'handle' : self.handle,
+                      'type' : 'real',
+                      'code' : str(default_value)
+                      }]
+        elif 'block' in self.platform_type:
+            inherits = self.platform_type['block']['inherits']
+            if inherits == 'signal':
+                inits = [{'handle' : self.handle,
+                          'type' : 'real',
+                          'code' : str(default_value)
+                          }]
+            else:
+                print("Don't know how to declare type " + ' '.join(self.declaration.keys()))
+                inits = []
+        else:
+            print("Don't know how to declare type " + ' '.join(self.declaration.keys()))
+            inits = []
         return inits
         
     def get_inline_processing_code(self, in_tokens):
         code = ''
         if 'processing' in self.platform_type['block']:
             direction = self.platform_type['block']['direction']
-            code = templates.get_platform_processing_code(
+            code = templates.get_platform_inline_processing_code(
                             self.platform_type['block']['processing'],
                             in_tokens,
-                            self.handle,
                             direction)
         else:
             if len(in_tokens) > 0:
@@ -336,7 +351,10 @@ class NameAtom(Atom):
         code = ''
         out_tokens = [self.handle]
         if 'processing' in self.platform_type['block']:
-            code = self.get_inline_processing_code(in_tokens)   
+            if self.inline:
+                code = templates.expression(self.get_inline_processing_code(in_tokens))
+            else:
+                code = templates.assignment(self.handle, self.get_inline_processing_code(in_tokens))
         else:
             code = templates.assignment(self.handle, self.get_inline_processing_code(in_tokens))
         return code, out_tokens
@@ -351,6 +369,9 @@ class BundleAtom(Atom):
         self.handle = self.name  #+ '_%03i'%(token_index);
         self.platform_type = platform_type
         self.declaration = declaration
+        
+        self.set_inline(False)
+        
         if 'include' in platform_type['block']:
             if 'include' in self.globals:
                 self.globals['include'].extend([inc['value']['value'] for inc in platform_type['block']['include']])
@@ -358,10 +379,11 @@ class BundleAtom(Atom):
                 self.globals['include'] = [inc['value']['value'] for inc in platform_type['block']['include']]
         if 'initialization' in platform_type['block']:
             if 'initialization' in self.globals:
-                self.globals['initialization'].append(platform_type['block']['initialization'])
+                self.globals['initialization'] += platform_type['block']['initialization']
             else:
-                self.globals['initialization'] = [platform_type['block']['initialization']]
-        self.set_inline(False)
+                self.globals['initialization'] = platform_type['block']['initialization']
+            if platform_type['block']['direction'] == 'in' or platform_type['block']['direction'] == 'thru':
+                self.inline = False
         
         if 'rate' in declaration:
             if type(declaration['rate']) == dict:
@@ -405,42 +427,44 @@ class BundleAtom(Atom):
 
                 
         return instances
-    
+        
     def get_inline_processing_code(self, in_tokens):
         code = ''
-        if len(in_tokens) > 0:
-            code = in_tokens[0] 
-        else:
-            code = self._get_token_name(self.index)
-            
         if 'processing' in self.platform_type['block']:
             direction = self.platform_type['block']['direction']
-            code = templates.get_platform_processing_code(
+            code = templates.get_platform_inline_processing_code(
                             self.platform_type['block']['processing'],
                             in_tokens,
-                            self._get_token_name(self.index),
                             direction,
                             self.index)
-        return code
-        
+        else:
+            if len(in_tokens) > 0:
+                code = in_tokens[0]
+            else:
+                code = self.handle
+            
+        return  code
+    
     def get_processing_code(self, in_tokens):
+
         code = ''
         if len(in_tokens) > 0:
             code = templates.assignment(self._get_token_name(self.index),
                                         self.get_inline_processing_code(in_tokens))
-                                        
+                                       
         if 'processing' in self.platform_type['block']:
             code = self.get_inline_processing_code(in_tokens)
         
         out_tokens = [self._get_token_name(self.index)]
-        return code, out_tokens
+        return code, out_tokens       
+    
         
     def _get_token_name(self, index):
         return '%s[%i]'%(self.handle, index)
     
 
 class ModuleAtom(Atom):
-    def __init__(self, module, platform_code, token_index, platform):
+    def __init__(self, module, function, platform_code, token_index, platform):
         super(ModuleAtom, self).__init__()
         self.name = module["name"]
         self.handle = self.name + '_%03i'%token_index;
@@ -454,6 +478,7 @@ class ModuleAtom(Atom):
         self.stride_type = self.platform.find_stride_type("module")
         self.module = module
         self.rate = -1 # Should modules have rates?
+        self.function = function
         
         
         self._init_blocks(module["internalBlocks"],
@@ -477,7 +502,7 @@ class ModuleAtom(Atom):
         init_code = self._get_internal_init_code()
         process_code = self._get_internal_processing_code()
         properties_code = self._get_internal_properties_code()
-            
+        
         declaration = templates.module_declaration(
                 self.name, declarations_code + instantiation_code + properties_code, 
                 init_code, self._input_block, process_code)
@@ -504,8 +529,20 @@ class ModuleAtom(Atom):
         
     def get_processing_code(self, in_tokens):
         code = ''
-        code = templates.assignment(self.out_tokens[0],self.get_inline_processing_code(in_tokens))
-        out_tokens = self.out_tokens
+        out_tokens = []
+        ports = self.function['ports']
+        for port_name in ports:
+            if 'value' in ports[port_name]:
+                port_in_token = [str(ports[port_name]['value']['value'])]
+            else:
+                port_in_token = '____XXX___'
+            code += templates.module_set_property(self.handle, port_name, port_in_token)
+        if 'output' in self._platform_code['block'] and not self._platform_code['block']['output'] is None:
+            code += templates.assignment(self.out_tokens[0],self.get_inline_processing_code(in_tokens))
+            out_tokens = self.out_tokens
+        else:
+            code += templates.expression(self.get_inline_processing_code(in_tokens))
+            out_tokens = self.out_tokens
         return code, out_tokens
         
     def _get_internal_instantiation_code(self):
@@ -528,11 +565,12 @@ class ModuleAtom(Atom):
         
     def _get_internal_properties_code(self):
         code = ''
-        for prop in self.module['properties']:
-            if 'block' in prop:
-                code += templates.module_property_setter(prop['block']['name'],
-                                         prop['block']['block']['name']['name'],
-                                         'real')
+        if self.module['properties']:
+            for prop in self.module['properties']:
+                if 'block' in prop:
+                    code += templates.module_property_setter(prop['block']['name'],
+                                             prop['block']['block']['name']['name'],
+                                             'real')
         return code
         
     def _process_module(self, streams, blocks):
@@ -556,9 +594,9 @@ class ModuleAtom(Atom):
         self._blocks = []
         for block in blocks:
             self._blocks.append(block['block'])
-            if 'name' in input_name and self._blocks[-1]['name'] == input_name["name"]['name']:
+            if input_name and 'name' in input_name and self._blocks[-1]['name'] == input_name["name"]['name']:
                 self._input_block = self._blocks[-1]
-            if 'name' in output_name and  self._blocks[-1]['name'] == output_name["name"]["name"]:
+            if output_name and 'name' in output_name and  self._blocks[-1]['name'] == output_name["name"]["name"]:
                 self._output_block = self._blocks[-1]
                 
     def find_internal_block(self, block_name):
@@ -567,8 +605,8 @@ class ModuleAtom(Atom):
                 return block
 
 class PlatformModuleAtom(ModuleAtom):
-    def __init__(self, module, platform_code, token_index, platform):
-        super(PlatformModuleAtom, self).__init__(module, platform_code, token_index, platform)
+    def __init__(self, module, function, platform_code, token_index, platform):
+        super(PlatformModuleAtom, self).__init__(module, function, platform_code, token_index, platform)
         
     
 
@@ -774,16 +812,16 @@ class PlatformFunctions:
             if module['type'] == 'module':
                 platform_type = self.find_stride_type(member['function']["name"])
                 if 'platformType' in platform_type['block']:
-                    new_atom = PlatformTypeAtom(module, platform_type, self.unique_id, self)
+                    new_atom = PlatformTypeAtom(module, member['function'], platform_type, self.unique_id, self)
                 elif 'type' in platform_type['block']:
-                    new_atom = ModuleAtom(module, platform_type, self.unique_id, self)
+                    new_atom = ModuleAtom(module, member['function'], platform_type, self.unique_id, self)
                 else:
                     raise ValueError("Invalid or unavailable platform type.")
             elif module['type'] == 'reaction':
                 new_atom = ReactionAtom(module, self.unique_id, self)
             elif module['type'] == 'platformModule':
                 platform_type = self.find_stride_type(member['function']["name"])
-                new_atom = PlatformModuleAtom(module, platform_type, self.unique_id, self)
+                new_atom = PlatformModuleAtom(module, member['function'], platform_type, self.unique_id, self)
         elif "expression" in member:
             if 'value' in member['expression']: # Unary expression
                 left_atom = self.make_atom(member['expression']['left'])

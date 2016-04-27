@@ -14,7 +14,7 @@ platformType _HwInput {
     linkTo: []
     declarations: ''
     initialization: ["// %%token%% = 0;"]
-    processing: "%%token%% = io.in(%%bundle_index%%);"
+    processing: "io.in(%%bundle_index%%)"
     inherits: 'signal'
 }
 
@@ -25,7 +25,7 @@ platformType _HwOutput {
     linkTo: []
     declarations: ''
     initialization: ["// %%token%% = 0;"]
-    processing: "io.out(%%bundle_index%%) = %%token%%;"
+    processing: "io.out(%%bundle_index%%) = %%intoken%%;"
     inherits: 'signal'
 }
 
@@ -55,7 +55,7 @@ platformType _SineType {
     linkTo: []
     declarations: ''
     initialization: ["// %%token%% = 0;"]
-    processing: "%%token%% = std::sin(%%intoken%%);"
+    processing: "std::sin(%%intoken%%)"
     inherits: 'signal'
 }
 

@@ -15,8 +15,8 @@ platformType _AnalogInput {
     include: []
     linkTo: []
     declarations: ['int sensorPin = A5;']
-    initialization: ["Serial.begin(9600);"]
-    processing: "%%token%% = analogRead(sensorPin);"
+    initialization: ['// init analog input']
+    processing: "analogRead(sensorPin)"
     inherits: 'signal'
 }
 
@@ -41,15 +41,15 @@ platformType _SerialOutType {
     include: []
     linkTo: []
     declarations: ''
-    initialization: ["// %%token%% = 0;"]
-    processing: "Serial.println(%%intoken%%);"
+    initialization: ["Serial.begin(9600);"]
+    processing: "Serial.println(%%intoken%%)"
     inherits: 'signal'
 }
 
 platformModule SerialOut {
     input: Input
     output: none
-    properties: none # A property could be the type of input, (degrees, radians, etc.)
+    properties: none
     internalBlocks: [
         signal Input {
                 default :       0.0

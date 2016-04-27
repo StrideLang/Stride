@@ -178,8 +178,12 @@ void PythonProject::astToJson(AST *node, QJsonObject &obj)
             AST *propValue = prop->getValue();
             QJsonObject valueObject;
             astToJson(propValue, valueObject);
-            newObject[QString::fromStdString(prop->getName())]
-                    = valueObject;
+            if (!valueObject.isEmpty()) {
+                newObject[QString::fromStdString(prop->getName())]
+                        = valueObject;
+            } else {
+                newObject[QString::fromStdString(prop->getName())] = QJsonValue();
+            }
             // TODO use astToJson here instead.
             if (propValue->getNodeType() == AST::Int) {
                 newObject[QString::fromStdString(prop->getName())]
@@ -234,6 +238,8 @@ void PythonProject::astToJson(AST *node, QJsonObject &obj)
         QJsonArray list;
         listToJsonArray(static_cast<ListNode *>(node), list);
         obj["list"] = list;
+    } else if (node->getNodeType() == AST::None) {
+        obj = QJsonObject(); // Null value
     } else {
         obj["type"] = QString("Unsupported");
     }
@@ -272,7 +278,11 @@ void PythonProject::functionToJson(FunctionNode *node, QJsonObject &obj)
     foreach(PropertyNode *property, properties) {
         QJsonObject propValue;
         astToJson(property->getValue(), propValue);
-        propObject[QString::fromStdString(property->getName())] = propValue;
+        if (!propValue.isEmpty()) {
+            propObject[QString::fromStdString(property->getName())] = propValue;
+        } else {
+            propObject[QString::fromStdString(property->getName())] = QJsonValue();
+        }
     }
     obj["ports"] = propObject;
     obj["rate"] = node->getRate();
@@ -285,14 +295,18 @@ void PythonProject::expressionToJson(ExpressionNode *node, QJsonObject &obj)
     if (node->isUnary()) {
         QJsonObject value;
         astToJson(node->getValue(), value);
-        obj["value"] = value;
+        if (!value.isEmpty()) {
+            obj["value"] = value;
+        } else {
+            obj["value"] = QJsonValue();
+        }
     } else {
         QJsonObject left;
         astToJson(node->getLeft(), left);
-        obj["left"] = left;
+        obj["left"] = left.isEmpty() ? QJsonValue() : left;
         QJsonObject right;
         astToJson(node->getRight(),right);
-        obj["right"] = right;
+        obj["right"] = right.isEmpty() ? QJsonValue() : right;
     }
 }
 

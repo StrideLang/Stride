@@ -41,6 +41,7 @@ public:
     ListNode *getPortsForFunction(QString typeName);
 
     BlockNode *getFunction(QString functionName);
+    QList<AST *> getBuiltinObjectsCopy();
     QList<AST *> getBuiltinObjects();
 
     bool isValidType(QString typeName);

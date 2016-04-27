@@ -104,19 +104,18 @@ StreamPlatform::~StreamPlatform()
 
 QVector<AST *> StreamPlatform::getPortsForType(QString typeName)
 {
-    foreach(AST* nodeGroup, m_platform) {
-        foreach(AST *node, nodeGroup->getChildren()) {
-            if (node->getNodeType() == AST::Block) {
-                BlockNode *block = static_cast<BlockNode *>(node);
-                if (block->getObjectType() == "platformType"
-                        || block->getObjectType() == "type") {
-                    ValueNode *name = static_cast<ValueNode*>(block->getPropertyValue("typeName"));
-                    Q_ASSERT(name->getNodeType() == AST::String);
-                    if (name->getStringValue() == typeName.toStdString()) {
-                        QVector<AST *> portList = getPortsForTypeBlock(block);
-                        if (!portList.isEmpty()) {
-                            return portList;
-                        }
+    QList<AST *> objects = getBuiltinObjects();
+    foreach(AST *node, objects) {
+        if (node->getNodeType() == AST::Block) {
+            BlockNode *block = static_cast<BlockNode *>(node);
+            if (block->getObjectType() == "platformType"
+                    || block->getObjectType() == "type") {
+                ValueNode *name = static_cast<ValueNode*>(block->getPropertyValue("typeName"));
+                Q_ASSERT(name->getNodeType() == AST::String);
+                if (name->getStringValue() == typeName.toStdString()) {
+                    QVector<AST *> portList = getPortsForTypeBlock(block);
+                    if (!portList.isEmpty()) {
+                        return portList;
                     }
                 }
             }
@@ -293,6 +292,16 @@ Builder *StreamPlatform::createBuilder(QString projectDir)
     return builder;
 }
 
+QList<AST *> StreamPlatform::getBuiltinObjectsCopy()
+{
+    QList<AST *> objects;
+    QList<AST *> libObjects = getBuiltinObjects();
+    foreach(AST *object, libObjects) {
+        objects << object->deepCopy();
+    }
+    return objects;
+}
+
 QList<AST *> StreamPlatform::getBuiltinObjects()
 {
     QList<AST *> objects;
@@ -301,15 +310,15 @@ QList<AST *> StreamPlatform::getBuiltinObjects()
         blockGroup.next();
         foreach(AST *element, blockGroup.value()->getChildren()) {
             if (element->getNodeType() == AST::Block) {
-                objects << element->deepCopy();
+                objects << element;
             } else {
-                objects << element->deepCopy(); // TODO: This inserts everything. Only insert what is needed
+                objects << element; // TODO: This inserts everything. Only insert what is needed
             }
         }
     }
     vector<AST *> libObjects = m_library.getNodes();
     foreach(AST *object, libObjects) {
-        objects << object->deepCopy();
+        objects << object;
     }
     return objects;
 }
