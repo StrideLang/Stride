@@ -283,8 +283,13 @@ class NameAtom(Atom):
                 self.globals['initialization'] += platform_type['block']['initialization']
             else:
                 self.globals['initialization'] = platform_type['block']['initialization']
+                
         
         self.set_inline(False)
+        
+        if 'direction' in platform_type['block']:
+            if platform_type['block']['direction'] == 'out' or platform_type['block']['direction'] == 'thru':
+                self.set_inline(True)
         
         if 'rate' in declaration:
             if type(declaration['rate']) == dict:
@@ -301,16 +306,7 @@ class NameAtom(Atom):
         return {}
     
     def get_instances(self):
-        if 'default' in self.declaration:
-            default_value = self.declaration['default']
-        elif 'block' in self.platform_type:
-            if 'default' in self.platform_type['block']:
-                default_value = self.platform_type['block']['default'] # FIXME inheritance is not being handled here
-            else:
-                default_value = 0.0
-        else:
-            print("Forced default value to 0 for " + self.name)
-            default_value = 0.0
+        default_value = self._get_default_value()
         if 'type' in self.declaration and self.declaration['type'] == 'signal':
             inits = [{'handle' : self.handle,
                       'type' : 'real',
@@ -323,6 +319,12 @@ class NameAtom(Atom):
                           'type' : 'real',
                           'code' : str(default_value)
                           }]
+            elif self.platform_type['block']['type'] == 'platformType':
+                inits = [{'handle' : self.handle,
+                          'type' : 'real',
+                          'code' : str(default_value)
+                          }]
+
             else:
                 print("Don't know how to declare type " + ' '.join(self.declaration.keys()))
                 inits = []
@@ -352,84 +354,57 @@ class NameAtom(Atom):
         out_tokens = [self.handle]
         if 'processing' in self.platform_type['block']:
             if self.inline:
-                code = templates.expression(self.get_inline_processing_code(in_tokens))
+                out_tokens = [self.get_inline_processing_code(in_tokens)]
             else:
                 code = templates.assignment(self.handle, self.get_inline_processing_code(in_tokens))
         else:
             code = templates.assignment(self.handle, self.get_inline_processing_code(in_tokens))
         return code, out_tokens
-
-class BundleAtom(Atom):
-    def __init__(self, platform_type, declaration, index, token_index):
-        ''' index indexes from 1, internal index from 0
-        '''
-        super(BundleAtom, self).__init__()
-        self.name = declaration['name']
-        self.index = index - 1
-        self.handle = self.name  #+ '_%03i'%(token_index);
-        self.platform_type = platform_type
-        self.declaration = declaration
         
-        self.set_inline(False)
-        
-        if 'include' in platform_type['block']:
-            if 'include' in self.globals:
-                self.globals['include'].extend([inc['value']['value'] for inc in platform_type['block']['include']])
-            else:
-                self.globals['include'] = [inc['value']['value'] for inc in platform_type['block']['include']]
-        if 'initialization' in platform_type['block']:
-            if 'initialization' in self.globals:
-                self.globals['initialization'] += platform_type['block']['initialization']
-            else:
-                self.globals['initialization'] = platform_type['block']['initialization']
-            if platform_type['block']['direction'] == 'in' or platform_type['block']['direction'] == 'thru':
-                self.inline = False
-        
-        if 'rate' in declaration:
-            if type(declaration['rate']) == dict:
-                self.rate = -1
-            else:
-                self.rate = declaration['rate']
-        else:
-            self.rate = -1
-        
-    def get_declarations(self):
-        if 'declarations' in self.platform_type['block']:
-            return templates.get_platform_declarations(self.platform_type['block']['declarations'])
-        return {}
-    
-    def get_instances(self):
+    def _get_default_value(self):
         if 'default' in self.declaration:
             default_value = self.declaration['default']
-
-        if 'blockbundle' in self.platform_type:
+        elif 'block' in self.platform_type:
+            if 'default' in self.platform_type['block']:
+                default_value = self.platform_type['block']['default'] # FIXME inheritance is not being handled here
+            else:
+                default_value = 0.0
+        elif 'blockbundle' in self.platform_type:
             #Stride definition
             if 'default' in self.platform_type['blockbundle']:
                 default_value = self.platform_type['blockbundle']['default']
             else:
                 default_value = 0.0
-            instances = [{'handle' : self.handle,
+        else:
+            print("Forced default value to 0 for " + self.name)
+            default_value = 0.0
+        return default_value
+
+class BundleAtom(NameAtom):
+    def __init__(self, platform_type, declaration, index, token_index):
+        ''' index indexes from 1, internal index from 0
+        '''
+        super(BundleAtom, self).__init__(platform_type, declaration, token_index)
+        self.index = index - 1
+        if not 'blockbundle' in self.platform_type and not 'platformType' in self.platform_type['block']['type']:
+            raise ValueError("Need a block bundle platform type to make a Bundle Atom.")
+        
+    
+    def get_instances(self):
+        default_value = self._get_default_value()
+
+        instances = [{'handle' : self.handle,
                       'code' : str(default_value),
                       'type' : 'bundle',
                       'bundletype' : 'real',
                       'size' : self.declaration['size']
-                      }]
-        else:
-            default_value = 0.0 # TODO put actual default
-            code = str(default_value)
+                      }]     
             
-            instances = [{'handle' : self.handle,
-                      'code' : code,
-                      'type' : 'bundle',
-                      'bundletype' : 'real',
-                      'size' : self.declaration['size']
-                      }]
-
                 
         return instances
         
-    def get_inline_processing_code(self, in_tokens):
-        code = ''
+    def get_inline_processing_code(self, in_tokens): 
+        code = super(BundleAtom, self).get_inline_processing_code(in_tokens)
         if 'processing' in self.platform_type['block']:
             direction = self.platform_type['block']['direction']
             code = templates.get_platform_inline_processing_code(
@@ -437,16 +412,9 @@ class BundleAtom(Atom):
                             in_tokens,
                             direction,
                             self.index)
-        else:
-            if len(in_tokens) > 0:
-                code = in_tokens[0]
-            else:
-                code = self.handle
-            
         return  code
     
     def get_processing_code(self, in_tokens):
-
         code = ''
         if len(in_tokens) > 0:
             code = templates.assignment(self._get_token_name(self.index),

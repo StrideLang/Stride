@@ -15,7 +15,7 @@ platformType _HwInput {
     declarations: ''
     initialization: ["// %%token%% = 0;"]
     processing: "io.in(%%bundle_index%%)"
-    inherits: 'signal'
+    inherits: ['signal']
 }
 
 platformType _HwOutput {
@@ -26,7 +26,7 @@ platformType _HwOutput {
     declarations: ''
     initialization: ["// %%token%% = 0;"]
     processing: "io.out(%%bundle_index%%) = %%intoken%%;"
-    inherits: 'signal'
+    inherits: ['signal']
 }
 
 constant PlatformRate {
@@ -56,7 +56,7 @@ platformType _SineType {
     declarations: ''
     initialization: ["// %%token%% = 0;"]
     processing: "std::sin(%%intoken%%)"
-    inherits: 'signal'
+    inherits: ['signal']
 }
 
 platformModule Sine {
@@ -79,4 +79,5 @@ platformModule Sine {
     streams: [
         Input >> SineBlock >> Output;
     ]
+    meta: ""
 }

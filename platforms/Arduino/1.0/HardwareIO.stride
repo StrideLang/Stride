@@ -17,7 +17,7 @@ platformType _AnalogInput {
     declarations: ['int sensorPin = A5;']
     initialization: ['// init analog input']
     processing: "analogRead(sensorPin)"
-    inherits: 'signal'
+    inherits: ['signal']
 }
 
 constant PlatformRate {
@@ -43,7 +43,7 @@ platformType _SerialOutType {
     declarations: ''
     initialization: ["Serial.begin(9600);"]
     processing: "Serial.println(%%intoken%%)"
-    inherits: 'signal'
+    inherits: ['signal']
 }
 
 platformModule SerialOut {

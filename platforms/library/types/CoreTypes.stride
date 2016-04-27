@@ -8,7 +8,7 @@ type _Constant {
 			required: off
 		}
 	]
-	inherits: "streamable"
+	inherits: ["streamable"]
 }
 
 type _Type {
@@ -99,7 +99,7 @@ type _Switch {
 			required: off
 		}
 	]
-	inherits: "streamable"
+	inherits: ["streamable"]
 }
 
 type _Trigger {
@@ -119,7 +119,7 @@ type _Signal {
 			required: off
 		}
 	]
-	inherits: "streamable"
+	inherits: ["streamable"]
 }
 
 type _Domain {

@@ -15,7 +15,7 @@ type _Streamable {
 			required: off
 		}
 	]
-	inherits: "rated"
+	inherits: ["rated"]
 }
 
 type _Rated {
@@ -34,7 +34,7 @@ type _Rated {
 			required: off
 		}
 	]
-	inherits: "domainMember" # TODO: Should we be able to say "_DomainMember" here instead?
+	inherits: ["domainMember"] # TODO: Should we be able to say "_DomainMember" here instead?
 }
 
 type _DomainMember {

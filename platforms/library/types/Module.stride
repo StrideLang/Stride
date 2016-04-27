@@ -34,7 +34,7 @@ type _Hybrid {
 			required: on
 		}
 	]
-	inherits: "rated" # TODO could we use Rated here instead?
+	inherits: ["rated"] # TODO could we use Rated here instead?
 }
 
 type _Module {
