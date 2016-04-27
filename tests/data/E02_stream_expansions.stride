@@ -1,5 +1,5 @@
 use Gamma version 1.0 on PC
-
+# This should be expanded into lists of equal size:
 AudioIn >> Level(gain: 1.5) >> AudioOut;
 
 signal In[2] {
@@ -9,9 +9,8 @@ signal In[2] {
 signal Out[2] {
     default: [5,6.5]
 }
-
+#Expanded to lists of size 2
 In >> Out;
 
-InSignal >> PassThru() >> OutSignal;
-
+# Signals should be delcared as blocks of size 2
 InSignal2 >> [PassThru(), PassThru()] >> OutSignal2;

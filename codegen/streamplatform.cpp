@@ -145,21 +145,19 @@ QVector<AST *> StreamPlatform::getPortsForTypeBlock(BlockNode *block)
         }
     }
     AST *inheritedPortsValue = block->getPropertyValue("inherits");
-    QStringList inheritedTypes;
+
     if (inheritedPortsValue){
         if (inheritedPortsValue->getNodeType() == AST::String) {
-            inheritedTypes << QString::fromStdString(static_cast<ValueNode *>(inheritedPortsValue)->getStringValue());
+            QString typeName =  QString::fromStdString(static_cast<ValueNode *>(inheritedPortsValue)->getStringValue());
+            outList << getPortsForType(typeName);
         } else if (inheritedPortsValue->getNodeType() == AST::List) {
             foreach(AST *inheritedMember, inheritedPortsValue->getChildren()) {
                 Q_ASSERT(inheritedMember->getNodeType() == AST::String);
-                inheritedTypes << QString::fromStdString(static_cast<ValueNode *>(inheritedMember)->getStringValue());
+                QString typeName =  QString::fromStdString(static_cast<ValueNode *>(inheritedMember)->getStringValue());
+                outList << getPortsForType(typeName);
             }
 
         }
-    }
-    foreach(QString inherited, inheritedTypes) {
-        QVector<AST *> inheritedPortsList = getPortsForType(inherited);
-        outList << inheritedPortsList;
     }
     return outList;
 }
