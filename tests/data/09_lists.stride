@@ -19,8 +19,8 @@ constant List_Switches [4] {
         value: [ on, off, on, on ]
 }
 
-constant List_Names [4] {
-        value: [ Name1, Name2, Name3, Name4 ]
+constant List_Mixed [4] {
+        value: [ List_Integer[1], List_Real[2], List_Strings[3], List_Switches[4] ]
 }
 
 constant List_Namespaces [4] {
@@ -38,25 +38,10 @@ property: [ blockType1 BlockName2 { property: "value" },
             ]
 }
 
-#These should trigger inconsistent constant errors
-
-constant List_Inconsistent [4] {
-        value: [ '16', "32.1", '64', 1 ]
-}
-
-constant List_Inconsistent2 [4] {
-        value: [ '16', "32.1", '64', 1.1 ]
-}
-
 # List of lists will parse
-list IntegerList [3] {
+constant IntegerList [3] {
         value: [[ 9, 8, 7 ] , [ 6, 5, 4 ] , [ 3, 2, 1 ] ]
         meta:	'List of lists'
 }
 
-# The following should FAIL. Real and string lists mixed.
-list IntegerList2 [3] {
-        value: [ [ 1, 2, 3 ], [ 4.0, 5.0, '6' ], [ 7, 8, 9 ] ]
-        meta:	'List of lists'
-}
 

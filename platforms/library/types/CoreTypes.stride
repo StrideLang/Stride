@@ -3,12 +3,11 @@ type _Constant {
 	ports: [
 		port Value {
 			name: "value"
-			types: ["CSP", "CIP", "CRP"]
+			types: ["CSP", "CIP", "CRP", "CBP"]
 			default: none
 			required: off
 		}
 	]
-	inherits: ["streamable"]
 }
 
 type _Type {

@@ -3,52 +3,54 @@ use Gamma version 1.0 on PC
 module Sum {
         input:          Inputs
         output:         Output
-        propertyName:   [
-                'size' ,
-                'reset'
+        properties: [
+                property SizeProperty {
+                        name: "size"
+                        block: Size
+                },
+                property ResetProperty {
+                        name: "reset"
+                        block: Reset
+                }
         ]
-        propertyBlock:  [
+        internalBlocks:  [
                 constant Size { value: 2 },
-                trigger Reset {}
-        ]
-        internalBlock:  [
+                trigger Reset {},
                 hybrid Inputs [Size] {
                         type:           [ 'Stream Real', 'Stream Integer' ]
                         default :       [ 0.0 , 0 ]
-                        rate:           streamRate
+                        #rate:           streamRate
                         domain:         streamDomain
-                        reset:          Reset
+                        #reset:          Reset
                 },
                 hybrid Output {
                         type:           [ 'Stream Real', 'Stream Integer' ]
                         default :       [ 0.0 , 0 ]
-                        rate:           streamRate
+                        #rate:           streamRate
                         domain:         streamDomain
-                        reset:          Reset
+                        #reset:          Reset
                 },
                 reaction Adder {
                         output:         Sum
                         onExecution:    AdderReset              # Is this Add's or Adder's Reset? (SCOPE)
                         terminateWhen:  Terminate
-                        internalBlock:  [
+                        internalBlocks:  [
                                 signal Index {
                                         default:        1
-                                        rate:           none
-                                        domain:         streamDomain
-                                        reset:          AdderReset
+                                        #domain:         streamDomain
+                                        #reset:          AdderReset
                                 },
                                 hybrid Sum      {
                                         type:           [ 'Stream Real', 'Stream Integer' ]
                                         default:        [ 0.0 , 0 ]
-                                        rate:           none
-                                        domain:         streamDomain
-                                        reset:          AdderReset
+                                        #domain:         streamDomain
+                                        #reset:          AdderReset
                                 },
                                 trigger AdderReset  { },
                                 trigger Terminate { }
                         ]
                         streams:        [
-                                Inputs[Index] + Sum >> Sum;
+                                #Inputs[Index] + Sum >> Sum;
                                 Index + 1 >> Index;
 #                                [ Index , Size ] >> Greater () >> Terminate;
                         ]

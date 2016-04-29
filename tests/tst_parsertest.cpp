@@ -581,10 +581,8 @@ void ParserTest::testValueTypeBundleResolution()
     ValueNode *value = static_cast<ValueNode *>(index->getChildren().at(0));
     QVERIFY(value->getNodeType() == AST::Int);
     QVERIFY(value->getIntValue() == 4);
-    QVERIFY(block->getProperties().size() == 2);
-    PropertyNode *property = block->getProperties().at(0);
-    QVERIFY(property->getName() == "value");
-    AST *propertyValue = property->getValue();
+    AST *propertyValue = block->getPropertyValue("value");
+    QVERIFY(propertyValue);
     QVERIFY(propertyValue->getNodeType() == AST::List);
     ListNode *listnode = static_cast<ListNode *>(propertyValue);
     QVERIFY(listnode->getListType() == AST::Int);
@@ -602,10 +600,8 @@ void ParserTest::testValueTypeBundleResolution()
     value = static_cast<ValueNode *>(index->getChildren().at(0));
     QVERIFY(value->getNodeType() == AST::Int);
     QVERIFY(value->getIntValue() == 4);
-    QVERIFY(block->getProperties().size() == 2);
-    property = block->getProperties().at(0);
-    QVERIFY(property->getName() == "value");
-    propertyValue = property->getValue();
+    propertyValue = block->getPropertyValue("value");
+    QVERIFY(propertyValue);
     QVERIFY(propertyValue->getNodeType() == AST::List);
     listnode = static_cast<ListNode *>(propertyValue);
     QVERIFY(listnode->getListType() == AST::Real);
@@ -623,10 +619,8 @@ void ParserTest::testValueTypeBundleResolution()
     value = static_cast<ValueNode *>(index->getChildren().at(0));
     QVERIFY(value->getNodeType() == AST::Int);
     QVERIFY(value->getIntValue() == 4);
-    QVERIFY(block->getProperties().size() == 2);
-    property = block->getProperties().at(0);
-    QVERIFY(property->getName() == "value");
-    propertyValue = property->getValue();
+    propertyValue = block->getPropertyValue("value");
+    QVERIFY(propertyValue);
     QVERIFY(propertyValue->getNodeType() == AST::List);
     listnode = static_cast<ListNode *>(propertyValue);
     QVERIFY(listnode->getListType() == AST::String);
@@ -836,7 +830,7 @@ void ParserTest::testLists()
     QVERIFY(members.size() == 4);
     foreach(AST * member, members) {
         NameNode *value = static_cast<NameNode *>(member);
-        QVERIFY(value->getNodeType() == AST::Name);
+        QVERIFY(value->getNodeType() == AST::Bundle);
     }
 
     //    constant List_Namespaces [4] {
@@ -875,39 +869,6 @@ void ParserTest::testLists()
     QVERIFY(internalBlock->getNodeType() == AST::Block);
     QVERIFY(internalBlock->getObjectType() == "blockType2");
     QVERIFY(internalBlock->getName() == "BlockName3");
-
-
-    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
-    generator.validate();
-    QVERIFY(!generator.isValid());
-    QList<LangError> errors = generator.getErrors();
-    //constant List_Inconsistent [4] {
-    //        value: [ '16', "32.1", '64', 1 ]
-    //}
-    LangError err = errors.at(0);
-
-    QVERIFY(err.type == LangError::InconsistentList);
-    //constant List_Inconsistent2 [4] {
-    //        value: [ '16', "32.1", '64', 1.1 ]
-    //}
-
-    //# List of lists will parse
-    //list IntegerList [3] {
-    //        value: [[ 9, 8, 7 ] , [ 6, 5, 4 ] , [ 3, 2, 1 ] ]
-    //        meta:	'List of lists'
-    //}
-
-    err = errors.at(1);
-
-    QVERIFY(err.type == LangError::InconsistentList);
-    //# The following should FAIL. Integer and Float lists mixed.
-    //list IntegerList [3] {
-    //        value: [ [ 1, 2, 3 ], [ 4.0, 5.0, 6.0 ], [ 7, 8, 9 ] ]
-    //        meta:	'List of lists'
-    //}
-    err = errors.at(2);
-
-    QVERIFY(err.type == LangError::InconsistentList);
 
     tree->deleteChildren();
     delete tree;

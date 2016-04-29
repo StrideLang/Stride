@@ -1,4 +1,4 @@
-use PufferFish version 1.1 on PufferFish
+use Gamma version 1.0 on PC
 
 constant Integers [4] {
         value: [ 2, 32, 64, 128 ]
@@ -49,6 +49,6 @@ constant Values_Mismatch_2[3] {
     value: Floats[1:2]; # size mismatch
 }
 
-constant Array_Float[ Floats[1] ] {} # index must be integer
-constant Array_String[ Strings[1] ] {} # index must be integer
+constant Array_Float[ Floats[1] ] { value: 1 } # index must be integer
+constant Array_String[ Strings[1] ] { value: 1 } # index must be integer
 
