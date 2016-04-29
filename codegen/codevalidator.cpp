@@ -626,8 +626,11 @@ PortType CodeValidator::resolveNameType(NameNode *name, QVector<AST *>scope, AST
         } else if (declaration->getObjectType() == "signal") {
             vector<PropertyNode *> properties = declaration->getProperties();
             PropertyNode *property = CodeValidator::findPropertyByName(properties, "default");
-            if(property) {
-                return resolveNodeOutType(property->getValue(), scope, tree);
+            PortType defaultType = resolveNodeOutType(property->getValue(), scope, tree);
+            if (defaultType == ConstReal) {
+                return Audio;
+            } else {
+                return Audio;  // TODO this should be separated into SRP and SIP?R
             }
         } else {
 //            return QString::fromStdString(declaration->getObjectType());

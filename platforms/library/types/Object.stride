@@ -91,7 +91,7 @@ type _Base {
 	ports: [
 		port Inherits {
 			name: "inherits"
-			types: ["CSP"]
+			types: ["CSP", ""]
 			default: "base"
 			required: off
 		},

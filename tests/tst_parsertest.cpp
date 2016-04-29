@@ -18,14 +18,13 @@ public:
 private:
     void testMultichannelUgens(); // This has not yet been properly implemented. So don't run test
 
-    //Expansion
-    void testStreamRates();
-    void testStreamExpansion();
 private Q_SLOTS:
     void testPlatformCommonObjects();
 
     //Expansion
     void testConstantResolution();
+    void testStreamRates();
+    void testStreamExpansion();
 
     //PlatformConsistency
     void testValueTypeExpressionResolution();
@@ -526,6 +525,8 @@ void ParserTest::testPlatformCommonObjects()
     QList<LangError> errors = generator.getErrors();
     QVERIFY(generator.platformIsValid());
 
+    QVERIFY(errors.size() == 5);
+
     QVERIFY(errors[0].type == LangError::UnknownType);
     QVERIFY(errors[0].lineNumber == 3);
     QVERIFY(errors[0].errorTokens[0] == "invalid");
@@ -547,11 +548,11 @@ void ParserTest::testPlatformCommonObjects()
     QVERIFY(errors[3].errorTokens[0]  == "signal");
     QVERIFY(errors[3].errorTokens[1]  == "badproperty");
 
-    //    QVERIFY(errors[4].type == LangError::InvalidPortType);
-    //    QVERIFY(errors[4].lineNumber == 56);
-    //    QVERIFY(errors[4].errorTokens[0]  == "control");
-    //    QVERIFY(errors[4].errorTokens[1]  == "maximum");
-    //    QVERIFY(errors[4].errorTokens[2]  == "CSP");
+    QVERIFY(errors[4].type == LangError::InvalidPortType);
+    QVERIFY(errors[4].lineNumber == 40);
+    QVERIFY(errors[4].errorTokens[0]  == "constant");
+    QVERIFY(errors[4].errorTokens[1]  == "value");
+    QVERIFY(errors[4].errorTokens[2]  == "ASP");
 
     tree->deleteChildren();
     delete tree;
