@@ -6,7 +6,7 @@
 class ListNode : public AST
 {
 public:
-    ListNode(AST *newMember, int line);
+    ListNode(AST *newMember, const char *filename, int line);
     ~ListNode();
 
     void stealMembers(ListNode *list);

@@ -8,9 +8,9 @@
 class NameNode : public AST
 {
 public:
-    NameNode(string name, int line);
+    NameNode(string name, const char *filename, int line);
 
-    NameNode(string name, string namespace_, int line);
+    NameNode(string name, string namespace_, const char *filename, int line);
     ~NameNode();
 
     string getName() const {return m_name;}

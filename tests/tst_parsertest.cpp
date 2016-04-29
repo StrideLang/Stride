@@ -18,15 +18,17 @@ public:
 private:
     void testMultichannelUgens(); // This has not yet been properly implemented. So don't run test
 
-private Q_SLOTS:
     //Expansion
-    void testConstantResolution();
     void testStreamRates();
     void testStreamExpansion();
+private Q_SLOTS:
+    void testPlatformCommonObjects();
+
+    //Expansion
+    void testConstantResolution();
 
     //PlatformConsistency
     void testValueTypeExpressionResolution();
-    void testPlatformCommonObjects();
     void testDuplicates();
     void testValueTypeBundleResolution();
 
@@ -524,15 +526,13 @@ void ParserTest::testPlatformCommonObjects()
     QList<LangError> errors = generator.getErrors();
     QVERIFY(generator.platformIsValid());
 
-    //    QVERIFY(errors.size() == 5);
-
     QVERIFY(errors[0].type == LangError::UnknownType);
     QVERIFY(errors[0].lineNumber == 3);
     QVERIFY(errors[0].errorTokens[0] == "invalid");
 
     QVERIFY(errors[1].type == LangError::InvalidPortType);
     QVERIFY(errors[1].lineNumber == 11);
-    QVERIFY(errors[1].errorTokens[0]  == "object");
+    QVERIFY(errors[1].errorTokens[0]  == "signal");
     QVERIFY(errors[1].errorTokens[1]  == "meta");
     QVERIFY(errors[1].errorTokens[2]  == "CIP");
 
@@ -543,7 +543,7 @@ void ParserTest::testPlatformCommonObjects()
     QVERIFY(errors[2].errorTokens[2]  == "CIP");
 
     QVERIFY(errors[3].type == LangError::InvalidPort);
-    QVERIFY(errors[3].lineNumber == 31);
+    QVERIFY(errors[3].lineNumber == 32);
     QVERIFY(errors[3].errorTokens[0]  == "signal");
     QVERIFY(errors[3].errorTokens[1]  == "badproperty");
 
@@ -2269,8 +2269,8 @@ void ParserTest::testLibraryBasicTypes()
                  << "hybrid" << "module" << "reaction";
     foreach(QString typeName, typesToCheck) {
         type = library.findTypeInLibrary(typeName);
-        Q_ASSERT(type);
-        Q_ASSERT(library.isValidBlock(type));
+        QVERIFY(type);
+        QVERIFY(library.isValidBlock(type));
     }
 
 
@@ -2280,10 +2280,10 @@ void ParserTest::testLibraryValidation()
 {
     AST *tree;
     tree = parse(QString(QFINDTESTDATA("data/L01_library_types_validation.stride")).toStdString().c_str());
-    Q_ASSERT(tree);
+    QVERIFY(tree);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
     generator.validate();
-    Q_ASSERT(generator.isValid());
+    QVERIFY(generator.isValid());
 
     tree->deleteChildren();
     delete tree;

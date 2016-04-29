@@ -1,7 +1,7 @@
 #include "importnode.h"
 
-ImportNode::ImportNode(string name, int line, string alias) :
-  AST(AST::Import, line)
+ImportNode::ImportNode(string name, const char *filename, int line, string alias) :
+  AST(AST::Import, filename, line)
 {
   m_importName = name;
   m_importAlias = alias;
@@ -28,7 +28,7 @@ void ImportNode::setImportAlias(const string &importAlias)
 
 AST *ImportNode::deepCopy()
 {
-  AST* newNode = new ImportNode(m_importName, getLine(), m_importAlias);
+  AST* newNode = new ImportNode(m_importName, m_filename.data(), getLine(), m_importAlias);
 //  vector<AST *> children = getChildren();
 //  newNode->setChildren(children);
   return newNode;

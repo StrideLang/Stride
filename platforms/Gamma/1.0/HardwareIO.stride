@@ -66,12 +66,36 @@ platformModule Sine {
     internalBlocks: [
         signal Input {
                 default :       0.0
-                rate:           streamRate
+                rate:           AudioRate # FIXME needs to be streamRate
                 domain:         streamDomain
         },
         signal Output {
                 default :       0.0
-                rate:           streamRate
+                rate:           AudioRate # FIXME needs to be streamRate
+                domain:         streamDomain
+        }
+        _sineType SineBlock {}
+    ]
+    streams: [
+        Input >> SineBlock >> Output;
+    ]
+    meta: ""
+}
+
+
+platformModule Oscillator {
+    input: none
+    output: Output
+    properties: none # A property could be the type of input, (degrees, radians, etc.)
+    internalBlocks: [
+        signal Input {
+                default :       0.0
+                rate:           AudioRate # FIXME needs to be streamRate
+                domain:         streamDomain
+        },
+        signal Output {
+                default :       0.0
+                rate:           AudioRate # FIXME needs to be streamRate
                 domain:         streamDomain
         }
         _sineType SineBlock {}

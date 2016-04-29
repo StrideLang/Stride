@@ -36,9 +36,11 @@ private:
     void expandStreamToSize(StreamNode *stream, int size);
     void fillDefaultPropertiesForNode(AST *node);
 
-    // TODO move these two functions to CodeValidator with the rest of querying functions
+    // TODO move these four functions to CodeValidator with the rest of querying functions
     double findRateInProperties(vector<PropertyNode *> properties, QVector<AST *> scope, AST *tree);
     double getNodeRate(AST *node, QVector<AST *> scope, AST *tree);
+    double getDefaultForTypeAsDouble(QString type, QString port);
+    AST *getDefaultPortValueForType(QString type, QString portName);
 
 
     void insertBuiltinObjects();
@@ -58,8 +60,6 @@ private:
     ValueNode *reduceConstExpression(ExpressionNode *expr, QVector<AST *> scope, AST *tree);
     ValueNode *resolveConstant(AST *value, QVector<AST *> scope);
     void resolveConstantsInNode(AST *node, QVector<AST *> scope);
-    double getDefaultForTypeAsDouble(QString type, QString port);
-    AST *getDefaultPortValueForType(QString type, QString portName);
 
     // Operators
     ValueNode *multiply(ValueNode *left, ValueNode *right);

@@ -12,9 +12,10 @@ AST::AST()
     m_rate = -1;
 }
 
-AST::AST(Token token, int line)
+AST::AST(Token token, const char *filename, int line)
 {
     m_token = token;
+    m_filename = filename;
     m_line = line;
     m_rate = -1;
 }
@@ -75,6 +76,16 @@ double AST::getRate() const
 void AST::setRate(double rate)
 {
     m_rate = rate;
+}
+
+string AST::getFilename() const
+{
+    return m_filename;
+}
+
+void AST::setFilename(const string &filename)
+{
+    m_filename = filename;
 }
 
 

@@ -2,8 +2,8 @@
 
 #include "propertynode.h"
 
-PropertyNode::PropertyNode(string name, AST *value, int line):
-    AST(AST::Property, line)
+PropertyNode::PropertyNode(string name, AST *value, const char *filename, int line):
+    AST(AST::Property, filename, line)
 {
     assert(value != NULL);
     m_name = name;
@@ -23,6 +23,6 @@ void PropertyNode::replaceValue(AST *newValue)
 
 AST *PropertyNode::deepCopy()
 {
-    return new PropertyNode(m_name, m_children.at(0)->deepCopy(), m_line);
+    return new PropertyNode(m_name, m_children.at(0)->deepCopy(), m_filename.data(), m_line);
 }
 

@@ -8,12 +8,12 @@
 class ValueNode : public AST
 {
 public:
-    ValueNode(int line);
-    ValueNode(int value, int line);
-    ValueNode(float value, int line);
-    ValueNode(double value, int line);
-    ValueNode(string value, int line);
-    ValueNode(bool value, int line);
+    ValueNode(const char *filename, int line);
+    ValueNode(int value, const char * filename, int line);
+    ValueNode(float value, const char * filename, int line);
+    ValueNode(double value, const char * filename, int line);
+    ValueNode(string value, const char * filename, int line);
+    ValueNode(bool value, const char * filename, int line);
     ~ValueNode();
 
     int getIntValue() const;

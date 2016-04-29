@@ -2,8 +2,8 @@
 
 #include "rangenode.h"
 
-RangeNode::RangeNode(AST *start, AST *end, int line):
-    AST(AST::Range, line)
+RangeNode::RangeNode(AST *start, AST *end, const char *filename, int line):
+    AST(AST::Range, filename, line)
 {
 	addChild(start);
 	addChild(end);
@@ -21,7 +21,8 @@ AST *RangeNode::endIndex() const
 
 AST *RangeNode::deepCopy()
 {
-    AST *output = new RangeNode(startIndex()->deepCopy(), endIndex()->deepCopy(), m_line);
+    AST *output = new RangeNode(startIndex()->deepCopy(), endIndex()->deepCopy(),
+                                m_filename.data(), m_line);
     output->setRate(m_rate);
     return output;
 }

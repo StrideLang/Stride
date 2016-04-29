@@ -2,16 +2,16 @@
 
 #include "bundlenode.h"
 
-BundleNode::BundleNode(string name, ListNode *indexList, int line) :
-    AST(AST::Bundle, line)
+BundleNode::BundleNode(string name, ListNode *indexList, const char *filename, int line) :
+    AST(AST::Bundle, filename, line)
 {
     addChild(indexList);
     m_name = name;
     m_namespace = "";
 }
 
-BundleNode::BundleNode(string name, string namespace_, ListNode *indexList, int line):
-    AST(AST::Bundle, line)
+BundleNode::BundleNode(string name, string namespace_, ListNode *indexList, const char *filename, int line):
+    AST(AST::Bundle, filename, line)
 {
     addChild(indexList);
     m_name = name;
@@ -51,7 +51,7 @@ AST *BundleNode::deepCopy()
 {
     assert(getNodeType() == AST::Bundle);
     if(getNodeType() == AST::Bundle) {
-        AST *bundle = new BundleNode(m_name, static_cast<ListNode *>(index()->deepCopy()), m_line);
+        AST *bundle = new BundleNode(m_name, static_cast<ListNode *>(index()->deepCopy()), m_filename.data(), m_line);
         bundle->setRate(m_rate);
         return bundle;
     }

@@ -6,13 +6,11 @@
 class KeywordNode : public AST
 {
 public:
-    KeywordNode(std::string keyword, int line);
+    KeywordNode(std::string keyword, const char *filename, int line);
 
     std::string keyword() {return m_kw;}
 
-    virtual AST *deepCopy() {
-        return new KeywordNode(keyword(), getLine());
-    }
+    virtual AST *deepCopy();
 
 private:
     std::string m_kw;

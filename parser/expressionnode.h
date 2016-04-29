@@ -17,8 +17,8 @@ public:
         LogicalNot
     } ExpressionType;
 
-    ExpressionNode(ExpressionType type, AST *left, AST *right, int line);
-    ExpressionNode(ExpressionType type, AST *value, int line);
+    ExpressionNode(ExpressionType type, AST *left, AST *right, const char *filename, int line);
+    ExpressionNode(ExpressionType type, AST *value, const char *filename, int line);
     ~ExpressionNode();
 
     bool isUnary() const;

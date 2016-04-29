@@ -102,117 +102,57 @@ StreamPlatform::~StreamPlatform()
     }
 }
 
-QVector<AST *> StreamPlatform::getPortsForType(QString typeName)
-{
-    QList<AST *> objects = getBuiltinObjects();
-    foreach(AST *node, objects) {
-        if (node->getNodeType() == AST::Block) {
-            BlockNode *block = static_cast<BlockNode *>(node);
-            if (block->getObjectType() == "platformType"
-                    || block->getObjectType() == "type") {
-                ValueNode *name = static_cast<ValueNode*>(block->getPropertyValue("typeName"));
-                Q_ASSERT(name->getNodeType() == AST::String);
-                if (name->getStringValue() == typeName.toStdString()) {
-                    QVector<AST *> portList = getPortsForTypeBlock(block);
-                    if (!portList.isEmpty()) {
-                        return portList;
-                    }
-                }
-            }
-        }
-    }
+//ListNode *StreamPlatform::getPortsForFunction(QString typeName)
+//{
+//    foreach(AST* group, m_platform) {
+//        foreach(AST *node, group->getChildren()){
+//            if (node->getNodeType() == AST::Block) {
+//                BlockNode *block = static_cast<BlockNode *>(node);
+//                if (block->getObjectType() == "platformModule") {
+//                    if (block->getObjectType() == typeName.toStdString()) {
+//                        vector<PropertyNode *> ports = block->getProperties();
+//                        foreach(PropertyNode *port, ports) {
+//                            if (port->getName() == "ports") {
+//                                ListNode *portList = static_cast<ListNode *>(port->getValue());
+//                                Q_ASSERT(portList->getNodeType() == AST::List);
+//                                return portList;
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+//    return NULL;
+//}
 
-    BlockNode * libraryType = m_library.findTypeInLibrary(typeName);
-    if (libraryType) {
-        QVector<AST *> portList = getPortsForTypeBlock(libraryType);
-        if (!portList.isEmpty()) {
-            return portList;
-        }
-    }
+//BlockNode *StreamPlatform::getFunction(QString functionName)
+//{
+//    QStringList typeNames;
+//    foreach(AST* node, m_platform) {
+//        if (node->getNodeType() == AST::Block) {
+//            BlockNode *block = static_cast<BlockNode *>(block);
+//            if (block->getObjectType() == "platformModule"
+//                    || block->getObjectType() == "module") {
+//                if (block->getName() == functionName.toStdString()) {
+//                    return block;
+//                }
+//            }
+//        }
+//    }
+//    foreach(AST* node, m_library.getNodes()) {
 
-    return QVector<AST *>();
-}
-
-QVector<AST *> StreamPlatform::getPortsForTypeBlock(BlockNode *block)
-{
-    AST *portsValue = block->getPropertyValue("ports");
-    QVector<AST *> outList;
-    if (portsValue) {
-        Q_ASSERT(portsValue->getNodeType() == AST::List);
-        ListNode *portList = static_cast<ListNode *>(portsValue);
-        foreach(AST *port, portList->getChildren()) {
-            outList << port;
-        }
-    }
-    AST *inheritedPortsValue = block->getPropertyValue("inherits");
-
-    if (inheritedPortsValue){
-        if (inheritedPortsValue->getNodeType() == AST::String) {
-            QString typeName =  QString::fromStdString(static_cast<ValueNode *>(inheritedPortsValue)->getStringValue());
-            outList << getPortsForType(typeName);
-        } else if (inheritedPortsValue->getNodeType() == AST::List) {
-            foreach(AST *inheritedMember, inheritedPortsValue->getChildren()) {
-                Q_ASSERT(inheritedMember->getNodeType() == AST::String);
-                QString typeName =  QString::fromStdString(static_cast<ValueNode *>(inheritedMember)->getStringValue());
-                outList << getPortsForType(typeName);
-            }
-
-        }
-    }
-    return outList;
-}
-
-ListNode *StreamPlatform::getPortsForFunction(QString typeName)
-{
-    foreach(AST* group, m_platform) {
-        foreach(AST *node, group->getChildren()){
-            if (node->getNodeType() == AST::Block) {
-                BlockNode *block = static_cast<BlockNode *>(node);
-                if (block->getObjectType() == "platformModule") {
-                    if (block->getObjectType() == typeName.toStdString()) {
-                        vector<PropertyNode *> ports = block->getProperties();
-                        foreach(PropertyNode *port, ports) {
-                            if (port->getName() == "ports") {
-                                ListNode *portList = static_cast<ListNode *>(port->getValue());
-                                Q_ASSERT(portList->getNodeType() == AST::List);
-                                return portList;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    return NULL;
-}
-
-BlockNode *StreamPlatform::getFunction(QString functionName)
-{
-    QStringList typeNames;
-    foreach(AST* node, m_platform) {
-        if (node->getNodeType() == AST::Block) {
-            BlockNode *block = static_cast<BlockNode *>(block);
-            if (block->getObjectType() == "platformModule"
-                    || block->getObjectType() == "module") {
-                if (block->getName() == functionName.toStdString()) {
-                    return block;
-                }
-            }
-        }
-    }
-    foreach(AST* node, m_library.getNodes()) {
-
-        if (node->getNodeType() == AST::Block) {
-            BlockNode *block = static_cast<BlockNode *>(node);
-            if (block->getObjectType() == "module") {
-                if (block->getName() == functionName.toStdString()) {
-                    return block;
-                }
-            }
-        }
-    }
-    return NULL;
-}
+//        if (node->getNodeType() == AST::Block) {
+//            BlockNode *block = static_cast<BlockNode *>(node);
+//            if (block->getObjectType() == "module") {
+//                if (block->getName() == functionName.toStdString()) {
+//                    return block;
+//                }
+//            }
+//        }
+//    }
+//    return NULL;
+//}
 
 QString StreamPlatform::getPlatformPath()
 {
@@ -331,59 +271,21 @@ QList<AST *> StreamPlatform::getBuiltinObjects()
     return objects;
 }
 
-bool StreamPlatform::isValidType(QString typeName)
-{
-    if (m_types.contains(typeName)) {
-        return true;
-    }
-    return false;
-}
+//bool StreamPlatform::typeHasPort(QString typeName, QString propertyName)
+//{
+//    QVector<AST *> ports = getPortsForType(typeName);
+//    if (!ports.isEmpty()) {
+//        foreach(AST *port, ports) {
+//            BlockNode *block = static_cast<BlockNode *>(port);
+//            Q_ASSERT(block->getNodeType() == AST::Block);
+//            ValueNode *nameValueNode = static_cast<ValueNode *>(block->getPropertyValue("name"));
+//            Q_ASSERT(nameValueNode->getNodeType() == AST::String);
+//            if (nameValueNode->getStringValue() == propertyName.toStdString()) {
+//                return true;
+//            }
+//        }
+//    }
+//    return false;
+//}
 
-bool StreamPlatform::typeHasPort(QString typeName, QString propertyName)
-{
-    QVector<AST *> ports = getPortsForType(typeName);
-    if (!ports.isEmpty()) {
-        foreach(AST *port, ports) {
-            BlockNode *block = static_cast<BlockNode *>(port);
-            Q_ASSERT(block->getNodeType() == AST::Block);
-            ValueNode *nameValueNode = static_cast<ValueNode *>(block->getPropertyValue("name"));
-            Q_ASSERT(nameValueNode->getNodeType() == AST::String);
-            if (nameValueNode->getStringValue() == propertyName.toStdString()) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-bool StreamPlatform::isValidPortType(QString typeName, QString propertyName, PortType propType)
-{
-    BlockNode *block = getFunction(typeName);
-    if (!block) {
-        return false;
-    }
-    AST *value = block->getPropertyValue(propertyName.toStdString());
-    QString type;
-    switch (value->getNodeType()) {
-    case AST::Int:
-        if (propType == ConstInt) {
-            return true;
-        } else {
-            return false;
-        }
-    case AST::Real:
-        if (propType == ConstReal) {
-            return true;
-        } else {
-            return false;
-        }
-    case AST::String:
-        if (propType == ConstString) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-    return false;
-}
 

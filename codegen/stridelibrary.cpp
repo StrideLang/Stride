@@ -46,16 +46,11 @@ BlockNode *StrideLibrary::findTypeInLibrary(QString typeName)
                 if (block->getObjectType() != "type") {
                     continue;
                 }
-                foreach(PropertyNode *property, block->getProperties()) {
-                    QString propertyName = QString::fromStdString(property->getName());
-                    if (propertyName == "typeName") {
-                        AST * value = property->getValue();
-                        if (value->getNodeType()  == AST::String) {
-                            QString libTypeName = QString::fromStdString(static_cast<ValueNode *>(value)->getStringValue());
-                            if (libTypeName == typeName) {
-                                return block;
-                            }
-                        }
+                AST * value = block->getPropertyValue("typeName");
+                if (value->getNodeType()  == AST::String) {
+                    QString libTypeName = QString::fromStdString(static_cast<ValueNode *>(value)->getStringValue());
+                    if (libTypeName == typeName) {
+                        return block;
                     }
                 }
             }
@@ -155,6 +150,12 @@ void StrideLibrary::readLibrary(QString rootDir)
             AST *tree = AST::parseFile(fileName.toLocal8Bit().data());
             if(tree) {
                 m_libraryTrees.append(tree);
+            } else {
+                qDebug() << "Not loaded:" << fileName;
+                vector<LangError> errors = AST::getParseErrors();
+                foreach(LangError error, errors) {
+                    qDebug() << QString::fromStdString(error.getErrorText());
+                }
             }
         }
     }

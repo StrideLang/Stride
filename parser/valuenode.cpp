@@ -2,37 +2,37 @@
 
 #include "valuenode.h"
 
-ValueNode::ValueNode(int line) :
-    AST(AST::None, line)
+ValueNode::ValueNode(const char * filename, int line) :
+    AST(AST::None, filename, line)
 {
 }
 
-ValueNode::ValueNode(int value, int line) :
-    AST(AST::Int, line)
+ValueNode::ValueNode(int value, const char * filename, int line) :
+    AST(AST::Int, filename, line)
 {
     m_intValue = value;
 }
 
-ValueNode::ValueNode(float value, int line) :
-    AST(AST::Real, line)
+ValueNode::ValueNode(float value, const char * filename, int line) :
+    AST(AST::Real, filename, line)
 {
     m_floatValue = value;
 }
 
-ValueNode::ValueNode(double value, int line) :
-    AST(AST::Real, line)
+ValueNode::ValueNode(double value, const char * filename, int line) :
+    AST(AST::Real, filename, line)
 {
     m_floatValue = value;
 }
 
-ValueNode::ValueNode(string value, int line) :
-    AST(AST::String, line)
+ValueNode::ValueNode(string value, const char * filename, int line) :
+    AST(AST::String, filename, line)
 {
     m_stringValue = value;
 }
 
-ValueNode::ValueNode(bool value, int line) :
-    AST(AST::Switch, line)
+ValueNode::ValueNode(bool value, const char * filename, int line) :
+    AST(AST::Switch, filename, line)
 {
     m_switch = value;
 }
@@ -79,15 +79,15 @@ bool ValueNode::getSwitchValue() const
 AST *ValueNode::deepCopy()
 {
     if (getNodeType() == AST::Int) {
-        return new ValueNode(getIntValue(), getLine());
+        return new ValueNode(getIntValue(), m_filename.data(), getLine());
     } else if (getNodeType() == AST::Real) {
-        return new ValueNode(getRealValue(), getLine());
+        return new ValueNode(getRealValue(), m_filename.data(), getLine());
     } else if (getNodeType() == AST::String) {
-        return new ValueNode(getStringValue(), getLine());
+        return new ValueNode(getStringValue(), m_filename.data(), getLine());
     } else if (getNodeType() == AST::Switch) {
-        return new ValueNode(getSwitchValue(), getLine());
+        return new ValueNode(getSwitchValue(), m_filename.data(), getLine());
     } else if (getNodeType() == AST::None) {
-        return new ValueNode(getLine());
+        return new ValueNode(m_filename.data(), getLine());
     }  else {
         assert(0); // Invalid type
     }

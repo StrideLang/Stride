@@ -2,8 +2,9 @@
 
 #include "expressionnode.h"
 
-ExpressionNode::ExpressionNode(ExpressionType type, AST *left, AST *right, int line) :
-    AST(AST::Expression, line)
+ExpressionNode::ExpressionNode(ExpressionType type, AST *left, AST *right,
+                               const char *filename, int line) :
+    AST(AST::Expression, filename, line)
 {
     m_type = type;
     assert(m_type != ExpressionNode::UnaryMinus && m_type != ExpressionNode::LogicalNot);
@@ -11,8 +12,9 @@ ExpressionNode::ExpressionNode(ExpressionType type, AST *left, AST *right, int l
     addChild(right);
 }
 
-ExpressionNode::ExpressionNode(ExpressionNode::ExpressionType type, AST *value, int line) :
-    AST(AST::Expression, line)
+ExpressionNode::ExpressionNode(ExpressionNode::ExpressionType type, AST *value,
+                               const char *filename, int line) :
+    AST(AST::Expression, filename, line)
 {
     m_type = type;
     assert(m_type == ExpressionNode::UnaryMinus || m_type == ExpressionNode::LogicalNot);
@@ -116,9 +118,9 @@ string ExpressionNode::getExpressionTypeString() const
 AST *ExpressionNode::deepCopy()
 {
     if (m_type == ExpressionNode::UnaryMinus || m_type == ExpressionNode::LogicalNot) {
-        return new ExpressionNode(m_type, m_children.at(0)->deepCopy(), m_line);
+        return new ExpressionNode(m_type, m_children.at(0)->deepCopy(), m_filename.data(), m_line);
     } else {
-        return new ExpressionNode(m_type, m_children.at(0)->deepCopy(), m_children.at(1)->deepCopy(), m_line);
+        return new ExpressionNode(m_type, m_children.at(0)->deepCopy(), m_children.at(1)->deepCopy(), m_filename.data(), m_line);
     }
 }
 

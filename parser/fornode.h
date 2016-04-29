@@ -6,7 +6,7 @@
 class ForNode : public AST
 {
 public:
-  ForNode(int line);
+  ForNode(const char *filename, int line);
 
   AST *deepCopy();
 };

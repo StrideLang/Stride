@@ -15,7 +15,7 @@ typedef struct {
 class PlatformNode : public AST
 {
 public:
-    PlatformNode(string platformName, double version, int line, string hwPlatform = string(), double hwVersion = -1);
+    PlatformNode(string platformName, double version, const char *filename, int line, string hwPlatform = string(), double hwVersion = -1);
 
     ~PlatformNode();
 

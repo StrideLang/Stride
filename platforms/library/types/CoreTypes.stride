@@ -3,7 +3,7 @@ type _Constant {
 	ports: [
 		port Value {
 			name: "value"
-			types: ["CSP", "CIP", "CRP", "none"]
+			types: ["CSP", "CIP", "CRP"]
 			default: none
 			required: off
 		}
@@ -16,13 +16,13 @@ type _Type {
 	ports: [
 		port TypeName {
 			name: "typeName"
-			types: ["CSP", "none"]
+			types: ["CSP"]
 			default: none
 			required: on
 		},
 		port Ports {
 			name: "ports"
-			types: ["", "none"] # TODO how to validate object lists?
+			types: [""] # TODO how to validate object lists?
 			default: none
 			required: on
 		}
@@ -39,15 +39,15 @@ type _PlatformType {
 			default: none
 			required: on
 		},
-		port Includes {
+		port Include {
 			name: "include"
-			types: ["CSP"] #TODO accepts list
+			types: ["CSP", ""] #TODO accepts list
 			default: none
 			required: on
 		},
 		port LinkTo {
 			name: "linkTo"
-			types: ["CSP"] #TODO accepts list
+			types: ["CSP" , ""] #TODO accepts list
 			default: none
 			required: on
 		},
@@ -90,18 +90,13 @@ type _PlatformType {
 	]
 }
 
+ # TODO: Default to switch should be MasterReset
 type _Switch {
 	typeName: "switch"
 	ports: [
-		port Reset {
-			name: "reset"
-			types: ["CBP", "none"]
-			default: off # TODO: This should be MasterReset
-			required: off
-		},
 		port Default {
 			name: "default"
-			types: ["CBP", "none"]
+			types: ["CBP"]
 			default: off
 			required: off
 		}
@@ -140,7 +135,7 @@ type _Domain {
 		},
 		port Platform {
 			name: "platform"
-			types: [""]
+			types: ["CSP", _Platform]
 			default: none
 			required: on
 		}

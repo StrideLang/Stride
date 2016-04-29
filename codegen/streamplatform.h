@@ -35,22 +35,18 @@ public:
     PlatformAPI getAPI() {return m_api;}
     Builder *createBuilder(QString projectDir);
 
-    QVector<AST *> getPortsForType(QString typeName);
-    QVector<AST *> getPortsForTypeBlock(BlockNode *block);
 
-    ListNode *getPortsForFunction(QString typeName);
-
-    BlockNode *getFunction(QString functionName);
+//    BlockNode *getFunction(QString functionName);
     QList<AST *> getBuiltinObjectsCopy();
     QList<AST *> getBuiltinObjects();
 
-    bool isValidType(QString typeName);
-    bool typeHasPort(QString typeName, QString propertyName);
-    bool isValidPortType(QString typeName, QString propertyName, PortType propType);
+//    bool typeHasPort(QString typeName, QString propertyName);
 
     QString getPlatformPath(); // Path for the specific platform
 
 private:
+    QVector<AST *> getPortsForTypeBlock(BlockNode *block);
+//    ListNode *getPortsForFunction(QString typeName);
 
     QString readFile(QString fileName);
 

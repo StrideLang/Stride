@@ -10,8 +10,8 @@
 class BlockNode : public AST
 {
 public:
-    BlockNode(string name, string objectType, AST *propertiesList, int line);
-    BlockNode(BundleNode *bundle, string objectType, AST *propertiesList, int line);
+    BlockNode(string name, string objectType, AST *propertiesList, const char *filename, int line);
+    BlockNode(BundleNode *bundle, string objectType, AST *propertiesList, const char *filename, int line);
     ~BlockNode();
 
     string getName() const;

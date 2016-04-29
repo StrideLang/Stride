@@ -27,6 +27,7 @@ public:
 
     ErrorType type;
     std::vector<std::string> errorTokens;
+    std::string filename;
     int lineNumber;
     std::string getErrorText();
 };

@@ -43,31 +43,31 @@ type _Module {
 	ports: [
 		port Input {
 			name: "input"
-			types: ["none", ""]
+			types: [""]
 			default: none
 			required: on
 		},
 		port Output {
 			name: "output"
-			types: ["none", ""]
+			types: [""]
 			default: none
 			required: on
 		},
 		port Properties {
 			name: "properties"
-			types: [ "" ]  # How can we define list types here?
+			types: [ "" ]  # TODO: How can we define list types here?
 			default: none
 			required: on
 		},
 		port InternalBlocks {
 			name: "internalBlocks"
-			types: [""]
+			types: [""] # TODO how to accept lists?
 			default: none
 			required: on
 		},
 		port Streams {
 			name: "streams"
-			types: ["none"]
+			types: [""]
 			default: none
 			required: on
 		}
@@ -116,25 +116,25 @@ type _PlatformPort {
 	ports: [
 		port Name {
 			name: "name"
-			types: ["CSP", "none"]
+			types: ["CSP", ""]
 			default: none
 			required: on
 		},
 		port Types {
 			name: "types"
-			types: ["CSP", "none"]
+			types: ["CSP", ""]
 			default: none
 			required: on
 		},
 		port Default {
 			name: "default"
-			types: ["CSP", "none"] # TODO how to handle hybrid port types?
+			types: ["CSP", ""] # TODO how to handle hybrid port types?
 			default: none
 			required: on
 		},
 		port Required {
 			name: "required"
-			types: ["CBP", "none"]
+			types: ["CBP", ""]
 			default: none
 			required: on
 		}
@@ -147,13 +147,13 @@ type _PlatformModule {
 	ports: [
 		platformPort Input {
 			name: "input"
-			types: ["none", ""]
+			types: [""]
 			default: none
 			required: on
 		},
 		platformPort Output {
 			name: "output"
-			types: ["none", ""]
+			types: [""]
 			default: none
 			required: on
 		},
@@ -171,7 +171,7 @@ type _PlatformModule {
 		},
 		port Streams {
 			name: "streams"
-			types: ["none"]
+			types: [""]
 			default: none
 			required: on
 		}#,

@@ -5,8 +5,8 @@
 
 #include "platformnode.h"
 
-PlatformNode::PlatformNode(string platformName, double version, int line, string hwPlatform, double hwVersion) :
-    AST(AST::Platform, line)
+PlatformNode::PlatformNode(string platformName, double version, const char *filename, int line, string hwPlatform, double hwVersion) :
+    AST(AST::Platform, filename, line)
 {
     m_platformName = platformName;
     m_version = version;
@@ -31,7 +31,7 @@ void PlatformNode::setVersion(double version)
 
 AST *PlatformNode::deepCopy()
 {
-    AST *newnode = new PlatformNode(m_platformName, m_version, m_line, m_targetPlatform.name, m_targetPlatform.version);
+    AST *newnode = new PlatformNode(m_platformName, m_version, m_filename.data() , m_line, m_targetPlatform.name, m_targetPlatform.version);
     vector<AST *> children = getChildren();
     for (unsigned int i = 0; i < children.size(); i++) {
         newnode->addChild(children.at(i)->deepCopy());

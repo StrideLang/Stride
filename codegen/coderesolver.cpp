@@ -19,8 +19,8 @@ void CodeResolver::preProcess()
 {
     insertBuiltinObjects();
     resolveStreamSymbols();
-    expandParallelFunctions();
     fillDefaultProperties();
+    expandParallelFunctions();
     resolveRates();
     resolveConstants();
 }
@@ -62,7 +62,9 @@ void CodeResolver::fillDefaultPropertiesForNode(AST *node)
         BlockNode *destBlock = static_cast<BlockNode *>(node);
         vector<PropertyNode *> blockProperties = destBlock->getProperties();
         // TODO: should also set properties for user defined types
-        QVector<AST *> typeProperties = m_platform->getPortsForType(QString::fromStdString(destBlock->getObjectType()));
+        QVector<AST *> typeProperties = CodeValidator::getPortsForType(
+                    QString::fromStdString(destBlock->getObjectType()),
+                    QVector<AST *>(), m_tree);
         if (typeProperties.isEmpty()) {
             qDebug() << "ERROR: fillDefaultProperties() No type definition for " << QString::fromStdString(destBlock->getObjectType());
             return;
@@ -86,7 +88,9 @@ void CodeResolver::fillDefaultPropertiesForNode(AST *node)
             }
             if (!propertySet) {
                 AST *defaultValueNode = portDescription->getPropertyValue("default");
-                PropertyNode *newProperty = new PropertyNode(propertyName, defaultValueNode->deepCopy(), -1);
+                PropertyNode *newProperty = new PropertyNode(propertyName,
+                            defaultValueNode->deepCopy(),
+                            portDescription->getFilename().data(), portDescription->getLine());
                 destBlock->addProperty(newProperty);
             }
         }
@@ -130,7 +134,7 @@ void CodeResolver::expandStreamToSize(StreamNode *stream, int size)
             || left->getNodeType() == AST::Function) {
         int numCopies = size/leftSize; // FIXME this is naive and only works in simple cases. Must take into account both size and number of outputs/inputs
         if (numCopies > 1 && numCopies == (float) size/leftSize) {
-            ListNode *newLeft = new ListNode(left->deepCopy(), left->getLine());
+            ListNode *newLeft = new ListNode(left->deepCopy(), left->getFilename().data(), left->getLine());
             for (int i = 1; i < numCopies; i++) {
                 newLeft->addChild(left->deepCopy());
             }
@@ -146,7 +150,7 @@ void CodeResolver::expandStreamToSize(StreamNode *stream, int size)
                 || right->getNodeType() == AST::Function) {
             int numCopies = leftSize/rightSize; // FIXME naive as above
             if (numCopies > 1 && numCopies == (float) leftSize/rightSize) {
-                ListNode *newRight = new ListNode(right->deepCopy(), right->getLine());
+                ListNode *newRight = new ListNode(right->deepCopy(), right->getFilename().data(), right->getLine());
                 for (int i = 1; i < numCopies; i++) {
                     newRight->addChild(right->deepCopy());
                 }
@@ -248,16 +252,16 @@ double CodeResolver::createSignalDeclaration(QString name, int size, AST *tree)
     double nameRate = -1;
     Q_ASSERT(size > 0);
     if (size == 1) {
-        newBlock = new BlockNode(name.toStdString(), "signal", NULL, -1);
+        newBlock = new BlockNode(name.toStdString(), "signal", NULL, "", -1);
     } else if (size > 1) {
-        ListNode *indexList = new ListNode(new ValueNode(size, -1), -1);
-        BundleNode *bundle = new BundleNode(name.toStdString(),indexList, -1);
-        newBlock = new BlockNode(bundle, "signal", NULL, -1);
+        ListNode *indexList = new ListNode(new ValueNode(size, "",-1), "", -1);
+        BundleNode *bundle = new BundleNode(name.toStdString(),indexList, "",-1);
+        newBlock = new BlockNode(bundle, "signal", NULL, "",-1);
     }
 
     double defaultRate = getDefaultForTypeAsDouble("signal", "rate");
-    ValueNode *value = new ValueNode(defaultRate, -1);
-    newBlock->addProperty(new PropertyNode("rate", value, -1));
+    ValueNode *value = new ValueNode(defaultRate, "", -1);
+    newBlock->addProperty(new PropertyNode("rate", value, "", -1));
 
     tree->addChild(newBlock);
     return nameRate;
@@ -303,10 +307,11 @@ void CodeResolver::declareUnknownExpressionSymbols(ExpressionNode *expr, int siz
 
 ListNode *CodeResolver::expandNameToList(NameNode *name, int size)
 {
-    ListNode *list = new ListNode(NULL, name->getLine());
+    ListNode *list = new ListNode(NULL, name->getFilename().data(), name->getLine());
     for (int i = 0; i < size; i++) {
-        ListNode *indexList = new ListNode(new ValueNode(i + 1, name->getLine()), name->getLine());
-        BundleNode *bundle = new BundleNode(name->getName(), indexList, name->getLine());
+        ListNode *indexList = new ListNode(new ValueNode(i + 1, name->getFilename().data(), name->getLine()),
+                                           name->getFilename().data(), name->getLine());
+        BundleNode *bundle = new BundleNode(name->getName(), indexList, name->getFilename().data(), name->getLine());
         list->addChild(bundle);
     }
     return list;
@@ -381,10 +386,10 @@ void CodeResolver::declareUnknownStreamSymbols(StreamNode *stream, AST *previous
         QVector<AST *> scope;
         int size = -1;
         if (previousStreamMember) {
-            size = CodeValidator::getNodeNumOutputs(previousStreamMember, *m_platform, scope, m_tree, errors);
+            size = CodeValidator::getNodeNumOutputs(previousStreamMember, scope, m_tree, errors);
         }
         if (size <= 0) { // Look to the right if can't resolve from the left
-            size = CodeValidator::getNodeNumInputs(nextStreamMember, *m_platform, scope, m_tree, errors);
+            size = CodeValidator::getNodeNumInputs(nextStreamMember, scope, m_tree, errors);
         }
         if (size <= 0) { // None of the elements in the stream have size
             size = 1;
@@ -402,7 +407,7 @@ void CodeResolver::declareUnknownStreamSymbols(StreamNode *stream, AST *previous
         NameNode *name = static_cast<NameNode *>(right);
         QList<LangError> errors;
         QVector<AST *> scope;
-        int size = CodeValidator::getNodeNumOutputs(left, *m_platform, scope, m_tree, errors);
+        int size = CodeValidator::getNodeNumOutputs(left, scope, m_tree, errors);
         if (size <= 0) { // None of the elements in the stream have size
             size = 1;
         }
@@ -620,7 +625,7 @@ double CodeResolver::getDefaultForTypeAsDouble(QString type, QString port)
 
 AST *CodeResolver::getDefaultPortValueForType(QString type, QString portName)
 {
-    QVector<AST *> ports = m_platform->getPortsForType(type);
+    QVector<AST *> ports = CodeValidator::getPortsForType(type, QVector<AST *>(), m_tree);
     if (!ports.isEmpty()) {
         foreach(AST *port, ports) {
             BlockNode *block = static_cast<BlockNode *>(port);
@@ -643,12 +648,12 @@ AST *CodeResolver::getDefaultPortValueForType(QString type, QString portName)
 ValueNode *CodeResolver::multiply(ValueNode *left, ValueNode *right)
 {
     if (left->getNodeType() == AST::Int && right->getNodeType() == AST::Int) {
-        return new ValueNode(left->getIntValue() * right->getIntValue(), left->getLine());
+        return new ValueNode(left->getIntValue() * right->getIntValue(), left->getFilename().data(),left->getLine());
     } else { // Automatic casting from int to real
         Q_ASSERT((left->getNodeType() == AST::Real &&  right->getNodeType() == AST::Int)
                  || (left->getNodeType() == AST::Int &&  right->getNodeType() == AST::Real)
                  || (left->getNodeType() == AST::Real &&  right->getNodeType() == AST::Real));
-        return new ValueNode(left->toReal() * right->toReal(), left->getLine());
+        return new ValueNode(left->toReal() * right->toReal(), left->getFilename().data(), left->getLine());
     }
     return NULL;
 }
@@ -656,12 +661,12 @@ ValueNode *CodeResolver::multiply(ValueNode *left, ValueNode *right)
 ValueNode *CodeResolver::divide(ValueNode *left, ValueNode *right)
 {
     if (left->getNodeType() == AST::Int && right->getNodeType() == AST::Int) {
-        return new ValueNode(left->getIntValue() / right->getIntValue(), left->getLine());
+        return new ValueNode(left->getIntValue() / right->getIntValue(), left->getFilename().data(), left->getLine());
     } else { // Automatic casting from int to real
         Q_ASSERT((left->getNodeType() == AST::Real &&  right->getNodeType() == AST::Int)
                  || (left->getNodeType() == AST::Int &&  right->getNodeType() == AST::Real)
                  || (left->getNodeType() == AST::Real &&  right->getNodeType() == AST::Real));
-        return new ValueNode(left->toReal() / right->toReal(), left->getLine());
+        return new ValueNode(left->toReal() / right->toReal(), left->getFilename().data(), left->getLine());
     }
     return NULL;
 }
@@ -669,12 +674,12 @@ ValueNode *CodeResolver::divide(ValueNode *left, ValueNode *right)
 ValueNode *CodeResolver::add(ValueNode *left, ValueNode *right)
 {
     if (left->getNodeType() == AST::Int && right->getNodeType() == AST::Int) {
-        return new ValueNode(left->getIntValue() + right->getIntValue(), left->getLine());
+        return new ValueNode(left->getIntValue() + right->getIntValue(), left->getFilename().data(), left->getLine());
     } else { // Automatic casting from int to real
         Q_ASSERT((left->getNodeType() == AST::Real &&  right->getNodeType() == AST::Int)
                  || (left->getNodeType() == AST::Int &&  right->getNodeType() == AST::Real)
                  || (left->getNodeType() == AST::Real &&  right->getNodeType() == AST::Real));
-        return new ValueNode(left->toReal() + right->toReal(), left->getLine());
+        return new ValueNode(left->toReal() + right->toReal(), left->getFilename().data(), left->getLine());
     }
     return NULL;
 }
@@ -682,12 +687,12 @@ ValueNode *CodeResolver::add(ValueNode *left, ValueNode *right)
 ValueNode *CodeResolver::subtract(ValueNode *left, ValueNode *right)
 {
     if (left->getNodeType() == AST::Int && right->getNodeType() == AST::Int) {
-        return new ValueNode(left->getIntValue() - right->getIntValue(), left->getLine());
+        return new ValueNode(left->getIntValue() - right->getIntValue(), left->getFilename().data(), left->getLine());
     } else { // Automatic casting from int to real
         Q_ASSERT((left->getNodeType() == AST::Real &&  right->getNodeType() == AST::Int)
                  || (left->getNodeType() == AST::Int &&  right->getNodeType() == AST::Real)
                  || (left->getNodeType() == AST::Real &&  right->getNodeType() == AST::Real));
-        return new ValueNode(left->toReal() - right->toReal(), left->getLine());
+        return new ValueNode(left->toReal() - right->toReal(), left->getFilename().data(), left->getLine());
     }
     return NULL;
 }
@@ -695,9 +700,9 @@ ValueNode *CodeResolver::subtract(ValueNode *left, ValueNode *right)
 ValueNode *CodeResolver::unaryMinus(ValueNode *value)
 {
     if (value->getNodeType() == AST::Int) {
-        return new ValueNode(- value->getIntValue(), value->getLine());
+        return new ValueNode(- value->getIntValue(), value->getFilename().data(), value->getLine());
     } else if (value->getNodeType() == AST::Real){
-        return new ValueNode(- value->getRealValue(), value->getLine());
+        return new ValueNode(- value->getRealValue(), value->getFilename().data(), value->getLine());
     }
     return NULL;
 }
@@ -705,7 +710,7 @@ ValueNode *CodeResolver::unaryMinus(ValueNode *value)
 ValueNode *CodeResolver::logicalAnd(ValueNode *left, ValueNode *right)
 {
     if (left->getNodeType() == AST::Int && right->getNodeType() == AST::Int) {
-        return new ValueNode(left->getIntValue() & right->getIntValue(), left->getLine());
+        return new ValueNode(left->getIntValue() & right->getIntValue(), left->getFilename().data(), left->getLine());
     }
     return NULL;
 }
@@ -713,7 +718,7 @@ ValueNode *CodeResolver::logicalAnd(ValueNode *left, ValueNode *right)
 ValueNode *CodeResolver::logicalOr(ValueNode *left, ValueNode *right)
 {
     if (left->getNodeType() == AST::Int && right->getNodeType() == AST::Int) {
-        return new ValueNode(left->getIntValue() | right->getIntValue(), left->getLine());
+        return new ValueNode(left->getIntValue() | right->getIntValue(), left->getFilename().data(), left->getLine());
     }
     return NULL;
 }
@@ -721,7 +726,7 @@ ValueNode *CodeResolver::logicalOr(ValueNode *left, ValueNode *right)
 ValueNode *CodeResolver::logicalNot(ValueNode *value)
 {
     if (value->getNodeType() == AST::Int) {
-        return new ValueNode(~ (value->getIntValue()), value->getLine());
+        return new ValueNode(~ (value->getIntValue()), value->getFilename().data(), value->getLine());
     }
     return NULL;
 }
@@ -832,17 +837,17 @@ StreamNode *CodeResolver::splitStream(StreamNode *stream, AST *closingNode, AST 
     AST * left = stream->getLeft();
     AST * right = stream->getRight();
     if (right == endNode) { // endNode is the last node in the stream, just append closingNode
-        StreamNode *lastStream = new StreamNode(right->deepCopy(), closingNode, -1);
-        StreamNode *outStream = new StreamNode(left->deepCopy(), lastStream, -1);
+        StreamNode *lastStream = new StreamNode(right->deepCopy(), closingNode, "", -1);
+        StreamNode *outStream = new StreamNode(left->deepCopy(), lastStream, "", -1);
         return outStream;
     } else if (left == endNode) { // There is more stream, but we have reached the split point
-        StreamNode *outStream = new StreamNode(left->deepCopy(), closingNode, -1);
+        StreamNode *outStream = new StreamNode(left->deepCopy(), closingNode, "", -1);
         return outStream;
     }
     if  (right != endNode) {
         Q_ASSERT(right->getNodeType() == AST::Stream); // Shouldn't reach the end of the stream before reaching endNode
         outStream = splitStream(static_cast<StreamNode *>(right), closingNode, endNode);
-        StreamNode *finalStream = new StreamNode(left, outStream->deepCopy(), -1);
+        StreamNode *finalStream = new StreamNode(left, outStream->deepCopy(), "", -1);
         outStream->deleteChildren();
         delete outStream;
         return finalStream;

@@ -1,7 +1,7 @@
 #include "listnode.h"
 
-ListNode::ListNode(AST *newMember, int line) :
-    AST(AST::List, line)
+ListNode::ListNode(AST *newMember, const char *filename, int line) :
+    AST(AST::List, filename, line)
 {
     if (newMember) {
         addChild(newMember);
@@ -62,9 +62,9 @@ AST *ListNode::deepCopy()
     vector<AST *> children = getChildren();
     ListNode *newList;
     if (children.size() > 0) {
-        newList = new ListNode(children.at(0)->deepCopy(), m_line);
+        newList = new ListNode(children.at(0)->deepCopy(), m_filename.data(), m_line);
     } else {
-        newList = new ListNode(NULL, m_line);
+        newList = new ListNode(NULL, m_filename.data(), m_line);
     }
     for(unsigned int i = 1; i < children.size(); i++) {
         newList->addChild(children.at(i)->deepCopy());

@@ -120,62 +120,76 @@ void CodeValidator::validateTypes(AST *node, QVector<AST *> scope)
             || node->getNodeType() == AST::Block) {
         BlockNode *block = static_cast<BlockNode *>(node);
         QString blockType = QString::fromStdString(block->getObjectType());
-        if (m_platform->isValidType(blockType)) { // Check if node type exists
-            // Validate property names and types
+        QList<LangError> errors;
+        BlockNode *declaration = CodeValidator::findTypeDeclaration(block, scope, m_tree, errors);
+        if (!declaration) { // Check if node type exists
+            LangError error; // Not a valid type, then error
+            error.type = LangError::UnknownType;
+            error.lineNumber = block->getLine();
+            error.errorTokens.push_back(block->getObjectType());
+            error.filename = block->getFilename();
+            m_errors << error;
+        } else {
+            // Validate port names and types
             vector<PropertyNode *> ports = block->getProperties();
             foreach(PropertyNode *port, ports) {
                 QString portName = QString::fromStdString(port->getName());
                 // Check if portname is valid
-                if (!m_platform->typeHasPort(blockType, portName) ) {
+                ListNode *portTypesList = validTypesForPort(declaration, portName, scope, m_tree);
+                if (!portTypesList) {
                     LangError error;
                     error.type = LangError::InvalidPort;
-                    error.lineNumber = block->getLine();
+                    error.lineNumber = port->getLine();
                     error.errorTokens.push_back(blockType.toStdString());
                     error.errorTokens.push_back(portName.toStdString());
+                    error.filename = port->getFilename();
                     m_errors << error;
                 } else {
                     // Then check type passed to port is valid
+                    bool typeIsValid = false;
                     AST *portValue = port->getValue();
-                    if (portValue->getNodeType() == AST::List) {
-                        ListNode *list = static_cast<ListNode *>(portValue);
-                        for (int i = 0; i < list->size(); i++) {
-                            PortType portType = resolveNodeOutType(list->getChildren().at(i), scope, m_tree);
-                            if (m_platform->isValidPortType(blockType, portName, portType)) {
-                                LangError error;
-                                error.type = LangError::InvalidPortType;
-                                error.lineNumber = block->getLine();
-                                error.errorTokens.push_back(blockType.toStdString());
-                                error.errorTokens.push_back(portName.toStdString());
-                                error.errorTokens.push_back(getPortTypeName(portType).toStdString());
-                                m_errors << error;
+                    QString typeName = getPortTypeName(resolveNodeOutType(portValue, scope, m_tree));
+                    foreach(AST *validType, portTypesList->getChildren()) {
+                        if (validType->getNodeType() == AST::String) {
+                            QString typeCode = QString::fromStdString(static_cast<ValueNode *>(validType)->getStringValue());
+                            if (!typeName.isEmpty()) {
+                                if (typeName == typeCode || typeCode == "") {
+                                    typeIsValid = true;
+                                    break;
+                                }
+                            } else { // FIXME for now empty string means any type allowed...
+                                typeIsValid = true;
+                                break;
                             }
-                        }
-                    } else {
-                        PortType portType = resolveNodeOutType(portValue, scope, m_tree);
-                        if (!m_platform->isValidPortType(blockType, portName, portType)) {
-                            // FIXME Now we need to check if the type is user defined
-//                            LangError error;
-//                            error.type = LangError::InvalidPortType;
-//                            error.lineNumber = block->getLine();
-//                            error.errorTokens.push_back(blockType.toStdString());
-//                            error.errorTokens.push_back(portName.toStdString());
-//                            error.errorTokens.push_back(getPortTypeName(portType).toStdString());
-//                            m_errors << error;
-                        }
+                        } else if (validType->getNodeType() == AST::Name) {
+                            NameNode * nameNode = static_cast<NameNode *>(validType);
+                            BlockNode *declaration = findDeclaration(QString::fromStdString(nameNode->getName()), scope, m_tree);
+                            AST *typeNameValue = declaration->getPropertyValue("typeName");
+                            Q_ASSERT(typeNameValue->getNodeType() == AST::String);
+                            string validTypeName = static_cast<ValueNode *>(typeNameValue)->getStringValue();
+                            if (portValue->getNodeType() == AST::Name) {
+                                NameNode *currentTypeNameNode = static_cast<NameNode *>(portValue);
+                                BlockNode *valueDeclaration = findDeclaration(
+                                            QString::fromStdString(currentTypeNameNode->getName()), scope, m_tree);
+                                if (validTypeName == valueDeclaration->getObjectType()) {
+                                    typeIsValid = true;
+                                    break;
+                                }
+                            }
+                        } // TODO Add support for checking of bundle types
+                    }
+                    if (!typeIsValid) {
+                        LangError error;
+                        error.type = LangError::InvalidPortType;
+                        error.lineNumber = block->getLine();
+                        error.errorTokens.push_back(blockType.toStdString());
+                        error.errorTokens.push_back(portName.toStdString());
+                        error.errorTokens.push_back(typeName.toStdString());
+                        error.filename = block->getFilename();
+                        m_errors << error;
                     }
                 }
             }
-//        } else if (typeBlock == m_library.findTypeInLibrary(blockType)) {
-//            foreach(PropertyNode *properties, block->getProperties()) {
-////                foreach()
-//            }
-
-        } else { // Not platform or library type, then error
-            LangError error;
-            error.type = LangError::UnknownType;
-            error.lineNumber = block->getLine();
-            error.errorTokens.push_back(block->getObjectType());
-            m_errors << error;
         }
 
     }
@@ -315,8 +329,8 @@ void CodeValidator::validateStreamInputSize(StreamNode *stream, QVector<AST *> s
     AST *left = stream->getLeft();
     AST *right = stream->getRight();
 
-    int leftOutSize = getNodeNumOutputs(left, *m_platform, scope, m_tree, errors);
-    int rightInSize = getNodeNumInputs(right, *m_platform, scope, m_tree, errors);
+    int leftOutSize = getNodeNumOutputs(left, scope, m_tree, errors);
+    int rightInSize = getNodeNumInputs(right, scope, m_tree, errors);
 
     if (leftOutSize != rightInSize
             && ((int) (rightInSize/ (double) leftOutSize)) != (rightInSize/ (double) leftOutSize) ) {
@@ -384,10 +398,10 @@ int CodeValidator::getBlockDataSize(BlockNode *block, QVector<AST *> scope, QLis
     if (ports.size() == 0) {
         return 0;
     }
-    int size = getNodeNumOutputs(ports.at(0)->getValue(), *m_platform, scope, m_tree, errors);
+    int size = getNodeNumOutputs(ports.at(0)->getValue(), scope, m_tree, errors);
     foreach(PropertyNode *port, ports) {
         AST *value = port->getValue();
-        int newSize = getNodeNumOutputs(value, *m_platform, scope, m_tree, errors);
+        int newSize = getNodeNumOutputs(value, scope, m_tree, errors);
         if (size != newSize) {
             if (size == 1) {
                 size = newSize;
@@ -489,7 +503,7 @@ int CodeValidator::getLargestPropertySize(vector<PropertyNode *> &properties, QV
     return maxSize;
 }
 
-int CodeValidator::getNodeNumOutputs(AST *node, StreamPlatform &platform, QVector<AST *> &scope, AST *tree, QList<LangError> &errors)
+int CodeValidator::getNodeNumOutputs(AST *node, QVector<AST *> &scope, AST *tree, QList<LangError> &errors)
 {
     Q_ASSERT(node->getNodeType() != AST::Stream); // Stream nodes should not be on the left...
     if (node->getNodeType() == AST::List) {
@@ -516,28 +530,28 @@ int CodeValidator::getNodeNumOutputs(AST *node, StreamPlatform &platform, QVecto
         }
     } else if (node->getNodeType() == AST::Function) {
         FunctionNode *func = static_cast<FunctionNode *>(node);
-        BlockNode *platformFunc = platform.getFunction(QString::fromStdString(func->getName()));
+        BlockNode *platformFunc = CodeValidator::findDeclaration(QString::fromStdString(func->getName()), scope, tree);
         if (!platformFunc) { // function not in platform
             return 1;
         } else {
-            return 1; // FIXME this needs to query the library correctly for number of outputs
+            return 1; // FIXME this needs to check the declaration correctly for number of outputs
         }
     }
     return -1;
 }
 
-int CodeValidator::getNodeNumInputs(AST *node, StreamPlatform &platform, QVector<AST *> &scope, AST *tree, QList<LangError> &errors)
+int CodeValidator::getNodeNumInputs(AST *node, QVector<AST *> &scope, AST *tree, QList<LangError> &errors)
 {
     if (node->getNodeType() == AST::Function) {
         FunctionNode *func = static_cast<FunctionNode *>(node);
-        BlockNode *platformFunc = platform.getFunction(QString::fromStdString(func->getName()));
+        BlockNode *platformFunc = CodeValidator::findDeclaration(QString::fromStdString(func->getName()), scope, tree);
         return 1; // FIXME output the right number of outputs
 //        return platformFunc.numInputs();
     } else if (node->getNodeType() == AST::Stream) {
         StreamNode *stream = static_cast<StreamNode *>(node);
         AST *left = stream->getLeft();
 //        AST *right = stream->getRight();
-        int leftSize = CodeValidator::getNodeNumInputs(left, platform, scope, tree, errors);
+        int leftSize = CodeValidator::getNodeNumInputs(left, scope, tree, errors);
         return leftSize;
     } else if (node->getNodeType() == AST::Name) {
         NameNode *name = static_cast<NameNode *>(node);
@@ -841,6 +855,95 @@ PropertyNode *CodeValidator::findPropertyByName(vector<PropertyNode *> propertie
     return NULL;
 }
 
+ListNode *CodeValidator::validTypesForPort(BlockNode *typeDeclaration, QString portName,
+                                           QVector<AST *> scope, AST *tree)
+{
+    QVector<AST *> portList = getPortsForTypeBlock(typeDeclaration, scope, tree);
+    foreach(AST *node, portList) {
+        BlockNode *portNode = static_cast<BlockNode *>(node);
+        ValueNode *name = static_cast<ValueNode *>(portNode->getPropertyValue("name"));
+        Q_ASSERT(name->getNodeType() == AST::String);
+        if (name->getStringValue() == portName.toStdString()) {
+            ListNode *typesPort = static_cast<ListNode *>(portNode->getPropertyValue("types"));
+            Q_ASSERT(typesPort->getNodeType() == AST::List);
+            return typesPort;
+        }
+    }
+    return NULL;
+}
+
+BlockNode *CodeValidator::findTypeDeclaration(BlockNode *block, QVector<AST *> scope, AST *tree, QList<LangError> &errors)
+{
+    // TODO check in scope as well
+    QString typeName = QString::fromStdString(block->getObjectType());
+    foreach(AST *node, tree->getChildren()) {
+        if (node->getNodeType() == AST::Block) {
+            BlockNode *declarationNode = static_cast<BlockNode *>(node);
+            if (declarationNode->getObjectType() == "type"
+                    || declarationNode->getObjectType() == "platformType") {
+                AST *valueNode = declarationNode->getPropertyValue("typeName");
+                if (valueNode->getNodeType() == AST::String) {
+                    ValueNode *value = static_cast<ValueNode *>(valueNode);
+                    if (typeName == QString::fromStdString( value->getStringValue())) {
+                        return declarationNode;
+                    }
+                }
+            }
+        }
+    }
+    return NULL;
+}
+
+QVector<AST *> CodeValidator::getPortsForType(QString typeName, QVector<AST *> scope, AST* tree)
+{
+    QVector<AST *> portList;
+    foreach(AST *node, tree->getChildren()) {
+        if (node->getNodeType() == AST::Block) {
+            BlockNode *block = static_cast<BlockNode *>(node);
+            if (block->getObjectType() == "platformType"
+                    || block->getObjectType() == "type") {
+                ValueNode *name = static_cast<ValueNode*>(block->getPropertyValue("typeName"));
+                Q_ASSERT(name->getNodeType() == AST::String);
+                if (name->getStringValue() == typeName.toStdString()) {
+                    QVector<AST *> newPortList = getPortsForTypeBlock(block, scope, tree);
+                    portList << newPortList;
+                    break;
+                }
+            }
+        }
+    }
+    return portList;
+}
+
+QVector<AST *> CodeValidator::getPortsForTypeBlock(BlockNode *block, QVector<AST *> scope, AST *tree)
+{
+    AST *portsValue = block->getPropertyValue("ports");
+    QVector<AST *> outList;
+    if (portsValue) {
+        Q_ASSERT(portsValue->getNodeType() == AST::List);
+        ListNode *portList = static_cast<ListNode *>(portsValue);
+        foreach(AST *port, portList->getChildren()) {
+            outList << port;
+        }
+    }
+    AST *inheritedPortsValue = block->getPropertyValue("inherits");
+
+    if (inheritedPortsValue){
+        if (inheritedPortsValue->getNodeType() == AST::String) {
+            QString typeName =  QString::fromStdString(static_cast<ValueNode *>(inheritedPortsValue)->getStringValue());
+            outList << getPortsForType(typeName, scope, tree);
+        } else if (inheritedPortsValue->getNodeType() == AST::List) {
+            foreach(AST *inheritedMember, inheritedPortsValue->getChildren()) {
+                Q_ASSERT(inheritedMember->getNodeType() == AST::String);
+                QString typeName =  QString::fromStdString(static_cast<ValueNode *>(inheritedMember)->getStringValue());
+                outList << getPortsForType(typeName, scope, tree);
+            }
+
+        }
+    }
+    return outList;
+}
+
 int CodeValidator::numParallelStreams(StreamNode *stream, StreamPlatform &platform, QVector<AST *> &scope, AST *tree, QList<LangError> &errors)
 {
     AST *left = stream->getLeft();
@@ -855,7 +958,7 @@ int CodeValidator::numParallelStreams(StreamNode *stream, StreamPlatform &platfo
     } else if (left->getNodeType() == AST::List) {
         leftSize = getNodeSize(left, tree);
     } else {
-        leftSize = getNodeNumOutputs(left, platform, scope, tree, errors);
+        leftSize = getNodeNumOutputs(left, scope, tree, errors);
     }
     if (right->getNodeType() == AST::Name
             || right->getNodeType() == AST::List) {
@@ -874,18 +977,18 @@ int CodeValidator::numParallelStreams(StreamNode *stream, StreamPlatform &platfo
                 || firstMember->getNodeType() == AST::List) {
             rightSize = getNodeSize(firstMember, tree);
         } else {
-            rightSize = getNodeNumInputs(firstMember, platform, scope, tree, errors);
+            rightSize = getNodeNumInputs(firstMember, scope, tree, errors);
         }
         if (firstMember->getNodeType() == AST::Function) {
             int functionNodeSize = getNodeSize(firstMember, tree);
             if (functionNodeSize == 1) {
-                rightSize = getNodeNumInputs(firstMember, platform, scope, tree, errors);;
+                rightSize = getNodeNumInputs(firstMember, scope, tree, errors);;
             } else {
 
             }
         }
     } else {
-        rightSize = getNodeNumInputs(right, platform, scope, tree, errors);
+        rightSize = getNodeNumInputs(right, scope, tree, errors);
     }
     int thisParallel = -1;
 

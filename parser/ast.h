@@ -38,7 +38,7 @@ public:
         Invalid
     } Token;
 
-    AST(Token token, int line = -1);
+    AST(Token token, const char *filename, int line = -1);
     virtual ~AST();
 
     Token getNodeType() const { return m_token; }
@@ -62,9 +62,13 @@ public:
     double getRate() const;
     void setRate(double rate);
 
+    string getFilename() const;
+    void setFilename(const string &filename);
+
 protected:
     Token m_token; // From which token did we create node?
     vector<AST *> m_children; // normalized list of children
+    string m_filename; // file where the node was generated
     int m_line;
     double m_rate;
 };

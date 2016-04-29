@@ -4,13 +4,13 @@ type _Streamable {
 	ports: [
 		port InputName {
 			name: "inputName"
-			types: ["", "none"]
+			types: ["CSP", "none"]
 			default: none
 			required: off
 		},
 		port OutputName {
 			name: "outputName"
-			types: ["", "none"]
+			types: ["CSP", "none"]
 			default: none
 			required: off
 		}
@@ -23,14 +23,14 @@ type _Rated {
 	ports: [
 		port Rate {
 			name: "rate"
-			types: ["", "none"]
+			types: ["CIP", "CRP"]
 			default: PlatformRate
-			required: on
+			required: off
 		},
 		port Reset {
 			name: "reset"
-			types: ["", "none"]
-			default: none
+			types: ["CBP"]
+			default: off
 			required: off
 		}
 	]
@@ -42,11 +42,12 @@ type _DomainMember {
 	ports: [
 		port TypeName {
 			name: "domain"
-			types: ["", "none"]
+			types: ["CSP", "none"]
 			default: none
 			required: on
 		}
 	]
+	inherits: ["base"]
 }
 
 type _Port {
@@ -54,31 +55,31 @@ type _Port {
 	ports: [
 		port Name {
 			name: "name"
-			types: ["CSP", "none"]
+			types: ["CSP"]
 			default: none
 			required: on
 		},
 		port Direction {
 			name: "direction"
-			types: ["CSP", "none"]
+			types: ["CSP"]
 			default: "output"
 			required: off
 		},
 		port Types {
 			name: "types"
-			types: ["CSP", "none"]
+			types: ["CSP"]
 			default: none
 			required: on
 		},
 		port Default {
 			name: "default"
-			types: ["CSP", "none"] # TODO how to handle hybrid port types?
+			types: [""] # TODO how to handle hybrid port types?
 			default: none
 			required: on
 		},
 		port Required {
 			name: "required"
-			types: ["CBP", "none"]
+			types: ["CBP"]
 			default: none
 			required: on
 		}
@@ -90,15 +91,16 @@ type _Base {
 	ports: [
 		port Inherits {
 			name: "inherits"
-			types: ["CSP", "none"]
+			types: ["CSP"]
 			default: "base"
 			required: off
 		},
 		port Meta {
 			name: "meta"
-			types: ["CSP", "none"]
-			default: none
+			types: ["CSP"]
+			default: ""
 			required: off
 		}
 	]
+	inherits: []
 }

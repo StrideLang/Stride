@@ -7,7 +7,7 @@
 class RangeNode : public AST
 {
 public:
-  RangeNode(AST *start, AST *end, int line);
+  RangeNode(AST *start, AST *end, const char *filename, int line);
 
   AST *startIndex() const;
   AST *endIndex() const;

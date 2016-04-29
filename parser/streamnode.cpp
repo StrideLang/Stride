@@ -3,8 +3,8 @@
 
 #include "streamnode.h"
 
-StreamNode::StreamNode(AST *left, AST *right, int line) :
-    AST(AST::Stream, line)
+StreamNode::StreamNode(AST *left, AST *right, const char *filename, int line) :
+    AST(AST::Stream, filename, line)
 {
 //    assert(left); assert(right);
     assert(left->getNodeType() != AST:: Stream); // This is not allowed
@@ -35,7 +35,7 @@ void StreamNode::setRight(AST *newRight)
 
 AST *StreamNode::deepCopy()
 {
-    AST * stream = new StreamNode(m_children.at(0)->deepCopy(), m_children.at(1)->deepCopy(), m_line);
+    AST * stream = new StreamNode(m_children.at(0)->deepCopy(), m_children.at(1)->deepCopy(), m_filename.data(), m_line);
     stream->setRate(m_rate);
     return stream;
 }

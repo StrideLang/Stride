@@ -8,7 +8,7 @@
 class ImportNode : public AST
 {
 public:
-  ImportNode(string name, int line, string alias = string());
+  ImportNode(string name, const char *filename, int line, string alias = string());
 
   string importName() const;
   void setImportName(const string &importName);

@@ -2,8 +2,9 @@
 
 #include "functionnode.h"
 
-FunctionNode::FunctionNode(string name, AST *propertiesList, FunctionType type, int line, string namespace_) :
-    AST(AST::Function, line)
+FunctionNode::FunctionNode(string name, AST *propertiesList, FunctionType type,
+                           const char *filename, int line, string namespace_) :
+    AST(AST::Function, filename, line)
 {
     m_name = name;
     if (propertiesList) {
@@ -36,7 +37,7 @@ AST *FunctionNode::deepCopy()
     for(unsigned int i = 0; i< m_properties.size(); i++) {
         newProps->addChild(m_properties[i]->deepCopy());
     }
-    AST *output = new FunctionNode(m_name, newProps, m_type, m_line);
+    AST *output = new FunctionNode(m_name, newProps, m_type, m_filename.data(), m_line);
     newProps->deleteChildren();
     delete newProps;
     output->setRate(m_rate);

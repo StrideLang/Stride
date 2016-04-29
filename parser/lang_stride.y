@@ -23,6 +23,8 @@ AST *tree_head;
 
 AST *parse(const char *filename);
 
+const char * currentFile;
+
 std::vector<LangError> getErrors();
 
 //#define DEBUG
@@ -208,14 +210,14 @@ languagePlatform:
         USE UVAR                {
                                     string s;
                                     s.append($2); /* string constructor leaks otherwise! */
-                                    $$ = new PlatformNode(s, -1, yyloc.first_line);
+                                    $$ = new PlatformNode(s, -1, currentFile, yyloc.first_line);
                                     COUT << "Platform: " << $2 << ENDL << " Using latest version!" << ENDL;
                                     free($2);
                                 }
     |   USE UVAR VERSION FLOAT  {
                                     string s;
                                     s.append($2); /* string constructor leaks otherwise! */
-                                    $$ = new PlatformNode(s, $4, yyloc.first_line);
+                                    $$ = new PlatformNode(s, $4, currentFile, yyloc.first_line);
                                     COUT << "Platform: " << $2 << ENDL << "Version: " << $4 << " line " << yylineno << ENDL;
                                     free($2);
                                 }
@@ -245,7 +247,7 @@ auxPlatformDef:
           string word;
           word.append($1); /* string constructor leaks otherwise! */
           AST *temp = new AST();
-          temp->addChild(new NameNode(word, yyloc.first_line));
+          temp->addChild(new NameNode(word, currentFile, yyloc.first_line));
           $$ = temp;
           COUT << "With additional platform: " << $1 << ENDL;
           free($1);
@@ -256,7 +258,7 @@ auxPlatformDef:
           aux->giveChildren(temp);
           string word;
           word.append($3); /* string constructor leaks otherwise! */
-          temp->addChild(new NameNode(word, yyloc.first_line));
+          temp->addChild(new NameNode(word, currentFile, yyloc.first_line));
           $$ = temp;
           aux->deleteChildren();
           delete aux;
@@ -273,7 +275,7 @@ importDef:
         IMPORT WORD 		{
           string word;
           word.append($2); /* string constructor leaks otherwise! */
-          $$ = new ImportNode(word, yyloc.first_line);
+          $$ = new ImportNode(word, currentFile, yyloc.first_line);
           COUT << "Importing: " << $2 << ENDL;
           free($2);
         }
@@ -282,7 +284,7 @@ importDef:
           word.append($2); /* string constructor leaks otherwise! */
           string alias;
           alias.append($4); /* string constructor leaks otherwise! */
-          $$ = new ImportNode(word, yyloc.first_line, alias);
+          $$ = new ImportNode(word, currentFile, yyloc.first_line, alias);
           COUT << "Importing: " << $2 << " as " << $4 << ENDL;
           free($2);
           free($4);
@@ -292,7 +294,7 @@ importDef:
           word.append($2); /* string constructor leaks otherwise! */
           string alias;
           alias.append($4); /* string constructor leaks otherwise! */
-          $$ = new ImportNode(word, yyloc.first_line, alias);
+          $$ = new ImportNode(word, currentFile, yyloc.first_line, alias);
           COUT << "Importing: " << $2 << " as " << $4 << ENDL;
           free($2);
           free($4);
@@ -306,7 +308,7 @@ importDef:
 forDef:
         FOR forPlatformDef		{
           AST* aux = $2;
-          ForNode *fornode = new ForNode(yyloc.first_line);
+          ForNode *fornode = new ForNode(currentFile, yyloc.first_line);
           vector<AST *> children = aux->getChildren();
           fornode->setChildren(children);
           $$ = fornode;
@@ -319,7 +321,7 @@ forPlatformDef:
           string word;
           word.append($1); /* string constructor leaks otherwise! */
           AST *temp = new AST();
-          temp->addChild(new NameNode(word, yyloc.first_line));
+          temp->addChild(new NameNode(word, currentFile, yyloc.first_line));
           $$ = temp;
           COUT << "For platform: " << $1 << ENDL;
           free($1);
@@ -330,7 +332,7 @@ forPlatformDef:
           aux->giveChildren(temp);
           string word;
           word.append($3); /* string constructor leaks otherwise! */
-          temp->addChild(new NameNode(word, yyloc.first_line));
+          temp->addChild(new NameNode(word, currentFile, yyloc.first_line));
           $$ = temp;
           aux->deleteChildren();
           delete aux;
@@ -349,7 +351,7 @@ blockDef:
                                         word.append($1); /* string constructor leaks otherwise! */
                                         string uvar;
                                         uvar.append($2); /* string constructor leaks otherwise! */
-                                        $$ = new BlockNode(uvar, word, $3, yyloc.first_line);
+                                        $$ = new BlockNode(uvar, word, $3, currentFile, yyloc.first_line);
                                         AST *props = $3;
 //                                        props->deleteChildren();
                                         delete props;
@@ -360,12 +362,12 @@ blockDef:
       | WORD UVAR '[' indexExp ']' blockType    {
              string name;
              name.append($2); /* string constructor leaks otherwise! */
-             ListNode *list = new ListNode($4, yyloc.first_line);
-             BundleNode *bundle = new BundleNode(name, list, yyloc.first_line);
+             ListNode *list = new ListNode($4, currentFile, yyloc.first_line);
+             BundleNode *bundle = new BundleNode(name, list, currentFile, yyloc.first_line);
              COUT << "Bundle name: " << name << ENDL;
              string type;
              type.append($1); /* string constructor leaks otherwise! */
-             $$ = new BlockNode(bundle, type, $6, yyloc.first_line);
+             $$ = new BlockNode(bundle, type, $6, currentFile, yyloc.first_line);
              COUT << "Block Bundle: " << $1 << ", Labelled: " << $2 << ENDL;
              free($2);
              free($1);
@@ -390,11 +392,11 @@ blockType:
 	
 streamDef:
         valueExp STREAM streamExp SEMICOLON  	{
-                                                    $$ = new StreamNode($1, $3, yyloc.first_line);
+                                                    $$ = new StreamNode($1, $3, currentFile, yyloc.first_line);
                                                     COUT << "Stream Resolved!" << ENDL;
                                                 }
     |	valueListExp STREAM streamExp SEMICOLON	{
-                                                    $$ = new StreamNode($1, $3, yyloc.first_line);
+                                                    $$ = new StreamNode($1, $3, currentFile, yyloc.first_line);
                                                     COUT << "Stream Resolved!" << ENDL;
                                                 }
     ;
@@ -408,7 +410,7 @@ bundleDef:
         UVAR '[' indexList ']'          {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
-            $$ = new BundleNode(s, $3, yyloc.first_line);
+            $$ = new BundleNode(s, $3, currentFile, yyloc.first_line);
             COUT << "Bundle name: " << $1 << ENDL;
             free($1);
         }
@@ -417,7 +419,7 @@ bundleDef:
             ns.append($1); /* string constructor leaks otherwise! */
             string s;
             s.append($3); /* string constructor leaks otherwise! */
-            $$ = new BundleNode(s, ns, $5, yyloc.first_line);
+            $$ = new BundleNode(s, ns, $5, currentFile, yyloc.first_line);
             COUT << "Bundle name: " << $3  << " in NameSpace: " << $1 << ENDL;
             free($1);
             free($3);
@@ -463,14 +465,14 @@ functionDef:
         UVAR '(' ')'                        {
                                                 string s;
                                                 s.append($1); /* string constructor leaks otherwise! */
-                                                $$ = new FunctionNode(s, NULL, FunctionNode::UserDefined, yyloc.first_line);
+                                                $$ = new FunctionNode(s, NULL, FunctionNode::UserDefined, currentFile, yyloc.first_line);
                                                 COUT << "User function: " << $1 << ENDL;
                                                 free($1);
                                             }
     |	UVAR '(' properties ')'             {
                                                 string s;
                                                 s.append($1); /* string constructor leaks otherwise! */
-                                                $$ = new FunctionNode(s, $3, FunctionNode::UserDefined, yyloc.first_line);
+                                                $$ = new FunctionNode(s, $3, FunctionNode::UserDefined, currentFile, yyloc.first_line);
                                                 AST *props = $3;
                                                 delete props;
                                                 COUT << "Properties () ..." << ENDL;
@@ -482,7 +484,7 @@ functionDef:
                                                 ns.append($1); /* string constructor leaks otherwise! */
                                                 string s;
                                                 s.append($3); /* string constructor leaks otherwise! */
-                                                $$ = new FunctionNode(s, NULL, FunctionNode::UserDefined, yyloc.first_line, ns);
+                                                $$ = new FunctionNode(s, NULL, FunctionNode::UserDefined, currentFile, yyloc.first_line, ns);
                                                 COUT << "Function: " << $3 << " in NameSpace: " << $1 << ENDL;
                                                 free($1);
                                                 free($3);
@@ -493,7 +495,7 @@ functionDef:
                                                 ns.append($1); /* string constructor leaks otherwise! */
                                                 string s;
                                                 s.append($3); /* string constructor leaks otherwise! */
-                                                $$ = new FunctionNode(s, $5, FunctionNode::UserDefined, yyloc.first_line, ns);
+                                                $$ = new FunctionNode(s, $5, FunctionNode::UserDefined, currentFile, yyloc.first_line, ns);
                                                 AST *props = $5;
                                                 delete props;
 
@@ -544,7 +546,7 @@ property:
         WORD COLON propertyType {
                                     string s;
                                     s.append($1); /* string constructor leaks otherwise! */
-                                    $$ = new PropertyNode(s, $3, yyloc.first_line);
+                                    $$ = new PropertyNode(s, $3, currentFile, yyloc.first_line);
                                     COUT << "Property: " << $1 << ENDL << "New property ... " << ENDL;
                                     free($1);
                                 }
@@ -552,7 +554,7 @@ property:
 	
 propertyType:
         NONE            {
-                            $$ = new ValueNode(yyloc.first_line);
+                            $$ = new ValueNode(currentFile, yyloc.first_line);
                             COUT << "Keyword: none" << ENDL;
                         }
     |   valueExp		{
@@ -560,7 +562,7 @@ propertyType:
                             COUT << "Value expression as property value!" << ENDL;
                         }
     |	blockType		{
-                            $$ = new BlockNode("", "" , $1, yyloc.first_line);
+                            $$ = new BlockNode("", "" , $1, currentFile, yyloc.first_line);
                             AST *props = $1;
                             delete props;
                             COUT << "Block as property value!" << ENDL;
@@ -592,14 +594,14 @@ valueListDef:
                                     COUT << "New list of lists ... " << ENDL;
                                 }
     |	'[' ']'	{
-                                    $$ = new ListNode(NULL, yyloc.first_line);
+                                    $$ = new ListNode(NULL, currentFile, yyloc.first_line);
                                     COUT << "New empty list ...  " << ENDL;
                                 }
     ;
 
 valueList:
         valueList COMMA valueExp	{
-                                        ListNode *list = new ListNode(NULL, yyloc.first_line);
+                                        ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line);
                                         list->stealMembers($1);
                                         ListNode *oldList = $1;
 //                                        oldList->deleteChildren();
@@ -610,7 +612,7 @@ valueList:
                                         COUT << "New list item ... " << ENDL;
                                     }
     |	valueExp                    {
-                                        $$ = new ListNode($1, yyloc.first_line);
+                                        $$ = new ListNode($1, currentFile, yyloc.first_line);
                                         COUT << "Value expression ..." << ENDL;
                                         COUT << "New list item ... " << ENDL;
                                     }
@@ -618,7 +620,7 @@ valueList:
 
 valueListList:
         valueListList COMMA valueListDef    {
-                                                ListNode *list = new ListNode(NULL, yyloc.first_line);
+                                                ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line);
                                                 list->stealMembers($1);
                                                 ListNode *oldList = $1;
 //                                                oldList->deleteChildren();
@@ -627,7 +629,7 @@ valueListList:
                                                 $$ = list;
                                             }
     |	valueListDef                        {
-                                                $$ = new ListNode($1, yyloc.first_line);
+                                                $$ = new ListNode($1, currentFile, yyloc.first_line);
                                             }
     ;
 
@@ -643,7 +645,7 @@ listDef:
 	
 blockList:
         blockList COMMA blockDef	{
-                                        ListNode *list = new ListNode(NULL, yyloc.first_line);
+                                        ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line);
                                         list->stealMembers($1);
                                         ListNode *oldList = $1;
 //                                        oldList->deleteChildren();
@@ -654,7 +656,7 @@ blockList:
                                         COUT << "New list item ... " << ENDL;
                                     }
       |  blockList blockDef	{
-                                        ListNode *list = new ListNode(NULL, yyloc.first_line);
+                                        ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line);
                                         list->stealMembers($1);
                                         ListNode *oldList = $1;
 //                                        oldList->deleteChildren();
@@ -665,7 +667,7 @@ blockList:
                                         COUT << "New list item ... " << ENDL;
                                     }
     |	blockDef                    {
-                                        $$ = new ListNode($1, yyloc.first_line);
+                                        $$ = new ListNode($1, currentFile, yyloc.first_line);
                                         COUT << "Block definition ... " << ENDL;
                                         COUT << "New list item ... " << ENDL;
                                     }
@@ -673,7 +675,7 @@ blockList:
 	
 streamList:
         streamList COMMA streamDef	{
-                                        ListNode *list = new ListNode(NULL, yyloc.first_line);
+                                        ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line);
                                         list->stealMembers($1);
                                         ListNode *oldList = $1;
 //                                        oldList->deleteChildren();
@@ -684,7 +686,7 @@ streamList:
                                         COUT << "New list item ... " << ENDL;
                                     }
     |   streamList streamDef        {
-                                        ListNode *list = new ListNode(NULL, yyloc.first_line);
+                                        ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line);
                                         list->stealMembers($1);
                                         ListNode *oldList = $1;
 //                                        oldList->deleteChildren();
@@ -695,7 +697,7 @@ streamList:
                                         COUT << "New list item ... " << ENDL;
                                     }
     |	streamDef                   {
-                                        $$ = new ListNode($1, yyloc.first_line);
+                                        $$ = new ListNode($1, currentFile, yyloc.first_line);
                                         COUT << "Stream definition ... " << ENDL;
                                         COUT << "New list item ... " << ENDL;
                                     }
@@ -703,7 +705,7 @@ streamList:
 	
 listList:
         listList COMMA listDef  {
-                                    ListNode *list = new ListNode(NULL, yyloc.first_line);
+                                    ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line);
                                     list->stealMembers($1);
                                     ListNode *oldList = $1;
 //                                    oldList->deleteChildren();
@@ -714,7 +716,7 @@ listList:
                                     COUT << "New list item ... " << ENDL;
                                 }
     |	listDef                 {
-                                    $$ = new ListNode($1, yyloc.first_line);
+                                    $$ = new ListNode($1, currentFile, yyloc.first_line);
                                     COUT << "List of lists ..." << ENDL;
                                     COUT << "New list item ... " << ENDL;
                                 }
@@ -726,7 +728,7 @@ listList:
 
 indexList:
         indexList COMMA indexExp		{
-                                           ListNode *list = new ListNode(NULL, yyloc.first_line);
+                                           ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line);
                                            list->stealMembers($1);
                                            list->addChild($3);
                                            $$ = list;
@@ -735,20 +737,20 @@ indexList:
         }
     |	indexList COMMA indexRange		{
                                             COUT << "Resolving Index List Element ..." << ENDL;
-                                            ListNode *list = new ListNode(NULL, yyloc.first_line);
+                                            ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line);
                                             list->stealMembers($1);
                                             list->addChild($3);
                                             $$ = list;
                                             delete $1;
                                         }
     |	indexExp						{
-            ListNode *list = new ListNode(NULL, yyloc.first_line);
+            ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line);
             list->addChild($1);
             $$ = list;
             COUT << "Resolving Index List Element ..." << ENDL;
         }
     |	indexRange						{
-            ListNode *list = new ListNode(NULL, yyloc.first_line);
+            ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line);
             list->addChild($1);
             $$ = list;
             COUT << "Resolving Index List Range ..." << ENDL;
@@ -757,7 +759,7 @@ indexList:
 
 indexRange:
     indexExp COLON indexExp				{
-        $$ = new RangeNode($1, $3, yyloc.first_line);
+        $$ = new RangeNode($1, $3, currentFile, yyloc.first_line);
         COUT << "Resolving Index Range ..." << ENDL;
     }
     ;
@@ -768,19 +770,19 @@ indexRange:
 	
 indexExp:
         indexExp '+' indexExp 	{
-                                    $$ = new ExpressionNode(ExpressionNode::Add, $1, $3, yyloc.first_line);
+                                    $$ = new ExpressionNode(ExpressionNode::Add, $1, $3, currentFile, yyloc.first_line);
                                     COUT << "Index/Size adding ... " << ENDL;
                                 }
     |	indexExp '-' indexExp 	{
-                                    $$ = new ExpressionNode(ExpressionNode::Subtract, $1, $3, yyloc.first_line);
+                                    $$ = new ExpressionNode(ExpressionNode::Subtract, $1, $3, currentFile, yyloc.first_line);
                                     COUT << "Index/Size subtracting ... " << ENDL;
                                 }
     |	indexExp '*' indexExp 	{
-                                    $$ = new ExpressionNode(ExpressionNode::Multiply , $1, $3, yyloc.first_line);
+                                    $$ = new ExpressionNode(ExpressionNode::Multiply , $1, $3, currentFile, yyloc.first_line);
                                     COUT << "Index/Size multiplying ... " << ENDL;
                                 }
     |	indexExp '/' indexExp 	{
-                                    $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3, yyloc.first_line);
+                                    $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3, currentFile, yyloc.first_line);
                                     COUT << "Index/Size dividing ... " << ENDL;
                                 }
     |	'(' indexExp ')'        {
@@ -798,19 +800,19 @@ indexExp:
 
 valueListExp:
         valueListDef '+' valueExp       {
-                                            $$ = new ExpressionNode(ExpressionNode::Add, $1, $3, yyloc.first_line);
+                                            $$ = new ExpressionNode(ExpressionNode::Add, $1, $3, currentFile, yyloc.first_line);
                                             COUT << "Adding ... " << ENDL;
                                         }
     |	valueListDef '-' valueExp       {
-                                            $$ = new ExpressionNode(ExpressionNode::Subtract, $1, $3, yyloc.first_line);
+                                            $$ = new ExpressionNode(ExpressionNode::Subtract, $1, $3, currentFile, yyloc.first_line);
                                             COUT << "Subtracting ... " << ENDL;
                                         }
     |	valueListDef '*' valueExp       {
-                                            $$ = new ExpressionNode(ExpressionNode::Multiply, $1, $3, yyloc.first_line);
+                                            $$ = new ExpressionNode(ExpressionNode::Multiply, $1, $3, currentFile, yyloc.first_line);
                                             COUT << "Multiplying ... " << ENDL;
                                         }
     |	valueListDef '/' valueExp       {
-                                            $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3, yyloc.first_line);
+                                            $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3, currentFile, yyloc.first_line);
                                             COUT << "Dividing ... " << ENDL;
                                         }
     |	valueListDef AND valueExp       {
@@ -820,19 +822,19 @@ valueListExp:
                                             COUT << "Logical OR ... " << ENDL;
                                         }
     |	valueExp '+' valueListDef       {
-                                            $$ = new ExpressionNode(ExpressionNode::Add , $1, $3, yyloc.first_line);
+                                            $$ = new ExpressionNode(ExpressionNode::Add , $1, $3, currentFile, yyloc.first_line);
                                             COUT << "Adding ... " << ENDL;
                                         }
     |	valueExp '-' valueListDef       {
-                                            $$ = new ExpressionNode(ExpressionNode::Subtract, $1, $3, yyloc.first_line);
+                                            $$ = new ExpressionNode(ExpressionNode::Subtract, $1, $3, currentFile, yyloc.first_line);
                                             COUT << "Subtracting ... " << ENDL;
                                         }
     |	valueExp '*' valueListDef       {
-                                            $$ = new ExpressionNode(ExpressionNode::Multiply, $1, $3, yyloc.first_line);
+                                            $$ = new ExpressionNode(ExpressionNode::Multiply, $1, $3, currentFile, yyloc.first_line);
                                             COUT << "Multiplying ... " << ENDL;
                                         }
     |	valueExp '/' valueListDef       {
-                                            $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3, yyloc.first_line);
+                                            $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3, currentFile, yyloc.first_line);
                                             COUT << "Dividing ... " << ENDL;
                                         }
     |	valueExp AND valueListDef       {
@@ -870,27 +872,27 @@ valueListExp:
 	
 valueExp:
         valueExp '+' valueExp 		{
-                                        $$ = new ExpressionNode(ExpressionNode::Add, $1, $3, yyloc.first_line);
+                                        $$ = new ExpressionNode(ExpressionNode::Add, $1, $3, currentFile, yyloc.first_line);
                                         COUT << "Adding ... " << ENDL;
                                     }
     |	valueExp '-' valueExp 		{
-                                        $$ = new ExpressionNode(ExpressionNode::Subtract, $1, $3, yyloc.first_line);
+                                        $$ = new ExpressionNode(ExpressionNode::Subtract, $1, $3, currentFile, yyloc.first_line);
                                         COUT << "Subtracting ... " << ENDL;
                                     }
     |	valueExp '*' valueExp 		{
-                                        $$ = new ExpressionNode(ExpressionNode::Multiply, $1, $3, yyloc.first_line);
+                                        $$ = new ExpressionNode(ExpressionNode::Multiply, $1, $3, currentFile, yyloc.first_line);
                                         COUT << "Multiplying ... " << ENDL;
                                     }
     |	valueExp '/' valueExp 		{
-                                        $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3, yyloc.first_line);
+                                        $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3, currentFile, yyloc.first_line);
                                         COUT << "Dividing ... " << ENDL;
                                     }
     |	valueExp AND valueExp 		{
-                                        $$ = new ExpressionNode(ExpressionNode::And, $1, $3, yyloc.first_line);
+                                        $$ = new ExpressionNode(ExpressionNode::And, $1, $3, currentFile, yyloc.first_line);
                                         COUT << "Logical AND ... " << ENDL;
                                     }
     |	valueExp OR valueExp 		{
-                                        $$ = new ExpressionNode(ExpressionNode::Or, $1, $3, yyloc.first_line);
+                                        $$ = new ExpressionNode(ExpressionNode::Or, $1, $3, currentFile, yyloc.first_line);
                                         COUT << "Logical OR ... " << ENDL;
                                     }
     |	'(' valueExp ')'            {
@@ -898,11 +900,11 @@ valueExp:
                                         COUT << "Enclosure ..." << ENDL;
                                     }
     | 	'-' valueExp %prec UMINUS 	{
-                                        $$ = new ExpressionNode(ExpressionNode::UnaryMinus, $2, yyloc.first_line);
+                                        $$ = new ExpressionNode(ExpressionNode::UnaryMinus, $2, currentFile, yyloc.first_line);
                                         COUT << "Unary minus ... " << ENDL;
                                     }
     | 	NOT valueExp %prec NOT 		{
-                                        $$ = new ExpressionNode(ExpressionNode::LogicalNot, $2, yyloc.first_line);
+                                        $$ = new ExpressionNode(ExpressionNode::LogicalNot, $2, currentFile, yyloc.first_line);
                                         COUT << "Logical NOT ... " << ENDL;
                                     }
     | 	valueComp                   {
@@ -916,7 +918,7 @@ valueExp:
 	
 streamExp:
 		streamComp STREAM streamExp	{
-                                        $$ = new StreamNode($1, $3, yyloc.first_line);
+                                        $$ = new StreamNode($1, $3, currentFile, yyloc.first_line);
                                     }
     |	streamComp                  {
                                         $$ = $1;
@@ -929,13 +931,13 @@ streamExp:
 	
 indexComp:
         INT             {
-                            $$ = new ValueNode($1, yyloc.first_line);
+                            $$ = new ValueNode($1, currentFile, yyloc.first_line);
                             COUT << "Index/Size Integer: " << $1 << ENDL;
                         }
     |	UVAR            {
                             string s;
                             s.append($1); /* string constructor leaks otherwise! */
-                            $$ = new NameNode(s, yyloc.first_line);
+                            $$ = new NameNode(s, currentFile, yyloc.first_line);
                             COUT << "Index/Size User variable: " << $1 << ENDL;
                             free($1);
                         }
@@ -944,7 +946,7 @@ indexComp:
             ns.append($1); /* string constructor leaks otherwise! */
             string s;
             s.append($3); /* string constructor leaks otherwise! */
-            $$ = new NameNode(s, ns, yyloc.first_line);
+            $$ = new NameNode(s, ns, currentFile, yyloc.first_line);
             COUT << "Index/Size User variable: " << $3 << " in NameSpace: " << $1 << ENDL;
             free($1);
             free($3);
@@ -963,7 +965,7 @@ streamComp:
         UVAR            {
                             string s;
                             s.append($1); /* string constructor leaks otherwise! */
-                            $$ = new NameNode(s, yyloc.first_line);
+                            $$ = new NameNode(s, currentFile, yyloc.first_line);
                             COUT << "User variable: " << $1 << ENDL;
                             COUT << "Streaming ... " << ENDL;
                             free($1);
@@ -973,7 +975,7 @@ streamComp:
                             ns.append($1); /* string constructor leaks otherwise! */
                             string s;
                             s.append($3); /* string constructor leaks otherwise! */
-                            $$ = new NameNode(s, ns, yyloc.first_line);
+                            $$ = new NameNode(s, ns, currentFile, yyloc.first_line);
                             COUT << "User variable: " << $3 << " in NameSpace: " << $1 << ENDL;
                             COUT << "Streaming ... " << ENDL;
                             free($1);
@@ -999,38 +1001,38 @@ streamComp:
 
 valueComp:
         INT             {
-                            $$ = new ValueNode($1, yyloc.first_line);
+                            $$ = new ValueNode($1, currentFile, yyloc.first_line);
                             COUT << "Integer: " << $1 << ENDL;
                         }
     |	FLOAT           {
-                            $$ = new ValueNode($1, yyloc.first_line);
+                            $$ = new ValueNode($1, currentFile, yyloc.first_line);
                             COUT << "Real: " << $1 << ENDL; }
     |	ON              {
-                            $$ = new ValueNode(true, yyloc.first_line);
+                            $$ = new ValueNode(true, currentFile, yyloc.first_line);
                             COUT << "Keyword: on" << ENDL;
                         }
     |	OFF             {
-                            $$ = new ValueNode(false, yyloc.first_line);
+                            $$ = new ValueNode(false, currentFile, yyloc.first_line);
                             COUT << "Keyword: off" << ENDL;
                         }
     |	STRING			{
                             string s;
                             s.append($1); /* string constructor leaks otherwise! */
-                            $$ = new ValueNode(s, yyloc.first_line);
+                            $$ = new ValueNode(s, currentFile, yyloc.first_line);
                             COUT << "String: " << $1 << ENDL;
                             free($1);
                         }
     |	WORD            {
                             string s;
                             s.append($1);
-                            $$ = new KeywordNode(s, yyloc.first_line);
+                            $$ = new KeywordNode(s, currentFile, yyloc.first_line);
                             COUT << "Word: " << $1 <<  ENDL;
                             free($1);
                         }
     |	UVAR            {
                             string s;
                             s.append($1); /* string constructor leaks otherwise! */
-                            $$ = new NameNode(s,yyloc.first_line);
+                            $$ = new NameNode(s, currentFile, yyloc.first_line);
                             COUT << "User variable: " << $1 << ENDL;
                             free($1);
                         }
@@ -1039,7 +1041,7 @@ valueComp:
                             ns.append($1); /* string constructor leaks otherwise! */
                             string s;
                             s.append($3); /* string constructor leaks otherwise! */
-                            $$ = new NameNode(s, ns, yyloc.first_line);
+                            $$ = new NameNode(s, ns, currentFile, yyloc.first_line);
                             COUT << "User variable: " << $3 << " in NameSpace: " << $1 << ENDL;
                             free($1);
                             free($3);
@@ -1079,7 +1081,6 @@ std::vector<LangError> getErrors() {
 AST *parse(const char *filename){
     FILE * file;
     AST *ast = NULL;
-    char const * fileName = filename;
 
     char *lc;
     if (!(lc =setlocale (LC_ALL, "C"))) {
@@ -1087,7 +1088,7 @@ AST *parse(const char *filename){
     }
 
     parseErrors.clear();
-    file = fopen(fileName, "r");
+    file = fopen(filename, "r");
 
     if (!file){
         LangError newError;
@@ -1097,11 +1098,12 @@ AST *parse(const char *filename){
     //    newError.lineNumber = line;
         newError.lineNumber = yylineno;
         parseErrors.push_back(newError);
-        COUT << "Can't open " << fileName << ENDL;;
+        COUT << "Can't open " << filename << ENDL;;
         return NULL;
     }
+    currentFile = filename;
 	
-    COUT << "Analysing: " << fileName << ENDL;
+    COUT << "Analysing: " << filename << ENDL;
     COUT << "===========" << ENDL;
 
     tree_head = new AST;
@@ -1117,7 +1119,7 @@ AST *parse(const char *filename){
         return ast;
     }
     ast = tree_head;
-    COUT << "Completed Analysing: " << fileName << ENDL;
+    COUT << "Completed Analysing: " << filename << ENDL;
     return ast;
 }
 

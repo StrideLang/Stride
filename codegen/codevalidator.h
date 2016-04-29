@@ -35,6 +35,11 @@ public:
     static AST *getValueFromConstBlock(BlockNode *block);
     static AST *getMemberFromList(ListNode *node, int index, QList<LangError> &errors);
     static PropertyNode *findPropertyByName(vector<PropertyNode *> properties, QString propertyName);
+    static ListNode *validTypesForPort(BlockNode *typeDeclaration, QString portName, QVector<AST *> scope, AST *tree);
+    static BlockNode *findTypeDeclaration(BlockNode *block, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
+
+    static QVector<AST *> getPortsForTypeBlock(BlockNode *block, QVector<AST *> scope, AST *tree);
+    static QVector<AST *> getPortsForType(QString typeName, QVector<AST *> scope, AST *tree);
 
     /// Number of parallel streams that a single stream can be broken up into
     static int numParallelStreams(StreamNode *stream, StreamPlatform &platform, QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
@@ -43,8 +48,8 @@ public:
     /// can the node be broken up.
     static int getNodeSize(AST *node, AST *tree);
 
-    static int getNodeNumOutputs(AST *node, StreamPlatform &platform, QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
-    static int getNodeNumInputs(AST *node, StreamPlatform &platform, QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
+    static int getNodeNumOutputs(AST *node, QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
+    static int getNodeNumInputs(AST *node, QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
 
     static int getBlockDeclaredSize(BlockNode *block, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
 

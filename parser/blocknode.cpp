@@ -3,8 +3,9 @@
 #include "blocknode.h"
 
 
-BlockNode::BlockNode(string name, string objectType, AST *propertiesList, int line):
-    AST(AST::Block, line)
+BlockNode::BlockNode(string name, string objectType, AST *propertiesList,
+                     const char *filename, int line):
+    AST(AST::Block, filename, line)
 {
     m_name = name;
     m_objectType = objectType;
@@ -17,8 +18,9 @@ BlockNode::BlockNode(string name, string objectType, AST *propertiesList, int li
     }
 }
 
-BlockNode::BlockNode(BundleNode *bundle, string objectType, AST *propertiesList, int line) :
-    AST(AST::BlockBundle, line)
+BlockNode::BlockNode(BundleNode *bundle, string objectType, AST *propertiesList,
+                     const char *filename, int line) :
+    AST(AST::BlockBundle, filename, line)
 {
     addChild(bundle);
     m_objectType = objectType;
@@ -88,9 +90,9 @@ AST *BlockNode::deepCopy()
     }
     if (getNodeType() == AST::BlockBundle) {
         node = new BlockNode(static_cast<BundleNode *>(getBundle()->deepCopy()),
-                             m_objectType, newProps, m_line);
+                             m_objectType, newProps, m_filename.data(), m_line);
     } else if (getNodeType() == AST::Block) {
-        node = new BlockNode(m_name, m_objectType, newProps, m_line);
+        node = new BlockNode(m_name, m_objectType, newProps, m_filename.data(), m_line);
     }
     node->setRate(m_rate);
     delete newProps;

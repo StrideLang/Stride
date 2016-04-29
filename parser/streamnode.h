@@ -6,7 +6,7 @@
 class StreamNode : public AST
 {
 public:
-    StreamNode(AST *left, AST *right, int line);
+    StreamNode(AST *left, AST *right, const char *filename, int line);
     ~StreamNode();
 
     AST *getLeft() const {return m_children.at(0); }

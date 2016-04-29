@@ -14,7 +14,7 @@ public:
         UserDefined
     } FunctionType;
 
-    FunctionNode(string name, AST *propertiesList, FunctionType type, int line, string namespace_ = "");
+    FunctionNode(string name, AST *propertiesList, FunctionType type, const char *filename, int line, string namespace_ = "");
     ~FunctionNode();
 
     string getName() const { return m_name; }
