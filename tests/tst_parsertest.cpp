@@ -32,6 +32,7 @@ private Q_SLOTS:
     void testValueTypeBundleResolution();
 
     // Parser
+    void testExpressions();
     void testNamespaces();
     void testBundleIndeces();
     void testBasicNoneSwitch();
@@ -872,6 +873,21 @@ void ParserTest::testLists()
 
     tree->deleteChildren();
     delete tree;
+
+
+}
+
+void ParserTest::testExpressions()
+{
+    AST *tree;
+    tree = parse(QString(QFINDTESTDATA("data/10_expressions.stride")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    vector<AST *> nodes = tree->getChildren();
+    StreamNode *stream = static_cast<StreamNode *>(nodes.at(1));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    ExpressionNode *expression = static_cast<ExpressionNode *>(stream->getLeft());
+    QVERIFY(expression->getNodeType() == AST::Expression);
+    QVERIFY(expression->getExpressionType() == ExpressionNode::Greater);
 
 
 }

@@ -14,7 +14,13 @@ public:
         And,
         Or,
         UnaryMinus,
-        LogicalNot
+        LogicalNot,
+        Equal,
+        NotEqual,
+        Greater,
+        Lesser,
+        GreaterEqual,
+        LesserEqual
     } ExpressionType;
 
     ExpressionNode(ExpressionType type, AST *left, AST *right, const char *filename, int line);

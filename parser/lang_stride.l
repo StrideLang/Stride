@@ -39,6 +39,13 @@ CLETTER	[A-Z]
 "||"				{ return OR; }
 "!"					{ return NOT; }
 
+"=="				{ return EQUAL; }
+"!="				{ return NOTEQUAL; }
+">"					{ return GREATER; }
+"<"					{ return LESSER; }
+">="				{ return GREATEREQUAL; }
+"<="				{ return LESSEREQUAL; }
+
 "use"				{ return USE; }
 "version"			{ return VERSION; }
 "with"              { return WITH; }

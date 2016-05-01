@@ -63,6 +63,7 @@ DISTFILES += \
     data/07_bundle_indeces.stride \
     data/08_namespace.stride \
     data/09_lists.stride \
+    data/10_expressions.stride \
     data/P01_platform_objects.stride \
     data/P02_check_duplicates.stride \
     data/P03_bundle_resolution.stride \
