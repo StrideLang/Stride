@@ -314,7 +314,7 @@ void ProjectWindow::setEditorText(QString code)
     editor->setPlainText(code);
 }
 
-void ProjectWindow::saveFile(int index)
+bool ProjectWindow::saveFile(int index)
 {
     CodeEditor *editor;
     if (index == -1) {
@@ -324,12 +324,10 @@ void ProjectWindow::saveFile(int index)
     }
     Q_ASSERT(editor);
     if (!editor->document()->isModified()) {
-        return;
+        return true;
     }
     if (editor->filename().isEmpty()) {
-        if (!saveFileAs()) {
-            return;
-        }
+        return saveFileAs();
     }
     QString code = editor->toPlainText();
     QFile codeFile(editor->filename());
@@ -340,11 +338,17 @@ void ProjectWindow::saveFile(int index)
     editor->markChanged(false);
     codeFile.write(code.toLocal8Bit());
     codeFile.close();
+    return true;
 }
 
-bool ProjectWindow::saveFileAs()
+bool ProjectWindow::saveFileAs(int index)
 {
-    CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+    CodeEditor *editor;
+    if (index == -1) {
+        editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+    } else {
+        editor = static_cast<CodeEditor *>(ui->tabWidget->widget(index));
+    }
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save file as:"));
     if  (fileName.isEmpty()) {
         return false;
@@ -352,18 +356,44 @@ bool ProjectWindow::saveFileAs()
     if (!fileName.endsWith(".stride")) {
         fileName.append(".stride");
     }
-    QFile codeFile(fileName);
-    if (!codeFile.open(QIODevice::ReadWrite)) {
-        QMessageBox::critical(this, tr("Error writing file"),
-                              tr("Can't open file for writing."));
-        return false;
-    }
     editor->setFilename(fileName);
-    editor->markChanged(false);
-    codeFile.close();
     ui->tabWidget->setTabText(ui->tabWidget->currentIndex(),
                               QFileInfo(fileName).fileName());
-    return true;
+    editor->markChanged(false);
+
+    return saveFile(index);
+}
+
+void ProjectWindow::closeTab(int index)
+{
+    if (index < 0) {
+        index = ui->tabWidget->currentIndex();
+    }
+    if (index >= ui->tabWidget->count()) {
+        qDebug() << " ProjectWindow::closeTab(int index) invalid index " << index;
+    }
+    if (ui->tabWidget->count() > 1) {
+        CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->widget(index));
+        if (editor->isChanged()) {
+            QMessageBox::StandardButton result
+                    = QMessageBox::question(this, tr("File modified"),
+                                            tr("File has been modified. Save?"),
+                                            QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
+                                            QMessageBox::Yes);
+            if (result == QMessageBox::Yes) {
+                if (!saveFile()) {
+                    return;
+                }
+            }
+            if (result != QMessageBox::Cancel) {
+                ui->tabWidget->removeTab(ui->tabWidget->currentIndex());
+                delete editor; // TODO better handling of this pointer (smarter pointer)
+            }
+        } else {
+            ui->tabWidget->removeTab(ui->tabWidget->currentIndex());
+            delete editor;
+        }
+    }
 }
 
 void ProjectWindow::loadFile()
@@ -472,6 +502,7 @@ void ProjectWindow::connectActions()
     connect(ui->actionRefresh, SIGNAL(triggered()), this, SLOT(updateMenus()));
     connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(saveFile()));
     connect(ui->actionSave_as, SIGNAL(triggered()), this, SLOT(saveFileAs()));
+    connect(ui->actionClose_Tab, SIGNAL(triggered()), this, SLOT(closeTab()));
     connect(ui->actionOptions, SIGNAL(triggered()), this, SLOT(openOptionsDialog()));
     connect(ui->actionLoad_File, SIGNAL(triggered()), this, SLOT(loadFile()));
     connect(ui->actionStop, SIGNAL(triggered()), this, SLOT(stop()));
@@ -646,15 +677,9 @@ void ProjectWindow::newFile()
     updateEditorFont();
     m_highlighter->setDocument(editor->document());
     QObject::connect(editor, SIGNAL(textChanged()), this, SLOT(markModified()));
+    editor->setFocus();
 }
 
-void ProjectWindow::closeTab(int index)
-{
-    CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
-    qDebug() << "Close";
-    ui->tabWidget->removeTab(index);
-    delete editor;
-}
 
 void ProjectWindow::markModified()
 {

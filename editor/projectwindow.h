@@ -23,14 +23,14 @@ public:
 public slots:
     void updateMenus();
     void setEditorText(QString code);
-    void saveFile(int index = -1);
-    bool saveFileAs();
+    bool saveFile(int index = -1);
+    bool saveFileAs(int index = -1);
+    void closeTab(int index = -1);
     void loadFile();
     void loadFile(QString fileName);
     void openOptionsDialog();
     void updateCodeAnalysis();
     void newFile();
-    void closeTab(int index);
     void markModified();
 
 protected:
