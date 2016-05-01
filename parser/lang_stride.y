@@ -871,9 +871,11 @@ valueListExp:
                                         COUT << "Index/Size less or equal ... " << ENDL;
                                     }
     |	valueListDef AND valueExp       {
+                                            $$ = new ExpressionNode(ExpressionNode::And, $1, $3, currentFile, yyloc.first_line);
                                             COUT << "Logical AND ..." << ENDL;
                                         }
     |	valueListDef OR valueExp        {
+                                            $$ = new ExpressionNode(ExpressionNode::Or, $1, $3, currentFile, yyloc.first_line);
                                             COUT << "Logical OR ... " << ENDL;
                                         }
     |	valueExp '+' valueListDef       {
@@ -917,51 +919,59 @@ valueListExp:
                                         COUT << "Index/Size less or equal ... " << ENDL;
                                     }
     |	valueExp AND valueListDef       {
+                                            $$ = new ExpressionNode(ExpressionNode::And, $1, $3, currentFile, yyloc.first_line);
                                             COUT << "Logical AND ..." << ENDL;
                                         }
     |	valueExp OR valueListDef        {
+                                            $$ = new ExpressionNode(ExpressionNode::Or, $1, $3, currentFile, yyloc.first_line);
                                             COUT << "Logical OR ... " << ENDL;
                                         }
     |	valueListDef '+' valueListDef   {
+                                            $$ = new ExpressionNode(ExpressionNode::Add, $1, $3, currentFile, yyloc.first_line);
                                             COUT << "Adding Lists ... " << ENDL;
                                         }
     |	valueListDef '-' valueListDef	{
+                                            $$ = new ExpressionNode(ExpressionNode::Subtract, $1, $3, currentFile, yyloc.first_line);
                                             COUT << "Subtracting Lists ... " << ENDL;
                                         }
     |	valueListDef '*' valueListDef	{
+                                            $$ = new ExpressionNode(ExpressionNode::Multiply, $1, $3, currentFile, yyloc.first_line);
                                             COUT << "Multiplying Lists ... " << ENDL;
                                         }
     |	valueListDef '/' valueListDef	{
+                                            $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3, currentFile, yyloc.first_line);
                                             COUT << "Dividing Lists ... " << ENDL;
                                         }
         |	valueListDef EQUAL valueListDef 	{
-//                                        $$ = new ExpressionNode(ExpressionNode::Equal, $1, $3, currentFile, yyloc.first_line);
+                                        $$ = new ExpressionNode(ExpressionNode::Equal, $1, $3, currentFile, yyloc.first_line);
                                         COUT << "Index/Size equal ... " << ENDL;
                                     }
         |	valueListDef NOTEQUAL valueListDef 	{
-//                                        $$ = new ExpressionNode(ExpressionNode::NotEqual, $1, $3, currentFile, yyloc.first_line);
+                                        $$ = new ExpressionNode(ExpressionNode::NotEqual, $1, $3, currentFile, yyloc.first_line);
                                         COUT << "Index/Size not equal ... " << ENDL;
                                     }
         |	valueListDef GREATER valueListDef 	{
-//                                        $$ = new ExpressionNode(ExpressionNode::Greater , $1, $3, currentFile, yyloc.first_line);
+                                        $$ = new ExpressionNode(ExpressionNode::Greater , $1, $3, currentFile, yyloc.first_line);
                                         COUT << "Index/Size greater ... " << ENDL;
                                     }
         |	valueListDef LESSER valueListDef 	{
-//                                        $$ = new ExpressionNode(ExpressionNode::Lesser, $1, $3, currentFile, yyloc.first_line);
+                                        $$ = new ExpressionNode(ExpressionNode::Lesser, $1, $3, currentFile, yyloc.first_line);
                                         COUT << "Index/Size lesser ... " << ENDL;
                                     }
         |	valueListDef GREATEREQUAL valueListDef 	{
-//                                        $$ = new ExpressionNode(ExpressionNode::GreaterEqual, $1, $3, currentFile, yyloc.first_line);
+                                        $$ = new ExpressionNode(ExpressionNode::GreaterEqual, $1, $3, currentFile, yyloc.first_line);
                                         COUT << "Index/Size greater or equal ... " << ENDL;
                                     }
         |	valueListDef LESSEREQUAL valueListDef 	{
-//                                        $$ = new ExpressionNode(ExpressionNode::LesserEqual , $1, $3, currentFile, yyloc.first_line);
+                                        $$ = new ExpressionNode(ExpressionNode::LesserEqual , $1, $3, currentFile, yyloc.first_line);
                                         COUT << "Index/Size less or equal ... " << ENDL;
                                     }
     |	valueListDef AND valueListDef	{
+                                            $$ = new ExpressionNode(ExpressionNode::And, $1, $3, currentFile, yyloc.first_line);
                                             COUT << "Logical AND Lists ... " << ENDL;
                                         }
     |	valueListDef OR valueListDef	{
+                                            $$ = new ExpressionNode(ExpressionNode::Or, $1, $3, currentFile, yyloc.first_line);
                                             COUT << "Logical OR Lists ... " << ENDL;
                                         }
     |	valueListDef                    {
