@@ -5,6 +5,9 @@
 
 #include <cstdio>  // for fopen
 #include <cstdarg>  //for var args
+#include <cerrno> // For error codes
+#include <cstring> // For strerror
+
 
 #include "ast.h"
 
@@ -14,10 +17,12 @@ extern "C" int yylex();
 extern "C" int yylineno;
 extern "C" char * yytext;
 extern "C" FILE *yyin;
+extern "C" int errno ;
 
 std::vector<LangError> parseErrors;
 
 void yyerror(const char *s, ...);
+void syntaxError(const char *s, ...);
 
 AST *tree_head;
 
@@ -175,7 +180,7 @@ start:
                         COUT << "Stream Definition Resolved!" << ENDL;
                     }
     |	ERROR		{
-                        yyerror("Unrecognized character", $1, yyloc.first_line);
+                        syntaxError("Unrecognized character", $1, yyloc.first_line);
                     }
 ;
 
@@ -1061,6 +1066,23 @@ valueComp:
 void yyerror(const char *s, ...){
     va_list ap;
     va_start(ap, s);
+
+    if(yylloc.first_line)
+      fprintf(stderr, "%d.%d-%d.%d: error: ", yylloc.first_line, yylloc.first_column,
+          yylloc.last_line, yylloc.last_column);
+    vfprintf(stderr, s, ap);
+    fprintf(stderr, "\n");
+    LangError newError;
+    newError.type = LangError::Syntax;
+    newError.errorTokens.push_back(std::string(yytext));
+//    newError.lineNumber = line;
+    newError.lineNumber = yylloc.first_line;
+}
+
+void syntaxError(const char *s, ...){
+
+    va_list ap;
+    va_start(ap, s);
 //    const char *errorString = va_arg(ap, char*);
     int line = va_arg(ap, int);
     COUT << ENDL << ENDL << "ERROR: " << s ; //<< " => " << errorString << ENDL;
@@ -1091,9 +1113,10 @@ AST *parse(const char *filename){
     file = fopen(filename, "r");
 
     if (!file){
+//        perror(errno);
         LangError newError;
         newError.type = LangError::SystemError;
-        newError.errorTokens.push_back("File Not Found.");
+        newError.errorTokens.push_back(std::strerror(errno));
         newError.errorTokens.push_back(std::string(filename));
     //    newError.lineNumber = line;
         newError.lineNumber = yylineno;
