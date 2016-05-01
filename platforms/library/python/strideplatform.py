@@ -478,18 +478,28 @@ class ModuleAtom(Atom):
         return {self.name :  declaration}
     
     def get_instances(self):
+        instances = []
+        if 'internalBlocks' in self.module:
+            for block in self.module['internalBlocks']:
+                if 'block' in block:
+                    instances.append({ 'type' : 'real',
+                       'handle' : block['block']['name']
+                     })
+        
         if len(self.out_tokens) > 0:
-            return [{'type' : 'module',
+            instances += [{'type' : 'module',
                      'handle': self.handle,
                      'moduletype' : self.name},
                      { 'type' : 'real',
                        'handle' : self.out_tokens[0]
                      }]
         else:
-            return [{'type' : 'module',
+            instances += [{'type' : 'module',
                      'handle': self.handle,
                      'moduletype' : self.name}
                      ]
+                     
+        return instances
         
     def get_inline_processing_code(self, in_tokens):
         code = templates.module_processing_code(self.handle, in_tokens)
@@ -502,8 +512,10 @@ class ModuleAtom(Atom):
         for port_name in ports:
             if 'value' in ports[port_name]:
                 port_in_token = [str(ports[port_name]['value']['value'])]
+            elif 'name' in ports[port_name]:
+                port_in_token = [ports[port_name]['name']['name']]
             else:
-                port_in_token = '____XXX___'
+                port_in_token = ['____XXX___']
             code += templates.module_set_property(self.handle, port_name, port_in_token)
         if 'output' in self._platform_code['block'] and not self._platform_code['block']['output'] is None:
             code += templates.assignment(self.out_tokens[0],self.get_inline_processing_code(in_tokens))
@@ -532,14 +544,15 @@ class ModuleAtom(Atom):
         return code
         
     def _get_internal_properties_code(self):
-        code = ''
+        members = ''
+        functions = ''
         if self.module['properties']:
             for prop in self.module['properties']:
                 if 'block' in prop:
-                    code += templates.module_property_setter(prop['block']['name'],
+                    functions += templates.module_property_setter(prop['block']['name'],
                                              prop['block']['block']['name']['name'],
                                              'real')
-        return code
+        return members + functions
         
     def _process_module(self, streams, blocks):
         tree = streams + blocks
@@ -694,7 +707,7 @@ class PlatformFunctions:
         for elem in tree:
             if 'block' in elem:
                 if elem['block']['name'] == 'PlatformRate':
-                    self.sample_rate = elem['block']['rate']
+                    self.sample_rate = elem['block']['value']
         templates.domain_rate = self.sample_rate
 
     

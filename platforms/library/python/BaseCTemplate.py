@@ -150,7 +150,7 @@ struct %s {
     def initialization_code(self, instance):
         code = ''
         if instance['type'] == 'real':
-            code = instance['handle'] + ' = ' + instance['code'] + ';\n'
+            code = self.assignment(instance['handle'], instance['code'])
         elif instance['type'] == 'bundle':
             for i in range(instance['size']):
                 elem_instance = {'type': instance['bundletype'] ,
