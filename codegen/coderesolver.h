@@ -70,6 +70,12 @@ private:
     ValueNode *logicalAnd(ValueNode *left, ValueNode *right);
     ValueNode *logicalOr(ValueNode *left, ValueNode *right);
     ValueNode *logicalNot(ValueNode *left);
+    ValueNode *equal(ValueNode *left, ValueNode *right);
+    ValueNode *notEqual(ValueNode *left, ValueNode *right);
+    ValueNode *greaterThan(ValueNode *left, ValueNode *right);
+    ValueNode *lesser(ValueNode *left, ValueNode *right);
+    ValueNode *greaterEqual(ValueNode *left, ValueNode *right);
+    ValueNode *lesserEqual(ValueNode *left, ValueNode *right);
 
 
 //    QVector<AST *> expandStreamNode(StreamNode *stream);

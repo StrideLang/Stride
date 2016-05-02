@@ -215,6 +215,55 @@ void ParserTest::testConstantResolution()
 
     QVERIFY(qFuzzyCompare(value->getRealValue(), 2.0 + (3.1 * 0.1)));
 
+//    constant ConstSwitch1 {value: 1 > Const1;}
+//    constant ConstSwitch2 {value: 1 < Const1;}
+//    constant ConstSwitch3 {value: 1 == Const1;}
+//    constant ConstSwitch4 {value: 1 != Const1;}
+//    constant ConstSwitch5 {value: 1 >= Const1;}
+//    constant ConstSwitch6 {value: 1 <= Const1;}
+
+    block = static_cast<BlockNode *>(tree->getChildren().at(19));
+    QVERIFY(block->getNodeType() == AST::Block);
+    value = static_cast<ValueNode *>(block->getPropertyValue("value"));
+    QVERIFY(value != NULL);
+    QVERIFY(value->getNodeType() == AST::Switch);
+    QVERIFY(value->getSwitchValue() == false);
+
+    block = static_cast<BlockNode *>(tree->getChildren().at(20));
+    QVERIFY(block->getNodeType() == AST::Block);
+    value = static_cast<ValueNode *>(block->getPropertyValue("value"));
+    QVERIFY(value != NULL);
+    QVERIFY(value->getNodeType() == AST::Switch);
+    QVERIFY(value->getSwitchValue() == true);
+
+    block = static_cast<BlockNode *>(tree->getChildren().at(21));
+    QVERIFY(block->getNodeType() == AST::Block);
+    value = static_cast<ValueNode *>(block->getPropertyValue("value"));
+    QVERIFY(value != NULL);
+    QVERIFY(value->getNodeType() == AST::Switch);
+    QVERIFY(value->getSwitchValue() == false);
+
+    block = static_cast<BlockNode *>(tree->getChildren().at(22));
+    QVERIFY(block->getNodeType() == AST::Block);
+    value = static_cast<ValueNode *>(block->getPropertyValue("value"));
+    QVERIFY(value != NULL);
+    QVERIFY(value->getNodeType() == AST::Switch);
+    QVERIFY(value->getSwitchValue() == true);
+
+    block = static_cast<BlockNode *>(tree->getChildren().at(23));
+    QVERIFY(block->getNodeType() == AST::Block);
+    value = static_cast<ValueNode *>(block->getPropertyValue("value"));
+    QVERIFY(value != NULL);
+    QVERIFY(value->getNodeType() == AST::Switch);
+    QVERIFY(value->getSwitchValue() == false);
+
+    block = static_cast<BlockNode *>(tree->getChildren().at(24));
+    QVERIFY(block->getNodeType() == AST::Block);
+    value = static_cast<ValueNode *>(block->getPropertyValue("value"));
+    QVERIFY(value != NULL);
+    QVERIFY(value->getNodeType() == AST::Switch);
+    QVERIFY(value->getSwitchValue() == true);
+
     // TODO Verify Unary operators
     //# Unary operators
     //constant ConstInt6 {value: -ConstInt1}
@@ -222,6 +271,12 @@ void ParserTest::testConstantResolution()
     //#constant ConstInt8 {value: (ConstInt1 * 15) & 8}
     //#constant ConstInt9 {value: ~(ConstInt1 * 15)}
 
+    block = static_cast<BlockNode *>(tree->getChildren().at(25));
+    QVERIFY(block->getNodeType() == AST::Block);
+    value = static_cast<ValueNode *>(block->getPropertyValue("value"));
+    QVERIFY(value != NULL);
+    QVERIFY(value->getNodeType() == AST::Int);
+    QVERIFY(value->getIntValue() == -2);
 
     tree->deleteChildren();
     delete tree;

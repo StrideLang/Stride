@@ -791,27 +791,27 @@ indexExp:
                                     $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3, currentFile, yyloc.first_line);
                                     COUT << "Index/Size dividing ... " << ENDL;
                                 }
-        |	indexExp '==' indexExp 	{
+        |	indexExp EQUAL indexExp 	{
                                         $$ = new ExpressionNode(ExpressionNode::Equal, $1, $3, currentFile, yyloc.first_line);
                                         COUT << "Index/Size equal ... " << ENDL;
                                     }
-        |	indexExp '!=' indexExp 	{
+        |	indexExp NOTEQUAL indexExp 	{
                                         $$ = new ExpressionNode(ExpressionNode::NotEqual, $1, $3, currentFile, yyloc.first_line);
                                         COUT << "Index/Size not equal ... " << ENDL;
                                     }
-        |	indexExp '>' indexExp 	{
+        |	indexExp GREATER indexExp 	{
                                         $$ = new ExpressionNode(ExpressionNode::Greater , $1, $3, currentFile, yyloc.first_line);
                                         COUT << "Index/Size greater ... " << ENDL;
                                     }
-        |	indexExp '<' indexExp 	{
+        |	indexExp LESSER indexExp 	{
                                         $$ = new ExpressionNode(ExpressionNode::Lesser, $1, $3, currentFile, yyloc.first_line);
                                         COUT << "Index/Size lesser ... " << ENDL;
                                     }
-        |	indexExp '>=' indexExp 	{
+        |	indexExp GREATEREQUAL indexExp 	{
                                         $$ = new ExpressionNode(ExpressionNode::GreaterEqual, $1, $3, currentFile, yyloc.first_line);
                                         COUT << "Index/Size greater or equal ... " << ENDL;
                                     }
-        |	indexExp '<=' indexExp 	{
+        |	indexExp LESSEREQUAL indexExp 	{
                                         $$ = new ExpressionNode(ExpressionNode::LesserEqual , $1, $3, currentFile, yyloc.first_line);
                                         COUT << "Index/Size less or equal ... " << ENDL;
                                     }

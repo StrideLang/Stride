@@ -527,6 +527,24 @@ ValueNode *CodeResolver::reduceConstExpression(ExpressionNode *expr, QVector<AST
         case ExpressionNode::LogicalNot:
             result = logicalNot(static_cast<ValueNode *>(left));
             break;
+        case ExpressionNode::Equal:
+            result = equal(static_cast<ValueNode *>(left), static_cast<ValueNode *>(right));
+            break;
+        case ExpressionNode::NotEqual:
+            result = notEqual(static_cast<ValueNode *>(left), static_cast<ValueNode *>(right));
+            break;
+        case ExpressionNode::Greater:
+            result = greaterThan(static_cast<ValueNode *>(left), static_cast<ValueNode *>(right));
+            break;
+        case ExpressionNode::Lesser:
+            result = lesser(static_cast<ValueNode *>(left), static_cast<ValueNode *>(right));
+            break;
+        case ExpressionNode::GreaterEqual:
+            result = greaterEqual(static_cast<ValueNode *>(left), static_cast<ValueNode *>(right));
+            break;
+        case ExpressionNode::LesserEqual:
+            result = lesserEqual(static_cast<ValueNode *>(left), static_cast<ValueNode *>(right));
+            break;
         default:
             Q_ASSERT(0 == 1); // Should never get here
             break;
@@ -711,6 +729,8 @@ ValueNode *CodeResolver::logicalAnd(ValueNode *left, ValueNode *right)
 {
     if (left->getNodeType() == AST::Int && right->getNodeType() == AST::Int) {
         return new ValueNode(left->getIntValue() & right->getIntValue(), left->getFilename().data(), left->getLine());
+    } else if (left->getNodeType() == AST::Switch && right->getNodeType() == AST::Switch) {
+        return new ValueNode(left->getSwitchValue() == right->getSwitchValue(), left->getFilename().data(), left->getLine());
     }
     return NULL;
 }
@@ -719,6 +739,8 @@ ValueNode *CodeResolver::logicalOr(ValueNode *left, ValueNode *right)
 {
     if (left->getNodeType() == AST::Int && right->getNodeType() == AST::Int) {
         return new ValueNode(left->getIntValue() | right->getIntValue(), left->getFilename().data(), left->getLine());
+    } else if (left->getNodeType() == AST::Switch && right->getNodeType() == AST::Switch) {
+        return new ValueNode(left->getSwitchValue() == right->getSwitchValue(), left->getFilename().data(), left->getLine());
     }
     return NULL;
 }
@@ -727,6 +749,80 @@ ValueNode *CodeResolver::logicalNot(ValueNode *value)
 {
     if (value->getNodeType() == AST::Int) {
         return new ValueNode(~ (value->getIntValue()), value->getFilename().data(), value->getLine());
+    } else if (value->getNodeType() == AST::Switch) {
+        return new ValueNode(!value->getSwitchValue(), value->getFilename().data(), value->getLine());
+    }
+    return NULL;
+}
+
+ValueNode *CodeResolver::equal(ValueNode *left, ValueNode *right)
+{
+    if (left->getNodeType() == AST::Int && right->getNodeType() == AST::Int) {
+        return new ValueNode(left->getIntValue() == right->getIntValue(), left->getFilename().data(), left->getLine());
+    } else if ((left->getNodeType() == AST::Int || left->getNodeType() == AST::Real) &&
+               (right->getNodeType() == AST::Int || right->getNodeType() == AST::Real)) {
+        return new ValueNode(left->toReal() == right->toReal(), left->getFilename().data(), left->getLine());
+    } else if (left->getNodeType() == AST::Switch && right->getNodeType() == AST::Switch) {
+        return new ValueNode(left->getSwitchValue() == right->getSwitchValue(), left->getFilename().data(), left->getLine());
+    }
+    return NULL;
+}
+
+ValueNode *CodeResolver::notEqual(ValueNode *left, ValueNode *right)
+{
+    if (left->getNodeType() == AST::Int && right->getNodeType() == AST::Int) {
+        return new ValueNode(left->getIntValue() != right->getIntValue(), left->getFilename().data(), left->getLine());
+    } else if ((left->getNodeType() == AST::Int || left->getNodeType() == AST::Real) &&
+               (right->getNodeType() == AST::Int || right->getNodeType() == AST::Real)) {
+        return new ValueNode(left->toReal() != right->toReal(), left->getFilename().data(), left->getLine());
+    } else if (left->getNodeType() == AST::Switch && right->getNodeType() == AST::Switch) {
+        return new ValueNode(left->getSwitchValue() != right->getSwitchValue(), left->getFilename().data(), left->getLine());
+    }
+    return NULL;
+}
+
+ValueNode *CodeResolver::greaterThan(ValueNode *left, ValueNode *right)
+{
+    if (left->getNodeType() == AST::Int && right->getNodeType() == AST::Int) {
+        return new ValueNode(left->getIntValue() > right->getIntValue(), left->getFilename().data(), left->getLine());
+    } else if ((left->getNodeType() == AST::Int || left->getNodeType() == AST::Real) &&
+               (right->getNodeType() == AST::Int || right->getNodeType() == AST::Real)) {
+        return new ValueNode(left->toReal() > right->toReal(), left->getFilename().data(), left->getLine());
+    } else if (left->getNodeType() == AST::Switch && right->getNodeType() == AST::Switch) {
+        return new ValueNode(left->getSwitchValue() > right->getSwitchValue(), left->getFilename().data(), left->getLine());
+    }
+    return NULL;
+}
+
+ValueNode *CodeResolver::lesser(ValueNode *left, ValueNode *right)
+{
+    if (left->getNodeType() == AST::Int && right->getNodeType() == AST::Int) {
+        return new ValueNode(left->getIntValue() < right->getIntValue(), left->getFilename().data(), left->getLine());
+    } else if ((left->getNodeType() == AST::Int || left->getNodeType() == AST::Real) &&
+               (right->getNodeType() == AST::Int || right->getNodeType() == AST::Real)) {
+        return new ValueNode(left->toReal() < right->toReal(), left->getFilename().data(), left->getLine());
+    }
+    return NULL;
+}
+
+ValueNode *CodeResolver::greaterEqual(ValueNode *left, ValueNode *right)
+{
+    if (left->getNodeType() == AST::Int && right->getNodeType() == AST::Int) {
+        return new ValueNode(left->getIntValue() >= right->getIntValue(), left->getFilename().data(), left->getLine());
+    } else if ((left->getNodeType() == AST::Int || left->getNodeType() == AST::Real) &&
+               (right->getNodeType() == AST::Int || right->getNodeType() == AST::Real)) {
+        return new ValueNode(left->toReal() >= right->toReal(), left->getFilename().data(), left->getLine());
+    }
+    return NULL;
+}
+
+ValueNode *CodeResolver::lesserEqual(ValueNode *left, ValueNode *right)
+{
+    if (left->getNodeType() == AST::Int && right->getNodeType() == AST::Int) {
+        return new ValueNode(left->getIntValue() <= right->getIntValue(), left->getFilename().data(), left->getLine());
+    } else if ((left->getNodeType() == AST::Int || left->getNodeType() == AST::Real) &&
+               (right->getNodeType() == AST::Int || right->getNodeType() == AST::Real)) {
+        return new ValueNode(left->toReal() <= right->toReal(), left->getFilename().data(), left->getLine());
     }
     return NULL;
 }

@@ -28,6 +28,14 @@ constant ConstFloat8 {value: Const1 / 2.0}
 #Expressions
 constant ConstExpr {value: Const1 + (Const2 * Const3)}
 
+# Comparison operators
+constant ConstSwitch1 {value: 1 > Const1;}
+constant ConstSwitch2 {value: 1 < Const1;}
+constant ConstSwitch3 {value: 1 == Const1;}
+constant ConstSwitch4 {value: 1 != Const1;}
+constant ConstSwitch5 {value: 1 >= Const1;}
+constant ConstSwitch6 {value: 1 <= Const1;}
+
 # Unary operators
 constant ConstInt6 {value: -ConstInt1}
 #constant ConstInt7 {value: (ConstInt1 * 15) | 16}
