@@ -20,7 +20,10 @@ public:
         Greater,
         Lesser,
         GreaterEqual,
-        LesserEqual
+        LesserEqual,
+        BitAnd,
+        BitOr,
+        BitNot
     } ExpressionType;
 
     ExpressionNode(ExpressionType type, AST *left, AST *right, const char *filename, int line);

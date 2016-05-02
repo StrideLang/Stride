@@ -136,6 +136,7 @@ NullStream nstream;
 %token COMMA COLON SEMICOLON 
 %token USE VERSION WITH IMPORT AS FOR NONE ON OFF
 %token EQUAL NOTEQUAL GREATER LESSER GREATEREQUAL LESSEREQUAL
+//%token BITAND BITOR BITNOT
 //%token STREAMRATE
 
 %left STREAM
@@ -815,6 +816,18 @@ indexExp:
                                         $$ = new ExpressionNode(ExpressionNode::LesserEqual , $1, $3, currentFile, yyloc.first_line);
                                         COUT << "Index/Size less or equal ... " << ENDL;
                                     }
+//        |	indexExp BITAND indexExp 	{
+//                                        $$ = new ExpressionNode(ExpressionNode::BitAnd, $1, $3, currentFile, yyloc.first_line);
+//                                        COUT << "Index/Size Bitwise and ... " << ENDL;
+//                                    }
+//        |	indexExp BITOR indexExp 	{
+//                                        $$ = new ExpressionNode(ExpressionNode::BitOr , $1, $3, currentFile, yyloc.first_line);
+//                                        COUT << "Index/Size Bitwise or ... " << ENDL;
+//                                    }
+//        |	indexExp BITNOT indexExp 	{
+//                                        $$ = new ExpressionNode(ExpressionNode::BitNot , $1, $3, currentFile, yyloc.first_line);
+//                                        COUT << "Index/Size Bitwise not ... " << ENDL;
+//                                    }
 
     |	'(' indexExp ')'        {
                                     $$ = $2;
@@ -870,6 +883,18 @@ valueListExp:
                                         $$ = new ExpressionNode(ExpressionNode::LesserEqual , $1, $3, currentFile, yyloc.first_line);
                                         COUT << "Index/Size less or equal ... " << ENDL;
                                     }
+//        |	valueListDef BITAND valueExp 	{
+//                                        $$ = new ExpressionNode(ExpressionNode::BitAnd , $1, $3, currentFile, yyloc.first_line);
+//                                        COUT << "Index/Size Bitwise and ... " << ENDL;
+//                                    }
+//        |	valueListDef BITOR valueExp 	{
+//                                        $$ = new ExpressionNode(ExpressionNode::BitOr , $1, $3, currentFile, yyloc.first_line);
+//                                        COUT << "Index/Size Bitwise or ... " << ENDL;
+//                                    }
+//        |	valueListDef BITNOT valueExp 	{
+//                                        $$ = new ExpressionNode(ExpressionNode::BitNot , $1, $3, currentFile, yyloc.first_line);
+//                                        COUT << "Index/Size Bitwise not ... " << ENDL;
+//                                    }
     |	valueListDef AND valueExp       {
                                             $$ = new ExpressionNode(ExpressionNode::And, $1, $3, currentFile, yyloc.first_line);
                                             COUT << "Logical AND ..." << ENDL;
@@ -918,6 +943,18 @@ valueListExp:
                                         $$ = new ExpressionNode(ExpressionNode::LesserEqual , $1, $3, currentFile, yyloc.first_line);
                                         COUT << "Index/Size less or equal ... " << ENDL;
                                     }
+//        |	valueExp BITAND valueListDef 	{
+//                                        $$ = new ExpressionNode(ExpressionNode::BitAnd , $1, $3, currentFile, yyloc.first_line);
+//                                        COUT << "Index/Size Bitwise and ... " << ENDL;
+//                                    }
+//        |	valueExp BITOR valueListDef 	{
+//                                        $$ = new ExpressionNode(ExpressionNode::BitOr , $1, $3, currentFile, yyloc.first_line);
+//                                        COUT << "Index/Size bitwise or ... " << ENDL;
+//                                    }
+//        |	valueExp BITNOT valueListDef 	{
+//                                        $$ = new ExpressionNode(ExpressionNode::BitNot , $1, $3, currentFile, yyloc.first_line);
+//                                        COUT << "Index/Size Bitwise not ... " << ENDL;
+//                                    }
     |	valueExp AND valueListDef       {
                                             $$ = new ExpressionNode(ExpressionNode::And, $1, $3, currentFile, yyloc.first_line);
                                             COUT << "Logical AND ..." << ENDL;
@@ -966,6 +1003,18 @@ valueListExp:
                                         $$ = new ExpressionNode(ExpressionNode::LesserEqual , $1, $3, currentFile, yyloc.first_line);
                                         COUT << "Index/Size less or equal ... " << ENDL;
                                     }
+//        |	valueListDef BITAND valueListDef 	{
+//                                        $$ = new ExpressionNode(ExpressionNode::BitAnd , $1, $3, currentFile, yyloc.first_line);
+//                                        COUT << "Index/Size Bitwise And ... " << ENDL;
+//                                    }
+//        |	valueListDef BITOR valueListDef 	{
+//                                        $$ = new ExpressionNode(ExpressionNode::BitOr , $1, $3, currentFile, yyloc.first_line);
+//                                        COUT << "Index/Size Bitwise Or ... " << ENDL;
+//                                    }
+//        |	valueListDef BITNOT valueListDef 	{
+//                                        $$ = new ExpressionNode(ExpressionNode::BitNot , $1, $3, currentFile, yyloc.first_line);
+//                                        COUT << "Index/Size Bitwise Not ... " << ENDL;
+//                                    }
     |	valueListDef AND valueListDef	{
                                             $$ = new ExpressionNode(ExpressionNode::And, $1, $3, currentFile, yyloc.first_line);
                                             COUT << "Logical AND Lists ... " << ENDL;
@@ -1032,6 +1081,18 @@ valueExp:
                                         $$ = new ExpressionNode(ExpressionNode::LesserEqual , $1, $3, currentFile, yyloc.first_line);
                                         COUT << "Index/Size less or equal ... " << ENDL;
                                     }
+//        |	valueExp BITAND valueExp 	{
+//                                        $$ = new ExpressionNode(ExpressionNode::BitAnd , $1, $3, currentFile, yyloc.first_line);
+//                                        COUT << "Index/Size Bitwise and ... " << ENDL;
+//                                    }
+//        |	valueExp BITOR valueExp 	{
+//                                        $$ = new ExpressionNode(ExpressionNode::BitOr , $1, $3, currentFile, yyloc.first_line);
+//                                        COUT << "Index/Size Bitwise or ... " << ENDL;
+//                                    }
+//        |	valueExp BITNOT valueExp 	{
+//                                        $$ = new ExpressionNode(ExpressionNode::BitNot , $1, $3, currentFile, yyloc.first_line);
+//                                        COUT << "Index/Size Bitwise not ... " << ENDL;
+//                                    }
     |	'(' valueExp ')'            {
                                         $$ = $2;
                                         COUT << "Enclosure ..." << ENDL;
