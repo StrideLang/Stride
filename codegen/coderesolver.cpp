@@ -585,6 +585,13 @@ void CodeResolver::resolveConstantsInNode(AST *node, QVector<AST *> scope)
     if (node->getNodeType() == AST::Stream) {
         StreamNode *stream = static_cast<StreamNode *>(node);
         resolveConstantsInNode(stream->getLeft(), scope);
+        if (stream->getLeft()->getNodeType() == AST::Expression) {
+            ExpressionNode *expr = static_cast<ExpressionNode *>(stream->getLeft());
+            ValueNode *newValue = reduceConstExpression(expr, scope, m_tree);
+            if (newValue) {
+                stream->setLeft(newValue);
+            }
+        }
         resolveConstantsInNode(stream->getRight(), scope);
     } else if (node->getNodeType() == AST::Function) {
         FunctionNode *func = static_cast<FunctionNode *>(node);
@@ -603,6 +610,7 @@ void CodeResolver::resolveConstantsInNode(AST *node, QVector<AST *> scope)
             if (newValue) {
                 property->replaceValue(newValue);
             }
+            resolveConstantsInNode(property->getValue(), scope);
         }
     } else if(node->getNodeType() == AST::BlockBundle) {
         BlockNode *block = static_cast<BlockNode *>(node);
@@ -612,6 +620,7 @@ void CodeResolver::resolveConstantsInNode(AST *node, QVector<AST *> scope)
             if (newValue) {
                 property->replaceValue(newValue);
             }
+            resolveConstantsInNode(property->getValue(), scope);
         }
         BundleNode *bundle = block->getBundle();
         ListNode *indexList = bundle->index();
@@ -619,6 +628,7 @@ void CodeResolver::resolveConstantsInNode(AST *node, QVector<AST *> scope)
         foreach(AST *element, elements) {
             if (element->getNodeType() == AST::Expression) {
                 ExpressionNode *expr = static_cast<ExpressionNode *>(element);
+                resolveConstantsInNode(expr, scope);
                 ValueNode *newValue = reduceConstExpression(expr, scope, m_tree);
                 if (newValue) {
                     indexList->replaceMember(newValue, element);
@@ -626,6 +636,39 @@ void CodeResolver::resolveConstantsInNode(AST *node, QVector<AST *> scope)
                     delete element;
                 }
             }
+        }
+    } else if(node->getNodeType() == AST::Expression) {
+        ExpressionNode *expr = static_cast<ExpressionNode *>(node);
+        if (expr->isUnary()) {
+            resolveConstantsInNode(expr->getValue(), scope);
+            if (expr->getValue()->getNodeType() == AST::Expression) {
+                ExpressionNode *exprValue = static_cast<ExpressionNode *>(expr->getValue());
+                ValueNode *newValue = reduceConstExpression(exprValue, scope, m_tree);
+                if (newValue) {
+                    exprValue->replaceValue(newValue);
+                }
+            }
+        } else {
+            resolveConstantsInNode(expr->getLeft(), scope);
+            resolveConstantsInNode(expr->getRight(), scope);
+            if (expr->getLeft()->getNodeType() == AST::Expression) {
+                ExpressionNode *exprValue = static_cast<ExpressionNode *>(expr->getLeft());
+                ValueNode *newValue = reduceConstExpression(exprValue, scope, m_tree);
+                if (newValue) {
+                    exprValue->replaceLeft(newValue);
+                }
+            }
+            if (expr->getRight()->getNodeType() == AST::Expression) {
+                ExpressionNode *exprValue = static_cast<ExpressionNode *>(expr->getRight());
+                ValueNode *newValue = reduceConstExpression(exprValue, scope, m_tree);
+                if (newValue) {
+                    exprValue->replaceRight(newValue);
+                }
+            }
+        }
+    } else if(node->getNodeType() == AST::List) {
+        foreach(AST *element, node->getChildren()) {
+            resolveConstantsInNode(element, scope);
         }
     }
 }

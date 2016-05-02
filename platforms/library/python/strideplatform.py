@@ -142,7 +142,10 @@ class ExpressionAtom(Atom):
         self.index = index
         self.handle = '__expr_%03i'%index
         self.rate = -1
-        self.set_inline(True)
+        if isinstance(self.left_atom, ModuleAtom) or isinstance(self.right_atom, ModuleAtom):
+            self.set_inline(False)
+        else:
+            self.set_inline(True)
         
     def set_inline(self, inline):
         self.left_atom.set_inline(inline)
@@ -162,7 +165,7 @@ class ExpressionAtom(Atom):
             instances += self.right_atom.get_instances()
         if not self.is_inline():
             instances.append({'handle' : self.handle,
-                              'type' : 'real',
+                              'type' : self._expression_out_type(),
                               'code' : '0.0' #TODO get this value from platform/library default
                               })
         return instances
@@ -172,7 +175,64 @@ class ExpressionAtom(Atom):
             left_token = self.left_atom.get_inline_processing_code([])
         else:
             left_token = self.left_atom.get_out_tokens()[0]
-        code = '(' + left_token
+
+            
+        if self.right_atom.is_inline():
+            right_token = self.right_atom.get_inline_processing_code([])
+        else:
+            right_token = self.right_atom.get_out_tokens()[0]
+            
+        code = '(' + self._operator_symbol(left_token, right_token) + ')'
+        return code
+    
+    def get_processing_code(self, in_tokens):       
+        left_code = self.left_atom.get_processing_code([])[0]
+        right_code = self.right_atom.get_processing_code([])[0]
+        code = self._operator_symbol(left_code, right_code)
+        if self.is_inline():
+            code = ''
+            out_tokens = [self.get_inline_processing_code(in_tokens)]
+        else:
+            code = ''
+            code += templates.assignment(self.handle, self.get_inline_processing_code(in_tokens))
+        
+            out_tokens = [self.handle]
+        return code, out_tokens
+        
+        
+    def _expression_out_type(self):
+        if self.expr_type == 'Add':
+            out_type = 'real'
+        elif self.expr_type == 'Subtract':
+            out_type = 'real'
+        elif self.expr_type == 'Multiply':
+            out_type = 'real'
+        elif self.expr_type == 'Divide':
+            out_type = 'real'
+        elif self.expr_type == 'And':
+            out_type = 'bool'
+        elif self.expr_type == 'Or':
+            out_type = 'bool'
+        elif self.expr_type == 'UnaryMinus':
+            out_type = 'bool'
+        elif self.expr_type == 'LogicalNot':
+            out_type = 'bool'
+        elif self.expr_type == 'Greater':
+            out_type = 'bool'
+        elif self.expr_type == 'Lesser':
+            out_type = 'bool'
+        elif self.expr_type == 'Equal':
+            out_type = 'bool'
+        elif self.expr_type == 'NotEqual':
+            out_type = 'bool'
+        elif self.expr_type == 'GreaterEqual':
+            out_type = 'bool'
+        elif self.expr_type == 'LesserEqual':
+            out_type = 'bool'
+        return out_type
+        
+    def _operator_symbol(self, left, right = None):
+        code = '' if right is None else left
         if self.expr_type == 'Add':
             code += ' + '
         elif self.expr_type == 'Subtract':
@@ -186,30 +246,24 @@ class ExpressionAtom(Atom):
         elif self.expr_type == 'Or':
             code += ' | '
         elif self.expr_type == 'UnaryMinus':
-            code = ' - ' + code
+            code = ' - '
         elif self.expr_type == 'LogicalNot':
-            code += ' ~ ' + code
-            
-        if self.right_atom.is_inline():
-            right_token = self.right_atom.get_inline_processing_code([])
-        else:
-            right_token = self.right_atom.get_out_tokens()[0]
-        code += right_token + ')'
+            code += ' ~ '
+        elif self.expr_type == 'Greater':
+            code += ' > '
+        elif self.expr_type == 'Lesser':
+            code += ' < '
+        elif self.expr_type == 'Equal':
+            code += ' == '
+        elif self.expr_type == 'NotEqual':
+            code += ' != '
+        elif self.expr_type == 'GreaterEqual':
+            code += ' >= '
+        elif self.expr_type == 'LesserEqual':
+            code += ' <= '
+        code += left if right is None else right
         return code
-    
-    def get_processing_code(self, in_tokens):
-        code = ''        
-        code += self.left_atom.get_processing_code([])[0]
-        code += self.right_atom.get_processing_code([])[0]
-        if self.is_inline():
-            code = ''
-            out_tokens = [self.get_inline_processing_code(in_tokens)]
-        else:
-            code = ''
-            code += templates.assignment(self.handle, self.get_inline_processing_code(in_tokens))
         
-            out_tokens = [self.handle]
-        return code, out_tokens
         
 class ListAtom(Atom):
     def __init__(self, list_node):
@@ -308,6 +362,11 @@ class NameAtom(Atom):
     def get_instances(self):
         default_value = self._get_default_value()
         if 'type' in self.declaration and self.declaration['type'] == 'signal':
+            inits = [{'handle' : self.handle,
+                      'type' : 'real',
+                      'code' : str(default_value)
+                      }]
+        elif 'type' in self.declaration and self.declaration['type'] == 'constant':
             inits = [{'handle' : self.handle,
                       'type' : 'real',
                       'code' : str(default_value)
@@ -482,7 +541,15 @@ class ModuleAtom(Atom):
         if 'internalBlocks' in self.module:
             for block in self.module['internalBlocks']:
                 if 'block' in block:
-                    instances.append({ 'type' : 'real',
+                    data_type = ''
+                    if block['block']['type'] == "signal":
+                        data_type = 'real'
+                    elif block['block']['type'] == "switch":
+                        data_type = 'bool'
+                    else:
+                        data_type = 'real'
+                        
+                    instances.append({ 'type' : data_type,
                        'handle' : block['block']['name']
                      })
         
@@ -515,7 +582,7 @@ class ModuleAtom(Atom):
             elif 'name' in ports[port_name]:
                 port_in_token = [ports[port_name]['name']['name']]
             else:
-                port_in_token = ['____XXX___']
+                port_in_token = ['____XXX___'] # TODO implement
             code += templates.module_set_property(self.handle, port_name, port_in_token)
         if 'output' in self._platform_code['block'] and not self._platform_code['block']['output'] is None:
             code += templates.assignment(self.out_tokens[0],self.get_inline_processing_code(in_tokens))

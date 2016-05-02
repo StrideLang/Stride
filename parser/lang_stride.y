@@ -1265,6 +1265,7 @@ void yyerror(const char *s, ...){
           yylloc.last_line, yylloc.last_column);
     vfprintf(stderr, s, ap);
     fprintf(stderr, "\n");
+    fprintf(stderr, "On file %s.\n", currentFile);
     LangError newError;
     newError.type = LangError::Syntax;
     newError.errorTokens.push_back(std::string(yytext));

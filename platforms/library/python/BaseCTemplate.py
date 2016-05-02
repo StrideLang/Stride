@@ -5,6 +5,10 @@ Created on Tue Apr 26 18:38:44 2016
 @author: andres
 """
 
+from __future__ import print_function
+
+import re
+
 class BaseCTemplate(object):
     def __init__(self, domain_rate = 44100):
         
@@ -44,34 +48,30 @@ struct %s {
         
         
     def get_platform_inline_processing_code(self, code, token_names, direction, bundle_index = -1):
+        p = re.compile("%%intoken:[a-zA-Z0-9_]+%%") ## TODO tweak this better
+        matches = p.findall(code)
         if direction == 'in':
-            if len(token_names) > 0:
-                code = code.replace('%%intoken%%', token_names[0]) 
+            for i, match in enumerate(matches):
+                code = code.replace(match, token_names[i])
             if bundle_index >= 0:           
                 code = code.replace('%%bundle_index%%', str(bundle_index))
         elif direction == 'out':
             if bundle_index >= 0:           
                 code = code.replace('%%bundle_index%%', str(bundle_index))
         elif direction == 'thru': 
-            code = code.replace('%%intoken%%', token_names[0]) 
             if bundle_index >= 0:           
                 code = code.replace('%%bundle_index%%', str(bundle_index))
+            for i, match in enumerate(matches):
+                code = code.replace(match, token_names[i])
         return code        
         
-    def get_platform_processing_code(self, code, token_names, handle, direction, bundle_index = -1):
-        if direction == 'in':
-            code = code.replace('%%intoken%%', token_names[0]) 
-            if bundle_index >= 0:           
-                code = code.replace('%%bundle_index%%', str(bundle_index))
-        elif direction == 'out':
+    def get_platform_processing_code(self, code, token_names, handle, direction, bundle_index = -1, prop_tokens = {}):
+        code = self.get_platform_inline_processing_code(code, token_names, direction,
+                                                        bundle_index, prop_tokens)
+        if direction == 'out':
             code = code.replace('%%token%%', handle) 
-            if bundle_index >= 0:           
-                code = code.replace('%%bundle_index%%', str(bundle_index))
         elif direction == 'thru':
             code = code.replace('%%token%%', handle) 
-            code = code.replace('%%intoken%%', token_names[0]) 
-            if bundle_index >= 0:           
-                code = code.replace('%%bundle_index%%', str(bundle_index))
         return code
         
     def get_platform_declarations(self, declaration_list):
@@ -85,6 +85,12 @@ struct %s {
         if close:
             declaration += ';\n'
         return declaration
+        
+    def declaration_bool(self, name, close=True):
+        declaration = "bool %s"%name
+        if close:
+            declaration += ';\n'
+        return declaration 
         
     def expression(self, expression):
         return expression + ';\n'
@@ -134,9 +140,13 @@ struct %s {
     def instantiation_code(self, instance):
         if instance['type'] == 'real':
             code = 'float ' + instance['handle'] + ';\n'
+        elif instance['type'] == 'bool':
+            code = 'bool ' + instance['handle'] + ';\n'
         elif instance['type'] =='bundle':
             if instance['bundletype'] == 'real':
                 code = 'float ' + instance['handle'] + '[%i];\n'%instance['size']
+            elif instance['bundletype'] == 'bool':
+                code = 'bool ' + instance['handle'] + '[%i];\n'%instance['size']
             else:
                 raise ValueError("Unsupported bundle type.")
         elif instance['type'] == 'module':
@@ -150,6 +160,8 @@ struct %s {
     def initialization_code(self, instance):
         code = ''
         if instance['type'] == 'real':
+            code = self.assignment(instance['handle'], instance['code'])
+        if instance['type'] == 'bool':
             code = self.assignment(instance['handle'], instance['code'])
         elif instance['type'] == 'bundle':
             for i in range(instance['size']):
@@ -225,9 +237,17 @@ struct %s {
     def module_declaration(self, name, header_code, init_code,
                            input_block, process_code):       
         if input_block:
-            # TODO this needs to be generalized for other types apart from float
-            input_declaration = self.declaration_real(input_block['name'],
+            if input_block['type'] == 'real':
+                input_declaration = self.declaration_real(input_block['name'],
                                                            close = False)
+            elif input_block['type'] == 'switch':
+                input_declaration = self.declaration_bool(input_block['name'],
+                                                           close = False)
+            elif input_block['type'] == 'Unsupported':
+                input_declaration = self.declaration_real(input_block['name'],
+                                                           close = False)
+            else:
+                raise ValueError("Unknown type")
         else:
             input_declaration = ''
         declaration = self.str_module_declaration%(name, header_code, name, init_code, input_declaration, process_code)
@@ -248,6 +268,10 @@ struct %s {
         code = ''
         if prop_type == 'real':
             code += 'void set_' + name + '(float value) {\n'
+            code += block_name + ' = value;\n'
+            code += '\n}\n'
+        elif prop_type == 'bool':
+            code += 'void set_' + name + '(bool value) {\n'
             code += block_name + ' = value;\n'
             code += '\n}\n'
         return code
