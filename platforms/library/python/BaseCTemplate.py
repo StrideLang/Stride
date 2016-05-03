@@ -159,19 +159,20 @@ struct %s {
                 
     def initialization_code(self, instance):
         code = ''
-        if instance['type'] == 'real':
-            code = self.assignment(instance['handle'], instance['code'])
-        if instance['type'] == 'bool':
-            code = self.assignment(instance['handle'], instance['code'])
-        elif instance['type'] == 'bundle':
-            for i in range(instance['size']):
-                elem_instance = {'type': instance['bundletype'] ,
-                                 'handle' : instance['handle'] + '[%i]'%i,
-                                 'code' : instance['code']
-                                 }
-                code += self.initialization_code(elem_instance)
-        else:
-            ValueError("Unsupported type for initialization: " + instance['type'])
+        if not instance['code'] == '':
+            if instance['type'] == 'real':
+                code = self.assignment(instance['handle'], instance['code'])
+            if instance['type'] == 'bool':
+                code = self.assignment(instance['handle'], instance['code'])
+            elif instance['type'] == 'bundle':
+                for i in range(instance['size']):
+                    elem_instance = {'type': instance['bundletype'] ,
+                                     'handle' : instance['handle'] + '[%i]'%i,
+                                     'code' : instance['code']
+                                     }
+                    code += self.initialization_code(elem_instance)
+            else:
+                ValueError("Unsupported type for initialization: " + instance['type'])
         return code
       
     # Handling of rate changes within a stream -------------------------------

@@ -45,7 +45,16 @@ class Atom(object):
     def get_instances(self):
         return {}
         
+    def get_preprocessing_code(self, in_tokens):
+        ''' Returns code that needs to be run asynchronously but can't be
+        inlined, so needs to be run separately previous to the processing
+        code'''
+        return ''    
+        
     def get_processing_code(self, in_tokens):
+        '''Processing code includes both the pre-processing and the
+        inline processing code. The inline processing code will be provided
+        ready to insert rather than ready to inline.'''
         return None
         
     def get_inline_processing_code(self, in_tokens):
@@ -166,7 +175,7 @@ class ExpressionAtom(Atom):
         if not self.is_inline():
             instances.append({'handle' : self.handle,
                               'type' : self._expression_out_type(),
-                              'code' : '0.0' #TODO get this value from platform/library default
+                              'code' : ''
                               })
         return instances
         
@@ -185,17 +194,22 @@ class ExpressionAtom(Atom):
         code = '(' + self._operator_symbol(left_token, right_token) + ')'
         return code
     
+    def get_preprocessing_code(self, in_tokens):
+        left_code = self.left_atom.get_preprocessing_code([])
+        right_code = self.right_atom.get_preprocessing_code([])
+        return left_code + right_code
+    
     def get_processing_code(self, in_tokens):       
-        left_code = self.left_atom.get_processing_code([])[0]
-        right_code = self.right_atom.get_processing_code([])[0]
-        code = self._operator_symbol(left_code, right_code)
+        code = self.get_preprocessing_code(in_tokens)
         if self.is_inline():
-            code = ''
             out_tokens = [self.get_inline_processing_code(in_tokens)]
         else:
-            code = ''
-            code += templates.assignment(self.handle, self.get_inline_processing_code(in_tokens))
-        
+            left_code = self.left_atom.get_processing_code([])[0]
+            right_code = self.right_atom.get_processing_code([])[0]
+            code += left_code + right_code
+            code += templates.assignment(self.handle,
+                                         self._operator_symbol(self.left_atom.get_out_tokens()[0],
+                                                               self.right_atom.get_out_tokens()[0]))
             out_tokens = [self.handle]
         return code, out_tokens
         
@@ -538,20 +552,20 @@ class ModuleAtom(Atom):
     
     def get_instances(self):
         instances = []
-        if 'internalBlocks' in self.module:
-            for block in self.module['internalBlocks']:
-                if 'block' in block:
-                    data_type = ''
-                    if block['block']['type'] == "signal":
-                        data_type = 'real'
-                    elif block['block']['type'] == "switch":
-                        data_type = 'bool'
-                    else:
-                        data_type = 'real'
-                        
-                    instances.append({ 'type' : data_type,
-                       'handle' : block['block']['name']
-                     })
+#        if 'internalBlocks' in self.module:
+#            for block in self.module['internalBlocks']:
+#                if 'block' in block:
+#                    data_type = ''
+#                    if block['block']['type'] == "signal":
+#                        data_type = 'real'
+#                    elif block['block']['type'] == "switch":
+#                        data_type = 'bool'
+#                    else:
+#                        data_type = 'real'
+#                        
+#                    instances.append({ 'type' : data_type,
+#                       'handle' : block['block']['name']
+#                     })
         
         if len(self.out_tokens) > 0:
             instances += [{'type' : 'module',
@@ -572,9 +586,8 @@ class ModuleAtom(Atom):
         code = templates.module_processing_code(self.handle, in_tokens)
         return code
         
-    def get_processing_code(self, in_tokens):
+    def get_preprocessing_code(self, in_tokens):
         code = ''
-        out_tokens = []
         ports = self.function['ports']
         for port_name in ports:
             if 'value' in ports[port_name]:
@@ -584,8 +597,16 @@ class ModuleAtom(Atom):
             else:
                 port_in_token = ['____XXX___'] # TODO implement
             code += templates.module_set_property(self.handle, port_name, port_in_token)
+        return code
+        
+    def get_processing_code(self, in_tokens):
+        code = self.get_preprocessing_code(in_tokens)
+        out_tokens = []
         if 'output' in self._platform_code['block'] and not self._platform_code['block']['output'] is None:
-            code += templates.assignment(self.out_tokens[0],self.get_inline_processing_code(in_tokens))
+            if self.inline:
+                code += self.get_handles()[0]
+            else:
+                code += templates.assignment(self.out_tokens[0],self.get_inline_processing_code(in_tokens))
             out_tokens = self.out_tokens
         else:
             code += templates.expression(self.get_inline_processing_code(in_tokens))
