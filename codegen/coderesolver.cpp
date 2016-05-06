@@ -584,7 +584,7 @@ void CodeResolver::resolveConstantsInNode(AST *node, QVector<AST *> scope)
 {
     if (node->getNodeType() == AST::Stream) {
         StreamNode *stream = static_cast<StreamNode *>(node);
-        resolveConstantsInNode(stream->getLeft(), scope);
+//        resolveConstantsInNode(stream->getLeft(), scope);
         if (stream->getLeft()->getNodeType() == AST::Expression) {
             ExpressionNode *expr = static_cast<ExpressionNode *>(stream->getLeft());
             ValueNode *newValue = reduceConstExpression(expr, scope, m_tree);

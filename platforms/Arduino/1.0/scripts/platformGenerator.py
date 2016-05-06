@@ -37,7 +37,6 @@ class Generator:
             os.mkdir(self.out_dir + "/template")
         
         self.out_file = self.out_dir + "/template/template.ino"
-        shutil.copyfile(self.platform_dir + "/template/template.ino", self.out_file)
         
     def log(self, text):
         print(text)
@@ -78,6 +77,7 @@ class Generator:
         includes_code = templates.get_includes_code(code['global_groups']['include'])
         config_code = templates.get_configuration_code(code['global_groups']['initialization'])
        
+        shutil.copyfile(self.platform_dir + "/template/template.ino", self.out_file)
         self.write_section_in_file('Includes', includes_code)
         self.write_section_in_file('Init Code', code['declare_code'] + code['instantiation_code'])
         self.write_section_in_file('Config Code', code['init_code'] + template_init_code + config_code)

@@ -278,6 +278,14 @@ void ParserTest::testConstantResolution()
     QVERIFY(value->getNodeType() == AST::Int);
     QVERIFY(value->getIntValue() == -2);
 
+    StreamNode * stream = static_cast<StreamNode *>(tree->getChildren().at(26));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    ExpressionNode *expr = static_cast<ExpressionNode *>(stream->getLeft());
+    QVERIFY(expr->getNodeType() == AST::Expression);
+    value = static_cast<ValueNode *>(expr->getRight());
+    QVERIFY(value->getNodeType() == AST::Real);
+    QVERIFY(value->getRealValue() == 7);
+
     tree->deleteChildren();
     delete tree;
 }

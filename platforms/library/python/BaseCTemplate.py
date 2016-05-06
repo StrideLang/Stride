@@ -29,7 +29,7 @@ struct %s {
     %s %s() {
         %s
     }
-    float process(%s) {
+    %s process(%s) {
         %s
     }
 };
@@ -74,14 +74,23 @@ struct %s {
             code = code.replace('%%token%%', handle) 
         return code
         
-    def get_platform_declarations(self, declaration_list):
-        declarations = {}
+    def get_platform_declarations(self, declaration_list, scope_index):
+        declarations = []
         for i,dec in enumerate(declaration_list):
-            declarations["_dec_%03i"%i] = dec['value']['value'] + '\n'
+            declarations.append({"name": "_dec_%03i"%i,
+                                 "code" : dec['value']['value'] + '\n',
+                                 'scope' : scope_index}
+                                )
         return declarations
-    
+        
     def declaration_real(self, name, close=True):
         declaration = "float %s"%name
+        if close:
+            declaration += ';\n'
+        return declaration
+
+    def declaration_bundle(self, name, size, close=True):
+        declaration = "float %s[%i]"%(name, size)
         if close:
             declaration += ';\n'
         return declaration
@@ -236,10 +245,15 @@ struct %s {
         
     # Module code ------------------------------------------------------------
     def module_declaration(self, name, header_code, init_code,
-                           input_block, process_code):       
+                           output_block, input_block, process_code):       
         if input_block:
-            if input_block['type'] == 'real':
-                input_declaration = self.declaration_real(input_block['name'],
+            if input_block['type'] == 'signal':
+                if output_block and 'size' in output_block:
+                    input_declaration = self.declaration_real(input_block['name'],
+                                                              close = False)
+                    input_declaration += ", float %s[%i]"%(output_block['name'], output_block['size'])
+                else:
+                    input_declaration = self.declaration_real(input_block['name'],
                                                            close = False)
             elif input_block['type'] == 'switch':
                 input_declaration = self.declaration_bool(input_block['name'],
@@ -251,16 +265,33 @@ struct %s {
                 raise ValueError("Unknown type")
         else:
             input_declaration = ''
-        declaration = self.str_module_declaration%(name, header_code, name, init_code, input_declaration, process_code)
+        if output_block:
+            if output_block['type'] == 'signal':
+                if 'size' in output_block:
+                    out_type = 'void'
+                else:
+                    out_type = 'float'
+            elif output_block['type'] == 'switch':
+                out_type = 'bool'
+            else:
+                raise ValueError("Unknown type")
+        else:
+            out_type = 'void'
+            
+        declaration = self.str_module_declaration%(name, header_code, name, init_code,
+                                                   out_type, input_declaration, process_code)
         return declaration
 
     def module_set_property(self, handle, port_name, in_tokens):
         code = handle + '.set_' + port_name + '(' + in_tokens[0] + ');'
         return code
         
-    def module_processing_code(self, handle, in_tokens):
+    def module_processing_code(self, handle, in_tokens, out_token):
         if len(in_tokens) > 0:
-            code = handle + '.process(' + in_tokens[0] + ')'
+            code = handle + '.process(' + in_tokens[0]
+            if not out_token == '':
+                code += ', ' + out_token
+            code += ')'
         else:
             code = handle + '.process()'
         return code
@@ -279,7 +310,7 @@ struct %s {
         
     def module_output_code(self, output_block):
         code = ''        
-        if output_block:
+        if output_block and not 'size' in output_block: #When a bundle, then output is passed as reference in the arguments
             code += 'return %s;\n'%(output_block['name']) 
         return code
         

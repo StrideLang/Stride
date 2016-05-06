@@ -33,8 +33,7 @@ class Generator:
         # What about secondary deps like portaudio and libsndfile?
         self.log("Building Gamma project")
         self.log("Buiding in directory: " + self.out_dir)
-            
-        shutil.copyfile(self.project_dir + "/template.cpp", self.out_dir + "/main.cpp")
+
         
     def log(self, text):
         print(text)
@@ -74,6 +73,7 @@ class Generator:
 
         globals_code = templates.get_globals_code(code['global_groups'])
         
+        shutil.copyfile(self.project_dir + "/template.cpp", self.out_dir + "/main.cpp")
         self.write_section_in_file('Includes', globals_code)
         self.write_section_in_file('Init Code', code['declare_code'] + code['instantiation_code'])
         self.write_section_in_file('Config Code', code['init_code'] + template_init_code)

@@ -82,6 +82,10 @@ platformModule Sine {
     meta: ""
 }
 
+constant _Pi {
+    value: 3.14159265358979323846264338327950288419716939937510
+}
+
 platformModule Oscillator {
     input: none
     output: Output
@@ -114,12 +118,15 @@ platformModule Oscillator {
                 default :       0.0
                 rate:           AudioRate # FIXME needs to be streamRate
                 domain:         streamDomain}
+        signal NewPhase {}
         _sineType SineBlock {}
     ]
     streams: [
-        Frequency * 2 * 3.14159 / AudioRate >> PhaseInc;
+        Frequency * 2.0 * _Pi / AudioRate >> PhaseInc;
         Phase >> SineBlock >> Output;
         Phase + PhaseInc >> Phase;
+        Phase -( 2 * _Pi) >> NewPhase;
+        Phase > ( 2.0 * _Pi ) >> Select(whenOn: NewPhase whenOff: Phase) >> Phase;
     ]
     meta: ""
 }
