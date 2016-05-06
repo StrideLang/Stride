@@ -910,11 +910,10 @@ class PlatformFunctions:
                 # Process processing code
                 code, out_tokens = atom.get_processing_code(in_tokens)
                 if atom.rate > 0:
-                    processing_code += templates.rate_end_code()
-                    templates.rate_start(atom.rate)
-                    instantiation_code += templates.rate_instance_code()
-                    init_code +=  templates.rate_init_code()
-                    processing_code += templates.rate_start_code()
+                    new_inst, new_init, new_proc = templates.rate_start(atom.rate)
+                    processing_code += new_proc
+                    instantiation_code += new_inst
+                    init_code += new_init
                     # We want to avoid inlining across rate boundaries
                     if previous_atom:
                         previous_atom.set_inline(False)

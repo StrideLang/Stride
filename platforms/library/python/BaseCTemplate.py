@@ -13,6 +13,7 @@ class BaseCTemplate(object):
     def __init__(self, domain_rate = 44100):
         
         self.rate_stack = []
+        self.rate_nested = 0
         self.rate_counter = 0
         self.domain_rate = domain_rate # TODO set this from domain configuration
         
@@ -205,19 +206,33 @@ struct %s {
         return code
         
     def rate_start(self, rate):
-        self.rate_stack.append(rate)
+        inst_code = ''
+        init_code = ''
+        proc_code = self.rate_end_code()
+        if not rate == self.domain_rate:
+            self.rate_stack.append(rate)
+            inst_code = self.rate_instance_code()
+            init_code =  self.rate_init_code()
+            proc_code += self.rate_start_code()
+            self.rate_nested += 1
+        return inst_code, init_code, proc_code
         
     def rate_start_code(self):
         code = ''
         rate = self.rate_stack[-1]
+        if len(self.rate_stack) > 1:
+            parent_rate = self.rate_stack[-2]
+        else:
+            parent_rate = self.domain_rate
         index = self.rate_counter
-        if not rate == self.domain_rate:
-            if rate < self.domain_rate:
+        if not rate == parent_rate:
+            if rate < parent_rate:
                 code += self.str_rate_begin_code%rate
                 code += 'if (_counter_%03i >= 1.0) {\n_counter_%03i -= 1.0;\n'%(index, index)
             else:
                 code += self.str_rate_begin_code%rate
                 code += 'while (_counter_%03i < 1.0) {\n'%(index)
+            self.rate_nested += 1
         return code
         
     def rate_stack_size(self):
@@ -228,16 +243,19 @@ struct %s {
             code = ''
             rate = self.rate_stack.pop()
             index = self.rate_counter
-            if not rate == self.domain_rate:
-                if rate < self.domain_rate:
-                    code += '}\n' # Closes counter check above
-                    code += self.str_rate_end_code%rate
-                    code += '_counter_%03i += %.10f;\n'%(index, float(rate)/self.domain_rate)
-                else:
-                    code += '_counter_%03i += %.10f;\n'%(index, self.domain_rate/ float(rate))
-                    code += '}\n' # Closes counter check above
-                    code += '_counter_%03i -= 1.0;\n'%(index)
-                    code += self.str_rate_end_code%rate
+            if len(self.rate_stack) > 1:
+                parent_rate = self.rate_stack[-2]
+            else:
+                parent_rate = self.domain_rate
+            if rate < parent_rate:
+                code += '}\n' # Closes counter check above
+                code += self.str_rate_end_code%rate
+                code += '_counter_%03i += %.10f;\n'%(index, float(rate)/parent_rate)
+            else:
+                code += '_counter_%03i += %.10f;\n'%(index, parent_rate/ float(rate))
+                code += '}\n' # Closes counter check above
+                code += '_counter_%03i -= 1.0;\n'%(index)
+                code += self.str_rate_end_code%rate
             self.rate_counter += 1
             return code
         else:
