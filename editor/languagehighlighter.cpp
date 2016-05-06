@@ -1,6 +1,7 @@
 #include <QDebug>
 
 #include <QMutexLocker>
+#include <QTextDocument>
 
 #include "languagehighlighter.h"
 

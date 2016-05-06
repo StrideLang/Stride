@@ -1,11 +1,12 @@
 #include <QPainter>
 #include <QTextBlock>
+#include <QDebug>
 
 #include "codeeditor.h"
 #include "linenumberarea.h"
 
 CodeEditor::CodeEditor(QWidget *parent) :
-    QPlainTextEdit(parent)
+    QPlainTextEdit(parent), m_IndentTabs(true)
 {
     m_lineNumberArea = new LineNumberArea(this);
 
@@ -91,6 +92,23 @@ void CodeEditor::resizeEvent(QResizeEvent *e)
     
     QRect cr = contentsRect();
     m_lineNumberArea->setGeometry(QRect(cr.left(), cr.top(), lineNumberAreaWidth(), cr.height()));
+}
+
+void CodeEditor::keyReleaseEvent(QKeyEvent *event)
+{
+    if (event->key() == Qt::Key_Return) {
+        QTextCursor cursor = textCursor();
+        QString previousText = toPlainText().left(cursor.position());
+        int scopeLevel = previousText.count("{") + previousText.count("[");
+        scopeLevel -= previousText.count("}") + previousText.count("]");
+        for (int i = 0; i < scopeLevel; ++i) {
+            if (m_IndentTabs) {
+                cursor.insertText("\t");
+            } else {
+                cursor.insertText("    ");
+            }
+        }
+    }
 }
 
 void CodeEditor::highlightCurrentLine()

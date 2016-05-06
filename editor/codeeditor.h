@@ -28,6 +28,7 @@ public slots:
 
 protected:
     void resizeEvent(QResizeEvent *event);
+    virtual void keyReleaseEvent(QKeyEvent * event);
 
 private slots:
     void updateLineNumberAreaWidth(int newBlockCount);
@@ -39,6 +40,7 @@ private:
     QVector<ErrorMarker *> m_errorMarkers;
 //    QList<LangError> m_errors;
     QString m_filename;
+    bool m_IndentTabs;
 
 signals:
 
