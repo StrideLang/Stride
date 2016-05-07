@@ -8,7 +8,7 @@ LangError::LangError()
 }
 
 std::string LangError::getErrorText() {
-    std::string errorText = "In file " + filename  + ":\n" ;
+    std::string errorText = "In file " + filename  + ":\n    " ;
     switch(type) {
     case Syntax:
         errorText += "Syntax Error: Unexpected character '" + errorTokens[0] + "'";

@@ -49,8 +49,10 @@ void CodeEditor::setErrors(QList<LangError> errors)
     m_errorMarkers.clear();
 
     foreach(LangError error, errors) {
-        m_errorMarkers.push_back(new ErrorMarker(m_lineNumberArea, error.lineNumber,
-                                                 QString::fromStdString(error.getErrorText())));
+        if (error.filename == filename().toStdString()) {
+            m_errorMarkers.push_back(new ErrorMarker(m_lineNumberArea, error.lineNumber,
+                                                     QString::fromStdString(error.getErrorText())));
+        }
     }
     m_lineNumberArea->repaint();
 }

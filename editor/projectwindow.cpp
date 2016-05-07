@@ -87,6 +87,8 @@ void ProjectWindow::build()
 
     foreach(LangError error, errors) {
         ui->consoleText->insertPlainText(QString::fromStdString(error.getErrorText()) + "\n");
+    }
+    if (errors.size() > 0) {
         return;
     }
     if (tree) {

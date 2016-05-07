@@ -1271,6 +1271,7 @@ void yyerror(const char *s, ...){
     newError.errorTokens.push_back(std::string(yytext));
 //    newError.lineNumber = line;
     newError.lineNumber = yylloc.first_line;
+    parseErrors.push_back(newError);
 }
 
 void syntaxError(const char *s, ...){
