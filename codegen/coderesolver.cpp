@@ -113,7 +113,8 @@ void CodeResolver::fillDefaultProperties()
 
 void CodeResolver::expandParallelFunctions()
 {
-    foreach (AST *node, m_tree->getChildren()) {// FIXME this needs to be done in reverse! (to resolve unknown bundles correctly)
+    for (unsigned int i = 0; i < m_tree->getChildren().size(); ++i) {
+        AST *node = m_tree->getChildren()[m_tree->getChildren().size() - i - 1];
         if (node->getNodeType() == AST::Stream) {
             StreamNode *stream = static_cast<StreamNode *>(node);
             QList<LangError> errors;
@@ -397,12 +398,12 @@ void CodeResolver::expandNamesToBundles(StreamNode *stream, AST *tree)
 {
     AST *left = stream->getLeft();
     AST *right = stream->getRight();
-    AST * nextStreamMember;
-    if (right->getNodeType() != AST::Stream) {
-        nextStreamMember = right;
-    } else {
-        nextStreamMember = static_cast<StreamNode *>(right)->getLeft();
-    }
+//    AST *nextStreamMember;
+//    if (right->getNodeType() != AST::Stream) {
+//        nextStreamMember = right;
+//    } else {
+//        nextStreamMember = static_cast<StreamNode *>(right)->getLeft();
+//    }
 
     if (left->getNodeType() == AST::Name) {
         NameNode *name = static_cast<NameNode *>(left);
@@ -514,35 +515,6 @@ void CodeResolver::resolveConstants()
         resolveConstantsInNode(node, children);
     }
 }
-
-//void CodeResolver::expandStreamMembers()
-//{
-//    vector<AST *> nodes = m_tree->getChildren();
-//    QVector<AST *> newReversedNodes;
-//    QVector<AST *> newNodes;
-
-//    // Need to traverse streams in reverse order to resolve later streams first.
-//    vector<AST *>::reverse_iterator rit = nodes.rbegin();
-//    for (; rit!= nodes.rend(); ++rit) {
-//        AST *node = *rit;
-//        if (node->getNodeType() == AST::Stream) {
-//            StreamNode *oldNode = static_cast<StreamNode *>(node);
-//            QVector<AST *> newStreams = expandStreamNode(oldNode);
-//            for(int i = 0; i < newStreams.size(); i++) {
-//                newReversedNodes << newStreams[newStreams.size() - i - 1];
-//            }
-//        } else {
-//            newReversedNodes << node->deepCopy();
-//        }
-//    }
-//    // Now reverse vectors to put them back.
-//    for(int k = 0; k < newReversedNodes.size(); k++) {
-//        newNodes << newReversedNodes[newReversedNodes.size() - k -1];
-//    }
-//    m_tree->deleteChildren();
-//    vector<AST *> newNodesStl = newNodes.toStdVector();
-//    m_tree->setChildren(newNodesStl);
-//}
 
 ValueNode *CodeResolver::reduceConstExpression(ExpressionNode *expr, QVector<AST *> scope, AST *tree)
 {
