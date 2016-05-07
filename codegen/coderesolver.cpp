@@ -584,7 +584,7 @@ void CodeResolver::resolveConstantsInNode(AST *node, QVector<AST *> scope)
 {
     if (node->getNodeType() == AST::Stream) {
         StreamNode *stream = static_cast<StreamNode *>(node);
-//        resolveConstantsInNode(stream->getLeft(), scope);
+        resolveConstantsInNode(stream->getLeft(), scope);
         if (stream->getLeft()->getNodeType() == AST::Expression) {
             ExpressionNode *expr = static_cast<ExpressionNode *>(stream->getLeft());
             ValueNode *newValue = reduceConstExpression(expr, scope, m_tree);
@@ -606,21 +606,21 @@ void CodeResolver::resolveConstantsInNode(AST *node, QVector<AST *> scope)
         BlockNode *block = static_cast<BlockNode *>(node);
         vector<PropertyNode *> properties = block->getProperties();
         foreach(PropertyNode *property, properties) {
+            resolveConstantsInNode(property->getValue(), scope);
             ValueNode *newValue = resolveConstant(property->getValue(), scope);
             if (newValue) {
                 property->replaceValue(newValue);
             }
-            resolveConstantsInNode(property->getValue(), scope);
         }
     } else if(node->getNodeType() == AST::BlockBundle) {
         BlockNode *block = static_cast<BlockNode *>(node);
         vector<PropertyNode *> properties = block->getProperties();
         foreach(PropertyNode *property, properties) {
+            resolveConstantsInNode(property->getValue(), scope);
             ValueNode *newValue = resolveConstant(property->getValue(), scope);
             if (newValue) {
                 property->replaceValue(newValue);
             }
-            resolveConstantsInNode(property->getValue(), scope);
         }
         BundleNode *bundle = block->getBundle();
         ListNode *indexList = bundle->index();
@@ -655,14 +655,14 @@ void CodeResolver::resolveConstantsInNode(AST *node, QVector<AST *> scope)
                 ExpressionNode *exprValue = static_cast<ExpressionNode *>(expr->getLeft());
                 ValueNode *newValue = reduceConstExpression(exprValue, scope, m_tree);
                 if (newValue) {
-                    exprValue->replaceLeft(newValue);
+                    expr->replaceLeft(newValue);
                 }
             }
             if (expr->getRight()->getNodeType() == AST::Expression) {
                 ExpressionNode *exprValue = static_cast<ExpressionNode *>(expr->getRight());
                 ValueNode *newValue = reduceConstExpression(exprValue, scope, m_tree);
                 if (newValue) {
-                    exprValue->replaceRight(newValue);
+                    expr->replaceRight(newValue);
                 }
             }
         }

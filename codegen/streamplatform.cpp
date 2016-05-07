@@ -80,13 +80,13 @@ StreamPlatform::StreamPlatform(QStringList platformPaths, QString platform, QStr
                         foreach(LangError error, errors) {
                             qDebug() << QString::fromStdString(error.getErrorText());
                         }
+                    }
                 }
                 m_platformPath = fullPath;
                 m_api = PythonTools;
                 m_types = getPlatformTypeNames();
                 break;
             }
-        }
     }
 
     if (m_api == NullPlatform) {
