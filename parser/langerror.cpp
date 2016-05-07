@@ -9,6 +9,9 @@ LangError::LangError()
 
 std::string LangError::getErrorText() {
     std::string errorText = "In file " + filename  + ":\n    " ;
+    std::stringstream lineNumString;
+    lineNumString << lineNumber;
+    errorText += "Line " + lineNumString.str() + " : ";
     switch(type) {
     case Syntax:
         errorText += "Syntax Error: Unexpected character '" + errorTokens[0] + "'";
@@ -42,17 +45,21 @@ std::string LangError::getErrorText() {
     case InconsistentList:
         errorText += "Inconsistent List Error";
         break;
+    case StreamMemberSizeMismatch:
+        errorText += "Stream size mismatch. '" + errorTokens[1]
+                + "' provides " + errorTokens[0] + "outs , " + errorTokens[2] + " expected.";
+        break;
     case UndeclaredSymbol:
         errorText += "Undeclared Symbol '" + errorTokens[0] + "'";
         break;
+    case SystemError:
+        errorText += "Undeclared Symbol '" + errorTokens[0] + "'";
+        break;
     case None:
+        errorText += "Unknown error";
+        break;
     default:
         break;
     }
-
-    std::stringstream lineNumString;
-    lineNumString << lineNumber;
-
-    errorText += " in line " + lineNumString.str();
     return errorText;
 }

@@ -32,8 +32,7 @@ private:
     void fillDefaultProperties();
     void expandParallelFunctions();
 
-
-    void expandStreamToSize(StreamNode *stream, int size);
+    void expandStreamToSizes(StreamNode *stream, QVector<int> &size);
     void fillDefaultPropertiesForNode(AST *node);
 
     // TODO move these four functions to CodeValidator with the rest of querying functions

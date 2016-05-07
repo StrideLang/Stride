@@ -25,3 +25,5 @@ DummyStereo >> Pan(position: PanMod) >> DummyStereo2;
 # This line should work (Pan is expanded to two copies)
 DummyStereo >> Pan(position: PanMod) >> DummyQuad;
 
+# Need to test platform functions as well as library functions
+

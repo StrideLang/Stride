@@ -13,4 +13,7 @@ signal Out[2] {
 In >> Out;
 
 # Signals should be delcared as blocks of size 2
-InSignal2 >> [PassThru(), PassThru()] >> OutSignal2;
+InSignal2 >> [Level(gain: 1.0), Level(gain: 1.0)] >> OutSignal2;
+
+# Passthru() should be duplicated and OutSignal3 declared as a bundle size 2
+In >> Level(gain: 1.0) >> OutSignal3;

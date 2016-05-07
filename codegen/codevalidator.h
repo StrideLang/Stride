@@ -48,8 +48,10 @@ public:
     /// can the node be broken up.
     static int getNodeSize(AST *node, AST *tree);
 
-    static int getNodeNumOutputs(AST *node, QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
-    static int getNodeNumInputs(AST *node, QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
+    static int getNodeNumOutputs(AST *node, const QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
+    static int getNodeNumInputs(AST *node, const QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
+    static int getTypeNumOutputs(BlockNode *blockDeclaration, const QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
+    static int getTypeNumInputs(BlockNode *blockDeclaration, const QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
 
     static int getBlockDeclaredSize(BlockNode *block, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
 

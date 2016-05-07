@@ -22,9 +22,9 @@ private Q_SLOTS:
     void testPlatformCommonObjects();
 
     //Expansion
+    void testStreamExpansion();
     void testConstantResolution();
     void testStreamRates();
-    void testStreamExpansion();
 
     //PlatformConsistency
     void testValueTypeExpressionResolution();
@@ -215,12 +215,12 @@ void ParserTest::testConstantResolution()
 
     QVERIFY(qFuzzyCompare(value->getRealValue(), 2.0 + (3.1 * 0.1)));
 
-//    constant ConstSwitch1 {value: 1 > Const1;}
-//    constant ConstSwitch2 {value: 1 < Const1;}
-//    constant ConstSwitch3 {value: 1 == Const1;}
-//    constant ConstSwitch4 {value: 1 != Const1;}
-//    constant ConstSwitch5 {value: 1 >= Const1;}
-//    constant ConstSwitch6 {value: 1 <= Const1;}
+    //    constant ConstSwitch1 {value: 1 > Const1;}
+    //    constant ConstSwitch2 {value: 1 < Const1;}
+    //    constant ConstSwitch3 {value: 1 == Const1;}
+    //    constant ConstSwitch4 {value: 1 != Const1;}
+    //    constant ConstSwitch5 {value: 1 >= Const1;}
+    //    constant ConstSwitch6 {value: 1 <= Const1;}
 
     block = static_cast<BlockNode *>(tree->getChildren().at(19));
     QVERIFY(block->getNodeType() == AST::Block);
@@ -386,8 +386,8 @@ void ParserTest::testStreamExpansion()
     QVERIFY(generator.isValid());
     QVERIFY(generator.platformIsValid());
 
-//# This should be expanded into lists of equal size:
-//AudioIn >> Level(gain: 1.5) >> AudioOut;
+    //# This should be expanded into lists of equal size:
+    //AudioIn >> Level(gain: 1.5) >> AudioOut;
 
     vector<AST *> nodes = tree->getChildren();
     QVERIFY(nodes.size() > 3);
@@ -573,6 +573,48 @@ void ParserTest::testStreamExpansion()
     QVERIFY(value->getNodeType() == AST::Int);
     QVERIFY(value->getIntValue() == 2);
 
+    //    In >> PassThru() >> OutSignal3;
+    stream = static_cast<StreamNode *>(nodes.at(6));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+
+    list = static_cast<ListNode *>(stream->getLeft());
+    QVERIFY(list->getNodeType() == AST::List);
+    QVERIFY(list->getChildren().size() == 2);
+
+    right = static_cast<StreamNode *>(stream->getRight());
+    QVERIFY(right->getNodeType() == AST::Stream);
+    list = static_cast<ListNode *>(right->getLeft());
+    QVERIFY(list->getNodeType() == AST::List);
+    QVERIFY(list->getChildren().size() == 2);
+
+    func = static_cast<FunctionNode *>(list->getChildren()[0]);
+    QVERIFY(func->getNodeType() == AST::Function);
+    QVERIFY(func->getName() == "Level");
+    func = static_cast<FunctionNode *>(list->getChildren()[1]);
+    QVERIFY(func->getNodeType() == AST::Function);
+    QVERIFY(func->getName() == "Level");
+
+    list = static_cast<ListNode *>(right->getRight());
+    QVERIFY(list->getChildren().size() == 2);
+    bundle = static_cast<BundleNode *>(list->getChildren()[0]);
+    QVERIFY(bundle->getNodeType() == AST::Bundle);
+    QVERIFY(bundle->getName() == "OutSignal3");
+    index = static_cast<ListNode *>(bundle->index());
+    QVERIFY(index->getNodeType() == AST::List);
+    QVERIFY(index->getChildren().size() == 1);
+    value = static_cast<ValueNode *>(index->getChildren().at(0));
+    QVERIFY(value->getNodeType() == AST::Int);
+    QVERIFY(value->getIntValue() == 1);
+
+    bundle = static_cast<BundleNode *>(list->getChildren()[1]);
+    QVERIFY(bundle->getNodeType() == AST::Bundle);
+    QVERIFY(bundle->getName() == "OutSignal3");
+    index = static_cast<ListNode *>(bundle->index());
+    QVERIFY(index->getNodeType() == AST::List);
+    QVERIFY(index->getChildren().size() == 1);
+    value = static_cast<ValueNode *>(index->getChildren().at(0));
+    QVERIFY(value->getNodeType() == AST::Int);
+    QVERIFY(value->getIntValue() == 2);
 
     tree->deleteChildren();
     delete tree;

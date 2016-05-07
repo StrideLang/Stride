@@ -18,9 +18,9 @@ CodeResolver::~CodeResolver()
 void CodeResolver::preProcess()
 {
     insertBuiltinObjects();
+    expandParallelFunctions(); // Find better name this expands bundles, functions and declares undefined bundles
     resolveStreamSymbols();
     fillDefaultProperties();
-    expandParallelFunctions();
     resolveRates();
     resolveConstants();
 }
@@ -113,50 +113,126 @@ void CodeResolver::fillDefaultProperties()
 
 void CodeResolver::expandParallelFunctions()
 {
-    foreach (AST *node, m_tree->getChildren()) {
+    foreach (AST *node, m_tree->getChildren()) {// FIXME this needs to be done in reverse! (to resolve unknown bundles correctly)
         if (node->getNodeType() == AST::Stream) {
             StreamNode *stream = static_cast<StreamNode *>(node);
             QList<LangError> errors;
             QVector<AST *> scope;
-            expandStreamToSize(stream, -1);
+
+            // Figure out stream IO sizes
+            AST *left = stream->getLeft();
+            StreamNode *stream2;
+            AST *right = stream->getRight();
+            QVector<QPair<int, int> > IOs;
+            while (right) {
+                QPair<int, int> io;
+                io.first = CodeValidator::getNodeNumInputs(left, QVector<AST *>(), m_tree, errors);
+                io.second = CodeValidator::getNodeNumOutputs(left, QVector<AST *>(), m_tree, errors);
+                IOs << io;
+                if (right->getNodeType() == AST::Stream) {
+                    stream2 = static_cast<StreamNode *>(right);
+                    left = stream2->getLeft();
+                    right = stream2->getRight();
+                } else {
+                    io.first = CodeValidator::getNodeNumInputs(right, QVector<AST *>(), m_tree, errors);
+                    io.second = CodeValidator::getNodeNumOutputs(right, QVector<AST *>(), m_tree, errors);
+                    IOs << io;
+                    right = NULL;
+                }
+            }
+            // Now go through comparing number of outputs to number of inputs to figure out if we
+            // need to duplicate any members
+            QVector<int> numCopies;
+            numCopies << 1;
+            for(int i = 1; i < IOs.size(); ++i) {
+                int numPrevOut = abs(IOs[i - 1].second * numCopies.back());
+                int numCurIn = abs(IOs[i].first);
+                if (numPrevOut > numCurIn) { // Need to clone next
+                    if (numPrevOut/(float)numCurIn == numPrevOut/numCurIn) {
+                        numCopies << numPrevOut/numCurIn;
+                    } else {
+                        // Stream size mismatch. Stop expansion. The error will be reported later by
+                        // CodeValidator.
+                        qDebug() << "Could not clone " << IOs[i - 1].second * numCopies.back()
+                                 << " outputs into " << IOs[i].first << " inputs.";
+                        break;
+                    }
+                } else if (numPrevOut < numCurIn) { // Need to clone all existing left side
+                    if (numCurIn/(float)numPrevOut == numCurIn/numPrevOut) {
+                        int newNumCopies = numCurIn/numPrevOut;
+                        for(int i = 0; i < numCopies.size(); ++i) {
+                            numCopies[i] *= newNumCopies;
+                        }
+                        numCopies << 1;
+                    } else {
+                        // Stream size mismatch. Stop expansion. The error will be reported later by
+                        // CodeValidator.
+                        qDebug() << "Could not clone " << IOs[i - 1].second
+                                 << " outputs into " << IOs[i].first << " inputs.";
+                        break;
+                    }
+
+                } else { // Size match, no need to clone
+                    numCopies << 1;
+                }
+            }
+            qDebug() << "----";
+            qDebug() << IOs;
+            qDebug() << numCopies;
+
+            if (numCopies.size() == IOs.size()) { // Expansion calculation went fine, so expand
+//                qDebug() << "Will expand";
+                expandStreamToSizes(stream, numCopies);
+            }
+
+
         }
     }
 }
 
-void CodeResolver::expandStreamToSize(StreamNode *stream, int size)
+void CodeResolver::expandStreamToSizes(StreamNode *stream, QVector<int> &size)
 {
     QList<LangError> errors;
     QVector<AST *> scope;
 //    int leftNumOuts = CodeValidator::getNodeNumOutputs(stream, *m_platform, scope, m_tree, errors);
     AST *left = stream->getLeft();
     int leftSize = CodeValidator::getNodeSize(left, m_tree);
+
     if (left->getNodeType() == AST::Name
             || left->getNodeType() == AST::Function) {
-        int numCopies = size/leftSize; // FIXME this is naive and only works in simple cases. Must take into account both size and number of outputs/inputs
-        if (numCopies > 1 && numCopies == (float) size/leftSize) {
+        int numCopies = size.front();
+        if (leftSize < 0 && left->getNodeType() == AST::Name) {
+            declareUnknownName(static_cast<NameNode *>(left), numCopies, m_tree);
+        } else if (numCopies > 1) {
             ListNode *newLeft = new ListNode(left->deepCopy(), left->getFilename().data(), left->getLine());
             for (int i = 1; i < numCopies; i++) {
                 newLeft->addChild(left->deepCopy());
             }
-            stream->setLeft(newLeft);
+            stream->setLeft(newLeft); // This will take care of the deallocation internally
         }
     }
+    size.pop_front();
     AST *right = stream->getRight();
     if (right->getNodeType() == AST::Stream) {
-        expandStreamToSize(static_cast<StreamNode *>(right), leftSize);
+        expandStreamToSizes(static_cast<StreamNode *>(right), size);
     } else {
         int rightSize = CodeValidator::getNodeSize(right, m_tree);
         if (right->getNodeType() == AST::Name
                 || right->getNodeType() == AST::Function) {
-            int numCopies = leftSize/rightSize; // FIXME naive as above
-            if (numCopies > 1 && numCopies == (float) leftSize/rightSize) {
+            int numCopies = size.front();
+            if (rightSize < 0 && right->getNodeType() == AST::Name) {
+                declareUnknownName(static_cast<NameNode *>(right), numCopies, m_tree);
+            } else if (numCopies > 1) {
                 ListNode *newRight = new ListNode(right->deepCopy(), right->getFilename().data(), right->getLine());
                 for (int i = 1; i < numCopies; i++) {
                     newRight->addChild(right->deepCopy());
                 }
-                stream->setRight(newRight);
+                stream->setRight(newRight); // This will take care of the deallocation internally
             }
+
         }
+        size.pop_front();
+        Q_ASSERT(size.size() == 0); // This is the end of the stream there should be no sizes left
     }
 }
 
@@ -425,7 +501,7 @@ void CodeResolver::resolveStreamSymbols()
     foreach(AST *node, children) {
         if(node->getNodeType() == AST:: Stream) {
             StreamNode *stream = static_cast<StreamNode *>(node);
-            declareUnknownStreamSymbols(stream, NULL, m_tree);
+            declareUnknownStreamSymbols(stream, NULL, m_tree); // FIXME Is this already done in expandParallelFunctions?
             expandNamesToBundles(stream, m_tree);
         }
     }
