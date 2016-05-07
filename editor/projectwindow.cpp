@@ -31,12 +31,11 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
     ui->setupUi(this);
 
     m_platformsRootDir = "../../StreamStack/platforms";
-//    QString xmosToolChainRoot = "/home/andres/Documents/src/XMOS/xTIMEcomposer/Community_13.0.2";
-//    m_project = new XmosProject(projectDir, platformsRootDir, xmosToolChainRoot);
-//    m_project->setBoardId("0ontZocni8POZ");
 
     connectActions();
     connectShortcuts();
+    QIcon icon(":resources/icon.png");
+    setWindowIcon(icon);
 
     setWindowTitle("StreamStack");
     updateMenus();
@@ -333,7 +332,7 @@ bool ProjectWindow::saveFile(int index)
     QFile codeFile(editor->filename());
     if (!codeFile.open(QIODevice::WriteOnly)) {
         qDebug() << "Error opening code file for writing!";
-        throw;
+//        throw;
     }
     editor->markChanged(false);
     codeFile.write(code.toLocal8Bit());
@@ -359,7 +358,6 @@ bool ProjectWindow::saveFileAs(int index)
     editor->setFilename(fileName);
     ui->tabWidget->setTabText(ui->tabWidget->currentIndex(),
                               QFileInfo(fileName).fileName());
-    editor->markChanged(false);
 
     return saveFile(index);
 }
@@ -413,6 +411,13 @@ void ProjectWindow::loadFile(QString fileName)
         qDebug() << "Error opening code file!";
         return;
     }
+    for(int i = 0; i < ui->tabWidget->count(); ++i) {
+        CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->widget(i));
+        if (editor->filename() == fileName) {
+            ui->tabWidget->setCurrentWidget(editor);
+            return;
+        }
+    }
     newFile();
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     setEditorText(codeFile.readAll());
@@ -458,8 +463,8 @@ void ProjectWindow::openOptionsDialog()
 
 void ProjectWindow::updateCodeAnalysis()
 {
-    if (QApplication::activeWindow() == this) { // FIXME check if document has been modified to avoid doing this unnecessarily
-        CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+    CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+    if (QApplication::activeWindow() == this  && editor->document()->isModified()) {
         QTemporaryFile tmpFile;
         if (tmpFile.open()) {
             tmpFile.write(editor->document()->toPlainText().toLocal8Bit());
