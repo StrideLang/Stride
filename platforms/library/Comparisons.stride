@@ -1,0 +1,78 @@
+
+module Greater {
+    input: Input
+    output: Output
+    internalBlocks: [
+        signal Input[2] {},
+        switch Output {}
+    ]
+    streams: [
+       Input[1] > Input[2] >> Output;
+    ]
+    meta: ""
+}
+
+module GreaterOrEqual {
+    input: Input
+    output: Output
+    internalBlocks: [
+        signal Input[2] {},
+        switch Output {}
+    ]
+    streams: [
+       Input[1] >= Input[2] >> Output;
+    ]
+    meta: ""
+}
+
+module Less {
+    input: Input
+    output: Output
+    internalBlocks: [
+        signal Input[2] {},
+        switch Output {}
+    ]
+    streams: [
+       Input[1] < Input[2] >> Output;
+    ]
+    meta: ""
+}
+
+module LessOrEqual {
+    input: Input
+    output: Output
+    internalBlocks: [
+        signal Input[2] {},
+        switch Output {}
+    ]
+    streams: [
+       Input[1] <= Input[2] >> Output;
+    ]
+    meta: ""
+}
+
+module Equal {
+    input: Input
+    output: Output
+    internalBlocks: [
+        signal Input[2] {},
+        switch Output {}
+    ]
+    streams: [
+       Input[1] == Input[2] >> Output;
+    ]
+    meta: ""
+}
+
+module NotEqual {
+    input: Input
+    output: Output
+    internalBlocks: [
+        signal Input[2] {},
+        switch Output {}
+    ]
+    streams: [
+       Input[1] != Input[2] >> Output;
+    ]
+    meta: ""
+}
