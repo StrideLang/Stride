@@ -27,7 +27,8 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
     ui(new Ui::ProjectWindow),
     m_codeModelTimer(this),
     m_builder(NULL),
-    m_lastValidTree(NULL)
+    m_lastValidTree(NULL),
+    m_startingUp(true)
 {
     ui->setupUi(this);
 
@@ -59,6 +60,7 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
     connect(ui->tabWidget, SIGNAL(currentChanged(int)),
             this, SLOT(tabChanged(int)));
 
+    m_startingUp = false;
     QTimer::singleShot(200, this, SLOT(updateCodeAnalysis()));
 }
 
@@ -563,12 +565,12 @@ void ProjectWindow::loadFile(QString fileName)
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     setEditorText(codeFile.readAll());
     editor->setFilename(QFileInfo(fileName).absoluteFilePath());
+    updateCodeAnalysis();
     editor->markChanged(false);
     ui->tabWidget->setTabText(ui->tabWidget->currentIndex(),
                               QFileInfo(fileName).fileName());
     codeFile.close();
     markModified();
-    m_codeModelTimer.start();
 }
 
 void ProjectWindow::openOptionsDialog()
@@ -606,7 +608,8 @@ void ProjectWindow::openOptionsDialog()
 void ProjectWindow::updateCodeAnalysis()
 {
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
-    if (QApplication::activeWindow() == this  && editor->document()->isModified()) {
+    if ((QApplication::activeWindow() == this  && editor->document()->isModified())
+            || m_startingUp) {
         QTemporaryFile tmpFile;
         if (tmpFile.open()) {
             tmpFile.write(editor->document()->toPlainText().toLocal8Bit());
@@ -847,9 +850,6 @@ void ProjectWindow::markModified()
         textColor = p.color(QPalette::Foreground);
     }
     ui->tabWidget->tabBar()->setTabTextColor(currentIndex, textColor);
-    if (m_codeModelTimer.remainingTime() < m_codeModelTimer.interval() - 1500) {
-        m_codeModelTimer.start(); // Force code structure reevaluation
-    }
 }
 
 void ProjectWindow::closeEvent(QCloseEvent *event)

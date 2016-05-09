@@ -75,6 +75,7 @@ private:
     Builder *m_builder;
     QMutex m_validTreeLock;
     AST *m_lastValidTree;
+    bool m_startingUp;
 };
 
 #endif // PROJECTWINDOW_H
