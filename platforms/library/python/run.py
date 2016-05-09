@@ -26,5 +26,7 @@ def log(text):
 os.chdir(out_dir)
 log("Running in directory: " + out_dir)
 
-args = ['pasuspender', '--', "./" + app_name]
+
+#args = ['pasuspender', '--', "./" + app_name]
+args = ["./" + app_name]
 outtext = ck_out(args)

@@ -16,77 +16,41 @@ StreamPlatform::StreamPlatform(QStringList platformPaths, QString platform, QStr
     QString functionsJson;
 //    QString platformPath = m_platformRootPath + QDir::separator() + m_platformName
 //            + QDir::separator() + m_version + QDir::separator() + "plugins";
-    platformPaths << "/home/andres/Documents/src/Stride/StreamStack/plugins"; // TODO: un hard-code this
+    platformPaths << "/home/andres/Documents/src/Stride/StreamStack/platforms"; // TODO: un hard-code this
     foreach(QString path, platformPaths) {
         if (m_api != NullPlatform) {
             break; // Stop looking if platform has been found.
         }
-
         // FIXME move loading somewhere else where it's done less often (Or don't create a new StreamPlatform every time you parse)
         QString fullPath = QDir(path + QDir::separator() + m_platformName
-                + QDir::separator() + m_version).absolutePath();
+                                + QDir::separator() + m_version + QDir::separator() + "platformlib").absolutePath();
+        if (m_api != NullPlatform) {
+            break; // Stop looking if platform has been found.
+        }
+        m_library.setLibraryPath(path);
+        // Now try to find Python platform
         if (QFile::exists(fullPath)) {
-            // First try to find plugin platforms
-//            QStringList pluginFiles = QDir(fullPath).entryList(QDir::Files | QDir::NoDotAndDotDot);
-//            foreach (QString file, pluginFiles) {
-//                if (QLibrary::isLibrary(file)) {
-//                    QLibrary pluginLibrary(fullPath + QDir::separator() + file);
-//                    if (!pluginLibrary.load()) {
-//                        qDebug() << pluginLibrary.errorString();
-//                        continue;
-//                    }
-//                    create_object_t create = (create_object_t) pluginLibrary.resolve("create_object");
-//                    platform_name_t get_name = (platform_name_t) pluginLibrary.resolve("platform_name");
-//                    platform_version_t get_version = (platform_version_t) pluginLibrary.resolve("platform_version");
-//                    if (create && get_name && get_version) {
-//                        char name[32];
-//                        get_name(name);
-//                        double platformVersion = get_version();
-//                        //                qDebug() << "Loaded platform " << name << " version " << QString::number(libversion, 'f', 1);
-//                        if (m_platformName == QString(name) && (QString::number(platformVersion, 'f', 1) == m_version || m_version == "-1.0")) {
-//                            qDebug() << "Using Plugin Platform " << name << " version " << QString::number(platformVersion, 'f', 1);
-//                            m_platformPath = fullPath;
-//                            m_api = PluginPlatform;
-//                            m_pluginName = fullPath + QDir::separator() + file;
-////                            QString xmosToolChainRoot = "/home/andres/Documents/src/XMOS/xTIMEcomposer/Community_14.0.1";
-//                            Builder *builder = create("", "", "" );
-
-//                            typesJson = builder->requestTypesJson();
-//                            functionsJson = builder->requestFunctionsJson();
-//                            objectsJson = builder->requestObjectsJson();
-//                            break;
-//                        }
-//                    }
-//                    pluginLibrary.unload();
-//                }
-            }
-            if (m_api != NullPlatform) {
-                break; // Stop looking if platform has been found.
-            }
-            // Now try to find Python platform
-            if (QFile::exists(fullPath)) {
-                m_library.setLibraryPath(path);
-                QStringList nameFilters;
-                nameFilters << "*.stride";
-                QStringList libraryFiles =  QDir(fullPath).entryList(nameFilters);
-                foreach (QString file, libraryFiles) {
-                    QString fileName = fullPath + QDir::separator() + file;
-                    AST *tree = AST::parseFile(fileName.toLocal8Bit().data());
-                    if(tree) {
-                        Q_ASSERT(!m_platform.contains(file));
-                        m_platform[file] = tree;
-                    } else {
-                        vector<LangError> errors = AST::getParseErrors();
-                        foreach(LangError error, errors) {
-                            qDebug() << QString::fromStdString(error.getErrorText());
-                        }
+            QStringList nameFilters;
+            nameFilters << "*.stride";
+            QStringList libraryFiles =  QDir(fullPath).entryList(nameFilters);
+            foreach (QString file, libraryFiles) {
+                QString fileName = fullPath + QDir::separator() + file;
+                AST *tree = AST::parseFile(fileName.toLocal8Bit().data());
+                if(tree) {
+                    Q_ASSERT(!m_platform.contains(file));
+                    m_platform[file] = tree;
+                } else {
+                    vector<LangError> errors = AST::getParseErrors();
+                    foreach(LangError error, errors) {
+                        qDebug() << QString::fromStdString(error.getErrorText());
                     }
                 }
-                m_platformPath = fullPath;
-                m_api = PythonTools;
-                m_types = getPlatformTypeNames();
-                break;
             }
+            m_platformPath = fullPath;
+            m_api = PythonTools;
+            m_types = getPlatformTypeNames();
+            break;
+        }
     }
 
     if (m_api == NullPlatform) {
