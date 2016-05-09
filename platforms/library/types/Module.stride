@@ -12,6 +12,12 @@ type _Property {
 			types: [""] # This should be made to accept type handles
 			default: none
 			required: on
+		},
+		port Types {
+			name: "types"
+			types: [""] # This should be made to accept type handles
+			default: [""]
+			required: off
 		}
 	]
 	inherits: ["base"]
@@ -44,14 +50,14 @@ type _Module {
 		port Input {
 			name: "input"
 			types: [""]
-			default: none
-			required: on
+			default: Input
+			required: off
 		},
 		port Output {
 			name: "output"
 			types: [""]
-			default: none
-			required: on
+			default: Output
+			required: off
 		},
 		port Properties {
 			name: "properties"
@@ -73,6 +79,7 @@ type _Module {
 		}
 
 	]
+	meta: "Module Type Doc"
 }
 
 type _Reaction {
@@ -81,20 +88,26 @@ type _Reaction {
 		port Output {
 			name: "output"
 			types: [""]
-			default: none
+			default: Output
 			required: on
+		},
+		port Properties {
+			name: "properties"
+			types: [ "" ]  # TODO: How can we define list types here?
+			default: none
+			required: off
 		},
 		port OnExecution {
 			name: "onExecution"
 			types: [""]
-			default: none
+			default: Input
 			required: on
 		},
 		port TerminateWhen {
 			name: "terminateWhen"
 			types: [""]
 			default: none
-			required: on
+			required: off
 		},
 		port InternalBlocks {
 			name: "internalBlocks"

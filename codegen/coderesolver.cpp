@@ -177,16 +177,10 @@ void CodeResolver::expandParallelFunctions()
                     numCopies << 1;
                 }
             }
-            qDebug() << "----";
-            qDebug() << IOs;
-            qDebug() << numCopies;
-
             if (numCopies.size() == IOs.size()) { // Expansion calculation went fine, so expand
 //                qDebug() << "Will expand";
                 expandStreamToSizes(stream, numCopies);
             }
-
-
         }
     }
 }

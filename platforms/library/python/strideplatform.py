@@ -111,7 +111,7 @@ class ValueAtom(Atom):
     def __init__(self, value_node, index, scope_index):
         super(ValueAtom, self).__init__()
         self.index = index
-        self.value = value_node['value']
+        self.value = value_node
         self.handle = '__value_%03i'%index
         self.rate = 0
         self.inline = True
@@ -353,9 +353,9 @@ class NameAtom(Atom):
         self.declaration = declaration
         if 'include' in platform_type['block']:
             if 'include' in self.globals:
-                self.globals['include'].extend([inc['value']['value'] for inc in platform_type['block']['include']])
+                self.globals['include'].extend([inc['value'] for inc in platform_type['block']['include']])
             else:
-                self.globals['include'] = [inc['value']['value'] for inc in platform_type['block']['include']]
+                self.globals['include'] = [inc['value'] for inc in platform_type['block']['include']]
         if 'initialization' in platform_type['block']:
             if 'initialization' in self.globals:
                 self.globals['initialization'] += platform_type['block']['initialization']
@@ -365,8 +365,8 @@ class NameAtom(Atom):
         
         self.set_inline(False)
         
-        if 'direction' in platform_type['block']:
-            if platform_type['block']['direction'] == 'out' or platform_type['block']['direction'] == 'thru':
+        if 'numOutputs' in platform_type['block']:
+            if platform_type['block']['numOutputs'] > 0:
                 self.set_inline(True)
         
         if 'rate' in declaration:
@@ -390,19 +390,19 @@ class NameAtom(Atom):
             inits = [{'handle' : self.handle,
                       'type' : 'real',
                       'code' : str(default_value),
-                      'scope' : self.scope_index
+                      'scope' : self.declaration['stack_index']
                       }]
         elif 'type' in self.declaration and self.declaration['type'] == 'constant':
             inits = [{'handle' : self.handle,
                       'type' : 'real',
                       'code' : str(default_value),
-                      'scope' : self.scope_index
+                      'scope' : self.declaration['stack_index']
                       }]
         elif 'type' in self.declaration and self.declaration['type'] == 'switch':
             inits = [{'handle' : self.handle,
                       'type' : 'bool',
-                      'code' : str(default_value),
-                      'scope' : self.scope_index
+                      'code' : templates.str_true if default_value['value'] else templates.str_false,
+                      'scope' : self.declaration['stack_index']
                       }]
         elif 'block' in self.platform_type:
             inherits = self.platform_type['block']['inherits']
@@ -410,13 +410,13 @@ class NameAtom(Atom):
                 inits = [{'handle' : self.handle,
                           'type' : 'real',
                           'code' : str(default_value),
-                          'scope' : self.scope_index
+                          'scope' : self.declaration['stack_index']
                           }]
             elif self.platform_type['block']['type'] == 'platformType':
                 inits = [{'handle' : self.handle,
                           'type' : 'real',
                           'code' : str(default_value),
-                          'scope' : self.scope_index
+                          'scope' : self.declaration['stack_index']
                           }]
 
             else:
@@ -430,11 +430,11 @@ class NameAtom(Atom):
     def get_inline_processing_code(self, in_tokens):
         code = ''
         if 'processing' in self.platform_type['block']:
-            direction = self.platform_type['block']['direction']
             code = templates.get_platform_inline_processing_code(
                             self.platform_type['block']['processing'],
                             in_tokens,
-                            direction)
+                            self.platform_type['block']['numInputs'],
+                            self.platform_type['block']['numOutputs'])
         else:
             if len(in_tokens) > 0:
                 code = in_tokens[0]
@@ -450,7 +450,10 @@ class NameAtom(Atom):
             if self.inline:
                 out_tokens = [self.get_inline_processing_code(in_tokens)]
             else:
-                code = templates.assignment(self.handle, self.get_inline_processing_code(in_tokens))
+                if self.platform_type['block']['numOutputs'] > 0:
+                    code = templates.assignment(self.handle, self.get_inline_processing_code(in_tokens))
+                else:
+                    code = templates.expression(self.get_inline_processing_code(in_tokens))
         else:
             code = templates.assignment(self.handle, self.get_inline_processing_code(in_tokens))
         return code, out_tokens
@@ -502,11 +505,11 @@ class BundleAtom(NameAtom):
     def get_inline_processing_code(self, in_tokens): 
         code = super(BundleAtom, self).get_inline_processing_code(in_tokens)
         if 'processing' in self.platform_type['block']:
-            direction = self.platform_type['block']['direction']
             code = templates.get_platform_inline_processing_code(
                             self.platform_type['block']['processing'],
                             in_tokens,
-                            direction,
+                            self.platform_type['block']['numInputs'],
+                            self.platform_type['block']['numOutputs'],
                             self.index)
         return  code
     
@@ -560,65 +563,49 @@ class ModuleAtom(Atom):
         self.inline = inline
         
     def get_declarations(self):
-        declarations_code = self._get_internal_declarations_code()
-        
-        instantiation_code = self._get_internal_instantiation_code()
+        declarations = []
+        if "other_scope_declarations" in self.code:
+            declarations += self.code["other_scope_declarations"]
+        header_code = self._get_internal_header_code()
         init_code = self._get_internal_init_code()
         process_code = self._get_internal_processing_code()
         properties_code = self._get_internal_properties_code()
         
         declaration = templates.module_declaration(
-                self.name, declarations_code + instantiation_code + properties_code, 
+                self.name, header_code + properties_code, 
                 init_code, self._output_block , self._input_block, process_code)
-        declarations = [{"name": self.name,
+        declarations += [{"name": self.name,
                          "code" :  declaration,
                          'scope' : self.module['stack_index']}]
-        if "other_scope_declarations" in self.code:
-            declarations += self.code["other_scope_declarations"]
         return declarations
     
     def get_instances(self):
         instances = []
-#        if 'internalBlocks' in self.module:
-#            for block in self.module['internalBlocks']:
-#                if 'block' in block:
-#                    data_type = ''
-#                    if block['block']['type'] == "signal":
-#                        data_type = 'real'
-#                    elif block['block']['type'] == "switch":
-#                        data_type = 'bool'
-#                    else:
-#                        data_type = 'real'
-#                        
-#                    instances.append({ 'type' : data_type,
-#                       'handle' : block['block']['name']
-#                     })
-        
-        if len(self.out_tokens) > 0:
-            instances += [{'type' : 'module',
-                           'handle': self.handle,
-                           'moduletype' : self.name,
-                           'scope' : self.scope_index
-                           },
-                           { 'type' : 'real',
-                             'handle' : self.out_tokens[0],
-                             'scope' : self.scope_index
-                             }]
-        else:
-            instances += [{'type' : 'module',
+        if "other_scope_instances" in self.code:
+            for inst in self.code["other_scope_instances"]:
+                inst['post'] = False
+                instances.append(inst)
+        instances += [{'type' : 'module',
                      'handle': self.handle,
                      'moduletype' : self.name,
-                     'scope' : self.scope_index}
+                     'scope' : self.scope_index,
+                     'post' : True}
                      ]
-        if "other_scope_instances" in self.code:
-            instances += self.code["other_scope_instances"]
+        if len(self.out_tokens) > 0:
+            instances += [{ 'type' : 'real',
+                             'handle' : self.out_tokens[0],
+                             'scope' : self.scope_index,
+                             'post' : True
+                             }]
         return instances
         
     def get_inline_processing_code(self, in_tokens):
-        if 'size' in self._output_block:
-            code = templates.module_processing_code(self.handle, in_tokens, '_' + self.name + '_%03i_out'%self._index)
-        else:
-            code = templates.module_processing_code(self.handle, in_tokens, '')
+        code = ''
+        if self._output_block:
+            if 'size' in self._output_block:
+                code = templates.module_processing_code(self.handle, in_tokens, '_' + self.name + '_%03i_out'%self._index)
+            else:
+                code = templates.module_processing_code(self.handle, in_tokens, '')
         return code
         
     def get_preprocessing_code(self, in_tokens):
@@ -626,7 +613,7 @@ class ModuleAtom(Atom):
         ports = self.function['ports']
         for port_name in ports:
             if 'value' in ports[port_name]:
-                port_in_token = [str(ports[port_name]['value']['value'])]
+                port_in_token = [str(ports[port_name]['value'])]
             elif 'name' in ports[port_name]:
                 port_in_token = [ports[port_name]['name']['name']]
             elif 'expression' in ports[port_name]:
@@ -653,13 +640,8 @@ class ModuleAtom(Atom):
             out_tokens = self.out_tokens
         return code, out_tokens
         
-    def _get_internal_instantiation_code(self):
-        code = self.code['instantiation_code']
-        return code
-        
-    def _get_internal_declarations_code(self):
-        code = self.code['declare_code']
-        
+    def _get_internal_header_code(self):
+        code = self.code['header_code']
         return code
         
     def _get_internal_init_code(self):
@@ -684,11 +666,13 @@ class ModuleAtom(Atom):
         
     def _process_module(self, streams):
         tree = streams
-        self.platform.push_scope(self.current_scope)
+        instanced = []
+        if self._input_block:
+            instanced = [[self._input_block['name'], self.scope_index]]
         
-        self.code = self.platform.generate_code(tree,
-                                                instanced = [self._input_block['name'] if self._input_block else None])
-        self.platform.pop_scope()
+        self.code = self.platform.generate_code(tree, self.current_scope,
+                                                instanced = instanced)
+
         if 'include' in self.globals and 'include' in self.code['global_groups']:
             self.globals['include'].extend(self.code['global_groups']['include'])
         else:
@@ -721,9 +705,172 @@ class PlatformModuleAtom(ModuleAtom):
 
 # TODO complete work on reaction block
 class ReactionAtom(Atom):
-    def __init__(self, reaction, token_index, platform, scope_index):
+    def __init__(self, reaction, platform_code, token_index, platform, scope_index):
         super(ReactionAtom, self).__init__()
+        self.scope_index = scope_index
+        self.name = reaction["name"]
+        self.handle = self.name + '_%03i'%token_index;
+        self.current_scope = reaction["internalBlocks"]
+        self._platform_code = platform_code
+        self._output_block = None
+        self._index = token_index
+        self.platform = platform
+        self.reaction = reaction
+        self.rate = -1 # Should reactions have rates?
+        
+        self._init_blocks(reaction["internalBlocks"],
+                          reaction["output"])
+        self.set_inline(False)
+                         
+            
+    def set_inline(self, inline):
+        if inline:
+            self.out_tokens = []
+        else:
+            if self._output_block and 'size' in self._output_block:
+                self.out_tokens = ['_' + self.name + '_%03i_out[%i]'%(self._index, i) for i in range(self._output_block['size'])]
+            else:
+                self.out_tokens = ['_' + self.name + '_%03i_out'%self._index]
+        self._process_reaction(self.reaction["streams"])
+        self.inline = inline
+        
+    def get_declarations(self):
+        declarations = []
+        if "other_scope_declarations" in self.code:
+            declarations += self.code["other_scope_declarations"]
+        header_code = self._get_internal_header_code()
+        init_code = self._get_internal_init_code()
+        process_code = self._get_internal_processing_code()
+        properties_code = self._get_internal_properties_code()
+        
+        declaration = templates.reaction_declaration(
+                self.name, header_code + properties_code, 
+                init_code, self._output_block , process_code)
+        declarations += [{"name": self.name,
+                         "code" :  declaration,
+                         'scope' : self.reaction['stack_index']}]
+        return declarations
+    
+    def get_instances(self):
+        instances = []       
+        if "other_scope_instances" in self.code:
+            for inst in self.code["other_scope_instances"]:
+                inst['post'] = False
+                instances.append(inst)
+        if len(self.out_tokens) > 0:
+            instances += [{'type' : 'module',
+                           'handle': self.handle,
+                           'moduletype' : self.name,
+                           'scope' : self.scope_index,
+                           'post' : True
+                           },
+                           { 'type' : 'real',
+                             'handle' : self.out_tokens[0],
+                             'scope' : self.scope_index,
+                             'post' : True
+                             }]
+        else:
+            instances += [{'type' : 'module',
+                     'handle': self.handle,
+                     'moduletype' : self.name,
+                     'scope' : self.scope_index,
+                     'post' : True}
+                     ]
+        return instances
+        
+    def get_inline_processing_code(self, in_tokens):
+        if self._output_block:
+            if 'size' in self._output_block:
+                code = templates.reaction_processing_code(self.handle, in_tokens, '_' + self.name + '_%03i_out'%self._index)
+            else:
+                code = templates.reaction_processing_code(self.handle, in_tokens, '')
+        else:
+            code = templates.reaction_processing_code(self.handle, in_tokens, '')
+        return code
+        
+    def get_preprocessing_code(self, in_tokens):
+        # TODO Reactions and properties??
+        code = ''
+#        ports = self.function['ports']
+#        for port_name in ports:
+#            if 'value' in ports[port_name]:
+#                port_in_token = [str(ports[port_name]['value']['value'])]
+#            elif 'name' in ports[port_name]:
+#                port_in_token = [ports[port_name]['name']['name']]
+#            elif 'expression' in ports[port_name]:
+#                port_in_token = ['']
+#            else:
+#                port_in_token = ['____XXX___'] # TODO implement
+           # code += templates.module_set_property(self.handle, port_name, port_in_token)
+        return code
+        
+    def get_processing_code(self, in_tokens):
+        code = self.get_preprocessing_code(in_tokens)
+        out_tokens = []
+        if 'output' in self._platform_code['block'] and not self._platform_code['block']['output'] is None:
+            if self.inline:
+                code += self.get_handles()[0]
+            else:
+                if 'size' in self._output_block:
+                    code += templates.expression(self.get_inline_processing_code(in_tokens))
+                else:
+                    code += templates.assignment(self.out_tokens[0],self.get_inline_processing_code(in_tokens))
+            out_tokens = self.out_tokens
+        else:
+            code += templates.expression(self.get_inline_processing_code(in_tokens))
+            out_tokens = self.out_tokens
+        return code, out_tokens
+        
+    def _get_internal_header_code(self):
+        code = self.code['header_code']
+        return code
+        
+        
+    def _get_internal_init_code(self):
+        code = self.code['init_code']
+        return code
+        
+    def _get_internal_processing_code(self):
+        code = self.code['processing_code']
+        code += templates.module_output_code(self._output_block) 
+        return code
+        
+    def _get_internal_properties_code(self):
+        members = ''
+        functions = ''
+#        if self.module['properties']:
+#            for prop in self.module['properties']:
+#                if 'block' in prop:
+#                    functions += templates.module_property_setter(prop['block']['name'],
+#                                             prop['block']['block']['name']['name'],
+#                                             'real')
+        return members + functions
+        
+    def _process_reaction(self, streams):
+        tree = streams
+        self.code = self.platform.generate_code(tree,self.current_scope,
+                                                instanced = [])
+        if 'include' in self.globals and 'include' in self.code['global_groups']:
+            self.globals['include'].extend(self.code['global_groups']['include'])
+        else:
+            self.globals['include'] = self.code['global_groups']['include']
 
+
+        
+    def _init_blocks(self, blocks, output_name):
+        self._blocks = []
+        for block in blocks:
+            if 'block' in block:
+                self._blocks.append(block['block'])
+            elif 'blockbundle' in block:
+                self._blocks.append(block['blockbundle'])
+            if output_name and 'name' in output_name and  self._blocks[-1]['name'] == output_name["name"]["name"]:
+                self._output_block = self._blocks[-1]
+                
+    def find_internal_block(self, block_name):
+        for block in self._blocks:
+            if block['name'] == block_name:
+                return block
     
 
 # --------------------- Common platform functions
@@ -747,21 +894,21 @@ class PlatformFunctions:
         for node in tree:
             if 'block' in node:
                 if node["block"]["name"] == block_name:
-                    node["block"]['stack_index'] = - 1
+                    node["block"]['stack_index'] = 0
                     return node["block"]
             if 'blockbundle' in node:
                 if node["blockbundle"]["name"] == block_name:
-                    node["blockbundle"]['stack_index'] = - 1
+                    node["blockbundle"]['stack_index'] = 0
                     return node["blockbundle"]
-        for scope in self.scope_stack:
+        for i, scope in enumerate(self.scope_stack):
             for node in scope: # Now look within scope
                 if 'block' in node:
                     if node["block"]["name"] == block_name:
-                        node["block"]['stack_index'] = len(self.scope_stack)
+                        node["block"]['stack_index'] = len(self.scope_stack) + i
                         return node["block"]
                 if 'blockbundle' in node:
                     if node["blockbundle"]["name"] == block_name:
-                        node["blockbundle"]['stack_index'] = len(self.scope_stack)
+                        node["blockbundle"]['stack_index'] = len(self.scope_stack) + 1
                         return node["blockbundle"]
 #        raise ValueError("Declaration not found for " + block_name)
         return None
@@ -769,7 +916,7 @@ class PlatformFunctions:
     def find_stride_type(self, type_name):
         for element in self.tree:
             if 'block' in element:
-                element["block"]['stack_index'] = -1
+                element["block"]['stack_index'] = 0
                 if element['block']['type'] == 'module':
                     if element['block']['name'] == type_name:
                         return element
@@ -836,7 +983,7 @@ class PlatformFunctions:
                 else:
                     raise ValueError("Invalid or unavailable platform type.")
             elif declaration['type'] == 'reaction':
-                new_atom = ReactionAtom(declaration, self.unique_id, self)
+                new_atom = ReactionAtom(declaration, platform_type, self.unique_id, self, scope_index)
             elif declaration['type'] == 'platformModule':
                 new_atom = PlatformModuleAtom(declaration, member['function'], platform_type, self.unique_id, self, scope_index)
         elif "expression" in member:
@@ -879,14 +1026,14 @@ class PlatformFunctions:
         return node_groups
         
     def generate_code_from_groups(self, node_groups, global_groups, declared, instanced, initialized):
-        declare_code = ''
+#        declare_code = ''
+#        instantiation_code = ''
         init_code = ''
+        header_code = ''
         processing_code = '' 
-        instantiation_code = ''
         parent_rates_size = templates.rate_stack_size() # To know now much we need to pop for this stream
         
-        instances = []
-        declarations = []
+        header = []
         for group in node_groups:
             in_tokens = []
             previous_atom = None
@@ -901,18 +1048,17 @@ class PlatformFunctions:
                              global_groups['linkTo']  += new_globals[group]
                         elif group == 'initialization':
                              global_groups['initialization']  += new_globals[group]
-                #Process declaration code
+
                 declares = atom.get_declarations()
-                declarations += declares
-                # Process instantiation code
                 new_instances = atom.get_instances()
-                instances += new_instances
+                header.append([declares, new_instances])
+                
                 # Process processing code
                 code, out_tokens = atom.get_processing_code(in_tokens)
                 if atom.rate > 0:
                     new_inst, new_init, new_proc = templates.rate_start(atom.rate)
                     processing_code += new_proc
-                    instantiation_code += new_inst
+                    header_code += new_inst
                     init_code += new_init
                     # We want to avoid inlining across rate boundaries
                     if previous_atom:
@@ -928,30 +1074,47 @@ class PlatformFunctions:
         #It might be useful in the future to process instance code and declarations 
         # together at once, e.g. to keep them in a large memory block or struct
         other_scope_declarations = []
-        for dec in declarations[::-1]:
-            if dec['scope'] == len(self.scope_stack) -1 : # if declaration in this scope
-                if not  dec['name'] in declared:
-                    declared.append(dec['name'])
-                    declare_code += dec['code']
-            else:
-                other_scope_declarations.append(dec)
-        
         other_scope_instances = []
-        for inst in instances:
-            if inst['scope'] == len(self.scope_stack) - 1: # if instance is declared in this scope
-                if not inst['handle'] in instanced:
-                    instanced.append(inst['handle'])
-                    instantiation_code += templates.instantiation_code(inst)
-                    if 'code' in inst:
-                        init_code +=  templates.initialization_code(inst)
-            else:
-                other_scope_instances.append(inst)
+        for new_header in header:
+            for new_dec in new_header[0]:
+                # FIXME This should not be >= but == instead. This is what is working now though...
+                if new_dec['scope'] >= len(self.scope_stack) - 1: # if declaration in this scope
+                    is_declared = False
+                    for d in declared:
+                        if d[0] == new_dec['name'] and d[1] == new_dec['scope']:
+                            is_declared = True
+                            break
+                    if not is_declared:
+                        declared.append( [new_dec['name'], new_dec['scope'] ])
+                        header_code += new_dec['code']
+                else:
+                    other_scope_declarations.append(new_dec)
+            
+            for new_inst in new_header[1]:
+                # FIXME This should not be >= but == instead. This is what is working now though...
+                if new_inst['scope'] >= len(self.scope_stack) - 1: # if instance is declared in this scope
+                    is_declared = False
+                    for i in instanced:
+                        if i[0] == new_inst['handle'] and i[1] == new_inst['scope']:
+                            is_declared = True
+                            break
+                    if not is_declared:
+                        instanced.append([new_inst['handle'], new_inst['scope'] ])
+                        new_inst_code = templates.instantiation_code(new_inst)
+                        if 'post' in new_inst and new_inst['post']:
+                            header_code += new_inst_code
+                        else:
+                            header_code = new_inst_code + header_code
+                        if 'code' in new_inst:
+                            init_code +=  templates.initialization_code(new_inst)
+                else:
+                    other_scope_instances.append(new_inst)
             
         # Close pending rates in this stream
         while not parent_rates_size == templates.rate_stack_size():
             processing_code += templates.rate_end_code()
 
-        return [declare_code, instantiation_code, init_code, processing_code,
+        return [header_code, init_code, processing_code,
                 other_scope_instances, other_scope_declarations]
         
     def generate_stream_code(self, stream, stream_index, global_groups, declared, instanced, initialized):
@@ -960,44 +1123,45 @@ class PlatformFunctions:
         processing_code = templates.stream_begin_code%stream_index
         
         new_code = self.generate_code_from_groups(node_groups, global_groups, declared, instanced, initialized)
-        declare_code, instantiation_code, init_code, new_processing_code, other_scope_instances, other_scope_declarations = new_code
+        header_code, init_code, new_processing_code, other_scope_instances, other_scope_declarations = new_code
         processing_code += new_processing_code
             
         processing_code += templates.stream_end_code%stream_index
         
         return {"global_groups" : global_groups,
-                "declare_code" : declare_code,
-                "instantiation_code" : instantiation_code,
+                "header_code" : header_code,
                 "init_code" : init_code,
                 "processing_code" : processing_code,
                 "other_scope_instances" : other_scope_instances,
                 "other_scope_declarations" : other_scope_declarations}
                 
-    def generate_code(self, tree, global_groups = {'include':[], 'initialization' : [], 'linkTo' : []}, declared = [], instanced = [], initialized = []):  
+    def generate_code(self, tree, current_scope = [],
+                      global_groups = {'include':[], 'initialization' : [], 'linkTo' : []},
+                      declared = [], instanced = [], initialized = []):  
         stream_index = 0
-        declare_code = ''
-        instantiation_code = ''
+        header_code = ''
         init_code = ''
         processing_code = ''
         other_scope_instances = []
         other_scope_declarations = []
+        
+        self.push_scope(current_scope)
 
         for node in tree:
             if 'stream' in node: # Everything grows from streams.
                 code = self.generate_stream_code(node["stream"], stream_index,
                                                  global_groups, declared, instanced,
                                                  initialized)
-                declare_code += code["declare_code"]
-                instantiation_code += code["instantiation_code"]
+                header_code += code["header_code"]
                 init_code  += code["init_code"]
                 processing_code += code["processing_code"]
                 stream_index += 1
                 other_scope_instances += code['other_scope_instances']
                 other_scope_declarations += code["other_scope_declarations"]
         
+        self.pop_scope()
         return {"global_groups" : code['global_groups'],
-                "declare_code" : declare_code,
-                "instantiation_code" : instantiation_code,
+                "header_code" : header_code,
                 "init_code" : init_code,
                 "processing_code" : processing_code,
                 "other_scope_instances" : other_scope_instances,

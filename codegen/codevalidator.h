@@ -36,6 +36,7 @@ public:
     static AST *getMemberFromList(ListNode *node, int index, QList<LangError> &errors);
     static PropertyNode *findPropertyByName(vector<PropertyNode *> properties, QString propertyName);
     static ListNode *validTypesForPort(BlockNode *typeDeclaration, QString portName, QVector<AST *> scope, AST *tree);
+    static BlockNode *findTypeDeclarationByName(QString typeName, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
     static BlockNode *findTypeDeclaration(BlockNode *block, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
 
     static QVector<AST *> getPortsForTypeBlock(BlockNode *block, QVector<AST *> scope, AST *tree);

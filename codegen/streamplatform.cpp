@@ -178,8 +178,12 @@ QStringList StreamPlatform::getPlatformTypeNames()
                 BlockNode *block = static_cast<BlockNode *>(node);
                 if (block->getObjectType() == "platformType") {
                     ValueNode *name = static_cast<ValueNode *>(block->getPropertyValue("typeName"));
-                    Q_ASSERT(name->getNodeType() == AST::String);
-                    typeNames << QString::fromStdString(name->getStringValue());
+                    if (name) {
+                        Q_ASSERT(name->getNodeType() == AST::String);
+                        typeNames << QString::fromStdString(name->getStringValue());
+                    } else {
+                        qDebug() << "Error. platform Type missing typeName port.";
+                    }
                 }
             }
         }

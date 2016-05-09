@@ -45,6 +45,7 @@ private slots:
     void stop();
     void tabChanged(int index);
     bool maybeSave();
+    void showDocumentation();
 
     void programStopped();
 
@@ -69,9 +70,11 @@ private:
 
     QString m_platformsRootDir;
     QMap<QString, QVariant> m_options;
-    QTimer m_timer;
+    QTimer m_codeModelTimer;
     QFont m_font;
     Builder *m_builder;
+    QMutex m_validTreeLock;
+    AST *m_lastValidTree;
 };
 
 #endif // PROJECTWINDOW_H

@@ -9,7 +9,8 @@ _platform _GammaPlatform {
 
 platformType _HwInput {
     typeName: '_hwInput'
-    direction: 'out'
+	numInputs: 0
+	numOutputs: 2
     include: []
     linkTo: []
     declarations: ''
@@ -20,7 +21,8 @@ platformType _HwInput {
 
 platformType _HwOutput {
     typeName: '_hwOutput'
-    direction: 'in'
+	numInputs: 2
+	numOutputs: 0
     include: []
     linkTo: []
     declarations: ''
@@ -50,7 +52,8 @@ _hwOutput AudioOut[2] {
 # Sine function test
 platformType _SineType {
     typeName: '_sineType'
-    direction: 'thru'
+    numInputs: 1
+	numOutputs: 1
     include: ["cmath"]
     linkTo: []
     declarations: ''
@@ -134,7 +137,8 @@ platformModule Oscillator {
 
 platformType _SelectType {
     typeName: '_selectType'
-    direction: 'thru'
+    numInputs: 3
+	numOutputs: 1
     include: []
     linkTo: []
     declarations: ''

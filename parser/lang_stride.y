@@ -1269,6 +1269,7 @@ void yyerror(const char *s, ...){
     LangError newError;
     newError.type = LangError::Syntax;
     newError.errorTokens.push_back(std::string(yytext));
+    newError.filename = string(currentFile);
 //    newError.lineNumber = line;
     newError.lineNumber = yylloc.first_line;
     parseErrors.push_back(newError);
@@ -1286,6 +1287,7 @@ void syntaxError(const char *s, ...){
     LangError newError;
     newError.type = LangError::Syntax;
     newError.errorTokens.push_back(std::string(yytext));
+    newError.filename = string(currentFile);
 //    newError.lineNumber = line;
     newError.lineNumber = yylineno;
     parseErrors.push_back(newError);

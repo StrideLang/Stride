@@ -1,4 +1,5 @@
 #include <QVector>
+#include <QDebug>
 
 #include "codevalidator.h"
 #include "coderesolver.h"
@@ -938,10 +939,9 @@ ListNode *CodeValidator::validTypesForPort(BlockNode *typeDeclaration, QString p
     return NULL;
 }
 
-BlockNode *CodeValidator::findTypeDeclaration(BlockNode *block, QVector<AST *> scope, AST *tree, QList<LangError> &errors)
+BlockNode *CodeValidator::findTypeDeclarationByName(QString typeName, QVector<AST *> scope, AST *tree, QList<LangError> &errors)
 {
-    // TODO check in scope as well
-    QString typeName = QString::fromStdString(block->getObjectType());
+    // FIXME check within scope as well
     foreach(AST *node, tree->getChildren()) {
         if (node->getNodeType() == AST::Block) {
             BlockNode *declarationNode = static_cast<BlockNode *>(node);
@@ -960,6 +960,12 @@ BlockNode *CodeValidator::findTypeDeclaration(BlockNode *block, QVector<AST *> s
     return NULL;
 }
 
+BlockNode *CodeValidator::findTypeDeclaration(BlockNode *block, QVector<AST *> scope, AST *tree, QList<LangError> &errors)
+{
+    QString typeName = QString::fromStdString(block->getObjectType());
+    return CodeValidator::findTypeDeclarationByName(typeName, scope, tree, errors);
+}
+
 QVector<AST *> CodeValidator::getPortsForType(QString typeName, QVector<AST *> scope, AST* tree)
 {
     QVector<AST *> portList;
@@ -969,11 +975,15 @@ QVector<AST *> CodeValidator::getPortsForType(QString typeName, QVector<AST *> s
             if (block->getObjectType() == "platformType"
                     || block->getObjectType() == "type") {
                 ValueNode *name = static_cast<ValueNode*>(block->getPropertyValue("typeName"));
-                Q_ASSERT(name->getNodeType() == AST::String);
-                if (name->getStringValue() == typeName.toStdString()) {
-                    QVector<AST *> newPortList = getPortsForTypeBlock(block, scope, tree);
-                    portList << newPortList;
-                    break;
+                if (name) {
+                    Q_ASSERT(name->getNodeType() == AST::String);
+                    if (name->getStringValue() == typeName.toStdString()) {
+                        QVector<AST *> newPortList = getPortsForTypeBlock(block, scope, tree);
+                        portList << newPortList;
+                        break;
+                    }
+                } else {
+                    qDebug() << "CodeValidator::getPortsForType type missing typeName port.";
                 }
             }
         }

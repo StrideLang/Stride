@@ -25,8 +25,9 @@
 ProjectWindow::ProjectWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::ProjectWindow),
-    m_timer(this),
-    m_builder(NULL)
+    m_codeModelTimer(this),
+    m_builder(NULL),
+    m_lastValidTree(NULL)
 {
     ui->setupUi(this);
 
@@ -48,10 +49,11 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
         newFile(); // No files from previous session
     }
 
-    connect(&m_timer, SIGNAL(timeout()), this, SLOT(updateCodeAnalysis()));
-    m_timer.start(2000);
+    connect(&m_codeModelTimer, SIGNAL(timeout()), this, SLOT(updateCodeAnalysis()));
+    m_codeModelTimer.start(2000);
     ui->tabWidget->setDocumentMode(true);
     ui->tabWidget->setTabsClosable(true);
+    ui->tabWidget->setMovable(true);
     connect(ui->tabWidget, SIGNAL(tabCloseRequested(int)),
             this, SLOT(closeTab(int)));
     connect(ui->tabWidget, SIGNAL(currentChanged(int)),
@@ -257,6 +259,143 @@ bool ProjectWindow::maybeSave()
     }
 }
 
+void ProjectWindow::showDocumentation()
+{
+    // TODO should all this be moved to the editor or related class?
+    CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+    QTextCursor cursor= editor->textCursor();
+    QTextDocument *doc = editor->document();
+    if (cursor.selectedText() == "") {
+        cursor.select(QTextCursor::WordUnderCursor);
+    }
+    QString word = cursor.selectedText();
+    if (!m_lastValidTree) {
+        ui->docBrowser->setPlainText(tr("Parsing error. Can't update tree.").arg(word));
+        return;
+    }
+    QMutexLocker locker(&m_validTreeLock);
+    QList<LangError> errors;
+    if (word[0].toLower() == word[0]) {
+        BlockNode *typeBlock = CodeValidator::findTypeDeclarationByName(word, QVector<AST *>(), m_lastValidTree, errors);
+        if (typeBlock) {
+            AST *metaValue = typeBlock->getPropertyValue("meta");
+            Q_ASSERT(metaValue);
+            if (metaValue) {
+                Q_ASSERT(metaValue->getNodeType() == AST::String);
+                QString docHtml = "<h1>" + word + "</h1>\n";
+                docHtml += QString::fromStdString(static_cast<ValueNode *>(metaValue)->getStringValue());
+                vector<PropertyNode *> properties = typeBlock->getProperties();
+                QString propertiesTable = "<table><tr><td><b>Name</b></td><td><b>Type</b></td><td><b>Default</b></td><td><b>Direction</b></td></tr>";
+                QString propertiesHtml = tr("<h2>Ports</h2>") + "\n";
+                QVector<AST *> ports = CodeValidator::getPortsForTypeBlock(typeBlock, QVector<AST *>(), m_lastValidTree);
+                foreach(AST *port, ports) {
+                    BlockNode *portBlock = static_cast<BlockNode *>(port);
+                    Q_ASSERT(portBlock->getNodeType() == AST::Block);
+                    if (portBlock->getNodeType() == AST::Block) {
+                        QString portName = QString::fromStdString(
+                                    static_cast<ValueNode *>(portBlock->getPropertyValue("name"))->getStringValue());
+                        if (portName != "inherits" && portName != "meta") {
+                            AST *portMetaNode = portBlock->getPropertyValue("meta");
+                            QString portMeta;
+                            if (portMetaNode) {
+                                portMeta = QString::fromStdString(static_cast<ValueNode *>(portMetaNode)->getStringValue());
+                            }
+                            propertiesHtml += "<h3>" + portName + "</h3>" + portMeta;
+                            propertiesTable += "<tr><td>" + portName;
+                            AST *portTypesValue = portBlock->getPropertyValue("types");
+                            Q_ASSERT(portTypesValue);
+                            Q_ASSERT(portTypesValue->getNodeType() == AST::List);
+                            if (portTypesValue && portTypesValue->getNodeType() == AST::List) {
+                                ListNode *validTypesList = static_cast<ListNode *>(portTypesValue);
+                                QString typesText;
+                                foreach(AST *validTypeNode, validTypesList->getChildren()) {
+                                    if (validTypeNode->getNodeType() == AST::String) {
+                                        string typeName = static_cast<ValueNode *>(validTypeNode)->getStringValue();
+                                        typesText += QString::fromStdString(typeName + ", ");
+                                    } else if (validTypeNode->getNodeType() == AST::Name) {
+                                        string typeName = static_cast<NameNode *>(validTypeNode)->getName();
+                                        typesText += QString::fromStdString(typeName + ", ");
+                                    } else {
+                                        typesText += "  ";
+                                    }
+
+                                }
+                                typesText.chop(2);
+                                propertiesTable += "<td>" + typesText + "</td>";
+                            }
+                            propertiesTable += "</tr>";
+                        }
+                    }
+                }
+                propertiesTable += "</table>";
+                ui->docBrowser->setHtml(docHtml + propertiesHtml + propertiesTable);
+            }
+            
+        } else {
+            ui->docBrowser->setPlainText(tr("Unknown type: %1").arg(word));
+        }
+        
+    } else if (word[0].toUpper() == word[0]) { // Check if it is a declared module
+        BlockNode *declaration = CodeValidator::findDeclaration(word, QVector<AST *>(), m_lastValidTree);
+        if (declaration) {
+            AST *metaValue = declaration->getPropertyValue("meta");
+            Q_ASSERT(metaValue);
+            if (metaValue) {
+                Q_ASSERT(metaValue->getNodeType() == AST::String);
+                QString docHtml = "<h1>" + word + "</h1>\n";
+                docHtml += QString::fromStdString(static_cast<ValueNode *>(metaValue)->getStringValue());
+                QString propertiesTable = "<table> <tr><td><b>Name</b></td><td><b>Type</b></td><td><b>Default</b></td><td><b>Direction</b></td></tr>";
+                QString propertiesHtml = tr("<h2>Ports</h2>") + "\n";
+                AST *properties = declaration->getPropertyValue("properties");
+                if (properties && properties->getNodeType() == AST::List) {
+                    Q_ASSERT(properties->getNodeType() == AST::List);
+                    ListNode *propertiesList = static_cast<ListNode *>(properties);
+                    foreach(AST *member, propertiesList->getChildren()) {
+                        BlockNode *portBlock = static_cast<BlockNode *>(member);
+                        Q_ASSERT(portBlock->getNodeType() == AST::Block);
+                        if (portBlock->getNodeType() == AST::Block) {
+                            QString portName = QString::fromStdString(
+                                        static_cast<ValueNode *>(portBlock->getPropertyValue("name"))->getStringValue());
+                            if (portName != "inherits" && portName != "meta") {
+                                AST *portMetaNode = portBlock->getPropertyValue("meta");
+                                QString portMeta;
+                                if (portMetaNode) {
+                                    portMeta = QString::fromStdString(static_cast<ValueNode *>(portMetaNode)->getStringValue());
+                                }
+                                propertiesHtml += "<h3>" + portName + "</h3>" + portMeta;
+                                propertiesTable += "<tr><td>" + portName;
+                                AST *portTypesValue = portBlock->getPropertyValue("types");
+                                Q_ASSERT(portTypesValue);
+                                Q_ASSERT(portTypesValue->getNodeType() == AST::List);
+                                if (portTypesValue && portTypesValue->getNodeType() == AST::List) {
+                                    ListNode *validTypesList = static_cast<ListNode *>(portTypesValue);
+                                    foreach(AST *validTypeNode, validTypesList->getChildren()) {
+                                        if (validTypeNode->getNodeType() == AST::String) {
+                                            string typeName = static_cast<ValueNode *>(validTypeNode)->getStringValue();
+                                            propertiesTable += QString::fromStdString("<td>" + typeName + "</td>");
+                                        } else if (validTypeNode->getNodeType() == AST::Name) {
+                                            string typeName = static_cast<NameNode *>(validTypeNode)->getName();
+                                            propertiesTable += QString::fromStdString("<td>" + typeName + "</td>");
+                                        } else {
+                                            propertiesTable += "<td>---</td>";
+                                        }
+                                    }
+                                }
+                                propertiesTable += "</tr>";
+                            }
+                        }
+                    }
+                    propertiesTable += "</table>";
+                    ui->docBrowser->setHtml(docHtml + propertiesHtml + propertiesTable);
+                }
+            }
+
+        } else {
+            ui->docBrowser->setPlainText(tr("Unknown type: %1").arg(word));
+        }
+    }
+}
+
 void ProjectWindow::programStopped()
 {
     ui->actionRun->setChecked(false);
@@ -429,6 +568,7 @@ void ProjectWindow::loadFile(QString fileName)
                               QFileInfo(fileName).fileName());
     codeFile.close();
     markModified();
+    m_codeModelTimer.start();
 }
 
 void ProjectWindow::openOptionsDialog()
@@ -492,7 +632,12 @@ void ProjectWindow::updateCodeAnalysis()
                 m_highlighter->setBuiltinObjects(objectNames);
                 QList<LangError> errors = validator.getErrors();
                 editor->setErrors(errors);
-                delete tree;
+
+                QMutexLocker locker(&m_validTreeLock);
+                if(m_lastValidTree) {
+                    delete m_lastValidTree;
+                }
+                m_lastValidTree = tree;
             }
         }
     }
@@ -514,6 +659,8 @@ void ProjectWindow::connectActions()
     connect(ui->actionLoad_File, SIGNAL(triggered()), this, SLOT(loadFile()));
     connect(ui->actionStop, SIGNAL(triggered()), this, SLOT(stop()));
     connect(ui->actionQuit, SIGNAL(triggered()), this, SLOT(close()));
+    connect(ui->actionShow_Documentation, SIGNAL(triggered()),
+            this, SLOT(showDocumentation()));
 
 
 //    connect(m_project, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
@@ -700,6 +847,9 @@ void ProjectWindow::markModified()
         textColor = p.color(QPalette::Foreground);
     }
     ui->tabWidget->tabBar()->setTabTextColor(currentIndex, textColor);
+    if (m_codeModelTimer.remainingTime() < m_codeModelTimer.interval() - 1500) {
+        m_codeModelTimer.start(); // Force code structure reevaluation
+    }
 }
 
 void ProjectWindow::closeEvent(QCloseEvent *event)

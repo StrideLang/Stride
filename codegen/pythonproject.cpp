@@ -158,16 +158,13 @@ void PythonProject::astToJson(AST *node, QJsonObject &obj)
         obj["stream"] = array;
     } else if (node->getNodeType() == AST::Int) {
         QJsonObject newObj;
-        newObj["value"] = static_cast<ValueNode *>(node)->getIntValue();
-        obj["value"] = newObj;
+        obj["value"] = static_cast<ValueNode *>(node)->getIntValue();
     } else if (node->getNodeType() == AST::Real) {
-        QJsonObject newObj;
-        newObj["value"] = static_cast<ValueNode *>(node)->getRealValue();
-        obj["value"] = newObj;
+        obj["value"] = static_cast<ValueNode *>(node)->getRealValue();
     } else if (node->getNodeType() == AST::String) {
-        QJsonObject newObj;
-        newObj["value"] = QString::fromStdString(static_cast<ValueNode *>(node)->getStringValue());
-        obj["value"] = newObj;
+        obj["value"] = QString::fromStdString(static_cast<ValueNode *>(node)->getStringValue());
+    } else if (node->getNodeType() == AST::Switch) {
+        obj["value"] = static_cast<ValueNode *>(node)->getSwitchValue();
     } else if (node->getNodeType() == AST::Block) {
         BlockNode *block = static_cast<BlockNode *>(node);
         QJsonObject newObject;
@@ -296,9 +293,7 @@ void PythonProject::expressionToJson(ExpressionNode *node, QJsonObject &obj)
         QJsonObject value;
         astToJson(node->getValue(), value);
         if (!value.isEmpty()) {
-            obj["value"] = value;
-        } else {
-            obj["value"] = QJsonValue();
+            obj = value;
         }
     } else {
         QJsonObject left;

@@ -177,7 +177,7 @@
       <number>2</number>
      </property>
      <item>
-      <widget class="QTextBrowser" name="textBrowser">
+      <widget class="QTextBrowser" name="docBrowser">
        <property name="frameShape">
         <enum>QFrame::NoFrame</enum>
        </property>
@@ -291,9 +291,16 @@
     </property>
     <addaction name="actionComment"/>
    </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionShow_Documentation"/>
+   </widget>
    <addaction name="menuProject"/>
    <addaction name="menuEdit"/>
    <addaction name="menuBuild"/>
+   <addaction name="menuHelp"/>
   </widget>
   <action name="actionBuild">
    <property name="text">
@@ -393,6 +400,14 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+W</string>
+   </property>
+  </action>
+  <action name="actionShow_Documentation">
+   <property name="text">
+    <string>Show Documentation</string>
+   </property>
+   <property name="shortcut">
+    <string>F1</string>
    </property>
   </action>
  </widget>

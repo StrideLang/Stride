@@ -6,8 +6,10 @@ type _Constant {
 			types: ["CSP", "CIP", "CRP", "CBP"]
 			default: none
 			required: off
+#			meta: "The constant value"
 		}
 	]
+	meta: "Holds a constant value"
 }
 
 type _Type {
@@ -50,11 +52,17 @@ type _PlatformType {
 			default: none
 			required: on
 		},
-		port Direction {
-			name: "direction"
-			types: ["CSP"]
-			default: none
-			required: on
+		port NumInputs {
+			name: "numInputs"
+			types: ["CIP"]
+			default: 1
+			required: off
+		},
+		port NumOutputs {
+			name: "numOutputs"
+			types: ["CIP"]
+			default: 1
+			required: off
 		},
 		port Declarations {
 			name: "declarations"

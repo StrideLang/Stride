@@ -17,6 +17,8 @@ class BaseCTemplate(object):
         self.rate_counter = 0
         self.domain_rate = domain_rate # TODO set this from domain configuration
         
+        self.str_true = "true"
+        self.str_false = "false"
         self.stream_begin_code = '// Starting stream %02i -------------------------\n{\n'
         self.stream_end_code = '} // Stream End %02i\n'
         
@@ -35,6 +37,16 @@ struct %s {
     }
 };
 '''        
+        self.str_reaction_declaration = '''
+struct %s {
+    %s %s() {
+        %s
+    }
+    %s execute() {
+        %s
+    }
+};
+'''
 
         pass
     
@@ -48,30 +60,24 @@ struct %s {
         return s;
         
         
-    def get_platform_inline_processing_code(self, code, token_names, direction, bundle_index = -1):
+    def get_platform_inline_processing_code(self, code, token_names, num_inputs, num_outputs, bundle_index = -1):
         p = re.compile("%%intoken:[a-zA-Z0-9_]+%%") ## TODO tweak this better
         matches = p.findall(code)
-        if direction == 'in':
-            for i, match in enumerate(matches):
-                code = code.replace(match, token_names[i])
-            if bundle_index >= 0:           
-                code = code.replace('%%bundle_index%%', str(bundle_index))
-        elif direction == 'out':
-            if bundle_index >= 0:           
-                code = code.replace('%%bundle_index%%', str(bundle_index))
-        elif direction == 'thru': 
+        if num_inputs > 0: # has inputs
             if bundle_index >= 0:           
                 code = code.replace('%%bundle_index%%', str(bundle_index))
             for i, match in enumerate(matches):
-                code = code.replace(match, token_names[i])
+                code = code.replace(match, token_names[i])          
+                code = code.replace('%%bundle_index%%', str(bundle_index))
+        else: # Output only
+            if bundle_index >= 0:           
+                code = code.replace('%%bundle_index%%', str(bundle_index))
         return code        
         
-    def get_platform_processing_code(self, code, token_names, handle, direction, bundle_index = -1, prop_tokens = {}):
-        code = self.get_platform_inline_processing_code(code, token_names, direction,
+    def get_platform_processing_code(self, code, token_names, handle, num_inputs, num_outputs, bundle_index = -1, prop_tokens = {}):
+        code = self.get_platform_inline_processing_code(code, token_names, num_inputs, num_outputs,
                                                         bundle_index, prop_tokens)
-        if direction == 'out':
-            code = code.replace('%%token%%', handle) 
-        elif direction == 'thru':
+        if num_outputs > 0:
             code = code.replace('%%token%%', handle) 
         return code
         
@@ -79,7 +85,7 @@ struct %s {
         declarations = []
         for i,dec in enumerate(declaration_list):
             declarations.append({"name": "_dec_%03i"%i,
-                                 "code" : dec['value']['value'] + '\n',
+                                 "code" : dec['value'] + '\n',
                                  'scope' : scope_index}
                                 )
         return declarations
@@ -136,7 +142,7 @@ struct %s {
     def get_configuration_code(self, inits):
         init_code = ''
         for elem in inits:
-            init_code += elem['value']['value'] + '\n'
+            init_code += elem['value'] + '\n'
         return init_code
             
     def includes_code(self, includes):
@@ -173,7 +179,8 @@ struct %s {
             if instance['type'] == 'real':
                 code = self.assignment(instance['handle'], instance['code'])
             if instance['type'] == 'bool':
-                code = self.assignment(instance['handle'], instance['code'])
+                value = instance['code']
+                code = self.assignment(instance['handle'], value)
             elif instance['type'] == 'bundle':
                 for i in range(instance['size']):
                     elem_instance = {'type': instance['bundletype'] ,
@@ -330,6 +337,33 @@ struct %s {
         code = ''        
         if output_block and not 'size' in output_block: #When a bundle, then output is passed as reference in the arguments
             code += 'return %s;\n'%(output_block['name']) 
+        return code
+        
+    # Reactions code
+        
+    def reaction_declaration(self, name, header_code, init_code,
+                           output_block, process_code):
+        if output_block:
+            if output_block['type'] == 'signal':
+                if 'size' in output_block:
+                    out_type = 'void'
+                else:
+                    out_type = 'float'
+            elif output_block['type'] == 'switch':
+                out_type = 'bool'
+            else:
+                raise ValueError("Unknown type")
+        else:
+            out_type = 'void'
+            
+        declaration = self.str_reaction_declaration%(name, header_code, name, init_code,
+                                                     out_type, process_code)
+        return declaration        
+        
+    def reaction_processing_code(self, handle, in_tokens, out_token):
+        code = "if ("+ in_tokens[0] + ") {\n"
+        code += handle + '.execute();\n'
+        code += "}\n"
         return code
         
     # Configuration code -----------------------------------------------------
