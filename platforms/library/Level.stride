@@ -1,0 +1,43 @@
+module Level {
+	input: Input
+	output: Output
+	properties: [
+		property GainTypeProperty {
+			name: "gainType"
+			block: GainType
+			meta: "Sets the gain type to linear or decibel scaling. Possible values are 'Linear' and 'Decibel'."
+		},
+		property GainProperty {
+			name: "gain"
+			block: Gain
+			meta: "Amplifies or attenuates the signal."
+		},
+		property OffsetProperty {
+			name: "offset"
+			block: Offset
+			meta: "Adds an offset to the signal after applying the gain."
+		},
+		property BypassProperty {
+			name: "bypass"
+			block: Bypass
+		}
+
+	]
+	internalBlocks: [
+		signal Input {},
+		signal Output {},
+		signal GainType {},
+		signal Gain {},
+		signal Offset {},
+		signal Bypass {}
+	]
+	streams: [
+		GainType >> Bypass; # For now while we sort things out...
+		(Input * Gain) + Offset >> Output;
+	]
+	meta: "Scales the input signal and applies an offset to it.
+
+output = input * gain + offset
+
+If all properties are integers the input port is a SIP else it is a SRP."
+}

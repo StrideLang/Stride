@@ -67,6 +67,7 @@ DISTFILES += \
     data/P01_platform_objects.stride \
     data/P02_check_duplicates.stride \
     data/P03_bundle_resolution.stride \
+    data/P04_import.stride \
     data/E01_constant_res.stride \
     data/E02_stream_expansions.stride \
     data/E03_multichn_streams.stride \

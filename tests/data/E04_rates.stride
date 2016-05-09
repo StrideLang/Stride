@@ -19,5 +19,5 @@ Rate1 >> Rate2 >> Output1;
 
 Signal1 >> Rate1 >> Signal2 >> Rate2 >> GetAudioRate >> Output2;
 
-Oscillator() >> Rate1 >> LowPass() >> Output3;
+Oscillator() >> Rate1 >> Level(gain: 0.5) >> Output3;
 

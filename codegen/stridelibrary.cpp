@@ -13,9 +13,9 @@ StrideLibrary::StrideLibrary()
 {
 }
 
-StrideLibrary::StrideLibrary(QString libraryPath)
+StrideLibrary::StrideLibrary(QString libraryPath, QMap<QString, QString> importList)
 {
-    readLibrary(libraryPath);
+    readLibrary(libraryPath, importList);
 }
 
 StrideLibrary::~StrideLibrary()
@@ -26,7 +26,7 @@ StrideLibrary::~StrideLibrary()
     }
 }
 
-void StrideLibrary::setLibraryPath(QString libraryPath)
+void StrideLibrary::setLibraryPath(QString libraryPath, QMap<QString, QString> importList)
 {
     foreach(AST *node, m_libraryTrees) {
         node->deleteChildren();
@@ -34,7 +34,7 @@ void StrideLibrary::setLibraryPath(QString libraryPath)
     }
     m_libraryTrees.clear();
 
-    readLibrary(libraryPath);
+    readLibrary(libraryPath, importList);
 }
 
 BlockNode *StrideLibrary::findTypeInLibrary(QString typeName)
@@ -136,13 +136,18 @@ QList<BlockNode *> StrideLibrary::getParentTypes(BlockNode *type)
     return QList<BlockNode *>();
 }
 
-void StrideLibrary::readLibrary(QString rootDir)
+void StrideLibrary::readLibrary(QString rootDir, QMap<QString, QString> importList)
 {
     QStringList nameFilters;
     nameFilters << "*.stride";
     QString basepath = "/library";
     QStringList subPaths;
-    subPaths << "" << "types";
+    subPaths << "";
+    QMapIterator<QString, QString> it(importList);
+    while (it.hasNext()) {
+        it.next();
+        subPaths << it.key();
+    }
     foreach(QString subPath, subPaths) {
         QStringList libraryFiles =  QDir(rootDir + basepath + QDir::separator() + subPath).entryList(nameFilters);
         foreach (QString file, libraryFiles) {

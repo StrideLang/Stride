@@ -5,6 +5,7 @@
 
 #include <QString>
 #include <QList>
+#include <QMap>
 
 #include "blocknode.h"
 #include "langerror.h"
@@ -13,10 +14,10 @@ class StrideLibrary
 {
 public:
     StrideLibrary();
-    StrideLibrary(QString libraryPath);
+    StrideLibrary(QString libraryPath, QMap<QString,QString> importList = QMap<QString,QString>());
    ~StrideLibrary();
 
-    void setLibraryPath(QString libraryPath);
+    void setLibraryPath(QString libraryPath, QMap<QString,QString> importList = QMap<QString,QString>());
 
     BlockNode *findTypeInLibrary(QString typeName);
 
@@ -29,7 +30,7 @@ private:
     bool isValidProperty(PropertyNode *property, BlockNode *type);
     QList<BlockNode *> getParentTypes(BlockNode *type);
 
-    void readLibrary(QString rootDir);
+    void readLibrary(QString rootDir, QMap<QString, QString> importList);
     QList<AST *> m_libraryTrees;
 };
 

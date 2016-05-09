@@ -19,7 +19,8 @@ private:
 
     void testMultichannelUgens(); // This has not yet been properly implemented. So don't run test
 private Q_SLOTS:
-    void testPlatformCommonObjects();
+
+    void testImport();
 
     //Expansion
     void testStreamExpansion();
@@ -27,6 +28,7 @@ private Q_SLOTS:
     void testStreamRates();
 
     //PlatformConsistency
+    void testPlatformCommonObjects();
     void testValueTypeExpressionResolution();
     void testDuplicates();
     void testValueTypeBundleResolution();
@@ -82,6 +84,22 @@ void ParserTest::testMultichannelUgens()
 
     tree->deleteChildren();
     delete tree;
+}
+
+void ParserTest::testImport()
+{
+    AST *tree;
+    tree = parse(QString(QFINDTESTDATA("data/P04_import.stride")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    generator.validate();
+    QVERIFY(generator.isValid());
+
+    tree = parse(QString(QFINDTESTDATA("data/P05_import_fail.stride")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    CodeValidator generator2(QFINDTESTDATA("/../platforms"), tree);
+    generator2.validate();
+    QVERIFY(!generator2.isValid());
 }
 
 void ParserTest::testConstantResolution()

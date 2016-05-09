@@ -50,13 +50,13 @@ type _Module {
 		port Input {
 			name: "input"
 			types: [""]
-			default: Input
+			default: none
 			required: off
 		},
 		port Output {
 			name: "output"
 			types: [""]
-			default: Output
+			default: none
 			required: off
 		},
 		port Properties {
@@ -88,7 +88,7 @@ type _Reaction {
 		port Output {
 			name: "output"
 			types: [""]
-			default: Output
+			default: none
 			required: on
 		},
 		port Properties {
@@ -100,7 +100,7 @@ type _Reaction {
 		port OnExecution {
 			name: "onExecution"
 			types: [""]
-			default: Input
+			default: none
 			required: on
 		},
 		port TerminateWhen {

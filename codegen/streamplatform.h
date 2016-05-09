@@ -19,7 +19,8 @@
 class StreamPlatform
 {
 public:
-    StreamPlatform(QStringList platformPaths, QString platform, QString version);
+    StreamPlatform(QStringList platformPaths, QString platform, QString version,
+                   QMap<QString, QString> importList);
     ~StreamPlatform();
 
     typedef enum {
@@ -60,10 +61,10 @@ private:
     QStringList m_errors;
     QStringList m_warnings;
 
-
     QStringList m_types;
 
     QMap<QString, AST *> m_platform;
+    QMap<QString, QString> m_importList;
     StrideLibrary m_library;
 };
 

@@ -12,7 +12,7 @@ platformType _DebugPrintType {
 
 
 platformModule DebugPrint {
-    input: Input
+    input: Value
     output: none
 	properties: [
 		property ValueProperty {

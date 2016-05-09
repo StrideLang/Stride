@@ -49,7 +49,7 @@ public:
     /// can the node be broken up.
     static int getNodeSize(AST *node, AST *tree);
 
-    static int getNodeNumOutputs(AST *node, const QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
+    static int getNodeNumOutputs(AST *node, const QVector<AST *> &scope, AST *tree, QList<LangError> &errors);    bool validateNodeDeclaration(QString name, QVector<AST *> scopeStack, AST *tree);
     static int getNodeNumInputs(AST *node, const QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
     static int getTypeNumOutputs(BlockNode *blockDeclaration, const QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
     static int getTypeNumInputs(BlockNode *blockDeclaration, const QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
@@ -69,7 +69,7 @@ private:
     QVector<PlatformNode *> getPlatformNodes();
     QVector<AST *> getBlocksInScope(AST *root);
 
-    void validateTypes(AST *node, QVector<AST *> scope);
+    void validateTypes(AST *node, QVector<AST *> scopeStack);
     void validateStreamMembers(StreamNode *node, QVector<AST *> scopeStack);
     void validateBundleIndeces(AST *node, QVector<AST *> scope);
     void validateBundleSizes(AST *node, QVector<AST *> scope);

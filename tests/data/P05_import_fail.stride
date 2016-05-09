@@ -1,0 +1,7 @@
+use Gamma version 1.0 on PC
+
+#import filters
+
+# This line should fail as LowPass is declared in "filters"
+AudioIn >> LowPass() >> AudioOut;
+

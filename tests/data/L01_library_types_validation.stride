@@ -1,7 +1,7 @@
 use Gamma version 1.0 on PC
 
 module Sum {
-        input:          Inputs
+        input:    none #     Inputs
         output:         Output
         properties: [
                 property SizeProperty {

@@ -1,0 +1,33 @@
+# Pass thru for testing
+
+
+#FIXME AudioRate below needs to be streamRate
+module PassThru {
+        input:          Input
+        output:         Output
+		properties: [
+#			property SizeProperty {
+#				name: "size"
+#				block: Size
+#			}
+		]
+        internalBlocks:  [
+                signal Input {
+                        default :       0.0
+                        rate:           AudioRate
+                        domain:         streamDomain
+                },
+                signal Output {
+                        default :       0.0
+                        rate:           AudioRate
+                        domain:         streamDomain
+                },
+                signal Size {
+                        default :       0.0
+                        rate:           AudioRate
+                        domain:         streamDomain
+                }
+        ]
+        streams:     [   Input >> Output;
+		]
+}

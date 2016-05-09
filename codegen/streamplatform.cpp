@@ -8,7 +8,7 @@
 #include "pythonproject.h"
 
 
-StreamPlatform::StreamPlatform(QStringList platformPaths, QString platform, QString version) :
+StreamPlatform::StreamPlatform(QStringList platformPaths, QString platform, QString version, QMap<QString, QString> importList) :
     m_platformName(platform), m_version(version), m_api(NullPlatform)
 {
     QString objectsJson;
@@ -27,7 +27,7 @@ StreamPlatform::StreamPlatform(QStringList platformPaths, QString platform, QStr
         if (m_api != NullPlatform) {
             break; // Stop looking if platform has been found.
         }
-        m_library.setLibraryPath(path);
+        m_library.setLibraryPath(path, importList);
         // Now try to find Python platform
         if (QFile::exists(fullPath)) {
             QStringList nameFilters;

@@ -236,26 +236,3 @@ platformModule Select {
     ]
     meta: ""
 }
-
-platformModule LowPass {
-    input: Input
-    output: Output
-    properties:  [
-    ]
-    internalBlocks: [
-        signal Input {
-                default :       0.0
-                rate:           AudioRate
-                domain:         streamDomain
-        },
-        signal Output {
-                default :       0.0
-                rate:           AudioRate
-                domain:         streamDomain
-        }
-    ]
-    streams: [
-        Input >> Output;
-    ]
-    meta: "Placeholder for low pass filter. Currently not implemented."
-}
