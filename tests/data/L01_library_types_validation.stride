@@ -16,13 +16,13 @@ module Sum {
         internalBlocks:  [
                 constant Size { value: 2 },
                 trigger Reset {},
-                hybrid Inputs [Size] {
-                        type:           [ 'Stream Real', 'Stream Integer' ]
-                        default :       [ 0.0 , 0 ]
-                        #rate:           streamRate
-                        domain:         streamDomain
-                        #reset:          Reset
-                },
+#                hybrid Inputs [Size] {
+#                        type:           [ 'Stream Real', 'Stream Integer' ]
+#                        default :       [ 0.0 , 0 ]
+#                        #rate:           streamRate
+#                        domain:         streamDomain
+#                        #reset:          Reset
+#                },
                 hybrid Output {
                         type:           [ 'Stream Real', 'Stream Integer' ]
                         default :       [ 0.0 , 0 ]

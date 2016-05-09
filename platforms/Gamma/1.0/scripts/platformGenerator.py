@@ -57,7 +57,7 @@ class Generator:
     def generate_code(self):
         # Generate code from tree
         # TODO These defaults should be set from the platform definition file
-        self.block_size = 2048
+        self.block_size = 256
         self.sample_rate = 44100.
         self.num_out_chnls = 2
         self.num_in_chnls = 2
@@ -75,7 +75,7 @@ class Generator:
         
         shutil.copyfile(self.project_dir + "/template.cpp", self.out_dir + "/main.cpp")
         self.write_section_in_file('Includes', globals_code)
-        self.write_section_in_file('Init Code', code['declare_code'] + code['instantiation_code'])
+        self.write_section_in_file('Init Code', code['header_code'])
         self.write_section_in_file('Config Code', code['init_code'] + template_init_code)
         self.write_section_in_file('Dsp Code', code['processing_code'])
         

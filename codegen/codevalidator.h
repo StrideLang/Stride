@@ -21,7 +21,7 @@ public:
 
     StreamPlatform *getPlatform();
 
-    static BlockNode *findDeclaration(QString objectName, QVector<AST *> scope, AST *tree);
+    static BlockNode *findDeclaration(QString objectName, QVector<AST *> scopeStack, AST *tree);
     static PortType resolveBundleType(BundleNode *bundle, QVector<AST *> scope, AST *tree);
     static PortType resolveNameType(NameNode *name, QVector<AST *> scope, AST *tree);
     static PortType resolveNodeOutType(AST *node, QVector<AST *> scope, AST *tree);
@@ -36,7 +36,7 @@ public:
     static AST *getMemberFromList(ListNode *node, int index, QList<LangError> &errors);
     static PropertyNode *findPropertyByName(vector<PropertyNode *> properties, QString propertyName);
     static ListNode *validTypesForPort(BlockNode *typeDeclaration, QString portName, QVector<AST *> scope, AST *tree);
-    static BlockNode *findTypeDeclarationByName(QString typeName, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
+    static BlockNode *findTypeDeclarationByName(QString typeName, QVector<AST *> scopeStack, AST *tree, QList<LangError> &errors);
     static BlockNode *findTypeDeclaration(BlockNode *block, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
 
     static QVector<AST *> getPortsForTypeBlock(BlockNode *block, QVector<AST *> scope, AST *tree);
@@ -58,6 +58,8 @@ public:
 
     static int getLargestPropertySize(vector<PropertyNode *> &properties, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
 
+    static AST *getBlockSubScope(BlockNode *block);
+
     static QString getPortTypeName(PortType type);
 
     void validate();
@@ -68,6 +70,7 @@ private:
     QVector<AST *> getBlocksInScope(AST *root);
 
     void validateTypes(AST *node, QVector<AST *> scope);
+    void validateStreamMembers(StreamNode *node, QVector<AST *> scopeStack);
     void validateBundleIndeces(AST *node, QVector<AST *> scope);
     void validateBundleSizes(AST *node, QVector<AST *> scope);
     void validateSymbolUniqueness(AST *node, QVector<AST *> scope);

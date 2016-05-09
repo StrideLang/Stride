@@ -16,8 +16,8 @@ public:
     ParserTest();
 
 private:
-    void testMultichannelUgens(); // This has not yet been properly implemented. So don't run test
 
+    void testMultichannelUgens(); // This has not yet been properly implemented. So don't run test
 private Q_SLOTS:
     void testPlatformCommonObjects();
 
@@ -357,7 +357,7 @@ void ParserTest::testStreamRates()
     QVERIFY(name->getNodeType() == AST::Name);
     QVERIFY(name->getRate() == 44100);
 
-    //    oscillator() >> Rate1 >> lowPass() >> Output3;
+    //    Oscillator() >> Rate1 >> LowPass() >> Output3;
     stream = static_cast<StreamNode *>(nodes.at(6));
     QVERIFY(stream->getNodeType() == AST::Stream);
     QVERIFY(stream->getLeft()->getRate() == 22050);
