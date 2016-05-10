@@ -32,17 +32,33 @@ StreamPlatform::StreamPlatform(QStringList platformPaths, QString platform, QStr
         if (QFile::exists(fullPath)) {
             QStringList nameFilters;
             nameFilters << "*.stride";
-            QStringList libraryFiles =  QDir(fullPath).entryList(nameFilters);
-            foreach (QString file, libraryFiles) {
-                QString fileName = fullPath + QDir::separator() + file;
-                AST *tree = AST::parseFile(fileName.toLocal8Bit().data());
-                if(tree) {
-                    Q_ASSERT(!m_platform.contains(file));
-                    m_platform[file] = tree;
-                } else {
-                    vector<LangError> errors = AST::getParseErrors();
-                    foreach(LangError error, errors) {
-                        qDebug() << QString::fromStdString(error.getErrorText());
+            QStringList subPaths;
+            subPaths << "";
+            QMapIterator<QString, QString> it(importList);
+            while (it.hasNext()) {
+                it.next();
+                subPaths << it.key();
+            }
+            foreach(QString subPath, subPaths) {
+                QStringList libraryFiles =  QDir(fullPath + "/" + subPath).entryList(nameFilters);
+                foreach (QString file, libraryFiles) {
+                    QString fileName = fullPath + QDir::separator() + file;
+                    AST *tree = AST::parseFile(fileName.toLocal8Bit().data());
+                    if(tree) {
+                        Q_ASSERT(!m_platform.contains(file));
+                        m_platform[file] = tree;
+                    } else {
+                        vector<LangError> errors = AST::getParseErrors();
+                        foreach(LangError error, errors) {
+                            qDebug() << QString::fromStdString(error.getErrorText());
+                        }
+                    }
+                    QString namespaceName = importList[subPath];
+                    if (!namespaceName.isEmpty()) {
+                        foreach(AST *node, tree->getChildren()) {
+                            // Do we need to set namespace recursively or would this do?
+                            node->setNamespace(namespaceName.toStdString());
+                        }
                     }
                 }
             }

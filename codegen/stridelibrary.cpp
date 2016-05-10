@@ -154,6 +154,13 @@ void StrideLibrary::readLibrary(QString rootDir, QMap<QString, QString> importLi
             QString fileName = rootDir + basepath + QDir::separator() + subPath + QDir::separator() + file;
             AST *tree = AST::parseFile(fileName.toLocal8Bit().data());
             if(tree) {
+                QString namespaceName = importList[subPath];
+                if (!namespaceName.isEmpty()) {
+                    foreach(AST *node, tree->getChildren()) {
+                        // Do we need to set namespace recursively or would this do?
+                        node->setNamespace(namespaceName.toStdString());
+                    }
+                }
                 m_libraryTrees.append(tree);
             } else {
                 qDebug() << "Not loaded:" << fileName;

@@ -2,7 +2,7 @@
 
 
 NameNode::NameNode(string name, const char *filename, int line) :
-    AST(AST::Name, filename, line), m_namespace("")
+    AST(AST::Name, filename, line)
 {
     m_name = name;
 }
@@ -11,7 +11,7 @@ NameNode::NameNode(string name, string namespace_, const char *filename, int lin
     AST(AST::Name, filename, line)
 {
     m_name = name;
-    m_namespace = namespace_;
+    setNamespace(namespace_);
 }
 
 NameNode::~NameNode()

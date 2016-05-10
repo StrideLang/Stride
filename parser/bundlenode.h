@@ -14,14 +14,12 @@ public:
     virtual ~BundleNode();
 
     string getName() const;
-    string getNamespace() const;
     ListNode *index() const;
 
     AST *deepCopy();
 
 private:
     string m_name;
-    string m_namespace;
 };
 
 #endif // BUNDLENODE_H

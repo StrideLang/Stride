@@ -2,5 +2,9 @@ use Gamma version 1.0 on PC
 
 import filters
 
-AudioIn >> LowPass() >> AudioOut;
+AudioIn[1] >> LowPass() >> AudioOut[1];
+
+import filters as f
+
+AudioIn[1] >> f.LowPass() >> AudioOut[1];
 

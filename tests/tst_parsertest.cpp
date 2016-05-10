@@ -100,6 +100,18 @@ void ParserTest::testImport()
     CodeValidator generator2(QFINDTESTDATA("/../platforms"), tree);
     generator2.validate();
     QVERIFY(!generator2.isValid());
+    QList<LangError> errors = generator2.getErrors();
+    LangError error = errors.front();
+    QVERIFY(error.type == LangError::UndeclaredSymbol);
+    QVERIFY(error.lineNumber == 6);
+    QVERIFY(error.errorTokens[0] == "LowPass");
+
+    errors.removeFirst();
+    error = errors.front();
+    QVERIFY(error.type == LangError::UndeclaredSymbol);
+    QVERIFY(error.lineNumber == 9);
+    QVERIFY(error.errorTokens[0] == "LowPass");
+
 }
 
 void ParserTest::testConstantResolution()

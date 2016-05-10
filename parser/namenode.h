@@ -15,13 +15,10 @@ public:
 
     string getName() const {return m_name;}
 
-    string getNamespace() const {return m_namespace;}
-
     AST *deepCopy();
 
 private:
     string m_name;
-    string m_namespace;
 };
 
 

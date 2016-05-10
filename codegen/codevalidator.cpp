@@ -203,6 +203,7 @@ void CodeValidator::validateTypes(AST *node, QVector<AST *> scopeStack)
         scopeStack.append(CodeValidator::getBlockSubScope(block));
     } else if (node->getNodeType() == AST::Stream) {
         validateStreamMembers(static_cast<StreamNode *>(node), scopeStack);
+        return; // Children are validated when validating stream
     } else if (node->getNodeType() == AST::List) {
          // Children are checked automatically below
     } else if (node->getNodeType() == AST::Name) {
@@ -214,6 +215,7 @@ void CodeValidator::validateTypes(AST *node, QVector<AST *> scopeStack)
             error.lineNumber = node->getLine();
             error.filename = node->getFilename();
             error.errorTokens.push_back(name->getName());
+            error.errorTokens.push_back(name->getNamespace());
             m_errors << error;
         }
 
@@ -226,6 +228,7 @@ void CodeValidator::validateTypes(AST *node, QVector<AST *> scopeStack)
             error.lineNumber = node->getLine();
             error.filename = node->getFilename();
             error.errorTokens.push_back(bundle->getName());
+            error.errorTokens.push_back(bundle->getNamespace());
             m_errors << error;
         }
     } else if (node->getNodeType() == AST::Function) {
@@ -237,6 +240,7 @@ void CodeValidator::validateTypes(AST *node, QVector<AST *> scopeStack)
             error.lineNumber = node->getLine();
             error.filename = node->getFilename();
             error.errorTokens.push_back(func->getName());
+            error.errorTokens.push_back(func->getNamespace());
             m_errors << error;
         }
     }
@@ -927,7 +931,8 @@ double CodeValidator::evaluateConstReal(AST *node, QVector<AST *> scope, AST *tr
             LangError error;
             error.type = LangError::UndeclaredSymbol;
             error.lineNumber = node->getLine();
-            error.errorTokens.push_back(name.toStdString());
+            error.errorTokens.push_back(nameNode->getName());
+            error.errorTokens.push_back(nameNode->getNamespace());
             errors << error;
         }
         if(declaration && declaration->getNodeType() == AST::Block) {

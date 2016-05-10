@@ -65,10 +65,14 @@ public:
     string getFilename() const;
     void setFilename(const string &filename);
 
+    string getNamespace() const {return m_namespace;}
+    void setNamespace(string namespace_) { m_namespace = namespace_;}
+
 protected:
     Token m_token; // From which token did we create node?
     vector<AST *> m_children; // normalized list of children
     string m_filename; // file where the node was generated
+    string m_namespace;
     int m_line;
     double m_rate;
 };

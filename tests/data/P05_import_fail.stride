@@ -3,5 +3,7 @@ use Gamma version 1.0 on PC
 #import filters
 
 # This line should fail as LowPass is declared in "filters"
-AudioIn >> LowPass() >> AudioOut;
+AudioIn[1] >> LowPass() >> AudioOut[1];
 
+# This line shoud fail as LowPass not in namespace f
+AudioIn[1] >> f.LowPass() >> AudioOut[1];
