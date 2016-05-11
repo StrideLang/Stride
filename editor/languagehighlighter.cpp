@@ -27,7 +27,7 @@ void LanguageHighlighter::highlightBlock(const QString &text)
 //    }
 
     // Properties/ports
-    pattern ="([{,;\\s*]([a-z][a-zA-Z0-9_]*)[\\s]*:)";
+    pattern ="(([a-z][a-zA-Z0-9_]*)[\\s]*:)";
     expression.setPattern(pattern);
     index = text.indexOf(expression);
     while (index >= 0) {
@@ -78,6 +78,15 @@ void LanguageHighlighter::highlightBlock(const QString &text)
             setFormat(index, length, m_formats["type"]);
             index = text.indexOf(expression, index + length);
         }
+    }
+
+    pattern = ">>";
+    expression.setPattern(pattern);
+    index = text.indexOf(expression);
+    while (index >= 0) {
+        int length = expression.matchedLength();
+        setFormat(index, length, m_formats["streamOp"]);
+        index = text.indexOf(expression, index + length);
     }
 
     pattern = "\\\"(\\.|[^\"])*\\\"";
@@ -158,6 +167,7 @@ void LanguageHighlighter::setFormatPreset(int index)
     QTextCharFormat propertiesFormat;
     QTextCharFormat builtinFormat;
     QTextCharFormat stringFormat;
+    QTextCharFormat streamOpFormat;
 
     if (index == 0) {
         keywordFormat.setFontWeight(QFont::Bold);
@@ -187,6 +197,10 @@ void LanguageHighlighter::setFormatPreset(int index)
         stringFormat.setFontWeight(QFont::Bold);
         stringFormat.setForeground(QColor("#33CC00"));
         stringFormat.setBackground(Qt::white);
+
+        streamOpFormat.setFontWeight(QFont::Bold);
+        streamOpFormat.setForeground(QColor("#BBCCBB"));
+        streamOpFormat.setBackground(Qt::white);
     } else {
         return;
     }
@@ -198,6 +212,7 @@ void LanguageHighlighter::setFormatPreset(int index)
     m_formats["ports"] = propertiesFormat;
     m_formats["builtin"] = builtinFormat;
     m_formats["strings"] = stringFormat;
+    m_formats["streamOp"] = streamOpFormat;
 
     emit currentHighlightingChanged(m_formats);
 }
