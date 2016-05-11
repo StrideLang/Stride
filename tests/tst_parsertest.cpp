@@ -95,6 +95,9 @@ void ParserTest::testImport()
     generator.validate();
     QVERIFY(generator.isValid());
 
+    tree->deleteChildren();
+    delete tree;
+
     tree = parse(QString(QFINDTESTDATA("data/P05_import_fail.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator2(QFINDTESTDATA("/../platforms"), tree);
@@ -111,6 +114,9 @@ void ParserTest::testImport()
     QVERIFY(error.type == LangError::UndeclaredSymbol);
     QVERIFY(error.lineNumber == 9);
     QVERIFY(error.errorTokens[0] == "LowPass");
+
+    tree->deleteChildren();
+    delete tree;
 
 }
 
@@ -1090,6 +1096,8 @@ void ParserTest::testExpressions()
     QVERIFY(expression->getNodeType() == AST::Expression);
     QVERIFY(expression->getExpressionType() == ExpressionNode::LesserEqual);
 
+    tree->deleteChildren();
+    delete tree;
 }
 
 void ParserTest::testNamespaces()
