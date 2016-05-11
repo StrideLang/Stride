@@ -272,6 +272,10 @@ struct %s {
     def module_declaration(self, name, header_code, init_code,
                            output_block, input_block, process_code):       
         if input_block:
+            if 'block' in input_block:
+                input_block = input_block['block']
+            elif 'blockbundle' in input_block:
+                input_block = input_block['blockbundle']
             if input_block['type'] == 'signal':
                 if output_block and 'size' in output_block:
                     input_declaration = self.declaration_real(input_block['name'],
@@ -291,6 +295,10 @@ struct %s {
         else:
             input_declaration = ''
         if output_block:
+            if 'block' in output_block:
+                output_block = output_block['block']
+            elif 'blockbundle' in input_block:
+                output_block = output_block['blockbundle']
             if output_block['type'] == 'signal':
                 if 'size' in output_block:
                     out_type = 'void'
@@ -335,8 +343,12 @@ struct %s {
         
     def module_output_code(self, output_block):
         code = ''        
-        if output_block and not 'size' in output_block: #When a bundle, then output is passed as reference in the arguments
-            code += 'return %s;\n'%(output_block['name']) 
+        if 'block' in output_block:
+            block_type = 'block'
+        else:
+            block_type = 'blockbundle'
+        if not block_type == 'blockbundle' : #When a bundle, then output is passed as reference in the arguments
+            code += 'return %s;\n'%(output_block['block']['name']) 
         return code
         
     # Reactions code
@@ -344,6 +356,10 @@ struct %s {
     def reaction_declaration(self, name, header_code, init_code,
                            output_block, process_code):
         if output_block:
+            if 'block' in output_block:
+                output_block = output_block['block']
+            elif 'blockbundle' in output_block:
+                output_block = output_block['blockbundle']
             if output_block['type'] == 'signal':
                 if 'size' in output_block:
                     out_type = 'void'

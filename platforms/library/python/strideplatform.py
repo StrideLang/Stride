@@ -546,10 +546,12 @@ class ModuleAtom(Atom):
         self.rate = -1 # Should modules have rates?
         self.function = function
         
+        self.port_name_atoms = []
+        
         self._init_blocks(module["internalBlocks"],
                           module["input"], module["output"])
         self.set_inline(False)
-                         
+        
             
     def set_inline(self, inline):
         if inline:
@@ -585,6 +587,9 @@ class ModuleAtom(Atom):
             for inst in self.code["other_scope_instances"]:
                 inst['post'] = False
                 instances.append(inst)
+        for atom in self.port_name_atoms:
+            instances += atom.get_instances()
+                
         instances += [{'type' : 'module',
                      'handle': self.handle,
                      'moduletype' : self.name,
@@ -668,10 +673,21 @@ class ModuleAtom(Atom):
         tree = streams
         instanced = []
         if self._input_block:
-            instanced = [[self._input_block['name'], self.scope_index]]
+            if 'block' in self._input_block:
+                block_type = 'block'
+            else:
+                block_type = 'blockbundle'
+            instanced = [[self._input_block[block_type]['name'], self.scope_index]]
+            
+        if 'ports' in self.function:
+            for name,port in self.function['ports'].iteritems():
+                new_atom = self.platform.make_atom(port)
+                self.port_name_atoms.append(new_atom)
         
         self.code = self.platform.generate_code(tree, self.current_scope,
                                                 instanced = instanced)
+                                                
+
 
         if 'include' in self.globals and 'include' in self.code['global_groups']:
             self.globals['include'].extend(self.code['global_groups']['include'])
@@ -684,12 +700,14 @@ class ModuleAtom(Atom):
         self._blocks = []
         for block in blocks:
             if 'block' in block:
-                self._blocks.append(block['block'])
+                self._blocks.append(block)
+                block_type = 'block'
             elif 'blockbundle' in block:
-                self._blocks.append(block['blockbundle'])
-            if input_name and 'name' in input_name and self._blocks[-1]['name'] == input_name["name"]['name']:
+                self._blocks.append(block)
+                block_type = 'blockbundle'
+            if input_name and 'name' in input_name and self._blocks[-1][block_type]['name'] == input_name["name"]['name']:
                 self._input_block = self._blocks[-1]
-            if output_name and 'name' in output_name and  self._blocks[-1]['name'] == output_name["name"]["name"]:
+            if output_name and 'name' in output_name and  self._blocks[-1][block_type]['name'] == output_name["name"]["name"]:
                 self._output_block = self._blocks[-1]
                 
     def find_internal_block(self, block_name):
@@ -861,10 +879,12 @@ class ReactionAtom(Atom):
         self._blocks = []
         for block in blocks:
             if 'block' in block:
-                self._blocks.append(block['block'])
+                self._blocks.append(block)
+                block_type = 'block'
             elif 'blockbundle' in block:
-                self._blocks.append(block['blockbundle'])
-            if output_name and 'name' in output_name and  self._blocks[-1]['name'] == output_name["name"]["name"]:
+                self._blocks.append(block)
+                block_type = 'blockbundle'
+            if output_name and 'name' in output_name and  self._blocks[-1][block_type]['name'] == output_name["name"]["name"]:
                 self._output_block = self._blocks[-1]
                 
     def find_internal_block(self, block_name):
@@ -908,7 +928,7 @@ class PlatformFunctions:
                         return node["block"]
                 if 'blockbundle' in node:
                     if node["blockbundle"]["name"] == block_name:
-                        node["blockbundle"]['stack_index'] = len(self.scope_stack) + 1
+                        node["blockbundle"]['stack_index'] = len(self.scope_stack) + i
                         return node["blockbundle"]
 #        raise ValueError("Declaration not found for " + block_name)
         return None
@@ -1004,6 +1024,18 @@ class PlatformFunctions:
                 element_atom = self.make_atom(element)
                 list_atoms.append(element_atom)
             new_atom = ListAtom(list_atoms, scope_index)
+        elif "block" in member:
+            if 'type' in member['block']:
+                platform_type = self.find_stride_type(member['block']["type"])
+            else:
+                platform_type =  self.find_stride_type(member['block']["platformType"])
+            new_atom = NameAtom(platform_type, member['block'], self.unique_id, scope_index)
+        elif "blockbundle" in member:
+            if 'type' in member:
+                platform_type = self.find_stride_type(member['blockbundle']["type"])
+            else:
+                platform_type =  self.find_stride_type(member['blockbundle']["platformType"])
+            new_atom = NameAtom(platform_type, member['blockbundle'], self.unique_id, scope_index)
         else:
             raise ValueError("Unsupported type")
         return new_atom
