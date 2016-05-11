@@ -67,7 +67,7 @@ CLETTER	[A-Z]
 (_)*{CLETTER}({LETTER}|{CLETTER}|{DIGIT}|_)*	{ yylval.sval = strdup(yytext); return UVAR;}
 (_)*{LETTER}({LETTER}|{CLETTER}|{DIGIT})*		{ yylval.sval = strdup(yytext); return WORD;}
 
-'[^'\t\n]*'			{	buffer = strdup(yytext);
+'[^']*'			{	buffer = strdup(yytext);
                         buffer[strlen(buffer)-1] = '\0';
                         yylval.sval = strdup(buffer + 1);
                         free(buffer);
