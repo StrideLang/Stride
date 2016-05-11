@@ -669,6 +669,9 @@ int CodeValidator::getTypeNumOutputs(BlockNode *blockDeclaration, const QVector<
             ListNode *blockList = static_cast<ListNode *>(blockDeclaration->getPropertyValue("internalBlocks"));
             NameNode *outputName = static_cast<NameNode *>(blockDeclaration->getPropertyValue("output"));
             Q_ASSERT(blockList->getNodeType() == AST::List);
+            if (outputName->getNodeType() == AST::None) {
+                return 0;
+            }
             Q_ASSERT(outputName->getNodeType() == AST::Name);
             QString outputBlockName = QString::fromStdString(outputName->getName());
             foreach(AST *internalBlockNode, blockList->getChildren()) {

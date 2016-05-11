@@ -1,0 +1,34 @@
+
+
+module OSCOut {
+	input: Value
+	output: none
+	properties: [
+		property OSCAddressProperty {
+			name: "address"
+			block: Address
+			meta: "The OSC address"
+		},
+		property IPProperty {
+			name: "ip"
+			block: IP
+			meta: "The IP address to send to."
+		},
+		property PortProperty {
+			name: "port"
+			block: Port
+			meta: "The Network port to send the data to."
+		}
+	]
+	internalBlocks: [
+		signal Value {},
+		signal Address { default: "/Stride" },
+		signal IP { default: "127.0.0.1" },
+		signal Port { default: 9010 },
+		_oscOutType OscOutNode {}
+	]
+	streams: [
+		[Value, Address, IP, Port] >> OscOutNode;
+	]
+	meta: "Sends OSC messages."
+}

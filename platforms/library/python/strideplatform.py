@@ -18,6 +18,8 @@ class Atom(object):
         self.inline = False
         self.globals = {}
         
+        self.global_sections = ['include', 'initialization', 'linkTo']
+        
     def set_inline(self, inline):
         self.inline = inline
     
@@ -136,11 +138,18 @@ class ValueAtom(Atom):
         if self.is_inline():
             return []
         else:
-            return [{'type' : 'real',
+            if type(self.value) == unicode:
+                return [{'type' : 'string',
                      'handle' : self.handle,
-                     'code' : self.get_inline_processing_code([]),
+                     'code' : '"' + self.get_inline_processing_code([]) + '"',
                      'scope' : self.scope_index
                      }]
+            else:
+                return [{'type' : 'real',
+                         'handle' : self.handle,
+                         'code' : self.get_inline_processing_code([]),
+                         'scope' : self.scope_index
+                         }]
         
     def get_inline_processing_code(self, in_tokens):
         return str(self.value)
@@ -351,11 +360,13 @@ class NameAtom(Atom):
         self.handle = self.name # + '_%03i'%token_index;
         self.platform_type = platform_type
         self.declaration = declaration
-        if 'include' in platform_type['block']:
-            if 'include' in self.globals:
-                self.globals['include'].extend([inc['value'] for inc in platform_type['block']['include']])
-            else:
-                self.globals['include'] = [inc['value'] for inc in platform_type['block']['include']]
+        
+        for section in self.global_sections:
+            if section in platform_type['block']:
+                if section in self.globals:
+                    self.globals[section].extend([inc['value'] for inc in platform_type['block'][section]])
+                else:
+                    self.globals[section] = [inc['value'] for inc in platform_type['block'][section]]
         if 'initialization' in platform_type['block']:
             if 'initialization' in self.globals:
                 self.globals['initialization'] += platform_type['block']['initialization']
@@ -387,11 +398,18 @@ class NameAtom(Atom):
     def get_instances(self):
         default_value = self._get_default_value()
         if 'type' in self.declaration and self.declaration['type'] == 'signal':
-            inits = [{'handle' : self.handle,
-                      'type' : 'real',
-                      'code' : str(default_value),
+            if type(self.declaration['default']) == unicode:
+                inits = [{'handle' : self.handle,
+                      'type' : 'string',
+                      'code' : default_value,
                       'scope' : self.declaration['stack_index']
                       }]
+            else:
+                inits = [{'handle' : self.handle,
+                          'type' : 'real',
+                          'code' : str(default_value),
+                          'scope' : self.declaration['stack_index']
+                          }]
         elif 'type' in self.declaration and self.declaration['type'] == 'constant':
             inits = [{'handle' : self.handle,
                       'type' : 'real',
@@ -407,17 +425,31 @@ class NameAtom(Atom):
         elif 'block' in self.platform_type:
             inherits = self.platform_type['block']['inherits']
             if inherits == 'signal':
-                inits = [{'handle' : self.handle,
-                          'type' : 'real',
-                          'code' : str(default_value),
+                if type(self.declaration['default']) == unicode:
+                    inits = [{'handle' : self.handle,
+                          'type' : 'string',
+                          'code' : default_value,
                           'scope' : self.declaration['stack_index']
                           }]
+                else:
+                    inits = [{'handle' : self.handle,
+                              'type' : 'real',
+                              'code' : str(default_value),
+                              'scope' : self.declaration['stack_index']
+                              }]
             elif self.platform_type['block']['type'] == 'platformType':
-                inits = [{'handle' : self.handle,
-                          'type' : 'real',
-                          'code' : str(default_value),
-                          'scope' : self.declaration['stack_index']
-                          }]
+                if type(self.declaration['default']) == unicode:
+                    inits = [{'handle' : self.handle,
+                              'type' : 'string',
+                              'code' : default_value,
+                              'scope' : self.declaration['stack_index']
+                              }]
+                else:
+                    inits = [{'handle' : self.handle,
+                              'type' : 'real',
+                              'code' : str(default_value),
+                              'scope' : self.declaration['stack_index']
+                              }]
 
             else:
                 print("Don't know how to declare type " + ' '.join(self.declaration.keys()))
@@ -484,6 +516,7 @@ class BundleAtom(NameAtom):
         super(BundleAtom, self).__init__(platform_type, declaration, token_index, scope_index)
         self.scope_index = scope_index
         self.index = index - 1
+        self.set_inline(False)
 #        if not 'blockbundle' in self.platform_type and not 'platformType' in self.platform_type['block']['type']:
 #            raise ValueError("Need a block bundle platform type to make a Bundle Atom.")
         
@@ -491,13 +524,22 @@ class BundleAtom(NameAtom):
     def get_instances(self):
         default_value = self._get_default_value()
 
-        instances = [{'handle' : self.handle,
-                      'code' : str(default_value),
-                      'type' : 'bundle',
-                      'bundletype' : 'real',
-                      'size' : self.declaration['size'],
-                      'scope' : self.scope_index
-                      }]     
+        if 'default' in self.declaration and type(self.declaration['default']) == unicode:
+            instances = [{'handle' : self.handle,
+                          'code' : default_value,
+                          'type' : 'bundle',
+                          'bundletype' : 'string',
+                          'size' : self.declaration['size'],
+                          'scope' : self.scope_index
+                          }]   
+        else:
+            instances = [{'handle' : self.handle,
+                          'code' : str(default_value),
+                          'type' : 'bundle',
+                          'bundletype' : 'real',
+                          'size' : self.declaration['size'],
+                          'scope' : self.scope_index
+                          }] 
             
                 
         return instances
@@ -515,15 +557,30 @@ class BundleAtom(NameAtom):
     
     def get_processing_code(self, in_tokens):
         code = ''
-        if len(in_tokens) > 0:
-            code = templates.assignment(self._get_token_name(self.index),
-                                        self.get_inline_processing_code(in_tokens))
-                                       
-        if 'processing' in self.platform_type['block']:
-            code = self.get_inline_processing_code(in_tokens)
-        
         out_tokens = [self._get_token_name(self.index)]
+        if 'processing' in self.platform_type['block']:
+            if self.inline:
+                out_tokens = [self.get_inline_processing_code(in_tokens)]
+            else:
+                if self.platform_type['block']['numOutputs'] > 0:
+                    code = templates.assignment(self._get_token_name(self.index), self.get_inline_processing_code(in_tokens))
+                else:
+                    code = templates.expression(self.get_inline_processing_code(in_tokens))
+        else:
+            code = templates.assignment(self.handle, self.get_inline_processing_code(in_tokens)) 
+            
+#        if len(in_tokens) > 0:
+#            code = templates.assignment(self._get_token_name(self.index),
+#                                        self.get_inline_processing_code(in_tokens))
+#                                       
+#        if 'processing' in self.platform_type['block']:
+#            code = self.get_inline_processing_code(in_tokens)
+#        
+#        out_tokens = [self._get_token_name(self.index)]
         return code, out_tokens       
+        
+        
+        
     
         
     def _get_token_name(self, index):
@@ -606,11 +663,10 @@ class ModuleAtom(Atom):
         
     def get_inline_processing_code(self, in_tokens):
         code = ''
-        if self._output_block:
-            if 'size' in self._output_block:
-                code = templates.module_processing_code(self.handle, in_tokens, '_' + self.name + '_%03i_out'%self._index)
-            else:
-                code = templates.module_processing_code(self.handle, in_tokens, '')
+        if self._output_block and 'size' in self._output_block:
+            code = templates.module_processing_code(self.handle, in_tokens, '_' + self.name + '_%03i_out'%self._index)
+        else:
+            code = templates.module_processing_code(self.handle, in_tokens, '')
         return code
         
     def get_preprocessing_code(self, in_tokens):
@@ -618,7 +674,10 @@ class ModuleAtom(Atom):
         ports = self.function['ports']
         for port_name in ports:
             if 'value' in ports[port_name]:
-                port_in_token = [str(ports[port_name]['value'])]
+                if type(ports[port_name]['value']) == unicode:
+                     port_in_token = [ '"' + ports[port_name]['value'] + '"']
+                else:
+                    port_in_token = [str(ports[port_name]['value'])]
             elif 'name' in ports[port_name]:
                 port_in_token = [ports[port_name]['name']['name']]
             elif 'expression' in ports[port_name]:
@@ -664,9 +723,15 @@ class ModuleAtom(Atom):
         if self.module['properties']:
             for prop in self.module['properties']:
                 if 'block' in prop:
+                    decl = self.platform.find_declaration_in_tree(prop['block']['block']['name']['name'],
+                                                                  self.platform.tree + self.current_scope)
+                    if type(decl['default']) == unicode:
+                        prop_type = 'string'
+                    else:
+                        prop_type = 'real'
                     functions += templates.module_property_setter(prop['block']['name'],
                                              prop['block']['block']['name']['name'],
-                                             'real')
+                                             prop_type)
         return members + functions
         
     def _process_module(self, streams):
@@ -688,11 +753,11 @@ class ModuleAtom(Atom):
                                                 instanced = instanced)
                                                 
 
-
-        if 'include' in self.globals and 'include' in self.code['global_groups']:
-            self.globals['include'].extend(self.code['global_groups']['include'])
-        else:
-            self.globals['include'] = self.code['global_groups']['include']
+        for section in self.global_sections:
+            if section in self.globals and section in self.code[section]:
+                self.globals[section].extend(self.code['global_groups'][section])
+            else:
+                self.globals[section] = self.code['global_groups'][section]
 
 
         
@@ -868,10 +933,12 @@ class ReactionAtom(Atom):
         tree = streams
         self.code = self.platform.generate_code(tree,self.current_scope,
                                                 instanced = [])
-        if 'include' in self.globals and 'include' in self.code['global_groups']:
-            self.globals['include'].extend(self.code['global_groups']['include'])
-        else:
-            self.globals['include'] = self.code['global_groups']['include']
+        
+        for section in self.global_sections:
+            if section in self.globals and section in self.code[section]:
+                self.globals[section].extend(self.code['global_groups'][section])
+            else:
+                self.globals[section] = self.code['global_groups'][section]
 
 
         

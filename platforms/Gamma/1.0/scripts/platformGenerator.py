@@ -81,6 +81,13 @@ class Generator:
         
         ck_out(['astyle', self.out_dir + "/main.cpp" ])
         
+        self.link_flags = []
+        for link_target in code['global_groups']['linkTo']:
+            new_flag = "-l" + link_target
+            if not new_flag in self.link_flags:
+                self.link_flags.append(new_flag)
+        
+        
         
 # Compile --------------------------
     def compile(self):
@@ -116,9 +123,12 @@ class Generator:
         elif platform.system() == "Linux":
             cpp_compiler = "/usr/bin/c++"
         
-            flags = "-I"+ self.platform_dir +"/include -O3 -DNDEBUG -o" \
-                + self.out_dir +"/main.cpp.o -c "+ self.out_dir + "/main.cpp"
-            args = [cpp_compiler] + flags.split()
+            args = [cpp_compiler,
+                    "-I"+ self.platform_dir +"/include -O3 -DNDEBUG",
+                     "-o" + self.out_dir +"/main.cpp.o",
+                     "-c",
+                     self.out_dir + "/main.cpp"]
+
             
             #self.log(' '.join(args))
             #os.system(' '.join(args))
@@ -127,9 +137,18 @@ class Generator:
             self.log(outtext)
         
             # Link ------------------------
-            flags = "-O3 -DNDEBUG "+ self.out_dir +"/main.cpp.o -o"+ self.out_dir +"/app -rdynamic -L" \
-                + self.platform_dir + "/lib -lGamma -lpthread -lportaudio -lsndfile -lpthread -lportaudio -lsndfile"
-            args = [cpp_compiler] + flags.split()
+            gamma_flags = ["-lGamma", "-lpthread", "-lportaudio", "-lsndfile",
+                           "-lpthread", "-lportaudio", "-lsndfile"]
+            args = [cpp_compiler,
+                    "-O3",
+                    "-DNDEBUG",
+                    self.out_dir +"/main.cpp.o",
+                    "-o" + self.out_dir +"/app",
+                    "-rdynamic",
+                    "-L" + self.platform_dir + "/lib"]
+                    
+            
+            args += gamma_flags + self.link_flags 
             
             #self.log(' '.join(args))
             outtext = ck_out(args)

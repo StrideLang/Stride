@@ -66,8 +66,9 @@ struct %s {
         if num_inputs > 0: # has inputs
             if bundle_index >= 0:           
                 code = code.replace('%%bundle_index%%', str(bundle_index))
-            for i, match in enumerate(matches):
-                code = code.replace(match, token_names[i])          
+            for match in matches:
+                index = int(match[match.rfind(":") + 1:-2])
+                code = code.replace(match, token_names[index])          
                 code = code.replace('%%bundle_index%%', str(bundle_index))
         else: # Output only
             if bundle_index >= 0:           
@@ -104,6 +105,12 @@ struct %s {
         
     def declaration_bool(self, name, close=True):
         declaration = "bool %s"%name
+        if close:
+            declaration += ';\n'
+        return declaration 
+        
+    def declaration_string(self, name, close=True):
+        declaration = "std::string %s"%name
         if close:
             declaration += ';\n'
         return declaration 
@@ -158,6 +165,8 @@ struct %s {
             code = 'float ' + instance['handle'] + ';\n'
         elif instance['type'] == 'bool':
             code = 'bool ' + instance['handle'] + ';\n'
+        elif instance['type'] == 'string':
+            code = 'std::string ' + instance['handle'] + ';\n'
         elif instance['type'] =='bundle':
             if instance['bundletype'] == 'real':
                 code = 'float ' + instance['handle'] + '[%i];\n'%instance['size']
@@ -178,8 +187,11 @@ struct %s {
         if not instance['code'] == '':
             if instance['type'] == 'real':
                 code = self.assignment(instance['handle'], instance['code'])
-            if instance['type'] == 'bool':
+            elif instance['type'] == 'bool':
                 value = instance['code']
+                code = self.assignment(instance['handle'], value)
+            elif instance['type'] == 'string':
+                value = '"' + instance['code'] + '"'
                 code = self.assignment(instance['handle'], value)
             elif instance['type'] == 'bundle':
                 for i in range(instance['size']):
@@ -277,13 +289,15 @@ struct %s {
             elif 'blockbundle' in input_block:
                 input_block = input_block['blockbundle']
             if input_block['type'] == 'signal':
-                if output_block and 'size' in output_block:
-                    input_declaration = self.declaration_real(input_block['name'],
-                                                              close = False)
-                    input_declaration += ", float %s[%i]"%(output_block['name'], output_block['size'])
+                if type(input_block['default']) == unicode:
+                    input_declaration = self.declaration_string(input_block['name'],
+                                                                close = False)
                 else:
                     input_declaration = self.declaration_real(input_block['name'],
-                                                           close = False)
+                                                              close = False)
+                if output_block and 'size' in output_block:
+                    input_declaration += ", " + self.declaration_bundle(output_block['name'], output_block['size'], False)
+
             elif input_block['type'] == 'switch':
                 input_declaration = self.declaration_bool(input_block['name'],
                                                            close = False)
@@ -339,11 +353,15 @@ struct %s {
             code += 'void set_' + name + '(bool value) {\n'
             code += block_name + ' = value;\n'
             code += '\n}\n'
+        elif prop_type == 'string':
+            code += 'void set_' + name + '(std::string value) {\n'
+            code += block_name + ' = value;\n'
+            code += '\n}\n'
         return code
         
     def module_output_code(self, output_block):
         code = ''        
-        if 'block' in output_block:
+        if output_block and 'block' in output_block:
             block_type = 'block'
         else:
             block_type = 'blockbundle'

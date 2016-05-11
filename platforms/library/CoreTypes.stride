@@ -123,7 +123,7 @@ type _Signal {
 	ports: [
 		port Default {
 			name: "default"
-			types: ["CIP", "CRP"]
+			types: ["CIP", "CRP", "CSP"]
 			default: 0.0
 			required: off
 		}
