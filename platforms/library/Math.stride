@@ -1,0 +1,56 @@
+
+constant _Pi {
+    value: 3.14159265358979323846264338327950288419716939937510
+}
+
+module Cos {
+	input: Input
+	output: Output
+	properties: none # A property could be the type of input, (degrees, radians, etc.)
+	internalBlocks: [
+		signal Input {
+			default : 0.0
+			rate: AudioRate # FIXME needs to be streamRate
+			domain: streamDomain
+			meta: "Input angle in radians"
+		},
+		signal Output {
+			default :       0.0
+			rate:           AudioRate # FIXME needs to be streamRate
+			domain:         streamDomain
+			meta : "The cosine of the angle." 
+		}
+		_cosineType CosineBlock {}
+	]
+	streams: [
+		Input >> CosineBlock >> Output;
+	]
+	meta: "Cosine function"
+}
+
+
+
+module Sin {
+	input: Input
+	output: Output
+	properties: none # A property could be the type of input, (degrees, radians, etc.)
+	internalBlocks: [
+		signal Input {
+			default : 0.0
+			rate: AudioRate # FIXME needs to be streamRate
+			domain: streamDomain
+			meta: "Input angle in radians"
+		},
+		signal Output {
+			default :       0.0
+			rate:           AudioRate # FIXME needs to be streamRate
+			domain:         streamDomain
+			meta : "The sine of the angle." 
+		}
+		_sineType SineBlock {}
+	]
+	streams: [
+		Input >> SineBlock >> Output;
+	]
+	meta: "Sine function"
+}
