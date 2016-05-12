@@ -34,7 +34,8 @@ void PythonProject::build(AST *tree)
     QProcess pythonProcess(this);
     QStringList arguments;
     pythonProcess.setWorkingDirectory(m_platformPath + "/../../../");
-    arguments << "library/python/build.py" << m_projectDir << m_platformPath + "/../";
+    // TODO un hard-code library version
+    arguments << "library/1.0/python/build.py" << m_projectDir << m_platformPath + "/../";
     pythonProcess.start(m_pythonExecutable, arguments);
     if(!pythonProcess.waitForFinished()) {
 
@@ -62,7 +63,8 @@ void PythonProject::run(bool pressed)
        }
     }
     m_runningProcess.setWorkingDirectory(m_platformPath + "/../../../");
-    arguments << "library/python/run.py" << m_projectDir;
+    // TODO un hard-code library version
+    arguments << "library/1.0/python/run.py" << m_projectDir;
     m_runningProcess.start(m_pythonExecutable, arguments);
     m_running.store(1);
     while(m_running.load() == 1) {

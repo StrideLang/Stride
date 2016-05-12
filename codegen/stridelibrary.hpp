@@ -32,6 +32,8 @@ private:
 
     void readLibrary(QString rootDir, QMap<QString, QString> importList);
     QList<AST *> m_libraryTrees;
+    int m_majorVersion;
+    int m_minorVersion;
 };
 
 #endif // STRIDELIBRARY_HPP

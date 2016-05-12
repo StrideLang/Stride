@@ -18,7 +18,7 @@ if __name__ == '__main__':
     parser.add_argument("products_dir",
                         help="The directory where stride products where generated",
                         nargs='?',
-                        default= cur_path + '/Gamma/examples/scope.stride_Products'
+                        default= cur_path + '/Gamma/examples/filtering.stride_Products'
 #                        default='/home/andres/Documents/src/Stride/StreamStack/platforms/Arduino/examples/test.stride_Products'
                         )
     parser.add_argument("platform_dir",
