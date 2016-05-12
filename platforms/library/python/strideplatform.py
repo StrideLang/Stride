@@ -174,7 +174,8 @@ class ExpressionAtom(Atom):
         
     def set_inline(self, inline):
         self.left_atom.set_inline(inline)
-        self.right_atom.set_inline(inline)
+        if self.right_atom:
+            self.right_atom.set_inline(inline)
         self.inline = inline
             
     def get_declarations(self):
@@ -203,17 +204,22 @@ class ExpressionAtom(Atom):
             left_token = self.left_atom.get_out_tokens()[0]
 
             
-        if self.right_atom.is_inline():
-            right_token = self.right_atom.get_inline_processing_code([])
+        if self.right_atom:
+            if self.right_atom.is_inline():
+                right_token = self.right_atom.get_inline_processing_code([])
+            else:
+                right_token = self.right_atom.get_out_tokens()[0]
         else:
-            right_token = self.right_atom.get_out_tokens()[0]
+            right_token = None
             
         code = '(' + self._operator_symbol(left_token, right_token) + ')'
         return code
     
     def get_preprocessing_code(self, in_tokens):
         left_code = self.left_atom.get_preprocessing_code([])
-        right_code = self.right_atom.get_preprocessing_code([])
+        right_code = ''
+        if self.right_atom:
+            right_code = self.right_atom.get_preprocessing_code([])
         return left_code + right_code
     
     def get_processing_code(self, in_tokens):       
@@ -222,11 +228,17 @@ class ExpressionAtom(Atom):
             out_tokens = [self.get_inline_processing_code(in_tokens)]
         else:
             left_code = self.left_atom.get_processing_code([])[0]
-            right_code = self.right_atom.get_processing_code([])[0]
+            if self.right_atom:
+                right_code = self.right_atom.get_processing_code([])[0]
+                right_tokens = self.right_atom.get_out_tokens()[0]
+            else:
+                right_code = ''
+                right_tokens = None
             code += left_code + right_code
+            
             code += templates.assignment(self.handle,
                                          self._operator_symbol(self.left_atom.get_out_tokens()[0],
-                                                               self.right_atom.get_out_tokens()[0]))
+                                                               right_tokens))
             out_tokens = [self.handle]
         return code, out_tokens
         
@@ -245,7 +257,7 @@ class ExpressionAtom(Atom):
         elif self.expr_type == 'Or':
             out_type = 'bool'
         elif self.expr_type == 'UnaryMinus':
-            out_type = 'bool'
+            out_type = 'real'
         elif self.expr_type == 'LogicalNot':
             out_type = 'bool'
         elif self.expr_type == 'Greater':
@@ -545,7 +557,8 @@ class BundleAtom(NameAtom):
         return instances
         
     def get_inline_processing_code(self, in_tokens): 
-        code = super(BundleAtom, self).get_inline_processing_code(in_tokens)
+        code = ''
+ 
         if 'processing' in self.platform_type['block']:
             code = templates.get_platform_inline_processing_code(
                             self.platform_type['block']['processing'],
@@ -553,6 +566,11 @@ class BundleAtom(NameAtom):
                             self.platform_type['block']['numInputs'],
                             self.platform_type['block']['numOutputs'],
                             self.index)
+        else:
+            if len(in_tokens) > 0:
+                code = in_tokens[0]
+            else:
+                code = self._get_token_name(self.index)  
         return  code
     
     def get_processing_code(self, in_tokens):
@@ -567,7 +585,8 @@ class BundleAtom(NameAtom):
                 else:
                     code = templates.expression(self.get_inline_processing_code(in_tokens))
         else:
-            code = templates.assignment(self.handle, self.get_inline_processing_code(in_tokens)) 
+            for token in out_tokens:
+                code += templates.assignment(token, self.get_inline_processing_code(in_tokens)) 
             
 #        if len(in_tokens) > 0:
 #            code = templates.assignment(self._get_token_name(self.index),
@@ -578,10 +597,6 @@ class BundleAtom(NameAtom):
 #        
 #        out_tokens = [self._get_token_name(self.index)]
         return code, out_tokens       
-        
-        
-        
-    
         
     def _get_token_name(self, index):
         return '%s[%i]'%(self.handle, index)
@@ -594,7 +609,7 @@ class ModuleAtom(Atom):
         self.name = module["name"]
         self.handle = self.name + '_%03i'%token_index;
         self.current_scope = module["internalBlocks"]
-        self._platform_code = platform_code
+        #self._platform_code = platform_code
         self._input_block = None
         self._output_block = None
         self._index = token_index
@@ -690,7 +705,7 @@ class ModuleAtom(Atom):
     def get_processing_code(self, in_tokens):
         code = self.get_preprocessing_code(in_tokens)
         out_tokens = []
-        if 'output' in self._platform_code['block'] and not self._platform_code['block']['output'] is None:
+        if 'output' in self.module and not self.module['output'] is None: #For Platform types
             if self.inline:
                 code += self.get_handles()[0]
             else:
@@ -1063,19 +1078,15 @@ class PlatformFunctions:
         elif "function" in member:
             platform_type, declaration = self.find_block(member['function']['name'], self.tree)
             if declaration['type'] == 'module':
-                if 'platformType' in platform_type['block']:
-                    new_atom = PlatformTypeAtom(declaration, member['function'], platform_type, self.unique_id, self, scope_index)
-                elif 'type' in platform_type['block']:
+                if 'type' in platform_type['block']:
                     new_atom = ModuleAtom(declaration, member['function'], platform_type, self.unique_id, self, scope_index)
                 else:
                     raise ValueError("Invalid or unavailable platform type.")
             elif declaration['type'] == 'reaction':
                 new_atom = ReactionAtom(declaration, platform_type, self.unique_id, self, scope_index)
-            elif declaration['type'] == 'platformModule':
-                new_atom = PlatformModuleAtom(declaration, member['function'], platform_type, self.unique_id, self, scope_index)
         elif "expression" in member:
             if 'value' in member['expression']: # Unary expression
-                left_atom = self.make_atom(member['expression']['left'])
+                left_atom = self.make_atom(member['expression']['value'])
                 right_atom = None
             else:
                 left_atom = self.make_atom(member['expression']['left'])

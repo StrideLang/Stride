@@ -42,16 +42,16 @@ public:
     virtual ~AST();
 
     Token getNodeType() const { return m_token; }
-    void addChild(AST *t);
+    virtual void addChild(AST *t);
     void giveChildren(AST *p); // Move all children nodes to be children of "parent" and make parent a child of this class
     bool isNil() { return m_token == AST::None; }
 
     vector<AST *> getChildren() const {return m_children;}
-    void setChildren(vector<AST *> &newChildren);
+    virtual void setChildren(vector<AST *> &newChildren);
 
     int getLine() const {return m_line;}
 
-    void deleteChildren();
+    virtual void deleteChildren();
 
     virtual AST *deepCopy();
 

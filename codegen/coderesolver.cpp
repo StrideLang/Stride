@@ -18,7 +18,7 @@ CodeResolver::~CodeResolver()
 void CodeResolver::preProcess()
 {
     insertBuiltinObjects();
-    expandParallelFunctions(); // Find better name this expands bundles, functions and declares undefined bundles
+    expandParallel(); // Find better name this expands bundles, functions and declares undefined bundles
     resolveStreamSymbols();
     fillDefaultProperties();
     resolveRates();
@@ -111,76 +111,102 @@ void CodeResolver::fillDefaultProperties()
     }
 }
 
-void CodeResolver::expandParallelFunctions()
+void CodeResolver::expandParallelStream(StreamNode *stream, QVector<AST *> scopeStack, AST *tree)
 {
-    for (unsigned int i = 0; i < m_tree->getChildren().size(); ++i) {
-        AST *node = m_tree->getChildren()[m_tree->getChildren().size() - i - 1];
+    QList<LangError> errors;
+    StreamNode *subStream = stream;
+
+    // Figure out stream IO sizes
+    AST *left = stream->getLeft();
+    AST *right = stream->getRight();
+    QVector<QPair<int, int> > IOs;
+    while (right) {
+        if (left->getNodeType() == AST::Function) { // Expand from properties size to list
+            AST *newFunctions = expandFunctionFromProperties(static_cast<FunctionNode *>(left),
+                                                             scopeStack, m_tree);
+            if (newFunctions) {
+                subStream->setLeft(newFunctions);
+                left = subStream->getLeft();
+            }
+        }
+        QPair<int, int> io;
+        io.first = CodeValidator::getNodeNumInputs(left, scopeStack, m_tree, errors);
+        io.second = CodeValidator::getNodeNumOutputs(left, scopeStack, m_tree, errors);
+        IOs << io;
+        if (right->getNodeType() == AST::Stream) {
+            subStream = static_cast<StreamNode *>(right);
+            left = subStream->getLeft();
+            right = subStream->getRight();
+        } else {
+            if (right->getNodeType() == AST::Function) {
+                AST *newFunctions = expandFunctionFromProperties(static_cast<FunctionNode *>(right),
+                                                                 scopeStack, m_tree);
+                if (newFunctions) {
+                    subStream->setRight(newFunctions);
+                    right = subStream->getRight();
+                }
+            }
+            io.first = CodeValidator::getNodeNumInputs(right, scopeStack, m_tree, errors);
+            io.second = CodeValidator::getNodeNumOutputs(right, scopeStack, m_tree, errors);
+            IOs << io;
+            right = NULL;
+        }
+    }
+    // Now go through comparing number of outputs to number of inputs to figure out if we
+    // need to duplicate any members
+    QVector<int> numCopies;
+    numCopies << 1;
+    for(int i = 1; i < IOs.size(); ++i) {
+        int numPrevOut = IOs[i - 1].second * numCopies.back();
+        int numCurIn = IOs[i].first;
+        if (numPrevOut == -1) { // Found undeclared block
+            numCopies << 1;
+            continue;
+        }
+        if (numPrevOut > numCurIn) { // Need to clone next
+            if (numPrevOut/(float)numCurIn == numPrevOut/numCurIn) {
+                numCopies << numPrevOut/numCurIn;
+            } else {
+                // Stream size mismatch. Stop expansion. The error will be reported later by
+                // CodeValidator.
+                qDebug() << "Could not clone " << IOs[i - 1].second * numCopies.back()
+                         << " outputs into " << IOs[i].first << " inputs.";
+                break;
+            }
+        } else if (numPrevOut < numCurIn) { // Need to clone all existing left side
+
+            if (numCurIn/(float)numPrevOut == numCurIn/numPrevOut) {
+//                        int newNumCopies = numCurIn/numPrevOut;
+//                        for(int i = 0; i < numCopies.size(); ++i) {
+//                            numCopies[i] *= newNumCopies;
+//                        }
+                // Should not be expanded but connected recursively and interleaved (according to the rules of the language)
+                numCopies << 1;
+            } else {
+                // Stream size mismatch. Stop expansion. The error will be reported later by
+                // CodeValidator.
+                qDebug() << "Could not clone " << IOs[i - 1].second
+                         << " outputs into " << IOs[i].first << " inputs.";
+                break;
+            }
+
+        } else { // Size match, no need to clone
+            numCopies << 1;
+        }
+    }
+    if (numCopies.size() == IOs.size()) { // Expansion calculation went fine, so expand
+//                qDebug() << "Will expand";
+        expandStreamToSizes(stream, numCopies);
+    }
+}
+
+void CodeResolver::expandParallel()
+{
+    foreach (AST *node, m_tree->getChildren()) {
+        QVector<AST *> scopeStack;
         if (node->getNodeType() == AST::Stream) {
             StreamNode *stream = static_cast<StreamNode *>(node);
-            QList<LangError> errors;
-            QVector<AST *> scope;
-
-            // Figure out stream IO sizes
-            AST *left = stream->getLeft();
-            StreamNode *stream2;
-            AST *right = stream->getRight();
-            QVector<QPair<int, int> > IOs;
-            while (right) {
-                QPair<int, int> io;
-                io.first = CodeValidator::getNodeNumInputs(left, QVector<AST *>(), m_tree, errors);
-                io.second = CodeValidator::getNodeNumOutputs(left, QVector<AST *>(), m_tree, errors);
-                IOs << io;
-                if (right->getNodeType() == AST::Stream) {
-                    stream2 = static_cast<StreamNode *>(right);
-                    left = stream2->getLeft();
-                    right = stream2->getRight();
-                } else {
-                    io.first = CodeValidator::getNodeNumInputs(right, QVector<AST *>(), m_tree, errors);
-                    io.second = CodeValidator::getNodeNumOutputs(right, QVector<AST *>(), m_tree, errors);
-                    IOs << io;
-                    right = NULL;
-                }
-            }
-            // Now go through comparing number of outputs to number of inputs to figure out if we
-            // need to duplicate any members
-            QVector<int> numCopies;
-            numCopies << 1;
-            for(int i = 1; i < IOs.size(); ++i) {
-                int numPrevOut = abs(IOs[i - 1].second * numCopies.back());
-                int numCurIn = abs(IOs[i].first);
-                if (numPrevOut > numCurIn) { // Need to clone next
-                    if (numPrevOut/(float)numCurIn == numPrevOut/numCurIn) {
-                        numCopies << numPrevOut/numCurIn;
-                    } else {
-                        // Stream size mismatch. Stop expansion. The error will be reported later by
-                        // CodeValidator.
-                        qDebug() << "Could not clone " << IOs[i - 1].second * numCopies.back()
-                                 << " outputs into " << IOs[i].first << " inputs.";
-                        break;
-                    }
-                } else if (numPrevOut < numCurIn) { // Need to clone all existing left side
-                    if (numCurIn/(float)numPrevOut == numCurIn/numPrevOut) {
-                        int newNumCopies = numCurIn/numPrevOut;
-                        for(int i = 0; i < numCopies.size(); ++i) {
-                            numCopies[i] *= newNumCopies;
-                        }
-                        numCopies << 1;
-                    } else {
-                        // Stream size mismatch. Stop expansion. The error will be reported later by
-                        // CodeValidator.
-                        qDebug() << "Could not clone " << IOs[i - 1].second
-                                 << " outputs into " << IOs[i].first << " inputs.";
-                        break;
-                    }
-
-                } else { // Size match, no need to clone
-                    numCopies << 1;
-                }
-            }
-            if (numCopies.size() == IOs.size()) { // Expansion calculation went fine, so expand
-//                qDebug() << "Will expand";
-                expandStreamToSizes(stream, numCopies);
-            }
+            expandParallelStream(stream, scopeStack, m_tree);
         }
     }
 }
@@ -197,8 +223,9 @@ void CodeResolver::expandStreamToSizes(StreamNode *stream, QVector<int> &size)
             || left->getNodeType() == AST::Function) {
         int numCopies = size.front();
         if (leftSize < 0 && left->getNodeType() == AST::Name) {
-            declareUnknownName(static_cast<NameNode *>(left), numCopies, m_tree);
-        } else if (numCopies > 1) {
+            declareUnknownName(static_cast<NameNode *>(left), abs(numCopies), m_tree);
+        }
+        if (numCopies > 1) {
             ListNode *newLeft = new ListNode(left->deepCopy(), left->getFilename().data(), left->getLine());
             for (int i = 1; i < numCopies; i++) {
                 newLeft->addChild(left->deepCopy());
@@ -216,7 +243,7 @@ void CodeResolver::expandStreamToSizes(StreamNode *stream, QVector<int> &size)
                 || right->getNodeType() == AST::Function) {
             int numCopies = size.front();
             if (rightSize < 0 && right->getNodeType() == AST::Name) {
-                declareUnknownName(static_cast<NameNode *>(right), numCopies, m_tree);
+                declareUnknownName(static_cast<NameNode *>(right), abs(numCopies), m_tree);
             } else if (numCopies > 1) {
                 ListNode *newRight = new ListNode(right->deepCopy(), right->getFilename().data(), right->getLine());
                 for (int i = 1; i < numCopies; i++) {
@@ -229,6 +256,81 @@ void CodeResolver::expandStreamToSizes(StreamNode *stream, QVector<int> &size)
         size.pop_front();
         Q_ASSERT(size.size() == 0); // This is the end of the stream there should be no sizes left
     }
+}
+
+AST *CodeResolver::expandFunctionFromProperties(FunctionNode *func, QVector<AST *> scopeStack, AST *tree)
+{
+    QList<LangError> errors;
+    ListNode *newFunctions = NULL;
+    int dataSize = CodeValidator::getFunctionDataSize(func, scopeStack, tree, errors);
+    if (dataSize > 1) {
+        vector<PropertyNode *> props = func->getProperties();
+        newFunctions = new ListNode(NULL, func->getFilename().c_str(), func->getLine());
+        for (int i = 0; i < dataSize; ++i) { // FIXME this assumes each port takes a single input. Need to check the actual input size.
+            newFunctions->addChild(func->deepCopy());
+        }
+        foreach(AST * newFunction, newFunctions->getChildren()) {
+            newFunction->deleteChildren(); // Get rid of old properties. They will be put back below
+        }
+        foreach(PropertyNode *prop, props) {
+            AST *value = prop->getValue();
+            int numOuts = CodeValidator::getNodeNumOutputs(value, scopeStack, tree, errors);
+            if (numOuts != 1 && numOuts != dataSize) {
+                LangError error;
+                error.type = LangError::BundleSizeMismatch;
+                error.filename = func->getFilename();
+                error.lineNumber = func->getLine();
+                error.errorTokens.push_back(func->getName());
+                error.errorTokens.push_back(QString::number(numOuts).toStdString());
+                error.errorTokens.push_back(QString::number(dataSize).toStdString());
+                errors << error;
+                newFunctions->deleteChildren();
+                delete newFunctions;
+                return NULL;
+            }
+            if (numOuts == 1) { // Single value given, duplicate for all copies.
+                foreach(AST * newFunction, newFunctions->getChildren()) {
+                    newFunction->addChild(prop->deepCopy());
+                }
+            } else {
+                if (value->getNodeType() == AST::Bundle) {
+                    // FIXME write support for ranges
+
+                } else if (value->getNodeType() == AST::Name) {
+                    NameNode *name = static_cast<NameNode *>(value);
+                    BlockNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()),
+                                                                      scopeStack, tree);
+                    int size = CodeValidator::getBlockDeclaredSize(block, scopeStack, tree, errors);
+                    Q_ASSERT(size == dataSize);
+                    for (int i = 0; i < size; ++i) {
+                        PropertyNode *newProp = static_cast<PropertyNode *>(prop->deepCopy());
+                        ListNode *indexList = new ListNode(new ValueNode(i + 1,
+                                                                         prop->getFilename().c_str(),
+                                                                         prop->getLine()),
+                                                           prop->getFilename().c_str(), prop->getLine());
+                        BundleNode *newBundle = new BundleNode(name->getName(), indexList,
+                                                               prop->getFilename().c_str(), prop->getLine());
+                        newProp->replaceValue(newBundle);
+                        static_cast<FunctionNode *>(newFunctions->getChildren()[i])->addChild(newProp);
+                    }
+
+                } else if (value->getNodeType() == AST::List) {
+                    vector<AST *> values = static_cast<ListNode *>(value)->getChildren();
+                    vector<AST *> functions = static_cast<ListNode *>(newFunctions)->getChildren();
+                    Q_ASSERT(values.size() == functions.size());
+                    for (int i = 0 ; i < dataSize; ++i) {
+                        PropertyNode *newProp = static_cast<PropertyNode *>(prop->deepCopy());
+                        newProp->replaceValue(values[i]->deepCopy());
+                        static_cast<FunctionNode *>(functions[i])->addChild(newProp);
+                    }
+                } else {
+                    qDebug() << "Error. Don't know how to expand property.";
+                }
+            }
+
+        }
+    }
+    return newFunctions;
 }
 
 double CodeResolver::findRateInProperties(vector<PropertyNode *> properties, QVector<AST *> scope, AST *tree)

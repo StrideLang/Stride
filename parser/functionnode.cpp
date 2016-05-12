@@ -12,18 +12,34 @@ FunctionNode::FunctionNode(string name, AST *propertiesList, FunctionType type,
     }
     m_type = type;
 
-    for (unsigned int i = 0; i < m_children.size(); i++) {
-        assert(m_children.at(i)->getNodeType() == AST::Property);
-        m_properties.push_back(static_cast<PropertyNode *>(m_children.at(i)));
-    }
-    m_parallelInstances = 0;
-
     m_namespace = namespace_;
 }
 
 FunctionNode::~FunctionNode()
 {
 
+}
+
+void FunctionNode::addChild(AST *t)
+{
+    AST::addChild(t);
+    assert(t->getNodeType() == AST::Property);
+    m_properties.push_back(static_cast<PropertyNode *>(t));
+}
+
+void FunctionNode::setChildren(vector<AST *> &newChildren)
+{
+    AST::setChildren(newChildren);
+    for (unsigned int i = 0; i < m_children.size(); i++) {
+        assert(m_children.at(i)->getNodeType() == AST::Property);
+        m_properties.push_back(static_cast<PropertyNode *>(m_children.at(i)));
+    }
+}
+
+void FunctionNode::deleteChildren()
+{
+    AST::deleteChildren();
+    m_properties.clear();
 }
 
 vector<PropertyNode *> FunctionNode::getProperties() const

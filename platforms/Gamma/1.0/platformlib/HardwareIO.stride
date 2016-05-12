@@ -49,49 +49,7 @@ _hwOutput AudioOut[2] {
     domain: _GammaDomain
 }
 
-# Sine function test
-platformType _SineType {
-    typeName: '_sineType'
-    numInputs: 1
-	numOutputs: 1
-    include: ["cmath"]
-    linkTo: []
-    declarations: ''
-    initialization: ["// %%token%% = 0;"]
-    processing: "std::sin(%%intoken:0%%)"
-    inherits: ['signal']
-}
-
-platformModule Sine {
-	input: Input
-	output: Output
-	properties: none # A property could be the type of input, (degrees, radians, etc.)
-	internalBlocks: [
-		signal Input {
-			default : 0.0
-			rate: AudioRate # FIXME needs to be streamRate
-			domain: streamDomain
-			meta: "Input angle in radians"
-		},
-		signal Output {
-			default :       0.0
-			rate:           AudioRate # FIXME needs to be streamRate
-			domain:         streamDomain
-			meta : "The sine of the angle." 
-		}
-		_sineType SineBlock {}
-	]
-	streams: [
-		Input >> SineBlock >> Output;
-	]
-	meta: "Sine function"
-}
-
-constant _Pi {
-    value: 3.14159265358979323846264338327950288419716939937510
-}
-
-platformModule Oscillator {
+module Oscillator {
     input: none
     output: Output
     properties: [
@@ -195,7 +153,7 @@ platformType _SelectType {
 }
 
  # FIXME AudioRate needs to be streamRate
-platformModule Select {
+module Select {
     input: Input
     output: Output
     properties:  [

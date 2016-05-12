@@ -11,7 +11,7 @@ platformType _DebugPrintType {
 }
 
 
-platformModule DebugPrint {
+module DebugPrint {
     input: Value
     output: none
 	properties: [

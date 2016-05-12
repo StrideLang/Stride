@@ -293,7 +293,7 @@ void PythonProject::expressionToJson(ExpressionNode *node, QJsonObject &obj)
         QJsonObject value;
         astToJson(node->getValue(), value);
         if (!value.isEmpty()) {
-            obj = value;
+            obj["value"] = value;
         }
     } else {
         QJsonObject left;

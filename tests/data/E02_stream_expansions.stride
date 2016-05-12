@@ -12,8 +12,22 @@ signal Out[2] {
 #Expanded to lists of size 2
 In >> Out;
 
-# Signals should be delcared as blocks of size 2
+# Only OutSignal2 should be delcared as block of size 2
 InSignal2 >> [Level(gain: 1.0), Level(gain: 1.0)] >> OutSignal2;
 
 # Level() should be duplicated and OutSignal3 declared as a bundle size 2
 In >> Level(gain: 1.0) >> OutSignal3;
+
+# No expansion should occur
+signal StereoOut[2] { }
+MonoSignal >> Level(gain: 1.0) >> StereoOut;
+
+# Level should be expanded into a list
+MonoSignal2 >> Level(gain: [1.0, 1.0]) >> StereoOut2;
+
+# NewSignal2 should be auto declared as a bundle with size 2
+Out >> Level(gain: 1.0) >> NewSignal;
+NewSignal >> Level(gain: 1.0) >> NewSignal2;
+
+# Need to check bundle and name into properties and correct expansion
+

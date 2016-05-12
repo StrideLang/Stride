@@ -189,7 +189,7 @@ QStringList StreamPlatform::getFunctionNames()
     foreach(AST* node, m_platform) {
         if (node->getNodeType() == AST::Block) {
             BlockNode *block = static_cast<BlockNode *>(block);
-            if (block->getObjectType() == "platformModule") {
+            if (block->getObjectType() == "module") {
                 typeNames << QString::fromStdString(block->getName());
             }
         }

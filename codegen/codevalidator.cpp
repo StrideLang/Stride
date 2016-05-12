@@ -487,6 +487,29 @@ int CodeValidator::getBlockDataSize(BlockNode *block, QVector<AST *> scope, QLis
     return size;
 }
 
+int CodeValidator::getFunctionDataSize(FunctionNode *func, QVector<AST *> scope, AST *tree, QList<LangError> &errors)
+{
+    QVector<PropertyNode *> ports = QVector<PropertyNode *>::fromStdVector(func->getProperties());
+    if (ports.size() == 0) {
+        return 1;
+    }
+    int size = 1;
+    foreach(PropertyNode *port, ports) {
+        AST *value = port->getValue();
+        int newSize = CodeValidator::getNodeNumOutputs(value, scope, tree, errors);
+        if (size != newSize) {
+            if (size == 1) {
+                size = newSize;
+            } else if (newSize == 1) {
+                // just ignore
+            } else {
+                size = -1; // TODO should this be a reported error?
+            }
+        }
+    }
+    return size;
+}
+
 int CodeValidator::getBundleSize(BundleNode *bundle, QVector<AST *> scope, AST * tree, QList<LangError> &errors)
 {
     ListNode *indexList = bundle->index();
@@ -582,8 +605,6 @@ AST *CodeValidator::getBlockSubScope(BlockNode *block)
         internalBlocks = block->getPropertyValue("internalBlocks");
     } else if (block->getObjectType() == "reaction") {
         internalBlocks = block->getPropertyValue("internalBlocks");
-    } else if (block->getObjectType() == "platformModule") {
-        internalBlocks = block->getPropertyValue("internalBlocks");
     }
     return internalBlocks;
 }
@@ -612,8 +633,9 @@ int CodeValidator::getNodeNumOutputs(AST *node, const QVector<AST *> &scope, AST
     } else if (node->getNodeType() == AST::Function) {
         FunctionNode *func = static_cast<FunctionNode *>(node);
         BlockNode *platformFunc = CodeValidator::findDeclaration(QString::fromStdString(func->getName()), scope, tree);
+        int dataSize = CodeValidator::getFunctionDataSize(func, scope, tree, errors);
         if (platformFunc) {
-            return getTypeNumOutputs(platformFunc, scope, tree, errors);
+            return getTypeNumOutputs(platformFunc, scope, tree, errors) * dataSize;
         } else {
             return -1;
         }
@@ -626,8 +648,9 @@ int CodeValidator::getNodeNumInputs(AST *node, const QVector<AST *> &scope, AST 
     if (node->getNodeType() == AST::Function) {
         FunctionNode *func = static_cast<FunctionNode *>(node);
         BlockNode *platformFunc = CodeValidator::findDeclaration(QString::fromStdString(func->getName()), scope, tree);
+        int dataSize = CodeValidator::getFunctionDataSize(func, scope, tree, errors);
         if (platformFunc) {
-            return getTypeNumInputs(platformFunc, scope, tree, errors);
+            return getTypeNumInputs(platformFunc, scope, tree, errors) * dataSize;
         } else {
             return -1;
         }
@@ -685,9 +708,6 @@ int CodeValidator::getTypeNumOutputs(BlockNode *blockDeclaration, const QVector<
                 }
             }
             return -1; // Should never get here!
-        } else if (blockDeclaration->getObjectType() == "platformModule") {
-            //            qFatal() << "Implement"; // TODO implement
-            return 1;
         }
         return 1;
     }
@@ -702,6 +722,9 @@ int CodeValidator::getTypeNumInputs(BlockNode *blockDeclaration, const QVector<A
             ListNode *blockList = static_cast<ListNode *>(blockDeclaration->getPropertyValue("internalBlocks"));
             NameNode *inputName = static_cast<NameNode *>(blockDeclaration->getPropertyValue("input"));
             Q_ASSERT(blockList->getNodeType() == AST::List);
+            if (inputName->getNodeType() == AST::None) {
+                return 0;
+            }
             Q_ASSERT(inputName->getNodeType() == AST::Name);
             QString inputBlockName = QString::fromStdString(inputName->getName());
             foreach(AST *internalBlockNode, blockList->getChildren()) {
@@ -714,9 +737,6 @@ int CodeValidator::getTypeNumInputs(BlockNode *blockDeclaration, const QVector<A
                 }
                 return -1; // Should never get here!
             }
-        } else if (blockDeclaration->getObjectType() == "platformModule") {
-//            qFatal() << "Implement"; // TODO implement.
-            return 1;
         }
         return 1;
     }

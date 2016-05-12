@@ -49,6 +49,7 @@ public:
     /// can the node be broken up.
     static int getNodeSize(AST *node, AST *tree);
 
+    static int getFunctionDataSize(FunctionNode *func, QVector<AST *> scope, AST * tree, QList<LangError> &errors);
     static int getNodeNumOutputs(AST *node, const QVector<AST *> &scope, AST *tree, QList<LangError> &errors);    bool validateNodeDeclaration(QString name, QVector<AST *> scopeStack, AST *tree);
     static int getNodeNumInputs(AST *node, const QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
     static int getTypeNumOutputs(BlockNode *blockDeclaration, const QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
@@ -59,6 +60,7 @@ public:
     static int getLargestPropertySize(vector<PropertyNode *> &properties, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
 
     static AST *getBlockSubScope(BlockNode *block);
+    static int getBundleSize(BundleNode *bundle, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
 
     static QString getPortTypeName(PortType type);
 
@@ -82,7 +84,6 @@ private:
     void validateStreamInputSize(StreamNode *stream, QVector<AST *> scope, QList<LangError> &errors);
 
     int getBlockDataSize(BlockNode *block, QVector<AST *> scope, QList<LangError> &errors);
-    static int getBundleSize(BundleNode *bundle, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
 
     QString getNodeText(AST *node);
 

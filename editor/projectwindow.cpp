@@ -465,11 +465,11 @@ bool ProjectWindow::saveFile(int index)
         editor = static_cast<CodeEditor *>(ui->tabWidget->widget(index));
     }
     Q_ASSERT(editor);
-    if (!editor->document()->isModified()) {
-        return true;
-    }
     if (editor->filename().isEmpty()) {
         return saveFileAs();
+    }
+    if (!editor->document()->isModified()) {
+        return true;
     }
     QString code = editor->toPlainText();
     QFile codeFile(editor->filename());

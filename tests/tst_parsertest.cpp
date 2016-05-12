@@ -559,29 +559,9 @@ void ParserTest::testStreamExpansion()
     stream = static_cast<StreamNode *>(nodes.at(5));
     QVERIFY(stream->getNodeType() == AST::Stream);
 
-    list = static_cast<ListNode *>(stream->getLeft());
-    QVERIFY(list->getNodeType() == AST::List);
-    QVERIFY(list->getChildren().size() == 2);
-
-    bundle = static_cast<BundleNode *>(list->getChildren()[0]);
-    QVERIFY(bundle->getNodeType() == AST::Bundle);
-    QVERIFY(bundle->getName() == "InSignal2");
-    index = static_cast<ListNode *>(bundle->index());
-    QVERIFY(index->getNodeType() == AST::List);
-    QVERIFY(index->getChildren().size() == 1);
-    value = static_cast<ValueNode *>(index->getChildren().at(0));
-    QVERIFY(value->getNodeType() == AST::Int);
-    QVERIFY(value->getIntValue() == 1);
-
-    bundle = static_cast<BundleNode *>(list->getChildren()[1]);
-    QVERIFY(bundle->getNodeType() == AST::Bundle);
-    QVERIFY(bundle->getName() == "InSignal2");
-    index = static_cast<ListNode *>(bundle->index());
-    QVERIFY(index->getNodeType() == AST::List);
-    QVERIFY(index->getChildren().size() == 1);
-    value = static_cast<ValueNode *>(index->getChildren().at(0));
-    QVERIFY(value->getNodeType() == AST::Int);
-    QVERIFY(value->getIntValue() == 2);
+    NameNode *name = static_cast<NameNode *>(stream->getLeft());
+    QVERIFY(name->getNodeType() == AST::Name);
+    QVERIFY(name->getName() == "InSignal2");
 
     right = static_cast<StreamNode *>(stream->getRight());
     QVERIFY(right->getNodeType() == AST::Stream);
@@ -651,6 +631,72 @@ void ParserTest::testStreamExpansion()
     value = static_cast<ValueNode *>(index->getChildren().at(0));
     QVERIFY(value->getNodeType() == AST::Int);
     QVERIFY(value->getIntValue() == 2);
+
+//    signal StereoOut[2] { }
+//    MonoSignal >> Level(gain: 1.0) >> StereoOut;
+    stream = static_cast<StreamNode *>(nodes.at(8));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    name = static_cast<NameNode *>(stream->getLeft());
+    QVERIFY(name->getNodeType() == AST::Name);
+    QVERIFY(name->getName() == "MonoSignal");
+    stream = static_cast<StreamNode *>(stream->getRight());
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    func = static_cast<FunctionNode *>(stream->getLeft());
+    QVERIFY(func->getNodeType() == AST::Function);
+    list = static_cast<ListNode *>(stream->getRight());
+    QVERIFY(list->getNodeType() == AST::List);
+    QVERIFY(list->getChildren().size() == 2);
+
+//    signal StereoOut[2] { }
+//    MonoSignal2 >> Level(gain: [1.0, 1.0]) >> StereoOut;
+    stream = static_cast<StreamNode *>(nodes.at(9));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    name = static_cast<NameNode *>(stream->getLeft());
+    QVERIFY(name->getNodeType() == AST::Name);
+    QVERIFY(name->getName() == "MonoSignal2");
+    stream = static_cast<StreamNode *>(stream->getRight());
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    list = static_cast<ListNode *>(stream->getLeft());
+    QVERIFY(list->getNodeType() == AST::List);
+    QVERIFY(list->getChildren().size() == 2);
+    func = static_cast<FunctionNode *>(list->getChildren()[0]);
+    QVERIFY(func->getNodeType() == AST::Function);
+    QVERIFY(func->getName() == "Level");
+    vector<PropertyNode *> props = func->getProperties();
+    QVERIFY(props[0]->getName() == "gain" );
+    value = static_cast<ValueNode *>(props[0]->getValue());
+    QVERIFY(value->getNodeType() == AST::Real);
+    QVERIFY(value->getRealValue() == 1.0);
+    func = static_cast<FunctionNode *>(list->getChildren()[1]);
+    QVERIFY(func->getNodeType() == AST::Function);
+    props = func->getProperties();
+    QVERIFY(props[0]->getName() == "gain" );
+    value = static_cast<ValueNode *>(props[0]->getValue());
+    QVERIFY(value->getNodeType() == AST::Real);
+    QVERIFY(value->getRealValue() == 1.0);
+
+    list = static_cast<ListNode *>(stream->getRight());
+    QVERIFY(list->getNodeType() == AST::List);
+    QVERIFY(list->getChildren().size() == 2);
+    bundle = static_cast<BundleNode *>(list->getChildren()[0]);
+    QVERIFY(bundle->getNodeType() == AST::Bundle);
+    index = bundle->index();
+    QVERIFY(index->getChildren().size() == 1);
+    value = static_cast<ValueNode *>(index->getChildren()[0]);
+    QVERIFY(value->getNodeType() == AST::Int);
+    QVERIFY(value->getIntValue() == 1);
+    bundle = static_cast<BundleNode *>(list->getChildren()[1]);
+    QVERIFY(bundle->getNodeType() == AST::Bundle);
+    index = bundle->index();
+    QVERIFY(index->getChildren().size() == 1);
+    value = static_cast<ValueNode *>(index->getChildren()[0]);
+    QVERIFY(value->getNodeType() == AST::Int);
+    QVERIFY(value->getIntValue() == 2);
+
+//    Out >> Level(gain: 1.0) >> NewSignal;
+//    NewSignal >> Level(gain: 1.0) >> NewSignal2;
+
+
 
     tree->deleteChildren();
     delete tree;

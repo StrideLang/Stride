@@ -30,9 +30,11 @@ private:
     void resolveRates();
     void resolveStreamRates(StreamNode *stream);
     void fillDefaultProperties();
-    void expandParallelFunctions();
+    void expandParallel();
+    void expandParallelStream(StreamNode *stream, QVector<AST *> scopeStack, AST *tree);
 
     void expandStreamToSizes(StreamNode *stream, QVector<int> &size);
+    AST *expandFunctionFromProperties(FunctionNode *func, QVector<AST *> scope, AST *tree);
     void fillDefaultPropertiesForNode(AST *node);
 
     // TODO move these four functions to CodeValidator with the rest of querying functions
