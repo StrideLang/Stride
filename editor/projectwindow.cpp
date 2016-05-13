@@ -69,6 +69,17 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
 ProjectWindow::~ProjectWindow()
 {
     delete ui;
+    QMutexLocker locker(&m_validTreeLock);
+    if (m_lastValidTree) {
+        foreach(AST * node, m_lastValidTree->getChildren()) {
+            node->deleteChildren();
+            delete node;
+        }
+    }
+    foreach(AST *node, m_platformObjects) {
+        node->deleteChildren();
+        delete node;
+    }
 }
 
 void ProjectWindow::build()
@@ -113,6 +124,7 @@ void ProjectWindow::build()
             qDebug() << "Can't create builder";
 //            Q_ASSERT(false);
         }
+        tree->deleteChildren();
         delete tree;
     }
     //    m_project->build();
@@ -670,6 +682,7 @@ void ProjectWindow::openOptionsDialog()
 
 void ProjectWindow::updateCodeAnalysis()
 {
+    QMutexLocker locker(&m_validTreeLock);
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     if ((QApplication::activeWindow() == this  && editor->document()->isModified())
             || m_startingUp) {
@@ -700,8 +713,8 @@ void ProjectWindow::updateCodeAnalysis()
                 QList<LangError> errors = validator.getErrors();
                 editor->setErrors(errors);
 
-                QMutexLocker locker(&m_validTreeLock);
                 if(m_lastValidTree) {
+                    m_lastValidTree->deleteChildren();
                     delete m_lastValidTree;
                 }
                 foreach(AST *node, m_platformObjects) {
