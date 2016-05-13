@@ -250,8 +250,6 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
-   <addaction name="actionBuild"/>
-   <addaction name="actionUpload"/>
    <addaction name="actionRun"/>
    <addaction name="actionStop"/>
   </widget>
