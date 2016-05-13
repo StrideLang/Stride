@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QFile>
 #include <QTimer>
+#include <QMenu>
 
 #include "languagehighlighter.h"
 #include "builder.h"
@@ -38,16 +39,19 @@ protected:
 
 private slots:
     void build();
-    void commentSection();
-    void uncomment();
     void flash();
     void run(bool pressed);
     void stop();
+    void programStopped();
     void tabChanged(int index);
     bool maybeSave();
     void showDocumentation();
 
-    void programStopped();
+    // Editor
+    void commentSection();
+    void uncomment();
+    void showHelperMenu(QPoint where);
+    void insertText(QString text = "");
 
     void printConsoleText(QString text);
     void printConsoleError(QString text);
@@ -74,6 +78,7 @@ private:
     QFont m_font;
     Builder *m_builder;
     QMutex m_validTreeLock;
+    QMenu m_helperMenu;
     AST *m_lastValidTree;
     bool m_startingUp;
 };

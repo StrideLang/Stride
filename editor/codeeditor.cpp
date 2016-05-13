@@ -6,7 +6,7 @@
 #include "linenumberarea.h"
 
 CodeEditor::CodeEditor(QWidget *parent) :
-    QPlainTextEdit(parent), m_IndentTabs(true)
+    QPlainTextEdit(parent), m_IndentTabs(true), m_helperButton(this)
 {
     m_lineNumberArea = new LineNumberArea(this);
 
@@ -16,6 +16,14 @@ CodeEditor::CodeEditor(QWidget *parent) :
 
     updateLineNumberAreaWidth(0);
     highlightCurrentLine();
+    m_ButtonTimer.setInterval(1400);
+
+    m_helperButton.hide();
+    m_helperButton.setText("+");
+
+    connect(&m_ButtonTimer, SIGNAL(timeout()), this, SLOT(showButton()));
+    connect(&m_helperButton,SIGNAL(pressed()), this, SLOT(helperButtonClicked()));
+    connect(this, SIGNAL(cursorPositionChanged()), this, SLOT(hideButton()));
 }
 
 int CodeEditor::lineNumberAreaWidth()
@@ -73,6 +81,28 @@ void CodeEditor::updateLineNumberArea(const QRect &rect, int dy)
         updateLineNumberAreaWidth(0);
 }
 
+void CodeEditor::showButton()
+{
+    QRect buttonRect = cursorRect();
+    buttonRect.setX(buttonRect.x() + 50);
+    buttonRect.setWidth(15);
+    buttonRect.setHeight(15);
+    m_helperButton.setGeometry(buttonRect);
+    m_helperButton.show();
+}
+
+void CodeEditor::hideButton()
+{
+    m_helperButton.hide();
+    m_ButtonTimer.start();
+}
+
+void CodeEditor::helperButtonClicked()
+{
+    emit(customContextMenuRequested(m_helperButton.pos()));
+    m_helperButton.setChecked(false);
+}
+
 void CodeEditor::markChanged(bool changed)
 {
     document()->setModified(changed);
@@ -111,6 +141,7 @@ void CodeEditor::keyReleaseEvent(QKeyEvent *event)
             }
         }
     }
+    hideButton();
 }
 
 void CodeEditor::highlightCurrentLine()

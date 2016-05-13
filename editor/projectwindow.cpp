@@ -9,6 +9,7 @@
 #include <QTemporaryFile>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QSignalMapper>
 
 #include "projectwindow.h"
 #include "ui_projectwindow.h"
@@ -27,6 +28,7 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
     ui(new Ui::ProjectWindow),
     m_codeModelTimer(this),
     m_builder(NULL),
+    m_helperMenu(this),
     m_lastValidTree(NULL),
     m_startingUp(true)
 {
@@ -227,6 +229,8 @@ void ProjectWindow::tabChanged(int index)
     if (index >= 0) {
         QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
         m_highlighter->setDocument(editor->document());
+        connect(editor, SIGNAL(customContextMenuRequested(QPoint)),
+                this, SLOT(showHelperMenu(QPoint)));
     }
 }
 
@@ -396,6 +400,41 @@ void ProjectWindow::showDocumentation()
             ui->docBrowser->setPlainText(tr("Unknown type: %1").arg(word));
         }
     }
+}
+
+void ProjectWindow::showHelperMenu(QPoint where)
+{
+    m_helperMenu.clear();
+
+    QMutexLocker locker(&m_validTreeLock);
+    bool platformChosen = false;
+    foreach(AST *node, m_lastValidTree->getChildren()) {
+        if (node->getNodeType() == AST::Platform) {
+            platformChosen = true;
+            break;
+        }
+    }
+    QMenu *platformMenu = m_helperMenu.addMenu(tr("Platform"));
+    QStringList platformList, platformCode;
+    platformList << "Gamma" << "Arduino";
+    platformCode << "use Gamma version 1.0 on PC" << "use Arduino version 1.0 on Uno";
+    for (int i = 0; i < platformList.size(); ++i) {
+        QAction *newAction = platformMenu->addAction(platformList[i], this, SLOT(insertText()));
+        newAction->setData(platformCode[i]);
+    }
+
+    m_helperMenu.addAction("Text");
+    m_helperMenu.exec(ui->tabWidget->currentWidget()->mapToGlobal(where));
+}
+
+void ProjectWindow::insertText(QString text)
+{
+    if (text.isEmpty()) {
+        text = static_cast<QAction *>(sender())->data().toString();
+    }
+
+    QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
+    editor->insertPlainText(text);
 }
 
 void ProjectWindow::programStopped()

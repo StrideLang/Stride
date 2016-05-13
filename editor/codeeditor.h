@@ -3,9 +3,10 @@
 
 #include <QPlainTextEdit>
 #include <QList>
+#include <QTimer>
+#include <QPushButton>
 
-//FIXME move lang error out of codevalidator
-#include "codevalidator.h"
+#include "langerror.h"
 #include "errormarker.h"
 
 class CodeEditor : public QPlainTextEdit
@@ -27,24 +28,28 @@ public slots:
     void markChanged(bool changed = true);
 
 protected:
-    void resizeEvent(QResizeEvent *event);
+    virtual void resizeEvent(QResizeEvent *event);
     virtual void keyReleaseEvent(QKeyEvent * event);
 
 private slots:
     void updateLineNumberAreaWidth(int newBlockCount);
     void highlightCurrentLine();
     void updateLineNumberArea(const QRect &, int);
+    void showButton();
+    void hideButton();
+    void helperButtonClicked();
+
+signals:
 
 private:
     QWidget *m_lineNumberArea;
     QVector<ErrorMarker *> m_errorMarkers;
-//    QList<LangError> m_errors;
+    QTimer m_ButtonTimer;
+
+    // Properties
     QString m_filename;
     bool m_IndentTabs;
-
-signals:
-
-
+    QPushButton m_helperButton;
 };
 
 #endif // CODEEDITOR_H
