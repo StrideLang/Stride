@@ -16,15 +16,10 @@ LanguageHighlighter::LanguageHighlighter(QObject *parent) :
 void LanguageHighlighter::highlightBlock(const QString &text)
 {
     QMutexLocker locker(&m_highlighterLock);
-    QString pattern = "\\b[A-Z]\\w+\\b";
 
-    QRegExp expression(pattern);
-    int index = text.indexOf(expression);
-//    while (index >= 0) {
-//        int length = expression.matchedLength();
-//        setFormat(index, length, m_formats["user"]);
-//        index = text.indexOf(expression, index + length);
-//    }
+    QRegExp expression;
+    QString pattern;
+    int index;
 
     // Properties/ports
     pattern ="(([a-z][a-zA-Z0-9_]*)[\\s]*:)";
@@ -75,7 +70,7 @@ void LanguageHighlighter::highlightBlock(const QString &text)
         index = text.indexOf(expression);
         while (index >= 0) {
             int length = expression.matchedLength();
-            setFormat(index, length, m_formats["type"]);
+            setFormat(index, length, m_formats["function"]);
             index = text.indexOf(expression, index + length);
         }
     }
@@ -163,7 +158,7 @@ void LanguageHighlighter::setFormatPreset(int index)
     QTextCharFormat keywordFormat;
     QTextCharFormat commentsFormat;
     QTextCharFormat typeFormat;
-    QTextCharFormat userFormat;
+    QTextCharFormat functionFormat;
     QTextCharFormat propertiesFormat;
     QTextCharFormat builtinFormat;
     QTextCharFormat stringFormat;
@@ -182,9 +177,10 @@ void LanguageHighlighter::setFormatPreset(int index)
         typeFormat.setForeground(QColor("#cc0000"));
         typeFormat.setBackground(Qt::white);
 
-        userFormat.setFontWeight(QFont::Normal);
-        userFormat.setForeground(Qt::blue);
-        userFormat.setBackground(Qt::white);
+        functionFormat.setFontWeight(QFont::Normal);
+        functionFormat.setFontItalic(true);
+        functionFormat.setForeground(Qt::black);
+        functionFormat.setBackground(Qt::white);
 
         propertiesFormat.setFontWeight(QFont::Normal);
         propertiesFormat.setForeground(Qt::blue);
@@ -198,7 +194,7 @@ void LanguageHighlighter::setFormatPreset(int index)
         stringFormat.setForeground(QColor("#33CC00"));
         stringFormat.setBackground(Qt::white);
 
-        streamOpFormat.setFontWeight(QFont::Bold);
+        streamOpFormat.setFontWeight(99);
         streamOpFormat.setForeground(QColor("#BBCCBB"));
         streamOpFormat.setBackground(Qt::white);
     } else {
@@ -208,7 +204,7 @@ void LanguageHighlighter::setFormatPreset(int index)
     m_formats["keywords"] = keywordFormat;
     m_formats["comments"] = commentsFormat;
     m_formats["type"] = typeFormat;
-    m_formats["user"] = userFormat;
+    m_formats["function"] = functionFormat;
     m_formats["ports"] = propertiesFormat;
     m_formats["builtin"] = builtinFormat;
     m_formats["strings"] = stringFormat;

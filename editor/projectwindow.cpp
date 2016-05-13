@@ -15,7 +15,6 @@
 #include "ui_projectwindow.h"
 
 #include "codeeditor.h"
-//#include "xmosproject.h"
 #include "ast.h"
 #include "codevalidator.h"
 #include "configdialog.h"
@@ -52,8 +51,6 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
         newFile(); // No files from previous session
     }
 
-    connect(&m_codeModelTimer, SIGNAL(timeout()), this, SLOT(updateCodeAnalysis()));
-    m_codeModelTimer.start(2000);
     ui->tabWidget->setDocumentMode(true);
     ui->tabWidget->setTabsClosable(true);
     ui->tabWidget->setMovable(true);
@@ -63,7 +60,9 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
             this, SLOT(tabChanged(int)));
 
     m_startingUp = false;
-    QTimer::singleShot(200, this, SLOT(updateCodeAnalysis()));
+    m_codeModelTimer.setSingleShot(true);
+    m_codeModelTimer.setInterval(2000);
+    connect(&m_codeModelTimer, SIGNAL(timeout()), this, SLOT(updateCodeAnalysis()));
 }
 
 ProjectWindow::~ProjectWindow()
@@ -291,9 +290,9 @@ void ProjectWindow::showDocumentation()
         ui->docBrowser->setPlainText(tr("Parsing error. Can't update tree.").arg(word));
         return;
     }
-    QMutexLocker locker(&m_validTreeLock);
     QList<LangError> errors;
     if (word[0].toLower() == word[0]) {
+        QMutexLocker locker(&m_validTreeLock);
         BlockNode *typeBlock = CodeValidator::findTypeDeclarationByName(word, QVector<AST *>(), m_lastValidTree, errors);
         if (typeBlock) {
             AST *metaValue = typeBlock->getPropertyValue("meta");
@@ -418,14 +417,13 @@ void ProjectWindow::showHelperMenu(QPoint where)
 {
     m_helperMenu.clear();
 
-    QMutexLocker locker(&m_validTreeLock);
-    bool platformChosen = false;
-    foreach(AST *node, m_lastValidTree->getChildren()) {
-        if (node->getNodeType() == AST::Platform) {
-            platformChosen = true;
-            break;
-        }
-    }
+//    bool platformChosen = false;
+//    foreach(AST *node, m_lastValidTree->getChildren()) {
+//        if (node->getNodeType() == AST::Platform) {
+//            platformChosen = true;
+//            break;
+//        }
+//    }
     QMenu *platformMenu = m_helperMenu.addMenu(tr("Platform"));
     QStringList platformList, platformCode;
     platformList << "Gamma" << "Arduino";
@@ -435,6 +433,7 @@ void ProjectWindow::showHelperMenu(QPoint where)
         newAction->setData(platformCode[i]);
     }
     QMenu *functionMenu = m_helperMenu.addMenu(tr("New function"));
+    m_validTreeLock.lock();
     foreach(AST *node, m_platformObjects) {
         if (node->getNodeType() == AST::Block) {
             BlockNode *block = static_cast<BlockNode *>(node);
@@ -446,11 +445,13 @@ void ProjectWindow::showHelperMenu(QPoint where)
                 }
                 text += QString::fromStdString(block->getName()) + "(";
                 ListNode *portList = static_cast<ListNode *>(block->getPropertyValue("ports"));
-                if (portList) {
+                if (portList && portList->getNodeType() == AST::List) {
                     foreach(AST *port, portList->getChildren()) {
                         BlockNode *portBlock = static_cast<BlockNode *>(port);
                         AST *portName = portBlock->getPropertyValue("name");
-                        text += QString::fromStdString(static_cast<ValueNode *>(portName)->getStringValue()) + ":  ";
+                        if (portName && portName->getNodeType() == AST::String) {
+                            text += QString::fromStdString(static_cast<ValueNode *>(portName)->getStringValue()) + ":  ";
+                        }
                     }
                 }
                 text += ") ";
@@ -458,7 +459,7 @@ void ProjectWindow::showHelperMenu(QPoint where)
             }
         }
     }
-
+    m_validTreeLock.unlock();
 
     m_helperMenu.exec(ui->tabWidget->currentWidget()->mapToGlobal(where));
 }
@@ -682,10 +683,11 @@ void ProjectWindow::openOptionsDialog()
 
 void ProjectWindow::updateCodeAnalysis()
 {
-    QMutexLocker locker(&m_validTreeLock);
+    m_codeModelTimer.stop();
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     if ((QApplication::activeWindow() == this  && editor->document()->isModified())
             || m_startingUp) {
+        QMutexLocker locker(&m_validTreeLock);
         QTemporaryFile tmpFile;
         if (tmpFile.open()) {
             tmpFile.write(editor->document()->toPlainText().toLocal8Bit());
@@ -726,6 +728,7 @@ void ProjectWindow::updateCodeAnalysis()
             }
         }
     }
+    m_codeModelTimer.start();
 }
 
 void ProjectWindow::connectActions()
