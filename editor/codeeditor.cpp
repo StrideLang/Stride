@@ -84,9 +84,10 @@ void CodeEditor::updateLineNumberArea(const QRect &rect, int dy)
 void CodeEditor::showButton()
 {
     QRect buttonRect = cursorRect();
-    buttonRect.setX(buttonRect.x() + 50);
-    buttonRect.setWidth(15);
-    buttonRect.setHeight(15);
+    buttonRect.setX(buttonRect.x() + 40);
+    buttonRect.setY(buttonRect.y() - 4);
+    buttonRect.setWidth(12);
+    buttonRect.setHeight(12);
     m_helperButton.setGeometry(buttonRect);
     m_helperButton.show();
 }
