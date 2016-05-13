@@ -80,6 +80,7 @@ private:
     QMutex m_validTreeLock;
     QMenu m_helperMenu;
     AST *m_lastValidTree;
+    QList<AST *> m_platformObjects;
     bool m_startingUp;
 };
 

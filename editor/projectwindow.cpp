@@ -422,8 +422,32 @@ void ProjectWindow::showHelperMenu(QPoint where)
         QAction *newAction = platformMenu->addAction(platformList[i], this, SLOT(insertText()));
         newAction->setData(platformCode[i]);
     }
+    QMenu *functionMenu = m_helperMenu.addMenu(tr("New function"));
+    foreach(AST *node, m_platformObjects) {
+        if (node->getNodeType() == AST::Block) {
+            BlockNode *block = static_cast<BlockNode *>(node);
+            if (block->getObjectType() == "module") {
+                QAction *newAction = functionMenu->addAction(QString::fromStdString(block->getName()), this, SLOT(insertText()));
+                QString text = QString::fromStdString(block->getNamespace());
+                if (!text.isEmpty()) {
+                    text += ".";
+                }
+                text += QString::fromStdString(block->getName()) + "(";
+                ListNode *portList = static_cast<ListNode *>(block->getPropertyValue("ports"));
+                if (portList) {
+                    foreach(AST *port, portList->getChildren()) {
+                        BlockNode *portBlock = static_cast<BlockNode *>(port);
+                        AST *portName = portBlock->getPropertyValue("name");
+                        text += QString::fromStdString(static_cast<ValueNode *>(portName)->getStringValue()) + ":  ";
+                    }
+                }
+                text += ") ";
+                newAction->setData(text);
+            }
+        }
+    }
 
-    m_helperMenu.addAction("Text");
+
     m_helperMenu.exec(ui->tabWidget->currentWidget()->mapToGlobal(where));
 }
 
@@ -659,6 +683,7 @@ void ProjectWindow::updateCodeAnalysis()
             if (tree) {
                 CodeValidator validator(m_platformsRootDir, tree);
                 validator.validate();
+                QList<AST *> newPlatformObjects = validator.getPlatform()->getBuiltinObjectsCopy();
                 //    QVERIFY(!generator.isValid());
                 QStringList types = validator.getPlatform()->getPlatformTypeNames();
                 m_highlighter->setBlockTypes(types);
@@ -679,6 +704,11 @@ void ProjectWindow::updateCodeAnalysis()
                 if(m_lastValidTree) {
                     delete m_lastValidTree;
                 }
+                foreach(AST *node, m_platformObjects) {
+                    node->deleteChildren();
+                    delete node;
+                }
+                m_platformObjects = newPlatformObjects;
                 m_lastValidTree = tree;
             }
         }
