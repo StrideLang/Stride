@@ -770,7 +770,7 @@ class ModuleAtom(Atom):
 
         for section in self.global_sections:
             if section in self.globals:
-                if section in self.code[section]:
+                if section in self.code['global_groups']:
                     self.globals[section].extend(self.code['global_groups'][section])
                 else:
                     pass

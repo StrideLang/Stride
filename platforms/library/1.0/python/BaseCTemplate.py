@@ -150,8 +150,8 @@ struct %s {
         init_code = ''
         configured = []
         for elem in inits:
-            if not elem in configured:
-                init_code += inits[elem]['value'] + '\n'
+            if not elem in configured and type(elem) == unicode:
+                init_code += elem + '\n'
                 configured.append(elem)
         return init_code
             
@@ -159,8 +159,9 @@ struct %s {
         includes_code = ''
         for include in includes:
             if not include in self.included: 
-                includes_code += "#include <%s>\n"%include
-                self.included.append(include)
+                if not include == '': 
+                    includes_code += "#include <%s>\n"%include
+                    self.included.append(include)
         return includes_code
         
     def instantiation_code(self, instance):

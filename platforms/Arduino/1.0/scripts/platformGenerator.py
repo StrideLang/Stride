@@ -78,12 +78,12 @@ class Generator:
                         self.num_out_chnls, self.num_in_chnls, self.audio_device)
 
         globals_code = templates.get_globals_code(code['global_groups'])
-        #config_code = templates.get_configuration_code(code['global_groups']['initialization'])
+        config_code = templates.get_configuration_code(code['global_groups']['initialization'])
        
         shutil.copyfile(self.project_dir + "/template.ino", self.out_file)
         self.write_section_in_file('Includes', globals_code)
         self.write_section_in_file('Init Code', code['header_code'])
-        self.write_section_in_file('Config Code', code['init_code'] + template_init_code)
+        self.write_section_in_file('Config Code', code['init_code'] + template_init_code + config_code)
         self.write_section_in_file('Dsp Code', code['processing_code'])
         
         ck_out(['astyle', self.out_file ])
