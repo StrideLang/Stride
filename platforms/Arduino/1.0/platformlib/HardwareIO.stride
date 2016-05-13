@@ -22,9 +22,9 @@ platformType _AnalogInput {
 	numOutputs:2
     include: []
     linkTo: []
-    declarations: ['int sensorPin = A5;']
+    declarations: ['int sensorPin[6] = {A0, A1, A2, A3, A4, A5};']
     initialization: ['// init analog input']
-    processing: "analogRead(sensorPin)"
+    processing: "analogRead(sensorPin[%%bundle_index%%])"
     inherits: ['signal']
 }
 
@@ -33,12 +33,28 @@ _analogInput AnalogIn[2] {
     domain: _ArduinoDomain
 }
 
+platformType _DigitalOutput {
+    typeName: '_digitalOutput'
+	numInputs: 1
+	numOutputs: 0
+    include: []
+    linkTo: []
+    declarations: ['']
+    initialization: ['pinMode(13, OUTPUT);']
+    processing: "digitalWrite(%%bundle_index%%, %%intoken:0%% ? HIGH : LOW);"
+    inherits: ['signal']
+}
+
+_digitalOutput DigitalOut[14] {
+    rate: PlatformRate
+    domain: _ArduinoDomain
+}
 
 platformType _OscOutType {
     typeName: '_oscOutType'
     numInputs: 4
 	numOutputs: 0
-    include: [""]
+    include: []
     linkTo: [""]
     declarations: ''
     initialization: ["// INIT OSC"]
