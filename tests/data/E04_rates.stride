@@ -1,6 +1,7 @@
 
 use Gamma version 1.0 on PC
 
+import generators
 
 AudioIn[1] >> Signal >> AudioOut[1];
 

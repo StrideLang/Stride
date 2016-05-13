@@ -76,3 +76,49 @@ module NotEqual {
     ]
     meta: ""
 }
+
+
+ # FIXME AudioRate needs to be streamRate
+module Select {
+    input: Input
+    output: Output
+    properties:  [
+		property WhenOnProperty {
+    	   name: "whenOn"
+           block: WhenOn
+           meta: ""
+        },
+        property WhenOffProperty {
+            name: "whenOff"
+            block: WhenOff
+            meta: ""
+        }
+    ]
+    internalBlocks: [
+        switch Input {
+                default :       on
+                rate:           AudioRate
+                domain:         streamDomain
+        },
+        signal Output {
+                default :       0.0
+                rate:           AudioRate
+                domain:         streamDomain
+        },
+        signal WhenOn {
+                default :       0.0
+                rate:           AudioRate
+                domain:         streamDomain
+        },
+        signal WhenOff {
+                default :       0.0
+                rate:           AudioRate
+                domain:         streamDomain
+        },
+        _selectType SelectBlock {}
+    ]
+    streams: [
+        [Input, WhenOn, WhenOff]  >> SelectBlock >> Output;
+    ]
+    meta: ""
+}

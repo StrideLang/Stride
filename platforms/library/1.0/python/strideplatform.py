@@ -769,13 +769,16 @@ class ModuleAtom(Atom):
                                                 
 
         for section in self.global_sections:
-            if section in self.globals and section in self.code[section]:
-                self.globals[section].extend(self.code['global_groups'][section])
+            if section in self.globals:
+                if section in self.code[section]:
+                    self.globals[section].extend(self.code['global_groups'][section])
+                else:
+                    pass
             else:
                 self.globals[section] = self.code['global_groups'][section]
 
 
-        
+
     def _init_blocks(self, blocks, input_name, output_name):
         self._blocks = []
         for block in blocks:
@@ -950,8 +953,11 @@ class ReactionAtom(Atom):
                                                 instanced = [])
         
         for section in self.global_sections:
-            if section in self.globals and section in self.code[section]:
-                self.globals[section].extend(self.code['global_groups'][section])
+            if section in self.globals:
+                if section in self.code[section]:
+                    self.globals[section].extend(self.code['global_groups'][section])
+                else:
+                    pass
             else:
                 self.globals[section] = self.code['global_groups'][section]
 

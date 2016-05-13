@@ -1,3 +1,9 @@
 use Gamma version 1.0 on PC
- 
-AudioIn >> level(gain: 2) >> LowPass(cutOff: 100) >> AudioOut;
+
+import filters
+
+AudioIn[1] >> BiQuad(centerFrequency: [440,800]  resonance: [10000, 10]) >> Level(gain: [80.0, 1.0]) >> Modes;
+
+#Modes >> AudioOut;
+
+#Oscillator(frequency: 440) >> AudioOut;

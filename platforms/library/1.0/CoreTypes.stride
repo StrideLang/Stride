@@ -76,6 +76,12 @@ type _PlatformType {
 			default: none
 			required: on
 		},
+		port PreProcessing {
+			name: "preprocessing"
+			types: ["CSP"]
+			default: ""
+			required: off
+		},
 		port Processing {
 			name: "processing"
 			types: ["CSP"]
@@ -90,7 +96,7 @@ type _PlatformType {
 		},
 		port Inherits { # TODO should this be done differently? e.g. not as a port but through inheritance merging ports?
 			name: "inherits"
-			types: ["CSP"] # _platform
+			types: ["CSP", _Type]
 			default: []
 			required: off
 		}

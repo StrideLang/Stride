@@ -20,6 +20,9 @@ class Generator:
         self.platform_dir = platform_dir
         self.out_dir = out_dir
         
+        self.project_dir = platform_dir + '/project'
+        
+        
         jsonfile = open(self.out_dir + '/tree.json')
         self.tree = json.load(jsonfile)
         
@@ -50,7 +53,7 @@ class Generator:
         start_index = text.find("//[[%s]]"%sec_name)
         end_index = text.find("//[[/%s]]"%sec_name, start_index)
         if start_index <0 or end_index < 0:
-            raise ValueError("Error finding [[%s]]  section"%sec_name)
+            raise ValueError("Error finproject/ding [[%s]]  section"%sec_name)
             return
         text = text[:start_index] + '//[[%s]]\n'%sec_name + code + text[end_index:]
         f = open(filename, 'w')
@@ -74,13 +77,13 @@ class Generator:
         template_init_code = templates.get_config_code(self.sample_rate, self.block_size,
                         self.num_out_chnls, self.num_in_chnls, self.audio_device)
 
-        includes_code = templates.get_includes_code(code['global_groups']['include'])
-        config_code = templates.get_configuration_code(code['global_groups']['initialization'])
+        globals_code = templates.get_globals_code(code['global_groups'])
+        #config_code = templates.get_configuration_code(code['global_groups']['initialization'])
        
-        shutil.copyfile(self.platform_dir + "/template/template.ino", self.out_file)
-        self.write_section_in_file('Includes', includes_code)
-        self.write_section_in_file('Init Code', code['declare_code'] + code['instantiation_code'])
-        self.write_section_in_file('Config Code', code['init_code'] + template_init_code + config_code)
+        shutil.copyfile(self.project_dir + "/template.ino", self.out_file)
+        self.write_section_in_file('Includes', globals_code)
+        self.write_section_in_file('Init Code', code['header_code'])
+        self.write_section_in_file('Config Code', code['init_code'] + template_init_code)
         self.write_section_in_file('Dsp Code', code['processing_code'])
         
         ck_out(['astyle', self.out_file ])

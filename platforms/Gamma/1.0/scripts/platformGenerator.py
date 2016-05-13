@@ -17,8 +17,7 @@ class Generator:
         
         self.platform_dir = platform_dir
         self.out_dir = out_dir
-        #out_dir = '/home/andres/Documents/src/XMOS/Odo/StreamStack/platforms/Gamma/1.0/test'
-        #out_dir = sys.argv[1]
+        
         self.project_dir = platform_dir + '/project'
         
         jsonfile = open(self.out_dir + '/tree.json')

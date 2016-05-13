@@ -148,8 +148,11 @@ struct %s {
     
     def get_configuration_code(self, inits):
         init_code = ''
+        configured = []
         for elem in inits:
-            init_code += elem['value'] + '\n'
+            if not elem in configured:
+                init_code += inits[elem]['value'] + '\n'
+                configured.append(elem)
         return init_code
             
     def includes_code(self, includes):

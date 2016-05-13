@@ -8,18 +8,6 @@ _domain _ArduinoDomain {
     platform: _ArduinoPlatform
 }
 
-
-platformType _AnalogInput {
-    typeName: '_analogInput'
-    direction: 'out'
-    include: []
-    linkTo: []
-    declarations: ['int sensorPin = A5;']
-    initialization: ['// init analog input']
-    processing: "analogRead(sensorPin)"
-    inherits: ['signal']
-}
-
 constant PlatformRate {
     value: 1000
 }
@@ -28,37 +16,57 @@ constant AudioRate { # TODO this should be removed for this hardware as it doesn
     value: PlatformRate
 }
 
+platformType _AnalogInput {
+    typeName: '_analogInput'
+	numInputs: 1
+	numOutputs:2
+    include: []
+    linkTo: []
+    declarations: ['int sensorPin = A5;']
+    initialization: ['// init analog input']
+    processing: "analogRead(sensorPin)"
+    inherits: ['signal']
+}
+
 _analogInput AnalogIn[2] {
     rate: PlatformRate
-    domain: _GammaDomain
+    domain: _ArduinoDomain
 }
 
 
-# Sine function test
+platformType _OscOutType {
+    typeName: '_oscOutType'
+    numInputs: 4
+	numOutputs: 0
+    include: [""]
+    linkTo: [""]
+    declarations: ''
+    initialization: ["// INIT OSC"]
+    processing: '// Not implemented'
+    inherits: ['signal']
+}
+
+
+platformType _SelectType {
+    typeName: '_selectType'
+    numInputs: 3
+	numOutputs: 1
+    include: []
+    linkTo: []
+    declarations: ''
+    initialization: ["// %%token%% = 0;"]
+    processing: "%%intoken:0%% ? %%intoken:1%% : %%intoken:2%%"
+    inherits: ['signal']
+}
+
 platformType _SerialOutType {
     typeName: '_serialOutType'
-    direction: 'in'
+	numInputs: 1
+	numOutputs: 0
     include: []
     linkTo: []
     declarations: ''
     initialization: ["Serial.begin(9600);"]
-    processing: "Serial.println(%%intoken%%)"
+    processing: "Serial.println(%%intoken:0%%)"
     inherits: ['signal']
-}
-
-platformModule SerialOut {
-    input: Input
-    output: none
-    properties: none
-    internalBlocks: [
-        signal Input {
-                default :       0.0
-                rate:           streamRate
-                domain:         streamDomain
-        },
-        _serialOutType SerialOutBlock {}
-    ]
-    streams: [
-        Input >> SerialOutBlock;
-    ]
 }
