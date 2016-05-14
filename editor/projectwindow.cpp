@@ -211,7 +211,7 @@ void ProjectWindow::run(bool pressed)
 
     if (pressed) {
         build();
-        ui->consoleText->clear();
+//        ui->consoleText->clear();
         if (m_builder) {
             m_builder->run();
         } else {
@@ -353,6 +353,7 @@ void ProjectWindow::showDocumentation()
         }
         
     } else if (word[0].toUpper() == word[0]) { // Check if it is a declared module
+        QMutexLocker locker(&m_validTreeLock);
         BlockNode *declaration = CodeValidator::findDeclaration(word, QVector<AST *>(), m_lastValidTree);
         if (declaration) {
             AST *metaValue = declaration->getPropertyValue("meta");
