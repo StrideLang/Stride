@@ -1,4 +1,4 @@
-
+ 
 module Greater {
     input: Input
     output: Output
@@ -77,7 +77,6 @@ module NotEqual {
     meta: ""
 }
 
-
  # FIXME AudioRate needs to be streamRate
 module Select {
     input: Input
@@ -121,4 +120,49 @@ module Select {
         [Input, WhenOn, WhenOff]  >> SelectBlock >> Output;
     ]
     meta: ""
+}
+
+ # FIXME AudioRate needs to be streamRate
+module OnChange {
+    input: Input
+    output: Output
+    properties:  [
+    ]
+    internalBlocks: [
+        switch Input {
+                default :       off
+                rate:           AudioRate
+                domain:         streamDomain
+        },
+        switch Output {
+                default :       off
+                rate:           AudioRate
+                domain:         streamDomain
+        },
+		switch OldInput {},
+		reaction OnChangedReaction {
+			output: Output
+			properties: [
+				property OutputProperty {
+					name: "output"
+					block: OutputValue
+					types: [""] # Any type for now
+				}
+			]
+#			onExecution:
+#			terminateWhen:
+			internalBlocks: [
+				switch Output { }
+				switch OutputValue {}
+			]
+			streams: [
+				OutputValue >> Output;
+			]
+		}
+    ]
+    streams: [
+        Input != OldInput  >> OnChangedReaction(output: Input) >> Output;
+		Input >> OldInput;
+    ]
+    meta: "Discard repetitions of a value. Can be use to turn synchronous signals to asynchronous messages."
 }

@@ -54,3 +54,38 @@ module Sin {
 	]
 	meta: "Sine function"
 }
+
+
+module Divide {
+	input: Input
+	output: Output
+	internalBlocks: [
+		signal Input[2] { 
+			meta: "Input values"
+		},
+		signal Output {
+			meta : "The result of the division" 
+		}
+	]
+	streams: [
+		Input[1]/Input[2] >> Output;
+	]
+	meta: "Divide input values"
+}
+
+module Multiply {
+	input: Input
+	output: Output
+	internalBlocks: [
+		signal Input[2] { 
+			meta: "Values to multiply"
+		},
+		signal Output {
+			meta : "The result of the multiplication" 
+		}
+	]
+	streams: [
+		Input[1]*Input[2] >> Output;
+	]
+	meta: "Multiply input values."
+}

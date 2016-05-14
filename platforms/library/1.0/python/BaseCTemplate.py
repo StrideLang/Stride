@@ -400,6 +400,8 @@ struct %s {
         
     def reaction_processing_code(self, handle, in_tokens, out_token):
         code = "if ("+ in_tokens[0] + ") {\n"
+        if out_token:
+            code += out_token + ' = '
         code += handle + '.execute();\n'
         code += "}\n"
         return code

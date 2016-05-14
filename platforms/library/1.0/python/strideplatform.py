@@ -812,7 +812,7 @@ class ReactionAtom(Atom):
         self.name = reaction["name"]
         self.handle = self.name + '_%03i'%token_index;
         self.current_scope = reaction["internalBlocks"]
-        self._platform_code = platform_code
+#        self._platform_code = platform_code
         self._output_block = None
         self._index = token_index
         self.platform = platform
@@ -884,7 +884,7 @@ class ReactionAtom(Atom):
             if 'size' in self._output_block:
                 code = templates.reaction_processing_code(self.handle, in_tokens, '_' + self.name + '_%03i_out'%self._index)
             else:
-                code = templates.reaction_processing_code(self.handle, in_tokens, '')
+                code = templates.reaction_processing_code(self.handle, in_tokens, self.out_tokens[0])
         else:
             code = templates.reaction_processing_code(self.handle, in_tokens, '')
         return code
@@ -908,27 +908,26 @@ class ReactionAtom(Atom):
     def get_processing_code(self, in_tokens):
         code = self.get_preprocessing_code(in_tokens)
         out_tokens = []
-        if 'output' in self._platform_code['block'] and not self._platform_code['block']['output'] is None:
+        if 'output' in self.reaction and not self.reaction['output'] is None:
             if self.inline:
                 code += self.get_handles()[0]
             else:
                 if 'size' in self._output_block:
                     code += templates.expression(self.get_inline_processing_code(in_tokens))
                 else:
-                    code += templates.assignment(self.out_tokens[0],self.get_inline_processing_code(in_tokens))
+                    code += templates.expression(self.get_inline_processing_code(in_tokens))
             out_tokens = self.out_tokens
         else:
             code += templates.expression(self.get_inline_processing_code(in_tokens))
             out_tokens = self.out_tokens
         return code, out_tokens
         
-    def _get_internal_header_code(self):
-        code = self.code['header_code']
-        return code
-        
-        
     def _get_internal_init_code(self):
         code = self.code['init_code']
+        return code
+        
+    def _get_internal_header_code(self):
+        code = self.code['header_code']
         return code
         
     def _get_internal_processing_code(self):
