@@ -44,4 +44,8 @@ constant IntegerList [3] {
         meta:	'List of lists'
 }
 
+#Lists of streams
+[ In >> Out; OtherIn >> OtherOut;] >> [Out1, Out2];
+[ In >> Out; OtherIn >> OtherOut;] >> Out;
+Out >> [ In >> Out; OtherIn >> OtherOut;];
 

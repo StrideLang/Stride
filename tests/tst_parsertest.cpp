@@ -1058,6 +1058,44 @@ void ParserTest::testLists()
     QVERIFY(internalBlock->getObjectType() == "blockType2");
     QVERIFY(internalBlock->getName() == "BlockName3");
 
+//    constant IntegerList [3] {
+//            value: [[ 9, 8, 7 ] , [ 6, 5, 4 ] , [ 3, 2, 1 ] ]
+//            meta:	'List of lists'
+//    }
+    block = static_cast<BlockNode *>(nodes.at(8));
+    QVERIFY(block->getNodeType() == AST::BlockBundle);
+    props =  block->getProperties();
+    list = static_cast<ListNode *>(props.at(0)->getValue());
+    QVERIFY(list->getNodeType() == AST::List);
+    members = list->getChildren();
+    QVERIFY(members.size() == 3);
+    QVERIFY(members.at(0)->getNodeType() == AST::List);
+    QVERIFY(members.at(1)->getNodeType() == AST::List);
+    QVERIFY(members.at(2)->getNodeType() == AST::List);
+
+//    [ In >> Out; OtherIn >> OtherOut;] >> [Out1, Out2];
+//    [ In >> Out; OtherIn >> OtherOut;] >> Out;
+//    Out >> [ In >> Out; OtherIn >> OtherOut;];
+    StreamNode *stream = static_cast<StreamNode *>(nodes.at(9));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    list = static_cast<ListNode *>(stream->getLeft());
+    QVERIFY(list->getNodeType() == AST::List);
+    QVERIFY(list->getChildren().size() == 2);
+    QVERIFY(list->getChildren()[0]->getNodeType() == AST::Stream);
+    QVERIFY(list->getChildren()[1]->getNodeType() == AST::Stream);
+    stream = static_cast<StreamNode *>(nodes.at(10));
+    list = static_cast<ListNode *>(stream->getLeft());
+    QVERIFY(list->getNodeType() == AST::List);
+    QVERIFY(list->getChildren().size() == 2);
+    QVERIFY(list->getChildren()[0]->getNodeType() == AST::Stream);
+    QVERIFY(list->getChildren()[1]->getNodeType() == AST::Stream);
+    stream = static_cast<StreamNode *>(nodes.at(11));
+    list = static_cast<ListNode *>(stream->getRight());
+    QVERIFY(list->getNodeType() == AST::List);
+    QVERIFY(list->getChildren().size() == 2);
+    QVERIFY(list->getChildren()[0]->getNodeType() == AST::Stream);
+    QVERIFY(list->getChildren()[1]->getNodeType() == AST::Stream);
+
     tree->deleteChildren();
     delete tree;
 

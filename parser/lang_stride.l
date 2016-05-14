@@ -39,6 +39,10 @@ CLETTER	[A-Z]
 "||"				{ return OR; }
 "!"					{ return NOT; }
 
+"&"					{ return BITAND; }
+"|"					{ return BITOR; }
+"~"					{ return BITNOT; }
+
 "=="				{ return EQUAL; }
 "!="				{ return NOTEQUAL; }
 ">"					{ return GREATER; }
