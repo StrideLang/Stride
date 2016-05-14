@@ -89,3 +89,16 @@ module Multiply {
 	]
 	meta: "Multiply input values."
 }
+
+module Inverse {
+	input: Input
+	output: Output
+	internalBlocks: [
+		signal Input { meta: "Value to invert" },
+		signal Output { meta: "The inverted value." }
+	]
+	streams: [
+		-Input >> Output;
+	]
+	meta: "Invert (change the sign) of a value."
+}
