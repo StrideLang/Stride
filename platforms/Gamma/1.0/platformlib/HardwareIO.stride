@@ -129,7 +129,7 @@ platformType _SerialInType {
 	linkDir: ["serial/build"]
     linkTo: ["serial"]
     declarations: ''
-    initialization: ["
+    initialization: ['
   unsigned long baud = 9600;
   string port =""
   // port, baudrate, timeout in milliseconds
@@ -139,7 +139,7 @@ platformType _SerialInType {
   else
     std::cout << " No." << std::endl;
 		
-		"]
+		']
     processing: "
 	size_t bytes_wrote = my_serial.write(test_string);
 	// Perhaps check if things were written properly?	
