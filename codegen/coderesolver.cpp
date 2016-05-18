@@ -21,8 +21,9 @@ void CodeResolver::preProcess()
     expandParallel(); // Find better name this expands bundles, functions and declares undefined bundles
     resolveStreamSymbols();
     fillDefaultProperties();
-    resolveRates();
     resolveConstants();
+    resolveRates();
+    processDomains();
 }
 
 void CodeResolver::resolveRates()
@@ -61,7 +62,6 @@ void CodeResolver::fillDefaultPropertiesForNode(AST *node)
     if (node->getNodeType() == AST::Block || node->getNodeType() == AST::BlockBundle) {
         BlockNode *destBlock = static_cast<BlockNode *>(node);
         vector<PropertyNode *> blockProperties = destBlock->getProperties();
-        // TODO: should also set properties for user defined types
         QVector<AST *> typeProperties = CodeValidator::getPortsForType(
                     QString::fromStdString(destBlock->getObjectType()),
                     QVector<AST *>(), m_tree);
@@ -94,10 +94,49 @@ void CodeResolver::fillDefaultPropertiesForNode(AST *node)
                 destBlock->addProperty(newProperty);
             }
         }
+    } else if (node->getNodeType() == AST::Function) {
+//        FunctionNode *destFunc = static_cast<FunctionNode *>(node);
+//        vector<PropertyNode *> blockProperties = destFunc->getProperties();
+//        BlockNode *functionModule = CodeValidator::findDeclaration(
+//                    QString::fromStdString(destFunc->getName()),
+//                    QVector<AST *>(), m_tree);
+//        vector<PropertyNode *> typeProperties = functionModule->getProperties();
+//        if (typeProperties.size() < 1) {
+//            qDebug() << "ERROR: fillDefaultProperties() No type definition for " << QString::fromStdString(destFunc->getName());
+//            return;
+//        }
+//        foreach(PropertyNode *property, blockProperties) {
+//            fillDefaultPropertiesForNode(property->getValue());
+//        }
+
+//        foreach(AST *propertyListMember, typeProperties) {
+//            Q_ASSERT(propertyListMember->getNodeType() == AST::Property);
+//            PropertyNode *property = static_cast<PropertyNode *>(propertyListMember);
+//            string propertyName = property->getName();
+//            bool propertySet = false;
+//            foreach(PropertyNode *blockProperty, blockProperties) {
+//                if (blockProperty->getName() == propertyName) {
+//                    propertySet = true;
+//                    break;
+//                }
+//            }
+//            if (!propertySet) {
+////                AST *defaultValueNode = property->getPropertyValue("default");
+////                PropertyNode *newProperty = new PropertyNode(propertyName,
+////                            defaultValueNode->deepCopy(),
+////                            property->getFilename().data(), property->getLine());
+////                destFunc->addProperty(newProperty);
+//            }
+//        }
     } else if (node->getNodeType() == AST::List) {
         ListNode *list = static_cast<ListNode *>(node);
         foreach(AST *listElement, list->getChildren()) {
             fillDefaultPropertiesForNode(listElement);
+        }
+    } else if (node->getNodeType() == AST::Stream) {
+        StreamNode *stream = static_cast<StreamNode *>(node);
+        foreach(AST *streamElement, stream->getChildren()) {
+            fillDefaultPropertiesForNode(streamElement);
         }
     }
 }
@@ -417,6 +456,115 @@ void CodeResolver::insertBuiltinObjects()
     foreach(AST *object, objects) {
         m_tree->addChild(object);
     }
+    QList<AST *> domainDeclarations;
+    foreach(AST *object, m_tree->getChildren()) {
+        if (object->getNodeType() == AST::Block) {
+            BlockNode *block = static_cast<BlockNode *>(object);
+            if (block->getObjectType() == "_domain") {
+                AST *nameNode = block->getPropertyValue("name");
+                if (nameNode->getNodeType() == AST::String) {
+                    ValueNode *domainName = static_cast<ValueNode *>(nameNode);
+                    PropertyNode *valueProperty = new PropertyNode("value", domainName->deepCopy(), "", -1);
+                    BlockNode *declaration = new BlockNode(domainName->getStringValue(), "constant", NULL, "", -1);
+                    declaration->addProperty(valueProperty);
+                    domainDeclarations << declaration;
+                }
+            }
+        }
+    }
+    foreach(AST *declaration, domainDeclarations) {
+        m_tree->addChild(declaration);
+    }
+}
+
+void CodeResolver::processDomains()
+{
+    foreach(AST *node, m_tree->getChildren()) {
+        if (node->getNodeType() == AST::Stream) {
+            StreamNode *stream = static_cast<StreamNode *>(node);
+            AST *left = stream->getLeft();
+            AST *right = stream->getRight();
+            QList<AST *> domainStack;
+            QVector<AST *> scopeStack;
+            string domainName;
+            while (right) {
+                resolveDomainForStreamNode(left, scopeStack);
+                if (left->getNodeType() == AST::Name
+                        || left->getNodeType() == AST::Bundle) {
+                    BlockNode *declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(left, scopeStack, m_tree), scopeStack, m_tree);
+                    AST *domain = declaration->getDomain();
+                    if (domain->getNodeType() == AST::String) {
+                        domainName = static_cast<ValueNode *>(domain)->getStringValue();
+                    } else {
+                        if (declaration) {
+                            domainStack << declaration;
+                        }
+                    }
+                } else if (left->getNodeType() == AST::Function) {
+                    FunctionNode *func = static_cast<FunctionNode *>(left);
+                    AST *domain = func->getDomain();
+                    if (domain && domain->getNodeType() == AST::String) {
+                        domainName = static_cast<ValueNode *>(domain)->getStringValue();
+                    } else {
+                        domainStack << left;
+                    }
+                } else if (left->getNodeType() == AST::List) {
+                    foreach(AST * member, left->getChildren()) {
+                        AST *domain = NULL;
+                        if (member->getNodeType() == AST::Name
+                                || member->getNodeType() == AST::Bundle) {
+                            BlockNode *declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(member, scopeStack, m_tree), scopeStack, m_tree);
+                            domain = declaration->getDomain();
+                        } else if (member->getNodeType() == AST::Function) {
+                            FunctionNode *func = static_cast<FunctionNode *>(member);
+                            domain = func->getDomain();
+                        }
+                        if (domain && domain->getNodeType() == AST::String) {
+                            domainName = static_cast<ValueNode *>(domain)->getStringValue();
+                        } else {
+                            domainStack << member;
+                        }
+                    }
+                }
+
+                if (domainName.size() > 0) {
+                    foreach (AST *relatedNode, domainStack) {
+                        if (relatedNode->getNodeType() == AST::Block
+                                || relatedNode->getNodeType() == AST::BlockBundle ) {
+                            BlockNode *block = static_cast<BlockNode *>(relatedNode);
+                            block->setDomain(domainName);
+                        } else if (relatedNode->getNodeType() == AST::Function) {
+                            FunctionNode *func = static_cast<FunctionNode *>(relatedNode);
+                            func->setDomain(domainName);
+                        }  else if (relatedNode->getNodeType() == AST::List) {
+                            foreach(AST * member, relatedNode->getChildren()) {
+                                if (member->getNodeType() == AST::Block
+                                        || member->getNodeType() == AST::BlockBundle ) {
+                                    BlockNode *block = static_cast<BlockNode *>(member);
+                                    block->setDomain(domainName);
+                                } else if (member->getNodeType() == AST::Function) {
+                                    FunctionNode *func = static_cast<FunctionNode *>(member);
+                                    func->setDomain(domainName);
+                                }
+                            }
+                        }
+                    }
+                    domainStack.clear();
+                }
+
+
+                if (left == right) {
+                    right = left = NULL; // End
+                } else if(right->getNodeType() == AST::Stream) {
+                    stream = static_cast<StreamNode *>(right);
+                    left = stream->getLeft();
+                    right = stream->getRight();
+                } else {
+                    left = right; // Last pass (process right, call it left)
+                }
+            }
+        }
+    }
 }
 
 double CodeResolver::createSignalDeclaration(QString name, int size, AST *tree)
@@ -712,7 +860,8 @@ ValueNode *CodeResolver::resolveConstant(AST* value, QVector<AST *> scope)
         BlockNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), QVector<AST *>(), m_tree);
         if (block && block->getNodeType() == AST::Block && block->getObjectType() == "constant") { // Size == 1
             AST *blockValue = block->getPropertyValue("value");
-            if (blockValue->getNodeType() == AST::Int || blockValue->getNodeType() == AST::Real ) {
+            if (blockValue->getNodeType() == AST::Int || blockValue->getNodeType() == AST::Real
+                     || blockValue->getNodeType() == AST::String ) {
                 return static_cast<ValueNode *>(blockValue->deepCopy());
             }
             newValue = resolveConstant(block->getPropertyValue("value"), scope);
@@ -1015,8 +1164,8 @@ ValueNode *CodeResolver::lesserEqual(ValueNode *left, ValueNode *right)
 }
 
 
-QVector<AST *> CodeResolver::expandStream(StreamNode *stream)
-{
+//QVector<AST *> CodeResolver::expandStream(StreamNode *stream)
+//{
 //    QList<LangError> errors;
 //    QVector<AST *> scope;
 //    int size = CodeValidator::numParallelStreams(stream, m_platform, scope, m_tree, errors);
@@ -1032,7 +1181,7 @@ QVector<AST *> CodeResolver::expandStream(StreamNode *stream)
 //    //    return slicedStreams;
 
 
-}
+//}
 //QVector<AST *> CodeResolver::expandStreamNode(StreamNode *stream)
 //{
 
@@ -1137,6 +1286,50 @@ StreamNode *CodeResolver::splitStream(StreamNode *stream, AST *closingNode, AST 
     }
     qFatal("Shouldn't get here");
     return outStream;
+}
+
+void CodeResolver::resolveDomainForStreamNode(AST *node, QVector<AST *> scopeStack)
+{
+    string domainName;
+    AST *domain = NULL;
+    if (node->getNodeType() == AST::Name
+            || node->getNodeType() == AST::Bundle) {
+        BlockNode *declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(node, scopeStack, m_tree), scopeStack, m_tree);
+        domain = static_cast<BlockNode *>(declaration)->getDomain();
+    } else if (node->getNodeType() == AST::Function) {
+        domain = static_cast<FunctionNode *>(node)->getDomain();
+    } else if (node->getNodeType() == AST::List) {
+        foreach(AST *member, node->getChildren()) {
+            resolveDomainForStreamNode(member, scopeStack);
+            return;
+        }
+    }
+    if (domain) {
+        if (domain->getNodeType() == AST::Name) { // Resolve domain name
+            NameNode *domainNameNode = static_cast<NameNode *>(domain);
+            BlockNode *domainDeclaration = CodeValidator::findDeclaration(
+                        QString::fromStdString(domainNameNode->getName()), scopeStack, m_tree);
+            if (domainDeclaration) {
+                AST *domainValue = domainDeclaration->getPropertyValue("name");
+                while (domainDeclaration && domainValue->getNodeType() == AST::Name) {
+                    NameNode *recurseDomain = static_cast<NameNode *>(domainValue);
+                    domainDeclaration = CodeValidator::findDeclaration(
+                                QString::fromStdString(recurseDomain->getName()), scopeStack, m_tree);
+                    domainValue = domainDeclaration->getPropertyValue("name");
+                }
+                if (domainValue && domainValue->getNodeType() == AST::String) {
+                    string domainName = static_cast<ValueNode *>(domainValue)->getStringValue();
+                    if (node->getNodeType() == AST::Name
+                            || node->getNodeType() == AST::Bundle) {
+                        BlockNode *declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(node, scopeStack, m_tree), scopeStack, m_tree);
+                        declaration->setDomain(domainName);
+                    } else if (node->getNodeType() == AST::Function) {
+                         static_cast<FunctionNode *>(node)->setDomain(domainName);
+                    }
+                }
+            }
+        }
+    }
 }
 
 //AST *CodeResolver::expandStream(AST *node, int index, int rightNumInputs, int leftNumOutputs)

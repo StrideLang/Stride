@@ -142,8 +142,8 @@ type _Domain {
 	ports: [
 		port Name {
 			name: "name"
-			types: ["CSP"]
-			default: none
+			types: ["CSP", ""] # TODO Should accept _domain
+			default: _PlatformDomain
 			required: on
 		},
 		port Platform {

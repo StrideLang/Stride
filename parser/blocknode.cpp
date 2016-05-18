@@ -1,6 +1,7 @@
 #include <cassert>
 
 #include "blocknode.h"
+#include "valuenode.h"
 
 
 BlockNode::BlockNode(string name, string objectType, AST *propertiesList,
@@ -74,6 +75,21 @@ AST *BlockNode::getPropertyValue(string propertyName)
         }
     }
     return NULL;
+}
+
+AST *BlockNode::getDomain()
+{
+    AST *domainValue = getPropertyValue("domain");
+    return domainValue;
+}
+
+void BlockNode::setDomain(string domain)
+{
+    for (unsigned int i = 0; i < m_properties.size(); i++) {
+        if (m_properties.at(i)->getName() == "domain") {
+            m_properties.at(i)->replaceValue(new ValueNode(domain, "", -1));
+        }
+    }
 }
 
 string BlockNode::getObjectType() const

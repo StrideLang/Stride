@@ -20,6 +20,9 @@ public:
     void addProperty(PropertyNode *newProperty);
     AST *getPropertyValue(string propertyName);
 
+    AST *getDomain();
+    void setDomain(string domain);
+
     string getObjectType() const;
     AST *deepCopy();
 

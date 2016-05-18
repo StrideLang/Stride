@@ -86,3 +86,15 @@ platformType _SerialOutType {
     processing: "Serial.println(%%intoken:0%%)"
     inherits: ['signal']
 }
+
+platformType _SerialInType {
+    typeName: '_serialInType'
+	numInputs: 0
+	numOutputs: 1
+    include: []
+    linkTo: []
+    declarations: ''
+    initialization: [""]
+    processing: ""
+    inherits: ['signal']
+}

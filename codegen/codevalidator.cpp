@@ -180,7 +180,7 @@ void CodeValidator::validateTypes(AST *node, QVector<AST *> scopeStack)
                                 NameNode *currentTypeNameNode = static_cast<NameNode *>(portValue);
                                 BlockNode *valueDeclaration = findDeclaration(
                                             QString::fromStdString(currentTypeNameNode->getName()), scopeStack, m_tree);
-                                if (validTypeName == valueDeclaration->getObjectType()) {
+                                if (valueDeclaration && validTypeName == valueDeclaration->getObjectType()) {
                                     typeIsValid = true;
                                     break;
                                 }
@@ -711,6 +711,7 @@ int CodeValidator::getTypeNumOutputs(BlockNode *blockDeclaration, const QVector<
         }
         return 1;
     }
+    return 0;
 }
 
 int CodeValidator::getTypeNumInputs(BlockNode *blockDeclaration, const QVector<AST *> &scope, AST *tree, QList<LangError> &errors)
@@ -740,6 +741,7 @@ int CodeValidator::getTypeNumInputs(BlockNode *blockDeclaration, const QVector<A
         }
         return 1;
     }
+    return 0;
 }
 
 BlockNode *CodeValidator::findDeclaration(QString objectName, QVector<AST *> scopeStack, AST *tree)
@@ -769,6 +771,27 @@ BlockNode *CodeValidator::findDeclaration(QString objectName, QVector<AST *> sco
         }
     }
     return NULL;
+}
+
+QString CodeValidator::streamMemberName(AST *node, QVector<AST *> scopeStack, AST *tree)
+{
+    if (node->getNodeType() == AST::Name) {
+        NameNode *name = static_cast<NameNode *>(node);
+        return QString::fromStdString(name->getName());
+    } else if (node->getNodeType() == AST::Bundle) {
+        BundleNode *bundle = static_cast<BundleNode *>(node);
+        return QString::fromStdString(bundle->getName());
+    } else if (node->getNodeType() == AST::List) {
+        return "";
+    } else if (node->getNodeType() == AST::Function) {
+        FunctionNode *func = static_cast<FunctionNode *>(node);
+        return QString::fromStdString(func->getName());
+    } else if (node->getNodeType() == AST::Expression) {
+        return "";
+    } else {
+        qDebug() << "streamMemberName() error. Invalid stream member type.";
+    }
+    return "";
 }
 
 

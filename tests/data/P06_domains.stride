@@ -1,0 +1,12 @@
+use Gamma version 1.0 on PC
+
+import generators
+
+signal ValueInSerialDomain {
+    domain: SerialInDomain
+}
+
+[SerialIn(), 1024.0] >> Divide() >> ValueInSerialDomain;
+
+Oscillator(frequency: ValueInSerialDomain) >> Level(gain: 0.2) >> AudioOut;
+

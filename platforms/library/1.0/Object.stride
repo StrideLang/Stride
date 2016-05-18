@@ -42,8 +42,8 @@ type _DomainMember {
 	ports: [
 		port TypeName {
 			name: "domain"
-			types: ["CSP", "none"]
-			default: none
+			types: ["CSP", ""]
+			default: streamDomain
 			required: on
 		}
 	]

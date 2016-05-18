@@ -76,6 +76,12 @@ type _Module {
 			types: [""]
 			default: none
 			required: on
+		},
+		port Domain {
+			name: "domain"
+			types: ["CSP", "" ] #  Should allow _Domain
+			default: streamNode
+			required: off
 		}
 
 	]
@@ -120,6 +126,13 @@ type _Reaction {
 			types: [""]
 			default: none
 			required: on
+		},
+		port Domain {
+			name: "domain"
+			types: ["CSP", "" ] #  Should allow _Domain
+			default: streamNode
+			required: off
 		}
 	]
+	inherits: ["domainMember"]
 }

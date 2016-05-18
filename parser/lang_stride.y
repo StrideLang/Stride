@@ -138,7 +138,8 @@ NullStream nstream;
 %token USE VERSION WITH IMPORT AS FOR NONE ON OFF
 %token EQUAL NOTEQUAL GREATER LESSER GREATEREQUAL LESSEREQUAL
 %token BITAND BITOR BITNOT
-//%token STREAMRATE
+%token STREAMRATE
+%token STREAMDOMAIN
 
 %left STREAM
 %left AND OR
@@ -563,6 +564,21 @@ property:
                                     string s;
                                     s.append($1); /* string constructor leaks otherwise! */
                                     $$ = new PropertyNode(s, $3, currentFile, yyloc.first_line);
+                                    COUT << "Property: " << $1 << ENDL << "New property ... " << ENDL;
+                                    free($1);
+                                }
+      |  WORD COLON STREAMDOMAIN {
+                                    string s;
+                                    s.append($1); /* string constructor leaks otherwise! */
+                                    $$ = new PropertyNode(s, new ValueNode((string) "streamDomain", "", -1), currentFile, yyloc.first_line);
+                                    COUT << "Property: " << $1 << ENDL << "New property ... " << ENDL;
+                                    free($1);
+                                }
+       | WORD COLON STREAMRATE {
+                                    string s;
+                                    s.append($1); /* string constructor leaks otherwise! */
+                                    PropertyNode * node = new PropertyNode(s, new ValueNode((string) "streamRate", "", -1), currentFile, yyloc.first_line);
+                                    $$ = node;
                                     COUT << "Property: " << $1 << ENDL << "New property ... " << ENDL;
                                     free($1);
                                 }

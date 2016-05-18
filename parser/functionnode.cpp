@@ -1,6 +1,7 @@
 #include <cassert>
 
 #include "functionnode.h"
+#include "valuenode.h"
 
 FunctionNode::FunctionNode(string name, AST *propertiesList, FunctionType type,
                            const char *filename, int line, string namespace_) :
@@ -36,6 +37,26 @@ void FunctionNode::setChildren(vector<AST *> &newChildren)
     }
 }
 
+AST *FunctionNode::getDomain()
+{
+    AST *domainValue = getPropertyValue("domain");
+    return domainValue;
+}
+
+void FunctionNode::setDomain(string domain)
+{
+    bool domainSet = false;
+    for (unsigned int i = 0; i < m_properties.size(); i++) {
+        if (m_properties.at(i)->getName() == "domain") {
+            m_properties.at(i)->replaceValue(new ValueNode(domain, "", -1));
+            domainSet = true;
+        }
+    }
+    if (!domainSet) {
+        addProperty(new PropertyNode("domain", new ValueNode(domain, "", -1), "", -1));
+    }
+}
+
 void FunctionNode::deleteChildren()
 {
     AST::deleteChildren();
@@ -45,6 +66,23 @@ void FunctionNode::deleteChildren()
 vector<PropertyNode *> FunctionNode::getProperties() const
 {
     return m_properties;
+}
+
+void FunctionNode::addProperty(PropertyNode *newProperty)
+{
+    // TODO check that property name is not there already
+    addChild(newProperty);
+    m_properties.push_back(newProperty);
+}
+
+AST *FunctionNode::getPropertyValue(string propertyName)
+{
+    for (unsigned int i = 0; i < m_properties.size(); i++) {
+        if (m_properties.at(i)->getName() == propertyName) {
+            return m_properties.at(i)->getValue();
+        }
+    }
+    return NULL;
 }
 
 AST *FunctionNode::deepCopy()

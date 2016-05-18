@@ -15,7 +15,7 @@ StrideLibrary::StrideLibrary() :
 }
 
 StrideLibrary::StrideLibrary(QString libraryPath, QMap<QString, QString> importList) :
-    StrideLibrary()
+    m_majorVersion(1), m_minorVersion(0)
 {
     readLibrary(libraryPath, importList);
 }

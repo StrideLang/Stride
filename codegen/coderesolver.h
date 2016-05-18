@@ -45,6 +45,7 @@ private:
 
 
     void insertBuiltinObjects();
+    void processDomains();
     double createSignalDeclaration(QString name, int size, AST *tree);
     void declareUnknownName(NameNode *name, int size, AST *tree);
     void declareUnknownExpressionSymbols(ExpressionNode *expr, int size, AST * tree);
@@ -53,7 +54,7 @@ private:
     void declareUnknownStreamSymbols(StreamNode *stream, AST *previousStreamMember, AST *tree);
     void resolveStreamSymbols();
     void resolveConstants();
-    QVector<AST *>  expandStream(StreamNode *stream);
+//    QVector<AST *>  expandStream(StreamNode *stream);
 //    void expandStreamMembers();
 //    void sliceStreams();
 
@@ -61,6 +62,7 @@ private:
     ValueNode *reduceConstExpression(ExpressionNode *expr, QVector<AST *> scope, AST *tree);
     ValueNode *resolveConstant(AST *value, QVector<AST *> scope);
     void resolveConstantsInNode(AST *node, QVector<AST *> scope);
+    void resolveDomainForStreamNode(AST *node, QVector<AST *> scope);
 
     // Operators
     ValueNode *multiply(ValueNode *left, ValueNode *right);

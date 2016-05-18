@@ -38,7 +38,7 @@ void PythonProject::build(AST *tree)
     arguments << "library/1.0/python/build.py" << m_projectDir << m_platformPath + "/../";
     pythonProcess.start(m_pythonExecutable, arguments);
     if(!pythonProcess.waitForFinished()) {
-
+        emit(errorText("Error building!"));
     }
     QByteArray stdOut = pythonProcess.readAllStandardOutput();
     QByteArray stdErr = pythonProcess.readAllStandardError();
