@@ -1,0 +1,28 @@
+
+
+# Sine function test
+platformType _SineType {
+    typeName: '_sineType'
+    numInputs: 1
+	numOutputs: 1
+    include: ["cmath"]
+    linkTo: []
+    declarations: ''
+    initialization: ["// %%token%% = 0;"]
+    processing: "std::sin(%%intoken:0%%)"
+    inherits: ['signal']
+}
+
+
+platformType _CosineType {
+    typeName: '_cosineType'
+    numInputs: 1
+	numOutputs: 1
+    include: ["cmath"]
+    linkTo: []
+    declarations: ''
+    initialization: ["// %%token%% = 0;"]
+    processing: "std::cos(%%intoken:0%%)"
+    inherits: ['signal']
+}
+
