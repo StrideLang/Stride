@@ -3,8 +3,23 @@ _platform _ArduinoPlatform {
     name: "Arduino"
 }
 
+_domain _PlatformDomain {
+    name: _ArduinoDomain
+    platform: _ArduinoPlatform
+}
+
 _domain _ArduinoDomain {
     name: "arduino"
+    platform: _ArduinoPlatform
+}
+
+_domain _SerialInDomain {
+    name: "SerialInDomain"
+    platform: _ArduinoPlatform
+}
+
+_domain _SerialOutDomain {
+    name: "SerialOutDomain"
     platform: _ArduinoPlatform
 }
 
@@ -77,13 +92,16 @@ platformType _SelectType {
 
 platformType _SerialOutType {
     typeName: '_serialOutType'
-	numInputs: 1
+	numInputs: 2
 	numOutputs: 0
     include: []
     linkTo: []
     declarations: ''
     initialization: ["Serial.begin(9600);"]
-    processing: "Serial.println(%%intoken:0%%)"
+    processing: ' String str = %%intoken:1%% + " f ";
+	str += %%intoken:0%%;
+	Serial.println(str);
+	'
     inherits: ['signal']
 }
 

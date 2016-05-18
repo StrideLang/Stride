@@ -1,10 +1,26 @@
-_domain _GammaDomain {
-    name: "audio"
-    platform: _GammaPlatform
-}
 
 _platform _GammaPlatform {
     name: "Gamma"
+}
+
+_domain _PlatformDomain {
+    name: _AudioDomain
+    platform: _GammaPlatform
+}
+
+_domain _AudioDomain {
+    name: "AudioDomain"
+    platform: _GammaPlatform
+}
+
+_domain _SerialInDomain {
+    name: "SerialInDomain"
+    platform: _GammaPlatform
+}
+
+_domain _SerialOutDomain {
+    name: "SerialOutDomain"
+    platform: _GammaPlatform
 }
 
 constant PlatformRate {
@@ -15,6 +31,7 @@ constant AudioRate {
     value: PlatformRate
 }
 
+# Audio ---------------
 platformType _HwInput {
     typeName: '_hwInput'
 	numInputs: 0
@@ -41,12 +58,12 @@ platformType _HwOutput {
 
 _hwInput AudioIn[2] {
     rate: AudioRate
-    domain: _GammaDomain
+    domain: _AudioDomain
 }
 
 _hwOutput AudioOut[2] {
     rate: AudioRate
-    domain: _GammaDomain
+    domain: _AudioDomain
 }
 
 platformType _OscOutType {
@@ -78,15 +95,54 @@ platformType _SelectType {
     inherits: ['signal']
 }
 
+# Serial ------------------------
+
 platformType _SerialOutType {
     typeName: '_serialOutType'
-	numInputs: 1
+	numInputs: 2
 	numOutputs: 0
-    include: []
-    linkTo: []
+    include: ["serial/serial.h", "iostream"]
+	linkDir: ["serial/build"]
+    linkTo: ["serial"]
     declarations: ''
     initialization: ["// Not implemented"]
-    processing: "// Not implemented"
+    processing: "
+	
+    size_t bytes_wrote = my_serial.write(test_string);
+#ifdef _WIN32
+//      Sleep(milliseconds); // 100 ms
+#else
+//      usleep(milliseconds*1000); // 100 ms
+#endif	
+	
+	
+	"
     inherits: ['signal']
 }
 
+platformType _SerialInType {
+    typeName: '_serialInType'
+	numInputs: 0
+	numOutputs: 1
+	includeDir: ["serial/include"]
+    include: ["serial/serial.h", "iostream"]
+	linkDir: ["serial/build"]
+    linkTo: ["serial"]
+    declarations: ''
+    initialization: ["
+  unsigned long baud = 9600;
+  string port =""
+  // port, baudrate, timeout in milliseconds
+  serial::Serial my_serial(port, baud, serial::Timeout::simpleTimeout(1000));		
+  if(my_serial.isOpen())
+    std::cout << " Yes." << std::endl;
+  else
+    std::cout << " No." << std::endl;
+		
+		"]
+    processing: "
+	size_t bytes_wrote = my_serial.write(test_string);
+	// Perhaps check if things were written properly?	
+	"
+    inherits: ['signal']
+}
