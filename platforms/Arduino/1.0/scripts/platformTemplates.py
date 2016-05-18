@@ -11,6 +11,8 @@ from BaseCTemplate import BaseCTemplate
 class Templates(BaseCTemplate):
     def __init__(self, domain_rate = 44100):
         super(Templates, self).__init__(domain_rate)
+        
+        self.string_type = "String"
 
 
 
