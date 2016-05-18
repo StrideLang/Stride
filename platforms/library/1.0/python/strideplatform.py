@@ -372,6 +372,10 @@ class NameAtom(Atom):
         self.handle = self.name # + '_%03i'%token_index;
         self.platform_type = platform_type
         self.declaration = declaration
+        self.domain = ''
+        if 'domain' in self.declaration:
+            self.domain = self.declaration['domain']
+            
         
         for section in self.global_sections:
             if section in platform_type['block']:
@@ -617,6 +621,10 @@ class ModuleAtom(Atom):
         self.module = module
         self.rate = -1 # Should modules have rates?
         self.function = function
+        self.domain = ''
+        if 'domain' in self.function['ports']:
+            self.domain = self.function['ports']['domain']
+            self.function['ports'].pop('domain')
         
         self.port_name_atoms = []
         

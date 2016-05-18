@@ -17,10 +17,11 @@ public:
 
 private:
 
-    void testMultichannelUgens(); // This has not yet been properly implemented. So don't run test
+    void testMultichannelUgens(); // Need to complete support for this.
+
 private Q_SLOTS:
 
-    void testImport();
+    void testDomains();
 
     //Expansion
     void testStreamExpansion();
@@ -32,6 +33,7 @@ private Q_SLOTS:
     void testValueTypeExpressionResolution();
     void testDuplicates();
     void testValueTypeBundleResolution();
+    void testImport();
 
     // Parser
     void testExpressions();
@@ -84,6 +86,48 @@ void ParserTest::testMultichannelUgens()
 
     tree->deleteChildren();
     delete tree;
+}
+
+void ParserTest::testDomains()
+{
+
+    AST *tree;
+    tree = parse(QString(QFINDTESTDATA("data/P06_domains.stride")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    generator.validate();
+    QVERIFY(generator.isValid());
+
+//    [SerialIn(), 1024.0] >> Divide() >> ValueInSerialDomain;
+
+
+    StreamNode *stream = static_cast<StreamNode *>(tree->getChildren()[3]);
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    ListNode *list = static_cast<ListNode *>(stream->getLeft());
+    QVERIFY(list->getNodeType() == AST::List);
+    FunctionNode *func = static_cast<FunctionNode *>(list->getChildren()[0]);
+    ValueNode *domainName = static_cast<ValueNode *>(func->getDomain());
+    QVERIFY(domainName->getNodeType() == AST::String);
+    QVERIFY(domainName->getStringValue() == "SerialInDomain");
+    stream = static_cast<StreamNode *>(stream->getRight());
+    func = static_cast<FunctionNode *>(stream->getLeft());
+    domainName = static_cast<ValueNode *>(func->getDomain());
+    QVERIFY(domainName->getNodeType() == AST::String);
+    QVERIFY(domainName->getStringValue() == "SerialInDomain");
+
+    //    Oscillator(frequency: ValueInSerialDomain) >> Level(gain: 0.2) >> AudioOut;
+
+    stream = static_cast<StreamNode *>(tree->getChildren()[4]);
+    func = static_cast<FunctionNode *>(stream->getLeft());
+    domainName = static_cast<ValueNode *>(func->getDomain());
+    QVERIFY(domainName->getNodeType() == AST::String);
+    QVERIFY(domainName->getStringValue() == "AudioDomain");
+    stream = static_cast<StreamNode *>(stream->getRight());
+    func = static_cast<FunctionNode *>(stream->getLeft());
+    domainName = static_cast<ValueNode *>(func->getDomain());
+    QVERIFY(domainName->getNodeType() == AST::String);
+    QVERIFY(domainName->getStringValue() == "AudioDomain");
+
 }
 
 void ParserTest::testImport()
