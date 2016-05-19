@@ -61,6 +61,9 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
     m_codeModelTimer.setSingleShot(true);
     m_codeModelTimer.setInterval(2000);
     connect(&m_codeModelTimer, SIGNAL(timeout()), this, SLOT(updateCodeAnalysis()));
+
+    ui->docBrowser->settings()->setUserStyleSheetUrl(QUrl("qrc:/resources/style.css"));
+    ui->docBrowser->setHtml("<h1>Welcome to Stride</h1>");
 }
 
 ProjectWindow::~ProjectWindow()
@@ -285,7 +288,7 @@ void ProjectWindow::showDocumentation()
     }
     QString word = cursor.selectedText();
     if (!m_lastValidTree) {
-        ui->docBrowser->setPlainText(tr("Parsing error. Can't update tree.").arg(word));
+        ui->docBrowser->setHtml(tr("Parsing error. Can't update tree.").arg(word));
         return;
     }
     QList<LangError> errors;
@@ -345,11 +348,11 @@ void ProjectWindow::showDocumentation()
                 propertiesTable += "</table>";
                 ui->docBrowser->setHtml(docHtml + propertiesHtml + propertiesTable);
             }
-            
+
         } else {
-            ui->docBrowser->setPlainText(tr("Unknown type: %1").arg(word));
+            ui->docBrowser->setHtml(tr("Unknown type: %1").arg(word));
         }
-        
+
     } else if (word[0].toUpper() == word[0]) { // Check if it is a declared module
         QMutexLocker locker(&m_validTreeLock);
         BlockNode *declaration = CodeValidator::findDeclaration(word, QVector<AST *>(), m_lastValidTree);
@@ -407,7 +410,7 @@ void ProjectWindow::showDocumentation()
             }
 
         } else {
-            ui->docBrowser->setPlainText(tr("Unknown type: %1").arg(word));
+            ui->docBrowser->setHtml(tr("Unknown type: %1").arg(word));
         }
     }
 }

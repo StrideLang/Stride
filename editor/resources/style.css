@@ -1,0 +1,24 @@
+* {
+/* font-size: 100%;*/
+ font-family: Ubuntu;
+}
+
+h1 {
+text-align: center
+}
+
+table {
+    width: 100%;
+}
+
+td {
+/*    height: 50px;*/
+    valign: bottom;
+}
+
+th {
+    bgcolor: #4CAF50;
+/*    color: white;*/
+}
+
+tr:nth-child(even) {background-color: #f2f2f2}

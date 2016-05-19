@@ -177,9 +177,11 @@
       <number>2</number>
      </property>
      <item>
-      <widget class="QTextBrowser" name="docBrowser">
-       <property name="frameShape">
-        <enum>QFrame::NoFrame</enum>
+      <widget class="QWebView" name="docBrowser">
+       <property name="url">
+        <url>
+         <string>about:blank</string>
+        </url>
        </property>
       </widget>
      </item>
@@ -409,6 +411,13 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QWebView</class>
+   <extends>QWidget</extends>
+   <header>QtWebKitWidgets/QWebView</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

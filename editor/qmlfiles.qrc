@@ -2,5 +2,6 @@
     <qresource prefix="/">
         <file>qml/Editor.qml</file>
         <file>resources/icon.png</file>
+        <file>resources/style.css</file>
     </qresource>
 </RCC>
