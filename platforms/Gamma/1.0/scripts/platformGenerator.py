@@ -96,7 +96,7 @@ class Generator:
         if platform.system() == "Windows":
             cpp_compiler = "/usr/bin/c++"
         
-            flags = "-I"+ self.platform_dir +"/include -O3 -DNDEBUG -o " \
+            flags = "-I"+ self.platform_dir +"include -O3 -DNDEBUG -o " \
                 + self.out_dir +"/main.cpp.o -c "+ self.out_dir +"/main.cpp"
             args = [cpp_compiler] + flags.split()
             try:
@@ -121,10 +121,10 @@ class Generator:
         
         
         elif platform.system() == "Linux":
-            cpp_compiler = "/usr/bin/c++"
+            cpp_compiler = "/usr/bin/g++"
         
             args = [cpp_compiler,
-                    "-I"+ self.platform_dir +"/include -O3 -DNDEBUG",
+                    "-I"+ self.platform_dir +"/include",  "-O3" , "-std=c++11", "-DNDEBUG",
                      "-o" + self.out_dir +"/main.cpp.o",
                      "-c",
                      self.out_dir + "/main.cpp"]
@@ -137,8 +137,7 @@ class Generator:
             self.log(outtext)
         
             # Link ------------------------
-            gamma_flags = ["-lGamma", "-lpthread", "-lportaudio", "-lsndfile",
-                           "-lpthread", "-lportaudio", "-lsndfile"]
+            gamma_flags = ["-lGamma", "-lpthread", "-lportaudio", "-lsndfile"]
             args = [cpp_compiler,
                     "-O3",
                     "-DNDEBUG",
@@ -151,6 +150,8 @@ class Generator:
             args += gamma_flags + self.link_flags 
             
             #self.log(' '.join(args))
+            print(args)
+
             outtext = ck_out(args)
         
             self.log(outtext)

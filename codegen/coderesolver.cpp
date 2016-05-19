@@ -493,7 +493,7 @@ void CodeResolver::processDomains()
                         || left->getNodeType() == AST::Bundle) {
                     BlockNode *declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(left, scopeStack, m_tree), scopeStack, m_tree);
                     AST *domain = declaration->getDomain();
-                    if (domain->getNodeType() == AST::String) {
+                    if (domain && domain->getNodeType() == AST::String) {
                         domainName = static_cast<ValueNode *>(domain)->getStringValue();
                     } else {
                         if (declaration) {

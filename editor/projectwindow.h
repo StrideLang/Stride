@@ -72,8 +72,9 @@ private:
 
     LanguageHighlighter *m_highlighter;
 
-    QString m_platformsRootDir;
+//    QString m_platformsRootDir;
     QMap<QString, QVariant> m_options;
+    QMap<QString, QVariant> m_environment;
     QTimer m_codeModelTimer;
     QFont m_font;
     Builder *m_builder;

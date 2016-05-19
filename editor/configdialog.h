@@ -21,6 +21,9 @@ public:
     QFont font() const;
     void setFont(const QFont &font);
 
+    QString platformRootPath();
+    void setPlatformRootPath(QString path);
+
     QMap<QString, QTextCharFormat> highlighterFormats() const;
 
 public slots:

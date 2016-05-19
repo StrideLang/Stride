@@ -33,8 +33,6 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    m_platformsRootDir = "../../StreamStack/platforms";
-
     connectActions();
     connectShortcuts();
     QIcon icon(":resources/icon.png");
@@ -96,7 +94,7 @@ void ProjectWindow::build()
             errors << syntaxErrors[i];
         }
     }
-    CodeValidator validator(m_platformsRootDir, tree);
+    CodeValidator validator(m_environment["platformRootPath"].toString(), tree);
     validator.validate();
     errors << validator.getErrors();
     editor->setErrors(errors);
@@ -652,6 +650,7 @@ void ProjectWindow::loadFile(QString fileName)
 
 void ProjectWindow::openOptionsDialog()
 {
+    // First set current values
     ConfigDialog config(this);
     config.setFont(
                 QFont(m_options["editor.fontFamily"].toString(),
@@ -664,12 +663,17 @@ void ProjectWindow::openOptionsDialog()
     QMap<QString, QTextCharFormat> formats = m_highlighter->formats();
     config.setHighlighterFormats(formats);
 
+    config.setPlatformRootPath(m_environment["platformRootPath"].toString());
+
+
+    // Connect
     connect(&config, SIGNAL(requestHighlighterPreset(int)),
             m_highlighter, SLOT(setFormatPreset(int)));
     connect(m_highlighter, SIGNAL(currentHighlightingChanged(QMap<QString,QTextCharFormat> &)),
             &config, SLOT(setHighlighterFormats(QMap<QString,QTextCharFormat> &)));
 
     int result = config.exec();
+    // Get values back
     if (result == QDialog::Accepted) {
         m_font = config.font();
         updateEditorFont();
@@ -678,6 +682,8 @@ void ProjectWindow::openOptionsDialog()
         m_options["editor.fontWeight"] = m_font.weight();
         m_options["editor.fontItalic"] = m_font.italic();
         m_highlighter->setFormats(config.highlighterFormats());
+
+        m_environment["platformRootPath"] = config.platformRootPath();
         writeSettings();
     }
 }
@@ -697,7 +703,7 @@ void ProjectWindow::updateCodeAnalysis()
             tree = AST::parseFile(tmpFile.fileName().toLocal8Bit().constData());
 
             if (tree) {
-                CodeValidator validator(m_platformsRootDir, tree);
+                CodeValidator validator(m_environment["platformRootPath"].toString(), tree);
                 validator.validate();
                 QList<AST *> newPlatformObjects = validator.getPlatform()->getBuiltinObjectsCopy();
                 //    QVERIFY(!generator.isValid());
@@ -840,6 +846,10 @@ void ProjectWindow::readSettings()
         tabChanged(settings.value("lastIndex", -1).toInt()); // Should be triggered automatically but isn't...
     }
     settings.endGroup();
+
+    settings.beginGroup("environment");
+    m_environment["platformRootPath"] = settings.value("platformRootPath", "../../StreamStack/platforms").toString();
+    settings.endGroup();
 }
 
 void ProjectWindow::writeSettings()
@@ -877,6 +887,11 @@ void ProjectWindow::writeSettings()
      }
      settings.endArray();
 
+     settings.endGroup();
+
+
+     settings.beginGroup("environment");
+     settings.setValue("platformRootPath", m_environment["platformRootPath"]);
      settings.endGroup();
 }
 

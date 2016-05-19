@@ -36,6 +36,16 @@ void ConfigDialog::setFont(const QFont &font)
     m_font = font;
 }
 
+QString ConfigDialog::platformRootPath()
+{
+    return ui->platformRootLineEdit->text();
+}
+
+void ConfigDialog::setPlatformRootPath(QString path)
+{
+    ui->platformRootLineEdit->setText(path);
+}
+
 QMap<QString, QTextCharFormat> ConfigDialog::highlighterFormats() const
 {
     return m_highlighterFormats;
