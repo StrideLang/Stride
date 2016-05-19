@@ -46,11 +46,23 @@ type _PlatformType {
 			default: none
 			required: on
 		},
+		port IncludeDir {
+			name: "includeDir"
+			types: ["CSP", ""] #TODO accepts list
+			default: none
+			required: off
+		},
 		port LinkTo {
 			name: "linkTo"
 			types: ["CSP" , ""] #TODO accepts list
 			default: none
 			required: on
+		},
+		port LinkDir {
+			name: "linkDir"
+			types: ["CSP" , ""] #TODO accepts list
+			default: none
+			required: off
 		},
 		port NumInputs {
 			name: "numInputs"
