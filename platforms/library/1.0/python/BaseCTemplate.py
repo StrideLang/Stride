@@ -22,12 +22,15 @@ class BaseCTemplate(object):
         self.stream_begin_code = '// Starting stream %02i -------------------------\n{\n'
         self.stream_end_code = '} // Stream End %02i\n'
         
+        self.string_type = "std::string"
+        
         # Internal templates
         self.str_rate_begin_code = '{ // Start new rate %i\n' 
         self.str_rate_end_code = '\n}  // Close Rate %i\n' 
         self.str_assignment = '%s = %s;\n'
         self.str_increment = '%s += %s;\n'
         self.str_module_declaration = '''
+        
 struct %s {
     %s %s() {
         %s
@@ -110,7 +113,7 @@ struct %s {
         return declaration 
         
     def declaration_string(self, name, close=True):
-        declaration = "std::string %s"%name
+        declaration = self.string_type + " " + name
         if close:
             declaration += ';\n'
         return declaration 
@@ -170,7 +173,7 @@ struct %s {
         elif instance['type'] == 'bool':
             code = 'bool ' + instance['handle'] + ';\n'
         elif instance['type'] == 'string':
-            code = 'std::string ' + instance['handle'] + ';\n'
+            code = self.declaration_string(instance['handle'])
         elif instance['type'] =='bundle':
             if instance['bundletype'] == 'real':
                 code = 'float ' + instance['handle'] + '[%i];\n'%instance['size']
@@ -358,7 +361,7 @@ struct %s {
             code += block_name + ' = value;\n'
             code += '\n}\n'
         elif prop_type == 'string':
-            code += 'void set_' + name + '(std::string value) {\n'
+            code += 'void set_' + name + '(' + self.string_type + ' value) {\n'
             code += block_name + ' = value;\n'
             code += '\n}\n'
         return code
