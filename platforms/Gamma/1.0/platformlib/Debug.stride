@@ -1,11 +1,10 @@
 platformType _DebugPrintType {
     typeName: '_debugPrintType'
-    numInputs: 1
-	numOutputs: 0
+    inputs: ["any"]
     include: ["iostream"]
-    linkTo: []
-    declarations: ''
-    initialization: [" "]
+#    linkTo: []
+#    declarations: ['']
+#    initialization: [" "]
     processing: "std::cout << %%intoken:0%% << std::endl;"
     inherits: ['signal']
 }
@@ -22,11 +21,15 @@ module DebugPrint {
 	]
     internalBlocks: [
 		switch Trigger {},
-		signal Value {},
+		signal Null { default: ""},
+		signal Value { default: ""},
 		reaction Print {
-#		onExecution: 
+#			properties: [
+#			]
+#		onExecution:
 #		terminateWhen:
 			internalBlocks: [
+				signal PrintValue {},
      		   _debugPrintType DebugPrintBlock {}
 			]
 			streams: [

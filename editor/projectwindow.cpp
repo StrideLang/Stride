@@ -63,7 +63,7 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
     connect(&m_codeModelTimer, SIGNAL(timeout()), this, SLOT(updateCodeAnalysis()));
 
     ui->docBrowser->settings()->setUserStyleSheetUrl(QUrl("qrc:/resources/style.css"));
-    ui->docBrowser->setHtml("<h1>Welcome to Stride</h1>");
+    ui->docBrowser->setHtml("<h1>Welcome to Stride</h1> A declarative and reactive domain specific programming language for real-time sound synthesis, processing, and interaction design. By Andrés Cabrera and Joseph Tilbian.");
 }
 
 ProjectWindow::~ProjectWindow()
@@ -558,6 +558,7 @@ bool ProjectWindow::saveFile(int index)
     editor->markChanged(false);
     codeFile.write(code.toLocal8Bit());
     codeFile.close();
+    markModified();
     return true;
 }
 

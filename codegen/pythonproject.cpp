@@ -37,13 +37,30 @@ void PythonProject::build(AST *tree)
     // TODO un hard-code library version
     arguments << "library/1.0/python/build.py" << m_projectDir << m_platformPath + "/../";
     pythonProcess.start(m_pythonExecutable, arguments);
-    if(!pythonProcess.waitForFinished()) {
-        emit(errorText("Error building!"));
+
+    QByteArray stdOut;
+    QByteArray stdErr;
+    if (pythonProcess.waitForStarted()) {
+        while (pythonProcess.state() == QProcess::Running) {
+            if (pythonProcess.waitForReadyRead(100)) { // TODO this should be offloaded to a separate thread to avoid blocking the GUI thread
+                stdOut = pythonProcess.readAllStandardOutput();
+                stdErr = pythonProcess.readAllStandardError();
+                if (!stdOut.isEmpty()) {
+                    emit outputText(stdOut);
+                }
+                if (!stdErr.isEmpty()) {
+                    emit errorText(stdErr);
+                }
+            }
+        }
     }
-    QByteArray stdOut = pythonProcess.readAllStandardOutput();
-    QByteArray stdErr = pythonProcess.readAllStandardError();
+    // Then catch final output
+    stdOut = pythonProcess.readAllStandardOutput();
+    stdErr = pythonProcess.readAllStandardError();
     emit outputText(stdOut);
     emit errorText(stdErr);
+
+//    pythonProcess.terminate();
 //    qDebug() << stdOut;
 //    qDebug() << stdErr;
 }

@@ -10,3 +10,4 @@ editor/templates/simple/lua_scripts/lpeg.dll
 editor/templates/simple/.metadata
 
 platforms/Arduino/1.0/arduino-1.6.8
+platforms/Discovery_M7/1.0/STM32Cube_FW_F7*

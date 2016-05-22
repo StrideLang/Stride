@@ -42,54 +42,72 @@ type _PlatformType {
 		},
 		port Include {
 			name: "include"
-			types: ["CSP", ""] #TODO accepts list
-			default: none
-			required: on
+			types: [""] #TODO accepts list
+			default: []
+			required: off
 		},
 		port IncludeDir {
 			name: "includeDir"
-			types: ["CSP", ""] #TODO accepts list
-			default: none
+			types: [""] #TODO accepts list
+			default: []
 			required: off
 		},
 		port LinkTo {
 			name: "linkTo"
-			types: ["CSP" , ""] #TODO accepts list
-			default: none
-			required: on
+			types: [""] #TODO accepts list
+			default: []
+			required: off
 		},
 		port LinkDir {
 			name: "linkDir"
-			types: ["CSP" , ""] #TODO accepts list
-			default: none
+			types: [""] #TODO accepts list
+			default: []
 			required: off
 		},
-		port NumInputs {
-			name: "numInputs"
-			types: ["CIP"]
-			default: 1
+		port Inputs {
+			name: "inputs"
+			types: [""] #TODO accepts list
+			default: []
 			required: off
 		},
-		port NumOutputs {
-			name: "numOutputs"
-			types: ["CIP"]
-			default: 1
+		port Outputs {
+			name: "outputs"
+			types: [""]
+			default: []
+			required: off
+		},
+		port GlobalDeclarations {
+			name: "globalDeclarations"
+			types: [""] #TODO validate list
+			default: []
+			required: off
+		},
+		port GlobalInitializations {
+			name: "globalInitializations"
+			types: [""] #TODO validate list
+			default: []
 			required: off
 		},
 		port Declarations {
 			name: "declarations"
-			types: ["CSP"]
-			default: none
+			types: [""] #TODO validate list
+			default: []
 			required: on
 		},
-		port Initialization {
-			name: "initialization"
-			types: ["CSP"]
-			default: none
+		port Constructors {
+			name: "constructors"
+			types: [""] #TODO validate list
+			default: []
+			required: off
+		},
+		port Initializations {
+			name: "initializations"
+			types: [""] #TODO validate list
+			default: []
 			required: on
 		},
 		port PreProcessing {
-			name: "preprocessing"
+			name: "preProcessing"
 			types: ["CSP"]
 			default: ""
 			required: off

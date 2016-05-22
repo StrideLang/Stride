@@ -33,13 +33,13 @@ constant AudioRate { # TODO this should be removed for this hardware as it doesn
 
 platformType _AnalogInput {
     typeName: '_analogInput'
-	numInputs: 1
-	numOutputs:2
-    include: []
-    linkTo: []
+#	inputs: []
+	outputs: ["real"]
+#    include: []
+#    linkTo: []
     declarations: ['int sensorPin[6] = {A0, A1, A2, A3, A4, A5};']
     initialization: ['// init analog input']
-    processing: "analogRead(sensorPin[%%bundle_index%%])"
+    processing: "analogRead(sensorPin[(int) %%bundle_index%%])"
     inherits: ['signal']
 }
 
@@ -50,11 +50,10 @@ _analogInput AnalogIn[2] {
 
 platformType _DigitalOutput {
     typeName: '_digitalOutput'
-	numInputs: 1
-	numOutputs: 0
-    include: []
-    linkTo: []
-    declarations: ['']
+	inputs: ["bool"]
+#    include: []
+#    linkTo: []
+#    declarations: ['']
     initialization: ['pinMode(13, OUTPUT);']
     processing: "digitalWrite(%%bundle_index%%, %%intoken:0%% ? HIGH : LOW);"
     inherits: ['signal']
@@ -67,12 +66,11 @@ _digitalOutput DigitalOut[14] {
 
 platformType _OscOutType {
     typeName: '_oscOutType'
-    numInputs: 4
-	numOutputs: 0
-    include: []
-    linkTo: [""]
-    declarations: ''
-    initialization: ["// INIT OSC"]
+    inputs: ["any", "any", "any", "any"]
+#    include: []
+#    linkTo: [""]
+#    declarations: ['']
+    initializations: ["// INIT OSC"]
     processing: '// Not implemented'
     inherits: ['signal']
 }
@@ -80,24 +78,23 @@ platformType _OscOutType {
 
 platformType _SelectType {
     typeName: '_selectType'
-    numInputs: 3
-	numOutputs: 1
-    include: []
-    linkTo: []
-    declarations: ''
-    initialization: ["// %%token%% = 0;"]
+    inputs: ["bool", "any", "any"]
+	outputs: ["any"]
+#    include: []
+#    linkTo: []
+#    declarations: ['']
+    initializations: ["// %%token%% = 0;"]
     processing: "%%intoken:0%% ? %%intoken:1%% : %%intoken:2%%"
     inherits: ['signal']
 }
 
 platformType _SerialOutType {
     typeName: '_serialOutType'
-	numInputs: 2
-	numOutputs: 0
-    include: []
-    linkTo: []
-    declarations: ''
-    initialization: ["Serial.begin(9600);"]
+	inputs: ["string", "string"]
+#    include: []
+#    linkTo: []
+#    declarations: ['']
+    initializations: ["Serial.begin(9600);"]
     processing: ' String str = %%intoken:1%% + " f ";
 	str += %%intoken:0%%;
 	Serial.println(str);
@@ -107,11 +104,10 @@ platformType _SerialOutType {
 
 platformType _SerialInType {
     typeName: '_serialInType'
-	numInputs: 0
-	numOutputs: 1
-    include: []
-    linkTo: []
-    declarations: ''
+	outputs: ["string"]
+#    include: []
+#    linkTo: []
+#    declarations: ['']
     initialization: [""]
     processing: ""
     inherits: ['signal']

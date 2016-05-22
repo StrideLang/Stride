@@ -34,24 +34,24 @@ constant AudioRate {
 # Audio ---------------
 platformType _HwInput {
     typeName: '_hwInput'
-	numInputs: 0
-	numOutputs: 2
-    include: []
-    linkTo: []
-    declarations: ''
-    initialization: ["// %%token%% = 0;"]
+#	numInputs: 0
+	outputs: ["real", "real"]
+#    include: []
+#    linkTo: []
+#    declarations: ['']
+#    initializations: ["// %%token%% = 0;"]
     processing: "io.in(%%bundle_index%%)"
     inherits: ['signal']
 }
 
 platformType _HwOutput {
     typeName: '_hwOutput'
-	numInputs: 2
-	numOutputs: 0
-    include: []
-    linkTo: []
-    declarations: ''
-    initialization: ["// %%token%% = 0;"]
+	inputs: ["real", "real"]
+#	numOutputs: 0
+#    include: []
+#    linkTo: []
+#    declarations: ['']
+#    initializations: ["// %%token%% = 0;"]
     processing: "io.out(%%bundle_index%%) = %%intoken:0%%;"
     inherits: ['signal']
 }
@@ -68,12 +68,12 @@ _hwOutput AudioOut[2] {
 
 platformType _OscOutType {
     typeName: '_oscOutType'
-    numInputs: 4
-	numOutputs: 0
+    inputs: ["string", "string", "string", "int"]
+#	numOutputs: 0
     include: ["lo/lo.h"]
     linkTo: ["lo"]
-    declarations: ''
-    initialization: ["// INIT OSC"]
+#    declarations: []
+#    initializations: ["// INIT OSC"]
     processing: '
 	char portStr[16];
 	sprintf(portStr, "%d", (int) %%intoken:3%%);
@@ -85,12 +85,12 @@ platformType _OscOutType {
 
 platformType _SelectType {
     typeName: '_selectType'
-    numInputs: 3
-	numOutputs: 1
-    include: []
-    linkTo: []
-    declarations: ''
-    initialization: ["// %%token%% = 0;"]
+    inputs: ["bool", "any", "any"]
+	outputs: ["any"]
+#    include: []
+#    linkTo: []
+#    declarations: []
+    initializations: ["// %%token%% = 0;"]
     processing: "%%intoken:0%% ? %%intoken:1%% : %%intoken:2%%"
     inherits: ['signal']
 }
@@ -99,50 +99,57 @@ platformType _SelectType {
 
 platformType _SerialOutType {
     typeName: '_serialOutType'
-	numInputs: 2
-	numOutputs: 0
+	inputs: ["string", "string"]
+#	outputs: 0
     include: ["serial/serial.h", "iostream"]
 	linkDir: ["serial/build"]
     linkTo: ["serial"]
-    declarations: ''
-    initialization: ["// Not implemented"]
-    processing: "
-	
-    size_t bytes_wrote = my_serial.write(test_string);
-#ifdef _WIN32
-//      Sleep(milliseconds); // 100 ms
-#else
-//      usleep(milliseconds*1000); // 100 ms
-#endif	
-	
-	
-	"
+#    declarations: ['']
+    initializations: ["// Not implemented"]
+    processing: "my_serial.write(test_string);
+"
     inherits: ['signal']
 }
+#
+##ifdef _WIN32
+#//      Sleep(milliseconds); // 100 ms
+##else
+#//      usleep(milliseconds*1000); // 100 ms
+##endif	
+	
+	
+
 
 platformType _SerialInType {
     typeName: '_serialInType'
-	numInputs: 0
-	numOutputs: 1
+#	inputs: 0
+	outputs: ["string"]
 	includeDir: ["serial/include"]
     include: ["serial/serial.h", "iostream"]
 	linkDir: ["serial/build"]
     linkTo: ["serial"]
-    declarations: ''
-    initialization: ['
+    declarations: ['
   unsigned long baud = 9600;
-  string port =""
-  // port, baudrate, timeout in milliseconds
-  serial::Serial my_serial(port, baud, serial::Timeout::simpleTimeout(1000));		
+  std::string port ="";
+  serial::Serial my_serial;'
+	]
+	constructors: [ 'my_serial(port, baud, serial::Timeout::simpleTimeout(1000))' ]
+    initializations: ['		
   if(my_serial.isOpen())
-    std::cout << " Yes." << std::endl;
+    std::cout << "Serial opened successfully." << std::endl;
   else
-    std::cout << " No." << std::endl;
-		
+    std::cout << "ERROR: Failed to open serial.		" << std::endl;
 		']
-    processing: "
-	size_t bytes_wrote = my_serial.write(test_string);
-	// Perhaps check if things were written properly?	
-	"
+	globalDeclarations: []
+	globalInitializations: []
+	preProcessing: '
+	std::string tempVar;
+	std::string newChar;
+	do {
+		tempVar += newChar;
+		newChar += my_serial.read(1);
+		} while (newChar.size() > 0 && newChar != "\n");
+	'
+    processing: "tempVar"
     inherits: ['signal']
 }

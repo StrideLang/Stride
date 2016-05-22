@@ -3,12 +3,12 @@
 # Sine function test
 platformType _SineType {
     typeName: '_sineType'
-    numInputs: 1
-	numOutputs: 1
-    include: [""]
-    linkTo: []
-    declarations: ''
-    initialization: ["// %%token%% = 0;"]
+    inputs: ["real"]
+	outputs: ["real"]
+#    include: [""]
+#    linkTo: []
+#    declarations: ['']
+#    initializations: ["// %%token%% = 0;"]
     processing: "sin(%%intoken:0%%)"
     inherits: ['signal']
 }
@@ -16,12 +16,12 @@ platformType _SineType {
 
 platformType _CosineType {
     typeName: '_cosineType'
-    numInputs: 1
-	numOutputs: 1
-    include: [""]
-    linkTo: []
-    declarations: ''
-    initialization: ["// "]
+    inputs: ["real"]
+	outputs: ["real"]
+#    include: [""]
+#    linkTo: []
+#    declarations: ['']
+#    initializations: ["// "]
     processing: "cos(%%intoken:0%%)"
     inherits: ['signal']
 }

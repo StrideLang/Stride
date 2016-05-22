@@ -86,6 +86,17 @@ class Generator:
             new_flag = "-l" + link_target
             if not new_flag in self.link_flags:
                 self.link_flags.append(new_flag)
+                
+        for link_dir in code['global_groups']['linkDir']:
+            new_flag = "-L" + link_dir
+            if not new_flag in self.link_flags:
+                self.link_flags.append(new_flag)
+                
+        self.build_flags = []
+        for include_dir in code['global_groups']['includeDir']:
+            new_flag = "-I" + include_dir
+            if not new_flag in self.build_flags:
+                self.build_flags.append(new_flag)
         
         
         
@@ -147,7 +158,7 @@ class Generator:
                     "-L" + self.platform_dir + "/lib"]
                     
             
-            args += gamma_flags + self.link_flags 
+            args += gamma_flags + self.build_flags + self.link_flags 
             
             #self.log(' '.join(args))
             print(args)

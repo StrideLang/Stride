@@ -23,6 +23,7 @@ class BaseCTemplate(object):
         self.stream_end_code = '} // Stream End %02i\n'
         
         self.string_type = "std::string"
+        self.real_type = 'float'
         
         # Internal templates
         self.str_rate_begin_code = '{ // Start new rate %i\n' 
@@ -62,6 +63,23 @@ struct %s {
             raise ValueError(u"Unsupported type '%s' in assignment."%type(number).__name__)
         return s;
         
+    def get_platform_preprocessing_code(self, code, token_names, num_inputs, out_tokens, bundle_index = -1):
+        p = re.compile("%%intoken:[a-zA-Z0-9_]+%%") ## TODO tweak this better
+        matches = p.findall(code)
+        if num_inputs > 0: # has inputs
+            if bundle_index >= 0:           
+                code = code.replace('%%bundle_index%%', str(bundle_index))
+            for match in matches:
+                index = int(match[match.rfind(":") + 1:-2])
+                code = code.replace(match, token_names[index])          
+                code = code.replace('%%bundle_index%%', str(bundle_index))
+        else: # Output only
+            if bundle_index >= 0:           
+                code = code.replace('%%bundle_index%%', str(bundle_index))
+        for token in out_tokens:
+            code = code.replace('%%token%%', token) 
+        return code 
+        
         
     def get_platform_inline_processing_code(self, code, token_names, num_inputs, num_outputs, bundle_index = -1):
         p = re.compile("%%intoken:[a-zA-Z0-9_]+%%") ## TODO tweak this better
@@ -95,13 +113,13 @@ struct %s {
         return declarations
         
     def declaration_real(self, name, close=True):
-        declaration = "float %s"%name
+        declaration = self.real_type + " " + name
         if close:
             declaration += ';\n'
         return declaration
 
     def declaration_bundle(self, name, size, close=True):
-        declaration = "float %s[%i]"%(name, size)
+        declaration = self.real_type + " %s[%i]"%(name, size)
         if close:
             declaration += ';\n'
         return declaration
@@ -302,9 +320,6 @@ struct %s {
                 else:
                     input_declaration = self.declaration_real(input_block['name'],
                                                               close = False)
-                if output_block and 'size' in output_block:
-                    input_declaration += ", " + self.declaration_bundle(output_block['name'], output_block['size'], False)
-
             elif input_block['type'] == 'switch':
                 input_declaration = self.declaration_bool(input_block['name'],
                                                            close = False)
@@ -313,18 +328,27 @@ struct %s {
                                                            close = False)
             else:
                 raise ValueError("Unknown type")
+                                                         
+            if output_block and 'size' in output_block:
+                input_declaration += ", " + self.declaration_bundle(output_block['name'], output_block['size'], False)
+
         else:
             input_declaration = ''
+            if output_block and 'size' in output_block:
+                input_declaration += self.declaration_bundle(output_block['name'], output_block['size'], False)
         if output_block:
             if 'block' in output_block:
                 output_block = output_block['block']
-            elif 'blockbundle' in input_block:
+            elif 'blockbundle' in output_block:
                 output_block = output_block['blockbundle']
             if output_block['type'] == 'signal':
                 if 'size' in output_block:
                     out_type = 'void'
                 else:
-                    out_type = 'float'
+                    if type(output_block['default']) == unicode:
+                        out_type = self.string_type
+                    else:
+                        out_type = self.real_type
             elif output_block['type'] == 'switch':
                 out_type = 'bool'
             else:
@@ -389,7 +413,10 @@ struct %s {
                 if 'size' in output_block:
                     out_type = 'void'
                 else:
-                    out_type = 'float'
+                    if type(output_block['default']) == unicode:
+                        out_type = self.string_type
+                    else:
+                        out_type = self.real_type
             elif output_block['type'] == 'switch':
                 out_type = 'bool'
             else:
