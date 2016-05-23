@@ -645,13 +645,13 @@ class ModuleAtom(Atom):
         
             
     def set_inline(self, inline):
-        if inline:
-            self.out_tokens = []
+        if inline == True:
+            print("Warning: Inlining modules not supported")
+            return
+        if self._output_block and 'size' in self._output_block:
+            self.out_tokens = ['_' + self.name + '_%03i_out[%i]'%(self._index, i) for i in range(self._output_block['size'])]
         else:
-            if self._output_block and 'size' in self._output_block:
-                self.out_tokens = ['_' + self.name + '_%03i_out[%i]'%(self._index, i) for i in range(self._output_block['size'])]
-            else:
-                self.out_tokens = ['_' + self.name + '_%03i_out'%self._index]
+            self.out_tokens = ['_' + self.name + '_%03i_out'%self._index]
         self._process_module(self.module["streams"])
         self.inline = inline
         
@@ -703,7 +703,7 @@ class ModuleAtom(Atom):
         if self._output_block and 'size' in self._output_block:
             code = templates.module_processing_code(self.handle, in_tokens, '_' + self.name + '_%03i_out'%self._index)
         else:
-            code = templates.module_processing_code(self.handle, in_tokens, '')
+            code = templates.module_processing_code(self.handle, in_tokens, self.out_tokens[0])
         return code
         
     def get_preprocessing_code(self, in_tokens):
@@ -726,19 +726,14 @@ class ModuleAtom(Atom):
         
     def get_processing_code(self, in_tokens):
         code = self.get_preprocessing_code(in_tokens)
-        out_tokens = []
+        out_tokens = self.out_tokens
         if 'output' in self.module and not self.module['output'] is None: #For Platform types
             if self.inline:
                 code += self.get_handles()[0]
             else:
-                if 'size' in self._output_block:
-                    code += templates.expression(self.get_inline_processing_code(in_tokens))
-                else:
-                    code += templates.assignment(self.out_tokens[0],self.get_inline_processing_code(in_tokens))
-            out_tokens = self.out_tokens
+                code += templates.expression(self.get_inline_processing_code(in_tokens)) 
         else:
             code += templates.expression(self.get_inline_processing_code(in_tokens))
-            out_tokens = self.out_tokens
         return code, out_tokens
         
     def _get_internal_header_code(self):

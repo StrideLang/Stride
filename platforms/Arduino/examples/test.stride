@@ -7,7 +7,7 @@ signal DownSample {
 }
 
 AnalogIn[1] * 4 >> DownSample >> SerialOut();
-1 + AnalogIn[4] * (1.0/128.0) >> Frequency;
+1 + AnalogIn[1] * (1.0/128.0) >> Frequency;
 
-Oscillator(frequency: Frequency) > 0 >> DigitalOut[14];
+Oscillator (frequency: Frequency) > 0 >> OnChange() >> DigitalOut[14];
 

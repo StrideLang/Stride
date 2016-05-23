@@ -38,7 +38,7 @@ platformType _AnalogInput {
 #    include: []
 #    linkTo: []
     declarations: ['int sensorPin[6] = {A0, A1, A2, A3, A4, A5};']
-    initialization: ['// init analog input']
+    initializations: ['// init analog input']
     processing: "analogRead(sensorPin[(int) %%bundle_index%%])"
     inherits: ['signal']
 }
@@ -54,7 +54,7 @@ platformType _DigitalOutput {
 #    include: []
 #    linkTo: []
 #    declarations: ['']
-    initialization: ['pinMode(13, OUTPUT);']
+    initializations: ['pinMode(13, OUTPUT);']
     processing: "digitalWrite(%%bundle_index%%, %%intoken:0%% ? HIGH : LOW);"
     inherits: ['signal']
 }
@@ -108,7 +108,7 @@ platformType _SerialInType {
 #    include: []
 #    linkTo: []
 #    declarations: ['']
-    initialization: [""]
+    initializations: [""]
     processing: ""
     inherits: ['signal']
 }

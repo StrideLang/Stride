@@ -112,14 +112,20 @@ struct %s {
                                 )
         return declarations
         
-    def declaration_real(self, name, close=True):
-        declaration = self.real_type + " " + name
+    def declaration_bundle(self, name, size, close=True):
+        # TODO add support for other types
+        declaration = self.real_type + " %s[%i]"%(name, size)
         if close:
             declaration += ';\n'
         return declaration
-
-    def declaration_bundle(self, name, size, close=True):
-        declaration = self.real_type + " %s[%i]"%(name, size)
+        
+    def declaration_name(self, name, close=True):
+        # TODO add support for other types
+        declaration = self.declaration_real(name, close)
+        return declaration
+        
+    def declaration_real(self, name, close=True):
+        declaration = self.real_type + " " + name
         if close:
             declaration += ';\n'
         return declaration
@@ -329,32 +335,40 @@ struct %s {
             else:
                 raise ValueError("Unknown type")
                                                          
-            if output_block and 'size' in output_block:
-                input_declaration += ", " + self.declaration_bundle(output_block['name'], output_block['size'], False)
-
-        else:
-            input_declaration = ''
-            if output_block and 'size' in output_block:
-                input_declaration += self.declaration_bundle(output_block['name'], output_block['size'], False)
-        if output_block:
-            if 'block' in output_block:
-                output_block = output_block['block']
-            elif 'blockbundle' in output_block:
-                output_block = output_block['blockbundle']
-            if output_block['type'] == 'signal':
+            if output_block:
                 if 'size' in output_block:
-                    out_type = 'void'
+                    input_declaration += ", " + self.declaration_bundle(output_block['name'], output_block['size'], False)
                 else:
-                    if type(output_block['default']) == unicode:
-                        out_type = self.string_type
-                    else:
-                        out_type = self.real_type
-            elif output_block['type'] == 'switch':
-                out_type = 'bool'
-            else:
-                raise ValueError("Unknown type")
-        else:
-            out_type = 'void'
+                    # TOD
+                    input_declaration +=  ", " + self.declaration_name("&" + output_block['name'], False)
+        else: # No input, only output
+            input_declaration = ''                              
+            if output_block:
+                if 'size' in output_block:
+                    input_declaration += self.declaration_bundle(output_block['name'], output_block['size'], False)
+                else:
+                    # TOD
+                    input_declaration += self.declaration_name("&" + output_block['name'], False)
+        
+#        if output_block:
+#            if 'block' in output_block:
+#                output_block = output_block['block']
+#            elif 'blockbundle' in output_block:
+#                output_block = output_block['blockbundle']
+#            if output_block['type'] == 'signal':
+#                if 'size' in output_block:
+#                    out_type = 'void'
+#                else:
+#                    if type(output_block['default']) == unicode:
+#                        out_type = self.string_type
+#                    else:
+#                        out_type = self.real_type
+#            elif output_block['type'] == 'switch':
+#                out_type = 'bool'
+#            else:
+#                raise ValueError("Unknown type")
+#        else:
+        out_type = 'void'
             
         declaration = self.str_module_declaration%(name, header_code, name, init_code,
                                                    out_type, input_declaration, process_code)
@@ -371,7 +385,7 @@ struct %s {
                 code += ', ' + out_token
             code += ')'
         else:
-            code = handle + '.process()'
+            code = handle + '.process('  + out_token + ')'
         return code
         
     def module_property_setter(self, name, block_name, prop_type):
