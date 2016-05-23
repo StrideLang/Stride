@@ -415,6 +415,38 @@ void ProjectWindow::showDocumentation()
     }
 }
 
+void ProjectWindow::followSymbol()
+{
+    qDebug() << "Follow symbol";
+    if (!m_lastValidTree) {
+        return;
+    }
+    CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+    QTextCursor cursor= editor->textCursor();
+//    QTextDocument *doc = editor->document();
+    if (cursor.selectedText() == "") {
+        cursor.select(QTextCursor::WordUnderCursor);
+    }
+    QString word = cursor.selectedText();
+    qDebug() << "Attempting to find " << word;
+    QMutexLocker locker(&m_validTreeLock);
+    foreach(AST *node, m_lastValidTree->getChildren()) {
+        if (node->getNodeType() == AST::Block ||
+                node->getNodeType() == AST::BlockBundle) {
+            BlockNode *block = static_cast<BlockNode *>(node);
+            if (block->getName() == word.toStdString()) {
+                QString fileName = QString::fromStdString(block->getFilename());
+                if (!fileName.isEmpty()) {
+                    loadFile(fileName);
+                    editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+                    QTextCursor cursor(editor->document()->findBlockByLineNumber(block->getLine()-1));
+                    editor->setTextCursor(cursor);
+                }
+            }
+        }
+    }
+}
+
 void ProjectWindow::showHelperMenu(QPoint where)
 {
     m_helperMenu.clear();
@@ -760,6 +792,7 @@ void ProjectWindow::connectActions()
     connect(ui->actionQuit, SIGNAL(triggered()), this, SLOT(close()));
     connect(ui->actionShow_Documentation, SIGNAL(triggered()),
             this, SLOT(showDocumentation()));
+    connect(ui->actionFollow_Symbol, SIGNAL(triggered()), this, SLOT(followSymbol()));
 
 
 //    connect(m_project, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));

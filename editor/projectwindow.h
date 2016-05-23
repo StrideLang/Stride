@@ -46,6 +46,7 @@ private slots:
     void tabChanged(int index);
     bool maybeSave();
     void showDocumentation();
+    void followSymbol();
 
     // Editor
     void commentSection();
