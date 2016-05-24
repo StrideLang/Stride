@@ -141,9 +141,10 @@ struct %s {
     def declaration(self, block, close=True):
         vartype = self.get_block_type(block)
         if 'block' in block:
-            name = block['block']['name']
+            block = block['block']
         elif 'blockbundle' in block:
-            name = block['blockbundle']['name']
+            block = block['blockbundle']
+        name = block['name']
         if 'size' in block:
             if vartype == 'real': 
                 declaration = self.declaration_bundle_real(name, block['size'], close)
@@ -152,7 +153,7 @@ struct %s {
             elif vartype == 'bool':
                 declaration = self.declaration_bundle_bool(name, block['size'],close)
             elif vartype == 'int':
-                declaration = self.declaration_int(name, block['size'],close)
+                declaration = self.declaration_bundle_int(name, block['size'],close)
         else:
             if vartype == 'real': 
                 declaration = self.declaration_real(name, close)
