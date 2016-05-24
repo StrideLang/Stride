@@ -869,24 +869,10 @@ void ProjectWindow::readSettings()
         this->restoreGeometry(settings.value("geometry").toByteArray());
     }
     int size = settings.beginReadArray("openDocuments");
-    for(int i = 0; i < ui->tabWidget->count(); i++) {
-        CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->widget(i));
-        settings.setArrayIndex(i);
-        settings.setValue("ServerItem", editor->filename());
-    }
+    QStringList filesToOpen;
     for (int i = 0; i < size; ++i) {
         settings.setArrayIndex(i);
-        QString fileName = settings.value("fileName").toString();
-        if (fileName.isEmpty()) {
-            newFile();
-        } else {
-            if (QFile::exists(fileName)) {
-                loadFile(fileName);
-            } else {
-                QMessageBox::warning(this, tr("File not found"),
-                                     tr("Previously open file %1 not found.").arg(fileName));
-            }
-        }
+        filesToOpen << settings.value("fileName").toString();
     }
     settings.endArray();
     ui->tabWidget->setCurrentIndex(settings.value("lastIndex", -1).toInt());
@@ -898,6 +884,19 @@ void ProjectWindow::readSettings()
     settings.beginGroup("environment");
     m_environment["platformRootPath"] = settings.value("platformRootPath", "../../StreamStack/platforms").toString();
     settings.endGroup();
+
+    foreach(QString fileName, filesToOpen) {
+        if (fileName.isEmpty()) {
+            newFile();
+        } else {
+            if (QFile::exists(fileName)) {
+                loadFile(fileName);
+            } else {
+                QMessageBox::warning(this, tr("File not found"),
+                                     tr("Previously open file %1 not found.").arg(fileName));
+            }
+        }
+    }
 }
 
 void ProjectWindow::writeSettings()
