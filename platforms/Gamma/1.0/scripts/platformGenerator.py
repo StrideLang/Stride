@@ -13,7 +13,8 @@ from platformTemplates import templates # Perhaps we should acces this through P
 
 class Generator:
     def __init__(self, out_dir = '',
-                 platform_dir = ''):
+                 platform_dir = '',
+                 debug = False):
         
         self.platform_dir = platform_dir
         self.out_dir = out_dir
@@ -23,7 +24,7 @@ class Generator:
         jsonfile = open(self.out_dir + '/tree.json')
         self.tree = json.load(jsonfile)
         
-        self.platform = PlatformFunctions(platform_dir, self.tree)
+        self.platform = PlatformFunctions(self.tree, debug)
         
         self.last_num_outs = 0
         
@@ -143,6 +144,8 @@ class Generator:
             
             #self.log(' '.join(args))
             #os.system(' '.join(args))
+            
+            print(args)
             outtext = ck_out(args)
         
             self.log(outtext)

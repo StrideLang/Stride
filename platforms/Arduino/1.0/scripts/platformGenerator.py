@@ -26,7 +26,7 @@ class Generator:
         jsonfile = open(self.out_dir + '/tree.json')
         self.tree = json.load(jsonfile)
         
-        self.platform = PlatformFunctions(platform_dir, self.tree)
+        self.platform = PlatformFunctions(self.tree)
         
         self.last_num_outs = 0
         

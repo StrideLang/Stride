@@ -17,6 +17,7 @@ class Atom(object):
         self.rate = -1
         self.inline = False
         self.globals = {}
+        self.handle = ''
         
         self.global_sections = ['include', 'includeDir', 'initialization', 'linkTo', 'linkDir']
         
@@ -641,6 +642,12 @@ class ModuleAtom(Atom):
         
         self._init_blocks(module["internalBlocks"],
                           module["input"], module["output"])
+                          
+        if self._output_block and 'size' in self._output_block:
+            self.out_tokens = ['_' + self.name + '_%03i_out[%i]'%(self._index, i) for i in range(self._output_block['size'])]
+        else:
+            self.out_tokens = ['_' + self.name + '_%03i_out'%self._index]
+        self._process_module(self.module["streams"])
         self.set_inline(False)
         
             
@@ -648,11 +655,6 @@ class ModuleAtom(Atom):
         if inline == True:
             print("Warning: Inlining modules not supported")
             return
-        if self._output_block and 'size' in self._output_block:
-            self.out_tokens = ['_' + self.name + '_%03i_out[%i]'%(self._index, i) for i in range(self._output_block['size'])]
-        else:
-            self.out_tokens = ['_' + self.name + '_%03i_out'%self._index]
-        self._process_module(self.module["streams"])
         self.inline = inline
         
     def get_declarations(self):
@@ -700,10 +702,13 @@ class ModuleAtom(Atom):
         
     def get_inline_processing_code(self, in_tokens):
         code = ''
-        if self._output_block and 'size' in self._output_block:
-            code = templates.module_processing_code(self.handle, in_tokens, '_' + self.name + '_%03i_out'%self._index)
+        if self._output_block:
+            if 'size' in self._output_block:
+                code = templates.module_processing_code(self.handle, in_tokens, '_' + self.name + '_%03i_out'%self._index)
+            else:
+                code = templates.module_processing_code(self.handle, in_tokens, self.out_tokens[0])
         else:
-            code = templates.module_processing_code(self.handle, in_tokens, self.out_tokens[0])
+            code = templates.module_processing_code(self.handle, in_tokens, '')
         return code
         
     def get_preprocessing_code(self, in_tokens):
@@ -725,7 +730,8 @@ class ModuleAtom(Atom):
         return code
         
     def get_processing_code(self, in_tokens):
-        code = self.get_preprocessing_code(in_tokens)
+        #code = self.get_preprocessing_code(in_tokens)
+        code = '' 
         out_tokens = self.out_tokens
         if 'output' in self.module and not self.module['output'] is None: #For Platform types
             if self.inline:
@@ -1033,9 +1039,10 @@ class ReactionAtom(Atom):
 
 # --------------------- Common platform functions
 class PlatformFunctions:
-    def __init__(self, platform_dir, tree):
+    def __init__(self, tree, debug_messages=False):
         
         self.defined_modules =[]
+        self.debug_messages = debug_messages
     
         self.tree = tree
         self.scope_stack = []
@@ -1047,6 +1054,11 @@ class PlatformFunctions:
                     self.sample_rate = elem['block']['value']
         templates.domain_rate = self.sample_rate
         self.unique_id = 0
+        
+    def log_debug(self, text):
+        if self.debug_messages:
+            print(text)
+            
     
     def find_declaration_in_tree(self, block_name, tree):
         for node in tree:
@@ -1181,11 +1193,23 @@ class PlatformFunctions:
         self.scope_stack.pop()
         
     def make_stream_nodes(self, stream):
-        node_groups = [[]] # Nodes are grouped by rate
+        node_groups = [[]] # Nodes are grouped by domain
+        current_domain = ''
+        cur_group = node_groups[-1]
         
         for member in stream: #Only instantiate whatever is used in streams. Discard the rest
-            cur_group = node_groups[-1]  
-            new_atom = self.make_atom(member)             
+            
+            new_atom = self.make_atom(member) 
+            if hasattr("domain", "new_atom"):
+                if not current_domain == new_atom.domain:
+                    current_domain = new_atom.domain
+                    print("New domain!" + current_domain)
+                    node_groups.append([])
+                    cur_group = node_groups[-1]
+            else:
+                #print("No domain... Bad.")
+                pass
+            self.log_debug("New atom: " + str(new_atom.handle) + " domain: :" + current_domain)
             cur_group.append(new_atom)
 
             self.unique_id += 1
@@ -1200,23 +1224,30 @@ class PlatformFunctions:
         parent_rates_size = templates.rate_stack_size() # To know now much we need to pop for this stream
         
         header = []
+        
+        self.log_debug(">>> Start stream generation")
         for group in node_groups:
             in_tokens = []
             previous_atom = None
             for atom in group:
+                self.log_debug("Processing atom: " + str(atom.handle))
                 #Process Inlcudes
                 new_globals = atom.get_globals()
                 if len(new_globals) > 0:
-                    for group in new_globals:
-                        global_groups[group] += new_globals[group]
+                    for global_group in new_globals:
+                        global_groups[global_group] += new_globals[global_group]
 
                 declares = atom.get_declarations()
+                
+                self.log_debug("Declarations " + str(declares))
                 new_instances = atom.get_instances()
+                self.log_debug("New instances " + str(new_instances))
                 header.append([declares, new_instances])
                 
                 processing_code += atom.get_preprocessing_code(in_tokens)
                 # Process processing code
                 code, out_tokens = atom.get_processing_code(in_tokens)
+                self.log_debug("Code:  " + str(code))
                 if atom.rate > 0:
                     new_inst, new_init, new_proc = templates.rate_start(atom.rate)
                     processing_code += new_proc
@@ -1282,10 +1313,12 @@ class PlatformFunctions:
         while not parent_rates_size == templates.rate_stack_size():
             processing_code += templates.rate_end_code()
 
+        self.log_debug(">>> End stream generation")
         return [header_code, init_code, processing_code,
                 other_scope_instances, other_scope_declarations]
         
     def generate_stream_code(self, stream, stream_index, global_groups, declared, instanced, initialized):
+        self.log_debug("-- Start stream")       
         node_groups = self.make_stream_nodes(stream)
         
         processing_code = templates.stream_begin_code%stream_index
@@ -1295,6 +1328,8 @@ class PlatformFunctions:
         processing_code += new_processing_code
             
         processing_code += templates.stream_end_code%stream_index
+
+        self.log_debug("-- End stream")
         
         return {"global_groups" : global_groups,
                 "header_code" : header_code,
@@ -1313,6 +1348,7 @@ class PlatformFunctions:
         other_scope_instances = []
         other_scope_declarations = []
         
+        self.log_debug("* New Generation ----- scopes: " + str(len(self.scope_stack)))
         self.push_scope(current_scope)
 
         for node in tree:
@@ -1326,6 +1362,8 @@ class PlatformFunctions:
                 stream_index += 1
                 other_scope_instances += code['other_scope_instances']
                 other_scope_declarations += code["other_scope_declarations"]
+                
+        self.log_debug("* Ending Generation -----")
         
         self.pop_scope()
         return {"global_groups" : code['global_groups'],

@@ -1,0 +1,47 @@
+
+module SerialOut {
+    input: Input
+    output: none
+    properties: [
+		property AddressProperty {
+			name: "address"
+			block: Address
+			meta: "The address that identifies the data sent."
+		}
+	]
+    internalBlocks: [
+        signal Input {
+                default :       ""
+                #rate:           streamRate
+                domain:         streamDomain
+        },
+        signal Address {
+                default :       "/Stride"
+                #rate:           streamRate
+                domain:         streamDomain
+        },
+        _serialOutType SerialOutBlock {}
+    ]
+    streams: [
+        [Input, Address] >> SerialOutBlock;
+    ]
+	domain: _SerialOutDomain
+}
+
+module SerialIn {
+    input: none
+    output: Output
+    properties: none
+    internalBlocks: [
+        signal Output {
+                default :       ""
+                #rate:           streamRate
+                domain:         streamDomain
+        },
+        _serialInType SerialInBlock {}
+    ]
+    streams: [
+        SerialInBlock >> Output;
+    ]
+	domain: _SerialInDomain
+}

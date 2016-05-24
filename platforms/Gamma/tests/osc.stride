@@ -1,0 +1,8 @@
+use Gamma version 1.0 on PC
+
+
+signal Slow {
+	rate: 2
+}
+
+AudioIn[1] >> Slow >> OSCOut(address: '/val');

@@ -1,0 +1,24 @@
+use Gamma version 1.0 on PC
+
+import generators
+
+constant CarrierFreq { value: 220}
+
+constant CMRatio { 	value: 3 }
+
+constant ModFreq {	value: CarrierFreq * CMRatio }
+
+constant ModIndex {	value: 1 }
+
+#signal Modulator {
+#		rate: AudioRate
+#}
+
+Oscillator (
+        frequency:      ModFreq
+) >> Modulator;
+
+220 + Modulator * 220 >> CarrierFrequency;
+
+Oscillator (  frequency:      CarrierFrequency ) 
+>> Level(gain: 0.2) >> AudioOut;

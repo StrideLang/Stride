@@ -1,0 +1,9 @@
+use Gamma version 1.0 on PC
+
+import generators
+
+signal Rate1 {
+		rate:11025
+}
+
+Oscillator(frequency: 440) >> Rate1 >> AudioOut;
