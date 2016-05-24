@@ -32,69 +32,17 @@
     </property>
     <item>
      <widget class="QTabWidget" name="tabWidget">
-      <property name="palette">
-       <palette>
-        <active>
-         <colorrole role="Base">
-          <brush brushstyle="SolidPattern">
-           <color alpha="255">
-            <red>255</red>
-            <green>255</green>
-            <blue>255</blue>
-           </color>
-          </brush>
-         </colorrole>
-         <colorrole role="Window">
-          <brush brushstyle="SolidPattern">
-           <color alpha="255">
-            <red>255</red>
-            <green>255</green>
-            <blue>255</blue>
-           </color>
-          </brush>
-         </colorrole>
-        </active>
-        <inactive>
-         <colorrole role="Base">
-          <brush brushstyle="SolidPattern">
-           <color alpha="255">
-            <red>255</red>
-            <green>255</green>
-            <blue>255</blue>
-           </color>
-          </brush>
-         </colorrole>
-         <colorrole role="Window">
-          <brush brushstyle="SolidPattern">
-           <color alpha="255">
-            <red>255</red>
-            <green>255</green>
-            <blue>255</blue>
-           </color>
-          </brush>
-         </colorrole>
-        </inactive>
-        <disabled>
-         <colorrole role="Base">
-          <brush brushstyle="SolidPattern">
-           <color alpha="255">
-            <red>255</red>
-            <green>255</green>
-            <blue>255</blue>
-           </color>
-          </brush>
-         </colorrole>
-         <colorrole role="Window">
-          <brush brushstyle="SolidPattern">
-           <color alpha="255">
-            <red>255</red>
-            <green>255</green>
-            <blue>255</blue>
-           </color>
-          </brush>
-         </colorrole>
-        </disabled>
-       </palette>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>320</width>
+        <height>0</height>
+       </size>
       </property>
       <property name="currentIndex">
        <number>-1</number>
@@ -177,9 +125,11 @@
       <number>2</number>
      </property>
      <item>
-      <widget class="QTextBrowser" name="docBrowser">
-       <property name="frameShape">
-        <enum>QFrame::NoFrame</enum>
+      <widget class="QWebView" name="docBrowser">
+       <property name="url">
+        <url>
+         <string>about:blank</string>
+        </url>
        </property>
       </widget>
      </item>
@@ -282,6 +232,8 @@
     <addaction name="actionUpload"/>
     <addaction name="actionRename"/>
     <addaction name="actionRefresh"/>
+    <addaction name="actionFollow_Symbol"/>
+    <addaction name="actionOpen_Generated_Code"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
@@ -408,7 +360,30 @@
     <string>F1</string>
    </property>
   </action>
+  <action name="actionFollow_Symbol">
+   <property name="text">
+    <string>Follow Symbol</string>
+   </property>
+   <property name="shortcut">
+    <string>F2</string>
+   </property>
+  </action>
+  <action name="actionOpen_Generated_Code">
+   <property name="text">
+    <string>Open Generated Code</string>
+   </property>
+   <property name="shortcut">
+    <string>F3</string>
+   </property>
+  </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QWebView</class>
+   <extends>QWidget</extends>
+   <header>QtWebKitWidgets/QWebView</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

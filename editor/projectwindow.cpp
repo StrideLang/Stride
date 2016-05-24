@@ -10,6 +10,7 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QSignalMapper>
+#include <QDesktopServices>
 
 #include "projectwindow.h"
 #include "ui_projectwindow.h"
@@ -61,6 +62,9 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
     m_codeModelTimer.setSingleShot(true);
     m_codeModelTimer.setInterval(2000);
     connect(&m_codeModelTimer, SIGNAL(timeout()), this, SLOT(updateCodeAnalysis()));
+
+    ui->docBrowser->settings()->setUserStyleSheetUrl(QUrl("qrc:/resources/style.css"));
+    ui->docBrowser->setHtml("<h1>Welcome to Stride</h1> A declarative and reactive domain specific programming language for real-time sound synthesis, processing, and interaction design. By Andrés Cabrera and Joseph Tilbian.");
 }
 
 ProjectWindow::~ProjectWindow()
@@ -285,7 +289,7 @@ void ProjectWindow::showDocumentation()
     }
     QString word = cursor.selectedText();
     if (!m_lastValidTree) {
-        ui->docBrowser->setPlainText(tr("Parsing error. Can't update tree.").arg(word));
+        ui->docBrowser->setHtml(tr("Parsing error. Can't update tree.").arg(word));
         return;
     }
     QList<LangError> errors;
@@ -294,8 +298,8 @@ void ProjectWindow::showDocumentation()
         BlockNode *typeBlock = CodeValidator::findTypeDeclarationByName(word, QVector<AST *>(), m_lastValidTree, errors);
         if (typeBlock) {
             AST *metaValue = typeBlock->getPropertyValue("meta");
-            Q_ASSERT(metaValue);
             if (metaValue) {
+                Q_ASSERT(metaValue);
                 Q_ASSERT(metaValue->getNodeType() == AST::String);
                 QString docHtml = "<h1>" + word + "</h1>\n";
                 docHtml += QString::fromStdString(static_cast<ValueNode *>(metaValue)->getStringValue());
@@ -345,11 +349,11 @@ void ProjectWindow::showDocumentation()
                 propertiesTable += "</table>";
                 ui->docBrowser->setHtml(docHtml + propertiesHtml + propertiesTable);
             }
-            
+
         } else {
-            ui->docBrowser->setPlainText(tr("Unknown type: %1").arg(word));
+            ui->docBrowser->setHtml(tr("Unknown type: %1").arg(word));
         }
-        
+
     } else if (word[0].toUpper() == word[0]) { // Check if it is a declared module
         QMutexLocker locker(&m_validTreeLock);
         BlockNode *declaration = CodeValidator::findDeclaration(word, QVector<AST *>(), m_lastValidTree);
@@ -407,7 +411,48 @@ void ProjectWindow::showDocumentation()
             }
 
         } else {
-            ui->docBrowser->setPlainText(tr("Unknown type: %1").arg(word));
+            ui->docBrowser->setHtml(tr("Unknown type: %1").arg(word));
+        }
+    }
+}
+
+void ProjectWindow::openGeneratedDir()
+{
+    CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+    if(!editor->filename().isEmpty()){
+        QFileInfo info(editor->filename());
+        QString dirName = info.absolutePath() + QDir::separator()
+                + info.fileName() + "_Products";
+        QDesktopServices::openUrl(QUrl("file://" + dirName));
+    }
+}
+
+void ProjectWindow::followSymbol()
+{
+    if (!m_lastValidTree) {
+        return;
+    }
+    CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+    QTextCursor cursor= editor->textCursor();
+//    QTextDocument *doc = editor->document();
+    if (cursor.selectedText() == "") {
+        cursor.select(QTextCursor::WordUnderCursor);
+    }
+    QString word = cursor.selectedText();
+    QMutexLocker locker(&m_validTreeLock);
+    foreach(AST *node, m_lastValidTree->getChildren()) {
+        if (node->getNodeType() == AST::Block ||
+                node->getNodeType() == AST::BlockBundle) {
+            BlockNode *block = static_cast<BlockNode *>(node);
+            if (block->getName() == word.toStdString()) {
+                QString fileName = QString::fromStdString(block->getFilename());
+                if (!fileName.isEmpty()) {
+                    loadFile(fileName);
+                    editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+                    QTextCursor cursor(editor->document()->findBlockByLineNumber(block->getLine()-1));
+                    editor->setTextCursor(cursor);
+                }
+            }
         }
     }
 }
@@ -555,6 +600,7 @@ bool ProjectWindow::saveFile(int index)
     editor->markChanged(false);
     codeFile.write(code.toLocal8Bit());
     codeFile.close();
+    markModified();
     return true;
 }
 
@@ -756,6 +802,8 @@ void ProjectWindow::connectActions()
     connect(ui->actionQuit, SIGNAL(triggered()), this, SLOT(close()));
     connect(ui->actionShow_Documentation, SIGNAL(triggered()),
             this, SLOT(showDocumentation()));
+    connect(ui->actionFollow_Symbol, SIGNAL(triggered()), this, SLOT(followSymbol()));
+    connect(ui->actionOpen_Generated_Code, SIGNAL(triggered()), this, SLOT(openGeneratedDir()));
 
 
 //    connect(m_project, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
@@ -821,24 +869,10 @@ void ProjectWindow::readSettings()
         this->restoreGeometry(settings.value("geometry").toByteArray());
     }
     int size = settings.beginReadArray("openDocuments");
-    for(int i = 0; i < ui->tabWidget->count(); i++) {
-        CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->widget(i));
-        settings.setArrayIndex(i);
-        settings.setValue("ServerItem", editor->filename());
-    }
+    QStringList filesToOpen;
     for (int i = 0; i < size; ++i) {
         settings.setArrayIndex(i);
-        QString fileName = settings.value("fileName").toString();
-        if (fileName.isEmpty()) {
-            newFile();
-        } else {
-            if (QFile::exists(fileName)) {
-                loadFile(fileName);
-            } else {
-                QMessageBox::warning(this, tr("File not found"),
-                                     tr("Previously open file %1 not found.").arg(fileName));
-            }
-        }
+        filesToOpen << settings.value("fileName").toString();
     }
     settings.endArray();
     ui->tabWidget->setCurrentIndex(settings.value("lastIndex", -1).toInt());
@@ -850,6 +884,19 @@ void ProjectWindow::readSettings()
     settings.beginGroup("environment");
     m_environment["platformRootPath"] = settings.value("platformRootPath", "../../StreamStack/platforms").toString();
     settings.endGroup();
+
+    foreach(QString fileName, filesToOpen) {
+        if (fileName.isEmpty()) {
+            newFile();
+        } else {
+            if (QFile::exists(fileName)) {
+                loadFile(fileName);
+            } else {
+                QMessageBox::warning(this, tr("File not found"),
+                                     tr("Previously open file %1 not found.").arg(fileName));
+            }
+        }
+    }
 }
 
 void ProjectWindow::writeSettings()

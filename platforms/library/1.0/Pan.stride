@@ -1,0 +1,27 @@
+
+module Pan {
+	input: Input
+	output: Output
+	properties: [
+		property PositionProperty {
+			name: "position"
+			block: Position
+			meta: "Sets the panning position with range [-1, 1]."
+		}
+
+	]
+	internalBlocks: [
+		signal Input {},
+		signal Output[2] {},
+		signal Position {},
+		signal GainLeft {},
+		signal GainRight {}
+	]
+	streams: [
+		(Position + 1) /2 >> GainRight;
+		1 - GainRight >> GainLeft;
+		Input * GainLeft >> Output[1]; 
+		Input * GainRight >> Output[2];
+	]
+	meta: "Stereo panner."
+}

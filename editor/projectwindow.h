@@ -30,6 +30,7 @@ public slots:
     void loadFile();
     void loadFile(QString fileName);
     void openOptionsDialog();
+    void openGeneratedDir();
     void updateCodeAnalysis();
     void newFile();
     void markModified();
@@ -46,6 +47,7 @@ private slots:
     void tabChanged(int index);
     bool maybeSave();
     void showDocumentation();
+    void followSymbol();
 
     // Editor
     void commentSection();

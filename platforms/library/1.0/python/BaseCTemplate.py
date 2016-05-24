@@ -22,12 +22,18 @@ class BaseCTemplate(object):
         self.stream_begin_code = '// Starting stream %02i -------------------------\n{\n'
         self.stream_end_code = '} // Stream End %02i\n'
         
+        self.string_type = "std::string"
+        self.real_type = 'float'
+        self.bool_type = 'bool'
+        self.int_type = 'int'
+        
         # Internal templates
         self.str_rate_begin_code = '{ // Start new rate %i\n' 
         self.str_rate_end_code = '\n}  // Close Rate %i\n' 
         self.str_assignment = '%s = %s;\n'
         self.str_increment = '%s += %s;\n'
         self.str_module_declaration = '''
+        
 struct %s {
     %s %s() {
         %s
@@ -42,7 +48,7 @@ struct %s {
     %s %s() {
         %s
     }
-    %s execute() {
+    %s execute(%s) {
         %s
     }
 };
@@ -58,6 +64,23 @@ struct %s {
         else:
             raise ValueError(u"Unsupported type '%s' in assignment."%type(number).__name__)
         return s;
+        
+    def get_platform_preprocessing_code(self, code, token_names, num_inputs, out_tokens, bundle_index = -1):
+        p = re.compile("%%intoken:[a-zA-Z0-9_]+%%") ## TODO tweak this better
+        matches = p.findall(code)
+        if num_inputs > 0: # has inputs
+            if bundle_index >= 0:           
+                code = code.replace('%%bundle_index%%', str(bundle_index))
+            for match in matches:
+                index = int(match[match.rfind(":") + 1:-2])
+                code = code.replace(match, token_names[index])          
+                code = code.replace('%%bundle_index%%', str(bundle_index))
+        else: # Output only
+            if bundle_index >= 0:           
+                code = code.replace('%%bundle_index%%', str(bundle_index))
+        for token in out_tokens:
+            code = code.replace('%%token%%', token) 
+        return code 
         
         
     def get_platform_inline_processing_code(self, code, token_names, num_inputs, num_outputs, bundle_index = -1):
@@ -91,26 +114,101 @@ struct %s {
                                 )
         return declarations
         
-    def declaration_real(self, name, close=True):
-        declaration = "float %s"%name
-        if close:
-            declaration += ';\n'
-        return declaration
-
-    def declaration_bundle(self, name, size, close=True):
-        declaration = "float %s[%i]"%(name, size)
+    def declaration_bundle_real(self, name, size, close=True):
+        declaration = self.real_type + " %s[%i]"%(name, size)
         if close:
             declaration += ';\n'
         return declaration
         
+    def declaration_bundle_int(self, name, size, close=True):
+        declaration = self.int_type + " %s[%i]"%(name, size)
+        if close:
+            declaration += ';\n'
+        return declaration
+        
+    def declaration_bundle_bool(self, name, size, close=True):
+        declaration = self.bool_type + " %s[%i]"%(name, size)
+        if close:
+            declaration += ';\n'
+        return declaration
+        
+    def declaration_bundle_string(self, name, size, close=True):
+        declaration = self.string_type + " %s[%i]"%(name, size)
+        if close:
+            declaration += ';\n'
+        return declaration
+        
+    def declaration(self, block, close=True):
+        vartype = self.get_block_type(block)
+        if 'block' in block:
+            block = block['block']
+        elif 'blockbundle' in block:
+            block = block['blockbundle']
+        name = block['name']
+        if 'size' in block:
+            if vartype == 'real': 
+                declaration = self.declaration_bundle_real(name, block['size'], close)
+            elif vartype == 'string':
+                declaration = self.declaration_bundle_string(name, block['size'],close)
+            elif vartype == 'bool':
+                declaration = self.declaration_bundle_bool(name, block['size'],close)
+            elif vartype == 'int':
+                declaration = self.declaration_bundle_int(name, block['size'],close)
+        else:
+            if vartype == 'real': 
+                declaration = self.declaration_real(name, close)
+            elif vartype == 'string':
+                declaration = self.declaration_string(name, close)
+            elif vartype == 'bool':
+                declaration = self.declaration_bool(name, close)
+            elif vartype == 'int':
+                declaration = self.declaration_int(name, close)
+        return declaration
+        
+    def declaration_reference(self, block, close=True):
+        vartype = self.get_block_type(block)
+        name = block['name']
+        if 'size' in block:
+            if vartype == 'real': 
+                declaration = self.declaration_bundle_real(name, block['size'], close)
+            elif vartype == 'string':
+                declaration = self.declaration_bundle_string(name, block['size'],close)
+            elif vartype == 'bool':
+                declaration = self.declaration_bundle_bool(name, block['size'],close)
+            elif vartype == 'int':
+                declaration = self.declaration_bundle_int(name, block['size'],close)
+        else:
+            name = "&" + name
+            if vartype == 'real': 
+                declaration = self.declaration_real(name, close)
+            elif vartype == 'string':
+                declaration = self.declaration_string(name, close)
+            elif vartype == 'bool':
+                declaration = self.declaration_bool(name, close)
+            elif vartype == 'int':
+                declaration = self.declaration_int(name, close)
+        return declaration
+        
+    def declaration_real(self, name, close=True):
+        declaration = self.real_type + " " + name
+        if close:
+            declaration += ';\n'
+        return declaration
+        
+    def declaration_int(self, name, close=True):
+        declaration = self.int_type + " " + name
+        if close:
+            declaration += ';\n'
+        return declaration 
+        
     def declaration_bool(self, name, close=True):
-        declaration = "bool %s"%name
+        declaration = self.bool_type + " " + name
         if close:
             declaration += ';\n'
         return declaration 
         
     def declaration_string(self, name, close=True):
-        declaration = "std::string %s"%name
+        declaration = self.string_type + " " + name
         if close:
             declaration += ';\n'
         return declaration 
@@ -131,6 +229,22 @@ struct %s {
             value = self.number_to_string(value)
         code = self.str_increment%(assignee, value)
         return code
+    
+    def get_block_type(self, block):
+        if 'block' in block:
+            block = block['block']
+        elif 'blockbundle' in block:
+            block = block['blockbundle']
+        if block['type'] == 'signal':
+            if 'default' in block:
+                if type(block['default']) == unicode:
+                    return 'string'
+                
+            return 'real'
+        elif block['type'] == 'switch':
+            return 'bool'
+        elif block['type'] == 'Unsupported':
+            return 'real'
     
     def get_globals_code(self, global_groups):
         code = ''
@@ -166,16 +280,16 @@ struct %s {
         
     def instantiation_code(self, instance):
         if instance['type'] == 'real':
-            code = 'float ' + instance['handle'] + ';\n'
+            code = self.declaration_real(instance['handle'])
         elif instance['type'] == 'bool':
-            code = 'bool ' + instance['handle'] + ';\n'
+            code = self.declaration_bool(instance['handle'])
         elif instance['type'] == 'string':
-            code = 'std::string ' + instance['handle'] + ';\n'
+            code = self.declaration_string(instance['handle'])
         elif instance['type'] =='bundle':
             if instance['bundletype'] == 'real':
-                code = 'float ' + instance['handle'] + '[%i];\n'%instance['size']
+                code = self.declaration_bundle_real(instance['handle'], instance['size'])
             elif instance['bundletype'] == 'bool':
-                code = 'bool ' + instance['handle'] + '[%i];\n'%instance['size']
+                code = self.declaration_bundle_bool(instance['handle'], instance['size'])
             else:
                 raise ValueError("Unsupported bundle type.")
         elif instance['type'] == 'module':
@@ -288,46 +402,14 @@ struct %s {
     def module_declaration(self, name, header_code, init_code,
                            output_block, input_block, process_code):       
         if input_block:
-            if 'block' in input_block:
-                input_block = input_block['block']
-            elif 'blockbundle' in input_block:
-                input_block = input_block['blockbundle']
-            if input_block['type'] == 'signal':
-                if type(input_block['default']) == unicode:
-                    input_declaration = self.declaration_string(input_block['name'],
-                                                                close = False)
-                else:
-                    input_declaration = self.declaration_real(input_block['name'],
-                                                              close = False)
-                if output_block and 'size' in output_block:
-                    input_declaration += ", " + self.declaration_bundle(output_block['name'], output_block['size'], False)
-
-            elif input_block['type'] == 'switch':
-                input_declaration = self.declaration_bool(input_block['name'],
-                                                           close = False)
-            elif input_block['type'] == 'Unsupported':
-                input_declaration = self.declaration_real(input_block['name'],
-                                                           close = False)
-            else:
-                raise ValueError("Unknown type")
-        else:
-            input_declaration = ''
-        if output_block:
-            if 'block' in output_block:
-                output_block = output_block['block']
-            elif 'blockbundle' in input_block:
-                output_block = output_block['blockbundle']
-            if output_block['type'] == 'signal':
-                if 'size' in output_block:
-                    out_type = 'void'
-                else:
-                    out_type = 'float'
-            elif output_block['type'] == 'switch':
-                out_type = 'bool'
-            else:
-                raise ValueError("Unknown type")
-        else:
-            out_type = 'void'
+            input_declaration = self.declaration(input_block, close = False)
+            if output_block:
+                input_declaration +=  ", " + self.declaration_reference(output_block, False)
+        else: # No input, only output
+            input_declaration = ''                              
+            if output_block:
+                input_declaration += self.declaration_reference(output_block, False)
+        out_type = 'void'
             
         declaration = self.str_module_declaration%(name, header_code, name, init_code,
                                                    out_type, input_declaration, process_code)
@@ -338,13 +420,15 @@ struct %s {
         return code
         
     def module_processing_code(self, handle, in_tokens, out_token):
-        if len(in_tokens) > 0:
-            code = handle + '.process(' + in_tokens[0]
-            if not out_token == '':
-                code += ', ' + out_token
-            code += ')'
+        code = handle + '.process('
+        for in_token in in_tokens:
+            code += in_token + ", "
+            
+        if not out_token == '':
+            code += out_token
         else:
-            code = handle + '.process()'
+            code = code[:-2] # Chop off extra comma
+        code += ')'
         return code
         
     def module_property_setter(self, name, block_name, prop_type):
@@ -358,7 +442,7 @@ struct %s {
             code += block_name + ' = value;\n'
             code += '\n}\n'
         elif prop_type == 'string':
-            code += 'void set_' + name + '(std::string value) {\n'
+            code += 'void set_' + name + '(' + self.string_type + ' value) {\n'
             code += block_name + ' = value;\n'
             code += '\n}\n'
         return code
@@ -386,23 +470,29 @@ struct %s {
                 if 'size' in output_block:
                     out_type = 'void'
                 else:
-                    out_type = 'float'
+                    if type(output_block['default']) == unicode:
+                        out_type = self.string_type
+                    else:
+                        out_type = self.real_type
             elif output_block['type'] == 'switch':
                 out_type = 'bool'
             else:
                 raise ValueError("Unknown type")
+            out_declaration = self.declaration_reference(output_block, False)          
         else:
             out_type = 'void'
+            out_declaration = ''
             
         declaration = self.str_reaction_declaration%(name, header_code, name, init_code,
-                                                     out_type, process_code)
+                                                     out_type, out_declaration, process_code)
         return declaration        
         
     def reaction_processing_code(self, handle, in_tokens, out_token):
         code = "if ("+ in_tokens[0] + ") {\n"
         if out_token:
-            code += out_token + ' = '
-        code += handle + '.execute();\n'
+            code += handle + '.execute(&' + out_token +  ');\n'
+        else:
+            code += handle + '.execute();\n'
         code += "}\n"
         return code
         

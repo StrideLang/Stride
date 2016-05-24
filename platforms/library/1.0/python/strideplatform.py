@@ -17,8 +17,9 @@ class Atom(object):
         self.rate = -1
         self.inline = False
         self.globals = {}
+        self.handle = ''
         
-        self.global_sections = ['include', 'initialization', 'linkTo']
+        self.global_sections = ['include', 'includeDir', 'initialization', 'linkTo', 'linkDir']
         
     def set_inline(self, inline):
         self.inline = inline
@@ -382,7 +383,8 @@ class NameAtom(Atom):
                 if section in self.globals:
                     self.globals[section].extend([inc['value'] for inc in platform_type['block'][section]])
                 else:
-                    self.globals[section] = [inc['value'] for inc in platform_type['block'][section]]
+                    if section in platform_type['block']:
+                        self.globals[section] = [inc['value'] for inc in platform_type['block'][section]]
         if 'initialization' in platform_type['block']:
             if 'initialization' in self.globals:
                 self.globals['initialization'] += platform_type['block']['initialization']
@@ -392,8 +394,8 @@ class NameAtom(Atom):
         
         self.set_inline(False)
         
-        if 'numOutputs' in platform_type['block']:
-            if platform_type['block']['numOutputs'] > 0:
+        if 'outputs' in platform_type['block']:
+            if len(platform_type['block']['outputs']) > 0:
                 self.set_inline(True)
         
         if 'rate' in declaration:
@@ -481,8 +483,8 @@ class NameAtom(Atom):
             code = templates.get_platform_inline_processing_code(
                             self.platform_type['block']['processing'],
                             in_tokens,
-                            self.platform_type['block']['numInputs'],
-                            self.platform_type['block']['numOutputs'])
+                            len(self.platform_type['block']['inputs']),
+                            len(self.platform_type['block']['outputs']) )
         else:
             if len(in_tokens) > 0:
                 code = in_tokens[0]
@@ -491,6 +493,17 @@ class NameAtom(Atom):
             
         return  code
     
+    def get_preprocessing_code(self, in_tokens):
+        code = ''
+        if 'preProcessing' in self.platform_type['block']:
+            code = self.platform_type['block']['preProcessing']
+            code = templates.get_platform_preprocessing_code(code, 
+                            in_tokens,
+                            len(self.platform_type['block']['inputs']),
+                            [self.handle]
+                            )
+        return code
+    
     def get_processing_code(self, in_tokens):
         code = ''
         out_tokens = [self.handle]
@@ -498,7 +511,7 @@ class NameAtom(Atom):
             if self.inline:
                 out_tokens = [self.get_inline_processing_code(in_tokens)]
             else:
-                if self.platform_type['block']['numOutputs'] > 0:
+                if len(self.platform_type['block']['outputs']) > 0:
                     code = templates.assignment(self.handle, self.get_inline_processing_code(in_tokens))
                 else:
                     code = templates.expression(self.get_inline_processing_code(in_tokens))
@@ -567,8 +580,8 @@ class BundleAtom(NameAtom):
             code = templates.get_platform_inline_processing_code(
                             self.platform_type['block']['processing'],
                             in_tokens,
-                            self.platform_type['block']['numInputs'],
-                            self.platform_type['block']['numOutputs'],
+                            len(self.platform_type['block']['inputs']),
+                            len(self.platform_type['block']['outputs']),
                             self.index)
         else:
             if len(in_tokens) > 0:
@@ -584,7 +597,7 @@ class BundleAtom(NameAtom):
             if self.inline:
                 out_tokens = [self.get_inline_processing_code(in_tokens)]
             else:
-                if self.platform_type['block']['numOutputs'] > 0:
+                if len(self.platform_type['block']['outputs']) > 0:
                     code = templates.assignment(self._get_token_name(self.index), self.get_inline_processing_code(in_tokens))
                 else:
                     code = templates.expression(self.get_inline_processing_code(in_tokens))
@@ -612,7 +625,6 @@ class ModuleAtom(Atom):
         self.scope_index = scope_index
         self.name = module["name"]
         self.handle = self.name + '_%03i'%token_index;
-        self.current_scope = module["internalBlocks"]
         #self._platform_code = platform_code
         self._input_block = None
         self._output_block = None
@@ -630,18 +642,19 @@ class ModuleAtom(Atom):
         
         self._init_blocks(module["internalBlocks"],
                           module["input"], module["output"])
+                          
+        if self._output_block and 'size' in self._output_block:
+            self.out_tokens = ['_' + self.name + '_%03i_out[%i]'%(self._index, i) for i in range(self._output_block['size'])]
+        else:
+            self.out_tokens = ['_' + self.name + '_%03i_out'%self._index]
+        self._process_module(self.module["streams"])
         self.set_inline(False)
         
             
     def set_inline(self, inline):
-        if inline:
-            self.out_tokens = []
-        else:
-            if self._output_block and 'size' in self._output_block:
-                self.out_tokens = ['_' + self.name + '_%03i_out[%i]'%(self._index, i) for i in range(self._output_block['size'])]
-            else:
-                self.out_tokens = ['_' + self.name + '_%03i_out'%self._index]
-        self._process_module(self.module["streams"])
+        if inline == True:
+            print("Warning: Inlining modules not supported")
+            return
         self.inline = inline
         
     def get_declarations(self):
@@ -676,8 +689,11 @@ class ModuleAtom(Atom):
                      'scope' : self.scope_index,
                      'post' : True}
                      ]
-        if len(self.out_tokens) > 0:
-            instances += [{ 'type' : 'real',
+        if len(self.out_tokens) > 0 and self.module['output']:
+            out_block = self.find_internal_block(self.module['output']['name']['name'])
+            # FIXME support bundles
+            block_types = self.get_block_types(out_block);
+            instances += [{ 'type' : block_types[0],
                              'handle' : self.out_tokens[0],
                              'scope' : self.scope_index,
                              'post' : True
@@ -686,8 +702,11 @@ class ModuleAtom(Atom):
         
     def get_inline_processing_code(self, in_tokens):
         code = ''
-        if self._output_block and 'size' in self._output_block:
-            code = templates.module_processing_code(self.handle, in_tokens, '_' + self.name + '_%03i_out'%self._index)
+        if self._output_block:
+            if 'size' in self._output_block:
+                code = templates.module_processing_code(self.handle, in_tokens, '_' + self.name + '_%03i_out'%self._index)
+            else:
+                code = templates.module_processing_code(self.handle, in_tokens, self.out_tokens[0])
         else:
             code = templates.module_processing_code(self.handle, in_tokens, '')
         return code
@@ -711,20 +730,16 @@ class ModuleAtom(Atom):
         return code
         
     def get_processing_code(self, in_tokens):
-        code = self.get_preprocessing_code(in_tokens)
-        out_tokens = []
+        #code = self.get_preprocessing_code(in_tokens)
+        code = '' 
+        out_tokens = self.out_tokens
         if 'output' in self.module and not self.module['output'] is None: #For Platform types
             if self.inline:
                 code += self.get_handles()[0]
             else:
-                if 'size' in self._output_block:
-                    code += templates.expression(self.get_inline_processing_code(in_tokens))
-                else:
-                    code += templates.assignment(self.out_tokens[0],self.get_inline_processing_code(in_tokens))
-            out_tokens = self.out_tokens
+                code += templates.expression(self.get_inline_processing_code(in_tokens)) 
         else:
             code += templates.expression(self.get_inline_processing_code(in_tokens))
-            out_tokens = self.out_tokens
         return code, out_tokens
         
     def _get_internal_header_code(self):
@@ -747,11 +762,9 @@ class ModuleAtom(Atom):
             for prop in self.module['properties']:
                 if 'block' in prop:
                     decl = self.platform.find_declaration_in_tree(prop['block']['block']['name']['name'],
-                                                                  self.platform.tree + self.current_scope)
-                    if type(decl['default']) == unicode:
-                        prop_type = 'string'
-                    else:
-                        prop_type = 'real'
+                                                                  self.platform.tree + self._blocks)
+                    #FIXME implement for bundles
+                    prop_type = self.get_block_types(decl)[0]
                     functions += templates.module_property_setter(prop['block']['name'],
                                              prop['block']['block']['name']['name'],
                                              prop_type)
@@ -770,9 +783,10 @@ class ModuleAtom(Atom):
         if 'ports' in self.function:
             for name,port in self.function['ports'].iteritems():
                 new_atom = self.platform.make_atom(port)
+                new_atom.scope_index += 1 # Hack to bring it up to the right scope...
                 self.port_name_atoms.append(new_atom)
         
-        self.code = self.platform.generate_code(tree, self.current_scope,
+        self.code = self.platform.generate_code(tree, self._blocks,
                                                 instanced = instanced)
                                                 
 
@@ -790,21 +804,30 @@ class ModuleAtom(Atom):
     def _init_blocks(self, blocks, input_name, output_name):
         self._blocks = []
         for block in blocks:
+            self._blocks.append(block)
             if 'block' in block:
-                self._blocks.append(block)
                 block_type = 'block'
             elif 'blockbundle' in block:
-                self._blocks.append(block)
                 block_type = 'blockbundle'
             if input_name and 'name' in input_name and self._blocks[-1][block_type]['name'] == input_name["name"]['name']:
                 self._input_block = self._blocks[-1]
             if output_name and 'name' in output_name and  self._blocks[-1][block_type]['name'] == output_name["name"]["name"]:
-                self._output_block = self._blocks[-1]
+                self._output_block = self._blocks[-1][block_type]
                 
     def find_internal_block(self, block_name):
         for block in self._blocks:
-            if block['name'] == block_name:
-                return block
+            if 'block' in block and block['block']['name'] == block_name:
+                return block['block']
+            elif 'blockbundle' in block and block['blockbundle']['name'] == block_name:
+                return block['blockbundle']
+                
+    def get_block_types(self, block):
+        # FIXME implement for bundles
+        if 'default' in block and type(block['default']) == unicode:
+            block_type = 'string'
+        else:
+            block_type = 'real'
+        return [block_type]
 
 class PlatformModuleAtom(ModuleAtom):
     def __init__(self, module, function, platform_code, token_index, platform, scope_index):
@@ -819,7 +842,6 @@ class ReactionAtom(Atom):
         self.scope_index = scope_index
         self.name = reaction["name"]
         self.handle = self.name + '_%03i'%token_index;
-        self.current_scope = reaction["internalBlocks"]
 #        self._platform_code = platform_code
         self._output_block = None
         self._index = token_index
@@ -956,7 +978,22 @@ class ReactionAtom(Atom):
         
     def _process_reaction(self, streams):
         tree = streams
-        self.code = self.platform.generate_code(tree,self.current_scope,
+        
+        # This is from ModuleAtom._process_module(). Needed here?
+#        instanced = []
+#        if self._input_block:
+#            if 'block' in self._input_block:
+#                block_type = 'block'
+#            else:
+#                block_type = 'blockbundle'
+#            instanced = [[self._input_block[block_type]['name'], self.scope_index]]
+#            
+#        if 'ports' in self.function:
+#            for name,port in self.function['ports'].iteritems():
+#                new_atom = self.platform.make_atom(port)
+#                self.port_name_atoms.append(new_atom)
+        
+        self.code = self.platform.generate_code(tree,self._blocks,
                                                 instanced = [])
         
         for section in self.global_sections:
@@ -967,17 +1004,29 @@ class ReactionAtom(Atom):
                     pass
             else:
                 self.globals[section] = self.code['global_groups'][section]
+                                                          
+
+        for section in self.global_sections:
+            if section in self.globals:
+                if section in self.code['global_groups']:
+                    self.globals[section].extend(self.code['global_groups'][section])
+                else:
+                    pass
+            else:
+                self.globals[section] = self.code['global_groups'][section]                
+                
+                
+                
 
 
         
     def _init_blocks(self, blocks, output_name):
         self._blocks = []
         for block in blocks:
+            self._blocks.append(block)
             if 'block' in block:
-                self._blocks.append(block)
                 block_type = 'block'
             elif 'blockbundle' in block:
-                self._blocks.append(block)
                 block_type = 'blockbundle'
             if output_name and 'name' in output_name and  self._blocks[-1][block_type]['name'] == output_name["name"]["name"]:
                 self._output_block = self._blocks[-1]
@@ -990,9 +1039,10 @@ class ReactionAtom(Atom):
 
 # --------------------- Common platform functions
 class PlatformFunctions:
-    def __init__(self, platform_dir, tree):
+    def __init__(self, tree, debug_messages=False):
         
         self.defined_modules =[]
+        self.debug_messages = debug_messages
     
         self.tree = tree
         self.scope_stack = []
@@ -1004,6 +1054,11 @@ class PlatformFunctions:
                     self.sample_rate = elem['block']['value']
         templates.domain_rate = self.sample_rate
         self.unique_id = 0
+        
+    def log_debug(self, text):
+        if self.debug_messages:
+            print(text)
+            
     
     def find_declaration_in_tree(self, block_name, tree):
         for node in tree:
@@ -1015,15 +1070,15 @@ class PlatformFunctions:
                 if node["blockbundle"]["name"] == block_name:
                     node["blockbundle"]['stack_index'] = 0
                     return node["blockbundle"]
-        for i, scope in enumerate(self.scope_stack):
+        for i, scope in enumerate(self.scope_stack[::-1]):
             for node in scope: # Now look within scope
                 if 'block' in node:
                     if node["block"]["name"] == block_name:
-                        node["block"]['stack_index'] = len(self.scope_stack) + i
+                        node["block"]['stack_index'] = len(self.scope_stack) - 1 - i
                         return node["block"]
                 if 'blockbundle' in node:
                     if node["blockbundle"]["name"] == block_name:
-                        node["blockbundle"]['stack_index'] = len(self.scope_stack) + i
+                        node["blockbundle"]['stack_index'] = len(self.scope_stack) - 1 - i
                         return node["blockbundle"]
 #        raise ValueError("Declaration not found for " + block_name)
         return None
@@ -1138,11 +1193,23 @@ class PlatformFunctions:
         self.scope_stack.pop()
         
     def make_stream_nodes(self, stream):
-        node_groups = [[]] # Nodes are grouped by rate
+        node_groups = [[]] # Nodes are grouped by domain
+        current_domain = ''
+        cur_group = node_groups[-1]
         
         for member in stream: #Only instantiate whatever is used in streams. Discard the rest
-            cur_group = node_groups[-1]  
-            new_atom = self.make_atom(member)             
+            
+            new_atom = self.make_atom(member) 
+            if hasattr("domain", "new_atom"):
+                if not current_domain == new_atom.domain:
+                    current_domain = new_atom.domain
+                    print("New domain!" + current_domain)
+                    node_groups.append([])
+                    cur_group = node_groups[-1]
+            else:
+                #print("No domain... Bad.")
+                pass
+            self.log_debug("New atom: " + str(new_atom.handle) + " domain: :" + current_domain)
             cur_group.append(new_atom)
 
             self.unique_id += 1
@@ -1157,27 +1224,30 @@ class PlatformFunctions:
         parent_rates_size = templates.rate_stack_size() # To know now much we need to pop for this stream
         
         header = []
+        
+        self.log_debug(">>> Start stream generation")
         for group in node_groups:
             in_tokens = []
             previous_atom = None
             for atom in group:
+                self.log_debug("Processing atom: " + str(atom.handle))
                 #Process Inlcudes
                 new_globals = atom.get_globals()
                 if len(new_globals) > 0:
-                    for group in new_globals:
-                        if group == 'include':
-                             global_groups['include'] += new_globals[group]
-                        elif group == 'linkTo':
-                             global_groups['linkTo']  += new_globals[group]
-                        elif group == 'initialization':
-                             global_groups['initialization']  += new_globals[group]
+                    for global_group in new_globals:
+                        global_groups[global_group] += new_globals[global_group]
 
                 declares = atom.get_declarations()
+                
+                self.log_debug("Declarations " + str(declares))
                 new_instances = atom.get_instances()
+                self.log_debug("New instances " + str(new_instances))
                 header.append([declares, new_instances])
                 
+                processing_code += atom.get_preprocessing_code(in_tokens)
                 # Process processing code
                 code, out_tokens = atom.get_processing_code(in_tokens)
+                self.log_debug("Code:  " + str(code))
                 if atom.rate > 0:
                     new_inst, new_init, new_proc = templates.rate_start(atom.rate)
                     processing_code += new_proc
@@ -1200,7 +1270,10 @@ class PlatformFunctions:
         other_scope_instances = []
         for new_header in header:
             for new_dec in new_header[0]:
-                # FIXME This should not be >= but == instead. This is what is working now though...
+                # FIXME doing >= solves the issue of using a Level instance
+                # within an Oscillator. The scope for the Output signal is
+                # currently marked as within the Oscillator instead of the 
+                # Level declared scope.
                 if new_dec['scope'] >= len(self.scope_stack) - 1: # if declaration in this scope
                     is_declared = False
                     for d in declared:
@@ -1214,7 +1287,10 @@ class PlatformFunctions:
                     other_scope_declarations.append(new_dec)
             
             for new_inst in new_header[1]:
-                # FIXME This should not be >= but == instead. This is what is working now though...
+                # FIXME doing >= solves the issue of using a Level instance
+                # within an Oscillator. The scope for the Output signal is
+                # currently marked as within the Oscillator instead of the 
+                # Level declared scope.
                 if new_inst['scope'] >= len(self.scope_stack) - 1: # if instance is declared in this scope
                     is_declared = False
                     for i in instanced:
@@ -1237,10 +1313,12 @@ class PlatformFunctions:
         while not parent_rates_size == templates.rate_stack_size():
             processing_code += templates.rate_end_code()
 
+        self.log_debug(">>> End stream generation")
         return [header_code, init_code, processing_code,
                 other_scope_instances, other_scope_declarations]
         
     def generate_stream_code(self, stream, stream_index, global_groups, declared, instanced, initialized):
+        self.log_debug("-- Start stream")       
         node_groups = self.make_stream_nodes(stream)
         
         processing_code = templates.stream_begin_code%stream_index
@@ -1250,6 +1328,8 @@ class PlatformFunctions:
         processing_code += new_processing_code
             
         processing_code += templates.stream_end_code%stream_index
+
+        self.log_debug("-- End stream")
         
         return {"global_groups" : global_groups,
                 "header_code" : header_code,
@@ -1259,7 +1339,7 @@ class PlatformFunctions:
                 "other_scope_declarations" : other_scope_declarations}
                 
     def generate_code(self, tree, current_scope = [],
-                      global_groups = {'include':[], 'initialization' : [], 'linkTo' : []},
+                      global_groups = {'include':[], 'includeDir':[], 'initialization' : [], 'linkTo' : [], 'linkDir' : []},
                       declared = [], instanced = [], initialized = []):  
         stream_index = 0
         header_code = ''
@@ -1268,6 +1348,7 @@ class PlatformFunctions:
         other_scope_instances = []
         other_scope_declarations = []
         
+        self.log_debug("* New Generation ----- scopes: " + str(len(self.scope_stack)))
         self.push_scope(current_scope)
 
         for node in tree:
@@ -1281,6 +1362,8 @@ class PlatformFunctions:
                 stream_index += 1
                 other_scope_instances += code['other_scope_instances']
                 other_scope_declarations += code["other_scope_declarations"]
+                
+        self.log_debug("* Ending Generation -----")
         
         self.pop_scope()
         return {"global_groups" : code['global_groups'],

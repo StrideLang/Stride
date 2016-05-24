@@ -1,0 +1,19 @@
+use Gamma version 1.0 on PC
+
+import generators
+
+signal Frequency2 { default: 440 }
+
+reaction Test {
+	output: none
+	internalBlocks: [
+	]
+	streams: [
+		Frequency2 + 10 >> Frequency2;
+	]
+}
+
+Impulse(frequency:1) == 1 >> Test();
+
+Oscillator(frequency: Frequency2) >> Level(gain:0.2) >> AudioOut;
+

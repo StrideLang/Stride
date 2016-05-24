@@ -13,7 +13,8 @@ from platformTemplates import templates # Perhaps we should acces this through P
 
 class Generator:
     def __init__(self, out_dir = '',
-                 platform_dir = ''):
+                 platform_dir = '',
+                 debug = False):
         
         self.platform_dir = platform_dir
         self.out_dir = out_dir
@@ -23,7 +24,7 @@ class Generator:
         jsonfile = open(self.out_dir + '/tree.json')
         self.tree = json.load(jsonfile)
         
-        self.platform = PlatformFunctions(platform_dir, self.tree)
+        self.platform = PlatformFunctions(self.tree, debug)
         
         self.last_num_outs = 0
         
@@ -86,6 +87,17 @@ class Generator:
             new_flag = "-l" + link_target
             if not new_flag in self.link_flags:
                 self.link_flags.append(new_flag)
+                
+        for link_dir in code['global_groups']['linkDir']:
+            new_flag = "-L" + link_dir
+            if not new_flag in self.link_flags:
+                self.link_flags.append(new_flag)
+                
+        self.build_flags = []
+        for include_dir in code['global_groups']['includeDir']:
+            new_flag = "-I" + include_dir
+            if not new_flag in self.build_flags:
+                self.build_flags.append(new_flag)
         
         
         
@@ -132,6 +144,8 @@ class Generator:
             
             #self.log(' '.join(args))
             #os.system(' '.join(args))
+            
+            print(args)
             outtext = ck_out(args)
         
             self.log(outtext)
@@ -147,7 +161,7 @@ class Generator:
                     "-L" + self.platform_dir + "/lib"]
                     
             
-            args += gamma_flags + self.link_flags 
+            args += gamma_flags + self.build_flags + self.link_flags 
             
             #self.log(' '.join(args))
             print(args)

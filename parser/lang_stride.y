@@ -1370,7 +1370,7 @@ AST *parse(const char *filename){
         COUT << ENDL << "Number of Errors: " << parseErrors.size() << ENDL;
         tree_head->deleteChildren();
         delete tree_head;
-        return ast;
+        return NULL;
     }
     ast = tree_head;
     COUT << "Completed Analysing: " << filename << ENDL;

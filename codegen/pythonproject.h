@@ -38,6 +38,8 @@ public slots:
     virtual void run(bool pressed = true);
     virtual bool isValid();
 
+    void consoleMessage();
+
     void stopRunning();
 
 private:
@@ -52,6 +54,8 @@ private:
     QString m_pythonExecutable;
     QAtomicInt m_running;
     QProcess m_runningProcess;
+    QAtomicInt m_building;
+    QProcess m_buildProcess;
 };
 
 #endif // PYTHONPROJECT_H
