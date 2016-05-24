@@ -233,6 +233,7 @@
     <addaction name="actionRename"/>
     <addaction name="actionRefresh"/>
     <addaction name="actionFollow_Symbol"/>
+    <addaction name="actionOpen_Generated_Code"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
@@ -365,6 +366,14 @@
    </property>
    <property name="shortcut">
     <string>F2</string>
+   </property>
+  </action>
+  <action name="actionOpen_Generated_Code">
+   <property name="text">
+    <string>Open Generated Code</string>
+   </property>
+   <property name="shortcut">
+    <string>F3</string>
    </property>
   </action>
  </widget>

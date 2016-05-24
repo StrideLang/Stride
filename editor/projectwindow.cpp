@@ -10,6 +10,7 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QSignalMapper>
+#include <QDesktopServices>
 
 #include "projectwindow.h"
 #include "ui_projectwindow.h"
@@ -297,8 +298,8 @@ void ProjectWindow::showDocumentation()
         BlockNode *typeBlock = CodeValidator::findTypeDeclarationByName(word, QVector<AST *>(), m_lastValidTree, errors);
         if (typeBlock) {
             AST *metaValue = typeBlock->getPropertyValue("meta");
-            Q_ASSERT(metaValue);
             if (metaValue) {
+                Q_ASSERT(metaValue);
                 Q_ASSERT(metaValue->getNodeType() == AST::String);
                 QString docHtml = "<h1>" + word + "</h1>\n";
                 docHtml += QString::fromStdString(static_cast<ValueNode *>(metaValue)->getStringValue());
@@ -415,9 +416,19 @@ void ProjectWindow::showDocumentation()
     }
 }
 
+void ProjectWindow::openGeneratedDir()
+{
+    CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+    if(!editor->filename().isEmpty()){
+        QFileInfo info(editor->filename());
+        QString dirName = info.absolutePath() + QDir::separator()
+                + info.fileName() + "_Products";
+        QDesktopServices::openUrl(QUrl("file://" + dirName));
+    }
+}
+
 void ProjectWindow::followSymbol()
 {
-    qDebug() << "Follow symbol";
     if (!m_lastValidTree) {
         return;
     }
@@ -428,7 +439,6 @@ void ProjectWindow::followSymbol()
         cursor.select(QTextCursor::WordUnderCursor);
     }
     QString word = cursor.selectedText();
-    qDebug() << "Attempting to find " << word;
     QMutexLocker locker(&m_validTreeLock);
     foreach(AST *node, m_lastValidTree->getChildren()) {
         if (node->getNodeType() == AST::Block ||
@@ -793,6 +803,7 @@ void ProjectWindow::connectActions()
     connect(ui->actionShow_Documentation, SIGNAL(triggered()),
             this, SLOT(showDocumentation()));
     connect(ui->actionFollow_Symbol, SIGNAL(triggered()), this, SLOT(followSymbol()));
+    connect(ui->actionOpen_Generated_Code, SIGNAL(triggered()), this, SLOT(openGeneratedDir()));
 
 
 //    connect(m_project, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
