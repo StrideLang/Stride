@@ -137,7 +137,7 @@ class Generator:
             self.log(outtext)
         
             # Link ------------------------
-            gamma_flags = ["-lGamma", "-lpthread", "-lportaudio", "-lsndfile"]
+            gamma_flags = ["-rdynamic", "-lGamma", "-lpthread", "-lportaudio", "-lsndfile"]
             args = [cpp_compiler,
                     "-O3",
                     "-DNDEBUG",
