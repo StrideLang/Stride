@@ -115,9 +115,9 @@ platformType _SerialOutType {
 #//      Sleep(milliseconds); // 100 ms
 ##else
 #//      usleep(milliseconds*1000); // 100 ms
-##endif	
-	
-	
+##endif
+
+
 
 
 platformType _SerialInType {
@@ -134,7 +134,7 @@ platformType _SerialInType {
   serial::Serial my_serial;'
 	]
 	constructors: [ 'my_serial(port, baud, serial::Timeout::simpleTimeout(1000))' ]
-    initializations: ['		
+    initializations: ['
   if(my_serial.isOpen())
     std::cout << "Serial opened successfully." << std::endl;
   else

@@ -37,24 +37,26 @@ module BiQuad {
 		signal B[3] {},
 		signal Temp {},
 		signal W0 {},
-		signal Alpha {}
+		signal Alpha {},
+		signal W0Cos {}
 	]
 	streams: [
 #		Type >> Null;
 		# For BP resonant filter
 #		2 * _Pi * CenterFrequency /AudioRate >> W0 >> Sin() >> Temp;
 #		[Temp, 2.0 * Resonance] >> Divide () >> [ Alpha, B[1] , Inverse() >> B[3] ];
-		
-		2 * _Pi * CenterFrequency /AudioRate >> W0 >> Sin() >> Temp;		
+
+		2 * _Pi * CenterFrequency /AudioRate >> W0 >> Sin() >> Temp;
 		Temp / (2*Resonance) >> Alpha >> B[1];
 		-Alpha >> B[3];
 		1 + Alpha >> A[1];
-		W0 >> Cos() >> Multiply(value: -2) >> A[2];
+		W0 >> Cos() >> W0Cos;
+		[W0Cos, 2] >> Multiply() >> A[2];
 		1 - Alpha >> A[3];
-		
+
 		# Filter Processing
 		(Input * B[1] + Xn[1] * B[2] + Xn[2] * B[3] - Yn[1] * A[2] - Yn[2] * A[3]) / A[1] >> Output;
-		Xn[1] >> Xn[2];		
+		Xn[1] >> Xn[2];
 		Input >> Xn[1];
 		Yn[1] >> Yn[2];
 		Output >> Yn[1];
