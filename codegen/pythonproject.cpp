@@ -11,7 +11,8 @@ PythonProject::PythonProject(QString platformPath,
                              QString projectDir,
                              QString pythonExecutable) :
     Builder(projectDir, platformPath),
-    m_runningProcess(this)
+    m_runningProcess(this),
+    m_buildProcess(this)
 
 {
     if(pythonExecutable.isEmpty()) {
@@ -19,10 +20,17 @@ PythonProject::PythonProject(QString platformPath,
     } else {
         m_pythonExecutable = pythonExecutable;
     }
+
+    connect(&m_buildProcess, SIGNAL(readyRead()), this, SLOT(consoleMessage()));
+    connect(&m_runningProcess, SIGNAL(readyRead()), this, SLOT(consoleMessage()));
 }
 
 PythonProject::~PythonProject()
 {
+    m_building.store(0);
+    m_buildProcess.kill();
+    m_buildProcess.waitForFinished();
+
     m_running.store(0);
     m_runningProcess.kill();
     m_runningProcess.waitForFinished();
@@ -31,35 +39,29 @@ PythonProject::~PythonProject()
 void PythonProject::build(AST *tree)
 {
     writeAST(tree);
-    QProcess pythonProcess(this);
     QStringList arguments;
-    pythonProcess.setWorkingDirectory(m_platformPath + "/../../../");
-    // TODO un hard-code library version
-    arguments << "library/1.0/python/build.py" << m_projectDir << m_platformPath + "/../";
-    pythonProcess.start(m_pythonExecutable, arguments);
-
-    QByteArray stdOut;
-    QByteArray stdErr;
-    if (pythonProcess.waitForStarted()) {
-        while (pythonProcess.state() == QProcess::Running) {
-            if (pythonProcess.waitForReadyRead(100)) { // TODO this should be offloaded to a separate thread to avoid blocking the GUI thread
-                stdOut = pythonProcess.readAllStandardOutput();
-                stdErr = pythonProcess.readAllStandardError();
-                if (!stdOut.isEmpty()) {
-                    emit outputText(stdOut);
-                }
-                if (!stdErr.isEmpty()) {
-                    emit errorText(stdErr);
-                }
-            }
+    if (m_buildProcess.state() == QProcess::Running) {
+        m_buildProcess.close();
+        if (!m_buildProcess.waitForFinished(5000)) {
+            qDebug() << "Could not stop build process. Not starting again.";
+            return;
         }
-    }
-    // Then catch final output
-    stdOut = pythonProcess.readAllStandardOutput();
-    stdErr = pythonProcess.readAllStandardError();
-    emit outputText(stdOut);
-    emit errorText(stdErr);
+     }
+    m_buildProcess.setWorkingDirectory(m_platformPath + "/../../../");
+    // FIXME un hard-code library version
+    arguments << "library/1.0/python/build.py" << m_projectDir << m_platformPath + "/../";
+    m_buildProcess.start(m_pythonExecutable, arguments);
 
+    m_buildProcess.waitForStarted(15000);
+    m_building.store(1);
+    while(m_building.load() == 1) {
+        if(m_buildProcess.waitForFinished(50)) {
+            m_building.store(0);
+        }
+        qApp->processEvents();
+    }
+    emit outputText("Done building.");
+    m_buildProcess.close();
 //    pythonProcess.terminate();
 //    qDebug() << stdOut;
 //    qDebug() << stdErr;
@@ -83,23 +85,14 @@ void PythonProject::run(bool pressed)
     // TODO un hard-code library version
     arguments << "library/1.0/python/run.py" << m_projectDir;
     m_runningProcess.start(m_pythonExecutable, arguments);
+    m_runningProcess.waitForStarted(15000);
     m_running.store(1);
     while(m_running.load() == 1) {
         if(m_runningProcess.waitForFinished(50)) {
             m_running.store(0);
         }
-        QByteArray stdOut = m_runningProcess.readAllStandardOutput();
-        QByteArray stdErr = m_runningProcess.readAllStandardError();
-        emit outputText(stdOut);
-        emit errorText(stdErr);
         qApp->processEvents();
     }
-    QByteArray stdOut = m_runningProcess.readAllStandardOutput();
-    QByteArray stdErr = m_runningProcess.readAllStandardError();
-    emit outputText(stdOut);
-    emit errorText(stdErr);
-//    qDebug() << m_runningProcess.readAllStandardOutput();
-//    qDebug() << m_runningProcess.readAllStandardError();
     emit outputText("Done.");
     m_runningProcess.close();
 }
@@ -339,4 +332,25 @@ void PythonProject::appendStreamToArray(AST *node, QJsonArray &array)
 bool PythonProject::isValid()
 {
     return true;
+}
+
+void PythonProject::consoleMessage()
+{
+    QByteArray stdOut;
+    QByteArray stdErr;
+    if (m_running.load() == 1) {
+        stdOut = m_runningProcess.readAllStandardOutput();
+        stdErr = m_runningProcess.readAllStandardError();
+    } else if (m_building.load() == 1) {
+        stdOut = m_buildProcess.readAllStandardOutput();
+        stdErr = m_buildProcess.readAllStandardError();
+    } else {
+        qDebug() << "WARNING: consoleMessage() called but nothing running";
+    }
+    if (!stdOut.isEmpty()) {
+        emit outputText(stdOut);
+    }
+    if (!stdErr.isEmpty()) {
+        emit errorText(stdErr);
+    }
 }
