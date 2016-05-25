@@ -1,0 +1,37 @@
+Open On-Chip Debugger 0.10.0-dev-00267-g884c33c (2016-03-16-12:22)
+Licensed under GNU GPL v2
+For bug reports, read
+	http://openocd.org/doc/doxygen/bugs.html
+Info : The selected transport took over low-level target control. The results might differ compared to plain JTAG/SWD
+adapter speed: 2000 kHz
+srst_only separate srst_nogate srst_open_drain connect_assert_srst
+adapter_nsrst_delay: 100
+Info : Unable to match requested speed 2000 kHz, using 1800 kHz
+Info : Unable to match requested speed 2000 kHz, using 1800 kHz
+Info : clock speed 1800 kHz
+Info : STLINK v2 JTAG v24 API v2 SWIM v11 VID 0x0483 PID 0x374B
+Info : using stlink api v2
+Info : Target voltage: 3.215213
+Info : STM32F756.cpu: hardware has 8 breakpoints, 4 watchpoints
+STM32F756.cpu: target state: halted
+target halted due to debug-request, current mode: Thread 
+xPSR: 0x01000000 pc: 0x0800272c msp: 0x20050000
+Info : Unable to match requested speed 8000 kHz, using 4000 kHz
+Info : Unable to match requested speed 8000 kHz, using 4000 kHz
+adapter speed: 4000 kHz
+** Programming Started **
+auto erase enabled
+Info : flash size probed value 1024
+STM32F756.cpu: target state: halted
+target halted due to breakpoint, current mode: Thread 
+xPSR: 0x61000000 pc: 0x20000084 msp: 0x20050000
+wrote 32768 bytes from file Debug/Blinky.elf in 0.499029s (64.125 KiB/s)
+** Programming Finished **
+** Verify Started **
+STM32F756.cpu: target state: halted
+target halted due to breakpoint, current mode: Thread 
+xPSR: 0x61000000 pc: 0x2000002e msp: 0x20050000
+verified 3648 bytes in 0.036002s (98.953 KiB/s)
+** Verified OK **
+** Resetting Target **
+shutdown command invoked

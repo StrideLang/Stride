@@ -1,0 +1,131 @@
+23:18:15 **** Build of configuration Debug for project Blinky ****
+make all 
+'Building file: ../Src/gpio.c'
+'Invoking: MCU GCC Compiler'
+C:\Users\Pacifist\workspace\Blinky\Debug
+arm-none-eabi-gcc -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16 -D__weak="__attribute__((weak))" -D__packed="__attribute__((__packed__))" -DUSE_HAL_DRIVER -DSTM32F746xx -I"C:/Users/Pacifist/workspace/Blinky/Inc" -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc/Legacy -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Include -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Device/ST/STM32F7xx/Include  -Os -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0 -MMD -MP -MF"Src/gpio.d" -MT"Src/gpio.o" -o "Src/gpio.o" "../Src/gpio.c"
+'Finished building: ../Src/gpio.c'
+' '
+'Building file: ../Src/main.c'
+'Invoking: MCU GCC Compiler'
+C:\Users\Pacifist\workspace\Blinky\Debug
+arm-none-eabi-gcc -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16 -D__weak="__attribute__((weak))" -D__packed="__attribute__((__packed__))" -DUSE_HAL_DRIVER -DSTM32F746xx -I"C:/Users/Pacifist/workspace/Blinky/Inc" -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc/Legacy -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Include -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Device/ST/STM32F7xx/Include  -Os -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0 -MMD -MP -MF"Src/main.d" -MT"Src/main.o" -o "Src/main.o" "../Src/main.c"
+'Finished building: ../Src/main.c'
+' '
+'Building file: ../Src/stm32f7xx_hal_msp.c'
+'Invoking: MCU GCC Compiler'
+C:\Users\Pacifist\workspace\Blinky\Debug
+arm-none-eabi-gcc -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16 -D__weak="__attribute__((weak))" -D__packed="__attribute__((__packed__))" -DUSE_HAL_DRIVER -DSTM32F746xx -I"C:/Users/Pacifist/workspace/Blinky/Inc" -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc/Legacy -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Include -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Device/ST/STM32F7xx/Include  -Os -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0 -MMD -MP -MF"Src/stm32f7xx_hal_msp.d" -MT"Src/stm32f7xx_hal_msp.o" -o "Src/stm32f7xx_hal_msp.o" "../Src/stm32f7xx_hal_msp.c"
+'Finished building: ../Src/stm32f7xx_hal_msp.c'
+' '
+'Building file: ../Src/stm32f7xx_it.c'
+'Invoking: MCU GCC Compiler'
+C:\Users\Pacifist\workspace\Blinky\Debug
+arm-none-eabi-gcc -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16 -D__weak="__attribute__((weak))" -D__packed="__attribute__((__packed__))" -DUSE_HAL_DRIVER -DSTM32F746xx -I"C:/Users/Pacifist/workspace/Blinky/Inc" -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc/Legacy -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Include -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Device/ST/STM32F7xx/Include  -Os -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0 -MMD -MP -MF"Src/stm32f7xx_it.d" -MT"Src/stm32f7xx_it.o" -o "Src/stm32f7xx_it.o" "../Src/stm32f7xx_it.c"
+'Finished building: ../Src/stm32f7xx_it.c'
+' '
+'Building file: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal.c'
+'Invoking: MCU GCC Compiler'
+C:\Users\Pacifist\workspace\Blinky\Debug
+arm-none-eabi-gcc -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16 -D__weak="__attribute__((weak))" -D__packed="__attribute__((__packed__))" -DUSE_HAL_DRIVER -DSTM32F746xx -I"C:/Users/Pacifist/workspace/Blinky/Inc" -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc/Legacy -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Include -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Device/ST/STM32F7xx/Include  -Os -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0 -MMD -MP -MF"Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal.d" -MT"Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal.o" -o "Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal.o" "C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal.c"
+'Finished building: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal.c'
+' '
+'Building file: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_cortex.c'
+'Invoking: MCU GCC Compiler'
+C:\Users\Pacifist\workspace\Blinky\Debug
+arm-none-eabi-gcc -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16 -D__weak="__attribute__((weak))" -D__packed="__attribute__((__packed__))" -DUSE_HAL_DRIVER -DSTM32F746xx -I"C:/Users/Pacifist/workspace/Blinky/Inc" -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc/Legacy -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Include -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Device/ST/STM32F7xx/Include  -Os -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0 -MMD -MP -MF"Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_cortex.d" -MT"Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_cortex.o" -o "Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_cortex.o" "C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_cortex.c"
+'Finished building: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_cortex.c'
+' '
+'Building file: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dma.c'
+'Invoking: MCU GCC Compiler'
+C:\Users\Pacifist\workspace\Blinky\Debug
+arm-none-eabi-gcc -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16 -D__weak="__attribute__((weak))" -D__packed="__attribute__((__packed__))" -DUSE_HAL_DRIVER -DSTM32F746xx -I"C:/Users/Pacifist/workspace/Blinky/Inc" -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc/Legacy -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Include -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Device/ST/STM32F7xx/Include  -Os -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0 -MMD -MP -MF"Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_dma.d" -MT"Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_dma.o" -o "Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_dma.o" "C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dma.c"
+'Finished building: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dma.c'
+' '
+'Building file: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dma_ex.c'
+'Invoking: MCU GCC Compiler'
+C:\Users\Pacifist\workspace\Blinky\Debug
+arm-none-eabi-gcc -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16 -D__weak="__attribute__((weak))" -D__packed="__attribute__((__packed__))" -DUSE_HAL_DRIVER -DSTM32F746xx -I"C:/Users/Pacifist/workspace/Blinky/Inc" -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc/Legacy -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Include -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Device/ST/STM32F7xx/Include  -Os -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0 -MMD -MP -MF"Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_dma_ex.d" -MT"Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_dma_ex.o" -o "Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_dma_ex.o" "C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dma_ex.c"
+'Finished building: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dma_ex.c'
+' '
+'Building file: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_flash.c'
+'Invoking: MCU GCC Compiler'
+C:\Users\Pacifist\workspace\Blinky\Debug
+arm-none-eabi-gcc -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16 -D__weak="__attribute__((weak))" -D__packed="__attribute__((__packed__))" -DUSE_HAL_DRIVER -DSTM32F746xx -I"C:/Users/Pacifist/workspace/Blinky/Inc" -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc/Legacy -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Include -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Device/ST/STM32F7xx/Include  -Os -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0 -MMD -MP -MF"Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_flash.d" -MT"Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_flash.o" -o "Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_flash.o" "C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_flash.c"
+'Finished building: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_flash.c'
+' '
+'Building file: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_flash_ex.c'
+'Invoking: MCU GCC Compiler'
+C:\Users\Pacifist\workspace\Blinky\Debug
+arm-none-eabi-gcc -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16 -D__weak="__attribute__((weak))" -D__packed="__attribute__((__packed__))" -DUSE_HAL_DRIVER -DSTM32F746xx -I"C:/Users/Pacifist/workspace/Blinky/Inc" -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc/Legacy -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Include -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Device/ST/STM32F7xx/Include  -Os -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0 -MMD -MP -MF"Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_flash_ex.d" -MT"Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_flash_ex.o" -o "Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_flash_ex.o" "C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_flash_ex.c"
+'Finished building: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_flash_ex.c'
+' '
+'Building file: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_gpio.c'
+'Invoking: MCU GCC Compiler'
+C:\Users\Pacifist\workspace\Blinky\Debug
+arm-none-eabi-gcc -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16 -D__weak="__attribute__((weak))" -D__packed="__attribute__((__packed__))" -DUSE_HAL_DRIVER -DSTM32F746xx -I"C:/Users/Pacifist/workspace/Blinky/Inc" -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc/Legacy -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Include -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Device/ST/STM32F7xx/Include  -Os -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0 -MMD -MP -MF"Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_gpio.d" -MT"Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_gpio.o" -o "Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_gpio.o" "C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_gpio.c"
+'Finished building: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_gpio.c'
+' '
+'Building file: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pwr.c'
+'Invoking: MCU GCC Compiler'
+C:\Users\Pacifist\workspace\Blinky\Debug
+arm-none-eabi-gcc -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16 -D__weak="__attribute__((weak))" -D__packed="__attribute__((__packed__))" -DUSE_HAL_DRIVER -DSTM32F746xx -I"C:/Users/Pacifist/workspace/Blinky/Inc" -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc/Legacy -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Include -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Device/ST/STM32F7xx/Include  -Os -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0 -MMD -MP -MF"Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_pwr.d" -MT"Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_pwr.o" -o "Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_pwr.o" "C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pwr.c"
+'Finished building: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pwr.c'
+' '
+'Building file: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pwr_ex.c'
+'Invoking: MCU GCC Compiler'
+C:\Users\Pacifist\workspace\Blinky\Debug
+arm-none-eabi-gcc -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16 -D__weak="__attribute__((weak))" -D__packed="__attribute__((__packed__))" -DUSE_HAL_DRIVER -DSTM32F746xx -I"C:/Users/Pacifist/workspace/Blinky/Inc" -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc/Legacy -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Include -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Device/ST/STM32F7xx/Include  -Os -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0 -MMD -MP -MF"Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_pwr_ex.d" -MT"Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_pwr_ex.o" -o "Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_pwr_ex.o" "C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pwr_ex.c"
+'Finished building: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pwr_ex.c'
+' '
+'Building file: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc.c'
+'Invoking: MCU GCC Compiler'
+C:\Users\Pacifist\workspace\Blinky\Debug
+arm-none-eabi-gcc -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16 -D__weak="__attribute__((weak))" -D__packed="__attribute__((__packed__))" -DUSE_HAL_DRIVER -DSTM32F746xx -I"C:/Users/Pacifist/workspace/Blinky/Inc" -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc/Legacy -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Include -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Device/ST/STM32F7xx/Include  -Os -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0 -MMD -MP -MF"Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_rcc.d" -MT"Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_rcc.o" -o "Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_rcc.o" "C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc.c"
+'Finished building: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc.c'
+' '
+'Building file: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc_ex.c'
+'Invoking: MCU GCC Compiler'
+C:\Users\Pacifist\workspace\Blinky\Debug
+arm-none-eabi-gcc -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16 -D__weak="__attribute__((weak))" -D__packed="__attribute__((__packed__))" -DUSE_HAL_DRIVER -DSTM32F746xx -I"C:/Users/Pacifist/workspace/Blinky/Inc" -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc/Legacy -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Include -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Device/ST/STM32F7xx/Include  -Os -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0 -MMD -MP -MF"Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_rcc_ex.d" -MT"Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_rcc_ex.o" -o "Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_rcc_ex.o" "C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc_ex.c"
+'Finished building: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc_ex.c'
+' '
+'Building file: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_tim.c'
+'Invoking: MCU GCC Compiler'
+C:\Users\Pacifist\workspace\Blinky\Debug
+arm-none-eabi-gcc -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16 -D__weak="__attribute__((weak))" -D__packed="__attribute__((__packed__))" -DUSE_HAL_DRIVER -DSTM32F746xx -I"C:/Users/Pacifist/workspace/Blinky/Inc" -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc/Legacy -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Include -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Device/ST/STM32F7xx/Include  -Os -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0 -MMD -MP -MF"Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_tim.d" -MT"Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_tim.o" -o "Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_tim.o" "C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_tim.c"
+'Finished building: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_tim.c'
+' '
+'Building file: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_tim_ex.c'
+'Invoking: MCU GCC Compiler'
+C:\Users\Pacifist\workspace\Blinky\Debug
+arm-none-eabi-gcc -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16 -D__weak="__attribute__((weak))" -D__packed="__attribute__((__packed__))" -DUSE_HAL_DRIVER -DSTM32F746xx -I"C:/Users/Pacifist/workspace/Blinky/Inc" -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc/Legacy -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Include -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Device/ST/STM32F7xx/Include  -Os -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0 -MMD -MP -MF"Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_tim_ex.d" -MT"Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_tim_ex.o" -o "Drivers/STM32F7xx_HAL_Driver/stm32f7xx_hal_tim_ex.o" "C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_tim_ex.c"
+'Finished building: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_tim_ex.c'
+' '
+'Building file: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/system_stm32f7xx.c'
+'Invoking: MCU GCC Compiler'
+C:\Users\Pacifist\workspace\Blinky\Debug
+arm-none-eabi-gcc -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16 -D__weak="__attribute__((weak))" -D__packed="__attribute__((__packed__))" -DUSE_HAL_DRIVER -DSTM32F746xx -I"C:/Users/Pacifist/workspace/Blinky/Inc" -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/STM32F7xx_HAL_Driver/Inc/Legacy -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Include -IC:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Device/ST/STM32F7xx/Include  -Os -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0 -MMD -MP -MF"Drivers/CMSIS/system_stm32f7xx.d" -MT"Drivers/CMSIS/system_stm32f7xx.o" -o "Drivers/CMSIS/system_stm32f7xx.o" "C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/system_stm32f7xx.c"
+'Finished building: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/system_stm32f7xx.c'
+' '
+'Building file: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/gcc/startup_stm32f746xx.s'
+'Invoking: MCU GCC Assembler'
+C:\Users\Pacifist\workspace\Blinky\Debug
+arm-none-eabi-as -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16 -g -o "Application/SW4STM32/startup_stm32f746xx.o" "C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/gcc/startup_stm32f746xx.s"
+'Finished building: C:/Users/Pacifist/STM32Cube/Repository/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/gcc/startup_stm32f746xx.s'
+' '
+'Building target: Blinky.elf'
+'Invoking: MCU GCC Linker'
+arm-none-eabi-gcc -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16 -specs=nosys.specs -specs=nano.specs -T"../STM32F746NGHx_FLASH.ld" -Wl,-Map=output.map -Wl,--gc-sections -lm -o "Blinky.elf" @"objects.list"  
+'Finished building target: Blinky.elf'
+' '
+make --no-print-directory post-build
+'Generating binary and Printing size information:'
+arm-none-eabi-objcopy -O binary "Blinky.elf" "Blinky.bin"
+arm-none-eabi-size "Blinky.elf"
+   text	   data	    bss	    dec	    hex	filename
+   3636	     12	   1572	   5220	   1464	Blinky.elf
+' '
+
+23:18:26 Build Finished (took 11s.102ms)
+
