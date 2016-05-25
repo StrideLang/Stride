@@ -1,0 +1,3 @@
+use Discovery_M7 version 1.0 on PC
+
+AudioIn >> AudioOut;
