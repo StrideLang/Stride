@@ -9,15 +9,19 @@ INCLUDE(CMakeForceCompiler)
 #sudo add-apt-repository ppa:team-gcc-arm-embedded/ppa
 #sudo apt-get install gcc-arm-embedded
 
-set(CXX11 -std=gnu++0x)
+set(CXX11 -std=c++11)
 
 enable_language(ASM)
 
 CMAKE_FORCE_C_COMPILER(arm-none-eabi-gcc GNU)
 CMAKE_FORCE_CXX_COMPILER(arm-none-eabi-g++ GNU)
 set (CMAKE_ASM_COMPILER arm-none-eabi-as)
- 
+#SET(CMAKE_C_LINK_EXECUTABLE arm-none-eabi-gcc) 
 SET(COMMON_FLAGS "-mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16")
+
+SET(CMAKE_LINKER arm-none-eabi-g++) 
+set(LINK_FLAGS ${COMMON_FLAGS})
+set(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_LINKER> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
 #list(APPEND CMAKE_CXX_FLAGS "${COMMON_FLAGS} -DUSE_HAL_DRIVER -DSTM32F746xx  -Os -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0 ${CXX11}")
 
 #list(APPEND CMAKE_C_FLAGS "${COMMON_FLAGS} -DUSE_HAL_DRIVER -DSTM32F746xx  -Os -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0")
@@ -25,13 +29,13 @@ SET(COMMON_FLAGS "-mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16")
 #list(APPEND CMAKE_EXE_LINKER_FLAGS " -specs=nosys.specs -specs=nano.specs -u _printf_float -T../blinky/STM32F746NGHx_FLASH.ld -Wl,-Map=output.map -Wl,--gc-sections -lm")
 
 
-SET(CMAKE_C_FLAGS "-mthumb -fno-builtin -mcpu=cortex-m7 -mfpu=fpv5-sp-d16 -mfloat-abi=softfp -Wall -std=gnu99 -ffunction-sections -fdata-sections -fomit-frame-pointer -mabi=aapcs -fno-unroll-loops -ffast-math -ftree-vectorize" CACHE INTERNAL "c compiler flags")
-SET(CMAKE_CXX_FLAGS "-mthumb -fno-builtin -mcpu=cortex-m7 -mfpu=fpv5-sp-d16 -mfloat-abi=softfp -Wall -std=c++11 -ffunction-sections -fdata-sections -fomit-frame-pointer -mabi=aapcs -fno-unroll-loops -ffast-math -ftree-vectorize" CACHE INTERNAL "cxx compiler flags")
-SET(CMAKE_ASM_FLAGS "-mthumb -mcpu=cortex-m7 -mfpu=fpv5-sp-d16 -mfloat-abi=softfp -x assembler-with-cpp" CACHE INTERNAL "asm compiler flags")
+SET(CMAKE_C_FLAGS "${COMMON_FLAGS} -Os -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0")
+SET(CMAKE_CXX_FLAGS "${COMMON_FLAGS} -Os -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0 ${CXX11}")
+#SET(CMAKE_ASM_FLAGS "-mthumb -mcpu=cortex-m7 -mfpu=fpv5-sp-d16 -x assembler-with-cpp" CACHE INTERNAL "asm compiler flags")
 
-#SET(CMAKE_EXE_LINKER_FLAGS "-Wl,--gc-sections -mthumb -mcpu=cortex-m7 -mfpu=fpv5-sp-d16 -mfloat-abi=softfp -mabi=aapcs" CACHE INTERNAL "executable linker flags")
-#SET(CMAKE_MODULE_LINKER_FLAGS "-mthumb -mcpu=cortex-m7 -mfpu=fpv5-sp-d16 -mfloat-abi=softfp -mabi=aapcs" CACHE INTERNAL "module linker flags")
-#SET(CMAKE_SHARED_LINKER_FLAGS "-mthumb -mcpu=cortex-m7 -mfpu=fpv5-sp-d16 -mfloat-abi=softfp -mabi=aapcs" CACHE INTERNAL "shared linker flags")
+#SET(CMAKE_EXE_LINKER_FLAGS "-Wl,--gc-sections -mthumb -mcpu=cortex-m7 -mfpu=fpv5-sp-d16 -mfloat-abi=softfp -mabi=aapcs")
+#SET(CMAKE_MODULE_LINKER_FLAGS "-mthumb -mcpu=cortex-m7 -mfpu=fpv5-sp-d16 -mfloat-abi=softfp -mabi=aapcs")
+#SET(CMAKE_SHARED_LINKER_FLAGS "-mthumb -mcpu=cortex-m7 -mfpu=fpv5-sp-d16 -mfloat-abi=softfp -mabi=aapcs")
 
 
 SET(CMAKE_ASM_FLAGS ${COMMON_FLAGS})
@@ -51,6 +55,7 @@ ${STM_COMMON}/Drivers/CMSIS/Device/ST/STM32F7xx/Include
 #../stlink/st-flash write blinky.bin 0x8000000
 
 
+
 set(STM_PLATFORM 
 ${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal.c
 ${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_cortex.c
@@ -58,12 +63,16 @@ ${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dma.c
 ${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_flash.c
 #${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_ex.c
 ${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_gpio.c
-#${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_power.c
-#${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_power_ex.c
+${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pwr.c
+${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pwr_ex.c
 ${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc.c
 ${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc_ex.c
 ${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_tim.c
 ${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_tim_ex.c
+${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_sai.c
+${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_sai_ex.c
+${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_i2c.c
+${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_i2c_ex.c
 ${STM_COMMON}/Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/system_stm32f7xx.c
 #${STM_COMMON}/Drivers/CMSIS/system_stm32f7xx.c
 ${STM_COMMON}/Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/gcc/startup_stm32f746xx.s
@@ -71,15 +80,22 @@ ${STM_COMMON}/Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/gcc/startup_stm
 
 set_property(SOURCE ${STM_COMMON}/Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/gcc/startup_stm32f746xx.s PROPERTY LANGUAGE C)
 
-add_executable(blinky.elf Src/main.cpp Src/gpio.c Src/stm32f7xx_hal_msp.c Src/stm32f7xx_it.c ${STM_PLATFORM})
+file(GLOB SOURCES
+    "Src/*.cpp"
+    "Src/*.c"
+)
 
-SET_TARGET_PROPERTIES(blinky.elf PROPERTIES COMPILE_DEFINITIONS "USE_HAL_DRIVER;STM32F746xx")
+add_executable(blinky.elf ${SOURCES} ${STM_PLATFORM})
+
+SET_TARGET_PROPERTIES(blinky.elf PROPERTIES COMPILE_DEFINITIONS "USE_HAL_DRIVER;STM32F746xx;ARM_MATH_CM7")
 
 #set_target_properties(blinky.elf PROPERTIES COMPILE_FLAGS "${COMMON_FLAGS} -Os -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0 ${CXX11}")
 #target_compile_options(blinky.elf PRIVATE ${COMMON_FLAGS} )
 
-#add_definitions( "-D__weak=__attribute__((weak))" "-D__packed=__attribute__((__packed__))" )
+add_definitions( "-D__weak=__attribute__((weak))" "-D__packed=__attribute__((__packed__))" )
 
-target_link_libraries(blinky.elf -specs=nosys.specs -specs=nano.specs -u _printf_float -TSTM32F746NGHx_FLASH.ld -Wl,-Map=output.map -Wl,--gc-sections -lm ${CXX11})
+link_directories(${STM_COMMON}/Drivers/CMSIS/Lib/GCC)
+
+target_link_libraries(blinky.elf ${COMMON_FLAGS} -L${STM_COMMON}/Drivers/CMSIS/Lib/GCC -specs=nosys.specs -specs=nano.specs -TSTM32F746NGHx_FLASH.ld -Wl,-Map=output.map -Wl,--gc-sections -lm arm_cortexM7lfsp_math ${CXX11})
 
 

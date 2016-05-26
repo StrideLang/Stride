@@ -35,7 +35,7 @@ constant AudioRate {
 platformType _HwInput {
     typeName: '_hwInput'
 #	numInputs: 0
-	outputs: ["real", "real"]
+	outputs: ["real"]
 #    include: []
 #    linkTo: []
 #    declarations: ['']
@@ -46,7 +46,7 @@ platformType _HwInput {
 
 platformType _HwOutput {
     typeName: '_hwOutput'
-	inputs: ["real", "real"]
+	inputs: ["real"]
 #	numOutputs: 0
 #    include: []
 #    linkTo: []

@@ -5,9 +5,6 @@ import generators
 signal Frequency2 { default: 440 }
 
 reaction Test {
-	output: none
-	internalBlocks: [
-	]
 	streams: [
 		Frequency2 + 10 >> Frequency2;
 	]

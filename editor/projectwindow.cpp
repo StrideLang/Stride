@@ -283,7 +283,7 @@ void ProjectWindow::showDocumentation()
     // TODO should all this be moved to the editor or related class?
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     QTextCursor cursor= editor->textCursor();
-    QTextDocument *doc = editor->document();
+//    QTextDocument *doc = editor->document();
     if (cursor.selectedText() == "") {
         cursor.select(QTextCursor::WordUnderCursor);
     }

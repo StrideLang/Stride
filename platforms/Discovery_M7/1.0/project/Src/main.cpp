@@ -32,16 +32,64 @@
   */
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f7xx_hal.h"
+#include "dma.h"
+#include "i2c.h"
+#include "sai.h"
 #include "gpio.h"
 
 /* USER CODE BEGIN Includes */
+#include "Codec.h"
+#include "math.h"
+#include "arm_math.h"
 
+//[[Includes]]
+
+//[[/Includes]]
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+#define AUDIO_I2C_ADDRESS           ((uint16_t)0x34)
+extern AUDIO_DrvTypeDef wm8994_drv;
+
+#define BUFFER_SIZE				2
+static uint16_t Buffer[BUFFER_SIZE] = { 0,0 };
+
+// 0x00 = -57 dB
+// 0x27 = -18dB
+// 0x2D = -12 dB
+// 0x33 =  -6 dB
+// 0x39 =   0 db
+// 0x3F =  +6 db
+static uint32_t OutputVolume = 0x2D;
+
+// 0x00 = -71.625 dB
+// 0x90 = -18.000 dB
+// 0xA0 = -12.000 dB
+// 0xB0 =  -6.000 dB
+// 0xC0 =   0.000 dB
+// 0cFF = +17.625 dB
+
+static uint32_t InputVolume = 0xA0;
+
+
+//[[Init Code]]
+static float32_t PhaseInc_f32[4];//
+static float32_t Phase_f32[4];//
+static float32_t Partials_f32[4];//
+static float32_t Sample_f32;//
+static q15_t Sample_q15;//
+
+static float32_t Fs = 48000;
+
+
+static float32_t Freq[4] = { 110.00, 3.0, 440.0, 10.0 };
+static float32_t Amp[4] = { 0.4, 0.3, 0.2, 0.1 };
+
+//[[/Init Code]]
+
 
 /* USER CODE END PV */
 
@@ -50,7 +98,7 @@ void SystemClock_Config(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
-
+static void Codec_Init(void);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
@@ -62,7 +110,17 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
 
+//[[Config Code]]
+
+//[[/Config Code]]
+
   /* USER CODE END 1 */
+
+  /* Enable I-Cache-------------------------------------------------------------*/
+  SCB_EnableICache();
+
+  /* Enable D-Cache-------------------------------------------------------------*/
+  SCB_EnableDCache();
 
   /* MCU Configuration----------------------------------------------------------*/
 
@@ -74,8 +132,17 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
+  MX_I2C3_Init();
+  MX_SAI2_Init();
 
   /* USER CODE BEGIN 2 */
+
+  __HAL_SAI_ENABLE(&hsai_BlockA2);
+
+  Codec_Init();
+
+  HAL_SAI_Transmit_IT(&hsai_BlockA2,(uint8_t *) Buffer, BUFFER_SIZE );
 
   /* USER CODE END 2 */
 
@@ -83,12 +150,11 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
 
-	HAL_GPIO_TogglePin(GPIOI, GPIO_PIN_1);
-	HAL_Delay(1500);
   }
   /* USER CODE END 3 */
 
@@ -101,24 +167,41 @@ void SystemClock_Config(void)
 
   RCC_OscInitTypeDef RCC_OscInitStruct;
   RCC_ClkInitTypeDef RCC_ClkInitStruct;
+  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct;
 
   __HAL_RCC_PWR_CLK_ENABLE();
 
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = 16;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLM = 25;
+  RCC_OscInitStruct.PLL.PLLN = 432;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+  RCC_OscInitStruct.PLL.PLLQ = 2;
   HAL_RCC_OscConfig(&RCC_OscInitStruct);
+
+  HAL_PWREx_EnableOverDrive();
 
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
-  HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0);
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
+  HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_7);
+
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SAI2|RCC_PERIPHCLK_I2C3;
+  PeriphClkInitStruct.PLLI2S.PLLI2SN = 344;
+  PeriphClkInitStruct.PLLI2S.PLLI2SP = 1;
+  PeriphClkInitStruct.PLLI2S.PLLI2SR = 2;
+  PeriphClkInitStruct.PLLI2S.PLLI2SQ = 7;
+  PeriphClkInitStruct.PLLI2SDivQ = 1;
+  PeriphClkInitStruct.Sai2ClockSelection = RCC_SAI2CLKSOURCE_PLLI2S;
+  PeriphClkInitStruct.I2c3ClockSelection = RCC_I2C3CLKSOURCE_PCLK1;
+  HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct);
 
   HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
 
@@ -129,6 +212,73 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+void Codec_Init(void)
+{
+	uint32_t deviceid = 0x00;
+	deviceid = wm8994_drv.ReadID(AUDIO_I2C_ADDRESS);
+
+	if((deviceid) == WM8994_ID)
+	{
+		wm8994_drv.Reset(AUDIO_I2C_ADDRESS);
+		wm8994_drv.Init(AUDIO_I2C_ADDRESS, OUTPUT_DEVICE_HEADPHONE, OutputVolume, InputVolume, AUDIO_FREQUENCY_48K);
+
+		HAL_GPIO_TogglePin(GPIOI,GPIO_PIN_1);
+	}
+}
+
+void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai)
+{
+
+
+	for (uint8_t i = 0; i < 4 ; i++)
+	{
+		
+//[[Dsp Code]]
+
+		Sample_f32 = 0.0f;
+
+		for (uint8_t j = 0; j < 4 ; j++)
+		{
+			Phase_f32[j] += PhaseInc_f32[j];
+
+			if (Phase_f32[j] > 6.28318530718f) Phase_f32[j] -= 6.28318530718f;
+
+			Partials_f32[j] = arm_sin_f32 (Phase_f32[j]);
+
+			Sample_f32 += Partials_f32[j] * Amp[j];
+		}
+
+		Sample_f32  = Partials_f32[0] * Partials_f32[1] * Amp[0] + Partials_f32[2] * Partials_f32[3] * Amp[1];
+
+		arm_float_to_q15(&Sample_f32,&Sample_q15,1);
+
+		hsai_BlockA2.Instance->DR = Sample_q15;
+		hsai_BlockA2.Instance->DR = Sample_q15;
+
+
+//[[/Dsp Code]]
+	}
+
+	__HAL_SAI_ENABLE_IT(&hsai_BlockA2,SAI_IT_FREQ);
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	if (GPIO_Pin == GPIO_PIN_11 )
+	{
+
+//        Freq[0] += 5.0f * 1.1f;
+//        Freq[1] += 0.5f * 1.1f;
+//        Freq[2] += 10.0f * 1.1f;
+//        Freq[3] += 1.0f * 1.1f;
+
+//        for ( uint8_t i = 0; i < 4; i++)
+//        {
+//            PhaseInc_f32[i] = 2 * PI * Freq[i] / Fs;
+//        }
+	}
+}
+
 
 /* USER CODE END 4 */
 

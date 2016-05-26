@@ -65,7 +65,7 @@
 //#define HAL_SRAM_MODULE_ENABLED   
 //#define HAL_SDRAM_MODULE_ENABLED   
 //#define HAL_HASH_MODULE_ENABLED   
-//#define HAL_I2C_MODULE_ENABLED   
+#define HAL_I2C_MODULE_ENABLED
 //#define HAL_I2S_MODULE_ENABLED   
 //#define HAL_IWDG_MODULE_ENABLED   
 //#define HAL_LPTIM_MODULE_ENABLED   
@@ -73,7 +73,7 @@
 //#define HAL_QSPI_MODULE_ENABLED   
 //#define HAL_RNG_MODULE_ENABLED   
 //#define HAL_RTC_MODULE_ENABLED   
-//#define HAL_SAI_MODULE_ENABLED   
+#define HAL_SAI_MODULE_ENABLED
 //#define HAL_SD_MODULE_ENABLED   
 //#define HAL_SPDIFRX_MODULE_ENABLED   
 //#define HAL_SPI_MODULE_ENABLED   
@@ -149,8 +149,8 @@
 #define  VDD_VALUE                    ((uint32_t)3300) /*!< Value of VDD in mv */
 #define  TICK_INT_PRIORITY            ((uint32_t)0) /*!< tick interrupt priority */
 #define  USE_RTOS                     0
-#define  PREFETCH_ENABLE              0
-#define  ART_ACCLERATOR_ENABLE        0 /* To enable instruction cache and prefetch */
+#define  PREFETCH_ENABLE              1
+#define  ART_ACCLERATOR_ENABLE        1 /* To enable instruction cache and prefetch */
 
 /* ########################## Assert Selection ############################## */
 /**

@@ -5,11 +5,11 @@ platformType _SineType {
     typeName: '_sineType'
     inputs: ["real"]
 	outputs: ["real"]
-    include: ["cmath"]
+    include: ["arm_math.h"]
 #    linkTo: []
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
-    processing: "std::sin(%%intoken:0%%)"
+    processing: "arm_sin_f32(%%intoken:0%%)"
     inherits: ['signal']
 }
 
@@ -18,11 +18,11 @@ platformType _CosineType {
     typeName: '_cosineType'
     inputs: ["real"]
 	outputs: ["real"]
-    include: ["cmath"]
+    include: ["arm_math.h"]
 #    linkTo: []
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
-    processing: "std::cos(%%intoken:0%%)"
+    processing: "arm_cos_f32(%%intoken:0%%)"
     inherits: ['signal']
 }
 

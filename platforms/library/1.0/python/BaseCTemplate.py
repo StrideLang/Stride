@@ -490,7 +490,7 @@ struct %s {
     def reaction_processing_code(self, handle, in_tokens, out_token):
         code = "if ("+ in_tokens[0] + ") {\n"
         if out_token:
-            code += handle + '.execute(&' + out_token +  ');\n'
+            code += handle + '.execute(' + out_token +  ');\n'
         else:
             code += handle + '.execute();\n'
         code += "}\n"

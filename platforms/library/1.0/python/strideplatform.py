@@ -59,6 +59,9 @@ class Atom(object):
         inline processing code. The inline processing code will be provided
         ready to insert rather than ready to inline.'''
         return None
+    
+    def get_postproc_once(self):
+        return None
         
     def get_inline_processing_code(self, in_tokens):
         ''' This returns the processing code itself, so this can be used
@@ -224,7 +227,8 @@ class ExpressionAtom(Atom):
         return left_code + right_code
     
     def get_processing_code(self, in_tokens):       
-        code = self.get_preprocessing_code(in_tokens)
+        #code = self.get_preprocessing_code(in_tokens)
+        code = ''
         if self.is_inline():
             out_tokens = [self.get_inline_processing_code(in_tokens)]
         else:
@@ -349,6 +353,26 @@ class ListAtom(Atom):
     def get_inline_processing_code(self, in_tokens):
         return str(self.value)
         
+    def get_preprocessing_code(self, in_tokens):
+        code = ''
+        for i,elem in enumerate(self.list_node):
+            if len(in_tokens) > 0:
+                index = i%len(in_tokens)
+                new_code = elem.get_preprocessing_code([in_tokens[index]])
+                code += new_code
+            else:
+                 new_code = elem.get_preprocessing_code([])
+                 code += new_code
+        return code
+        
+    def get_postproc_once(self):
+        postproc = []
+        for i,elem in enumerate(self.list_node):
+            new_postproc = elem.get_postproc_once()
+            if new_postproc:
+                postproc += new_postproc
+        return postproc
+        
     def get_processing_code(self, in_tokens):
         code = ''
         out_tokens = []
@@ -443,7 +467,7 @@ class NameAtom(Atom):
         elif 'block' in self.platform_type:
             inherits = self.platform_type['block']['inherits']
             if inherits == 'signal':
-                if type(self.declaration['default']) == unicode:
+                if 'default' in self.declaration and type(self.declaration['default']) == unicode:
                     inits = [{'handle' : self.handle,
                           'type' : 'string',
                           'code' : default_value,
@@ -456,7 +480,7 @@ class NameAtom(Atom):
                               'scope' : self.declaration['stack_index']
                               }]
             elif self.platform_type['block']['type'] == 'platformType':
-                if type(self.declaration['default']) == unicode:
+                if 'default' in self.declaration and type(self.declaration['default']) == unicode:
                     inits = [{'handle' : self.handle,
                               'type' : 'string',
                               'code' : default_value,
@@ -518,7 +542,14 @@ class NameAtom(Atom):
         else:
             code = templates.assignment(self.handle, self.get_inline_processing_code(in_tokens))
         return code, out_tokens
-        
+    
+    def get_postproc_once(self):
+        if 'block' in self.platform_type and self.platform_type['block']['type'] == "platformType":
+            if not self.platform_type['block']['postProcessingOnce'] == '':
+                return [[self.platform_type['block']['name'], self.platform_type['block']['postProcessingOnce']]]
+        return None
+            
+    
     def _get_default_value(self):
         if 'default' in self.declaration:
             default_value = self.declaration['default']
@@ -638,7 +669,7 @@ class ModuleAtom(Atom):
             self.domain = self.function['ports']['domain']
             self.function['ports'].pop('domain')
         
-        self.port_name_atoms = []
+        self.port_name_atoms = {}
         
         self._init_blocks(module["internalBlocks"],
                           module["input"], module["output"])
@@ -680,8 +711,9 @@ class ModuleAtom(Atom):
             for inst in self.code["other_scope_instances"]:
                 inst['post'] = False
                 instances.append(inst)
-        for atom in self.port_name_atoms:
-            instances += atom.get_instances()
+        for atoms in self.port_name_atoms.itervalues():
+            for atom in atoms:
+                instances += atom.get_instances()
                 
         instances += [{'type' : 'module',
                      'handle': self.handle,
@@ -723,7 +755,7 @@ class ModuleAtom(Atom):
             elif 'name' in ports[port_name]:
                 port_in_token = [ports[port_name]['name']['name']]
             elif 'expression' in ports[port_name]:
-                port_in_token = ['']
+                port_in_token = [self.port_name_atoms[port_name][0].get_handles()[0]]
             else:
                 port_in_token = ['____XXX___'] # TODO implement
             code += templates.module_set_property(self.handle, port_name, port_in_token)
@@ -781,10 +813,13 @@ class ModuleAtom(Atom):
             instanced = [[self._input_block[block_type]['name'], self.scope_index]]
             
         if 'ports' in self.function:
-            for name,port in self.function['ports'].iteritems():
-                new_atom = self.platform.make_atom(port)
+            for name,port_value in self.function['ports'].iteritems():
+                new_atom = self.platform.make_atom(port_value)
                 new_atom.scope_index += 1 # Hack to bring it up to the right scope...
-                self.port_name_atoms.append(new_atom)
+                if name in self.port_name_atoms:
+                    self.port_name_atoms[name].append(new_atom)
+                else:
+                    self.port_name_atoms[name] = [new_atom]
         
         self.code = self.platform.generate_code(tree, self._blocks,
                                                 instanced = instanced)
@@ -825,6 +860,8 @@ class ModuleAtom(Atom):
         # FIXME implement for bundles
         if 'default' in block and type(block['default']) == unicode:
             block_type = 'string'
+        elif block['type'] == 'switch':
+            block_type = 'bool'
         else:
             block_type = 'real'
         return [block_type]
@@ -936,7 +973,8 @@ class ReactionAtom(Atom):
         return code
         
     def get_processing_code(self, in_tokens):
-        code = self.get_preprocessing_code(in_tokens)
+        #code = self.get_preprocessing_code(in_tokens)
+        code = ''
         out_tokens = []
         if 'output' in self.reaction and not self.reaction['output'] is None:
             if self.inline:
@@ -1022,14 +1060,15 @@ class ReactionAtom(Atom):
         
     def _init_blocks(self, blocks, output_name):
         self._blocks = []
-        for block in blocks:
-            self._blocks.append(block)
-            if 'block' in block:
-                block_type = 'block'
-            elif 'blockbundle' in block:
-                block_type = 'blockbundle'
-            if output_name and 'name' in output_name and  self._blocks[-1][block_type]['name'] == output_name["name"]["name"]:
-                self._output_block = self._blocks[-1]
+        if blocks:
+            for block in blocks:
+                self._blocks.append(block)
+                if 'block' in block:
+                    block_type = 'block'
+                elif 'blockbundle' in block:
+                    block_type = 'blockbundle'
+                if output_name and 'name' in output_name and  self._blocks[-1][block_type]['name'] == output_name["name"]["name"]:
+                    self._output_block = self._blocks[-1]
                 
     def find_internal_block(self, block_name):
         for block in self._blocks:
@@ -1221,6 +1260,7 @@ class PlatformFunctions:
         init_code = ''
         header_code = ''
         processing_code = '' 
+        post_processing = []
         parent_rates_size = templates.rate_stack_size() # To know now much we need to pop for this stream
         
         header = []
@@ -1247,6 +1287,17 @@ class PlatformFunctions:
                 processing_code += atom.get_preprocessing_code(in_tokens)
                 # Process processing code
                 code, out_tokens = atom.get_processing_code(in_tokens)
+                new_postprocs = atom.get_postproc_once()
+                if new_postprocs:
+                    for new_postproc in new_postprocs:
+                        if new_postproc:
+                            postproc_present = False
+                            for postproc in post_processing:
+                                if postproc[0] == new_postproc[0]:
+                                    postproc_present = True
+                            # Do we need to order the post processing code?
+                            if not postproc_present:
+                                post_processing.append(new_postproc)
                 self.log_debug("Code:  " + str(code))
                 if atom.rate > 0:
                     new_inst, new_init, new_proc = templates.rate_start(atom.rate)
@@ -1268,6 +1319,10 @@ class PlatformFunctions:
         # together at once, e.g. to keep them in a large memory block or struct
         other_scope_declarations = []
         other_scope_instances = []
+
+        for postproc in post_processing:
+            processing_code += postproc[1] + '\n'
+        
         for new_header in header:
             for new_dec in new_header[0]:
                 # FIXME doing >= solves the issue of using a Level instance

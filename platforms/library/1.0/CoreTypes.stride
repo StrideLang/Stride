@@ -118,6 +118,12 @@ type _PlatformType {
 			default: none
 			required: on
 		},
+		port PostProcessingOnce {
+			name: "postProcessingOnce"
+			types: ["CSP"]
+			default: ""
+			required: on
+		},
 		port Platform {
 			name: "platform"
 			types: [""] # _platform

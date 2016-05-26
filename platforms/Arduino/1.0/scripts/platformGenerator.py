@@ -15,7 +15,8 @@ from platformTemplates import templates # Perhaps we should acces this through P
 
 class Generator:
     def __init__(self, out_dir = '',
-                 platform_dir = ''):
+                 platform_dir = '',
+                 debug = False):
         
         self.platform_dir = platform_dir
         self.out_dir = out_dir
@@ -26,7 +27,7 @@ class Generator:
         jsonfile = open(self.out_dir + '/tree.json')
         self.tree = json.load(jsonfile)
         
-        self.platform = PlatformFunctions(self.tree)
+        self.platform = PlatformFunctions(self.tree, debug)
         
         self.last_num_outs = 0
         
@@ -94,7 +95,8 @@ class Generator:
         import platform
         
         if platform.system() == "Linux":
-            cpp_compiler = self.platform_dir + "/arduino-1.6.8/arduino"
+            #cpp_compiler = self.platform_dir + "/arduino-1.6.8/arduino"
+            cpp_compiler = self.platform_dir + "/arduino-1.7.10-linux64/arduino"
         
             flags =  '--upload --board arduino:avr:uno --port /dev/ttyACM0 --pref sketchbook.path=' + self.platform_dir + '/sketchbook'
             args = [cpp_compiler] + flags.split() + [self.out_file]

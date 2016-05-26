@@ -13,6 +13,11 @@ _domain _Discovery_M7_Domain {
     platform: _Discovery_M7_Platform
 }
 
+_domain _AudioDomain {
+	name: "AudioDomain"
+	platform: _Discovery_M7_Platform
+}
+
 _domain _SerialInDomain {
     name: "SerialInDomain"
     platform: _Discovery_M7_Platform
@@ -24,12 +29,55 @@ _domain _SerialOutDomain {
 }
 
 constant PlatformRate {
-    value: 1000
+    value: 48000
 }
 
-constant AudioRate { # TODO this should be removed for this hardware as it doesn't make sense
+constant AudioRate {
     value: PlatformRate
 }
+
+# Audio ---------------
+platformType _HwInput {
+    typeName: '_hwInput'
+#	numInputs: 0
+	outputs: ["real", "real"]
+#    include: []
+#    linkTo: []
+#    declarations: ['']
+#    initializations: ["// %%token%% = 0;"]
+    processing: "io.in(%%bundle_index%%)"
+    inherits: ['signal']
+}
+
+platformType _HwOutput {
+    typeName: '_hwOutput'
+	inputs: ["real", "real"]
+#	numOutputs: 0
+#    include: []
+#    linkTo: []
+    declarations: ['static q15_t Sample_q15[2];']
+#    initializations: ["// %%token%% = 0;"]
+    processing: "
+		arm_float_to_q15(&%%intoken:0%%,&Sample_q15[%%bundle_index%%],1);	
+	"
+	postProcessingOnce: "
+		hsai_BlockA2.Instance->DR = Sample_q15[0];
+		hsai_BlockA2.Instance->DR = Sample_q15[1];	
+
+	"
+    inherits: ['signal']
+}
+
+_hwInput AudioIn[2] {
+    rate: AudioRate
+    domain: _AudioDomain
+}
+
+_hwOutput AudioOut[2] {
+    rate: AudioRate
+    domain: _AudioDomain
+}
+
 
 platformType _AnalogInput {
     typeName: '_analogInput'
