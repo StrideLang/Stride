@@ -8,6 +8,7 @@
 
 #include "languagehighlighter.h"
 #include "builder.h"
+#include "searchwidget.h"
 
 namespace Ui {
 class ProjectWindow;
@@ -54,6 +55,9 @@ private slots:
     void uncomment();
     void showHelperMenu(QPoint where);
     void insertText(QString text = "");
+    void find(QString query = "");
+    void findNext();
+    void findPrevious();
 
     void printConsoleText(QString text);
     void printConsoleError(QString text);
@@ -70,7 +74,7 @@ private:
     QString makeProjectForCurrent();
 
     Ui::ProjectWindow *ui;
-    QWidget *m_layoutContainer;
+    QScopedPointer<SearchWidget> m_searchWidget;
 
     LanguageHighlighter *m_highlighter;
 

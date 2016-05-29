@@ -119,6 +119,16 @@ void CodeEditor::setFilename(const QString &filename)
     m_filename = filename;
 }
 
+void CodeEditor::find(QString query)
+{
+    QTextCursor cursor = textCursor();
+    if (query == "") {
+        cursor.select(QTextCursor::WordUnderCursor);
+        query = cursor.selectedText();
+    }
+    find(query);
+}
+
 void CodeEditor::resizeEvent(QResizeEvent *e)
 {
     QPlainTextEdit::resizeEvent(e);

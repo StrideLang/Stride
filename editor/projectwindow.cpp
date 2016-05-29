@@ -26,6 +26,7 @@
 ProjectWindow::ProjectWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::ProjectWindow),
+    m_searchWidget(new SearchWidget(this)),
     m_codeModelTimer(this),
     m_builder(NULL),
     m_helperMenu(this),
@@ -65,6 +66,13 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
 
     ui->docBrowser->settings()->setUserStyleSheetUrl(QUrl("qrc:/resources/style.css"));
     ui->docBrowser->setHtml("<h1>Welcome to Stride</h1> A declarative and reactive domain specific programming language for real-time sound synthesis, processing, and interaction design. By Andrés Cabrera and Joseph Tilbian.");
+
+    QVBoxLayout *layout = new QVBoxLayout;
+    layout->addWidget(m_searchWidget.data());
+    layout->setMargin(0);
+    ui->belowEditorWidget->setLayout(layout);
+
+    m_searchWidget->hide();
 }
 
 ProjectWindow::~ProjectWindow()
@@ -513,9 +521,47 @@ void ProjectWindow::insertText(QString text)
     if (text.isEmpty()) {
         text = static_cast<QAction *>(sender())->data().toString();
     }
-
     QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
     editor->insertPlainText(text);
+}
+
+void ProjectWindow::find(QString query)
+{
+   m_searchWidget->show();
+   QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
+   QTextCursor cursor = editor->textCursor();
+   if (query.isEmpty()) {
+       cursor.select(QTextCursor::WordUnderCursor);
+       editor->setTextCursor(cursor);
+       query = cursor.selectedText();
+   }
+   m_searchWidget->setSearchString(query, true);
+}
+
+void ProjectWindow::findNext()
+{
+    QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
+    QString searchString = m_searchWidget.data()->searchString();
+    QTextCursor cursor = editor->textCursor();
+    if (cursor.selectedText() == searchString) {
+        cursor.movePosition(QTextCursor::NextWord, QTextCursor::MoveAnchor);
+    }
+    if (!editor->find(searchString)) {
+        // TODO not found or needs wrap
+    }
+}
+
+void ProjectWindow::findPrevious()
+{
+    QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
+    QString searchString = m_searchWidget.data()->searchString();
+    QTextCursor cursor = editor->textCursor();
+    if (cursor.selectedText() == searchString) {
+        cursor.movePosition(QTextCursor::PreviousWord, QTextCursor::MoveAnchor);
+    }
+    if (!editor->find(searchString, QTextDocument::FindBackward)) {
+        // TODO not found or needs wrap
+    }
 }
 
 void ProjectWindow::programStopped()
@@ -804,6 +850,15 @@ void ProjectWindow::connectActions()
             this, SLOT(showDocumentation()));
     connect(ui->actionFollow_Symbol, SIGNAL(triggered()), this, SLOT(followSymbol()));
     connect(ui->actionOpen_Generated_Code, SIGNAL(triggered()), this, SLOT(openGeneratedDir()));
+
+    connect(ui->actionFind, SIGNAL(triggered()), this, SLOT(find()));
+    connect(ui->actionFind_Next, SIGNAL(triggered()), this, SLOT(findNext()));
+    connect(ui->actionFind_Previous, SIGNAL(triggered()), this, SLOT(findPrevious()));
+
+    connect(m_searchWidget.data()->getFindNextButton(), SIGNAL(released()),
+            this, SLOT(findNext()));
+    connect(m_searchWidget.data()->getFindPreviousButton(), SIGNAL(released()),
+            this, SLOT(findPrevious()));
 
 
 //    connect(m_project, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));

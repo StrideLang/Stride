@@ -24,6 +24,8 @@ public:
     QString filename() const;
     void setFilename(const QString &filename);
 
+    void find(QString query = "");
+
 public slots:
     void markChanged(bool changed = true);
 
