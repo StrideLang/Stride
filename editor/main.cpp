@@ -14,8 +14,8 @@ int main(int argc, char *argv[])
     qDebug() << "Using locale " << lc;
 
     QApplication a(argc, argv);
-
     ProjectWindow w;
+    a.installEventFilter(&w); // Pass events from a to w
     w.show();
 //    MainWindow w;
 //    w.show();

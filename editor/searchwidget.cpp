@@ -9,6 +9,7 @@ SearchWidget::SearchWidget(QWidget *parent) :
     ui(new Ui::SearchWidget)
 {
     ui->setupUi(this);
+    // TODO implement replace strings
     ui->replaceLineEdit->hide();
     ui->replaceLabel->hide();
 }

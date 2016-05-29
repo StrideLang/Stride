@@ -1067,5 +1067,17 @@ void ProjectWindow::closeEvent(QCloseEvent *event)
     } else {
         event->ignore();
     }
-//    QWidget::closeEvent(event);
+    //    QWidget::closeEvent(event);
+}
+
+bool ProjectWindow::eventFilter(QObject *obj, QEvent *event)
+{
+    Q_UNUSED(obj);
+    if (event->type() == QEvent::FileOpen) {
+        QFileOpenEvent *openEvent = static_cast<QFileOpenEvent *>(event);
+        loadFile(openEvent->file());
+        return true;
+    }
+//    qDebug() << "Application event: " << event->type();
+    return false;
 }
