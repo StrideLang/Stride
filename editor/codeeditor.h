@@ -8,6 +8,7 @@
 
 #include "langerror.h"
 #include "errormarker.h"
+#include "tooltip.hpp"
 
 class CodeEditor : public QPlainTextEdit
 {
@@ -52,6 +53,7 @@ private:
     QString m_filename;
     bool m_IndentTabs;
     QPushButton m_helperButton;
+    ToolTip m_toolTip;
 };
 
 #endif // CODEEDITOR_H

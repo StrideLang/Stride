@@ -9,6 +9,7 @@
 #include "languagehighlighter.h"
 #include "builder.h"
 #include "searchwidget.h"
+#include "codemodel.hpp"
 
 namespace Ui {
 class ProjectWindow;
@@ -83,12 +84,10 @@ private:
     QMap<QString, QVariant> m_options;
     QMap<QString, QVariant> m_environment;
     QTimer m_codeModelTimer;
+    CodeModel m_codeModel;
     QFont m_font;
     Builder *m_builder;
-    QMutex m_validTreeLock;
     QMenu m_helperMenu;
-    AST *m_lastValidTree;
-    QList<AST *> m_platformObjects;
     bool m_startingUp;
 };
 

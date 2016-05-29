@@ -6,7 +6,8 @@
 #include "linenumberarea.h"
 
 CodeEditor::CodeEditor(QWidget *parent) :
-    QPlainTextEdit(parent), m_IndentTabs(true), m_helperButton(this)
+    QPlainTextEdit(parent), m_IndentTabs(true),
+    m_helperButton(this), m_toolTip((QWidget*)this)
 {
     m_lineNumberArea = new LineNumberArea(this);
 
@@ -90,11 +91,14 @@ void CodeEditor::showButton()
     buttonRect.setHeight(12);
     m_helperButton.setGeometry(buttonRect);
     m_helperButton.show();
+    m_toolTip.setGeometry(buttonRect.x(), buttonRect.y() + 30, m_toolTip.width(), m_toolTip.height());
+//    m_toolTip.show();
 }
 
 void CodeEditor::hideButton()
 {
     m_helperButton.hide();
+//    m_toolTip.hide();
     m_ButtonTimer.start();
 }
 

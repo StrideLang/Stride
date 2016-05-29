@@ -21,7 +21,9 @@ SOURCES += main.cpp\
     configdialog.cpp \
     savechangeddialog.cpp \
     errormarker.cpp \
-    searchwidget.cpp
+    searchwidget.cpp \
+    tooltip.cpp \
+    codemodel.cpp
 
 HEADERS  += \
     projectwindow.h \
@@ -33,7 +35,9 @@ HEADERS  += \
     configdialog.h \
     savechangeddialog.h \
     errormarker.h \
-    searchwidget.h
+    searchwidget.h \
+    tooltip.hpp \
+    codemodel.hpp
 
 FORMS    += \
     projectwindow.ui \
