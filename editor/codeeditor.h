@@ -9,18 +9,20 @@
 #include "langerror.h"
 #include "errormarker.h"
 #include "tooltip.hpp"
+#include "codemodel.hpp"
 
 class CodeEditor : public QPlainTextEdit
 {
     Q_OBJECT
 public:
-    explicit CodeEditor(QWidget *parent = 0);
+    explicit CodeEditor(QWidget *parent, CodeModel *codeModel);
 
     void lineNumberAreaPaintEvent(QPaintEvent *event);
     int lineNumberAreaWidth();
     bool isChanged();
 
     void setErrors(QList<LangError> errors);
+    void setToolTipText(QString text);
 
     QString filename() const;
     void setFilename(const QString &filename);
@@ -33,6 +35,7 @@ public slots:
 protected:
     virtual void resizeEvent(QResizeEvent *event);
     virtual void keyReleaseEvent(QKeyEvent * event);
+    virtual void mouseMoveEvent(QMouseEvent *event);
 
 private slots:
     void updateLineNumberAreaWidth(int newBlockCount);
@@ -41,13 +44,16 @@ private slots:
     void showButton();
     void hideButton();
     void helperButtonClicked();
+    void mouseIdleTimeout();
 
 signals:
 
 private:
     QWidget *m_lineNumberArea;
+    CodeModel *m_codeModel;
     QVector<ErrorMarker *> m_errorMarkers;
     QTimer m_ButtonTimer;
+    QTimer m_mouseIdleTimer;
 
     // Properties
     QString m_filename;
@@ -55,5 +61,7 @@ private:
     QPushButton m_helperButton;
     ToolTip m_toolTip;
 };
+
+
 
 #endif // CODEEDITOR_H

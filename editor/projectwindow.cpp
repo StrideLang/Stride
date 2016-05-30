@@ -275,7 +275,7 @@ void ProjectWindow::showDocumentation()
     QString word = cursor.selectedText();
     QString html = m_codeModel.getHtmlDocumentation(word);
     if (html.isEmpty()) {
-        html = tr("Unknown type: %s").arg(word);
+        html = tr("Unknown type: %1").arg(word);
     }
     ui->docBrowser->setHtml(html);
 }
@@ -639,8 +639,10 @@ void ProjectWindow::updateCodeAnalysis()
         m_highlighter->setFunctions(m_codeModel.getFunctions());
         m_highlighter->setBuiltinObjects(m_codeModel.getObjectNames());
         editor->setErrors(m_codeModel.getErrors());
-
     }
+//    QTextCursor cursor = editor->textCursor();
+//    cursor.select(QTextCursor::WordUnderCursor);
+//    editor->setToolTipText(m_codeModel.getTooltipText(cursor.selectedText()));
     m_codeModelTimer.start();
 }
 
@@ -843,7 +845,7 @@ QString ProjectWindow::makeProjectForCurrent()
 void ProjectWindow::newFile()
 {
     // Create editor tab
-    CodeEditor *editor = new CodeEditor(this);
+    CodeEditor *editor = new CodeEditor(this, &m_codeModel);
     editor->setFilename("");
 
     int index = ui->tabWidget->insertTab(ui->tabWidget->currentIndex() + 1, editor, "untitled");

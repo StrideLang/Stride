@@ -16,6 +16,7 @@ public:
     ~CodeModel();
 
     QString getHtmlDocumentation(QString symbol);
+    QString getTooltipText(QString symbol);
     QPair<QString, int> getSymbolLocation(QString symbol);
 
     // Caller owns and must free the returned AST tree
