@@ -155,8 +155,8 @@ class ValueAtom(Atom):
                          'scope' : self.scope_index
                          }]
         
-    def get_inline_processing_code(self, in_tokens):
-        return str(self.value)
+    def get_inline_processing_code(self, in_token):
+        return templates.value_real(self.value)
         
     def get_processing_code(self, in_tokens):
         return '', in_tokens        
@@ -427,8 +427,8 @@ class NameAtom(Atom):
                 self.rate = -1
             else:
                 self.rate = declaration['rate']
-        else:
-            raise ValueError("Parser must fill defaults.")
+       # else:
+            #raise ValueError("Parser must fill defaults.")
             #this should never happen... The parser should fill defaults...
         
     def get_declarations(self):

@@ -9,13 +9,13 @@ INCLUDE(CMakeForceCompiler)
 #sudo add-apt-repository ppa:team-gcc-arm-embedded/ppa
 #sudo apt-get install gcc-arm-embedded
 
-set(CXX11 -std=c++11)
+#set(CXX11 -std=c++11)
 
+set(CMAKE_ASM_COMPILER arm-none-eabi-as) # Has to be before enabling ASM language
 enable_language(ASM)
 
 CMAKE_FORCE_C_COMPILER(arm-none-eabi-gcc GNU)
 CMAKE_FORCE_CXX_COMPILER(arm-none-eabi-g++ GNU)
-set (CMAKE_ASM_COMPILER arm-none-eabi-as)
 #SET(CMAKE_C_LINK_EXECUTABLE arm-none-eabi-gcc) 
 SET(COMMON_FLAGS "-mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16")
 
@@ -37,9 +37,7 @@ SET(CMAKE_CXX_FLAGS "${COMMON_FLAGS} -Os -g3 -Wall -fmessage-length=0 -ffunction
 #SET(CMAKE_MODULE_LINKER_FLAGS "-mthumb -mcpu=cortex-m7 -mfpu=fpv5-sp-d16 -mfloat-abi=softfp -mabi=aapcs")
 #SET(CMAKE_SHARED_LINKER_FLAGS "-mthumb -mcpu=cortex-m7 -mfpu=fpv5-sp-d16 -mfloat-abi=softfp -mabi=aapcs")
 
-
 SET(CMAKE_ASM_FLAGS ${COMMON_FLAGS})
-
 
 set(STM_COMMON ${STRIDE_PLATFORM_ROOT}/STM32Cube_FW_F7_V1.3.0)
 
@@ -77,6 +75,9 @@ ${STM_COMMON}/Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/system_stm32f7x
 #${STM_COMMON}/Drivers/CMSIS/system_stm32f7xx.c
 ${STM_COMMON}/Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/gcc/startup_stm32f746xx.s
 )
+
+#set_source_file_properties(${STM_COMMON}/Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/gcc/startup_stm32f746xx.s
+#PROPERTIES LANGUAGE ASM)
 
 set_property(SOURCE ${STM_COMMON}/Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/gcc/startup_stm32f746xx.s PROPERTY LANGUAGE C)
 

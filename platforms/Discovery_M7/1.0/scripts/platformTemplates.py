@@ -44,6 +44,11 @@ class Templates(BaseCTemplate):
 #        config_template_code = config_template_code.replace("%%num_in_chnls%%", str(num_in_chnls))
 
          return config_template_code
+         
+         
+    def value_real(self, value):
+        value = '%.10f'%value + "f"
+        return value
 
 
 templates = Templates()

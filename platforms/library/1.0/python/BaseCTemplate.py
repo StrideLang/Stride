@@ -213,6 +213,10 @@ struct %s {
             declaration += ';\n'
         return declaration 
         
+    def value_real(self, value):
+        value = str(value)
+        return value
+        
     def expression(self, expression):
         return expression + ';\n'
 
