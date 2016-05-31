@@ -128,7 +128,7 @@ void LanguageHighlighter::setFormats(const QMap<QString, QTextCharFormat> &forma
     rehighlight();
 }
 
-void LanguageHighlighter::setBlockTypes(QStringList &blockTypes)
+void LanguageHighlighter::setBlockTypes(QStringList blockTypes)
 {
     m_highlighterLock.lock();
     m_blockTypes = blockTypes;
@@ -136,7 +136,7 @@ void LanguageHighlighter::setBlockTypes(QStringList &blockTypes)
     rehighlight();
 }
 
-void LanguageHighlighter::setFunctions(QStringList &functionNames)
+void LanguageHighlighter::setFunctions(QStringList functionNames)
 {
     m_highlighterLock.lock();
     m_functionNames = functionNames;
@@ -145,7 +145,7 @@ void LanguageHighlighter::setFunctions(QStringList &functionNames)
 
 }
 
-void LanguageHighlighter::setBuiltinObjects(QStringList &builtinNames)
+void LanguageHighlighter::setBuiltinObjects(QStringList builtinNames)
 {
     m_highlighterLock.lock();
     m_builtinNames = builtinNames;

@@ -16,8 +16,6 @@
 #include "ui_projectwindow.h"
 
 #include "codeeditor.h"
-#include "ast.h"
-#include "codevalidator.h"
 #include "configdialog.h"
 #include "savechangeddialog.h"
 
@@ -26,10 +24,10 @@
 ProjectWindow::ProjectWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::ProjectWindow),
+    m_searchWidget(new SearchWidget(this)),
     m_codeModelTimer(this),
     m_builder(NULL),
     m_helperMenu(this),
-    m_lastValidTree(NULL),
     m_startingUp(true)
 {
     ui->setupUi(this);
@@ -66,24 +64,17 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
     docBrowser = new QWebEngineView();
     ui->documentationDockWidget->setWidget(docBrowser);
 
-//    docBrowser->settings()->setUserStyleSheetUrl(QUrl("qrc:/resources/style.css"));
-    docBrowser->setHtml("<h1>Welcome to Stride</h1> A declarative and reactive domain specific programming language for real-time sound synthesis, processing, and interaction design. By Andrés Cabrera and Joseph Tilbian.");
+    QVBoxLayout *layout = new QVBoxLayout;
+    layout->addWidget(m_searchWidget.data());
+    layout->setMargin(0);
+    ui->belowEditorWidget->setLayout(layout);
+
+    m_searchWidget->hide();
 }
 
 ProjectWindow::~ProjectWindow()
 {
     delete ui;
-    QMutexLocker locker(&m_validTreeLock);
-    if (m_lastValidTree) {
-        foreach(AST * node, m_lastValidTree->getChildren()) {
-            node->deleteChildren();
-            delete node;
-        }
-    }
-    foreach(AST *node, m_platformObjects) {
-        node->deleteChildren();
-        delete node;
-    }
 }
 
 void ProjectWindow::build()
@@ -91,19 +82,10 @@ void ProjectWindow::build()
     ui->consoleText->clear();
     saveFile();
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
-    AST *tree;
-    QList<LangError> errors;
-    tree = AST::parseFile(editor->filename().toLocal8Bit().constData());
-//    tree = AST::parseFile(editor->filename().toStdString().c_str());
-    if (!tree) {
-        vector<LangError> syntaxErrors = AST::getParseErrors();
-        for (unsigned int i = 0; i < syntaxErrors.size(); i++) {
-            errors << syntaxErrors[i];
-        }
-    }
-    CodeValidator validator(m_environment["platformRootPath"].toString(), tree);
-    validator.validate();
-    errors << validator.getErrors();
+    m_codeModel.updateCodeAnalysis(editor->filename().toLocal8Bit().constData(),
+                                   m_environment["platformRootPath"].toString());
+
+    QList<LangError> errors = m_codeModel.getErrors();
     editor->setErrors(errors);
 
     foreach(LangError error, errors) {
@@ -112,24 +94,24 @@ void ProjectWindow::build()
     if (errors.size() > 0) {
         return;
     }
-    if (tree) {
+    AST *optimizedTree = m_codeModel.getOptimizedTree();
+    if (optimizedTree) {
         if (m_builder) {
             delete m_builder;
         }
-        StreamPlatform *platform = validator.getPlatform();
         QString projectDir = makeProjectForCurrent();
-        m_builder = platform->createBuilder(projectDir);
+        m_builder = m_codeModel.createBuilder(projectDir);
         if (m_builder) {
             connect(m_builder, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
             connect(m_builder, SIGNAL(errorText(QString)), this, SLOT(printConsoleError(QString)));
-            m_builder->build(tree);
+            m_builder->build(optimizedTree);
         } else {
             printConsoleText(tr("Done. No builder set."));
             qDebug() << "Can't create builder";
 //            Q_ASSERT(false);
         }
-        tree->deleteChildren();
-        delete tree;
+        optimizedTree->deleteChildren();
+        delete optimizedTree;
     }
     //    m_project->build();
 }
@@ -291,132 +273,11 @@ void ProjectWindow::showDocumentation()
         cursor.select(QTextCursor::WordUnderCursor);
     }
     QString word = cursor.selectedText();
-    if (!m_lastValidTree) {
-        docBrowser->setHtml(tr("Parsing error. Can't update tree.").arg(word));
-        return;
+    QString html = m_codeModel.getHtmlDocumentation(word);
+    if (html.isEmpty()) {
+        html = tr("Unknown type: %1").arg(word);
     }
-    QList<LangError> errors;
-    if (word[0].toLower() == word[0]) {
-        QMutexLocker locker(&m_validTreeLock);
-        BlockNode *typeBlock = CodeValidator::findTypeDeclarationByName(word, QVector<AST *>(), m_lastValidTree, errors);
-        if (typeBlock) {
-            AST *metaValue = typeBlock->getPropertyValue("meta");
-            if (metaValue) {
-                Q_ASSERT(metaValue);
-                Q_ASSERT(metaValue->getNodeType() == AST::String);
-                QString docHtml = "<h1>" + word + "</h1>\n";
-                docHtml += QString::fromStdString(static_cast<ValueNode *>(metaValue)->getStringValue());
-                vector<PropertyNode *> properties = typeBlock->getProperties();
-                QString propertiesTable = "<table><tr><td><b>Name</b></td><td><b>Type</b></td><td><b>Default</b></td><td><b>Direction</b></td></tr>";
-                QString propertiesHtml = tr("<h2>Ports</h2>") + "\n";
-                QVector<AST *> ports = CodeValidator::getPortsForTypeBlock(typeBlock, QVector<AST *>(), m_lastValidTree);
-                foreach(AST *port, ports) {
-                    BlockNode *portBlock = static_cast<BlockNode *>(port);
-                    Q_ASSERT(portBlock->getNodeType() == AST::Block);
-                    if (portBlock->getNodeType() == AST::Block) {
-                        QString portName = QString::fromStdString(
-                                    static_cast<ValueNode *>(portBlock->getPropertyValue("name"))->getStringValue());
-                        if (portName != "inherits" && portName != "meta") {
-                            AST *portMetaNode = portBlock->getPropertyValue("meta");
-                            QString portMeta;
-                            if (portMetaNode) {
-                                portMeta = QString::fromStdString(static_cast<ValueNode *>(portMetaNode)->getStringValue());
-                            }
-                            propertiesHtml += "<h3>" + portName + "</h3>" + portMeta;
-                            propertiesTable += "<tr><td>" + portName;
-                            AST *portTypesValue = portBlock->getPropertyValue("types");
-                            Q_ASSERT(portTypesValue);
-                            Q_ASSERT(portTypesValue->getNodeType() == AST::List);
-                            if (portTypesValue && portTypesValue->getNodeType() == AST::List) {
-                                ListNode *validTypesList = static_cast<ListNode *>(portTypesValue);
-                                QString typesText;
-                                foreach(AST *validTypeNode, validTypesList->getChildren()) {
-                                    if (validTypeNode->getNodeType() == AST::String) {
-                                        string typeName = static_cast<ValueNode *>(validTypeNode)->getStringValue();
-                                        typesText += QString::fromStdString(typeName + ", ");
-                                    } else if (validTypeNode->getNodeType() == AST::Name) {
-                                        string typeName = static_cast<NameNode *>(validTypeNode)->getName();
-                                        typesText += QString::fromStdString(typeName + ", ");
-                                    } else {
-                                        typesText += "  ";
-                                    }
-
-                                }
-                                typesText.chop(2);
-                                propertiesTable += "<td>" + typesText + "</td>";
-                            }
-                            propertiesTable += "</tr>";
-                        }
-                    }
-                }
-                propertiesTable += "</table>";
-                docBrowser->setHtml(docHtml + propertiesHtml + propertiesTable);
-            }
-
-        } else {
-            docBrowser->setHtml(tr("Unknown type: %1").arg(word));
-        }
-
-    } else if (word[0].toUpper() == word[0]) { // Check if it is a declared module
-        QMutexLocker locker(&m_validTreeLock);
-        BlockNode *declaration = CodeValidator::findDeclaration(word, QVector<AST *>(), m_lastValidTree);
-        if (declaration) {
-            AST *metaValue = declaration->getPropertyValue("meta");
-            Q_ASSERT(metaValue);
-            if (metaValue) {
-                Q_ASSERT(metaValue->getNodeType() == AST::String);
-                QString docHtml = "<h1>" + word + "</h1>\n";
-                docHtml += QString::fromStdString(static_cast<ValueNode *>(metaValue)->getStringValue());
-                QString propertiesTable = "<table> <tr><td><b>Name</b></td><td><b>Type</b></td><td><b>Default</b></td><td><b>Direction</b></td></tr>";
-                QString propertiesHtml = tr("<h2>Ports</h2>") + "\n";
-                AST *properties = declaration->getPropertyValue("properties");
-                if (properties && properties->getNodeType() == AST::List) {
-                    Q_ASSERT(properties->getNodeType() == AST::List);
-                    ListNode *propertiesList = static_cast<ListNode *>(properties);
-                    foreach(AST *member, propertiesList->getChildren()) {
-                        BlockNode *portBlock = static_cast<BlockNode *>(member);
-                        Q_ASSERT(portBlock->getNodeType() == AST::Block);
-                        if (portBlock->getNodeType() == AST::Block) {
-                            QString portName = QString::fromStdString(
-                                        static_cast<ValueNode *>(portBlock->getPropertyValue("name"))->getStringValue());
-                            if (portName != "inherits" && portName != "meta") {
-                                AST *portMetaNode = portBlock->getPropertyValue("meta");
-                                QString portMeta;
-                                if (portMetaNode) {
-                                    portMeta = QString::fromStdString(static_cast<ValueNode *>(portMetaNode)->getStringValue());
-                                }
-                                propertiesHtml += "<h3>" + portName + "</h3>" + portMeta;
-                                propertiesTable += "<tr><td>" + portName;
-                                AST *portTypesValue = portBlock->getPropertyValue("types");
-                                Q_ASSERT(portTypesValue);
-                                Q_ASSERT(portTypesValue->getNodeType() == AST::List);
-                                if (portTypesValue && portTypesValue->getNodeType() == AST::List) {
-                                    ListNode *validTypesList = static_cast<ListNode *>(portTypesValue);
-                                    foreach(AST *validTypeNode, validTypesList->getChildren()) {
-                                        if (validTypeNode->getNodeType() == AST::String) {
-                                            string typeName = static_cast<ValueNode *>(validTypeNode)->getStringValue();
-                                            propertiesTable += QString::fromStdString("<td>" + typeName + "</td>");
-                                        } else if (validTypeNode->getNodeType() == AST::Name) {
-                                            string typeName = static_cast<NameNode *>(validTypeNode)->getName();
-                                            propertiesTable += QString::fromStdString("<td>" + typeName + "</td>");
-                                        } else {
-                                            propertiesTable += "<td>---</td>";
-                                        }
-                                    }
-                                }
-                                propertiesTable += "</tr>";
-                            }
-                        }
-                    }
-                    propertiesTable += "</table>";
-                    docBrowser->setHtml(docHtml + propertiesHtml + propertiesTable);
-                }
-            }
-
-        } else {
-            docBrowser->setHtml(tr("Unknown type: %1").arg(word));
-        }
-    }
+    docBrowser->setHtml(html);
 }
 
 void ProjectWindow::openGeneratedDir()
@@ -432,31 +293,20 @@ void ProjectWindow::openGeneratedDir()
 
 void ProjectWindow::followSymbol()
 {
-    if (!m_lastValidTree) {
-        return;
-    }
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     QTextCursor cursor= editor->textCursor();
-//    QTextDocument *doc = editor->document();
     if (cursor.selectedText() == "") {
         cursor.select(QTextCursor::WordUnderCursor);
     }
     QString word = cursor.selectedText();
-    QMutexLocker locker(&m_validTreeLock);
-    foreach(AST *node, m_lastValidTree->getChildren()) {
-        if (node->getNodeType() == AST::Block ||
-                node->getNodeType() == AST::BlockBundle) {
-            BlockNode *block = static_cast<BlockNode *>(node);
-            if (block->getName() == word.toStdString()) {
-                QString fileName = QString::fromStdString(block->getFilename());
-                if (!fileName.isEmpty()) {
-                    loadFile(fileName);
-                    editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
-                    QTextCursor cursor(editor->document()->findBlockByLineNumber(block->getLine()-1));
-                    editor->setTextCursor(cursor);
-                }
-            }
-        }
+    QPair<QString, int> symbolLocation = m_codeModel.getSymbolLocation(word);
+    QString fileName = symbolLocation.first;
+    int lineNumber = symbolLocation.second;
+    if (!fileName.isEmpty()) {
+        loadFile(fileName);
+        editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+        QTextCursor cursor(editor->document()->findBlockByLineNumber(lineNumber-1));
+        editor->setTextCursor(cursor);
     }
 }
 
@@ -480,8 +330,8 @@ void ProjectWindow::showHelperMenu(QPoint where)
         newAction->setData(platformCode[i]);
     }
     QMenu *functionMenu = m_helperMenu.addMenu(tr("New function"));
-    m_validTreeLock.lock();
-    foreach(AST *node, m_platformObjects) {
+    AST *optimizedTree = m_codeModel.getOptimizedTree();
+    foreach(AST *node, optimizedTree->getChildren()) {
         if (node->getNodeType() == AST::Block) {
             BlockNode *block = static_cast<BlockNode *>(node);
             if (block->getObjectType() == "module") {
@@ -504,9 +354,11 @@ void ProjectWindow::showHelperMenu(QPoint where)
                 text += ") ";
                 newAction->setData(text);
             }
+            node->deleteChildren();
+            delete node;
         }
     }
-    m_validTreeLock.unlock();
+    delete optimizedTree;
 
     m_helperMenu.exec(ui->tabWidget->currentWidget()->mapToGlobal(where));
 }
@@ -519,6 +371,45 @@ void ProjectWindow::insertText(QString text)
 
     QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
     editor->insertPlainText(text);
+}
+
+void ProjectWindow::find(QString query)
+{
+   m_searchWidget->show();
+   QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
+   QTextCursor cursor = editor->textCursor();
+   if (query.isEmpty()) {
+       cursor.select(QTextCursor::WordUnderCursor);
+       editor->setTextCursor(cursor);
+       query = cursor.selectedText();
+   }
+   m_searchWidget->setSearchString(query, true);
+}
+
+void ProjectWindow::findNext()
+{
+    QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
+    QString searchString = m_searchWidget.data()->searchString();
+    QTextCursor cursor = editor->textCursor();
+    if (cursor.selectedText() == searchString) {
+        cursor.movePosition(QTextCursor::NextWord, QTextCursor::MoveAnchor);
+    }
+    if (!editor->find(searchString)) {
+        // TODO not found or needs wrap
+    }
+}
+
+void ProjectWindow::findPrevious()
+{
+    QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
+    QString searchString = m_searchWidget.data()->searchString();
+    QTextCursor cursor = editor->textCursor();
+    if (cursor.selectedText() == searchString) {
+        cursor.movePosition(QTextCursor::PreviousWord, QTextCursor::MoveAnchor);
+    }
+    if (!editor->find(searchString, QTextDocument::FindBackward)) {
+        // TODO not found or needs wrap
+    }
 }
 
 void ProjectWindow::programStopped()
@@ -743,47 +634,16 @@ void ProjectWindow::updateCodeAnalysis()
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     if ((QApplication::activeWindow() == this  && editor->document()->isModified())
             || m_startingUp) {
-        QMutexLocker locker(&m_validTreeLock);
-        QTemporaryFile tmpFile;
-        if (tmpFile.open()) {
-            tmpFile.write(editor->document()->toPlainText().toLocal8Bit());
-            tmpFile.close();
-            AST *tree;
-            tree = AST::parseFile(tmpFile.fileName().toLocal8Bit().constData());
-
-            if (tree) {
-                CodeValidator validator(m_environment["platformRootPath"].toString(), tree);
-                validator.validate();
-                QList<AST *> newPlatformObjects = validator.getPlatform()->getBuiltinObjectsCopy();
-                //    QVERIFY(!generator.isValid());
-                QStringList types = validator.getPlatform()->getPlatformTypeNames();
-                m_highlighter->setBlockTypes(types);
-                QStringList funcs = validator.getPlatform()->getFunctionNames();
-                m_highlighter->setFunctions(funcs);
-                QList<AST *> objects = validator.getPlatform()->getBuiltinObjects();
-                QStringList objectNames;
-                foreach (AST *platObject, objects) {
-                    if (platObject->getNodeType() == AST::Name) {
-                        objectNames << QString::fromStdString(static_cast<NameNode *>(platObject)->getName());
-                    }
-                }
-                m_highlighter->setBuiltinObjects(objectNames);
-                QList<LangError> errors = validator.getErrors();
-                editor->setErrors(errors);
-
-                if(m_lastValidTree) {
-                    m_lastValidTree->deleteChildren();
-                    delete m_lastValidTree;
-                }
-                foreach(AST *node, m_platformObjects) {
-                    node->deleteChildren();
-                    delete node;
-                }
-                m_platformObjects = newPlatformObjects;
-                m_lastValidTree = tree;
-            }
-        }
+        m_codeModel.updateCodeAnalysis(editor->document()->toPlainText().toLocal8Bit(),
+                                       m_environment["platformRootPath"].toString());
+        m_highlighter->setBlockTypes(m_codeModel.getTypes());
+        m_highlighter->setFunctions(m_codeModel.getFunctions());
+        m_highlighter->setBuiltinObjects(m_codeModel.getObjectNames());
+        editor->setErrors(m_codeModel.getErrors());
     }
+//    QTextCursor cursor = editor->textCursor();
+//    cursor.select(QTextCursor::WordUnderCursor);
+//    editor->setToolTipText(m_codeModel.getTooltipText(cursor.selectedText()));
     m_codeModelTimer.start();
 }
 
@@ -807,6 +667,15 @@ void ProjectWindow::connectActions()
             this, SLOT(showDocumentation()));
     connect(ui->actionFollow_Symbol, SIGNAL(triggered()), this, SLOT(followSymbol()));
     connect(ui->actionOpen_Generated_Code, SIGNAL(triggered()), this, SLOT(openGeneratedDir()));
+
+    connect(ui->actionFind, SIGNAL(triggered()), this, SLOT(find()));
+    connect(ui->actionFind_Next, SIGNAL(triggered()), this, SLOT(findNext()));
+    connect(ui->actionFind_Previous, SIGNAL(triggered()), this, SLOT(findPrevious()));
+
+    connect(m_searchWidget.data()->getFindNextButton(), SIGNAL(released()),
+            this, SLOT(findNext()));
+    connect(m_searchWidget.data()->getFindPreviousButton(), SIGNAL(released()),
+            this, SLOT(findPrevious()));
 
 
 //    connect(m_project, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
@@ -977,7 +846,7 @@ QString ProjectWindow::makeProjectForCurrent()
 void ProjectWindow::newFile()
 {
     // Create editor tab
-    CodeEditor *editor = new CodeEditor(this);
+    CodeEditor *editor = new CodeEditor(this, &m_codeModel);
     editor->setFilename("");
 
     int index = ui->tabWidget->insertTab(ui->tabWidget->currentIndex() + 1, editor, "untitled");
@@ -987,7 +856,6 @@ void ProjectWindow::newFile()
     QObject::connect(editor, SIGNAL(textChanged()), this, SLOT(markModified()));
     editor->setFocus();
 }
-
 
 void ProjectWindow::markModified()
 {
@@ -1015,5 +883,17 @@ void ProjectWindow::closeEvent(QCloseEvent *event)
     } else {
         event->ignore();
     }
-//    QWidget::closeEvent(event);
+    //    QWidget::closeEvent(event);
+}
+
+bool ProjectWindow::eventFilter(QObject *obj, QEvent *event)
+{
+    Q_UNUSED(obj);
+    if (event->type() == QEvent::FileOpen) {
+        QFileOpenEvent *openEvent = static_cast<QFileOpenEvent *>(event);
+        loadFile(openEvent->file());
+        return true;
+    }
+//    qDebug() << "Application event: " << event->type();
+    return false;
 }

@@ -4,6 +4,7 @@
 #include <QCoreApplication>
 
 #include "pythonproject.h"
+#include "streamplatform.h"
 #include "codevalidator.h"
 
 

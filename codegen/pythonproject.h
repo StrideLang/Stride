@@ -11,7 +11,6 @@
 
 #include "builder.h"
 
-#include "streamplatform.h"
 #include "ast.h"
 #include "platformnode.h"
 #include "bundlenode.h"

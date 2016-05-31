@@ -20,7 +20,10 @@ SOURCES += main.cpp\
     linenumberarea.cpp \
     configdialog.cpp \
     savechangeddialog.cpp \
-    errormarker.cpp
+    errormarker.cpp \
+    searchwidget.cpp \
+    tooltip.cpp \
+    codemodel.cpp
 
 HEADERS  += \
     projectwindow.h \
@@ -31,12 +34,16 @@ HEADERS  += \
     linenumberarea.h \
     configdialog.h \
     savechangeddialog.h \
-    errormarker.h
+    errormarker.h \
+    searchwidget.h \
+    tooltip.hpp \
+    codemodel.hpp
 
 FORMS    += \
     projectwindow.ui \
     configdialog.ui \
-    savechangeddialog.ui
+    savechangeddialog.ui \
+    searchwidget.ui
 
 #win32 {
 #LIBS += -L${FLEX_LIB_PATH}

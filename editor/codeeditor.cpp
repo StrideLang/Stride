@@ -5,9 +5,12 @@
 #include "codeeditor.h"
 #include "linenumberarea.h"
 
-CodeEditor::CodeEditor(QWidget *parent) :
-    QPlainTextEdit(parent), m_IndentTabs(true), m_helperButton(this)
+CodeEditor::CodeEditor(QWidget *parent, CodeModel *codeModel) :
+    QPlainTextEdit(parent),
+    m_codeModel(codeModel), m_IndentTabs(true),
+    m_helperButton(this), m_toolTip((QWidget*)this)
 {
+    setMouseTracking(true);
     m_lineNumberArea = new LineNumberArea(this);
 
     connect(this, SIGNAL(blockCountChanged(int)), this, SLOT(updateLineNumberAreaWidth(int)));
@@ -17,11 +20,15 @@ CodeEditor::CodeEditor(QWidget *parent) :
     updateLineNumberAreaWidth(0);
     highlightCurrentLine();
     m_ButtonTimer.setInterval(1400);
+    m_ButtonTimer.setSingleShot(true);
+    m_mouseIdleTimer.setInterval(900);
+    m_mouseIdleTimer.setSingleShot(true);
 
     m_helperButton.hide();
     m_helperButton.setText("+");
 
     connect(&m_ButtonTimer, SIGNAL(timeout()), this, SLOT(showButton()));
+    connect(&m_mouseIdleTimer, SIGNAL(timeout()), this, SLOT(mouseIdleTimeout()));
     connect(&m_helperButton,SIGNAL(pressed()), this, SLOT(helperButtonClicked()));
     connect(this, SIGNAL(cursorPositionChanged()), this, SLOT(hideButton()));
 }
@@ -104,6 +111,29 @@ void CodeEditor::helperButtonClicked()
     m_helperButton.setChecked(false);
 }
 
+void CodeEditor::mouseIdleTimeout()
+{
+    if (this->hasFocus()) {
+        QTextCursor cursor = cursorForPosition(QPoint(m_toolTip.x(),m_toolTip.y()));
+        cursor.select(QTextCursor::WordUnderCursor);
+        QString word = cursor.selectedText();
+        qDebug() << "mouse idle " << word;
+        if (!word.isEmpty()) {
+            QString text = m_codeModel->getTooltipText(word);
+            if (!text.isEmpty()) {
+                int width = m_toolTip.fontMetrics().width(m_toolTip.text());
+                QRect boundingRect  = m_toolTip.fontMetrics().boundingRect(m_toolTip.text());
+                m_toolTip.setText(text);
+                m_toolTip.setGeometry(m_toolTip.x(), m_toolTip.y() + 30,
+                                      width, boundingRect.height() + 20);
+                m_toolTip.show();
+            }
+        } else {
+            m_toolTip.hide();
+        }
+    }
+}
+
 void CodeEditor::markChanged(bool changed)
 {
     document()->setModified(changed);
@@ -117,6 +147,16 @@ QString CodeEditor::filename() const
 void CodeEditor::setFilename(const QString &filename)
 {
     m_filename = filename;
+}
+
+void CodeEditor::find(QString query)
+{
+    QTextCursor cursor = textCursor();
+    if (query == "") {
+        cursor.select(QTextCursor::WordUnderCursor);
+        query = cursor.selectedText();
+    }
+    find(query);
 }
 
 void CodeEditor::resizeEvent(QResizeEvent *e)
@@ -143,6 +183,13 @@ void CodeEditor::keyReleaseEvent(QKeyEvent *event)
         }
     }
     hideButton();
+}
+
+void CodeEditor::mouseMoveEvent(QMouseEvent *event)
+{
+    m_toolTip.setGeometry(event->x(), event->y(), 10, 10);
+    m_toolTip.hide();
+    m_mouseIdleTimer.start();
 }
 
 void CodeEditor::highlightCurrentLine()
@@ -195,4 +242,9 @@ void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
         bottom = top + (int) blockBoundingRect(block).height();
         ++blockNumber;
     }
+}
+
+void CodeEditor::setToolTipText(QString text)
+{
+    m_toolTip.setText(text);
 }

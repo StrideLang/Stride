@@ -9,6 +9,8 @@
 
 #include "languagehighlighter.h"
 #include "builder.h"
+#include "searchwidget.h"
+#include "codemodel.hpp"
 
 namespace Ui {
 class ProjectWindow;
@@ -38,6 +40,7 @@ public slots:
 
 protected:
     virtual void closeEvent(QCloseEvent *event);
+    virtual bool eventFilter(QObject *obj, QEvent *event);
 
 private slots:
     void build();
@@ -55,6 +58,9 @@ private slots:
     void uncomment();
     void showHelperMenu(QPoint where);
     void insertText(QString text = "");
+    void find(QString query = "");
+    void findNext();
+    void findPrevious();
 
     void printConsoleText(QString text);
     void printConsoleError(QString text);
@@ -71,8 +77,8 @@ private:
     QString makeProjectForCurrent();
 
     Ui::ProjectWindow *ui;
-    QWidget *m_layoutContainer;
     QWebEngineView *docBrowser;
+    QScopedPointer<SearchWidget> m_searchWidget;
 
     LanguageHighlighter *m_highlighter;
 
@@ -80,12 +86,10 @@ private:
     QMap<QString, QVariant> m_options;
     QMap<QString, QVariant> m_environment;
     QTimer m_codeModelTimer;
+    CodeModel m_codeModel;
     QFont m_font;
     Builder *m_builder;
-    QMutex m_validTreeLock;
     QMenu m_helperMenu;
-    AST *m_lastValidTree;
-    QList<AST *> m_platformObjects;
     bool m_startingUp;
 };
 

@@ -13,9 +13,9 @@ public:
 
     QMap<QString, QTextCharFormat> formats();
     void setFormats(const QMap<QString, QTextCharFormat> &formats);
-    void setBlockTypes(QStringList &blockTypes);
-    void setFunctions(QStringList &functionNames);
-    void setBuiltinObjects(QStringList &builtinNames);
+    void setBlockTypes(QStringList blockTypes);
+    void setFunctions(QStringList functionNames);
+    void setBuiltinObjects(QStringList builtinNames);
 
 public slots:
     void setFormatPreset(int index);
