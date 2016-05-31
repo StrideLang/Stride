@@ -90,14 +90,14 @@ platformType _SelectType {
 
 platformType _SerialOutType {
     typeName: '_serialOutType'
-	inputs: ["string", "string"]
+	inputs: ["real", "string"]
 #    include: []
 #    linkTo: []
 #    declarations: ['']
     initializations: ["Serial.begin(9600);"]
-    processing: ' String str = %%intoken:1%% + " f ";
-	str += %%intoken:0%%;
-	Serial.println(str);
+    processing: ' //String str = %%intoken:1%% + " f ";
+	//str += %%intoken:0%%;
+	Serial.println(%%intoken:0%%);
 	'
     inherits: ['signal']
 }

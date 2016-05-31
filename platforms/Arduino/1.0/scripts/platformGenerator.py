@@ -79,7 +79,7 @@ class Generator:
                         self.num_out_chnls, self.num_in_chnls, self.audio_device)
 
         globals_code = templates.get_globals_code(code['global_groups'])
-        config_code = templates.get_configuration_code(code['global_groups']['initialization'])
+        config_code = templates.get_configuration_code(code['global_groups']['initializations'])
        
         shutil.copyfile(self.project_dir + "/template.ino", self.out_file)
         self.write_section_in_file('Includes', globals_code)
@@ -98,7 +98,7 @@ class Generator:
             #cpp_compiler = self.platform_dir + "/arduino-1.6.8/arduino"
             cpp_compiler = self.platform_dir + "/arduino-1.7.10-linux64/arduino"
         
-            flags =  '--upload --board arduino:avr:uno --port /dev/ttyACM0 --pref sketchbook.path=' + self.platform_dir + '/sketchbook'
+            flags =  '--upload --board arduino:avr:uno --port /dev/ttyACM1 --pref sketchbook.path=' + self.platform_dir + '/sketchbook'
             args = [cpp_compiler] + flags.split() + [self.out_file]
 
             outtext = ck_out(args)
