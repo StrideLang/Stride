@@ -19,7 +19,7 @@ class Atom(object):
         self.globals = {}
         self.handle = ''
         
-        self.global_sections = ['include', 'includeDir', 'initialization', 'linkTo', 'linkDir']
+        self.global_sections = ['include', 'includeDir', 'initializations', 'linkTo', 'linkDir']
         
     def set_inline(self, inline):
         self.inline = inline
@@ -409,11 +409,11 @@ class NameAtom(Atom):
                 else:
                     if section in platform_type['block']:
                         self.globals[section] = [inc['value'] for inc in platform_type['block'][section]]
-        if 'initialization' in platform_type['block']:
-            if 'initialization' in self.globals:
-                self.globals['initialization'] += platform_type['block']['initialization']
+        if 'initializations' in platform_type['block']:
+            if 'initializations' in self.globals:
+                self.globals['initializations'] += platform_type['block']['initializations']
             else:
-                self.globals['initialization'] = platform_type['block']['initialization']
+                self.globals['initializations'] = platform_type['block']['initializations']
                 
         
         self.set_inline(False)
@@ -1394,7 +1394,7 @@ class PlatformFunctions:
                 "other_scope_declarations" : other_scope_declarations}
                 
     def generate_code(self, tree, current_scope = [],
-                      global_groups = {'include':[], 'includeDir':[], 'initialization' : [], 'linkTo' : [], 'linkDir' : []},
+                      global_groups = {'include':[], 'includeDir':[], 'initializations' : [], 'linkTo' : [], 'linkDir' : []},
                       declared = [], instanced = [], initialized = []):  
         stream_index = 0
         header_code = ''

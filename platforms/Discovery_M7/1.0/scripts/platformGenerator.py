@@ -81,7 +81,7 @@ class Generator:
                         self.num_out_chnls, self.num_in_chnls, self.audio_device)
 
         globals_code = templates.get_globals_code(code['global_groups'])
-        config_code = templates.get_configuration_code(code['global_groups']['initialization'])
+        config_code = templates.get_configuration_code(code['global_groups']['initializations'])
        
         #shutil.rmtree(self.out_dir + "/project")
         if not os.path.exists(self.out_dir + "/project"):
