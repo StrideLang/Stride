@@ -5,6 +5,7 @@
 #include <QFile>
 #include <QTimer>
 #include <QMenu>
+#include <QWebEngineView>
 
 #include "languagehighlighter.h"
 #include "builder.h"
@@ -71,6 +72,7 @@ private:
 
     Ui::ProjectWindow *ui;
     QWidget *m_layoutContainer;
+    QWebEngineView *docBrowser;
 
     LanguageHighlighter *m_highlighter;
 

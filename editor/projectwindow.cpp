@@ -63,8 +63,11 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
     m_codeModelTimer.setInterval(2000);
     connect(&m_codeModelTimer, SIGNAL(timeout()), this, SLOT(updateCodeAnalysis()));
 
-    ui->docBrowser->settings()->setUserStyleSheetUrl(QUrl("qrc:/resources/style.css"));
-    ui->docBrowser->setHtml("<h1>Welcome to Stride</h1> A declarative and reactive domain specific programming language for real-time sound synthesis, processing, and interaction design. By Andrés Cabrera and Joseph Tilbian.");
+    docBrowser = new QWebEngineView();
+    ui->documentationDockWidget->setWidget(docBrowser);
+
+//    docBrowser->settings()->setUserStyleSheetUrl(QUrl("qrc:/resources/style.css"));
+    docBrowser->setHtml("<h1>Welcome to Stride</h1> A declarative and reactive domain specific programming language for real-time sound synthesis, processing, and interaction design. By Andrés Cabrera and Joseph Tilbian.");
 }
 
 ProjectWindow::~ProjectWindow()
@@ -289,7 +292,7 @@ void ProjectWindow::showDocumentation()
     }
     QString word = cursor.selectedText();
     if (!m_lastValidTree) {
-        ui->docBrowser->setHtml(tr("Parsing error. Can't update tree.").arg(word));
+        docBrowser->setHtml(tr("Parsing error. Can't update tree.").arg(word));
         return;
     }
     QList<LangError> errors;
@@ -347,11 +350,11 @@ void ProjectWindow::showDocumentation()
                     }
                 }
                 propertiesTable += "</table>";
-                ui->docBrowser->setHtml(docHtml + propertiesHtml + propertiesTable);
+                docBrowser->setHtml(docHtml + propertiesHtml + propertiesTable);
             }
 
         } else {
-            ui->docBrowser->setHtml(tr("Unknown type: %1").arg(word));
+            docBrowser->setHtml(tr("Unknown type: %1").arg(word));
         }
 
     } else if (word[0].toUpper() == word[0]) { // Check if it is a declared module
@@ -406,12 +409,12 @@ void ProjectWindow::showDocumentation()
                         }
                     }
                     propertiesTable += "</table>";
-                    ui->docBrowser->setHtml(docHtml + propertiesHtml + propertiesTable);
+                    docBrowser->setHtml(docHtml + propertiesHtml + propertiesTable);
                 }
             }
 
         } else {
-            ui->docBrowser->setHtml(tr("Unknown type: %1").arg(word));
+            docBrowser->setHtml(tr("Unknown type: %1").arg(word));
         }
     }
 }

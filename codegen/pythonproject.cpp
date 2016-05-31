@@ -61,7 +61,7 @@ void PythonProject::build(AST *tree)
         qApp->processEvents();
     }
     emit outputText("Done building.");
-    m_buildProcess.close();
+   // m_buildProcess.close();
 //    pythonProcess.terminate();
 //    qDebug() << stdOut;
 //    qDebug() << stdErr;
