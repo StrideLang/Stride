@@ -117,7 +117,6 @@ void CodeEditor::mouseIdleTimeout()
         QTextCursor cursor = cursorForPosition(QPoint(m_toolTip.x(),m_toolTip.y()));
         cursor.select(QTextCursor::WordUnderCursor);
         QString word = cursor.selectedText();
-        qDebug() << "mouse idle " << word;
         if (!word.isEmpty()) {
             QString text = m_codeModel->getTooltipText(word);
             if (!text.isEmpty()) {
@@ -165,6 +164,7 @@ void CodeEditor::resizeEvent(QResizeEvent *e)
     
     QRect cr = contentsRect();
     m_lineNumberArea->setGeometry(QRect(cr.left(), cr.top(), lineNumberAreaWidth(), cr.height()));
+    QPlainTextEdit::resizeEvent(e);
 }
 
 void CodeEditor::keyReleaseEvent(QKeyEvent *event)
@@ -183,6 +183,7 @@ void CodeEditor::keyReleaseEvent(QKeyEvent *event)
         }
     }
     hideButton();
+    QPlainTextEdit::keyReleaseEvent(event);
 }
 
 void CodeEditor::mouseMoveEvent(QMouseEvent *event)
@@ -190,6 +191,7 @@ void CodeEditor::mouseMoveEvent(QMouseEvent *event)
     m_toolTip.setGeometry(event->x(), event->y(), 10, 10);
     m_toolTip.hide();
     m_mouseIdleTimer.start();
+    QPlainTextEdit::mouseMoveEvent(event);
 }
 
 void CodeEditor::highlightCurrentLine()
