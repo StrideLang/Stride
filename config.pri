@@ -1,5 +1,6 @@
 
-unix:!macx {
+unix {
+!macx {
     use_lua {
       LUA_INCLUDE_PATH += /usr/include/luajit-2.0
       LUA_LIB_PATH = /usr/lib/x86_64-linux-gnu
@@ -15,6 +16,7 @@ macx: {
     use_lua {
         message("No lua support on OS X.")
     }
+}
 }
 win32 {
 

@@ -50,10 +50,11 @@ LIBS += -L${FLEX_LIB_PATH}
 LIBS += -lfl
 }
 
-unix:!macx {
+unix {
+!macx {
 LIBS += -lfl
 }
-
 macx {
 LIBS += -ll
+}
 }
