@@ -11,8 +11,6 @@ unix:!macx {
 }
 
 macx: {
-    FLEX_BIN_PATH = /usr/local/opt/flex/bin
-    FLEX_LIB_PATH = /usr/local/opt/flex/
     BISON_BIN_PATH = /usr/local/opt/bison/bin/
     use_lua {
         message("No lua support on OS X.")

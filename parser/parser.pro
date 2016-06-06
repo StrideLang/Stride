@@ -47,9 +47,13 @@ include(parser.pri)
 
 win32 {
 LIBS += -L${FLEX_LIB_PATH}
-}
-macx {
-LIBS += -L${FLEX_LIB_PATH}
+LIBS += -lfl
 }
 
+unix:!macx {
 LIBS += -lfl
+}
+
+macx {
+LIBS += -ll
+}

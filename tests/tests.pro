@@ -26,9 +26,16 @@ FLEXSOURCES = ../editor/parser/lang_stream.l
 
 win32 {
 LIBS += -L${FLEX_LIB_PATH}
+LIBS += -lfl
 }
 
+unix:!macx {
 LIBS += -lfl
+}
+
+macx {
+LIBS += -ll
+}
 
 folder_01.source = data/
 folder_01.target = data/
