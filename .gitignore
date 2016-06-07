@@ -1,7 +1,7 @@
-parser/lang_stream.lexer.cpp
-parser/lang_stream.parser.cpp
-parser/lang_stream.parser.hpp
-parser/lang_stream.parser.output
+parser/lang_stride.lexer.cpp
+parser/lang_stride.parser.cpp
+parser/lang_stride.parser.hpp
+parser/lang_stride.parser.output
 
 StreamStack.pro.user
 
