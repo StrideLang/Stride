@@ -159,7 +159,7 @@ class ValueAtom(Atom):
         return templates.value_real(self.value)
         
     def get_processing_code(self, in_tokens):
-        return '', in_tokens        
+        return '', self.get_inline_processing_code(in_tokens)        
 
 class ExpressionAtom(Atom):
     def __init__(self, expr_type, left_atom, right_atom, index, scope_index):
@@ -734,6 +734,8 @@ class ModuleAtom(Atom):
         
     def get_inline_processing_code(self, in_tokens):
         code = ''
+        if self._input_block and 'blockbundle' in self._input_block:
+            in_tokens = ['_%s_in'%self.handle]
         if self._output_block:
             if 'size' in self._output_block:
                 code = templates.module_processing_code(self.handle, in_tokens, '_' + self.name + '_%03i_out'%self._index)
@@ -759,6 +761,12 @@ class ModuleAtom(Atom):
             else:
                 port_in_token = ['____XXX___'] # TODO implement
             code += templates.module_set_property(self.handle, port_name, port_in_token)
+            
+        if self._input_block and 'blockbundle' in self._input_block:
+            new_code = templates.declaration_bundle_real('_%s_in'%self.handle, len(in_tokens)) + '\n'
+            for i in range(len(in_tokens)):
+                new_code += templates.assignment('_%s_in[%i]'%(self.handle, i), in_tokens[i])
+            code += new_code
         return code
         
     def get_processing_code(self, in_tokens):
@@ -805,7 +813,7 @@ class ModuleAtom(Atom):
     def _process_module(self, streams):
         tree = streams
         instanced = []
-        if self._input_block:
+        if self._input_block: # Mark input block as instanced so it doesn't get instantiated as other blocks
             if 'block' in self._input_block:
                 block_type = 'block'
             else:
