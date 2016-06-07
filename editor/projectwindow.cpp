@@ -82,7 +82,7 @@ void ProjectWindow::build()
     ui->consoleText->clear();
     saveFile();
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
-    m_codeModel.updateCodeAnalysis(editor->filename().toLocal8Bit().constData(),
+    m_codeModel.updateCodeAnalysis(editor->document()->toPlainText(),
                                    m_environment["platformRootPath"].toString());
 
     QList<LangError> errors = m_codeModel.getErrors();
@@ -634,7 +634,7 @@ void ProjectWindow::updateCodeAnalysis()
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     if ((QApplication::activeWindow() == this  && editor->document()->isModified())
             || m_startingUp) {
-        m_codeModel.updateCodeAnalysis(editor->document()->toPlainText().toLocal8Bit(),
+        m_codeModel.updateCodeAnalysis(editor->document()->toPlainText(),
                                        m_environment["platformRootPath"].toString());
         m_highlighter->setBlockTypes(m_codeModel.getTypes());
         m_highlighter->setFunctions(m_codeModel.getFunctions());

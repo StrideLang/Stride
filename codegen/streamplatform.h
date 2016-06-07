@@ -19,6 +19,7 @@
 class StreamPlatform
 {
 public:
+    StreamPlatform() {};
     StreamPlatform(QStringList platformPaths, QString platform, QString version,
                    QMap<QString, QString> importList);
     ~StreamPlatform();

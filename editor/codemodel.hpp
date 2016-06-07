@@ -36,7 +36,7 @@ public slots:
 
 private:
 //    QList<AST *> m_platformObjects;
-    StreamPlatform *m_platform;
+    StreamPlatform m_platform;
     QStringList m_types;
     QStringList m_funcs;
     QStringList m_objectNames;

@@ -233,7 +233,7 @@ AST * CodeModel::getOptimizedTree()
 Builder *CodeModel::createBuilder(QString projectDir)
 {
     QMutexLocker locker(&m_validTreeLock);
-    return m_platform->createBuilder(projectDir);
+    return m_platform.createBuilder(projectDir);
 }
 
 QStringList CodeModel::getTypes()
@@ -283,7 +283,7 @@ void CodeModel::updateCodeAnalysis(QString code, QString platformRootPath)
                 }
             }
             m_errors = validator.getErrors();
-            m_platform = validator.getPlatform();
+            m_platform = *validator.getPlatform();
 
             if(m_lastValidTree) {
                 m_lastValidTree->deleteChildren();
