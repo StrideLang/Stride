@@ -239,7 +239,11 @@ bool ProjectWindow::maybeSave()
     for(int i = 0; i < ui->tabWidget->count(); i++) {
         CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->widget(i));
         if(editor->isChanged()) {
-            modifiedFiles << editor->filename();
+            QString name = editor->filename();
+            if (name.isEmpty()) {
+                name = "Untitled.stride";
+            }
+            modifiedFiles << name;
             modifiedFilesTabs << i;
         }
     }
