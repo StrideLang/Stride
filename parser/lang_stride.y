@@ -1138,7 +1138,7 @@ valueExp:
     | 	valueComp                   {
                                         $$ = $1;
                                     }
-	;
+    ;
 
 // ================================= 
 //	STREAM EXPRESSION
@@ -1291,21 +1291,29 @@ valueComp:
 %%
 
 void yyerror(const char *s, ...){
-    va_list ap;
-    va_start(ap, s);
+/*
+ *   This function is called by the lexer. We do not know how many arguments exist when
+ *   called. It is safer not to get the arguments to avoid an out of bound read.
+ *
+ */
 
-    if(yylloc.first_line)
-      fprintf(stderr, "%d.%d-%d.%d: error: ", yylloc.first_line, yylloc.first_column,
-          yylloc.last_line, yylloc.last_column);
-    vfprintf(stderr, s, ap);
-    fprintf(stderr, "\n");
-    fprintf(stderr, "On file %s.\n", currentFile);
+//    va_list ap;
+//    va_start(ap, s);
+
+//    if(yylloc.first_line)
+//      fprintf(stderr, "%d.%d-%d.%d: error: ", yylloc.first_line, yylloc.first_column,
+//          yylloc.last_line, yylloc.last_column);
+//    vfprintf(stderr, s, ap);
+//    fprintf(stderr, "\n");
+//    fprintf(stderr, "On file %s.\n", currentFile);
+    cout << "Parser reported error: " << s << endl;
+    cout << "Unexpected token: " << yytext << " on line: " <<  yylineno << endl;
     LangError newError;
     newError.type = LangError::Syntax;
     newError.errorTokens.push_back(std::string(yytext));
     newError.filename = string(currentFile);
 //    newError.lineNumber = line;
-    newError.lineNumber = yylloc.first_line;
+    newError.lineNumber = yylineno;
     parseErrors.push_back(newError);
 }
 
@@ -1313,10 +1321,10 @@ void syntaxError(const char *s, ...){
 
     va_list ap;
     va_start(ap, s);
-//    const char *errorString = va_arg(ap, char*);
+    const char *errorString = va_arg(ap, char*);
     int line = va_arg(ap, int);
     COUT << ENDL << ENDL << "ERROR: " << s ; //<< " => " << errorString << ENDL;
-    COUT << "Unexpected token: \"" << yytext << "\" on line: " <<  line << ENDL;
+    COUT << "Unexpected token: " << yytext << " on line: " << line << ENDL;
     va_end(ap);
     LangError newError;
     newError.type = LangError::Syntax;

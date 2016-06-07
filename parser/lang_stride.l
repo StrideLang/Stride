@@ -80,7 +80,7 @@ CLETTER	[A-Z]
                         free(buffer);
                         return STRING; }
 
-\"[^"]*\"			{ 	buffer = strdup(yytext);
+\"[^\"]*\"			{ 	buffer = strdup(yytext);
                         buffer[strlen(buffer)-1] = '\0';
                         yylval.sval = strdup(buffer + 1);
                         free(buffer);
