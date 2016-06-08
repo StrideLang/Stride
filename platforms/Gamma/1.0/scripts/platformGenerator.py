@@ -5,8 +5,11 @@ Created on Mon Apr 25 08:29:07 2016
 @author: andres
 """
 from subprocess import check_output as ck_out
+from subprocess import call
 import shutil
 import json
+import os
+import sys
 from strideplatform import PlatformFunctions
 
 from platformTemplates import templates # Perhaps we should acces this through PlatformFunctions ?
@@ -65,6 +68,7 @@ class Generator:
         
         code = self.platform.generate_code(self.tree)
                 
+        print("OK.")
         #var_declaration = ''.join(['double stream_%02i;\n'%i for i in range(stream_index)])
         #declare_code = var_declaration + declare_code
         
@@ -80,7 +84,10 @@ class Generator:
         self.write_section_in_file('Config Code', code['init_code'] + template_init_code + config_code)
         self.write_section_in_file('Dsp Code', code['processing_code'])
         
-        ck_out(['astyle', self.out_dir + "/main.cpp" ])
+        try:
+            ck_out(['astyle', self.out_dir + "/main.cpp" ], shell=True)
+        except:
+            print("Error running astyle")
         
         self.link_flags = []
         for link_target in code['global_groups']['linkTo']:
@@ -98,6 +105,7 @@ class Generator:
             new_flag = "-I" + include_dir
             if not new_flag in self.build_flags:
                 self.build_flags.append(new_flag)
+                
         
         
         
@@ -172,28 +180,78 @@ class Generator:
             self.log("Done.")
         
         elif platform.system() == "Darwin":
+            
+            self.log("Start build.")
             cpp_compiler = "/usr/bin/c++"
-        
-            flags = "-I"+ self.platform_dir +"/include -O3 -DNDEBUG -o " \
-                + self.out_dir +"/main.cpp.o -c "+ self.out_dir +"/main.cpp"
-            args = [cpp_compiler] + flags.split()
-            try:
-                outtext = ck_out(args)
-            except:
-                pass
+            
+            args = [cpp_compiler,
+                    "-I"+ self.platform_dir +"/include",  "-O3" , "-std=c++11", "-DNDEBUG",
+                     "-o" + self.out_dir +"/main.cpp.o",
+                     "-c",
+                     self.out_dir + "/main.cpp"]
+
+            
+            #self.log(' '.join(args))
+            #os.system(' '.join(args))
+            
+            print(args)
+            outtext = ck_out(args)
         
             self.log(outtext)
         
             # Link ------------------------
-            flags = "-O3 -DNDEBUG "+ self.out_dir +"/main.cpp.o -o "+ self.out_dir +"/app -rdynamic -L " \
-                + self.platform_dir + "/lib -lGamma -lpthread -lportaudio -lsndfile -lpthread -lportaudio -lsndfile"
-            args = [cpp_compiler] + flags.split()
-            try:
-                outtext = ck_out(args)
-            except:
-                pass
+            args = [cpp_compiler,
+                    "-O3",
+                    "-std=c++11",
+                    "-DNDEBUG",
+                    "-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk",
+                    "-Wl,-search_paths_first",
+                    "-Wl,-headerpad_max_install_names",
+                    self.out_dir +"/main.cpp.o",
+                    "-o" + self.out_dir +"/app",
+                    "/usr/local/lib/libportaudio.dylib",
+                    "/usr/local/lib/libsndfile.dylib",
+                    "-framework AudioUnit",
+                    "-framework CoreAudio",
+                    "-framework CoreServices",
+                    "-framework AudioToolbox ", 
+                    "-L" + self.platform_dir + "/lib",
+                    "-lGamma"
+                    ]
+                    
+            
+            args += self.build_flags + self.link_flags 
+            
+            self.log(' '.join(args))
+            #print(args)
+
+            #outtext = ck_out(args, shell=True)
+            #call(args, shell=True)
+            os.system(' '.join(args))
         
             self.log(outtext)
             self.log("Done.")
+        
+#            flags = "-I"+ self.platform_dir +"/include -O3 -DNDEBUG -o " \
+#                + self.out_dir +"/main.cpp.o -c "+ self.out_dir +"/main.cpp"
+#            args = [cpp_compiler] + flags.split()
+#            try:
+#                outtext = ck_out(args)
+#            except:
+#                pass
+#        
+#            self.log(outtext)
+#        
+#            # Link ------------------------
+#            flags = "-O3 -DNDEBUG "+ self.out_dir +"/main.cpp.o -o "+ self.out_dir +"/app -rdynamic -L " \
+#                + self.platform_dir + "/lib -lGamma -lpthread -lportaudio -lsndfile -lpthread -lportaudio -lsndfile"
+#            args = [cpp_compiler] + flags.split()
+#            try:
+#                outtext = ck_out(args)
+#            except:
+#                pass
+#        
+#            self.log(outtext)
+#            self.log("Done.")
         else:
             self.log("Platform '%s' not supported!"%platform.system())
