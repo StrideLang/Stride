@@ -5,7 +5,7 @@
 #include <QMutex>
 
 #include "ast.h"
-#include "streamplatform.h"
+#include "strideplatform.hpp"
 
 class CodeModel : public QObject
 {
@@ -36,7 +36,7 @@ public slots:
 
 private:
 //    QList<AST *> m_platformObjects;
-    StreamPlatform m_platform;
+    StridePlatform m_platform;
     QStringList m_types;
     QStringList m_funcs;
     QStringList m_objectNames;

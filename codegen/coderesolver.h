@@ -5,7 +5,7 @@
 #include <QVector>
 #include <QSharedPointer>
 
-#include "streamplatform.h"
+#include "strideplatform.hpp"
 #include "stridelibrary.hpp"
 
 #include "ast.h"
@@ -21,7 +21,7 @@
 class CodeResolver
 {
 public:
-    CodeResolver(StreamPlatform *platform, AST *tree);
+    CodeResolver(StridePlatform *platform, AST *tree);
     ~CodeResolver();
 
     void preProcess();
@@ -86,7 +86,7 @@ private:
 //    QVector<AST *> sliceStream(StreamNode *stream);
     StreamNode *splitStream(StreamNode *stream, AST *closingNode, AST *endNode);
 
-    StreamPlatform *m_platform;
+    StridePlatform *m_platform;
     AST *m_tree;
     int m_connectorCounter;
 };

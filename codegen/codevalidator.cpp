@@ -23,12 +23,12 @@ CodeValidator::CodeValidator(QString platformRootDir, AST *tree):
         if (platforms.size() > 0) {
             PlatformNode *platformNode = platforms.at(0);
             // FIXME add error if more than one platform?
-            m_platform = new StreamPlatform(platformRoots,
+            m_platform = new StridePlatform(platformRoots,
                                             QString::fromStdString(platformNode->platformName()),
                                             QString::number(platformNode->version(),'f',  1),
                                             importList);
         } else {
-            m_platform = new StreamPlatform(platformRoots, "", "", importList);
+            m_platform = new StridePlatform(platformRoots, "", "", importList);
         }
     }
 }
@@ -99,7 +99,7 @@ QStringList CodeValidator::getPlatformErrors()
     return m_platform->getErrors();
 }
 
-StreamPlatform *CodeValidator::getPlatform()
+StridePlatform *CodeValidator::getPlatform()
 {
     return m_platform;
 }
@@ -753,6 +753,7 @@ BlockNode *CodeValidator::findDeclaration(QString objectName, QVector<AST *> sco
             globalAndLocal << QVector<AST *>::fromStdVector(listNode->getChildren());
         }
     }
+    if (!tree) { return NULL;}
     globalAndLocal << QVector<AST *>::fromStdVector(tree->getChildren());
     foreach(AST *node, globalAndLocal) {
         if (node->getNodeType() == AST::BlockBundle) {
@@ -1177,7 +1178,7 @@ QVector<AST *> CodeValidator::getPortsForTypeBlock(BlockNode *block, QVector<AST
     return outList;
 }
 
-int CodeValidator::numParallelStreams(StreamNode *stream, StreamPlatform &platform, QVector<AST *> &scope, AST *tree, QList<LangError> &errors)
+int CodeValidator::numParallelStreams(StreamNode *stream, StridePlatform &platform, QVector<AST *> &scope, AST *tree, QList<LangError> &errors)
 {
     AST *left = stream->getLeft();
     AST *right = stream->getRight();

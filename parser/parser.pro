@@ -1,5 +1,5 @@
 
-TARGET = StreamParser
+TARGET = StrideParser
 TEMPLATE = lib
 
 CONFIG += staticlib
@@ -46,15 +46,16 @@ include(../config.pri)
 include(parser.pri)
 
 win32 {
-LIBS += -L${FLEX_LIB_PATH}
-LIBS += -lfl
+    LIBS += -L${FLEX_LIB_PATH}
+    LIBS += -lfl
 }
 
 unix {
-!macx {
-LIBS += -lfl
-}
-macx {
-LIBS += -ll
-}
+    !macx {
+        LIBS += -lfl
+    }
+    macx {
+#        LIBS += -L${FLEX_LIB_PATH}
+#        LIBS += -ll
+    }
 }

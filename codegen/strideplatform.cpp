@@ -3,12 +3,12 @@
 #include <QDir>
 #include <QDebug>
 
-#include "streamplatform.h"
+#include "strideplatform.hpp"
 #include "builder.h"
 #include "pythonproject.h"
 
 
-StreamPlatform::StreamPlatform(QStringList platformPaths, QString platform, QString version, QMap<QString, QString> importList) :
+StridePlatform::StridePlatform(QStringList platformPaths, QString platform, QString version, QMap<QString, QString> importList) :
     m_platformName(platform), m_version(version), m_api(NullPlatform)
 {
     QString objectsJson;
@@ -74,7 +74,7 @@ StreamPlatform::StreamPlatform(QStringList platformPaths, QString platform, QStr
     }
 }
 
-StreamPlatform::~StreamPlatform()
+StridePlatform::~StridePlatform()
 {
     foreach(AST *tree, m_platform) {
         tree->deleteChildren();
@@ -134,22 +134,22 @@ StreamPlatform::~StreamPlatform()
 //    return NULL;
 //}
 
-QString StreamPlatform::getPlatformPath()
+QString StridePlatform::getPlatformPath()
 {
     return m_platformPath;
 }
 
-QStringList StreamPlatform::getErrors()
+QStringList StridePlatform::getErrors()
 {
     return m_errors;
 }
 
-QStringList StreamPlatform::getWarnings()
+QStringList StridePlatform::getWarnings()
 {
     return m_warnings;
 }
 
-QStringList StreamPlatform::getPlatformTypeNames()
+QStringList StridePlatform::getPlatformTypeNames()
 {
     QStringList typeNames;
     foreach(AST* group, m_platform) {
@@ -183,7 +183,7 @@ QStringList StreamPlatform::getPlatformTypeNames()
     return typeNames;
 }
 
-QStringList StreamPlatform::getFunctionNames()
+QStringList StridePlatform::getFunctionNames()
 {
     QStringList typeNames;
     foreach(AST* node, getBuiltinObjects()) {
@@ -197,13 +197,13 @@ QStringList StreamPlatform::getFunctionNames()
     return typeNames;
 }
 
-Builder *StreamPlatform::createBuilder(QString projectDir)
+Builder *StridePlatform::createBuilder(QString projectDir)
 {
     Builder *builder = NULL;
-    if (m_api == StreamPlatform::PythonTools) {
+    if (m_api == StridePlatform::PythonTools) {
         QString pythonExec = "python";
         builder = new PythonProject(m_platformPath, projectDir, pythonExec);
-    } else if(m_api == StreamPlatform::PluginPlatform) {
+    } else if(m_api == StridePlatform::PluginPlatform) {
         QString xmosRoot = "/home/andres/Documents/src/XMOS/xTIMEcomposer/Community_13.0.2";
 
         QLibrary pluginLibrary(m_pluginName);
@@ -224,7 +224,7 @@ Builder *StreamPlatform::createBuilder(QString projectDir)
     return builder;
 }
 
-QList<AST *> StreamPlatform::getBuiltinObjectsCopy()
+QList<AST *> StridePlatform::getBuiltinObjectsCopy()
 {
     QList<AST *> objects;
     QList<AST *> libObjects = getBuiltinObjects();
@@ -234,7 +234,7 @@ QList<AST *> StreamPlatform::getBuiltinObjectsCopy()
     return objects;
 }
 
-QList<AST *> StreamPlatform::getBuiltinObjects()
+QList<AST *> StridePlatform::getBuiltinObjects()
 {
     QList<AST *> objects;
     QMapIterator<QString, AST *> blockGroup(m_platform);

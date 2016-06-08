@@ -18,18 +18,21 @@ def build(platform_dir, products_dir, debug = False):
     
     gen = Generator(products_dir, platform_dir, debug)
     gen.generate_code()
+    print("Building done...")
     gen.compile()
 
 if __name__ == '__main__':
     import argparse
     cur_path = os.getcwd()
+    sys.path.append(cur_path + "/library/1.0/python")
     # First parse command line arguments
     parser = argparse.ArgumentParser()
     
     parser.add_argument("products_dir",
                         help="The directory where stride products where generated",
                         nargs='?',
-                        default= cur_path + '/Gamma/tests/modulation.stride_Products'
+#                        default= cur_path + '/Gamma/tests/modulation.stride_Products'
+                        default= cur_path + '/Gamma/examples/test.stride_Products'
 #                        default='/home/andres/Documents/src/Stride/StreamStack/platforms/Arduino/examples/test.stride_Products'
                         )
     parser.add_argument("platform_dir",

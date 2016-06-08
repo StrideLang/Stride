@@ -4,6 +4,7 @@ macx: BISON_BINARY = $$BISON_BIN_PATH/bison
 else: BISON_BINARY = bison
 
 win32: FLEX_BINARY = $$FLEX_BIN_PATH\flex
+macx: FLEX_BINARY = $$FLEX_BIN_PATH/flex
 else: FLEX_BINARY = flex
 
 bison.name = Bison ${QMAKE_FILE_IN}

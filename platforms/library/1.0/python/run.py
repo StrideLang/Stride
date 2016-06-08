@@ -23,6 +23,8 @@ app_name = "app"
 def log(text):
     print(text)
 
+print("Running python.")
+
 os.chdir(out_dir)
 log("Running in directory: " + out_dir)
 

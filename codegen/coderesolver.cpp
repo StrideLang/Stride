@@ -4,7 +4,7 @@
 #include "coderesolver.h"
 #include "codevalidator.h"
 
-CodeResolver::CodeResolver(StreamPlatform *platform, AST *tree) :
+CodeResolver::CodeResolver(StridePlatform *platform, AST *tree) :
     m_platform(platform), m_tree(tree), m_connectorCounter(0)
 {
 

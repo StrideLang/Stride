@@ -4,7 +4,7 @@
 #include <QString>
 
 #include "strideparser.h"
-#include "streamplatform.h"
+#include "strideplatform.hpp"
 #include "stridelibrary.hpp"
 
 class CodeValidator
@@ -19,7 +19,7 @@ public:
     QList<LangError> getErrors();
     QStringList getPlatformErrors();
 
-    StreamPlatform *getPlatform();
+    StridePlatform *getPlatform();
 
     static BlockNode *findDeclaration(QString streamMemberName, QVector<AST *> scopeStack, AST *tree);
     static QString streamMemberName(AST * node, QVector<AST *> scopeStack, AST *tree);
@@ -44,7 +44,7 @@ public:
     static QVector<AST *> getPortsForType(QString typeName, QVector<AST *> scope, AST *tree);
 
     /// Number of parallel streams that a single stream can be broken up into
-    static int numParallelStreams(StreamNode *stream, StreamPlatform &platform, QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
+    static int numParallelStreams(StreamNode *stream, StridePlatform &platform, QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
 
     /// Get the number of parallel nodes implicit in node. i.e. into how many parallel streams
     /// can the node be broken up.
@@ -88,7 +88,7 @@ private:
 
     QString getNodeText(AST *node);
 
-    StreamPlatform *m_platform;
+    StridePlatform *m_platform;
     AST *m_tree;
     QList<LangError> m_errors;
 };

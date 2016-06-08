@@ -2,7 +2,7 @@
 #include <QtTest>
 
 #include "strideparser.h"
-#include "streamplatform.h"
+#include "strideplatform.hpp"
 #include "codevalidator.h"
 #include "coderesolver.h"
 

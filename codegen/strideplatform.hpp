@@ -16,13 +16,13 @@
 
 #include "builder.h"
 
-class StreamPlatform
+class StridePlatform
 {
 public:
-    StreamPlatform() {};
-    StreamPlatform(QStringList platformPaths, QString platform, QString version,
+    StridePlatform() {}
+    StridePlatform(QStringList platformPaths, QString platform, QString version,
                    QMap<QString, QString> importList);
-    ~StreamPlatform();
+    ~StridePlatform();
 
     typedef enum {
         PythonTools,
