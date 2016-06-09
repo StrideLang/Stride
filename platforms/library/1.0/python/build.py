@@ -32,13 +32,13 @@ if __name__ == '__main__':
                         help="The directory where stride products where generated",
                         nargs='?',
 #                        default= cur_path + '/Gamma/tests/modulation.stride_Products'
-                        default= cur_path + '/Gamma/examples/test.stride_Products'
+                        default= cur_path + '/Arduino/examples/test.stride_Products'
 #                        default='/home/andres/Documents/src/Stride/StreamStack/platforms/Arduino/examples/test.stride_Products'
                         )
     parser.add_argument("platform_dir",
                         help="The directory of the platform to be used",
                         nargs='?',
-                        default= cur_path + '/Gamma/1.0'
+                        default= cur_path + '/Arduino/1.0'
 #                        default=this_path + '/../../../Arduino/1.0'
                         )
     args = parser.parse_args()

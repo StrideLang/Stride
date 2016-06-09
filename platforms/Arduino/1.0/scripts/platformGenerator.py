@@ -87,7 +87,10 @@ class Generator:
         self.write_section_in_file('Config Code', code['init_code'] + template_init_code + config_code)
         self.write_section_in_file('Dsp Code', code['processing_code'])
         
-        ck_out(['astyle', self.out_file ])
+        try:
+            ck_out(['astyle', self.out_file ])
+        except:
+            print("Error running astyle")
         
         
 # Compile --------------------------
@@ -135,7 +138,19 @@ class Generator:
         
     
         
-#        elif platform.system() == "Darwin":
+        elif platform.system() == "Darwin":
+            print("Buidling Arduino on OS X.")
+            cpp_compiler = "/Applications/Arduino.app/Contents/MacOS/Arduino"
+        
+            flags =  '--upload --board arduino:avr:uno --port /dev/cu.usbmodem1411' # --pref sketchbook.path=' + self.platform_dir + '/sketchbook'
+            args = [cpp_compiler] + flags.split() + [self.out_file]
+            
+            print(' '.join(args))
+            outtext = ck_out(args)
+        
+            self.log(outtext)
+        
+            self.log("Done.")
 #            cpp_compiler = "/usr/bin/c++"
 #        
 #            flags = "-I"+ self.platform_dir +"/include -O3 -DNDEBUG -o " \
