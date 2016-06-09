@@ -1,6 +1,7 @@
 
 QT += core gui #qml quick
-QT += webenginewidgets
+#QT += webenginewidgets
+QT += webkitwidgets
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 

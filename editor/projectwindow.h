@@ -5,7 +5,11 @@
 #include <QFile>
 #include <QTimer>
 #include <QMenu>
+#ifdef USE_WEBENGINE
 #include <QWebEngineView>
+#else
+#include <QWebView>
+#endif
 
 #include "languagehighlighter.h"
 #include "builder.h"
@@ -77,7 +81,11 @@ private:
     QString makeProjectForCurrent();
 
     Ui::ProjectWindow *ui;
+#ifdef USE_WEBENGINE
     QWebEngineView *docBrowser;
+#else
+    QWebView *docBrowser;
+#endif
     QScopedPointer<SearchWidget> m_searchWidget;
 
     LanguageHighlighter *m_highlighter;
