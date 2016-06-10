@@ -62,7 +62,7 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
     connect(&m_codeModelTimer, SIGNAL(timeout()), this, SLOT(updateCodeAnalysis()));
 
 #ifdef USE_WEBENGINE
-    docBrowser = new QWebEngine();
+    docBrowser = new QWebEngineView();
 #else
     docBrowser = new QWebView();
     docBrowser->settings()->setUserStyleSheetUrl(QUrl("qrc:/resources/style.css"));
