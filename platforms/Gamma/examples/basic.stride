@@ -2,7 +2,7 @@ use Gamma version 1.0 on PC
 
 constant String {
 	value: "hello"
-} 
+}
 
 
 signal Test[2] {

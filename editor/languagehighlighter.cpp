@@ -10,7 +10,7 @@ LanguageHighlighter::LanguageHighlighter(QObject *parent) :
 {
     setFormatPreset(0);
     m_keywords << "none" << "on" << "off" << "streamRate"
-               << "use" << "version";
+               << "use" << "version" << "import";
 }
 
 void LanguageHighlighter::highlightBlock(const QString &text)

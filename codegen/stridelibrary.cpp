@@ -142,7 +142,7 @@ void StrideLibrary::readLibrary(QString rootDir, QMap<QString, QString> importLi
 {
     QStringList nameFilters;
     nameFilters << "*.stride";
-    QString basepath = QString::asprintf("/library/%i.%01i", m_majorVersion, m_minorVersion);
+    QString basepath = "/library/1.0";// QString::asprintf("/library/%i.%01i", m_majorVersion, m_minorVersion);
     QStringList subPaths;
     subPaths << "";
     QMapIterator<QString, QString> it(importList);

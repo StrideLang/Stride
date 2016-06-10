@@ -114,27 +114,22 @@ class Generator:
         import platform
         
         if platform.system() == "Windows":
-            cpp_compiler = "/usr/bin/c++"
+            cpp_compiler = "c++"
         
-            flags = "-I"+ self.platform_dir +"include -O3 -DNDEBUG -o " \
+            flags = "-std=c++11 -I"+ self.platform_dir +"include -O3 -DNDEBUG -o " \
                 + self.out_dir +"/main.cpp.o -c "+ self.out_dir +"/main.cpp"
             args = [cpp_compiler] + flags.split()
-            try:
-                outtext = ck_out(args)
-            except:
-                pass
+            self.log(' '.join(args))
+            outtext = ck_out(args)
         
             self.log(outtext)
         
             # Link ------------------------
             flags = "-O3 -DNDEBUG "+ self.out_dir + "/main.cpp.o -o " \
-                + self.out_dir +"/app -rdynamic -L " \
-                + self.platform_dir + "/lib -lGamma -lpthread -lportaudio -lsndfile -lpthread -lportaudio -lsndfile"
+                + self.out_dir +"/app -L " \
+                + self.platform_dir + "/lib -lGamma -lportaudio_x86 -lsndfile-1"
             args = [cpp_compiler] + flags.split()
-            try:
-                outtext = ck_out(args)
-            except:
-                pass
+            outtext = ck_out(args)
         
             self.log(outtext)
             self.log("Done.")
