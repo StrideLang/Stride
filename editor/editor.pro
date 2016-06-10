@@ -2,14 +2,11 @@
 QT += core gui #qml quick
 
 lessThan(QT_MAJOR_VERSION, 5): error("Qt 5 required!")
-greaterThan(QT_MINOR_VERSION, 4)
-{
-  QT += webenginewidgets
-  DEFINES += USE_WEBENGINE
-}
-lessThan(QT_MINOR_VERSION, 5) {
-  QT += webkitwidgets
-}
+
+greaterThan(QT_MINOR_VERSION, 4): QT += webenginewidgets
+greaterThan(QT_MINOR_VERSION, 4): DEFINES += USE_WEBENGINE
+
+lessThan(QT_MINOR_VERSION, 5):QT += webkitwidgets
 
 include(../config.pri)
 
