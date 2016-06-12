@@ -254,6 +254,55 @@ QStringList CodeModel::getObjectNames()
     return m_objectNames;
 }
 
+QString CodeModel::getFunctionSyntax(QString symbol)
+{
+    if (symbol.isEmpty()) {
+        return "";
+    }
+    QString text;
+    if (symbol[0].toUpper() == symbol[0]) { // Check if it is a declared module
+        QMutexLocker locker(&m_validTreeLock);
+        BlockNode *declaration = CodeValidator::findDeclaration(symbol, QVector<AST *>(), m_lastValidTree);
+        if (declaration) {
+            AST *metaValue = declaration->getPropertyValue("meta");
+            Q_ASSERT(metaValue);
+            if (metaValue) {
+                Q_ASSERT(metaValue->getNodeType() == AST::String);
+                AST *properties = declaration->getPropertyValue("properties");
+                if (properties && properties->getNodeType() == AST::List) {
+                    text += symbol +  "(";
+                    Q_ASSERT(properties->getNodeType() == AST::List);
+                    ListNode *propertiesList = static_cast<ListNode *>(properties);
+                    foreach(AST *member, propertiesList->getChildren()) {
+                        BlockNode *portBlock = static_cast<BlockNode *>(member);
+                        Q_ASSERT(portBlock->getNodeType() == AST::Block);
+                        if (portBlock->getNodeType() == AST::Block) {
+                            QString portName = QString::fromStdString(
+                                        static_cast<ValueNode *>(portBlock->getPropertyValue("name"))->getStringValue());
+                            if (portName != "inherits" && portName != "meta") {
+//                                AST *portMetaNode = portBlock->getPropertyValue("meta");
+//                                QString portMeta;
+//                                if (portMetaNode) {
+//                                    portMeta = QString::fromStdString(static_cast<ValueNode *>(portMetaNode)->getStringValue());
+//                                }
+                                QString defaultValue;
+                                AST *portDefaultNode = portBlock->getPropertyValue("default");
+                                if (portDefaultNode) {
+                                    ValueNode * valueNode = static_cast<ValueNode *>(portDefaultNode);
+                                    defaultValue = QString::fromStdString(valueNode->toString());
+                                }
+                                text += portName + ":" + defaultValue + " ";
+                            }
+                        }
+                    }
+                    text += ")";
+                }
+            }
+        }
+    }
+    return text;
+}
+
 QList<LangError> CodeModel::getErrors()
 {
     QMutexLocker locker(&m_validTreeLock);

@@ -21,6 +21,9 @@ public:
     QFont font() const;
     void setFont(const QFont &font);
 
+    bool autoComplete();
+    void setAutoComplete(bool enabled);
+
     QString platformRootPath();
     void setPlatformRootPath(QString path);
 

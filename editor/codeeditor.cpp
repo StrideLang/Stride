@@ -7,7 +7,9 @@
 
 CodeEditor::CodeEditor(QWidget *parent, CodeModel *codeModel) :
     QPlainTextEdit(parent),
-    m_codeModel(codeModel), m_IndentTabs(true),
+    m_codeModel(codeModel),
+    m_autoCompleteMenu(this),
+    m_IndentTabs(true),
     m_helperButton(this), m_toolTip((QWidget*)this)
 {
     setMouseTracking(true);
@@ -51,6 +53,11 @@ int CodeEditor::lineNumberAreaWidth()
 bool CodeEditor::isChanged()
 {
     return document()->isModified();
+}
+
+void CodeEditor::setAutoComplete(bool enable)
+{
+    m_autoComplete = enable;
 }
 
 void CodeEditor::setErrors(QList<LangError> errors)
@@ -101,8 +108,9 @@ void CodeEditor::showButton()
 
 void CodeEditor::hideButton()
 {
-    m_helperButton.hide();
+//    m_helperButton.hide(); // TODO This currently hides the menu before it's shown...
     m_ButtonTimer.start();
+//    m_autoCompleteMenu.hide();
 }
 
 void CodeEditor::helperButtonClicked()
@@ -133,9 +141,54 @@ void CodeEditor::mouseIdleTimeout()
     }
 }
 
+void CodeEditor::insertAutoComplete()
+{
+    QString text = static_cast<QAction *>(sender())->data().toString();
+    QTextCursor cursor = textCursor();
+    cursor.select(QTextCursor::WordUnderCursor);
+    setTextCursor(cursor);
+    insertPlainText(text);
+}
+
+void CodeEditor::updateAutoCompleteMenu(QString currentWord)
+{
+    m_autoCompleteMenu.clear();
+    QStringList functions = m_codeModel->getFunctions();
+    foreach(QString functionName, functions) {
+        if (functionName.left(currentWord.size()) == currentWord) {
+            QString syntaxText = m_codeModel->getFunctionSyntax(functionName);
+            QAction *syntaxAction = m_autoCompleteMenu.addAction(functionName, this, SLOT(insertAutoComplete()));
+            syntaxAction->setData(syntaxText);
+        }
+    }
+//            m_autoCompleteMenu.setGeometry(20, 20, 50, 100);
+}
+
 void CodeEditor::markChanged(bool changed)
 {
     document()->setModified(changed);
+}
+
+bool CodeEditor::eventFilter(QObject *obj, QEvent *event)
+{
+    if (event->type() == QEvent::KeyPress) {
+        QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
+        qDebug("Ate key press %d", keyEvent->key());
+        QRegExp regex("\\w+");
+        if (regex.indexIn(keyEvent->text()) >= 0) {
+            this->insertPlainText(keyEvent->text());
+            QTextCursor cursor = textCursor();
+            cursor.select(QTextCursor::WordUnderCursor);
+            QString currentWord = cursor.selectedText();
+            updateAutoCompleteMenu(currentWord);
+            return true;
+        } else {
+            return QObject::eventFilter(obj, event);
+        }
+    } else {
+        // standard event processing
+        return QObject::eventFilter(obj, event);
+    }
 }
 
 QString CodeEditor::filename() const
@@ -176,11 +229,30 @@ void CodeEditor::keyReleaseEvent(QKeyEvent *event)
         scopeLevel -= previousText.count("}") + previousText.count("]");
         for (int i = 0; i < scopeLevel; ++i) {
             if (m_IndentTabs) {
-                cursor.insertText("\t");
+                insertPlainText("\t");
             } else {
-                cursor.insertText("    ");
+                insertPlainText("    ");
             }
         }
+    } else if (m_autoComplete && event->key() >= Qt::Key_A && event->key() <= Qt::Key_Z) {
+        QTextCursor cursor = textCursor();
+        cursor.select(QTextCursor::WordUnderCursor);
+        QString currentWord = cursor.selectedText();
+        if (currentWord.size() > 2) {
+            QRect cursorRectValue = cursorRect(cursor);
+            updateAutoCompleteMenu(currentWord);
+            QPoint p = QPoint(cursorRectValue.x() + cursorRectValue.width(),
+                              cursorRectValue.y() + cursorRectValue.height());
+            QPoint globalPoint =  this->mapToGlobal(p);
+            m_autoCompleteMenu.move(globalPoint);
+            if (m_autoCompleteMenu.actions().size() > 0) {
+                m_autoCompleteMenu.show();
+            }
+            setFocus();
+//            m_autoCompleteMenu.show();
+        }
+    } else if (event->key() == Qt::Key_Escape) {
+        m_autoCompleteMenu.hide();
     }
     hideButton();
     QPlainTextEdit::keyReleaseEvent(event);

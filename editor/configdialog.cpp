@@ -36,6 +36,16 @@ void ConfigDialog::setFont(const QFont &font)
     m_font = font;
 }
 
+bool ConfigDialog::autoComplete()
+{
+    return ui->autoCompleteCheckBox->isChecked();
+}
+
+void ConfigDialog::setAutoComplete(bool enabled)
+{
+    ui->autoCompleteCheckBox->setChecked(enabled);
+}
+
 QString ConfigDialog::platformRootPath()
 {
     return ui->platformRootLineEdit->text();

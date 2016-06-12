@@ -76,7 +76,7 @@ private:
     void readSettings();
     void writeSettings();
 
-    void updateEditorFont();
+    void updateEditorSettings();
 
     QString makeProjectForCurrent();
 

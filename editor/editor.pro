@@ -25,7 +25,8 @@ SOURCES += main.cpp\
     errormarker.cpp \
     searchwidget.cpp \
     tooltip.cpp \
-    codemodel.cpp
+    codemodel.cpp \
+    autocompletemenu.cpp
 
 HEADERS  += \
     projectwindow.h \
@@ -39,7 +40,8 @@ HEADERS  += \
     errormarker.h \
     searchwidget.h \
     tooltip.hpp \
-    codemodel.hpp
+    codemodel.hpp \
+    autocompletemenu.hpp
 
 FORMS    += \
     projectwindow.ui \

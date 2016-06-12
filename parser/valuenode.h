@@ -24,6 +24,8 @@ public:
 
     string getStringValue() const;
 
+    string toString() const;
+
     bool getSwitchValue() const;
 
     AST *deepCopy();

@@ -27,6 +27,7 @@ public:
     QStringList getTypes();
     QStringList getFunctions();
     QStringList getObjectNames();
+    QString getFunctionSyntax(QString symbol);
     QList<LangError> getErrors();
     void updateCodeAnalysis(QString code, QString platformRootPath);
 

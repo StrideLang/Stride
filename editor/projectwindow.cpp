@@ -602,19 +602,19 @@ void ProjectWindow::openOptionsDialog()
 {
     // First set current values
     ConfigDialog config(this);
-    config.setFont(
-                QFont(m_options["editor.fontFamily"].toString(),
-                      m_options["editor.fontSize"].toFloat(),
+    QFont font = QFont(m_options["editor.fontFamily"].toString(),
+            m_options["editor.fontSize"].toDouble(),
             m_options["editor.fontWeight"].toInt(),
-            m_options["editor.fontItalic"].toBool()
-            )
-            );
+            m_options["editor.fontItalic"].toBool());
+    font.setPointSizeF(m_options["editor.fontSize"].toDouble()); // Font constructor takes int
+    config.setFont(font);
+
+    config.setAutoComplete(m_options["editor.autoComplete"].toBool());
 
     QMap<QString, QTextCharFormat> formats = m_highlighter->formats();
     config.setHighlighterFormats(formats);
 
     config.setPlatformRootPath(m_environment["platformRootPath"].toString());
-
 
     // Connect
     connect(&config, SIGNAL(requestHighlighterPreset(int)),
@@ -625,14 +625,15 @@ void ProjectWindow::openOptionsDialog()
     int result = config.exec();
     // Get values back
     if (result == QDialog::Accepted) {
-        m_font = config.font();
-        updateEditorFont();
-        m_options["editor.fontFamily"] = m_font.family();
-        m_options["editor.fontSize"] = m_font.pointSizeF();
-        m_options["editor.fontWeight"] = m_font.weight();
-        m_options["editor.fontItalic"] = m_font.italic();
+        QFont font = config.font();
+        m_options["editor.fontFamily"] = font.family();
+        m_options["editor.fontSize"] = font.pointSizeF();
+        m_options["editor.fontWeight"] = font.weight();
+        m_options["editor.fontItalic"] = font.italic();
+        m_options["editor.autoComplete"] = config.autoComplete();
         m_highlighter->setFormats(config.highlighterFormats());
 
+        updateEditorSettings();
         m_environment["platformRootPath"] = config.platformRootPath();
         writeSettings();
     }
@@ -712,20 +713,14 @@ void ProjectWindow::readSettings()
 {
     QSettings settings("StreamStack", "StreamStackEdit", this);
     settings.beginGroup("project");
-
-    QString fontFamily = settings.value("editor.fontFamily", "Courier").toString();
-    qreal fontSize = settings.value("editor.fontSize", 10.0).toFloat();
-    int fontWeight = settings.value("editor.fontSize", QFont::Normal).toInt();
-    bool fontItalic = settings.value("editor.fontItalic", false).toBool();
-    m_font = QFont(fontFamily, fontSize, fontWeight, fontItalic);
-    m_font.setPointSizeF(fontSize);
-    updateEditorFont();
-    m_options["editor.fontFamily"] = fontFamily;
-    m_options["editor.fontSize"] = m_font.pointSizeF();
-    m_options["editor.fontWeight"] = m_font.weight();
-    m_options["editor.fontItalic"] = m_font.italic();
-
+    m_options["editor.fontFamily"] = settings.value("editor.fontFamily", "Courier").toString();
+    m_options["editor.fontSize"] = settings.value("editor.fontSize", 10.0).toDouble();
+    m_options["editor.fontWeight"] = settings.value("editor.fontSize", QFont::Normal).toInt();
+    m_options["editor.fontItalic"] = settings.value("editor.fontItalic", false).toBool();
+    m_options["editor.autoComplete"] = settings.value("editor.autoComplete", true).toBool();
     settings.endGroup();
+    updateEditorSettings();
+
     settings.beginGroup("highlighter");
     QMap<QString, QTextCharFormat> formats = m_highlighter->formats();
     QStringList keys = settings.childGroups();
@@ -824,15 +819,23 @@ void ProjectWindow::writeSettings()
      settings.endGroup();
 }
 
-void ProjectWindow::updateEditorFont()
+void ProjectWindow::updateEditorSettings()
 {
     for(int i = 0; i < ui->tabWidget->count(); i++) {
-        QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->widget(i));
-        editor->setFont(m_font);
+        QString fontFamily = m_options["editor.fontFamily"].toString();
+        double fontSize = m_options["editor.fontSize"].toDouble();
+        int fontWeight = m_options["editor.fontWeight"].toInt();
+        bool fontItalic= m_options["editor.fontItalic"].toBool();
+        QFont font = QFont(fontFamily, fontSize, fontWeight, fontItalic);
+        font.setPointSizeF(fontSize);  // Font constructor takes int
+        CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->widget(i));
+        editor->setFont(font);
 
         const int tabStop = 4;  // 4 characters
-        QFontMetrics metrics(m_font);
+        QFontMetrics metrics(font);
         editor->setTabStopWidth(tabStop * metrics.width(' '));
+
+        editor->setAutoComplete(m_options["editor.autoComplete"].toBool());
     }
 }
 
@@ -861,7 +864,7 @@ void ProjectWindow::newFile()
 
     int index = ui->tabWidget->insertTab(ui->tabWidget->currentIndex() + 1, editor, "untitled");
     ui->tabWidget->setCurrentIndex(index);
-    updateEditorFont();
+    updateEditorSettings();
     m_highlighter->setDocument(editor->document());
     QObject::connect(editor, SIGNAL(textChanged()), this, SLOT(markModified()));
     editor->setFocus();

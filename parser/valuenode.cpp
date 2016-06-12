@@ -1,4 +1,5 @@
 #include <cassert>
+#include <sstream>
 
 #include "valuenode.h"
 
@@ -68,6 +69,28 @@ string ValueNode::getStringValue() const
 {
     assert(getNodeType() == AST::String);
     return m_stringValue;
+}
+
+string ValueNode::toString() const
+{
+    if (getNodeType() == AST::Real) {
+        stringstream ss(stringstream::in);
+        ss << m_floatValue;
+        return ss.str();
+    } else if (getNodeType() == AST::Int) {
+        stringstream ss(stringstream::in);
+        ss << m_intValue;
+        return ss.str();
+    } else if (getNodeType() == AST::String) {
+        return m_stringValue;
+    } else if (getNodeType() == AST::Switch) {
+        if (m_switch) {
+            return "On";
+        } else {
+            return "Off";
+        }
+    }
+    return "";
 }
 
 bool ValueNode::getSwitchValue() const
