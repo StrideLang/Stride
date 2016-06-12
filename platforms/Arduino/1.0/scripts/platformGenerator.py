@@ -17,34 +17,34 @@ class Generator:
     def __init__(self, out_dir = '',
                  platform_dir = '',
                  debug = False):
-        
+
         self.platform_dir = platform_dir
         self.out_dir = out_dir
-        
+
         self.project_dir = platform_dir + '/project'
-        
-        
+
+
         jsonfile = open(self.out_dir + '/tree.json')
         self.tree = json.load(jsonfile)
-        
+
         self.platform = PlatformFunctions(self.tree, debug)
-        
+
         self.last_num_outs = 0
-        
+
         # TODO get gamma sources and build and install if not available
         # Question: building requires cmake, should binaries be distributed instead?
         # What about secondary deps like portaudio and libsndfile?
         self.log("Building Arduino project")
         self.log("Buiding in directory: " + self.out_dir)
-        
+
         if not os.path.exists(self.out_dir + "/template"):
             os.mkdir(self.out_dir + "/template")
-        
+
         self.out_file = self.out_dir + "/template/template.ino"
-        
+
     def log(self, text):
         print(text)
-    
+
     def write_section_in_file(self, sec_name, code):
         filename = self.out_file
         f = open(filename, 'r')
@@ -60,7 +60,7 @@ class Generator:
         f = open(filename, 'w')
         f.write(text)
         f.close()
-    
+
     def generate_code(self):
         # Generate code from tree
         # TODO These defaults should be set from the platform definition file
@@ -69,90 +69,73 @@ class Generator:
         self.num_out_chnls = 2
         self.num_in_chnls = 2
         self.audio_device = 0
-        
+
         code = self.platform.generate_code(self.tree)
-                
+
         #var_declaration = ''.join(['double stream_%02i;\n'%i for i in range(stream_index)])
         #declare_code = var_declaration + declare_code
-        
+
         template_init_code = templates.get_config_code(self.sample_rate, self.block_size,
                         self.num_out_chnls, self.num_in_chnls, self.audio_device)
 
         globals_code = templates.get_globals_code(code['global_groups'])
         config_code = templates.get_configuration_code(code['global_groups']['initializations'])
-       
+
         shutil.copyfile(self.project_dir + "/template.ino", self.out_file)
         self.write_section_in_file('Includes', globals_code)
         self.write_section_in_file('Init Code', code['header_code'])
         self.write_section_in_file('Config Code', code['init_code'] + template_init_code + config_code)
         self.write_section_in_file('Dsp Code', code['processing_code'])
-        
+
         try:
             ck_out(['astyle', self.out_file ])
         except:
             print("Error running astyle")
-        
-        
+
+
 # Compile --------------------------
     def compile(self):
         import platform
-        
+
         if platform.system() == "Linux":
             #cpp_compiler = self.platform_dir + "/arduino-1.6.8/arduino"
             cpp_compiler = self.platform_dir + "/arduino-1.7.10-linux64/arduino"
-        
+
             flags =  '--upload --board arduino:avr:uno --port /dev/ttyACM1 --pref sketchbook.path=' + self.platform_dir + '/sketchbook'
             args = [cpp_compiler] + flags.split() + [self.out_file]
 
             outtext = ck_out(args)
-        
+
             self.log(outtext)
-        
+
             self.log(outtext)
             self.log("Done.")
-#        elif platform.system() == "Windows":
-#            cpp_compiler = "/usr/bin/c++"
-#        
-#            flags = "-I"+ self.platform_dir +"/include -O3 -DNDEBUG -o " \
-#                + self.out_dir +"/main.cpp.o -c "+ self.out_dir +"/main.cpp"
-#            args = [cpp_compiler] + flags.split()
-#            try:
-#                outtext = ck_out(args)
-#            except:
-#                pass
-#        
-#            self.log(outtext)
-#        
-#            # Link ------------------------
-#            flags = "-O3 -DNDEBUG "+ self.out_dir + "/main.cpp.o -o " \
-#                + self.out_dir +"/app -rdynamic -L " \
-#                + self.platform_dir + "/lib -lGamma -lpthread -lportaudio -lsndfile -lpthread -lportaudio -lsndfile"
-#            args = [cpp_compiler] + flags.split()
-#            try:
-#                outtext = ck_out(args)
-#            except:
-#                pass
-#        
-#            self.log(outtext)
-#            self.log("Done.")
-        
-    
-        
+
+        elif platform.system() == "Windows":
+            cpp_compiler = "C:/Program Files (x86)/Arduino/arduino"
+
+            flags =  '--upload --board arduino:avr:uno --port COM7'
+
+            args = [cpp_compiler] + flags.split() + [self.out_file]
+            outtext = ck_out(args)
+            self.log(outtext)
+            self.log("Done building and uploading.")
+
         elif platform.system() == "Darwin":
             print("Buidling Arduino on OS X.")
             cpp_compiler = "/Applications/Arduino.app/Contents/MacOS/Arduino"
-        
+
             flags =  '--upload --board arduino:avr:uno --port /dev/cu.usbmodem1411' # --pref sketchbook.path=' + self.platform_dir + '/sketchbook'
             args = [cpp_compiler] + flags.split() + [self.out_file]
-            
+
             print(' '.join(args))
             outtext = ck_out(args)
-        
+
             self.log(outtext)
-        
-            self.log("Done.")
+
+            self.log("Done building and uploading.")
 #            cpp_compiler = "/usr/bin/c++"
-#        
+#
 #            flags = "-I"+ self.platform_dir +"/include -O3 -DNDEBUG -o " \
 #                + self.out_dir +"/main.cpp.o -c "+ self.out_dir +"/main.cpp"
 #            args = [cpp_compiler] + flags.split()
@@ -160,9 +143,9 @@ class Generator:
 #                outtext = ck_out(args)
 #            except:
 #                pass
-#        
+#
 #            self.log(outtext)
-#        
+#
 #            # Link ------------------------
 #            flags = "-O3 -DNDEBUG "+ self.out_dir +"/main.cpp.o -o "+ self.out_dir +"/app -rdynamic -L " \
 #                + self.platform_dir + "/lib -lGamma -lpthread -lportaudio -lsndfile -lpthread -lportaudio -lsndfile"
@@ -171,7 +154,7 @@ class Generator:
 #                outtext = ck_out(args)
 #            except:
 #                pass
-#        
+#
 #            self.log(outtext)
 #            self.log("Done.")
         else:
