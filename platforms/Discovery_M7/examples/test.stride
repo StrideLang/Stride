@@ -6,7 +6,7 @@ signal Oscillators[6] {}
 
 #Oscillator(frequency: 0.5 amplitude: 0.3) >> Amod;
 #
-Oscillator(frequency: [440, 443, 437, 880, 885, 887] amplitude: 0.1) >> Oscillators;
+Oscillator (frequency: [440, 443, 437, 880, 885, 887] amplitude: 0.1) >> Oscillators;
 
 Oscillators[1] + Oscillators[2] + Oscillators[3] +
 Oscillators[4] + Oscillators[5] + Oscillators[6]
