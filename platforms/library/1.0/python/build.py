@@ -17,9 +17,12 @@ def build(platform_dir, products_dir, debug = False):
     from platformGenerator import Generator
     
     gen = Generator(products_dir, platform_dir, debug)
+    print("Invoking code generator...")
     gen.generate_code()
-    print("Building done...")
+    print("Code generated.")
+    print("Invoking code compiler...")
     gen.compile()
+    print("Code compiled.")
 
 if __name__ == '__main__':
     import argparse
@@ -34,7 +37,7 @@ if __name__ == '__main__':
 #                        default= cur_path + '/Gamma/tests/modulation.stride_Products'
 #                        default= cur_path + '/Arduino/examples/test.stride_Products'
 #                        default='/home/andres/Documents/src/Stride/StreamStack/platforms/Arduino/examples/test.stride_Products'
-                        default= cur_path + '/Gamma/examples/testing.stride_Products'
+                        default= cur_path + '/Gamma/examples/basic.stride_Products'
                         )
     parser.add_argument("platform_dir",
                         help="The directory of the platform to be used",
