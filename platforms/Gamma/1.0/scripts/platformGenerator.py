@@ -85,7 +85,7 @@ class Generator:
         self.write_section_in_file('Dsp Code', code['processing_code'])
         
         try:
-            ck_out(['astyle', self.out_dir + "/main.cpp" ], shell=True)
+            ck_out(['astyle', self.out_file ])
         except:
             print("Error running astyle")
         
