@@ -20,11 +20,11 @@ class Generator:
                  platform_dir = '',
                  debug = False):
 
-        self.platform_dir = platform_dir
         self.out_dir = out_dir
+        self.platform_dir = platform_dir
 
         self.project_dir = platform_dir + '/project'
-
+        self.out_file = self.out_dir + "/project/Src/main.cpp"
 
         jsonfile = open(self.out_dir + '/tree.json')
         self.tree = json.load(jsonfile)
@@ -42,8 +42,6 @@ class Generator:
         if not os.path.exists(self.out_dir + "/project"):
             shutil.copytree(self.platform_dir + '/project', self.out_dir + "/project")
 
-        self.out_file = self.out_dir + "/project/Src/main.cpp"
-
     def log(self, text):
         print(text)
 
@@ -52,7 +50,7 @@ class Generator:
         f = open(filename, 'r')
         text = f.read()
         f.close()
-    #    log(text)
+
         start_index = text.find("//[[%s]]"%sec_name)
         end_index = text.find("//[[/%s]]"%sec_name, start_index)
         if start_index <0 or end_index < 0:
@@ -71,6 +69,8 @@ class Generator:
         self.num_out_chnls = 2
         self.num_in_chnls = 2
         self.audio_device = 0
+
+        self.log("Platform code generation starting...")
 
         code = self.platform.generate_code(self.tree)
 
@@ -94,14 +94,31 @@ class Generator:
         self.write_section_in_file('Config Code', code['init_code'] + template_init_code + config_code)
         self.write_section_in_file('Dsp Code', code['processing_code'])
 
-        ck_out(['astyle', self.out_file ])
-
-
-# Compile --------------------------
-    def compile(self):
         import platform
 
         if platform.system() == "Linux":
+            try:
+                ck_out(['astyle', self.out_file ])
+            except:
+                self.log("Error running astyle!")
+        else:
+            self.log("Platform '%s' not supported!"%platform.system())
+
+        self.log("Platform code generation finished!")
+
+# Compile --------------------------
+    def compile(self):
+
+        self.log("Platform code compilation started...")
+
+        import platform
+
+        if platform.system() == "Windows":
+
+            self.log("Windows NOT supported yet.")
+
+        elif platform.system() == "Linux":
+
             args = ['cmake', '.', '-DSTRIDE_PLATFORM_ROOT=' + self.platform_dir ]
             outtext = ck_out(args, cwd=self.out_dir + "/project")
             self.log(outtext)
@@ -122,30 +139,11 @@ class Generator:
             outtext = ck_out(args, cwd=self.out_dir + "/project")
             self.log(outtext)
 
-            self.log("Done building and uploading.")
+        elif platform.system() == "Darwin":
 
-        elif platform.system() == "Windows":
-            args = ['cmake', '.', '-DSTRIDE_PLATFORM_ROOT=' + self.platform_dir ]
-            outtext = ck_out(args, cwd=self.out_dir + "/project")
-            self.log(outtext)
-
-            args = ['make', '-j4']
-            outtext = ck_out(args, cwd=self.out_dir + "/project")
-            self.log(outtext)
-
-            args = ['arm-none-eabi-objcopy', '-O',  'binary', 'app.elf', 'app.bin']
-            outtext = ck_out(args, cwd=self.out_dir + "/project")
-            self.log(outtext)
-
-            args = ['C:/Program Files (x86)/STMicroelectronics/STM32 ST-LINK Utility/ST-LINK Utility/ST-LINK_CLI', '-P', 'app.bin', '0x8000000']
-            outtext = ck_out(args, cwd=self.out_dir + "/project")
-            self.log(outtext)
-
-            args = ['C:/Program Files (x86)/STMicroelectronics/STM32 ST-LINK Utility/ST-LINK Utility/ST-LINK_CLI', '-rst']
-            outtext = ck_out(args, cwd=self.out_dir + "/project")
-            self.log(outtext)
-
-            self.log("Done building and uploading.")
+            self.log("OS X NOT supported yet.")
 
         else:
             self.log("Platform '%s' not supported!"%platform.system())
+
+        self.log("Platform code compilation finished!")

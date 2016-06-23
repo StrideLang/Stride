@@ -171,7 +171,7 @@ class Generator:
             args = [cpp_compiler,
                     "-O3",
                     "-DNDEBUG",
-                    self.out_dir +"/main.cpp.o",
+                    self.out_file + ".o",
                     "-o" + self.out_dir +"/app",
                     "-rdynamic",
                     "-L" + self.platform_dir + "/lib"]
