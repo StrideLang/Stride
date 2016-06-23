@@ -9,12 +9,12 @@ from BaseCTemplate import BaseCTemplate
 
 
 class Templates(BaseCTemplate):
-    def __init__(self, domain_rate = 44100):
+    def __init__(self, domain_rate = 48000):
         super(Templates, self).__init__(domain_rate)
         
         self.real_type = 'float32_t'
         
-    def get_config_code(self, sample_rate = 44100, block_size = 512,
+    def get_config_code(self, sample_rate = 48000, block_size = 512,
                         num_out_chnls = 2, num_in_chnls = 2, device = -1):
          config_template_code = ''
 #        config_template_code = '''

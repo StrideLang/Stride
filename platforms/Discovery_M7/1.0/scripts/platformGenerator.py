@@ -127,7 +127,7 @@ class Generator:
             outtext = ck_out(args, cwd=self.out_dir + "/project")
             self.log(outtext)
 
-            args = ['arm-none-eabi-objcopy', '-O',  'binary', 'app.elf', 'app.bin']
+            args = ['arm-none-eabi-objcopy', '-O', 'binary', 'app.elf', 'app.bin']
             outtext = ck_out(args, cwd=self.out_dir + "/project")
             self.log(outtext)
 
@@ -144,6 +144,7 @@ class Generator:
             self.log("OS X NOT supported yet.")
 
         else:
+
             self.log("Platform '%s' not supported!"%platform.system())
 
         self.log("Platform code compilation finished!")
