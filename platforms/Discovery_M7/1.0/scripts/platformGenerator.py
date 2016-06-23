@@ -87,7 +87,8 @@ class Generator:
         if not os.path.exists(self.out_dir + "/project"):
             shutil.copytree(self.project_dir, self.out_dir + "/project")
 
-        additional_init = "static float32_t Fs = %f;\n"%self.sample_rate
+        #additional_init = "static float32_t Fs = %f;\n"%self.sample_rate
+	additional_init = ""
 
         self.write_section_in_file('Includes', globals_code)
         self.write_section_in_file('Init Code', additional_init + code['header_code'])
@@ -131,13 +132,39 @@ class Generator:
             outtext = ck_out(args, cwd=self.out_dir + "/project")
             self.log(outtext)
 
-            args = [self.platform_dir + '/stlink/st-flash', '--reset', 'write', 'app.bin', '0x8000000']
-            outtext = ck_out(args, cwd=self.out_dir + "/project")
-            self.log(outtext)
+            openOCD_dir = "/opt/gnuarmeclipse/openocd/0.10.0-201601101000-dev/scripts"
+            openOCD_bin = "../bin/openocd"
+            openOCD_cfg_file = self.platform_dir + "/openOCD/stm32f746g_disco.cfg"
+            #openOCD_cfg_file = "/home/andres/code/Stride/streamstack/platforms/Discovery_M7/1.0/openOCD/stm32f746g_disco.cfg"            
+            openOCD_bin_file = self.out_dir + "/project/app.bin"
 
-            args = [self.platform_dir + '/stlink/st-flash', '-rst']
-            outtext = ck_out(args, cwd=self.out_dir + "/project")
-            self.log(outtext)
+            self.log(openOCD_cfg_file)
+
+            args = [openOCD_bin,
+                    '-f ' + openOCD_cfg_file,
+                    '-c init',
+                    '-c "reset init"',
+                    '-c halt',
+                    '-c "flash write_image erase ' + openOCD_bin_file + ' 0x08000000"',
+                    '-c reset',
+                    '-c shutdown']
+
+            command_line = 'cd ' + openOCD_dir + ' && ' + ' '.join(args)          
+            self.log(command_line)
+
+            # ck_out is not working properly
+            os.system(command_line)
+
+            #outtext = ck_out(args, cwd=openOCD_dir)
+            #self.log(outtext)
+
+#            args = [self.platform_dir + '/stlink/st-flash', '--reset', 'write', 'app.bin', '0x8000000']
+#            outtext = ck_out(args, cwd=self.out_dir + "/project")
+#            self.log(outtext)
+#
+#            args = [self.platform_dir + '/stlink/st-flash', '-rst']
+#            outtext = ck_out(args, cwd=self.out_dir + "/project")
+#            self.log(outtext)
 
         elif platform.system() == "Darwin":
 

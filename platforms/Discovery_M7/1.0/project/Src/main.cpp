@@ -38,7 +38,7 @@
 #include "gpio.h"
 
 /* USER CODE BEGIN Includes */
-#include "Codec.h"
+#include "codec.h"
 #include "math.h"
 #include "arm_math.h"
 
@@ -76,13 +76,14 @@ static uint32_t InputVolume = 0xA0;
 
 
 //[[Init Code]]
-static float32_t PhaseInc_f32[4];//
-static float32_t Phase_f32[4];//
-static float32_t Partials_f32[4];//
-static float32_t Sample_f32;//
-static q15_t Sample_q15;//
+static float32_t PhaseInc_f32[4];
+static float32_t Phase_f32[4];
+static float32_t Partials_f32[4];
+static float32_t Sample_f32;
+static q15_t Sample_q15;
 
-static float32_t Fs = 48000;
+//Rate for CODEC hardcoded 'AUDIO_FREQUENCY_48K'
+//static float32_t Fs = 48000;
 
 
 static float32_t Freq[4] = { 110.00, 3.0, 440.0, 10.0 };
@@ -267,15 +268,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	if (GPIO_Pin == GPIO_PIN_11 )
 	{
 
-//        Freq[0] += 5.0f * 1.1f;
-//        Freq[1] += 0.5f * 1.1f;
-//        Freq[2] += 10.0f * 1.1f;
-//        Freq[3] += 1.0f * 1.1f;
-
-//        for ( uint8_t i = 0; i < 4; i++)
-//        {
-//            PhaseInc_f32[i] = 2 * PI * Freq[i] / Fs;
-//        }
 	}
 }
 
