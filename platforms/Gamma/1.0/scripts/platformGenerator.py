@@ -166,7 +166,7 @@ class Generator:
             self.log(outtext)
         
             # Link ------------------------
-            gamma_flags = ["-rdynamic", "-lGamma", "-lpthread", "-lportaudio", "-lsndfile"]
+            gamma_flags = ["-lGamma", "-lpthread", "-lportaudio", "-lsndfile"]
             
             args = [cpp_compiler,
                     "-O3",
@@ -175,7 +175,7 @@ class Generator:
                     "-o" + self.out_dir +"/app",
                     "-rdynamic",
                     "-L" + self.platform_dir + "/lib"]
-                    
+            
             args += gamma_flags + self.build_flags + self.link_flags 
             
             self.log(args)
