@@ -149,7 +149,7 @@ class Generator:
                     '-c reset',
                     '-c shutdown']
 
-            command_line = 'cd ' + openOCD_dir + ' && ' + ' '.join(args)          
+            command_line = 'cd ' + openOCD_dir + ' && ' + ' '.join(args)
             self.log(command_line)
 
             # ck_out is not working properly
@@ -167,6 +167,52 @@ class Generator:
 #            self.log(outtext)
 
         elif platform.system() == "Darwin":
+
+            args = ['cmake', '.', '-DSTRIDE_PLATFORM_ROOT=' + self.platform_dir]
+#            command_line = 'cd ' + self.out_dir + '/project' ' & ' + ' '.join(args)
+#            print(command_line)
+#            os.system(command_line)
+            print(' '.join(args))
+            outtext = ck_out(args, cwd=self.out_dir + "/project")
+#            self.log(outtext)
+
+            args = ['make', '-j4']
+            outtext = ck_out(args, cwd=self.out_dir + "/project")
+#            self.log(outtext)
+
+            args = ['arm-none-eabi-objcopy', '-O', 'binary', 'app.elf', 'app.bin']
+            outtext = ck_out(args, cwd=self.out_dir + "/project")
+#            self.log(outtext)
+            
+            openOCD_dir = "/Applications/GNU\ ARM\ Eclipse/OpenOCD/0.10.0-201601101000-dev/scripts"
+            openOCD_bin = "../bin/openocd"
+#            openOCD_cfg_file = self.platform_dir + "/openOCD/stm32f746g_disco.cfg"
+            openOCD_cfg_file = "/Users/pacifist/Documents/Qt/StreamStack/platforms/Discovery_M7/1.0/openOCD/stm32f746g_disco.cfg"            
+            openOCD_bin_file = self.out_dir + "/project/app.bin"
+
+
+            args = [
+#                    'cd',
+#                    openOCD_dir,
+#                    '&',
+                    openOCD_bin,
+                    '-f ' + openOCD_cfg_file,
+                    '-c init',
+                    '-c "reset init"',
+                    '-c halt',
+                    '-c "flash write_image erase ' + openOCD_bin_file + ' 0x08000000"',
+                    '-c reset',
+                    '-c shutdown']
+
+            print(' '.join(args))
+
+#            outtext = ck_out(args)
+            
+            command_line = 'cd ' + openOCD_dir + ' & ' + ' '.join(args)
+            self.log(command_line)
+#
+#            # ck_out is not working properly
+            os.system(command_line)
 
             self.log("OS X NOT supported yet.")
 
