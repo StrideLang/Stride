@@ -110,7 +110,7 @@ class Generator:
                 self.log("Running astyle...")
                 ck_out(['/usr/local/bin/astyle', self.out_file ])
             except:
-                self.log("Error running astyle!")          
+                self.log("Error running astyle!")
         else:
             self.log("Platform '%s' not supported!"%platform.system())
 
@@ -194,13 +194,13 @@ class Generator:
             # args = ['usr/bin/make']
             # outtext = ck_out(args, cwd=build_dir)
 
-            # The following two lines work when run from: Spyder but NOT StreamStacker
-            # StreamStacker >> make: *** No targets specified and no makefile found.  Stop.
+            # The following two lines work when run from: Spyder and StreamStacker
             make_cmd =  'PATH=$PATH\:/usr/local/bin/:/usr/bin/ ; export PATH & make -j4'
             Popen(make_cmd, cwd=build_dir, shell=True)
 
-
-            # THE NEXT COMMAND IS EXECUTING BEFORE MAKE FINISHES!!!
+            # TODO THE NEXT COMMAND IS EXECUTING BEFORE MAKE FINISHES!!!
+            # THIS IS NOT IDEAL // HOW LONG SHOULD WE WAIT
+            # PERHAPS WE CHECK IF 'app.elf' EXISTS AND THEN WE WAIT FOR SOME TIME
             time.sleep(3)
 
             # The following two lines work when run from: Spyder and StreamStacker
@@ -213,8 +213,7 @@ class Generator:
             openOCD_cfg_file = self.platform_dir + "/openOCD/stm32f746g_disco.cfg"
             openOCD_bin_file = self.out_dir + "/project/app.bin"
 
-            args = [
-                    openOCD_bin,
+            args = [openOCD_bin,
                     '-f' + openOCD_cfg_file,
                     '-c init',
                     '-c reset init',
@@ -222,7 +221,6 @@ class Generator:
                     '-c flash write_image erase ' + openOCD_bin_file + ' 0x08000000',
                     '-c reset',
                     '-c shutdown']
-
 
             outtext = ck_out(args, cwd=openOCD_dir  )
 
