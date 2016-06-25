@@ -9,8 +9,10 @@ Discovery_M7
 
 import os
 from subprocess import check_output as ck_out
+from subprocess import Popen
 import shutil
 import json
+import time
 from strideplatform import PlatformFunctions
 
 from platformTemplates import templates # Perhaps we should acces this through PlatformFunctions ?
@@ -88,7 +90,7 @@ class Generator:
             shutil.copytree(self.project_dir, self.out_dir + "/project")
 
         #additional_init = "static float32_t Fs = %f;\n"%self.sample_rate
-	additional_init = ""
+        additional_init = ""
 
         self.write_section_in_file('Includes', globals_code)
         self.write_section_in_file('Init Code', additional_init + code['header_code'])
@@ -99,9 +101,16 @@ class Generator:
 
         if platform.system() == "Linux":
             try:
+                self.log("Running astyle...")
                 ck_out(['astyle', self.out_file ])
             except:
                 self.log("Error running astyle!")
+        elif platform.system() == "Darwin":
+            try:
+                self.log("Running astyle...")
+                ck_out(['/usr/local/bin/astyle', self.out_file ])
+            except:
+                self.log("Error running astyle!")          
         else:
             self.log("Platform '%s' not supported!"%platform.system())
 
@@ -162,53 +171,60 @@ class Generator:
 
         elif platform.system() == "Darwin":
 
-            args = ['cmake', '.', '-DSTRIDE_PLATFORM_ROOT=' + self.platform_dir]
-#            command_line = 'cd ' + self.out_dir + '/project' ' & ' + ' '.join(args)
-#            print(command_line)
-#            os.system(command_line)
-            print(' '.join(args))
-            outtext = ck_out(args, cwd=self.out_dir + "/project")
-#            self.log(outtext)
+            build_dir = self.out_dir + '/project'
 
-            args = ['make', '-j4']
-            outtext = ck_out(args, cwd=self.out_dir + "/project")
-#            self.log(outtext)
+            # The following two lines work when run from: Spyder
+            # StreamStacker >> Completes execution without having run cmake
+            # args = ['cmake', '.', '-DSTRIDE_PLATFORM_ROOT=' + self.platform_dir]
+            # outtext = ck_out(args, cwd=build_dir)
 
-            args = ['arm-none-eabi-objcopy', '-O', 'binary', 'app.elf', 'app.bin']
-            outtext = ck_out(args, cwd=self.out_dir + "/project")
-#            self.log(outtext)
-            
-            openOCD_dir = "/Applications/GNU\ ARM\ Eclipse/OpenOCD/0.10.0-201601101000-dev/scripts"
+            # The following two lines work when run from: Spyder and StreamStacker
+            args = ['/usr/local/bin/cmake', '.', '-DSTRIDE_PLATFORM_ROOT=' + self.platform_dir]
+            outtext = ck_out(args, cwd=build_dir)
+
+            # The following two lines work when run from: StreamStacker and Spyder
+            # cmake_cmd = 'PATH=$PATH\:/usr/local/bin/ ; export PATH & cmake . -DSTRIDE_PLATFORM_ROOT=' + self.platform_dir
+            # Popen(cmake_cmd, cwd=build_dir, shell=True)
+
+            # The following two lines DO NOT WORK with Spyder
+            # OSError: [Errno 2] No such file or directory
+            # This might be due to not finding gcc and g++
+            # The following two lines DO NOT WORK with StreamStacker
+            # StreamStacker >> Completes execution without having run make
+            # args = ['usr/bin/make']
+            # outtext = ck_out(args, cwd=build_dir)
+
+            # The following two lines work when run from: Spyder but NOT StreamStacker
+            # StreamStacker >> make: *** No targets specified and no makefile found.  Stop.
+            make_cmd =  'PATH=$PATH\:/usr/local/bin/:/usr/bin/ ; export PATH & make -j4'
+            Popen(make_cmd, cwd=build_dir, shell=True)
+
+
+            # THE NEXT COMMAND IS EXECUTING BEFORE MAKE FINISHES!!!
+            time.sleep(3)
+
+            # The following two lines work when run from: Spyder and StreamStacker
+            args = ['/usr/local/bin/arm-none-eabi-objcopy', '-O', 'binary', 'app.elf', 'app.bin']
+            outtext = ck_out(args, cwd=build_dir)
+
+            # The following lines work when run from: Spyder and StreamStacker
+            openOCD_dir = "/Applications/GNU ARM Eclipse/OpenOCD/0.10.0-201601101000-dev/scripts"
             openOCD_bin = "../bin/openocd"
-#            openOCD_cfg_file = self.platform_dir + "/openOCD/stm32f746g_disco.cfg"
-            openOCD_cfg_file = "/Users/pacifist/Documents/Qt/StreamStack/platforms/Discovery_M7/1.0/openOCD/stm32f746g_disco.cfg"            
+            openOCD_cfg_file = self.platform_dir + "/openOCD/stm32f746g_disco.cfg"
             openOCD_bin_file = self.out_dir + "/project/app.bin"
 
-
             args = [
-#                    'cd',
-#                    openOCD_dir,
-#                    '&',
                     openOCD_bin,
-                    '-f ' + openOCD_cfg_file,
+                    '-f' + openOCD_cfg_file,
                     '-c init',
-                    '-c "reset init"',
+                    '-c reset init',
                     '-c halt',
-                    '-c "flash write_image erase ' + openOCD_bin_file + ' 0x08000000"',
+                    '-c flash write_image erase ' + openOCD_bin_file + ' 0x08000000',
                     '-c reset',
                     '-c shutdown']
 
-            print(' '.join(args))
 
-#            outtext = ck_out(args)
-            
-            command_line = 'cd ' + openOCD_dir + ' & ' + ' '.join(args)
-            self.log(command_line)
-#
-#            # ck_out is not working properly
-            os.system(command_line)
-
-            self.log("OS X NOT supported yet.")
+            outtext = ck_out(args, cwd=openOCD_dir  )
 
         else:
 
