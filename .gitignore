@@ -18,3 +18,6 @@ platforms/Arduino/1.0/scripts/*.pyc
 platforms/Discovery_M7/1.0/scripts/*.pyc
 platforms/Gamma/1.0/scripts/*.pyc
 platforms/library/1.0/python/*.pyc
+
+platforms/*/examples/*_Products*
+platforms/*/tests/*_Products*
