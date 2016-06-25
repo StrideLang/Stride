@@ -179,6 +179,7 @@ class Generator:
             # The following two lines work when run from: Spyder and StreamStacker
             args = ['/usr/local/bin/cmake', '.', '-DSTRIDE_PLATFORM_ROOT=' + self.platform_dir]
             outtext = ck_out(args, cwd=build_dir)
+            self.log(outtext)
 
             # The following two lines work when run from: StreamStacker and Spyder
             # cmake_cmd = 'PATH=$PATH\:/usr/local/bin/ ; export PATH & cmake . -DSTRIDE_PLATFORM_ROOT=' + self.platform_dir
@@ -196,14 +197,17 @@ class Generator:
             make_cmd =  'PATH=$PATH\:/usr/local/bin/:/usr/bin/ ; export PATH & make -j4'
             Popen(make_cmd, cwd=build_dir, shell=True)
 
-            # TODO THE NEXT COMMAND IS EXECUTING BEFORE MAKE FINISHES!!!
-            # THIS IS NOT IDEAL // HOW LONG SHOULD WE WAIT
-            # PERHAPS WE CHECK IF 'app.elf' EXISTS AND THEN WE WAIT FOR SOME TIME
-            time.sleep(3)
+            # Since 'make' is executing in a "differet" shell we need to wait for it to complete
+            # 50 / 0.1 sec = 5 sec
+            time_out = 50
+            while (not os.path.isfile(build_dir + '/app.elf') and time_out):
+                time.sleep(0.1)
+                time_out -= 1
 
             # The following two lines work when run from: Spyder and StreamStacker
             args = ['/usr/local/bin/arm-none-eabi-objcopy', '-O', 'binary', 'app.elf', 'app.bin']
             outtext = ck_out(args, cwd=build_dir)
+            self.log(outtext)
 
             # The following lines work when run from: Spyder and StreamStacker
             openOCD_dir = "/Applications/GNU ARM Eclipse/OpenOCD/0.10.0-201601101000-dev/scripts"
@@ -221,6 +225,7 @@ class Generator:
                     '-c shutdown']
 
             outtext = ck_out(args, cwd=openOCD_dir  )
+            self.log(outtext)
 
         else:
 

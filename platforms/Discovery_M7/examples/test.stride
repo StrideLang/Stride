@@ -4,24 +4,13 @@ import generators
 
 signal Oscillators[6] {}
 
-#Oscillator(frequency: 0.5 amplitude: 0.3) >> Amod;
-#
 Oscillator (frequency: [440, 443, 437, 880, 885, 887] amplitude: 0.1) >> Oscillators;
 
-Oscillators[1] + Oscillators[2] + Oscillators[3] +
-Oscillators[4] + Oscillators[5] + Oscillators[6]
- >> Level(gain: 0.5) >> AudioOut;
-
-
-#signal Frequency2 { default: 440 }
-
-#reaction Test {
-#	streams: [
-#		Frequency2 + 10 >> Frequency2;
-#	]
-#}
-
-#Impulse(frequency:3) == 1 >> Test();
-
-#Oscillator(frequency: Frequency2) >> Level(gain:0.2) >> AudioOut;
-
+Oscillators[1]
++ Oscillators[2] 
++ Oscillators[3]
++ Oscillators[4]
++ Oscillators[5]
++ Oscillators[6]
+>> Level(gain: 0.5) 
+>> AudioOut;

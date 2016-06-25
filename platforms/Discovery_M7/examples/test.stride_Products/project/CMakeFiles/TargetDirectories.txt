@@ -1,0 +1,3 @@
+/Users/pacifist/Documents/Qt/StreamStack/platforms/Discovery_M7/examples/test.stride_Products/project/CMakeFiles/edit_cache.dir
+/Users/pacifist/Documents/Qt/StreamStack/platforms/Discovery_M7/examples/test.stride_Products/project/CMakeFiles/rebuild_cache.dir
+/Users/pacifist/Documents/Qt/StreamStack/platforms/Discovery_M7/examples/test.stride_Products/project/CMakeFiles/app.elf.dir
