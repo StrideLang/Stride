@@ -7,6 +7,7 @@ Created on Mon Apr 25 08:29:07 2016
 
 import os
 from subprocess import check_output as ck_out
+import platform
 import shutil
 import json
 from strideplatform import PlatformFunctions
@@ -70,6 +71,8 @@ class Generator:
         self.num_in_chnls = 2
         self.audio_device = 0
 
+        self.log("Platform code generation starting...")
+
         code = self.platform.generate_code(self.tree)
 
         #var_declaration = ''.join(['double stream_%02i;\n'%i for i in range(stream_index)])
@@ -87,75 +90,68 @@ class Generator:
         self.write_section_in_file('Config Code', code['init_code'] + template_init_code + config_code)
         self.write_section_in_file('Dsp Code', code['processing_code'])
 
-        try:
-            ck_out(['astyle', self.out_file ])
-        except:
-            print("Error running astyle")
+        if platform.system() == "Linux":
+            try:
+                self.log("Running astyle...")
+                ck_out(['astyle', self.out_file ])
+            except:
+                self.log("Error running astyle!")
+        elif platform.system() == "Darwin":
+            try:
+                self.log("Running astyle...")
+                ck_out(['/usr/local/bin/astyle', self.out_file ])
+            except:
+                self.log("Error running astyle!")
+        else:
+            self.log("Platform '%s' not supported!"%platform.system())
 
+        self.log("Platform code generation finished!")
 
 # Compile --------------------------
     def compile(self):
-        import platform
+
+        self.log("Platform code compilation started...")
 
         if platform.system() == "Linux":
-            #cpp_compiler = self.platform_dir + "/arduino-1.6.8/arduino"
-            cpp_compiler = self.platform_dir + "/arduino-1.7.10-linux64/arduino"
 
+            self.log("Buidling and uploading Arduino on Linux...")
+
+            cpp_compiler = self.platform_dir + "/arduino-1.7.10-linux64/arduino"
             flags =  '--upload --board arduino:avr:uno --port /dev/ttyACM1 --pref sketchbook.path=' + self.platform_dir + '/sketchbook'
             args = [cpp_compiler] + flags.split() + [self.out_file]
 
             outtext = ck_out(args)
-
             self.log(outtext)
 
-            self.log(outtext)
-            self.log("Done.")
+            self.log("Done building and uploading.")
 
         elif platform.system() == "Windows":
+
+            self.log("Buidling and uploading Arduino on Windows...")
+
             cpp_compiler = "C:/Program Files (x86)/Arduino/arduino"
-
             flags =  '--upload --board arduino:avr:uno --port COM7'
-
             args = [cpp_compiler] + flags.split() + [self.out_file]
+
             outtext = ck_out(args)
             self.log(outtext)
+
             self.log("Done building and uploading.")
 
         elif platform.system() == "Darwin":
-            print("Buidling Arduino on OS X.")
-            cpp_compiler = "/Applications/Arduino.app/Contents/MacOS/Arduino"
 
+            self.log("Buidling and uploading Arduino on OS X..")
+
+            cpp_compiler = "/Applications/Arduino.app/Contents/MacOS/Arduino"
             flags =  '--upload --board arduino:avr:uno --port /dev/cu.usbmodem1411' # --pref sketchbook.path=' + self.platform_dir + '/sketchbook'
             args = [cpp_compiler] + flags.split() + [self.out_file]
 
-            print(' '.join(args))
             outtext = ck_out(args)
-
             self.log(outtext)
 
             self.log("Done building and uploading.")
-#            cpp_compiler = "/usr/bin/c++"
-#
-#            flags = "-I"+ self.platform_dir +"/include -O3 -DNDEBUG -o " \
-#                + self.out_dir +"/main.cpp.o -c "+ self.out_dir +"/main.cpp"
-#            args = [cpp_compiler] + flags.split()
-#            try:
-#                outtext = ck_out(args)
-#            except:
-#                pass
-#
-#            self.log(outtext)
-#
-#            # Link ------------------------
-#            flags = "-O3 -DNDEBUG "+ self.out_dir +"/main.cpp.o -o "+ self.out_dir +"/app -rdynamic -L " \
-#                + self.platform_dir + "/lib -lGamma -lpthread -lportaudio -lsndfile -lpthread -lportaudio -lsndfile"
-#            args = [cpp_compiler] + flags.split()
-#            try:
-#                outtext = ck_out(args)
-#            except:
-#                pass
-#
-#            self.log(outtext)
-#            self.log("Done.")
+
         else:
             self.log("Platform '%s' not supported!"%platform.system())
+
+        self.log("Platform code compilation finished!")

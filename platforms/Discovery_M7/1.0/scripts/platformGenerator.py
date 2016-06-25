@@ -10,6 +10,7 @@ Discovery_M7
 import os
 from subprocess import check_output as ck_out
 from subprocess import Popen
+import platform
 import shutil
 import json
 import time
@@ -97,8 +98,6 @@ class Generator:
         self.write_section_in_file('Config Code', code['init_code'] + template_init_code + config_code)
         self.write_section_in_file('Dsp Code', code['processing_code'])
 
-        import platform
-
         if platform.system() == "Linux":
             try:
                 self.log("Running astyle...")
@@ -120,8 +119,6 @@ class Generator:
     def compile(self):
 
         self.log("Platform code compilation started...")
-
-        import platform
 
         if platform.system() == "Windows":
 
@@ -157,6 +154,7 @@ class Generator:
 
             outtext = ck_out(args, cwd=openOCD_dir)
             self.log(outtext)
+
 #
 #           THE FOLLOWING CODE CAN BE REMOVED
 #
