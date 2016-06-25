@@ -194,15 +194,22 @@ class Generator:
             # outtext = ck_out(args, cwd=build_dir)
 
             # The following two lines work when run from: Spyder and StreamStacker
+            # TODO Find out how to capture output
             make_cmd =  'PATH=$PATH\:/usr/local/bin/:/usr/bin/ ; export PATH & make -j4'
             Popen(make_cmd, cwd=build_dir, shell=True)
 
             # Since 'make' is executing in a "differet" shell we need to wait for it to complete
-            # 50 / 0.1 sec = 5 sec
+            # 50 * 0.1 sec = 5 sec
             time_out = 50
             while (not os.path.isfile(build_dir + '/app.elf') and time_out):
                 time.sleep(0.1)
                 time_out -= 1
+
+            # Wait for the file to be written to
+            # TODO THIS IS NOT A PROPER SOLUTION!
+            # 1 second might not be enough
+            if os.stat(build_dir + '/app.elf').st_size == 0:
+                time.sleep(1)
 
             # The following two lines work when run from: Spyder and StreamStacker
             args = ['/usr/local/bin/arm-none-eabi-objcopy', '-O', 'binary', 'app.elf', 'app.bin']
