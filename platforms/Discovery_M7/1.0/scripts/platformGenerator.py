@@ -251,7 +251,6 @@ class Generator:
                     outtext = ck_out(args)
                 object_list.write('Build/' + source + '.o' + '\n')
 
-
             object_list.close()
 
             args =  cxx_linker \
@@ -328,7 +327,7 @@ class Generator:
 #           THE FOLLOWING CODE CAN BE REMOVED // STLINK REPLACED WITH OPENOCD
 #
 
-#            args = [self.platform_dir + '/stlink/st-flash', '--reset', 'write', 'app.bin', '0x80arm-none-eabi-g++ -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16 -specs=nosys.specs -specs=nano.specs -Wl,-Map=output.map -Wl,--gc-sections -TC:\Users\Pacifist\Documents\Qt\streamstack\platforms/Discovery_M7/examples/test.stride_Products/projectSTM32F746NGHx_FLASH.ld -LC:\Users\Pacifist\Documents\Qt\streamstack\platforms/Discovery_M7/1.0STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Lib/GCC -lm -larm_cortexM7lfsp_math -o C:\Users\Pacifist\Documents\Qt\streamstack\platforms/Discovery_M7/examples/test.stride_Products/project/app.elf @C:\Users\Pacifist\Documents\Qt\streamstack\platforms/Discovery_M7/examples/test.stride_Products/project/objects.list00000']
+#            args = [self.platform_dir + '/stlink/st-flash', '--reset', 'write', 'app.bin', '0x8000000']
 #            outtext = ck_out(args, cwd=self.out_dir + "/project")
 #            self.log(outtext)
 #
