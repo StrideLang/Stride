@@ -148,18 +148,18 @@ class Generator:
             library_file = ['-lm', '-larm_cortexM7lfsp_math']
             library_dir = ['-L' + self.platform_dir +'/STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Lib/GCC']
 
-            linker_script = ['-T' + build_dir + '/STM32F746NGHx_FLASH.ld']
+            linker_script = ['-TSTM32F746NGHx_FLASH.ld']
 
             common_flags = ['-mcpu=cortex-m7', '-mthumb', '-mfloat-abi=hard', '-mfpu=fpv5-sp-d16']
             compiler_flags = ['-Os', '-g3', '-Wall', '-fmessage-length=0', '-ffunction-sections', '-c', '-fmessage-length=0']
             linker_flags = ['-specs=nosys.specs', '-specs=nano.specs', '-Wl,-Map=output.map', '-Wl,--gc-sections']
 
             compiler_definitions =  [
-                    '-D__weak=__attribute__((weak))',
-                    '-D__packed=__attribute__((__packed__))',
+                    '-DARM_MATH_CM7',
                     '-DUSE_HAL_DRIVER',
                     '-DSTM32F746xx',
-                    '-DARM_MATH_CM7'
+                    '-D__weak=__attribute__((weak))',
+                    '-D__packed=__attribute__((__packed__))',
                 ]
 
             sources = []
@@ -187,70 +187,111 @@ class Generator:
             sources_cmsis_system = ['system_stm32f7xx.c']
             sources_cmsis_startup = ['startup_stm32f746xx.s']
 
-            compiler_flags_all =    common_flags \
-                                    + compiler_definitions \
+            compiler_flags_all =    compiler_definitions \
                                     + include_dir \
                                     + include_hal \
                                     + include_hal_legacy \
                                     + include_cmsis \
                                     + include_cmsis_stm \
+                                    + common_flags \
                                     + compiler_flags
 
             for source in sources:
+                # TODO IF FILE DIDN't CHANGE FROM LAST BUILD NO NEED TO BUILD
+                # IF ALL FILES DIDN't CHANGE NO NEED TO CALL LINKER EITHER
                 if source.split('.')[-1] == 'c':
                     args =  c_compiler \
                             + compiler_flags_all \
                             + ['-o', build_dir + '/Build/' + source + '.o'] \
-                            + [source_dir + source]
+                            + ['-c', source_dir + source]
                 else:
                     args =  cxx_compiler \
                             + compiler_flags_all \
                             + ['-o', build_dir + '/Build/' + source + '.o'] \
-                            + [source_dir + source]
-
-                object_list.write(build_dir + '/Build/' + source + '.o' + '\n')
+                            + ['-c', source_dir + source]
+                # self.log(' '.join(args))
+                object_list.write('Build/' + source + '.o' + '\n')
                 outtext = ck_out(args)
 
             for source in sources_hal:
-                args =  c_compiler \
-                        + compiler_flags_all \
-                        + ['-o', build_dir + '/Build/' + source + '.o'] \
-                        + [source_hal_dir + source]
-
-                object_list.write(build_dir + '/Build/' + source + '.o' + '\n')
-                outtext = ck_out(args)
+                if not os.path.isfile(build_dir + '/Build/' + source + '.o'):
+                    args =  c_compiler \
+                            + compiler_flags_all \
+                            + ['-o', build_dir + '/Build/' + source + '.o'] \
+                            + ['-c', source_hal_dir + source]
+                    # self.log(' '.join(args))
+                    outtext = ck_out(args)
+                object_list.write('Build/' + source + '.o' + '\n')
 
             for source in sources_cmsis_system:
-                args =  c_compiler \
-                        + compiler_flags_all \
-                        + ['-o', build_dir + '/Build/' + source + '.o'] \
-                        + [source_cmsis_system_dir + source]
-
-                object_list.write(build_dir + '/Build/' + source + '.o' + '\n')
-                outtext = ck_out(args)
+                if not os.path.isfile(build_dir + '/Build/' + source + '.o'):
+                    args =  c_compiler \
+                            + compiler_flags_all \
+                            + ['-o', build_dir + '/Build/' + source + '.o'] \
+                            + ['-c', source_cmsis_system_dir + source]
+                    # self.log(' '.join(args))
+                    outtext = ck_out(args)
+                object_list.write('Build/' + source + '.o' + '\n')
 
             for source in sources_cmsis_startup:
-                args =  asm_compiler \
-                        + common_flags \
-                        + ['-g'] \
-                        + ['-o', build_dir + '/Build/' + source + '.o'] \
-                        + [source_cmsis_startup_dir + source]
+                if not os.path.isfile(build_dir + '/Build/' + source + '.o'):
+                    # THE FOLLOWING CALL IS BASED ON SYSTEM WORKBENCH ON WINDOWS
+                    # args =  asm_compiler \
+                    #         + common_flags \
+                    #         + ['-g'] \
+                    #         + ['-o', build_dir + '/Build/' + source + '.o'] \
+                    #         + [source_cmsis_startup_dir + source]
 
-                object_list.write(build_dir + '/Build/' + source + '.o' + '\n')
-                outtext = ck_out(args)
+                    # THE FOLLOWING CODE IS BASED ON LINUX / CMAKE / MAKE
+                    args =  c_compiler \
+                            + compiler_flags_all \
+                            + ['-o', build_dir + '/Build/' + source + '.o'] \
+                            + ['-c', source_cmsis_startup_dir + source]
+                    # self.log(' '.join(args))
+                    outtext = ck_out(args)
+                object_list.write('Build/' + source + '.o' + '\n')
+
 
             object_list.close()
 
             args =  cxx_linker \
+                    + ['@objects.list'] \
+                    + ['-o', 'app.elf'] \
                     + common_flags \
+                    + library_dir \
                     + linker_flags \
                     + linker_script \
-                    + library_dir \
-                    + library_file \
-                    + ['-o', build_dir + '/app.elf'] \
-                    + ['@' + build_dir + '/objects.list']
-            linker_command = ' '.join(args)
-            self.log(linker_command)
+                    + library_file
+            # self.log(' '.join(args))
+            outtext = ck_out(args, cwd=build_dir)
+
+            args =  [   'arm-none-eabi-objcopy',
+                        '-O',
+                        'binary',
+                        'app.elf',
+                        'app.bin'
+                    ]
+            # self.log(' '.join(args))
+            outtext = ck_out(args, cwd=build_dir)
+
+            openOCD_bin = 'C:/Program Files/GNU ARM Eclipse/OpenOCD/0.10.0-201601101000-dev/bin/openocd'
+            openOCD_cfg_file = self.platform_dir + '/openOCD/stm32f746g_disco.cfg'
+
+            openOCD_bin_file = build_dir + '/app.bin'
+            openOCD_bin_file = openOCD_bin_file.split('\\')
+            openOCD_bin_file = '/'.join(openOCD_bin_file)
+
+            args = [openOCD_bin,
+                    '-f' + openOCD_cfg_file,
+                    '-c init',
+                    '-c "reset init"',
+                    '-c halt',
+                    '-c "flash write_image erase ' + openOCD_bin_file + ' 0x08000000" ',
+                    '-c reset',
+                    '-c shutdown']
+
+            self.log(' '.join(args))
+            Popen(' '.join(args))
 
         elif platform.system() == "Linux":
 
@@ -284,7 +325,7 @@ class Generator:
             self.log(outtext)
 
 #
-#           THE FOLLOWING CODE CAN BE REMOVED
+#           THE FOLLOWING CODE CAN BE REMOVED // STLINK REPLACED WITH OPENOCD
 #
 
 #            args = [self.platform_dir + '/stlink/st-flash', '--reset', 'write', 'app.bin', '0x80arm-none-eabi-g++ -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16 -specs=nosys.specs -specs=nano.specs -Wl,-Map=output.map -Wl,--gc-sections -TC:\Users\Pacifist\Documents\Qt\streamstack\platforms/Discovery_M7/examples/test.stride_Products/projectSTM32F746NGHx_FLASH.ld -LC:\Users\Pacifist\Documents\Qt\streamstack\platforms/Discovery_M7/1.0STM32Cube_FW_F7_V1.3.0/Drivers/CMSIS/Lib/GCC -lm -larm_cortexM7lfsp_math -o C:\Users\Pacifist\Documents\Qt\streamstack\platforms/Discovery_M7/examples/test.stride_Products/project/app.elf @C:\Users\Pacifist\Documents\Qt\streamstack\platforms/Discovery_M7/examples/test.stride_Products/project/objects.list00000']
