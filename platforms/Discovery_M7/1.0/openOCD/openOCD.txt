@@ -53,3 +53,29 @@ Run executable with default settings
 ---------
 
 "C:\Program Files\GNU ARM Eclipse\OpenOCD\<<$VERSION>>-dev\bin\openocd"
+
+-----------------------------------
+>>	       OS X              <<
+-----------------------------------
+
+\\ Download
+-----------
+
+https://github.com/gnuarmeclipse/openocd/releases
+
+gnuarmeclipse-openocd-osx-<<$VERSION>>-dev.pkg
+
+$VERSION >> 0.10.0-201601101000-dev
+
+
+\\ Install
+----------
+
+Install PKG
+
+
+\\ Verify
+---------
+
+/Applications/GNU\ ARM\ Eclipse/OpenOCD/<<$VERSION>>/bin/openocd --version
+
