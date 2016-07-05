@@ -25,7 +25,7 @@ module SerialOut {
     streams: [
         [Input, Address] >> SerialOutBlock;
     ]
-	domain: _SerialOutDomain
+	domain: SerialOutDomain
 }
 
 module SerialIn {
@@ -43,5 +43,5 @@ module SerialIn {
     streams: [
         SerialInBlock >> Output;
     ]
-	domain: _SerialInDomain
+	domain: SerialInDomain
 }
