@@ -527,6 +527,7 @@ bool ProjectWindow::saveFileAs(int index)
     ui->tabWidget->setTabText(ui->tabWidget->currentIndex(),
                               QFileInfo(fileName).fileName());
 
+    ui->tabWidget->setTabToolTip(ui->tabWidget->currentIndex(), QFileInfo(fileName).absoluteFilePath());
     return saveFile(index);
 }
 
@@ -594,6 +595,7 @@ void ProjectWindow::loadFile(QString fileName)
     editor->markChanged(false);
     ui->tabWidget->setTabText(ui->tabWidget->currentIndex(),
                               QFileInfo(fileName).fileName());
+    ui->tabWidget->setTabToolTip(ui->tabWidget->currentIndex(), QFileInfo(fileName).absoluteFilePath());
     codeFile.close();
     markModified();
 }
