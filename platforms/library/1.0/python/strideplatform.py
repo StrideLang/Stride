@@ -139,17 +139,17 @@ class ValueAtom(Atom):
             return {}
         else:
             if type(self.value) == unicode:
-                return {self.domain: {'type' : 'string',
+                return {self.domain: [{'type' : 'string',
                      'handle' : self.handle,
                      'code' : '"' + self.get_inline_processing_code([]) + '"',
                      'scope' : self.scope_index
-                     }}
+                     }]}
             else:
-                return {self.domain: {'type' : 'real',
+                return {self.domain: [{'type' : 'real',
                          'handle' : self.handle,
                          'code' : self.get_inline_processing_code([]),
                          'scope' : self.scope_index
-                         }}
+                         }]}
         
     def get_inline_processing_code(self, in_token):
         return templates.value_real(self.value)
@@ -1497,7 +1497,7 @@ class PlatformFunctions:
             
         processing_code += templates.stream_end_code%stream_index
         
-        domain = "AudioDomain" #TODO use actual domain from platform and domain declarations.
+        domain =  self.get_platform_domain() #TODO use actual domain from platform and domain declarations.
 
         self.log_debug("-- End stream")
         
@@ -1516,6 +1516,15 @@ class PlatformFunctions:
                 if 'type' in node['block'] and node['block']['type'] == '_domainDefinition':
                     domains.append(node['block'])
         return domains
+        
+    def get_platform_domain(self):
+        domain = ''
+        declaration = self.find_declaration_in_tree("PlatformDomain", self.tree)
+        if declaration:
+            domain = declaration['value']
+            
+        return domain
+        
                 
     def generate_code(self, tree, current_scope = [],
                       global_groups = {'include':[], 'includeDir':[], 'initializations' : [], 'linkTo' : [], 'linkDir' : []},

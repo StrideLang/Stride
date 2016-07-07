@@ -1,4 +1,4 @@
-use Arduino version 1.0 on Uno
+use Wiring version 1.0 on Uno
 
 import generators
 

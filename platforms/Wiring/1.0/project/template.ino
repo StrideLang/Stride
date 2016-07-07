@@ -5,32 +5,35 @@
 //[[/Includes]]
 
 Timer t;
-//[[Init Code]]
+//[[Declarations]]
 
 int led = 13;
 float phase = 0.0;
 
-//[[/Init Code]]
+//[[/Declarations]]
 
 void process()
 {
-//[[Dsp Code]]
+//[[Processing]]
       Serial.print("2 second tick: millis()=");
       Serial.println(millis());
-//[[/Dsp Code]]
+//[[/Processing]]
 }
 
 
 void setup() {
 
 int tickEvent = t.every(1, process);
-//[[Config Code]]
+//[[Initialization]]
 
   Serial.begin(9600);
   pinMode(led, OUTPUT);
-//[[/Config Code]]
+//[[/Initialization]]
 }
 
 void loop() {
   t.update();
+
+//[[Cleanup]]
+//[[/Cleanup]]
 }

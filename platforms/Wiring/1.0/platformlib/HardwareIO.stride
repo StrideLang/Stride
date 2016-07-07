@@ -1,28 +1,4 @@
 
-_platform _ArduinoPlatform {
-    name: "Arduino"
-}
-
-_domain _PlatformDomain {
-    name: _ArduinoDomain
-    platform: _ArduinoPlatform
-}
-
-_domain _ArduinoDomain {
-    name: "arduino"
-    platform: _ArduinoPlatform
-}
-
-_domain _SerialInDomain {
-    name: "SerialInDomain"
-    platform: _ArduinoPlatform
-}
-
-_domain _SerialOutDomain {
-    name: "SerialOutDomain"
-    platform: _ArduinoPlatform
-}
-
 constant PlatformRate {
     value: 1000
 }
@@ -45,7 +21,7 @@ platformType _AnalogInput {
 
 _analogInput AnalogIn[2] {
     rate: PlatformRate
-    domain: _ArduinoDomain
+    domain: WiringDomain
 }
 
 platformType _DigitalOutput {
@@ -61,7 +37,7 @@ platformType _DigitalOutput {
 
 _digitalOutput DigitalOut[14] {
     rate: PlatformRate
-    domain: _ArduinoDomain
+    domain: WiringDomain
 }
 
 platformType _OscOutType {

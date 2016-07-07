@@ -86,9 +86,23 @@ class Generator:
 
         shutil.copyfile(self.project_dir + "/template.ino", self.out_file)
         self.write_section_in_file('Includes', globals_code)
-        self.write_section_in_file('Init Code', code['header_code'])
-        self.write_section_in_file('Config Code', code['init_code'] + template_init_code + config_code)
-        self.write_section_in_file('Dsp Code', code['processing_code'])
+                
+        domains = self.platform.get_domains()
+        
+        for domain,sections in code['domain_code'].items():
+            domain_matched = False
+            for platform_domain in domains:
+                if platform_domain['domainName'] == domain:
+                    print("Domain found:" + domain)
+                    self.write_section_in_file(platform_domain['declarationsTag'], sections['header_code'])
+                    self.write_section_in_file(platform_domain['initializationTag'], sections['init_code'] + template_init_code + config_code)
+                    self.write_section_in_file(platform_domain['processingTag'], sections['processing_code'])
+                    if 'cleanup_code' in sections:
+                        self.write_section_in_file(platform_domain['cleanupTag'], sections['cleanup_code'])
+                    domain_matched = True
+                    break
+            if not domain_matched:
+                print('WARNING: Domain not matched: ' + domain);
 
         if platform.system() == "Linux":
             try:
