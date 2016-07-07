@@ -13,6 +13,12 @@ type _Property {
 			default: none
 			required: on
 		},
+		port Default {
+			name: "default"
+			types: [""]
+			default: 0.0
+			required: off
+		},
 		port Types {
 			name: "types"
 			types: [""] # This should be made to accept type handles

@@ -527,7 +527,7 @@ property:
     |   WORD COLON STREAMDOMAIN {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
-            $$ = new PropertyNode(s, new ValueNode((string) "streamDomain", "", -1), currentFile, yyloc.first_line);
+            $$ = new PropertyNode(s, new ValueNode("", -1), currentFile, yyloc.first_line);
             COUT << "Property: " << $1 << ENDL << "New property ... " << ENDL;
             free($1);
         }

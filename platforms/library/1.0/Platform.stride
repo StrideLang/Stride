@@ -1,0 +1,196 @@
+
+type _DomainDefinition {
+	typeName: "_domainDefinition"
+	ports: [
+		port DomainName {
+			name: "domainName"
+			types: ["CSP"]
+			default: none
+			required: on
+		},
+		port Platform {
+			name: "platform"
+			types: ["CSP", ""] # Allow _Platform
+			default: none
+			required: on
+		},
+		port DeclarationsTag {
+			name: "declarationsTag"
+			types: ["CSP"]
+			default: ""
+			required: off
+		},
+		port ProcessingTag {
+			name: "processingTag"
+			types: ["CSP"]
+			default: ""
+			required: off
+		},
+		port InitializationTag {
+			name: "initializationTag"
+			types: ["CSP"]
+			default: ""
+			required: off
+		},
+		port CleanupTag {
+			name: "cleanupTag"
+			types: ["CSP"]
+			default: ""
+			required: off
+		}
+	]
+	inherits: ["base"]
+}
+
+#type _Domain {
+#	typeName: "_domain"
+#	ports: [
+#		port Name {
+#			name: "name"
+#			types: ["CSP", ""] # TODO Should accept _domain
+#			default: _PlatformDomain
+#			required: on
+#		},
+#		port Platform {
+#			name: "platform"
+#			types: ["CSP", _Platform]
+#			default: none
+#			required: on
+#		}
+#	]
+#	inherits: ["base"]
+#}
+
+type _Platform {
+	typeName: "_platform"
+	ports: [
+		port Name {
+			name: "name"
+			types: ["CSP"]
+			default: none
+			required: on
+		}
+	]
+	inherits: ["base"]
+}
+
+type _PlatformType {
+	typeName: "platformType"
+	ports: [
+		port TypeName {
+			name: "typeName"
+			types: ["CSP"]
+			default: none
+			required: on
+		},
+		port Include {
+			name: "include"
+			types: [""] #TODO accepts list
+			default: []
+			required: off
+		},
+		port IncludeDir {
+			name: "includeDir"
+			types: [""] #TODO accepts list
+			default: []
+			required: off
+		},
+		port LinkTo {
+			name: "linkTo"
+			types: [""] #TODO accepts list
+			default: []
+			required: off
+		},
+		port LinkDir {
+			name: "linkDir"
+			types: [""] #TODO accepts list
+			default: []
+			required: off
+		},
+		port Inputs {
+			name: "inputs"
+			types: [""] #TODO accepts list
+			default: []
+			required: off
+		},
+		port Outputs {
+			name: "outputs"
+			types: [""]
+			default: []
+			required: off
+		},
+		port GlobalDeclarations {
+			name: "globalDeclarations"
+			types: [""] #TODO validate list
+			default: []
+			required: off
+		},
+		port GlobalInitializations {
+			name: "globalInitializations"
+			types: [""] #TODO validate list
+			default: []
+			required: off
+		},
+		port Declarations {
+			name: "declarations"
+			types: [""] #TODO validate list
+			default: []
+			required: on
+		},
+		port Constructors {
+			name: "constructors"
+			types: [""] #TODO validate list
+			default: []
+			required: off
+		},
+		port Initializations {
+			name: "initializations"
+			types: [""] #TODO validate list
+			default: []
+			required: on
+		},
+		port PreProcessing {
+			name: "preProcessing"
+			types: ["CSP"]
+			default: ""
+			required: off
+		},
+		port Processing {
+			name: "processing"
+			types: ["CSP"]
+			default: none
+			required: on
+		},
+		port PostProcessingOnce {
+			name: "postProcessingOnce"
+			types: ["CSP"]
+			default: ""
+			required: on
+		},
+		port Cleanup {
+			name: "cleanup"
+			types: ["CSP"]
+			default: ""
+			required: off
+		},
+		port Platform {
+			name: "platform"
+			types: [""] # _platform
+			default: none
+			required: on
+		},
+		port Domain {
+			name: "domain"
+			types: [""] # _platform
+			default: none
+			required: off
+		},
+		port Inherits { # TODO should this be done differently? e.g. not as a port but through inheritance merging ports?
+			name: "inherits"
+			types: ["CSP", _Type]
+			default: []
+			required: off
+		}
+	]
+	inherits: ["base"]
+}

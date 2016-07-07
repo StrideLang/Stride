@@ -75,7 +75,7 @@ static uint32_t OutputVolume = 0x2D;
 static uint32_t InputVolume = 0xA0;
 
 
-//[[Init Code]]
+//[[Declarations]]
 static float32_t PhaseInc_f32[4];
 static float32_t Phase_f32[4];
 static float32_t Partials_f32[4];
@@ -89,7 +89,7 @@ static q15_t Sample_q15;
 static float32_t Freq[4] = { 110.00, 3.0, 440.0, 10.0 };
 static float32_t Amp[4] = { 0.4, 0.3, 0.2, 0.1 };
 
-//[[/Init Code]]
+//[[/Declarations]]
 
 
 /* USER CODE END PV */
@@ -111,9 +111,9 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
 
-//[[Config Code]]
+//[[Initialization]]
 
-//[[/Config Code]]
+//[[/Initialization]]
 
   /* USER CODE END 1 */
 
@@ -159,6 +159,8 @@ int main(void)
   }
   /* USER CODE END 3 */
 
+  //[[Cleanup]]
+  //[[Cleanup]]
 }
 
 /** System Clock Configuration
@@ -233,8 +235,8 @@ void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai)
 
 	for (uint8_t i = 0; i < 4 ; i++)
 	{
-		
-//[[Dsp Code]]
+
+//[[Processing]]
 
 		Sample_f32 = 0.0f;
 
@@ -257,7 +259,7 @@ void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai)
 		hsai_BlockA2.Instance->DR = Sample_q15;
 
 
-//[[/Dsp Code]]
+//[[/Processing]]
 	}
 
 	__HAL_SAI_ENABLE_IT(&hsai_BlockA2,SAI_IT_FREQ);
@@ -296,10 +298,10 @@ void assert_failed(uint8_t* file, uint32_t line)
 
 /**
   * @}
-  */ 
+  */
 
 /**
   * @}
-*/ 
+*/
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

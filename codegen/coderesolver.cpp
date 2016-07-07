@@ -479,6 +479,7 @@ void CodeResolver::insertBuiltinObjects()
 
 void CodeResolver::processDomains()
 {
+    // Fill missing domain information (propagate domains)
     foreach(AST *node, m_tree->getChildren()) {
         if (node->getNodeType() == AST::Stream) {
             StreamNode *stream = static_cast<StreamNode *>(node);
@@ -494,10 +495,16 @@ void CodeResolver::processDomains()
                     BlockNode *declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(left, scopeStack, m_tree), scopeStack, m_tree);
                     if(declaration) {
                         AST *domain = declaration->getDomain();
-                        if (domain && domain->getNodeType() == AST::String) {
-                            domainName = static_cast<ValueNode *>(domain)->getStringValue();
+                        if (!domain) {
+                            // Put declaration in stack to set domain once domain is resolved
+                            domainStack << declaration;
                         } else {
-                            if (declaration) {
+                            if (domain->getNodeType() == AST::String) {
+                                domainName = static_cast<ValueNode *>(domain)->getStringValue();
+                            } else if (domain->getNodeType() == AST::None) { // domain is streamDomain
+                                domainStack << declaration;
+                            } else {
+                                qDebug() << "WARNING: Unrecognized domain type"; // Should this trigger an error?
                                 domainStack << declaration;
                             }
                         }
@@ -505,10 +512,18 @@ void CodeResolver::processDomains()
                 } else if (left->getNodeType() == AST::Function) {
                     FunctionNode *func = static_cast<FunctionNode *>(left);
                     AST *domain = func->getDomain();
-                    if (domain && domain->getNodeType() == AST::String) {
-                        domainName = static_cast<ValueNode *>(domain)->getStringValue();
-                    } else {
+                    if (!domain) {
+                        // Put declaration in stack to set domain once domain is resolved
                         domainStack << left;
+                    } else {
+                        if (domain->getNodeType() == AST::String) {
+                            domainName = static_cast<ValueNode *>(domain)->getStringValue();
+                        } else if (domain->getNodeType() == AST::None) { // domain is streamDomain
+                            domainStack << left;
+                        } else {
+                            qDebug() << "WARNING: Unrecognized domain type"; // Should this trigger an error?
+                            domainStack << left;
+                        }
                     }
                 } else if (left->getNodeType() == AST::List) {
                     foreach(AST * member, left->getChildren()) {
@@ -521,10 +536,18 @@ void CodeResolver::processDomains()
                             FunctionNode *func = static_cast<FunctionNode *>(member);
                             domain = func->getDomain();
                         }
-                        if (domain && domain->getNodeType() == AST::String) {
-                            domainName = static_cast<ValueNode *>(domain)->getStringValue();
-                        } else {
+                        if (!domain) {
+                            // Put declaration in stack to set domain once domain is resolved
                             domainStack << member;
+                        } else {
+                            if (domain->getNodeType() == AST::String) {
+                                domainName = static_cast<ValueNode *>(domain)->getStringValue();
+                            } else if (domain->getNodeType() == AST::None) { // domain is streamDomain
+                                domainStack << member;
+                            } else {
+                                qDebug() << "WARNING: Unrecognized domain type"; // Should this trigger an error?
+                                domainStack << member;
+                            }
                         }
                     }
                 }
@@ -567,6 +590,17 @@ void CodeResolver::processDomains()
             }
         }
     }
+
+    // Now split streams when there is a domain change
+    vector<AST *> new_tree;
+    foreach(AST *node, m_tree->getChildren()) {
+        if (node->getNodeType() == AST::Stream) {
+            new_tree.push_back(node);
+        } else {
+            new_tree.push_back(node);
+        }
+    }
+    m_tree->setChildren(new_tree);
 }
 
 double CodeResolver::createSignalDeclaration(QString name, int size, AST *tree)
@@ -1314,7 +1348,7 @@ void CodeResolver::resolveDomainForStreamNode(AST *node, QVector<AST *> scopeSta
             BlockNode *domainDeclaration = CodeValidator::findDeclaration(
                         QString::fromStdString(domainNameNode->getName()), scopeStack, m_tree);
             if (domainDeclaration) {
-                AST *domainValue = domainDeclaration->getPropertyValue("name");
+                AST *domainValue = domainDeclaration->getPropertyValue("domainName");
                 while (domainDeclaration && domainValue->getNodeType() == AST::Name) {
                     NameNode *recurseDomain = static_cast<NameNode *>(domainValue);
                     domainDeclaration = CodeValidator::findDeclaration(

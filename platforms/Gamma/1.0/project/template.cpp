@@ -9,21 +9,28 @@
 
 using namespace gam;
 
-//[[Init Code]]
-//[[/Init Code]]
+//[[Declarations]]
+//[[/Declarations]]
+
+//[[OSC:Declarations]]
+//[[/OSC:Declarations]]
 
 void audioCB(AudioIOData & io)
 {
     while(io()){
-//[[Dsp Code]]
+//[[Processing]]
 
-//[[/Dsp Code]]
+//[[/Processing]]
     }
 }
 
+//[[OSC:Processing]]
+
+//[[/OSC:Processing]]
+
 
 int main() {
-//[[Config Code]]
+//[[Initialization]]
     AudioDevice adevi = AudioDevice::defaultInput();
     AudioDevice adevo = AudioDevice::defaultOutput();
     //AudioDevice adevi = AudioDevice("firewire_pcm");
@@ -40,9 +47,15 @@ int main() {
     // ... or just use -1
 
     AudioIO io(256, 44100., audioCB, NULL, -1, -1);
-//[[/Config Code]]
+//[[/Initialization]]
+
+//[[OSC:Initialization]]
+//[[/OSC:Initialization]]
+
     io.deviceIn(adevi);
     io.deviceOut(adevo);
+
+    int returnval = 0;
 
     Domain::master().spu(io.framesPerSecond());
     if(io.start()){
@@ -52,7 +65,15 @@ int main() {
     }
     else{
         printf("start failed\n");
-        return -1;
+        returnval = -1;
+        goto exit;
     }
-    return 0;
+
+exit:
+//[[Cleanup]]
+//[[Cleanup]]
+
+//[[OSC:Cleanup]]
+//[[/OSC:Cleanup]]
+    return returnval;
 }

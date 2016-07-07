@@ -1,32 +1,4 @@
 
-_platform _Discovery_M7_Platform {
-    name: "Discovery_M7"
-}
-
-_domain _PlatformDomain {
-    name: _Discovery_M7_Domain
-    platform: _Discovery_M7_Platform
-}
-
-_domain _Discovery_M7_Domain {
-    name: "discoveryM7"
-    platform: _Discovery_M7_Platform
-}
-
-_domain _AudioDomain {
-	name: "AudioDomain"
-	platform: _Discovery_M7_Platform
-}
-
-_domain _SerialInDomain {
-    name: "SerialInDomain"
-    platform: _Discovery_M7_Platform
-}
-
-_domain _SerialOutDomain {
-    name: "SerialOutDomain"
-    platform: _Discovery_M7_Platform
-}
 
 constant PlatformRate {
     value: 48000
@@ -70,12 +42,12 @@ platformType _HwOutput {
 
 _hwInput AudioIn[2] {
     rate: AudioRate
-    domain: _AudioDomain
+    domain: AudioDomain
 }
 
 _hwOutput AudioOut[2] {
     rate: AudioRate
-    domain: _AudioDomain
+    domain: AudioDomain
 }
 
 
@@ -93,7 +65,7 @@ platformType _AnalogInput {
 
 _analogInput AnalogIn[2] {
     rate: PlatformRate
-    domain: _Discovery_M7_Domain
+    domain: Discovery_M7_Domain
 }
 
 platformType _DigitalOutput {
@@ -109,7 +81,7 @@ platformType _DigitalOutput {
 
 _digitalOutput DigitalOut[14] {
     rate: PlatformRate
-    domain: _Discovery_M7_Domain
+    domain: Discovery_M7_Domain
 }
 
 platformType _OscOutType {

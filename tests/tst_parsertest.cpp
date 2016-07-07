@@ -100,7 +100,6 @@ void ParserTest::testDomains()
 
 //    [SerialIn(), 1024.0] >> Divide() >> ValueInSerialDomain;
 
-
     StreamNode *stream = static_cast<StreamNode *>(tree->getChildren()[3]);
     QVERIFY(stream->getNodeType() == AST::Stream);
     ListNode *list = static_cast<ListNode *>(stream->getLeft());
@@ -108,12 +107,12 @@ void ParserTest::testDomains()
     FunctionNode *func = static_cast<FunctionNode *>(list->getChildren()[0]);
     ValueNode *domainName = static_cast<ValueNode *>(func->getDomain());
     QVERIFY(domainName->getNodeType() == AST::String);
-    QVERIFY(domainName->getStringValue() == "SerialInDomain");
+    QVERIFY(domainName->getStringValue() == "OSCInDomain");
     stream = static_cast<StreamNode *>(stream->getRight());
     func = static_cast<FunctionNode *>(stream->getLeft());
     domainName = static_cast<ValueNode *>(func->getDomain());
     QVERIFY(domainName->getNodeType() == AST::String);
-    QVERIFY(domainName->getStringValue() == "SerialInDomain");
+    QVERIFY(domainName->getStringValue() == "OSCInDomain");
 
     //    Oscillator(frequency: ValueInSerialDomain) >> Level(gain: 0.2) >> AudioOut;
 

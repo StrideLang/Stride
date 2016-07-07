@@ -28,6 +28,7 @@ class Generator:
         jsonfile = open(self.out_dir + '/tree.json')
         self.tree = json.load(jsonfile)
 
+        
         self.platform = PlatformFunctions(self.tree, debug)
 
         self.last_num_outs = 0
@@ -69,7 +70,8 @@ class Generator:
 
         self.log("Platform code generation starting...")
 
-        code = self.platform.generate_code(self.tree)
+        domain = "AudioDomain"
+        code = self.platform.generate_code(self.tree, domain)
 
         #var_declaration = ''.join(['double stream_%02i;\n'%i for i in range(stream_index)])
         #declare_code = var_declaration + declare_code
@@ -82,10 +84,25 @@ class Generator:
 
         shutil.copyfile(self.project_dir + "/template.cpp", self.out_dir + "/main.cpp")
         self.write_section_in_file('Includes', globals_code)
-        self.write_section_in_file('Init Code', code['header_code'])
-        self.write_section_in_file('Config Code', code['init_code'] + template_init_code + config_code)
-        self.write_section_in_file('Dsp Code', code['processing_code'])
-
+        
+        domains = self.platform.get_domains()
+        
+        #print(str(domains))
+        for domain,sections in code['domain_code'].items():
+            domain_matched = False
+            for platform_domain in domains:
+                if platform_domain['domainName'] == domain:
+                    print("Domain found:" + domain)
+                    self.write_section_in_file(platform_domain['declarationsTag'], sections['header_code'])
+                    self.write_section_in_file(platform_domain['initializationTag'], sections['init_code'] + template_init_code + config_code)
+                    self.write_section_in_file(platform_domain['processingTag'], sections['processing_code'])
+                    if 'cleanup_code' in sections:
+                        self.write_section_in_file(platform_domain['cleanupTag'], sections['cleanup_code'])
+                    domain_matched = True
+                    break
+            if not domain_matched:
+                print('WARNING: Domain not matched: ' + domain);
+            
         if platform.system() == "Linux":
             try:
                 self.log("Running astyle...")

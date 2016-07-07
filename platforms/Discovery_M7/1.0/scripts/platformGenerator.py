@@ -92,11 +92,25 @@ class Generator:
 
         #additional_init = "static float32_t Fs = %f;\n"%self.sample_rate
         additional_init = ""
-
+        
         self.write_section_in_file('Includes', globals_code)
-        self.write_section_in_file('Init Code', additional_init + code['header_code'])
-        self.write_section_in_file('Config Code', code['init_code'] + template_init_code + config_code)
-        self.write_section_in_file('Dsp Code', code['processing_code'])
+
+        domains = self.platform.get_domains()
+
+        for domain,sections in code['domain_code'].items():
+            domain_matched = False
+            for platform_domain in domains:
+                if platform_domain['domainName'] == domain:
+                    print("Domain found:" + domain)
+                    self.write_section_in_file(platform_domain['declarationsTag'],additional_init + sections['header_code'])
+                    self.write_section_in_file(platform_domain['initializationTag'], sections['init_code'] + template_init_code + config_code)
+                    self.write_section_in_file(platform_domain['processingTag'], sections['processing_code'])
+                    if 'cleanup_code' in sections:
+                        self.write_section_in_file(platform_domain['cleanupTag'], sections['cleanup_code'])
+                    domain_matched = True
+                    break
+            if not domain_matched:
+                print('WARNING: Domain not matched: ' + domain);\
 
         if platform.system() == "Linux":
             try:
@@ -306,8 +320,13 @@ class Generator:
             outtext = ck_out(args, cwd=self.out_dir + "/project")
             self.log(outtext)
 
-            openOCD_dir = "/opt/gnuarmeclipse/openocd/0.10.0-201601101000-dev/scripts"
-            openOCD_bin = "../bin/openocd"
+            openOCD_dirs = ["/opt/gnuarmeclipse/openocd/0.10.0-201601101000-dev/", "/home/andres/Documents/src/openocd/0.10.0-201601101000-dev"]
+            openOCD_bin = "bin/openocd"
+            for directory in openOCD_dirs:
+                if os.path.exists(directory + "/" + openOCD_bin):
+                    openOCD_dir = directory
+                    break
+                     
             openOCD_cfg_file = self.platform_dir + "/openOCD/stm32f746g_disco.cfg"
             openOCD_bin_file = self.out_dir + "/project/app.bin"
 

@@ -18,8 +18,9 @@ class Atom(object):
         self.inline = False
         self.globals = {}
         self.handle = ''
+        self.domain = 'AudioDomain' #FIXME this needs to be set correctly from source and platform
         
-        self.global_sections = ['include', 'includeDir', 'initializations', 'linkTo', 'linkDir']
+        self.global_sections = ['include', 'includeDir', 'linkTo', 'linkDir']
         
     def set_inline(self, inline):
         self.inline = inline
@@ -43,10 +44,15 @@ class Atom(object):
         return self.globals
     
     def get_declarations(self):
-        return []
+        return {}
     
     def get_instances(self):
-        return []
+        return {}
+        
+    def get_initialization_code(self, in_tokens):
+        '''Returns code that should be executed only once per construction of
+        the block'''
+        return ''
         
     def get_preprocessing_code(self, in_tokens):
         ''' Returns code that needs to be run asynchronously but can't be
@@ -99,13 +105,6 @@ class PlatformTypeAtom(Atom):
             return self.out_tokens
         else:
             return [self.handle]
-    
-    def get_declarations(self):
-        return []
-    
-    def get_instances(self):
-                # Hardware platform definition
-        return []
         
     def get_processing_code(self, in_tokens):
         return 'PROC_CODEEEEE'
@@ -135,25 +134,22 @@ class ValueAtom(Atom):
         else:
             return [self.handle]
     
-    def get_declarations(self):
-        return []
-    
     def get_instances(self):
         if self.is_inline():
-            return []
+            return {}
         else:
             if type(self.value) == unicode:
-                return [{'type' : 'string',
+                return {self.domain: {'type' : 'string',
                      'handle' : self.handle,
                      'code' : '"' + self.get_inline_processing_code([]) + '"',
                      'scope' : self.scope_index
-                     }]
+                     }}
             else:
-                return [{'type' : 'real',
+                return {self.domain: {'type' : 'real',
                          'handle' : self.handle,
                          'code' : self.get_inline_processing_code([]),
                          'scope' : self.scope_index
-                         }]
+                         }}
         
     def get_inline_processing_code(self, in_token):
         return templates.value_real(self.value)
@@ -185,16 +181,27 @@ class ExpressionAtom(Atom):
     def get_declarations(self):
         declarations = self.left_atom.get_declarations()
         if self.right_atom:
-            declarations += self.right_atom.get_declarations()
-
+            right_declarations = self.right_atom.get_declarations()
+            for domain in right_declarations:
+                if domain in declarations:
+                    declarations[domain] += right_declarations[domain]
+                else:
+                    declarations[domain] = right_declarations[domain]
         return declarations
     
     def get_instances(self):
         instances = self.left_atom.get_instances()
         if self.right_atom:
-            instances += self.right_atom.get_instances()
+            right_instances = self.right_atom.get_instances()
+            for domain in right_instances:
+                if domain in instances:
+                    instances[domain] += right_instances[domain]
+                else:
+                    instances[domain] = right_instances[domain]
         if not self.is_inline():
-            instances.append({'handle' : self.handle,
+            if not self.domain in instances:
+                instances[self.domain] = []
+            instances[self.domain].append({'handle' : self.handle,
                               'type' : self._expression_out_type(),
                               'code' : '',
                               'scope' : self.scope_index
@@ -219,6 +226,14 @@ class ExpressionAtom(Atom):
         code = '(' + self._operator_symbol(left_token, right_token) + ')'
         return code
     
+    
+    def get_initialization_code(self, in_tokens):
+        left_code = self.left_atom.get_initialization_code([])
+        right_code = ''
+        if self.right_atom:
+            right_code = self.right_atom.get_initialization_code([])
+        return left_code + right_code
+        
     def get_preprocessing_code(self, in_tokens):
         left_code = self.left_atom.get_preprocessing_code([])
         right_code = ''
@@ -323,7 +338,6 @@ class ListAtom(Atom):
         
         self.handles = [elem.get_handles() for elem in list_node] # TODO make this recursive
         self.out_tokens = [elem.get_out_tokens() for elem in list_node]
-        self.declarations = [elem.get_declarations() for elem in list_node]
         self.instances = [elem.get_instances() for elem in list_node]
         
     def get_handles(self, index = -1):
@@ -340,18 +354,36 @@ class ListAtom(Atom):
         return self.globals
         
     def get_declarations(self, index = -1):
-        return self.declarations[index]
+        declarations = {}
+        for elem in self.list_node:
+            elem_declarations = elem.get_declarations()
+            for domain in elem_declarations:
+                if domain in declarations:
+                    declarations[domain] += elem_declarations[domain]
+                else:
+                    declarations[domain] = elem_declarations[domain]
+        return declarations
     
     def get_instances(self, index = -1):
         if index == -1:
-            flat_instances = []
-            for instance in self.instances:
-                flat_instances.extend(instance)
+            flat_instances = {}
+            for instances in self.instances:
+                for domain, inst in instances.items():
+                    if not domain in flat_instances:
+                        flat_instances[domain] = []
+                    flat_instances[domain] += inst
             return flat_instances
         return self.instances[index]
         
     def get_inline_processing_code(self, in_tokens):
         return str(self.value)
+        
+    def get_initialization_code(self, in_tokens):
+        code = ''
+        for i,elem in enumerate(self.list_node):
+            new_code = elem.get_initialization_code(in_tokens)
+            code += new_code
+        return code
         
     def get_preprocessing_code(self, in_tokens):
         code = ''
@@ -432,10 +464,11 @@ class NameAtom(Atom):
             #this should never happen... The parser should fill defaults...
         
     def get_declarations(self):
+        declarations = []
         if 'declarations' in self.platform_type['block']:
-            return templates.get_platform_declarations(self.platform_type['block']['declarations'],
+            declarations = templates.get_platform_declarations(self.platform_type['block']['declarations'],
                                                        self.scope_index)
-        return []
+        return {self.domain : declarations}
     
     def get_instances(self):
         default_value = self._get_default_value()
@@ -499,7 +532,7 @@ class NameAtom(Atom):
         else:
             print("Don't know how to declare type " + ' '.join(self.declaration.keys()))
             inits = []
-        return inits
+        return {self.domain : inits}
         
     def get_inline_processing_code(self, in_tokens):
         code = ''
@@ -516,6 +549,22 @@ class NameAtom(Atom):
                 code = self.handle
             
         return  code
+    
+    def get_initialization_code(self, in_tokens):
+        code = ''
+        if 'initializations' in self.platform_type['block']:
+            code = self.platform_type['block']['initializations']
+            if type(code) == list:
+                merged_code = ''
+                for value in code:
+                    merged_code += value['value'] + '\n'
+                code = merged_code
+            code = templates.get_platform_initialization_code(code, 
+                            in_tokens,
+                            len(self.platform_type['block']['inputs']),
+                            [self.handle]
+                            )
+        return code
     
     def get_preprocessing_code(self, in_tokens):
         code = ''
@@ -602,7 +651,7 @@ class BundleAtom(NameAtom):
                           }] 
             
                 
-        return instances
+        return {self.domain : instances}
         
     def get_inline_processing_code(self, in_tokens): 
         code = ''
@@ -664,9 +713,9 @@ class ModuleAtom(Atom):
         self.module = module
         self.rate = -1 # Should modules have rates?
         self.function = function
-        self.domain = ''
+        self.domain = None
         if 'domain' in self.function['ports']:
-            self.domain = self.function['ports']['domain']
+            self.domain = self.function['ports']['domain']['value']
             self.function['ports'].pop('domain')
         
         self.port_name_atoms = {}
@@ -689,33 +738,51 @@ class ModuleAtom(Atom):
         self.inline = inline
         
     def get_declarations(self):
-        declarations = []
+        declarations = {}
         if "other_scope_declarations" in self.code:
-            declarations += self.code["other_scope_declarations"]
-        header_code = self._get_internal_header_code()
-        init_code = self._get_internal_init_code()
-        process_code = self._get_internal_processing_code()
-        properties_code = self._get_internal_properties_code()
+            declarations[self.domain] = self.code["other_scope_declarations"]
+
+        domain_code = self.code['domain_code']
         
-        declaration = templates.module_declaration(
-                self.name, header_code + properties_code, 
-                init_code, self._output_block , self._input_block, process_code)
-        declarations += [{"name": self.name,
-                         "code" :  declaration,
-                         'scope' : self.module['stack_index']}]
+        properties_code = self._get_internal_properties_code()
+        for domain, code in domain_code.items():
+            header_code = code['header_code'] 
+            init_code = code['init_code']
+            process_code = code['processing_code']
+            properties_domain_code = ''
+            if domain in properties_code:
+                properties_domain_code = '\n'.join(properties_code[domain])
+            if domain == self.domain or self.domain == None:
+                properties_domain_code = '\n'.join(properties_code[None])
+            
+        
+            declaration = templates.module_declaration(
+                    self.name, header_code + properties_domain_code, 
+                    init_code, self._output_block , self._input_block, process_code)
+            if not domain in declarations:
+                declarations[domain] = []
+            declarations[domain].append({"name": self.name,
+                             "code" :  declaration,
+                             'scope' : self.module['stack_index']})
+        
         return declarations
     
     def get_instances(self):
-        instances = []
+        instances = {}
+        instances[self.domain] = []
         if "other_scope_instances" in self.code:
             for inst in self.code["other_scope_instances"]:
-                inst['post'] = False
-                instances.append(inst)
+                if inst:
+                    inst['post'] = False
+                    instances[self.domain].append(inst)
         for atoms in self.port_name_atoms.itervalues():
             for atom in atoms:
-                instances += atom.get_instances()
+                for domain, inst in atom.get_instances().items():
+                    if not domain in instances:
+                        instances[domain] = []
+                    instances[domain] += inst
                 
-        instances += [{'type' : 'module',
+        instances[self.domain] += [{'type' : 'module',
                      'handle': self.handle,
                      'moduletype' : self.name,
                      'scope' : self.scope_index,
@@ -725,7 +792,7 @@ class ModuleAtom(Atom):
             out_block = self.find_internal_block(self.module['output']['name']['name'])
             # FIXME support bundles
             block_types = self.get_block_types(out_block);
-            instances += [{ 'type' : block_types[0],
+            instances[self.domain] += [{ 'type' : block_types[0],
                              'handle' : self.out_tokens[0],
                              'scope' : self.scope_index,
                              'post' : True
@@ -744,7 +811,31 @@ class ModuleAtom(Atom):
         else:
             code = templates.module_processing_code(self.handle, in_tokens, '')
         return code
-        
+    
+    def get_initialization_code(self, in_tokens):
+        code = ''
+        ports = self.function['ports']
+        for port_name in ports:
+            if 'value' in ports[port_name]:
+                if type(ports[port_name]['value']) == unicode:
+                     port_in_token = [ '"' + ports[port_name]['value'] + '"']
+                else:
+                    port_in_token = [str(ports[port_name]['value'])]
+            elif 'name' in ports[port_name]:
+                port_in_token = [ports[port_name]['name']['name']]
+            elif 'expression' in ports[port_name]:
+                port_in_token = [self.port_name_atoms[port_name][0].get_handles()[0]]
+            else:
+                port_in_token = ['____XXX___'] # TODO implement
+            code += templates.module_set_property(self.handle, port_name, port_in_token)
+            
+        if self._input_block and 'blockbundle' in self._input_block:
+            new_code = templates.declaration_bundle_real('_%s_in'%self.handle, len(in_tokens)) + '\n'
+            for i in range(len(in_tokens)):
+                new_code += templates.assignment('_%s_in[%i]'%(self.handle, i), in_tokens[i])
+            code += new_code
+        return code
+    
     def get_preprocessing_code(self, in_tokens):
         code = ''
         ports = self.function['ports']
@@ -782,33 +873,32 @@ class ModuleAtom(Atom):
             code += templates.expression(self.get_inline_processing_code(in_tokens))
         return code, out_tokens
         
-    def _get_internal_header_code(self):
-        code = self.code['header_code']
-        return code
-        
-    def _get_internal_init_code(self):
-        code = self.code['init_code']
-        return code
+#    def _get_internal_header_code(self):
+#        code = self.code['domain_code']['header_code']
+#        return code
         
     def _get_internal_processing_code(self):
-        code = self.code['processing_code']
+        code = self.code['domain_code']['processing_code']
         code += templates.module_output_code(self._output_block) 
         return code
         
     def _get_internal_properties_code(self):
-        members = ''
-        functions = ''
+        prop_code = {}
         if self.module['properties']:
             for prop in self.module['properties']:
                 if 'block' in prop:
                     decl = self.platform.find_declaration_in_tree(prop['block']['block']['name']['name'],
                                                                   self.platform.tree + self._blocks)
                     #FIXME implement for bundles
+                    domain = decl['domain']
+                    if not domain in prop_code:
+                        prop_code[domain] = []
                     prop_type = self.get_block_types(decl)[0]
-                    functions += templates.module_property_setter(prop['block']['name'],
+                    functions = templates.module_property_setter(prop['block']['name'],
                                              prop['block']['block']['name']['name'],
                                              prop_type)
-        return members + functions
+                    prop_code[domain].append(functions)
+        return prop_code
         
     def _process_module(self, streams):
         tree = streams
@@ -911,48 +1001,62 @@ class ReactionAtom(Atom):
         self.inline = inline
         
     def get_declarations(self):
-        declarations = []
+        declarations = {}
         if "other_scope_declarations" in self.code:
-            declarations += self.code["other_scope_declarations"]
-        header_code = self._get_internal_header_code()
-        init_code = self._get_internal_init_code()
-        process_code = self._get_internal_processing_code()
-        properties_code = self._get_internal_properties_code()
+            declarations[self.domain] = self.code["other_scope_declarations"]
+
+        domain_code = self.code['domain_code']
         
-        declaration = templates.reaction_declaration(
-                self.name, header_code + properties_code, 
-                init_code, self._output_block , process_code)
-        declarations += [{"name": self.name,
-                         "code" :  declaration,
-                         'scope' : self.reaction['stack_index']}]
+        properties_code = self._get_internal_properties_code()
+        for domain, code in domain_code.items():
+            header_code = code['header_code'] 
+            init_code = code['init_code']
+            process_code = code['processing_code']
+            properties_domain_code = ''
+            if domain in properties_code:
+                properties_domain_code = properties_code[domain]
+            
+        
+            declaration = templates.module_declaration(
+                    self.name, header_code + properties_domain_code, 
+                    init_code, self._output_block , self._input_block, process_code)
+            if not domain in declarations:
+                declarations[domain] = []
+            declarations[domain].append({"name": self.name,
+                             "code" :  declaration,
+                             'scope' : self.module['stack_index']})
+        
         return declarations
     
     def get_instances(self):
-        instances = []       
+        instances = []
         if "other_scope_instances" in self.code:
             for inst in self.code["other_scope_instances"]:
-                inst['post'] = False
-                instances.append(inst)
-        if len(self.out_tokens) > 0:
-            instances += [{'type' : 'module',
-                           'handle': self.handle,
-                           'moduletype' : self.name,
-                           'scope' : self.scope_index,
-                           'post' : True
-                           },
-                           { 'type' : 'real',
-                             'handle' : self.out_tokens[0],
-                             'scope' : self.scope_index,
-                             'post' : True
-                             }]
-        else:
-            instances += [{'type' : 'module',
+                if inst:
+                    inst['post'] = False
+                    instances.append(inst)
+        for atoms in self.port_name_atoms.itervalues():
+            for atom in atoms:
+                instances += atom.get_instances()
+                
+        instances += [{'type' : 'module',
                      'handle': self.handle,
                      'moduletype' : self.name,
                      'scope' : self.scope_index,
                      'post' : True}
                      ]
-        return instances
+        if len(self.out_tokens) > 0 and self.module['output']:
+            out_block = self.find_internal_block(self.module['output']['name']['name'])
+            # FIXME support bundles
+            block_types = self.get_block_types(out_block);
+            instances += [{ 'type' : block_types[0],
+                             'handle' : self.out_tokens[0],
+                             'scope' : self.scope_index,
+                             'post' : True
+                             }]
+        return {self.domain: instances}        
+        
+        
         
     def get_inline_processing_code(self, in_tokens):
         if self._output_block:
@@ -997,10 +1101,6 @@ class ReactionAtom(Atom):
             code += templates.expression(self.get_inline_processing_code(in_tokens))
             out_tokens = self.out_tokens
         return code, out_tokens
-        
-    def _get_internal_init_code(self):
-        code = self.code['init_code']
-        return code
         
     def _get_internal_header_code(self):
         code = self.code['header_code']
@@ -1292,6 +1392,8 @@ class PlatformFunctions:
                 self.log_debug("New instances " + str(new_instances))
                 header.append([declares, new_instances])
                 
+                init_code += atom.get_initialization_code(in_tokens)
+                
                 processing_code += atom.get_preprocessing_code(in_tokens)
                 # Process processing code
                 code, out_tokens = atom.get_processing_code(in_tokens)
@@ -1332,45 +1434,48 @@ class PlatformFunctions:
             processing_code += postproc[1] + '\n'
         
         for new_header in header:
-            for new_dec in new_header[0]:
+            for domain, new_decs in new_header[0].items():
                 # FIXME doing >= solves the issue of using a Level instance
                 # within an Oscillator. The scope for the Output signal is
                 # currently marked as within the Oscillator instead of the 
                 # Level declared scope.
-                if new_dec['scope'] >= len(self.scope_stack) - 1: # if declaration in this scope
-                    is_declared = False
-                    for d in declared:
-                        if d[0] == new_dec['name'] and d[1] == new_dec['scope']:
-                            is_declared = True
-                            break
-                    if not is_declared:
-                        declared.append( [new_dec['name'], new_dec['scope'] ])
-                        header_code += new_dec['code']
-                else:
-                    other_scope_declarations.append(new_dec)
+                for new_dec in new_decs:
+                    if new_dec['scope'] >= len(self.scope_stack) - 1: # if declaration in this scope
+                        is_declared = False
+                        for d in declared:
+                            if d[0] == new_dec['name'] and d[1] == new_dec['scope']:
+                                is_declared = True
+                                break
+                        if not is_declared:
+                            declared.append( [new_dec['name'], new_dec['scope'] ])
+                            header_code += new_dec['code']
+                    else:
+                        other_scope_declarations.append(new_dec)
             
-            for new_inst in new_header[1]:
+            
+            for domain, new_instances in new_header[1].items():
                 # FIXME doing >= solves the issue of using a Level instance
                 # within an Oscillator. The scope for the Output signal is
                 # currently marked as within the Oscillator instead of the 
                 # Level declared scope.
-                if new_inst['scope'] >= len(self.scope_stack) - 1: # if instance is declared in this scope
-                    is_declared = False
-                    for i in instanced:
-                        if i[0] == new_inst['handle'] and i[1] == new_inst['scope']:
-                            is_declared = True
-                            break
-                    if not is_declared:
-                        instanced.append([new_inst['handle'], new_inst['scope'] ])
-                        new_inst_code = templates.instantiation_code(new_inst)
-                        if 'post' in new_inst and new_inst['post']:
-                            header_code += new_inst_code
-                        else:
-                            header_code = new_inst_code + header_code
-                        if 'code' in new_inst:
-                            init_code +=  templates.initialization_code(new_inst)
-                else:
-                    other_scope_instances.append(new_inst)
+                for new_inst in new_instances:
+                    if new_inst and new_inst['scope'] >= len(self.scope_stack) - 1: # if instance is declared in this scope
+                        is_declared = False
+                        for i in instanced:
+                            if i[0] == new_inst['handle'] and i[1] == new_inst['scope']:
+                                is_declared = True
+                                break
+                        if not is_declared:
+                            instanced.append([new_inst['handle'], new_inst['scope'] ])
+                            new_inst_code = templates.instantiation_code(new_inst)
+                            if 'post' in new_inst and new_inst['post']:
+                                header_code += new_inst_code
+                            else:
+                                header_code = new_inst_code + header_code
+                            if 'code' in new_inst:
+                                init_code +=  templates.initialization_code(new_inst)
+                    else:
+                        other_scope_instances.append(new_inst)
             
         # Close pending rates in this stream
         while not parent_rates_size == templates.rate_stack_size():
@@ -1391,6 +1496,8 @@ class PlatformFunctions:
         processing_code += new_processing_code
             
         processing_code += templates.stream_end_code%stream_index
+        
+        domain = "AudioDomain" #TODO use actual domain from platform and domain declarations.
 
         self.log_debug("-- End stream")
         
@@ -1399,29 +1506,42 @@ class PlatformFunctions:
                 "init_code" : init_code,
                 "processing_code" : processing_code,
                 "other_scope_instances" : other_scope_instances,
-                "other_scope_declarations" : other_scope_declarations}
+                "other_scope_declarations" : other_scope_declarations,
+                "domain" : domain}
+                
+    def get_domains(self):
+        domains = []
+        for node in self.tree:
+            if 'block' in node:
+                if 'type' in node['block'] and node['block']['type'] == '_domainDefinition':
+                    domains.append(node['block'])
+        return domains
                 
     def generate_code(self, tree, current_scope = [],
                       global_groups = {'include':[], 'includeDir':[], 'initializations' : [], 'linkTo' : [], 'linkDir' : []},
                       declared = [], instanced = [], initialized = []):  
         stream_index = 0
-        header_code = ''
-        init_code = ''
-        processing_code = ''
         other_scope_instances = []
         other_scope_declarations = []
         
         self.log_debug("* New Generation ----- scopes: " + str(len(self.scope_stack)))
         self.push_scope(current_scope)
+        
+        domain_code = {}
+        
 
         for node in tree:
             if 'stream' in node: # Everything grows from streams.
                 code = self.generate_stream_code(node["stream"], stream_index,
                                                  global_groups, declared, instanced,
                                                  initialized)
-                header_code += code["header_code"]
-                init_code  += code["init_code"]
-                processing_code += code["processing_code"]
+                if not code['domain'] in domain_code:
+                    domain_code[code['domain']] = { "header_code": '',
+                        "init_code" : '',
+                        "processing_code" : '' }
+                domain_code[code['domain']]["header_code"] += code["header_code"]
+                domain_code[code['domain']]["init_code"]  += code["init_code"]
+                domain_code[code['domain']]["processing_code"] += code["processing_code"]
                 stream_index += 1
                 other_scope_instances += code['other_scope_instances']
                 other_scope_declarations += code["other_scope_declarations"]
@@ -1430,9 +1550,7 @@ class PlatformFunctions:
         
         self.pop_scope()
         return {"global_groups" : code['global_groups'],
-                "header_code" : header_code,
-                "init_code" : init_code,
-                "processing_code" : processing_code,
+                "domain_code": domain_code,
                 "other_scope_instances" : other_scope_instances,
                 "other_scope_declarations" : other_scope_declarations}
      

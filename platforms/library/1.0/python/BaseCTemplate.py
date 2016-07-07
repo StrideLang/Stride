@@ -65,6 +65,23 @@ struct %s {
             raise ValueError(u"Unsupported type '%s' in assignment."%type(number).__name__)
         return s;
         
+    def get_platform_initialization_code(self, code, token_names, num_inputs, out_tokens, bundle_index = -1):
+        p = re.compile("%%intoken:[a-zA-Z0-9_]+%%") ## TODO tweak this better
+        matches = p.findall(code)
+        if num_inputs > 0: # has inputs
+            if bundle_index >= 0:           
+                code = code.replace('%%bundle_index%%', str(bundle_index))
+            for match in matches:
+                index = int(match[match.rfind(":") + 1:-2])
+                code = code.replace(match, token_names[index])          
+                code = code.replace('%%bundle_index%%', str(bundle_index))
+        else: # Output only
+            if bundle_index >= 0:           
+                code = code.replace('%%bundle_index%%', str(bundle_index))
+        for token in out_tokens:
+            code = code.replace('%%token%%', token) 
+        return code 
+        
     def get_platform_preprocessing_code(self, code, token_names, num_inputs, out_tokens, bundle_index = -1):
         p = re.compile("%%intoken:[a-zA-Z0-9_]+%%") ## TODO tweak this better
         matches = p.findall(code)
@@ -404,8 +421,17 @@ struct %s {
         
     # Module code ------------------------------------------------------------
     def module_declaration(self, name, header_code, init_code,
-                           output_block, input_block, process_code):       
+                           output_block, input_block, process_code):
+        input_declaration = ''
         if input_block:
+#            if 'blockbundle' in input_block:
+#                for i in range(input_block['blockbundle']['size']):
+#                    block_type = self.get_block_type(input_block)
+#                    block_name = input_block['blockbundle']['name']
+#                    if block_type == 'real':
+#                        input_declaration += self.declaration_real(block_name + str(i), close = False) + ", "
+#                input_declaration = input_declaration[:-2]
+#            else:
             input_declaration = self.declaration(input_block, close = False)
             if output_block:
                 input_declaration +=  ", " + self.declaration_reference(output_block, False)
