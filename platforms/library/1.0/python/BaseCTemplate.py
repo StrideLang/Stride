@@ -228,7 +228,19 @@ struct %s {
         declaration = self.string_type + " " + name
         if close:
             declaration += ';\n'
+        return declaration  
+        
+    def declaration_module(self, moduletype, handle, close=True):
+        declaration = moduletype + ' ' + handle
+        if close:
+            declaration += ';\n'
         return declaration 
+        
+    def declaration_reaction(self, reactiontype, handle, close=True):
+        declaration = reactiontype + ' ' + handle
+        if close:
+            declaration += ';\n'
+        return declaration
         
     def value_real(self, value):
         value = str(value)
@@ -298,50 +310,6 @@ struct %s {
                     includes_code += "#include <%s>\n"%include
                     self.included.append(include)
         return includes_code
-        
-    def instantiation_code(self, instance):
-        if instance['type'] == 'real':
-            code = self.declaration_real(instance['handle'])
-        elif instance['type'] == 'bool':
-            code = self.declaration_bool(instance['handle'])
-        elif instance['type'] == 'string':
-            code = self.declaration_string(instance['handle'])
-        elif instance['type'] =='bundle':
-            if instance['bundletype'] == 'real':
-                code = self.declaration_bundle_real(instance['handle'], instance['size'])
-            elif instance['bundletype'] == 'bool':
-                code = self.declaration_bundle_bool(instance['handle'], instance['size'])
-            else:
-                raise ValueError("Unsupported bundle type.")
-        elif instance['type'] == 'module':
-            code = instance['moduletype'] + ' ' + instance['handle'] + ';\n'
-        elif instance['type'] == 'reaction':
-            code = instance['reactiontype'] + ' ' + instance['handle'] + ';\n'
-        else:
-            raise ValueError('Unsupported type for instance')
-        return code
-                
-    def initialization_code(self, instance):
-        code = ''
-        if not instance['code'] == '':
-            if instance['type'] == 'real':
-                code = self.assignment(instance['handle'], instance['code'])
-            elif instance['type'] == 'bool':
-                value = instance['code']
-                code = self.assignment(instance['handle'], value)
-            elif instance['type'] == 'string':
-                value = '"' + instance['code'] + '"'
-                code = self.assignment(instance['handle'], value)
-            elif instance['type'] == 'bundle':
-                for i in range(instance['size']):
-                    elem_instance = {'type': instance['bundletype'] ,
-                                     'handle' : instance['handle'] + '[%i]'%i,
-                                     'code' : instance['code']
-                                     }
-                    code += self.initialization_code(elem_instance)
-            else:
-                ValueError("Unsupported type for initialization: " + instance['type'])
-        return code
       
     # Handling of rate changes within a stream -------------------------------
     def rate_init_code(self):

@@ -10,7 +10,10 @@ from __future__ import division
 
 
 from platformTemplates import templates
+from code import Instance, BundleInstance, ModuleInstance
   
+def signal_type_string(signal_declaration):
+    return type(signal_declaration['default']) == unicode
     
 class Atom(object):
     def __init__(self):
@@ -47,7 +50,7 @@ class Atom(object):
         return {}
     
     def get_instances(self):
-        return {}
+        return []
         
     def get_initialization_code(self, in_tokens):
         '''Returns code that should be executed only once per construction of
@@ -136,26 +139,26 @@ class ValueAtom(Atom):
     
     def get_instances(self):
         if self.is_inline():
-            return {}
+            return []
         else:
             if type(self.value) == unicode:
-                return {self.domain: [{'type' : 'string',
-                     'handle' : self.handle,
-                     'code' : '"' + self.get_inline_processing_code([]) + '"',
-                     'scope' : self.scope_index
-                     }]}
+                return [Instance('"' +self.get_inline_processing_code([]) + '"',
+                                 self.scope_index,
+                                 self.domain,
+                                 'string',
+                                 self.handle)]
             else:
-                return {self.domain: [{'type' : 'real',
-                         'handle' : self.handle,
-                         'code' : self.get_inline_processing_code([]),
-                         'scope' : self.scope_index
-                         }]}
+                return [Instance(self.get_inline_processing_code([]),
+                                 self.scope_index,
+                                 self.domain,
+                                 'real',
+                                 self.handle) ]
         
     def get_inline_processing_code(self, in_token):
         return templates.value_real(self.value)
         
     def get_processing_code(self, in_tokens):
-        return '', self.get_inline_processing_code(in_tokens)        
+        return '', [self.get_inline_processing_code(in_tokens)]        
 
 class ExpressionAtom(Atom):
     def __init__(self, expr_type, left_atom, right_atom, index, scope_index):
@@ -192,20 +195,13 @@ class ExpressionAtom(Atom):
     def get_instances(self):
         instances = self.left_atom.get_instances()
         if self.right_atom:
-            right_instances = self.right_atom.get_instances()
-            for domain in right_instances:
-                if domain in instances:
-                    instances[domain] += right_instances[domain]
-                else:
-                    instances[domain] = right_instances[domain]
+            instances += self.right_atom.get_instances()
         if not self.is_inline():
-            if not self.domain in instances:
-                instances[self.domain] = []
-            instances[self.domain].append({'handle' : self.handle,
-                              'type' : self._expression_out_type(),
-                              'code' : '',
-                              'scope' : self.scope_index
-                              })
+            instances.append(Instance('',
+                                 self.scope_index,
+                                 self.domain,
+                                 self._expression_out_type(),
+                                 self.handle))
         return instances
         
     def get_inline_processing_code(self, in_tokens):
@@ -228,10 +224,10 @@ class ExpressionAtom(Atom):
     
     
     def get_initialization_code(self, in_tokens):
-        left_code = self.left_atom.get_initialization_code([])
+        left_code = self.left_atom.get_initialization_code(in_tokens)
         right_code = ''
         if self.right_atom:
-            right_code = self.right_atom.get_initialization_code([])
+            right_code = self.right_atom.get_initialization_code(in_tokens)
         return left_code + right_code
         
     def get_preprocessing_code(self, in_tokens):
@@ -338,7 +334,10 @@ class ListAtom(Atom):
         
         self.handles = [elem.get_handles() for elem in list_node] # TODO make this recursive
         self.out_tokens = [elem.get_out_tokens() for elem in list_node]
-        self.instances = [elem.get_instances() for elem in list_node]
+        self.instances = []
+        for elem in list_node:
+            self.instances += elem.get_instances()
+            
         
     def get_handles(self, index = -1):
         return self.handles
@@ -366,13 +365,7 @@ class ListAtom(Atom):
     
     def get_instances(self, index = -1):
         if index == -1:
-            flat_instances = {}
-            for instances in self.instances:
-                for domain, inst in instances.items():
-                    if not domain in flat_instances:
-                        flat_instances[domain] = []
-                    flat_instances[domain] += inst
-            return flat_instances
+            return self.instances
         return self.instances[index]
         
     def get_inline_processing_code(self, in_tokens):
@@ -473,58 +466,58 @@ class NameAtom(Atom):
     def get_instances(self):
         default_value = self._get_default_value()
         if 'type' in self.declaration and self.declaration['type'] == 'signal':
-            if type(self.declaration['default']) == unicode:
-                inits = [{'handle' : self.handle,
-                      'type' : 'string',
-                      'code' : default_value,
-                      'scope' : self.declaration['stack_index']
-                      }]
+            if signal_type_string(self.declaration):
+                inits = [Instance(default_value,
+                                 self.declaration['stack_index'],
+                                 self.domain,
+                                 'string',
+                                 self.handle)]
             else:
-                inits = [{'handle' : self.handle,
-                          'type' : 'real',
-                          'code' : str(default_value),
-                          'scope' : self.declaration['stack_index']
-                          }]
+                inits = [Instance(str(default_value),
+                                 self.declaration['stack_index'],
+                                 self.domain,
+                                 'real',
+                                 self.handle)]
         elif 'type' in self.declaration and self.declaration['type'] == 'constant':
-            inits = [{'handle' : self.handle,
-                      'type' : 'real',
-                      'code' : str(default_value),
-                      'scope' : self.declaration['stack_index']
-                      }]
+            inits = [Instance(str(default_value),
+                                 self.declaration['stack_index'],
+                                 self.domain,
+                                 'real',
+                                 self.handle)]
         elif 'type' in self.declaration and self.declaration['type'] == 'switch':
-            inits = [{'handle' : self.handle,
-                      'type' : 'bool',
-                      'code' : templates.str_true if default_value['value'] else templates.str_false,
-                      'scope' : self.declaration['stack_index']
-                      }]
+            inits = [Instance(templates.str_true if default_value['value'] else templates.str_false,
+                             self.declaration['stack_index'],
+                             self.domain,
+                             'bool',
+                             self.handle)]
         elif 'block' in self.platform_type:
             inherits = self.platform_type['block']['inherits']
             if inherits == 'signal':
-                if 'default' in self.declaration and type(self.declaration['default']) == unicode:
-                    inits = [{'handle' : self.handle,
-                          'type' : 'string',
-                          'code' : default_value,
-                          'scope' : self.declaration['stack_index']
-                          }]
+                if 'default' in self.declaration and signal_type_string(self.declaration):
+                    inits = [Instance(default_value,
+                                 self.declaration['stack_index'],
+                                 self.domain,
+                                 'string',
+                                 self.handle)]
                 else:
-                    inits = [{'handle' : self.handle,
-                              'type' : 'real',
-                              'code' : str(default_value),
-                              'scope' : self.declaration['stack_index']
-                              }]
+                    inits = [Instance(str(default_value),
+                                 self.declaration['stack_index'],
+                                 self.domain,
+                                 'real',
+                                 self.handle)]
             elif self.platform_type['block']['type'] == 'platformType':
-                if 'default' in self.declaration and type(self.declaration['default']) == unicode:
-                    inits = [{'handle' : self.handle,
-                              'type' : 'string',
-                              'code' : default_value,
-                              'scope' : self.declaration['stack_index']
-                              }]
+                if 'default' in self.declaration and signal_type_string(self.declaration):
+                    inits = [Instance(default_value,
+                                 self.declaration['stack_index'],
+                                 self.domain,
+                                 'string',
+                                 self.handle)]
                 else:
-                    inits = [{'handle' : self.handle,
-                              'type' : 'real',
-                              'code' : str(default_value),
-                              'scope' : self.declaration['stack_index']
-                              }]
+                    inits = [Instance(str(default_value),
+                                 self.declaration['stack_index'],
+                                 self.domain,
+                                 'real',
+                                 self.handle)]
 
             else:
                 print("Don't know how to declare type " + ' '.join(self.declaration.keys()))
@@ -532,7 +525,7 @@ class NameAtom(Atom):
         else:
             print("Don't know how to declare type " + ' '.join(self.declaration.keys()))
             inits = []
-        return {self.domain : inits}
+        return inits
         
     def get_inline_processing_code(self, in_tokens):
         code = ''
@@ -580,16 +573,18 @@ class NameAtom(Atom):
     def get_processing_code(self, in_tokens):
         code = ''
         out_tokens = [self.handle]
-        if 'processing' in self.platform_type['block']:
-            if self.inline:
-                out_tokens = [self.get_inline_processing_code(in_tokens)]
-            else:
-                if len(self.platform_type['block']['outputs']) > 0:
-                    code = templates.assignment(self.handle, self.get_inline_processing_code(in_tokens))
+        proc_code = self.get_inline_processing_code(in_tokens)
+        if len(proc_code) > 0:
+            if 'processing' in self.platform_type['block']:
+                if self.inline:
+                    out_tokens = [proc_code]
                 else:
-                    code = templates.expression(self.get_inline_processing_code(in_tokens))
-        else:
-            code = templates.assignment(self.handle, self.get_inline_processing_code(in_tokens))
+                    if len(self.platform_type['block']['outputs']) > 0:
+                        code = templates.assignment(self.handle, proc_code)
+                    else:
+                        code = templates.expression(proc_code)
+            else:
+                code = templates.assignment(self.handle, proc_code)
         return code, out_tokens
     
     def get_postproc_once(self):
@@ -633,25 +628,24 @@ class BundleAtom(NameAtom):
     def get_instances(self):
         default_value = self._get_default_value()
 
-        if 'default' in self.declaration and type(self.declaration['default']) == unicode:
-            instances = [{'handle' : self.handle,
-                          'code' : default_value,
-                          'type' : 'bundle',
-                          'bundletype' : 'string',
-                          'size' : self.declaration['size'],
-                          'scope' : self.scope_index
-                          }]   
+        if 'default' in self.declaration and signal_type_string(self.declaration):
+            instances = [BundleInstance(default_value,
+                                 self.scope_index,
+                                 self.domain,
+                                 'string',
+                                 self.handle,
+                                 self.declaration['size']) ]
+                                  
         else:
-            instances = [{'handle' : self.handle,
-                          'code' : str(default_value),
-                          'type' : 'bundle',
-                          'bundletype' : 'real',
-                          'size' : self.declaration['size'],
-                          'scope' : self.scope_index
-                          }] 
+            instances = [BundleInstance(str(default_value),
+                                 self.scope_index,
+                                 self.domain,
+                                 'real',
+                                 self.handle,
+                                 self.declaration['size']) ]
             
                 
-        return {self.domain : instances}
+        return instances
         
     def get_inline_processing_code(self, in_tokens): 
         code = ''
@@ -673,17 +667,19 @@ class BundleAtom(NameAtom):
     def get_processing_code(self, in_tokens):
         code = ''
         out_tokens = [self._get_token_name(self.index)]
-        if 'processing' in self.platform_type['block']:
-            if self.inline:
-                out_tokens = [self.get_inline_processing_code(in_tokens)]
-            else:
-                if len(self.platform_type['block']['outputs']) > 0:
-                    code = templates.assignment(self._get_token_name(self.index), self.get_inline_processing_code(in_tokens))
+        proc_code = self.get_inline_processing_code(in_tokens)
+        if len(proc_code) > 0:
+            if 'processing' in self.platform_type['block']:
+                if self.inline:
+                    out_tokens = [proc_code]
                 else:
-                    code = templates.expression(self.get_inline_processing_code(in_tokens))
-        else:
-            for token in out_tokens:
-                code += templates.assignment(token, self.get_inline_processing_code(in_tokens)) 
+                    if len(self.platform_type['block']['outputs']) > 0:
+                        code = templates.assignment(self._get_token_name(self.index), proc_code)
+                    else:
+                        code = templates.expression(proc_code)
+            else:
+                for token in out_tokens:
+                    code += templates.assignment(token, proc_code) 
             
 #        if len(in_tokens) > 0:
 #            code = templates.assignment(self._get_token_name(self.index),
@@ -768,35 +764,29 @@ class ModuleAtom(Atom):
         return declarations
     
     def get_instances(self):
-        instances = {}
-        instances[self.domain] = []
+        instances = []
         if "other_scope_instances" in self.code:
             for inst in self.code["other_scope_instances"]:
-                if inst:
-                    inst['post'] = False
-                    instances[self.domain].append(inst)
+                inst.post = False
+                instances.append(inst)
         for atoms in self.port_name_atoms.itervalues():
             for atom in atoms:
-                for domain, inst in atom.get_instances().items():
-                    if not domain in instances:
-                        instances[domain] = []
-                    instances[domain] += inst
-                
-        instances[self.domain] += [{'type' : 'module',
-                     'handle': self.handle,
-                     'moduletype' : self.name,
-                     'scope' : self.scope_index,
-                     'post' : True}
-                     ]
+                instances += atom.get_instances()
         if len(self.out_tokens) > 0 and self.module['output']:
             out_block = self.find_internal_block(self.module['output']['name']['name'])
             # FIXME support bundles
             block_types = self.get_block_types(out_block);
-            instances[self.domain] += [{ 'type' : block_types[0],
-                             'handle' : self.out_tokens[0],
-                             'scope' : self.scope_index,
-                             'post' : True
-                             }]
+            default_value = ''
+            instances += [Instance(default_value,
+                                 self.scope_index,
+                                 self.domain,
+                                 block_types[0],
+                                 self.out_tokens[0]) ]
+                
+        instances += [ ModuleInstance(self.scope_index,
+                                 self.domain,
+                                 self.name,
+                                 self.handle) ]
         return instances
         
     def get_inline_processing_code(self, in_tokens):
@@ -826,7 +816,7 @@ class ModuleAtom(Atom):
             elif 'expression' in ports[port_name]:
                 port_in_token = [self.port_name_atoms[port_name][0].get_handles()[0]]
             else:
-                port_in_token = ['____XXX___'] # TODO implement
+                port_in_token = ['____XXX NOT IMPLEMENTED___'] # TODO implement
             code += templates.module_set_property(self.handle, port_name, port_in_token)
             
         if self._input_block and 'blockbundle' in self._input_block:
@@ -1032,31 +1022,27 @@ class ReactionAtom(Atom):
         instances = []
         if "other_scope_instances" in self.code:
             for inst in self.code["other_scope_instances"]:
-                if inst:
-                    inst['post'] = False
-                    instances.append(inst)
+                inst.post = False
+                instances.append(inst)
         for atoms in self.port_name_atoms.itervalues():
             for atom in atoms:
                 instances += atom.get_instances()
-                
-        instances += [{'type' : 'module',
-                     'handle': self.handle,
-                     'moduletype' : self.name,
-                     'scope' : self.scope_index,
-                     'post' : True}
-                     ]
+                # TODO is there a difference for reactions here? i.e. not ModuleInstance
+        instances += [ ModuleInstance(self.scope_index,
+                                 self.domain,
+                                 self.name,
+                                 self.handle) ]
         if len(self.out_tokens) > 0 and self.module['output']:
             out_block = self.find_internal_block(self.module['output']['name']['name'])
             # FIXME support bundles
             block_types = self.get_block_types(out_block);
-            instances += [{ 'type' : block_types[0],
-                             'handle' : self.out_tokens[0],
-                             'scope' : self.scope_index,
-                             'post' : True
-                             }]
-        return {self.domain: instances}        
-        
-        
+            default_value = ''
+            instances += [Instance(default_value,
+                                 self.scope_index,
+                                 self.domain,
+                                 block_types[0],
+                                 self.out_tokens[0]) ]
+        return instances      
         
     def get_inline_processing_code(self, in_tokens):
         if self._output_block:
@@ -1356,11 +1342,56 @@ class PlatformFunctions:
             else:
                 #print("No domain... Bad.")
                 pass
-            self.log_debug("New atom: " + str(new_atom.handle) + " domain: :" + current_domain)
+            self.log_debug("New atom: " + str(new_atom.handle) + " domain: :" + current_domain + '(' + str(type(new_atom)) + ')')
             cur_group.append(new_atom)
 
             self.unique_id += 1
         return node_groups
+        
+    def instantiation_code(self, instance):
+        if instance.get_type() == 'real':
+            code = templates.declaration_real(instance.get_handle())
+        elif instance.get_type() == 'bool':
+            code = templates.declaration_bool(instance.get_handle())
+        elif instance.get_type() == 'string':
+            code = templates.declaration_string(instance.get_handle())
+        elif instance.get_type() =='bundle':
+            if instance.get_bundle_type() == 'real':
+                code = templates.declaration_bundle_real(instance.get_handle(), instance.size)
+            elif instance.get_bundle_type() == 'bool':
+                code = templates.declaration_bundle_bool(instance.get_handle(), instance.size)
+            else:
+                raise ValueError("Unsupported bundle type.")
+        elif instance.get_type() == 'module':
+            code = templates.declaration_module(instance.get_module_type(), instance.get_handle())
+        elif instance.get_type() == 'reaction':
+            code = templates.declaration_reaction(instance.get_module_type(), instance.get_handle())
+        else:
+            raise ValueError('Unsupported type for instance')
+        return code
+        
+    def initialization_code(self, instance):
+        code = ''
+        if not instance.get_code() == '':
+            if instance.get_type() == 'real':
+                code = templates.assignment(instance.get_handle(), instance.get_code())
+            elif instance.get_type() == 'bool':
+                value = instance.get_code()
+                code = templates.assignment(instance.get_handle(), value)
+            elif instance.get_type() == 'string':
+                value = '"' + instance.get_code() + '"'
+                code = templates.assignment(instance.get_handle(), value)
+            elif instance.get_type() == 'bundle':
+                for i in range(instance.get_size()):
+                    elem_instance = Instance(instance.get_code(),
+                                             instance.get_scope(),
+                                             instance.get_domain(),
+                                             instance.get_bundle_type(),
+                                             instance.get_handle() + '[%i]'%i)
+                    code += self.initialization_code(elem_instance)
+            else:
+                ValueError("Unsupported type for initialization: " + instance.get_type())
+        return code
         
     def generate_code_from_groups(self, node_groups, global_groups, declared, instanced, initialized):
 #        declare_code = ''
@@ -1385,11 +1416,9 @@ class PlatformFunctions:
                     for global_group in new_globals:
                         global_groups[global_group] += new_globals[global_group]
 
-                declares = atom.get_declarations()
-                
-                self.log_debug("Declarations " + str(declares))
+                declares = atom.get_declarations()                
                 new_instances = atom.get_instances()
-                self.log_debug("New instances " + str(new_instances))
+                
                 header.append([declares, new_instances])
                 
                 init_code += atom.get_initialization_code(in_tokens)
@@ -1439,9 +1468,12 @@ class PlatformFunctions:
                 # within an Oscillator. The scope for the Output signal is
                 # currently marked as within the Oscillator instead of the 
                 # Level declared scope.
+                self.log_debug("--- Domain : " + str(domain))
                 for new_dec in new_decs:
                     if new_dec['scope'] >= len(self.scope_stack) - 1: # if declaration in this scope
                         is_declared = False
+                        self.log_debug('::: ' + new_dec['name'] + '::: scope ' + str(new_dec['scope']) )
+                        self.log_debug(new_dec['code'])
                         for d in declared:
                             if d[0] == new_dec['name'] and d[1] == new_dec['scope']:
                                 is_declared = True
@@ -1453,29 +1485,31 @@ class PlatformFunctions:
                         other_scope_declarations.append(new_dec)
             
             
-            for domain, new_instances in new_header[1].items():
-                # FIXME doing >= solves the issue of using a Level instance
-                # within an Oscillator. The scope for the Output signal is
-                # currently marked as within the Oscillator instead of the 
-                # Level declared scope.
-                for new_inst in new_instances:
-                    if new_inst and new_inst['scope'] >= len(self.scope_stack) - 1: # if instance is declared in this scope
-                        is_declared = False
-                        for i in instanced:
-                            if i[0] == new_inst['handle'] and i[1] == new_inst['scope']:
-                                is_declared = True
-                                break
-                        if not is_declared:
-                            instanced.append([new_inst['handle'], new_inst['scope'] ])
-                            new_inst_code = templates.instantiation_code(new_inst)
-                            if 'post' in new_inst and new_inst['post']:
-                                header_code += new_inst_code
-                            else:
-                                header_code = new_inst_code + header_code
-                            if 'code' in new_inst:
-                                init_code +=  templates.initialization_code(new_inst)
-                    else:
-                        other_scope_instances.append(new_inst)
+            # FIXME doing >= solves the issue of using a Level instance
+            # within an Oscillator. The scope for the Output signal is
+            # currently marked as within the Oscillator instead of the 
+            # Level declared scope.
+            
+            self.log_debug("New instances ")
+            for new_inst in new_header[1]:
+                
+                if new_inst.get_scope() >= len(self.scope_stack) - 1: # if instance is declared in this scope
+                    is_declared = False
+                    self.log_debug("--- Domain : " + str(new_inst.get_domain()) + " handle: " + new_inst.get_handle())
+                    for i in instanced:
+                        if i[0] == new_inst.get_handle() and i[1] == new_inst.get_scope():
+                            is_declared = True
+                            break
+                    if not is_declared:
+                        new_inst_code = self.instantiation_code(new_inst)
+                        if new_inst.post:
+                            header_code += new_inst_code
+                        else:
+                            header_code = new_inst_code + header_code
+                        init_code +=  self.initialization_code(new_inst)
+                        instanced.append([new_inst.get_handle(), new_inst.get_scope() ])
+                else:
+                    other_scope_instances.append(new_inst)
             
         # Close pending rates in this stream
         while not parent_rates_size == templates.rate_stack_size():
