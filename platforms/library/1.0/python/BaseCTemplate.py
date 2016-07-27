@@ -122,15 +122,6 @@ struct %s {
             code = code.replace('%%token%%', handle) 
         return code
         
-    def get_platform_declarations(self, declaration_list, scope_index):
-        declarations = []
-        for i,dec in enumerate(declaration_list):
-            declarations.append({"name": "_dec_%03i"%i,
-                                 "code" : dec['value'] + '\n',
-                                 'scope' : scope_index}
-                                )
-        return declarations
-        
     def declaration_bundle_real(self, name, size, close=True):
         declaration = self.real_type + " %s[%i]"%(name, size)
         if close:

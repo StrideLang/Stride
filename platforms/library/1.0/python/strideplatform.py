@@ -10,7 +10,7 @@ from __future__ import division
 
 
 from platformTemplates import templates
-from code import Instance, BundleInstance, ModuleInstance
+from code import Instance, BundleInstance, ModuleInstance, Declaration
   
 def signal_type_string(signal_declaration):
     return type(signal_declaration['default']) == unicode
@@ -47,7 +47,7 @@ class Atom(object):
         return self.globals
     
     def get_declarations(self):
-        return {}
+        return []
     
     def get_instances(self):
         return []
@@ -185,11 +185,6 @@ class ExpressionAtom(Atom):
         declarations = self.left_atom.get_declarations()
         if self.right_atom:
             right_declarations = self.right_atom.get_declarations()
-            for domain in right_declarations:
-                if domain in declarations:
-                    declarations[domain] += right_declarations[domain]
-                else:
-                    declarations[domain] = right_declarations[domain]
         return declarations
     
     def get_instances(self):
@@ -353,14 +348,10 @@ class ListAtom(Atom):
         return self.globals
         
     def get_declarations(self, index = -1):
-        declarations = {}
+        declarations = []
         for elem in self.list_node:
             elem_declarations = elem.get_declarations()
-            for domain in elem_declarations:
-                if domain in declarations:
-                    declarations[domain] += elem_declarations[domain]
-                else:
-                    declarations[domain] = elem_declarations[domain]
+            declarations += elem_declarations
         return declarations
     
     def get_instances(self, index = -1):
@@ -459,9 +450,12 @@ class NameAtom(Atom):
     def get_declarations(self):
         declarations = []
         if 'declarations' in self.platform_type['block']:
-            declarations = templates.get_platform_declarations(self.platform_type['block']['declarations'],
-                                                       self.scope_index)
-        return {self.domain : declarations}
+            for i,dec in enumerate(self.platform_type['block']['declarations']):
+                declarations.append(Declaration(self.scope_index,
+                                                self.domain,
+                                                "_dec_%03i"%i,
+                                                dec['value'] + '\n'))
+        return declarations
     
     def get_instances(self):
         default_value = self._get_default_value()
@@ -734,9 +728,9 @@ class ModuleAtom(Atom):
         self.inline = inline
         
     def get_declarations(self):
-        declarations = {}
+        declarations = []
         if "other_scope_declarations" in self.code:
-            declarations[self.domain] = self.code["other_scope_declarations"]
+            declarations += self.code["other_scope_declarations"]
 
         domain_code = self.code['domain_code']
         
@@ -748,19 +742,20 @@ class ModuleAtom(Atom):
             properties_domain_code = ''
             if domain in properties_code:
                 properties_domain_code = '\n'.join(properties_code[domain])
-            if domain == self.domain or self.domain == None:
+            if domain == '' and 'streamDomain' in properties_code:
+                properties_domain_code = '\n'.join(properties_code['streamDomain'])
+            elif domain == self.domain or self.domain == None and None in properties_code:
                 properties_domain_code = '\n'.join(properties_code[None])
             
         
             declaration = templates.module_declaration(
                     self.name, header_code + properties_domain_code, 
                     init_code, self._output_block , self._input_block, process_code)
-            if not domain in declarations:
-                declarations[domain] = []
-            declarations[domain].append({"name": self.name,
-                             "code" :  declaration,
-                             'scope' : self.module['stack_index']})
-        
+
+            declarations.append(Declaration(self.module['stack_index'],
+                                            self.domain,
+                                            self.name,
+                                            declaration))
         return declarations
     
     def get_instances(self):
@@ -910,8 +905,7 @@ class ModuleAtom(Atom):
                     self.port_name_atoms[name] = [new_atom]
         
         self.code = self.platform.generate_code(tree, self._blocks,
-                                                instanced = instanced)
-                                                
+                                                instanced = instanced)                   
 
         for section in self.global_sections:
             if section in self.globals:
@@ -991,9 +985,9 @@ class ReactionAtom(Atom):
         self.inline = inline
         
     def get_declarations(self):
-        declarations = {}
+        declarations = []
         if "other_scope_declarations" in self.code:
-            declarations[self.domain] = self.code["other_scope_declarations"]
+            declarations += self.code["other_scope_declarations"]
 
         domain_code = self.code['domain_code']
         
@@ -1004,18 +998,19 @@ class ReactionAtom(Atom):
             process_code = code['processing_code']
             properties_domain_code = ''
             if domain in properties_code:
-                properties_domain_code = properties_code[domain]
+                properties_domain_code = '\n'.join(properties_code[domain])
+            if domain == self.domain or self.domain == None:
+                properties_domain_code = '\n'.join(properties_code[None])
             
         
             declaration = templates.module_declaration(
                     self.name, header_code + properties_domain_code, 
                     init_code, self._output_block , self._input_block, process_code)
-            if not domain in declarations:
-                declarations[domain] = []
-            declarations[domain].append({"name": self.name,
-                             "code" :  declaration,
-                             'scope' : self.module['stack_index']})
-        
+
+            declarations.append(Declaration(self.module['stack_index'],
+                                            self.domain,
+                                            self.name,
+                                            declaration))
         return declarations
     
     def get_instances(self):
@@ -1403,6 +1398,7 @@ class PlatformFunctions:
         parent_rates_size = templates.rate_stack_size() # To know now much we need to pop for this stream
         
         header = []
+        current_domain = None
         
         self.log_debug(">>> Start stream generation")
         for group in node_groups:
@@ -1463,26 +1459,24 @@ class PlatformFunctions:
             processing_code += postproc[1] + '\n'
         
         for new_header in header:
-            for domain, new_decs in new_header[0].items():
+            for new_dec in new_header[0]:
                 # FIXME doing >= solves the issue of using a Level instance
                 # within an Oscillator. The scope for the Output signal is
                 # currently marked as within the Oscillator instead of the 
                 # Level declared scope.
-                self.log_debug("--- Domain : " + str(domain))
-                for new_dec in new_decs:
-                    if new_dec['scope'] >= len(self.scope_stack) - 1: # if declaration in this scope
-                        is_declared = False
-                        self.log_debug('::: ' + new_dec['name'] + '::: scope ' + str(new_dec['scope']) )
-                        self.log_debug(new_dec['code'])
-                        for d in declared:
-                            if d[0] == new_dec['name'] and d[1] == new_dec['scope']:
-                                is_declared = True
-                                break
-                        if not is_declared:
-                            declared.append( [new_dec['name'], new_dec['scope'] ])
-                            header_code += new_dec['code']
-                    else:
-                        other_scope_declarations.append(new_dec)
+                if new_dec.get_scope() >= len(self.scope_stack) - 1: # if declaration in this scope
+                    is_declared = False
+                    self.log_debug(':::--- Domain : '+ str(new_dec.get_domain()) + ":::" + new_dec.get_name() + '::: scope ' + str(new_dec.get_scope()) )
+                    self.log_debug(new_dec.get_code())
+                    for d in declared:
+                        if d[0] == new_dec.get_name() and d[1] == new_dec.get_scope():
+                            is_declared = True
+                            break
+                    if not is_declared:
+                        declared.append( [new_dec.get_name(), new_dec.get_scope() ])
+                        header_code += new_dec.get_code()
+                else:
+                    other_scope_declarations.append(new_dec)
             
             
             # FIXME doing >= solves the issue of using a Level instance

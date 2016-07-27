@@ -70,3 +70,14 @@ class ModuleInstance(Instance):
 
     def get_module_type(self):
         return self.vartype
+        
+        
+class Declaration(Code):
+    def __init__(self, scope, domain, name, code):
+        self.scope = scope
+        self.domain = domain
+        self.name = name
+        self.code = code
+        
+    def get_name(self):
+        return self.name
