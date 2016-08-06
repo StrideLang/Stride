@@ -730,7 +730,14 @@ class ModuleAtom(Atom):
     def get_declarations(self):
         declarations = []
         if "other_scope_declarations" in self.code:
-            declarations += self.code["other_scope_declarations"]
+            for other_declaration in self.code["other_scope_declarations"]:
+                # TODO declarations get put in the same domain, but it must be checked
+                # later whether this declaration appears in a different domain,
+                # but the same code section in the template.
+                # Setting the domain here guarantees that dependency order is
+                # respected.
+                other_declaration.domain = self.domain
+                declarations.append(other_declaration)
 
         domain_code = self.code['domain_code']
         
@@ -745,7 +752,7 @@ class ModuleAtom(Atom):
                 properties_domain_code = '\n'.join(properties_code[domain])
             elif domain == '' and 'streamDomain' in properties_code:
                 properties_domain_code = '\n'.join(properties_code['streamDomain'])
-            elif domain == self.domain or self.domain == None and None in properties_code:
+            elif (domain == self.domain or self.domain == None) and None in properties_code:
                 properties_domain_code = '\n'.join(properties_code[None])
             elif None in properties_code:
                 properties_domain_code = '\n'.join(properties_code[None])
