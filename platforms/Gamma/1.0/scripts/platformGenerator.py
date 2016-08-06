@@ -7,57 +7,23 @@ Created on Mon Apr 25 08:29:07 2016
 from subprocess import check_output as ck_out
 import platform
 import shutil
-import json
 import os
-import sys
-from strideplatform import PlatformFunctions
+from strideplatform import GeneratorBase
 
 from platformTemplates import templates # Perhaps we should acces this through PlatformFunctions ?
 
-class Generator:
+class Generator(GeneratorBase):
     def __init__(self, out_dir = '',
                  platform_dir = '',
                  debug = False):
-
-        self.out_dir = out_dir
-        self.platform_dir = platform_dir
-
-        self.project_dir = platform_dir + '/project'
-        self.out_file = self.out_dir + '/main.cpp'
-
-        jsonfile = open(self.out_dir + '/tree.json')
-        self.tree = json.load(jsonfile)
-
-        
-        self.platform = PlatformFunctions(self.tree, debug)
-
-        self.last_num_outs = 0
+                     
+        super(Generator, self).__init__(out_dir, platform_dir, debug)     
 
         # TODO get gamma sources and build and install if not available
         # Question: building requires cmake, should binaries be distributed instead?
         # What about secondary deps like portaudio and libsndfile?
         self.log("Building Gamma project")
         self.log("Buiding in directory: " + self.out_dir)
-
-
-    def log(self, text):
-        print(text)
-
-    def write_section_in_file(self, sec_name, code):
-        filename = self.out_dir + "/main.cpp"
-        f = open(filename, 'r')
-        text = f.read()
-        f.close()
-    #    log(text)
-        start_index = text.find("//[[%s]]"%sec_name)
-        end_index = text.find("//[[/%s]]"%sec_name, start_index)
-        if start_index <0 or end_index < 0:
-            raise ValueError("Error finding [[%s]]  section"%sec_name)
-            return
-        text = text[:start_index] + '//[[%s]]\n'%sec_name + code + text[end_index:]
-        f = open(filename, 'w')
-        f.write(text)
-        f.close()
 
     def generate_code(self):
         # Generate code from tree
@@ -76,32 +42,13 @@ class Generator:
         #var_declaration = ''.join(['double stream_%02i;\n'%i for i in range(stream_index)])
         #declare_code = var_declaration + declare_code
 
-        template_init_code = templates.get_config_code(self.sample_rate, self.block_size,
-                        self.num_out_chnls, self.num_in_chnls, self.audio_device)
 
-        globals_code = templates.get_globals_code(code['global_groups'])
-        config_code = templates.get_configuration_code(code['global_groups']['initializations'])
-
-        shutil.copyfile(self.project_dir + "/template.cpp", self.out_dir + "/main.cpp")
-        self.write_section_in_file('Includes', globals_code)
+        filename = self.out_dir + "/main.cpp"
+        shutil.copyfile(self.project_dir + "/template.cpp", filename)
         
-        domains = self.platform.get_domains()
+        self.write_code(code,filename)
         
         #print(str(domains))
-        for domain,sections in code['domain_code'].items():
-            domain_matched = False
-            for platform_domain in domains:
-                if platform_domain['domainName'] == domain:
-                    print("Domain found:" + domain)
-                    self.write_section_in_file(platform_domain['declarationsTag'], sections['header_code'])
-                    self.write_section_in_file(platform_domain['initializationTag'], sections['init_code'] + template_init_code + config_code)
-                    self.write_section_in_file(platform_domain['processingTag'], sections['processing_code'])
-                    if 'cleanup_code' in sections:
-                        self.write_section_in_file(platform_domain['cleanupTag'], sections['cleanup_code'])
-                    domain_matched = True
-                    break
-            if not domain_matched:
-                print('WARNING: Domain not matched: ' + domain);
             
         if platform.system() == "Linux":
             try:

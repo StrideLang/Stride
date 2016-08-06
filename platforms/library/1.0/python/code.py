@@ -10,6 +10,7 @@ class Code(object):
         self.code = ''
         self.scope = 0
         self.domain = None
+        self.dependents = []
     
     def get_code(self):
         return self.code
@@ -19,6 +20,12 @@ class Code(object):
         
     def get_domain(self):
         return self.domain
+    
+    def get_dependents(self):
+        return self.dependents
+    
+    def add_dependent(self, dependent):
+        self.dependents.append(dependent)
     
 class Instance(Code):
     def __init__(self, code, scope, domain, vartype, handle, post = True):

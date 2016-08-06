@@ -66,19 +66,21 @@ platformType _OscInType {
     include: ["lo/lo.h"]
     linkTo: ["lo"]
     declarations: ['
-		int foo_handler(const char *path, const char *types, lo_arg **argv, int argc, lo_message msg, void *user_data) {
-			
+		int foo_handler(const char *path, const char *types, lo_arg ** argv,
+                int argc, void *data, void *user_data) {
+				
+			%%token%% = argv[0]->f;
 			}
 		']
-    initializations: '
+    initializations: ['
 	lo_server_thread st = lo_server_thread_new(std::to_string(%%intoken:0%%).c_str(), error);
 
     lo_server_thread_add_method(st, "/foo/bar", "fi", foo_handler, NULL);
 
     lo_server_thread_start(st);
-	'
+	']
 	preProcessing: ''
-    processing: '3'
+    processing: ''
 	domain: OSCInDomain
     inherits: ['signal']
 }

@@ -12,8 +12,8 @@ using namespace gam;
 //[[Declarations]]
 //[[/Declarations]]
 
-//[[OSC:Declarations]]
-//[[/OSC:Declarations]]
+//[[Instances]]
+//[[/Instances]]
 
 void audioCB(AudioIOData & io)
 {
@@ -49,9 +49,6 @@ int main() {
     AudioIO io(256, 44100., audioCB, NULL, -1, -1);
 //[[/Initialization]]
 
-//[[OSC:Initialization]]
-//[[/OSC:Initialization]]
-
     io.deviceIn(adevi);
     io.deviceOut(adevo);
 
@@ -73,7 +70,5 @@ exit:
 //[[Cleanup]]
 //[[Cleanup]]
 
-//[[OSC:Cleanup]]
-//[[/OSC:Cleanup]]
     return returnval;
 }

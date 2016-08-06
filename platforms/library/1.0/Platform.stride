@@ -14,8 +14,20 @@ type _DomainDefinition {
 			default: none
 			required: on
 		},
+		port GlobalsTag {
+			name: "globalsTag"
+			types: ["CSP"]
+			default: "Includes"
+			required: off
+		},
 		port DeclarationsTag {
 			name: "declarationsTag"
+			types: ["CSP"]
+			default: ""
+			required: off
+		},
+		port InstanceTag {
+			name: "instanceTag"
 			types: ["CSP"]
 			default: ""
 			required: off

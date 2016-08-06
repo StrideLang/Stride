@@ -21,7 +21,7 @@ class Atom(object):
         self.inline = False
         self.globals = {}
         self.handle = ''
-        self.domain = 'AudioDomain' #FIXME this needs to be set correctly from source and platform
+        self.domain = None
         
         self.global_sections = ['include', 'includeDir', 'linkTo', 'linkDir']
         
@@ -184,7 +184,7 @@ class ExpressionAtom(Atom):
     def get_declarations(self):
         declarations = self.left_atom.get_declarations()
         if self.right_atom:
-            right_declarations = self.right_atom.get_declarations()
+            declarations += self.right_atom.get_declarations()
         return declarations
     
     def get_instances(self):
@@ -413,7 +413,7 @@ class NameAtom(Atom):
         self.handle = self.name # + '_%03i'%token_index;
         self.platform_type = platform_type
         self.declaration = declaration
-        self.domain = ''
+        self.domain = None
         if 'domain' in self.declaration:
             self.domain = self.declaration['domain']
             
@@ -737,25 +737,30 @@ class ModuleAtom(Atom):
         properties_code = self._get_internal_properties_code()
         for domain, code in domain_code.items():
             header_code = code['header_code'] 
+            instance_code = code['instance_code']
             init_code = code['init_code']
             process_code = code['processing_code']
             properties_domain_code = ''
             if domain in properties_code:
                 properties_domain_code = '\n'.join(properties_code[domain])
-            if domain == '' and 'streamDomain' in properties_code:
+            elif domain == '' and 'streamDomain' in properties_code:
                 properties_domain_code = '\n'.join(properties_code['streamDomain'])
             elif domain == self.domain or self.domain == None and None in properties_code:
                 properties_domain_code = '\n'.join(properties_code[None])
+            elif None in properties_code:
+                properties_domain_code = '\n'.join(properties_code[None])
             
         
-            declaration = templates.module_declaration(
-                    self.name, header_code + properties_domain_code, 
+            declaration_text = templates.module_declaration(
+                    self.name, header_code + instance_code + properties_domain_code, 
                     init_code, self._output_block , self._input_block, process_code)
-
-            declarations.append(Declaration(self.module['stack_index'],
+                    
+            declaration = Declaration(self.module['stack_index'],
                                             self.domain,
                                             self.name,
-                                            declaration))
+                                            declaration_text)
+
+            declarations.append(declaration)
         return declarations
     
     def get_instances(self):
@@ -953,7 +958,6 @@ class PlatformModuleAtom(ModuleAtom):
         super(PlatformModuleAtom, self).__init__(module, function, platform_code, token_index, platform, scope_index)
         
     
-
 # TODO complete work on reaction block
 class ReactionAtom(Atom):
     def __init__(self, reaction, platform_code, token_index, platform, scope_index):
@@ -1322,7 +1326,7 @@ class PlatformFunctions:
         
     def make_stream_nodes(self, stream):
         node_groups = [[]] # Nodes are grouped by domain
-        current_domain = ''
+        current_domain = None
         cur_group = node_groups[-1]
         
         for member in stream: #Only instantiate whatever is used in streams. Discard the rest
@@ -1337,7 +1341,7 @@ class PlatformFunctions:
             else:
                 #print("No domain... Bad.")
                 pass
-            self.log_debug("New atom: " + str(new_atom.handle) + " domain: :" + current_domain + '(' + str(type(new_atom)) + ')')
+            self.log_debug("New atom: " + str(new_atom.handle) + " domain: :" + str(current_domain) + ' (' + str(type(new_atom)) + ')')
             cur_group.append(new_atom)
 
             self.unique_id += 1
@@ -1391,10 +1395,11 @@ class PlatformFunctions:
     def generate_code_from_groups(self, node_groups, global_groups, declared, instanced, initialized):
 #        declare_code = ''
 #        instantiation_code = ''
-        init_code = ''
-        header_code = ''
-        processing_code = '' 
-        post_processing = []
+        init_code = {}
+        header_code = {}
+        instance_code = {}
+        processing_code = {} 
+        post_processing = {}
         parent_rates_size = templates.rate_stack_size() # To know now much we need to pop for this stream
         
         header = []
@@ -1406,6 +1411,9 @@ class PlatformFunctions:
             previous_atom = None
             for atom in group:
                 self.log_debug("Processing atom: " + str(atom.handle))
+                # TODO check if domain has changed to handle in tokens in domain change
+                if atom.domain: # Make "None" domain reuse existing domain
+                    current_domain = atom.domain
                 #Process Inlcudes
                 new_globals = atom.get_globals()
                 if len(new_globals) > 0:
@@ -1415,37 +1423,51 @@ class PlatformFunctions:
                 declares = atom.get_declarations()                
                 new_instances = atom.get_instances()
                 
+                if not current_domain in header_code:
+                    header_code[current_domain] = "" 
+                
+                if not current_domain in instance_code:
+                    instance_code[current_domain] = ""
+                    
                 header.append([declares, new_instances])
                 
-                init_code += atom.get_initialization_code(in_tokens)
+                if not current_domain in init_code:
+                    init_code[current_domain] = "" 
+                init_code[current_domain] += atom.get_initialization_code(in_tokens)
                 
-                processing_code += atom.get_preprocessing_code(in_tokens)
+                if not current_domain in processing_code:
+                    processing_code[current_domain] = "" 
+                processing_code[current_domain] += atom.get_preprocessing_code(in_tokens)
                 # Process processing code
                 code, out_tokens = atom.get_processing_code(in_tokens)
                 new_postprocs = atom.get_postproc_once()
+                
+                if not current_domain in post_processing:
+                    post_processing[current_domain] = [] 
                 if new_postprocs:
                     for new_postproc in new_postprocs:
                         if new_postproc:
                             postproc_present = False
-                            for postproc in post_processing:
+                            for postproc in post_processing[current_domain]:
                                 if postproc[0] == new_postproc[0]:
                                     postproc_present = True
+                                    break
                             # Do we need to order the post processing code?
                             if not postproc_present:
-                                post_processing.append(new_postproc)
+                                post_processing[current_domain].append(new_postproc)
                 self.log_debug("Code:  " + str(code))
                 if atom.rate > 0:
                     new_inst, new_init, new_proc = templates.rate_start(atom.rate)
-                    processing_code += new_proc
-                    header_code += new_inst
-                    init_code += new_init
+                    processing_code[current_domain] += new_proc
+                    header_code[current_domain] += new_inst
+                    init_code[current_domain] += new_init
                     # We want to avoid inlining across rate boundaries
                     if previous_atom:
                         previous_atom.set_inline(False)
                     atom.set_inline(False)
 
                 if code:
-                    processing_code += code + '\n'
+                    processing_code[current_domain] += code + '\n'
                 in_tokens = out_tokens
             
             previous_atom = atom
@@ -1455,8 +1477,9 @@ class PlatformFunctions:
         other_scope_declarations = []
         other_scope_instances = []
 
-        for postproc in post_processing:
-            processing_code += postproc[1] + '\n'
+        for domain in post_processing:
+            for postprocdomain in post_processing[domain]:
+                processing_code[domain] += postprocdomain[1] + '\n'
         
         for new_header in header:
             for new_dec in new_header[0]:
@@ -1473,8 +1496,10 @@ class PlatformFunctions:
                             is_declared = True
                             break
                     if not is_declared:
+                        if not new_dec.get_domain() in header_code:
+                            header_code[new_dec.get_domain()] = ''
                         declared.append( [new_dec.get_name(), new_dec.get_scope() ])
-                        header_code += new_dec.get_code()
+                        header_code[new_dec.get_domain()] += new_dec.get_code()
                 else:
                     other_scope_declarations.append(new_dec)
             
@@ -1496,46 +1521,49 @@ class PlatformFunctions:
                             break
                     if not is_declared:
                         new_inst_code = self.instantiation_code(new_inst)
+                        if not new_inst.get_domain() in instance_code:
+                            instance_code[new_inst.get_domain()] = ''
+                        if not new_inst.get_domain() in init_code:
+                            init_code[new_inst.get_domain()] = ''
                         if new_inst.post:
-                            header_code += new_inst_code
+                            instance_code[new_inst.get_domain()] += new_inst_code
                         else:
-                            header_code = new_inst_code + header_code
-                        init_code +=  self.initialization_code(new_inst)
+                            instance_code[new_inst.get_domain()] = new_inst_code + instance_code[new_inst.get_domain()]
+                        init_code[new_inst.get_domain()] +=  self.initialization_code(new_inst)
                         instanced.append([new_inst.get_handle(), new_inst.get_scope() ])
                 else:
                     other_scope_instances.append(new_inst)
             
         # Close pending rates in this stream
         while not parent_rates_size == templates.rate_stack_size():
-            processing_code += templates.rate_end_code()
+            # FIXME rates should be closed in their specific domain
+            processing_code[current_domain] += templates.rate_end_code()
 
         self.log_debug(">>> End stream generation")
-        return [header_code, init_code, processing_code,
+        return [header_code, instance_code, init_code, processing_code,
                 other_scope_instances, other_scope_declarations]
         
     def generate_stream_code(self, stream, stream_index, global_groups, declared, instanced, initialized):
         self.log_debug("-- Start stream")       
         node_groups = self.make_stream_nodes(stream)
-        
-        processing_code = templates.stream_begin_code%stream_index
-        
+
         new_code = self.generate_code_from_groups(node_groups, global_groups, declared, instanced, initialized)
-        header_code, init_code, new_processing_code, other_scope_instances, other_scope_declarations = new_code
-        processing_code += new_processing_code
-            
-        processing_code += templates.stream_end_code%stream_index
-        
-        domain =  self.get_platform_domain() #TODO use actual domain from platform and domain declarations.
+        header_code, instance_code, init_code, new_processing_code, other_scope_instances, other_scope_declarations = new_code
 
         self.log_debug("-- End stream")
         
+        for domain in new_processing_code.keys():
+            new_processing_code[domain] = templates.stream_begin_code%stream_index + new_processing_code[domain]
+            new_processing_code[domain] += templates.stream_end_code%stream_index
+        
         return {"global_groups" : global_groups,
                 "header_code" : header_code,
+                "instance_code" : instance_code,
                 "init_code" : init_code,
-                "processing_code" : processing_code,
+                "processing_code" : new_processing_code,
                 "other_scope_instances" : other_scope_instances,
-                "other_scope_declarations" : other_scope_declarations,
-                "domain" : domain}
+                "other_scope_declarations" : other_scope_declarations
+                }
                 
     def get_domains(self):
         domains = []
@@ -1572,13 +1600,38 @@ class PlatformFunctions:
                 code = self.generate_stream_code(node["stream"], stream_index,
                                                  global_groups, declared, instanced,
                                                  initialized)
-                if not code['domain'] in domain_code:
-                    domain_code[code['domain']] = { "header_code": '',
+                
+                for domain, header_code in code["header_code"].items():
+                    if not domain in domain_code:
+                        domain_code[domain] =  { "header_code": '',
+                        "instance_code" : '',
                         "init_code" : '',
                         "processing_code" : '' }
-                domain_code[code['domain']]["header_code"] += code["header_code"]
-                domain_code[code['domain']]["init_code"]  += code["init_code"]
-                domain_code[code['domain']]["processing_code"] += code["processing_code"]
+                    domain_code[domain]["header_code"] += header_code
+                
+                for domain, instance_code in code["instance_code"].items():
+                    if not domain in domain_code:
+                        domain_code[domain] =  { "header_code": '',
+                        "instance_code" : '',
+                        "init_code" : '',
+                        "processing_code" : '' }
+                    domain_code[domain]["instance_code"] += instance_code
+                
+                for domain, init_code in code["init_code"].items():
+                    if not domain in domain_code:
+                        domain_code[domain] =  { "header_code": '',
+                        "instance_code" : '',
+                        "init_code" : '',
+                        "processing_code" : '' }
+                    domain_code[domain]["init_code"] += init_code
+                
+                for domain, processing_code in code["processing_code"].items():
+                    if not domain in domain_code:
+                        domain_code[domain] =  { "header_code": '',
+                        "instance_code" : '',
+                        "init_code" : '',
+                        "processing_code" : '' }
+                    domain_code[domain]["processing_code"] += processing_code
                 stream_index += 1
                 other_scope_instances += code['other_scope_instances']
                 other_scope_declarations += code["other_scope_declarations"]
@@ -1591,5 +1644,83 @@ class PlatformFunctions:
                 "other_scope_instances" : other_scope_instances,
                 "other_scope_declarations" : other_scope_declarations}
      
+
+import json
+
+class GeneratorBase(object):
+    def __init__(self, out_dir = '',
+                 platform_dir = '',
+                 debug = False):
+
+        self.out_dir = out_dir
+        self.platform_dir = platform_dir
+
+        self.project_dir = platform_dir + '/project'
+        self.out_file = self.out_dir + '/main.cpp'
+
+        jsonfile = open(self.out_dir + '/tree.json')
+        self.tree = json.load(jsonfile)
+
+        self.platform = PlatformFunctions(self.tree, debug)
+
+        self.last_num_outs = 0        
+        
+        self.written_sections = []
+    
+    def log(self, text):
+        print(text)
+
+    def write_section_in_file(self, sec_name, code, filename):
+        f = open(filename, 'r')
+        text = f.read()
+        f.close()
+    #    log(text)
+        start_index = text.find("//[[%s]]"%sec_name)
+        end_index = text.find("//[[/%s]]"%sec_name, start_index)
+        if start_index <0 or end_index < 0:
+            raise ValueError("Error finding [[%s]]  section"%sec_name)
+            return
+        if sec_name in self.written_sections:
+            code = text[start_index + len("//[[%s]]"%sec_name):end_index] + code
+        else:
+            self.written_sections.append(sec_name)
+        text = text[:start_index] + '//[[%s]]\n'%sec_name + code + text[end_index:]
+        f = open(filename, 'w')
+        f.write(text)
+        f.close()
+        
+    def write_code(self, code, filename):
+        
+        domains = self.platform.get_domains()
+        globals_code = templates.get_globals_code(code['global_groups'])
+        for platform_domain in domains:
+            if platform_domain['domainName'] == self.platform.get_platform_domain():
+               break
+        self.write_section_in_file(platform_domain['globalsTag'], globals_code, filename)
+        
+        template_init_code = templates.get_config_code(self.sample_rate, self.block_size,
+                        self.num_out_chnls, self.num_in_chnls, self.audio_device)
+        config_code = templates.get_configuration_code(code['global_groups']['initializations'])
+        self.write_section_in_file(platform_domain['initializationTag'], template_init_code + config_code, filename)
+        for domain,sections in code['domain_code'].items():
+            domain_matched = False
+            for platform_domain in domains:
+                if platform_domain['domainName'] == domain or not domain:
+                    if domain:
+                        print("Domain found:" + domain)
+                    else:
+                        print("Domain none.")
+                    self.write_section_in_file(platform_domain['declarationsTag'], sections['header_code'], filename)
+                    self.write_section_in_file(platform_domain['initializationTag'], sections['init_code'], filename)
+                    self.write_section_in_file(platform_domain['instanceTag'], sections['instance_code'], filename)
+                    self.write_section_in_file(platform_domain['processingTag'], sections['processing_code'], filename)
+                    if 'cleanup_code' in sections:
+                        self.write_section_in_file(platform_domain['cleanupTag'], sections['cleanup_code'], filename)
+                    domain_matched = True
+                    break
+            if not domain_matched:
+                print('WARNING: Domain not matched: ' + str(domain))
+    
+    
 if __name__ == '__main__':
     pass

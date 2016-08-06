@@ -241,6 +241,9 @@ void PythonProject::astToJson(AST *node, QJsonObject &obj)
             if (propValue->getNodeType() == AST::Int) {
                 newObject[QString::fromStdString(prop->getName())]
                         = static_cast<ValueNode *>(propValue)->getIntValue();
+            } else if (propValue->getNodeType() == AST::Name) {
+                newObject[QString::fromStdString(prop->getName())]
+                        = QString::fromStdString(static_cast<NameNode *>(propValue)->getName());
             }
         }
         obj["blockbundle"] = newObject;

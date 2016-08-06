@@ -13,6 +13,7 @@ platformType _HwInput {
     typeName: '_hwInput'
 #	numInputs: 0
 	outputs: ["real", "real"]
+    domain: AudioDomain
 #    include: []
 #    linkTo: []
 #    declarations: ['']
@@ -24,6 +25,7 @@ platformType _HwInput {
 platformType _HwOutput {
     typeName: '_hwOutput'
 	inputs: ["real", "real"]
+    domain: AudioDomain
 #	numOutputs: 0
 #    include: []
 #    linkTo: []

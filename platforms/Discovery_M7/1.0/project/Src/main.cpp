@@ -92,6 +92,10 @@ static float32_t Amp[4] = { 0.4, 0.3, 0.2, 0.1 };
 //[[/Declarations]]
 
 
+//[[Instances]]
+//[[/Instances]]
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -154,13 +158,15 @@ int main(void)
 
   /* USER CODE END WHILE */
 
+    //[[Processing]]
+    //[[/Processing]]
   /* USER CODE BEGIN 3 */
 
   }
+    //[[Cleanup]]
+    //[[/Cleanup]]
   /* USER CODE END 3 */
 
-  //[[Cleanup]]
-  //[[Cleanup]]
 }
 
 /** System Clock Configuration
@@ -236,7 +242,7 @@ void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai)
 	for (uint8_t i = 0; i < 4 ; i++)
 	{
 
-//[[Processing]]
+//[[AudioProcessing]]
 
 		Sample_f32 = 0.0f;
 
@@ -259,7 +265,7 @@ void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai)
 		hsai_BlockA2.Instance->DR = Sample_q15;
 
 
-//[[/Processing]]
+//[[/AudioProcessing]]
 	}
 
 	__HAL_SAI_ENABLE_IT(&hsai_BlockA2,SAI_IT_FREQ);
