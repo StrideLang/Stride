@@ -1,4 +1,5 @@
 use Gamma version 1.0 on PC
+
 # This should be expanded into lists of equal size:
 AudioIn >> Level(gain: 1.5) >> AudioOut;
 
@@ -28,6 +29,12 @@ MonoSignal2 >> Level(gain: [1.0, 1.0]) >> StereoOut2;
 # NewSignal2 should be auto declared as a bundle with size 2
 Out >> Level(gain: 1.0) >> NewSignal;
 NewSignal >> Level(gain: 1.0) >> NewSignal2;
+
+# This should be expanded to two parallel streams (within lists)
+# And Osc should be declared as a bundle of size 2
+import generators
+
+Oscillator(frequency: [440,2] amplitude: 1.0) >> Osc;
 
 # Need to check bundle and name into properties and correct expansion
 
