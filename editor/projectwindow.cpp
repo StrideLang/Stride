@@ -301,6 +301,20 @@ void ProjectWindow::openGeneratedDir()
     }
 }
 
+void ProjectWindow::cleanProject()
+{
+    CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+    Q_ASSERT(!editor->filename().isEmpty());
+    QFileInfo info(editor->filename());
+    QString dirName = info.absolutePath() + QDir::separator()
+            + info.fileName() + "_Products";
+    if (QFile::exists(dirName)) {
+        if (!QDir(dirName).removeRecursively()) {
+            qDebug() << "Error cleaning project.";
+        }
+    }
+}
+
 void ProjectWindow::followSymbol()
 {
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
@@ -680,6 +694,7 @@ void ProjectWindow::connectActions()
             this, SLOT(showDocumentation()));
     connect(ui->actionFollow_Symbol, SIGNAL(triggered()), this, SLOT(followSymbol()));
     connect(ui->actionOpen_Generated_Code, SIGNAL(triggered()), this, SLOT(openGeneratedDir()));
+    connect(ui->actionClean_Project, SIGNAL(triggered()), this, SLOT(cleanProject()));
 
     connect(ui->actionFind, SIGNAL(triggered()), this, SLOT(find()));
     connect(ui->actionFind_Next, SIGNAL(triggered()), this, SLOT(findNext()));

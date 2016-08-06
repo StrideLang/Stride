@@ -38,6 +38,7 @@ public slots:
     void loadFile(QString fileName);
     void openOptionsDialog();
     void openGeneratedDir();
+    void cleanProject();
     void updateCodeAnalysis();
     void newFile();
     void markModified();

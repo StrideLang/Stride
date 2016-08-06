@@ -203,7 +203,7 @@
      <x>0</x>
      <y>0</y>
      <width>784</width>
-     <height>25</height>
+     <height>19</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuProject">
@@ -228,6 +228,7 @@
     <addaction name="actionRefresh"/>
     <addaction name="actionFollow_Symbol"/>
     <addaction name="actionOpen_Generated_Code"/>
+    <addaction name="actionClean_Project"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
@@ -395,6 +396,11 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+G</string>
+   </property>
+  </action>
+  <action name="actionClean_Project">
+   <property name="text">
+    <string>Clean Project</string>
    </property>
   </action>
  </widget>
