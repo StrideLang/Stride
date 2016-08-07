@@ -237,6 +237,9 @@ struct %s {
         value = str(value)
         return value
         
+    def bundle_indexing(self, bundle_name, index):
+        return bundle_name + '[' + str(index - 1) + ']'
+        
     def expression(self, expression):
         return expression + ';\n'
 
