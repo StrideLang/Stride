@@ -822,6 +822,9 @@ class ModuleAtom(Atom):
                 port_in_token = [ports[port_name]['name']['name']]
             elif 'expression' in ports[port_name]:
                 port_in_token = [self.port_name_atoms[port_name][0].get_handles()[0]]
+            elif 'bundle' in ports[port_name]:
+                port_in_token = [templates.bundle_indexing(ports[port_name]['bundle']['name'],
+                                                               ports[port_name]['bundle']['index'])]
             else:
                 port_in_token = ['____XXX NOT IMPLEMENTED___'] # TODO implement
             code += templates.module_set_property(self.handle, port_name, port_in_token)
@@ -846,6 +849,9 @@ class ModuleAtom(Atom):
                 port_in_token = [ports[port_name]['name']['name']]
             elif 'expression' in ports[port_name]:
                 port_in_token = [self.port_name_atoms[port_name][0].get_handles()[0]]
+            elif 'bundle' in ports[port_name]:
+                port_in_token = [templates.bundle_indexing(ports[port_name]['bundle']['name'],
+                                                           ports[port_name]['bundle']['index'])]
             else:
                 port_in_token = ['____XXX___'] # TODO implement
             code += templates.module_set_property(self.handle, port_name, port_in_token)
@@ -1399,9 +1405,8 @@ class PlatformFunctions:
                 ValueError("Unsupported type for initialization: " + instance.get_type())
         return code
         
-    def generate_code_from_groups(self, node_groups, global_groups, declared, instanced, initialized):
-#        declare_code = ''
-#        instantiation_code = ''
+    def generate_code_from_groups(self, node_groups, global_groups):
+
         init_code = {}
         header_code = {}
         instance_code = {}
@@ -1409,7 +1414,9 @@ class PlatformFunctions:
         post_processing = {}
         parent_rates_size = templates.rate_stack_size() # To know now much we need to pop for this stream
         
-        header = []
+#        header = []
+        scope_declarations = []
+        scope_instances = []
         current_domain = None
         
         self.log_debug(">>> Start stream generation")
@@ -1435,8 +1442,10 @@ class PlatformFunctions:
                 
                 if not current_domain in instance_code:
                     instance_code[current_domain] = ""
-                    
-                header.append([declares, new_instances])
+                
+                scope_declarations += declares
+                scope_instances += new_instances
+#                header.append([declares, new_instances])
                 
                 if not current_domain in init_code:
                     init_code[current_domain] = "" 
@@ -1478,68 +1487,10 @@ class PlatformFunctions:
                 in_tokens = out_tokens
             
             previous_atom = atom
-            
-        #It might be useful in the future to process instance code and declarations 
-        # together at once, e.g. to keep them in a large memory block or struct
-        other_scope_declarations = []
-        other_scope_instances = []
 
         for domain in post_processing:
             for postprocdomain in post_processing[domain]:
                 processing_code[domain] += postprocdomain[1] + '\n'
-        
-        for new_header in header:
-            for new_dec in new_header[0]:
-                # FIXME doing >= solves the issue of using a Level instance
-                # within an Oscillator. The scope for the Output signal is
-                # currently marked as within the Oscillator instead of the 
-                # Level declared scope.
-                if new_dec.get_scope() >= len(self.scope_stack) - 1: # if declaration in this scope
-                    is_declared = False
-                    self.log_debug(':::--- Domain : '+ str(new_dec.get_domain()) + ":::" + new_dec.get_name() + '::: scope ' + str(new_dec.get_scope()) )
-                    self.log_debug(new_dec.get_code())
-                    for d in declared:
-                        if d[0] == new_dec.get_name() and d[1] == new_dec.get_scope():
-                            is_declared = True
-                            break
-                    if not is_declared:
-                        if not new_dec.get_domain() in header_code:
-                            header_code[new_dec.get_domain()] = ''
-                        declared.append( [new_dec.get_name(), new_dec.get_scope() ])
-                        header_code[new_dec.get_domain()] += new_dec.get_code()
-                else:
-                    other_scope_declarations.append(new_dec)
-            
-            
-            # FIXME doing >= solves the issue of using a Level instance
-            # within an Oscillator. The scope for the Output signal is
-            # currently marked as within the Oscillator instead of the 
-            # Level declared scope.
-            
-            self.log_debug("New instances ")
-            for new_inst in new_header[1]:
-                
-                if new_inst.get_scope() >= len(self.scope_stack) - 1: # if instance is declared in this scope
-                    is_declared = False
-                    self.log_debug("--- Domain : " + str(new_inst.get_domain()) + " handle: " + new_inst.get_handle())
-                    for i in instanced:
-                        if i[0] == new_inst.get_handle() and i[1] == new_inst.get_scope():
-                            is_declared = True
-                            break
-                    if not is_declared:
-                        new_inst_code = self.instantiation_code(new_inst)
-                        if not new_inst.get_domain() in instance_code:
-                            instance_code[new_inst.get_domain()] = ''
-                        if not new_inst.get_domain() in init_code:
-                            init_code[new_inst.get_domain()] = ''
-                        if new_inst.post:
-                            instance_code[new_inst.get_domain()] += new_inst_code
-                        else:
-                            instance_code[new_inst.get_domain()] = new_inst_code + instance_code[new_inst.get_domain()]
-                        init_code[new_inst.get_domain()] +=  self.initialization_code(new_inst)
-                        instanced.append([new_inst.get_handle(), new_inst.get_scope() ])
-                else:
-                    other_scope_instances.append(new_inst)
             
         # Close pending rates in this stream
         while not parent_rates_size == templates.rate_stack_size():
@@ -1548,14 +1499,14 @@ class PlatformFunctions:
 
         self.log_debug(">>> End stream generation")
         return [header_code, instance_code, init_code, processing_code,
-                other_scope_instances, other_scope_declarations]
+                scope_instances, scope_declarations]
         
-    def generate_stream_code(self, stream, stream_index, global_groups, declared, instanced, initialized):
+    def generate_stream_code(self, stream, stream_index, global_groups):
         self.log_debug("-- Start stream")       
         node_groups = self.make_stream_nodes(stream)
 
-        new_code = self.generate_code_from_groups(node_groups, global_groups, declared, instanced, initialized)
-        header_code, instance_code, init_code, new_processing_code, other_scope_instances, other_scope_declarations = new_code
+        new_code = self.generate_code_from_groups(node_groups, global_groups)
+        header_code, instance_code, init_code, new_processing_code, scope_instances, scope_declarations = new_code
 
         self.log_debug("-- End stream")
         
@@ -1568,8 +1519,8 @@ class PlatformFunctions:
                 "instance_code" : instance_code,
                 "init_code" : init_code,
                 "processing_code" : new_processing_code,
-                "other_scope_instances" : other_scope_instances,
-                "other_scope_declarations" : other_scope_declarations
+                "scope_instances": scope_instances,
+                "scope_declarations": scope_declarations
                 }
                 
     def get_domains(self):
@@ -1591,23 +1542,23 @@ class PlatformFunctions:
                 
     def generate_code(self, tree, current_scope = [],
                       global_groups = {'include':[], 'includeDir':[], 'initializations' : [], 'linkTo' : [], 'linkDir' : []},
-                      declared = [], instanced = [], initialized = []):  
+                      instanced = []):  
         stream_index = 0
         other_scope_instances = []
         other_scope_declarations = []
+        scope_declarations = []
+        scope_instances = []
         
         self.log_debug("* New Generation ----- scopes: " + str(len(self.scope_stack)))
         self.push_scope(current_scope)
         
         domain_code = {}
         
-
         for node in tree:
             if 'stream' in node: # Everything grows from streams.
                 code = self.generate_stream_code(node["stream"], stream_index,
-                                                 global_groups, declared, instanced,
-                                                 initialized)
-                
+                                                 global_groups)
+                self.log_debug("* Ending Generation -----")
                 for domain, header_code in code["header_code"].items():
                     if not domain in domain_code:
                         domain_code[domain] =  { "header_code": '',
@@ -1639,12 +1590,59 @@ class PlatformFunctions:
                         "init_code" : '',
                         "processing_code" : '' }
                     domain_code[domain]["processing_code"] += processing_code
+                    
+                scope_declarations += code["scope_declarations"]
+                scope_instances += code["scope_instances"]
                 stream_index += 1
-                other_scope_instances += code['other_scope_instances']
-                other_scope_declarations += code["other_scope_declarations"]
                 
-        self.log_debug("* Ending Generation -----")
-        
+        declared = []
+        for new_dec in scope_declarations:
+            if new_dec.get_scope() >= len(self.scope_stack) - 1: # if declaration in this scope
+                is_declared = False
+                self.log_debug(':::--- Domain : '+ str(new_dec.get_domain()) + ":::" + new_dec.get_name() + '::: scope ' + str(new_dec.get_scope()) )
+                self.log_debug(new_dec.get_code())
+                for d in declared:
+                    if d[0] == new_dec.get_name() and d[1] == new_dec.get_scope():
+                        is_declared = True
+                        break
+                if not is_declared:
+                    
+                    if not new_dec.get_domain() in domain_code:
+                        domain_code[new_dec.get_domain()] =  { "header_code": '',
+                            "instance_code" : '',
+                            "init_code" : '',
+                            "processing_code" : '' }
+                    declared.append( [new_dec.get_name(), new_dec.get_scope() ])
+                    domain_code[new_dec.get_domain()]['header_code'] += new_dec.get_code()
+            else:
+                other_scope_declarations.append(new_dec)
+            
+        self.log_debug("New instances ")
+        for new_inst in scope_instances:
+            
+            if new_inst.get_scope() == len(self.scope_stack) - 1: # if instance is declared in this scope
+                is_declared = False
+                self.log_debug("--- Domain : " + str(new_inst.get_domain()) + " handle: " + new_inst.get_handle())
+                for i in instanced:
+                    if i[0] == new_inst.get_handle() and i[1] == new_inst.get_scope():
+                        is_declared = True
+                        break
+                if not is_declared:
+                    new_inst_code = self.instantiation_code(new_inst)
+                    if not new_inst.get_domain() in domain_code:
+                        domain_code[new_inst.get_domain()] =  { "header_code": '',
+                            "instance_code" : '',
+                            "init_code" : '',
+                            "processing_code" : '' }
+                    if new_inst.post:
+                        domain_code[new_inst.get_domain()]["instance_code"] += new_inst_code
+                    else:
+                        domain_code[new_inst.get_domain()]["instance_code"] = new_inst_code + instance_code[new_inst.get_domain()]
+                    domain_code[new_inst.get_domain()]["init_code"] +=  self.initialization_code(new_inst)
+                    instanced.append([new_inst.get_handle(), new_inst.get_scope() ])
+            else:
+                other_scope_instances.append(new_inst)  
+
         self.pop_scope()
         return {"global_groups" : code['global_groups'],
                 "domain_code": domain_code,
