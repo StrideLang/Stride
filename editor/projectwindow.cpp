@@ -762,6 +762,11 @@ void ProjectWindow::readSettings()
     if (settings.contains("geometry")) {
         this->restoreGeometry(settings.value("geometry").toByteArray());
     }
+    if (settings.contains("windowState")) {
+        if (!this->restoreState(settings.value("windowState").toByteArray())) {
+            qDebug() << "Error recalling window state. (Version mismatch?)";
+        }
+    }
     int size = settings.beginReadArray("openDocuments");
     QStringList filesToOpen;
     for (int i = 0; i < size; ++i) {
@@ -819,6 +824,7 @@ void ProjectWindow::writeSettings()
 
      settings.beginGroup("GUI");
      settings.setValue("geometry", saveGeometry());
+     settings.setValue("windowState", saveState());
      settings.setValue("lastIndex", ui->tabWidget->currentIndex());
      settings.beginWriteArray("openDocuments");
      for(int i = 0; i < ui->tabWidget->count(); i++) {
