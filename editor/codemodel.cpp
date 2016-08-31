@@ -162,7 +162,6 @@ QString CodeModel::getTooltipText(QString symbol)
         BlockNode *declaration = CodeValidator::findDeclaration(symbol, QVector<AST *>(), m_lastValidTree);
         if (declaration) {
             AST *metaValue = declaration->getPropertyValue("meta");
-            Q_ASSERT(metaValue);
             if (metaValue) {
                 Q_ASSERT(metaValue->getNodeType() == AST::String);
                 AST *properties = declaration->getPropertyValue("properties");
@@ -189,6 +188,12 @@ QString CodeModel::getTooltipText(QString symbol)
                     text += ")";
                 }
             }
+        }
+    } else { // word starts with lower case letter
+        QList<LangError> errors;
+        BlockNode *typeBlock = CodeValidator::findTypeDeclarationByName(symbol, QVector<AST *>(), m_lastValidTree, errors);
+        if (typeBlock) {
+            text = "type: " + symbol;
         }
     }
     return text;

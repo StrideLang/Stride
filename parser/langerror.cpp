@@ -23,7 +23,8 @@ std::string LangError::getErrorText() {
         errorText += "Invalid Type Error";
         break;
     case InvalidPort:
-        errorText += "Invalid port Error";
+        errorText += "Invalid Port '" + errorTokens[1]
+                + "' for type '" + errorTokens[0] + "'";
         break;
     case InvalidPortType:
         errorText += "Invalid port type Error. Port '" + errorTokens[1]

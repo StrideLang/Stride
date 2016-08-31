@@ -1,0 +1,15 @@
+
+module Mix {
+	input: Input
+	output: Output
+	properties: [
+	]
+	internalBlocks: [
+		signal Input {},
+		signal Output {}
+	]
+	streams: [
+		Input >> Output;
+	]
+	meta: "Not implemented yet"
+}

@@ -166,3 +166,30 @@ module OnChange {
     ]
     meta: "Discard repetitions of a value. Can be use to turn synchronous signals to asynchronous messages."
 }
+
+module Compare {
+    input: Input
+    output: Output
+	properties: [
+		property OperatorProperty {
+			name: "operator"
+			block: Operator
+			types: [""] # Any type for now
+		},
+		property ValueProperty {
+			name: "value"
+			block: Value
+			types: [""] # Any type for now
+		}
+	]
+    internalBlocks: [
+        signal Input[2] {},
+        switch Output {},
+		signal Operator {},
+		signal Value {}
+    ]
+    streams: [
+		
+    ]
+    meta: "Not implemented..."
+}

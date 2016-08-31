@@ -29,7 +29,7 @@ type _Rated {
 		},
 		port Reset {
 			name: "reset"
-			types: ["CBP"]
+			types: [""] # Fix
 			default: off
 			required: off
 		}

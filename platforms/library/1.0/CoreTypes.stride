@@ -56,6 +56,12 @@ type _Trigger {
 type _Signal {
 	typeName: "signal"
 	ports: [
+		port Value {
+			name: "value"
+			types: ["CIP", "CRP", "CSP"]
+			default: 0.0
+			required: off
+		}
 		port Default {
 			name: "default"
 			types: ["CIP", "CRP", "CSP"]

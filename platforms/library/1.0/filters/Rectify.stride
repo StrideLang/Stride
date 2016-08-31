@@ -1,0 +1,21 @@
+
+module Rectify {
+	input: Input
+	output: Output
+	properties: [
+		property ModeProperty {
+			name: "mode"
+			block: Mode
+			meta: "	Possible options are 'Full' and 'Half'."
+		}
+	]
+	internalBlocks: [
+		signal Input {},
+		signal Output {},
+		signal Mode {}
+	]
+	streams: [
+		Input >> Output;
+	]
+	meta: "Not implemented yet"
+}
