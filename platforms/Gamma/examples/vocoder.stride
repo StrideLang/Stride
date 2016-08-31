@@ -1,0 +1,24 @@
+use Gamma version 1.0 on PC
+import generators
+import filters
+
+signal CarrierFrequency { value: 110.0 rate: 1 reset: Reset }
+constant CenterFrequencies [8] { value: [ 82.5, 165, 330, 660, 1320, 2640, 5280, 10560 ] }
+constant  QFactor { value: 1.414}
+trigger Reset {}
+
+AudioIn[1]
+>> BandPass ( centerFrequency: CenterFrequencies qFactor: QFactor )
+>> Rectify ( mode: 'Full' )
+>> LowPass ( cutoff: 50 )
+>> AmplitudeEnvelope;
+
+BandLimitedSaw ( frequency: CarrierFrequency )
+>> BandPass ( centerFrequency: CenterFrequencies qFactor: QFactor gain: AmplitudeEnvelope )
+>> Mix ()
+>> AudioOut;
+
+CarrierFrequency * 1.059463
+>> CarrierFrequency
+>> Compare ( value: 7040 operator: 'Greater' )
+>> Reset;
