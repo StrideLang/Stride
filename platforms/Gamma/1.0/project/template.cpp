@@ -15,14 +15,14 @@ using namespace gam;
 //[[Instances]]
 //[[/Instances]]
 
-void audioCB(AudioIOData & io)
-{
-    while(io()){
+//void audioCB(AudioIOData & io)
+//{
+//    while(io()){
 //[[Processing]]
 
 //[[/Processing]]
-    }
-}
+//    }
+//}
 
 //[[OSC:Processing]]
 

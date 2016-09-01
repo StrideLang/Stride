@@ -1707,6 +1707,7 @@ class GeneratorBase(object):
                         self.num_out_chnls, self.num_in_chnls, self.audio_device)
         config_code = templates.get_configuration_code(code['global_groups']['initializations'])
         self.write_section_in_file(platform_domain['initializationTag'], template_init_code + config_code, filename)
+        processing_code = {}
         for domain,sections in code['domain_code'].items():
             domain_matched = False
             for platform_domain in domains:
@@ -1714,17 +1715,30 @@ class GeneratorBase(object):
                     if domain:
                         print("Domain found:" + domain)
                     else:
+                        domain = self.platform.get_platform_domain()
                         print("Domain none.")
+                    if not domain in processing_code:
+                        processing_code[domain] = ""
+                    processing_code[domain] += '\n'.join(sections['processing_code'])
+                    
                     self.write_section_in_file(platform_domain['declarationsTag'], sections['header_code'], filename)
                     self.write_section_in_file(platform_domain['initializationTag'], sections['init_code'], filename)
                     self.write_section_in_file(platform_domain['instanceTag'], sections['instance_code'], filename)
-                    self.write_section_in_file(platform_domain['processingTag'], sections['processing_code'], filename)
                     if 'cleanup_code' in sections:
                         self.write_section_in_file(platform_domain['cleanupTag'], sections['cleanup_code'], filename)
                     domain_matched = True
                     break
             if not domain_matched:
                 print('WARNING: Domain not matched: ' + str(domain))
+        
+        for domain in processing_code:
+            for platform_domain in domains: 
+                if platform_domain['domainName'] == domain:
+                    code = processing_code[domain]
+                    if not platform_domain['domainFunction'] == '':
+                        code = platform_domain['domainFunction'].replace("%%domainCode%%", code)
+                    
+                    self.write_section_in_file(platform_domain['processingTag'], code, filename)
     
     
 if __name__ == '__main__':

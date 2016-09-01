@@ -49,6 +49,12 @@ type _DomainDefinition {
 			types: ["CSP"]
 			default: ""
 			required: off
+		},
+		port DomainFunction {
+			name: "domainFunction"
+			types: ["CSP"]
+			default: ""
+			required: off
 		}
 	]
 	inherits: ["base"]

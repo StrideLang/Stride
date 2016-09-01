@@ -16,6 +16,14 @@ _domainDefinition AudioDomain {
 	processingTag: "Processing"
 	initializationTag: "Initialization"
 	cleanupTag: "Cleanup"
+	domainFunction: '
+	void audioCB(AudioIOData & io)
+{
+    while(io()){
+%%domainCode%%
+	}		
+}
+'
 }
 
 # OSC Domains
