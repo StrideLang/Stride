@@ -217,6 +217,19 @@ QPair<QString, int> CodeModel::getSymbolLocation(QString symbol)
                 location.second = block->getLine();
                 return location;
             }
+            if (block->getObjectType() == "type") {
+                AST *namePropertyValue = block->getPropertyValue("typeName");
+                Q_ASSERT(namePropertyValue);
+                if (namePropertyValue->getNodeType() == AST::String) {
+                    ValueNode *nameValue = static_cast<ValueNode *>(namePropertyValue);
+                    if (nameValue->getStringValue() == symbol.toStdString()) {
+                        QString fileName = QString::fromStdString(block->getFilename());
+                        location.first = fileName;
+                        location.second = block->getLine();
+                        return location;
+                    }
+                }
+            }
         }
     }
     return location;

@@ -20,7 +20,7 @@ std::string LangError::getErrorText() {
         errorText += "Unknown Type Error. Type '" + errorTokens[0] + "' not recognized.";
         break;
     case InvalidType:
-        errorText += "Invalid Type Error";
+        errorText += "Invalid Type: '" + errorTokens[0] + "'";
         break;
     case InvalidPort:
         errorText += "Invalid Port '" + errorTokens[1]

@@ -127,6 +127,8 @@ void ParserTest::testDomains()
     QVERIFY(domainName->getNodeType() == AST::String);
     QVERIFY(domainName->getStringValue() == "AudioDomain");
 
+    tree->deleteChildren();
+    delete tree;
 }
 
 void ParserTest::testImport()
@@ -687,7 +689,6 @@ void ParserTest::testStreamExpansion()
     QVERIFY(list->getNodeType() == AST::List);
     QVERIFY(list->getChildren().size() == 2);
 
-//    signal StereoOut[2] { }
 //    MonoSignal2 >> Level(gain: [1.0, 1.0]) >> StereoOut;
     stream = static_cast<StreamNode *>(nodes.at(9));
     QVERIFY(stream->getNodeType() == AST::Stream);
