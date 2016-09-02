@@ -98,7 +98,7 @@ void ParserTest::testDomains()
     generator.validate();
     QVERIFY(generator.isValid());
 
-//    [SerialIn(), 1024.0] >> Divide() >> ValueInSerialDomain;
+//    [ OSCIn(address: "/val") , 1024.0] >> Divide() >> ValueInOSCDomain;
 
     StreamNode *stream = static_cast<StreamNode *>(tree->getChildren()[4]);
     QVERIFY(stream->getNodeType() == AST::Stream);
@@ -114,7 +114,7 @@ void ParserTest::testDomains()
     QVERIFY(domainName->getNodeType() == AST::String);
     QVERIFY(domainName->getStringValue() == "OSCInDomain");
 
-    //    Oscillator(frequency: ValueInSerialDomain) >> Level(gain: 0.2) >> AudioOut;
+    //    Oscillator(frequency: ValueInOSCDomain) >> Level(gain: 0.2) >> AudioOut;
 
     stream = static_cast<StreamNode *>(tree->getChildren()[5]);
     func = static_cast<FunctionNode *>(stream->getLeft());
@@ -126,6 +126,16 @@ void ParserTest::testDomains()
     domainName = static_cast<ValueNode *>(func->getDomain());
     QVERIFY(domainName->getNodeType() == AST::String);
     QVERIFY(domainName->getStringValue() == "AudioDomain");
+
+    // Check if "none" domain is set to platform domain
+//    signal Modulator {}
+//    Oscillator(frequency: 5) >> Modulator;
+//    Oscillator(frequency:440) >> Level(gain: Modulator) >> AudioOut;
+
+    BlockNode *block = static_cast<BlockNode *>(tree->getChildren()[6]);
+    ValueNode *domain = static_cast<ValueNode *>(block->getDomain());
+    QVERIFY(domain->getNodeType() == AST::String);
+    QVERIFY(domain->getStringValue() == "AudioDomain");
 
     tree->deleteChildren();
     delete tree;

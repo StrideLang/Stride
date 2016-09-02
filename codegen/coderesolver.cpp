@@ -480,7 +480,11 @@ void CodeResolver::insertBuiltinObjects()
 void CodeResolver::processDomains()
 {
     // Fill missing domain information (propagate domains)
-    foreach(AST *node, m_tree->getChildren()) {
+    // First we need to reverse the streams backwards to make sure we propagate the streams from the furthest point down the line
+    vector<AST *> children = m_tree->getChildren();
+    vector<AST *>::reverse_iterator rit = children.rbegin();
+    while(rit != children.rend()) {
+        AST *node = *rit;
         if (node->getNodeType() == AST::Stream) {
             StreamNode *stream = static_cast<StreamNode *>(node);
             AST *left = stream->getLeft();
@@ -551,6 +555,9 @@ void CodeResolver::processDomains()
                         }
                     }
                 }
+                if (left == right && domainName.size() == 0) { // If this is is the last pass then set the unknown domains to platform domain
+                    domainName = m_platform->getPlatformDomain().toStdString();
+                }
 
                 if (domainName.size() > 0) {
                     foreach (AST *relatedNode, domainStack) {
@@ -589,6 +596,9 @@ void CodeResolver::processDomains()
                 }
             }
         }
+
+
+        rit++;
     }
 
     // Now split streams when there is a domain change

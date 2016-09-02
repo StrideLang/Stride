@@ -10,3 +10,9 @@ signal ValueInOSCDomain {
 [ OSCIn(address: "/val") , 1024.0] >> Divide() >> ValueInOSCDomain;
 
 Oscillator(frequency: ValueInOSCDomain) >> Level(gain: 0.2) >> AudioOut;
+
+# Default domain should be set to platform domain
+
+signal Modulator {}
+Oscillator(frequency: 5) >> Modulator;
+Oscillator(frequency:440) >> Level(gain: Modulator) >> AudioOut;
