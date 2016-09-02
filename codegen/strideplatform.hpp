@@ -37,6 +37,7 @@ public:
     PlatformAPI getAPI() {return m_api;}
     Builder *createBuilder(QString projectDir);
 
+    QString getPlatformDomain();  // The platform's default domain
 
 //    BlockNode *getFunction(QString functionName);
     QList<AST *> getBuiltinObjectsCopy();

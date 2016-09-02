@@ -224,6 +224,23 @@ Builder *StridePlatform::createBuilder(QString projectDir)
     return builder;
 }
 
+QString StridePlatform::getPlatformDomain()
+{
+    QList<AST *> libObjects = getBuiltinObjects();
+    foreach(AST *object, libObjects) {
+        if (object->getNodeType() == AST::Block) {
+            BlockNode *block = static_cast<BlockNode *>(object);
+            if (block->getObjectType() == "constant"
+                    && block->getName() == "PlatformDomain") {
+                ValueNode *domainValue = static_cast<ValueNode *>(block->getPropertyValue("value"));
+                Q_ASSERT(domainValue->getNodeType() == AST::String);
+                return QString::fromStdString(domainValue->getStringValue());
+            }
+        }
+    }
+    return "";
+}
+
 QList<AST *> StridePlatform::getBuiltinObjectsCopy()
 {
     QList<AST *> objects;
