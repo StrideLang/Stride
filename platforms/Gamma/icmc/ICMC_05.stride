@@ -1,0 +1,13 @@
+# Frequency Modulation with Signal Declaration and Real Rate
+
+use Gamma version 1.0 on PC
+
+import generators
+
+signal Modulator {
+    rate:       2.33
+}
+
+Oscillator ( frequency: 3.0 amplitude: 40.0 ) >> Modulator;
+
+Oscillator ( frequency: 440.0 + Modulator amplitude: 0.1 ) >> AudioOut;

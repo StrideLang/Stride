@@ -1,0 +1,7 @@
+# Sine Oscillator
+
+use Gamma version 1.0 on PC
+
+import generators
+
+Oscillator ( frequency: 440.0 amplitude: 0.1 ) >> AudioOut;
