@@ -731,11 +731,6 @@ class ModuleAtom(Atom):
         declarations = []
         if "other_scope_declarations" in self.code:
             for other_declaration in self.code["other_scope_declarations"]:
-                # TODO declarations get put in the same domain, but it must be checked
-                # later whether this declaration appears in a different domain,
-                # but the same code section in the template.
-                # Setting the domain here guarantees that dependency order is
-                # respected.
                 other_declaration.domain = self.domain
                 declarations.append(other_declaration)
 
@@ -746,7 +741,7 @@ class ModuleAtom(Atom):
             header_code = code['header_code'] 
             instance_code = code['instance_code']
             init_code = code['init_code']
-            process_code = code['processing_code']
+            process_code = '\n'.join(code['processing_code'])
             properties_domain_code = ''
             if domain in properties_code:
                 properties_domain_code = '\n'.join(properties_code[domain])
@@ -894,10 +889,12 @@ class ModuleAtom(Atom):
                                                                   self.platform.tree + self._blocks)
                     #FIXME implement for bundles
                     domain = decl['domain']
+                    property_name = prop['block']['name']
+#                    domain = "_Property:" + property_name
                     if not domain in prop_code:
                         prop_code[domain] = []
                     prop_type = self.get_block_types(decl)[0]
-                    functions = templates.module_property_setter(prop['block']['name'],
+                    functions = templates.module_property_setter(property_name,
                                              prop['block']['block']['name']['name'],
                                              prop_type)
                     prop_code[domain].append(functions)
@@ -1564,7 +1561,7 @@ class PlatformFunctions:
                         domain_code[domain] =  { "header_code": '',
                         "instance_code" : '',
                         "init_code" : '',
-                        "processing_code" : '' }
+                        "processing_code" : [] }
                     domain_code[domain]["header_code"] += header_code
                 
                 for domain, instance_code in code["instance_code"].items():
@@ -1572,7 +1569,7 @@ class PlatformFunctions:
                         domain_code[domain] =  { "header_code": '',
                         "instance_code" : '',
                         "init_code" : '',
-                        "processing_code" : '' }
+                        "processing_code" : [] }
                     domain_code[domain]["instance_code"] += instance_code
                 
                 for domain, init_code in code["init_code"].items():
@@ -1580,7 +1577,7 @@ class PlatformFunctions:
                         domain_code[domain] =  { "header_code": '',
                         "instance_code" : '',
                         "init_code" : '',
-                        "processing_code" : '' }
+                        "processing_code" : [] }
                     domain_code[domain]["init_code"] += init_code
                 
                 for domain, processing_code in code["processing_code"].items():
@@ -1588,8 +1585,8 @@ class PlatformFunctions:
                         domain_code[domain] =  { "header_code": '',
                         "instance_code" : '',
                         "init_code" : '',
-                        "processing_code" : '' }
-                    domain_code[domain]["processing_code"] += processing_code
+                        "processing_code" : [] }
+                    domain_code[domain]["processing_code"].append(processing_code)
                     
                 scope_declarations += code["scope_declarations"]
                 scope_instances += code["scope_instances"]
@@ -1611,7 +1608,7 @@ class PlatformFunctions:
                         domain_code[new_dec.get_domain()] =  { "header_code": '',
                             "instance_code" : '',
                             "init_code" : '',
-                            "processing_code" : '' }
+                            "processing_code" : [] }
                     declared.append( [new_dec.get_name(), new_dec.get_scope() ])
                     domain_code[new_dec.get_domain()]['header_code'] += new_dec.get_code()
             else:
@@ -1633,7 +1630,7 @@ class PlatformFunctions:
                         domain_code[new_inst.get_domain()] =  { "header_code": '',
                             "instance_code" : '',
                             "init_code" : '',
-                            "processing_code" : '' }
+                            "processing_code" : [] }
                     if new_inst.post:
                         domain_code[new_inst.get_domain()]["instance_code"] += new_inst_code
                     else:
