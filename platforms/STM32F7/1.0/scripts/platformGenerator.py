@@ -4,7 +4,7 @@ Created on Mon Apr 25 08:29:07 2016
 
 @author: andres
 
-Discovery_M7
+STM32F7
 """
 
 import os
@@ -26,7 +26,7 @@ class Generator(GeneratorBase):
 
         self.out_file = self.out_dir + "/project/Src/main.cpp"   
 
-        self.log("Building Discovery_M7 project")
+        self.log("Building STM32F7 project")
         self.log("Buiding in directory: " + self.out_dir)
 
         if not os.path.exists(self.out_dir + "/project"):
@@ -43,7 +43,7 @@ class Generator(GeneratorBase):
 
         self.log("Platform code generation starting...")
         
-        domain = "Discovery_M7_Domain"
+        domain = "STM32F7_Domain"
         code = self.platform.generate_code(self.tree,domain)
 
         #shutil.rmtree(self.out_dir + "/project")

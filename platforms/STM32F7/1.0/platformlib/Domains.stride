@@ -1,15 +1,15 @@
 
-_platform _Discovery_M7_Platform {
-    name: "Discovery_M7"
+_platform _STM32F7_Platform {
+    name: "STM32F7"
 }
 
 constant PlatformDomain {
-    value: "Discovery_M7_Domain"
+    value: "STM32F7_Domain"
 }
 
-_domainDefinition Discovery_M7_Domain {
-	domainName: "Discovery_M7_Domain"
-	platform: _Discovery_M7_Platform
+_domainDefinition STM32F7_Domain {
+	domainName: "STM32F7_Domain"
+	platform: _STM32F7_Platform
 	globalsTag: "Includes" 
 	declarationsTag: "Declarations"
 	instanceTag: "Instances" 
@@ -20,7 +20,7 @@ _domainDefinition Discovery_M7_Domain {
 
 _domainDefinition AudioDomain {
 	domainName: "AudioDomain"
-	platform: _Discovery_M7_Platform
+	platform: _STM32F7_Platform
 	globalsTag: "Includes" 
 	declarationsTag: "Declarations"
 	instanceTag: "Instances" 
@@ -32,7 +32,7 @@ _domainDefinition AudioDomain {
 # OSC Domains
 _domainDefinition OSCInDomain {
 	domainName: "OSCInDomain"
-	platform: _Discovery_M7_Platform
+	platform: _STM32F7_Platform
 	globalsTag: "Includes" 
 	declarationsTag: "OSC:Declarations"
 	instanceTag: "Instances" 
@@ -44,7 +44,7 @@ _domainDefinition OSCInDomain {
 # Serial domains
 _domainDefinition SerialInDomain {
 	domainName: "SerialInDomain"
-	platform: _Discovery_M7_Platform
+	platform: _STM32F7_Platform
 	globalsTag: "Includes" 
 	declarationsTag: "SerialIn:Declarations"
 	instanceTag: "Instances" 
@@ -55,7 +55,7 @@ _domainDefinition SerialInDomain {
 
 _domainDefinition SerialOutDomain {
 	domainName: "SerialOutDomain"
-	platform: _Discovery_M7_Platform
+	platform: _STM32F7_Platform
 	globalsTag: "Includes" 
 	declarationsTag: "SerialOut:Declarations"
 	instanceTag: "Instances" 

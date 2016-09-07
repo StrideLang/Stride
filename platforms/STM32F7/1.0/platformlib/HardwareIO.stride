@@ -67,7 +67,7 @@ platformType _AnalogInput {
 
 _analogInput AnalogIn[2] {
     rate: PlatformRate
-    domain: Discovery_M7_Domain
+    domain: STM32F7_Domain
 }
 
 platformType _DigitalOutput {
@@ -83,7 +83,7 @@ platformType _DigitalOutput {
 
 _digitalOutput DigitalOut[14] {
     rate: PlatformRate
-    domain: Discovery_M7_Domain
+    domain: STM32F7_Domain
 }
 
 platformType _OscOutType {

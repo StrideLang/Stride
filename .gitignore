@@ -10,14 +10,17 @@ editor/templates/simple/lua_scripts/lpeg.dll
 editor/templates/simple/.metadata
 
 platforms/Wiring/1.0/arduino-1*
-platforms/Discovery_M7/1.0/STM32Cube_FW_F7*
+platforms/STM32F7/1.0/STM32Cube_FW_F7*
 platforms/Gamma/1.0/include
 platforms/Gamma/1.0/lib
 
 platforms/Wiring/1.0/scripts/*.pyc
-platforms/Discovery_M7/1.0/scripts/*.pyc
+platforms/STM32F7/1.0/scripts/*.pyc
 platforms/Gamma/1.0/scripts/*.pyc
 platforms/library/1.0/python/*.pyc
 
 platforms/*/examples/*_Products*
 platforms/*/tests/*_Products*
+platforms/*/icmc/*_Products*
+
+*.DS_Store
