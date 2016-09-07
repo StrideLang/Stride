@@ -4,7 +4,7 @@ use Gamma version 1.0 on PC
 
 import generators
 
-Oscillator ( frequency: [ 3.0, 5.0, 1.0 ] amplitude: [ 40.0, 0.1, 1.0 ] ) >> Modulator;
+Oscillator ( frequency: [ 3.0, 1.0, 1.0 ] amplitude: [ 40.0, 0.1, 1.0 ] ) >> Modulator;
 
 Oscillator ( frequency: 440.0 + Modulator[1] amplitude: Modulator[2] )
 >> Pan ( position: Modulator[3] )
