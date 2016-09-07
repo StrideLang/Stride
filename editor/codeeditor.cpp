@@ -171,7 +171,9 @@ void CodeEditor::markChanged(bool changed)
 
 bool CodeEditor::eventFilter(QObject *obj, QEvent *event)
 {
-    if (event->type() == QEvent::KeyPress) {
+    if (m_autoComplete
+            && obj == &m_autoCompleteMenu
+            && event->type() == QEvent::KeyPress) {
         QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
         qDebug("Ate key press %d", keyEvent->key());
         QRegExp regex("\\w+");
@@ -183,6 +185,7 @@ bool CodeEditor::eventFilter(QObject *obj, QEvent *event)
             updateAutoCompleteMenu(currentWord);
             return true;
         } else {
+            m_autoCompleteMenu.hide();
             return QObject::eventFilter(obj, event);
         }
     } else {
@@ -248,11 +251,12 @@ void CodeEditor::keyReleaseEvent(QKeyEvent *event)
             if (m_autoCompleteMenu.actions().size() > 0) {
                 m_autoCompleteMenu.show();
             }
-            setFocus();
 //            m_autoCompleteMenu.show();
         }
-    } else if (event->key() == Qt::Key_Escape) {
+//        setFocus();
+    } else {
         m_autoCompleteMenu.hide();
+        setFocus();
     }
     hideButton();
     QPlainTextEdit::keyReleaseEvent(event);
