@@ -19,6 +19,8 @@ extern "C" char * yytext;
 extern "C" FILE *yyin;
 extern "C" int errno ;
 
+extern void yyrestart  (FILE * input_file );
+
 std::vector<LangError> parseErrors;
 
 void yyerror(const char *s, ...);
@@ -1323,6 +1325,7 @@ AST *parse(const char *filename){
     tree_head = new AST;
     yyin = file;
     yylineno = 1;
+    yyrestart(file);
     yyparse();
     fclose(file);
 
