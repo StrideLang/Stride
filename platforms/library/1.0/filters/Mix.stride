@@ -1,15 +1,94 @@
-
 module Mix {
-	input: Input
-	output: Output
-	properties: [
-	]
-	internalBlocks: [
-		signal Input {},
-		signal Output {}
-	]
-	streams: [
-		Input >> Output;
-	]
-	meta: "Not implemented yet"
+    ports:          [
+        port OutputPort {
+            name:       'output'
+            type:       'main'
+            direction:  'output'
+            block:      Output
+            rate:       OutputPortRate
+            domain:     OutputPortDomain
+            size:       none
+            meta:       "The module's primary output port."
+        }
+        port InputPort {
+            name:       'input'
+            type:       'main'
+            direction:  'input'
+            block:      Input
+            rate:       none
+            domain:     none
+            size:       InputPortSize
+            meta:       "The module's primary output port."
+        }
+        port GainPort {
+            name:       'gain'
+            type:       'auxiliary'
+            direction:  'input'
+            block:      Gain
+            rate:       none
+            domain:     none
+            size:       none
+            meta:       "Gain applied to channel."
+        }
+        port BiasPort {
+            name:       'bias'
+            type:       'auxiliary'
+            direction:  'input'
+            block:      Bias
+            rate:       none
+            domain:     none
+            size:       none
+            meta:       "Bias applied to channel."
+        }
+    ]
+    blocks:         [
+        hybrid Output {
+            type:       [ 'Stream Real', 'Stream Integer' ] 
+            default:    [ 0.0, 0 ]
+            rate:       none
+            domain:     OutputPortDomain
+            reset:      Reset
+        }
+        hybrid Input [InputPortSize] {
+            type:       [ 'Stream Real', 'Stream Integer' ]
+            default:    [ 0.0, 0 ]
+            rate:       OutputPortRate
+            domain:     OutputPortDomain
+            reset:      none
+        }
+        hybrid Gain [InputPortSize] {
+            type:       [ 'Stream Real', 'Stream Integer' ]
+            default:    [ 1.0, 1 ]
+            rate:       none
+            domain:     OutputPortDomain
+            reset:      Reset
+        }
+        hybrid Bias [InputPortSize] {
+            type:       [ 'Stream Real', 'Stream Integer' ]
+            default:    [ 0.0, 0 ]
+            rate:       none
+            domain:     OutputPortDomain
+            reset:      none
+        }
+        trigger Reset {}
+        reaction ComputeMix {
+            ports:          none
+            blocks:         [
+                signal Index {
+                    default:    1
+                    rate:       none
+                    domain:     OutputPortDomain
+                    reset:      Reset
+                }
+                trigger Terminate {}
+            ]
+            onExecution:    Reset
+            terminateWhen:  Terminate
+            streams:        [
+                [ Input[Index] >> Level ( gain: Gain[Index] bias: Bias[Index] ), Output ] >> Add () >> Output;
+                Index + 1 >> Index >> Compare ( value: InputPortSize operator: 'Greater' ) >> Terminate;
+            ]
+        }
+    ]
+    streams:        on >> ComputeMix();
 }
