@@ -774,16 +774,6 @@ void ProjectWindow::readSettings()
         filesToOpen << settings.value("fileName").toString();
     }
     settings.endArray();
-    ui->tabWidget->setCurrentIndex(settings.value("lastIndex", -1).toInt());
-    if (settings.value("lastIndex", -1).toInt() >= 0 && ui->tabWidget->count() > 0) {
-        tabChanged(settings.value("lastIndex", -1).toInt()); // Should be triggered automatically but isn't...
-    }
-    settings.endGroup();
-
-    settings.beginGroup("environment");
-    m_environment["platformRootPath"] = settings.value("platformRootPath", "../../StreamStack/platforms").toString();
-    settings.endGroup();
-
     foreach(QString fileName, filesToOpen) {
         if (fileName.isEmpty()) {
             newFile();
@@ -796,6 +786,13 @@ void ProjectWindow::readSettings()
             }
         }
     }
+    int lastIndex = settings.value("lastIndex", -1).toInt(); // Used later after files are loaded
+    ui->tabWidget->setCurrentIndex(lastIndex);
+    settings.endGroup();
+
+    settings.beginGroup("environment");
+    m_environment["platformRootPath"] = settings.value("platformRootPath", "../../StreamStack/platforms").toString();
+    settings.endGroup();
 }
 
 void ProjectWindow::writeSettings()
