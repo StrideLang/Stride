@@ -94,8 +94,8 @@ module BandLimitedSaw {
         1.0 - 2.0 * W >> Norm;
 
         Phase + 2.0 * W >> Phase >> Compare ( value: 1.0 operation: 'GreaterOrEqual' ) >> CorrectPhase();
-        2.0 * PI * (Phase + Osc * Scaling) >> Sin () >> Level ( bias: Osc) >> Level ( gain: 0.5 ) >> Osc;
-        ( 2.5 * Osc - 1.5 * History ) + DC ) * Norm >> Output;
+        2.0 * _PI * ( Phase + Osc * Scaling ) >> Sin () >> Level ( bias: Osc ) >> Level ( gain: 0.5 ) >> Osc;
+        (( 2.5 * Osc - 1.5 * History ) + DC ) * Norm >> Output;
         Osc >> History;
     ]
 }
