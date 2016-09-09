@@ -1,56 +1,56 @@
 
 type _DomainDefinition {
 	typeName: "_domainDefinition"
-	ports: [
-		port DomainName {
+	properties: [
+		typeProperty DomainName {
 			name: "domainName"
 			types: ["CSP"]
 			default: none
 			required: on
 		},
-		port Platform {
+		typeProperty Platform {
 			name: "platform"
 			types: ["CSP", ""] # Allow _Platform
 			default: none
 			required: on
 		},
-		port GlobalsTag {
+		typeProperty GlobalsTag {
 			name: "globalsTag"
 			types: ["CSP"]
 			default: "Includes"
 			required: off
 		},
-		port DeclarationsTag {
+		typeProperty DeclarationsTag {
 			name: "declarationsTag"
 			types: ["CSP"]
 			default: ""
 			required: off
 		},
-		port InstanceTag {
+		typeProperty InstanceTag {
 			name: "instanceTag"
 			types: ["CSP"]
 			default: ""
 			required: off
 		},
-		port ProcessingTag {
+		typeProperty ProcessingTag {
 			name: "processingTag"
 			types: ["CSP"]
 			default: ""
 			required: off
 		},
-		port InitializationTag {
+		typeProperty InitializationTag {
 			name: "initializationTag"
 			types: ["CSP"]
 			default: ""
 			required: off
 		},
-		port CleanupTag {
+		typeProperty CleanupTag {
 			name: "cleanupTag"
 			types: ["CSP"]
 			default: ""
 			required: off
 		},
-		port DomainFunction {
+		typeProperty DomainFunction {
 			name: "domainFunction"
 			types: ["CSP"]
 			default: ""
@@ -62,7 +62,7 @@ type _DomainDefinition {
 
 #type _Domain {
 #	typeName: "_domain"
-#	ports: [
+#	properties: [
 #		port Name {
 #			name: "name"
 #			types: ["CSP", ""] # TODO Should accept _domain
@@ -81,8 +81,8 @@ type _DomainDefinition {
 
 type _Platform {
 	typeName: "_platform"
-	ports: [
-		port Name {
+	properties: [
+		typeProperty Name {
 			name: "name"
 			types: ["CSP"]
 			default: none
@@ -94,116 +94,116 @@ type _Platform {
 
 type _PlatformType {
 	typeName: "platformType"
-	ports: [
-		port TypeName {
+	properties: [
+		typeProperty TypeName {
 			name: "typeName"
 			types: ["CSP"]
 			default: none
 			required: on
 		},
-		port Include {
+		typeProperty Include {
 			name: "include"
 			types: [""] #TODO accepts list
 			default: []
 			required: off
 		},
-		port IncludeDir {
+		typeProperty IncludeDir {
 			name: "includeDir"
 			types: [""] #TODO accepts list
 			default: []
 			required: off
 		},
-		port LinkTo {
+		typeProperty LinkTo {
 			name: "linkTo"
 			types: [""] #TODO accepts list
 			default: []
 			required: off
 		},
-		port LinkDir {
+		typeProperty LinkDir {
 			name: "linkDir"
 			types: [""] #TODO accepts list
 			default: []
 			required: off
 		},
-		port Inputs {
+		typeProperty Inputs {
 			name: "inputs"
 			types: [""] #TODO accepts list
 			default: []
 			required: off
 		},
-		port Outputs {
+		typeProperty Outputs {
 			name: "outputs"
 			types: [""]
 			default: []
 			required: off
 		},
-		port GlobalDeclarations {
+		typeProperty GlobalDeclarations {
 			name: "globalDeclarations"
 			types: [""] #TODO validate list
 			default: []
 			required: off
 		},
-		port GlobalInitializations {
+		typeProperty GlobalInitializations {
 			name: "globalInitializations"
 			types: [""] #TODO validate list
 			default: []
 			required: off
 		},
-		port Declarations {
+		typeProperty Declarations {
 			name: "declarations"
 			types: [""] #TODO validate list
 			default: []
 			required: on
 		},
-		port Constructors {
+		typeProperty Constructors {
 			name: "constructors"
 			types: [""] #TODO validate list
 			default: []
 			required: off
 		},
-		port Initializations {
+		typeProperty Initializations {
 			name: "initializations"
 			types: [""] #TODO validate list
 			default: []
 			required: on
 		},
-		port PreProcessing {
+		typeProperty PreProcessing {
 			name: "preProcessing"
 			types: ["CSP"]
 			default: ""
 			required: off
 		},
-		port Processing {
+		typeProperty Processing {
 			name: "processing"
 			types: ["CSP"]
 			default: none
 			required: on
 		},
-		port PostProcessingOnce {
+		typeProperty PostProcessingOnce {
 			name: "postProcessingOnce"
 			types: ["CSP"]
 			default: ""
 			required: on
 		},
-		port Cleanup {
+		typeProperty Cleanup {
 			name: "cleanup"
 			types: ["CSP"]
 			default: ""
 			required: off
 		},
-		port Platform {
+		typeProperty Platform {
 			name: "platform"
 			types: [""] # _platform
 			default: none
 			required: on
 		},
-		port Domain {
+		typeProperty Domain {
 			name: "domain"
 			types: [""] # _platform
 			default: none
 			required: off
 		},
-		port Inherits { # TODO should this be done differently? e.g. not as a port but through inheritance merging ports?
+		typeProperty Inherits { # TODO should this be done differently? e.g. not as a port but through inheritance merging ports?
 			name: "inherits"
 			types: ["CSP", _Type]
 			default: []

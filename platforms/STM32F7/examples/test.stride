@@ -2,7 +2,9 @@ use STM32F7 version 1.0 on PC
 
 import generators
 
-signal Oscillators[6] {}
+signal Oscillators[6] {
+	domain: "AudioDomain"
+}
 
 Oscillator (frequency: [440, 443, 437, 880, 885, 887] amplitude: 0.1) >> Oscillators;
 
@@ -14,3 +16,10 @@ Oscillators[1]
 + Oscillators[6]
 >> Level(gain: 0.5) 
 >> AudioOut;
+
+signal Value {
+	default: 3.0
+	domain: STM32F7_Domain
+}
+
+Value + 2 >> Value;

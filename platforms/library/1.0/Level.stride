@@ -1,23 +1,23 @@
 module Level {
 	input: Input
 	output: Output
-	properties: [
-		property GainTypeProperty {
+	ports: [
+		port GainTypeProperty {
 			name: "gainType"
 			block: GainType
 			meta: "Sets the gain type to linear or decibel scaling. Possible values are 'Linear' and 'Decibel'."
 		},
-		property GainProperty {
+		port GainProperty {
 			name: "gain"
 			block: Gain
 			meta: "Amplifies or attenuates the signal."
 		},
-		property OffsetProperty {
+		port OffsetProperty {
 			name: "offset"
 			block: Offset
 			meta: "Adds an offset to the signal after applying the gain."
 		},
-		property BypassProperty {
+		port BypassProperty {
 			name: "bypass"
 			block: Bypass
 		}

@@ -2,8 +2,8 @@
 module Rectify {
 	input: Input
 	output: Output
-	properties: [
-		property ModeProperty {
+	ports: [
+		port ModeProperty {
 			name: "mode"
 			block: Mode
 			meta: "	Possible options are 'Full' and 'Half'."

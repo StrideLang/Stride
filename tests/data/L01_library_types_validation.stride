@@ -3,12 +3,12 @@ use Gamma version 1.0 on PC
 module Sum {
         input:    none #     Inputs
         output:         Output
-        properties: [
-                property SizeProperty {
+        ports: [
+                port SizeProperty {
                         name: "size"
                         block: Size
                 },
-                property ResetProperty {
+                port ResetProperty {
                         name: "reset"
                         block: Reset
                 }
@@ -16,15 +16,15 @@ module Sum {
         internalBlocks:  [
                 constant Size { value: 2 },
                 trigger Reset {},
-#                hybrid Inputs [Size] {
+#                signal Inputs [Size] {
 #                        type:           [ 'Stream Real', 'Stream Integer' ]
 #                        default :       [ 0.0 , 0 ]
 #                        #rate:           streamRate
 #                        domain:         streamDomain
 #                        #reset:          Reset
 #                },
-                hybrid Output {
-                        type:           [ 'Stream Real', 'Stream Integer' ]
+                signal Output {
+#                        type:           [ 'Stream Real', 'Stream Integer' ]
                         default :       [ 0.0 , 0 ]
                         #rate:           streamRate
                         domain:         streamDomain
@@ -40,8 +40,8 @@ module Sum {
                                         #domain:         streamDomain
                                         #reset:          AdderReset
                                 },
-                                hybrid Sum      {
-                                        type:           [ 'Stream Real', 'Stream Integer' ]
+                                signal Sum      {
+#                                        type:           [ 'Stream Real', 'Stream Integer' ]
                                         default:        [ 0.0 , 0 ]
                                         #domain:         streamDomain
                                         #reset:          AdderReset

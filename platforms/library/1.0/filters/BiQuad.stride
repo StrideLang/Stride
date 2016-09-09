@@ -2,23 +2,23 @@
 module BiQuad {
 	input: Input
 	output: Output
-	properties: [
-#		property TypeProperty {
+	ports: [
+#		port TypeProperty {
 #			name: "type"
 #			block: Type
 #			meta: "The type of filter. Possible values are 'LowPass', 'HighPass', 'BandPass', 'BandPassUnitGain', 'BandReject', and 'AllPass'."
 #		}
-		property CenterFrequencyProperty {
+		port CenterFrequencyProperty {
 			name: "centerFrequency"
 			block: CenterFrequency
 			meta: "The center frequency of the filter."
 		}
-		property ResonanceProperty {
+		port ResonanceProperty {
 			name: "resonance"
 			block: Resonance
 			meta: "Resonance (Q) amount. Should be greater than on equal to 1.0."
 		}#,
-#		property ResetProperty {
+#		port ResetProperty {
 #			name: "reset"
 #			block: Reset
 #			meta: "Resets the internal memory of the filter when set to on."

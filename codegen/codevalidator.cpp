@@ -1151,9 +1151,9 @@ QVector<AST *> CodeValidator::getPortsForType(QString typeName, QVector<AST *> s
 
 QVector<AST *> CodeValidator::getPortsForTypeBlock(BlockNode *block, QVector<AST *> scope, AST *tree)
 {
-    AST *portsValue = block->getPropertyValue("ports");
+    AST *portsValue = block->getPropertyValue("properties");
     QVector<AST *> outList;
-    if (portsValue) {
+    if (portsValue && portsValue->getNodeType() != AST::None) {
         Q_ASSERT(portsValue->getNodeType() == AST::List);
         ListNode *portList = static_cast<ListNode *>(portsValue);
         foreach(AST *port, portList->getChildren()) {

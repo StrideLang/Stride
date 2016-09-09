@@ -1,14 +1,14 @@
 
 type _Streamable {
 	typeName: "streamable"
-	ports: [
-		port InputName {
+	properties: [
+		typeProperty InputName {
 			name: "inputName"
 			types: ["CSP", "none"]
 			default: none
 			required: off
 		},
-		port OutputName {
+		typeProperty OutputName {
 			name: "outputName"
 			types: ["CSP", "none"]
 			default: none
@@ -20,14 +20,14 @@ type _Streamable {
 
 type _Rated {
 	typeName: "rated"
-	ports: [
-		port Rate {
+	properties: [
+		typeProperty Rate {
 			name: "rate"
 			types: ["CIP", "CRP"]
 			default: PlatformRate
 			required: off
 		},
-		port Reset {
+		typeProperty Reset {
 			name: "reset"
 			types: [""] # Fix
 			default: off
@@ -39,8 +39,8 @@ type _Rated {
 
 type _DomainMember {
 	typeName: "domainMember"
-	ports: [
-		port TypeName {
+	properties: [
+		typeProperty TypeName {
 			name: "domain"
 			types: ["CSP", ""]
 			default: streamDomain
@@ -50,52 +50,16 @@ type _DomainMember {
 	inherits: ["base"]
 }
 
-type _Port {
-	typeName: "port"
-	ports: [
-		port Name {
-			name: "name"
-			types: ["CSP"]
-			default: none
-			required: on
-		},
-		port Direction {
-			name: "direction"
-			types: ["CSP"]
-			default: "output"
-			required: off
-		},
-		port Types {
-			name: "types"
-			types: ["CSP"]
-			default: none
-			required: on
-		},
-		port Default {
-			name: "default"
-			types: [""] # TODO how to handle hybrid port types?
-			default: none
-			required: on
-		},
-		port Required {
-			name: "required"
-			types: ["CBP"]
-			default: none
-			required: on
-		}
-	]
-}
-
 type _Base {
 	typeName: "base"
-	ports: [
-		port Inherits {
+	properties: [
+		typeProperty Inherits {
 			name: "inherits"
 			types: ["CSP", ""]
 			default: "base"
 			required: off
 		},
-		port Meta {
+		typeProperty Meta {
 			name: "meta"
 			types: ["CSP"]
 			default: ""

@@ -105,7 +105,7 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
                 docHtml += QString::fromStdString(static_cast<ValueNode *>(metaValue)->getStringValue());
                 QString propertiesTable = "<table> <tr><td><b>Name</b></td><td><b>Type</b></td><td><b>Default</b></td><td><b>Direction</b></td></tr>";
                 QString propertiesHtml = tr("<h2>Ports</h2>") + "\n";
-                AST *properties = declaration->getPropertyValue("properties");
+                AST *properties = declaration->getPropertyValue("ports");
                 if (properties && properties->getNodeType() == AST::List) {
                     Q_ASSERT(properties->getNodeType() == AST::List);
                     ListNode *propertiesList = static_cast<ListNode *>(properties);
@@ -164,7 +164,7 @@ QString CodeModel::getTooltipText(QString symbol)
             AST *metaValue = declaration->getPropertyValue("meta");
             if (metaValue) {
                 Q_ASSERT(metaValue->getNodeType() == AST::String);
-                AST *properties = declaration->getPropertyValue("properties");
+                AST *properties = declaration->getPropertyValue("ports");
                 if (properties && properties->getNodeType() == AST::List) {
                     text += "<b>" + symbol + "</b>\n(";
                     Q_ASSERT(properties->getNodeType() == AST::List);
@@ -286,7 +286,7 @@ QString CodeModel::getFunctionSyntax(QString symbol)
             Q_ASSERT(metaValue);
             if (metaValue) {
                 Q_ASSERT(metaValue->getNodeType() == AST::String);
-                AST *properties = declaration->getPropertyValue("properties");
+                AST *properties = declaration->getPropertyValue("ports");
                 if (properties && properties->getNodeType() == AST::List) {
                     text += symbol +  "(";
                     Q_ASSERT(properties->getNodeType() == AST::List);

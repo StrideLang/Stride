@@ -2,18 +2,18 @@
 module OSCOut {
 	input: Value
 	output: none
-	properties: [
-		property OSCAddressProperty {
+	ports: [
+		port OSCAddressProperty {
 			name: "address"
 			block: Address
 			meta: "The OSC address"
 		},
-		property IPProperty {
+		port IPProperty {
 			name: "ip"
 			block: IP
 			meta: "The IP address to send to."
 		},
-		property PortProperty {
+		port PortProperty {
 			name: "port"
 			block: Port
 			meta: "The Network port to send the data to."
@@ -35,18 +35,18 @@ module OSCOut {
 module OSCIn {
 	input: none
 	output: Value
-	properties: [
-		property OSCAddressProperty {
+	ports: [
+		port OSCAddressProperty {
 			name: "address"
 			block: Address
 			meta: "The OSC address"
 		},
-		property IPProperty {
+		port IPProperty {
 			name: "ip"
 			block: IP
 			meta: "The IP address to receive from."
 		},
-		property PortProperty {
+		port PortProperty {
 			name: "port"
 			block: Port
 			meta: "The Network port to receive the data from."

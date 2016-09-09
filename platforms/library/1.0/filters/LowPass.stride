@@ -2,7 +2,7 @@
 module LowPass {
     input: Input
     output: Output
-    properties:  [
+    ports:  [
     ]
     internalBlocks: [
         signal Input {

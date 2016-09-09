@@ -882,8 +882,8 @@ class ModuleAtom(Atom):
         
     def _get_internal_properties_code(self):
         prop_code = {}
-        if self.module['properties']:
-            for prop in self.module['properties']:
+        if self.module['ports']:
+            for prop in self.module['ports']:
                 if 'block' in prop:
                     decl = self.platform.find_declaration_in_tree(prop['block']['block']['name']['name'],
                                                                   self.platform.tree + self._blocks)

@@ -1,25 +1,37 @@
-type _Property {
-	typeName: "property"
-	ports: [
-		port Name {
+type _Port {
+	typeName: "port"
+	properties: [
+		typeProperty Name {
 			name: "name"
 			types: ["CSP"]
 			default: none
 			required: on
 		},
-		port Block {
+		typeProperty Type {
+			name: "type"
+			types: ["CSP"]
+			default: "main"
+			required: off
+		},
+		typeProperty Direction {
+			name: "direction"
+			types: ["CSP"]
+			default: "input"
+			required: off
+		},
+		typeProperty Block {
 			name: "block"
 			types: [""] # This should be made to accept type handles
 			default: none
 			required: on
 		},
-		port Default {
+		typeProperty Default {
 			name: "default"
 			types: [""]
 			default: 0.0
 			required: off
 		},
-		port Types {
+		typeProperty Types {
 			name: "types"
 			types: [""] # This should be made to accept type handles
 			default: [""]
@@ -31,59 +43,40 @@ type _Property {
 }
 
 
-type _Hybrid {
-	typeName: "hybrid"
-	ports: [
-		port Name {
-			name: "type"
-			types: ["CSP"]
-			default: none
-			required: on
-		},
-		port Block {
-			name: "default"
-			types: [""]
-			default: none
-			required: on
-		}
-	]
-	inherits: ["rated"] # TODO could we use Rated here instead?
-}
-
 type _Module {
 	typeName: "module"
-	ports: [
-		port Input {
+	properties: [
+		typeProperty Input {
 			name: "input"
 			types: [""]
 			default: none
 			required: off
 		},
-		port Output {
+		typeProperty Output {
 			name: "output"
 			types: [""]
 			default: none
 			required: off
 		},
-		port Properties {
-			name: "properties"
+		typeProperty Ports {
+			name: "ports"
 			types: [ "" ]  # TODO: How can we define list types here?
 			default: none
 			required: on
 		},
-		port InternalBlocks {
+		typeProperty InternalBlocks {
 			name: "internalBlocks"
 			types: [""] # TODO how to accept lists?
 			default: none
 			required: on
 		},
-		port Streams {
+		typeProperty Streams {
 			name: "streams"
 			types: [""]
 			default: none
 			required: on
 		},
-		port Domain {
+		typeProperty Domain {
 			name: "domain"
 			types: ["CSP", "" ] #  Should allow _Domain
 			default: streamNode
@@ -96,44 +89,44 @@ type _Module {
 
 type _Reaction {
 	typeName: "reaction"
-	ports: [
-		port Output {
+	properties: [
+		typeProperty Output {
 			name: "output"
 			types: [""]
 			default: none
 			required: on
 		},
-		port Properties {
-			name: "properties"
+		typeProperty Ports {
+			name: "ports"
 			types: [ "" ]  # TODO: How can we define list types here?
 			default: none
 			required: off
 		},
-		port OnExecution {
+		typeProperty OnExecution {
 			name: "onExecution"
 			types: [""]
 			default: none
 			required: on
 		},
-		port TerminateWhen {
+		typeProperty TerminateWhen {
 			name: "terminateWhen"
 			types: [""]
 			default: none
 			required: off
 		},
-		port InternalBlocks {
+		typeProperty InternalBlocks {
 			name: "internalBlocks"
 			types: [""]
 			default: none
 			required: on
 		},
-		port Streams {
+		typeProperty Streams {
 			name: "streams"
 			types: [""]
 			default: none
 			required: on
 		},
-		port Domain {
+		typeProperty Domain {
 			name: "domain"
 			types: ["CSP", "" ] #  Should allow _Domain
 			default: streamNode

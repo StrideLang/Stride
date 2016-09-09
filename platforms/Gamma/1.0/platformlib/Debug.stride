@@ -13,8 +13,8 @@ platformType _DebugPrintType {
 module DebugPrint {
     input: Value
     output: none
-	properties: [
-		property ValueProperty {
+	ports: [
+		port ValueProperty {
 			name: "value"
 			block: Value
 		}

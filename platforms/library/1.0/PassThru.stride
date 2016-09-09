@@ -5,7 +5,7 @@
 module PassThru {
         input:          Input
         output:         Output
-		properties: [
+		ports: [
 #			property SizeProperty {
 #				name: "size"
 #				block: Size

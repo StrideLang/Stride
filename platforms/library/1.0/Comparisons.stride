@@ -81,13 +81,13 @@ module NotEqual {
 module Select {
     input: Input
     output: Output
-    properties:  [
-		property WhenOnProperty {
+    ports:  [
+		port WhenOnProperty {
     	   name: "whenOn"
            block: WhenOn
            meta: ""
         },
-        property WhenOffProperty {
+        port WhenOffProperty {
             name: "whenOff"
             block: WhenOff
             meta: ""
@@ -126,7 +126,7 @@ module Select {
 module OnChange {
     input: Input
     output: Output
-    properties:  [
+    ports:  [
     ]
     internalBlocks: [
         switch Input {
@@ -142,8 +142,8 @@ module OnChange {
 		switch OldInput {},
 		reaction OnChangedReaction {
 			output: Output
-			properties: [
-				property OutputProperty {
+			ports: [
+				port OutputProperty {
 					name: "output"
 					block: OutputValue
 					types: [""] # Any type for now
@@ -170,13 +170,13 @@ module OnChange {
 module Compare {
     input: Input
     output: Output
-	properties: [
-		property OperatorProperty {
+	ports: [
+		port OperatorProperty {
 			name: "operator"
 			block: Operator
 			types: [""] # Any type for now
 		},
-		property ValueProperty {
+		port ValueProperty {
 			name: "value"
 			block: Value
 			types: [""] # Any type for now

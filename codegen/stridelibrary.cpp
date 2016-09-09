@@ -98,13 +98,13 @@ std::vector<AST *> StrideLibrary::getNodes()
 bool StrideLibrary::isValidProperty(PropertyNode *property, BlockNode *type)
 {
     Q_ASSERT(type->getObjectType() == "type");
-    PropertyNode *portsInType = CodeValidator::findPropertyByName(type->getProperties(), "ports");
+    PropertyNode *portsInType = CodeValidator::findPropertyByName(type->getProperties(), "properties");
     ListNode *portList = static_cast<ListNode *>(portsInType->getValue());
     Q_ASSERT(portList->getNodeType() == AST::List);
     foreach(AST * port, portList->getChildren()) {
         BlockNode *portBlock = static_cast<BlockNode *>(port);
         Q_ASSERT(portBlock->getNodeType() == AST::Block);
-        Q_ASSERT(portBlock->getObjectType() == "port");
+        Q_ASSERT(portBlock->getObjectType() == "typeProperty");
         PropertyNode *portName = CodeValidator::findPropertyByName(portBlock->getProperties(), "name");
         string portNameInType = static_cast<ValueNode *>(portName->getValue())->getStringValue();
         if(property->getName() == portNameInType) {

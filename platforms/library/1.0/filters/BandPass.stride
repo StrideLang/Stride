@@ -2,18 +2,18 @@
 module BandPass {
 	input: Input
 	output: Output
-	properties: [
-		property CenterFrequencyProperty {
+	ports: [
+		port CenterFrequencyProperty {
 			name: "centerFrequency"
 			block: CenterFrequency
 			meta: "The center frequency of the filter."
 		},
-		property QFactorProperty {
+		port QFactorProperty {
 			name: "qFactor"
 			block: QFactor
 			meta: "The Q value of the filter."
 		}
-#		property ResetProperty {
+#		port ResetProperty {
 #			name: "reset"
 #			block: Reset
 #			meta: "Resets the internal memory of the filter when set to on."

@@ -6,7 +6,7 @@ constant _Pi {
 module Cos {
 	input: Input
 	output: Output
-	properties: none # A property could be the type of input, (degrees, radians, etc.)
+	ports: none # A property could be the type of input, (degrees, radians, etc.)
 	internalBlocks: [
 		signal Input {
 			default : 0.0
@@ -33,7 +33,7 @@ module Cos {
 module Sin {
 	input: Input
 	output: Output
-	properties: none # A property could be the type of input, (degrees, radians, etc.)
+	ports: none # A property could be the type of input, (degrees, radians, etc.)
 	internalBlocks: [
 		signal Input {
 			default : 0.0

@@ -1030,7 +1030,7 @@ AST *CodeResolver::getDefaultPortValueForType(QString type, QString portName)
         foreach(AST *port, ports) {
             BlockNode *block = static_cast<BlockNode *>(port);
             Q_ASSERT(block->getNodeType() == AST::Block);
-            Q_ASSERT(block->getObjectType() == "port");
+            Q_ASSERT(block->getObjectType() == "typeProperty");
             AST *platPortNameNode = block->getPropertyValue("name");
             ValueNode *platPortName = static_cast<ValueNode *>(platPortNameNode);
             Q_ASSERT(platPortName->getNodeType() == AST::String);

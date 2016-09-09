@@ -2,8 +2,8 @@
 module Pan {
 	input: Input
 	output: Output
-	properties: [
-		property PositionProperty {
+	ports: [
+		port PositionProperty {
 			name: "position"
 			block: Position
 			meta: "Sets the panning position with range [-1, 1]."

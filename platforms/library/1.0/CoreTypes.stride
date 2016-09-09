@@ -1,15 +1,51 @@
 
+type _TypeProperty {
+	typeName: "typeProperty"
+	properties: [
+		typeProperty Name {
+			name: "name"
+			types: ["CSP"]
+			default: none
+			required: on
+		},
+		typeProperty Direction {
+			name: "direction"
+			types: ["CSP"]
+			default: "output"
+			required: off
+		},
+		typeProperty Types {
+			name: "types"
+			types: ["CSP"]
+			default: none
+			required: on
+		},
+		typeProperty Default {
+			name: "default"
+			types: [""] # TODO how to handle hybrid port types?
+			default: none
+			required: on
+		},
+		typeProperty Required {
+			name: "required"
+			types: ["CBP"]
+			default: none
+			required: on
+		}
+	]
+}
+
 type _Type {
 	typeName: "type"
-	ports: [
-		port TypeName {
+	properties: [
+		typeProperty TypeName {
 			name: "typeName"
 			types: ["CSP"]
 			default: none
 			required: on
 		},
-		port Ports {
-			name: "ports"
+		typeProperty Properties {
+			name: "properties"
 			types: [""] # TODO how to validate object lists?
 			default: none
 			required: on
@@ -20,8 +56,8 @@ type _Type {
 
 type _Constant {
 	typeName: "constant"
-	ports: [
-		port Value {
+	properties: [
+		typeProperty Value {
 			name: "value"
 			types: ["CSP", "CIP", "CRP", "CBP"]
 			default: none
@@ -35,8 +71,8 @@ type _Constant {
 # TODO: Default to switch should be MasterReset
 type _Switch {
 	typeName: "switch"
-	ports: [
-		port Default {
+	properties: [
+		typeProperty Default {
 			name: "default"
 			types: ["CBP"]
 			default: off
@@ -48,21 +84,21 @@ type _Switch {
 
 type _Trigger {
 	typeName: "trigger"
-	ports: [
+	properties: [
 	]
 	inherits: "streamable"
 }
 
 type _Signal {
 	typeName: "signal"
-	ports: [
-		port Value {
+	properties: [
+		typeProperty Value {
 			name: "value"
 			types: ["CIP", "CRP", "CSP"]
 			default: 0.0
 			required: off
 		}
-		port Default {
+		typeProperty Default {
 			name: "default"
 			types: ["CIP", "CRP", "CSP"]
 			default: 0.0
