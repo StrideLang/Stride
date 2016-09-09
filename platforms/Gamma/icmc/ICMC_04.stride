@@ -5,7 +5,7 @@ use Gamma version 1.0 on PC
 import generators
 
 signal Modulator {
-    rate:       10.0
+    rate:       9.0
 }
 
 Oscillator ( frequency: 3.0 amplitude: 40.0 ) >> Modulator;
