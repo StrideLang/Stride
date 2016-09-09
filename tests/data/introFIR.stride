@@ -58,7 +58,7 @@ aliasList:	[ 'length' , 'coefficients' ]
 propertyBlocks: [ 	constant Length {}, 
 constant Coefficients [Length]{} 
 ]
-internalBlocks:	[ 	constant Delays [Length] {},
+blocks:	[ 	constant Delays [Length] {},
 signal Taps [Length] {} 
 ]
 setup:		[

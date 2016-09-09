@@ -11,7 +11,7 @@
 #				block: Reset
 #			}
 #		]
-#        internalBlocks:  [
+#        blocks:  [
 #                constant Size { value: 2 },
 #                trigger Reset {},
 #                hybrid Inputs [Size] {

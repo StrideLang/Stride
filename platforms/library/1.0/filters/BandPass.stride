@@ -19,7 +19,7 @@ module BandPass {
 #			meta: "Resets the internal memory of the filter when set to on."
 #		}
 	]
-	internalBlocks: [
+	blocks: [
 		signal Input {},
 		signal Output {},
 		signal CenterFrequency {},

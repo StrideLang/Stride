@@ -2,7 +2,7 @@
 module Greater {
     input: Input
     output: Output
-    internalBlocks: [
+    blocks: [
         signal Input[2] {},
         switch Output {}
     ]
@@ -15,7 +15,7 @@ module Greater {
 module GreaterOrEqual {
     input: Input
     output: Output
-    internalBlocks: [
+    blocks: [
         signal Input[2] {},
         switch Output {}
     ]
@@ -28,7 +28,7 @@ module GreaterOrEqual {
 module Less {
     input: Input
     output: Output
-    internalBlocks: [
+    blocks: [
         signal Input[2] {},
         switch Output {}
     ]
@@ -41,7 +41,7 @@ module Less {
 module LessOrEqual {
     input: Input
     output: Output
-    internalBlocks: [
+    blocks: [
         signal Input[2] {},
         switch Output {}
     ]
@@ -54,7 +54,7 @@ module LessOrEqual {
 module Equal {
     input: Input
     output: Output
-    internalBlocks: [
+    blocks: [
         signal Input[2] {},
         switch Output {}
     ]
@@ -67,7 +67,7 @@ module Equal {
 module NotEqual {
     input: Input
     output: Output
-    internalBlocks: [
+    blocks: [
         signal Input[2] {},
         switch Output {}
     ]
@@ -93,7 +93,7 @@ module Select {
             meta: ""
         }
     ]
-    internalBlocks: [
+    blocks: [
         switch Input {
                 default :       on
                 rate:           AudioRate
@@ -128,7 +128,7 @@ module OnChange {
     output: Output
     ports:  [
     ]
-    internalBlocks: [
+    blocks: [
         switch Input {
                 default :       off
                 rate:           AudioRate
@@ -151,7 +151,7 @@ module OnChange {
 			]
 #			onExecution:
 #			terminateWhen:
-			internalBlocks: [
+			blocks: [
 				switch Output { }
 				switch OutputValue {}
 			]
@@ -182,7 +182,7 @@ module Compare {
 			types: [""] # Any type for now
 		}
 	]
-    internalBlocks: [
+    blocks: [
         signal Input[2] {},
         switch Output {},
 		signal Operator {},

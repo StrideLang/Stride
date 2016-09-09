@@ -13,7 +13,7 @@ module Sum {
                         block: Reset
                 }
         ]
-        internalBlocks:  [
+        blocks:  [
                 constant Size { value: 2 },
                 trigger Reset {},
 #                signal Inputs [Size] {
@@ -34,7 +34,7 @@ module Sum {
                         output:         Sum
                         onExecution:    AdderReset              # Is this Add's or Adder's Reset? (SCOPE)
                         terminateWhen:  Terminate
-                        internalBlocks:  [
+                        blocks:  [
                                 signal Index {
                                         default:        1
                                         #domain:         streamDomain

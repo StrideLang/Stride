@@ -4,7 +4,7 @@ module LowPass {
     output: Output
     ports:  [
     ]
-    internalBlocks: [
+    blocks: [
         signal Input {
                 default :       0.0
                 rate:           AudioRate

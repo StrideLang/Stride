@@ -64,8 +64,8 @@ type _Module {
 			default: none
 			required: on
 		},
-		typeProperty InternalBlocks {
-			name: "internalBlocks"
+		typeProperty Blocks {
+			name: "blocks"
 			types: [""] # TODO how to accept lists?
 			default: none
 			required: on
@@ -115,7 +115,7 @@ type _Reaction {
 			required: off
 		},
 		typeProperty InternalBlocks {
-			name: "internalBlocks"
+			name: "blocks"
 			types: [""]
 			default: none
 			required: on

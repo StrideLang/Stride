@@ -10,7 +10,7 @@ module Pan {
 		}
 
 	]
-	internalBlocks: [
+	blocks: [
 		signal Input {},
 		signal Output[2] {},
 		signal Position {},

@@ -23,7 +23,7 @@ module Level {
 		}
 
 	]
-	internalBlocks: [
+	blocks: [
 		signal Input {},
 		signal Output {},
 		signal GainType {},

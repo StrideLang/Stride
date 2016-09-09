@@ -9,7 +9,7 @@ module SerialOut {
 			meta: "The address that identifies the data sent."
 		}
 	]
-    internalBlocks: [
+    blocks: [
         signal Input {
                 default :       ""
                 #rate:           streamRate
@@ -32,7 +32,7 @@ module SerialIn {
     input: none
     output: Output
     properties: none
-    internalBlocks: [
+    blocks: [
         signal Output {
                 default :       ""
                 #rate:           streamRate

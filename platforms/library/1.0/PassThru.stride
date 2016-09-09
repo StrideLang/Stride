@@ -11,7 +11,7 @@ module PassThru {
 #				block: Size
 #			}
 		]
-        internalBlocks:  [
+        blocks:  [
                 signal Input {
                         default :       0.0
                         rate:           AudioRate

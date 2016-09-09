@@ -31,7 +31,7 @@ module Oscillator {
 			meta: "Resets the oscillator to the starting phase."
 		}
     ]
-    internalBlocks: [
+    blocks: [
         signal Input {
                default :       0.0
                rate:           AudioRate # FIXME needs to be streamRate
@@ -122,7 +122,7 @@ module Impulse {
 #				meta: "Resets the oscillator to the starting phase."
 #			}
     ]
-    internalBlocks: [
+    blocks: [
         signal Output {
                 default :       0.0
                 rate:           AudioRate # FIXME needs to be streamRate

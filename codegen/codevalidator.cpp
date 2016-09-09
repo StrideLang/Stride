@@ -602,9 +602,9 @@ AST *CodeValidator::getBlockSubScope(BlockNode *block)
 {
     AST *internalBlocks = NULL;
     if (block->getObjectType() == "module")  {
-        internalBlocks = block->getPropertyValue("internalBlocks");
+        internalBlocks = block->getPropertyValue("blocks");
     } else if (block->getObjectType() == "reaction") {
-        internalBlocks = block->getPropertyValue("internalBlocks");
+        internalBlocks = block->getPropertyValue("blocks");
     }
     return internalBlocks;
 }
@@ -689,7 +689,7 @@ int CodeValidator::getTypeNumOutputs(BlockNode *blockDeclaration, const QVector<
         return getBlockDeclaredSize(blockDeclaration, scope, tree, errors);
     } else if (blockDeclaration->getNodeType() == AST::Block) {
         if (blockDeclaration->getObjectType() == "module") {
-            ListNode *blockList = static_cast<ListNode *>(blockDeclaration->getPropertyValue("internalBlocks"));
+            ListNode *blockList = static_cast<ListNode *>(blockDeclaration->getPropertyValue("blocks"));
             NameNode *outputName = static_cast<NameNode *>(blockDeclaration->getPropertyValue("output"));
             Q_ASSERT(blockList->getNodeType() == AST::List);
             if (outputName->getNodeType() == AST::None) {
@@ -720,7 +720,7 @@ int CodeValidator::getTypeNumInputs(BlockNode *blockDeclaration, const QVector<A
         return getBlockDeclaredSize(blockDeclaration, scope, tree, errors);
     } else if (blockDeclaration->getNodeType() == AST::Block) {
         if (blockDeclaration->getObjectType() == "module") {
-            ListNode *blockList = static_cast<ListNode *>(blockDeclaration->getPropertyValue("internalBlocks"));
+            ListNode *blockList = static_cast<ListNode *>(blockDeclaration->getPropertyValue("blocks"));
             NameNode *inputName = static_cast<NameNode *>(blockDeclaration->getPropertyValue("input"));
             Q_ASSERT(blockList->getNodeType() == AST::List);
             if (inputName->getNodeType() == AST::None) {

@@ -153,7 +153,7 @@ channelsIn:	1
 channelsOut:	1
 aliasList:	[ 'inputCoefficients', 'outputCoefficients' ]
 propertyBlocks: [ constant B [3] {}, constant A [2] {}]
-internalBlocks:	[ signal Z [3] {}]
+blocks:	[ signal Z [3] {}]
 setup:		none
 connections:	[ChannelIn[1]
 >> Mix (

@@ -19,7 +19,7 @@ module DebugPrint {
 			block: Value
 		}
 	]
-    internalBlocks: [
+    blocks: [
 		switch Trigger {},
 		signal Null { default: ""},
 		signal Value { default: ""},
@@ -28,7 +28,7 @@ module DebugPrint {
 #			]
 #		onExecution:
 #		terminateWhen:
-			internalBlocks: [
+			blocks: [
 				signal PrintValue {},
      		   _debugPrintType DebugPrintBlock {}
 			]

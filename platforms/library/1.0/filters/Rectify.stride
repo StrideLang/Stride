@@ -9,7 +9,7 @@ module Rectify {
 			meta: "	Possible options are 'Full' and 'Half'."
 		}
 	]
-	internalBlocks: [
+	blocks: [
 		signal Input {},
 		signal Output {},
 		signal Mode {}

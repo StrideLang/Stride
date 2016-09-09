@@ -231,7 +231,7 @@ value:	0.5
 meta:	'Default level.' 
 }
 ]
-internalBlocks:	none
+blocks:	none
 setup:		none
 connections:
 [
@@ -280,7 +280,7 @@ value: 0.0
 meta:	none
 }
 ]
-internalBlocks:	[signal Amplitude {
+blocks:	[signal Amplitude {
 default:	0.0
 rate:		2048
 reset:		MasterReset

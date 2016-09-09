@@ -19,7 +19,7 @@ module OSCOut {
 			meta: "The Network port to send the data to."
 		}
 	]
-	internalBlocks: [
+	blocks: [
 		signal Value {},
 		signal Address { default: "/Stride" },
 		signal IP { default: "127.0.0.1" },
@@ -52,7 +52,7 @@ module OSCIn {
 			meta: "The Network port to receive the data from."
 		}
 	]
-	internalBlocks: [
+	blocks: [
 		signal Value {},
 		signal Address { default: "/Stride" },
 		signal IP { default: "127.0.0.1" },

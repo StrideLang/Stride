@@ -7,7 +7,7 @@ module Cos {
 	input: Input
 	output: Output
 	ports: none # A property could be the type of input, (degrees, radians, etc.)
-	internalBlocks: [
+	blocks: [
 		signal Input {
 			default : 0.0
 			rate: AudioRate # FIXME needs to be streamRate
@@ -34,7 +34,7 @@ module Sin {
 	input: Input
 	output: Output
 	ports: none # A property could be the type of input, (degrees, radians, etc.)
-	internalBlocks: [
+	blocks: [
 		signal Input {
 			default : 0.0
 			rate: AudioRate # FIXME needs to be streamRate
@@ -59,7 +59,7 @@ module Sin {
 module Divide {
 	input: Input
 	output: Output
-	internalBlocks: [
+	blocks: [
 		signal Input[2] { 
 			meta: "Input values"
 		},
@@ -76,7 +76,7 @@ module Divide {
 module Multiply {
 	input: Input
 	output: Output
-	internalBlocks: [
+	blocks: [
 		signal Input[2] { 
 			meta: "Values to multiply"
 		},
@@ -93,7 +93,7 @@ module Multiply {
 module Inverse {
 	input: Input
 	output: Output
-	internalBlocks: [
+	blocks: [
 		signal Input { meta: "Value to invert" },
 		signal Output { meta: "The inverted value." }
 	]
