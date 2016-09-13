@@ -1,4 +1,3 @@
 use Gamma version 1.0 on PC
 
-
 AudioIn[1] >> Level(gain: 0.05) >> AudioOut[2];

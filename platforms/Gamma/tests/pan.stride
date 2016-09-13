@@ -2,6 +2,6 @@ use Gamma version 1.0 on PC
 
 import generators
 
-#Oscillator(frequency: 0.5) >> PanPos;
+Oscillator(frequency: 0.5) >> PanPos;
 
-AudioIn[1] >> Pan(position: 0.0) >> AudioOut;
+AudioIn[1] >> Pan(position: PanPos) >> AudioOut;

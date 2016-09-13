@@ -2,8 +2,8 @@
 module SerialOut {
     input: Input
     output: none
-    properties: [
-		property AddressProperty {
+    ports: [
+		port AddressProperty {
 			name: "address"
 			block: Address
 			meta: "The address that identifies the data sent."
@@ -31,7 +31,7 @@ module SerialOut {
 module SerialIn {
     input: none
     output: Output
-    properties: none
+    ports: none
     blocks: [
         signal Output {
                 default :       ""
