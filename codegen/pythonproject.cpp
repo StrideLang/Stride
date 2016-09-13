@@ -143,6 +143,8 @@ void PythonProject::astToJson(AST *node, QJsonObject &obj)
         AST *indexNode = indexList->getChildren().at(0);
         if (indexNode->getNodeType() == AST::Int) {
             newObj["index"] = static_cast<ValueNode *>(indexNode)->getIntValue();
+        } else if (indexNode->getNodeType() == AST::Name) {
+            newObj["index"] = QString::fromStdString(static_cast<NameNode *>(indexNode)->getName());
         } else if (indexNode->getNodeType() == AST::List) {
             // FIXME implement support for Lists
         } else if (indexNode->getNodeType() == AST::Range) {
@@ -229,7 +231,9 @@ void PythonProject::astToJson(AST *node, QJsonObject &obj)
         if (bundleIndex->getNodeType() == AST::Int || bundleIndex->getNodeType() == AST::Real) {
             newObject["size"] = static_cast<ValueNode *>(bundleIndex)->getIntValue();
         } else if (bundleIndex->getNodeType() == AST::Name) {
-            newObject["size"] = QString::fromStdString(static_cast<NameNode *>(bundleIndex)->getName());
+            // FIXME we need to set the value from the name (it must be a constant)
+//            newObject["size"] = QString::fromStdString(static_cast<NameNode *>(bundleIndex)->getName());
+            newObject["size"] = 8;
         } else {
             qDebug() << "Type for index not implemented.";
             // TODO Implement support for more index types

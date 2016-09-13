@@ -1,101 +1,110 @@
-#module BandLimitedSaw {
-#    ports:      [
-#        port OutputPort {
-#            name:       'output'
-#            type:       'main'
-#            direction:  'output'
-#            block:      Output
-#            rate:       OutputPortRate
-#            domain:     OutputPortDomain
-#            meta:       "The module's primary output port."
-#        }
-#        port FrequencyPort {
-#            name:       'frequency'
-#            type:       'auxiliary'
-#            direction:  'input'
-#            block:      Frequency
-#            rate:       FrequencyPortRate
-#            domain:     FrequencyPortDomain
-#            meta:       "The frequency of the oscillator in Hz."
-#        }
-#    ]
-#    blocks:     [
-#        signal Output {
-#            default:    0.0
-#            rate:       OutputPortRate
-#            domain:     OutputPortDomain
-#        }
-#        signal Frequency {
-#            default:    220.0
-#            rate:       FrequencyPortRate
-#            domain:     FrequencyPortDomain
-#        }
-#        signal Osc {
-#            default:    0.0
-#            rate:       OutputPortRate
-#            domain:     OutputPortDomain
-#        }
-#        signal History {
-#            default:    0.0
-#            rate:       OutputPortRate
-#            domain:     OutputPortDomain
-#        }
-#        signal PhaseResidue {
-#            default:    0.0
-#            rate:       OutputPortRate
-#            domain:     OutputPortDomain
-#        }
-#        signal Phase {
-#            default:    PhaseResidue
-#            rate:       OutputPortRate
-#            domain:     OutputPortDomain
-#            reset:      ResetPhase
-#        }
-#        trigger ResetPhase {}
-#        reaction CorrectPhase {
-#            terminateWhen:  Done
-#            onTermination:  ResetPhase;
-#            streams:    [
-#                Phase - 2.0 >> PhaseResidue;
-#                on >> Done;
-#            ]
-#        }
-#        signal W {
-#            default:    0.0
-#            rate:       none
-#            domain:     FrequencyPortDomain
-#        }
-#        signal N {
-#            default:    0.0
-#            rate:       none
-#            domain:     FrequencyPortDomain
-#        }
-#        signal Scaling {
-#            default:    0.0
-#            rate:       none
-#            domain:     FrequencyPortDomain
-#        }
-#        signal DC {
-#            default:    0.0
-#            rate:       none
-#            domain:     FrequencyPortDomain
-#        }
-#        signal Norm {
-#            default:    0.0
-#            rate:       none
-#            domain:     FrequencyPortDomain
-#        }
-#    ]
-#    streams:    [
-#        Frequency / OutputPortRate / 2.0 >> W;
-#        0.5 - W >> N;
-#        13.0 * N * N * N * N >> Scaling;
-#        0.376 - W * 0.752 >> DC;
-#        1.0 - 2.0 * W >> Norm;
-#
-#        Phase + 2.0 * W >> Phase >> Compare ( value: 1.0 operation: 'GreaterOrEqual' ) >> CorrectPhase();
-#        2.0 * _PI * ( Phase + Osc * Scaling ) >> Sin () >> Level ( bias: Osc ) >> Level ( gain: 0.5 ) >> Osc;
-#        (( 2.5 * Osc - 1.5 * History ) + DC ) * Norm >> Output;
-#        Osc >> History;
-#    ]
-#}
+module BandLimitedSaw {
+	input: none # This needs to be removed...
+	output: Output
+    ports:      [
+        port OutputPort {
+            name:       'output'
+            type:       'main'
+            direction:  'output'
+            block:      Output
+            rate:       OutputPortRate
+            domain:     OutputPortDomain
+            meta:       "The module's primary output port."
+        }
+        port FrequencyPort {
+            name:       'frequency'
+            type:       'auxiliary'
+            direction:  'input'
+            block:      Frequency
+            rate:       FrequencyPortRate
+            domain:     FrequencyPortDomain
+            meta:       "The frequency of the oscillator in Hz."
+        }
+    ]
+    blocks:     [
+        signal Output {
+            default:    0.0
+            rate:       OutputPortRate
+            domain:     OutputPortDomain
+        }
+        signal Frequency {
+            default:    220.0
+            rate:       FrequencyPortRate
+            domain:     FrequencyPortDomain
+        }
+        signal Osc {
+            default:    0.0
+            rate:       OutputPortRate
+            domain:     OutputPortDomain
+        }
+        signal History {
+            default:    0.0
+            rate:       OutputPortRate
+            domain:     OutputPortDomain
+        }
+        signal PhaseResidue {
+            default:    0.0
+            rate:       OutputPortRate
+            domain:     OutputPortDomain
+        }
+        signal Phase {
+            default:    0.0 # FIMXE needs to be PhaseResidue
+            rate:       OutputPortRate
+            domain:     OutputPortDomain
+            reset:      ResetPhase
+        }
+		constant OutputPortRate {value: 0 }
+		constant OutputPortDomain { value: "AudioDomain"}
+		constant FrequencyPortRate {value: 0 }
+		constant FrequencyPortDomain { value: "AudioDomain"}
+        trigger ResetPhase {}
+        reaction CorrectPhase {
+            terminateWhen:  Done
+            onTermination:  ResetPhase;
+			blocks: [
+				trigger Done {}
+			]
+            streams:    [
+                Phase - 2.0 >> PhaseResidue;
+                on >> Done;
+            ]
+        }
+        signal W {
+            default:    0.0
+            rate:       none
+            domain:     FrequencyPortDomain
+        }
+        signal N {
+            default:    0.0
+            rate:       none
+            domain:     FrequencyPortDomain
+        }
+        signal Scaling {
+            default:    0.0
+            rate:       none
+            domain:     FrequencyPortDomain
+        }
+        signal DC {
+            default:    0.0
+            rate:       none
+            domain:     FrequencyPortDomain
+        }
+        signal Norm {
+            default:    0.0
+            rate:       none
+            domain:     FrequencyPortDomain
+        }
+    ]
+    streams:    [
+        Frequency / OutputPortRate / 2.0 >> W;
+        0.5 - W >> N;
+        13.0 * N * N * N * N >> Scaling;
+        0.376 - W * 0.752 >> DC;
+        1.0 - 2.0 * W >> Norm;
+
+        Phase + 2.0 * W >> Phase >> Compare ( value: 1.0 operation: 'GreaterOrEqual' ) >> CorrectPhase();
+        2.0 * _Pi * ( Phase + Osc * Scaling ) >> Sin () >> Level ( bias: Osc ) >> Level ( gain: 0.5 ) >> Osc;
+        (( 2.5 * Osc - 1.5 * History ) + DC ) * Norm >> Output;
+        Osc >> History;
+    ]
+}

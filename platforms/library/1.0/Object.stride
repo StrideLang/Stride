@@ -23,7 +23,7 @@ type _Rated {
 	properties: [
 		typeProperty Rate {
 			name: "rate"
-			types: ["CIP", "CRP"]
+			types: ["CIP", "CRP", ""]
 			default: PlatformRate
 			required: off
 		},

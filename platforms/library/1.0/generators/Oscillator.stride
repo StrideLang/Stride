@@ -6,13 +6,13 @@ module Oscillator {
 		port FrequencyProperty {
 			name: "frequency"
 			block: Frequency
-			default: 440.0
+#			default: 440.0
 			meta: "The frequency of the oscillator."
 		},
 		port AmplitudeProperty {
 			name: "amplitude"
 			block: Amplitude
-			default: 1.0
+#			default: 1.0
 			meta: "The amplitude of the oscillator."
 		},
 #			property TypeProperty {

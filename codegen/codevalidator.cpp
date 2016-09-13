@@ -275,7 +275,7 @@ void CodeValidator::validateBundleIndeces(AST *node, QVector<AST *> scope)
     if (node->getNodeType() == AST::Bundle) {
         BundleNode *bundle = static_cast<BundleNode *>(node);
         PortType type = resolveNodeOutType(bundle->index(), scope, m_tree);
-        if(type != ConstInt && type != ControlInt) {
+        if(type != ConstInt && type != ControlInt && type != AudioInteger) {
             LangError error;
             error.type = LangError::IndexMustBeInteger;
             error.lineNumber = bundle->getLine();
@@ -650,7 +650,9 @@ int CodeValidator::getNodeNumInputs(AST *node, const QVector<AST *> &scope, AST 
         BlockNode *platformFunc = CodeValidator::findDeclaration(QString::fromStdString(func->getName()), scope, tree);
         int dataSize = CodeValidator::getFunctionDataSize(func, scope, tree, errors);
         if (platformFunc) {
-            return getTypeNumInputs(platformFunc, scope, tree, errors) * dataSize;
+            QVector<AST *> internalScope = scope;
+            internalScope << QVector<AST *>::fromStdVector(platformFunc->getPropertyValue("blocks")->getChildren());
+            return getTypeNumInputs(platformFunc, internalScope, tree, errors) * dataSize;
         } else {
             return -1;
         }
@@ -698,16 +700,19 @@ int CodeValidator::getTypeNumOutputs(BlockNode *blockDeclaration, const QVector<
             Q_ASSERT(outputName->getNodeType() == AST::Name);
             QString outputBlockName = QString::fromStdString(outputName->getName());
             foreach(AST *internalBlockNode, blockList->getChildren()) {
-                BlockNode *intBlock = static_cast<BlockNode *>(internalBlockNode);
-                if (intBlock->getName() == outputBlockName.toStdString()) {
-                    if (internalBlockNode->getNodeType() == AST::BlockBundle) {
-                        return getBlockDeclaredSize(intBlock, scope, tree, errors);
-                    } else if (internalBlockNode->getNodeType() == AST::Block) {
-                        return 1;
+                Q_ASSERT(internalBlockNode->getNodeType() == AST::BlockBundle || internalBlockNode->getNodeType() == AST::Block);
+                QString blockName = QString::fromStdString(static_cast<BlockNode *>(internalBlockNode)->getName());
+                if (blockName == outputBlockName) {
+                    BlockNode *intBlock = static_cast<BlockNode *>(internalBlockNode);
+                    if (intBlock->getName() == outputBlockName.toStdString()) {
+                        if (internalBlockNode->getNodeType() == AST::BlockBundle) {
+                            return getBlockDeclaredSize(intBlock, scope, tree, errors);
+                        } else if (internalBlockNode->getNodeType() == AST::Block) {
+                            return 1;
+                        }
                     }
                 }
             }
-            return -1; // Should never get here!
         }
         return 1;
     }
@@ -729,14 +734,18 @@ int CodeValidator::getTypeNumInputs(BlockNode *blockDeclaration, const QVector<A
             Q_ASSERT(inputName->getNodeType() == AST::Name);
             QString inputBlockName = QString::fromStdString(inputName->getName());
             foreach(AST *internalBlockNode, blockList->getChildren()) {
-                if (internalBlockNode->getNodeType() == AST::BlockBundle) {
-                    BlockNode *intBlock = static_cast<BlockNode *>(internalBlockNode);
-                    Q_ASSERT(intBlock->getNodeType() == AST::BlockBundle);
-                    return getBlockDeclaredSize(intBlock, scope, tree, errors);
-                } else if (internalBlockNode->getNodeType() == AST::Block) {
-                    return 1;
+                Q_ASSERT(internalBlockNode->getNodeType() == AST::BlockBundle || internalBlockNode->getNodeType() == AST::Block);
+                QString blockName = QString::fromStdString(static_cast<BlockNode *>(internalBlockNode)->getName());
+                if (blockName == inputBlockName) {
+                    if (internalBlockNode->getNodeType() == AST::BlockBundle) {
+                        BlockNode *intBlock = static_cast<BlockNode *>(internalBlockNode);
+                        Q_ASSERT(intBlock->getNodeType() == AST::BlockBundle);
+                        return getBlockDeclaredSize(intBlock, scope, tree, errors);
+                    } else if (internalBlockNode->getNodeType() == AST::Block) {
+                        return 1;
+                    }
                 }
-                return -1; // Should never get here!
+//                return -1; // Should never get here!
             }
         }
         return 1;
@@ -749,8 +758,12 @@ BlockNode *CodeValidator::findDeclaration(QString objectName, QVector<AST *> sco
     QVector<AST *> globalAndLocal;
     foreach(AST *scope, scopeStack) {
         if (scope) {
-            ListNode *listNode = static_cast<ListNode *>(scope);
-            globalAndLocal << QVector<AST *>::fromStdVector(listNode->getChildren());
+            if (scope->getNodeType() == AST::List) {
+                ListNode *listNode = static_cast<ListNode *>(scope);
+                globalAndLocal << QVector<AST *>::fromStdVector(listNode->getChildren());
+            } else if (scope->getNodeType() == AST::Block || scope->getNodeType() == AST::BlockBundle) {
+                 globalAndLocal << scope;
+            }
         }
     }
     if (!tree) { return NULL;}
@@ -830,7 +843,9 @@ PortType CodeValidator::resolveNameType(NameNode *name, QVector<AST *>scope, AST
             PortType defaultType = resolveNodeOutType(property->getValue(), scope, tree);
             if (defaultType == ConstReal) {
                 return Audio;
-            } else {
+            } else if (defaultType == ConstInt) {
+                return AudioInteger;
+            } else{
                 return Audio;  // TODO this should be separated into SRP and SIP?R
             }
         } else {
@@ -941,7 +956,11 @@ int CodeValidator::evaluateConstInteger(AST *node, QVector<AST *> scope, AST *tr
         error.errorTokens.push_back(bundle->getName());
         errors << error;
     } else if (node->getNodeType() == AST::Name) {
-        // TODO: REsolve name when possible
+        QString name = QString::fromStdString(static_cast<NameNode *>(node)->getName());
+        BlockNode *declaration = findDeclaration(name, scope, tree);
+        if (declaration->getObjectType() == "constant") {
+            return evaluateConstInteger(declaration->getPropertyValue("value"), scope, tree, errors);
+        }
     } else if (node->getNodeType() == AST::Expression) {
         // TODO: check expression out
     } else {

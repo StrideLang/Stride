@@ -12,6 +12,11 @@ module BandPass {
 			name: "qFactor"
 			block: QFactor
 			meta: "The Q value of the filter."
+		},
+		port GainProperty {
+			name: "gain"
+			block: Gain
+			meta: ""
 		}
 #		port ResetProperty {
 #			name: "reset"
@@ -24,10 +29,11 @@ module BandPass {
 		signal Output {},
 		signal CenterFrequency {},
 		signal QFactor { default: 1.0},
+		signal Gain {},
 #		switch Reset {},
 		signal Xn[2] {},
 		signal Yn[2] {},
-		signal A[2] {},
+		signal A[2] {},	
 		signal B[3] {},
 		signal Temp {},
 		signal W0 {},

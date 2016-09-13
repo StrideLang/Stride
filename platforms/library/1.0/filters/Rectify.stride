@@ -12,7 +12,7 @@ module Rectify {
 	blocks: [
 		signal Input {},
 		signal Output {},
-		signal Mode {}
+		signal Mode { default: "mode"}
 	]
 	streams: [
 		Input >> Output;

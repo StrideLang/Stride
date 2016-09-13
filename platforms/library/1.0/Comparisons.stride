@@ -146,7 +146,7 @@ module OnChange {
 				port OutputProperty {
 					name: "output"
 					block: OutputValue
-					types: [""] # Any type for now
+#					type: [""] # Any type for now
 				}
 			]
 #			onExecution:
@@ -174,12 +174,12 @@ module Compare {
 		port OperatorProperty {
 			name: "operator"
 			block: Operator
-			types: [""] # Any type for now
+			type: [""] # Any type for now
 		},
 		port ValueProperty {
 			name: "value"
 			block: Value
-			types: [""] # Any type for now
+			type: [""] # Any type for now
 		}
 	]
     blocks: [

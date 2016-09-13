@@ -1,25 +1,27 @@
 module Mix {
+    input: Input
+    output: Output
     ports:          [
-        port OutputPort {
-            name:       'output'
-            type:       'main'
-            direction:  'output'
-            block:      Output
-            rate:       OutputPortRate
-            domain:     OutputPortDomain
-            size:       none
-            meta:       "The module's primary output port."
-        },
-        port InputPort {
-            name:       'input'
-            type:       'main'
-            direction:  'input'
-            block:      Input
-            rate:       none
-            domain:     none
-            size:       InputPortSize
-            meta:       "The module's primary output port."
-        },
+#        port OutputPort {
+#            name:       'output'
+#            type:       'main'
+#            direction:  'output'
+#            block:      Output
+#            rate:       OutputPortRate
+#            domain:     OutputPortDomain
+#            size:       none
+#            meta:       "The module's primary output port."
+#        },
+#        port InputPort {
+#            name:       'input'
+#            type:       'main'
+#            direction:  'input'
+#            block:      Input
+#            rate:       none
+#            domain:     none
+#            size:       InputPortSize
+#            meta:       "The module's primary output port."
+#        },
         port GainPort {
             name:       'gain'
             type:       'auxiliary'
@@ -43,33 +45,36 @@ module Mix {
     ]
     blocks:         [
         signal Output {
-            type:       [ 'Stream Real', 'Stream Integer' ] 
+#            type:       [ 'Stream Real', 'Stream Integer' ]
             default:    [ 0.0, 0 ]
-            rate:       none
+#            rate:       none
             domain:     OutputPortDomain
             reset:      Reset
         }
         signal Input [InputPortSize] {
-            type:       [ 'Stream Real', 'Stream Integer' ]
+#            type:       [ 'Stream Real', 'Stream Integer' ]
             default:    [ 0.0, 0 ]
             rate:       OutputPortRate
             domain:     OutputPortDomain
             reset:      none
         }
         signal Gain [InputPortSize] {
-            type:       [ 'Stream Real', 'Stream Integer' ]
+#            type:       [ 'Stream Real', 'Stream Integer' ]
             default:    [ 1.0, 1 ]
-            rate:       none
+#            rate:       none
             domain:     OutputPortDomain
             reset:      Reset
         }
         signal Bias [InputPortSize] {
-            type:       [ 'Stream Real', 'Stream Integer' ]
+#            type:       [ 'Stream Real', 'Stream Integer' ]
             default:    [ 0.0, 0 ]
-            rate:       none
+#            rate:       none
             domain:     OutputPortDomain
             reset:      none
         }
+		constant OutputPortRate {value: 0 }
+		constant OutputPortDomain { value: 0}
+		constant InputPortSize { value: 8 }
         trigger Reset {}
         reaction ComputeMix {
             ports:          none
@@ -85,7 +90,7 @@ module Mix {
             onExecution:    Reset
             terminateWhen:  Terminate
             streams:        [
-                [ Input[Index] * Gain[Index] + Bias[Index] , Output ] >> Add () >> Output;
+                Input[Index] * Gain[Index] + Bias[Index] + Output >> Output;
                 Index + 1 >> Index >> Compare ( value: InputPortSize operator: 'Greater' ) >> Terminate;
             ]
         }

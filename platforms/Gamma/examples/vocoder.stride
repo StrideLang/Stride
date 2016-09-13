@@ -8,19 +8,19 @@ constant  QFactor { value: 6.0 }
 trigger Reset {}
 
 AudioIn[1]
->> BandPass ( frequency: CenterFrequencies qFactor: QFactor gain: 5.0 )
+>> BandPass ( centerFrequency: CenterFrequencies qFactor: QFactor gain: 5.0 )
 >> Rectify ( mode: 'Full' )
 >> LowPass ( frequency: 50.0 qFactor: 0.707 gain: 3.0 )
 >> AmplitudeEnvelope;
 
 BandLimitedSaw ( frequency: CarrierFrequency )
->> BandPass ( frequency: CenterFrequencies qFactor: QFactor gain: AmplitudeEnvelope )
+>> BandPass ( centerFrequency: CenterFrequencies qFactor: QFactor gain: AmplitudeEnvelope )
 >> Mix ()
 >> AudioOut[1];
 
-reaction UpdateCarrierFrequency (
+reaction UpdateCarrierFrequency {
     terminateWhen:  Updated
-    blocks:         trigger Updated {}
+    blocks:         [trigger Updated {}]
     streams:        [
         CarrierFrequency * 1.059463
         >> CarrierFrequency
@@ -29,6 +29,6 @@ reaction UpdateCarrierFrequency (
 
         on >> Updated;
     ]
-)
+}
 
-DigitalIn[1] >> UpdateCarrierFrequency();
+#DigitalIn[1] >> UpdateCarrierFrequency();

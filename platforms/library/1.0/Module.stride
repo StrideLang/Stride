@@ -25,18 +25,36 @@ type _Port {
 			default: none
 			required: on
 		},
-		typeProperty Default {
-			name: "default"
+		typeProperty Rate {
+			name: "rate"
 			types: [""]
-			default: 0.0
+			default: none
 			required: off
 		},
-		typeProperty Types {
-			name: "types"
+		typeProperty Domain {
+			name: "domain"
 			types: [""] # This should be made to accept type handles
-			default: [""]
+			default: none
+			required: off
+		},
+		typeProperty Size {
+			name: "size"
+			types: [""] # This should be made to accept type handles
+			default: 1
 			required: off
 		}
+#		typeProperty Default {
+#			name: "default"
+#			types: [""]
+#			default: 0.0
+#			required: off
+#		},
+#		typeProperty Types {
+#			name: "types"
+#			types: [""] # This should be made to accept type handles
+#			default: [""]
+#			required: off
+#		}
 	]
 	inherits: ["base"]
 	meta: ""
@@ -104,6 +122,12 @@ type _Reaction {
 		},
 		typeProperty OnExecution {
 			name: "onExecution"
+			types: [""]
+			default: none
+			required: on
+		},
+		typeProperty OnTermination {
+			name: "onTermination"
 			types: [""]
 			default: none
 			required: on
