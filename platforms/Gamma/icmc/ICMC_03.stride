@@ -6,8 +6,8 @@ import generators
 
 signal Modulator {
     default:    0.0
-    rate:       AudioRate
-    domain:     AudioDomain
+    rate:         AudioRate
+    domain:   AudioDomain
     meta:       "The frequency modulation signal."
 }
 
