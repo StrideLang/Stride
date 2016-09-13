@@ -651,7 +651,9 @@ int CodeValidator::getNodeNumInputs(AST *node, const QVector<AST *> &scope, AST 
         int dataSize = CodeValidator::getFunctionDataSize(func, scope, tree, errors);
         if (platformFunc) {
             QVector<AST *> internalScope = scope;
-            internalScope << QVector<AST *>::fromStdVector(platformFunc->getPropertyValue("blocks")->getChildren());
+            if (platformFunc->getPropertyValue("blocks")) {
+                internalScope << QVector<AST *>::fromStdVector(platformFunc->getPropertyValue("blocks")->getChildren());
+            }
             return getTypeNumInputs(platformFunc, internalScope, tree, errors) * dataSize;
         } else {
             return -1;
