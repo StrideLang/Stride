@@ -1,30 +1,26 @@
 module Mix {
-    input: Input
-    output: Output
+#    input: Input
+#    output: Output
     ports:          [
-#        port OutputPort {
-#            name:       'output'
-#            type:       'main'
-#            direction:  'output'
-#            block:      Output
-#            rate:       OutputPortRate
-#            domain:     OutputPortDomain
-#            size:       none
-#            meta:       "The module's primary output port."
-#        },
-#        port InputPort {
-#            name:       'input'
-#            type:       'main'
-#            direction:  'input'
-#            block:      Input
-#            rate:       none
-#            domain:     none
-#            size:       InputPortSize
-#            meta:       "The module's primary output port."
-#        },
+        port OutputPort {
+            name:       'output'
+            main: on
+            direction:  'output'
+            block:      Output
+            rate:       OutputPortRate
+            domain:     OutputPortDomain
+            meta:       "The module's primary output port."
+        },
+        port InputPort {
+            name:       'input'
+            main: on
+            direction:  'input'
+            block:      Input
+            size:       InputPortSize
+            meta:       "The module's primary output port."
+        },
         port GainPort {
             name:       'gain'
-            type:       'auxiliary'
             direction:  'input'
             block:      Gain
             rate:       none
@@ -34,7 +30,6 @@ module Mix {
         },
         port BiasPort {
             name:       'bias'
-            type:       'auxiliary'
             direction:  'input'
             block:      Bias
             rate:       none
@@ -46,14 +41,14 @@ module Mix {
     blocks:         [
         signal Output {
 #            type:       [ 'Stream Real', 'Stream Integer' ]
-            default:    [ 0.0, 0 ]
+#            default:    [ 0.0, 0 ]
 #            rate:       none
             domain:     OutputPortDomain
             reset:      Reset
         }
         signal Input [InputPortSize] {
 #            type:       [ 'Stream Real', 'Stream Integer' ]
-            default:    [ 0.0, 0 ]
+#            default:    [ 0.0, 0 ]
             rate:       OutputPortRate
             domain:     OutputPortDomain
             reset:      none
@@ -76,24 +71,27 @@ module Mix {
 		constant OutputPortDomain { value: 0}
 		constant InputPortSize { value: 8 }
         trigger Reset {}
-        reaction ComputeMix {
-            ports:          none
-            blocks:         [
-                signal Index {
-                    default:    1
-                    rate:       none
-                    domain:     OutputPortDomain
-                    reset:      Reset
-                }
-                trigger Terminate {}
-            ]
-            onExecution:    Reset
-            terminateWhen:  Terminate
-            streams:        [
-                Input[Index] * Gain[Index] + Bias[Index] + Output >> Output;
-                Index + 1 >> Index >> Compare ( value: InputPortSize operator: 'Greater' ) >> Terminate;
-            ]
-        }
+#        reaction ComputeMix {
+#            ports:          none
+#            blocks:         [
+#                signal Index {
+#                    default:    1
+#                    rate:       none
+#                    domain:     OutputPortDomain
+#                    reset:      Reset
+#                }
+#                trigger Terminate {}
+#            ]
+#            onExecution:    Reset
+#            terminateWhen:  Terminate
+#            streams:        [
+#                Input[Index] * Gain[Index] + Bias[Index] + Output >> Output;
+#                Index + 1 >> Index >> Compare ( value: InputPortSize operator: 'Greater' ) >> Terminate;
+#            ]
+#        }
     ]
-    streams:        on >> ComputeMix();
+    streams: [
+		Input[1] + Input[2] + Input[3] + Input[4] + Input[5] + Input[6] + Input[7] + Input[8] >> Output; 
+#		on >> ComputeMix();
+	]
 }

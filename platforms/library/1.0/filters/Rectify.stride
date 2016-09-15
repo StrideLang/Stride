@@ -3,16 +3,16 @@ module Rectify {
 	input: Input
 	output: Output
 	ports: [
-		port ModeProperty {
-			name: "mode"
-			block: Mode
-			meta: "	Possible options are 'Full' and 'Half'."
-		}
+#		port ModeProperty {
+#			name: "mode"
+#			block: Mode
+#			meta: "	Possible options are 'Full' and 'Half'."
+#		}
 	]
 	blocks: [
 		signal Input {},
-		signal Output {},
-		signal Mode { default: "mode"}
+		signal Output {}
+#		signal Mode { default: "mode"}
 	]
 	streams: [
 		Input >> Output;

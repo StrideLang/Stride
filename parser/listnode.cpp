@@ -46,10 +46,10 @@ int ListNode::size()
 
 void ListNode::replaceMember(AST *replacement, AST *member)
 {
-    vector<AST *> children = getChildren();
-    for(unsigned int i = 1; i < children.size(); i++) {
-        if (children.at(i) == member) {
-            children.at(i) = replacement;
+//    vector<AST *> children = getChildren();
+    for(unsigned int i = 0; i < m_children.size(); i++) {
+        if (m_children.at(i) == member) {
+            m_children.at(i) = replacement;
             member->deleteChildren();
             delete member;
             return;

@@ -21,7 +21,9 @@ private:
 
 private Q_SLOTS:
 
-    void testDomains();
+
+    // Parser
+    void testModules();
 
     //Expansion
     void testStreamExpansion();
@@ -34,6 +36,7 @@ private Q_SLOTS:
     void testDuplicates();
     void testValueTypeBundleResolution();
     void testImport();
+    void testDomains();
 
     // Parser
     void testExpressions();
@@ -139,6 +142,35 @@ void ParserTest::testDomains()
 
     tree->deleteChildren();
     delete tree;
+}
+
+void ParserTest::testModules()
+{
+    AST *tree;
+    tree = parse(QString(QFINDTESTDATA("data/11_modules.stride")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    generator.validate();
+    QVERIFY(generator.isValid());
+
+    BlockNode *moduleNode = static_cast<BlockNode *>(tree->getChildren().at(1));
+    QVERIFY(moduleNode->getName() == "SizeTest");
+    ListNode *blockList = static_cast<ListNode *>(moduleNode->getPropertyValue("blocks"));
+    QVERIFY(blockList->getNodeType() == AST::List);
+    for(size_t i = 0; i < blockList->getChildren().size(); i++) {
+        AST *member = blockList->getChildren().at(i);
+        if (member->getNodeType() == AST::Block) {
+            BlockNode *block = static_cast<BlockNode *>(member);
+            if (block->getObjectType() == "constant") {
+
+            }
+        }
+    }
+
+
+    tree->deleteChildren();
+    delete tree;
+
 }
 
 void ParserTest::testImport()

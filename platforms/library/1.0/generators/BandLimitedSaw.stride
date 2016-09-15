@@ -4,7 +4,7 @@ module BandLimitedSaw {
     ports:      [
         port OutputPort {
             name:       'output'
-            type:       'main'
+            main: on
             direction:  'output'
             block:      Output
             rate:       OutputPortRate
@@ -13,7 +13,6 @@ module BandLimitedSaw {
         }
         port FrequencyPort {
             name:       'frequency'
-            type:       'auxiliary'
             direction:  'input'
             block:      Frequency
             rate:       FrequencyPortRate

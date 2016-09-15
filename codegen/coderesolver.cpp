@@ -18,10 +18,11 @@ CodeResolver::~CodeResolver()
 void CodeResolver::preProcess()
 {
     insertBuiltinObjects();
+    fillDefaultProperties();
+    declareModuleInternalBlocks();
+    resolveConstants();
     expandParallel(); // Find better name this expands bundles, functions and declares undefined bundles
     resolveStreamSymbols();
-    fillDefaultProperties();
-    resolveConstants();
     resolveRates();
     processDomains();
 }
@@ -147,6 +148,99 @@ void CodeResolver::fillDefaultProperties()
     for(unsigned int i = 0; i < nodes.size(); i++) {
         AST* node = nodes.at(i);
         fillDefaultPropertiesForNode(node);
+    }
+}
+
+
+void CodeResolver::declareModuleInternalBlocks()
+{
+    foreach (AST *node, m_tree->getChildren()) {
+        if (node->getNodeType() == AST::Block) {
+            BlockNode *block = static_cast<BlockNode *>(node);
+            if (block->getObjectType() == "module") {
+                ListNode *ports = static_cast<ListNode *>(block->getPropertyValue("ports"));
+                if (ports->getNodeType() == AST::List) {
+                    foreach (AST *port, ports->getChildren()) {
+                        Q_ASSERT(port->getNodeType() == AST::Block);
+                        BlockNode *portBlock = static_cast<BlockNode *>(port);
+                        Q_ASSERT(portBlock->getObjectType() == "port");
+                        AST *portMain = portBlock->getPropertyValue("main");
+                        ValueNode *portMainValue = static_cast<ValueNode *>(portMain);
+                        Q_ASSERT(portMainValue->getNodeType() == AST::Switch);
+                        if (portMainValue->getSwitchValue()) {
+                            qDebug() << "main port";
+                            NameNode *blockName = static_cast<NameNode *>(portBlock->getPropertyValue("block"));
+
+                            // Properties that we need to auto-declare for
+                            AST *ratePortValue = portBlock->getPropertyValue("rate");
+                            AST *domainPortValue = portBlock->getPropertyValue("domain");
+                            AST *sizePortValue = portBlock->getPropertyValue("size");
+
+                            Q_ASSERT(ratePortValue->getNodeType() == AST::Name || ratePortValue->getNodeType() == AST::None); // Catch on debug but fail gracefully on release
+                            if (ratePortValue->getNodeType() == AST::Name) {
+                                NameNode *nameNode = static_cast<NameNode *>(ratePortValue);
+                                string name = nameNode->getName();
+                                AST *internalBlocks = block->getPropertyValue("blocks");
+                                declareIfMissing(name, internalBlocks, new ValueNode(0, "", -1));
+
+//                                    if (declaration->getObjectType() == "constant") {
+//                                        // If existing declaration is not a constant then an error should be produced later when checking types
+//                                        AST *value = declaration->getPropertyValue("value");
+//                                        if (value)
+//                                    }
+                            } else {
+                                qDebug() << "CodeResolver::processModules() rate port should contain a name.";
+                            }
+
+                            Q_ASSERT(domainPortValue->getNodeType() == AST::Name || domainPortValue->getNodeType() == AST::None); // Catch on debug but fail gracefully on release
+                            if (domainPortValue->getNodeType() == AST::Name) {
+                                NameNode *nameNode = static_cast<NameNode *>(domainPortValue);
+                                string name = nameNode->getName();
+                                AST *internalBlocks = block->getPropertyValue("blocks");
+                                declareIfMissing(name, internalBlocks, new ValueNode(0, "", -1));
+                            }
+
+                            Q_ASSERT(sizePortValue->getNodeType() == AST::Name || sizePortValue->getNodeType() == AST::None); // Catch on debug but fail gracefully on release
+                            if (sizePortValue->getNodeType() == AST::Name) {
+                                NameNode *nameNode = static_cast<NameNode *>(sizePortValue);
+                                string name = nameNode->getName();
+                                AST *internalBlocks = block->getPropertyValue("blocks");
+                                declareIfMissing(name, internalBlocks, new ValueNode(0, "", -1));
+                            }
+
+                            // Now do auto declaration of block if not declared.
+                            if (blockName->getNodeType() == AST::Name || blockName->getNodeType() == AST::None) {
+                                AST *internalBlocks = block->getPropertyValue("blocks");
+
+                                if (internalBlocks->getNodeType() == AST::List) {
+                                    ListNode *blockList = static_cast<ListNode *>(internalBlocks);
+                                    // First check if block has been declared
+                                    foreach(AST *block, blockList->getChildren()) {
+                                        // TODO finish
+                                    }
+                                } else {
+                                    qDebug() << "CodeResolver::processModules() block property is not list";
+                                }
+                            }
+
+//                            AST *portDirection = portBlock->getPropertyValue("direction");
+//                            ValueNode *portDirectionValue = static_cast<ValueNode *>(portDirection);
+//                            Q_ASSERT(portDirectionValue->getNodeType() == AST::String);
+//                            if (portDirectionValue->getStringValue() == "input") {
+
+//                            } else if (portDirectionValue->getStringValue() == "output") {
+
+//                            }
+                        }
+                    }
+                } else if (ports->getNodeType() == AST::None) {
+                    // If port list is None, then ignore
+                } else {
+                    qDebug() << "ERROR! ports property must be a list or None!";
+                }
+            }
+        }
+
     }
 }
 
@@ -643,6 +737,39 @@ void CodeResolver::declareUnknownName(NameNode *name, int size, AST *tree)
     }
 }
 
+BlockNode *CodeResolver::createConstantDeclaration(string name, AST *value)
+{
+    BlockNode *constant = new BlockNode(name, "constant", NULL, "", -1);
+    PropertyNode *valueProperty = new PropertyNode("value", value, "", -1);
+    constant->addProperty(valueProperty);
+    return constant;
+}
+
+void CodeResolver::declareIfMissing(string name, AST *blocks, AST * value)
+{
+    BlockNode *declaration = NULL;
+    if (blocks->getNodeType() == AST::List) {
+        ListNode *blockList = static_cast<ListNode *>(blocks);
+        // First check if block has been declared
+        foreach(AST *block, blockList->getChildren()) {
+            if (block->getNodeType() == AST::Block || block->getNodeType() == AST::BlockBundle) {
+                BlockNode *declaredBlock = static_cast<BlockNode *>(block);
+                if (declaredBlock->getName() == name) {
+                    declaration = declaredBlock;
+                    qDebug() << "CodeResolver::declareModuleInternalBlocks() Overriding constant declaration value.";
+                    break;
+                }
+            }
+        }
+        if (!declaration) {
+            declaration = createConstantDeclaration(name, value);
+            blockList->addChild(declaration);
+        }
+    } else {
+            qDebug() << "CodeResolver::declareIfMissing() blocks is not list";
+    }
+}
+
 
 void CodeResolver::declareUnknownExpressionSymbols(ExpressionNode *expr, int size, AST * tree)
 {
@@ -903,7 +1030,7 @@ ValueNode *CodeResolver::resolveConstant(AST* value, QVector<AST *> scope)
         return newValue;
     } else if(value->getNodeType() == AST::Name) {
         NameNode *name = static_cast<NameNode *>(value);
-        BlockNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), QVector<AST *>(), m_tree);
+        BlockNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scope, m_tree);
         if (block && block->getNodeType() == AST::Block && block->getObjectType() == "constant") { // Size == 1
             AST *blockValue = block->getPropertyValue("value");
             if (blockValue->getNodeType() == AST::Int || blockValue->getNodeType() == AST::Real
@@ -944,6 +1071,12 @@ void CodeResolver::resolveConstantsInNode(AST *node, QVector<AST *> scope)
     } else if(node->getNodeType() == AST::Block) {
         BlockNode *block = static_cast<BlockNode *>(node);
         vector<PropertyNode *> properties = block->getProperties();
+        ListNode *internalBlocks = static_cast<ListNode *>(block->getPropertyValue("blocks"));
+        if (internalBlocks) {
+            if (internalBlocks->getNodeType() == AST::List) {
+                scope << QVector<AST *>::fromStdVector(internalBlocks->getChildren());
+            }
+        }
         foreach(PropertyNode *property, properties) {
             resolveConstantsInNode(property->getValue(), scope);
             ValueNode *newValue = resolveConstant(property->getValue(), scope);
@@ -954,6 +1087,12 @@ void CodeResolver::resolveConstantsInNode(AST *node, QVector<AST *> scope)
     } else if(node->getNodeType() == AST::BlockBundle) {
         BlockNode *block = static_cast<BlockNode *>(node);
         vector<PropertyNode *> properties = block->getProperties();
+        ListNode *internalBlocks = static_cast<ListNode *>(block->getPropertyValue("blocks"));
+        if (internalBlocks) {
+            if (internalBlocks->getNodeType() == AST::List) {
+                scope << QVector<AST *>::fromStdVector(internalBlocks->getChildren());
+            }
+        }
         foreach(PropertyNode *property, properties) {
             resolveConstantsInNode(property->getValue(), scope);
             ValueNode *newValue = resolveConstant(property->getValue(), scope);
@@ -971,8 +1110,16 @@ void CodeResolver::resolveConstantsInNode(AST *node, QVector<AST *> scope)
                 ValueNode *newValue = reduceConstExpression(expr, scope, m_tree);
                 if (newValue) {
                     indexList->replaceMember(newValue, element);
-                    element->deleteChildren();
-                    delete element;
+//                    element->deleteChildren();
+//                    delete element;
+                }
+            } else if (element->getNodeType() == AST::Name) {
+//                NameNode *name = static_cast<NameNode *>(element);
+                ValueNode *newValue = resolveConstant(element, scope);
+                if (newValue) {
+                    indexList->replaceMember(newValue, element);
+//                    element->deleteChildren();
+//                    delete element;
                 }
             }
         }

@@ -30,6 +30,7 @@ private:
     void resolveRates();
     void resolveStreamRates(StreamNode *stream);
     void fillDefaultProperties();
+    void declareModuleInternalBlocks();
     void expandParallel();
     void expandParallelStream(StreamNode *stream, QVector<AST *> scopeStack, AST *tree);
 
@@ -48,6 +49,9 @@ private:
     void processDomains();
     double createSignalDeclaration(QString name, int size, AST *tree);
     void declareUnknownName(NameNode *name, int size, AST *tree);
+    BlockNode *createConstantDeclaration(string name, AST *value);
+    void declareIfMissing(string name, AST *blockList, AST *value);
+
     void declareUnknownExpressionSymbols(ExpressionNode *expr, int size, AST * tree);
     ListNode *expandNameToList(NameNode *name, int size);
     void expandNamesToBundles(StreamNode *stream, AST *tree);

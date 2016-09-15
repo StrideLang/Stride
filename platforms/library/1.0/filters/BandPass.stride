@@ -51,7 +51,7 @@ module BandPass {
 		1 - Alpha >> A[3];
 
 		# Filter Processing
-		(Input * B[1] + Xn[1] * B[2] + Xn[2] * B[3] - Yn[1] * A[2] - Yn[2] * A[3]) / A[1] >> Output;
+		Gain * (Input * B[1] + Xn[1] * B[2] + Xn[2] * B[3] - Yn[1] * A[2] - Yn[2] * A[3]) / A[1] >> Output;
 		Xn[1] >> Xn[2];
 		Input >> Xn[1];
 		Yn[1] >> Yn[2];

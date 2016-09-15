@@ -613,7 +613,7 @@ int CodeValidator::getNodeNumOutputs(AST *node, const QVector<AST *> &scope, AST
 {
     Q_ASSERT(node->getNodeType() != AST::Stream); // Stream nodes should not be on the left...
     if (node->getNodeType() == AST::List) {
-        return node->getChildren().size();
+        return (int) node->getChildren().size();
     } else if (node->getNodeType() == AST::Bundle) {
         return getBundleSize(static_cast<BundleNode *>(node), scope, tree, errors);
     } else if (node->getNodeType() == AST::Int
@@ -684,7 +684,6 @@ int CodeValidator::getNodeNumInputs(AST *node, const QVector<AST *> &scope, AST 
         return 0;
 //        return CodeValidator::getNodeNumOutputs(node, platform, scope, tree, errors);
     }
-    return -1;
 }
 
 int CodeValidator::getTypeNumOutputs(BlockNode *blockDeclaration, const QVector<AST *> &scope, AST *tree, QList<LangError> &errors)
@@ -694,7 +693,38 @@ int CodeValidator::getTypeNumOutputs(BlockNode *blockDeclaration, const QVector<
     } else if (blockDeclaration->getNodeType() == AST::Block) {
         if (blockDeclaration->getObjectType() == "module") {
             ListNode *blockList = static_cast<ListNode *>(blockDeclaration->getPropertyValue("blocks"));
+            // FIXME checking for "output" port should be removed
             NameNode *outputName = static_cast<NameNode *>(blockDeclaration->getPropertyValue("output"));
+            if (!outputName || outputName->getNodeType() == AST::None) {
+                ListNode *portList = static_cast<ListNode *>(blockDeclaration->getPropertyValue("ports"));
+
+                if (portList && portList->getNodeType() != AST::None) {
+                    Q_ASSERT(portList->getNodeType() == AST::List);
+                    foreach(AST *port, portList->getChildren()) {
+                        if (port->getNodeType() == AST::Block) {
+                            BlockNode *portBlock = static_cast<BlockNode *>(port);
+                            AST *mainProperty = portBlock->getPropertyValue("main");
+                            if (mainProperty && mainProperty->getNodeType() == AST::Switch) {
+                                ValueNode *mainSwitch = static_cast<ValueNode *>(mainProperty);
+                                if (mainSwitch->getSwitchValue()) {
+                                    AST *direction = portBlock->getPropertyValue("direction");
+                                    if (direction && direction->getNodeType() == AST::String) {
+                                        ValueNode *directionValue = static_cast<ValueNode *>(direction);
+                                        if (directionValue->getStringValue() == "output") {
+                                            if (portBlock->getPropertyValue("block")->getNodeType() == AST::Name) {
+                                                outputName = static_cast<NameNode *>(portBlock->getPropertyValue("block"));
+                                            } else {
+                                                qDebug() << "WARNING: Expecting name node for output block";
+                                            }
+                                        }
+                                    }
+
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             Q_ASSERT(blockList->getNodeType() == AST::List);
             if (outputName->getNodeType() == AST::None) {
                 return 0;
@@ -728,7 +758,38 @@ int CodeValidator::getTypeNumInputs(BlockNode *blockDeclaration, const QVector<A
     } else if (blockDeclaration->getNodeType() == AST::Block) {
         if (blockDeclaration->getObjectType() == "module") {
             ListNode *blockList = static_cast<ListNode *>(blockDeclaration->getPropertyValue("blocks"));
+            // FIXME checking for "input" port should be removed
             NameNode *inputName = static_cast<NameNode *>(blockDeclaration->getPropertyValue("input"));
+
+            if (!inputName || inputName->getNodeType() == AST::None) {
+                ListNode *portList = static_cast<ListNode *>(blockDeclaration->getPropertyValue("ports"));
+                if (portList && portList->getNodeType() != AST::None) {
+                    Q_ASSERT(portList->getNodeType() == AST::List);
+                    foreach(AST *port, portList->getChildren()) {
+                        if (port->getNodeType() == AST::Block) {
+                            BlockNode *portBlock = static_cast<BlockNode *>(port);
+                            AST *mainProperty = portBlock->getPropertyValue("main");
+                            if (mainProperty && mainProperty->getNodeType() == AST::Switch) {
+                                ValueNode *mainSwitch = static_cast<ValueNode *>(mainProperty);
+                                if (mainSwitch->getSwitchValue()) {
+                                    AST *direction = portBlock->getPropertyValue("direction");
+                                    if (direction && direction->getNodeType() == AST::String) {
+                                        ValueNode *directionValue = static_cast<ValueNode *>(direction);
+                                        if (directionValue->getStringValue() == "input") {
+                                            if (portBlock->getPropertyValue("block")->getNodeType() == AST::Name) {
+                                                inputName = static_cast<NameNode *>(portBlock->getPropertyValue("block"));
+                                            } else {
+                                                qDebug() << "WARNING: Expecting name node for output block";
+                                            }
+                                        }
+                                    }
+
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             Q_ASSERT(blockList->getNodeType() == AST::List);
             if (inputName->getNodeType() == AST::None) {
                 return 0;

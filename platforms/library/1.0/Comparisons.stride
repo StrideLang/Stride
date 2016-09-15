@@ -174,12 +174,12 @@ module Compare {
 		port OperatorProperty {
 			name: "operator"
 			block: Operator
-			type: [""] # Any type for now
+#			type: [""] # Any type for now
 		},
 		port ValueProperty {
 			name: "value"
 			block: Value
-			type: [""] # Any type for now
+#			type: [""] # Any type for now
 		}
 	]
     blocks: [

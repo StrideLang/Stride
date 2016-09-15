@@ -8,9 +8,9 @@ type _Port {
 			required: on
 		},
 		typeProperty Type {
-			name: "type"
-			types: ["CSP"]
-			default: "main"
+			name: "main"
+			types: ["CBP"]
+			default: off
 			required: off
 		},
 		typeProperty Direction {
@@ -40,7 +40,7 @@ type _Port {
 		typeProperty Size {
 			name: "size"
 			types: [""] # This should be made to accept type handles
-			default: 1
+			default: none
 			required: off
 		}
 #		typeProperty Default {
