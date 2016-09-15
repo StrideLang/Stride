@@ -1228,6 +1228,39 @@ QVector<AST *> CodeValidator::getPortsForType(QString typeName, QVector<AST *> s
             }
         }
     }
+    QList<LangError> errors;
+    BlockNode *typeBlock = CodeValidator::findTypeDeclarationByName(typeName, scope, tree, errors);
+    if (typeBlock) {
+        AST *inherits = typeBlock->getPropertyValue("inherits");
+        if (inherits) {
+            if(inherits->getNodeType() == AST::List) {
+                foreach(AST *inheritsFromName, inherits->getChildren()) {
+                    if (inheritsFromName->getNodeType() == AST::String) {
+                        ValueNode *inheritsName = static_cast<ValueNode *>(inheritsFromName);
+                        QVector<AST *> inheritedProperties = CodeValidator::getPortsForType(QString::fromStdString(inheritsName->getStringValue()), scope, tree);
+                        foreach(AST *property, inheritedProperties) {
+                            if (portList.count(property) == 0) {
+                                portList << property;
+                            }
+                        }
+                    } else {
+                        qDebug() << "Expected string name in inherits property list.";
+                    }
+                }
+            } else if (inherits->getNodeType() == AST::String) {
+                ValueNode *inheritsName = static_cast<ValueNode *>(inherits);
+                QVector<AST *> inheritedProperties = CodeValidator::getPortsForType(QString::fromStdString(inheritsName->getStringValue()), scope, tree);
+                foreach(AST *property, inheritedProperties) {
+                    if (portList.count(property) == 0) {
+                        portList << property;
+                    }
+                }
+            } else {
+                qDebug() << "Unexpected type for inherits property";
+            }
+        }
+    }
+
     return portList;
 }
 
