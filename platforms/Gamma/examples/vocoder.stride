@@ -2,7 +2,7 @@ use Gamma version 1.0 on PC
 import generators
 import filters
 
-signal CarrierFrequency { value: 196.0 rate: none reset: Reset }
+signal CarrierFrequency { default: 196.0 rate: none reset: Reset }
 constant CenterFrequencies [8] { value: [ 82.5, 165.0, 330.0, 660.0, 1320.0, 2640.0, 5280.0, 10560.0 ] }
 constant  QFactor { value: 6.0 }
 trigger Reset {}
