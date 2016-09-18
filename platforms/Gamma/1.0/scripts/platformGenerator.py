@@ -173,7 +173,7 @@ class Generator(GeneratorBase):
                     "-O3",
                     "-std=c++11",
                     "-DNDEBUG",
-                    "-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk",
+                    "-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk",
                     "-Wl,-search_paths_first",
                     "-Wl,-headerpad_max_install_names",
                     self.out_file + ".o",
