@@ -553,7 +553,7 @@ void ProjectWindow::closeTab(int index)
     if (index >= ui->tabWidget->count()) {
         qDebug() << " ProjectWindow::closeTab(int index) invalid index " << index;
     }
-    if (ui->tabWidget->count() > 1) {
+    if (ui->tabWidget->count() > 1) { // TODO This should be set to ZERO
         CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->widget(index));
         if (editor->isChanged()) {
             QMessageBox::StandardButton result
@@ -571,8 +571,8 @@ void ProjectWindow::closeTab(int index)
                 delete editor; // TODO better handling of this pointer (smarter pointer)
             }
         } else {
-            ui->tabWidget->removeTab(ui->tabWidget->currentIndex());
-            delete editor;
+            ui->tabWidget->removeTab(index);
+            delete editor; // TODO better handling of this pointer (smarter pointer)
         }
     }
 }
