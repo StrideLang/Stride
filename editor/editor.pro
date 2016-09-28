@@ -1,5 +1,6 @@
 
 QT += core gui #qml quick
+CONFIG += c++11
 
 lessThan(QT_MAJOR_VERSION, 5): error("Qt 5 required!")
 

@@ -10,6 +10,7 @@ QT += core
 TARGET = codegen
 TEMPLATE = lib
 CONFIG += staticlib
+CONFIG += c++11
 
 message(Building $${TARGET})
 

@@ -18,6 +18,7 @@ TEMPLATE = app
 
 SOURCES += tst_parsertest.cpp
 DEFINES += SRCDIR=\\\"$$PWD/\\\"
+CONFIG += c++11
 
 include("../config.pri")
 
