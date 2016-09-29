@@ -8,12 +8,16 @@ Created on Tue Jul 12 19:15:03 2016
 class Code(object):
     def __init__(self):
         self.code = ''
+        self.name = ''
         self.scope = 0
         self.domain = None
         self.dependents = []
     
     def get_code(self):
         return self.code
+        
+    def get_name(self):
+        return self.name
         
     def get_scope(self):
         return self.scope
@@ -26,6 +30,9 @@ class Code(object):
     
     def add_dependent(self, dependent):
         self.dependents.append(dependent)
+        
+    def depended_by(self, code_obj):
+        return code_obj in self.dependents
     
 class Instance(Code):
     def __init__(self, code, scope, domain, vartype, handle, post = True):
@@ -35,24 +42,17 @@ class Instance(Code):
         self.vartype = vartype
         self.handle = handle
         self.post = post
-        
-    def get_code(self):
-        return self.code
+        self.dependents = []
         
     def get_type(self):
         return self.vartype
         
-    def get_handle(self):
+    def get_name(self):
         return self.handle
         
     def get_post(self):
         return self.post
-        
-    def get_domain(self):
-        return self.domain
-        
-    def get_scope(self):
-        return self.scope
+
 
 class BundleInstance(Instance):
     def __init__(self, code, scope, domain, vartype, handle, size, post = True):
@@ -85,6 +85,7 @@ class Declaration(Code):
         self.domain = domain
         self.name = name
         self.code = code
+        self.dependents = []
         
     def get_name(self):
         return self.name

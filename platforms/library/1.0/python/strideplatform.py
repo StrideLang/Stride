@@ -745,17 +745,19 @@ class ModuleAtom(Atom):
         
     def get_declarations(self):
         declarations = []
+        outer_declarations = []
         if "other_scope_declarations" in self.code:
             for other_declaration in self.code["other_scope_declarations"]:
-                other_declaration.domain = self.domain
-                declarations.append(other_declaration)
+                if not other_declaration.domain:
+                    other_declaration.domain = self.domain
+                outer_declarations.append(other_declaration)
 
+        declarations += outer_declarations
         domain_code = self.code['domain_code']
         
         properties_code = self._get_internal_properties_code()
         for domain, code in domain_code.items():
             header_code = code['header_code'] 
-            instance_code = code['instance_code']
             init_code = code['init_code']
             process_code = '\n'.join(code['processing_code'])
             properties_domain_code = ''
@@ -770,7 +772,7 @@ class ModuleAtom(Atom):
             
         
             declaration_text = templates.module_declaration(
-                    self.name, header_code + instance_code + properties_domain_code, 
+                    self.name, header_code + properties_domain_code, 
                     init_code, self._output_block , self._input_block, process_code)
                     
             declaration = Declaration(self.module['stack_index'],
@@ -778,14 +780,22 @@ class ModuleAtom(Atom):
                                             self.name,
                                             declaration_text)
 
+            for outer_dec in outer_declarations:
+                outer_dec.add_dependent(declaration)
+                
             declarations.append(declaration)
         return declarations
     
     def get_instances(self):
         instances = []
+        module_instance = ModuleInstance(self.scope_index,
+                                 self.domain,
+                                 self.name,
+                                 self.handle)
         if "other_scope_instances" in self.code:
             for inst in self.code["other_scope_instances"]:
                 inst.post = False
+                inst.add_dependent(module_instance)
                 instances.append(inst)
         for atoms in self.port_name_atoms.itervalues():
             for atom in atoms:
@@ -800,11 +810,8 @@ class ModuleAtom(Atom):
                                  self.domain,
                                  block_types[0],
                                  self.out_tokens[0]) ]
-                
-        instances += [ ModuleInstance(self.scope_index,
-                                 self.domain,
-                                 self.name,
-                                 self.handle) ]
+                                 
+        instances += [module_instance ]
         return instances
         
     def get_inline_processing_code(self, in_tokens):
@@ -1034,17 +1041,19 @@ class ReactionAtom(Atom):
         
     def get_declarations(self):
         declarations = []
+        outer_declarations = []
         if "other_scope_declarations" in self.code:
             for other_declaration in self.code["other_scope_declarations"]:
                 other_declaration.domain = self.domain
-                declarations.append(other_declaration)
+                
+                outer_declarations.append(other_declaration)
 
-        domain_code = self.code['domain_code']
+        declarations += outer_declarations
+        domain_code = self.code['domain_code']        
         
         properties_code = self._get_internal_properties_code()
         for domain, code in domain_code.items():
             header_code = code['header_code'] 
-            instance_code = code['instance_code']
             init_code = code['init_code']
             process_code = '\n'.join(code['processing_code'])
             properties_domain_code = ''
@@ -1059,7 +1068,7 @@ class ReactionAtom(Atom):
             
         
             declaration_text = templates.reaction_declaration(
-                    self.name, header_code + instance_code + properties_domain_code, 
+                    self.name, header_code + properties_domain_code, 
                     init_code, self._output_block,  process_code)
                     
             declaration = Declaration(self.reaction['stack_index'],
@@ -1067,23 +1076,27 @@ class ReactionAtom(Atom):
                                             self.name,
                                             declaration_text)
 
+            for outer_dec in outer_declarations:
+                outer_dec.add_dependent(declaration)
             declarations.append(declaration)
         return declarations
     
     def get_instances(self):
         instances = []
+        module_instance = ModuleInstance(self.scope_index,
+                                 self.domain,
+                                 self.name,
+                                 self.handle)
         if "other_scope_instances" in self.code:
             for inst in self.code["other_scope_instances"]:
                 inst.post = False
+                inst.add_dependent(module_instance)
                 instances.append(inst)
         for atoms in self.port_name_atoms.itervalues():
             for atom in atoms:
                 instances += atom.get_instances()
                 # TODO is there a difference for reactions here? i.e. not ModuleInstance
-        instances += [ ModuleInstance(self.scope_index,
-                                 self.domain,
-                                 self.name,
-                                 self.handle) ]
+        instances += [ module_instance ]
         if len(self.out_tokens) > 0 and self.reaction['output']:
             out_block = self.find_internal_block(self.reaction['output']['name']['name'])
             # FIXME support bundles
@@ -1388,22 +1401,22 @@ class PlatformFunctions:
         
     def instantiation_code(self, instance):
         if instance.get_type() == 'real':
-            code = templates.declaration_real(instance.get_handle())
+            code = templates.declaration_real(instance.get_name())
         elif instance.get_type() == 'bool':
-            code = templates.declaration_bool(instance.get_handle())
+            code = templates.declaration_bool(instance.get_name())
         elif instance.get_type() == 'string':
-            code = templates.declaration_string(instance.get_handle())
+            code = templates.declaration_string(instance.get_name())
         elif instance.get_type() =='bundle':
             if instance.get_bundle_type() == 'real':
-                code = templates.declaration_bundle_real(instance.get_handle(), instance.size)
+                code = templates.declaration_bundle_real(instance.get_name(), instance.size)
             elif instance.get_bundle_type() == 'bool':
-                code = templates.declaration_bundle_bool(instance.get_handle(), instance.size)
+                code = templates.declaration_bundle_bool(instance.get_name(), instance.size)
             else:
                 raise ValueError("Unsupported bundle type.")
         elif instance.get_type() == 'module':
-            code = templates.declaration_module(instance.get_module_type(), instance.get_handle())
+            code = templates.declaration_module(instance.get_module_type(), instance.get_name())
         elif instance.get_type() == 'reaction':
-            code = templates.declaration_reaction(instance.get_module_type(), instance.get_handle())
+            code = templates.declaration_reaction(instance.get_module_type(), instance.get_name())
         else:
             raise ValueError('Unsupported type for instance')
         return code
@@ -1412,20 +1425,20 @@ class PlatformFunctions:
         code = ''
         if not instance.get_code() == '':
             if instance.get_type() == 'real':
-                code = templates.assignment(instance.get_handle(), instance.get_code())
+                code = templates.assignment(instance.get_name(), instance.get_code())
             elif instance.get_type() == 'bool':
                 value = instance.get_code()
-                code = templates.assignment(instance.get_handle(), value)
+                code = templates.assignment(instance.get_name(), value)
             elif instance.get_type() == 'string':
                 value = '"' + instance.get_code() + '"'
-                code = templates.assignment(instance.get_handle(), value)
+                code = templates.assignment(instance.get_name(), value)
             elif instance.get_type() == 'bundle':
                 for i in range(instance.get_size()):
                     elem_instance = Instance(instance.get_code(),
                                              instance.get_scope(),
                                              instance.get_domain(),
                                              instance.get_bundle_type(),
-                                             instance.get_handle() + '[%i]'%i)
+                                             instance.get_name() + '[%i]'%i)
                     code += self.initialization_code(elem_instance)
             else:
                 ValueError("Unsupported type for initialization: " + instance.get_type())
@@ -1435,7 +1448,6 @@ class PlatformFunctions:
 
         init_code = {}
         header_code = {}
-        instance_code = {}
         processing_code = {} 
         post_processing = {}
         parent_rates_size = templates.rate_stack_size() # To know now much we need to pop for this stream
@@ -1473,11 +1485,28 @@ class PlatformFunctions:
                 if not current_domain in header_code:
                     header_code[current_domain] = "" 
                 
-                if not current_domain in instance_code:
-                    instance_code[current_domain] = ""
-                
-                scope_declarations += declares
-                scope_instances += new_instances
+                # append new declarations if not there in the list already
+                for new_dec in declares:
+                    already_declared = False
+                    for dec in scope_declarations:
+                        if dec.get_name() == new_dec.get_name():
+                            print ("Declaration already queued: " + dec.name)
+                            already_declared = True
+                            break
+                    if not already_declared:
+                        scope_declarations.append(new_dec)
+                        
+                for new_inst in new_instances:
+                    already_declared = False
+                    for inst in scope_instances:
+                        if new_inst.get_name() == inst.get_name():
+                            print ("Instance already queued: " + new_inst.handle)
+                            already_declared = True
+                            break
+                    if not already_declared:
+                        scope_instances.append(new_inst)
+                        
+                #scope_instances += new_instances
 #                header.append([declares, new_instances])
                 
                 if not current_domain in init_code:
@@ -1531,7 +1560,7 @@ class PlatformFunctions:
             processing_code[current_domain] += templates.rate_end_code()
 
         self.log_debug(">>> End stream generation")
-        return [header_code, instance_code, init_code, processing_code,
+        return [header_code, init_code, processing_code,
                 scope_instances, scope_declarations]
         
     def generate_stream_code(self, stream, stream_index, global_groups):
@@ -1539,7 +1568,7 @@ class PlatformFunctions:
         node_groups = self.make_stream_nodes(stream)
 
         new_code = self.generate_code_from_groups(node_groups, global_groups)
-        header_code, instance_code, init_code, new_processing_code, scope_instances, scope_declarations = new_code
+        header_code, init_code, new_processing_code, scope_instances, scope_declarations = new_code
 
         self.log_debug("-- End stream")
         
@@ -1549,7 +1578,6 @@ class PlatformFunctions:
         
         return {"global_groups" : global_groups,
                 "header_code" : header_code,
-                "instance_code" : instance_code,
                 "init_code" : init_code,
                 "processing_code" : new_processing_code,
                 "scope_instances": scope_instances,
@@ -1598,23 +1626,13 @@ class PlatformFunctions:
                 for domain, header_code in code["header_code"].items():
                     if not domain in domain_code:
                         domain_code[domain] =  { "header_code": '',
-                        "instance_code" : '',
                         "init_code" : '',
                         "processing_code" : [] }
                     domain_code[domain]["header_code"] += header_code
                 
-                for domain, instance_code in code["instance_code"].items():
-                    if not domain in domain_code:
-                        domain_code[domain] =  { "header_code": '',
-                        "instance_code" : '',
-                        "init_code" : '',
-                        "processing_code" : [] }
-                    domain_code[domain]["instance_code"] += instance_code
-                
                 for domain, init_code in code["init_code"].items():
                     if not domain in domain_code:
                         domain_code[domain] =  { "header_code": '',
-                        "instance_code" : '',
                         "init_code" : '',
                         "processing_code" : [] }
                     domain_code[domain]["init_code"] += init_code
@@ -1622,7 +1640,6 @@ class PlatformFunctions:
                 for domain, processing_code in code["processing_code"].items():
                     if not domain in domain_code:
                         domain_code[domain] =  { "header_code": '',
-                        "instance_code" : '',
                         "init_code" : '',
                         "processing_code" : [] }
                     domain_code[domain]["processing_code"].append(processing_code)
@@ -1632,52 +1649,59 @@ class PlatformFunctions:
                 stream_index += 1
                 
         declared = []
-        for new_dec in scope_declarations:
-            if new_dec.get_scope() >= len(self.scope_stack) - 1: # if declaration in this scope
-                is_declared = False
-                self.log_debug(':::--- Domain : '+ str(new_dec.get_domain()) + ":::" + new_dec.get_name() + '::: scope ' + str(new_dec.get_scope()) )
-                self.log_debug(new_dec.get_code())
-                for d in declared:
-                    if d[0] == new_dec.get_name() and d[1] == new_dec.get_scope():
-                        is_declared = True
+
+        header_elements = scope_declarations + scope_instances 
+        
+        is_sorted = False
+        # TODO do a more efficient sort
+        while not is_sorted:
+            for i in range(len(header_elements)):
+                for j in range(i):
+                    if header_elements[i].depended_by(header_elements[j]):
+                        header_elements[i], header_elements[j] = header_elements[j], header_elements[i]
                         break
-                if not is_declared:
-                    
-                    if not new_dec.get_domain() in domain_code:
-                        domain_code[new_dec.get_domain()] =  { "header_code": '',
-                            "instance_code" : '',
-                            "init_code" : '',
-                            "processing_code" : [] }
-                    declared.append( [new_dec.get_name(), new_dec.get_scope() ])
-                    domain_code[new_dec.get_domain()]['header_code'] += new_dec.get_code()
-            else:
-                other_scope_declarations.append(new_dec)
-            
-        self.log_debug("New instances ")
-        for new_inst in scope_instances:
-            
-            if new_inst.get_scope() == len(self.scope_stack) - 1: # if instance is declared in this scope
+                if i == len(header_elements) - 1:  
+                    is_sorted = True
+                
+        for new_element in header_elements:
+            if new_element.get_scope() >= len(self.scope_stack) - 1: # if declaration in this scope
                 is_declared = False
-                self.log_debug("--- Domain : " + str(new_inst.get_domain()) + " handle: " + new_inst.get_handle())
-                for i in instanced:
-                    if i[0] == new_inst.get_handle() and i[1] == new_inst.get_scope():
-                        is_declared = True
-                        break
-                if not is_declared:
-                    new_inst_code = self.instantiation_code(new_inst)
-                    if not new_inst.get_domain() in domain_code:
-                        domain_code[new_inst.get_domain()] =  { "header_code": '',
-                            "instance_code" : '',
-                            "init_code" : '',
-                            "processing_code" : [] }
-                    if new_inst.post:
-                        domain_code[new_inst.get_domain()]["instance_code"] += new_inst_code
-                    else:
-                        domain_code[new_inst.get_domain()]["instance_code"] = new_inst_code + domain_code[new_inst.get_domain()]["instance_code"]
-                    domain_code[new_inst.get_domain()]["init_code"] +=  self.initialization_code(new_inst)
-                    instanced.append([new_inst.get_handle(), new_inst.get_scope() ])
+                self.log_debug(':::--- Domain : '+ str(new_element.get_domain()) + ":::" + new_element.get_name() + '::: scope ' + str(new_element.get_scope()) )
+                tempdict = new_element.__dict__  # For debugging. This shows the contents in the spyder variable explorer              
+                self.log_debug(new_element.get_code())
+                if type(new_element) == Declaration or issubclass(type(new_element), Declaration):
+                    # TODO can this go? Shouldn't we have chacked if already declared by now?
+                    for d in declared:
+                        if d[0] == new_element.get_name() and d[1] == new_element.get_scope():
+                            is_declared = True
+                            break
+                    if not is_declared:
+                        if not new_element.get_domain() in domain_code:
+                            domain_code[new_element.get_domain()] =  { "header_code": '',
+                                "init_code" : '',
+                                "processing_code" : [] }
+                        declared.append( [new_element.get_name(), new_element.get_scope() ])
+                        domain_code[new_element.get_domain()]['header_code'] += new_element.get_code()
+                elif type(new_element) == Instance or issubclass(type(new_element), Instance):
+                    is_declared = False
+                    for i in instanced:
+                        if i[0] == new_element.get_name() and i[1] == new_element.get_scope():
+                            is_declared = True
+                            break
+                    if not is_declared:
+                        new_inst_code = self.instantiation_code(new_element)
+                        if not new_element.get_domain() in domain_code:
+                            domain_code[new_element.get_domain()] =  { "header_code": '',
+                                "init_code" : '',
+                                "processing_code" : [] }
+                        if new_element.post:
+                            domain_code[new_element.get_domain()]["header_code"] += new_inst_code
+                        else:
+                            domain_code[new_element.get_domain()]["header_code"] = new_inst_code + domain_code[new_element.get_domain()]["header_code"]
+                        domain_code[new_element.get_domain()]["init_code"] +=  self.initialization_code(new_element)
+                        instanced.append([new_element.get_name(), new_element.get_scope() ])
             else:
-                other_scope_instances.append(new_inst)  
+                other_scope_declarations.append(new_element) 
 
         self.pop_scope()
         return {"global_groups" : global_groups_code,
@@ -1761,7 +1785,6 @@ class GeneratorBase(object):
                     
                     self.write_section_in_file(platform_domain['declarationsTag'], sections['header_code'], filename)
                     self.write_section_in_file(platform_domain['initializationTag'], sections['init_code'], filename)
-                    self.write_section_in_file(platform_domain['instanceTag'], sections['instance_code'], filename)
                     if 'cleanup_code' in sections:
                         self.write_section_in_file(platform_domain['cleanupTag'], sections['cleanup_code'], filename)
                     domain_matched = True
