@@ -84,6 +84,9 @@ class Atom(object):
     def get_scope_index(self):
         return self.scope_index
         
+    def get_domain(self):
+        return self.domain
+        
          
 class PlatformTypeAtom(Atom):
     def __init__(self, module, function, platform_type, token_index, platform, scope_index):
@@ -174,6 +177,10 @@ class ExpressionAtom(Atom):
             self.set_inline(False)
         else:
             self.set_inline(True)
+        
+        self.domain = left_atom.get_domain()
+        if not self.domain == right_atom.get_domain():
+            print ("ERROR! domains must match inside expressions!")
         
     def set_inline(self, inline):
         self.left_atom.set_inline(inline)
