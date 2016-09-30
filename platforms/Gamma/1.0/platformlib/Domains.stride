@@ -11,8 +11,7 @@ _domainDefinition AudioDomain {
 	domainName: "AudioDomain"
 	platform: _GammaPlatform
 	globalsTag: "Includes" 
-	declarationsTag: "Declarations"
-	instanceTag: "Instances" 
+	declarationsTag: "Declarations" 
 	processingTag: "Processing"
 	initializationTag: "Initialization"
 	cleanupTag: "Cleanup"
@@ -32,7 +31,6 @@ _domainDefinition OSCInDomain {
 	platform: _GammaPlatform
 	globalsTag: "Includes" 
 	declarationsTag: "Declarations"
-	instanceTag: "Instances" 
 	processingTag: "OSC:Processing"
 	initializationTag: "Initialization"
 	cleanupTag: "Cleanup"
@@ -45,7 +43,6 @@ _domainDefinition SerialInDomain {
 	platform: _GammaPlatform
 	globalsTag: "Includes" 
 	declarationsTag: "SerialIn:Declarations"
-	instanceTag: "Instances" 
 	processingTag: "SerialIn:Processing"
 	initializationTag: "SerialIn:Initialization"
 	cleanupTag: "SerialIn:Cleanup"
@@ -56,7 +53,6 @@ _domainDefinition SerialOutDomain {
 	platform: _GammaPlatform
 	globalsTag: "Includes" 
 	declarationsTag: "SerialOut:Declarations"
-	instanceTag: "Instances" 
 	processingTag: "SerialOut:Processing"
 	initializationTag: "SerialOut:Initialization"
 	cleanupTag: "SerialOut:Cleanup"

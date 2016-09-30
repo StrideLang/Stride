@@ -94,10 +94,10 @@ type _Module {
 			default: none
 			required: on
 		},
-		typeProperty Domain {
-			name: "domain"
+		typeProperty DefaultDomain {
+			name: "defaultDomain"
 			types: ["CSP", "" ] #  Should allow _Domain
-			default: streamNode
+			default: PlatformDomain
 			required: off
 		}
 
@@ -150,10 +150,10 @@ type _Reaction {
 			default: none
 			required: on
 		},
-		typeProperty Domain {
-			name: "domain"
+		typeProperty DefaultDomain {
+			name: "defaultDomain"
 			types: ["CSP", "" ] #  Should allow _Domain
-			default: streamNode
+			default: PlatformDomain
 			required: off
 		}
 	]

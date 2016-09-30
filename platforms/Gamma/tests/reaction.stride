@@ -2,12 +2,15 @@ use Gamma version 1.0 on PC
 
 import generators
 
-signal Frequency2 { default: 440 }
+signal Frequency2 { 
+	default: 440
+}
 
 reaction Test {
 	streams: [
-		Frequency2 + 10 >> Frequency2;
+		Frequency2 + 50 >> Frequency2;
 	]
+	defaultDomain: AudioDomain
 }
 
 Impulse(frequency:1) == 1 >> Test();

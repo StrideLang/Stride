@@ -12,7 +12,6 @@ _domainDefinition STM32F7_Domain {
 	platform: _STM32F7_Platform
 	globalsTag: "Includes" 
 	declarationsTag: "Declarations"
-	instanceTag: "Instances" 
 	processingTag: "Processing"
 	initializationTag: "Initialization"
 	cleanupTag: "Cleanup"
@@ -23,7 +22,6 @@ _domainDefinition AudioDomain {
 	platform: _STM32F7_Platform
 	globalsTag: "Includes" 
 	declarationsTag: "Declarations"
-	instanceTag: "Instances" 
 	processingTag: "AudioProcessing"
 	initializationTag: "Initialization"
 	cleanupTag: "Cleanup"
@@ -35,7 +33,6 @@ _domainDefinition OSCInDomain {
 	platform: _STM32F7_Platform
 	globalsTag: "Includes" 
 	declarationsTag: "OSC:Declarations"
-	instanceTag: "Instances" 
 	processingTag: "OSC:Processing"
 	initializationTag: "OSC:Initialization"
 	cleanupTag: "OSC:Cleanup"
@@ -47,7 +44,6 @@ _domainDefinition SerialInDomain {
 	platform: _STM32F7_Platform
 	globalsTag: "Includes" 
 	declarationsTag: "SerialIn:Declarations"
-	instanceTag: "Instances" 
 	processingTag: "SerialIn:Processing"
 	initializationTag: "SerialIn:Initialization"
 	cleanupTag: "SerialIn:Cleanup"
@@ -58,7 +54,6 @@ _domainDefinition SerialOutDomain {
 	platform: _STM32F7_Platform
 	globalsTag: "Includes" 
 	declarationsTag: "SerialOut:Declarations"
-	instanceTag: "Instances" 
 	processingTag: "SerialOut:Processing"
 	initializationTag: "SerialOut:Initialization"
 	cleanupTag: "SerialOut:Cleanup"

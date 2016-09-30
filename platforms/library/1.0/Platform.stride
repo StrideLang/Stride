@@ -26,12 +26,6 @@ type _DomainDefinition {
 			default: ""
 			required: off
 		},
-		typeProperty InstanceTag {
-			name: "instanceTag"
-			types: ["CSP"]
-			default: ""
-			required: off
-		},
 		typeProperty ProcessingTag {
 			name: "processingTag"
 			types: ["CSP"]
