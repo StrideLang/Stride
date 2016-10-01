@@ -47,7 +47,9 @@ private:
 
     void insertBuiltinObjects();
     void processDomains();
-    double createSignalDeclaration(QString name, int size, AST *tree);
+
+    void processDomainsForStream(StreamNode *func, QVector<AST *> scopeStack);
+    BlockNode *createSignalDeclaration(QString name, int size = 1);
     void declareUnknownName(NameNode *name, int size, AST *tree);
     BlockNode *createConstantDeclaration(string name, AST *value);
     void declareIfMissing(string name, AST *blockList, AST *value);

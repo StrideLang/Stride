@@ -4,8 +4,8 @@ type _Port {
 		typeProperty Name {
 			name: "name"
 			types: ["CSP"]
-			default: none
-			required: on
+			default: ""
+			required: off
 		},
 		typeProperty Type {
 			name: "main"
@@ -85,7 +85,7 @@ type _Module {
 		typeProperty Blocks {
 			name: "blocks"
 			types: [""] # TODO how to accept lists?
-			default: none
+			default: []
 			required: on
 		},
 		typeProperty Streams {
@@ -141,7 +141,7 @@ type _Reaction {
 		typeProperty InternalBlocks {
 			name: "blocks"
 			types: [""]
-			default: none
+			default: []
 			required: on
 		},
 		typeProperty Streams {

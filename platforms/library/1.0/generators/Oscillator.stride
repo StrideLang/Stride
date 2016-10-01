@@ -1,8 +1,11 @@
 
 module Oscillator {
-    input: none
-    output: Output
     ports: [
+		port OutputPort {
+			main: on
+			direction: "output"
+			block: Output
+		}
 		port FrequencyProperty {
 			name: "frequency"
 			block: Frequency
@@ -32,25 +35,13 @@ module Oscillator {
 		}
     ]
     blocks: [
-        signal Input {
-               default :       0.0
-               rate:           AudioRate # FIXME needs to be streamRate
-                domain:         streamDomain
-        },
-        signal Output {
-                default :       0.0
-                rate:           AudioRate # FIXME needs to be streamRate
-                domain:         streamDomain
-        }
         signal Frequency {
                 default :       0.0
                 rate:           AudioRate # FIXME needs to be streamRate
-                domain:         streamDomain
 		}
         signal Amplitude {
                 default :       1.0
                 rate:           AudioRate # FIXME needs to be streamRate
-                domain:         streamDomain
 		}
 #        signal Type {
 #                default :       0.0
@@ -60,22 +51,18 @@ module Oscillator {
         signal StartPhase {
                 default :       0.0
                 rate:           AudioRate # FIXME needs to be streamRate
-                domain:         streamDomain
 		}
         switch Reset {
                 default :       off
                 rate:           AudioRate # FIXME needs to be streamRate
-                domain:         streamDomain
 		}
         signal Phase {
                 default :       0.0
                 rate:           AudioRate # FIXME needs to be streamRate
-                domain:         streamDomain
 		}
         signal PhaseInc {
                 default :       0.0
                 rate:           AudioRate # FIXME needs to be streamRate
-                domain:         streamDomain
 		}
         signal NewPhase {}
         _sineType SineBlock {}

@@ -1299,8 +1299,8 @@ int CodeValidator::numParallelStreams(StreamNode *stream, StridePlatform &platfo
     AST *right = stream->getRight();
     int numParallel = 0;
 
-    int leftSize;
-    int rightSize;
+    int leftSize = 0;
+    int rightSize = 0;
 
     if (left->getNodeType() == AST::Name) {
         leftSize = getNodeSize(left, tree);

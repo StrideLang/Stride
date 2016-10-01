@@ -43,7 +43,7 @@ type _DomainMember {
 		typeProperty TypeName {
 			name: "domain"
 			types: ["CSP", ""]
-			default: streamDomain
+			default: none
 			required: on
 		}
 	]

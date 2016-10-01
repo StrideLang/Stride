@@ -59,7 +59,7 @@ type _Constant {
 	properties: [
 		typeProperty Value {
 			name: "value"
-			types: ["CSP", "CIP", "CRP", "CBP"]
+			types: ["CSP", "CIP", "CRP", "CBP", "none"]
 			default: none
 			required: off
 #			meta: "The constant value"

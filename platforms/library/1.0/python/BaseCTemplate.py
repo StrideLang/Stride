@@ -418,7 +418,7 @@ struct %s {
             
         if not out_token == '':
             code += out_token
-        else:
+        elif len(in_tokens) > 0:
             code = code[:-2] # Chop off extra comma
         code += ')'
         return code

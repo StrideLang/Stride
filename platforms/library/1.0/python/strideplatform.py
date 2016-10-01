@@ -730,8 +730,7 @@ class ModuleAtom(Atom):
         
         self.port_name_atoms = {}
         
-        self._init_blocks(module["blocks"],
-                          module["input"], module["output"])
+        self._init_blocks(module["blocks"])
                           
         if self._output_block and 'size' in self._output_block:
             self.out_tokens = ['_' + self.name + '_%03i_out[%i]'%(self._index, i) for i in range(self._output_block['size'])]
@@ -966,7 +965,23 @@ class ModuleAtom(Atom):
                 self.globals[section] = self.code['global_groups'][section]
                 
 
-    def _init_blocks(self, blocks, input_name, output_name):
+    def _init_blocks(self, blocks):
+
+        input_name = None
+        output_name = None
+        for port in self.module['ports']: 
+            if 'main' in port['block'] and port['block']['main']['value'] == True:
+                if 'direction' in port['block'] and port['block']['direction'] == 'input':
+                    input_name = port['block']['block']
+                if 'direction' in port['block'] and port['block']['direction'] == 'output':
+                    output_name = port['block']['block']
+        
+        # TODO remove these checks once the obsolte input and output properties are removed
+        if 'input' in self.module and not input_name:
+            input_name = self.module["input"]
+        if 'output' in self.module and not output_name:
+            output_name = self.module["output"]
+            
         self._blocks = []
         for block in blocks:
             self._blocks.append(block)

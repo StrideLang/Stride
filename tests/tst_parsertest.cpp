@@ -167,7 +167,25 @@ void ParserTest::testModules()
         }
     }
 
-
+    moduleNode = static_cast<BlockNode *>(tree->getChildren().at(2));
+    QVERIFY(moduleNode->getName() == "BlocksTest");
+    blockList = static_cast<ListNode *>(moduleNode->getPropertyValue("blocks"));
+    QVERIFY(blockList->getNodeType() == AST::List);
+    QStringList blockNames;
+    blockNames << "InputPortRate" << "InputPortDomain" << "InputPortSize" << "Input";
+    blockNames << "OutputPortRate" << "OutputPortDomain" << "OutputPortSize" << "Output";
+    for(size_t i = 1; i < blockList->getChildren().size(); i++) {
+        AST *member = blockList->getChildren().at(i);
+        if (member->getNodeType() == AST::Block) {
+            BlockNode *block = static_cast<BlockNode *>(member);
+            QVERIFY(block->getName() == blockNames.front().toStdString());
+            blockNames.pop_front();
+        }
+    }
+    // Check to make sure input and output domains have propagated correctly
+    BlockNode *block = static_cast<BlockNode *>(blockList->getChildren().at(0));
+    string domain = static_cast<ValueNode *>(block->getDomain())->toString();
+    QVERIFY(domain == "OutputPortDomain");
     tree->deleteChildren();
     delete tree;
 
