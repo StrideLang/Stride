@@ -80,9 +80,12 @@ module Oscillator {
 
 
 module Impulse {
-    input: none
-    output: Output
     ports: [
+		port OutputPort {
+			main: on
+			direction: "output"
+			block: Output
+		},
 			port FrequencyPort {
 				name: "frequency"
 				block: Frequency
@@ -110,11 +113,6 @@ module Impulse {
 #			}
     ]
     blocks: [
-        signal Output {
-                default :       0.0
-                rate:           AudioRate # FIXME needs to be streamRate
-                domain:         streamDomain
-        },
         signal Frequency {
                 default :       0.0
                 rate:           AudioRate # FIXME needs to be streamRate

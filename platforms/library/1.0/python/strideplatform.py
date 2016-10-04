@@ -754,43 +754,46 @@ class ModuleAtom(Atom):
         
         properties_code = self._get_internal_properties_code()
         
-        if None in domain_code:
-            base_header_code = domain_code[None]['header_code'] 
-            base_init_code = domain_code[None]['init_code']
-            base_process_code = '\n'.join(domain_code[None]['processing_code']) 
-        else:
-            base_header_code = ''
-            base_init_code = ''
-            base_process_code = ''
+#        if None in domain_code:
+#            base_header_code = domain_code[None]['header_code'] 
+#            base_init_code = domain_code[None]['init_code']
+#            base_process_code = '\n'.join(domain_code[None]['processing_code']) 
+#        else:
+#            base_header_code = ''
+#            base_init_code = ''
+#            base_process_code = ''
             
+        header_code = ''
+        init_code = ''
+        process_code = ''
+        properties_domain_code = ''
         for domain, code in domain_code.items():
-            header_code = base_header_code + code['header_code'] 
-            init_code = base_init_code + code['init_code']
-            process_code = base_process_code + '\n'.join(code['processing_code'])
-            properties_domain_code = ''
+            header_code += code['header_code'] 
+            init_code += code['init_code']
+            process_code += '\n'.join(code['processing_code'])
             if domain in properties_code:
-                properties_domain_code = '\n'.join(properties_code[domain])
+                properties_domain_code += '\n'.join(properties_code[domain])
             elif domain == '' and 'streamDomain' in properties_code:
-                properties_domain_code = '\n'.join(properties_code['streamDomain'])
+                properties_domain_code += '\n'.join(properties_code['streamDomain'])
             elif (domain == self.domain or self.domain == None) and None in properties_code:
-                properties_domain_code = '\n'.join(properties_code[None])
+                properties_domain_code += '\n'.join(properties_code[None])
             elif None in properties_code:
-                properties_domain_code = '\n'.join(properties_code[None])
+                properties_domain_code += '\n'.join(properties_code[None])
             
         
-            declaration_text = templates.module_declaration(
-                    self.name, header_code + properties_domain_code, 
-                    init_code, self._output_block , self._input_block, process_code)
-                    
-            declaration = Declaration(self.module['stack_index'],
-                                            self.domain,
-                                            self.name,
-                                            declaration_text)
-
-            for outer_dec in outer_declarations:
-                outer_dec.add_dependent(declaration)
+        declaration_text = templates.module_declaration(
+                self.name, header_code + properties_domain_code, 
+                init_code, self._output_block , self._input_block, process_code)
                 
-            declarations.append(declaration)
+        declaration = Declaration(self.module['stack_index'],
+                                        self.domain,
+                                        self.name,
+                                        declaration_text)
+
+        for outer_dec in outer_declarations:
+            outer_dec.add_dependent(declaration)
+                
+        declarations.append(declaration)
         return declarations
     
     def get_instances(self):
@@ -931,15 +934,14 @@ class ModuleAtom(Atom):
                         if type(domain) == dict:
                             domain = domain['name']['name']
                             # FIXME need to resolve domain name from "name"
-                        if domain:
-                            if not domain in prop_code:
-                                prop_code[domain] = []
-                            prop_type = self.get_block_types(decl)[0]
-                            functions = templates.module_property_setter(property_name,
-                                                     prop['block']['block']['name']['name'],
-                                                     prop_type)
-                            prop_code[domain].append(functions)
-                            properties.append(property_name)
+                        if not domain in prop_code:
+                            prop_code[domain] = []
+                        prop_type = self.get_block_types(decl)[0]
+                        functions = templates.module_property_setter(property_name,
+                                                 prop['block']['block']['name']['name'],
+                                                 prop_type)
+                        prop_code[domain].append(functions)
+                        properties.append(property_name)
                     else:
                         # Property is not a block but a constant value.
                         pass
