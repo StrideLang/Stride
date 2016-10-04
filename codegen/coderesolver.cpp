@@ -225,9 +225,9 @@ void CodeResolver::declareModuleInternalBlocks()
                                 AST *internalBlocks = block->getPropertyValue("blocks");
                                 BlockNode *newSignal = CodeValidator::findDeclaration(QString::fromStdString(name), QVector<AST *>(), internalBlocks);
                                 if (!newSignal) {
-                                    newSignal =                                         createSignalDeclaration(QString::fromStdString(name));
+                                    newSignal = createSignalDeclaration(QString::fromStdString(name));
                                     internalBlocks->addChild(newSignal);
-                                    newSignal->setDomain(domainName);
+//                                    newSignal->setDomain(domainName);
 //                                    if (direction == "input") {
 //                                    } else if (direction == "output") {
 
@@ -633,100 +633,14 @@ void CodeResolver::processDomainsForStream(StreamNode *stream, QVector<AST *> sc
     AST *left = stream->getLeft();
     AST *right = stream->getRight();
     QList<AST *> domainStack;
-    string domainName;
     while (right) {
-        resolveDomainForStreamNode(left, scopeStack);
-        if (left->getNodeType() == AST::Name
-                || left->getNodeType() == AST::Bundle) {
-            BlockNode *declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(left, scopeStack, m_tree), scopeStack, m_tree);
-            if(declaration) {
-                AST *domain = declaration->getDomain();
-                if (!domain) {
-                    // Put declaration in stack to set domain once domain is resolved
-                    domainStack << declaration;
-                } else {
-                    if (domain->getNodeType() == AST::String) {
-                        domainName = static_cast<ValueNode *>(domain)->getStringValue();
-                    } else if (domain->getNodeType() == AST::None) { // domain is streamDomain
-                        domainStack << declaration;
-                    } else {
-                        qDebug() << "WARNING: Unrecognized domain type"; // Should this trigger an error?
-                        domainStack << declaration;
-                    }
-                }
-            }
-        } else if (left->getNodeType() == AST::Function) {
-            FunctionNode *func = static_cast<FunctionNode *>(left);
-            AST *domain = func->getDomain();
-            if (!domain) {
-                // Put declaration in stack to set domain once domain is resolved
-                domainStack << left;
-            } else {
-                if (domain->getNodeType() == AST::String) {
-                    domainName = static_cast<ValueNode *>(domain)->getStringValue();
-                } else if (domain->getNodeType() == AST::None) { // domain is streamDomain
-                    domainStack << left;
-                } else {
-                    qDebug() << "WARNING: Unrecognized domain type"; // Should this trigger an error?
-                    domainStack << left;
-                }
-            }
-        } else if (left->getNodeType() == AST::List || left->getNodeType() == AST::Expression) {
-            foreach(AST * member, left->getChildren()) {
-                AST *domain = NULL;
-                if (member->getNodeType() == AST::Name
-                        || member->getNodeType() == AST::Bundle) {
-                    BlockNode *declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(member, scopeStack, m_tree), scopeStack, m_tree);
-                    domain = declaration->getDomain();
-                } else if (member->getNodeType() == AST::Function) {
-                    FunctionNode *func = static_cast<FunctionNode *>(member);
-                    domain = func->getDomain();
-                }
-                if (!domain) {
-                    // Put declaration in stack to set domain once domain is resolved
-                    domainStack << member;
-                } else {
-                    if (domain->getNodeType() == AST::String) {
-                        domainName = static_cast<ValueNode *>(domain)->getStringValue();
-                    } else if (domain->getNodeType() == AST::None) {
-                        domainStack << member;
-                    } else {
-                        qDebug() << "WARNING: Unrecognized domain type"; // Should this trigger an error?
-                        domainStack << member;
-                    }
-                }
-            }
-        }
+        string domainName = processDomainsForNode(left, scopeStack, domainStack);
         if (left == right && domainName.size() == 0) { // If this is is the last pass then set the unknown domains to platform domain
             domainName = m_platform->getPlatformDomain().toStdString();
         }
 
         if (domainName.size() > 0) {
-            foreach (AST *relatedNode, domainStack) {
-                if (relatedNode->getNodeType() == AST::Block
-                        || relatedNode->getNodeType() == AST::BlockBundle ) {
-                    BlockNode *block = static_cast<BlockNode *>(relatedNode);
-                    block->setDomain(domainName);
-                } else if (relatedNode->getNodeType() == AST::Name) {
-                    BlockNode *declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(relatedNode, scopeStack, m_tree), scopeStack, m_tree);
-                    declaration->setDomain(domainName);
-                } else if (relatedNode->getNodeType() == AST::Function) {
-                    FunctionNode *func = static_cast<FunctionNode *>(relatedNode);
-                    func->setDomain(domainName);
-                }  else if (relatedNode->getNodeType() == AST::List
-                            || relatedNode->getNodeType() == AST::Expression) {
-                    foreach(AST * member, relatedNode->getChildren()) {
-                        if (member->getNodeType() == AST::Block
-                                || member->getNodeType() == AST::BlockBundle ) {
-                            BlockNode *block = static_cast<BlockNode *>(member);
-                            block->setDomain(domainName);
-                        } else if (member->getNodeType() == AST::Function) {
-                            FunctionNode *func = static_cast<FunctionNode *>(member);
-                            func->setDomain(domainName);
-                        }
-                    }
-                }
-            }
+            setDomainForStack(domainStack, domainName, scopeStack);
             domainStack.clear();
         }
 
@@ -743,6 +657,103 @@ void CodeResolver::processDomainsForStream(StreamNode *stream, QVector<AST *> sc
     }
 }
 
+std::string CodeResolver::processDomainsForNode(AST *node, QVector<AST *> scopeStack, QList<AST *> &domainStack)
+{
+    string domainName;
+    resolveDomainForStreamNode(node, scopeStack);
+    if (node->getNodeType() == AST::Name
+            || node->getNodeType() == AST::Bundle) {
+        BlockNode *declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(node, scopeStack, m_tree), scopeStack, m_tree);
+        if(declaration) {
+            AST *domain = declaration->getDomain();
+            if (!domain) {
+                // Put declaration in stack to set domain once domain is resolved
+                domainStack << declaration;
+            } else {
+                if (domain->getNodeType() == AST::String) {
+                    domainName = static_cast<ValueNode *>(domain)->getStringValue();
+                } else if (domain->getNodeType() == AST::None) { // domain is streamDomain
+                    domainStack << declaration;
+                } else {
+                    qDebug() << "WARNING: Unrecognized domain type"; // Should this trigger an error?
+                    domainStack << declaration;
+                }
+            }
+        }
+    } else if (node->getNodeType() == AST::Function) {
+        FunctionNode *func = static_cast<FunctionNode *>(node);
+        AST *domain = func->getDomain();
+        if (!domain) {
+            // Put declaration in stack to set domain once domain is resolved
+            domainStack << node;
+        } else {
+            if (domain->getNodeType() == AST::String) {
+                domainName = static_cast<ValueNode *>(domain)->getStringValue();
+            } else if (domain->getNodeType() == AST::None) { // domain is streamDomain
+                domainStack << node;
+            } else {
+                qDebug() << "WARNING: Unrecognized domain type"; // Should this trigger an error?
+                domainStack << node;
+            }
+        }
+    } else if (node->getNodeType() == AST::List) {
+        foreach(AST * member, node->getChildren()) {
+            string domainName = processDomainsForNode(member, scopeStack, domainStack);
+            if (domainName.size() == 0) {
+                // Put declaration in stack to set domain once domain is resolved
+                domainStack << member;
+                // FIMXE: This is very simplistic.
+                // It assumes that the next found domain affects all elements
+                // in the list that don't have domains. This is likely a
+                // common case but dlist elements should inherit domains from
+                // the port to which they are connected.
+            }
+        }
+    } else if (node->getNodeType() == AST::Expression) {
+        QList<AST *> expressionDomainStack;
+        foreach(AST * member, node->getChildren()) {
+            string domainName = processDomainsForNode(member, scopeStack, domainStack);
+            if (domainName.size() == 0) {
+                // Put declaration in stack to set domain once domain is resolved
+                expressionDomainStack << member;
+            } else {
+                setDomainForStack(expressionDomainStack, domainName, scopeStack);
+            }
+        }
+
+    }
+    return domainName;
+}
+
+void CodeResolver::setDomainForStack(QList<AST *> domainStack, string domainName,  QVector<AST *> scopeStack)
+{
+    foreach (AST *relatedNode, domainStack) {
+        if (relatedNode->getNodeType() == AST::Block
+                || relatedNode->getNodeType() == AST::BlockBundle ) {
+            BlockNode *block = static_cast<BlockNode *>(relatedNode);
+            block->setDomain(domainName);
+        } else if (relatedNode->getNodeType() == AST::Name) {
+            BlockNode *declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(relatedNode, scopeStack, m_tree), scopeStack, m_tree);
+            declaration->setDomain(domainName);
+        } else if (relatedNode->getNodeType() == AST::Function) {
+            FunctionNode *func = static_cast<FunctionNode *>(relatedNode);
+            func->setDomain(domainName);
+        }  else if (relatedNode->getNodeType() == AST::List
+                    || relatedNode->getNodeType() == AST::Expression) {
+            foreach(AST * member, relatedNode->getChildren()) {
+                if (member->getNodeType() == AST::Block
+                        || member->getNodeType() == AST::BlockBundle ) {
+                    BlockNode *block = static_cast<BlockNode *>(member);
+                    block->setDomain(domainName);
+                } else if (member->getNodeType() == AST::Function) {
+                    FunctionNode *func = static_cast<FunctionNode *>(member);
+                    func->setDomain(domainName);
+                }
+            }
+        }
+    }
+}
+
 BlockNode *CodeResolver::createSignalDeclaration(QString name, int size)
 {
     BlockNode *newBlock = nullptr;
@@ -755,13 +766,7 @@ BlockNode *CodeResolver::createSignalDeclaration(QString name, int size)
         newBlock = new BlockNode(bundle, "signal", NULL, "",-1);
     }
     Q_ASSERT(newBlock);
-
-    double defaultRate = getDefaultForTypeAsDouble("signal", "rate");
-    ValueNode *value = new ValueNode(defaultRate, "", -1);
-    newBlock->addProperty(new PropertyNode("rate", value, "", -1));
-    ValueNode *defaultValue = new ValueNode(getDefaultForTypeAsDouble("signal", "default"), "", -1);
-    newBlock->addProperty(new PropertyNode("default", defaultValue, "", -1));
-    newBlock->addProperty(new PropertyNode("domain", new ValueNode("", -1), "", -1));
+    fillDefaultPropertiesForNode(newBlock);
     return newBlock;
 }
 void CodeResolver::declareUnknownName(NameNode *name, int size, AST *tree)

@@ -730,15 +730,6 @@ class ModuleAtom(Atom):
         
         self.port_name_atoms = {}
         
-        self._init_blocks(module["blocks"])
-                          
-        if self._output_block and 'size' in self._output_block:
-            self.out_tokens = ['_' + self.name + '_%03i_out[%i]'%(self._index, i) for i in range(self._output_block['size'])]
-        else:
-            self.out_tokens = ['_' + self.name + '_%03i_out'%self._index]
-        if not type(self.module["streams"]) == list:
-            # FIXME this is a hack and should be handled by the code validator
-            self.module["streams"] = [self.module["streams"]]
         self._process_module(self.module["streams"])
         self.set_inline(False)
         
@@ -762,10 +753,20 @@ class ModuleAtom(Atom):
         domain_code = self.code['domain_code']
         
         properties_code = self._get_internal_properties_code()
+        
+        if None in domain_code:
+            base_header_code = domain_code[None]['header_code'] 
+            base_init_code = domain_code[None]['init_code']
+            base_process_code = '\n'.join(domain_code[None]['processing_code']) 
+        else:
+            base_header_code = ''
+            base_init_code = ''
+            base_process_code = ''
+            
         for domain, code in domain_code.items():
-            header_code = code['header_code'] 
-            init_code = code['init_code']
-            process_code = '\n'.join(code['processing_code'])
+            header_code = base_header_code + code['header_code'] 
+            init_code = base_init_code + code['init_code']
+            process_code = base_process_code + '\n'.join(code['processing_code'])
             properties_domain_code = ''
             if domain in properties_code:
                 properties_domain_code = '\n'.join(properties_code[domain])
@@ -808,7 +809,12 @@ class ModuleAtom(Atom):
                 instances += atom.get_instances()
         if len(self.out_tokens) > 0 and self.module['output']:
             out_block = self.find_internal_block(self.module['output']['name']['name'])
+        elif self._output_block:
+            out_block = self._output_block
             # FIXME support bundles
+        else:
+            out_block
+        if out_block:
             block_types = self.get_block_types(out_block);
             default_value = ''
             instances += [Instance(default_value,
@@ -911,6 +917,7 @@ class ModuleAtom(Atom):
         
     def _get_internal_properties_code(self):
         prop_code = {}
+        properties = []
         if self.module['ports']:
             for prop in self.module['ports']:
                 if 'block' in prop:
@@ -924,13 +931,15 @@ class ModuleAtom(Atom):
                         if type(domain) == dict:
                             domain = domain['name']['name']
                             # FIXME need to resolve domain name from "name"
-                        if not domain in prop_code:
-                            prop_code[domain] = []
-                        prop_type = self.get_block_types(decl)[0]
-                        functions = templates.module_property_setter(property_name,
-                                                 prop['block']['block']['name']['name'],
-                                                 prop_type)
-                        prop_code[domain].append(functions)
+                        if domain:
+                            if not domain in prop_code:
+                                prop_code[domain] = []
+                            prop_type = self.get_block_types(decl)[0]
+                            functions = templates.module_property_setter(property_name,
+                                                     prop['block']['block']['name']['name'],
+                                                     prop_type)
+                            prop_code[domain].append(functions)
+                            properties.append(property_name)
                     else:
                         # Property is not a block but a constant value.
                         pass
@@ -938,6 +947,17 @@ class ModuleAtom(Atom):
         return prop_code
         
     def _process_module(self, streams):
+        
+        self._init_blocks(self.module["blocks"])
+                          
+        if self._output_block and 'size' in self._output_block:
+            self.out_tokens = ['_' + self.name + '_%03i_out[%i]'%(self._index, i) for i in range(self._output_block['size'])]
+        else:
+            self.out_tokens = ['_' + self.name + '_%03i_out'%self._index]
+        if not type(self.module["streams"]) == list:
+            # FIXME this is a hack and should be handled by the code validator
+            self.module["streams"] = [self.module["streams"]]
+        
         tree = streams
         instanced = []
         if self._input_block: # Mark input block as instanced so it doesn't get instantiated as other blocks
