@@ -102,13 +102,13 @@ bool ValueNode::getSwitchValue() const
 AST *ValueNode::deepCopy()
 {
     if (getNodeType() == AST::Int) {
-        return new ValueNode(getIntValue(), m_filename.data(), getLine());
+        return new ValueNode(getIntValue(), m_filename.c_str(), getLine());
     } else if (getNodeType() == AST::Real) {
-        return new ValueNode(getRealValue(), m_filename.data(), getLine());
+        return new ValueNode(getRealValue(), m_filename.c_str(), getLine());
     } else if (getNodeType() == AST::String) {
-        return new ValueNode(getStringValue(), m_filename.data(), getLine());
+        return new ValueNode(getStringValue(), m_filename.c_str(), getLine());
     } else if (getNodeType() == AST::Switch) {
-        return new ValueNode(getSwitchValue(), m_filename.data(), getLine());
+        return new ValueNode(getSwitchValue(), m_filename.c_str(), getLine());
     } else if (getNodeType() == AST::None) {
         return new ValueNode(m_filename.data(), getLine());
     }  else {

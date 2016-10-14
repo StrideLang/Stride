@@ -52,6 +52,7 @@ StridePlatform::StridePlatform(QStringList platformPaths, QString platform, QStr
                         foreach(LangError error, errors) {
                             qDebug() << QString::fromStdString(error.getErrorText());
                         }
+                        continue;
                     }
                     QString namespaceName = importList[subPath];
                     if (!namespaceName.isEmpty()) {

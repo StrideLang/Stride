@@ -7,7 +7,7 @@ type _Port {
 			default: ""
 			required: off
 		},
-		typeProperty Type {
+		typeProperty Main {
 			name: "main"
 			types: ["CBP"]
 			default: off

@@ -100,7 +100,7 @@ string BlockNode::getObjectType() const
 AST *BlockNode::deepCopy()
 {
     AST * newProps = new AST();
-    AST *node;
+    AST *node = NULL;
     for(unsigned int i = 0; i< m_properties.size(); i++) {
         newProps->addChild(m_properties[i]->deepCopy());
     }
@@ -110,6 +110,7 @@ AST *BlockNode::deepCopy()
     } else if (getNodeType() == AST::Block) {
         node = new BlockNode(m_name, m_objectType, newProps, m_filename.data(), m_line);
     }
+    assert(node);
     node->setRate(m_rate);
     delete newProps;
     return node;

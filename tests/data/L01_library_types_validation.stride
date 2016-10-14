@@ -1,9 +1,19 @@
 use Gamma version 1.0 on PC
 
 module Sum {
-        input:    none #     Inputs
-        output:         Output
         ports: [
+                port InputsProperty {
+                name: "inputs"
+                block: Inputs
+                main: on
+                direction: "input"
+        },
+        port OutputsProperty {
+        name: "outputs"
+        block: Inputs
+        main: on
+        direction: "output"
+},
                 port SizeProperty {
                         name: "size"
                         block: Size

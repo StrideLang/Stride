@@ -84,6 +84,7 @@ DISTFILES += \
     data/E02_stream_expansions.stride \
     data/E03_multichn_streams.stride \
     data/E04_rates.stride \
+    data/E05_library_objects.stride \
     data/L01_library_types_validation.stride \
     data/P06_domains.stride
 

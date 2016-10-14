@@ -21,6 +21,7 @@ private:
 
 private Q_SLOTS:
 
+    void testLibraryObjectInsertion();
 
     // Parser
     void testModules();
@@ -91,9 +92,39 @@ void ParserTest::testMultichannelUgens()
     delete tree;
 }
 
+void ParserTest::testLibraryObjectInsertion()
+{
+    AST *tree;
+    tree = parse(QString(QFINDTESTDATA("data/E05_library_objects.stride")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    generator.validate();
+    QVERIFY(generator.isValid());
+
+    BlockNode * decl = CodeValidator::findDeclaration("AudioIn", QVector<AST *>(), tree);
+    QVERIFY(decl);
+    QVERIFY(decl->getObjectType() == "_hwInput");
+
+    QList<LangError> errors;
+    decl = CodeValidator::findTypeDeclarationByName("signal", QVector<AST *>(), tree, errors);
+    QVERIFY(decl);
+    QVERIFY(errors.isEmpty());
+
+    // the module type should get brought in by Level()
+    decl = CodeValidator::findTypeDeclarationByName("module", QVector<AST *>(), tree, errors);
+    QVERIFY(decl);
+    QVERIFY(errors.isEmpty());
+
+    // Oscillator is not used and there should be no declaration for it
+    decl = CodeValidator::findDeclaration("Oscillator", QVector<AST *>(), tree);
+    QVERIFY(!decl);
+
+    tree->deleteChildren();
+    delete tree;
+}
+
 void ParserTest::testDomains()
 {
-
     AST *tree;
     tree = parse(QString(QFINDTESTDATA("data/P06_domains.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);

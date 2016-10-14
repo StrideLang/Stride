@@ -27,26 +27,25 @@ public:
     void preProcess();
 
 private:
-    void resolveRates();
-    void resolveStreamRates(StreamNode *stream);
+    // Main processing functions
+    void insertBuiltinObjects();
     void fillDefaultProperties();
     void declareModuleInternalBlocks();
+    void resolveStreamSymbols();
     void expandParallel();
+    void resolveConstants();
+    void resolveRates();
+    void processDomains();
+
+    // Sub functions
+    void resolveStreamRates(StreamNode *stream);
     void expandParallelStream(StreamNode *stream, QVector<AST *> scopeStack, AST *tree);
 
     void expandStreamToSizes(StreamNode *stream, QVector<int> &size);
     AST *expandFunctionFromProperties(FunctionNode *func, QVector<AST *> scope, AST *tree);
     void fillDefaultPropertiesForNode(AST *node);
 
-    // TODO move these four functions to CodeValidator with the rest of querying functions
-    double findRateInProperties(vector<PropertyNode *> properties, QVector<AST *> scope, AST *tree);
-    double getNodeRate(AST *node, QVector<AST *> scope, AST *tree);
-    double getDefaultForTypeAsDouble(QString type, QString port);
-    AST *getDefaultPortValueForType(QString type, QString portName);
-
-
-    void insertBuiltinObjects();
-    void processDomains();
+    void insertBuiltinObjectsForNode(AST *node, QList<AST *> &objects);
 
     void processDomainsForStream(StreamNode *func, QVector<AST *> scopeStack);
     string processDomainsForNode(AST *node, QVector<AST *> scopeStack, QList<AST *> &domainStack);
@@ -60,8 +59,7 @@ private:
     ListNode *expandNameToList(NameNode *name, int size);
     void expandNamesToBundles(StreamNode *stream, AST *tree);
     void declareUnknownStreamSymbols(StreamNode *stream, AST *previousStreamMember, AST *tree);
-    void resolveStreamSymbols();
-    void resolveConstants();
+
 //    QVector<AST *>  expandStream(StreamNode *stream);
 //    void expandStreamMembers();
 //    void sliceStreams();
@@ -88,11 +86,17 @@ private:
     ValueNode *greaterEqual(ValueNode *left, ValueNode *right);
     ValueNode *lesserEqual(ValueNode *left, ValueNode *right);
 
-
 //    QVector<AST *> expandStreamNode(StreamNode *stream);
 //    AST *expandStream(AST *node, int index, int rightNumInputs, int leftNumOutputs);
 //    QVector<AST *> sliceStream(StreamNode *stream);
     StreamNode *splitStream(StreamNode *stream, AST *closingNode, AST *endNode);
+
+    // TODO move these four functions to CodeValidator with the rest of querying functions
+    double findRateInProperties(vector<PropertyNode *> properties, QVector<AST *> scope, AST *tree);
+    double getNodeRate(AST *node, QVector<AST *> scope, AST *tree);
+    double getDefaultForTypeAsDouble(QString type, QString port);
+    AST *getDefaultPortValueForType(QString type, QString portName);
+
 
     StridePlatform *m_platform;
     AST *m_tree;

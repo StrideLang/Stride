@@ -1,0 +1,8 @@
+use Gamma version 1.0 on PC
+
+constant Const1 {value: 2.0}
+
+signal Sig {}
+
+AudioIn >> Level(gain: 0.1) >> AudioOut;
+
