@@ -190,11 +190,11 @@ void CodeValidator::validateTypes(AST *node, QVector<AST *> scopeStack)
                     if (!typeIsValid) {
                         LangError error;
                         error.type = LangError::InvalidPortType;
-                        error.lineNumber = block->getLine();
+                        error.lineNumber = port->getLine();
                         error.errorTokens.push_back(blockType.toStdString());
                         error.errorTokens.push_back(portName.toStdString());
                         error.errorTokens.push_back(typeName.toStdString());
-                        error.filename = block->getFilename();
+                        error.filename = port->getFilename();
                         m_errors << error;
                     }
                 }
@@ -696,7 +696,7 @@ int CodeValidator::getTypeNumOutputs(BlockNode *blockDeclaration, const QVector<
     } else if (blockDeclaration->getNodeType() == AST::Block) {
         if (blockDeclaration->getObjectType() == "module") {
             ListNode *blockList = static_cast<ListNode *>(blockDeclaration->getPropertyValue("blocks"));
-            // FIXME checking for "output" port should be removed
+            // FIXME checking for "output" port should be removed (deprecated)
             NameNode *outputName = static_cast<NameNode *>(blockDeclaration->getPropertyValue("output"));
             if (!outputName || outputName->getNodeType() == AST::None) {
                 ListNode *portList = static_cast<ListNode *>(blockDeclaration->getPropertyValue("ports"));
@@ -762,7 +762,7 @@ int CodeValidator::getTypeNumInputs(BlockNode *blockDeclaration, const QVector<A
     } else if (blockDeclaration->getNodeType() == AST::Block) {
         if (blockDeclaration->getObjectType() == "module") {
             ListNode *blockList = static_cast<ListNode *>(blockDeclaration->getPropertyValue("blocks"));
-            // FIXME checking for "input" port should be removed
+            // FIXME checking for "input" port should be removed (deprecated)
             NameNode *inputName = static_cast<NameNode *>(blockDeclaration->getPropertyValue("input"));
 
             if (!inputName || inputName->getNodeType() == AST::None) {
@@ -1245,7 +1245,7 @@ BlockNode *CodeValidator::findTypeDeclarationByName(QString typeName, QVector<AS
                 if (declarationNode->getObjectType() == "type"
                         || declarationNode->getObjectType() == "platformType") {
                     AST *valueNode = declarationNode->getPropertyValue("typeName");
-                    if (valueNode->getNodeType() == AST::String) {
+                    if (valueNode && valueNode->getNodeType() == AST::String) {
                         ValueNode *value = static_cast<ValueNode *>(valueNode);
                         if (typeName == QString::fromStdString( value->getStringValue())) {
                             return declarationNode;
@@ -1295,8 +1295,7 @@ QVector<AST *> CodeValidator::getPortsForType(QString typeName, QVector<AST *> s
                 if (block->getObjectType() == "platformType"
                         || block->getObjectType() == "type") {
                     ValueNode *name = static_cast<ValueNode*>(block->getPropertyValue("typeName"));
-                    if (name) {
-                        Q_ASSERT(name->getNodeType() == AST::String);
+                    if (name && name->getNodeType() == AST::String) {
                         if (name->getStringValue() == typeName.toStdString()) {
                             QVector<AST *> newPortList = getPortsForTypeBlock(block, scope, tree);
                             portList << newPortList;

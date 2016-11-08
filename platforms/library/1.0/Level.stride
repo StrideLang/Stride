@@ -2,6 +2,16 @@ module Level {
 	input: Input
 	output: Output
 	ports: [
+		port InputPort {
+			main: on
+			direction: "input"
+			block: Input
+		}
+		port OutputPort {
+			main: on
+			direction: "output"
+			block: Output
+		}
 		port GainTypeProperty {
 			name: "gainType"
 			block: GainType
@@ -24,8 +34,6 @@ module Level {
 
 	]
 	blocks: [
-		signal Input {},
-		signal Output {},
 		signal GainType {},
 		signal Gain {},
 		signal Offset {},
@@ -38,6 +46,5 @@ module Level {
 	meta: "Scales the input signal and applies an offset to it.
 
 output = input * gain + offset
-
-If all properties are integers the input port is a SIP else it is a SRP."
+"
 }

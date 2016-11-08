@@ -1,0 +1,61 @@
+use Gamma version 1.0 on PC
+
+type TestType {
+	typeName: "testType"
+	properties: [
+		typeProperty StringPort {
+			name: "stringPort"
+			types: ["CSP"]
+			default: ""
+			required: on
+		},
+		typeProperty FloatPort {
+			name: "floatPort"
+			types: ["CRP"]
+			default: 0.0
+			required: on
+		},
+		typeProperty NonePort {
+			name: "nonePort"
+			types: ["none"]
+			required: on
+		},
+		typeProperty AnyPort {
+			name: "anyPort"
+			types: [""]
+			required: on
+		},
+		typeProperty BuiltinTypePort {
+			name: "builtinTypePort"
+			types: ["signal"]
+			required: on
+		},
+		typeProperty BlockTypePort {
+			name: "blockTypePort"
+			types: ["signal", "constant", "none"]
+			default: none
+			required: off
+		}
+	]
+	inherits: ["base"]
+}
+
+signal Sig {}
+
+testType Test {
+	stringPort: "right"
+	floatPort: 1.0
+	nonePort: none
+	builtinTypePort: Sig
+}
+
+constant Const { value: 1.0 }
+
+testType FailedTest {
+	stringPort: 1.0
+	floatPort: "hello"
+	nonePort: 1
+	builtinTypePort: Const
+}
+
+

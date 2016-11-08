@@ -80,13 +80,14 @@ DISTFILES += \
     data/P03_bundle_resolution.stride \
     data/P04_import.stride \
     data/P05_import_fail.stride \
+    data/P06_domains.stride \
+    data/P07_type_validation.stride \
     data/E01_constant_res.stride \
     data/E02_stream_expansions.stride \
     data/E03_multichn_streams.stride \
     data/E04_rates.stride \
     data/E05_library_objects.stride \
-    data/L01_library_types_validation.stride \
-    data/P06_domains.stride
+    data/L01_library_types_validation.stride
 
 # Link to codegen library
 

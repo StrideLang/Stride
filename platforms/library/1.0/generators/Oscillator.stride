@@ -11,6 +11,7 @@ module Oscillator {
 			block: Frequency
 #			default: 440.0
 			meta: "The frequency of the oscillator."
+			domain: FrequencyDomain
 		},
 		port AmplitudeProperty {
 			name: "amplitude"
@@ -36,12 +37,14 @@ module Oscillator {
     ]
     blocks: [
         signal Frequency {
-                default :       0.0
+			default :       0.0
+                domain:         streamDomain
                 rate:           AudioRate # FIXME needs to be streamRate
 		}
         signal Amplitude {
-                default :       1.0
-                rate:           AudioRate # FIXME needs to be streamRate
+			default :       1.0
+			domain: streamDomain
+			rate:           AudioRate # FIXME needs to be streamRate
 		}
 #        signal Type {
 #                default :       0.0
