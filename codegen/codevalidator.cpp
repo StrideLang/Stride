@@ -1087,6 +1087,50 @@ double CodeValidator::evaluateConstReal(AST *node, QVector<AST *> scope, AST *tr
     return result;
 }
 
+std::string CodeValidator::evaluateConstString(AST *node, QVector<AST *> scope, AST *tree, QList<LangError> &errors)
+{
+    std::string result;
+    if (node->getNodeType() == AST::String) {
+        return static_cast<ValueNode *>(node)->getStringValue();
+    } else if (node->getNodeType() == AST::Bundle) {
+        BundleNode *bundle = static_cast<BundleNode *>(node);
+        QString bundleName = QString::fromStdString(bundle->getName());
+        BlockNode *declaration = findDeclaration(bundleName, scope, tree);
+        int index = evaluateConstInteger(bundle->index(), scope, tree, errors);
+        if(declaration && declaration->getNodeType() == AST::BlockBundle) {
+            AST *member = getMemberfromBlockBundle(declaration, index, errors);
+            return evaluateConstString(member, scope, tree, errors);
+        }
+    } else if (node->getNodeType() == AST::Name) {
+        NameNode *nameNode = static_cast<NameNode *>(node);
+        QString name = QString::fromStdString(nameNode->getName());
+        BlockNode *declaration = findDeclaration(name, scope, tree);
+        if (!declaration) {
+            LangError error;
+            error.type = LangError::UndeclaredSymbol;
+            error.lineNumber = node->getLine();
+            error.errorTokens.push_back(nameNode->getName());
+            error.errorTokens.push_back(nameNode->getNamespace());
+            errors << error;
+        }
+        if(declaration && declaration->getNodeType() == AST::Block) {
+            AST *value = getValueFromConstBlock(declaration);
+            if(value->getNodeType() == AST::String) {
+                return static_cast<ValueNode *>(value)->getStringValue();
+            } else {
+                // Do something?
+            }
+        }
+    } else {
+        LangError error;
+        error.type = LangError::InvalidType;
+        error.lineNumber = node->getLine();
+        error.errorTokens.push_back(getPortTypeName(resolveNodeOutType(node, scope, tree)).toStdString());
+        errors << error;
+    }
+    return result;
+}
+
 AST *CodeValidator::getMemberfromBlockBundle(BlockNode *block, int index, QList<LangError> &errors)
 {
     AST *out = nullptr;

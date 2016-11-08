@@ -164,79 +164,74 @@ void CodeResolver::declareModuleInternalBlocks()
                         Q_ASSERT(port->getNodeType() == AST::Block);
                         BlockNode *portBlock = static_cast<BlockNode *>(port);
                         Q_ASSERT(portBlock->getObjectType() == "port");
-                        AST *portMain = portBlock->getPropertyValue("main");
-                        ValueNode *portMainValue = static_cast<ValueNode *>(portMain);
-                        if (portMainValue) {
-                            Q_ASSERT(portMainValue->getNodeType() == AST::Switch);
-                            if (portMainValue->getSwitchValue()) {
-                                //                            NameNode *blockName = static_cast<NameNode *>(portBlock->getPropertyValue("block"));
-                                AST *portDirection = portBlock->getPropertyValue("direction");
-                                ValueNode *portDirectionValue = static_cast<ValueNode *>(portDirection);
-                                Q_ASSERT(portDirectionValue->getNodeType() == AST::String);
-                                string direction = portDirectionValue->getStringValue();
+                        //                            if (portMainValue->getSwitchValue()) {
+                        //                            NameNode *blockName = static_cast<NameNode *>(portBlock->getPropertyValue("block"));
+                        //                                AST *portDirection = portBlock->getPropertyValue("direction");
+                        //                                ValueNode *portDirectionValue = static_cast<ValueNode *>(portDirection);
+                        //                                Q_ASSERT(portDirectionValue->getNodeType() == AST::String);
+                        //                                string direction = portDirectionValue->getStringValue();
 
-                                // Properties that we need to auto-declare for
-                                AST *ratePortValue = portBlock->getPropertyValue("rate");
-                                AST *domainPortValue = portBlock->getPropertyValue("domain");
-                                AST *sizePortValue = portBlock->getPropertyValue("size");
-                                AST *blockPortValue = portBlock->getPropertyValue("block");
+                        // Properties that we need to auto-declare for
+                        AST *ratePortValue = portBlock->getPropertyValue("rate");
+                        AST *domainPortValue = portBlock->getPropertyValue("domain");
+                        AST *sizePortValue = portBlock->getPropertyValue("size");
+                        AST *blockPortValue = portBlock->getPropertyValue("block");
 
-                                Q_ASSERT(ratePortValue && domainPortValue && sizePortValue && blockPortValue);
-                                Q_ASSERT(ratePortValue->getNodeType() == AST::Name || ratePortValue->getNodeType() == AST::None); // Catch on debug but fail gracefully on release
-                                if (ratePortValue->getNodeType() == AST::Name) {
-                                    NameNode *nameNode = static_cast<NameNode *>(ratePortValue);
-                                    string name = nameNode->getName();
-                                    AST *internalBlocks = block->getPropertyValue("blocks");
-                                    declareIfMissing(name, internalBlocks, new ValueNode(0, "", -1));
+                        Q_ASSERT(ratePortValue && domainPortValue && sizePortValue && blockPortValue);
+                        Q_ASSERT(ratePortValue->getNodeType() == AST::Name || ratePortValue->getNodeType() == AST::None); // Catch on debug but fail gracefully on release
+                        if (ratePortValue->getNodeType() == AST::Name) {
+                            NameNode *nameNode = static_cast<NameNode *>(ratePortValue);
+                            string name = nameNode->getName();
+                            AST *internalBlocks = block->getPropertyValue("blocks");
+                            declareIfMissing(name, internalBlocks, new ValueNode(0, "", -1));
 
-                                    //                                    if (declaration->getObjectType() == "constant") {
-                                    //                                        // If existing declaration is not a constant then an error should be produced later when checking types
-                                    //                                        AST *value = declaration->getPropertyValue("value");
-                                    //                                        if (value)
-                                    //                                    }
-                                } else if (ratePortValue->getNodeType() == AST::Int || ratePortValue->getNodeType() == AST::Real) {
-                                    // Do nothing
-                                } else {
-                                    qDebug() << "CodeResolver::declareModuleInternalBlocks() rate port should contain a name.";
-                                }
+                            //                                    if (declaration->getObjectType() == "constant") {
+                            //                                        // If existing declaration is not a constant then an error should be produced later when checking types
+                            //                                        AST *value = declaration->getPropertyValue("value");
+                            //                                        if (value)
+                            //                                    }
+                        } else if (ratePortValue->getNodeType() == AST::Int || ratePortValue->getNodeType() == AST::Real) {
+                            // Do nothing
+                        } else if (ratePortValue->getNodeType() == AST::None) {
+                            // Do nothing
+                        }  else {
+                            qDebug() << "CodeResolver::declareModuleInternalBlocks() rate unrecognized.";
+                        }
 
-                                Q_ASSERT(domainPortValue->getNodeType() == AST::Name || domainPortValue->getNodeType() == AST::None); // Catch on debug but fail gracefully on release
-                                string domainName;
-                                if (domainPortValue->getNodeType() == AST::Name) {
-                                    NameNode *nameNode = static_cast<NameNode *>(domainPortValue);
-                                    domainName = nameNode->getName();
-                                    AST *internalBlocks = block->getPropertyValue("blocks");
-                                    declareIfMissing(domainName, internalBlocks, new ValueNode("", -1));
-                                } else if (domainPortValue->getNodeType() == AST::None) {
-                                    // TODO should this be handled?
-                                }
+                        Q_ASSERT(domainPortValue->getNodeType() == AST::Name || domainPortValue->getNodeType() == AST::None); // Catch on debug but fail gracefully on release
+                        string domainName;
+                        if (domainPortValue->getNodeType() == AST::Name) {
+                            NameNode *nameNode = static_cast<NameNode *>(domainPortValue);
+                            domainName = nameNode->getName();
+                            AST *internalBlocks = block->getPropertyValue("blocks");
+                            declareIfMissing(domainName, internalBlocks, new ValueNode("", -1));
+                        } else if (domainPortValue->getNodeType() == AST::None) {
+                            // TODO should this be handled?
+                        }
 
-                                Q_ASSERT(sizePortValue->getNodeType() == AST::Name || sizePortValue->getNodeType() == AST::None); // Catch on debug but fail gracefully on release
-                                if (sizePortValue->getNodeType() == AST::Name) {
-                                    NameNode *nameNode = static_cast<NameNode *>(sizePortValue);
-                                    string name = nameNode->getName();
-                                    AST *internalBlocks = block->getPropertyValue("blocks");
-                                    declareIfMissing(name, internalBlocks, new ValueNode(0, "", -1));
-                                }
+                        Q_ASSERT(sizePortValue->getNodeType() == AST::Name || sizePortValue->getNodeType() == AST::None); // Catch on debug but fail gracefully on release
+                        if (sizePortValue->getNodeType() == AST::Name) {
+                            NameNode *nameNode = static_cast<NameNode *>(sizePortValue);
+                            string name = nameNode->getName();
+                            AST *internalBlocks = block->getPropertyValue("blocks");
+                            declareIfMissing(name, internalBlocks, new ValueNode(0, "", -1));
+                        }
 
-                                // Now do auto declaration of IO blocks if not declared.
-                                Q_ASSERT(blockPortValue->getNodeType() == AST::Name || blockPortValue->getNodeType() == AST::None); // Catch on debug but fail gracefully on release
-                                if (blockPortValue->getNodeType() == AST::Name) {
-                                    NameNode *nameNode = static_cast<NameNode *>(blockPortValue);
-                                    string name = nameNode->getName();
-                                    AST *internalBlocks = block->getPropertyValue("blocks");
-                                    BlockNode *newSignal = CodeValidator::findDeclaration(QString::fromStdString(name), QVector<AST *>(), internalBlocks);
-                                    if (!newSignal) {
-                                        newSignal = createSignalDeclaration(QString::fromStdString(name));
-                                        internalBlocks->addChild(newSignal);
-                                        newSignal->setDomain(domainName);
-                                        //                                    if (direction == "input") {
-                                        //                                    } else if (direction == "output") {
+                        // Now do auto declaration of IO blocks if not declared.
+                        Q_ASSERT(blockPortValue->getNodeType() == AST::Name || blockPortValue->getNodeType() == AST::None); // Catch on debug but fail gracefully on release
+                        if (blockPortValue->getNodeType() == AST::Name) {
+                            NameNode *nameNode = static_cast<NameNode *>(blockPortValue);
+                            string name = nameNode->getName();
+                            AST *internalBlocks = block->getPropertyValue("blocks");
+                            BlockNode *newSignal = CodeValidator::findDeclaration(QString::fromStdString(name), QVector<AST *>(), internalBlocks);
+                            if (!newSignal) {
+                                newSignal = createSignalDeclaration(QString::fromStdString(name));
+                                internalBlocks->addChild(newSignal);
+                                newSignal->setDomain(domainName);
+                                //                                    if (direction == "input") {
+                                //                                    } else if (direction == "output") {
 
-                                        //                                    }
-                                    }
-                                }
-
+                                //                                    }
                             }
                         }
                     }
@@ -843,6 +838,9 @@ std::string CodeResolver::processDomainsForNode(AST *node, QVector<AST *> scopeS
             } else {
                 if (domain->getNodeType() == AST::String) {
                     domainName = static_cast<ValueNode *>(domain)->getStringValue();
+                } else if (domain->getNodeType() == AST::Name) {
+                    QList<LangError> errors;
+                    domainName = CodeValidator::evaluateConstString(domain, scopeStack, m_tree, errors);
                 } else if (domain->getNodeType() == AST::None) { // domain is streamDomain
                     domainStack << declaration;
                 } else {

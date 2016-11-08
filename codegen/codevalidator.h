@@ -32,6 +32,7 @@ public:
 
     static int evaluateConstInteger(AST *node, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
     static double evaluateConstReal(AST *node, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
+    static std::string evaluateConstString(AST *node, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
     static AST *getMemberfromBlockBundle(BlockNode *block, int index, QList<LangError> &errors);
     static AST *getValueFromConstBlock(BlockNode *block);
     static AST *getMemberFromList(ListNode *node, int index, QList<LangError> &errors);
