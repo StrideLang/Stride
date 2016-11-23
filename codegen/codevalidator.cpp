@@ -160,9 +160,16 @@ void CodeValidator::validateTypes(AST *node, QVector<AST *> scopeStack)
                     QString typeName = getPortTypeName(resolveNodeOutType(portValue, scopeStack, m_tree));
                     for (AST *validType: portTypesList) {
                         if (validType->getNodeType() == AST::String) {
-                            QString typeCode = QString::fromStdString(static_cast<ValueNode *>(validType)->getStringValue());
+                            std::string typeCode = static_cast<ValueNode *>(validType)->getStringValue();
                             if (!typeName.isEmpty()) {
-                                if (typeName == typeCode || typeCode == "") {
+                                if (typeName.toStdString() == typeCode || typeCode == "") {
+                                    typeIsValid = true;
+                                    break;
+                                }
+                            } else if (portValue->getNodeType() == AST::Name) {
+                                QList<LangError> errors;
+                                std::string validTypeName = CodeValidator::evaluateConstString(portValue, scopeStack, m_tree, errors);
+                                if (validTypeName == typeCode) {
                                     typeIsValid = true;
                                     break;
                                 }
@@ -1115,7 +1122,7 @@ std::string CodeValidator::evaluateConstString(AST *node, QVector<AST *> scope, 
         }
         if(declaration && declaration->getNodeType() == AST::Block) {
             AST *value = getValueFromConstBlock(declaration);
-            if(value->getNodeType() == AST::String) {
+            if(value && value->getNodeType() == AST::String) {
                 return static_cast<ValueNode *>(value)->getStringValue();
             } else {
                 // Do something?
