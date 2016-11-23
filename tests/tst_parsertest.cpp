@@ -93,7 +93,7 @@ void ParserTest::testMultichannelUgens()
 
 void ParserTest::testPortTypeValidation()
 {
-
+// TODO: Check validation of bundles
     AST *tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/P07_type_validation.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
@@ -101,12 +101,12 @@ void ParserTest::testPortTypeValidation()
     generator.validate();
     QList<LangError> errors = generator.getErrors();
     LangError error = errors.at(0);
-    QVERIFY(error.lineNumber == 46);
+    QVERIFY(error.lineNumber == 55);
     QVERIFY(error.errorTokens[0] == "testType");
     QVERIFY(error.errorTokens[1] == "stringPort");
     QVERIFY(error.errorTokens[2] == "CRP");
     error = errors.at(1);
-    QVERIFY(error.lineNumber == 47);
+    QVERIFY(error.lineNumber == 46);
     QVERIFY(error.errorTokens[0] == "testType");
     QVERIFY(error.errorTokens[1] == "floatPort");
     QVERIFY(error.errorTokens[2] == "CSP");
