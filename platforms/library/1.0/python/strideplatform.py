@@ -10,7 +10,12 @@ from __future__ import division
 
 
 from platformTemplates import templates
-from code import Instance, BundleInstance, ModuleInstance, Declaration
+from code_objects import Instance, BundleInstance, ModuleInstance, Declaration
+
+try:
+    unicode_exists_test = type('a') == unicode
+except:
+    unicode = str # for python 3  
   
 def signal_type_string(signal_declaration):
     return type(signal_declaration['default']) == unicode
@@ -765,12 +770,14 @@ class ModuleAtom(Atom):
             
         header_code = ''
         init_code = ''
-        process_code = ''
+        process_code = {}
         properties_domain_code = ''
         for domain, code in domain_code.items():
             header_code += code['header_code'] 
             init_code += code['init_code']
-            process_code += '\n'.join(code['processing_code'])
+            if not domain in process_code:
+                process_code[domain] = ''
+            process_code[domain] += '\n'.join(code['processing_code'])
             if domain in properties_code:
                 properties_domain_code += '\n'.join(properties_code[domain])
             elif domain == '' and 'streamDomain' in properties_code:
@@ -807,7 +814,7 @@ class ModuleAtom(Atom):
                 inst.post = False
                 inst.add_dependent(module_instance)
                 instances.append(inst)
-        for atoms in self.port_name_atoms.itervalues():
+        for atoms in self.port_name_atoms.values():
             for atom in atoms:
                 instances += atom.get_instances()
         if len(self.out_tokens) > 0 and self.module['output']:
@@ -835,11 +842,15 @@ class ModuleAtom(Atom):
             in_tokens = ['_%s_in'%self.handle]
         if self._output_block:
             if 'size' in self._output_block:
-                code = templates.module_processing_code(self.handle, in_tokens, '_' + self.name + '_%03i_out'%self._index)
+                code = templates.module_processing_code(self.handle, 
+                                                        in_tokens,
+                                                        '_' + self.name + '_%03i_out'%self._index,
+                                                        self.domain
+                                                        )
             else:
-                code = templates.module_processing_code(self.handle, in_tokens, self.out_tokens[0])
+                code = templates.module_processing_code(self.handle, in_tokens, self.out_tokens[0], self.domain)
         else:
-            code = templates.module_processing_code(self.handle, in_tokens, '')
+            code = templates.module_processing_code(self.handle, in_tokens, '', self.domain)
         return code
     
     def get_initialization_code(self, in_tokens):
@@ -970,7 +981,7 @@ class ModuleAtom(Atom):
             instanced = [[self._input_block[block_type]['name'], self.scope_index]]
             
         if 'ports' in self.function:
-            for name,port_value in self.function['ports'].iteritems():
+            for name,port_value in self.function['ports'].items():
                 new_atom = self.platform.make_atom(port_value)
                 new_atom.scope_index += 1 # Hack to bring it up to the right scope...
                 if name in self.port_name_atoms:

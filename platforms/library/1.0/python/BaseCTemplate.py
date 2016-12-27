@@ -7,6 +7,12 @@ Created on Tue Apr 26 18:38:44 2016
 
 from __future__ import print_function
 
+
+try:
+    unicode_exists_test = type('a') == unicode
+except:
+    unicode = str # for python 3  
+
 import re
 
 class BaseCTemplate(object):
@@ -38,9 +44,7 @@ struct %s {
     %s %s() {
         %s
     }
-    %s process(%s) {
-        %s
-    }
+    %s
 };
 '''        
         self.str_reaction_declaration = '''
@@ -233,6 +237,13 @@ struct %s {
             declaration += ';\n'
         return declaration
         
+    
+    def declaration_const_real(self, name, default, close=True):
+        declaration = "const " + self.real_type + " " + name + " = " + str(default)
+        if close:
+            declaration += ';\n'
+        return declaration
+        
     def value_real(self, value):
         value = str(value)
         return value
@@ -402,17 +413,23 @@ struct %s {
             if output_block:
                 input_declaration += self.declaration_reference(output_block, False)
         out_type = 'void'
+        
+        process_str = '''%s process_%s(%s) {
+        %s
+    }'''
+        process_functions = ''
+        for domain, domain_proc_code in process_code.items():
+            process_functions += process_str%(out_type, str(domain), input_declaration, domain_proc_code)
             
-        declaration = self.str_module_declaration%(name, header_code, name, init_code,
-                                                   out_type, input_declaration, process_code)
+        declaration = self.str_module_declaration%(name, header_code, name, init_code, process_functions)
         return declaration
 
     def module_set_property(self, handle, port_name, in_tokens):
         code = handle + '.set_' + port_name + '(' + in_tokens[0] + ');'
         return code
         
-    def module_processing_code(self, handle, in_tokens, out_token):
-        code = handle + '.process('
+    def module_processing_code(self, handle, in_tokens, out_token, domain_name):
+        code = handle + '.process_' + str(domain_name) + '('
         for in_token in in_tokens:
             code += in_token + ", "
             
