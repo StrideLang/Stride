@@ -105,11 +105,25 @@ void ParserTest::testPortTypeValidation()
     QVERIFY(error.errorTokens[0] == "testType");
     QVERIFY(error.errorTokens[1] == "stringPort");
     QVERIFY(error.errorTokens[2] == "CRP");
+    QVERIFY(error.errorTokens[3] == "CSP");
     error = errors.at(1);
-    QVERIFY(error.lineNumber == 46);
+    QVERIFY(error.lineNumber == 56);
     QVERIFY(error.errorTokens[0] == "testType");
     QVERIFY(error.errorTokens[1] == "floatPort");
     QVERIFY(error.errorTokens[2] == "CSP");
+    QVERIFY(error.errorTokens[3] == "CRP");
+    error = errors.at(2);
+    QVERIFY(error.lineNumber == 57);
+    QVERIFY(error.errorTokens[0] == "testType");
+    QVERIFY(error.errorTokens[1] == "nonePort");
+    QVERIFY(error.errorTokens[2] == "CIP");
+    QVERIFY(error.errorTokens[3] == "none");
+    error = errors.at(3);
+    QVERIFY(error.lineNumber == 58);
+    QVERIFY(error.errorTokens[0] == "testType");
+    QVERIFY(error.errorTokens[1] == "builtinTypePort");
+    QVERIFY(error.errorTokens[2] == "CRP");
+    QVERIFY(error.errorTokens[3] == "signal");
 
     tree->deleteChildren();
     delete tree;
@@ -1048,7 +1062,7 @@ void ParserTest::testPlatformCommonObjects()
     QVERIFY(errors[4].lineNumber == 41);
     QVERIFY(errors[4].errorTokens[0]  == "constant");
     QVERIFY(errors[4].errorTokens[1]  == "value");
-    QVERIFY(errors[4].errorTokens[2]  == "ASP");
+    QVERIFY(errors[4].errorTokens[2]  == "signal");
 
     tree->deleteChildren();
     delete tree;

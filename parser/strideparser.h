@@ -18,12 +18,7 @@
 
 
 typedef enum {
-    Audio,
-    AudioInteger,
-    ControlReal,
-    ControlInt,
-    ControlBoolean,
-    ControlString,
+    Signal,
     ConstReal,
     ConstInt,
     ConstBoolean,

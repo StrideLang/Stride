@@ -158,9 +158,11 @@ void CodeValidator::validateTypes(AST *node, QVector<AST *> scopeStack)
                     bool typeIsValid = false;
                     AST *portValue = port->getValue();
                     QString typeName = getPortTypeName(resolveNodeOutType(portValue, scopeStack, m_tree));
+                    QStringList validTypeNames;
                     for (AST *validType: portTypesList) {
                         if (validType->getNodeType() == AST::String) {
                             std::string typeCode = static_cast<ValueNode *>(validType)->getStringValue();
+                            validTypeNames << QString::fromStdString(typeCode);
                             if (!typeName.isEmpty()) {
                                 if (typeName.toStdString() == typeCode || typeCode == "") {
                                     typeIsValid = true;
@@ -201,6 +203,7 @@ void CodeValidator::validateTypes(AST *node, QVector<AST *> scopeStack)
                         error.errorTokens.push_back(blockType.toStdString());
                         error.errorTokens.push_back(portName.toStdString());
                         error.errorTokens.push_back(typeName.toStdString());
+                        error.errorTokens.push_back(validTypeNames.join(",").toStdString());
                         error.filename = port->getFilename();
                         m_errors << error;
                     }
@@ -285,7 +288,7 @@ void CodeValidator::validateBundleIndeces(AST *node, QVector<AST *> scope)
     if (node->getNodeType() == AST::Bundle) {
         BundleNode *bundle = static_cast<BundleNode *>(node);
         PortType type = resolveNodeOutType(bundle->index(), scope, m_tree);
-        if(type != ConstInt && type != ControlInt && type != AudioInteger) {
+        if(type != ConstInt /*&& type != ControlInt && type != AudioInteger*/) {
             LangError error;
             error.type = LangError::IndexMustBeInteger;
             error.lineNumber = bundle->getLine();
@@ -917,11 +920,11 @@ PortType CodeValidator::resolveNameType(NameNode *name, QVector<AST *>scope, AST
             PropertyNode *property = CodeValidator::findPropertyByName(properties, "default");
             PortType defaultType = resolveNodeOutType(property->getValue(), scope, tree);
             if (defaultType == ConstReal) {
-                return Audio;
-            } else if (defaultType == ConstInt) {
-                return AudioInteger;
+                return Signal;
+//            } else if (defaultType == ConstInt) {
+//                return AudioInteger;
             } else{
-                return Audio;  // TODO this should be separated into SRP and SIP?R
+                return Signal;  // TODO this should be separated into SRP and SIP?R
             }
         } else {
 //            return QString::fromStdString(declaration->getObjectType());
@@ -1528,41 +1531,20 @@ int CodeValidator::getNodeSize(AST *node, AST *tree)
 QString CodeValidator::getPortTypeName(PortType type)
 {
     switch (type) {
-    case Audio:
-        return "ASP";
-        break;
-    case ControlReal:
-        return "CSRP";
-        break;
-    case ControlInt:
-        return "CSRP";
-        break;
-    case ControlBoolean:
-        return "CSBP";
-        break;
-    case ControlString:
-        return "CSSP";
-        break;
+    case Signal:
+        return "signal";
     case ConstReal:
         return "CRP";
-        break;
     case ConstInt:
         return "CIP";
-        break;
     case ConstBoolean:
         return "CBP";
-        break;
     case ConstString:
         return "CSP";
-        break;
     case None:
         return "none";
-        break;
     case Invalid:
         return "";
-        break;
-    default:
-        break;
     }
     return "";
 }
