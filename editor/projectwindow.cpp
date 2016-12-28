@@ -61,14 +61,10 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
     m_codeModelTimer.setInterval(2000);
     connect(&m_codeModelTimer, SIGNAL(timeout()), this, SLOT(updateCodeAnalysis()));
 
-#ifdef USE_WEBENGINE
-    docBrowser = new QWebEngineView();
-#else
-    docBrowser = new QWebView();
-    docBrowser->settings()->setUserStyleSheetUrl(QUrl("qrc:/resources/style.css"));
-#endif
-    ui->documentationDockWidget->setWidget(docBrowser);
-    docBrowser->setHtml("<h1>Welcome to Stride</h1> A declarative and reactive domain specific programming language for real-time sound synthesis, processing, and interaction design. By Andrés Cabrera and Joseph Tilbian.");
+    ui->documentationWidget->setHtml("<h1>Welcome to Stride</h1> A declarative and reactive domain specific programming language for real-time sound synthesis, processing, and interaction design. By Andrés Cabrera and Joseph Tilbian.");
+    ui->documentationDockWidget->setFeatures(QDockWidget::DockWidgetClosable
+                          | QDockWidget::DockWidgetMovable
+                          | QDockWidget::DockWidgetFloatable);
 
     QVBoxLayout *layout = new QVBoxLayout;
     layout->addWidget(m_searchWidget.data());
@@ -287,7 +283,7 @@ void ProjectWindow::showDocumentation()
     if (html.isEmpty()) {
         html = tr("Unknown type: %1").arg(word);
     }
-    docBrowser->setHtml(html);
+    ui->documentationWidget->load(QUrl(html));
 }
 
 void ProjectWindow::openGeneratedDir()
