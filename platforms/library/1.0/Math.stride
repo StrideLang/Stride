@@ -4,22 +4,21 @@ constant _Pi {
 }
 
 module Cos {
-	input: Input
-	output: Output
-	ports: none # A property could be the type of input, (degrees, radians, etc.)
-	blocks: [
-		signal Input {
-			default : 0.0
-			rate: AudioRate # FIXME needs to be streamRate
-			domain: streamDomain
-			meta: "Input angle in radians"
-		},
-		signal Output {
-			default :       0.0
-			rate:           AudioRate # FIXME needs to be streamRate
-			domain:         streamDomain
+	ports: [ # A property could be the type of input, (degrees, radians, etc.)
+		port OutputPort {
+			main: on
+			direction: "output"
+			block: Output
 			meta : "The cosine of the angle." 
+		},
+		port InputPort {
+			main: on
+			direction: "input"
+			block: Input
+			meta: "Input angle in radians"
 		}
+	]
+	blocks: [
 		_cosineType CosineBlock {}
 	]
 	streams: [
@@ -31,22 +30,21 @@ module Cos {
 
 
 module Sin {
-	input: Input
-	output: Output
-	ports: none # A property could be the type of input, (degrees, radians, etc.)
-	blocks: [
-		signal Input {
-			default : 0.0
-			rate: AudioRate # FIXME needs to be streamRate
-			domain: streamDomain
-			meta: "Input angle in radians"
-		},
-		signal Output {
-			default :       0.0
-			rate:           AudioRate # FIXME needs to be streamRate
-			domain:         streamDomain
+	ports: [ # A property could be the type of input, (degrees, radians, etc.)
+		port OutputPort {
+			main: on
+			direction: "output"
+			block: Output
 			meta : "The sine of the angle." 
+		},
+		port InputPort {
+			main: on
+			direction: "input"
+			block: Input
+			meta: "Input angle in radians"
 		}
+	]
+	blocks: [
 		_sineType SineBlock {}
 	]
 	streams: [
