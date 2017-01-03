@@ -9,15 +9,16 @@ module Oscillator {
 		port FrequencyProperty {
 			name: "frequency"
 			block: Frequency
-#			default: 440.0
+			default: 440.0
 			meta: "The frequency of the oscillator."
 			domain: FrequencyDomain
 		},
 		port AmplitudeProperty {
 			name: "amplitude"
 			block: Amplitude
-#			default: 1.0
+			default: 1.0
 			meta: "The amplitude of the oscillator."
+			domain: AmplitudeDomain
 		},
 #			property TypeProperty {
 #				name: "type"
@@ -36,16 +37,14 @@ module Oscillator {
 		}
     ]
     blocks: [
-        signal Frequency {
-			default :       0.0
-                domain:         streamDomain
-                rate:           AudioRate # FIXME needs to be streamRate
-		}
-        signal Amplitude {
-			default :       1.0
-			domain: streamDomain
-			rate:           AudioRate # FIXME needs to be streamRate
-		}
+#        signal Frequency {
+#			default :       0.0
+#                rate:           AudioRate # FIXME needs to be streamRate
+#		}
+#        signal Amplitude {
+#			default :       1.0
+#			rate:           AudioRate # FIXME needs to be streamRate
+#		}
 #        signal Type {
 #                default :       0.0
 #                rate:           AudioRate # FIXME needs to be streamRate
@@ -53,19 +52,15 @@ module Oscillator {
 #		}
         signal StartPhase {
                 default :       0.0
-                rate:           AudioRate # FIXME needs to be streamRate
 		}
         switch Reset {
                 default :       off
-                rate:           AudioRate # FIXME needs to be streamRate
 		}
         signal Phase {
                 default :       0.0
-                rate:           AudioRate # FIXME needs to be streamRate
 		}
         signal PhaseInc {
                 default :       0.0
-                rate:           AudioRate # FIXME needs to be streamRate
 		}
         signal NewPhase {}
         _sineType SineBlock {}
@@ -89,16 +84,16 @@ module Impulse {
 			direction: "output"
 			block: Output
 		},
-			port FrequencyPort {
-				name: "frequency"
-				block: Frequency
-				meta: "The frequency of the oscillator."
-			},
-			port AmplitudePort {
-				name: "amplitude"
+		port FrequencyPort {
+			name: "frequency"
+			block: Frequency
+			meta: "The frequency of the oscillator."
+		},
+		port AmplitudePort {
+			name: "amplitude"
 				block: Amplitude
-				meta: "The amplitude of the oscillator."
-			}
+			meta: "The amplitude of the oscillator."
+		}
 #			port TypeProperty {
 #				name: "type"
 #				block: Type
@@ -116,16 +111,16 @@ module Impulse {
 #			}
     ]
     blocks: [
-        signal Frequency {
-                default :       0.0
-                rate:           AudioRate # FIXME needs to be streamRate
-                domain:         streamDomain
-		},
-        signal Amplitude {
-                default :       1.0
-                rate:           AudioRate # FIXME needs to be streamRate
-                domain:         streamDomain
-		},
+#        signal Frequency {
+#                default :       0.0
+#                rate:           AudioRate # FIXME needs to be streamRate
+#                domain:         streamDomain
+#		},
+#        signal Amplitude {
+#                default :       1.0
+#                rate:           AudioRate # FIXME needs to be streamRate
+#                domain:         streamDomain
+#		},
 #        signal Type {
 #                default :       0.0
 #                rate:           AudioRate # FIXME needs to be streamRate

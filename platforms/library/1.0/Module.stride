@@ -43,12 +43,12 @@ type _Port {
 			default: none
 			required: off
 		}
-#		typeProperty Default {
-#			name: "default"
-#			types: [""]
-#			default: 0.0
-#			required: off
-#		},
+		typeProperty Default {
+			name: "default"
+			types: [""]
+			default: none
+			required: off
+		} #,
 #		typeProperty Types {
 #			name: "types"
 #			types: [""] # This should be made to accept type handles
@@ -93,13 +93,13 @@ type _Module {
 			types: [""]
 			default: none
 			required: on
-		},
-		typeProperty DefaultDomain {
-			name: "defaultDomain"
-			types: ["CSP", "" ] #  Should allow _Domain
-			default: PlatformDomain
-			required: off
-		}
+		} #,
+#		typeProperty DefaultDomain {
+#			name: "defaultDomain"
+#			types: ["CSP", "" ] #  Should allow _Domain
+#			default: PlatformDomain
+#			required: off
+#		}
 
 	]
 	meta: "Module Type Doc"
@@ -149,13 +149,13 @@ type _Reaction {
 			types: [""]
 			default: none
 			required: on
-		},
-		typeProperty DefaultDomain {
-			name: "defaultDomain"
-			types: ["CSP", "" ] #  Should allow _Domain
-			default: PlatformDomain
-			required: off
-		}
+		} #,
+#		typeProperty DefaultDomain {
+#			name: "defaultDomain"
+#			types: ["CSP", "" ] #  Should allow _Domain
+#			default: PlatformDomain
+#			required: off
+#		}
 	]
 	inherits: ["domainMember"]
 }
