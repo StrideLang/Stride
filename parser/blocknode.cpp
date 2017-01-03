@@ -77,6 +77,15 @@ AST *BlockNode::getPropertyValue(string propertyName)
     return NULL;
 }
 
+void BlockNode::replacePropertyValue(string propertyName, AST *newValue)
+{
+    for (unsigned int i = 0; i < m_properties.size(); i++) {
+        if (m_properties.at(i)->getName() == propertyName) {
+            m_properties.at(i)->replaceValue(newValue);
+        }
+    }
+}
+
 AST *BlockNode::getDomain()
 {
     AST *domainValue = getPropertyValue("domain");

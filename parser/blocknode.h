@@ -19,6 +19,7 @@ public:
     vector<PropertyNode *> getProperties() const;
     void addProperty(PropertyNode *newProperty);
     AST *getPropertyValue(string propertyName);
+    void replacePropertyValue(string propertyName, AST *newValue);
 
     AST *getDomain();
     void setDomain(string domain);

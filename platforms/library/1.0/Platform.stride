@@ -54,24 +54,24 @@ type _DomainDefinition {
 	inherits: ["base"]
 }
 
-#type _Domain {
-#	typeName: "_domain"
-#	properties: [
-#		port Name {
-#			name: "name"
-#			types: ["CSP", ""] # TODO Should accept _domain
-#			default: _PlatformDomain
-#			required: on
-#		},
-#		port Platform {
-#			name: "platform"
-#			types: ["CSP", _Platform]
-#			default: none
-#			required: on
-#		}
-#	]
-#	inherits: ["base"]
-#}
+type _Domain {
+	typeName: "_domain"
+	properties: [
+		typeProperty Name {
+			name: "domainName"
+			types: ["CSP", ""]
+			default: none
+			required: on
+		},
+		typeProperty Platform {
+			name: "platform"
+			types: ["CSP", ""] # TODO allow _Platform
+			default: none
+			required: off
+		}
+	]
+	inherits: ["base"]
+}
 
 type _Platform {
 	typeName: "_platform"
