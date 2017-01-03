@@ -21,6 +21,7 @@ private:
 
 private Q_SLOTS:
 
+    void testModuleDomains();
     void testPortTypeValidation();
 
     //Expansion
@@ -86,6 +87,35 @@ void ParserTest::testMultichannelUgens()
     QVERIFY(error.errorTokens[0] == "2");
     QVERIFY(error.errorTokens[1] == "DummyStereo");
     QVERIFY(error.errorTokens[2] == "1");
+
+    tree->deleteChildren();
+    delete tree;
+}
+
+void ParserTest::testModuleDomains()
+{
+    AST *tree;
+    tree = AST::parseFile(QString(QFINDTESTDATA("data/12_modules_domains.stride")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    generator.validate();
+    QVERIFY(generator.isValid());
+
+    BlockNode *block = static_cast<BlockNode *>(tree->getChildren()[1]);
+    QVERIFY(block->getNodeType() == AST::Block);
+    ListNode *portList = static_cast<ListNode *>(block->getPropertyValue("ports"));
+    QVERIFY(portList->getNodeType() == AST::List);
+    BlockNode *portBlock = static_cast<BlockNode *>(portList->getChildren().at(0));
+    QVERIFY(portBlock->getNodeType() == AST::Block);
+    NameNode *domainName = static_cast<NameNode *>(portBlock->getPropertyValue("domain"));
+    QVERIFY(domainName->getNodeType() == AST::Name);
+    QVERIFY(domainName->getName() == "_InputDomain");
+
+    portBlock = static_cast<BlockNode *>(portList->getChildren().at(1));
+    QVERIFY(portBlock->getNodeType() == AST::Block);
+    domainName = static_cast<NameNode *>(portBlock->getPropertyValue("domain"));
+    QVERIFY(domainName->getNodeType() == AST::Name);
+    QVERIFY(domainName->getName() == "_OutputDomain");
 
     tree->deleteChildren();
     delete tree;

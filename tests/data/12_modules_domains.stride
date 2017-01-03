@@ -1,0 +1,29 @@
+use Gamma version 1.0 on PC
+
+module SimpleTest {
+    ports:          [
+	        port InputPort {
+	            name:       'input'
+	            main: on
+	            direction:  'input'
+	            block:      Input
+	        },
+			port OutputPort {
+			name:       'output'
+            main: on
+            direction:  'output'
+            block:      Output
+        }
+    ]
+    blocks:         [
+    ]
+    streams: [
+                Input >> Output;
+        ]
+}
+
+signal InSignal { domain: "Domain1" }
+signal OutSignal { domain: "Domain2" }
+
+InSignal >> SimpleTest() >> OutSignal;
+

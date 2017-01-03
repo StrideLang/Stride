@@ -87,7 +87,8 @@ DISTFILES += \
     data/E03_multichn_streams.stride \
     data/E04_rates.stride \
     data/E05_library_objects.stride \
-    data/L01_library_types_validation.stride
+    data/L01_library_types_validation.stride \
+    data/12_modules_domains.stride
 
 # Link to codegen library
 
