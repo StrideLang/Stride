@@ -544,11 +544,9 @@ void ParserTest::testStreamRates()
     // AudioIn[1] >> Signal >> AudioOut[1];
     StreamNode *stream = static_cast<StreamNode *>(nodes.at(2));
     QVERIFY(stream->getNodeType() == AST::Stream);
-    QVERIFY(stream->getRate() == 44100);
 
     stream = static_cast<StreamNode *>(stream->getRight());
     QVERIFY(stream->getNodeType() == AST::Stream);
-    QVERIFY(stream->getRate() == 44100);
 
     NameNode *name = static_cast<NameNode *>(stream->getLeft());
     QVERIFY(name->getNodeType() == AST::Name);
@@ -558,7 +556,7 @@ void ParserTest::testStreamRates()
     QVERIFY(bundle->getNodeType() == AST::Bundle);
     QVERIFY(bundle->getRate() == 44100);
 
-    // Rate1 >> Rate2 >> AudioOut[1];
+    // Rate1 >> Rate2 >> Output1;
     stream = static_cast<StreamNode *>(nodes.at(5));
     QVERIFY(stream->getNodeType() == AST::Stream);
     QVERIFY(stream->getLeft()->getRate() == 22050);
@@ -571,7 +569,7 @@ void ParserTest::testStreamRates()
     QVERIFY(nameNode->getNodeType() == AST::Name);
     QVERIFY(nameNode->getRate() == 44100);
 
-    // GetRate1 >> Rate1 >> GetRate2 >> Rate2 >> GetAudioRate >> AudioOut[1];
+    // GetRate1 >> Rate1 >> GetRate2 >> Rate2 >> GetAudioRate >> Output2;
     stream = static_cast<StreamNode *>(nodes.at(6));
     QVERIFY(stream->getNodeType() == AST::Stream);
     QVERIFY(stream->getLeft()->getRate() == 44100);

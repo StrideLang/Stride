@@ -47,7 +47,7 @@ private:
 
     void insertBuiltinObjectsForNode(AST *node, QList<AST *> &objects);
 
-    void processDomainsForStream(StreamNode *func, QVector<AST *> scopeStack);
+    void resolveDomainsForStream(StreamNode *func, QVector<AST *> scopeStack);
     string processDomainsForNode(AST *node, QVector<AST *> scopeStack, QList<AST *> &domainStack);
     void setDomainForStack(QList<AST *> domainStack, string domainName,  QVector<AST *> scopeStack);
     BlockNode *createSignalDeclaration(QString name, int size = 1);
@@ -88,8 +88,8 @@ private:
 
 //    QVector<AST *> expandStreamNode(StreamNode *stream);
 //    AST *expandStream(AST *node, int index, int rightNumInputs, int leftNumOutputs);
-//    QVector<AST *> sliceStream(StreamNode *stream);
-    StreamNode *splitStream(StreamNode *stream, AST *closingNode, AST *endNode);
+    QVector<AST *> sliceStreamByDomain(StreamNode *stream, QVector<AST *> scopeStack);
+//    StreamNode *splitStream(StreamNode *stream, AST *closingNode, AST *endNode);
 
     // TODO move these four functions to CodeValidator with the rest of querying functions
     double findRateInProperties(vector<PropertyNode *> properties, QVector<AST *> scope, AST *tree);

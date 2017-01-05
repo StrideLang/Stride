@@ -66,23 +66,36 @@ QVector<PlatformNode *> CodeValidator::getPlatformNodes()
     return platformNodes;
 }
 
-QVector<AST *> CodeValidator::getBlocksInScope(AST *root)
+QVector<AST *> CodeValidator::getBlocksInScope(AST *root, QVector<AST *> scopeStack, AST *tree)
 {
     QVector<AST *> blocks;
     if (root->getNodeType() == AST::Block || root->getNodeType() == AST::BlockBundle) {
         vector<PropertyNode *> properties = static_cast<BlockNode *>(root)->getProperties();
         blocks << root;
-        foreach(PropertyNode *property, properties) {
-            blocks << getBlocksInScope(property->getValue());
+        AST *subScope = CodeValidator::getBlockSubScope(static_cast<BlockNode *>(root));
+        if (subScope) {
+            for (AST * block: subScope->getChildren()) {
+                blocks << block;
+                scopeStack << block;
+            }
         }
+//        foreach(PropertyNode *property, properties) {
+//            blocks << getBlocksInScope(property->getValue(), scopeStack, tree);
+//        }
     } else if  (root->getNodeType() == AST::List) {
         vector<AST *> elements = static_cast<ListNode *>(root)->getChildren();
         foreach(AST* element, elements) {
-            blocks << getBlocksInScope(element);
+            blocks << getBlocksInScope(element, scopeStack, tree);
+        }
+    } else if (root->getNodeType() == AST::Name) {
+        NameNode *name = static_cast<NameNode *>(root);
+        BlockNode *declaration = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scopeStack, tree);
+        if (declaration) {
+            blocks = getBlocksInScope(declaration, scopeStack, tree);
         }
     } else {
         foreach(AST * child, root->getChildren()) {
-            blocks << getBlocksInScope(child);
+            blocks << getBlocksInScope(child, scopeStack, tree);
         }
     }
 
@@ -299,7 +312,7 @@ void CodeValidator::validateBundleIndeces(AST *node, QVector<AST *> scope)
     }
     QVector<AST *> children = QVector<AST *>::fromStdVector(node->getChildren());
     foreach(AST *node, children) {
-        QVector<AST *> subScope = getBlocksInScope(node);
+        QVector<AST *> subScope = getBlocksInScope(node, scope, m_tree);
         scope << subScope;
         validateBundleIndeces(node, scope);
     }
@@ -1547,5 +1560,105 @@ QString CodeValidator::getPortTypeName(PortType type)
         return "";
     }
     return "";
+}
+
+string CodeValidator::getNodeDomainName(AST *node, QVector<AST *> scopeStack, AST *tree)
+{
+    std::string domainName;
+    AST *domainNode = nullptr;
+
+    if (node->getNodeType() == AST::Name) {
+        NameNode *name = static_cast<NameNode *>(node);
+        BlockNode *declaration = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scopeStack, tree);
+        if (declaration) {
+            domainNode = declaration->getDomain();
+        }
+    } else if (node->getNodeType() == AST::Bundle) {
+        BundleNode *name = static_cast<BundleNode *>(node);
+        BlockNode *declaration = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scopeStack, tree);
+        if (declaration) {
+            domainNode = declaration->getDomain();
+        }
+    }  else if (node->getNodeType() == AST::List) {
+        std::vector<std::string> domainList;
+        std::string tempDomainName;
+        for (AST *member : node->getChildren()) {
+            if (member->getNodeType() == AST::Name) {
+                NameNode *name = static_cast<NameNode *>(member);
+                BlockNode *declaration = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scopeStack, tree);
+                tempDomainName = CodeValidator::getNodeDomainName(declaration, scopeStack, tree);
+            } if (member->getNodeType() == AST::Bundle) {
+                BundleNode *name = static_cast<BundleNode *>(member);
+                BlockNode *declaration = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scopeStack, tree);
+                tempDomainName = CodeValidator::getNodeDomainName(declaration, scopeStack, tree);
+            } if (member->getNodeType() == AST::Int
+                  || member->getNodeType() == AST::Real
+                  || member->getNodeType() == AST::String
+                  || member->getNodeType() == AST::Switch) {
+                continue; // Don't append empty domain to domainList, as a value should take any domain.
+            }
+            else {
+                tempDomainName = CodeValidator::getNodeDomainName(member, scopeStack, tree);
+            }
+            domainList.push_back(tempDomainName);
+        }
+        bool allEqual = true;
+        for (unsigned int i = 1; i <  domainList.size(); i++) {
+            if (domainList[i -1] != domainList[i]) {
+                allEqual = false;
+            }
+        }
+        if (allEqual) {
+            return tempDomainName;
+        } else {
+            return "";
+        }
+    } else if (node->getNodeType() == AST::Block || node->getNodeType() == AST::BlockBundle) {
+        domainNode = static_cast<BlockNode *>(node)->getDomain();
+    } else if (node->getNodeType() == AST::Function) {
+        domainNode = static_cast<FunctionNode *>(node)->getDomain();
+    } else if (node->getNodeType() == AST::Expression) {
+        ExpressionNode *expr = static_cast<ExpressionNode *>(node);
+        if (expr->isUnary()) {
+            domainNode = expr->getValue();
+        } else {
+            AST *left = expr->getLeft();
+            AST *right = expr->getRight();
+            string leftDomain = CodeValidator::getNodeDomainName(left, scopeStack, tree);
+            string rightDomain = CodeValidator::getNodeDomainName(right, scopeStack, tree);
+            if (left->getNodeType() == AST::Int
+                    || left->getNodeType() == AST::Real
+                    || left->getNodeType() == AST::String
+                    || left->getNodeType() == AST::Switch) {
+                leftDomain = rightDomain;
+            }
+            if (right->getNodeType() == AST::Int
+                    || right->getNodeType() == AST::Real
+                    || right->getNodeType() == AST::String
+                    || right->getNodeType() == AST::Switch) {
+                rightDomain = leftDomain;
+            }
+            if (leftDomain == rightDomain) {
+                return leftDomain;
+            } else {
+                return "";
+            }
+        }
+    }
+
+    if (domainNode) {
+        if (domainNode->getNodeType() == AST::String) {
+            domainName = static_cast<ValueNode *>(domainNode)->getStringValue();
+        } else if (domainNode->getNodeType() == AST::Block) {
+            BlockNode *domainBlock = static_cast<BlockNode *>(domainNode);
+            if (domainBlock->getObjectType() == "_domain") {
+                AST *domainValue = domainBlock->getPropertyValue("domainName");
+                if (domainValue->getNodeType() == AST::String) {
+                    domainName = static_cast<ValueNode *>(domainValue)->getStringValue();
+                }
+            }
+        }
+    }
+    return domainName;
 }
 

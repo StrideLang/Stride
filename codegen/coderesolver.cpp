@@ -55,7 +55,7 @@ void CodeResolver::resolveStreamRates(StreamNode *stream)
         rate = rightRate;
     }
 //    Q_ASSERT(rate != -1);
-    stream->setRate(rate);
+//    stream->setRate(rate);
 }
 
 void CodeResolver::fillDefaultPropertiesForNode(AST *node)
@@ -224,7 +224,7 @@ void CodeResolver::declareModuleInternalBlocks()
                                         }
                                     } else if (directionName == "input") {
                                         portBlock->replacePropertyValue("domain", new NameNode("_InputDomain", "", -1));
-                                        AST *outDomainDeclaration = CodeValidator::findDeclaration("_OutputDomain", QVector<AST *>(), internalBlocks);
+                                        AST *outDomainDeclaration = CodeValidator::findDeclaration("_InputDomain", QVector<AST *>(), internalBlocks);
                                         if (!outDomainDeclaration) {
                                             BlockNode *newDomainBlock = new BlockNode("_InputDomain", "_domain", nullptr, "", -1);
                                             newDomainBlock->addProperty(
@@ -235,7 +235,7 @@ void CodeResolver::declareModuleInternalBlocks()
                                             BlockNode *domainTypeDeclaration =
                                                     CodeValidator::findTypeDeclarationByName("_domain", QVector<AST *>(), m_tree, errors);
                                             if (!domainTypeDeclaration) {
-                                                // TODO Since we are probably always going to need the _domain type, we should add it by default like we do for the "type" type
+                                                // TODO Since we are probably always going to need the "_domain" and "signalbridge" type, we should add it by default like we do for the "type" type
                                                 QList<AST *> builtinObjects = m_platform->getBuiltinObjects();
                                                 for (AST *node: builtinObjects) {
                                                     if (node->getNodeType() == AST::Block) {
@@ -244,11 +244,12 @@ void CodeResolver::declareModuleInternalBlocks()
                                                             AST *typeNameValue = block->getPropertyValue("typeName");
                                                             Q_ASSERT(typeNameValue && typeNameValue->getNodeType() == AST::String);
                                                             if (typeNameValue
-                                                                    && typeNameValue->getNodeType() == AST::String
-                                                                    && static_cast<ValueNode *>(typeNameValue)->getStringValue() == "_domain") {
-                                                                m_tree->addChild(node->deepCopy());
+                                                                    && typeNameValue->getNodeType() == AST::String) {
+                                                                if (static_cast<ValueNode *>(typeNameValue)->getStringValue() == "_domain"
+                                                                        || static_cast<ValueNode *>(typeNameValue)->getStringValue() == "signalbridge") {
+                                                                    m_tree->addChild(node->deepCopy());
+                                                                }
                                                             }
-
                                                         }
                                                     }
                                                 }
@@ -284,7 +285,7 @@ void CodeResolver::declareModuleInternalBlocks()
                                 //                                    }
                             }
                         } else if (blockPortValue->getNodeType() == AST::None) {
-                            qDebug() << "dd" ;
+                            // TODO implement
                         }
                     }
                 } else if (ports->getNodeType() == AST::None) {
@@ -643,7 +644,7 @@ void CodeResolver::processDomains()
     while(rit != children.rend()) {
         AST *node = *rit;
         if (node->getNodeType() == AST::Stream) {
-            processDomainsForStream(static_cast<StreamNode *>(node), scopeStack);
+            resolveDomainsForStream(static_cast<StreamNode *>(node), scopeStack);
         } else if (node->getNodeType() == AST::Block) {
             BlockNode *module = static_cast<BlockNode *>(node);
             if (module->getObjectType() == "module") {
@@ -652,7 +653,7 @@ void CodeResolver::processDomains()
                     ListNode *blocks = static_cast<ListNode *>(module->getPropertyValue("blocks"));
                     Q_ASSERT(blocks->getNodeType() == AST::List);
                     scopeStack = QVector<AST*>::fromStdVector(blocks->getChildren()) + scopeStack; // Prepend internal scope
-                    processDomainsForStream(static_cast<StreamNode *>(streamsNode), scopeStack);
+                    resolveDomainsForStream(static_cast<StreamNode *>(streamsNode), scopeStack);
                 } else if (streamsNode->getNodeType() == AST::List) {
                     vector<AST *> streamChild = streamsNode->getChildren();
                     vector<AST *>::reverse_iterator streamIt = streamChild.rbegin();
@@ -662,7 +663,7 @@ void CodeResolver::processDomains()
                             ListNode *blocks = static_cast<ListNode *>(module->getPropertyValue("blocks"));
                             Q_ASSERT(blocks->getNodeType() == AST::List);
                             scopeStack = QVector<AST*>::fromStdVector(blocks->getChildren()) + scopeStack; // Prepend internal scope
-                            processDomainsForStream(static_cast<StreamNode *>(streamNode), scopeStack);
+                            resolveDomainsForStream(static_cast<StreamNode *>(streamNode), scopeStack);
                         } else {
                             qDebug() << "ERROR: Expecting stream.";
                         }
@@ -678,11 +679,40 @@ void CodeResolver::processDomains()
     vector<AST *> new_tree;
     for (AST *node : m_tree->getChildren()) {
         if (node->getNodeType() == AST::Stream) {
+            QVector<AST *> streams = sliceStreamByDomain(static_cast<StreamNode *>(node), QVector<AST *>());
+            for (AST * stream: streams) {
+                new_tree.push_back(stream);
+            }
+        } else if (node->getNodeType() == AST::Block) {
+            BlockNode *module = static_cast<BlockNode *>(node);
+            if (module->getObjectType() == "module") {
+                AST *streamsNode = module->getPropertyValue("streams");
+                ListNode *newStreamsList = new ListNode(nullptr, "", -1);
+                QVector<AST *> scopeStack;
+                scopeStack << CodeValidator::getBlocksInScope(module, QVector<AST *>(), m_tree);
+                if (streamsNode->getNodeType() == AST::List) {
+                    for (AST * stream: streamsNode->getChildren()) {
+                        if (stream->getNodeType() == AST::Stream) {
+                            QVector<AST *> streams = sliceStreamByDomain(static_cast<StreamNode *>(stream), scopeStack);
+                            for (AST * newStream: streams) {
+                                newStreamsList->addChild(newStream->deepCopy());
+                            }
+                        }
+                    }
+                } else if (streamsNode->getNodeType() == AST::Stream) {
+                    QVector<AST *> streams = sliceStreamByDomain(static_cast<StreamNode *>(streamsNode), scopeStack);
+                    for (AST * newStream: streams) {
+                        newStreamsList->addChild(newStream->deepCopy());
+                    }
+                }
+                module->replacePropertyValue("streams", newStreamsList);
+            }
             new_tree.push_back(node);
         } else {
             new_tree.push_back(node);
         }
     }
+
     m_tree->setChildren(new_tree);
 }
 
@@ -846,21 +876,29 @@ void CodeResolver::insertBuiltinObjectsForNode(AST *node, QList<AST *> &objects)
     }
 }
 
-void CodeResolver::processDomainsForStream(StreamNode *stream, QVector<AST *> scopeStack)
+void CodeResolver::resolveDomainsForStream(StreamNode *stream, QVector<AST *> scopeStack)
 {
     AST *left = stream->getLeft();
     AST *right = stream->getRight();
     QList<AST *> domainStack;
+    string previousDomainName;
+    string domainName;
     while (right) {
-        string domainName = processDomainsForNode(left, scopeStack, domainStack);
+        domainName = processDomainsForNode(left, scopeStack, domainStack);
         if (left == right && domainName.size() == 0) { // If this is is the last pass then set the unknown domains to platform domain
+            // This is needed in cases where signals with no set domain are connected
+            // to input ports on other objects. Domains are not
+            // propagated across secondary ports
             domainName = m_platform->getPlatformDomain().toStdString();
         }
 
-        if (domainName.size() > 0) {
+        if (domainName.size() > 0 && previousDomainName != domainName) {
             setDomainForStack(domainStack, domainName, scopeStack);
             domainStack.clear();
+        } else if (domainName.size() == 0) { // Domain needs to be resolved
+            domainStack << left;
         }
+        previousDomainName = domainName;
 
 
         if (left == right) {
@@ -923,10 +961,10 @@ std::string CodeResolver::processDomainsForNode(AST *node, QVector<AST *> scopeS
             if (domainName.size() == 0) {
                 // Put declaration in stack to set domain once domain is resolved
                 domainStack << member;
-                // FIMXE: This is very simplistic.
+                // FIMXE: This is very simplistic (or plain wrong....)
                 // It assumes that the next found domain affects all elements
                 // in the list that don't have domains. This is likely a
-                // common case but dlist elements should inherit domains from
+                // common case but list elements should inherit domains from
                 // the port to which they are connected.
             }
         }
@@ -1647,106 +1685,101 @@ ValueNode *CodeResolver::lesserEqual(ValueNode *left, ValueNode *right)
 
 //}
 
-//QVector<AST *> CodeResolver::sliceStream(StreamNode *stream)
-//{
-//    QList<LangError> errors;
-//    QVector<AST *> scope;
-//    int size = CodeValidator::numParallelStreams(stream, m_platform, scope, m_tree, errors);
-
-//    QVector<AST *> streams;
-//    if (size == 1 || size == -1) {
-//        streams << stream->deepCopy();
-//        return streams;
-//    }
-//    AST *left = stream->getLeft();
-////    AST *marker = stream->getLeft(); // To mark where last split occured
-//    int numOutputs = CodeValidator::getNodeNumOutputs(left, m_platform, scope, m_tree, errors);
-//    Q_ASSERT(numOutputs >= 0);
-//    AST *nextNode = stream->getRight();
-//    while (nextNode) {
-//        if (nextNode->getNodeType() == AST::Stream) {
-//            StreamNode *rightStream = static_cast<StreamNode *>(nextNode);
-//            int nextSize = CodeValidator::getNodeSize(rightStream->getLeft(), m_tree);
-//            Q_ASSERT(nextSize != -1);
-////            Q_ASSERT(nextSize >=)
-//            if (nextSize > size) {
-//                QVector<AST *> nextStreams = expandStreamNode(rightStream);
-//                foreach(AST * stream, nextStreams) {
-//                    // Now prepend the new connection symbol
-//                    QString nodeName = QString("__Connector%1").arg(m_connectorCounter++, 2);
-//                    NameNode *newConnectionName = new NameNode(nodeName.toStdString(), -1);
-//                    streams << new StreamNode(newConnectionName, stream->deepCopy(), -1);
-//                    stream->deleteChildren();
-//                    delete stream;
-//                }
-//                nextNode = NULL;
-//                continue;
-//            } else if (nextSize == size) {
-//                // Just keep going if size hasn't changed
-//            } else {
-////                qFatal("Error, stream size shouldn't have decreased");
-//            }
-//            nextNode = rightStream->getRight();
-//        } else { // Last member of the stream (any node that is not StreamNode *)
-
-//            int nextSize = CodeValidator::getNodeNumInputs(nextNode, m_platform, scope, m_tree, errors)
-//                    * CodeValidator::getNodeSize(nextNode, m_tree);
-//            if (nextSize > size) {
-//                // TODO expand up to here and add new signal to connect
-////                QVector<AST *> nextStreams = expandStreamFromMemberSizes(rightStream);
-////                foreach(AST * stream, nextStreams) {
-////                    // Now prepend the new connection symbol
-////                    QString nodeName = QString("__Connector%1").arg(m_connectorCounter++, 2);
-////                    NameNode *newConnectionName = new NameNode(nodeName.toStdString(), -1);
-////                    streams << new StreamNode(newConnectionName, stream, -1);
-////                }
-//                nextNode = NULL;
-//                continue;
-//            } else if (nextSize == size) { // All streams are parallel and of the same size
-
-//                AST *left = stream->getLeft();
-//                AST *right = stream->getRight();
-
-//                for (int i = 0; i < size; i++) {
-//                    AST *newLeft, *newRight;
-////                    newRight = expandStream(right, i);
-////                    newLeft = expandStream(left, i);
-////                    StreamNode *newStream = new StreamNode(newLeft, newRight, stream->getLine());
-////                    streams << newStream;
-//                }
-//            } else {
-////                qFatal("Error, stream size shouldn't have decreased");
-//            }
-//            nextNode = NULL;
-//        }
-//    }
-//    return streams;
-//}
-
-StreamNode *CodeResolver::splitStream(StreamNode *stream, AST *closingNode, AST *endNode)
+QVector<AST *> CodeResolver::sliceStreamByDomain(StreamNode *stream, QVector<AST *> scopeStack)
 {
-    StreamNode *outStream;
-    AST * left = stream->getLeft();
-    AST * right = stream->getRight();
-    if (right == endNode) { // endNode is the last node in the stream, just append closingNode
-        StreamNode *lastStream = new StreamNode(right->deepCopy(), closingNode, "", -1);
-        StreamNode *outStream = new StreamNode(left->deepCopy(), lastStream, "", -1);
-        return outStream;
-    } else if (left == endNode) { // There is more stream, but we have reached the split point
-        StreamNode *outStream = new StreamNode(left->deepCopy(), closingNode, "", -1);
-        return outStream;
+    QVector<AST *> streams;
+    QVector<AST *> stack;
+
+    AST *left = stream->getLeft();
+    AST *right = stream->getRight();
+    std::string domainName = CodeValidator::getNodeDomainName(left, CodeValidator::getBlocksInScope(left, scopeStack, m_tree), m_tree);
+    std::string previousDomainName = CodeValidator::getNodeDomainName(left, CodeValidator::getBlocksInScope(left, scopeStack, m_tree), m_tree);
+    while (right) {
+        if (left == right) { // If this is is the last pass then make last slice
+            StreamNode *newStream;
+            AST *lastNode = stack.back();
+            stack.pop_back();
+            newStream = new StreamNode(lastNode, left, lastNode->getFilename().c_str(), lastNode->getLine());
+            while (stack.size() > 0) {
+                lastNode = stack.back();
+                newStream = new StreamNode(lastNode, newStream, lastNode->getFilename().c_str(), lastNode->getLine());
+                stack.pop_back();
+            }
+            streams << newStream;
+            right = left = NULL; // End
+            continue;
+        }
+        domainName = CodeValidator::getNodeDomainName(left, CodeValidator::getBlocksInScope(left, scopeStack, m_tree), m_tree);
+
+        if (previousDomainName != domainName && left != stream->getLeft()) { // domain change and not the first node in the stream
+            int size = CodeValidator::getNodeSize(left, m_tree);
+            // TODO make sure connectorName is not used in the file
+            std::string connectorName = "_BridgeSig_" + std::to_string(m_connectorCounter++);
+            AST *closingName = new NameNode(connectorName, "", -1);
+            StreamNode *newStream;
+            if (stack.size() == 0) {
+                newStream = new StreamNode(closingName, left, left->getFilename().c_str(), left->getLine());
+            } else {
+                newStream = new StreamNode(stack.back(), closingName, left->getFilename().c_str(), left->getLine());
+                stack.pop_back();
+            }
+            while (stack.size() > 0) {
+                AST *lastNode = stack.back();
+                newStream = new StreamNode(lastNode, newStream, lastNode->getFilename().c_str(), lastNode->getLine());
+                stack.pop_back();
+            }
+            streams << newStream;
+            AST *newStart = new NameNode(connectorName, "", -1);
+            if (size == 1) {
+                streams << new BlockNode(connectorName, "signalbridge", nullptr, "", -1);
+            } else {
+                streams << new BlockNode(
+                               new BundleNode(connectorName, new ListNode(new ValueNode(size, "", -1), "", -1), "", -1),
+                               "signalbridge", nullptr, "", -1);
+            }
+            stack << newStart << left;
+            // Slice
+        } else {
+            stack << left;
+        }
+        previousDomainName = domainName;
+
+        if(right->getNodeType() == AST::Stream) {
+            StreamNode *subStream = static_cast<StreamNode *>(right);
+            left = subStream->getLeft();
+            right = subStream->getRight();
+//            delete stream;
+        } else {
+            left = right; // Last pass (process right, call it left)
+        }
     }
-    if  (right != endNode) {
-        Q_ASSERT(right->getNodeType() == AST::Stream); // Shouldn't reach the end of the stream before reaching endNode
-        outStream = splitStream(static_cast<StreamNode *>(right), closingNode, endNode);
-        StreamNode *finalStream = new StreamNode(left, outStream->deepCopy(), "", -1);
-        outStream->deleteChildren();
-        delete outStream;
-        return finalStream;
-    }
-    qFatal("Shouldn't get here");
-    return outStream;
+//    delete stream;
+    return streams;
 }
+
+//StreamNode *CodeResolver::splitStream(StreamNode *stream, AST *closingNode, AST *endNode)
+//{
+//    StreamNode *outStream;
+//    AST * left = stream->getLeft();
+//    AST * right = stream->getRight();
+//    if (right == endNode) { // endNode is the last node in the stream, just append closingNode
+//        StreamNode *lastStream = new StreamNode(right->deepCopy(), closingNode, "", -1);
+//        outStream = new StreamNode(left->deepCopy(), lastStream, "", -1);
+//        return outStream;
+//    } else if (left == endNode) { // There is more stream, but we have reached the split point
+//        StreamNode *outStream = new StreamNode(left->deepCopy(), closingNode, "", -1);
+//        return outStream;
+//    }
+//    if  (right != endNode) {
+//        Q_ASSERT(right->getNodeType() == AST::Stream); // Shouldn't reach the end of the stream before reaching endNode
+//        outStream = splitStream(static_cast<StreamNode *>(right), closingNode, endNode);
+//        StreamNode *finalStream = new StreamNode(left, outStream->deepCopy(), "", -1);
+//        outStream->deleteChildren();
+//        delete outStream;
+//        return finalStream;
+//    }
+//    qFatal("Shouldn't get here");
+//}
 
 void CodeResolver::resolveDomainForStreamNode(AST *node, QVector<AST *> scopeStack)
 {
@@ -1762,8 +1795,8 @@ void CodeResolver::resolveDomainForStreamNode(AST *node, QVector<AST *> scopeSta
     } else if (node->getNodeType() == AST::List) {
         for (AST *member : node->getChildren()) {
             resolveDomainForStreamNode(member, scopeStack);
-            return;
         }
+        return;
     } else if (node->getNodeType() == AST::Expression) {
         ExpressionNode *expr = static_cast<ExpressionNode *>(node);
         if (expr->isUnary()) {

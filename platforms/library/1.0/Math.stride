@@ -55,14 +55,26 @@ module Sin {
 
 
 module Divide {
-	input: Input
-	output: Output
+	ports: [
+		port OutputPort {
+			main: on
+			direction: "output"
+			block: Output
+			meta : "The result of the division" 
+		},
+		port InputPort {
+			main: on
+			direction: "input"
+			block: Input
+			meta: "Input values" 
+		}
+	]
 	blocks: [
 		signal Input[2] { 
 			meta: "Input values"
 		},
 		signal Output {
-			meta : "The result of the division" 
+			meta : "The result of the division"
 		}
 	]
 	streams: [
@@ -71,9 +83,21 @@ module Divide {
 	meta: "Divide input values"
 }
 
-module Multiply {
-	input: Input
-	output: Output
+module Multiply {	
+	ports: [
+		port OutputPort {
+			main: on
+			direction: "output"
+			block: Output
+			meta : "The result of the multiplication" 
+		},
+		port InputPort {
+			main: on
+			direction: "input"
+			block: Input
+			meta: "Values to multiply"
+		}
+	]
 	blocks: [
 		signal Input[2] { 
 			meta: "Values to multiply"

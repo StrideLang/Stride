@@ -107,3 +107,22 @@ type _Signal {
 	]
 	inherits: ["streamable"]
 }
+
+type _SignalBridge {
+	typeName: "signalbridge"
+	properties: [
+		typeProperty InDomain {
+			name: "inDomain"
+			types: [""]
+			default: ""
+			required: off
+		}
+		typeProperty OutDomain {
+			name: "outDomain"
+			types: [""]
+			default: ""
+			required: off
+		}
+	]
+	inherits: ["base"]
+}

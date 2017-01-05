@@ -68,12 +68,14 @@ public:
 
     static QString getPortTypeName(PortType type);
 
+    static std::string getNodeDomainName(AST *node, QVector<AST *> scopeStack, AST *tree);
+    static QVector<AST *> getBlocksInScope(AST *root, QVector<AST *> scopeStack, AST *tree);
+
     void validate();
 
 private:
 
     QVector<PlatformNode *> getPlatformNodes();
-    QVector<AST *> getBlocksInScope(AST *root);
 
     void validateTypes(AST *node, QVector<AST *> scopeStack);
     void validateStreamMembers(StreamNode *node, QVector<AST *> scopeStack);
