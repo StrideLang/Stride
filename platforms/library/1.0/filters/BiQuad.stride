@@ -1,8 +1,16 @@
 
 module BiQuad {
-	input: Input
-	output: Output
 	ports: [
+		port OutputPort {
+            name:       'output'
+            main: on
+            direction:  'output'
+        },
+        port InputPort {
+            name:       'input'
+            main: on
+            direction:  'input'
+        },
 #		port TypeProperty {
 #			name: "type"
 #			block: Type
@@ -25,8 +33,6 @@ module BiQuad {
 #		}
 	]
 	blocks: [
-		signal Input {},
-		signal Output {},
 #		signal Type { default: "BandPass" },
 		signal CenterFrequency {},
 		signal Resonance { default: 50},

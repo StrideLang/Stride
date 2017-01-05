@@ -1,6 +1,4 @@
 module Mix {
-#    input: Input
-#    output: Output
     ports:          [
         port OutputPort {
             name:       'output'

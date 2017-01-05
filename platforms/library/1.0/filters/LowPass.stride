@@ -1,8 +1,16 @@
 
 module LowPass {
-    input: Input
-    output: Output
     ports:  [
+		port OutputPort {
+            name:       'output'
+            main: on
+            direction:  'output'
+        },
+        port InputPort {
+            name:       'input'
+            main: on
+            direction:  'input'
+        },
 		port FrequencyProperty {
 			name: "frequency"
 			block: CenterFrequency
@@ -20,22 +28,11 @@ module LowPass {
 		}
     ]
     blocks: [
-        signal Input {
-                default :       0.0
-                rate:           AudioRate
-                domain:         streamDomain
-        },
-        signal Output {
-                default :       0.0
-                rate:           AudioRate
-                domain:         streamDomain
-        },
 		signal CenterFrequency {},
 		signal QFactor {},
 		signal Gain {}
     ]
     streams: [
-		Input >> QFactor >> CenterFrequency;
         Input * Gain >> Output;
     ]
     meta: "Placeholder for low pass filter. Currently not implemented."

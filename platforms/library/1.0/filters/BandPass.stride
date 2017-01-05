@@ -1,8 +1,16 @@
 
 module BandPass {
-	input: Input
-	output: Output
 	ports: [
+		port OutputPort {
+            name:       'output'
+            main: on
+            direction:  'output'
+        },
+        port InputPort {
+            name:       'input'
+            main: on
+            direction:  'input'
+        },
 		port CenterFrequencyProperty {
 			name: "centerFrequency"
 			block: CenterFrequency
@@ -25,8 +33,6 @@ module BandPass {
 #		}
 	]
 	blocks: [
-		signal Input {},
-		signal Output {},
 		signal CenterFrequency {},
 		signal QFactor { default: 1.0},
 		signal Gain {},

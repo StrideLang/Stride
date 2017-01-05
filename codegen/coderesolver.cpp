@@ -285,7 +285,22 @@ void CodeResolver::declareModuleInternalBlocks()
                                 //                                    }
                             }
                         } else if (blockPortValue->getNodeType() == AST::None) {
-                            // TODO implement
+                            std::string directionName = static_cast<ValueNode *>(directionPortValue)->getStringValue();
+                            Q_ASSERT(directionName == "input" || directionName == "output");
+                            string defaultName;
+                            if (directionName == "input") {
+                                defaultName = "Input";
+                            } else if (directionName == "output") {
+                                defaultName = "Output";
+                            }
+                            NameNode *name = new NameNode(defaultName, "", -1);
+                            portBlock->replacePropertyValue("block", name);
+                            BlockNode *newSignal = CodeValidator::findDeclaration(QString::fromStdString(defaultName), QVector<AST *>(), internalBlocks);
+                            if (!newSignal) {
+                                newSignal = createSignalDeclaration(QString::fromStdString(defaultName));
+                                internalBlocks->addChild(newSignal);
+                                newSignal->setDomain(domainName);
+                            }
                         }
                     }
                 } else if (ports->getNodeType() == AST::None) {
@@ -362,7 +377,7 @@ void CodeResolver::expandParallelStream(StreamNode *stream, QVector<AST *> scope
                 break;
             }
         } else if (numPrevOut < numCurIn) { // Need to clone all existing left side
-
+            Q_ASSERT(numPrevOut > 0);
             if (numCurIn/(float)numPrevOut == numCurIn/numPrevOut) {
 //                        int newNumCopies = numCurIn/numPrevOut;
 //                        for(int i = 0; i < numCopies.size(); ++i) {

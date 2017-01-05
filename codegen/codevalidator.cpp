@@ -720,8 +720,10 @@ int CodeValidator::getTypeNumOutputs(BlockNode *blockDeclaration, const QVector<
         if (blockDeclaration->getObjectType() == "module") {
             ListNode *blockList = static_cast<ListNode *>(blockDeclaration->getPropertyValue("blocks"));
             // FIXME checking for "output" port should be removed (deprecated)
-            NameNode *outputName = static_cast<NameNode *>(blockDeclaration->getPropertyValue("output"));
-            if (!outputName || outputName->getNodeType() == AST::None) {
+//            NameNode *outputName = static_cast<NameNode *>(blockDeclaration->getPropertyValue("output"));
+//            if (!outputName || outputName->getNodeType() == AST::None)
+            NameNode *outputName;
+            {
                 ListNode *portList = static_cast<ListNode *>(blockDeclaration->getPropertyValue("ports"));
 
                 if (portList && portList->getNodeType() != AST::None) {
@@ -751,11 +753,10 @@ int CodeValidator::getTypeNumOutputs(BlockNode *blockDeclaration, const QVector<
                     }
                 }
             }
-            Q_ASSERT(outputName);
-            Q_ASSERT(blockList->getNodeType() == AST::List);
-            if (outputName->getNodeType() == AST::None) {
+            if (!outputName ||outputName->getNodeType() == AST::None) {
                 return 0;
             }
+            Q_ASSERT(blockList->getNodeType() == AST::List);
             Q_ASSERT(outputName->getNodeType() == AST::Name);
             QString outputBlockName = QString::fromStdString(outputName->getName());
             foreach(AST *internalBlockNode, blockList->getChildren()) {
@@ -806,7 +807,7 @@ int CodeValidator::getTypeNumInputs(BlockNode *blockDeclaration, const QVector<A
                                             if (portBlock->getPropertyValue("block")->getNodeType() == AST::Name) {
                                                 inputName = static_cast<NameNode *>(portBlock->getPropertyValue("block"));
                                             } else {
-                                                qDebug() << "WARNING: Expecting name node for output block";
+                                                qDebug() << "WARNING: Expecting name node for input block";
                                             }
                                         }
                                     }
