@@ -1,6 +1,4 @@
 module BandLimitedSaw {
-	input: none # This needs to be removed...
-	output: Output
     ports:      [
         port OutputPort {
             name:       'output'

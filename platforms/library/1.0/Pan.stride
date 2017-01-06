@@ -1,8 +1,17 @@
 
 module Pan {
-	input: Input
-	output: Output
 	ports: [
+    port OutputPort {
+        name:       'output'
+        main: on
+        block: Output
+        direction:  'output'
+    },
+    port InputPort {
+        name:       'input'
+        main: on
+        direction:  'input'
+    },
 		port PositionProperty {
 			name: "position"
 			block: Position
@@ -11,7 +20,6 @@ module Pan {
 
 	]
 	blocks: [
-		signal Input {},
 		signal Output[2] {},
 		signal Position {},
 		signal GainLeft {},

@@ -1,8 +1,11 @@
 
 module SerialOut {
-    input: Input
-    output: none
     ports: [
+        port InputPort {
+            name:       'input'
+            main: on
+            direction:  'input'
+        }
 		port AddressProperty {
 			name: "address"
 			block: Address
@@ -10,15 +13,8 @@ module SerialOut {
 		}
 	]
     blocks: [
-        signal Input {
-                default :       ""
-                #rate:           streamRate
-                domain:         streamDomain
-        },
         signal Address {
                 default :       "/Stride"
-                #rate:           streamRate
-                domain:         streamDomain
         },
         _serialOutType SerialOutBlock {}
     ]
@@ -29,14 +25,16 @@ module SerialOut {
 }
 
 module SerialIn {
-    input: none
-    output: Output
-    ports: none
+    ports: [
+        port OutputPort {
+            name:       'output'
+            main: on
+            direction:  'output'
+        }
+    ]
     blocks: [
         signal Output {
                 default :       ""
-                #rate:           streamRate
-                domain:         streamDomain
         },
         _serialInType SerialInBlock {}
     ]

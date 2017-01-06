@@ -109,7 +109,7 @@ void ParserTest::testModuleDomains()
     QVERIFY(portBlock->getNodeType() == AST::Block);
     NameNode *domainName = static_cast<NameNode *>(portBlock->getPropertyValue("domain"));
     QVERIFY(domainName->getNodeType() == AST::Name);
-    QVERIFY(domainName->getName() == "_InputDomain");
+    QVERIFY(domainName->getName() == "_OutputDomain");
 
     portBlock = static_cast<BlockNode *>(portList->getChildren().at(1));
     QVERIFY(portBlock->getNodeType() == AST::Block);

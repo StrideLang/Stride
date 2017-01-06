@@ -1,8 +1,11 @@
 
 module OSCOut {
-	input: Value
-	output: none
 	ports: [
+		port InputPort {
+			name:       'input'
+			main: on
+			direction:  'input'
+		},
 		port OSCAddressProperty {
 			name: "address"
 			block: Address
@@ -20,22 +23,24 @@ module OSCOut {
 		}
 	]
 	blocks: [
-		signal Value {},
 		signal Address { default: "/Stride" },
 		signal IP { default: "127.0.0.1" },
 		signal Port { default: 9010 },
 		_oscOutType OscOutNode {}
 	]
 	streams: [
-		[Value, Address, IP, Port] >> OscOutNode;
+		[Input, Address, IP, Port] >> OscOutNode;
 	]
 	meta: "Sends OSC messages."
 }
 
 module OSCIn {
-	input: none
-	output: Value
 	ports: [
+		port OutputPort {
+			name:       'output'
+			main: on
+			direction:  'output'
+		},
 		port OSCAddressProperty {
 			name: "address"
 			block: Address
@@ -53,14 +58,13 @@ module OSCIn {
 		}
 	]
 	blocks: [
-		signal Value {},
 		signal Address { default: "/Stride" },
 		signal IP { default: "127.0.0.1" },
 		signal Port { default: 9011 },
 		_oscInType OscInNode {}
 	]
 	streams: [
-		[Address, IP, Port] >> OscInNode >> Value;
+		[Address, IP, Port] >> OscInNode >> Output;
 	]
 	meta: "Receives OSC messages."
 }

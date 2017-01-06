@@ -1,8 +1,16 @@
 
 module Rectify {
-	input: Input
-	output: Output
 	ports: [
+		port OutputPort {
+            name:       'output'
+            main: on
+            direction:  'output'
+        },
+        port InputPort {
+            name:       'input'
+            main: on
+            direction:  'input'
+        }
 #		port ModeProperty {
 #			name: "mode"
 #			block: Mode
@@ -10,8 +18,6 @@ module Rectify {
 #		}
 	]
 	blocks: [
-		signal Input {},
-		signal Output {}
 #		signal Mode { default: "mode"}
 	]
 	streams: [

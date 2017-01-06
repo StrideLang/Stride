@@ -1,10 +1,19 @@
  
 module Greater {
-    input: Input
-    output: Output
+    ports: [
+    port OutputPort {
+        name:       'output'
+        main: on
+        direction:  'output'
+    },
+    port InputPort {
+        name:       'input'
+        main: on
+        size: 2
+        direction:  'input'
+    }
+    ]
     blocks: [
-        signal Input[2] {},
-        switch Output {}
     ]
     streams: [
        Input[1] > Input[2] >> Output;
@@ -13,11 +22,20 @@ module Greater {
 }
 
 module GreaterOrEqual {
-    input: Input
-    output: Output
+    ports: [
+    port OutputPort {
+        name:       'output'
+        main: on
+        direction:  'output'
+    },
+    port InputPort {
+        name:       'input'
+        main: on
+        size: 2
+        direction:  'input'
+    }
+    ]
     blocks: [
-        signal Input[2] {},
-        switch Output {}
     ]
     streams: [
        Input[1] >= Input[2] >> Output;
@@ -26,11 +44,21 @@ module GreaterOrEqual {
 }
 
 module Less {
-    input: Input
-    output: Output
+
+ports: [
+port OutputPort {
+    name:       'output'
+    main: on
+    direction:  'output'
+},
+port InputPort {
+    name:       'input'
+    main: on
+    size: 2
+    direction:  'input'
+}
+]
     blocks: [
-        signal Input[2] {},
-        switch Output {}
     ]
     streams: [
        Input[1] < Input[2] >> Output;
@@ -39,11 +67,21 @@ module Less {
 }
 
 module LessOrEqual {
-    input: Input
-    output: Output
+
+ports: [
+port OutputPort {
+    name:       'output'
+    main: on
+    direction:  'output'
+},
+port InputPort {
+    name:       'input'
+    main: on
+    size: 2
+    direction:  'input'
+}
+]
     blocks: [
-        signal Input[2] {},
-        switch Output {}
     ]
     streams: [
        Input[1] <= Input[2] >> Output;
@@ -52,11 +90,21 @@ module LessOrEqual {
 }
 
 module Equal {
-    input: Input
-    output: Output
+
+ports: [
+port OutputPort {
+    name:       'output'
+    main: on
+    direction:  'output'
+},
+port InputPort {
+    name:       'input'
+    main: on
+    size: 2
+    direction:  'input'
+}
+]
     blocks: [
-        signal Input[2] {},
-        switch Output {}
     ]
     streams: [
        Input[1] == Input[2] >> Output;
@@ -65,11 +113,21 @@ module Equal {
 }
 
 module NotEqual {
-    input: Input
-    output: Output
+
+ports: [
+port OutputPort {
+    name:       'output'
+    main: on
+    direction:  'output'
+},
+port InputPort {
+    name:       'input'
+    main: on
+    size: 2
+    direction:  'input'
+}
+]
     blocks: [
-        signal Input[2] {},
-        switch Output {}
     ]
     streams: [
        Input[1] != Input[2] >> Output;
@@ -79,8 +137,20 @@ module NotEqual {
 
  # FIXME AudioRate needs to be streamRate
 module Select {
-    input: Input
-    output: Output
+
+ports: [
+port OutputPort {
+    name:       'output'
+    main: on
+    direction:  'output'
+},
+port InputPort {
+    name:       'input'
+    main: on
+    block: Input
+    direction:  'input'
+}
+]
     ports:  [
 		port WhenOnProperty {
     	   name: "whenOn"
@@ -98,12 +168,7 @@ module Select {
                 default :       on
                 rate:           AudioRate
                 domain:         streamDomain
-        },
-        signal Output {
-                default :       0.0
-                rate:           AudioRate
-                domain:         streamDomain
-        },
+        }
         signal WhenOn {
                 default :       0.0
                 rate:           AudioRate
@@ -124,8 +189,21 @@ module Select {
 
  # FIXME AudioRate needs to be streamRate
 module OnChange {
-    input: Input
-    output: Output
+
+ports: [
+port OutputPort {
+    name:       'output'
+    main: on
+    block: Output
+    direction:  'output'
+},
+port InputPort {
+    name:       'input'
+    main: on
+    block: Input
+    direction:  'input'
+}
+]
     ports:  [
     ]
     blocks: [
@@ -143,6 +221,12 @@ module OnChange {
 		reaction OnChangedReaction {
 			output: Output
 			ports: [
+            port OutputPort {
+            name:       'output'
+            main: on
+            block: Output
+            direction:  'output'
+        },
 				port OutputProperty {
 					name: "output"
 					block: OutputValue
@@ -170,8 +254,20 @@ module OnChange {
 module Compare {
     input: Input
     output: Output
-	ports: [
-		port OperatorProperty {
+    ports: [
+    port OutputPort {
+        name:       'output'
+        main: on
+        block: Output
+        direction:  'output'
+    },
+    port InputPort {
+        name:       'input'
+        main: on
+        size: 2
+        direction:  'input'
+    },
+    port OperatorProperty {
 			name: "operator"
 			block: Operator
 #			type: [""] # Any type for now
@@ -183,7 +279,6 @@ module Compare {
 		}
 	]
     blocks: [
-        signal Input[2] {},
         switch Output {},
 		signal Operator {},
 		signal Value {}

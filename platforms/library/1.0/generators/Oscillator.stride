@@ -5,6 +5,7 @@ module Oscillator {
 			main: on
 			direction: "output"
 			block: Output
+			domain: OutputDomain
 		}
 		port FrequencyProperty {
 			name: "frequency"
@@ -57,7 +58,8 @@ module Oscillator {
                 default :       off
 		}
         signal Phase {
-                default :       0.0
+            default :       0.0
+			domain: OutputDomain
 		}
         signal PhaseInc {
                 default :       0.0

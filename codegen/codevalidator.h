@@ -46,6 +46,9 @@ public:
     static QVector<AST *> getInheritedPorts(BlockNode *block, QVector<AST *> scope, AST *tree);
     static QStringList getInheritedTypeNames(BlockNode *block, QVector<AST *> scope, AST *tree);
 
+    static BlockNode *getMainOutputPortBlock(BlockNode *moduleBlock);
+    static BlockNode *getMainInputPortBlock(BlockNode *moduleBlock);
+
     /// Number of parallel streams that a single stream can be broken up into
     static int numParallelStreams(StreamNode *stream, StridePlatform &platform, QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
 
