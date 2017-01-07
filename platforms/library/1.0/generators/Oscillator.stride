@@ -62,7 +62,8 @@ module Oscillator {
 			domain: OutputDomain
 		}
         signal PhaseInc {
-                default :       0.0
+			default :       0.0
+			domain: FrequencyDomain
 		}
         signal NewPhase {}
         _sineType SineBlock {}

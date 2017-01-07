@@ -301,7 +301,7 @@ void CodeValidator::validateBundleIndeces(AST *node, QVector<AST *> scope)
     if (node->getNodeType() == AST::Bundle) {
         BundleNode *bundle = static_cast<BundleNode *>(node);
         PortType type = resolveNodeOutType(bundle->index(), scope, m_tree);
-        if(type != ConstInt /*&& type != ControlInt && type != AudioInteger*/) {
+        if(type != ConstInt && type != Signal /*&& type != ControlInt && type != AudioInteger*/) {
             LangError error;
             error.type = LangError::IndexMustBeInteger;
             error.lineNumber = bundle->getLine();

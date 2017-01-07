@@ -40,7 +40,8 @@ class BaseCTemplate(object):
         self.str_increment = '%s += %s;\n'
         self.str_module_declaration = '''
         
-struct %s {
+class %s {
+public:
     %s %s() {
         %s
     }
@@ -48,7 +49,8 @@ struct %s {
 };
 '''        
         self.str_reaction_declaration = '''
-struct %s {
+class %s {
+public:
     %s %s() {
         %s
     }
@@ -393,32 +395,36 @@ struct %s {
             return ''
         
     # Module code ------------------------------------------------------------
-    def module_declaration(self, name, header_code, init_code,
-                           output_block, input_block, process_code):
-        input_declaration = ''
-        if input_block:
-#            if 'blockbundle' in input_block:
-#                for i in range(input_block['blockbundle']['size']):
-#                    block_type = self.get_block_type(input_block)
-#                    block_name = input_block['blockbundle']['name']
-#                    if block_type == 'real':
-#                        input_declaration += self.declaration_real(block_name + str(i), close = False) + ", "
-#                input_declaration = input_declaration[:-2]
-#            else:
-            input_declaration = self.declaration(input_block, close = False)
-            if output_block:
-                input_declaration +=  ", " + self.declaration_reference(output_block, False)
-        else: # No input, only output
-            input_declaration = ''                              
-            if output_block:
-                input_declaration += self.declaration_reference(output_block, False)
+    def module_declaration(self, name, header_code, init_code, process_code):
+
         out_type = 'void'
         
         process_str = '''%s process_%s(%s) {
         %s
     }'''
         process_functions = ''
-        for domain, domain_proc_code in process_code.items():
+        for domain, domain_components in process_code.items():
+            domain_proc_code = domain_components['code']
+            #TODO is there need to support multiple input/output blocks here?
+            input_block = domain_components['input_blocks'][0]
+            output_block = domain_components['output_blocks'][0]
+            input_declaration = ''
+            if input_block:
+    #            if 'blockbundle' in input_block:
+    #                for i in range(input_block['blockbundle']['size']):
+    #                    block_type = self.get_block_type(input_block)
+    #                    block_name = input_block['blockbundle']['name']
+    #                    if block_type == 'real':
+    #                        input_declaration += self.declaration_real(block_name + str(i), close = False) + ", "
+    #                input_declaration = input_declaration[:-2]
+    #            else:
+                input_declaration = self.declaration(input_block, close = False)
+                if output_block:
+                    input_declaration +=  ", " + self.declaration_reference(output_block, False)
+            else: # No input, only output
+                input_declaration = ''                              
+                if output_block:
+                    input_declaration += self.declaration_reference(output_block, False)
             process_functions += process_str%(out_type, str(domain), input_declaration, domain_proc_code)
             
         declaration = self.str_module_declaration%(name, header_code, name, init_code, process_functions)
@@ -440,21 +446,21 @@ struct %s {
         code += ')'
         return code
         
-    def module_property_setter(self, name, block_name, prop_type):
-        code = ''
-        if prop_type == 'real':
-            code += 'void set_' + name + '(float value) {\n'
-            code += block_name + ' = value;\n'
-            code += '\n}\n'
-        elif prop_type == 'bool':
-            code += 'void set_' + name + '(bool value) {\n'
-            code += block_name + ' = value;\n'
-            code += '\n}\n'
-        elif prop_type == 'string':
-            code += 'void set_' + name + '(' + self.string_type + ' value) {\n'
-            code += block_name + ' = value;\n'
-            code += '\n}\n'
-        return code
+#    def module_property_setter(self, name, block_name, prop_type):
+#        code = ''
+#        if prop_type == 'real':
+#            code += 'void set_' + name + '(float value) {\n'
+#            code += block_name + ' = value;\n'
+#            code += '\n}\n'
+#        elif prop_type == 'bool':
+#            code += 'void set_' + name + '(bool value) {\n'
+#            code += block_name + ' = value;\n'
+#            code += '\n}\n'
+#        elif prop_type == 'string':
+#            code += 'void set_' + name + '(' + self.string_type + ' value) {\n'
+#            code += block_name + ' = value;\n'
+#            code += '\n}\n'
+#        return code
         
     def module_output_code(self, output_block):
         code = ''        
