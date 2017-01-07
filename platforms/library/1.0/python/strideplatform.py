@@ -852,19 +852,23 @@ class ModuleAtom(Atom):
         
     def get_inline_processing_code(self, in_tokens):
         code = ''
+        # TODO handle correctly the calling of input and output domain functions for modules where it is different
         if self._input_block and 'blockbundle' in self._input_block:
             in_tokens = ['_%s_in'%self.handle]
+            in_domain = self._input_block['domain']
+            
         if self._output_block:
+            out_domain = self._output_block['domain']
             if 'size' in self._output_block:
                 code = templates.module_processing_code(self.handle, 
                                                         in_tokens,
-                                                        '_' + self.name + '_%03i_out'%self._index,
-                                                        self.domain
+                                                        ['_' + self.name + '_%03i_out'%self._index],
+                                                        out_domain
                                                         )
             else:
-                code = templates.module_processing_code(self.handle, in_tokens, self.out_tokens[0], self.domain)
+                code = templates.module_processing_code(self.handle, in_tokens, self.out_tokens, out_domain)
         else:
-            code = templates.module_processing_code(self.handle, in_tokens, '', self.domain)
+            code = templates.module_processing_code(self.handle, in_tokens, [], in_domain)
         return code
     
     def get_initialization_code(self, in_tokens):
@@ -1011,12 +1015,6 @@ class ModuleAtom(Atom):
                     input_name = port['block']['block']
                 if 'direction' in port['block'] and port['block']['direction'] == 'output':
                     output_name = port['block']['block']
-        
-        # TODO remove these checks once the obsolte input and output properties are removed
-        if 'input' in self.module and not input_name:
-            input_name = self.module["input"]
-        if 'output' in self.module and not output_name:
-            output_name = self.module["output"]
             
         self._blocks = []
         for block in blocks:

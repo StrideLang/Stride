@@ -434,14 +434,14 @@ public:
         code = handle + '.set_' + port_name + '(' + in_tokens[0] + ');'
         return code
         
-    def module_processing_code(self, handle, in_tokens, out_token, domain_name):
+    def module_processing_code(self, handle, in_tokens, out_tokens, domain_name):
         code = handle + '.process_' + str(domain_name) + '('
         for in_token in in_tokens:
             code += in_token + ", "
             
-        if not out_token == '':
-            code += out_token
-        elif len(in_tokens) > 0:
+        for out_token in out_tokens:
+            code += out_token + ", "
+        if (len(in_tokens) > 0 and len(out_tokens) == 0) or (len(out_tokens) > 0):
             code = code[:-2] # Chop off extra comma
         code += ')'
         return code

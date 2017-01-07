@@ -138,20 +138,18 @@ port InputPort {
  # FIXME AudioRate needs to be streamRate
 module Select {
 
-ports: [
-port OutputPort {
-    name:       'output'
-    main: on
-    direction:  'output'
-},
-port InputPort {
-    name:       'input'
-    main: on
-    block: Input
-    direction:  'input'
-}
-]
-    ports:  [
+	ports: [
+		port OutputPort {
+			name:       'output'
+			main: on
+			direction:  'output'
+		},
+		port InputPort {
+			name:       'input'
+			main: on
+			block: Input
+			direction:  'input'
+		},
 		port WhenOnProperty {
     	   name: "whenOn"
            block: WhenOn
