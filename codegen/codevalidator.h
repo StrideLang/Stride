@@ -72,6 +72,7 @@ public:
     static QString getPortTypeName(PortType type);
 
     static std::string getNodeDomainName(AST *node, QVector<AST *> scopeStack, AST *tree);
+    static std::string getDomainNodeString(AST *node);
     static QVector<AST *> getBlocksInScope(AST *root, QVector<AST *> scopeStack, AST *tree);
 
     void validate();

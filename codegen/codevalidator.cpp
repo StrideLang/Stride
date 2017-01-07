@@ -1695,15 +1695,24 @@ string CodeValidator::getNodeDomainName(AST *node, QVector<AST *> scopeStack, AS
     }
 
     if (domainNode) {
-        if (domainNode->getNodeType() == AST::String) {
-            domainName = static_cast<ValueNode *>(domainNode)->getStringValue();
-        } else if (domainNode->getNodeType() == AST::Block) {
-            BlockNode *domainBlock = static_cast<BlockNode *>(domainNode);
-            if (domainBlock->getObjectType() == "_domain") {
-                AST *domainValue = domainBlock->getPropertyValue("domainName");
-                if (domainValue->getNodeType() == AST::String) {
-                    domainName = static_cast<ValueNode *>(domainValue)->getStringValue();
-                }
+        domainName = getDomainNodeString(domainNode);
+
+    }
+    return domainName;
+}
+
+string CodeValidator::getDomainNodeString(AST *domainNode)
+{
+    Q_ASSERT(domainNode);
+    string domainName;
+    if (domainNode->getNodeType() == AST::String) {
+        domainName = static_cast<ValueNode *>(domainNode)->getStringValue();
+    } else if (domainNode->getNodeType() == AST::Block) {
+        BlockNode *domainBlock = static_cast<BlockNode *>(domainNode);
+        if (domainBlock->getObjectType() == "_domain") {
+            AST *domainValue = domainBlock->getPropertyValue("domainName");
+            if (domainValue->getNodeType() == AST::String) {
+                domainName = static_cast<ValueNode *>(domainValue)->getStringValue();
             }
         }
     }

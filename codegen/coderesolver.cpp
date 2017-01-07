@@ -222,7 +222,39 @@ void CodeResolver::declareModuleInternalBlocks()
                         Q_ASSERT(domainPortValue->getNodeType() == AST::Name || domainPortValue->getNodeType() == AST::None); // Catch on debug but fail gracefully on release
                         string domainName;
 
-                        if (domainPortValue->getNodeType() == AST::Name) {
+                        if (domainPortValue->getNodeType() == AST::None) { // Make default port domains match the main output/input port domain
+                            BlockNode *outputPortBlock = CodeValidator::getMainOutputPortBlock(block);
+                            AST *domainNode = nullptr;
+                            QVector<AST *> subDomain;
+                            for (AST *node: internalBlocks->getChildren()) {
+                                subDomain << node;
+                            }
+                            if (outputPortBlock) {
+                                if (outputPortBlock->getDomain()->getNodeType() == AST::Name) {
+                                    string name = static_cast<NameNode *>(outputPortBlock->getDomain())->getName();
+                                    domainNode = CodeValidator::findDeclaration(QString::fromStdString(name), subDomain, m_tree);
+                                } else {
+                                    domainNode = outputPortBlock->getDomain();
+                                }
+                            } else {
+                                BlockNode *inputPortBlock = CodeValidator::getMainInputPortBlock(block);
+                                if (inputPortBlock) { // If output port not available use input port domain
+                                    if (inputPortBlock->getDomain()->getNodeType() == AST::Name) {
+                                        string name = static_cast<NameNode *>(outputPortBlock->getDomain())->getName();
+                                        domainNode = CodeValidator::findDeclaration(QString::fromStdString(name), subDomain, m_tree);
+                                    } else {
+                                        domainNode = inputPortBlock->getDomain();
+                                    }
+                                }
+                            }
+                            if (domainNode) {
+                                domainName = CodeValidator::getDomainNodeString(domainNode);
+                            }
+                            if (domainName.size() > 0) {
+                                ValueNode *domainNameNode = new ValueNode(domainName, "", -1);
+                                portBlock->replacePropertyValue("domain", domainNameNode);
+                            }
+                        } else if (domainPortValue->getNodeType() == AST::Name) { // Auto declare domain if not declared
                             NameNode *nameNode = static_cast<NameNode *>(domainPortValue);
                             domainName = nameNode->getName();
                             declareIfMissing(domainName, internalBlocks, new ValueNode("", -1)); // TODO should we autodelcare domains here?

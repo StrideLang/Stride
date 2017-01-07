@@ -873,7 +873,31 @@ class ModuleAtom(Atom):
     
     def get_initialization_code(self, in_tokens):
         code = ''
-        ports = self.function['ports']
+        # Go through the module ports and check if the function is setting any by
+        # value. This means that the call needs to be put into the initialization
+        # of the domain
+        for module_port in self.module['ports']:
+            module_port_domain = ''
+            if 'block' in module_port:
+                module_block = module_port['block']
+            elif 'blockbundle' in module_port:
+                module_block = module_port['blockbundle']
+            if  'domain' in module_block and module_block['domain']:
+                if type(module_block['domain']) == str:
+                    module_port_domain = module_block['domain']
+                else:
+                    module_port_domain = module_block['domain']['name']['name']
+            module_port_name = module_block['name']
+            module_port_direction = module_block['direction']
+            for port_atom_name in self.port_name_atoms:
+                if port_atom_name == module_port_name:
+                    for port_value in self.port_name_atoms[port_atom_name]:
+                        # TODO implement for output ports
+                        if type(port_value) is ValueAtom and module_port_direction == 'input':
+                            #if port_atom.
+                            module_call = templates.module_processing_code(self.handle, port_value.get_handles(), [], module_port_domain)
+                            code += templates.expression(module_call)
+                    pass
 #        for port_name in ports:
 #            if 'value' in ports[port_name]:
 #                if type(ports[port_name]['value']) == unicode:
@@ -930,6 +954,32 @@ class ModuleAtom(Atom):
         code = '' 
         out_tokens = self.out_tokens
         domain = self.domain
+        
+        # Process port domains
+        for module_port in self.module['ports']:
+            module_port_domain = ''
+            if 'block' in module_port:
+                module_block = module_port['block']
+            elif 'blockbundle' in module_port:
+                module_block = module_port['blockbundle']
+            if  'domain' in module_block and module_block['domain']:
+                if type(module_block['domain']) == str:
+                    module_port_domain = module_block['domain']
+                else:
+                    module_port_domain = module_block['domain']['name']['name']
+            module_port_name = module_block['name']
+            module_port_direction = module_block['direction']
+            for port_atom_name in self.port_name_atoms:
+                if port_atom_name == module_port_name:
+                    for port_value in self.port_name_atoms[port_atom_name]:
+                        # TODO implement for output ports
+                        if not type(port_value) is ValueAtom and module_port_direction == 'input':
+                            #if port_atom.
+                            module_call = templates.module_processing_code(self.handle, port_value.get_handles(), [], module_port_domain)
+                            code += templates.expression(module_call)
+                    pass        
+        
+        
         if 'output' in self.module and not self.module['output'] is None: #For Platform types
             if self.inline:
                 code += self.get_handles()[0]
@@ -937,6 +987,9 @@ class ModuleAtom(Atom):
                 code += templates.expression(self.get_inline_processing_code(in_tokens)) 
         else:
             code += templates.expression(self.get_inline_processing_code(in_tokens))
+        for port_atom in self.port_name_atoms:
+            pass
+            
         return {domain : [code, out_tokens] }
         
 #    def _get_internal_header_code(self):
