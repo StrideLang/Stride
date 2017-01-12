@@ -786,7 +786,8 @@ class ModuleAtom(Atom):
             if not domain in process_code:
                 process_code[domain] = {"code": '', "input_blocks" : [], "output_blocks" : []}
             #TODO set blocks from port declarations for modules
-                
+            
+
             process_code[domain]['input_blocks'].append(self._input_block)
             process_code[domain]['output_blocks'].append(self._output_block)
             
@@ -828,9 +829,9 @@ class ModuleAtom(Atom):
                 inst.post = False
                 inst.add_dependent(module_instance)
                 instances.append(inst)
-        for atoms in self.port_name_atoms.values():
-            for atom in atoms:
-                instances += atom.get_instances()
+#        for atoms in self.port_name_atoms.values():
+#            for atom in atoms:
+#                instances += atom.get_instances()
         if len(self.out_tokens) > 0 and self.module['output']:
             out_block = self.find_internal_block(self.module['output']['name']['name'])
         elif self._output_block:

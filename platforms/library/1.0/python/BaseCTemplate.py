@@ -60,6 +60,10 @@ public:
 };
 '''
 
+        self.str_function_declaration = '''%s process_%s(%s) {
+        %s
+    }'''
+
         pass
     
     def number_to_string(self, number):
@@ -399,9 +403,7 @@ public:
 
         out_type = 'void'
         
-        process_str = '''%s process_%s(%s) {
-        %s
-    }'''
+        process_str = self.str_function_declaration
         process_functions = ''
         for domain, domain_components in process_code.items():
             domain_proc_code = domain_components['code']

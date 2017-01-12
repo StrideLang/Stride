@@ -114,19 +114,19 @@ port InputPort {
 
 module NotEqual {
 
-ports: [
-port OutputPort {
-    name:       'output'
-    main: on
-    direction:  'output'
-},
-port InputPort {
-    name:       'input'
-    main: on
-    size: 2
-    direction:  'input'
-}
-]
+	ports: [
+		port OutputPort {
+			name:       'output'
+			main: on
+			direction:  'output'
+		},
+		port InputPort {
+			name:       'input'
+			main: on
+			size: 2
+			direction:  'input'
+		}
+	]
     blocks: [
     ]
     streams: [
@@ -151,32 +151,19 @@ module Select {
 			direction:  'input'
 		},
 		port WhenOnProperty {
-    	   name: "whenOn"
-           block: WhenOn
-           meta: ""
+			name: "whenOn"
+			block: WhenOn
+			meta: ""
+			domain: WhenOnDomain
         },
-        port WhenOffProperty {
-            name: "whenOff"
-            block: WhenOff
-            meta: ""
+		port WhenOffProperty {
+			name: "whenOff"
+			block: WhenOff
+			meta: ""
+			domain: WhenOffDomain
         }
     ]
     blocks: [
-        switch Input {
-                default :       on
-                rate:           AudioRate
-                domain:         streamDomain
-        }
-        signal WhenOn {
-                default :       0.0
-                rate:           AudioRate
-                domain:         streamDomain
-        },
-        signal WhenOff {
-                default :       0.0
-                rate:           AudioRate
-                domain:         streamDomain
-        },
         _selectType SelectBlock {}
     ]
     streams: [
