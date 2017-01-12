@@ -720,6 +720,7 @@ void CodeResolver::processDomains()
             BlockNode *module = static_cast<BlockNode *>(node);
             if (module->getObjectType() == "module") {
                 AST *streamsNode = module->getPropertyValue("streams");
+                AST *blocksNode = module->getPropertyValue("blocks");
                 ListNode *newStreamsList = new ListNode(nullptr, "", -1);
                 QVector<AST *> scopeStack;
                 scopeStack << CodeValidator::getBlocksInScope(module, QVector<AST *>(), m_tree);
@@ -727,8 +728,14 @@ void CodeResolver::processDomains()
                     for (AST * stream: streamsNode->getChildren()) {
                         if (stream->getNodeType() == AST::Stream) {
                             QVector<AST *> streams = sliceStreamByDomain(static_cast<StreamNode *>(stream), scopeStack);
-                            for (AST * newStream: streams) {
-                                newStreamsList->addChild(newStream->deepCopy());
+                            for (AST * node: streams) {
+                                if (node->getNodeType() == AST::Stream) {
+                                    newStreamsList->addChild(node->deepCopy());
+                                } else if (node->getNodeType() == AST::Block || node->getNodeType() == AST::BlockBundle) {
+                                    blocksNode->addChild(node->deepCopy());
+                                } else {
+                                    qDebug() << "Stream slicing must result in streams or blocks.";
+                                }
                             }
                         }
                     }
@@ -1752,8 +1759,31 @@ QVector<AST *> CodeResolver::sliceStreamByDomain(StreamNode *stream, QVector<AST
             int size = CodeValidator::getNodeSize(left, m_tree);
             // FIXME make sure connectorName is not declared in current scope
             std::string connectorName = "_BridgeSig_" + std::to_string(m_connectorCounter++);
-            AST *closingName = new NameNode(connectorName, "", -1);
-            StreamNode *newStream;
+            AST *closingName = nullptr;
+            StreamNode *newStream = nullptr;
+            AST *newStart = nullptr;
+            vector<AST *> newDeclarations;
+            if (left->getNodeType() == AST::List) {
+                closingName = new ListNode(nullptr, "", -1);
+                newStart = new ListNode(nullptr, "", -1);
+                for (unsigned int i = 0; i < left->getChildren().size(); i++) {
+                    string listMemberName = connectorName + "_" + std::to_string(i);
+                    newDeclarations.push_back(new BlockNode(listMemberName, "signalbridge", nullptr, "", -1));
+                    closingName->addChild(new NameNode(listMemberName, "", -1));
+                    newStart->addChild(new NameNode(listMemberName, "", -1));
+                }
+                // Slice
+            } else {
+                if (size == 1) {
+                     newDeclarations.push_back(new BlockNode(connectorName, "signalbridge", nullptr, "", -1));
+                } else {
+                     newDeclarations.push_back(new BlockNode(
+                                                   new BundleNode(connectorName, new ListNode(new ValueNode(size, "", -1), "", -1), "", -1),
+                                                   "signalbridge", nullptr, "", -1));
+                }
+                closingName = new NameNode(connectorName, "", -1);
+                newStart = new NameNode(connectorName, "", -1);
+            }
             if (stack.size() == 0) {
                 newStream = new StreamNode(closingName, left, left->getFilename().c_str(), left->getLine());
             } else {
@@ -1765,17 +1795,11 @@ QVector<AST *> CodeResolver::sliceStreamByDomain(StreamNode *stream, QVector<AST
                 newStream = new StreamNode(lastNode, newStream, lastNode->getFilename().c_str(), lastNode->getLine());
                 stack.pop_back();
             }
-            streams << newStream;
-            AST *newStart = new NameNode(connectorName, "", -1);
-            if (size == 1) {
-                streams << new BlockNode(connectorName, "signalbridge", nullptr, "", -1);
-            } else {
-                streams << new BlockNode(
-                               new BundleNode(connectorName, new ListNode(new ValueNode(size, "", -1), "", -1), "", -1),
-                               "signalbridge", nullptr, "", -1);
+            for (AST *declaration: newDeclarations) {
+                streams << declaration;
             }
+            streams << newStream;
             stack << newStart << left;
-            // Slice
         } else {
             stack << left;
         }
