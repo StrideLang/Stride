@@ -168,10 +168,7 @@ void CodeResolver::declareModuleInternalBlocks()
                     outDomain = outBlockName;
                     AST *outDomainDeclaration = CodeValidator::findDeclaration("_OutputDomain", QVector<AST *>(), internalBlocks);
                     if (!outDomainDeclaration) {
-                        BlockNode *newDomainBlock = new BlockNode("_OutputDomain", "_domain", nullptr, "", -1);
-                        newDomainBlock->addProperty(
-                                    new PropertyNode("domainName",
-                                                     new ValueNode(std::string("_OutputDomain"),"", -1), "", -1));
+                        BlockNode *newDomainBlock = createDomainDeclaration(QString::fromStdString("_OutputDomain"));
                         internalBlocks->addChild(newDomainBlock);
                     }
                 }
@@ -216,48 +213,60 @@ void CodeResolver::declareModuleInternalBlocks()
                         } else if (ratePortValue->getNodeType() == AST::None) {
                             // Do nothing
                         }  else {
-                            qDebug() << "CodeResolver::declareModuleInternalBlocks() rate unrecognized.";
+                            qDebug() << "Rate unrecognized.";
                         }
 
                         Q_ASSERT(domainPortValue->getNodeType() == AST::Name || domainPortValue->getNodeType() == AST::None); // Catch on debug but fail gracefully on release
                         string domainName;
 
                         if (domainPortValue->getNodeType() == AST::None) { // Make default port domains match the main output/input port domain
-                            BlockNode *outputPortBlock = CodeValidator::getMainOutputPortBlock(block);
+
                             AST *domainNode = nullptr;
-                            QVector<AST *> subDomain;
+                            QVector<AST *> subScope;
                             for (AST *node: internalBlocks->getChildren()) {
-                                subDomain << node;
+                                subScope << node;
                             }
-                            if (outputPortBlock) {
-                                if (outputPortBlock->getDomain()->getNodeType() == AST::Name) {
-                                    string name = static_cast<NameNode *>(outputPortBlock->getDomain())->getName();
-                                    domainNode = CodeValidator::findDeclaration(QString::fromStdString(name), subDomain, m_tree);
-                                } else {
-                                    domainNode = outputPortBlock->getDomain();
-                                }
-                            } else {
-                                BlockNode *inputPortBlock = CodeValidator::getMainInputPortBlock(block);
-                                if (inputPortBlock) { // If output port not available use input port domain
-                                    if (inputPortBlock->getDomain()->getNodeType() == AST::Name) {
-                                        string name = static_cast<NameNode *>(outputPortBlock->getDomain())->getName();
-                                        domainNode = CodeValidator::findDeclaration(QString::fromStdString(name), subDomain, m_tree);
-                                    } else {
-                                        domainNode = inputPortBlock->getDomain();
-                                    }
-                                }
-                            }
-                            if (domainNode) {
+//                            BlockNode *outputPortBlock = CodeValidator::getMainOutputPortBlock(block);
+//                            if (outputPortBlock) {
+//                                if (outputPortBlock->getDomain()->getNodeType() == AST::Name) {
+//                                    string name = static_cast<NameNode *>(outputPortBlock->getDomain())->getName();
+//                                    domainNode = CodeValidator::findDeclaration(QString::fromStdString(name), subScope, m_tree);
+//                                } else {
+//                                    domainNode = outputPortBlock->getDomain();
+//                                }
+//                            } else {
+//                                BlockNode *inputPortBlock = CodeValidator::getMainInputPortBlock(block);
+//                                if (inputPortBlock) { // If output port not available use input port domain
+//                                    if (inputPortBlock->getDomain()->getNodeType() == AST::Name) {
+//                                        string name = static_cast<NameNode *>(outputPortBlock->getDomain())->getName();
+//                                        domainNode = CodeValidator::findDeclaration(QString::fromStdString(name), subScope, m_tree);
+//                                    } else {
+//                                        domainNode = inputPortBlock->getDomain();
+//                                    }
+//                                }
+//                            }
+                            if (domainNode && domainNode->getNodeType() != AST::None) {
                                 domainName = CodeValidator::getDomainNodeString(domainNode);
-                            }
-                            if (domainName.size() > 0) {
+                                if (domainName.size() > 0) {
+                                    ValueNode *domainNameNode = new ValueNode(domainName, "", -1);
+                                    portBlock->replacePropertyValue("domain", domainNameNode);
+                                }
+                            } else { // If no domain set and block has no domain, then make a new domain for port.
+                                domainName = "_" + portBlock->getName() + "Domain";
+                                // TODO check to make sure domain does not exist in scope
+
+                                BlockNode *domainDeclaration = CodeValidator::findDeclaration(QString::fromStdString(domainName), subScope, m_tree);
+                                if (!domainDeclaration) {
+                                    domainDeclaration = createDomainDeclaration(QString::fromStdString(domainName));
+                                    internalBlocks->addChild(domainDeclaration);
+                                }
                                 ValueNode *domainNameNode = new ValueNode(domainName, "", -1);
                                 portBlock->replacePropertyValue("domain", domainNameNode);
                             }
                         } else if (domainPortValue->getNodeType() == AST::Name) { // Auto declare domain if not declared
                             NameNode *nameNode = static_cast<NameNode *>(domainPortValue);
                             domainName = nameNode->getName();
-                            declareIfMissing(domainName, internalBlocks, new ValueNode("", -1)); // TODO should we autodelcare domains here?
+                            declareIfMissing(domainName, internalBlocks, new ValueNode("", -1)); // TODO should we autodeclare domains here?
                         }
 
                         Q_ASSERT(sizePortValue->getNodeType() == AST::Int || sizePortValue->getNodeType() == AST::Name || sizePortValue->getNodeType() == AST::None); // Catch on debug but fail gracefully on release
@@ -1057,6 +1066,15 @@ void CodeResolver::setDomainForStack(QList<AST *> domainStack, string domainName
     }
 }
 
+BlockNode *CodeResolver::createDomainDeclaration(QString name)
+{
+    BlockNode *newBlock = nullptr;
+    newBlock = new BlockNode(name.toStdString(), "_domain", NULL, "", -1);
+    newBlock->addProperty(new PropertyNode("domainName", new ValueNode(name.toStdString(), "", -1), "", -1));
+    fillDefaultPropertiesForNode(newBlock);
+    return newBlock;
+}
+
 BlockNode *CodeResolver::createSignalDeclaration(QString name, int size)
 {
     BlockNode *newBlock = nullptr;
@@ -1763,10 +1781,10 @@ QVector<AST *> CodeResolver::sliceStreamByDomain(StreamNode *stream, QVector<AST
             StreamNode *newStream = nullptr;
             AST *newStart = nullptr;
             vector<AST *> newDeclarations;
-            if (left->getNodeType() == AST::List) {
+            if (stack.size() > 0 &&  stack.back()->getNodeType() == AST::List) {
                 closingName = new ListNode(nullptr, "", -1);
                 newStart = new ListNode(nullptr, "", -1);
-                for (unsigned int i = 0; i < left->getChildren().size(); i++) {
+                for (unsigned int i = 0; i < stack.back()->getChildren().size(); i++) {
                     string listMemberName = connectorName + "_" + std::to_string(i);
                     newDeclarations.push_back(new BlockNode(listMemberName, "signalbridge", nullptr, "", -1));
                     closingName->addChild(new NameNode(listMemberName, "", -1));

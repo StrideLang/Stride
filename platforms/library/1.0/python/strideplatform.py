@@ -847,6 +847,18 @@ class ModuleAtom(Atom):
                                  self.domain,
                                  block_types[0],
                                  self.out_tokens[0]) ]
+        for name, atoms in self.port_name_atoms.items():
+            for atom in atoms:
+                decl = self.platform.find_declaration_in_tree(atom.get_handles(),
+                                                              self.platform.tree + self.module['blocks'])
+                if not decl and type(atom) is NameAtom:
+                    # TODO need to check expressions and add instances within expression members
+                    default_value = 0.0
+                    instances += [Instance(default_value,
+                                     atom.get_scope_index(),
+                                     atom.get_domain(),
+                                     'real',
+                                     atom.get_handles()[0])]
                                  
         instances += [module_instance ]
         return instances
@@ -884,7 +896,7 @@ class ModuleAtom(Atom):
             elif 'blockbundle' in module_port:
                 module_block = module_port['blockbundle']
             if  'domain' in module_block and module_block['domain']:
-                if type(module_block['domain']) == str:
+                if type(module_block['domain']) == str or type(module_block['domain']) == unicode:
                     module_port_domain = module_block['domain']
                 else:
                     module_port_domain = module_block['domain']['name']['name']
@@ -926,22 +938,22 @@ class ModuleAtom(Atom):
     def get_preprocessing_code(self, in_tokens):
         code = ''
         ports = self.function['ports']
-        for port_name in ports:
-            if 'value' in ports[port_name]:
-                if type(ports[port_name]['value']) == unicode:
-                     port_in_token = [ '"' + ports[port_name]['value'] + '"']
-                else:
-                    port_in_token = [str(ports[port_name]['value'])]
-            elif 'name' in ports[port_name]:
-                port_in_token = [ports[port_name]['name']['name']]
-            elif 'expression' in ports[port_name]:
-                port_in_token = [self.port_name_atoms[port_name][0].get_handles()[0]]
-            elif 'bundle' in ports[port_name]:
-                port_in_token = [templates.bundle_indexing(ports[port_name]['bundle']['name'],
-                                                           ports[port_name]['bundle']['index'])]
-            else:
-                port_in_token = ['____XXX___'] # TODO implement
-            code += templates.module_set_property(self.handle, port_name, port_in_token)
+#        for port_name in ports:
+#            if 'value' in ports[port_name]:
+#                if type(ports[port_name]['value']) == unicode:
+#                     port_in_token = [ '"' + ports[port_name]['value'] + '"']
+#                else:
+#                    port_in_token = [str(ports[port_name]['value'])]
+#            elif 'name' in ports[port_name]:
+#                port_in_token = [ports[port_name]['name']['name']]
+#            elif 'expression' in ports[port_name]:
+#                port_in_token = [self.port_name_atoms[port_name][0].get_handles()[0]]
+#            elif 'bundle' in ports[port_name]:
+#                port_in_token = [templates.bundle_indexing(ports[port_name]['bundle']['name'],
+#                                                           ports[port_name]['bundle']['index'])]
+#            else:
+#                port_in_token = ['____XXX___'] # TODO implement
+#            code += templates.module_set_property(self.handle, port_name, port_in_token)
             
         if self._input_block and 'blockbundle' in self._input_block:
             new_code = templates.declaration_bundle_real('_%s_in'%self.handle, len(in_tokens)) + '\n'
@@ -964,7 +976,7 @@ class ModuleAtom(Atom):
             elif 'blockbundle' in module_port:
                 module_block = module_port['blockbundle']
             if  'domain' in module_block and module_block['domain']:
-                if type(module_block['domain']) == str:
+                if type(module_block['domain']) == str or type(module_block['domain']) == unicode:
                     module_port_domain = module_block['domain']
                 else:
                     module_port_domain = module_block['domain']['name']['name']
@@ -1052,7 +1064,8 @@ class ModuleAtom(Atom):
                         else:
                             # Property is not a block but a constant value.
                             pass  
-                        
+
+        
         self.globals = {}
         for section in self.global_sections:
             if section in self.code['global_groups']:
@@ -1118,8 +1131,6 @@ class ReactionAtom(Atom):
         self.reaction = reaction
         self.function = function
         self.rate = -1 # Should reactions have rates?
-        
-        self.port_name_atoms = {}
         
         self.domain = None
         if 'domain' in self.function['ports']:
@@ -1656,7 +1667,7 @@ class PlatformFunctions:
                 
                 for domain in new_processing_code:
                     code, out_tokens = new_processing_code[domain]
-                    self.log_debug("Code:  " + str(code))
+                    #self.log_debug("Code:  " + str(code))
                     if not domain:
                         domain = current_domain
                     processing_code[domain] += code + '\n'
@@ -1735,7 +1746,6 @@ class PlatformFunctions:
             if 'stream' in node: # Everything grows from streams.
                 code = self.generate_stream_code(node["stream"], stream_index,
                                                  global_groups)
-                self.log_debug("* Ending Generation -----")
                 # FIXME should merge global groups from different streams...
                 global_groups_code = code['global_groups']
                 for domain, header_code in code["header_code"].items():
@@ -1762,7 +1772,7 @@ class PlatformFunctions:
                 scope_declarations += code["scope_declarations"]
                 scope_instances += code["scope_instances"]
                 stream_index += 1
-                
+        
         declared = []
 
         header_elements = scope_declarations + scope_instances 
@@ -1782,7 +1792,7 @@ class PlatformFunctions:
             if new_element.get_scope() >= len(self.scope_stack) - 1: # if declaration in this scope
                 self.log_debug(':::--- Domain : '+ str(new_element.get_domain()) + ":::" + new_element.get_name() + '::: scope ' + str(new_element.get_scope()) )
                 tempdict = new_element.__dict__  # For debugging. This shows the contents in the spyder variable explorer              
-                self.log_debug(new_element.get_code())
+                #self.log_debug(new_element.get_code())
                 if type(new_element) == Declaration or issubclass(type(new_element), Declaration):
                     is_declared = False
                     # TODO can this go? Shouldn't we have chacked if already declared by now?
@@ -1819,6 +1829,8 @@ class PlatformFunctions:
                 other_scope_declarations.append(new_element) 
 
         self.pop_scope()
+        self.log_debug("* Ending Generation ----- scopes: " + str(len(self.scope_stack)))
+        
         return {"global_groups" : global_groups_code,
                 "domain_code": domain_code,
                 "other_scope_instances" : other_scope_instances,

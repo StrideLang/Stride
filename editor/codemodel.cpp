@@ -122,25 +122,25 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
                                     portMeta = QString::fromStdString(static_cast<ValueNode *>(portMetaNode)->getStringValue());
                                 }
                                 propertiesHtml += "<h3>" + portName + "</h3>" + portMeta;
-                                propertiesTable += "<tr><td>" + portName;
-                                AST *portTypesValue = portBlock->getPropertyValue("types");
-                                Q_ASSERT(portTypesValue);
-                                Q_ASSERT(portTypesValue->getNodeType() == AST::List);
-                                if (portTypesValue && portTypesValue->getNodeType() == AST::List) {
-                                    ListNode *validTypesList = static_cast<ListNode *>(portTypesValue);
-                                    foreach(AST *validTypeNode, validTypesList->getChildren()) {
-                                        if (validTypeNode->getNodeType() == AST::String) {
-                                            string typeName = static_cast<ValueNode *>(validTypeNode)->getStringValue();
-                                            propertiesTable += QString::fromStdString("<td>" + typeName + "</td>");
-                                        } else if (validTypeNode->getNodeType() == AST::Name) {
-                                            string typeName = static_cast<NameNode *>(validTypeNode)->getName();
-                                            propertiesTable += QString::fromStdString("<td>" + typeName + "</td>");
-                                        } else {
-                                            propertiesTable += "<td>---</td>";
-                                        }
-                                    }
-                                }
-                                propertiesTable += "</tr>";
+//                                propertiesTable += "<tr><td>" + portName;
+//                                AST *portTypesValue = portBlock->getPropertyValue("types");
+//                                Q_ASSERT(portTypesValue);
+//                                Q_ASSERT(portTypesValue->getNodeType() == AST::List);
+//                                if (portTypesValue && portTypesValue->getNodeType() == AST::List) {
+//                                    ListNode *validTypesList = static_cast<ListNode *>(portTypesValue);
+//                                    foreach(AST *validTypeNode, validTypesList->getChildren()) {
+//                                        if (validTypeNode->getNodeType() == AST::String) {
+//                                            string typeName = static_cast<ValueNode *>(validTypeNode)->getStringValue();
+//                                            propertiesTable += QString::fromStdString("<td>" + typeName + "</td>");
+//                                        } else if (validTypeNode->getNodeType() == AST::Name) {
+//                                            string typeName = static_cast<NameNode *>(validTypeNode)->getName();
+//                                            propertiesTable += QString::fromStdString("<td>" + typeName + "</td>");
+//                                        } else {
+//                                            propertiesTable += "<td>---</td>";
+//                                        }
+//                                    }
+//                                }
+//                                propertiesTable += "</tr>";
                             }
                         }
                     }

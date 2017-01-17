@@ -62,7 +62,8 @@ public:
 
         self.str_function_declaration = '''%s process_%s(%s) {
         %s
-    }'''
+    }
+'''
 
         pass
     

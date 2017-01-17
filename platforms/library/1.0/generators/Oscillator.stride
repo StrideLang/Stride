@@ -9,7 +9,7 @@ module Oscillator {
 		}
 		port FrequencyProperty {
 			name: "frequency"
-			block: Frequency
+			block: Frequency			
 			default: 440.0
 			meta: "The frequency of the oscillator."
 			domain: FrequencyDomain
@@ -19,7 +19,7 @@ module Oscillator {
 			block: Amplitude
 			default: 1.0
 			meta: "The amplitude of the oscillator."
-			domain: AmplitudeDomain
+#			domain: AmplitudeDomain
 		},
 #			property TypeProperty {
 #				name: "type"
@@ -35,6 +35,7 @@ module Oscillator {
 			name: "reset"
 			block: Reset
 			meta: "Resets the oscillator to the starting phase."
+			domain: ResetDomain
 		}
     ]
     blocks: [
@@ -57,6 +58,9 @@ module Oscillator {
         switch Reset {
                 default :       off
 		}
+		signal ResetValue {
+			domain: ResetDomain
+		}
         signal Phase {
             default :       0.0
 			domain: OutputDomain
@@ -74,7 +78,7 @@ module Oscillator {
         Phase + PhaseInc >> Phase;
         Phase -( 2 * _Pi) >> NewPhase;
         Phase > ( 2.0 * _Pi ) >> Select(whenOn: NewPhase whenOff: Phase) >> Phase;
-		Reset >> Select(whenOn: StartPhase whenOff: Phase) >> Phase;
+		Reset >> Select(whenOn: StartPhase whenOff: Phase) >> ResetValue >> Phase;
     ]
 	meta: "Bipolar output [ -1. , 1. ] scaled by amplitude"
 }
@@ -94,7 +98,7 @@ module Impulse {
 		},
 		port AmplitudePort {
 			name: "amplitude"
-				block: Amplitude
+			block: Amplitude
 			meta: "The amplitude of the oscillator."
 		}
 #			port TypeProperty {

@@ -62,6 +62,7 @@ private Q_SLOTS:
 
 ParserTest::ParserTest()
 {
+    qSetMessagePattern("[%{time yyyy-MM-dd h:mm:ss.zzz}%{if-debug}D%{endif}%{if-info}I%{endif}%{if-warning}W%{endif}%{if-critical}C%{endif}%{if-fatal}F%{endif}][%{file}:%{line} %{function}] %{message}");
 }
 
 void ParserTest::testMultichannelUgens()

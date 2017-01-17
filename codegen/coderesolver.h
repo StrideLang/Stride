@@ -50,6 +50,7 @@ private:
     void resolveDomainsForStream(StreamNode *func, QVector<AST *> scopeStack, QString contextDomain = "");
     string processDomainsForNode(AST *node, QVector<AST *> scopeStack, QList<AST *> &domainStack);
     void setDomainForStack(QList<AST *> domainStack, string domainName,  QVector<AST *> scopeStack);
+    BlockNode *createDomainDeclaration(QString name);
     BlockNode *createSignalDeclaration(QString name, int size = 1);
     void declareUnknownName(NameNode *name, int size, AST *tree);
     BlockNode *createConstantDeclaration(string name, AST *value);

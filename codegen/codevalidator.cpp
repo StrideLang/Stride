@@ -823,7 +823,10 @@ int CodeValidator::getTypeNumInputs(BlockNode *blockDeclaration, const QVector<A
             Q_ASSERT(inputName->getNodeType() == AST::Name);
             QString inputBlockName = QString::fromStdString(inputName->getName());
             foreach(AST *internalBlockNode, blockList->getChildren()) {
-                Q_ASSERT(internalBlockNode->getNodeType() == AST::BlockBundle || internalBlockNode->getNodeType() == AST::Block);
+//                Q_ASSERT(internalBlockNode->getNodeType() == AST::BlockBundle || internalBlockNode->getNodeType() == AST::Block);
+                if (!internalBlockNode) {
+                    return -1;
+                }
                 QString blockName = QString::fromStdString(static_cast<BlockNode *>(internalBlockNode)->getName());
                 if (blockName == inputBlockName) {
                     if (internalBlockNode->getNodeType() == AST::BlockBundle) {
