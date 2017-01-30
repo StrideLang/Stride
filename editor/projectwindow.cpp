@@ -37,7 +37,7 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
     QIcon icon(":resources/icon.png");
     setWindowIcon(icon);
 
-    setWindowTitle("StreamStack");
+    setWindowTitle("StrideIDE");
     updateMenus();
     ui->projectDockWidget->setVisible(false);
     m_highlighter = new LanguageHighlighter(this);
@@ -726,7 +726,7 @@ void ProjectWindow::connectShortcuts()
 
 void ProjectWindow::readSettings()
 {
-    QSettings settings("StreamStack", "StreamStackEdit", this);
+    QSettings settings("Stride", "StrideIDE", this);
     settings.beginGroup("project");
     m_options["editor.fontFamily"] = settings.value("editor.fontFamily", "Courier").toString();
     m_options["editor.fontSize"] = settings.value("editor.fontSize", 10.0).toDouble();
@@ -795,7 +795,7 @@ void ProjectWindow::readSettings()
 
 void ProjectWindow::writeSettings()
 {
-    QSettings settings("StreamStack", "StreamStackEdit", this);
+    QSettings settings("Stride", "StrideIDE", this);
     settings.beginGroup("project");
     QStringList keys = m_options.keys();
      foreach(QString key, keys) {

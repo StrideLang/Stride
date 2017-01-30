@@ -10,7 +10,7 @@ QT += webenginewidgets
 
 include(../config.pri)
 
-TARGET = StreamStacker
+TARGET = StrideIDE
 TEMPLATE = app
 
 SOURCES += main.cpp\
