@@ -62,7 +62,11 @@ vector<PropertyNode *> BlockNode::getProperties() const
 
 void BlockNode::addProperty(PropertyNode *newProperty)
 {
-    // TODO check that property name is not there already
+    for (PropertyNode *prop:m_properties) {
+        if (prop->getName() == newProperty->getName()) {
+            return; // Property is not replaced
+        }
+    }
     addChild(newProperty);
     m_properties.push_back(newProperty);
 }
