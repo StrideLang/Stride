@@ -25,6 +25,7 @@ void CodeResolver::preProcess()
     resolveStreamSymbols();
     resolveRates();
     processDomains();
+    analyzeConnections();
 }
 
 void CodeResolver::resolveRates()
@@ -763,6 +764,18 @@ void CodeResolver::processDomains()
     }
 
     m_tree->setChildren(new_tree);
+}
+
+void CodeResolver::analyzeConnections()
+{
+    for (AST *object : m_tree->getChildren()) {
+//        We need to check streams on the root but also streams within modules and reactions
+        if (object->getNodeType() == AST::Block) {
+
+        } else if (object->getNodeType() == AST::Stream) {
+            checkStreamConnections(static_cast<StreamNode *>(object), QVector<AST *>(), true);
+        }
+    }
 }
 
 void CodeResolver::insertBuiltinObjectsForNode(AST *node, QList<AST *> &objects)
@@ -1911,6 +1924,61 @@ void CodeResolver::resolveDomainForStreamNode(AST *node, QVector<AST *> scopeSta
                 }
             }
         }
+    }
+}
+
+void CodeResolver::checkStreamConnections(StreamNode *stream, QVector<AST *> scopeStack, bool start)
+{
+    AST *left = stream->getLeft();
+    AST *right = stream->getRight();
+    markConnectionForNode(left, scopeStack, start);
+
+    if (right->getNodeType() == AST::Stream) {
+        checkStreamConnections(static_cast<StreamNode *>(right), scopeStack, false);
+    } else {
+        markConnectionForNode(right, scopeStack, false);
+    }
+}
+
+void CodeResolver::markConnectionForNode(AST *node, QVector<AST *> scopeStack, bool start)
+{
+    if (node->getNodeType() == AST::Name) {
+        QString name = QString::fromStdString(static_cast<NameNode *>(node)->getName());
+        BlockNode *decl = CodeValidator::findDeclaration(name, scopeStack, m_tree);
+        Q_ASSERT(decl);
+        if (decl && decl->getObjectType() == "signal") {
+            if (start) { // not first element in stream, so it is being written to
+                PropertyNode *readsProperty;
+                ListNode *readsProperties;
+                if (!decl->getPropertyValue("_reads")) {
+                    readsProperties = new ListNode(nullptr, node->getFilename().c_str(), node->getLine());
+                    readsProperty = new PropertyNode("_reads", readsProperties, node->getFilename().c_str(), node->getLine());
+                    decl->addProperty(readsProperty);
+                } else {
+                    readsProperties = static_cast<ListNode *>(decl->getPropertyValue("_reads"));
+                    Q_ASSERT(readsProperties->getNodeType() == AST::List);
+                }
+                std::string domainName = CodeValidator::getDomainNodeString(decl->getDomain());
+                readsProperties->addChild(new ValueNode(domainName.c_str(), node->getFilename().c_str(), node->getLine()));
+            } else {
+                PropertyNode *writesProperty;
+                ListNode *writesProperties;
+                if (!decl->getPropertyValue("_writes")) {
+                    writesProperties = new ListNode(nullptr, node->getFilename().c_str(), node->getLine());
+                    writesProperty = new PropertyNode("_writes", writesProperties, node->getFilename().c_str(), node->getLine());
+                    decl->addProperty(writesProperty);
+                } else {
+                    writesProperties = static_cast<ListNode *>(decl->getPropertyValue("_writes"));
+                    Q_ASSERT(writesProperties->getNodeType() == AST::List);
+                }
+                std::string domainName = CodeValidator::getDomainNodeString(decl->getDomain());
+                writesProperties->addChild(new ValueNode(domainName.c_str(), node->getFilename().c_str(), node->getLine()));
+            }
+        }
+    } else if (node->getNodeType() == AST::Bundle) {
+
+    } else if (node->getNodeType() == AST::Bundle) {
+
     }
 }
 

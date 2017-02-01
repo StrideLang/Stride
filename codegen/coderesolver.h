@@ -36,6 +36,7 @@ private:
     void resolveConstants();
     void resolveRates();
     void processDomains();
+    void analyzeConnections();
 
     // Sub functions
     void resolveStreamRates(StreamNode *stream);
@@ -70,6 +71,9 @@ private:
     ValueNode *resolveConstant(AST *value, QVector<AST *> scope);
     void resolveConstantsInNode(AST *node, QVector<AST *> scope);
     void resolveDomainForStreamNode(AST *node, QVector<AST *> scope);
+
+    void checkStreamConnections(StreamNode *stream, QVector<AST *> scopeStack, bool start = true);
+    void markConnectionForNode(AST *node, QVector<AST *> scopeStack, bool start);
 
     // Operators
     ValueNode *multiply(ValueNode *left, ValueNode *right);

@@ -1,0 +1,10 @@
+use Gamma version 1.0 on PC
+
+signal InSignal {}
+signal OutSignal {}
+signal OutSignal2 {}
+
+InSignal >> OutSignal;
+InSignal >> OutSignal2;
+InSignal2 >> OutSignal2; #InSignal2 should be auto declared
+

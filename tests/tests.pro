@@ -75,6 +75,8 @@ DISTFILES += \
     data/09_lists.stride \
     data/10_expressions.stride \
     data/11_modules.stride \
+    data/12_modules_domains.stride \
+    data/13_connection_count.stride \
     data/P01_platform_objects.stride \
     data/P02_check_duplicates.stride \
     data/P03_bundle_resolution.stride \
@@ -87,8 +89,7 @@ DISTFILES += \
     data/E03_multichn_streams.stride \
     data/E04_rates.stride \
     data/E05_library_objects.stride \
-    data/L01_library_types_validation.stride \
-    data/12_modules_domains.stride
+    data/L01_library_types_validation.stride
 
 # Link to codegen library
 
