@@ -3,8 +3,8 @@ TEMPLATE = subdirs
 SUBDIRS = parser \
           editor \
           codegen \
-          tests
-
+          tests \
+    compiler
 
 editor.depends = parser codegen
 codegen.depends = parser
