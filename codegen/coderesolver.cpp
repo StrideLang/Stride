@@ -219,14 +219,14 @@ void CodeResolver::declareModuleInternalBlocks()
 
                         Q_ASSERT(domainPortValue->getNodeType() == AST::Name || domainPortValue->getNodeType() == AST::None); // Catch on debug but fail gracefully on release
                         string domainName;
+                        QVector<AST *> subScope;
+                        for (AST *node: internalBlocks->getChildren()) {
+                            subScope << node;
+                        }
 
-                        if (domainPortValue->getNodeType() == AST::None) { // Make default port domains match the main output/input port domain
+                        if (domainPortValue->getNodeType() == AST::None) {
 
                             AST *domainNode = nullptr;
-                            QVector<AST *> subScope;
-                            for (AST *node: internalBlocks->getChildren()) {
-                                subScope << node;
-                            }
 //                            BlockNode *outputPortBlock = CodeValidator::getMainOutputPortBlock(block);
 //                            if (outputPortBlock) {
 //                                if (outputPortBlock->getDomain()->getNodeType() == AST::Name) {
@@ -267,7 +267,11 @@ void CodeResolver::declareModuleInternalBlocks()
                         } else if (domainPortValue->getNodeType() == AST::Name) { // Auto declare domain if not declared
                             NameNode *nameNode = static_cast<NameNode *>(domainPortValue);
                             domainName = nameNode->getName();
-                            declareIfMissing(domainName, internalBlocks, new ValueNode("", -1)); // TODO should we autodeclare domains here?
+                            BlockNode *domainDeclaration = CodeValidator::findDeclaration(QString::fromStdString(domainName), subScope, m_tree);
+                            if (!domainDeclaration) {
+                                BlockNode *domainDeclaration = createDomainDeclaration(QString::fromStdString(domainName));
+                                internalBlocks->addChild(domainDeclaration);
+                            }
                         }
 
                         Q_ASSERT(sizePortValue->getNodeType() == AST::Int || sizePortValue->getNodeType() == AST::Name || sizePortValue->getNodeType() == AST::None); // Catch on debug but fail gracefully on release
