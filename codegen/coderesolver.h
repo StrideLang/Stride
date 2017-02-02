@@ -53,14 +53,14 @@ private:
     void setDomainForStack(QList<AST *> domainStack, string domainName,  QVector<AST *> scopeStack);
     BlockNode *createDomainDeclaration(QString name);
     BlockNode *createSignalDeclaration(QString name, int size = 1);
-    void declareUnknownName(NameNode *name, int size, AST *tree);
+    std::vector<AST *> declareUnknownName(NameNode *name, int size, AST *tree);
     BlockNode *createConstantDeclaration(string name, AST *value);
     void declareIfMissing(string name, AST *blockList, AST *value);
 
-    void declareUnknownExpressionSymbols(ExpressionNode *expr, int size, AST * tree);
+    std::vector<AST *> declareUnknownExpressionSymbols(ExpressionNode *expr, int size, AST * tree);
     ListNode *expandNameToList(NameNode *name, int size);
     void expandNamesToBundles(StreamNode *stream, AST *tree);
-    void declareUnknownStreamSymbols(StreamNode *stream, AST *previousStreamMember, AST *tree);
+    std::vector<AST *> declareUnknownStreamSymbols(StreamNode *stream, AST *previousStreamMember, AST *tree);
 
 //    QVector<AST *>  expandStream(StreamNode *stream);
 //    void expandStreamMembers();

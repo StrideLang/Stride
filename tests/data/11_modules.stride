@@ -74,6 +74,7 @@ module BlocksTest {
     streams: [
         Input >> Test;
         Test >> Output; # Test should be computed in the Output domain
+        Test >> AutoDeclared;
 ]
 }
 

@@ -8,3 +8,13 @@ InSignal >> OutSignal;
 InSignal >> OutSignal2;
 InSignal2 >> OutSignal2; #InSignal2 should be auto declared
 
+module Test {
+	streams: [
+		Sig1 >> Sig2;
+		Sig2 >> Sig3;
+		Sig4 >> Sig3;
+	]
+}
+
+
+

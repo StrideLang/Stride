@@ -162,22 +162,24 @@ void CodeResolver::declareModuleInternalBlocks()
             if (block->getObjectType() == "module") {
                 // First insert and resolve input and output domains for main ports. The input port takes the output domain if undefined.
                 BlockNode *outputPortBlock = CodeValidator::getMainOutputPortBlock(block);
-                AST *outDomain = outputPortBlock->getPropertyValue("domain");
-                if (!outDomain || outDomain->getNodeType() == AST::None) {
-                    NameNode *outBlockName = new NameNode("_OutputDomain", "", -1);
-                    outputPortBlock->replacePropertyValue("domain", outBlockName);
-                    outDomain = outBlockName;
-                    AST *outDomainDeclaration = CodeValidator::findDeclaration("_OutputDomain", QVector<AST *>(), internalBlocks);
-                    if (!outDomainDeclaration) {
-                        BlockNode *newDomainBlock = createDomainDeclaration(QString::fromStdString("_OutputDomain"));
-                        internalBlocks->addChild(newDomainBlock);
+                if (outputPortBlock) {
+                    AST *outDomain = outputPortBlock->getPropertyValue("domain");
+                    if (!outDomain || outDomain->getNodeType() == AST::None) {
+                        NameNode *outBlockName = new NameNode("_OutputDomain", "", -1);
+                        outputPortBlock->replacePropertyValue("domain", outBlockName);
+                        outDomain = outBlockName;
+                        AST *outDomainDeclaration = CodeValidator::findDeclaration("_OutputDomain", QVector<AST *>(), internalBlocks);
+                        if (!outDomainDeclaration) {
+                            BlockNode *newDomainBlock = createDomainDeclaration(QString::fromStdString("_OutputDomain"));
+                            internalBlocks->addChild(newDomainBlock);
+                        }
                     }
-                }
-                BlockNode *inputPortBlock = CodeValidator::getMainInputPortBlock(block);
-                if (inputPortBlock) {
-                    AST *inDomain = inputPortBlock->getPropertyValue("domain");
-                    if (!inDomain || inDomain->getNodeType() == AST::None) {
-                        inputPortBlock->replacePropertyValue("domain", outDomain->deepCopy());
+                    BlockNode *inputPortBlock = CodeValidator::getMainInputPortBlock(block);
+                    if (inputPortBlock) {
+                        AST *inDomain = inputPortBlock->getPropertyValue("domain");
+                        if (!inDomain || inDomain->getNodeType() == AST::None) {
+                            inputPortBlock->replacePropertyValue("domain", outDomain->deepCopy());
+                        }
                     }
                 }
 
@@ -440,7 +442,10 @@ void CodeResolver::expandStreamToSizes(StreamNode *stream, QVector<int> &size)
             || left->getNodeType() == AST::Function) {
         int numCopies = size.front();
         if (leftSize < 0 && left->getNodeType() == AST::Name) {
-            declareUnknownName(static_cast<NameNode *>(left), abs(numCopies), m_tree);
+            std::vector<AST *> newDeclaration = declareUnknownName(static_cast<NameNode *>(left), abs(numCopies), m_tree);
+            for(AST *decl:newDeclaration) {
+                m_tree->addChild(decl);
+            }
         }
         if (numCopies > 1) {
             ListNode *newLeft = new ListNode(left->deepCopy(), left->getFilename().data(), left->getLine());
@@ -460,7 +465,10 @@ void CodeResolver::expandStreamToSizes(StreamNode *stream, QVector<int> &size)
                 || right->getNodeType() == AST::Function) {
             int numCopies = size.front();
             if (rightSize < 0 && right->getNodeType() == AST::Name) {
-                declareUnknownName(static_cast<NameNode *>(right), abs(numCopies), m_tree);
+                std::vector<AST *> newDeclaration = declareUnknownName(static_cast<NameNode *>(right), abs(numCopies), m_tree);
+                for(AST *decl:newDeclaration) {
+                    m_tree->addChild(decl);
+                }
             } else if (numCopies > 1) {
                 ListNode *newRight = new ListNode(right->deepCopy(), right->getFilename().data(), right->getLine());
                 for (int i = 1; i < numCopies; i++) {
@@ -703,12 +711,14 @@ void CodeResolver::processDomains()
                             Q_ASSERT(blocks->getNodeType() == AST::List);
                             scopeStack = QVector<AST*>::fromStdVector(blocks->getChildren()) + scopeStack; // Prepend internal scope
                             BlockNode *domainBlock = CodeValidator::getMainOutputPortBlock(module);
-                            AST *domainNode = domainBlock->getPropertyValue("domain");
                             QString domainName;
-                            if (domainNode->getNodeType() == AST::Name) {
-                                domainName = QString::fromStdString(static_cast<NameNode *>(domainNode)->getName());
-                            } else if (domainNode->getNodeType() == AST::String) {
-                                domainName = QString::fromStdString(static_cast<ValueNode *>(domainNode)->getStringValue());
+                            if (domainBlock) {
+                                AST *domainNode = domainBlock->getPropertyValue("domain");
+                                if (domainNode->getNodeType() == AST::Name) {
+                                    domainName = QString::fromStdString(static_cast<NameNode *>(domainNode)->getName());
+                                } else if (domainNode->getNodeType() == AST::String) {
+                                    domainName = QString::fromStdString(static_cast<ValueNode *>(domainNode)->getStringValue());
+                                }
                             }
                             resolveDomainsForStream(static_cast<StreamNode *>(streamNode), scopeStack, domainName);
                         } else {
@@ -1063,7 +1073,9 @@ void CodeResolver::setDomainForStack(QList<AST *> domainStack, string domainName
             block->setDomain(domainName);
         } else if (relatedNode->getNodeType() == AST::Name) {
             BlockNode *declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(relatedNode, scopeStack, m_tree), scopeStack, m_tree);
-            declaration->setDomain(domainName);
+            if(declaration) {
+                declaration->setDomain(domainName);
+            }
         } else if (relatedNode->getNodeType() == AST::Function) {
             FunctionNode *func = static_cast<FunctionNode *>(relatedNode);
             func->setDomain(domainName);
@@ -1107,15 +1119,19 @@ BlockNode *CodeResolver::createSignalDeclaration(QString name, int size)
     fillDefaultPropertiesForNode(newBlock);
     return newBlock;
 }
-void CodeResolver::declareUnknownName(NameNode *name, int size, AST *tree)
+
+std::vector<AST *> CodeResolver::declareUnknownName(NameNode *name, int size, AST *tree)
 {
+	std::vector<AST *> declarations;
     BlockNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), QVector<AST *>(), tree);
     if (!block) { // Not declared, so make declaration
         BlockNode *newSignal = createSignalDeclaration(QString::fromStdString(name->getName()), size);
-        tree->addChild(newSignal);
+//        tree->addChild(newSignal);
         double rate = getNodeRate(newSignal, QVector<AST *>(), tree);
         name->setRate(rate);
+		declarations.push_back(newSignal);
     }
+	return declarations;
 }
 
 BlockNode *CodeResolver::createConstantDeclaration(string name, AST *value)
@@ -1155,32 +1171,40 @@ void CodeResolver::declareIfMissing(string name, AST *blocks, AST * value)
 }
 
 
-void CodeResolver::declareUnknownExpressionSymbols(ExpressionNode *expr, int size, AST * tree)
+std::vector<AST *> CodeResolver::declareUnknownExpressionSymbols(ExpressionNode *expr, int size, AST * tree)
 {
+    std::vector<AST *> newDeclarations;
     if (expr->isUnary()) {
         if (expr->getValue()->getNodeType() == AST::Name) {
             NameNode *name = static_cast<NameNode *>(expr->getValue());
-            declareUnknownName(name, size, tree);
+            std::vector<AST *> decls = declareUnknownName(name, size, tree);
+            newDeclarations.insert(newDeclarations.end(), decls.begin(), decls.end());
         } else if (expr->getValue()->getNodeType() == AST::Expression) {
             ExpressionNode *name = static_cast<ExpressionNode *>(expr->getValue());
-            declareUnknownExpressionSymbols(name, size, tree);
+            std::vector<AST *> decls = declareUnknownExpressionSymbols(name, size, tree);
+            newDeclarations.insert(newDeclarations.end(), decls.begin(), decls.end());
         }
     } else {
         if (expr->getLeft()->getNodeType() == AST::Name) {
             NameNode *name = static_cast<NameNode *>(expr->getLeft());
-            declareUnknownName(name, size, tree);
+            std::vector<AST *> decls = declareUnknownName(name, size, tree);
+            newDeclarations.insert(newDeclarations.end(), decls.begin(), decls.end());
         } else if (expr->getLeft()->getNodeType() == AST::Expression) {
             ExpressionNode *inner_expr = static_cast<ExpressionNode *>(expr->getLeft());
-            declareUnknownExpressionSymbols(inner_expr, size, tree);
+            std::vector<AST *> decls = declareUnknownExpressionSymbols(inner_expr, size, tree);
+            newDeclarations.insert(newDeclarations.end(), decls.begin(), decls.end());
         }
         if (expr->getRight()->getNodeType() == AST::Name) {
             NameNode *name = static_cast<NameNode *>(expr->getRight());
-            declareUnknownName(name, size, tree);
+            std::vector<AST *> decls = declareUnknownName(name, size, tree);
+            newDeclarations.insert(newDeclarations.end(), decls.begin(), decls.end());
         } else if (expr->getRight()->getNodeType() == AST::Expression) {
             ExpressionNode *inner_expr = static_cast<ExpressionNode *>(expr->getRight());
-            declareUnknownExpressionSymbols(inner_expr, size, tree);
+            std::vector<AST *> decls = declareUnknownExpressionSymbols(inner_expr, size, tree);
+            newDeclarations.insert(newDeclarations.end(), decls.begin(), decls.end());
         }
     }
+    return newDeclarations;
 }
 
 ListNode *CodeResolver::expandNameToList(NameNode *name, int size)
@@ -1246,8 +1270,9 @@ void CodeResolver::expandNamesToBundles(StreamNode *stream, AST *tree)
     }
 }
 
-void CodeResolver::declareUnknownStreamSymbols(StreamNode *stream, AST *previousStreamMember, AST * tree)
+std::vector<AST *> CodeResolver::declareUnknownStreamSymbols(StreamNode *stream, AST *previousStreamMember, AST * tree)
 {
+    std::vector<AST *> newDeclarations;
     AST *left = stream->getLeft();
     AST *right = stream->getRight();
 
@@ -1272,15 +1297,18 @@ void CodeResolver::declareUnknownStreamSymbols(StreamNode *stream, AST *previous
         if (size <= 0) { // None of the elements in the stream have size
             size = 1;
         }
-        declareUnknownName(name, size, tree);
+        std::vector<AST *> declarations = declareUnknownName(name, size, tree);
+        newDeclarations.insert(newDeclarations.end(), declarations.begin(), declarations.end());
     } else if (left->getNodeType() == AST::Expression) {
         int size = 1; // FIXME implement size detection for expressions
         ExpressionNode *expr = static_cast<ExpressionNode *>(left);
-        declareUnknownExpressionSymbols(expr, size, tree);
+        std::vector<AST *> declarations = declareUnknownExpressionSymbols(expr, size, tree);
+        newDeclarations.insert(newDeclarations.end(), declarations.begin(), declarations.end());
     }
 
     if (right->getNodeType() == AST::Stream) {
-        declareUnknownStreamSymbols(static_cast<StreamNode *>(right), left, tree);
+        std::vector<AST *> declarations = declareUnknownStreamSymbols(static_cast<StreamNode *>(right), left, tree);
+        newDeclarations.insert(newDeclarations.end(), declarations.begin(), declarations.end());
     } else if (right->getNodeType() == AST::Name) {
         NameNode *name = static_cast<NameNode *>(right);
         QList<LangError> errors;
@@ -1289,22 +1317,50 @@ void CodeResolver::declareUnknownStreamSymbols(StreamNode *stream, AST *previous
         if (size <= 0) { // None of the elements in the stream have size
             size = 1;
         }
-        declareUnknownName(name, size, tree);
+        std::vector<AST *> declarations = declareUnknownName(name, size, tree);
+        newDeclarations.insert(newDeclarations.end(), declarations.begin(), declarations.end());
     } else if (left->getNodeType() == AST::Expression) {
         int size = 1; // FIXME implement size detection for expressions
         ExpressionNode *expr = static_cast<ExpressionNode *>(left);
-        declareUnknownExpressionSymbols(expr, size, tree);
+        std::vector<AST *> declarations = declareUnknownExpressionSymbols(expr, size, tree);
+        newDeclarations.insert(newDeclarations.end(), declarations.begin(), declarations.end());
     }
+    return newDeclarations;
 }
 
 void CodeResolver::resolveStreamSymbols()
 {
     QVector<AST *> children = QVector<AST *>::fromStdVector(m_tree->getChildren());
     for(AST *node : children) {
-        if(node->getNodeType() == AST:: Stream) {
+        if(node->getNodeType() == AST::Stream) {
             StreamNode *stream = static_cast<StreamNode *>(node);
-            declareUnknownStreamSymbols(stream, NULL, m_tree); // FIXME Is this already done in expandParallelFunctions?
+            std::vector<AST *> declarations = declareUnknownStreamSymbols(stream, NULL, m_tree); // FIXME Is this already done in expandParallelFunctions?
+            for(AST *decl: declarations) {
+                m_tree->addChild(decl);
+            }
             expandNamesToBundles(stream, m_tree);
+        } else if(node->getNodeType() == AST::Block) {
+            BlockNode *block = static_cast<BlockNode *>(node);
+            if (block->getObjectType() == "module" || block->getObjectType() == "reaction") {
+                if (block->getPropertyValue("streams")->getNodeType() == AST::List) {
+                    ListNode *streamList = static_cast<ListNode *>(block->getPropertyValue("streams"));
+                    for (AST *streamNode: streamList->getChildren()) {
+                        if (streamNode->getNodeType() == AST::Stream) {
+                            StreamNode *stream = static_cast<StreamNode *>(streamNode);
+                            std::vector<AST *> declarations = declareUnknownStreamSymbols(stream, NULL, m_tree); // FIXME Is this already done in expandParallelFunctions?
+                            for(AST *decl: declarations) {
+                                m_tree->addChild(decl);
+                            }
+                        }
+                    }
+                } else if (block->getPropertyValue("streams")->getNodeType() == AST::Stream)  {
+                    StreamNode *stream = static_cast<StreamNode *>(node);
+                    std::vector<AST *> declarations = declareUnknownStreamSymbols(stream, NULL, m_tree); // FIXME Is this already done in expandParallelFunctions?
+                    for(AST *decl: declarations) {
+                        m_tree->addChild(decl);
+                    }
+                }
+            }
         }
     }
 }
