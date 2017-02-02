@@ -140,6 +140,55 @@ void ParserTest::testConnectionCount()
     QVERIFY(writes->getChildren().size() == 2);
 
 
+//    signal Sig1 {};
+//    signal Sig2 {};
+//    signal Sig3 {};
+//    signal Sig4 {};
+
+//    module Test {
+//        streams: [
+//            Sig1 >> Sig2;
+//            Sig2 >> Sig3;
+//            Sig4 >> Sig3;
+//        ]
+//    }
+
+    block = static_cast<BlockNode *>(tree->getChildren().at(7));
+    QVERIFY(block->getNodeType() == AST::Block);
+    reads = static_cast<ListNode *>(block->getPropertyValue("_reads"));
+    QVERIFY(reads->getNodeType() == AST::List);
+    QVERIFY(reads->getChildren().size() == 1);
+    writes = static_cast<ListNode *>(block->getPropertyValue("_writes"));
+    QVERIFY(writes->getNodeType() == AST::List);
+    QVERIFY(writes->getChildren().size() == 0);
+
+    block = static_cast<BlockNode *>(tree->getChildren().at(8));
+    QVERIFY(block->getNodeType() == AST::Block);
+    reads = static_cast<ListNode *>(block->getPropertyValue("_reads"));
+    QVERIFY(reads->getNodeType() == AST::List);
+    QVERIFY(reads->getChildren().size() == 1);
+    writes = static_cast<ListNode *>(block->getPropertyValue("_writes"));
+    QVERIFY(writes->getNodeType() == AST::List);
+    QVERIFY(writes->getChildren().size() == 1);
+
+    block = static_cast<BlockNode *>(tree->getChildren().at(9));
+    QVERIFY(block->getNodeType() == AST::Block);
+    reads = static_cast<ListNode *>(block->getPropertyValue("_reads"));
+    QVERIFY(reads->getNodeType() == AST::List);
+    QVERIFY(reads->getChildren().size() == 0);
+    writes = static_cast<ListNode *>(block->getPropertyValue("_writes"));
+    QVERIFY(writes->getNodeType() == AST::List);
+    QVERIFY(writes->getChildren().size() == 2);
+
+    block = static_cast<BlockNode *>(tree->getChildren().at(10));
+    QVERIFY(block->getNodeType() == AST::Block);
+    reads = static_cast<ListNode *>(block->getPropertyValue("_reads"));
+    QVERIFY(reads->getNodeType() == AST::List);
+    QVERIFY(reads->getChildren().size() == 1);
+    writes = static_cast<ListNode *>(block->getPropertyValue("_writes"));
+    QVERIFY(writes->getNodeType() == AST::List);
+    QVERIFY(writes->getChildren().size() == 0);
+
     tree->deleteChildren();
     delete tree;
 }

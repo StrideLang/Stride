@@ -687,45 +687,29 @@ void CodeResolver::processDomains()
         } else if (node->getNodeType() == AST::Block) {
             BlockNode *module = static_cast<BlockNode *>(node);
             if (module->getObjectType() == "module") {
-                AST *streamsNode = module->getPropertyValue("streams");
-                if (streamsNode->getNodeType() == AST::Stream) {
-                    ListNode *blocks = static_cast<ListNode *>(module->getPropertyValue("blocks"));
-                    Q_ASSERT(blocks->getNodeType() == AST::List);
-                    scopeStack = QVector<AST*>::fromStdVector(blocks->getChildren()) + scopeStack; // Prepend internal scope
-                    BlockNode *domainBlock = CodeValidator::getMainOutputPortBlock(module);
-                    AST *domainNode = domainBlock->getPropertyValue("domain");
-                    QString domainName;
-                    if (domainNode->getNodeType() == AST::Name) {
-                        domainName = QString::fromStdString(static_cast<NameNode *>(domainNode)->getName());
-                    } else if (domainNode->getNodeType() == AST::String) {
-                        domainName = QString::fromStdString(static_cast<ValueNode *>(domainNode)->getStringValue());
-                    }
-                    resolveDomainsForStream(static_cast<StreamNode *>(streamsNode), scopeStack, domainName);
-                } else if (streamsNode->getNodeType() == AST::List) {
-                    vector<AST *> streamChild = streamsNode->getChildren();
-                    vector<AST *>::reverse_iterator streamIt = streamChild.rbegin();
-                    while(streamIt != streamChild.rend()) {
-                        AST *streamNode = *streamIt;
-                        if (streamNode->getNodeType() == AST::Stream) {
-                            ListNode *blocks = static_cast<ListNode *>(module->getPropertyValue("blocks"));
-                            Q_ASSERT(blocks->getNodeType() == AST::List);
-                            scopeStack = QVector<AST*>::fromStdVector(blocks->getChildren()) + scopeStack; // Prepend internal scope
-                            BlockNode *domainBlock = CodeValidator::getMainOutputPortBlock(module);
-                            QString domainName;
-                            if (domainBlock) {
-                                AST *domainNode = domainBlock->getPropertyValue("domain");
-                                if (domainNode->getNodeType() == AST::Name) {
-                                    domainName = QString::fromStdString(static_cast<NameNode *>(domainNode)->getName());
-                                } else if (domainNode->getNodeType() == AST::String) {
-                                    domainName = QString::fromStdString(static_cast<ValueNode *>(domainNode)->getStringValue());
-                                }
+                vector<const AST *> streamsNode = getModuleStreams(module);
+                vector<const AST *>::reverse_iterator streamIt = streamsNode.rbegin();
+                while(streamIt != streamsNode.rend()) {
+                    const AST *streamNode = *streamIt;
+                    if (streamNode->getNodeType() == AST::Stream) {
+                        ListNode *blocks = static_cast<ListNode *>(module->getPropertyValue("blocks"));
+                        Q_ASSERT(blocks->getNodeType() == AST::List);
+                        scopeStack = QVector<AST*>::fromStdVector(blocks->getChildren()) + scopeStack; // Prepend internal scope
+                        BlockNode *domainBlock = CodeValidator::getMainOutputPortBlock(module);
+                        QString domainName;
+                        if (domainBlock) {
+                            AST *domainNode = domainBlock->getPropertyValue("domain");
+                            if (domainNode->getNodeType() == AST::Name) {
+                                domainName = QString::fromStdString(static_cast<NameNode *>(domainNode)->getName());
+                            } else if (domainNode->getNodeType() == AST::String) {
+                                domainName = QString::fromStdString(static_cast<ValueNode *>(domainNode)->getStringValue());
                             }
-                            resolveDomainsForStream(static_cast<StreamNode *>(streamNode), scopeStack, domainName);
-                        } else {
-                            qDebug() << "ERROR: Expecting stream.";
                         }
-                        streamIt++;
+                        resolveDomainsForStream(static_cast<const StreamNode *>(streamNode), scopeStack, domainName);
+                    } else {
+                        qDebug() << "ERROR: Expecting stream.";
                     }
+                    streamIt++;
                 }
             }
         }
@@ -785,6 +769,21 @@ void CodeResolver::analyzeConnections()
     for (AST *object : m_tree->getChildren()) {
 //        We need to check streams on the root but also streams within modules and reactions
         if (object->getNodeType() == AST::Block) {
+            BlockNode *block = static_cast<BlockNode *>(object);
+            if (block->getObjectType() == "module" || block->getObjectType() == "reaction") {
+                std::vector<const AST *> streams = getModuleStreams(block);
+                AST *blocks = block->getPropertyValue("blocks");
+                QVector<AST *> moduleScope;
+                for (AST *block: blocks->getChildren()) {
+                    moduleScope.push_back(block);
+                }
+                for (const AST *stream: streams) {
+                    Q_ASSERT(stream->getNodeType() == AST::Stream);
+                    if (stream->getNodeType() == AST::Stream) {
+                        checkStreamConnections(static_cast<const StreamNode *>(stream), moduleScope, true);
+                    }
+                }
+            }
 
         } else if (object->getNodeType() == AST::Stream) {
             checkStreamConnections(static_cast<StreamNode *>(object), QVector<AST *>(), true);
@@ -952,7 +951,7 @@ void CodeResolver::insertBuiltinObjectsForNode(AST *node, QList<AST *> &objects)
     }
 }
 
-void CodeResolver::resolveDomainsForStream(StreamNode *stream, QVector<AST *> scopeStack, QString contextDomain)
+void CodeResolver::resolveDomainsForStream(const StreamNode *stream, QVector<AST *> scopeStack, QString contextDomain)
 {
     AST *left = stream->getLeft();
     AST *right = stream->getRight();
@@ -1270,7 +1269,7 @@ void CodeResolver::expandNamesToBundles(StreamNode *stream, AST *tree)
     }
 }
 
-std::vector<AST *> CodeResolver::declareUnknownStreamSymbols(StreamNode *stream, AST *previousStreamMember, AST * tree)
+std::vector<AST *> CodeResolver::declareUnknownStreamSymbols(const StreamNode *stream, AST *previousStreamMember, AST * tree)
 {
     std::vector<AST *> newDeclarations;
     AST *left = stream->getLeft();
@@ -1328,6 +1327,23 @@ std::vector<AST *> CodeResolver::declareUnknownStreamSymbols(StreamNode *stream,
     return newDeclarations;
 }
 
+std::vector<const AST *> CodeResolver::getModuleStreams(BlockNode *module)
+{
+    std::vector<const AST *> streams;
+
+    AST *streamsNode = module->getPropertyValue("streams");
+    if (streamsNode->getNodeType() == AST::Stream) {
+        streams.push_back(streamsNode);
+    } else if (streamsNode->getNodeType() == AST::List) {
+        for(AST * node: streamsNode->getChildren()) {
+            if (node->getNodeType() == AST::Stream) {
+                streams.push_back(node);
+            }
+        }
+    }
+    return streams;
+}
+
 void CodeResolver::resolveStreamSymbols()
 {
     QVector<AST *> children = QVector<AST *>::fromStdVector(m_tree->getChildren());
@@ -1342,22 +1358,14 @@ void CodeResolver::resolveStreamSymbols()
         } else if(node->getNodeType() == AST::Block) {
             BlockNode *block = static_cast<BlockNode *>(node);
             if (block->getObjectType() == "module" || block->getObjectType() == "reaction") {
-                if (block->getPropertyValue("streams")->getNodeType() == AST::List) {
-                    ListNode *streamList = static_cast<ListNode *>(block->getPropertyValue("streams"));
-                    for (AST *streamNode: streamList->getChildren()) {
-                        if (streamNode->getNodeType() == AST::Stream) {
-                            StreamNode *stream = static_cast<StreamNode *>(streamNode);
-                            std::vector<AST *> declarations = declareUnknownStreamSymbols(stream, NULL, m_tree); // FIXME Is this already done in expandParallelFunctions?
-                            for(AST *decl: declarations) {
-                                m_tree->addChild(decl);
-                            }
+                std::vector<const AST *> streams = getModuleStreams(block);
+                for (const AST *streamNode: streams) {
+                    if (streamNode->getNodeType() == AST::Stream) {
+                        const StreamNode *stream = static_cast<const StreamNode *>(streamNode);
+                        std::vector<AST *> declarations = declareUnknownStreamSymbols(stream, NULL, m_tree); // FIXME Is this already done in expandParallelFunctions?
+                        for(AST *decl: declarations) {
+                            m_tree->addChild(decl);
                         }
-                    }
-                } else if (block->getPropertyValue("streams")->getNodeType() == AST::Stream)  {
-                    StreamNode *stream = static_cast<StreamNode *>(node);
-                    std::vector<AST *> declarations = declareUnknownStreamSymbols(stream, NULL, m_tree); // FIXME Is this already done in expandParallelFunctions?
-                    for(AST *decl: declarations) {
-                        m_tree->addChild(decl);
                     }
                 }
             }
@@ -1987,7 +1995,7 @@ void CodeResolver::resolveDomainForStreamNode(AST *node, QVector<AST *> scopeSta
     }
 }
 
-void CodeResolver::checkStreamConnections(StreamNode *stream, QVector<AST *> scopeStack, bool start)
+void CodeResolver::checkStreamConnections(const StreamNode *stream, QVector<AST *> scopeStack, bool start)
 {
     AST *left = stream->getLeft();
     AST *right = stream->getRight();

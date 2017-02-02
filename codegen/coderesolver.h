@@ -48,7 +48,7 @@ private:
 
     void insertBuiltinObjectsForNode(AST *node, QList<AST *> &objects);
 
-    void resolveDomainsForStream(StreamNode *func, QVector<AST *> scopeStack, QString contextDomain = "");
+    void resolveDomainsForStream(const StreamNode *func, QVector<AST *> scopeStack, QString contextDomain = "");
     string processDomainsForNode(AST *node, QVector<AST *> scopeStack, QList<AST *> &domainStack);
     void setDomainForStack(QList<AST *> domainStack, string domainName,  QVector<AST *> scopeStack);
     BlockNode *createDomainDeclaration(QString name);
@@ -60,7 +60,8 @@ private:
     std::vector<AST *> declareUnknownExpressionSymbols(ExpressionNode *expr, int size, AST * tree);
     ListNode *expandNameToList(NameNode *name, int size);
     void expandNamesToBundles(StreamNode *stream, AST *tree);
-    std::vector<AST *> declareUnknownStreamSymbols(StreamNode *stream, AST *previousStreamMember, AST *tree);
+    std::vector<AST *> declareUnknownStreamSymbols(const StreamNode *stream, AST *previousStreamMember, AST *tree);
+    std::vector<const AST *> getModuleStreams(BlockNode *module);
 
 //    QVector<AST *>  expandStream(StreamNode *stream);
 //    void expandStreamMembers();
@@ -72,7 +73,7 @@ private:
     void resolveConstantsInNode(AST *node, QVector<AST *> scope);
     void resolveDomainForStreamNode(AST *node, QVector<AST *> scope);
 
-    void checkStreamConnections(StreamNode *stream, QVector<AST *> scopeStack, bool start = true);
+    void checkStreamConnections(const StreamNode *stream, QVector<AST *> scopeStack, bool start = true);
     void markConnectionForNode(AST *node, QVector<AST *> scopeStack, bool start);
 
     // Operators
