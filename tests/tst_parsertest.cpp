@@ -189,6 +189,82 @@ void ParserTest::testConnectionCount()
     QVERIFY(writes->getNodeType() == AST::List);
     QVERIFY(writes->getChildren().size() == 0);
 
+//    module Test2 {
+//        blocks: [
+//            signal Sig1 {};
+//            signal Sig2 {};
+//            signal Sig3 {};
+//            signal Sig4 {};
+//        ]
+//        streams: [
+//            Sig1 >> Sig2;
+//            Sig2 >> Sig3;
+//            Sig4 >> Sig3;
+//        ]
+//    }
+
+    block = static_cast<BlockNode *>(tree->getChildren().at(12));
+    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getName() == "Test2");
+    ListNode *blocks = static_cast<ListNode *>(block->getPropertyValue("blocks"));
+    QVERIFY(blocks != nullptr);
+    QVERIFY(blocks->getNodeType() == AST::List);
+    BlockNode *declaration = static_cast<BlockNode *>(blocks->getChildren().at(0));
+    QVERIFY(declaration->getName() == "Sig1");
+
+    reads = static_cast<ListNode *>(declaration->getPropertyValue("_reads"));
+    QVERIFY(reads->getNodeType() == AST::List);
+    QVERIFY(reads->getChildren().size() == 1);
+    writes = static_cast<ListNode *>(declaration->getPropertyValue("_writes"));
+    QVERIFY(writes->getNodeType() == AST::List);
+    QVERIFY(writes->getChildren().size() == 0);
+
+    declaration = static_cast<BlockNode *>(blocks->getChildren().at(1));
+    QVERIFY(declaration->getName() == "Sig2");
+
+    reads = static_cast<ListNode *>(declaration->getPropertyValue("_reads"));
+    QVERIFY(reads->getNodeType() == AST::List);
+    QVERIFY(reads->getChildren().size() == 1);
+    writes = static_cast<ListNode *>(declaration->getPropertyValue("_writes"));
+    QVERIFY(writes->getNodeType() == AST::List);
+    QVERIFY(writes->getChildren().size() == 1);
+
+    declaration = static_cast<BlockNode *>(blocks->getChildren().at(2));
+    QVERIFY(declaration->getName() == "Sig3");
+
+    reads = static_cast<ListNode *>(declaration->getPropertyValue("_reads"));
+    QVERIFY(reads->getNodeType() == AST::List);
+    QVERIFY(reads->getChildren().size() == 0);
+    writes = static_cast<ListNode *>(declaration->getPropertyValue("_writes"));
+    QVERIFY(writes->getNodeType() == AST::List);
+    QVERIFY(writes->getChildren().size() == 2);
+
+    declaration = static_cast<BlockNode *>(blocks->getChildren().at(3));
+    QVERIFY(declaration->getName() == "Sig4");
+
+    reads = static_cast<ListNode *>(declaration->getPropertyValue("_reads"));
+    QVERIFY(reads->getNodeType() == AST::List);
+    QVERIFY(reads->getChildren().size() == 1);
+    writes = static_cast<ListNode *>(declaration->getPropertyValue("_writes"));
+    QVERIFY(writes->getNodeType() == AST::List);
+    QVERIFY(writes->getChildren().size() == 0);
+
+
+//    module Test3 {
+
+//        streams: [
+//            Sig1 >> Sig2;
+//            Sig2 >> Sig3;
+//            Sig4 >> Sig3;
+//        ]
+//        streams: [ # Duplicate port names should trigger error, not crash
+//            Sig1 >> Sig2;
+//            Sig2 >> Sig3;
+//            Sig4 >> Sig3;
+//        ]
+//    }
+
+
     tree->deleteChildren();
     delete tree;
 }

@@ -83,3 +83,24 @@ signal OutSignal[2] {}
 
 InSignal >> SizeTest() >> OutSignal;
 
+module DuplicatePortName {
+    ports:          [
+        port InputPort {
+            name:       'input'
+            main: on
+            direction:  'input'
+            block:      Input
+        }
+        ]
+    blocks: [
+        signal Test {
+            domain: none
+        }
+]
+    streams: [
+        Input >> Test;
+]
+streams: [
+    Input >> Test;
+]
+}

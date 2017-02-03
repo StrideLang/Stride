@@ -23,4 +23,18 @@ module Test {
 }
 
 
+module Test2 {
+blocks: [
+signal Sig1 {},
+signal Sig2 {},
+signal Sig3 {},
+signal Sig4 {}
+]
+	streams: [
+		Sig1 >> Sig2;
+		Sig2 >> Sig3;
+		Sig4 >> Sig3;
+	]
+}
+
 
