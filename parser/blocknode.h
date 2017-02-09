@@ -22,7 +22,7 @@ public:
     void replacePropertyValue(string propertyName, AST *newValue);
 
     AST *getDomain();
-    void setDomain(string domain);
+    void setDomainString(string domain);
 
     string getObjectType() const;
     AST *deepCopy();

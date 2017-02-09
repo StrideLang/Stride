@@ -42,7 +42,7 @@ private:
     void resolveStreamRates(StreamNode *stream);
     void expandParallelStream(StreamNode *stream, QVector<AST *> scopeStack, AST *tree);
 
-    void expandStreamToSizes(StreamNode *stream, QVector<int> &size);
+    void expandStreamToSizes(StreamNode *stream, QVector<int> &size, QVector<AST *> scopeStack);
     AST *expandFunctionFromProperties(FunctionNode *func, QVector<AST *> scope, AST *tree);
     void fillDefaultPropertiesForNode(AST *node);
 
@@ -53,14 +53,14 @@ private:
     void setDomainForStack(QList<AST *> domainStack, string domainName,  QVector<AST *> scopeStack);
     BlockNode *createDomainDeclaration(QString name);
     BlockNode *createSignalDeclaration(QString name, int size = 1);
-    std::vector<AST *> declareUnknownName(NameNode *name, int size, AST *tree);
+    std::vector<AST *> declareUnknownName(NameNode *name, int size, QVector<AST *> localScope, AST *tree);
     BlockNode *createConstantDeclaration(string name, AST *value);
     void declareIfMissing(string name, AST *blockList, AST *value);
 
-    std::vector<AST *> declareUnknownExpressionSymbols(ExpressionNode *expr, int size, AST * tree);
+    std::vector<AST *> declareUnknownExpressionSymbols(ExpressionNode *expr, int size, QVector<AST *> scopeStack, AST * tree);
     ListNode *expandNameToList(NameNode *name, int size);
     void expandNamesToBundles(StreamNode *stream, AST *tree);
-    std::vector<AST *> declareUnknownStreamSymbols(const StreamNode *stream, AST *previousStreamMember, AST *tree);
+    std::vector<AST *> declareUnknownStreamSymbols(const StreamNode *stream, AST *previousStreamMember, QVector<AST *> localScope, AST *tree);
     std::vector<const AST *> getModuleStreams(BlockNode *module);
 
 //    QVector<AST *>  expandStream(StreamNode *stream);

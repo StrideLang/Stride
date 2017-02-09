@@ -31,6 +31,12 @@ type _TypeProperty {
 			types: ["CBP"]
 			default: none
 			required: on
+		},
+		typeProperty Public {
+			name: "public"
+			types: ["CBP"]
+			default: off
+			required: off
 		}
 	]
 }
@@ -97,12 +103,44 @@ type _Signal {
 			types: ["CIP", "CRP", "CSP"]
 			default: 0.0
 			required: off
-		}
+		},
 		typeProperty Default {
 			name: "default"
 			types: ["CIP", "CRP", "CSP"]
 			default: 0.0
 			required: off
+		},
+		typeProperty Domain {
+			name: "domain"
+			types: ["CSP", ""]
+			default: none
+			required: off
+		},
+		typeProperty Mode {
+			name: "mode"
+			types: ["CSP"]
+			default: "realtime"
+			required: off
+		},
+		typeProperty Rate {
+			name: "rate"
+			types: [""]
+			default: PlatformRate
+			required: off
+		},
+		typeProperty _Reads {
+			name: "_reads"
+			types: [""]
+			default: []
+			required: off
+			meta: "Used by the parser to keep track of stream connections"
+		},
+		typeProperty _Writes {
+			name: "_writes"
+			types: [""]
+			default: []
+			required: off
+			meta: "Used by the parser to keep track of stream connections"
 		}
 	]
 	inherits: ["streamable"]

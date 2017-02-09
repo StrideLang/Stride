@@ -97,7 +97,7 @@ AST *BlockNode::getDomain()
     return domainValue;
 }
 
-void BlockNode::setDomain(string domain)
+void BlockNode::setDomainString(string domain)
 {
     for (unsigned int i = 0; i < m_properties.size(); i++) {
         if (m_properties.at(i)->getName() == "domain") {

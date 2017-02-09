@@ -1637,11 +1637,15 @@ string CodeValidator::getNodeDomainName(AST *node, QVector<AST *> scopeStack, AS
             if (member->getNodeType() == AST::Name) {
                 NameNode *name = static_cast<NameNode *>(member);
                 BlockNode *declaration = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scopeStack, tree);
-                tempDomainName = CodeValidator::getNodeDomainName(declaration, scopeStack, tree);
+                if (declaration) {
+                    tempDomainName = CodeValidator::getNodeDomainName(declaration, scopeStack, tree);
+                }
             } if (member->getNodeType() == AST::Bundle) {
                 BundleNode *name = static_cast<BundleNode *>(member);
                 BlockNode *declaration = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scopeStack, tree);
-                tempDomainName = CodeValidator::getNodeDomainName(declaration, scopeStack, tree);
+                if (declaration) {
+                    tempDomainName = CodeValidator::getNodeDomainName(declaration, scopeStack, tree);
+                }
             } if (member->getNodeType() == AST::Int
                   || member->getNodeType() == AST::Real
                   || member->getNodeType() == AST::String
