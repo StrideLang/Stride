@@ -1,0 +1,19 @@
+use Gamma version 1.0 on PC
+
+import generators
+
+
+module Test {
+	ports: [
+		port OutputPort {
+			main: on
+			direction: "output"
+			block: Output
+		}
+	]
+	streams: [
+		10 >> Output;
+	]
+}
+
+Test() >> AudioOut[1];

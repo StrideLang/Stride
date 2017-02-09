@@ -67,6 +67,13 @@ public:
 
         pass
     
+    def source_marker(self, line, filename):
+        if line == -1:
+            marker = ''
+        else:
+            marker = " //" + str(line) + ':' + filename + '\n'
+        return marker
+    
     def number_to_string(self, number):
         if type(number) == int:
             s = '%i;\n'%number
@@ -158,6 +165,7 @@ public:
         return declaration
         
     def declaration(self, block, close=True):
+        declaration = ''
         vartype = self.get_block_type(block)
         if 'block' in block:
             block = block['block']
@@ -182,9 +190,11 @@ public:
                 declaration = self.declaration_bool(name, close)
             elif vartype == 'int':
                 declaration = self.declaration_int(name, close)
+
         return declaration
         
     def declaration_reference(self, block, close=True):
+        declaration = ''
         vartype = self.get_block_type(block)
         name = block['name']
         if 'size' in block:
@@ -404,15 +414,11 @@ public:
 
         out_type = 'void'
         
-        process_str = self.str_function_declaration
         process_functions = ''
         for domain, domain_components in process_code.items():
             domain_proc_code = domain_components['code']
-            #TODO is there need to support multiple input/output blocks here?
-            input_block = domain_components['input_blocks'][0]
-            output_block = domain_components['output_blocks'][0]
             input_declaration = ''
-            if input_block:
+            for input_block in domain_components['input_blocks']:
     #            if 'blockbundle' in input_block:
     #                for i in range(input_block['blockbundle']['size']):
     #                    block_type = self.get_block_type(input_block)
@@ -421,14 +427,14 @@ public:
     #                        input_declaration += self.declaration_real(block_name + str(i), close = False) + ", "
     #                input_declaration = input_declaration[:-2]
     #            else:
-                input_declaration = self.declaration(input_block, close = False)
-                if output_block:
-                    input_declaration +=  ", " + self.declaration_reference(output_block, False)
-            else: # No input, only output
-                input_declaration = ''                              
-                if output_block:
-                    input_declaration += self.declaration_reference(output_block, False)
-            process_functions += process_str%(out_type, str(domain), input_declaration, domain_proc_code)
+                input_declaration += self.declaration(input_block, close = False) + ", "
+            for output_block in domain_components['output_blocks']:
+                input_declaration +=  self.declaration_reference(output_block, False) + ", "
+                
+            if len(input_declaration) > 0:
+                input_declaration = input_declaration[:-2]
+
+            process_functions += self.str_function_declaration%(out_type, str(domain), input_declaration, domain_proc_code)
             
         declaration = self.str_module_declaration%(name, header_code, name, init_code, process_functions)
         return declaration

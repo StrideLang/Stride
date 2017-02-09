@@ -27,7 +27,12 @@ class Atom(object):
         self.globals = {}
         self.handle = ''
         self.domain = None
+        self.line = -1
+        self.filename = ""
+        self.writes = 0
+        self.reads = 0
         
+        # FIXME these sections should be driven by the platform definition
         self.global_sections = ['include', 'includeDir', 'linkTo', 'linkDir']
         
     def set_inline(self, inline):
@@ -91,7 +96,18 @@ class Atom(object):
         
     def get_domain(self):
         return self.domain
+    
+    def get_line(self):
+        return self.line
         
+    def get_filename(self):
+        return self.filename
+        
+    def get_num_writes(self):
+        return self.writes
+        
+    def get_num_reads(self):
+        return self.reads
          
 class PlatformTypeAtom(Atom):
     def __init__(self, module, function, platform_type, token_index, platform, scope_index):
@@ -154,13 +170,15 @@ class ValueAtom(Atom):
                                  self.scope_index,
                                  self.domain,
                                  'string',
-                                 self.handle)]
+                                 self.handle),
+                                 self]
             else:
                 return [Instance(self.get_inline_processing_code([]),
                                  self.scope_index,
                                  self.domain,
                                  'real',
-                                 self.handle) ]
+                                 self.handle,
+                                 self)]
         
     def get_inline_processing_code(self, in_token):
         return templates.value_real(self.value)
@@ -208,7 +226,8 @@ class ExpressionAtom(Atom):
                                  self.scope_index,
                                  self.domain,
                                  self._expression_out_type(),
-                                 self.handle))
+                                 self.handle,
+                                 self))
         return instances
         
     def get_inline_processing_code(self, in_tokens):
@@ -236,6 +255,7 @@ class ExpressionAtom(Atom):
         if self.right_atom:
             right_code = self.right_atom.get_initialization_code(in_tokens)
         return left_code + right_code
+
         
     def get_preprocessing_code(self, in_tokens):
         left_code = self.left_atom.get_preprocessing_code([])
@@ -418,7 +438,7 @@ class ListAtom(Atom):
         
 
 class NameAtom(Atom):
-    def __init__(self, platform_type, declaration, token_index, scope_index):
+    def __init__(self, platform_type, declaration, token_index, scope_index, line, filename):
         super(NameAtom, self).__init__()
         self.scope_index = scope_index
         self.name = declaration['name']
@@ -426,6 +446,8 @@ class NameAtom(Atom):
         self.platform_type = platform_type
         self.declaration = declaration
         self.domain = None
+        self.line = line
+        self.filename = filename
         if 'domain' in self.declaration:
             if type(self.declaration['domain']) == dict:
                 #FIXME this should be set by the code validator
@@ -459,6 +481,13 @@ class NameAtom(Atom):
                 self.rate = -1
             else:
                 self.rate = declaration['rate']
+                
+        if '_writes' in declaration:
+            self.writes = len(declaration['_writes'])
+            
+        print(self.writes)
+        if '_reads' in declaration:
+            self.reads = len(declaration['_reads'])
        # else:
             #raise ValueError("Parser must fill defaults.")
             #this should never happen... The parser should fill defaults...
@@ -474,6 +503,9 @@ class NameAtom(Atom):
         return declarations
     
     def get_instances(self):
+        
+        if 'main' in self.declaration and self.declaration['main']:
+            return [] # Atoms for main ports need not be de
         default_value = self._get_default_value()
         if 'type' in self.declaration and self.declaration['type'] == 'signal':
             if signal_type_string(self.declaration):
@@ -481,25 +513,30 @@ class NameAtom(Atom):
                                  self.declaration['stack_index'],
                                  self.domain,
                                  'string',
-                                 self.handle)]
+                                 self.handle,
+                                 self
+                                 )]
             else:
                 inits = [Instance(str(default_value),
                                  self.declaration['stack_index'],
                                  self.domain,
                                  'real',
-                                 self.handle)]
+                                 self.handle,
+                                 self)]
         elif 'type' in self.declaration and self.declaration['type'] == 'constant':
             inits = [Instance(str(default_value),
                                  self.declaration['stack_index'],
                                  self.domain,
                                  'real',
-                                 self.handle)]
+                                 self.handle,
+                                 self)]
         elif 'type' in self.declaration and self.declaration['type'] == 'switch':
             inits = [Instance(templates.str_true if default_value['value'] else templates.str_false,
                              self.declaration['stack_index'],
                              self.domain,
                              'bool',
-                             self.handle)]
+                             self.handle,
+                             self)]
         elif 'block' in self.platform_type:
             inherits = self.platform_type['block']['inherits']
             if inherits == 'signal':
@@ -508,26 +545,30 @@ class NameAtom(Atom):
                                  self.declaration['stack_index'],
                                  self.domain,
                                  'string',
-                                 self.handle)]
+                                 self.handle,
+                                 self)]
                 else:
                     inits = [Instance(str(default_value),
                                  self.declaration['stack_index'],
                                  self.domain,
                                  'real',
-                                 self.handle)]
+                                 self.handle,
+                                 self)]
             elif self.platform_type['block']['type'] == 'platformType':
                 if 'default' in self.declaration and signal_type_string(self.declaration):
                     inits = [Instance(default_value,
                                  self.declaration['stack_index'],
                                  self.domain,
                                  'string',
-                                 self.handle)]
+                                 self.handle,
+                                 self)]
                 else:
                     inits = [Instance(str(default_value),
                                  self.declaration['stack_index'],
                                  self.domain,
                                  'real',
-                                 self.handle)]
+                                 self.handle,
+                                 self)]
 
             else:
                 print("Don't know how to declare type " + ' '.join(self.declaration.keys()))
@@ -625,10 +666,10 @@ class NameAtom(Atom):
         return default_value
 
 class BundleAtom(NameAtom):
-    def __init__(self, platform_type, declaration, index, token_index, scope_index):
+    def __init__(self, platform_type, declaration, index, token_index, scope_index, line, filename):
         ''' index indexes from 1, internal index from 0
         '''
-        super(BundleAtom, self).__init__(platform_type, declaration, token_index, scope_index)
+        super(BundleAtom, self).__init__(platform_type, declaration, token_index, scope_index, line, filename)
         self.scope_index = scope_index
         if type(index) == int:
             self.index = index - 1
@@ -639,7 +680,9 @@ class BundleAtom(NameAtom):
 #        if not 'blockbundle' in self.platform_type and not 'platformType' in self.platform_type['block']['type']:
 #            raise ValueError("Need a block bundle platform type to make a Bundle Atom.")
         
-    
+    def get_handles(self):
+        return [templates.bundle_indexing(self.handle, self.index + 1)]    
+        
     def get_instances(self):
         default_value = self._get_default_value()
 
@@ -649,7 +692,8 @@ class BundleAtom(NameAtom):
                                  self.domain,
                                  'string',
                                  self.handle,
-                                 self.declaration['size']) ]
+                                 self.declaration['size'],
+                                 self) ]
                                   
         else:
             instances = [BundleInstance(str(default_value),
@@ -657,7 +701,8 @@ class BundleAtom(NameAtom):
                                  self.domain,
                                  'real',
                                  self.handle,
-                                 self.declaration['size']) ]
+                                 self.declaration['size'],
+                                 self) ]
             
                 
         return instances
@@ -721,8 +766,8 @@ class ModuleAtom(Atom):
         self.name = module["name"]
         self.handle = self.name + '_%03i'%token_index;
         #self._platform_code = platform_code
-        self._input_block = None
-        self._output_block = None
+        self._input_blocks = []
+        self._output_blocks = []
         self._index = token_index
         self.platform = platform
         self.module = module
@@ -753,8 +798,9 @@ class ModuleAtom(Atom):
         declarations = []
         outer_declarations = []
         secondary_domain = ''
-        if self._output_block:
-            secondary_domain = self._output_block['domain']
+        #FIXME do we need to support more than 1 output block?
+        if len(self._output_blocks) > 0:
+            secondary_domain = self._output_blocks[0]['domain']
 
         if "other_scope_declarations" in self.code:
             for other_declaration in self.code["other_scope_declarations"]:
@@ -764,47 +810,38 @@ class ModuleAtom(Atom):
 
         declarations += outer_declarations
         domain_code = self.code['domain_code']
-        
-#        properties_code = self._get_internal_properties_code()
-        
-#        if None in domain_code:
-#            base_header_code = domain_code[None]['header_code'] 
-#            base_init_code = domain_code[None]['init_code']
-#            base_process_code = '\n'.join(domain_code[None]['processing_code']) 
-#        else:
-#            base_header_code = ''
-#            base_init_code = ''
-#            base_process_code = ''
-            
+
         header_code = ''
         init_code = ''
         process_code = {}
-        properties_domain_code = ''
+        #properties_domain_code = ''
         for domain, code in domain_code.items():
-            header_code += code['header_code'] 
-            init_code += code['init_code']
-            if not domain in process_code:
-                process_code[domain] = {"code": '', "input_blocks" : [], "output_blocks" : []}
-            #TODO set blocks from port declarations for modules
-            
-
-            process_code[domain]['input_blocks'].append(self._input_block)
-            process_code[domain]['output_blocks'].append(self._output_block)
-            
-            process_code[domain]['code'] += '\n'.join(code['processing_code'])
-#            if domain in properties_code:
-#                properties_domain_code += '\n'.join(properties_code[domain])
-#            elif domain == '' and 'streamDomain' in properties_code:
-#                properties_domain_code += '\n'.join(properties_code['streamDomain'])
-#            elif (domain == self.domain or self.domain == None) and None in properties_code:
-#                properties_domain_code += '\n'.join(properties_code[None])
-#            elif None in properties_code:
-#                properties_domain_code += '\n'.join(properties_code[None])
+            if domain is not None: # To get rid of domains from constants
+                header_code += code['header_code'] 
+                init_code += code['init_code']
+                if not domain in process_code:
+                    process_code[domain] = {"code": '', "input_blocks" : [], "output_blocks" : []}
+    
+    #            if 'input_blocks' in self.code['domain_code'][domain]:
+    #                for input_block in self.code['domain_code'][domain]['input_blocks']:
+    #                    if type(input_block.atom) == NameAtom or type(input_block.atom) == BundleAtom:
+    #                        process_code[domain]['input_blocks'].append(input_block.atom.declaration)
+    #            if 'output_blocks' in self.code['domain_code'][domain]:
+    #                for output_block in self.code['domain_code'][domain]['output_blocks']:
+    #                    if type(output_block.atom) == NameAtom or type(output_block.atom) == BundleAtom:
+    #                        process_code[domain]['output_blocks'].append(output_block.atom.declaration)
                 
-            
+                process_code[domain]['code'] += '\n'.join(code['processing_code'])
+                for block in self._input_blocks:
+                    if block['domain'] == domain:
+                        process_code[domain]['input_blocks'].append(block)
+                
+                for block in self._output_blocks:
+                    if block['domain'] == domain:
+                        process_code[domain]['output_blocks'].append(block)
         
         declaration_text = templates.module_declaration(
-                self.name, header_code + properties_domain_code, 
+                self.name, header_code, 
                 init_code, process_code)
                 
         declaration = Declaration(self.module['stack_index'],
@@ -823,7 +860,8 @@ class ModuleAtom(Atom):
         module_instance = ModuleInstance(self.scope_index,
                                  self.domain,
                                  self.name,
-                                 self.handle)
+                                 self.handle,
+                                 self)
         if "other_scope_instances" in self.code:
             for inst in self.code["other_scope_instances"]:
                 inst.post = False
@@ -832,33 +870,30 @@ class ModuleAtom(Atom):
 #        for atoms in self.port_name_atoms.values():
 #            for atom in atoms:
 #                instances += atom.get_instances()
-        if len(self.out_tokens) > 0 and self.module['output']:
-            out_block = self.find_internal_block(self.module['output']['name']['name'])
-        elif self._output_block:
-            out_block = self._output_block
-            # FIXME support bundles
-        else:
-            out_block = None
-        if out_block:
-            block_types = self.get_block_types(out_block);
+                #FIXME do we need to support multiple output blocks?
+        if len(self.out_tokens) > 0:
+            block_types = self.get_block_types(self._output_blocks[0]);
             default_value = ''
             instances += [Instance(default_value,
                                  self.scope_index,
                                  self.domain,
                                  block_types[0],
-                                 self.out_tokens[0]) ]
+                                 self.out_tokens[0],
+                                 self) ]
+            
         for name, atoms in self.port_name_atoms.items():
             for atom in atoms:
                 decl = self.platform.find_declaration_in_tree(atom.get_handles(),
                                                               self.platform.tree + self.module['blocks'])
-                if not decl and type(atom) is NameAtom:
-                    # TODO need to check expressions and add instances within expression members
-                    default_value = 0.0
-                    instances += [Instance(default_value,
-                                     atom.get_scope_index(),
-                                     atom.get_domain(),
-                                     'real',
-                                     atom.get_handles()[0])]
+                if not decl:
+                    if type(atom) is NameAtom:
+                        default_value = 0.0
+                        if not self.platform.find_instance_by_handle(atom.get_handles()[0], instances):
+                            instances += atom.get_instances()
+                    elif type(atom) is ExpressionAtom:
+                        for new_inst in self._get_expression_instances(atom):
+                            if not self.platform.find_instance_by_handle(new_inst.get_name(), instances):
+                                instances += [new_inst]
                                  
         instances += [module_instance ]
         return instances
@@ -866,22 +901,29 @@ class ModuleAtom(Atom):
     def get_inline_processing_code(self, in_tokens):
         code = ''
         # TODO handle correctly the calling of input and output domain functions for modules where it is different
-        if self._input_block and 'blockbundle' in self._input_block:
-            in_tokens = ['_%s_in'%self.handle]
-            in_domain = self._input_block['domain']
+        #FIXME support multiple input blocks?
+        #in_tokens = []
+        out_tokens = self.out_tokens
+        domain = ''
+        for in_block in self._input_blocks:
+            domain = in_block['domain']
+            if not in_block['main']:
+                if 'size' in in_block:
+                    in_tokens.append('_%s_in'%in_block['name'])
             
-        if self._output_block:
-            out_domain = self._output_block['domain']
-            if 'size' in self._output_block:
-                code = templates.module_processing_code(self.handle, 
-                                                        in_tokens,
-                                                        ['_' + self.name + '_%03i_out'%self._index],
-                                                        out_domain
-                                                        )
-            else:
-                code = templates.module_processing_code(self.handle, in_tokens, self.out_tokens, out_domain)
-        else:
-            code = templates.module_processing_code(self.handle, in_tokens, [], in_domain)
+        for out_block in self._output_blocks:
+            domain = out_block['domain']
+            if not out_block['main']:
+                if 'size' in out_block:
+                    out_tokens.append('_%s_%03i_out'%(out_block['name'], out_block['index']))
+                else:
+                    out_tokens.append(out_block['name'])
+            
+        code = templates.module_processing_code(self.handle, 
+                                                in_tokens,
+                                                out_tokens,
+                                                domain
+                                                )
         return code
     
     def get_initialization_code(self, in_tokens):
@@ -911,55 +953,26 @@ class ModuleAtom(Atom):
                             module_call = templates.module_processing_code(self.handle, port_value.get_handles(), [], module_port_domain)
                             code += templates.expression(module_call)
                     pass
-#        for port_name in ports:
-#            if 'value' in ports[port_name]:
-#                if type(ports[port_name]['value']) == unicode:
-#                     port_in_token = [ '"' + ports[port_name]['value'] + '"']
-#                else:
-#                    port_in_token = [str(ports[port_name]['value'])]
-#            elif 'name' in ports[port_name]:
-#                port_in_token = [ports[port_name]['name']['name']]
-#            elif 'expression' in ports[port_name]:
-#                port_in_token = [self.port_name_atoms[port_name][0].get_handles()[0]]
-#            elif 'bundle' in ports[port_name]:
-#                port_in_token = [templates.bundle_indexing(ports[port_name]['bundle']['name'],
-#                                                               ports[port_name]['bundle']['index'])]
-#            else:
-#                port_in_token = ['____XXX NOT IMPLEMENTED___'] # TODO implement
-#            code += templates.module_set_property(self.handle, port_name, port_in_token)
             
-        if self._input_block and 'blockbundle' in self._input_block:
-            new_code = templates.declaration_bundle_real('_%s_in'%self.handle, len(in_tokens)) + '\n'
-            for i in range(len(in_tokens)):
-                new_code += templates.assignment('_%s_in[%i]'%(self.handle, i), in_tokens[i])
-            code += new_code
+        # FIXME this needs fixing
+#        for in_block in self._input_blocks:
+#            if 'size' in in_block:
+#                new_code = templates.declaration_bundle_real('_%s_in'%self.handle, len(in_tokens)) + '\n'
+#                for i in range(len(in_tokens)):
+#                    new_code += templates.assignment('_%s_in[%i]'%(self.handle, i), in_tokens[i])
+#                code += new_code
         return code
     
     def get_preprocessing_code(self, in_tokens):
         code = ''
-        ports = self.function['ports']
-#        for port_name in ports:
-#            if 'value' in ports[port_name]:
-#                if type(ports[port_name]['value']) == unicode:
-#                     port_in_token = [ '"' + ports[port_name]['value'] + '"']
-#                else:
-#                    port_in_token = [str(ports[port_name]['value'])]
-#            elif 'name' in ports[port_name]:
-#                port_in_token = [ports[port_name]['name']['name']]
-#            elif 'expression' in ports[port_name]:
-#                port_in_token = [self.port_name_atoms[port_name][0].get_handles()[0]]
-#            elif 'bundle' in ports[port_name]:
-#                port_in_token = [templates.bundle_indexing(ports[port_name]['bundle']['name'],
-#                                                           ports[port_name]['bundle']['index'])]
-#            else:
-#                port_in_token = ['____XXX___'] # TODO implement
-#            code += templates.module_set_property(self.handle, port_name, port_in_token)
-            
-        if self._input_block and 'blockbundle' in self._input_block:
-            new_code = templates.declaration_bundle_real('_%s_in'%self.handle, len(in_tokens)) + '\n'
-            for i in range(len(in_tokens)):
-                new_code += templates.assignment('_%s_in[%i]'%(self.handle, i), in_tokens[i])
-            code += new_code
+
+        # FIXME this needs fixing
+#        for in_block in self._input_blocks:
+#            if 'size' in in_block:
+#                new_code = templates.declaration_bundle_real('_%s_in'%self.handle, len(in_tokens)) + '\n'
+#                for i in range(len(in_tokens)):
+#                    new_code += templates.assignment('_%s_in[%i]'%(self.handle, i), in_tokens[i])
+#                code += new_code
         return code
         
     def get_processing_code(self, in_tokens):
@@ -1017,23 +1030,22 @@ class ModuleAtom(Atom):
     def _process_module(self, streams):
         
         self._init_blocks(self.module["blocks"])
-                          
-        if self._output_block and 'size' in self._output_block:
-            self.out_tokens = ['_' + self.name + '_%03i_out[%i]'%(self._index, i) for i in range(self._output_block['size'])]
-        else:
-            self.out_tokens = ['_' + self.name + '_%03i_out'%self._index]
+        
+        self.out_tokens = []
+        #FIXME do we need to support more than 1 output block?
+        if len(self._output_blocks) > 0:
+            if 'size' in self._output_blocks[0]:
+                self.out_tokens = ['_' + self.name + '_%03i_out[%i]'%(self._index, i) for i in range(self._output_blocks[0]['size'])]
+            else:
+                self.out_tokens = ['_' + self.name + '_%03i_out'%self._index]
         if not type(self.module["streams"]) == list:
-            # FIXME this is a hack and should be handled by the code validator
+            # TODO Should this be handled by the code validator before getting here?
             self.module["streams"] = [self.module["streams"]]
         
         tree = streams
         instanced = []
-        if self._input_block: # Mark input block as instanced so it doesn't get instantiated as other blocks
-            if 'block' in self._input_block:
-                block_type = 'block'
-            else:
-                block_type = 'blockbundle'
-            instanced = [[self._input_block[block_type]['name'], self.scope_index]]
+#        if self._input_block: # Mark input block as instanced so it doesn't get instantiated as other blocks
+#            instanced = [[self._input_block['name'], self.scope_index]]
             
         if 'ports' in self.function:
             for name,port_value in self.function['ports'].items():
@@ -1047,23 +1059,23 @@ class ModuleAtom(Atom):
         self.code = self.platform.generate_code(tree, self._blocks,
                                                 instanced = instanced)
         
-        if self.module['ports']:
-                for prop in self.module['ports']:
-                    if 'block' in prop:
-                        if type(prop['block']['block']) == dict:
-                            decl = self.platform.find_declaration_in_tree(prop['block']['block']['name']['name'],
-                                                                          self.platform.tree + self._blocks)
-                                     #FIXME implement for bundles
-                            domain = decl['domain']
-                            property_name = prop['block']['name']
-        #                    domain = "_Property:" + property_name
-                            if type(domain) == dict:
-                                domain = domain['name']['name']
-                                # FIXME need to resolve domain name from "name"
-                            prop_type = self.get_block_types(decl)[0]
-                        else:
-                            # Property is not a block but a constant value.
-                            pass  
+#        if self.module['ports']:
+#                for prop in self.module['ports']:
+#                    if 'block' in prop:
+#                        if type(prop['block']['block']) == dict:
+#                            decl = self.platform.find_declaration_in_tree(prop['block']['block']['name']['name'],
+#                                                                          self.platform.tree + self._blocks)
+#                                     #FIXME implement for bundles
+#                            domain = decl['domain']
+#                            property_name = prop['block']['name']
+#        #                    domain = "_Property:" + property_name
+#                            if type(domain) == dict:
+#                                domain = domain['name']['name']
+#                                # FIXME need to resolve domain name from "name"
+#                            prop_type = self.get_block_types(decl)[0]
+#                        else:
+#                            # Property is not a block but a constant value.
+#                            pass  
 
         
         self.globals = {}
@@ -1073,27 +1085,34 @@ class ModuleAtom(Atom):
                 
 
     def _init_blocks(self, blocks):
-
-        input_name = None
-        output_name = None
-        for port in self.module['ports']: 
-            if 'main' in port['block'] and port['block']['main']['value'] == True:
-                if 'direction' in port['block'] and port['block']['direction'] == 'input':
-                    input_name = port['block']['block']
-                if 'direction' in port['block'] and port['block']['direction'] == 'output':
-                    output_name = port['block']['block']
-            
         self._blocks = []
         for block in blocks:
             self._blocks.append(block)
-            if 'block' in block:
-                block_type = 'block'
-            elif 'blockbundle' in block:
-                block_type = 'blockbundle'
-            if input_name and 'name' in input_name and self._blocks[-1][block_type]['name'] == input_name["name"]['name']:
-                self._input_block = self._blocks[-1]
-            if output_name and 'name' in output_name and  self._blocks[-1][block_type]['name'] == output_name["name"]["name"]:
-                self._output_block = self._blocks[-1][block_type]
+            
+        for port in self.module['ports']: 
+            internal_block = self.find_internal_block(port['block']['block']['name']['name'])
+            if 'main' in port['block'] and port['block']['main']['value'] == True:
+                internal_block['main'] = True
+#                for block in self._blocks:
+#                    name = ''
+#                    if 'block' in block:
+#                        name = block['block']['name']
+#                    elif 'blockbundle' in block:
+#                        name = block['blockbundle']['name']
+#                    if internal_block['name'] == name:
+#                        self._blocks.remove(block)
+#                        break
+                if 'direction' in port['block'] and port['block']['direction'] == 'input':
+                    self._input_blocks.append(internal_block)
+                elif 'direction' in port['block'] and port['block']['direction'] == 'output':
+                    self._output_blocks.append(internal_block)
+            else: # Not a main port
+                internal_block['main'] = False
+                if 'direction' in port['block'] and port['block']['direction'] == 'input':
+                    self._input_blocks.append(internal_block)
+                elif 'direction' in port['block'] and port['block']['direction'] == 'output':
+                    self._output_blocks.append(internal_block)
+            
                 
     def find_internal_block(self, block_name):
         for block in self._blocks:
@@ -1111,6 +1130,23 @@ class ModuleAtom(Atom):
         else:
             block_type = 'real'
         return [block_type]
+    
+    def _get_expression_instances(self, atom):
+        if not type(atom) is ExpressionAtom:
+            return []
+        instances = []
+        left = atom.left_atom
+        right = atom.right_atom
+        if type(left) is NameAtom:
+            instances += left.get_instances()
+        elif type(left) is ExpressionAtom:
+            instances += self._get_expression_instances(left)
+        
+        if type(right) is NameAtom:
+            instances += right.get_instances()
+        elif type(right) is ExpressionAtom:
+            instances += self._get_expression_instances(right)
+        return instances
 
 class PlatformModuleAtom(ModuleAtom):
     def __init__(self, module, function, platform_code, token_index, platform, scope_index):
@@ -1207,7 +1243,8 @@ class ReactionAtom(Atom):
         module_instance = ModuleInstance(self.scope_index,
                                  self.domain,
                                  self.name,
-                                 self.handle)
+                                 self.handle,
+                                 self)
         if "other_scope_instances" in self.code:
             for inst in self.code["other_scope_instances"]:
                 inst.post = False
@@ -1227,7 +1264,8 @@ class ReactionAtom(Atom):
                                  self.scope_index,
                                  self.domain,
                                  block_types[0],
-                                 self.out_tokens[0]) ]
+                                 self.out_tokens[0],
+                                 self) ]
         return instances      
         
     def get_inline_processing_code(self, in_tokens):
@@ -1427,8 +1465,17 @@ class PlatformFunctions:
     #                return type[
         return None
     
+    def find_port_direction(self, prot_block):
+        return port_block['block']['direction']
+    
     def find_function_property(self, func, property_name):
         return func["ports"][property_name]
+    
+    def find_instance_by_handle(self,handle, instance_list):
+        for instance in instance_list:
+            if instance.get_name() == handle:
+                return instance
+        return None
     
     
     def bool_to_str(self, bool_val):
@@ -1445,10 +1492,10 @@ class PlatformFunctions:
         scope_index = len(self.scope_stack) -1 
         if "name" in member:
             platform_type, declaration = self.find_block(member['name']['name'], self.tree)
-            new_atom = NameAtom(platform_type, declaration, self.unique_id, scope_index)
+            new_atom = NameAtom(platform_type, declaration, self.unique_id, scope_index, member['name']['line'], member['name']['filename'])
         elif "bundle" in member:
             platform_type, declaration = self.find_block(member['bundle']['name'], self.tree)
-            new_atom = BundleAtom(platform_type, declaration, member['bundle']['index'], self.unique_id, scope_index)
+            new_atom = BundleAtom(platform_type, declaration, member['bundle']['index'], self.unique_id, scope_index, member['bundle']['line'],member['bundle']['filename'])
         elif "function" in member:
             platform_type, declaration = self.find_block(member['function']['name'], self.tree)
             if declaration['type'] == 'module':
@@ -1476,18 +1523,18 @@ class PlatformFunctions:
                 element_atom = self.make_atom(element)
                 list_atoms.append(element_atom)
             new_atom = ListAtom(list_atoms, scope_index)
-        elif "block" in member:
-            if 'type' in member['block']:
-                platform_type = self.find_stride_type(member['block']["type"])
-            else:
-                platform_type =  self.find_stride_type(member['block']["platformType"])
-            new_atom = NameAtom(platform_type, member['block'], self.unique_id, scope_index)
-        elif "blockbundle" in member:
-            if 'type' in member:
-                platform_type = self.find_stride_type(member['blockbundle']["type"])
-            else:
-                platform_type =  self.find_stride_type(member['blockbundle']["platformType"])
-            new_atom = NameAtom(platform_type, member['blockbundle'], self.unique_id, scope_index)
+#        elif "block" in member:
+#            if 'type' in member['block']:
+#                platform_type = self.find_stride_type(member['block']["type"])
+#            else:
+#                platform_type =  self.find_stride_type(member['block']["platformType"])
+#            new_atom = NameAtom(platform_type, member['block'], self.unique_id, scope_index)
+#        elif "blockbundle" in member:
+#            if 'type' in member:
+#                platform_type = self.find_stride_type(member['blockbundle']["type"])
+#            else:
+#                platform_type =  self.find_stride_type(member['blockbundle']["platformType"])
+#            new_atom = NameAtom(platform_type, member['blockbundle'], self.unique_id, scope_index)
         else:
             raise ValueError("Unsupported type")
         return new_atom
@@ -1541,6 +1588,7 @@ class PlatformFunctions:
             code = templates.declaration_reaction(instance.get_module_type(), instance.get_name())
         else:
             raise ValueError('Unsupported type for instance')
+        code += templates.source_marker(instance.get_line(), instance.get_filename())
         return code
         
     def initialization_code(self, instance):
@@ -1560,7 +1608,8 @@ class PlatformFunctions:
                                              instance.get_scope(),
                                              instance.get_domain(),
                                              instance.get_bundle_type(),
-                                             instance.get_name() + '[%i]'%i)
+                                             instance.get_name() + '[%i]'%i,
+                                             instance)
                     code += self.initialization_code(elem_instance)
             else:
                 ValueError("Unsupported type for initialization: " + instance.get_type())
@@ -1572,6 +1621,8 @@ class PlatformFunctions:
         header_code = {}
         processing_code = {} 
         post_processing = {}
+        writes = {}
+        reads = {}
         parent_rates_size = templates.rate_stack_size() # To know now much we need to pop for this stream
         
 #        header = []
@@ -1593,6 +1644,17 @@ class PlatformFunctions:
                         current_domain = atom.domain['name']['name']
                     else:
                         current_domain = atom.domain
+                
+                # Accumulate reads and writes within domains
+                if not current_domain in writes:
+                    writes[current_domain] = []
+                if not current_domain in reads:
+                    reads[current_domain] = []
+                
+                if (atom.get_num_writes() > 0):
+                    writes[current_domain].append(atom.get_handles());
+                if (atom.get_num_reads() > 0):
+                    reads[current_domain].append(atom.get_handles());
                 #Process Inlcudes
                 new_globals = atom.get_globals()
                 if len(new_globals) > 0:
@@ -1609,23 +1671,15 @@ class PlatformFunctions:
                 
                 # append new declarations if not there in the list already
                 for new_dec in declares:
-                    already_declared = False
-                    for dec in scope_declarations:
-                        if dec.get_name() == new_dec.get_name():
-                            print ("Declaration already queued: " + dec.name)
-                            already_declared = True
-                            break
-                    if not already_declared:
+                    if self.find_instance_by_handle(new_dec.get_name(), scope_declarations):
+                        print ("Declaration already queued: " + new_dec.get_name())
+                    else:
                         scope_declarations.append(new_dec)
                         
                 for new_inst in new_instances:
-                    already_declared = False
-                    for inst in scope_instances:
-                        if new_inst.get_name() == inst.get_name():
-                            print ("Instance already queued: " + new_inst.handle)
-                            already_declared = True
-                            break
-                    if not already_declared:
+                    if self.find_instance_by_handle(new_inst.get_name(), scope_instances):
+                        print ("Instance already queued: " + new_inst.handle)
+                    else:
                         scope_instances.append(new_inst)
                         
                 #scope_instances += new_instances
@@ -1687,20 +1741,27 @@ class PlatformFunctions:
 
         self.log_debug(">>> End stream generation")
         return [header_code, init_code, processing_code,
-                scope_instances, scope_declarations]
+                scope_instances, scope_declarations, reads, writes]
         
     def generate_stream_code(self, stream, stream_index, global_groups):
         self.log_debug("-- Start stream")       
         node_groups = self.make_stream_nodes(stream)
+        
+        first_line = node_groups[0][0].get_line()
+        #last_line = node_groups[0][-1].get_line()
+        stream_filename = node_groups[0][0].get_filename()
 
         new_code = self.generate_code_from_groups(node_groups, global_groups)
-        header_code, init_code, new_processing_code, scope_instances, scope_declarations = new_code
+        header_code, init_code, new_processing_code, scope_instances, scope_declarations, reads, writes = new_code
 
+        self.log_debug("READS------ " + str(reads) )
+        self.log_debug("WRITES------ " + str(writes) )
         self.log_debug("-- End stream")
         
         for domain in new_processing_code.keys():
-            new_processing_code[domain] = templates.stream_begin_code%stream_index + new_processing_code[domain]
-            new_processing_code[domain] += templates.stream_end_code%stream_index
+            wrapper_begin = templates.stream_begin_code%stream_index + templates.source_marker(first_line, stream_filename)
+            wrapper_end =  templates.stream_end_code%stream_index
+            new_processing_code[domain] = wrapper_begin + new_processing_code[domain] + wrapper_end
         
         return {"global_groups" : global_groups,
                 "header_code" : header_code,
@@ -1746,11 +1807,18 @@ class PlatformFunctions:
             if 'stream' in node: # Everything grows from streams.
                 code = self.generate_stream_code(node["stream"], stream_index,
                                                  global_groups)
-                # FIXME should merge global groups from different streams...
-                global_groups_code = code['global_groups']
+                # merge global groups from different streams...
+                for global_key in code['global_groups']:
+                    if not global_key in global_groups_code:
+                        global_groups_code[global_key] = {}
+                    for global_section in global_groups_code[global_key]:
+                        if global_section in global_groups_code[global_key]:
+                            global_groups_code[global_key][global_section] += code['global_groups'][global_section]
+                        else:
+                            global_groups_code[global_key][global_section] = code['global_groups'][global_section]
                 for domain, header_code in code["header_code"].items():
                     if not domain in domain_code:
-                        domain_code[domain] =  { "header_code": '',
+                        domain_code[domain] = { "header_code": '',
                         "init_code" : '',
                         "processing_code" : [] }
                     domain_code[domain]["header_code"] += header_code
@@ -1779,14 +1847,15 @@ class PlatformFunctions:
         
         is_sorted = False
         # TODO do a more efficient sort
-        while not is_sorted:
-            for i in range(len(header_elements)):
-                for j in range(i):
-                    if header_elements[i].depended_by(header_elements[j]):
-                        header_elements[i], header_elements[j] = header_elements[j], header_elements[i]
-                        break
-                if i == len(header_elements) - 1:  
-                    is_sorted = True
+        if len(header_elements) > 0:
+            while not is_sorted:
+                for i in range(len(header_elements)):
+                    for j in range(i):
+                        if header_elements[i].depended_by(header_elements[j]):
+                            header_elements[i], header_elements[j] = header_elements[j], header_elements[i]
+                            break
+                    if i == len(header_elements) - 1:  
+                        is_sorted = True
                 
         for new_element in header_elements:
             if new_element.get_scope() >= len(self.scope_stack) - 1: # if declaration in this scope
@@ -1825,6 +1894,32 @@ class PlatformFunctions:
                             domain_code[new_element.get_domain()]["header_code"] = new_inst_code + domain_code[new_element.get_domain()]["header_code"]
                         domain_code[new_element.get_domain()]["init_code"] +=  self.initialization_code(new_element)
                         instanced.append([new_element.get_name(), new_element.get_scope() ])
+#                    if not "input_blocks" in domain_code[new_element.get_domain()]:
+#                        domain_code[new_element.atom.get_domain()]["input_blocks"] = []
+#                    contained = False
+#                    for elem in domain_code[new_element.atom.get_domain()]["input_blocks"]:
+#                        if new_element.get_name() == elem.get_name():
+#                            contained = True
+#                            break
+#                        
+#                    if not contained:
+#                        domain_code[new_element.atom.get_domain()]["input_blocks"].append(new_element)
+#                        
+#                    if not "output_blocks" in domain_code[new_element.get_domain()]:
+#                        domain_code[new_element.atom.get_domain()]["output_blocks"] = []
+#                    contained = False
+#                    for elem in domain_code[new_element.atom.get_domain()]["output_blocks"]:
+#                        if new_element.get_name() == elem.get_name():
+#                            contained = True
+#                            break
+##                    # Don't include as output if it is already an input
+#                    for elem in domain_code[new_element.atom.get_domain()]["input_blocks"]:
+#                        if new_element.get_name() == elem.get_name():
+#                            contained = True
+#                            break
+#                        
+#                    if not contained:
+#                        domain_code[new_element.atom.get_domain()]["output_blocks"].append(new_element)
             else:
                 other_scope_declarations.append(new_element) 
 

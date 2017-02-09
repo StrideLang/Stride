@@ -12,6 +12,8 @@ class Code(object):
         self.scope = 0
         self.domain = None
         self.dependents = []
+        self.line = -1
+        self.filename = ''
     
     def get_code(self):
         return self.code
@@ -34,15 +36,24 @@ class Code(object):
     def depended_by(self, code_obj):
         return code_obj in self.dependents
     
+    def get_line(self):
+        return self.line
+        
+    def get_filename(self):
+        return self.filename
+    
 class Instance(Code):
-    def __init__(self, code, scope, domain, vartype, handle, post = True):
+    def __init__(self, code, scope, domain, vartype, handle, atom, post = True):
         self.code = code
         self.scope = scope
         self.domain = domain
         self.vartype = vartype
         self.handle = handle
+        self.line = atom.get_line()
+        self.filename = atom.get_filename()
         self.post = post
         self.dependents = []
+        self.atom = atom
         
     def get_type(self):
         return self.vartype
@@ -55,8 +66,9 @@ class Instance(Code):
 
 
 class BundleInstance(Instance):
-    def __init__(self, code, scope, domain, vartype, handle, size, post = True):
-        super(BundleInstance, self).__init__(code, scope, domain, vartype, handle, post)
+    def __init__(self, code, scope, domain, vartype, handle, size, atom, post = True,
+                 reads = [], writes = []):
+        super(BundleInstance, self).__init__(code, scope, domain, vartype, handle, atom, post)
         self.size = size
     
     def get_type(self):
@@ -69,8 +81,8 @@ class BundleInstance(Instance):
         return self.vartype
 
 class ModuleInstance(Instance):
-    def __init__(self, scope, domain, vartype, handle, post = True):
-        super(ModuleInstance, self).__init__('', scope, domain, vartype, handle, post)
+    def __init__(self, scope, domain, vartype, handle, atom, post = True):
+        super(ModuleInstance, self).__init__('', scope, domain, vartype, handle, atom, post)
     
     def get_type(self):
         return 'module'

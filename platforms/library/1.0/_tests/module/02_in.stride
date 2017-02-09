@@ -1,0 +1,23 @@
+use Gamma version 1.0 on PC
+
+import generators
+
+
+module Test {
+	ports: [
+		port InputPort {
+			main: on
+			direction: "input"
+			block: Input
+			domain: InputDomain
+		}
+	]
+	blocks: [
+		signal Dummy { domain: InputDomain }
+	]
+	streams: [
+		Input >> Dummy;
+	]
+}
+
+AudioIn[1] >> Test();
