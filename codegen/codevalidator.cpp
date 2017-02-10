@@ -762,15 +762,16 @@ int CodeValidator::getTypeNumOutputs(BlockNode *blockDeclaration, const QVector<
             Q_ASSERT(outputName->getNodeType() == AST::Name);
             QString outputBlockName = QString::fromStdString(outputName->getName());
             foreach(AST *internalBlockNode, blockList->getChildren()) {
-                Q_ASSERT(internalBlockNode->getNodeType() == AST::BlockBundle || internalBlockNode->getNodeType() == AST::Block);
-                QString blockName = QString::fromStdString(static_cast<BlockNode *>(internalBlockNode)->getName());
-                if (blockName == outputBlockName) {
-                    BlockNode *intBlock = static_cast<BlockNode *>(internalBlockNode);
-                    if (intBlock->getName() == outputBlockName.toStdString()) {
-                        if (internalBlockNode->getNodeType() == AST::BlockBundle) {
-                            return getBlockDeclaredSize(intBlock, scope, tree, errors);
-                        } else if (internalBlockNode->getNodeType() == AST::Block) {
-                            return 1;
+                if (internalBlockNode->getNodeType() == AST::BlockBundle || internalBlockNode->getNodeType() == AST::Block) {
+                    QString blockName = QString::fromStdString(static_cast<BlockNode *>(internalBlockNode)->getName());
+                    if (blockName == outputBlockName) {
+                        BlockNode *intBlock = static_cast<BlockNode *>(internalBlockNode);
+                        if (intBlock->getName() == outputBlockName.toStdString()) {
+                            if (internalBlockNode->getNodeType() == AST::BlockBundle) {
+                                return getBlockDeclaredSize(intBlock, scope, tree, errors);
+                            } else if (internalBlockNode->getNodeType() == AST::Block) {
+                                return 1;
+                            }
                         }
                     }
                 }
@@ -827,14 +828,16 @@ int CodeValidator::getTypeNumInputs(BlockNode *blockDeclaration, const QVector<A
                 if (!internalBlockNode) {
                     return -1;
                 }
-                QString blockName = QString::fromStdString(static_cast<BlockNode *>(internalBlockNode)->getName());
-                if (blockName == inputBlockName) {
-                    if (internalBlockNode->getNodeType() == AST::BlockBundle) {
-                        BlockNode *intBlock = static_cast<BlockNode *>(internalBlockNode);
-                        Q_ASSERT(intBlock->getNodeType() == AST::BlockBundle);
-                        return getBlockDeclaredSize(intBlock, scope, tree, errors);
-                    } else if (internalBlockNode->getNodeType() == AST::Block) {
-                        return 1;
+                if (internalBlockNode->getNodeType() == AST::Block) {
+                    QString blockName = QString::fromStdString(static_cast<BlockNode *>(internalBlockNode)->getName());
+                    if (blockName == inputBlockName) {
+                        if (internalBlockNode->getNodeType() == AST::BlockBundle) {
+                            BlockNode *intBlock = static_cast<BlockNode *>(internalBlockNode);
+                            Q_ASSERT(intBlock->getNodeType() == AST::BlockBundle);
+                            return getBlockDeclaredSize(intBlock, scope, tree, errors);
+                        } else if (internalBlockNode->getNodeType() == AST::Block) {
+                            return 1;
+                        }
                     }
                 }
 //                return -1; // Should never get here!

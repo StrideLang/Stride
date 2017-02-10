@@ -504,10 +504,26 @@ class NameAtom(Atom):
     
     def get_instances(self):
         
-        if 'main' in self.declaration and self.declaration['main']:
+        if 'port_block' in self.declaration and self.declaration['port_block']:
             return [] # Atoms for main ports need not be de
         default_value = self._get_default_value()
         if 'type' in self.declaration and self.declaration['type'] == 'signal':
+            if signal_type_string(self.declaration):
+                inits = [Instance(default_value,
+                                 self.declaration['stack_index'],
+                                 self.domain,
+                                 'string',
+                                 self.handle,
+                                 self
+                                 )]
+            else:
+                inits = [Instance(str(default_value),
+                                 self.declaration['stack_index'],
+                                 self.domain,
+                                 'real',
+                                 self.handle,
+                                 self)]
+        elif 'type' in self.declaration and self.declaration['type'] == 'signalbridge':
             if signal_type_string(self.declaration):
                 inits = [Instance(default_value,
                                  self.declaration['stack_index'],
@@ -1093,6 +1109,7 @@ class ModuleAtom(Atom):
             internal_block = self.find_internal_block(port['block']['block']['name']['name'])
             if 'main' in port['block'] and port['block']['main']['value'] == True:
                 internal_block['main'] = True
+                internal_block['port_block'] = True
 #                for block in self._blocks:
 #                    name = ''
 #                    if 'block' in block:
@@ -1108,6 +1125,7 @@ class ModuleAtom(Atom):
                     self._output_blocks.append(internal_block)
             else: # Not a main port
                 internal_block['main'] = False
+                internal_block['port_block'] = True
                 if 'direction' in port['block'] and port['block']['direction'] == 'input':
                     self._input_blocks.append(internal_block)
                 elif 'direction' in port['block'] and port['block']['direction'] == 'output':

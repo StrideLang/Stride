@@ -149,14 +149,28 @@ type _Signal {
 type _SignalBridge {
 	typeName: "signalbridge"
 	properties: [
-		typeProperty InDomain {
-			name: "inDomain"
+		typeProperty InputDomain {
+			name: "inputDomain"
 			types: [""]
 			default: ""
 			required: off
 		}
-		typeProperty OutDomain {
-			name: "outDomain"
+		typeProperty OutputDomain {
+			name: "outputDomain"
+			types: [""]
+			default: ""
+			required: off
+			meta: "The Output Domain"
+		}
+		typeProperty Domain {
+			name: "domain"
+			types: [""]
+			default: ""
+			required: off
+			meta: "Domain for quick compatibility with signal. Possibly removed in the future"
+		}
+		typeProperty Default {
+			name: "default"
 			types: [""]
 			default: ""
 			required: off

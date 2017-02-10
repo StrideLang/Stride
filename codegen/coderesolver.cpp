@@ -1177,6 +1177,20 @@ void CodeResolver::declareIfMissing(string name, AST *blocks, AST * value)
     }
 }
 
+BlockNode *CodeResolver::createSignalBridge(string name, BlockNode *declaration, AST *outDomain)
+{
+    BlockNode *newBridge = new BlockNode(name, "signalbridge", nullptr, "", -1);
+    newBridge->addProperty(new PropertyNode("default", declaration->getPropertyValue("default")->deepCopy(),
+                                            declaration->getFilename().c_str(), declaration->getLine()));
+    newBridge->addProperty(new PropertyNode("inputDomain", declaration->getDomain()->deepCopy(),
+                                            declaration->getFilename().c_str(), declaration->getLine()));
+    newBridge->addProperty(new PropertyNode("domain", declaration->getDomain()->deepCopy(),
+                                            declaration->getFilename().c_str(), declaration->getLine()));
+    newBridge->addProperty(new PropertyNode("outputDomain", outDomain->deepCopy(),
+                                            declaration->getFilename().c_str(), declaration->getLine()));
+    return newBridge;
+}
+
 
 std::vector<AST *> CodeResolver::declareUnknownExpressionSymbols(ExpressionNode *expr, int size, QVector<AST *> scopeStack, AST * tree)
 {
@@ -1868,6 +1882,26 @@ QVector<AST *> CodeResolver::sliceStreamByDomain(StreamNode *stream, QVector<AST
         }
         domainName = CodeValidator::getNodeDomainName(left, CodeValidator::getBlocksInScope(left, scopeStack, m_tree), m_tree);
 
+        // We might need to add bridge signals if expression members belong to different domains
+        if (left->getNodeType() == AST::Expression && previousDomainName.size() == 0) { // Because expressions are only allowed on the left most node, no need to check that
+            AST *outDomain = nullptr;
+            if (right->getNodeType() == AST::Name) {
+                BlockNode *declaration = CodeValidator::findDeclaration(QString::fromStdString(static_cast<NameNode *>(right)->getName()),
+                                                                        scopeStack, m_tree);
+                if (declaration) {
+                    outDomain = declaration->getDomain();
+                }
+            } else if (right->getNodeType() == AST::Bundle) {
+                BlockNode *declaration = CodeValidator::findDeclaration(QString::fromStdString(static_cast<BundleNode *>(right)->getName()),
+                                                                        scopeStack, m_tree);
+                if (declaration) {
+                    outDomain = declaration->getDomain();
+                }
+            }
+            ExpressionNode *expr = static_cast<ExpressionNode *>(left);
+            QVector<AST *> newStreams = processExpression(expr, scopeStack, outDomain);
+            streams << newStreams;
+        }
         if (previousDomainName != domainName && left != stream->getLeft()) { // domain change and not the first node in the stream
             int size = CodeValidator::getNodeSize(left, m_tree);
             // FIXME make sure connectorName is not declared in current scope
@@ -1881,7 +1915,9 @@ QVector<AST *> CodeResolver::sliceStreamByDomain(StreamNode *stream, QVector<AST
                 newStart = new ListNode(nullptr, "", -1);
                 for (unsigned int i = 0; i < stack.back()->getChildren().size(); i++) {
                     string listMemberName = connectorName + "_" + std::to_string(i);
-                    newDeclarations.push_back(new BlockNode(listMemberName, "signalbridge", nullptr, "", -1));
+                    BlockNode *declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(stack[i], scopeStack, m_tree),
+                                                                            scopeStack, m_tree);
+                    newDeclarations.push_back(createSignalBridge(listMemberName, declaration, new AST));
                     closingName->addChild(new NameNode(listMemberName, "", -1));
                     newStart->addChild(new NameNode(listMemberName, "", -1));
                 }
@@ -1928,6 +1964,54 @@ QVector<AST *> CodeResolver::sliceStreamByDomain(StreamNode *stream, QVector<AST
         }
     }
 //    delete stream;
+    return streams;
+}
+
+QVector<AST *> CodeResolver::processExpression(ExpressionNode *expr, QVector<AST *> scopeStack, AST *outDomain)
+{
+    QVector<AST *> streams;
+    AST *exprLeft = expr->getLeft();
+    if (exprLeft->getNodeType() == AST::Expression) {
+        streams << processExpression(static_cast<ExpressionNode *>(exprLeft), scopeStack, outDomain);
+    } else if (exprLeft->getNodeType() == AST::Name || exprLeft->getNodeType() == AST::Bundle) {
+        QString memberName = CodeValidator::streamMemberName(exprLeft, scopeStack, m_tree);
+        BlockNode *declaration = CodeValidator::findDeclaration(memberName, scopeStack, m_tree);
+        if (declaration) {
+            if ( CodeValidator::getDomainNodeString(declaration->getDomain()) !=
+                 CodeValidator::getDomainNodeString(outDomain)) {
+                std::string connectorName = "_BridgeSig_" + std::to_string(m_connectorCounter++);
+                streams.push_back(createSignalBridge(connectorName, declaration, outDomain)); // Add definition to stream
+                NameNode *connectorNameNode = new NameNode(connectorName, "", -1);
+                StreamNode *newStream = new StreamNode(exprLeft->deepCopy(), connectorNameNode, exprLeft->getFilename().c_str(), exprLeft->getLine());
+                expr->replaceLeft(new NameNode(connectorName, "", -1));
+                streams.push_back(newStream);
+                // FIXME need to implement for bundles
+            }
+        }
+    }
+
+    AST *exprRight = expr->getRight();
+
+    if (exprRight->getNodeType() == AST::Expression) {
+        streams << processExpression(static_cast<ExpressionNode *>(exprLeft), scopeStack, outDomain);
+    } else if (exprRight->getNodeType() == AST::Name) {
+        NameNode *exprName = static_cast<NameNode *>(exprRight);
+        BlockNode *declaration = CodeValidator::findDeclaration(QString::fromStdString(exprName->getName()),
+                                                                scopeStack, m_tree);
+        if (declaration) {
+            if ( CodeValidator::getDomainNodeString(declaration->getDomain()) !=
+                 CodeValidator::getDomainNodeString(outDomain)) {
+                std::string connectorName = "_BridgeSig_" + std::to_string(m_connectorCounter++);
+                streams.push_back(createSignalBridge(connectorName, declaration, outDomain)); // Add definition to stream
+                NameNode *connectorNameNode = new NameNode(connectorName, "", -1);
+                StreamNode *newStream = new StreamNode(exprRight->deepCopy(), connectorNameNode, exprRight->getFilename().c_str(), exprRight->getLine());
+                expr->replaceRight(new NameNode(connectorName, "", -1));
+                streams.push_back(newStream);
+            }
+        }
+    } else if (exprRight->getNodeType() == AST::Bundle) {
+
+    }
     return streams;
 }
 

@@ -1,8 +1,5 @@
 use Gamma version 1.0 on PC
 
-import generators
-
-
 module Test {
 	ports: [
 		port OutputPort {
@@ -19,14 +16,16 @@ module Test {
 			name: "test"
 			direction: "input"
 			block: TestBlock
+			domain: TestDomain
 		}
 	]
+	blocks: [
+		signal Amp { domain: TestDomain }
+	]
 	streams: [
-		Input * TestBlock >> Output;
-#		[Input, TestBlock] >> Multiply() >> Output;
-#		Input >> Multiplication( value: TestBlock) >> >> Output;
-		
-		]
+		TestBlock * 2 >> Amp;
+		Input * Amp >> Output;
+	]
 }
 
 AudioIn[1] >> Test(test: AudioIn[2]) >> AudioOut[1];

@@ -56,6 +56,7 @@ private:
     std::vector<AST *> declareUnknownName(NameNode *name, int size, QVector<AST *> localScope, AST *tree);
     BlockNode *createConstantDeclaration(string name, AST *value);
     void declareIfMissing(string name, AST *blockList, AST *value);
+    BlockNode *createSignalBridge(string name, BlockNode *declaration, AST * outDomain);
 
     std::vector<AST *> declareUnknownExpressionSymbols(ExpressionNode *expr, int size, QVector<AST *> scopeStack, AST * tree);
     ListNode *expandNameToList(NameNode *name, int size);
@@ -96,6 +97,7 @@ private:
 //    AST *expandStream(AST *node, int index, int rightNumInputs, int leftNumOutputs);
     QVector<AST *> sliceStreamByDomain(StreamNode *stream, QVector<AST *> scopeStack);
 //    StreamNode *splitStream(StreamNode *stream, AST *closingNode, AST *endNode);
+    QVector<AST *> processExpression(ExpressionNode *expr, QVector<AST *> scopeStack, AST *outDOmain);
 
     // TODO move these four functions to CodeValidator with the rest of querying functions
     double findRateInProperties(vector<PropertyNode *> properties, QVector<AST *> scope, AST *tree);
