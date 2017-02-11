@@ -33,6 +33,7 @@ CLETTER     [A-Z]
 ","     { return COMMA; }
 "."     { return DOT; }
 ":"     { return COLON; }
+"::"     { return COLONCOLON; }
 ";"     { return SEMICOLON; }
 ">>"    { return STREAM; }
 
