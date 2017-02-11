@@ -155,7 +155,6 @@ NullStream nstream;
 %right BITNOT
 %right UMINUS
 %left '(' ')'
-%token DOT
 
 %locations
 
