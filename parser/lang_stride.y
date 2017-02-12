@@ -136,7 +136,7 @@ NullStream nstream;
 %token  <sval>  ERROR
 
 %token '[' ']' '{' '}'
-%token COMMA COLON SEMICOLON 
+%token DOT COMMA COLON COLONCOLON SEMICOLON
 %token USE VERSION WITH IMPORT AS FOR NONE ON OFF
 %token EQUAL NOTEQUAL GREATER LESSER GREATEREQUAL LESSEREQUAL
 %token BITAND BITOR BITNOT
@@ -155,7 +155,6 @@ NullStream nstream;
 %right BITNOT
 %right UMINUS
 %left '(' ')'
-%token DOT
 
 %locations
 
