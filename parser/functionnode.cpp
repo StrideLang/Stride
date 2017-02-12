@@ -70,9 +70,10 @@ vector<PropertyNode *> FunctionNode::getProperties() const
 
 void FunctionNode::addProperty(PropertyNode *newProperty)
 {
-    // TODO check that property name is not there already
-    addChild(newProperty);
-    m_properties.push_back(newProperty);
+    if (!getPropertyValue(newProperty->getName())) {
+        addChild(newProperty);
+//        m_properties.push_back(newProperty);
+    }
 }
 
 AST *FunctionNode::getPropertyValue(string propertyName)

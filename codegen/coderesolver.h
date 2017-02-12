@@ -56,7 +56,7 @@ private:
     std::vector<AST *> declareUnknownName(NameNode *name, int size, QVector<AST *> localScope, AST *tree);
     BlockNode *createConstantDeclaration(string name, AST *value);
     void declareIfMissing(string name, AST *blockList, AST *value);
-    BlockNode *createSignalBridge(string name, BlockNode *declaration, AST * outDomain);
+    BlockNode *createSignalBridge(string name, BlockNode *declaration, AST * outDomain, int size = 1);
 
     std::vector<AST *> declareUnknownExpressionSymbols(ExpressionNode *expr, int size, QVector<AST *> scopeStack, AST * tree);
     ListNode *expandNameToList(NameNode *name, int size);

@@ -916,24 +916,23 @@ class ModuleAtom(Atom):
         
     def get_inline_processing_code(self, in_tokens):
         code = ''
-        # TODO handle correctly the calling of input and output domain functions for modules where it is different
-        #FIXME support multiple input blocks?
-        #in_tokens = []
         out_tokens = self.out_tokens
         domain = ''
         for in_block in self._input_blocks:
             domain = in_block['domain']
-            if not in_block['main']:
-                if 'size' in in_block:
-                    in_tokens.append('_%s_in'%in_block['name'])
+#            if not in_block['main'] and in_block['domain'] == self._input_blocks[0]['domain']:
+#                if 'size' in in_block:
+#                    in_tokens.append('_%s_in'%in_block['name'])
+#                else:
+#                    in_tokens.append(in_block['name'])
             
         for out_block in self._output_blocks:
             domain = out_block['domain']
-            if not out_block['main']:
-                if 'size' in out_block:
-                    out_tokens.append('_%s_%03i_out'%(out_block['name'], out_block['index']))
-                else:
-                    out_tokens.append(out_block['name'])
+#            if not out_block['main']and out_block['domain'] == self._output_blocks[0]['domain']:
+#                if 'size' in out_block:
+#                    out_tokens.append('_%s_%03i_out'%(out_block['name'], out_block['index']))
+#                else:
+#                    out_tokens.append(out_block['name'])
             
         code = templates.module_processing_code(self.handle, 
                                                 in_tokens,
@@ -998,6 +997,7 @@ class ModuleAtom(Atom):
         domain = self.domain
         
         # Process port domains
+        domain_proc_code = {}
         for module_port in self.module['ports']:
             module_port_domain = ''
             if 'block' in module_port:
@@ -1017,10 +1017,17 @@ class ModuleAtom(Atom):
                         # TODO implement for output ports
                         if not type(port_value) is ValueAtom and module_port_direction == 'input':
                             #if port_atom.
-                            module_call = templates.module_processing_code(self.handle, port_value.get_handles(), [], module_port_domain)
-                            code += templates.expression(module_call)
+                            if not module_port_domain in domain_proc_code:
+                                domain_proc_code[module_port_domain] = {'handles': []}
+                            domain_proc_code[module_port_domain]['handles'] += port_value.get_handles()
                     pass        
-        
+                
+        for module_port_domain, values  in domain_proc_code.iteritems():
+            if module_port_domain == self._output_blocks[0]['domain']:
+                in_tokens += values['handles']
+            else:
+                module_call = templates.module_processing_code(self.handle, values['handles'], [], module_port_domain)
+                code += templates.expression(module_call)
         
         if 'output' in self.module and not self.module['output'] is None: #For Platform types
             if self.inline:
@@ -1821,19 +1828,17 @@ class PlatformFunctions:
         domain_code = {}
         global_groups_code = {}
         
+        
         for node in tree:
             if 'stream' in node: # Everything grows from streams.
                 code = self.generate_stream_code(node["stream"], stream_index,
                                                  global_groups)
                 # merge global groups from different streams...
-                for global_key in code['global_groups']:
-                    if not global_key in global_groups_code:
-                        global_groups_code[global_key] = {}
-                    for global_section in global_groups_code[global_key]:
-                        if global_section in global_groups_code[global_key]:
-                            global_groups_code[global_key][global_section] += code['global_groups'][global_section]
-                        else:
-                            global_groups_code[global_key][global_section] = code['global_groups'][global_section]
+                for global_section in code['global_groups']:
+                    if global_section in global_groups_code:
+                        global_groups_code[global_section] += code['global_groups'][global_section]
+                    else:
+                        global_groups_code[global_section] = code['global_groups'][global_section]
                 for domain, header_code in code["header_code"].items():
                     if not domain in domain_code:
                         domain_code[domain] = { "header_code": '',

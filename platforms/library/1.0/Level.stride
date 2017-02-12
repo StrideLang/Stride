@@ -36,7 +36,7 @@ module Level {
 	blocks: [
 	]
 	streams: [
-		GainType >> Bypass; # For now while we sort things out...
+#		GainType >> Bypass; # For now while we sort things out...
 		(Input * Gain) + Offset >> Output;
 	]
 	meta: "Scales the input signal and applies an offset to it.

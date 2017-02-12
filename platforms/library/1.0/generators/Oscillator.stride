@@ -26,7 +26,7 @@ module Oscillator {
 #				block: Type
 #				meta: "Possible options are 'Sine', 'Triangle', 'Saw', 'ReverseSaw', 'Square'."
 #			},
-		port PhaseProperty {
+		port StartPhaseProperty {
 			name: "phase"
 			block: StartPhase
 			meta: "The starting phase of the oscillator."
@@ -52,11 +52,12 @@ module Oscillator {
 #                rate:           AudioRate # FIXME needs to be streamRate
 #                domain:         streamDomain
 #		}
-        signal StartPhase {
-                default :       0.0
-		}
+#        signal StartPhase {
+#			default :       0.0
+#		}
         switch Reset {
-                default :       off
+			default :       off
+			domain: ResetDomain
 		}
 		signal ResetValue {
 			domain: ResetDomain
@@ -77,8 +78,8 @@ module Oscillator {
         Phase >> SineBlock >> Level(gain: Amplitude) >> Output;
         Phase + PhaseInc >> Phase;
         Phase -( 2 * _Pi) >> NewPhase;
-        Phase > ( 2.0 * _Pi ) >> Select(whenOn: NewPhase whenOff: Phase) >> Phase;
-		Reset >> Select(whenOn: StartPhase whenOff: Phase) >> ResetValue >> Phase;
+#        Phase > 1.0 >> Select(whenOn: NewPhase whenOff: Phase) >> Phase;
+#		Reset >> Select(whenOn: StartPhase whenOff: Phase) >> ResetValue >> Phase; #This needs to be done in a reaction
     ]
 	meta: "Bipolar output [ -1. , 1. ] scaled by amplitude"
 }
