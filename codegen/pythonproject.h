@@ -14,7 +14,7 @@
 #include "ast.h"
 #include "platformnode.h"
 #include "bundlenode.h"
-#include "blocknode.h"
+#include "declarationnode.h"
 #include "streamnode.h"
 #include "valuenode.h"
 #include "functionnode.h"

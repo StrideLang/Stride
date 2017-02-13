@@ -58,7 +58,7 @@ NullStream nstream;
 
 %code requires { #include "ast.h" }
 %code requires { #include "platformnode.h" }
-%code requires { #include "blocknode.h" }
+%code requires { #include "declarationnode.h" }
 %code requires { #include "streamnode.h" }
 %code requires { #include "propertynode.h" }
 %code requires { #include "bundlenode.h" }
@@ -79,7 +79,7 @@ NullStream nstream;
     AST  *  ast;
     PlatformNode *platformNode;
     HwPlatform *hwPlatform;
-    BlockNode *blockNode;
+    DeclarationNode *declarationNode;
     StreamNode *streamNode;
     PropertyNode *propertyNode;
     BundleNode *bundleNode;
@@ -100,7 +100,7 @@ NullStream nstream;
 %type <importNode> importDef
 %type <forNode> forDef
 %type <ast> forPlatformDef
-%type <blockNode> blockDef
+%type <declarationNode> blockDef
 %type <ast> blockType
 %type <ast> properties
 %type <propertyNode> property
@@ -364,7 +364,7 @@ blockDef:
             word.append($1); /* string constructor leaks otherwise! */
             string uvar;
             uvar.append($2); /* string constructor leaks otherwise! */
-            $$ = new BlockNode(uvar, word, $3, currentFile, yyloc.first_line);
+            $$ = new DeclarationNode(uvar, word, $3, currentFile, yyloc.first_line);
             AST *props = $3;
             delete props;
             COUT << "Block: " << $1 << ", Labelled: " << $2 << ENDL;
@@ -379,7 +379,7 @@ blockDef:
             COUT << "Bundle name: " << name << ENDL;
             string type;
             type.append($1); /* string constructor leaks otherwise! */
-            $$ = new BlockNode(bundle, type, $6, currentFile, yyloc.first_line);
+            $$ = new DeclarationNode(bundle, type, $6, currentFile, yyloc.first_line);
             COUT << "Block Bundle: " << $1 << ", Labelled: " << $2 << ENDL;
             free($2);
             free($1);
@@ -552,7 +552,7 @@ propertyType:
             COUT << "Value expression as property value!" << ENDL;
         }
     |   blockType       {
-            $$ = new BlockNode("", "" , $1, currentFile, yyloc.first_line);
+            $$ = new DeclarationNode("", "" , $1, currentFile, yyloc.first_line);
             AST *props = $1;
             delete props;
             COUT << "Block as property value!" << ENDL;

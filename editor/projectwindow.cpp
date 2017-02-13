@@ -355,7 +355,7 @@ void ProjectWindow::showHelperMenu(QPoint where)
     AST *optimizedTree = m_codeModel.getOptimizedTree();
     foreach(AST *node, optimizedTree->getChildren()) {
         if (node->getNodeType() == AST::Block) {
-            BlockNode *block = static_cast<BlockNode *>(node);
+            DeclarationNode *block = static_cast<DeclarationNode *>(node);
             if (block->getObjectType() == "module") {
                 QAction *newAction = functionMenu->addAction(QString::fromStdString(block->getName()), this, SLOT(insertText()));
                 QString text = QString::fromStdString(block->getNamespace());
@@ -366,7 +366,7 @@ void ProjectWindow::showHelperMenu(QPoint where)
                 ListNode *portList = static_cast<ListNode *>(block->getPropertyValue("ports"));
                 if (portList && portList->getNodeType() == AST::List) {
                     foreach(AST *port, portList->getChildren()) {
-                        BlockNode *portBlock = static_cast<BlockNode *>(port);
+                        DeclarationNode *portBlock = static_cast<DeclarationNode *>(port);
                         AST *portName = portBlock->getPropertyValue("name");
                         if (portName && portName->getNodeType() == AST::String) {
                             text += QString::fromStdString(static_cast<ValueNode *>(portName)->getStringValue()) + ":  ";

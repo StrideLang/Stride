@@ -39,12 +39,12 @@ void StrideLibrary::setLibraryPath(QString libraryPath, QMap<QString, QString> i
     readLibrary(libraryPath, importList);
 }
 
-BlockNode *StrideLibrary::findTypeInLibrary(QString typeName)
+DeclarationNode *StrideLibrary::findTypeInLibrary(QString typeName)
 {
     foreach (AST *rootNode, m_libraryTrees) {
         foreach (AST *node, rootNode->getChildren()) {
             if (node->getNodeType() == AST::Block) {
-                BlockNode *block = static_cast<BlockNode *>(node);
+                DeclarationNode *block = static_cast<DeclarationNode *>(node);
                 if (block->getObjectType() != "type") {
                     continue;
                 }
@@ -61,9 +61,9 @@ BlockNode *StrideLibrary::findTypeInLibrary(QString typeName)
     return NULL;
 }
 
-bool StrideLibrary::isValidBlock(BlockNode *block)
+bool StrideLibrary::isValidBlock(DeclarationNode *block)
 {
-    BlockNode *type = findTypeInLibrary(QString::fromStdString(block->getObjectType()));
+    DeclarationNode *type = findTypeInLibrary(QString::fromStdString(block->getObjectType()));
     if (type) {
         if (block->getProperties().size() == 0) {
             return true; // FIXME we need to check if properties are required
@@ -73,9 +73,9 @@ bool StrideLibrary::isValidBlock(BlockNode *block)
                 return true;
             }
             // Now check for inherited properties
-            QList<BlockNode *> parentTypes = getParentTypes(block);
+            QList<DeclarationNode *> parentTypes = getParentTypes(block);
             bool propertyInParent = false;
-            foreach(BlockNode *parent, parentTypes) {
+            foreach(DeclarationNode *parent, parentTypes) {
                 propertyInParent |= isValidProperty(property, parent);
             }
             if (propertyInParent) return true;
@@ -95,14 +95,14 @@ std::vector<AST *> StrideLibrary::getNodes()
     return nodes;
 }
 
-bool StrideLibrary::isValidProperty(PropertyNode *property, BlockNode *type)
+bool StrideLibrary::isValidProperty(PropertyNode *property, DeclarationNode *type)
 {
     Q_ASSERT(type->getObjectType() == "type");
     PropertyNode *portsInType = CodeValidator::findPropertyByName(type->getProperties(), "properties");
     ListNode *portList = static_cast<ListNode *>(portsInType->getValue());
     Q_ASSERT(portList->getNodeType() == AST::List);
     foreach(AST * port, portList->getChildren()) {
-        BlockNode *portBlock = static_cast<BlockNode *>(port);
+        DeclarationNode *portBlock = static_cast<DeclarationNode *>(port);
         Q_ASSERT(portBlock->getNodeType() == AST::Block);
         Q_ASSERT(portBlock->getObjectType() == "typeProperty");
         PropertyNode *portName = CodeValidator::findPropertyByName(portBlock->getProperties(), "name");
@@ -115,7 +115,7 @@ bool StrideLibrary::isValidProperty(PropertyNode *property, BlockNode *type)
     if (inherits) {
         ValueNode *inheritedTypeName = static_cast<ValueNode *>(inherits->getValue());
         Q_ASSERT(inheritedTypeName->getNodeType() == AST::String);
-        BlockNode *inheritedType = findTypeInLibrary(QString::fromStdString(inheritedTypeName->getStringValue()));
+        DeclarationNode *inheritedType = findTypeInLibrary(QString::fromStdString(inheritedTypeName->getStringValue()));
         Q_ASSERT(inheritedType != NULL);
         if (isValidProperty(property, inheritedType)) {
             return true;
@@ -124,18 +124,18 @@ bool StrideLibrary::isValidProperty(PropertyNode *property, BlockNode *type)
     return false;
 }
 
-QList<BlockNode *> StrideLibrary::getParentTypes(BlockNode *type)
+QList<DeclarationNode *> StrideLibrary::getParentTypes(DeclarationNode *type)
 {
     PropertyNode *inheritProperty = CodeValidator::findPropertyByName(type->getProperties(), "inherits");
     if (inheritProperty) {
         AST *parentType = inheritProperty->getValue();
         if (parentType->getNodeType() == AST::String) {
             string parentBlockName = static_cast<ValueNode *>(parentType)->getStringValue();
-            BlockNode *parentBlock = findTypeInLibrary(QString::fromStdString(parentBlockName));
+            DeclarationNode *parentBlock = findTypeInLibrary(QString::fromStdString(parentBlockName));
             return getParentTypes(parentBlock);
         }
     }
-    return QList<BlockNode *>();
+    return QList<DeclarationNode *>();
 }
 
 void StrideLibrary::readLibrary(QString rootDir, QMap<QString, QString> importList)

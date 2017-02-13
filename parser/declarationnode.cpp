@@ -1,10 +1,10 @@
 #include <cassert>
 
-#include "blocknode.h"
+#include "declarationnode.h"
 #include "valuenode.h"
 
 
-BlockNode::BlockNode(string name, string objectType, AST *propertiesList,
+DeclarationNode::DeclarationNode(string name, string objectType, AST *propertiesList,
                      const char *filename, int line):
     AST(AST::Block, filename, line)
 {
@@ -19,7 +19,7 @@ BlockNode::BlockNode(string name, string objectType, AST *propertiesList,
     }
 }
 
-BlockNode::BlockNode(BundleNode *bundle, string objectType, AST *propertiesList,
+DeclarationNode::DeclarationNode(BundleNode *bundle, string objectType, AST *propertiesList,
                      const char *filename, int line) :
     AST(AST::BlockBundle, filename, line)
 {
@@ -34,11 +34,11 @@ BlockNode::BlockNode(BundleNode *bundle, string objectType, AST *propertiesList,
     }
 }
 
-BlockNode::~BlockNode()
+DeclarationNode::~DeclarationNode()
 {
 }
 
-string BlockNode::getName() const
+string DeclarationNode::getName() const
 {
     if(getNodeType() == AST::Block) {
         return m_name;
@@ -49,18 +49,18 @@ string BlockNode::getName() const
     return string();
 }
 
-BundleNode *BlockNode::getBundle() const
+BundleNode *DeclarationNode::getBundle() const
 {
     assert(getNodeType() == AST::BlockBundle);
     return static_cast<BundleNode *>(m_children.at(0));
 }
 
-vector<PropertyNode *> BlockNode::getProperties() const
+vector<PropertyNode *> DeclarationNode::getProperties() const
 {
     return m_properties;
 }
 
-void BlockNode::addProperty(PropertyNode *newProperty)
+void DeclarationNode::addProperty(PropertyNode *newProperty)
 {
     for (PropertyNode *prop:m_properties) {
         if (prop->getName() == newProperty->getName()) {
@@ -71,7 +71,7 @@ void BlockNode::addProperty(PropertyNode *newProperty)
     m_properties.push_back(newProperty);
 }
 
-AST *BlockNode::getPropertyValue(string propertyName)
+AST *DeclarationNode::getPropertyValue(string propertyName)
 {
     for (unsigned int i = 0; i < m_properties.size(); i++) {
         if (m_properties.at(i)->getName() == propertyName) {
@@ -81,7 +81,7 @@ AST *BlockNode::getPropertyValue(string propertyName)
     return NULL;
 }
 
-void BlockNode::replacePropertyValue(string propertyName, AST *newValue)
+void DeclarationNode::replacePropertyValue(string propertyName, AST *newValue)
 {
     for (unsigned int i = 0; i < m_properties.size(); i++) {
         if (m_properties.at(i)->getName() == propertyName) {
@@ -91,13 +91,13 @@ void BlockNode::replacePropertyValue(string propertyName, AST *newValue)
     }
 }
 
-AST *BlockNode::getDomain()
+AST *DeclarationNode::getDomain()
 {
     AST *domainValue = getPropertyValue("domain");
     return domainValue;
 }
 
-void BlockNode::setDomainString(string domain)
+void DeclarationNode::setDomainString(string domain)
 {
     for (unsigned int i = 0; i < m_properties.size(); i++) {
         if (m_properties.at(i)->getName() == "domain") {
@@ -106,12 +106,12 @@ void BlockNode::setDomainString(string domain)
     }
 }
 
-string BlockNode::getObjectType() const
+string DeclarationNode::getObjectType() const
 {
     return m_objectType;
 }
 
-AST *BlockNode::deepCopy()
+AST *DeclarationNode::deepCopy()
 {
     AST * newProps = new AST();
     AST *node = NULL;
@@ -119,10 +119,10 @@ AST *BlockNode::deepCopy()
         newProps->addChild(m_properties[i]->deepCopy());
     }
     if (getNodeType() == AST::BlockBundle) {
-        node = new BlockNode(static_cast<BundleNode *>(getBundle()->deepCopy()),
+        node = new DeclarationNode(static_cast<BundleNode *>(getBundle()->deepCopy()),
                              m_objectType, newProps, m_filename.data(), m_line);
     } else if (getNodeType() == AST::Block) {
-        node = new BlockNode(m_name, m_objectType, newProps, m_filename.data(), m_line);
+        node = new DeclarationNode(m_name, m_objectType, newProps, m_filename.data(), m_line);
     }
     assert(node);
     node->setRate(m_rate);

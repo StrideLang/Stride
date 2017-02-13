@@ -5,7 +5,7 @@
 #include "codemodel.hpp"
 
 #include "codevalidator.h"
-#include "blocknode.h"
+#include "declarationnode.h"
 #include "valuenode.h"
 #include "listnode.h"
 #include "namenode.h"
@@ -36,7 +36,7 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
     QList<LangError> errors;
     if (symbol[0].toLower() == symbol[0]) {
         QMutexLocker locker(&m_validTreeLock);
-        BlockNode *typeBlock = CodeValidator::findTypeDeclarationByName(symbol, QVector<AST *>(), m_lastValidTree, errors);
+        DeclarationNode *typeBlock = CodeValidator::findTypeDeclarationByName(symbol, QVector<AST *>(), m_lastValidTree, errors);
         if (typeBlock) {
             AST *metaValue = typeBlock->getPropertyValue("meta");
             if (metaValue) {
@@ -49,7 +49,7 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
                 QString propertiesHtml = tr("<h2>Ports</h2>") + "\n";
                 QVector<AST *> ports = CodeValidator::getPortsForTypeBlock(typeBlock, QVector<AST *>(), m_lastValidTree);
                 foreach(AST *port, ports) {
-                    BlockNode *portBlock = static_cast<BlockNode *>(port);
+                    DeclarationNode *portBlock = static_cast<DeclarationNode *>(port);
                     Q_ASSERT(portBlock->getNodeType() == AST::Block);
                     if (portBlock->getNodeType() == AST::Block) {
                         QString portName = QString::fromStdString(
@@ -95,7 +95,7 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
 
     } else if (symbol[0].toUpper() == symbol[0]) { // Check if it is a declared module
         QMutexLocker locker(&m_validTreeLock);
-        BlockNode *declaration = CodeValidator::findDeclaration(symbol, QVector<AST *>(), m_lastValidTree);
+        DeclarationNode *declaration = CodeValidator::findDeclaration(symbol, QVector<AST *>(), m_lastValidTree);
         if (declaration) {
             AST *metaValue = declaration->getPropertyValue("meta");
             Q_ASSERT(metaValue);
@@ -110,7 +110,7 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
                     Q_ASSERT(properties->getNodeType() == AST::List);
                     ListNode *propertiesList = static_cast<ListNode *>(properties);
                     foreach(AST *member, propertiesList->getChildren()) {
-                        BlockNode *portBlock = static_cast<BlockNode *>(member);
+                        DeclarationNode *portBlock = static_cast<DeclarationNode *>(member);
                         Q_ASSERT(portBlock->getNodeType() == AST::Block);
                         if (portBlock->getNodeType() == AST::Block) {
                             QString portName = QString::fromStdString(
@@ -159,7 +159,7 @@ QString CodeModel::getTooltipText(QString symbol)
     QString text;
     if (symbol[0].toUpper() == symbol[0]) { // Check if it is a declared module
         QMutexLocker locker(&m_validTreeLock);
-        BlockNode *declaration = CodeValidator::findDeclaration(symbol, QVector<AST *>(), m_lastValidTree);
+        DeclarationNode *declaration = CodeValidator::findDeclaration(symbol, QVector<AST *>(), m_lastValidTree);
         if (declaration) {
             AST *metaValue = declaration->getPropertyValue("meta");
             if (metaValue) {
@@ -170,7 +170,7 @@ QString CodeModel::getTooltipText(QString symbol)
                     Q_ASSERT(properties->getNodeType() == AST::List);
                     ListNode *propertiesList = static_cast<ListNode *>(properties);
                     foreach(AST *member, propertiesList->getChildren()) {
-                        BlockNode *portBlock = static_cast<BlockNode *>(member);
+                        DeclarationNode *portBlock = static_cast<DeclarationNode *>(member);
                         Q_ASSERT(portBlock->getNodeType() == AST::Block);
                         if (portBlock->getNodeType() == AST::Block) {
                             QString portName = QString::fromStdString(
@@ -191,7 +191,7 @@ QString CodeModel::getTooltipText(QString symbol)
         }
     } else { // word starts with lower case letter
         QList<LangError> errors;
-        BlockNode *typeBlock = CodeValidator::findTypeDeclarationByName(symbol, QVector<AST *>(), m_lastValidTree, errors);
+        DeclarationNode *typeBlock = CodeValidator::findTypeDeclarationByName(symbol, QVector<AST *>(), m_lastValidTree, errors);
         if (typeBlock) {
             text = "type: " + symbol;
         }
@@ -210,7 +210,7 @@ QPair<QString, int> CodeModel::getSymbolLocation(QString symbol)
     foreach(AST *node, m_lastValidTree->getChildren()) {
         if (node->getNodeType() == AST::Block ||
                 node->getNodeType() == AST::BlockBundle) {
-            BlockNode *block = static_cast<BlockNode *>(node);
+            DeclarationNode *block = static_cast<DeclarationNode *>(node);
             if (block->getName() == symbol.toStdString()) {
                 QString fileName = QString::fromStdString(block->getFilename());
                 location.first = fileName;
@@ -280,7 +280,7 @@ QString CodeModel::getFunctionSyntax(QString symbol)
     QString text;
     if (symbol[0].toUpper() == symbol[0]) { // Check if it is a declared module
         QMutexLocker locker(&m_validTreeLock);
-        BlockNode *declaration = CodeValidator::findDeclaration(symbol, QVector<AST *>(), m_lastValidTree);
+        DeclarationNode *declaration = CodeValidator::findDeclaration(symbol, QVector<AST *>(), m_lastValidTree);
         if (declaration) {
             AST *metaValue = declaration->getPropertyValue("meta");
             Q_ASSERT(metaValue);
@@ -292,7 +292,7 @@ QString CodeModel::getFunctionSyntax(QString symbol)
                     Q_ASSERT(properties->getNodeType() == AST::List);
                     ListNode *propertiesList = static_cast<ListNode *>(properties);
                     foreach(AST *member, propertiesList->getChildren()) {
-                        BlockNode *portBlock = static_cast<BlockNode *>(member);
+                        DeclarationNode *portBlock = static_cast<DeclarationNode *>(member);
                         Q_ASSERT(portBlock->getNodeType() == AST::Block);
                         if (portBlock->getNodeType() == AST::Block) {
                             QString portName = QString::fromStdString(

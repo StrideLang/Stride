@@ -1,5 +1,5 @@
-#ifndef OBJECTNODE_H
-#define OBJECTNODE_H
+#ifndef DECLARATIONNODE_H
+#define DECLARATIONNODE_H
 
 #include <string>
 
@@ -7,12 +7,12 @@
 #include "bundlenode.h"
 #include "propertynode.h"
 
-class BlockNode : public AST
+class DeclarationNode : public AST
 {
 public:
-    BlockNode(string name, string objectType, AST *propertiesList, const char *filename, int line);
-    BlockNode(BundleNode *bundle, string objectType, AST *propertiesList, const char *filename, int line);
-    ~BlockNode();
+    DeclarationNode(string name, string objectType, AST *propertiesList, const char *filename, int line);
+    DeclarationNode(BundleNode *bundle, string objectType, AST *propertiesList, const char *filename, int line);
+    ~DeclarationNode();
 
     string getName() const;
     BundleNode *getBundle() const;
@@ -33,4 +33,4 @@ private:
     vector<PropertyNode *> m_properties;
 };
 
-#endif // OBJECTNODE_H
+#endif // DECLARATIONNODE_H

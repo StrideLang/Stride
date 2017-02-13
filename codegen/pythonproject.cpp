@@ -189,7 +189,7 @@ void PythonProject::astToJson(AST *node, QJsonObject &obj)
     } else if (node->getNodeType() == AST::Switch) {
         obj["value"] = static_cast<ValueNode *>(node)->getSwitchValue();
     } else if (node->getNodeType() == AST::Block) {
-        BlockNode *block = static_cast<BlockNode *>(node);
+        DeclarationNode *block = static_cast<DeclarationNode *>(node);
         QJsonObject newObject;
         newObject["name"] = QString::fromStdString(block->getName());
         newObject["type"] = QString::fromStdString(block->getObjectType());
@@ -230,7 +230,7 @@ void PythonProject::astToJson(AST *node, QJsonObject &obj)
         newObject["line"] = node->getLine();
         obj["block"] = newObject;
     } else if (node->getNodeType() == AST::BlockBundle) {
-        BlockNode *block = static_cast<BlockNode *>(node);
+        DeclarationNode *block = static_cast<DeclarationNode *>(node);
         QJsonObject newObject;
         BundleNode *bundle = block->getBundle();
         newObject["name"] = QString::fromStdString(bundle->getName());

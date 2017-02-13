@@ -10,7 +10,7 @@
 
 #include "ast.h"
 #include "propertynode.h"
-#include "blocknode.h"
+#include "declarationnode.h"
 #include "strideparser.h"
 #include "stridelibrary.hpp"
 
@@ -39,7 +39,7 @@ public:
 
     QString getPlatformDomain();  // The platform's default domain
 
-//    BlockNode *getFunction(QString functionName);
+//    DeclarationNode *getFunction(QString functionName);
     QList<AST *> getBuiltinObjectsCopy();
     QList<AST *> getBuiltinObjects();
 
@@ -48,7 +48,7 @@ public:
     QString getPlatformPath(); // Path for the specific platform
 
 private:
-    QVector<AST *> getPortsForTypeBlock(BlockNode *block);
+    QVector<AST *> getPortsForTypeBlock(DeclarationNode *block);
 //    ListNode *getPortsForFunction(QString typeName);
 
     QString readFile(QString fileName);

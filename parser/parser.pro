@@ -14,13 +14,13 @@ SOURCES += ast.cpp \
     namenode.cpp \
     functionnode.cpp \
     expressionnode.cpp \
-    blocknode.cpp \
     listnode.cpp \
     importnode.cpp \
     fornode.cpp \
     rangenode.cpp \
     langerror.cpp \
-    keywordnode.cpp
+    keywordnode.cpp \
+    declarationnode.cpp
 
 HEADERS += ast.h \
            platformnode.h \
@@ -31,14 +31,14 @@ HEADERS += ast.h \
     namenode.h \
     functionnode.h \
     expressionnode.h \
-    blocknode.h \
     listnode.h \
     importnode.h \
     fornode.h \
     rangenode.h \
     langerror.h \
     strideparser.h \
-    keywordnode.hpp
+    keywordnode.hpp \
+    declarationnode.h
 
 BISONSOURCES = lang_stride.y
 FLEXSOURCES = lang_stride.l

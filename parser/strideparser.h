@@ -2,7 +2,7 @@
 #define STREAMPARSER_H
 
 #include "ast.h"
-#include "blocknode.h"
+#include "declarationnode.h"
 #include "bundlenode.h"
 #include "expressionnode.h"
 #include "functionnode.h"

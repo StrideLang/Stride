@@ -21,7 +21,7 @@ public:
 
     StridePlatform *getPlatform();
 
-    static BlockNode *findDeclaration(QString streamMemberName, QVector<AST *> scopeStack, AST *tree);
+    static DeclarationNode *findDeclaration(QString streamMemberName, QVector<AST *> scopeStack, AST *tree);
     static QString streamMemberName(AST * node, QVector<AST *> scopeStack, AST *tree);
     static PortType resolveBundleType(BundleNode *bundle, QVector<AST *> scope, AST *tree);
     static PortType resolveNameType(NameNode *name, QVector<AST *> scope, AST *tree);
@@ -33,21 +33,21 @@ public:
     static int evaluateConstInteger(AST *node, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
     static double evaluateConstReal(AST *node, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
     static std::string evaluateConstString(AST *node, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
-    static AST *getMemberfromBlockBundle(BlockNode *block, int index, QList<LangError> &errors);
-    static AST *getValueFromConstBlock(BlockNode *block);
+    static AST *getMemberfromBlockBundle(DeclarationNode *block, int index, QList<LangError> &errors);
+    static AST *getValueFromConstBlock(DeclarationNode *block);
     static AST *getMemberFromList(ListNode *node, int index, QList<LangError> &errors);
     static PropertyNode *findPropertyByName(vector<PropertyNode *> properties, QString propertyName);
-    static QVector<AST *> validTypesForPort(BlockNode *typeDeclaration, QString portName, QVector<AST *> scope, AST *tree);
-    static BlockNode *findTypeDeclarationByName(QString typeName, QVector<AST *> scopeStack, AST *tree, QList<LangError> &errors);
-    static BlockNode *findTypeDeclaration(BlockNode *block, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
+    static QVector<AST *> validTypesForPort(DeclarationNode *typeDeclaration, QString portName, QVector<AST *> scope, AST *tree);
+    static DeclarationNode *findTypeDeclarationByName(QString typeName, QVector<AST *> scopeStack, AST *tree, QList<LangError> &errors);
+    static DeclarationNode *findTypeDeclaration(DeclarationNode *block, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
 
-    static QVector<AST *> getPortsForTypeBlock(BlockNode *block, QVector<AST *> scope, AST *tree);
+    static QVector<AST *> getPortsForTypeBlock(DeclarationNode *block, QVector<AST *> scope, AST *tree);
     static QVector<AST *> getPortsForType(QString typeName, QVector<AST *> scope, AST *tree);
-    static QVector<AST *> getInheritedPorts(BlockNode *block, QVector<AST *> scope, AST *tree);
-    static QStringList getInheritedTypeNames(BlockNode *block, QVector<AST *> scope, AST *tree);
+    static QVector<AST *> getInheritedPorts(DeclarationNode *block, QVector<AST *> scope, AST *tree);
+    static QStringList getInheritedTypeNames(DeclarationNode *block, QVector<AST *> scope, AST *tree);
 
-    static BlockNode *getMainOutputPortBlock(BlockNode *moduleBlock);
-    static BlockNode *getMainInputPortBlock(BlockNode *moduleBlock);
+    static DeclarationNode *getMainOutputPortBlock(DeclarationNode *moduleBlock);
+    static DeclarationNode *getMainInputPortBlock(DeclarationNode *moduleBlock);
 
     /// Number of parallel streams that a single stream can be broken up into
     static int numParallelStreams(StreamNode *stream, StridePlatform &platform, QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
@@ -59,14 +59,14 @@ public:
     static int getFunctionDataSize(FunctionNode *func, QVector<AST *> scope, AST * tree, QList<LangError> &errors);
     static int getNodeNumOutputs(AST *node, const QVector<AST *> &scope, AST *tree, QList<LangError> &errors);    bool validateNodeDeclaration(QString name, QVector<AST *> scopeStack, AST *tree);
     static int getNodeNumInputs(AST *node, const QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
-    static int getTypeNumOutputs(BlockNode *blockDeclaration, const QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
-    static int getTypeNumInputs(BlockNode *blockDeclaration, const QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
+    static int getTypeNumOutputs(DeclarationNode *blockDeclaration, const QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
+    static int getTypeNumInputs(DeclarationNode *blockDeclaration, const QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
 
-    static int getBlockDeclaredSize(BlockNode *block, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
+    static int getBlockDeclaredSize(DeclarationNode *block, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
 
     static int getLargestPropertySize(vector<PropertyNode *> &properties, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
 
-    static AST *getBlockSubScope(BlockNode *block);
+    static AST *getBlockSubScope(DeclarationNode *block);
     static int getBundleSize(BundleNode *bundle, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
 
     static QString getPortTypeName(PortType type);
@@ -93,7 +93,7 @@ private:
 
     void validateStreamInputSize(StreamNode *stream, QVector<AST *> scope, QList<LangError> &errors);
 
-    int getBlockDataSize(BlockNode *block, QVector<AST *> scope, QList<LangError> &errors);
+    int getBlockDataSize(DeclarationNode *block, QVector<AST *> scope, QList<LangError> &errors);
 
     QString getNodeText(AST *node);
 

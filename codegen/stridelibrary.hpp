@@ -7,7 +7,7 @@
 #include <QList>
 #include <QMap>
 
-#include "blocknode.h"
+#include "declarationnode.h"
 #include "langerror.h"
 
 class StrideLibrary
@@ -19,16 +19,16 @@ public:
 
     void setLibraryPath(QString libraryPath, QMap<QString,QString> importList = QMap<QString,QString>());
 
-    BlockNode *findTypeInLibrary(QString typeName);
+    DeclarationNode *findTypeInLibrary(QString typeName);
 
-    bool isValidBlock(BlockNode *block);
+    bool isValidBlock(DeclarationNode *block);
 
     std::vector<AST *> getNodes();
 
 private:
 
-    bool isValidProperty(PropertyNode *property, BlockNode *type);
-    QList<BlockNode *> getParentTypes(BlockNode *type);
+    bool isValidProperty(PropertyNode *property, DeclarationNode *type);
+    QList<DeclarationNode *> getParentTypes(DeclarationNode *type);
 
     void readLibrary(QString rootDir, QMap<QString, QString> importList);
     QList<AST *> m_libraryTrees;
