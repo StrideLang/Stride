@@ -165,7 +165,7 @@ void CodeResolver::declareModuleInternalBlocks()
                 if (outputPortBlock) {
                     AST *outDomain = outputPortBlock->getPropertyValue("domain");
                     if (!outDomain || outDomain->getNodeType() == AST::None) {
-                        NameNode *outBlockName = new NameNode("_OutputDomain", "", -1);
+                        BlockNode *outBlockName = new BlockNode("_OutputDomain", "", -1);
                         outputPortBlock->replacePropertyValue("domain", outBlockName);
                         outDomain = outBlockName;
                         AST *outDomainDeclaration = CodeValidator::findDeclaration("_OutputDomain", QVector<AST *>(), internalBlocks);
@@ -202,7 +202,7 @@ void CodeResolver::declareModuleInternalBlocks()
                         Q_ASSERT(ratePortValue && domainPortValue && sizePortValue && blockPortValue && directionPortValue);
                         Q_ASSERT(ratePortValue->getNodeType() == AST::Name || ratePortValue->getNodeType() == AST::None); // Catch on debug but fail gracefully on release
                         if (ratePortValue->getNodeType() == AST::Name) {
-                            NameNode *nameNode = static_cast<NameNode *>(ratePortValue);
+                            BlockNode *nameNode = static_cast<BlockNode *>(ratePortValue);
                             string name = nameNode->getName();
                             declareIfMissing(name, internalBlocks, new ValueNode(0, "", -1));
 
@@ -268,7 +268,7 @@ void CodeResolver::declareModuleInternalBlocks()
                                 domainPortValue = portBlock->getDomain();
                             }
                         } else if (domainPortValue->getNodeType() == AST::Name) { // Auto declare domain if not declared
-                            NameNode *nameNode = static_cast<NameNode *>(domainPortValue);
+                            BlockNode *nameNode = static_cast<BlockNode *>(domainPortValue);
                             domainName = nameNode->getName();
                             DeclarationNode *domainDeclaration = CodeValidator::findDeclaration(QString::fromStdString(domainName), subScope, m_tree);
                             if (!domainDeclaration) {
@@ -279,7 +279,7 @@ void CodeResolver::declareModuleInternalBlocks()
 
                         Q_ASSERT(sizePortValue->getNodeType() == AST::Int || sizePortValue->getNodeType() == AST::Name || sizePortValue->getNodeType() == AST::None); // Catch on debug but fail gracefully on release
                         if (sizePortValue->getNodeType() == AST::Name) {
-                            NameNode *nameNode = static_cast<NameNode *>(sizePortValue);
+                            BlockNode *nameNode = static_cast<BlockNode *>(sizePortValue);
                             string name = nameNode->getName();
                             AST *internalBlocks = block->getPropertyValue("blocks");
                             declareIfMissing(name, internalBlocks, new ValueNode(0, "", -1));
@@ -288,7 +288,7 @@ void CodeResolver::declareModuleInternalBlocks()
                         // Now do auto declaration of IO blocks if not declared.
                         Q_ASSERT(blockPortValue->getNodeType() == AST::Name || blockPortValue->getNodeType() == AST::None); // Catch on debug but fail gracefully on release
                         if (blockPortValue->getNodeType() == AST::Name) {
-                            NameNode *nameNode = static_cast<NameNode *>(blockPortValue);
+                            BlockNode *nameNode = static_cast<BlockNode *>(blockPortValue);
                             string name = nameNode->getName();
                             AST *internalBlocks = block->getPropertyValue("blocks");
                             DeclarationNode *newSignal = CodeValidator::findDeclaration(QString::fromStdString(name), QVector<AST *>(), internalBlocks);
@@ -317,7 +317,7 @@ void CodeResolver::declareModuleInternalBlocks()
                             } else if (directionName == "output") {
                                 defaultName = "Output";
                             }
-                            NameNode *name = new NameNode(defaultName, "", -1);
+                            BlockNode *name = new BlockNode(defaultName, "", -1);
                             portBlock->replacePropertyValue("block", name);
                             DeclarationNode *newSignal = CodeValidator::findDeclaration(QString::fromStdString(defaultName), QVector<AST *>(), internalBlocks);
                             if (!newSignal) {
@@ -450,7 +450,7 @@ void CodeResolver::expandStreamToSizes(StreamNode *stream, QVector<int> &size, Q
             || left->getNodeType() == AST::Function) {
         int numCopies = size.front();
         if (leftSize < 0 && left->getNodeType() == AST::Name) {
-            std::vector<AST *> newDeclaration = declareUnknownName(static_cast<NameNode *>(left), abs(numCopies), scopeStack, m_tree);
+            std::vector<AST *> newDeclaration = declareUnknownName(static_cast<BlockNode *>(left), abs(numCopies), scopeStack, m_tree);
             for(AST *decl:newDeclaration) {
                 m_tree->addChild(decl);
             }
@@ -473,7 +473,7 @@ void CodeResolver::expandStreamToSizes(StreamNode *stream, QVector<int> &size, Q
                 || right->getNodeType() == AST::Function) {
             int numCopies = size.front();
             if (rightSize < 0 && right->getNodeType() == AST::Name) {
-                std::vector<AST *> newDeclaration = declareUnknownName(static_cast<NameNode *>(right), abs(numCopies), scopeStack, m_tree);
+                std::vector<AST *> newDeclaration = declareUnknownName(static_cast<BlockNode *>(right), abs(numCopies), scopeStack, m_tree);
                 for(AST *decl:newDeclaration) {
                     m_tree->addChild(decl);
                 }
@@ -530,7 +530,7 @@ AST *CodeResolver::expandFunctionFromProperties(FunctionNode *func, QVector<AST 
                     // FIXME write support for ranges
 
                 } else if (value->getNodeType() == AST::Name) {
-                    NameNode *name = static_cast<NameNode *>(value);
+                    BlockNode *name = static_cast<BlockNode *>(value);
                     DeclarationNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()),
                                                                       scopeStack, tree);
                     int size = CodeValidator::getBlockDeclaredSize(block, scopeStack, tree, errors);
@@ -581,7 +581,7 @@ double CodeResolver::findRateInProperties(vector<PropertyNode *> properties, QVe
                 return rate;
             } else if (propertyValue->getNodeType() == AST::Name) {
                 DeclarationNode* valueDeclaration =  CodeValidator::findDeclaration(
-                            QString::fromStdString(static_cast<NameNode *>(propertyValue)->getName()), scope, tree);
+                            QString::fromStdString(static_cast<BlockNode *>(propertyValue)->getName()), scope, tree);
                 if (valueDeclaration && valueDeclaration->getObjectType() == "constant") {
                     PropertyNode *property = CodeValidator::findPropertyByName(valueDeclaration->getProperties(), "value");
                     if (property) {
@@ -608,7 +608,7 @@ double CodeResolver::getNodeRate(AST *node, QVector<AST *> scope, AST *tree)
         return node->getRate();
     }
     if (node->getNodeType() == AST::Name) {
-        NameNode *name = static_cast<NameNode *>(node);
+        BlockNode *name = static_cast<BlockNode *>(node);
         DeclarationNode* declaration =  CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scope, tree);
         if (!declaration) {
             return -1;
@@ -708,7 +708,7 @@ void CodeResolver::processDomains()
                         if (domainBlock) {
                             AST *domainNode = domainBlock->getPropertyValue("domain");
                             if (domainNode->getNodeType() == AST::Name) {
-                                domainName = QString::fromStdString(static_cast<NameNode *>(domainNode)->getName());
+                                domainName = QString::fromStdString(static_cast<BlockNode *>(domainNode)->getName());
                             } else if (domainNode->getNodeType() == AST::String) {
                                 domainName = QString::fromStdString(static_cast<ValueNode *>(domainNode)->getStringValue());
                             }
@@ -909,7 +909,7 @@ void CodeResolver::insertBuiltinObjectsForNode(AST *node, QList<AST *> &objects)
         for(AST *object : objects) {
             if (object->getNodeType() == AST::Block
                     || object->getNodeType() == AST::BlockBundle) {
-                NameNode *name = static_cast<NameNode *>(node);
+                BlockNode *name = static_cast<BlockNode *>(node);
                 DeclarationNode *block = static_cast<DeclarationNode *>(object);
                 if (block->getName() == name->getName()
                         && !blockList.contains(block)) {
@@ -1127,7 +1127,7 @@ DeclarationNode *CodeResolver::createSignalDeclaration(QString name, int size)
     return newBlock;
 }
 
-std::vector<AST *> CodeResolver::declareUnknownName(NameNode *name, int size, QVector<AST *> localScope, AST *tree)
+std::vector<AST *> CodeResolver::declareUnknownName(BlockNode *name, int size, QVector<AST *> localScope, AST *tree)
 {
 	std::vector<AST *> declarations;
     DeclarationNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), localScope, tree);
@@ -1204,7 +1204,7 @@ std::vector<AST *> CodeResolver::declareUnknownExpressionSymbols(ExpressionNode 
     std::vector<AST *> newDeclarations;
     if (expr->isUnary()) {
         if (expr->getValue()->getNodeType() == AST::Name) {
-            NameNode *name = static_cast<NameNode *>(expr->getValue());
+            BlockNode *name = static_cast<BlockNode *>(expr->getValue());
             std::vector<AST *> decls = declareUnknownName(name, size, scopeStack, tree);
             newDeclarations.insert(newDeclarations.end(), decls.begin(), decls.end());
         } else if (expr->getValue()->getNodeType() == AST::Expression) {
@@ -1214,7 +1214,7 @@ std::vector<AST *> CodeResolver::declareUnknownExpressionSymbols(ExpressionNode 
         }
     } else {
         if (expr->getLeft()->getNodeType() == AST::Name) {
-            NameNode *name = static_cast<NameNode *>(expr->getLeft());
+            BlockNode *name = static_cast<BlockNode *>(expr->getLeft());
             std::vector<AST *> decls = declareUnknownName(name, size, scopeStack, tree);
             newDeclarations.insert(newDeclarations.end(), decls.begin(), decls.end());
         } else if (expr->getLeft()->getNodeType() == AST::Expression) {
@@ -1223,7 +1223,7 @@ std::vector<AST *> CodeResolver::declareUnknownExpressionSymbols(ExpressionNode 
             newDeclarations.insert(newDeclarations.end(), decls.begin(), decls.end());
         }
         if (expr->getRight()->getNodeType() == AST::Name) {
-            NameNode *name = static_cast<NameNode *>(expr->getRight());
+            BlockNode *name = static_cast<BlockNode *>(expr->getRight());
             std::vector<AST *> decls = declareUnknownName(name, size, scopeStack, tree);
             newDeclarations.insert(newDeclarations.end(), decls.begin(), decls.end());
         } else if (expr->getRight()->getNodeType() == AST::Expression) {
@@ -1235,7 +1235,7 @@ std::vector<AST *> CodeResolver::declareUnknownExpressionSymbols(ExpressionNode 
     return newDeclarations;
 }
 
-ListNode *CodeResolver::expandNameToList(NameNode *name, int size)
+ListNode *CodeResolver::expandNameToList(BlockNode *name, int size)
 {
     ListNode *list = new ListNode(NULL, name->getFilename().data(), name->getLine());
     for (int i = 0; i < size; i++) {
@@ -1259,7 +1259,7 @@ void CodeResolver::expandNamesToBundles(StreamNode *stream, AST *tree)
 //    }
 
     if (left->getNodeType() == AST::Name) {
-        NameNode *name = static_cast<NameNode *>(left);
+        BlockNode *name = static_cast<BlockNode *>(left);
         QVector<AST *> scope;
         DeclarationNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scope, tree);
         int size = 0;
@@ -1277,7 +1277,7 @@ void CodeResolver::expandNamesToBundles(StreamNode *stream, AST *tree)
         }
     }
     if (right->getNodeType() == AST::Name) {
-        NameNode *name = static_cast<NameNode *>(right);
+        BlockNode *name = static_cast<BlockNode *>(right);
         QVector<AST *> scope;
         DeclarationNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scope, tree);
         int size = 0;
@@ -1312,7 +1312,7 @@ std::vector<AST *> CodeResolver::declareUnknownStreamSymbols(const StreamNode *s
     }
 
     if (left->getNodeType() == AST::Name) {
-        NameNode *name = static_cast<NameNode *>(left);
+        BlockNode *name = static_cast<BlockNode *>(left);
         QList<LangError> errors;
         int size = -1;
         if (previousStreamMember) {
@@ -1337,7 +1337,7 @@ std::vector<AST *> CodeResolver::declareUnknownStreamSymbols(const StreamNode *s
         std::vector<AST *> declarations = declareUnknownStreamSymbols(static_cast<StreamNode *>(right), left, localScope, tree);
         newDeclarations.insert(newDeclarations.end(), declarations.begin(), declarations.end());
     } else if (right->getNodeType() == AST::Name) {
-        NameNode *name = static_cast<NameNode *>(right);
+        BlockNode *name = static_cast<BlockNode *>(right);
         QList<LangError> errors;
         int size = CodeValidator::getNodeNumOutputs(left, localScope, m_tree, errors);
         if (size <= 0) { // None of the elements in the stream have size
@@ -1512,7 +1512,7 @@ ValueNode *CodeResolver::resolveConstant(AST* value, QVector<AST *> scope)
         newValue = reduceConstExpression(expr, scope, m_tree);
         return newValue;
     } else if(value->getNodeType() == AST::Name) {
-        NameNode *name = static_cast<NameNode *>(value);
+        BlockNode *name = static_cast<BlockNode *>(value);
         DeclarationNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scope, m_tree);
         if (block && block->getNodeType() == AST::Block && block->getObjectType() == "constant") { // Size == 1
             AST *blockValue = block->getPropertyValue("value");
@@ -1893,7 +1893,7 @@ QVector<AST *> CodeResolver::sliceStreamByDomain(StreamNode *stream, QVector<AST
         if (left->getNodeType() == AST::Expression && previousDomainName.size() == 0) { // Because expressions are only allowed on the left most node, no need to check that
             AST *outDomain = nullptr;
             if (right->getNodeType() == AST::Name) {
-                DeclarationNode *declaration = CodeValidator::findDeclaration(QString::fromStdString(static_cast<NameNode *>(right)->getName()),
+                DeclarationNode *declaration = CodeValidator::findDeclaration(QString::fromStdString(static_cast<BlockNode *>(right)->getName()),
                                                                         scopeStack, m_tree);
                 if (declaration) {
                     outDomain = declaration->getDomain();
@@ -1923,7 +1923,7 @@ QVector<AST *> CodeResolver::sliceStreamByDomain(StreamNode *stream, QVector<AST
                         size = static_cast<ValueNode *>(declaration->getBundle()->index()->getChildren()[0])->getIntValue();
                     }
                     streams.push_back(createSignalBridge(connectorName, declaration, new ValueNode("", -1), size)); // Add definition to stream
-                    NameNode *connectorNameNode = new NameNode(connectorName, "", -1);
+                    BlockNode *connectorNameNode = new BlockNode(connectorName, "", -1);
                     StreamNode *newStream = new StreamNode(value->deepCopy(), connectorNameNode, left->getFilename().c_str(), left->getLine());
                     prop->replaceValue(connectorNameNode);
                     streams.push_back(newStream);
@@ -1952,8 +1952,8 @@ QVector<AST *> CodeResolver::sliceStreamByDomain(StreamNode *stream, QVector<AST
                         DeclarationNode *declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(stack.back()->getChildren()[i], scopeStack, m_tree),
                                                                                 scopeStack, m_tree);
                         newDeclarations.push_back(createSignalBridge(listMemberName, declaration, new ValueNode("", -1)));
-                        closingName->addChild(new NameNode(listMemberName, "", -1));
-                        newStart->addChild(new NameNode(listMemberName, "", -1));
+                        closingName->addChild(new BlockNode(listMemberName, "", -1));
+                        newStart->addChild(new BlockNode(listMemberName, "", -1));
                     }
                     // Slice
                 } else {
@@ -1962,8 +1962,8 @@ QVector<AST *> CodeResolver::sliceStreamByDomain(StreamNode *stream, QVector<AST
                     if (declaration->getObjectType() == "signal") {
                         newDeclarations.push_back(createSignalBridge(connectorName, declaration, new ValueNode("", -1), size));
                     }
-                    closingName = new NameNode(connectorName, "", -1);
-                    newStart = new NameNode(connectorName, "", -1);
+                    closingName = new BlockNode(connectorName, "", -1);
+                    newStart = new BlockNode(connectorName, "", -1);
                 }
             }
             if (stack.size() == 0) {
@@ -2020,9 +2020,9 @@ QVector<AST *> CodeResolver::processExpression(ExpressionNode *expr, QVector<AST
                  CodeValidator::getDomainNodeString(outDomain)) {
                 std::string connectorName = "_BridgeSig_" + std::to_string(m_connectorCounter++);
                 streams.push_back(createSignalBridge(connectorName, declaration, outDomain)); // Add definition to stream
-                NameNode *connectorNameNode = new NameNode(connectorName, "", -1);
+                BlockNode *connectorNameNode = new BlockNode(connectorName, "", -1);
                 StreamNode *newStream = new StreamNode(exprLeft->deepCopy(), connectorNameNode, exprLeft->getFilename().c_str(), exprLeft->getLine());
-                expr->replaceLeft(new NameNode(connectorName, "", -1));
+                expr->replaceLeft(new BlockNode(connectorName, "", -1));
                 streams.push_back(newStream);
                 // FIXME need to implement for bundles
             }
@@ -2034,7 +2034,7 @@ QVector<AST *> CodeResolver::processExpression(ExpressionNode *expr, QVector<AST
         if (exprRight->getNodeType() == AST::Expression) {
             streams << processExpression(static_cast<ExpressionNode *>(exprLeft), scopeStack, outDomain);
         } else if (exprRight->getNodeType() == AST::Name) {
-            NameNode *exprName = static_cast<NameNode *>(exprRight);
+            BlockNode *exprName = static_cast<BlockNode *>(exprRight);
             DeclarationNode *declaration = CodeValidator::findDeclaration(QString::fromStdString(exprName->getName()),
                                                                     scopeStack, m_tree);
             if (declaration) {
@@ -2042,9 +2042,9 @@ QVector<AST *> CodeResolver::processExpression(ExpressionNode *expr, QVector<AST
                      CodeValidator::getDomainNodeString(outDomain)) {
                     std::string connectorName = "_BridgeSig_" + std::to_string(m_connectorCounter++);
                     streams.push_back(createSignalBridge(connectorName, declaration, outDomain)); // Add definition to stream
-                    NameNode *connectorNameNode = new NameNode(connectorName, "", -1);
+                    BlockNode *connectorNameNode = new BlockNode(connectorName, "", -1);
                     StreamNode *newStream = new StreamNode(exprRight->deepCopy(), connectorNameNode, exprRight->getFilename().c_str(), exprRight->getLine());
-                    expr->replaceRight(new NameNode(connectorName, "", -1));
+                    expr->replaceRight(new BlockNode(connectorName, "", -1));
                     streams.push_back(newStream);
                 }
             }
@@ -2108,13 +2108,13 @@ void CodeResolver::resolveDomainForStreamNode(AST *node, QVector<AST *> scopeSta
     }
     if (domain) {
         if (domain->getNodeType() == AST::Name) { // Resolve domain name
-            NameNode *domainNameNode = static_cast<NameNode *>(domain);
+            BlockNode *domainNameNode = static_cast<BlockNode *>(domain);
             DeclarationNode *domainDeclaration = CodeValidator::findDeclaration(
                         QString::fromStdString(domainNameNode->getName()), scopeStack, m_tree);
             if (domainDeclaration) {
                 AST *domainValue = domainDeclaration->getPropertyValue("domainName");
                 while (domainValue && domainValue->getNodeType() == AST::Name) {
-                    NameNode *recurseDomain = static_cast<NameNode *>(domainValue);
+                    BlockNode *recurseDomain = static_cast<BlockNode *>(domainValue);
                     domainDeclaration = CodeValidator::findDeclaration(
                                 QString::fromStdString(recurseDomain->getName()), scopeStack, m_tree);
                     domainValue = domainDeclaration->getPropertyValue("name");
@@ -2150,7 +2150,7 @@ void CodeResolver::checkStreamConnections(const StreamNode *stream, QVector<AST 
 void CodeResolver::markConnectionForNode(AST *node, QVector<AST *> scopeStack, bool start)
 {
     if (node->getNodeType() == AST::Name) {
-        QString name = QString::fromStdString(static_cast<NameNode *>(node)->getName());
+        QString name = QString::fromStdString(static_cast<BlockNode *>(node)->getName());
         DeclarationNode *decl = CodeValidator::findDeclaration(name, scopeStack, m_tree);
         if (decl && decl->getObjectType() == "signal") {
             if (start) { // not first element in stream, so it is being written to

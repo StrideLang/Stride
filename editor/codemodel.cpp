@@ -8,7 +8,7 @@
 #include "declarationnode.h"
 #include "valuenode.h"
 #include "listnode.h"
-#include "namenode.h"
+#include "blocknode.h"
 
 CodeModel::CodeModel(QObject *parent) :
     QObject(parent),
@@ -73,7 +73,7 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
                                         string typeName = static_cast<ValueNode *>(validTypeNode)->getStringValue();
                                         typesText += QString::fromStdString(typeName + ", ");
                                     } else if (validTypeNode->getNodeType() == AST::Name) {
-                                        string typeName = static_cast<NameNode *>(validTypeNode)->getName();
+                                        string typeName = static_cast<BlockNode *>(validTypeNode)->getName();
                                         typesText += QString::fromStdString(typeName + ", ");
                                     } else {
                                         typesText += "  ";
@@ -346,7 +346,7 @@ void CodeModel::updateCodeAnalysis(QString code, QString platformRootPath)
             m_objectNames.clear();
             foreach (AST *platObject, objects) {
                 if (platObject->getNodeType() == AST::Name) {
-                    m_objectNames << QString::fromStdString(static_cast<NameNode *>(platObject)->getName());
+                    m_objectNames << QString::fromStdString(static_cast<BlockNode *>(platObject)->getName());
                 }
             }
             m_errors = validator.getErrors();

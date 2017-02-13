@@ -24,7 +24,7 @@ public:
     static DeclarationNode *findDeclaration(QString streamMemberName, QVector<AST *> scopeStack, AST *tree);
     static QString streamMemberName(AST * node, QVector<AST *> scopeStack, AST *tree);
     static PortType resolveBundleType(BundleNode *bundle, QVector<AST *> scope, AST *tree);
-    static PortType resolveNameType(NameNode *name, QVector<AST *> scope, AST *tree);
+    static PortType resolveNameType(BlockNode *name, QVector<AST *> scope, AST *tree);
     static PortType resolveNodeOutType(AST *node, QVector<AST *> scope, AST *tree);
     static PortType resolveListType(ListNode *listnode, QVector<AST *> scope, AST *tree);
     static PortType resolveExpressionType(ExpressionNode *exprnode, QVector<AST *> scope, AST *tree);

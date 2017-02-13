@@ -63,7 +63,7 @@ NullStream nstream;
 %code requires { #include "propertynode.h" }
 %code requires { #include "bundlenode.h" }
 %code requires { #include "valuenode.h" }
-%code requires { #include "namenode.h" }
+%code requires { #include "blocknode.h" }
 %code requires { #include "functionnode.h" }
 %code requires { #include "expressionnode.h" }
 %code requires { #include "listnode.h" }
@@ -260,7 +260,7 @@ auxPlatformDef:
             string word;
             word.append($1); /* string constructor leaks otherwise! */
             AST *temp = new AST();
-            temp->addChild(new NameNode(word, currentFile, yyloc.first_line));
+            temp->addChild(new BlockNode(word, currentFile, yyloc.first_line));
             $$ = temp;
             COUT << "With additional platform: " << $1 << ENDL;
             free($1);
@@ -271,7 +271,7 @@ auxPlatformDef:
             aux->giveChildren(temp);
             string word;
             word.append($3); /* string constructor leaks otherwise! */
-            temp->addChild(new NameNode(word, currentFile, yyloc.first_line));
+            temp->addChild(new BlockNode(word, currentFile, yyloc.first_line));
             $$ = temp;
             aux->deleteChildren();
             delete aux;
@@ -334,7 +334,7 @@ forPlatformDef:
             string word;
             word.append($1); /* string constructor leaks otherwise! */
             AST *temp = new AST();
-            temp->addChild(new NameNode(word, currentFile, yyloc.first_line));
+            temp->addChild(new BlockNode(word, currentFile, yyloc.first_line));
             $$ = temp;
             COUT << "For platform: " << $1 << ENDL;
             free($1);
@@ -345,7 +345,7 @@ forPlatformDef:
             aux->giveChildren(temp);
             string word;
             word.append($3); /* string constructor leaks otherwise! */
-            temp->addChild(new NameNode(word, currentFile, yyloc.first_line));
+            temp->addChild(new BlockNode(word, currentFile, yyloc.first_line));
             $$ = temp;
             aux->deleteChildren();
             delete aux;
@@ -1119,7 +1119,7 @@ indexComp:
     |   UVAR            {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
-            $$ = new NameNode(s, currentFile, yyloc.first_line);
+            $$ = new BlockNode(s, currentFile, yyloc.first_line);
             COUT << "Index/Size User variable: " << $1 << ENDL;
             free($1);
         }
@@ -1128,7 +1128,7 @@ indexComp:
             ns.append($1); /* string constructor leaks otherwise! */
             string s;
             s.append($3); /* string constructor leaks otherwise! */
-            $$ = new NameNode(s, ns, currentFile, yyloc.first_line);
+            $$ = new BlockNode(s, ns, currentFile, yyloc.first_line);
             COUT << "Index/Size User variable: " << $3 << " in NameSpace: " << $1 << ENDL;
             free($1);
             free($3);
@@ -1147,7 +1147,7 @@ streamComp:
         UVAR            {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
-            $$ = new NameNode(s, currentFile, yyloc.first_line);
+            $$ = new BlockNode(s, currentFile, yyloc.first_line);
             COUT << "User variable: " << $1 << ENDL;
             COUT << "Streaming ... " << ENDL;
             free($1);
@@ -1157,7 +1157,7 @@ streamComp:
             ns.append($1); /* string constructor leaks otherwise! */
             string s;
             s.append($3); /* string constructor leaks otherwise! */
-            $$ = new NameNode(s, ns, currentFile, yyloc.first_line);
+            $$ = new BlockNode(s, ns, currentFile, yyloc.first_line);
             COUT << "User variable: " << $3 << " in NameSpace: " << $1 << ENDL;
             COUT << "Streaming ... " << ENDL;
             free($1);
@@ -1219,7 +1219,7 @@ valueComp:
     |   UVAR            {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
-            $$ = new NameNode(s, currentFile, yyloc.first_line);
+            $$ = new BlockNode(s, currentFile, yyloc.first_line);
             COUT << "User variable: " << $1 << ENDL;
             free($1);
         }
@@ -1228,7 +1228,7 @@ valueComp:
             ns.append($1); /* string constructor leaks otherwise! */
             string s;
             s.append($3); /* string constructor leaks otherwise! */
-            $$ = new NameNode(s, ns, currentFile, yyloc.first_line);
+            $$ = new BlockNode(s, ns, currentFile, yyloc.first_line);
             COUT << "User variable: " << $3 << " in NameSpace: " << $1 << ENDL;
             free($1);
             free($3);

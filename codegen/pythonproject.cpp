@@ -146,7 +146,7 @@ void PythonProject::astToJson(AST *node, QJsonObject &obj)
         if (indexNode->getNodeType() == AST::Int) {
             newObj["index"] = static_cast<ValueNode *>(indexNode)->getIntValue();
         } else if (indexNode->getNodeType() == AST::Name) {
-            newObj["index"] = QString::fromStdString(static_cast<NameNode *>(indexNode)->getName());
+            newObj["index"] = QString::fromStdString(static_cast<BlockNode *>(indexNode)->getName());
         } else if (indexNode->getNodeType() == AST::List) {
             // FIXME implement support for Lists
         } else if (indexNode->getNodeType() == AST::Range) {

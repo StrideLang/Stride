@@ -11,7 +11,6 @@ SOURCES += ast.cpp \
     valuenode.cpp \
     bundlenode.cpp \
     propertynode.cpp \
-    namenode.cpp \
     functionnode.cpp \
     expressionnode.cpp \
     listnode.cpp \
@@ -20,7 +19,8 @@ SOURCES += ast.cpp \
     rangenode.cpp \
     langerror.cpp \
     keywordnode.cpp \
-    declarationnode.cpp
+    declarationnode.cpp \
+    blocknode.cpp
 
 HEADERS += ast.h \
            platformnode.h \
@@ -28,7 +28,6 @@ HEADERS += ast.h \
     valuenode.h \
     bundlenode.h \
     propertynode.h \
-    namenode.h \
     functionnode.h \
     expressionnode.h \
     listnode.h \
@@ -38,7 +37,8 @@ HEADERS += ast.h \
     langerror.h \
     strideparser.h \
     keywordnode.hpp \
-    declarationnode.h
+    declarationnode.h \
+    blocknode.h
 
 BISONSOURCES = lang_stride.y
 FLEXSOURCES = lang_stride.l

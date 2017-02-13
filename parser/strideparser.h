@@ -7,7 +7,7 @@
 #include "expressionnode.h"
 #include "functionnode.h"
 #include "listnode.h"
-#include "namenode.h"
+#include "blocknode.h"
 #include "platformnode.h"
 #include "propertynode.h"
 #include "streamnode.h"
