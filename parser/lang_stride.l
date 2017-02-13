@@ -67,7 +67,6 @@ CLETTER     [A-Z]
 "not"           { return NOT; }
 
 "streamRate"    { return STREAMRATE; }
-"streamDomain"  { return STREAMDOMAIN; }
 
 {DIGIT}+\.{DIGIT}*  { yylval.fval = atof(yytext); return FLOAT; }
 {DIGIT}*\.{DIGIT}+  { yylval.fval = atof(yytext); return FLOAT; }

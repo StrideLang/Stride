@@ -84,8 +84,8 @@ NullStream nstream;
     PropertyNode *propertyNode;
     BundleNode *bundleNode;
     FunctionNode *functionNode;
-    ListNode *listNode;
     ExpressionNode *expressionNode;
+    ListNode *listNode;
     ImportNode *importNode;
     ForNode *forNode;
     RangeNode *rangeNode;
@@ -141,7 +141,7 @@ NullStream nstream;
 %token EQUAL NOTEQUAL GREATER LESSER GREATEREQUAL LESSEREQUAL
 %token BITAND BITOR BITNOT
 %token STREAMRATE
-%token STREAMDOMAIN
+//%token STREAMDOMAIN
 
 %left STREAM
 %left AND OR
@@ -525,13 +525,13 @@ property:
             COUT << "Property: " << $1 << ENDL << "New property ... " << ENDL;
             free($1);
         }
-    |   WORD COLON STREAMDOMAIN {
-            string s;
-            s.append($1); /* string constructor leaks otherwise! */
-            $$ = new PropertyNode(s, new ValueNode("", -1), currentFile, yyloc.first_line);
-            COUT << "Property: " << $1 << ENDL << "New property ... " << ENDL;
-            free($1);
-        }
+//    |   WORD COLON STREAMDOMAIN {
+//            string s;
+//            s.append($1); /* string constructor leaks otherwise! */
+//            $$ = new PropertyNode(s, new ValueNode("", -1), currentFile, yyloc.first_line);
+//            COUT << "Property: " << $1 << ENDL << "New property ... " << ENDL;
+//            free($1);
+//        }
     |   WORD COLON STREAMRATE   {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
