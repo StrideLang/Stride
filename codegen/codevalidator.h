@@ -4,6 +4,7 @@
 #include <QString>
 
 #include "strideparser.h"
+#include "porttypes.h"
 #include "strideplatform.hpp"
 #include "stridelibrary.hpp"
 

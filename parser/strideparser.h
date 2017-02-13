@@ -16,17 +16,5 @@
 #include "fornode.h"
 #include "rangenode.h"
 
-
-typedef enum {
-    Signal,
-    ConstReal,
-    ConstInt,
-    ConstBoolean,
-    ConstString,
-    None,
-    Invalid
-} PortType;
-
-
 #endif // STREAMPARSER_H
 

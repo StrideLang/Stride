@@ -27,7 +27,8 @@ HEADERS += \
     coderesolver.h \
     builder.h \
     stridelibrary.hpp \
-    strideplatform.hpp
+    strideplatform.hpp \
+    porttypes.h
 
 #unix {
 #    target.path = /usr/local/lib
