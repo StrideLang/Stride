@@ -20,7 +20,8 @@ SOURCES += ast.cpp \
     langerror.cpp \
     keywordnode.cpp \
     declarationnode.cpp \
-    blocknode.cpp
+    blocknode.cpp \
+    scopenode.cpp
 
 HEADERS += ast.h \
            platformnode.h \
@@ -38,7 +39,8 @@ HEADERS += ast.h \
     strideparser.h \
     keywordnode.hpp \
     declarationnode.h \
-    blocknode.h
+    blocknode.h \
+    scopenode.h
 
 BISONSOURCES = lang_stride.y
 FLEXSOURCES = lang_stride.l

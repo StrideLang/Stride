@@ -3,11 +3,10 @@
 #include <string>
 #include <vector>
 
-#include <cstdio>  // for fopen
+#include <cstdio>   // for fopen
 #include <cstdarg>  //for var args
-#include <cerrno> // For error codes
-#include <cstring> // For strerror
-
+#include <cerrno>   // For error codes
+#include <cstring>  // For strerror
 
 #include "ast.h"
 
