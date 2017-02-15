@@ -1011,7 +1011,7 @@ std::string CodeResolver::processDomainsForNode(AST *node, QVector<AST *> scopeS
             AST *domain = declaration->getDomain();
             if (!domain) {
                 // Put declaration in stack to set domain once domain is resolved
-                domainStack << declaration;
+//                domainStack << declaration;
             } else {
                 if (domain->getNodeType() == AST::String) {
                     domainName = static_cast<ValueNode *>(domain)->getStringValue();
@@ -1019,10 +1019,10 @@ std::string CodeResolver::processDomainsForNode(AST *node, QVector<AST *> scopeS
                     QList<LangError> errors;
                     domainName = CodeValidator::evaluateConstString(domain, scopeStack, m_tree, errors);
                 } else if (domain->getNodeType() == AST::None) { // domain is streamDomain
-                    domainStack << declaration;
+//                    domainStack << declaration;
                 } else {
                     qDebug() << "WARNING: Unrecognized domain type"; // Should this trigger an error?
-                    domainStack << declaration;
+//                    domainStack << declaration;
                 }
             }
         }
@@ -1031,15 +1031,21 @@ std::string CodeResolver::processDomainsForNode(AST *node, QVector<AST *> scopeS
         AST *domain = func->getDomain();
         if (!domain) {
             // Put declaration in stack to set domain once domain is resolved
-            domainStack << node;
+//            domainStack << node;
         } else {
             if (domain->getNodeType() == AST::String) {
                 domainName = static_cast<ValueNode *>(domain)->getStringValue();
             } else if (domain->getNodeType() == AST::None) { // domain is streamDomain
-                domainStack << node;
+//                domainStack << node;
             } else {
                 qDebug() << "WARNING: Unrecognized domain type"; // Should this trigger an error?
-                domainStack << node;
+//                domainStack << node;
+            }
+        }
+        for(PropertyNode * member : func->getProperties()) {
+            string propertyDomainName = processDomainsForNode(member->getValue(), scopeStack, domainStack);
+            if (propertyDomainName.size() == 0) {
+                 domainStack << member->getValue();
             }
         }
     } else if (node->getNodeType() == AST::List) {
@@ -1047,7 +1053,7 @@ std::string CodeResolver::processDomainsForNode(AST *node, QVector<AST *> scopeS
             domainName = processDomainsForNode(member, scopeStack, domainStack);
             if (domainName.size() == 0) {
                 // Put declaration in stack to set domain once domain is resolved
-                domainStack << member;
+//                domainStack << member;
                 // FIMXE: This is very simplistic (or plain wrong....)
                 // It assumes that the next found domain affects all elements
                 // in the list that don't have domains. This is likely a
@@ -1925,7 +1931,7 @@ QVector<AST *> CodeResolver::sliceStreamByDomain(StreamNode *stream, QVector<AST
                     streams.push_back(createSignalBridge(connectorName, declaration, new ValueNode("", -1), size)); // Add definition to stream
                     BlockNode *connectorNameNode = new BlockNode(connectorName, "", -1);
                     StreamNode *newStream = new StreamNode(value->deepCopy(), connectorNameNode, left->getFilename().c_str(), left->getLine());
-                    prop->replaceValue(connectorNameNode);
+                    prop->replaceValue(connectorNameNode->deepCopy());
                     streams.push_back(newStream);
 
                 } else if (value->getNodeType() == AST::Bundle) {
