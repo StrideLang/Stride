@@ -200,7 +200,7 @@ void CodeResolver::declareModuleInternalBlocks()
                         AST *internalBlocks = block->getPropertyValue("blocks");
 
                         Q_ASSERT(ratePortValue && domainPortValue && sizePortValue && blockPortValue && directionPortValue);
-                        Q_ASSERT(ratePortValue->getNodeType() == AST::Name || ratePortValue->getNodeType() == AST::None); // Catch on debug but fail gracefully on release
+                        Q_ASSERT(ratePortValue->getNodeType() == AST::Name || ratePortValue->getNodeType() == AST::Int || ratePortValue->getNodeType() == AST::Real || ratePortValue->getNodeType() == AST::None); // Catch on debug but fail gracefully on release
                         if (ratePortValue->getNodeType() == AST::Name) {
                             BlockNode *nameNode = static_cast<BlockNode *>(ratePortValue);
                             string name = nameNode->getName();
@@ -296,6 +296,11 @@ void CodeResolver::declareModuleInternalBlocks()
                                 newSignal = createSignalDeclaration(QString::fromStdString(name));
                                 internalBlocks->addChild(newSignal);
                                 newSignal->setDomainString(domainName);
+                                AST *portDefault = portBlock->getPropertyValue("default");
+                                if (portDefault && portDefault->getNodeType() != AST::None) {
+                                    Q_ASSERT(newSignal->getPropertyValue("default"));
+                                    newSignal->replacePropertyValue("default", portDefault->deepCopy());
+                                }
                                 //                                    if (direction == "input") {
                                 //                                    } else if (direction == "output") {
 
