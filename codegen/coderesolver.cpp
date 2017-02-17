@@ -1100,9 +1100,13 @@ void CodeResolver::setDomainForStack(QList<AST *> domainStack, string domainName
         }  else if (relatedNode->getNodeType() == AST::List
                     || relatedNode->getNodeType() == AST::Expression) {
             for(AST * member : relatedNode->getChildren()) {
-                if (member->getNodeType() == AST::Block
-                        || member->getNodeType() == AST::BlockBundle ) {
-                    DeclarationNode *block = static_cast<DeclarationNode *>(member);
+                if (member->getNodeType() == AST::Name) {
+                    string name = static_cast<BlockNode *>(member)->getName();
+                    DeclarationNode *block =  CodeValidator::findDeclaration(QString::fromStdString(name), scopeStack, m_tree);
+                    block->setDomainString(domainName);
+                } else if (member->getNodeType() == AST::Bundle) {
+                    string name = static_cast<BundleNode *>(member)->getName();
+                    DeclarationNode *block =  CodeValidator::findDeclaration(QString::fromStdString(name), scopeStack, m_tree);
                     block->setDomainString(domainName);
                 } else if (member->getNodeType() == AST::Function) {
                     FunctionNode *func = static_cast<FunctionNode *>(member);
@@ -1409,8 +1413,12 @@ void CodeResolver::resolveStreamSymbols()
                     if (streamNode->getNodeType() == AST::Stream) {
                         const StreamNode *stream = static_cast<const StreamNode *>(streamNode);
                         std::vector<AST *> declarations = declareUnknownStreamSymbols(stream, NULL, scopeStack, m_tree);
+                        ListNode *blockList = static_cast<ListNode *>(block->getPropertyValue("blocks"));
+                        Q_ASSERT(blockList && blockList->getNodeType() == AST::List);
                         for(AST *decl: declarations) {
-                            m_tree->addChild(decl);
+                            blockList->addChild(decl);
+                            scopeStack.push_back(decl);
+//                            m_tree->addChild(decl);
                         }
                     }
                 }

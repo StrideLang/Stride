@@ -450,8 +450,10 @@ void ParserTest::testModules()
     blockList = static_cast<ListNode *>(moduleNode->getPropertyValue("blocks"));
     QVERIFY(blockList->getNodeType() == AST::List);
     QStringList blockNames;
+//    blockNames << "Test";
     blockNames << "InputPortRate" << "InputPortDomain" << "InputPortSize" << "Input";
     blockNames << "OutputPortRate" << "OutputPortDomain" << "OutputPortSize" << "Output";
+    blockNames << "AutoDeclared";
     for(size_t i = 1; i < blockList->getChildren().size(); i++) {
         AST *member = blockList->getChildren().at(i);
         if (member->getNodeType() == AST::Block) {
@@ -967,8 +969,8 @@ void ParserTest::testStreamExpansion()
     QVERIFY(value->getNodeType() == AST::Int);
     QVERIFY(value->getIntValue() == 2);
 
-    //    In >> PassThru() >> OutSignal3;
-    stream = static_cast<StreamNode *>(nodes.at(8));
+    //    In >> Level(gain: 1.0) >> OutSignal3;
+    stream = static_cast<StreamNode *>(nodes.at(6));
 
     QVERIFY(stream->getNodeType() == AST::Stream);
 
@@ -984,8 +986,6 @@ void ParserTest::testStreamExpansion()
     QVERIFY(declSize->getNodeType() == AST::Int);
     QVERIFY(declSize->getIntValue() == 2);
 
-    // Stream has been split because of signal bridges
-    stream = static_cast<StreamNode *>(nodes.at(9));
     func = static_cast<FunctionNode *>(stream->getRight()->getChildren()[0]->getChildren()[0]);
     QVERIFY(func->getNodeType() == AST::Function);
     QVERIFY(func->getName() == "Level");
@@ -1017,7 +1017,7 @@ void ParserTest::testStreamExpansion()
 
 //    signal StereoOut[2] { }
 //    MonoSignal >> Level(gain: 1.0) >> StereoOut;
-    stream = static_cast<StreamNode *>(nodes.at(11));
+    stream = static_cast<StreamNode *>(nodes.at(8));
     QVERIFY(stream->getNodeType() == AST::Stream);
     name = static_cast<BlockNode *>(stream->getLeft());
     QVERIFY(name->getNodeType() == AST::Name);
@@ -1031,7 +1031,7 @@ void ParserTest::testStreamExpansion()
     QVERIFY(list->getChildren().size() == 2);
 
 //    MonoSignal2 >> Level(gain: [1.0, 1.0]) >> StereoOut;
-    stream = static_cast<StreamNode *>(nodes.at(12));
+    stream = static_cast<StreamNode *>(nodes.at(9));
     QVERIFY(stream->getNodeType() == AST::Stream);
     name = static_cast<BlockNode *>(stream->getLeft());
     QVERIFY(name->getNodeType() == AST::Name);
@@ -1078,7 +1078,7 @@ void ParserTest::testStreamExpansion()
 //    Out >> Level(gain: 1.0) >> NewSignal;
 //    NewSignal >> Level(gain: 1.0) >> NewSignal2;
 
-    stream = static_cast<StreamNode *>(nodes.at(15));
+    stream = static_cast<StreamNode *>(nodes.at(10));
     list = static_cast<ListNode *>(stream->getLeft());
     QVERIFY(list->getNodeType() == AST::List);
     QVERIFY(list->size() == 2);
@@ -1099,7 +1099,6 @@ void ParserTest::testStreamExpansion()
     QVERIFY(value->getNodeType() == AST::Int);
     QVERIFY(value->getIntValue() == 2);
 
-    stream = static_cast<StreamNode *>(nodes.at(16));
     stream = static_cast<StreamNode *>(stream->getRight());
     QVERIFY(stream->getNodeType() == AST::Stream);
     list = static_cast<ListNode *>(stream->getLeft());
@@ -1138,7 +1137,7 @@ void ParserTest::testStreamExpansion()
     QVERIFY(value->getNodeType() == AST::Int);
     QVERIFY(value->getIntValue() == 2);
 
-    stream = static_cast<StreamNode *>(nodes.at(19));
+    stream = static_cast<StreamNode *>(nodes.at(11));
     list = static_cast<ListNode *>(stream->getLeft());
     QVERIFY(list->getNodeType() == AST::List);
     QVERIFY(list->size() == 2);
@@ -1159,7 +1158,6 @@ void ParserTest::testStreamExpansion()
     QVERIFY(value->getNodeType() == AST::Int);
     QVERIFY(value->getIntValue() == 2);
 
-    stream = static_cast<StreamNode *>(nodes.at(20));
     stream = static_cast<StreamNode *>(stream->getRight());
     QVERIFY(stream->getNodeType() == AST::Stream);
     list = static_cast<ListNode *>(stream->getLeft());
@@ -1200,7 +1198,7 @@ void ParserTest::testStreamExpansion()
 
     //    Oscillator(frequency: [440,2] amplitude: 1.0) >> Osc;
 
-    stream = static_cast<StreamNode *>(nodes.at(22));
+    stream = static_cast<StreamNode *>(nodes.at(13));
     list = static_cast<ListNode *>(stream->getLeft());
     QVERIFY(list->getNodeType() == AST::List);
     QVERIFY(list->size() == 2);
