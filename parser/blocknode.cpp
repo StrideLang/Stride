@@ -1,6 +1,5 @@
 #include "blocknode.h"
 
-
 BlockNode::BlockNode(string name, const char *filename, int line) :
     AST(AST::Name, filename, line)
 {
@@ -18,7 +17,6 @@ BlockNode::~BlockNode()
 {
 
 }
-
 
 AST *BlockNode::deepCopy()
 {

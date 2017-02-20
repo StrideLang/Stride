@@ -56,26 +56,27 @@ NullStream nstream;
 %}
 
 %code requires { #include "ast.h" }
-%code requires { #include "platformnode.h" }
-%code requires { #include "declarationnode.h" }
-%code requires { #include "streamnode.h" }
-%code requires { #include "propertynode.h" }
-%code requires { #include "bundlenode.h" }
-%code requires { #include "valuenode.h" }
 %code requires { #include "blocknode.h" }
-%code requires { #include "functionnode.h" }
+%code requires { #include "bundlenode.h" }
+%code requires { #include "declarationnode.h" }
 %code requires { #include "expressionnode.h" }
-%code requires { #include "listnode.h" }
-%code requires { #include "importnode.h" }
 %code requires { #include "fornode.h" }
+%code requires { #include "functionnode.h" }
+%code requires { #include "importnode.h" }
+%code requires { #include "keywordnode.h" }
+%code requires { #include "listnode.h" }
+%code requires { #include "platformnode.h" }
+%code requires { #include "propertynode.h" }
 %code requires { #include "rangenode.h" }
-%code requires { #include "keywordnode.hpp" }
+%code requires { #include "scopenode.h" }
+%code requires { #include "streamnode.h" }
+%code requires { #include "valuenode.h" }
 
 %union {
     int     ival;
     double  fval;
-    char *  sval;
-    AST  *  ast;
+    char    *sval;
+    AST     *ast;
     PlatformNode *platformNode;
     HwPlatform *hwPlatform;
     DeclarationNode *declarationNode;
@@ -89,6 +90,7 @@ NullStream nstream;
     ForNode *forNode;
     RangeNode *rangeNode;
     KeywordNode *keywordNode;
+    ScopeNode *scopeNode;
 }
 
 /* declare types for nodes */
@@ -121,9 +123,11 @@ NullStream nstream;
 %type <listNode> valueListDef
 %type <listNode> blockList
 %type <listNode> streamList
-%type <listNode> listList 
+%type <listNode> listList
 %type <ast> valueExp
 %type <ast> valueListExp
+%type <ast> scopeDef
+%type <scopeNode> scope
 
 
 /* declare tokens */
@@ -284,32 +288,43 @@ auxPlatformDef:
 // =================================
 
 importDef:
-        IMPORT WORD         {
+        IMPORT UVAR             {
             string word;
             word.append($2); /* string constructor leaks otherwise! */
-            $$ = new ImportNode(word, currentFile, yyloc.first_line);
+            $$ = new ImportNode(word, NULL, currentFile, yyloc.first_line);
             COUT << "Importing: " << $2 << ENDL;
             free($2);
         }
-    |   IMPORT WORD AS WORD {
+    |   IMPORT scopeDef UVAR    {
+            string word;
+            word.append($3); /* string constructor leaks otherwise! */
+            $$ = new ImportNode(word, $2, currentFile, yyloc.first_line);
+            AST *scope = $2;
+            delete scope;
+            COUT << "Importing: " << $3 << " in scope" << ENDL;
+            free($3);
+        }
+    |   IMPORT UVAR AS UVAR {
             string word;
             word.append($2); /* string constructor leaks otherwise! */
             string alias;
             alias.append($4); /* string constructor leaks otherwise! */
-            $$ = new ImportNode(word, currentFile, yyloc.first_line, alias);
+            $$ = new ImportNode(word, NULL, currentFile, yyloc.first_line, alias);
             COUT << "Importing: " << $2 << " as " << $4 << ENDL;
             free($2);
             free($4);
         }
-    |   IMPORT UVAR AS WORD {
+    |   IMPORT scopeDef UVAR AS UVAR {
             string word;
-            word.append($2); /* string constructor leaks otherwise! */
+            word.append($3); /* string constructor leaks otherwise! */
             string alias;
-            alias.append($4); /* string constructor leaks otherwise! */
-            $$ = new ImportNode(word, currentFile, yyloc.first_line, alias);
-            COUT << "Importing: " << $2 << " as " << $4 << ENDL;
-            free($2);
-            free($4);
+            alias.append($5); /* string constructor leaks otherwise! */
+            $$ = new ImportNode(word, $2, currentFile, yyloc.first_line, alias);
+            AST *scope = $2;
+            delete scope;
+            COUT << "Importing: " << $3 << " as " << $5 << " in scope!" << ENDL;
+            free($3);
+            free($5);
         }
     ;
 
@@ -413,6 +428,33 @@ streamDef:
     |   streamListDef STREAM streamExp SEMICOLON    {
             $$ = new StreamNode($1, $3, currentFile, yyloc.first_line);
             COUT << "Stream Resolved!" << ENDL;
+        }
+    ;
+
+// =================================
+//    SCOPE DEFINITION
+// =================================
+
+scopeDef:
+        scopeDef scope  {
+            AST *scope = $1;
+            scope->addChild($2);
+            $$ = scope;
+        }
+    |   scope           {
+            AST *temp = new AST();
+            temp->addChild($1);
+            $$ = temp;
+        }
+    ;
+
+scope:
+        UVAR COLONCOLON {
+            string s;
+            s.append($1); /* string constructor leaks otherwise! */
+            $$ = new ScopeNode(s, currentFile, yyloc.first_line);
+            COUT << "Scope: " << $1 << ENDL;
+            free($1);
         }
     ;
 
@@ -563,7 +605,7 @@ propertyType:
             $$ = $1;
             COUT << "List expression as property value!" << ENDL;
         }
-     |  streamDef       {
+    |   streamDef       {
             $$ = $1;
             COUT << "Stream as property value!" << ENDL;
         }

@@ -1,4 +1,4 @@
-#include "keywordnode.hpp"
+#include "keywordnode.h"
 
 KeywordNode::KeywordNode(string keyword, const char *filename, int line)
     :AST(AST::Keyword, filename, line)

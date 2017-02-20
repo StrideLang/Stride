@@ -480,6 +480,13 @@ void ParserTest::testImport()
     generator.validate();
     QVERIFY(generator.isValid());
 
+    ImportNode *import = static_cast<ImportNode *>(tree->getChildren().at(5));
+    QVERIFY(import->getNodeType() == AST::Import);
+    QVERIFY(import->importName() == "Filter");
+    QVERIFY(import->getScopeLevels() == 2);
+    QVERIFY(import->getScopeAt(0) == "Platform");
+    QVERIFY(import->getScopeAt(1) == "Filters");
+
     tree->deleteChildren();
     delete tree;
 
@@ -1732,18 +1739,18 @@ void ParserTest::testNamespaces()
     //    import NameSpace as ns
     ImportNode *import = static_cast<ImportNode *>(nodes.at(0));
     QVERIFY(import->getNodeType() == AST::Import);
-    QVERIFY(import->importName() == "namespace");
+    QVERIFY(import->importName() == "Namespace");
     QVERIFY(import->importAlias() == "");
 
     import = static_cast<ImportNode *>(nodes.at(1));
     QVERIFY(import->getNodeType() == AST::Import);
-    QVERIFY(import->importName() == "namespace");
-    QVERIFY(import->importAlias() == "ns");
+    QVERIFY(import->importName() == "Namespace");
+    QVERIFY(import->importAlias() == "Namespace");
 
     import = static_cast<ImportNode *>(nodes.at(2));
     QVERIFY(import->getNodeType() == AST::Import);
     QVERIFY(import->importName() == "NameSpace");
-    QVERIFY(import->importAlias() == "ns");
+    QVERIFY(import->importAlias() == "Ns");
 
     //    ns.Value >> Constant;
     //    ns.Value_1 + 1.0 >> Constant;
@@ -2877,7 +2884,7 @@ void ParserTest::testHeader()
 
     QVERIFY(tree != NULL);
     vector<AST *> nodes = tree->getChildren();
-    QVERIFY(nodes.size() == 15);
+    QVERIFY(nodes.size() == 14);
     PlatformNode *node = static_cast<PlatformNode *>(nodes.at(0));
     QVERIFY(node->getNodeType() == AST::Platform);
     QVERIFY(node->platformName() == "PufferFish");
@@ -2997,31 +3004,25 @@ void ParserTest::testHeader()
 
     ImportNode *importnode = static_cast<ImportNode *>(nodes.at(10));
     QVERIFY(importnode->getNodeType() == AST::Import);
-    QVERIFY(importnode->importName() == "file");
+    QVERIFY(importnode->importName() == "File");
     QVERIFY(importnode->importAlias() == "");
     QVERIFY(importnode->getLine() == 15);
 
     importnode = static_cast<ImportNode *>(nodes.at(11));
     QVERIFY(importnode->getNodeType() == AST::Import);
-    QVERIFY(importnode->importName() == "file");
-    QVERIFY(importnode->importAlias() == "file");
+    QVERIFY(importnode->importName() == "File");
+    QVERIFY(importnode->importAlias() == "F");
     QVERIFY(importnode->getLine() == 16);
 
-    importnode = static_cast<ImportNode *>(nodes.at(12));
-    QVERIFY(importnode->getNodeType() == AST::Import);
-    QVERIFY(importnode->importName() == "File");
-    QVERIFY(importnode->importAlias() == "file");
-    QVERIFY(importnode->getLine() == 17);
-
-    ForNode *fornode = static_cast<ForNode *>(nodes.at(13));
+    ForNode *fornode = static_cast<ForNode *>(nodes.at(12));
     QVERIFY(fornode->getNodeType() == AST::For);
     vector<AST *> fornames = fornode->getChildren();
     QVERIFY(fornames.size() == 1);
     nameNode = static_cast<BlockNode *>(fornames.at(0));
     QVERIFY(nameNode->getName() == "Gamma");
-    QVERIFY(fornode->getLine() == 19);
+    QVERIFY(fornode->getLine() == 18);
 
-    fornode = static_cast<ForNode *>(nodes.at(14));
+    fornode = static_cast<ForNode *>(nodes.at(13));
     QVERIFY(fornode->getNodeType() == AST::For);
     fornames = fornode->getChildren();
     QVERIFY(fornames.size() == 2);
@@ -3029,7 +3030,7 @@ void ParserTest::testHeader()
     QVERIFY(nameNode->getName() == "Gamma");
     nameNode = static_cast<BlockNode *>(fornames.at(1));
     QVERIFY(nameNode->getName() == "PufferFish");
-    QVERIFY(fornode->getLine() == 20);
+    QVERIFY(fornode->getLine() == 19);
 
     tree->deleteChildren();
     delete tree;

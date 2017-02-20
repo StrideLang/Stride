@@ -1,7 +1,7 @@
 use Gamma version 1.0 on PC
 
-import generators
-import osc
+import Generators
+import Osc
 
 signal ValueInOSCDomain {
     domain: OSCInDomain

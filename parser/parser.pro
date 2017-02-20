@@ -6,7 +6,6 @@ CONFIG += staticlib
 CONFIG += c++11
 
 SOURCES += ast.cpp \
-           platformnode.cpp \
            streamnode.cpp \
     valuenode.cpp \
     bundlenode.cpp \
@@ -21,10 +20,10 @@ SOURCES += ast.cpp \
     keywordnode.cpp \
     declarationnode.cpp \
     blocknode.cpp \
-    scopenode.cpp
+    scopenode.cpp \
+    platformnode.cpp
 
 HEADERS += ast.h \
-           platformnode.h \
            streamnode.h \
     valuenode.h \
     bundlenode.h \
@@ -37,10 +36,11 @@ HEADERS += ast.h \
     rangenode.h \
     langerror.h \
     strideparser.h \
-    keywordnode.hpp \
     declarationnode.h \
     blocknode.h \
-    scopenode.h
+    scopenode.h \
+    keywordnode.h \
+    platformnode.h
 
 BISONSOURCES = lang_stride.y
 FLEXSOURCES = lang_stride.l

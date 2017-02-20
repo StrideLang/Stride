@@ -4,23 +4,27 @@
 #include <string>
 
 #include "ast.h"
+#include "scopenode.h"
 
 class ImportNode : public AST
 {
 public:
-  ImportNode(string name, const char *filename, int line, string alias = string());
+    ImportNode(string name, AST *scope, const char *filename, int line, string alias = string());
+    ImportNode(string name, const char *filename, int line, string alias = string());
 
-  string importName() const;
-  void setImportName(const string &importName);
+    string importName() const;
+    void setImportName(const string &importName);
 
-  string importAlias() const;
-  void setImportAlias(const string &importAlias);
+    string importAlias() const;
+    void setImportAlias(const string &importAlias);
 
-  AST *deepCopy();
+    void resolveScope(AST *scope);
+
+    AST *deepCopy();
 
 private:
-  string m_importName;
-  string m_importAlias;
+    string m_importName;
+    string m_importAlias;
 };
 
 #endif // IMPORTNODE_H

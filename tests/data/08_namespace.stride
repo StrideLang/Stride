@@ -1,6 +1,6 @@
-import namespace
-import namespace as ns
-import NameSpace as ns
+import Namespace
+import Namespace as Namespace
+import NameSpace as Ns
 
 # namespace members in a stream
 ns.Value >> Constant;

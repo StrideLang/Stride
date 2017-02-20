@@ -32,7 +32,7 @@ NewSignal >> Level(gain: 1.0) >> NewSignal2;
 
 # This should be expanded to two parallel streams (within lists)
 # And Osc should be declared as a bundle of size 2
-import generators
+import Generators
 
 Oscillator(frequency: [440,2] amplitude: 1.0) >> Osc;
 

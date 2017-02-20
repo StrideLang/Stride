@@ -1,7 +1,6 @@
 #ifndef AST_H
 #define AST_H
 
-#include <vector>
 #include "langerror.h"
 
 using namespace std;
@@ -23,6 +22,7 @@ public:
         List,
         Import,
         For,
+        Scope,
 
         // Built-in types (leaf nodes)
         Int = 0x80,
@@ -68,6 +68,12 @@ public:
     string getNamespace() const {return m_namespace;}
     void setNamespace(string namespace_) { m_namespace = namespace_;}
 
+    virtual void resolveScope(AST* scope);
+
+    void addScope(string newScope);
+    int getScopeLevels ();
+    string getScopeAt(int scopeLevel);
+
 protected:
     Token m_token; // From which token did we create node?
     vector<AST *> m_children; // normalized list of children
@@ -75,6 +81,7 @@ protected:
     string m_namespace;
     int m_line;
     double m_rate;
+    vector<string> m_scope;
 };
 
 #endif // AST_H

@@ -15,6 +15,7 @@
 #include "importnode.h"
 #include "fornode.h"
 #include "rangenode.h"
+#include "scopenode.h"
 
 #endif // STREAMPARSER_H
 

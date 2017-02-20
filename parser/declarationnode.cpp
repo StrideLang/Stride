@@ -3,7 +3,6 @@
 #include "declarationnode.h"
 #include "valuenode.h"
 
-
 DeclarationNode::DeclarationNode(string name, string objectType, AST *propertiesList,
                      const char *filename, int line):
     AST(AST::Block, filename, line)

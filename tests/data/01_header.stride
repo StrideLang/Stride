@@ -12,9 +12,8 @@ use Gamma on PC with Arduino and RPi
 use Gamma version 1.0  on PC with Arduino and RPi
 use Gamma version 1.0  on PC version 1.0 with Arduino and RPi
 
-import file
-import file as file
-import File as file
+import File
+import File as F
 
 for Gamma
 for Gamma and PufferFish

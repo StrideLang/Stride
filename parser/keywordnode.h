@@ -1,5 +1,5 @@
-#ifndef KEYWORDNODE_HPP
-#define KEYWORDNODE_HPP
+#ifndef KEYWORDNODE_H
+#define KEYWORDNODE_H
 
 #include "ast.h"
 
@@ -16,4 +16,4 @@ private:
     std::string m_kw;
 };
 
-#endif // KEYWORDNODE_HPP
+#endif // KEYWORDNODE_H

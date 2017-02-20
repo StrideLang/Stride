@@ -5,8 +5,8 @@
 RangeNode::RangeNode(AST *start, AST *end, const char *filename, int line):
     AST(AST::Range, filename, line)
 {
-	addChild(start);
-	addChild(end);
+    addChild(start);
+    addChild(end);
 }
 
 AST *RangeNode::startIndex() const

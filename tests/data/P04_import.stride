@@ -1,10 +1,11 @@
 use Gamma version 1.0 on PC
 
-import filters
+import Filters
 
 AudioIn[1] >> LowPass() >> AudioOut[1];
 
-import filters as f
+import Filters as F
 
 AudioIn[1] >> f.LowPass() >> AudioOut[1];
 
+import Platform::Filters::Filter

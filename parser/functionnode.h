@@ -17,9 +17,9 @@ public:
     FunctionNode(string name, AST *propertiesList, FunctionType type, const char *filename, int line, string namespace_ = "");
     ~FunctionNode();
 
-    virtual void addChild(AST *t);
-    virtual void setChildren(vector<AST *> &newChildren);
-    virtual void deleteChildren();
+    void addChild(AST *t);
+    void setChildren(vector<AST *> &newChildren);
+    void deleteChildren();
 
     string getName() const { return m_name; }
     string getNamespace() const { return m_namespace; }
