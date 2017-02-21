@@ -15,12 +15,6 @@ public:
         Or,
         UnaryMinus,
         LogicalNot,
-        Equal,
-        NotEqual,
-        Greater,
-        Lesser,
-        GreaterEqual,
-        LesserEqual,
         BitAnd,
         BitOr,
         BitNot

@@ -110,24 +110,6 @@ string ExpressionNode::getExpressionTypeString() const
     case LogicalNot:
         return "LogicalNot";
         break;
-    case Greater:
-        return "Greater";
-        break;
-    case Lesser:
-        return "Lesser";
-        break;
-    case Equal:
-        return "Equal";
-        break;
-    case NotEqual:
-        return "NotEqual";
-        break;
-    case GreaterEqual:
-        return "GreaterEqual";
-        break;
-    case LesserEqual:
-        return "LesserEqual";
-        break;
     default:
         return "";
     }

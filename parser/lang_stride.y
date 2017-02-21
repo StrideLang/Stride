@@ -144,7 +144,6 @@ NullStream nstream;
 %token '[' ']' '{' '}'
 %token DOT COMMA COLON COLONCOLON SEMICOLON
 %token USE VERSION WITH IMPORT AS FOR NONE ON OFF
-%token EQUAL NOTEQUAL GREATER LESSER GREATEREQUAL LESSEREQUAL
 %token BITAND BITOR BITNOT
 %token STREAMRATE
 //%token STREAMDOMAIN
@@ -152,9 +151,6 @@ NullStream nstream;
 %left STREAM
 %left AND OR
 %left BITAND BITOR
-%left GREATEREQUAL LESSEREQUAL
-%left GREATER LESSER
-%left EQUAL NOTEQUAL
 %left '+' '-' 
 %left '*' '/'
 %right NOT
@@ -872,30 +868,6 @@ indexExp:
             $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3, currentFile, yyloc.first_line);
             COUT << "Index/Size dividing ... " << ENDL;
         }
-    |   indexExp EQUAL indexExp         {
-            $$ = new ExpressionNode(ExpressionNode::Equal, $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size equal ... " << ENDL;
-        }
-    |   indexExp NOTEQUAL indexExp      {
-            $$ = new ExpressionNode(ExpressionNode::NotEqual, $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size not equal ... " << ENDL;
-        }
-    |   indexExp GREATER indexExp       {
-            $$ = new ExpressionNode(ExpressionNode::Greater , $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size greater ... " << ENDL;
-        }
-    |   indexExp LESSER indexExp        {
-            $$ = new ExpressionNode(ExpressionNode::Lesser, $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size lesser ... " << ENDL;
-        }
-    |   indexExp GREATEREQUAL indexExp  {
-            $$ = new ExpressionNode(ExpressionNode::GreaterEqual, $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size greater or equal ... " << ENDL;
-        }
-    |   indexExp LESSEREQUAL indexExp   {
-            $$ = new ExpressionNode(ExpressionNode::LesserEqual , $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size less or equal ... " << ENDL;
-        }
     |   indexExp BITAND indexExp        {
            $$ = new ExpressionNode(ExpressionNode::BitAnd, $1, $3, currentFile, yyloc.first_line);
             COUT << "Index/Size Bitwise and ... " << ENDL;
@@ -938,30 +910,6 @@ valueListExp:
             $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3, currentFile, yyloc.first_line);
             COUT << "Dividing ... " << ENDL;
         }
-    |   valueListDef EQUAL valueExp             {
-            $$ = new ExpressionNode(ExpressionNode::Equal, $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size equal ... " << ENDL;
-        }
-    |   valueListDef NOTEQUAL valueExp          {
-            $$ = new ExpressionNode(ExpressionNode::NotEqual, $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size not equal ... " << ENDL;
-        }
-    |   valueListDef GREATER valueExp           {
-            $$ = new ExpressionNode(ExpressionNode::Greater , $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size greater ... " << ENDL;
-        }
-    |   valueListDef LESSER valueExp            {
-            $$ = new ExpressionNode(ExpressionNode::Lesser, $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size lesser ... " << ENDL;
-        }
-    |   valueListDef GREATEREQUAL valueExp      {
-            $$ = new ExpressionNode(ExpressionNode::GreaterEqual, $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size greater or equal ... " << ENDL;
-        }
-    |   valueListDef LESSEREQUAL valueExp       {
-            $$ = new ExpressionNode(ExpressionNode::LesserEqual , $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size less or equal ... " << ENDL;
-        }
     |   valueListDef BITAND valueExp            {
             $$ = new ExpressionNode(ExpressionNode::BitAnd , $1, $3, currentFile, yyloc.first_line);
             COUT << "Index/Size Bitwise and ... " << ENDL;
@@ -998,30 +946,6 @@ valueListExp:
             $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3, currentFile, yyloc.first_line);
             COUT << "Dividing ... " << ENDL;
         }
-    |   valueExp EQUAL valueListDef             {
-            $$ = new ExpressionNode(ExpressionNode::Equal, $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size equal ... " << ENDL;
-        }
-    |   valueExp NOTEQUAL valueListDef          {
-            $$ = new ExpressionNode(ExpressionNode::NotEqual, $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size not equal ... " << ENDL;
-        }
-    |   valueExp GREATER valueListDef           {
-            $$ = new ExpressionNode(ExpressionNode::Greater , $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size greater ... " << ENDL;
-        }
-    |   valueExp LESSER valueListDef            {
-            $$ = new ExpressionNode(ExpressionNode::Lesser, $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size lesser ... " << ENDL;
-        }
-    |   valueExp GREATEREQUAL valueListDef      {
-            $$ = new ExpressionNode(ExpressionNode::GreaterEqual, $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size greater or equal ... " << ENDL;
-        }
-    |   valueExp LESSEREQUAL valueListDef       {
-            $$ = new ExpressionNode(ExpressionNode::LesserEqual , $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size less or equal ... " << ENDL;
-        }
     |   valueExp BITAND valueListDef            {
             $$ = new ExpressionNode(ExpressionNode::BitAnd , $1, $3, currentFile, yyloc.first_line);
             COUT << "Index/Size Bitwise and ... " << ENDL;
@@ -1057,30 +981,6 @@ valueListExp:
     |   valueListDef '/' valueListDef           {
             $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3, currentFile, yyloc.first_line);
             COUT << "Dividing Lists ... " << ENDL;
-        }
-    |   valueListDef EQUAL valueListDef         {
-            $$ = new ExpressionNode(ExpressionNode::Equal, $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size equal ... " << ENDL;
-        }
-    |   valueListDef NOTEQUAL valueListDef      {
-            $$ = new ExpressionNode(ExpressionNode::NotEqual, $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size not equal ... " << ENDL;
-        }
-    |   valueListDef GREATER valueListDef       {
-            $$ = new ExpressionNode(ExpressionNode::Greater , $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size greater ... " << ENDL;
-        }
-    |   valueListDef LESSER valueListDef        {
-            $$ = new ExpressionNode(ExpressionNode::Lesser, $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size lesser ... " << ENDL;
-        }
-    |   valueListDef GREATEREQUAL valueListDef  {
-            $$ = new ExpressionNode(ExpressionNode::GreaterEqual, $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size greater or equal ... " << ENDL;
-        }
-    |   valueListDef LESSEREQUAL valueListDef   {
-            $$ = new ExpressionNode(ExpressionNode::LesserEqual , $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size less or equal ... " << ENDL;
         }
     |   valueListDef BITAND valueListDef        {
             $$ = new ExpressionNode(ExpressionNode::BitAnd , $1, $3, currentFile, yyloc.first_line);
@@ -1135,30 +1035,6 @@ valueExp:
     |   valueExp OR valueExp            {
             $$ = new ExpressionNode(ExpressionNode::Or, $1, $3, currentFile, yyloc.first_line);
             COUT << "Logical OR ... " << ENDL;
-        }
-    |   valueExp EQUAL valueExp         {
-            $$ = new ExpressionNode(ExpressionNode::Equal, $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size equal ... " << ENDL;
-        }
-    |   valueExp NOTEQUAL valueExp      {
-            $$ = new ExpressionNode(ExpressionNode::NotEqual, $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size not equal ... " << ENDL;
-        }
-    |   valueExp GREATER valueExp       {
-            $$ = new ExpressionNode(ExpressionNode::Greater , $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size greater ... " << ENDL;
-        }
-    |   valueExp LESSER valueExp        {
-            $$ = new ExpressionNode(ExpressionNode::Lesser, $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size lesser ... " << ENDL;
-        }
-    |   valueExp GREATEREQUAL valueExp  {
-            $$ = new ExpressionNode(ExpressionNode::GreaterEqual, $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size greater or equal ... " << ENDL;
-        }
-    |   valueExp LESSEREQUAL valueExp   {
-            $$ = new ExpressionNode(ExpressionNode::LesserEqual , $1, $3, currentFile, yyloc.first_line);
-            COUT << "Index/Size less or equal ... " << ENDL;
         }
     |   valueExp BITAND valueExp        {
             $$ = new ExpressionNode(ExpressionNode::BitAnd , $1, $3, currentFile, yyloc.first_line);

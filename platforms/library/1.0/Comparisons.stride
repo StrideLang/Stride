@@ -1,4 +1,4 @@
- 
+
 module Greater {
     ports: [
     port OutputPort {
@@ -16,7 +16,7 @@ module Greater {
     blocks: [
     ]
     streams: [
-       Input[1] > Input[2] >> Output;
+#       Input[1] > Input[2] >> Output;
     ]
     meta: ""
 }
@@ -38,7 +38,7 @@ module GreaterOrEqual {
     blocks: [
     ]
     streams: [
-       Input[1] >= Input[2] >> Output;
+#       Input[1] >= Input[2] >> Output;
     ]
     meta: ""
 }
@@ -61,7 +61,7 @@ port InputPort {
     blocks: [
     ]
     streams: [
-       Input[1] < Input[2] >> Output;
+#       Input[1] < Input[2] >> Output;
     ]
     meta: ""
 }
@@ -84,7 +84,7 @@ port InputPort {
     blocks: [
     ]
     streams: [
-       Input[1] <= Input[2] >> Output;
+#       Input[1] <= Input[2] >> Output;
     ]
     meta: ""
 }
@@ -107,7 +107,7 @@ port InputPort {
     blocks: [
     ]
     streams: [
-       Input[1] == Input[2] >> Output;
+#       Input[1] == Input[2] >> Output;
     ]
     meta: ""
 }
@@ -130,7 +130,7 @@ module NotEqual {
     blocks: [
     ]
     streams: [
-       Input[1] != Input[2] >> Output;
+#       Input[1] != Input[2] >> Output;
     ]
     meta: ""
 }
@@ -230,7 +230,7 @@ port InputPort {
 		}
     ]
     streams: [
-        Input != OldInput  >> OnChangedReaction(output: Input) >> Output;
+#        Input != OldInput  >> OnChangedReaction(output: Input) >> Output;
 		Input >> OldInput;
     ]
     meta: "Discard repetitions of a value. Can be use to turn synchronous signals to asynchronous messages."
@@ -269,7 +269,7 @@ module Compare {
 		signal Value {}
     ]
     streams: [
-		
+
     ]
     meta: "Not implemented..."
 }

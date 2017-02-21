@@ -9,7 +9,7 @@ module Oscillator {
 		}
 		port FrequencyProperty {
 			name: "frequency"
-			block: Frequency			
+			block: Frequency
 			default: 440.0
 			meta: "The frequency of the oscillator."
 			domain: FrequencyDomain
@@ -160,10 +160,9 @@ module Impulse {
         Frequency / AudioRate >> PhaseInc;
         Phase + PhaseInc >> Phase;
         Phase - 1.0 >> NewPhase;
-		Phase > 1.0 >> Select(whenOn: Amplitude whenOff: 0.0) >> Output;
-        Phase > 1.0 >> Select(whenOn: NewPhase whenOff: Phase) >> Phase;
+#		Phase > 1.0 >> Select(whenOn: Amplitude whenOff: 0.0) >> Output;
+#        Phase > 1.0 >> Select(whenOn: NewPhase whenOff: Phase) >> Phase;
 		#Reset >> Select(whenOn: StartPhase whenOff: Phase) >> Phase;
     ]
 	meta: "Bipolar output [ -1. , 1. ] scaled by amplitude"
 }
-

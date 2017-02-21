@@ -45,13 +45,6 @@ CLETTER     [A-Z]
 "|"     { return BITOR; }
 "~"     { return BITNOT; }
 
-"=="    { return EQUAL; }
-"!="    { return NOTEQUAL; }
-">"     { return GREATER; }
-"<"     { return LESSER; }
-">="    { return GREATEREQUAL; }
-"<="    { return LESSEREQUAL; }
-
 "use"           { return USE; }
 "version"       { return VERSION; }
 "with"          { return WITH; }

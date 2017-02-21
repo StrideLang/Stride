@@ -1494,24 +1494,6 @@ ValueNode *CodeResolver::reduceConstExpression(ExpressionNode *expr, QVector<AST
         case ExpressionNode::LogicalNot:
             result = logicalNot(static_cast<ValueNode *>(left));
             break;
-        case ExpressionNode::Equal:
-            result = equal(static_cast<ValueNode *>(left), static_cast<ValueNode *>(right));
-            break;
-        case ExpressionNode::NotEqual:
-            result = notEqual(static_cast<ValueNode *>(left), static_cast<ValueNode *>(right));
-            break;
-        case ExpressionNode::Greater:
-            result = greaterThan(static_cast<ValueNode *>(left), static_cast<ValueNode *>(right));
-            break;
-        case ExpressionNode::Lesser:
-            result = lesser(static_cast<ValueNode *>(left), static_cast<ValueNode *>(right));
-            break;
-        case ExpressionNode::GreaterEqual:
-            result = greaterEqual(static_cast<ValueNode *>(left), static_cast<ValueNode *>(right));
-            break;
-        case ExpressionNode::LesserEqual:
-            result = lesserEqual(static_cast<ValueNode *>(left), static_cast<ValueNode *>(right));
-            break;
         default:
             Q_ASSERT(0 == 1); // Should never get here
             break;
