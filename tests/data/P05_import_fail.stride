@@ -6,4 +6,4 @@ use Gamma version 1.0 on PC
 AudioIn[1] >> LowPass() >> AudioOut[1];
 
 # This line shoud fail as LowPass not in namespace f
-AudioIn[1] >> f.LowPass() >> AudioOut[1];
+AudioIn[1] >> F::LowPass() >> AudioOut[1];

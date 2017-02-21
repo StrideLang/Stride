@@ -21,9 +21,9 @@ AST *RangeNode::endIndex() const
 
 AST *RangeNode::deepCopy()
 {
-    AST *output = new RangeNode(startIndex()->deepCopy(), endIndex()->deepCopy(),
+    AST *newRangeNode = new RangeNode(startIndex()->deepCopy(), endIndex()->deepCopy(),
                                 m_filename.data(), m_line);
-    output->setRate(m_rate);
-    return output;
+    newRangeNode->setRate(m_rate);
+    return newRangeNode;
 }
 

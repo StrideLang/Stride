@@ -34,8 +34,8 @@ void StreamNode::setRight(AST *newRight)
 
 AST *StreamNode::deepCopy()
 {
-    AST * stream = new StreamNode(m_children.at(0)->deepCopy(), m_children.at(1)->deepCopy(), m_filename.data(), m_line);
-    stream->setRate(m_rate);
-    return stream;
+    AST * newStream = new StreamNode(m_children.at(0)->deepCopy(), m_children.at(1)->deepCopy(), m_filename.data(), m_line);
+    newStream->setRate(m_rate);
+    return newStream;
 }
 

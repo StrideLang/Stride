@@ -50,8 +50,8 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
                 QVector<AST *> ports = CodeValidator::getPortsForTypeBlock(typeBlock, QVector<AST *>(), m_lastValidTree);
                 foreach(AST *port, ports) {
                     DeclarationNode *portBlock = static_cast<DeclarationNode *>(port);
-                    Q_ASSERT(portBlock->getNodeType() == AST::Block);
-                    if (portBlock->getNodeType() == AST::Block) {
+                    Q_ASSERT(portBlock->getNodeType() == AST::Declaration);
+                    if (portBlock->getNodeType() == AST::Declaration) {
                         QString portName = QString::fromStdString(
                                     static_cast<ValueNode *>(portBlock->getPropertyValue("name"))->getStringValue());
                         if (portName != "inherits" && portName != "meta") {
@@ -72,7 +72,7 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
                                     if (validTypeNode->getNodeType() == AST::String) {
                                         string typeName = static_cast<ValueNode *>(validTypeNode)->getStringValue();
                                         typesText += QString::fromStdString(typeName + ", ");
-                                    } else if (validTypeNode->getNodeType() == AST::Name) {
+                                    } else if (validTypeNode->getNodeType() == AST::Block) {
                                         string typeName = static_cast<BlockNode *>(validTypeNode)->getName();
                                         typesText += QString::fromStdString(typeName + ", ");
                                     } else {
@@ -111,8 +111,8 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
                     ListNode *propertiesList = static_cast<ListNode *>(properties);
                     foreach(AST *member, propertiesList->getChildren()) {
                         DeclarationNode *portBlock = static_cast<DeclarationNode *>(member);
-                        Q_ASSERT(portBlock->getNodeType() == AST::Block);
-                        if (portBlock->getNodeType() == AST::Block) {
+                        Q_ASSERT(portBlock->getNodeType() == AST::Declaration);
+                        if (portBlock->getNodeType() == AST::Declaration) {
                             QString portName = QString::fromStdString(
                                         static_cast<ValueNode *>(portBlock->getPropertyValue("name"))->getStringValue());
                             if (portName != "inherits" && portName != "meta") {
@@ -132,7 +132,7 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
 //                                        if (validTypeNode->getNodeType() == AST::String) {
 //                                            string typeName = static_cast<ValueNode *>(validTypeNode)->getStringValue();
 //                                            propertiesTable += QString::fromStdString("<td>" + typeName + "</td>");
-//                                        } else if (validTypeNode->getNodeType() == AST::Name) {
+//                                        } else if (validTypeNode->getNodeType() == AST::Block) {
 //                                            string typeName = static_cast<NameNode *>(validTypeNode)->getName();
 //                                            propertiesTable += QString::fromStdString("<td>" + typeName + "</td>");
 //                                        } else {
@@ -171,8 +171,8 @@ QString CodeModel::getTooltipText(QString symbol)
                     ListNode *propertiesList = static_cast<ListNode *>(properties);
                     foreach(AST *member, propertiesList->getChildren()) {
                         DeclarationNode *portBlock = static_cast<DeclarationNode *>(member);
-                        Q_ASSERT(portBlock->getNodeType() == AST::Block);
-                        if (portBlock->getNodeType() == AST::Block) {
+                        Q_ASSERT(portBlock->getNodeType() == AST::Declaration);
+                        if (portBlock->getNodeType() == AST::Declaration) {
                             QString portName = QString::fromStdString(
                                         static_cast<ValueNode *>(portBlock->getPropertyValue("name"))->getStringValue());
                             if (portName != "inherits" && portName != "meta") {
@@ -208,8 +208,8 @@ QPair<QString, int> CodeModel::getSymbolLocation(QString symbol)
 
     QMutexLocker locker(&m_validTreeLock);
     foreach(AST *node, m_lastValidTree->getChildren()) {
-        if (node->getNodeType() == AST::Block ||
-                node->getNodeType() == AST::BlockBundle) {
+        if (node->getNodeType() == AST::Declaration ||
+                node->getNodeType() == AST::BundleDeclaration) {
             DeclarationNode *block = static_cast<DeclarationNode *>(node);
             if (block->getName() == symbol.toStdString()) {
                 QString fileName = QString::fromStdString(block->getFilename());
@@ -293,8 +293,8 @@ QString CodeModel::getFunctionSyntax(QString symbol)
                     ListNode *propertiesList = static_cast<ListNode *>(properties);
                     foreach(AST *member, propertiesList->getChildren()) {
                         DeclarationNode *portBlock = static_cast<DeclarationNode *>(member);
-                        Q_ASSERT(portBlock->getNodeType() == AST::Block);
-                        if (portBlock->getNodeType() == AST::Block) {
+                        Q_ASSERT(portBlock->getNodeType() == AST::Declaration);
+                        if (portBlock->getNodeType() == AST::Declaration) {
                             QString portName = QString::fromStdString(
                                         static_cast<ValueNode *>(portBlock->getPropertyValue("name"))->getStringValue());
                             if (portName != "inherits" && portName != "meta") {
@@ -345,7 +345,7 @@ void CodeModel::updateCodeAnalysis(QString code, QString platformRootPath)
             QList<AST *> objects = validator.getPlatform()->getBuiltinObjects();
             m_objectNames.clear();
             foreach (AST *platObject, objects) {
-                if (platObject->getNodeType() == AST::Name) {
+                if (platObject->getNodeType() == AST::Block) {
                     m_objectNames << QString::fromStdString(static_cast<BlockNode *>(platObject)->getName());
                 }
             }

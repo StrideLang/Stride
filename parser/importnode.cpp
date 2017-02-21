@@ -1,6 +1,7 @@
 #include <cassert>
 
 #include "importnode.h"
+#include "scopenode.h"
 
 ImportNode::ImportNode(string name, AST *scope, const char *filename, int line, string alias) :
     AST(AST::Import, filename, line)

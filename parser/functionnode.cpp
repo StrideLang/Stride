@@ -1,6 +1,7 @@
 #include <cassert>
 
 #include "functionnode.h"
+#include "scopenode.h"
 #include "valuenode.h"
 
 FunctionNode::FunctionNode(string name, AST *propertiesList, FunctionType type,
@@ -14,6 +15,18 @@ FunctionNode::FunctionNode(string name, AST *propertiesList, FunctionType type,
     m_type = type;
 
     m_namespace = namespace_;
+}
+
+FunctionNode::FunctionNode(string name, AST* scope, AST *propertiesList, FunctionType type,
+                           const char *filename, int line) :
+    AST(AST::Function, filename, line)
+{
+    m_name = name;
+    if (propertiesList) {
+        propertiesList->giveChildren(this);
+    }
+    m_type = type;
+    resolveScope(scope);
 }
 
 FunctionNode::~FunctionNode()
@@ -86,16 +99,30 @@ AST *FunctionNode::getPropertyValue(string propertyName)
     return NULL;
 }
 
+void FunctionNode::resolveScope(AST *scope)
+{
+    if (scope)
+    {
+        for (unsigned int i = 0; i < scope->getChildren().size(); i++) {
+            assert(scope->getChildren().at(i)->getNodeType() == AST::Scope);
+            m_scope.push_back((static_cast<ScopeNode *>(scope->getChildren().at(i)))->getName());
+        }
+    }
+}
+
 AST *FunctionNode::deepCopy()
 {
     AST * newProps = new AST();
     for(unsigned int i = 0; i< m_properties.size(); i++) {
         newProps->addChild(m_properties[i]->deepCopy());
     }
-    AST *output = new FunctionNode(m_name, newProps, m_type, m_filename.data(), m_line);
+    AST *newFunctionNode = new FunctionNode(m_name, newProps, m_type, m_filename.data(), m_line);
     newProps->deleteChildren();
     delete newProps;
-    output->setRate(m_rate);
-    return output;
+    newFunctionNode->setRate(m_rate);
+    for (unsigned int i = 0; i < this->getScopeLevels(); i++) {
+        newFunctionNode->addScope(this->getScopeAt(i));
+    }
+    return newFunctionNode;
 }
 

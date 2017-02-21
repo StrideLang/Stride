@@ -14,8 +14,8 @@ public:
         None,
         Platform,
         Bundle,
-        BlockBundle,
-        Block,
+        Declaration,
+        BundleDeclaration,
         Stream,
         Property,
         Range,
@@ -28,7 +28,7 @@ public:
         Int = 0x80,
         Real = 0x81,
         String = 0x82,
-        Name = 0x20,
+        Block = 0x20,
         Expression = 0x21,
         Function = 0x22,
         Switch = 0x23,
@@ -71,8 +71,8 @@ public:
     virtual void resolveScope(AST* scope);
 
     void addScope(string newScope);
-    int getScopeLevels ();
-    string getScopeAt(int scopeLevel);
+    unsigned int getScopeLevels ();
+    string getScopeAt(unsigned int scopeLevel);
 
 protected:
     Token m_token; // From which token did we create node?

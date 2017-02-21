@@ -87,7 +87,7 @@ StridePlatform::~StridePlatform()
 //{
 //    foreach(AST* group, m_platform) {
 //        foreach(AST *node, group->getChildren()){
-//            if (node->getNodeType() == AST::Block) {
+//            if (node->getNodeType() == AST::Declaration) {
 //                DeclarationNode *block = static_cast<DeclarationNode *>(node);
 //                if (block->getObjectType() == "platformModule") {
 //                    if (block->getObjectType() == typeName.toStdString()) {
@@ -111,7 +111,7 @@ StridePlatform::~StridePlatform()
 //{
 //    QStringList typeNames;
 //    foreach(AST* node, m_platform) {
-//        if (node->getNodeType() == AST::Block) {
+//        if (node->getNodeType() == AST::Declaration) {
 //            DeclarationNode *block = static_cast<DeclarationNode *>(block);
 //            if (block->getObjectType() == "platformModule"
 //                    || block->getObjectType() == "module") {
@@ -123,7 +123,7 @@ StridePlatform::~StridePlatform()
 //    }
 //    foreach(AST* node, m_library.getNodes()) {
 
-//        if (node->getNodeType() == AST::Block) {
+//        if (node->getNodeType() == AST::Declaration) {
 //            DeclarationNode *block = static_cast<DeclarationNode *>(node);
 //            if (block->getObjectType() == "module") {
 //                if (block->getName() == functionName.toStdString()) {
@@ -155,7 +155,7 @@ QStringList StridePlatform::getPlatformTypeNames()
     QStringList typeNames;
     foreach(AST* group, m_platform) {
         foreach(AST *node, group->getChildren()) {
-            if (node->getNodeType() == AST::Block) {
+            if (node->getNodeType() == AST::Declaration) {
                 DeclarationNode *block = static_cast<DeclarationNode *>(node);
                 if (block->getObjectType() == "platformType") {
                     ValueNode *name = static_cast<ValueNode *>(block->getPropertyValue("typeName"));
@@ -171,7 +171,7 @@ QStringList StridePlatform::getPlatformTypeNames()
     }
     vector<AST *> libObjects = m_library.getNodes();
     foreach(AST *node, libObjects) {
-        if (node->getNodeType() == AST::Block) {
+        if (node->getNodeType() == AST::Declaration) {
             DeclarationNode *block = static_cast<DeclarationNode *>(node);
             if (block->getObjectType() == "platformType"
                     || block->getObjectType() == "type") {
@@ -188,7 +188,7 @@ QStringList StridePlatform::getFunctionNames()
 {
     QStringList typeNames;
     foreach(AST* node, getBuiltinObjects()) {
-        if (node->getNodeType() == AST::Block) {
+        if (node->getNodeType() == AST::Declaration) {
             DeclarationNode *block = static_cast<DeclarationNode *>(node);
             if (block->getObjectType() == "module") {
                 typeNames << QString::fromStdString(block->getName());
@@ -229,7 +229,7 @@ QString StridePlatform::getPlatformDomain()
 {
     QList<AST *> libObjects = getBuiltinObjects();
     foreach(AST *object, libObjects) {
-        if (object->getNodeType() == AST::Block) {
+        if (object->getNodeType() == AST::Declaration) {
             DeclarationNode *block = static_cast<DeclarationNode *>(object);
             if (block->getObjectType() == "constant"
                     && block->getName() == "PlatformDomain") {
@@ -259,7 +259,7 @@ QList<AST *> StridePlatform::getBuiltinObjects()
     while (blockGroup.hasNext()) {
         blockGroup.next();
         foreach(AST *element, blockGroup.value()->getChildren()) {
-            if (element->getNodeType() == AST::Block) {
+            if (element->getNodeType() == AST::Declaration) {
                 objects << element;
             } else {
                 objects << element; // TODO: This inserts everything. Only insert what is needed
@@ -279,7 +279,7 @@ QList<AST *> StridePlatform::getBuiltinObjects()
 //    if (!ports.isEmpty()) {
 //        foreach(AST *port, ports) {
 //            DeclarationNode *block = static_cast<DeclarationNode *>(port);
-//            Q_ASSERT(block->getNodeType() == AST::Block);
+//            Q_ASSERT(block->getNodeType() == AST::Declaration);
 //            ValueNode *nameValueNode = static_cast<ValueNode *>(block->getPropertyValue("name"));
 //            Q_ASSERT(nameValueNode->getNodeType() == AST::String);
 //            if (nameValueNode->getStringValue() == propertyName.toStdString()) {

@@ -301,7 +301,7 @@ importDef:
             $$ = new ImportNode(word, $2, currentFile, yyloc.first_line);
             AST *scope = $2;
             delete scope;
-            COUT << "Importing: " << $3 << " in scope" << ENDL;
+            COUT << "Importing: " << $3 << " in scope!" << ENDL;
             free($3);
         }
     |   IMPORT UVAR AS UVAR {
@@ -470,16 +470,26 @@ bundleDef:
             COUT << "Bundle name: " << $1 << ENDL;
             free($1);
         }
-    |   WORD DOT UVAR '[' indexList ']' {
-            string ns;
-            ns.append($1); /* string constructor leaks otherwise! */
+    |   scopeDef UVAR '[' indexList ']' {
             string s;
-            s.append($3); /* string constructor leaks otherwise! */
-            $$ = new BundleNode(s, ns, $5, currentFile, yyloc.first_line);
-            COUT << "Bundle name: " << $3  << " in NameSpace: " << $1 << ENDL;
-            free($1);
-            free($3);
+            s.append($2); /* string constructor leaks otherwise! */
+            $$ = new BundleNode(s, $1, $4, currentFile, yyloc.first_line);
+            AST *scope = $1;
+            delete scope;
+            COUT << "Bundle name: " << $2 << " in scope!" << ENDL;
+            COUT << "Streaming ... " << ENDL;
+            free($2);
         }
+//    |   WORD DOT UVAR '[' indexList ']' {
+//            string ns;
+//            ns.append($1); /* string constructor leaks otherwise! */
+//            string s;
+//            s.append($3); /* string constructor leaks otherwise! */
+//            $$ = new BundleNode(s, ns, $5, currentFile, yyloc.first_line);
+//            COUT << "Bundle name: " << $3  << " in NameSpace: " << $1 << ENDL;
+//            free($1);
+//            free($3);
+//        }
     ;
 
 // ================================= 
@@ -494,6 +504,15 @@ functionDef:
             COUT << "User function: " << $1 << ENDL;
             free($1);
         }
+    |   scopeDef UVAR '(' ')'               {
+            string s;
+            s.append($2);
+            $$ = new FunctionNode(s, $1, NULL, FunctionNode::UserDefined, currentFile, yyloc.first_line);
+            AST *scope = $1;
+            delete scope;
+            COUT << "User function: " << $2 << " in scope!" << ENDL;
+            free($2);
+        }
     |   UVAR '(' properties ')'             {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
@@ -504,29 +523,41 @@ functionDef:
             COUT << "User function: " << $1 << ENDL;
             free($1);
         }
-    |   WORD DOT UVAR '(' ')'               {
-            string ns;
-            ns.append($1); /* string constructor leaks otherwise! */
+    |   scopeDef UVAR '(' properties ')'               {
             string s;
-            s.append($3); /* string constructor leaks otherwise! */
-            $$ = new FunctionNode(s, NULL, FunctionNode::UserDefined, currentFile, yyloc.first_line, ns);
-            COUT << "Function: " << $3 << " in NameSpace: " << $1 << ENDL;
-            free($1);
-            free($3);
-        }
-    |   WORD DOT UVAR '(' properties ')'    {
-            COUT << "Properties () ..." << ENDL;
-            string ns;
-            ns.append($1); /* string constructor leaks otherwise! */
-            string s;
-            s.append($3); /* string constructor leaks otherwise! */
-            $$ = new FunctionNode(s, $5, FunctionNode::UserDefined, currentFile, yyloc.first_line, ns);
-            AST *props = $5;
+            s.append($2);
+            $$ = new FunctionNode(s, $1, $4, FunctionNode::UserDefined, currentFile, yyloc.first_line);
+            AST *scope = $1;
+            delete scope;
+            AST *props = $4;
             delete props;
-            COUT << "Function: " << $3 << " in NameSpace: " << $1 << ENDL;
-            free($1);
-            free($3);
+            COUT << "Properties () ..." << ENDL;
+            COUT << "User function: " << $2 << " in scope!" << ENDL;
+            free($2);
         }
+//    |   WORD DOT UVAR '(' ')'               {
+//            string ns;
+//            ns.append($1); /* string constructor leaks otherwise! */
+//            string s;
+//            s.append($3); /* string constructor leaks otherwise! */
+//            $$ = new FunctionNode(s, NULL, FunctionNode::UserDefined, currentFile, yyloc.first_line, ns);
+//            COUT << "Function: " << $3 << " in NameSpace: " << $1 << ENDL;
+//            free($1);
+//            free($3);
+//        }
+//    |   WORD DOT UVAR '(' properties ')'    {
+
+//            string ns;
+//            ns.append($1); /* string constructor leaks otherwise! */
+//            string s;
+//            s.append($3); /* string constructor leaks otherwise! */
+//            $$ = new FunctionNode(s, $5, FunctionNode::UserDefined, currentFile, yyloc.first_line, ns);
+//            AST *props = $5;
+//            delete props;
+//            COUT << "Function: " << $3 << " in NameSpace: " << $1 << ENDL;
+//            free($1);
+//            free($3);
+//        }
     ;
 
 // ================================= 
@@ -1164,16 +1195,25 @@ indexComp:
             COUT << "Index/Size User variable: " << $1 << ENDL;
             free($1);
         }
-    |   WORD DOT UVAR   {
-            string ns;
-            ns.append($1); /* string constructor leaks otherwise! */
+    |   scopeDef UVAR   {
             string s;
-            s.append($3); /* string constructor leaks otherwise! */
-            $$ = new BlockNode(s, ns, currentFile, yyloc.first_line);
-            COUT << "Index/Size User variable: " << $3 << " in NameSpace: " << $1 << ENDL;
-            free($1);
-            free($3);
+            s.append($2);
+            $$ = new BlockNode(s, $1, currentFile, yyloc.first_line);
+            AST *scope = $1;
+            delete scope;
+            COUT << "Index/Size User variable: " << $2 << " in scope!" << ENDL;
+            free($2);
         }
+//    |   WORD DOT UVAR   {
+//            string ns;
+//            ns.append($1); /* string constructor leaks otherwise! */
+//            string s;
+//            s.append($3); /* string constructor leaks otherwise! */
+//            $$ = new BlockNode(s, ns, currentFile, yyloc.first_line);
+//            COUT << "Index/Size User variable: " << $3 << " in NameSpace: " << $1 << ENDL;
+//            free($1);
+//            free($3);
+//        }
     |   bundleDef       {
             BundleNode *bundle = $1;
             COUT << "Resolving indexed bundle ..." << bundle->getName() << ENDL;
@@ -1193,17 +1233,27 @@ streamComp:
             COUT << "Streaming ... " << ENDL;
             free($1);
         }
-    |   WORD DOT UVAR	{
-            string ns;
-            ns.append($1); /* string constructor leaks otherwise! */
+    |   scopeDef UVAR   {
             string s;
-            s.append($3); /* string constructor leaks otherwise! */
-            $$ = new BlockNode(s, ns, currentFile, yyloc.first_line);
-            COUT << "User variable: " << $3 << " in NameSpace: " << $1 << ENDL;
+            s.append($2);
+            $$ = new BlockNode(s, $1, currentFile, yyloc.first_line);
+            AST *scope = $1;
+            delete scope;
+            COUT << "User variable: " << $2 << " in scope!" << ENDL;
             COUT << "Streaming ... " << ENDL;
-            free($1);
-            free($3);
+            free($2);
         }
+//    |   WORD DOT UVAR	{
+//            string ns;
+//            ns.append($1); /* string constructor leaks otherwise! */
+//            string s;
+//            s.append($3); /* string constructor leaks otherwise! */
+//            $$ = new BlockNode(s, ns, currentFile, yyloc.first_line);
+//            COUT << "User variable: " << $3 << " in NameSpace: " << $1 << ENDL;
+//            COUT << "Streaming ... " << ENDL;
+//            free($1);
+//            free($3);
+//        }
     |   bundleDef       {
             COUT << "Resolving indexed bundle ..." << ENDL;
             COUT << "Streaming ... " << ENDL;
@@ -1264,16 +1314,25 @@ valueComp:
             COUT << "User variable: " << $1 << ENDL;
             free($1);
         }
-    |   WORD DOT UVAR   {
-            string ns;
-            ns.append($1); /* string constructor leaks otherwise! */
+    |   scopeDef UVAR   {
             string s;
-            s.append($3); /* string constructor leaks otherwise! */
-            $$ = new BlockNode(s, ns, currentFile, yyloc.first_line);
-            COUT << "User variable: " << $3 << " in NameSpace: " << $1 << ENDL;
-            free($1);
-            free($3);
+            s.append($2);
+            $$ = new BlockNode(s, $1, currentFile, yyloc.first_line);
+            AST *scope = $1;
+            delete scope;
+            COUT << "User variable: " << $2 << " in scope!" << ENDL;
+            free($2);
         }
+//    |   WORD DOT UVAR   {
+//            string ns;
+//            ns.append($1); /* string constructor leaks otherwise! */
+//            string s;
+//            s.append($3); /* string constructor leaks otherwise! */
+//            $$ = new BlockNode(s, ns, currentFile, yyloc.first_line);
+//            COUT << "User variable: " << $3 << " in NameSpace: " << $1 << ENDL;
+//            free($1);
+//            free($3);
+//        }
     |   bundleDef       {
             $$ = $1;
             COUT << "Resolving indexed bundle ..." << ENDL;

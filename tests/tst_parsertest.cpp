@@ -42,7 +42,7 @@ private Q_SLOTS:
     // Parser
     void testModules();
     void testExpressions();
-    void testNamespaces();
+    void testScope();
     void testBundleIndeces();
     void testBasicNoneSwitch();
     void testBasicFunctions();
@@ -113,7 +113,7 @@ void ParserTest::testConnectionCount()
 //    InSignal2 >> OutSignal2;
 
     DeclarationNode *block = static_cast<DeclarationNode *>(tree->getChildren().at(1));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     ListNode *reads = static_cast<ListNode *>(block->getPropertyValue("_reads"));
     QVERIFY(reads->getNodeType() == AST::List);
     QVERIFY(reads->getChildren().size() == 2);
@@ -122,7 +122,7 @@ void ParserTest::testConnectionCount()
     QVERIFY(writes->getChildren().size() == 0);
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(2));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     reads = static_cast<ListNode *>(block->getPropertyValue("_reads"));
     QVERIFY(reads->getNodeType() == AST::List);
     QVERIFY(reads->getChildren().size() == 0);
@@ -131,7 +131,7 @@ void ParserTest::testConnectionCount()
     QVERIFY(writes->getChildren().size() == 1);
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(3));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     reads = static_cast<ListNode *>(block->getPropertyValue("_reads"));
     QVERIFY(reads->getNodeType() == AST::List);
     QVERIFY(reads->getChildren().size() == 0);
@@ -154,7 +154,7 @@ void ParserTest::testConnectionCount()
 //    }
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(7));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     reads = static_cast<ListNode *>(block->getPropertyValue("_reads"));
     QVERIFY(reads->getNodeType() == AST::List);
     QVERIFY(reads->getChildren().size() == 1);
@@ -163,7 +163,7 @@ void ParserTest::testConnectionCount()
     QVERIFY(writes->getChildren().size() == 0);
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(8));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     reads = static_cast<ListNode *>(block->getPropertyValue("_reads"));
     QVERIFY(reads->getNodeType() == AST::List);
     QVERIFY(reads->getChildren().size() == 1);
@@ -172,7 +172,7 @@ void ParserTest::testConnectionCount()
     QVERIFY(writes->getChildren().size() == 1);
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(9));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     reads = static_cast<ListNode *>(block->getPropertyValue("_reads"));
     QVERIFY(reads->getNodeType() == AST::List);
     QVERIFY(reads->getChildren().size() == 0);
@@ -181,7 +181,7 @@ void ParserTest::testConnectionCount()
     QVERIFY(writes->getChildren().size() == 2);
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(10));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     reads = static_cast<ListNode *>(block->getPropertyValue("_reads"));
     QVERIFY(reads->getNodeType() == AST::List);
     QVERIFY(reads->getChildren().size() == 1);
@@ -204,7 +204,7 @@ void ParserTest::testConnectionCount()
 //    }
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(12));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     QVERIFY(block->getName() == "Test2");
     ListNode *blocks = static_cast<ListNode *>(block->getPropertyValue("blocks"));
     QVERIFY(blocks != nullptr);
@@ -279,19 +279,19 @@ void ParserTest::testModuleDomains()
     QVERIFY(generator.isValid());
 
     DeclarationNode *block = static_cast<DeclarationNode *>(tree->getChildren()[1]);
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     ListNode *portList = static_cast<ListNode *>(block->getPropertyValue("ports"));
     QVERIFY(portList->getNodeType() == AST::List);
     DeclarationNode *portBlock = static_cast<DeclarationNode *>(portList->getChildren().at(0));
-    QVERIFY(portBlock->getNodeType() == AST::Block);
+    QVERIFY(portBlock->getNodeType() == AST::Declaration);
     BlockNode *domainName = static_cast<BlockNode *>(portBlock->getPropertyValue("domain"));
-    QVERIFY(domainName->getNodeType() == AST::Name);
+    QVERIFY(domainName->getNodeType() == AST::Block);
     QVERIFY(domainName->getName() == "_OutputDomain");
 
     portBlock = static_cast<DeclarationNode *>(portList->getChildren().at(1));
-    QVERIFY(portBlock->getNodeType() == AST::Block);
+    QVERIFY(portBlock->getNodeType() == AST::Declaration);
     domainName = static_cast<BlockNode *>(portBlock->getPropertyValue("domain"));
-    QVERIFY(domainName->getNodeType() == AST::Name);
+    QVERIFY(domainName->getNodeType() == AST::Block);
     QVERIFY(domainName->getName() == "_OutputDomain");
 
     tree->deleteChildren();
@@ -413,7 +413,7 @@ void ParserTest::testDomains()
 //    Oscillator(frequency:440) >> Level(gain: Modulator) >> AudioOut;
 
     DeclarationNode *block = static_cast<DeclarationNode *>(tree->getChildren()[8]);
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     ValueNode *domain = static_cast<ValueNode *>(block->getDomain());
     QVERIFY(domain->getNodeType() == AST::String);
     QVERIFY(domain->getStringValue() == "AudioDomain");
@@ -437,7 +437,7 @@ void ParserTest::testModules()
     QVERIFY(blockList->getNodeType() == AST::List);
     for(size_t i = 0; i < blockList->getChildren().size(); i++) {
         AST *member = blockList->getChildren().at(i);
-        if (member->getNodeType() == AST::Block) {
+        if (member->getNodeType() == AST::Declaration) {
             DeclarationNode *block = static_cast<DeclarationNode *>(member);
             if (block->getObjectType() == "constant") {
 
@@ -456,7 +456,7 @@ void ParserTest::testModules()
     blockNames << "AutoDeclared";
     for(size_t i = 1; i < blockList->getChildren().size(); i++) {
         AST *member = blockList->getChildren().at(i);
-        if (member->getNodeType() == AST::Block) {
+        if (member->getNodeType() == AST::Declaration) {
             DeclarationNode *block = static_cast<DeclarationNode *>(member);
             QVERIFY(block->getName() == blockNames.front().toStdString());
             blockNames.pop_front();
@@ -522,21 +522,21 @@ void ParserTest::testConstantResolution()
     QVERIFY(generator.isValid());
 
     DeclarationNode *block = static_cast<DeclarationNode *>(tree->getChildren().at(4));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     ValueNode *value = static_cast<ValueNode *>(block->getPropertyValue("value"));
     QVERIFY(value != NULL);
     QVERIFY(value->getNodeType() == AST::Real);
     QVERIFY(qFuzzyCompare(value->getRealValue(), -0.1));
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(5));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     value = static_cast<ValueNode *>(block->getPropertyValue("value"));
     QVERIFY(value != NULL);
     QVERIFY(value->getNodeType() == AST::Int);
     QVERIFY(value->getIntValue() == 2);
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(6));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     value = static_cast<ValueNode *>(block->getPropertyValue("value"));
     QVERIFY(value != NULL);
     QVERIFY(value->getNodeType() == AST::Int);
@@ -547,21 +547,21 @@ void ParserTest::testConstantResolution()
     //    constant ConstInt5 {value: ConstInt1 / 2}
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(7));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     value = static_cast<ValueNode *>(block->getPropertyValue("value"));
     QVERIFY(value != NULL);
     QVERIFY(value->getNodeType() == AST::Int);
     QVERIFY(value->getIntValue() == -1);
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(8));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     value = static_cast<ValueNode *>(block->getPropertyValue("value"));
     QVERIFY(value != NULL);
     QVERIFY(value->getNodeType() == AST::Int);
     QVERIFY(value->getIntValue() == 8);
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(9));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     value = static_cast<ValueNode *>(block->getPropertyValue("value"));
     QVERIFY(value != NULL);
     QVERIFY(value->getNodeType() == AST::Int);
@@ -574,28 +574,28 @@ void ParserTest::testConstantResolution()
     //constant ConstFloat4 {value: Const1 / 2}
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(10));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     value = static_cast<ValueNode *>(block->getPropertyValue("value"));
     QVERIFY(value != NULL);
     QVERIFY(value->getNodeType() == AST::Real);
     QVERIFY(value->getRealValue() == 3.0);
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(11));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     value = static_cast<ValueNode *>(block->getPropertyValue("value"));
     QVERIFY(value != NULL);
     QVERIFY(value->getNodeType() == AST::Real);
     QVERIFY(value->getRealValue() == -1.0);
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(12));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     value = static_cast<ValueNode *>(block->getPropertyValue("value"));
     QVERIFY(value != NULL);
     QVERIFY(value->getNodeType() == AST::Real);
     QVERIFY(value->getRealValue() == 8.0);
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(13));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     value = static_cast<ValueNode *>(block->getPropertyValue("value"));
     QVERIFY(value != NULL);
     QVERIFY(value->getNodeType() == AST::Real);
@@ -608,35 +608,35 @@ void ParserTest::testConstantResolution()
     //constant ConstFloat8 {value: Const1 / 2.0}
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(14));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     value = static_cast<ValueNode *>(block->getPropertyValue("value"));
     QVERIFY(value != NULL);
     QVERIFY(value->getNodeType() == AST::Real);
     QVERIFY(value->getRealValue() == 3.0);
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(15));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     value = static_cast<ValueNode *>(block->getPropertyValue("value"));
     QVERIFY(value != NULL);
     QVERIFY(value->getNodeType() == AST::Real);
     QVERIFY(value->getRealValue() == -1.0);
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(16));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     value = static_cast<ValueNode *>(block->getPropertyValue("value"));
     QVERIFY(value != NULL);
     QVERIFY(value->getNodeType() == AST::Real);
     QVERIFY(value->getRealValue() == 8.0);
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(17));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     value = static_cast<ValueNode *>(block->getPropertyValue("value"));
     QVERIFY(value != NULL);
     QVERIFY(value->getNodeType() == AST::Real);
     QVERIFY(value->getRealValue() == 1.0);
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(18));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     value = static_cast<ValueNode *>(block->getPropertyValue("value"));
     QVERIFY(value != NULL);
     QVERIFY(value->getNodeType() == AST::Real);
@@ -651,42 +651,42 @@ void ParserTest::testConstantResolution()
     //    constant ConstSwitch6 {value: 1 <= Const1;}
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(19));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     value = static_cast<ValueNode *>(block->getPropertyValue("value"));
     QVERIFY(value != NULL);
     QVERIFY(value->getNodeType() == AST::Switch);
     QVERIFY(value->getSwitchValue() == false);
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(20));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     value = static_cast<ValueNode *>(block->getPropertyValue("value"));
     QVERIFY(value != NULL);
     QVERIFY(value->getNodeType() == AST::Switch);
     QVERIFY(value->getSwitchValue() == true);
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(21));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     value = static_cast<ValueNode *>(block->getPropertyValue("value"));
     QVERIFY(value != NULL);
     QVERIFY(value->getNodeType() == AST::Switch);
     QVERIFY(value->getSwitchValue() == false);
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(22));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     value = static_cast<ValueNode *>(block->getPropertyValue("value"));
     QVERIFY(value != NULL);
     QVERIFY(value->getNodeType() == AST::Switch);
     QVERIFY(value->getSwitchValue() == true);
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(23));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     value = static_cast<ValueNode *>(block->getPropertyValue("value"));
     QVERIFY(value != NULL);
     QVERIFY(value->getNodeType() == AST::Switch);
     QVERIFY(value->getSwitchValue() == false);
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(24));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     value = static_cast<ValueNode *>(block->getPropertyValue("value"));
     QVERIFY(value != NULL);
     QVERIFY(value->getNodeType() == AST::Switch);
@@ -700,7 +700,7 @@ void ParserTest::testConstantResolution()
     //#constant ConstInt9 {value: ~(ConstInt1 * 15)}
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(25));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     value = static_cast<ValueNode *>(block->getPropertyValue("value"));
     QVERIFY(value != NULL);
     QVERIFY(value->getNodeType() == AST::Int);
@@ -738,7 +738,7 @@ void ParserTest::testStreamRates()
     QVERIFY(stream->getNodeType() == AST::Stream);
 
     BlockNode *name = static_cast<BlockNode *>(stream->getLeft());
-    QVERIFY(name->getNodeType() == AST::Name);
+    QVERIFY(name->getNodeType() == AST::Block);
     QVERIFY(name->getRate() == 44100);
 
     BundleNode *bundle = static_cast<BundleNode *>(stream->getRight());
@@ -755,7 +755,7 @@ void ParserTest::testStreamRates()
     QVERIFY(stream->getLeft()->getRate() == 11025);
 
     BlockNode *nameNode = static_cast<BlockNode *>(stream->getRight());
-    QVERIFY(nameNode->getNodeType() == AST::Name);
+    QVERIFY(nameNode->getNodeType() == AST::Block);
     QVERIFY(nameNode->getRate() == 44100);
 
     // GetRate1 >> Rate1 >> GetRate2 >> Rate2 >> GetAudioRate >> Output2;
@@ -780,7 +780,7 @@ void ParserTest::testStreamRates()
     QVERIFY(stream->getLeft()->getRate() == 44100);
 
     name = static_cast<BlockNode *>(stream->getRight());
-    QVERIFY(name->getNodeType() == AST::Name);
+    QVERIFY(name->getNodeType() == AST::Block);
     QVERIFY(name->getRate() == 44100);
 
     //    Oscillator() >> Rate1 >> LowPass() >> Output3;
@@ -947,7 +947,7 @@ void ParserTest::testStreamExpansion()
     QVERIFY(stream->getNodeType() == AST::Stream);
 
     BlockNode *name = static_cast<BlockNode *>(stream->getLeft());
-    QVERIFY(name->getNodeType() == AST::Name);
+    QVERIFY(name->getNodeType() == AST::Block);
     QVERIFY(name->getName() == "InSignal2");
 
     right = static_cast<StreamNode *>(stream->getRight());
@@ -986,7 +986,7 @@ void ParserTest::testStreamExpansion()
     QVERIFY(list->getChildren().size() == 2);
 
     DeclarationNode *decl = CodeValidator::findDeclaration("OutSignal3", QVector<AST *>(), tree);
-    QVERIFY(decl->getNodeType() == AST::BlockBundle);
+    QVERIFY(decl->getNodeType() == AST::BundleDeclaration);
     ListNode *bundleIndex = static_cast<ListNode *>(decl->getBundle()->index());
     QVERIFY(bundleIndex->size() == 1);
     ValueNode *declSize = static_cast<ValueNode *>(bundleIndex->getChildren()[0]);
@@ -1027,7 +1027,7 @@ void ParserTest::testStreamExpansion()
     stream = static_cast<StreamNode *>(nodes.at(8));
     QVERIFY(stream->getNodeType() == AST::Stream);
     name = static_cast<BlockNode *>(stream->getLeft());
-    QVERIFY(name->getNodeType() == AST::Name);
+    QVERIFY(name->getNodeType() == AST::Block);
     QVERIFY(name->getName() == "MonoSignal");
     stream = static_cast<StreamNode *>(stream->getRight());
     QVERIFY(stream->getNodeType() == AST::Stream);
@@ -1041,7 +1041,7 @@ void ParserTest::testStreamExpansion()
     stream = static_cast<StreamNode *>(nodes.at(9));
     QVERIFY(stream->getNodeType() == AST::Stream);
     name = static_cast<BlockNode *>(stream->getLeft());
-    QVERIFY(name->getNodeType() == AST::Name);
+    QVERIFY(name->getNodeType() == AST::Block);
     QVERIFY(name->getName() == "MonoSignal2");
     stream = static_cast<StreamNode *>(stream->getRight());
     QVERIFY(stream->getNodeType() == AST::Stream);
@@ -1300,7 +1300,7 @@ void ParserTest::testValueTypeBundleResolution()
     QList<LangError> errors = generator.getErrors();
 
     vector<AST *> nodes = tree->getChildren();
-    QVERIFY(nodes.at(1)->getNodeType() == AST::BlockBundle);
+    QVERIFY(nodes.at(1)->getNodeType() == AST::BundleDeclaration);
     DeclarationNode *block = static_cast<DeclarationNode *>(nodes.at(1));
     QVERIFY(block->getObjectType() == "constant");
     BundleNode *bundle = block->getBundle();
@@ -1319,7 +1319,7 @@ void ParserTest::testValueTypeBundleResolution()
     vector<AST *>listValues = listnode->getChildren();
     QVERIFY(listValues.size() == 4);
 
-    QVERIFY(nodes.at(2)->getNodeType() == AST::BlockBundle);
+    QVERIFY(nodes.at(2)->getNodeType() == AST::BundleDeclaration);
     block = static_cast<DeclarationNode *>(nodes.at(2));
     QVERIFY(block->getObjectType() == "constant");
     bundle = block->getBundle();
@@ -1338,7 +1338,7 @@ void ParserTest::testValueTypeBundleResolution()
     listValues = listnode->getChildren();
     QVERIFY(listValues.size() == 4);
 
-    QVERIFY(nodes.at(3)->getNodeType() == AST::BlockBundle);
+    QVERIFY(nodes.at(3)->getNodeType() == AST::BundleDeclaration);
     block = static_cast<DeclarationNode *>(nodes.at(3));
     QVERIFY(block->getObjectType() == "constant");
     bundle = block->getBundle();
@@ -1357,30 +1357,30 @@ void ParserTest::testValueTypeBundleResolution()
     listValues = listnode->getChildren();
     QVERIFY(listValues.size() == 4);
 
-    QVERIFY(nodes.at(4)->getNodeType() == AST::BlockBundle);
+    QVERIFY(nodes.at(4)->getNodeType() == AST::BundleDeclaration);
     block = static_cast<DeclarationNode *>(nodes.at(4));
     QVERIFY(block->getObjectType() == "constant");
     bundle = block->getBundle();
     QVERIFY(bundle->getName() == "Array_Int");
 
-    QVERIFY(nodes.at(5)->getNodeType() == AST::Block);
+    QVERIFY(nodes.at(5)->getNodeType() == AST::Declaration);
     block = static_cast<DeclarationNode *>(nodes.at(5));
     QVERIFY(block->getObjectType() == "constant");
     QVERIFY(block->getName() == "Value_Meta");
 
-    QVERIFY(nodes.at(6)->getNodeType() == AST::BlockBundle);
+    QVERIFY(nodes.at(6)->getNodeType() == AST::BundleDeclaration);
     block = static_cast<DeclarationNode *>(nodes.at(6));
     QVERIFY(block->getObjectType() == "constant");
     bundle = block->getBundle();
     QVERIFY(bundle->getName() == "Value_Meta_1");
 
-    QVERIFY(nodes.at(7)->getNodeType() == AST::BlockBundle);
+    QVERIFY(nodes.at(7)->getNodeType() == AST::BundleDeclaration);
     block = static_cast<DeclarationNode *>(nodes.at(7));
     QVERIFY(block->getObjectType() == "constant");
     bundle = block->getBundle();
     QVERIFY(bundle->getName() == "Values_1");
 
-    QVERIFY(nodes.at(8)->getNodeType() == AST::BlockBundle);
+    QVERIFY(nodes.at(8)->getNodeType() == AST::BundleDeclaration);
     block = static_cast<DeclarationNode *>(nodes.at(8));
     QVERIFY(block->getObjectType() == "constant");
     bundle = block->getBundle();
@@ -1388,7 +1388,7 @@ void ParserTest::testValueTypeBundleResolution()
 
     // The following cases should produce errors
 
-    QVERIFY(nodes.at(9)->getNodeType() == AST::Block);
+    QVERIFY(nodes.at(9)->getNodeType() == AST::Declaration);
     block = static_cast<DeclarationNode *>(nodes.at(9));
     QVERIFY(block->getObjectType() == "constant");
     QVERIFY(block->getName() == "Bad_Value_Meta");
@@ -1400,7 +1400,7 @@ void ParserTest::testValueTypeBundleResolution()
     QVERIFY(error.errorTokens[1] == "meta");
     QVERIFY(error.errorTokens[2] == "CRP");
 
-    QVERIFY(nodes.at(10)->getNodeType() == AST::BlockBundle);
+    QVERIFY(nodes.at(10)->getNodeType() == AST::BundleDeclaration);
     block = static_cast<DeclarationNode *>(nodes.at(10));
     QVERIFY(block->getObjectType() == "constant");
     bundle = block->getBundle();
@@ -1413,7 +1413,7 @@ void ParserTest::testValueTypeBundleResolution()
     QVERIFY(error.errorTokens[2] == "4");
 
 
-    QVERIFY(nodes.at(11)->getNodeType() == AST::BlockBundle);
+    QVERIFY(nodes.at(11)->getNodeType() == AST::BundleDeclaration);
     block = static_cast<DeclarationNode *>(nodes.at(11));
     QVERIFY(block->getObjectType() == "constant");
     bundle = block->getBundle();
@@ -1424,7 +1424,7 @@ void ParserTest::testValueTypeBundleResolution()
     QVERIFY(error.errorTokens[1] == "3");
     QVERIFY(error.errorTokens[2] == "2");
 
-    QVERIFY(nodes.at(12)->getNodeType() == AST::BlockBundle);
+    QVERIFY(nodes.at(12)->getNodeType() == AST::BundleDeclaration);
     block = static_cast<DeclarationNode *>(nodes.at(12));
     QVERIFY(block->getObjectType() == "constant");
     bundle = block->getBundle();
@@ -1435,7 +1435,7 @@ void ParserTest::testValueTypeBundleResolution()
     QVERIFY(error.errorTokens[0] == "Array_Float");
     QVERIFY(error.errorTokens[1] == "CRP");
 
-    QVERIFY(nodes.at(13)->getNodeType() == AST::BlockBundle);
+    QVERIFY(nodes.at(13)->getNodeType() == AST::BundleDeclaration);
     block = static_cast<DeclarationNode *>(nodes.at(13));
     QVERIFY(block->getObjectType() == "constant");
     bundle = block->getBundle();
@@ -1493,7 +1493,7 @@ void ParserTest::testLists()
     //            value: [ 16, 32, 64, 128 ]
     //    }
     DeclarationNode *block = static_cast<DeclarationNode *>(nodes.at(1));
-    QVERIFY(block->getNodeType() == AST::BlockBundle);
+    QVERIFY(block->getNodeType() == AST::BundleDeclaration);
     vector<PropertyNode *> props =  block->getProperties();
     ListNode *list = static_cast<ListNode *>(props.at(0)->getValue());
     QVERIFY(list->getNodeType() == AST::List);
@@ -1507,7 +1507,7 @@ void ParserTest::testLists()
     //            value: [ 16., 32.1, 64., 128. ]
     //    }
     block = static_cast<DeclarationNode *>(nodes.at(2));
-    QVERIFY(block->getNodeType() == AST::BlockBundle);
+    QVERIFY(block->getNodeType() == AST::BundleDeclaration);
     props =  block->getProperties();
     list = static_cast<ListNode *>(props.at(0)->getValue());
     QVERIFY(list->getNodeType() == AST::List);
@@ -1522,7 +1522,7 @@ void ParserTest::testLists()
     //            value: [ '16', "32.1", '64', "128" ]
     //    }
     block = static_cast<DeclarationNode *>(nodes.at(3));
-    QVERIFY(block->getNodeType() == AST::BlockBundle);
+    QVERIFY(block->getNodeType() == AST::BundleDeclaration);
     props =  block->getProperties();
     list = static_cast<ListNode *>(props.at(0)->getValue());
     QVERIFY(list->getNodeType() == AST::List);
@@ -1537,7 +1537,7 @@ void ParserTest::testLists()
     //            value: [ on, off, on, on ]
     //    }
     block = static_cast<DeclarationNode *>(nodes.at(4));
-    QVERIFY(block->getNodeType() == AST::BlockBundle);
+    QVERIFY(block->getNodeType() == AST::BundleDeclaration);
     props =  block->getProperties();
     list = static_cast<ListNode *>(props.at(0)->getValue());
     QVERIFY(list->getNodeType() == AST::List);
@@ -1552,7 +1552,7 @@ void ParserTest::testLists()
     //            value: [ Name1, Name2, Name3, Name4 ]
     //    }
     block = static_cast<DeclarationNode *>(nodes.at(5));
-    QVERIFY(block->getNodeType() == AST::BlockBundle);
+    QVERIFY(block->getNodeType() == AST::BundleDeclaration);
     props =  block->getProperties();
     list = static_cast<ListNode *>(props.at(0)->getValue());
     QVERIFY(list->getNodeType() == AST::List);
@@ -1567,7 +1567,7 @@ void ParserTest::testLists()
     //            value: [ ns.Name1, ns.Name2, ns.Name3, ns.Name4 ]
     //    }
     block = static_cast<DeclarationNode *>(nodes.at(6));
-    QVERIFY(block->getNodeType() == AST::BlockBundle);
+    QVERIFY(block->getNodeType() == AST::BundleDeclaration);
     props =  block->getProperties();
     list = static_cast<ListNode *>(props.at(0)->getValue());
     QVERIFY(list->getNodeType() == AST::List);
@@ -1575,8 +1575,9 @@ void ParserTest::testLists()
     QVERIFY(members.size() == 4);
     foreach(AST * member, members) {
         BlockNode *value = static_cast<BlockNode *>(member);
-        QVERIFY(value->getNodeType() == AST::Name);
-        QVERIFY(value->getNamespace() == "ns");
+        QVERIFY(value->getNodeType() == AST::Block);
+        QVERIFY(value->getScopeLevels() == 1);
+        QVERIFY(value->getScopeAt(0) == "Ns");
     }
 
     //    block BlockName {
@@ -1584,19 +1585,19 @@ void ParserTest::testLists()
     //                blockType1 BlockName3 { value: 1.0 } ]
     //    }
     block = static_cast<DeclarationNode *>(nodes.at(7));
-    QVERIFY(block->getNodeType() == AST::Block);
+    QVERIFY(block->getNodeType() == AST::Declaration);
     props =  block->getProperties();
     list = static_cast<ListNode *>(props.at(0)->getValue());
     QVERIFY(list->getNodeType() == AST::List);
     members = list->getChildren();
     QVERIFY(members.size() == 2);
     DeclarationNode *internalBlock = static_cast<DeclarationNode *>(members[0]);
-    QVERIFY(internalBlock->getNodeType() == AST::Block);
+    QVERIFY(internalBlock->getNodeType() == AST::Declaration);
     QVERIFY(internalBlock->getObjectType() == "blockType1");
     QVERIFY(internalBlock->getName() == "BlockName2");
 
     internalBlock = static_cast<DeclarationNode *>(members[1]);
-    QVERIFY(internalBlock->getNodeType() == AST::Block);
+    QVERIFY(internalBlock->getNodeType() == AST::Declaration);
     QVERIFY(internalBlock->getObjectType() == "blockType2");
     QVERIFY(internalBlock->getName() == "BlockName3");
 
@@ -1605,7 +1606,7 @@ void ParserTest::testLists()
 //            meta:	'List of lists'
 //    }
     block = static_cast<DeclarationNode *>(nodes.at(8));
-    QVERIFY(block->getNodeType() == AST::BlockBundle);
+    QVERIFY(block->getNodeType() == AST::BundleDeclaration);
     props =  block->getProperties();
     list = static_cast<ListNode *>(props.at(0)->getValue());
     QVERIFY(list->getNodeType() == AST::List);
@@ -1727,16 +1728,17 @@ void ParserTest::testExpressions()
     delete tree;
 }
 
-void ParserTest::testNamespaces()
+void ParserTest::testScope()
 {
     AST *tree;
-    tree = AST::parseFile(QString(QFINDTESTDATA("data/08_namespace.stride")).toStdString().c_str());
+    tree = AST::parseFile(QString(QFINDTESTDATA("data/P08_scope.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     vector<AST *> nodes = tree->getChildren();
 
-    //    import namespace
-    //    import namespace as ns
-    //    import NameSpace as ns
+//    import Namespace
+//    import Namespace as Namespace
+//    import NameSpace as Ns
+
     ImportNode *import = static_cast<ImportNode *>(nodes.at(0));
     QVERIFY(import->getNodeType() == AST::Import);
     QVERIFY(import->importName() == "Namespace");
@@ -1752,18 +1754,19 @@ void ParserTest::testNamespaces()
     QVERIFY(import->importName() == "NameSpace");
     QVERIFY(import->importAlias() == "Ns");
 
-    //    ns.Value >> Constant;
-    //    ns.Value_1 + 1.0 >> Constant;
-    //    1.0 + ns.Value_1 >> Constant;
-    //    ns.Value_1 + ns.Value_2 >> Constant;
-    //    ns.Block_1 >> ns.Block_2;
+//    Ns::Value >> Constant;
+//    Ns::Value_1 + 1.0 >> Constant;
+//    1.0 + Ns::Value_1 >> Constant;
+//    Ns::Value_1 + Ns::Value_2 >> Constant;
+//    Ns::Block_1 >> Ns::Block_2;
 
     StreamNode *stream = static_cast<StreamNode *>(nodes.at(3));
     QVERIFY(stream->getNodeType() == AST::Stream);
     BlockNode *node = static_cast<BlockNode *>(stream->getLeft());
-    QVERIFY(node->getNodeType() == AST::Name);
+    QVERIFY(node->getNodeType() == AST::Block);
     QVERIFY(node->getName() == "Value");
-    QVERIFY(node->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
 
     stream = static_cast<StreamNode *>(nodes.at(4));
     QVERIFY(stream->getNodeType() == AST::Stream);
@@ -1771,7 +1774,8 @@ void ParserTest::testNamespaces()
     QVERIFY(expr->getNodeType() == AST::Expression);
     node = static_cast<BlockNode *>(expr->getLeft());
     QVERIFY(node->getName() == "Value_1");
-    QVERIFY(node->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
 
     stream = static_cast<StreamNode *>(nodes.at(5));
     QVERIFY(stream->getNodeType() == AST::Stream);
@@ -1779,7 +1783,8 @@ void ParserTest::testNamespaces()
     QVERIFY(expr->getNodeType() == AST::Expression);
     node = static_cast<BlockNode *>(expr->getRight());
     QVERIFY(node->getName() == "Value_1");
-    QVERIFY(node->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
 
     stream = static_cast<StreamNode *>(nodes.at(6));
     QVERIFY(stream->getNodeType() == AST::Stream);
@@ -1787,23 +1792,28 @@ void ParserTest::testNamespaces()
     QVERIFY(expr->getNodeType() == AST::Expression);
     node = static_cast<BlockNode *>(expr->getLeft());
     QVERIFY(node->getName() == "Value_1");
-    QVERIFY(node->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
     node = static_cast<BlockNode *>(expr->getRight());
     QVERIFY(node->getName() == "Value_2");
-    QVERIFY(node->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
 
     stream = static_cast<StreamNode *>(nodes.at(7));
     QVERIFY(stream->getNodeType() == AST::Stream);
     node = static_cast<BlockNode *>(stream->getLeft());
-    QVERIFY(node->getNodeType() == AST::Name);
+    QVERIFY(node->getNodeType() == AST::Block);
     QVERIFY(node->getName() == "Block_1");
-    QVERIFY(node->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
     node = static_cast<BlockNode *>(stream->getRight());
-    QVERIFY(node->getNodeType() == AST::Name);
+    QVERIFY(node->getNodeType() == AST::Block);
     QVERIFY(node->getName() == "Block_2");
-    QVERIFY(node->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
 
-    //    ns.Bundle[1] + ns.Bundle[2] >> Constant;
+
+    //    Ns::Bundle[1] + Ns::Bundle[2] >> Constant;
 
     stream = static_cast<StreamNode *>(nodes.at(8));
     QVERIFY(stream->getNodeType() == AST::Stream);
@@ -1812,16 +1822,18 @@ void ParserTest::testNamespaces()
     BundleNode *bundle = static_cast<BundleNode *>(expr->getLeft());
     QVERIFY(bundle->getNodeType() == AST::Bundle);
     QVERIFY(bundle->getName() == "Bundle");
-    QVERIFY(bundle->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
     QVERIFY(static_cast<ValueNode *>(bundle->index()->getChildren().at(0))->getIntValue() == 1);
     bundle = static_cast<BundleNode *>(expr->getRight());
     QVERIFY(bundle->getNodeType() == AST::Bundle);
     QVERIFY(bundle->getName() == "Bundle");
-    QVERIFY(bundle->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
     QVERIFY(static_cast<ValueNode *>(bundle->index()->getChildren().at(0))->getIntValue() == 2);
 
-    //    [ns.Value_1, ns.Value_2] >> Constants;
-    //    [ns.Bundle[1], ns.Bundle[2]] >> Constants;
+//    [Ns::Value_1, Ns::Value_2] >> Constants;
+//    [Ns::Bundle[1], Ns::Bundle[2]] >> Constants;
 
     stream = static_cast<StreamNode *>(nodes.at(9));
     QVERIFY(stream->getNodeType() == AST::Stream);
@@ -1829,10 +1841,12 @@ void ParserTest::testNamespaces()
     QVERIFY(list->getNodeType() == AST::List);
     node = static_cast<BlockNode *>(list->getChildren().at(0));
     QVERIFY(node->getName() == "Value_1");
-    QVERIFY(node->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
     node = static_cast<BlockNode *>(list->getChildren().at(1));
     QVERIFY(node->getName() == "Value_2");
-    QVERIFY(node->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
 
     stream = static_cast<StreamNode *>(nodes.at(10));
     QVERIFY(stream->getNodeType() == AST::Stream);
@@ -1841,120 +1855,135 @@ void ParserTest::testNamespaces()
     bundle = static_cast<BundleNode *>(list->getChildren().at(0));
     QVERIFY(bundle->getNodeType() == AST::Bundle);
     QVERIFY(bundle->getName() == "Bundle");
-    QVERIFY(bundle->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
     QVERIFY(static_cast<ValueNode *>(bundle->index()->getChildren().at(0))->getIntValue() == 1);
     bundle = static_cast<BundleNode *>(list->getChildren().at(1));
     QVERIFY(bundle->getNodeType() == AST::Bundle);
     QVERIFY(bundle->getName() == "Bundle");
-    QVERIFY(bundle->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
     QVERIFY(static_cast<ValueNode *>(bundle->index()->getChildren().at(0))->getIntValue() == 2);
 
-    //    ns.Block_1[ns.Index_1] >> ns.Block_2 [ns.Index_2];
-    //    ns.Block_1[ns.Bundle[1]] >> ns.Block_2 [ns.Bundle[2]];
+//    Ns::Block_1[Ns::Index_1] >> Ns::Block_2 [Ns::Index_2];
+//    Ns::Block_1[Ns::Bundle[1]] >> Ns::Block_2 [Ns::Bundle[2]];
 
     stream = static_cast<StreamNode *>(nodes.at(11));
     QVERIFY(stream->getNodeType() == AST::Stream);
     bundle = static_cast<BundleNode *>(stream->getLeft());
     QVERIFY(bundle->getNodeType() == AST::Bundle);
     QVERIFY(bundle->getName() == "Block_1");
-    QVERIFY(bundle->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
     list = static_cast<ListNode *>(bundle->index());
     node = static_cast<BlockNode *>(list->getChildren().at(0));
-    QVERIFY(node->getNodeType() == AST::Name);
+    QVERIFY(node->getNodeType() == AST::Block);
     QVERIFY(node->getName() == "Index_1");
-    QVERIFY(node->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
     bundle = static_cast<BundleNode *>(stream->getRight());
     QVERIFY(bundle->getNodeType() == AST::Bundle);
     QVERIFY(bundle->getName() == "Block_2");
-    QVERIFY(bundle->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
     node = static_cast<BlockNode *>(bundle->index()->getChildren().at(0));
-    QVERIFY(node->getNodeType() == AST::Name);
+    QVERIFY(node->getNodeType() == AST::Block);
     QVERIFY(node->getName() == "Index_2");
-    QVERIFY(node->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
 
     stream = static_cast<StreamNode *>(nodes.at(12));
     QVERIFY(stream->getNodeType() == AST::Stream);
 
-    //    ns.Block_1[ns.Index_1:ns.Index_2] >> ns.Block_2 [ns.Index_1:ns.Index_2];
+//    Ns::Block_1[Ns::Index_1:Ns::Index_2] >> Ns::Block_2 [Ns::Index_1:Ns::Index_2];
 
     stream = static_cast<StreamNode *>(nodes.at(13));
     QVERIFY(stream->getNodeType() == AST::Stream);
     bundle = static_cast<BundleNode *>(stream->getLeft());
     QVERIFY(bundle->getNodeType() == AST::Bundle);
     QVERIFY(bundle->getName() == "Block_1");
-    QVERIFY(bundle->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
     list = static_cast<ListNode *>(bundle->index());
     RangeNode *range = static_cast<RangeNode *>(list->getChildren().at(0));
     QVERIFY(range->getNodeType() == AST::Range);
     node = static_cast<BlockNode *>(range->startIndex());
-    QVERIFY(node->getNodeType() == AST::Name);
+    QVERIFY(node->getNodeType() == AST::Block);
     QVERIFY(node->getName() == "Index_1");
-    QVERIFY(node->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
     node = static_cast<BlockNode *>(range->endIndex());
-    QVERIFY(node->getNodeType() == AST::Name);
+    QVERIFY(node->getNodeType() == AST::Block);
     QVERIFY(node->getName() == "Index_2");
-    QVERIFY(node->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
     bundle = static_cast<BundleNode *>(stream->getRight());
     QVERIFY(bundle->getNodeType() == AST::Bundle);
     QVERIFY(bundle->getName() == "Block_2");
-    QVERIFY(bundle->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
     list = static_cast<ListNode *>(bundle->index());
     range = static_cast<RangeNode *>(list->getChildren().at(0));
     QVERIFY(range->getNodeType() == AST::Range);
     node = static_cast<BlockNode *>(range->startIndex());
-    QVERIFY(node->getNodeType() == AST::Name);
+    QVERIFY(node->getNodeType() == AST::Block);
     QVERIFY(node->getName() == "Index_1");
-    QVERIFY(node->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
     node = static_cast<BlockNode *>(range->endIndex());
-    QVERIFY(node->getNodeType() == AST::Name);
+    QVERIFY(node->getNodeType() == AST::Block);
     QVERIFY(node->getName() == "Index_2");
-    QVERIFY(node->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
 
-    //    ns.Block_1[ns.Bundle[1]:ns.Bundle[2]] >> ns.Block_2 [ns.Bundle[1]:ns.Bundle[2]];
+//    Ns::Block_1[Ns::Bundle[1]:Ns::Bundle[2]] >> Ns::Block_2 [Ns::Bundle[1]:Ns::Bundle[2]];
 
     stream = static_cast<StreamNode *>(nodes.at(14));
     QVERIFY(stream->getNodeType() == AST::Stream);
     bundle = static_cast<BundleNode *>(stream->getLeft());
     QVERIFY(bundle->getNodeType() == AST::Bundle);
     QVERIFY(bundle->getName() == "Block_1");
-    QVERIFY(bundle->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
     list = static_cast<ListNode *>(bundle->index());
     range = static_cast<RangeNode *>(list->getChildren().at(0));
     QVERIFY(range->getNodeType() == AST::Range);
     bundle = static_cast<BundleNode *>(range->startIndex());
     QVERIFY(bundle->getNodeType() == AST::Bundle);
     QVERIFY(bundle->getName() == "Bundle");
-    QVERIFY(bundle->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
     QVERIFY(static_cast<ValueNode *>(bundle->index()->getChildren().at(0))->getIntValue() == 1);
     bundle = static_cast<BundleNode *>(range->endIndex());
     QVERIFY(bundle->getNodeType() == AST::Bundle);
     QVERIFY(bundle->getName() == "Bundle");
-    QVERIFY(bundle->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
     QVERIFY(static_cast<ValueNode *>(bundle->index()->getChildren().at(0))->getIntValue() == 2);
     bundle = static_cast<BundleNode *>(stream->getRight());
     QVERIFY(bundle->getNodeType() == AST::Bundle);
     QVERIFY(bundle->getName() == "Block_2");
-    QVERIFY(bundle->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
     list = static_cast<ListNode *>(bundle->index());
     range = static_cast<RangeNode *>(list->getChildren().at(0));
     QVERIFY(range->getNodeType() == AST::Range);
     bundle = static_cast<BundleNode *>(range->startIndex());
     QVERIFY(bundle->getNodeType() == AST::Bundle);
     QVERIFY(bundle->getName() == "Bundle");
-    QVERIFY(bundle->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
     QVERIFY(static_cast<ValueNode *>(bundle->index()->getChildren().at(0))->getIntValue() == 1);
     bundle = static_cast<BundleNode *>(range->endIndex());
     QVERIFY(bundle->getNodeType() == AST::Bundle);
     QVERIFY(bundle->getName() == "Bundle");
-    QVERIFY(bundle->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
     QVERIFY(static_cast<ValueNode *>(bundle->index()->getChildren().at(0))->getIntValue() == 2);
     bundle = static_cast<BundleNode *>(stream->getRight());
 
-    // Input
-    // >> ns.Function (
-    //	property:		ns.Value
-    // )
-    // >> Output;
+    //    Input >> Ns::Function () >> Output;
+    //    Input >> Ns::Function ( property: Ns::Value ) >> Output;
 
     stream = static_cast<StreamNode *>(nodes.at(15));
     QVERIFY(stream->getNodeType() == AST::Stream);
@@ -1963,12 +1992,24 @@ void ParserTest::testNamespaces()
     FunctionNode *func = static_cast<FunctionNode *>(stream->getLeft());
     QVERIFY(func->getNodeType() == AST::Function);
     QVERIFY(func->getName() == "Function");
-    QVERIFY(func->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
+
+    stream = static_cast<StreamNode *>(nodes.at(16));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    stream = static_cast<StreamNode *>(stream->getRight());
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    func = static_cast<FunctionNode *>(stream->getLeft());
+    QVERIFY(func->getNodeType() == AST::Function);
+    QVERIFY(func->getName() == "Function");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
     vector<PropertyNode *> props = func->getProperties();
     node = static_cast<BlockNode *>(props.at(0)->getValue());
-    QVERIFY(node->getNodeType() == AST::Name);
+    QVERIFY(node->getNodeType() == AST::Block);
     QVERIFY(node->getName() == "Value");
-    QVERIFY(node->getNamespace() == "ns");
+    QVERIFY(node->getScopeLevels() == 1);
+    QVERIFY(node->getScopeAt(0) == "Ns");
 
     tree->deleteChildren();
     delete tree;
@@ -1982,12 +2023,12 @@ void ParserTest::testBundleIndeces()
     vector<AST *> nodes = tree->getChildren();
     QVERIFY(nodes.size() == 23);
 
-    QVERIFY(nodes.at(0)->getNodeType() == AST::Block);
+    QVERIFY(nodes.at(0)->getNodeType() == AST::Declaration);
     DeclarationNode *block = static_cast<DeclarationNode *>(nodes.at(0));
     QVERIFY(block->getObjectType() == "constant");
     QVERIFY(block->getLine() == 8);
 
-    QVERIFY(nodes.at(1)->getNodeType() == AST::BlockBundle);
+    QVERIFY(nodes.at(1)->getNodeType() == AST::BundleDeclaration);
     block = static_cast<DeclarationNode *>(nodes.at(1));
     QVERIFY(block->getObjectType() == "constant");
     QVERIFY(block->getLine() == 13);
@@ -2028,7 +2069,7 @@ void ParserTest::testBundleIndeces()
 
     // constant Array_Parens [ ( CONST * 2 ) + 1 ] {}
     block = static_cast<DeclarationNode *>(nodes.at(6));
-    QVERIFY(block->getNodeType() == AST::BlockBundle);
+    QVERIFY(block->getNodeType() == AST::BundleDeclaration);
     QVERIFY(block->getObjectType() == "constant");
     QVERIFY(block->getLine() == 23);
     bundle = block->getBundle();
@@ -2043,13 +2084,13 @@ void ParserTest::testBundleIndeces()
     QVERIFY(expr->getLine() == 23);
     ExpressionNode *expr2 = static_cast<ExpressionNode *>(expr->getLeft());
     QVERIFY(expr2->getExpressionType() == ExpressionNode::Multiply);
-    QVERIFY(expr2->getLeft()->getNodeType() == AST::Name);
+    QVERIFY(expr2->getLeft()->getNodeType() == AST::Block);
     QVERIFY(expr2->getRight()->getNodeType() == AST::Int);
     QVERIFY(expr2->getLine() == 23);
 
     // constant Array_Expr [ SIZE [1] + SIZE [1 * 2] ] {}
     block = static_cast<DeclarationNode *>(nodes.at(8));
-    QVERIFY(block->getNodeType() == AST::BlockBundle);
+    QVERIFY(block->getNodeType() == AST::BundleDeclaration);
     QVERIFY(block->getLine() == 26);
     QVERIFY(block->getObjectType() == "constant");
     bundle = block->getBundle();
@@ -2087,7 +2128,7 @@ void ParserTest::testBundleIndeces()
 
     // constant Array_Expr2 [ SIZE [1] / SIZE [1 - 2] ] {}
     block = static_cast<DeclarationNode *>(nodes.at(9));
-    QVERIFY(block->getNodeType() == AST::BlockBundle);
+    QVERIFY(block->getNodeType() == AST::BundleDeclaration);
     QVERIFY(block->getObjectType() == "constant");
     QVERIFY(block->getLine() == 27);
     bundle = block->getBundle();
@@ -2138,7 +2179,7 @@ void ParserTest::testBasicNoneSwitch()
     vector<AST *> nodes = tree->getChildren();
     QVERIFY(nodes.size() == 2);
 
-    QVERIFY(nodes.at(0)->getNodeType() == AST::Block);
+    QVERIFY(nodes.at(0)->getNodeType() == AST::Declaration);
     DeclarationNode *block = static_cast<DeclarationNode *>(nodes.at(0));
     QVERIFY(block->getObjectType() == "object");
     vector<PropertyNode *> properties = block->getProperties();
@@ -2267,13 +2308,13 @@ void ParserTest::testBasicStream()
     vector<AST *>streamParts = node->getChildren();
     QVERIFY(streamParts.size() == 2);
     AST *streamComp = streamParts.at(0);
-    QVERIFY(streamComp->getNodeType() == AST::Name);
+    QVERIFY(streamComp->getNodeType() == AST::Block);
     QVERIFY(streamComp->getLine() == 3);
     BlockNode *nameNode = static_cast<BlockNode *>(streamComp);
     QVERIFY(nameNode->getName() == "Val1");
     QVERIFY(nameNode->getLine() == 3);
     streamComp = streamParts.at(1);
-    QVERIFY(streamComp->getNodeType() == AST::Name);
+    QVERIFY(streamComp->getNodeType() == AST::Block);
     QVERIFY(streamComp->getLine() == 3);
     nameNode = static_cast<BlockNode *>(streamComp);
     QVERIFY(nameNode->getName() == "Val2");
@@ -2303,7 +2344,7 @@ void ParserTest::testBasicStream()
     QVERIFY(node->getNodeType() == AST::Stream);
     QVERIFY(node->getLine() == 6);
     streamComp = node->getLeft();
-    QVERIFY(streamComp->getNodeType() == AST::Name);
+    QVERIFY(streamComp->getNodeType() == AST::Block);
     QVERIFY(streamComp->getLine() == 6);
     nameNode = static_cast<BlockNode *>(streamComp);
     QVERIFY(nameNode->getName() == "Val1");
@@ -2325,7 +2366,7 @@ void ParserTest::testBasicStream()
     functionNode = static_cast<FunctionNode *>(streamComp);
     QVERIFY(functionNode->getName() == "Func2");
     QVERIFY(functionNode->getLine() == 7);
-    QVERIFY(node->getRight()->getNodeType() == AST::Name);
+    QVERIFY(node->getRight()->getNodeType() == AST::Block);
     nameNode = static_cast<BlockNode *>(node->getRight());
     QVERIFY(nameNode->getName() == "Val2");
     QVERIFY(nameNode->getLine() == 8);
@@ -2365,7 +2406,7 @@ void ParserTest::testBasicStream()
     QVERIFY(node->getLine() == 11);
     ExpressionNode *expression = static_cast<ExpressionNode *>(node->getLeft());
     QVERIFY(expression->getExpressionType() == ExpressionNode::Multiply);
-    QVERIFY(expression->getLeft()->getNodeType() == AST::Name);
+    QVERIFY(expression->getLeft()->getNodeType() == AST::Block);
     QVERIFY(expression->getLine() == 11);
     nameNode = static_cast<BlockNode *>(expression->getLeft());
     QVERIFY(nameNode->getName() == "Val1");
@@ -2516,7 +2557,7 @@ void ParserTest::testBasicBundle()
     vector<AST *> nodes = tree->getChildren();
     QVERIFY(nodes.size() == 8);
     DeclarationNode *block = static_cast<DeclarationNode *>(nodes.at(1));
-    QVERIFY(block->getNodeType() == AST::BlockBundle);
+    QVERIFY(block->getNodeType() == AST::BundleDeclaration);
     QVERIFY(block->getObjectType() == "constant");
     QVERIFY(block->getLine() == 7);
     BundleNode *bundle = block->getBundle();
@@ -2628,13 +2669,13 @@ void ParserTest::testBasicBundle()
     QVERIFY(propertyValue->getNodeType() == AST::List);
     listValues = propertyValue->getChildren();
     QVERIFY(listValues.size() == 7);
-    QVERIFY(listValues.at(0)->getNodeType() == AST::Name);
-    QVERIFY(listValues.at(1)->getNodeType() == AST::Name);
-    QVERIFY(listValues.at(2)->getNodeType() == AST::Name);
-    QVERIFY(listValues.at(3)->getNodeType() == AST::Name);
-    QVERIFY(listValues.at(4)->getNodeType() == AST::Name);
-    QVERIFY(listValues.at(5)->getNodeType() == AST::Name);
-    QVERIFY(listValues.at(6)->getNodeType() == AST::Name);
+    QVERIFY(listValues.at(0)->getNodeType() == AST::Block);
+    QVERIFY(listValues.at(1)->getNodeType() == AST::Block);
+    QVERIFY(listValues.at(2)->getNodeType() == AST::Block);
+    QVERIFY(listValues.at(3)->getNodeType() == AST::Block);
+    QVERIFY(listValues.at(4)->getNodeType() == AST::Block);
+    QVERIFY(listValues.at(5)->getNodeType() == AST::Block);
+    QVERIFY(listValues.at(6)->getNodeType() == AST::Block);
     property = block->getProperties().at(1);
     QVERIFY(property->getName() == "meta");
 
@@ -2685,8 +2726,8 @@ void ParserTest::testBasicBundle()
     QVERIFY(propertyValue->getNodeType() == AST::List);
     listValues = propertyValue->getChildren();
     QVERIFY(listValues.size() == 3);
-    QVERIFY(listValues.at(0)->getNodeType() == AST::Block);
-    QVERIFY(listValues.at(1)->getNodeType() == AST::Block);
+    QVERIFY(listValues.at(0)->getNodeType() == AST::Declaration);
+    QVERIFY(listValues.at(1)->getNodeType() == AST::Declaration);
     property = static_cast<PropertyNode *>(block->getProperties().at(1));
     QVERIFY(property->getName() == "meta");
 
@@ -2711,9 +2752,9 @@ void ParserTest::testBasicBundle()
     QVERIFY(propertyValue->getNodeType() == AST::List);
     listValues = propertyValue->getChildren();
     QVERIFY(listValues.size() == 3);
-    QVERIFY(listValues.at(0)->getNodeType() == AST::BlockBundle);
-    QVERIFY(listValues.at(1)->getNodeType() == AST::BlockBundle);
-    QVERIFY(listValues.at(2)->getNodeType() == AST::BlockBundle);
+    QVERIFY(listValues.at(0)->getNodeType() == AST::BundleDeclaration);
+    QVERIFY(listValues.at(1)->getNodeType() == AST::BundleDeclaration);
+    QVERIFY(listValues.at(2)->getNodeType() == AST::BundleDeclaration);
     property = block->getProperties().at(1);
     QVERIFY(property->getName() == "meta");
 
@@ -2777,14 +2818,14 @@ void ParserTest::testBasicBlocks()
     vector<AST *> nodes = tree->getChildren();
     QVERIFY(nodes.size() == 5);
     AST *node = nodes.at(0);
-    QVERIFY(node->getNodeType() == AST::Block);
+    QVERIFY(node->getNodeType() == AST::Declaration);
     vector<PropertyNode *> properties = static_cast<DeclarationNode *>(node)->getProperties();
     QVERIFY(properties.size() == 2);
     PropertyNode *property = properties.at(0);
     QVERIFY(property != NULL && property->getChildren().size() == 1);
     QVERIFY(property->getName() == "rate");
     AST *propertyValue = property->getChildren().at(0);
-    QVERIFY(propertyValue->getNodeType() == AST::Name);
+    QVERIFY(propertyValue->getNodeType() == AST::Block);
     QVERIFY(static_cast<BlockNode *>(propertyValue)->getName() == "AudioRate");
     property = properties.at(1);
     QVERIFY(property != NULL && property->getChildren().size() == 1);
@@ -2794,7 +2835,7 @@ void ParserTest::testBasicBlocks()
     QVERIFY(static_cast<ValueNode *>(propertyValue)->getStringValue() == "Guitar input.");
 
     node = nodes.at(1);
-    QVERIFY(node->getNodeType() == AST::Block);
+    QVERIFY(node->getNodeType() == AST::Declaration);
     properties = static_cast<DeclarationNode *>(node)->getProperties();
     QVERIFY(properties.size() == 2);
     property = properties.at(0);
@@ -2812,20 +2853,20 @@ void ParserTest::testBasicBlocks()
 
     // No properties
     node = nodes.at(2);
-    QVERIFY(node->getNodeType() == AST::Block);
+    QVERIFY(node->getNodeType() == AST::Declaration);
     properties = static_cast<DeclarationNode *>(node)->getProperties();
     QVERIFY(properties.size() == 0);
 
     // Property is an object
     node = nodes.at(3);
-    QVERIFY(node->getNodeType() == AST::Block);
+    QVERIFY(node->getNodeType() == AST::Declaration);
     properties = static_cast<DeclarationNode *>(node)->getProperties();
     QVERIFY(properties.size() == 2);
     property = properties.at(0);
     QVERIFY(property != NULL && property->getChildren().size() == 1);
     QVERIFY(property->getName() == "value");
     propertyValue = property->getChildren().at(0);
-    QVERIFY(propertyValue->getNodeType() == AST::Block);
+    QVERIFY(propertyValue->getNodeType() == AST::Declaration);
     DeclarationNode *object = static_cast<DeclarationNode *>(propertyValue);
     QVERIFY(object->getName() == "");
     QVERIFY(object->getObjectType() == "");
@@ -2851,7 +2892,7 @@ void ParserTest::testBasicBlocks()
     QVERIFY(static_cast<ValueNode *>(propertyValue)->getStringValue() == "Block as Property");
 
     node = nodes.at(4);
-    QVERIFY(node->getNodeType() == AST::Block);
+    QVERIFY(node->getNodeType() == AST::Declaration);
     properties = static_cast<DeclarationNode *>(node)->getProperties();
     QVERIFY(properties.size() == 2);
     property = properties.at(0);
@@ -2929,7 +2970,7 @@ void ParserTest::testHeader()
     QVERIFY(node->hwVersion() == -1.0);
     QVERIFY(node->getChildren().size() == 1);
     BlockNode *nameNode = static_cast<BlockNode *>(node->getChildren().at(0));
-    QVERIFY(nameNode->getNodeType() == AST::Name);
+    QVERIFY(nameNode->getNodeType() == AST::Block);
     QVERIFY(nameNode->getName() == "Arduino");
     QVERIFY(node->getLine() == 7);
 
@@ -2941,7 +2982,7 @@ void ParserTest::testHeader()
     QVERIFY(node->hwVersion() == -1.0);
     QVERIFY(node->getChildren().size() == 1);
     nameNode = static_cast<BlockNode *>(node->getChildren().at(0));
-    QVERIFY(nameNode->getNodeType() == AST::Name);
+    QVERIFY(nameNode->getNodeType() == AST::Block);
     QVERIFY(nameNode->getName() == "Arduino");
     QVERIFY(node->getLine() == 8);
 
@@ -2953,7 +2994,7 @@ void ParserTest::testHeader()
     QVERIFY(node->hwVersion() == 1.0);
     QVERIFY(node->getChildren().size() == 1);
     nameNode = static_cast<BlockNode *>(node->getChildren().at(0));
-    QVERIFY(nameNode->getNodeType() == AST::Name);
+    QVERIFY(nameNode->getNodeType() == AST::Block);
     QVERIFY(nameNode->getName() == "Arduino");
     QVERIFY(node->getLine() == 9);
 
@@ -2965,10 +3006,10 @@ void ParserTest::testHeader()
     QVERIFY(node->hwVersion() == -1.0);
     QVERIFY(node->getChildren().size() == 2);
     nameNode = static_cast<BlockNode *>(node->getChildren().at(0));
-    QVERIFY(nameNode->getNodeType() == AST::Name);
+    QVERIFY(nameNode->getNodeType() == AST::Block);
     QVERIFY(nameNode->getName() == "Arduino");
     nameNode = static_cast<BlockNode *>(node->getChildren().at(1));
-    QVERIFY(nameNode->getNodeType() == AST::Name);
+    QVERIFY(nameNode->getNodeType() == AST::Block);
     QVERIFY(nameNode->getName() == "RPi");
     QVERIFY(node->getLine() == 11);
 
@@ -2980,10 +3021,10 @@ void ParserTest::testHeader()
     QVERIFY(node->hwVersion() == -1.0);
     QVERIFY(node->getChildren().size() == 2);
     nameNode = static_cast<BlockNode *>(node->getChildren().at(0));
-    QVERIFY(nameNode->getNodeType() == AST::Name);
+    QVERIFY(nameNode->getNodeType() == AST::Block);
     QVERIFY(nameNode->getName() == "Arduino");
     nameNode = static_cast<BlockNode *>(node->getChildren().at(1));
-    QVERIFY(nameNode->getNodeType() == AST::Name);
+    QVERIFY(nameNode->getNodeType() == AST::Block);
     QVERIFY(nameNode->getName() == "RPi");
     QVERIFY(node->getLine() == 12);
 
@@ -2995,10 +3036,10 @@ void ParserTest::testHeader()
     QVERIFY(node->hwVersion() == 1.0);
     QVERIFY(node->getChildren().size() == 2);
     nameNode = static_cast<BlockNode *>(node->getChildren().at(0));
-    QVERIFY(nameNode->getNodeType() == AST::Name);
+    QVERIFY(nameNode->getNodeType() == AST::Block);
     QVERIFY(nameNode->getName() == "Arduino");
     nameNode = static_cast<BlockNode *>(node->getChildren().at(1));
-    QVERIFY(nameNode->getNodeType() == AST::Name);
+    QVERIFY(nameNode->getNodeType() == AST::Block);
     QVERIFY(nameNode->getName() == "RPi");
     QVERIFY(node->getLine() == 13);
 

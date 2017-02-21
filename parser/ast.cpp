@@ -100,12 +100,12 @@ void AST::addScope(string newScope)
     m_scope.push_back(newScope);
 }
 
-int AST::getScopeLevels()
+unsigned int AST::getScopeLevels()
 {
     return m_scope.size();
 }
 
-string AST::getScopeAt(int scopeLevel)
+string AST::getScopeAt(unsigned int scopeLevel)
 {
     return m_scope.at(scopeLevel);
 }

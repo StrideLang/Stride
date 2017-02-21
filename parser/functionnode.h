@@ -15,6 +15,7 @@ public:
     } FunctionType;
 
     FunctionNode(string name, AST *propertiesList, FunctionType type, const char *filename, int line, string namespace_ = "");
+    FunctionNode(string name, AST *scope, AST *propertiesList, FunctionType type, const char *filename, int line);
     ~FunctionNode();
 
     void addChild(AST *t);
@@ -30,6 +31,8 @@ public:
 
     AST *getDomain();
     void setDomain(string domain);
+
+    void resolveScope(AST* scope);
 
     AST *deepCopy();
 

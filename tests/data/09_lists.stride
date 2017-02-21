@@ -24,7 +24,7 @@ constant List_Mixed [4] {
 }
 
 constant List_Namespaces [4] {
-        value: [ ns.Name1, ns.Name2, ns.Name3, ns.Name4 ]
+        value: [ Ns::Name1, Ns::Name2, Ns::Name3, Ns::Name4 ]
 }
 
 #Blocks inside lists in properties

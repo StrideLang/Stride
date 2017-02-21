@@ -354,7 +354,7 @@ void ProjectWindow::showHelperMenu(QPoint where)
     QMenu *functionMenu = m_helperMenu.addMenu(tr("New function"));
     AST *optimizedTree = m_codeModel.getOptimizedTree();
     foreach(AST *node, optimizedTree->getChildren()) {
-        if (node->getNodeType() == AST::Block) {
+        if (node->getNodeType() == AST::Declaration) {
             DeclarationNode *block = static_cast<DeclarationNode *>(node);
             if (block->getObjectType() == "module") {
                 QAction *newAction = functionMenu->addAction(QString::fromStdString(block->getName()), this, SLOT(insertText()));

@@ -5,7 +5,7 @@
 
 DeclarationNode::DeclarationNode(string name, string objectType, AST *propertiesList,
                      const char *filename, int line):
-    AST(AST::Block, filename, line)
+    AST(AST::Declaration, filename, line)
 {
     m_name = name;
     m_objectType = objectType;
@@ -20,7 +20,7 @@ DeclarationNode::DeclarationNode(string name, string objectType, AST *properties
 
 DeclarationNode::DeclarationNode(BundleNode *bundle, string objectType, AST *propertiesList,
                      const char *filename, int line) :
-    AST(AST::BlockBundle, filename, line)
+    AST(AST::BundleDeclaration, filename, line)
 {
     addChild(bundle);
     m_objectType = objectType;
@@ -39,9 +39,9 @@ DeclarationNode::~DeclarationNode()
 
 string DeclarationNode::getName() const
 {
-    if(getNodeType() == AST::Block) {
+    if(getNodeType() == AST::Declaration) {
         return m_name;
-    } else if(getNodeType() == AST::BlockBundle) {
+    } else if(getNodeType() == AST::BundleDeclaration) {
         return getBundle()->getName();
     }
     assert(0 == 1);
@@ -50,7 +50,7 @@ string DeclarationNode::getName() const
 
 BundleNode *DeclarationNode::getBundle() const
 {
-    assert(getNodeType() == AST::BlockBundle);
+    assert(getNodeType() == AST::BundleDeclaration);
     return static_cast<BundleNode *>(m_children.at(0));
 }
 
@@ -117,10 +117,10 @@ AST *DeclarationNode::deepCopy()
     for(unsigned int i = 0; i< m_properties.size(); i++) {
         newProps->addChild(m_properties[i]->deepCopy());
     }
-    if (getNodeType() == AST::BlockBundle) {
+    if (getNodeType() == AST::BundleDeclaration) {
         node = new DeclarationNode(static_cast<BundleNode *>(getBundle()->deepCopy()),
                              m_objectType, newProps, m_filename.data(), m_line);
-    } else if (getNodeType() == AST::Block) {
+    } else if (getNodeType() == AST::Declaration) {
         node = new DeclarationNode(m_name, m_objectType, newProps, m_filename.data(), m_line);
     }
     assert(node);

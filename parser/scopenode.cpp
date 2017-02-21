@@ -6,7 +6,6 @@ ScopeNode::ScopeNode(std::string name, const char *filename, int line) :
     m_name = name;
 }
 
-
 ScopeNode::~ScopeNode()
 {
 

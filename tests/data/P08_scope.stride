@@ -1,0 +1,23 @@
+import Namespace
+import Namespace as Namespace
+import NameSpace as Ns
+
+# namespace members in a stream
+Ns::Value >> Constant;
+Ns::Value_1 + 1.0 >> Constant;
+1.0 + Ns::Value_1 >> Constant;
+Ns::Value_1 + Ns::Value_2 >> Constant;
+Ns::Block_1 >> Ns::Block_2;
+
+Ns::Bundle[1] + Ns::Bundle[2] >> Constant;
+
+[Ns::Value_1, Ns::Value_2] >> Constants;
+[Ns::Bundle[1], Ns::Bundle[2]] >> Constants;
+
+Ns::Block_1[Ns::Index_1] >> Ns::Block_2 [Ns::Index_2];
+Ns::Block_1[Ns::Bundle[1]] >> Ns::Block_2 [Ns::Bundle[2]];
+Ns::Block_1[Ns::Index_1:Ns::Index_2] >> Ns::Block_2 [Ns::Index_1:Ns::Index_2];
+Ns::Block_1[Ns::Bundle[1]:Ns::Bundle[2]] >> Ns::Block_2 [Ns::Bundle[1]:Ns::Bundle[2]];
+
+Input >> Ns::Function () >> Output;
+Input >> Ns::Function ( property: Ns::Value ) >> Output;

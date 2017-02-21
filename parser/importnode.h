@@ -4,7 +4,6 @@
 #include <string>
 
 #include "ast.h"
-#include "scopenode.h"
 
 class ImportNode : public AST
 {

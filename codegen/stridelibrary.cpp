@@ -43,7 +43,7 @@ DeclarationNode *StrideLibrary::findTypeInLibrary(QString typeName)
 {
     foreach (AST *rootNode, m_libraryTrees) {
         foreach (AST *node, rootNode->getChildren()) {
-            if (node->getNodeType() == AST::Block) {
+            if (node->getNodeType() == AST::Declaration) {
                 DeclarationNode *block = static_cast<DeclarationNode *>(node);
                 if (block->getObjectType() != "type") {
                     continue;
@@ -103,7 +103,7 @@ bool StrideLibrary::isValidProperty(PropertyNode *property, DeclarationNode *typ
     Q_ASSERT(portList->getNodeType() == AST::List);
     foreach(AST * port, portList->getChildren()) {
         DeclarationNode *portBlock = static_cast<DeclarationNode *>(port);
-        Q_ASSERT(portBlock->getNodeType() == AST::Block);
+        Q_ASSERT(portBlock->getNodeType() == AST::Declaration);
         Q_ASSERT(portBlock->getObjectType() == "typeProperty");
         PropertyNode *portName = CodeValidator::findPropertyByName(portBlock->getProperties(), "name");
         string portNameInType = static_cast<ValueNode *>(portName->getValue())->getStringValue();

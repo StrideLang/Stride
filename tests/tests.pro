@@ -71,7 +71,6 @@ DISTFILES += \
     data/05_basic_functions.stride \
     data/06_basic_noneswitch.stride \
     data/07_bundle_indeces.stride \
-    data/08_namespace.stride \
     data/09_lists.stride \
     data/10_expressions.stride \
     data/11_modules.stride \
@@ -84,6 +83,7 @@ DISTFILES += \
     data/P05_import_fail.stride \
     data/P06_domains.stride \
     data/P07_type_validation.stride \
+    data/P08_scope.stride \
     data/E01_constant_res.stride \
     data/E02_stream_expansions.stride \
     data/E03_multichn_streams.stride \
