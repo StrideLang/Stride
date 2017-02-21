@@ -8,7 +8,6 @@ BundleNode::BundleNode(string name, ListNode *indexList, const char *filename, i
 {
     addChild(indexList);
     m_name = name;
-    m_namespace = "";
 }
 
 BundleNode::BundleNode(string name, AST *scope, ListNode *indexList, const char *filename, int line) :
@@ -16,25 +15,8 @@ BundleNode::BundleNode(string name, AST *scope, ListNode *indexList, const char 
 {
     addChild(indexList);
     m_name = name;
-    m_namespace = "";
     resolveScope(scope);
 }
-
-BundleNode::BundleNode(string name, string namespace_, ListNode *indexList, const char *filename, int line):
-    AST(AST::Bundle, filename, line)
-{
-    addChild(indexList);
-    m_name = name;
-    m_namespace = namespace_;
-}
-
-//BundleNode::BundleNode(string name, AST *indexStartExp, AST *indexEndExp, int line):
-//    AST(AST::BundleRange, line)
-//{
-//    addChild(indexStartExp);
-//    addChild(indexEndExp);
-//    m_name = name;
-//}
 
 BundleNode::~BundleNode()
 {

@@ -16,13 +16,6 @@ BlockNode::BlockNode(string name, AST *scope, const char *filename, int line) :
     resolveScope(scope);
 }
 
-BlockNode::BlockNode(string name, string namespace_, const char *filename, int line) :
-    AST(AST::Block, filename, line)
-{
-    m_name = name;
-    setNamespace(namespace_);
-}
-
 BlockNode::~BlockNode()
 {
 

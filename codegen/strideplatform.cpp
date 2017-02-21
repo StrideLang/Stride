@@ -58,7 +58,7 @@ StridePlatform::StridePlatform(QStringList platformPaths, QString platform, QStr
                     if (!namespaceName.isEmpty()) {
                         foreach(AST *node, tree->getChildren()) {
                             // Do we need to set namespace recursively or would this do?
-                            node->setNamespace(namespaceName.toStdString());
+//                            node->setNamespace(namespaceName.toStdString());
                         }
                     }
                 }

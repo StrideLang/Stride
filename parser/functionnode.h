@@ -14,7 +14,7 @@ public:
         UserDefined
     } FunctionType;
 
-    FunctionNode(string name, AST *propertiesList, FunctionType type, const char *filename, int line, string namespace_ = "");
+    FunctionNode(string name, AST *propertiesList, FunctionType type, const char *filename, int line);
     FunctionNode(string name, AST *scope, AST *propertiesList, FunctionType type, const char *filename, int line);
     ~FunctionNode();
 
@@ -23,7 +23,6 @@ public:
     void deleteChildren();
 
     string getName() const { return m_name; }
-    string getNamespace() const { return m_namespace; }
     vector<PropertyNode *> getProperties() const;
 
     void addProperty(PropertyNode *newProperty);
@@ -38,7 +37,6 @@ public:
 
 private:
     string m_name;
-    string m_namespace;
     FunctionType m_type;
     vector<PropertyNode *> m_properties;
 };

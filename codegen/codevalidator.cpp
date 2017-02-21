@@ -241,7 +241,7 @@ void CodeValidator::validateTypes(AST *node, QVector<AST *> scopeStack)
             error.lineNumber = node->getLine();
             error.filename = node->getFilename();
             error.errorTokens.push_back(name->getName());
-            error.errorTokens.push_back(name->getNamespace());
+//            error.errorTokens.push_back(name->getNamespace());
             m_errors << error;
         }
 
@@ -254,7 +254,7 @@ void CodeValidator::validateTypes(AST *node, QVector<AST *> scopeStack)
             error.lineNumber = node->getLine();
             error.filename = node->getFilename();
             error.errorTokens.push_back(bundle->getName());
-            error.errorTokens.push_back(bundle->getNamespace());
+//            error.errorTokens.push_back(bundle->getNamespace());
             m_errors << error;
         }
     } else if (node->getNodeType() == AST::Function) {
@@ -266,7 +266,7 @@ void CodeValidator::validateTypes(AST *node, QVector<AST *> scopeStack)
             error.lineNumber = node->getLine();
             error.filename = node->getFilename();
             error.errorTokens.push_back(func->getName());
-            error.errorTokens.push_back(func->getNamespace());
+//            error.errorTokens.push_back(func->getNamespace());
             m_errors << error;
         }
     }
@@ -1093,7 +1093,7 @@ double CodeValidator::evaluateConstReal(AST *node, QVector<AST *> scope, AST *tr
             error.type = LangError::UndeclaredSymbol;
             error.lineNumber = node->getLine();
             error.errorTokens.push_back(nameNode->getName());
-            error.errorTokens.push_back(nameNode->getNamespace());
+//            error.errorTokens.push_back(nameNode->getNamespace());
             errors << error;
         }
         if(declaration && declaration->getNodeType() == AST::Declaration) {
@@ -1137,7 +1137,7 @@ std::string CodeValidator::evaluateConstString(AST *node, QVector<AST *> scope, 
             error.type = LangError::UndeclaredSymbol;
             error.lineNumber = node->getLine();
             error.errorTokens.push_back(nameNode->getName());
-            error.errorTokens.push_back(nameNode->getNamespace());
+//            error.errorTokens.push_back(nameNode->getNamespace());
             errors << error;
         }
         if(declaration && declaration->getNodeType() == AST::Declaration) {

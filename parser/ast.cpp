@@ -10,7 +10,6 @@ AST::AST()
     m_token = AST::None;
     m_line = -1;
     m_rate = -1;
-    m_namespace = "";
 }
 
 AST::AST(Token token, const char *filename, int line)
@@ -19,7 +18,6 @@ AST::AST(Token token, const char *filename, int line)
     m_filename = filename;
     m_line = line;
     m_rate = -1;
-    m_namespace = "";
 }
 
 AST::~AST()

@@ -5,7 +5,7 @@
 #include "valuenode.h"
 
 FunctionNode::FunctionNode(string name, AST *propertiesList, FunctionType type,
-                           const char *filename, int line, string namespace_) :
+                           const char *filename, int line) :
     AST(AST::Function, filename, line)
 {
     m_name = name;
@@ -13,8 +13,6 @@ FunctionNode::FunctionNode(string name, AST *propertiesList, FunctionType type,
         propertiesList->giveChildren(this);
     }
     m_type = type;
-
-    m_namespace = namespace_;
 }
 
 FunctionNode::FunctionNode(string name, AST* scope, AST *propertiesList, FunctionType type,

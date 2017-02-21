@@ -358,7 +358,8 @@ void ProjectWindow::showHelperMenu(QPoint where)
             DeclarationNode *block = static_cast<DeclarationNode *>(node);
             if (block->getObjectType() == "module") {
                 QAction *newAction = functionMenu->addAction(QString::fromStdString(block->getName()), this, SLOT(insertText()));
-                QString text = QString::fromStdString(block->getNamespace());
+//                QString text = QString::fromStdString(block->getNamespace());
+                QString text = "";  // ADDED TO COMMENT OUT THE LINE ABOVE
                 if (!text.isEmpty()) {
                     text += ".";
                 }

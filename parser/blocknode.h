@@ -10,7 +10,6 @@ class BlockNode : public AST
 public:
     BlockNode(string name, const char *filename, int line);
     BlockNode(string name, AST *scope, const char *filename, int line);
-    BlockNode(string name, string namespace_, const char *filename, int line);
 
     ~BlockNode();
 
