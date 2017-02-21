@@ -16,6 +16,7 @@
 #include "fornode.h"
 #include "rangenode.h"
 #include "scopenode.h"
+#include "portpropertynode.h"
 
 #endif // STREAMPARSER_H
 

@@ -2,18 +2,18 @@ use Gamma version 1.0 on PC
 
 module SizeTest {
     ports:          [
-	        port InputPort {
-	            name:       'input'
-	            main: on
-	            direction:  'input'
-	            block:      Input
-	            rate:       InputPortRate
-	            domain:     InputPortDomain
-	            size:       InputPortSize
-	            meta:       "The module's primary input port."
-	        },
-			port OutputPort {
-			name:       'output'
+        port InputPort {
+            name:       'input'
+            main: on
+            direction:  'input'
+            block:      Input
+            rate:       InputPortRate
+            domain:     InputPortDomain
+            size:       InputPortSize
+            meta:       "The module's primary input port."
+        },
+        port OutputPort {
+            name:       'output'
             main: on
             direction:  'output'
             block:      Output
@@ -29,13 +29,13 @@ module SizeTest {
             domain:     InputPortDomain
             reset:      none
         },
-		signal Output [OutputPortSize] {
+        signal Output [OutputPortSize] {
             rate:       OutputPortRate
             domain:     OutputPortDomain
             reset:      none
         }
-		constant InputPortSize { value: 3}
-		constant OutputPortSize {value: 2}
+        constant InputPortSize { value: 3}
+        constant OutputPortSize {value: 2}
     ]
     streams: [
                 Input[1] >> Input[InputPortSize];
@@ -56,14 +56,14 @@ module BlocksTest {
             meta:       "The module's primary input port."
         },
         port OutputPort {
-        name:       'output'
-        main: on
-        direction:  'output'
-        block:      Output
-        rate:       OutputPortRate
-        domain:     OutputPortDomain
-        size:       OutputPortSize
-        meta:       "The module's primary output port."
+            name:       'output'
+            main: on
+            direction:  'output'
+            block:      Output
+            rate:       OutputPortRate
+            domain:     OutputPortDomain
+            size:       OutputPortSize
+            meta:       "The module's primary output port."
     }
 ]
     blocks: [

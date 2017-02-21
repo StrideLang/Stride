@@ -23,6 +23,7 @@ public:
         Import,
         For,
         Scope,
+        PortProperty,
 
         // Built-in types (leaf nodes)
         Int = 0x80,

@@ -1,22 +1,21 @@
-
 signal GuitarIn {
-        rate:	AudioRate
-        meta:	'Guitar input.'
+        rate:   AudioRate
+        meta:   'Guitar input.'
 }
 
 constant Integer {
-        value:	5
-        meta:	"Integer Value."
+        value:  5
+        meta:   "Integer Value."
 }
 
 constant Integer { } # Defaults
 
 block Object {
-        value:	{ prop1: 5; prop2: "hello"; }
-        meta:	"Block as Property"
+        value:  { prop1: 5; prop2: "hello"; }
+        meta:   "Block as Property"
 }
 
 generator ThreeHarmonicPartials {
-        process:	[ Oscillator ()  >> AudioOut[1]; ]
-        meta:		'Stream property'
+        process:    [ Oscillator ()  >> AudioOut[1]; ]
+        meta:       'Stream property'
 }

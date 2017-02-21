@@ -1,0 +1,5 @@
+use Gamma version 1.0 on PC
+
+signal Name {
+    property:   Port.rate
+}

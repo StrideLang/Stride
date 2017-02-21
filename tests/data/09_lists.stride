@@ -4,38 +4,41 @@
 use Gamma version 1.0 on PC
 
 constant List_Integer [4] {
-        value: [ 16, 32, 64, 128 ]
+    value: [ 16, 32, 64, 128 ]
 }
 
 constant List_Real [4] {
-        value: [ 16., 32.1, 64., 128. ]
+    value: [ 16., 32.1, 64., 128. ]
 }
 
 constant List_Strings [4] {
-        value: [ '16', "32.1", '64', "128" ]
+    value: [ '16', "32.1", '64', "128" ]
 }
 
 constant List_Switches [4] {
-        value: [ on, off, on, on ]
+    value: [ on, off, on, on ]
 }
 
 constant List_Mixed [4] {
-        value: [ List_Integer[1], List_Real[2], List_Strings[3], List_Switches[4] ]
+    value: [ List_Integer[1], List_Real[2], List_Strings[3], List_Switches[4] ]
 }
 
 constant List_Namespaces [4] {
-        value: [ Ns::Name1, Ns::Name2, Ns::Name3, Ns::Name4 ]
+    value: [ Ns::Name1, Ns::Name2, Ns::Name3, Ns::Name4 ]
 }
 
 #Blocks inside lists in properties
 
 block BlockName {
-property: [ blockType1 BlockName2 { property: "value" },
-            blockType2 BlockName3 {
+    property:   [
+        blockType1 BlockName2 {
+            property: "value"
+        },
+        blockType2 BlockName3 {
             value: 1.0
             value2: 2.0
-            }
-            ]
+        }
+    ]
 }
 
 # List of lists will parse

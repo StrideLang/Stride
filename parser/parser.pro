@@ -21,7 +21,8 @@ SOURCES += ast.cpp \
     declarationnode.cpp \
     blocknode.cpp \
     scopenode.cpp \
-    platformnode.cpp
+    platformnode.cpp \
+    portpropertynode.cpp
 
 HEADERS += ast.h \
            streamnode.h \
@@ -40,7 +41,8 @@ HEADERS += ast.h \
     blocknode.h \
     scopenode.h \
     keywordnode.h \
-    platformnode.h
+    platformnode.h \
+    portpropertynode.h
 
 BISONSOURCES = lang_stride.y
 FLEXSOURCES = lang_stride.l

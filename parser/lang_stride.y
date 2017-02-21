@@ -66,6 +66,7 @@ NullStream nstream;
 %code requires { #include "keywordnode.h" }
 %code requires { #include "listnode.h" }
 %code requires { #include "platformnode.h" }
+%code requires { #include "portpropertynode.h" }
 %code requires { #include "propertynode.h" }
 %code requires { #include "rangenode.h" }
 %code requires { #include "scopenode.h" }
@@ -91,6 +92,7 @@ NullStream nstream;
     RangeNode *rangeNode;
     KeywordNode *keywordNode;
     ScopeNode *scopeNode;
+    PortPropertyNode *portPropertyNode;
 }
 
 /* declare types for nodes */
@@ -128,6 +130,7 @@ NullStream nstream;
 %type <ast> valueListExp
 %type <ast> scopeDef
 %type <scopeNode> scope
+%type <portPropertyNode> portPropertyDef
 
 
 /* declare tokens */
@@ -615,33 +618,53 @@ property:
     ;
 
 propertyType:
-        NONE            {
+        NONE                {
             $$ = new ValueNode(currentFile, yyloc.first_line);
             COUT << "Keyword: none" << ENDL;
         }
-    |   valueExp        {
+    |   valueExp            {
             $$ = $1;
             COUT << "Value expression as property value!" << ENDL;
         }
-    |   blockType       {
+    |   blockType           {
             $$ = new DeclarationNode("", "" , $1, currentFile, yyloc.first_line);
             AST *props = $1;
             delete props;
             COUT << "Block as property value!" << ENDL;
         }
-    |   listDef         {
+    |   listDef             {
             $$ = $1;
         }
-    |   valueListExp    {
+    |   valueListExp        {
             $$ = $1;
             COUT << "List expression as property value!" << ENDL;
         }
-    |   streamDef       {
+    |   streamDef           {
             $$ = $1;
             COUT << "Stream as property value!" << ENDL;
         }
+    |   portPropertyDef     {
+            $$ = $1;
+            COUT << "Port property as property value!" << ENDL;
+        }
     ;
 
+// =================================
+//  PORT PROPERTY DEFINITION
+// =================================
+
+portPropertyDef:
+        UVAR DOT WORD   {
+            string p;
+            p.append($1); /* string constructor leaks otherwise! */
+            string s;
+            s.append($3); /* string constructor leaks otherwise! */
+            $$ = new PortPropertyNode(s, p, currentFile, yyloc.first_line);
+            COUT << "Port Name: " << $1 << ENDL<< "Port Property: " << $3 << ENDL;
+            free($1);
+            free($3);
+        }
+    ;
 // =================================
 //  VALUE LIST DEFINITION
 // =================================

@@ -12,7 +12,7 @@ signal Rate1 {
 
 
 signal Rate2 {
-   rate: 11025
+    rate: 11025
 }
 
 

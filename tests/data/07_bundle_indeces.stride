@@ -6,13 +6,13 @@
 # User variable should be of type 'constant'
 
 constant CONST {
-	value: 16
-	meta: 	'Array Size.'
+    value:  16
+    meta:   'Array Size.'
 }
 
 constant SIZE [4] {
-	value: [ 16, 32, 64, 128 ]
-	meta: 	'Array Sizes.'
+    value:  [ 16, 32, 64, 128 ]
+    meta:   'Array Sizes.'
 }
 
 # Declarations
@@ -34,7 +34,7 @@ constant THREE [SIZE [2]] {}
 constant FOUR [SIZE [1]] {}
 
 constant TEST {
-	value: ONE [ TWO [ SIZE[1] / 2] + THREE [ 16 + 32 ] ] + FOUR [64] * 2
+    value: ONE [ TWO [ SIZE[1] / 2] + THREE [ 16 + 32 ] ] + FOUR [64] * 2
 }
 
 
@@ -57,4 +57,3 @@ Test () >> AudioOut[1:2];
 AudioIn[1:2] >> Test ();
 
 AudioIn[1:2] >>[ AudioOut[1:2], AudioOut[3:4]];
-
