@@ -193,8 +193,8 @@ void CodeValidator::validateTypes(AST *node, QVector<AST *> scopeStack)
                                 break;
                             }
                         } else if (validType->getNodeType() == AST::Block) {
-                            BlockNode * nameNode = static_cast<BlockNode *>(validType);
-                            DeclarationNode *declaration = findDeclaration(QString::fromStdString(nameNode->getName()), scopeStack, m_tree);
+                            BlockNode * blockNode = static_cast<BlockNode *>(validType);
+                            DeclarationNode *declaration = findDeclaration(QString::fromStdString(blockNode->getName()), scopeStack, m_tree);
                             AST *typeNameValue = declaration->getPropertyValue("typeName");
                             Q_ASSERT(typeNameValue->getNodeType() == AST::String);
                             string validTypeName = static_cast<ValueNode *>(typeNameValue)->getStringValue();
@@ -233,15 +233,26 @@ void CodeValidator::validateTypes(AST *node, QVector<AST *> scopeStack)
     } else if (node->getNodeType() == AST::List) {
          // Children are checked automatically below
     } else if (node->getNodeType() == AST::Block) {
-        BlockNode *name = static_cast<BlockNode *>(node);
-        DeclarationNode *declaration = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scopeStack, m_tree);
+        BlockNode *block = static_cast<BlockNode *>(node);
+        DeclarationNode *declaration = CodeValidator::findDeclaration(QString::fromStdString(block->getName()), scopeStack, m_tree);
         if (!declaration) {
             LangError error;
             error.type = LangError::UndeclaredSymbol;
             error.lineNumber = node->getLine();
             error.filename = node->getFilename();
-            error.errorTokens.push_back(name->getName());
-//            error.errorTokens.push_back(name->getNamespace());
+//            error.errorTokens.push_back(block->getName());
+//            error.errorTokens.push_back(block->getNamespace());
+            string blockName = "";
+            if (block->getScopeLevels())
+            {
+                for (unsigned int i = 0; i < block->getScopeLevels(); i++)
+                {
+                    blockName += block->getScopeAt(i);
+                    blockName += "::";
+                }
+            }
+            blockName += block->getName();
+            error.errorTokens.push_back(blockName);
             m_errors << error;
         }
 
@@ -253,8 +264,19 @@ void CodeValidator::validateTypes(AST *node, QVector<AST *> scopeStack)
             error.type = LangError::UndeclaredSymbol;
             error.lineNumber = node->getLine();
             error.filename = node->getFilename();
-            error.errorTokens.push_back(bundle->getName());
+//            error.errorTokens.push_back(bundle->getName());
 //            error.errorTokens.push_back(bundle->getNamespace());
+            string bundleName = "";
+            if (bundle->getScopeLevels())
+            {
+                for (unsigned int i = 0; i < bundle->getScopeLevels(); i++)
+                {
+                    bundleName += bundle->getScopeAt(i);
+                    bundleName += "::";
+                }
+            }
+            bundleName += bundle->getName();
+            error.errorTokens.push_back(bundleName);
             m_errors << error;
         }
     } else if (node->getNodeType() == AST::Function) {
@@ -265,8 +287,19 @@ void CodeValidator::validateTypes(AST *node, QVector<AST *> scopeStack)
             error.type = LangError::UndeclaredSymbol;
             error.lineNumber = node->getLine();
             error.filename = node->getFilename();
-            error.errorTokens.push_back(func->getName());
+//            error.errorTokens.push_back(func->getName());
 //            error.errorTokens.push_back(func->getNamespace());
+            string funcName = "";
+            if (func->getScopeLevels())
+            {
+                for (unsigned int i = 0; i < func->getScopeLevels(); i++)
+                {
+                    funcName += func->getScopeAt(i);
+                    funcName += "::";
+                }
+            }
+            funcName += func->getName();
+            error.errorTokens.push_back(funcName);
             m_errors << error;
         }
     }
@@ -1085,15 +1118,26 @@ double CodeValidator::evaluateConstReal(AST *node, QVector<AST *> scope, AST *tr
             return evaluateConstReal(member, scope, tree, errors);
         }
     } else if (node->getNodeType() == AST::Block) {
-        BlockNode *nameNode = static_cast<BlockNode *>(node);
-        QString name = QString::fromStdString(nameNode->getName());
+        BlockNode *blockNode = static_cast<BlockNode *>(node);
+        QString name = QString::fromStdString(blockNode->getName());
         DeclarationNode *declaration = findDeclaration(name, scope, tree);
         if (!declaration) {
             LangError error;
             error.type = LangError::UndeclaredSymbol;
             error.lineNumber = node->getLine();
-            error.errorTokens.push_back(nameNode->getName());
-//            error.errorTokens.push_back(nameNode->getNamespace());
+//            error.errorTokens.push_back(blockNode->getName());
+//            error.errorTokens.push_back(blockNode->getNamespace());
+            string blockName = "";
+            if (blockNode->getScopeLevels())
+            {
+                for (unsigned int i = 0; i < blockNode->getScopeLevels(); i++)
+                {
+                    blockName += blockNode->getScopeAt(i);
+                    blockName += "::";
+                }
+            }
+            blockName += blockNode->getName();
+            error.errorTokens.push_back(blockName);
             errors << error;
         }
         if(declaration && declaration->getNodeType() == AST::Declaration) {
@@ -1129,15 +1173,26 @@ std::string CodeValidator::evaluateConstString(AST *node, QVector<AST *> scope, 
             return evaluateConstString(member, scope, tree, errors);
         }
     } else if (node->getNodeType() == AST::Block) {
-        BlockNode *nameNode = static_cast<BlockNode *>(node);
-        QString name = QString::fromStdString(nameNode->getName());
+        BlockNode *blockNode = static_cast<BlockNode *>(node);
+        QString name = QString::fromStdString(blockNode->getName());
         DeclarationNode *declaration = findDeclaration(name, scope, tree);
         if (!declaration) {
             LangError error;
             error.type = LangError::UndeclaredSymbol;
             error.lineNumber = node->getLine();
-            error.errorTokens.push_back(nameNode->getName());
-//            error.errorTokens.push_back(nameNode->getNamespace());
+//            error.errorTokens.push_back(blockNode->getName());
+//            error.errorTokens.push_back(blockNode->getNamespace());
+            string blockName = "";
+            if (blockNode->getScopeLevels())
+            {
+                for (unsigned int i = 0; i < blockNode->getScopeLevels(); i++)
+                {
+                    blockName += blockNode->getScopeAt(i);
+                    blockName += "::";
+                }
+            }
+            blockName += blockNode->getName();
+            error.errorTokens.push_back(blockName);
             errors << error;
         }
         if(declaration && declaration->getNodeType() == AST::Declaration) {
@@ -1569,8 +1624,8 @@ int CodeValidator::getNodeSize(AST *node, AST *tree)
             }
         }
     } else if (node->getNodeType() == AST::Block) {
-        BlockNode *nameNode = static_cast<BlockNode *>(node);
-        DeclarationNode *block = findDeclaration(QString::fromStdString(nameNode->getName()), QVector<AST *>(), tree);
+        BlockNode *blockNode = static_cast<BlockNode *>(node);
+        DeclarationNode *block = findDeclaration(QString::fromStdString(blockNode->getName()), QVector<AST *>(), tree);
         if (!block) {
             size = -1; // Block not declared
         } else if (block->getNodeType() == AST::BundleDeclaration) {

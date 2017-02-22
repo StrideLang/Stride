@@ -506,7 +506,7 @@ void ParserTest::testImport()
     error = errors.front();
     QVERIFY(error.type == LangError::UndeclaredSymbol);
     QVERIFY(error.lineNumber == 9);
-    QVERIFY(error.errorTokens[0] == "LowPass");
+    QVERIFY(error.errorTokens[0] == "F::LowPass");
 
     tree->deleteChildren();
     delete tree;

@@ -1,0 +1,7 @@
+use Discovery_M7 version 1.0 on DiscoveryBoard
+
+import generators
+
+signal Silence { default: 0.0 }
+
+Silence >> AudioOut;

@@ -1,0 +1,13 @@
+#use Gamma version 1.0 on PC
+
+use Discovery_M7 version 1.0 on DiscoveryBoard
+
+import generators
+
+signal Modulator {}
+
+Oscillator (frequency: 1) >> Modulator;
+
+Oscillator (frequency: 440 amplitude: 0.1) 
+>> Level (gain: Modulator) 
+>> AudioOut;
