@@ -41,7 +41,6 @@ private Q_SLOTS:
 
     // Parser
     void testModules();
-//    void testExpressions();
     void testScope();
     void testPortProperty();
     void testBundleIndeces();
@@ -1594,91 +1593,7 @@ void ParserTest::testLists()
 
     tree->deleteChildren();
     delete tree;
-
-
 }
-
-//void ParserTest::testExpressions()
-//{
-//    AST *tree;
-//    tree = AST::parseFile(QString(QFINDTESTDATA("data/10_expressions.stride")).toStdString().c_str());
-//    QVERIFY(tree != NULL);
-//    vector<AST *> nodes = tree->getChildren();
-//    StreamNode *stream = static_cast<StreamNode *>(nodes.at(1));
-//    QVERIFY(stream->getNodeType() == AST::Stream);
-//    ExpressionNode *expression = static_cast<ExpressionNode *>(stream->getLeft());
-//    QVERIFY(expression->getNodeType() == AST::Expression);
-//    QVERIFY(expression->getExpressionType() == ExpressionNode::Greater);
-
-//    stream = static_cast<StreamNode *>(nodes.at(2));
-//    QVERIFY(stream->getNodeType() == AST::Stream);
-//    expression = static_cast<ExpressionNode *>(stream->getLeft());
-//    QVERIFY(expression->getNodeType() == AST::Expression);
-//    QVERIFY(expression->getExpressionType() == ExpressionNode::Lesser);
-
-//    stream = static_cast<StreamNode *>(nodes.at(3));
-//    QVERIFY(stream->getNodeType() == AST::Stream);
-//    expression = static_cast<ExpressionNode *>(stream->getLeft());
-//    QVERIFY(expression->getNodeType() == AST::Expression);
-//    QVERIFY(expression->getExpressionType() == ExpressionNode::Equal);
-
-//    stream = static_cast<StreamNode *>(nodes.at(4));
-//    QVERIFY(stream->getNodeType() == AST::Stream);
-//    expression = static_cast<ExpressionNode *>(stream->getLeft());
-//    QVERIFY(expression->getNodeType() == AST::Expression);
-//    QVERIFY(expression->getExpressionType() == ExpressionNode::NotEqual);
-
-//    stream = static_cast<StreamNode *>(nodes.at(5));
-//    QVERIFY(stream->getNodeType() == AST::Stream);
-//    expression = static_cast<ExpressionNode *>(stream->getLeft());
-//    QVERIFY(expression->getNodeType() == AST::Expression);
-//    QVERIFY(expression->getExpressionType() == ExpressionNode::GreaterEqual);
-
-//    stream = static_cast<StreamNode *>(nodes.at(6));
-//    QVERIFY(stream->getNodeType() == AST::Stream);
-//    expression = static_cast<ExpressionNode *>(stream->getLeft());
-//    QVERIFY(expression->getNodeType() == AST::Expression);
-//    QVERIFY(expression->getExpressionType() == ExpressionNode::LesserEqual);
-
-//    stream = static_cast<StreamNode *>(nodes.at(7));
-//    QVERIFY(stream->getNodeType() == AST::Stream);
-//    expression = static_cast<ExpressionNode *>(stream->getLeft());
-//    QVERIFY(expression->getNodeType() == AST::Expression);
-//    QVERIFY(expression->getExpressionType() == ExpressionNode::Greater);
-
-//    stream = static_cast<StreamNode *>(nodes.at(8));
-//    QVERIFY(stream->getNodeType() == AST::Stream);
-//    expression = static_cast<ExpressionNode *>(stream->getLeft());
-//    QVERIFY(expression->getNodeType() == AST::Expression);
-//    QVERIFY(expression->getExpressionType() == ExpressionNode::Lesser);
-
-//    stream = static_cast<StreamNode *>(nodes.at(9));
-//    QVERIFY(stream->getNodeType() == AST::Stream);
-//    expression = static_cast<ExpressionNode *>(stream->getLeft());
-//    QVERIFY(expression->getNodeType() == AST::Expression);
-//    QVERIFY(expression->getExpressionType() == ExpressionNode::Equal);
-
-//    stream = static_cast<StreamNode *>(nodes.at(10));
-//    QVERIFY(stream->getNodeType() == AST::Stream);
-//    expression = static_cast<ExpressionNode *>(stream->getLeft());
-//    QVERIFY(expression->getNodeType() == AST::Expression);
-//    QVERIFY(expression->getExpressionType() == ExpressionNode::NotEqual);
-
-//    stream = static_cast<StreamNode *>(nodes.at(11));
-//    QVERIFY(stream->getNodeType() == AST::Stream);
-//    expression = static_cast<ExpressionNode *>(stream->getLeft());
-//    QVERIFY(expression->getNodeType() == AST::Expression);
-//    QVERIFY(expression->getExpressionType() == ExpressionNode::GreaterEqual);
-
-//    stream = static_cast<StreamNode *>(nodes.at(12));
-//    QVERIFY(stream->getNodeType() == AST::Stream);
-//    expression = static_cast<ExpressionNode *>(stream->getLeft());
-//    QVERIFY(expression->getNodeType() == AST::Expression);
-//    QVERIFY(expression->getExpressionType() == ExpressionNode::LesserEqual);
-
-//    tree->deleteChildren();
-//    delete tree;
-//}
 
 void ParserTest::testScope()
 {
