@@ -3,8 +3,8 @@
 #include <string>
 #include <vector>
 
-#include <cstdio>   // for fopen
-#include <cstdarg>  //for var args
+#include <cstdio>   // For fopen
+#include <cstdarg>  // For var args
 #include <cerrno>   // For error codes
 #include <cstring>  // For strerror
 
@@ -146,7 +146,6 @@ NullStream nstream;
 %token USE VERSION WITH IMPORT AS FOR NONE ON OFF
 %token BITAND BITOR BITNOT
 %token STREAMRATE
-//%token STREAMDOMAIN
 
 %left STREAM
 %left AND OR
@@ -166,7 +165,7 @@ entry:
         /*epsilon*/     {}
     |   entry start     { COUT << ENDL << "Grabbing Next ..." << ENDL ; }
     |   entry SEMICOLON { COUT << "Ignoring Semicolon!" << ENDL ; }
-	;
+    ;
 
 start:
         platformDef {
@@ -431,7 +430,7 @@ streamDef:
     ;
 
 // =================================
-//    SCOPE DEFINITION
+//  SCOPE DEFINITION
 // =================================
 
 scopeDef:
@@ -479,16 +478,6 @@ bundleDef:
             COUT << "Streaming ... " << ENDL;
             free($2);
         }
-//    |   WORD DOT UVAR '[' indexList ']' {
-//            string ns;
-//            ns.append($1); /* string constructor leaks otherwise! */
-//            string s;
-//            s.append($3); /* string constructor leaks otherwise! */
-//            $$ = new BundleNode(s, ns, $5, currentFile, yyloc.first_line);
-//            COUT << "Bundle name: " << $3  << " in NameSpace: " << $1 << ENDL;
-//            free($1);
-//            free($3);
-//        }
     ;
 
 // ================================= 
@@ -534,29 +523,6 @@ functionDef:
             COUT << "User function: " << $2 << " in scope!" << ENDL;
             free($2);
         }
-//    |   WORD DOT UVAR '(' ')'               {
-//            string ns;
-//            ns.append($1); /* string constructor leaks otherwise! */
-//            string s;
-//            s.append($3); /* string constructor leaks otherwise! */
-//            $$ = new FunctionNode(s, NULL, FunctionNode::UserDefined, currentFile, yyloc.first_line, ns);
-//            COUT << "Function: " << $3 << " in NameSpace: " << $1 << ENDL;
-//            free($1);
-//            free($3);
-//        }
-//    |   WORD DOT UVAR '(' properties ')'    {
-
-//            string ns;
-//            ns.append($1); /* string constructor leaks otherwise! */
-//            string s;
-//            s.append($3); /* string constructor leaks otherwise! */
-//            $$ = new FunctionNode(s, $5, FunctionNode::UserDefined, currentFile, yyloc.first_line, ns);
-//            AST *props = $5;
-//            delete props;
-//            COUT << "Function: " << $3 << " in NameSpace: " << $1 << ENDL;
-//            free($1);
-//            free($3);
-//        }
     ;
 
 // ================================= 
@@ -596,13 +562,6 @@ property:
             COUT << "Property: " << $1 << ENDL << "New property ... " << ENDL;
             free($1);
         }
-//    |   WORD COLON STREAMDOMAIN {
-//            string s;
-//            s.append($1); /* string constructor leaks otherwise! */
-//            $$ = new PropertyNode(s, new ValueNode("", -1), currentFile, yyloc.first_line);
-//            COUT << "Property: " << $1 << ENDL << "New property ... " << ENDL;
-//            free($1);
-//        }
     |   WORD COLON STREAMRATE   {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
@@ -656,11 +615,12 @@ portPropertyDef:
             string s;
             s.append($3); /* string constructor leaks otherwise! */
             $$ = new PortPropertyNode(s, p, currentFile, yyloc.first_line);
-            COUT << "Port Name: " << $1 << ENDL<< "Port Property: " << $3 << ENDL;
+            COUT << "Port Name: " << $1 << ENDL << "Port Property: " << $3 << ENDL;
             free($1);
             free($3);
         }
     ;
+
 // =================================
 //  VALUE LIST DEFINITION
 // =================================
@@ -1068,7 +1028,7 @@ valueExp:
 // ================================= 
 //  STREAM EXPRESSION
 // =================================
-	
+
 streamExp:
         streamComp STREAM streamExp {
             $$ = new StreamNode($1, $3, currentFile, yyloc.first_line);
@@ -1079,9 +1039,9 @@ streamExp:
     ;
 
 // ================================= 
-//	INDEX COMPONENTS
+//  INDEX COMPONENTS
 // =================================
-	
+
 indexComp:
         INT             {
             $$ = new ValueNode($1, currentFile, yyloc.first_line);
@@ -1103,16 +1063,6 @@ indexComp:
             COUT << "Index/Size User variable: " << $2 << " in scope!" << ENDL;
             free($2);
         }
-//    |   WORD DOT UVAR   {
-//            string ns;
-//            ns.append($1); /* string constructor leaks otherwise! */
-//            string s;
-//            s.append($3); /* string constructor leaks otherwise! */
-//            $$ = new BlockNode(s, ns, currentFile, yyloc.first_line);
-//            COUT << "Index/Size User variable: " << $3 << " in NameSpace: " << $1 << ENDL;
-//            free($1);
-//            free($3);
-//        }
     |   bundleDef       {
             BundleNode *bundle = $1;
             COUT << "Resolving indexed bundle ..." << bundle->getName() << ENDL;
@@ -1120,9 +1070,9 @@ indexComp:
     ;
 
 // ================================= 
-//	STREAM COMPONENTS
+//  STREAM COMPONENTS
 // =================================
-	
+
 streamComp:
         UVAR            {
             string s;
@@ -1142,17 +1092,6 @@ streamComp:
             COUT << "Streaming ... " << ENDL;
             free($2);
         }
-//    |   WORD DOT UVAR	{
-//            string ns;
-//            ns.append($1); /* string constructor leaks otherwise! */
-//            string s;
-//            s.append($3); /* string constructor leaks otherwise! */
-//            $$ = new BlockNode(s, ns, currentFile, yyloc.first_line);
-//            COUT << "User variable: " << $3 << " in NameSpace: " << $1 << ENDL;
-//            COUT << "Streaming ... " << ENDL;
-//            free($1);
-//            free($3);
-//        }
     |   bundleDef       {
             COUT << "Resolving indexed bundle ..." << ENDL;
             COUT << "Streaming ... " << ENDL;
@@ -1222,16 +1161,6 @@ valueComp:
             COUT << "User variable: " << $2 << " in scope!" << ENDL;
             free($2);
         }
-//    |   WORD DOT UVAR   {
-//            string ns;
-//            ns.append($1); /* string constructor leaks otherwise! */
-//            string s;
-//            s.append($3); /* string constructor leaks otherwise! */
-//            $$ = new BlockNode(s, ns, currentFile, yyloc.first_line);
-//            COUT << "User variable: " << $3 << " in NameSpace: " << $1 << ENDL;
-//            free($1);
-//            free($3);
-//        }
     |   bundleDef       {
             $$ = $1;
             COUT << "Resolving indexed bundle ..." << ENDL;
@@ -1249,7 +1178,6 @@ void yyerror(const char *s, ...){
 //    This function is called by the lexer. We do not know how many arguments exist when
 //    called. It is safer not to get the arguments to avoid an out of bound read.
 
-
 //    va_list ap;
 //    va_start(ap, s);
 
@@ -1259,6 +1187,7 @@ void yyerror(const char *s, ...){
 //    vfprintf(stderr, s, ap);
 //    fprintf(stderr, "\n");
 //    fprintf(stderr, "On file %s.\n", currentFile);
+
     cout << "Parser reported error: " << s << endl;
     cout << "Unexpected token: " << yytext << " on line: " <<  yylineno << endl;
 
