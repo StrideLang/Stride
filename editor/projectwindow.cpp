@@ -359,9 +359,16 @@ void ProjectWindow::showHelperMenu(QPoint where)
             if (block->getObjectType() == "module") {
                 QAction *newAction = functionMenu->addAction(QString::fromStdString(block->getName()), this, SLOT(insertText()));
 //                QString text = QString::fromStdString(block->getNamespace());
-                QString text = "";  // ADDED TO COMMENT OUT THE LINE ABOVE
-                if (!text.isEmpty()) {
-                    text += ".";
+//                if (!text.isEmpty()) {
+//                    text += ".";
+//                }
+                QString text = "";
+                if (block->getScopeLevels()) {
+                    for (unsigned int i = 0; i < block->getScopeLevels(); i++)
+                    {
+                        text += QString::fromStdString(block->getScopeAt(i));
+                        text += "::";
+                    }
                 }
                 text += QString::fromStdString(block->getName()) + "(";
                 ListNode *portList = static_cast<ListNode *>(block->getPropertyValue("ports"));
