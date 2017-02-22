@@ -1,71 +1,70 @@
 use Gamma version 1.0 on PC
 
 module Sum {
-        ports: [
-                port InputsProperty {
-                name: "inputs"
-                block: Inputs
-                main: on
-                direction: "input"
+    ports: [
+        port InputsProperty {
+            name:       "inputs"
+            block:      Inputs
+            main:       on
+            direction:  "input"
         },
         port OutputsProperty {
-        name: "outputs"
-        block: Inputs
-        main: on
-        direction: "output"
-},
-                port SizeProperty {
-                        name: "size"
-                        block: Size
+            name:       "outputs"
+            block:       Inputs
+            main:       on
+            direction:  "output"
+        },
+        port SizeProperty {
+            name:       "size"
+            block:       Size
+        },
+        port ResetProperty {
+            name:       "reset"
+            block:      Reset
+        }
+    ]
+    blocks:  [
+        constant Size { value: 2 },
+        trigger Reset {},
+#       signal Inputs [Size] {
+#           type:   [ 'Stream Real', 'Stream Integer' ]
+#           default :       [ 0.0 , 0 ]
+#           rate:           streamRate
+#           domain:         streamDomain
+#           reset:          Reset
+#       },
+        signal Output {
+#           type:           [ 'Stream Real', 'Stream Integer' ]
+            default :       [ 0.0 , 0 ]
+#           rate:           streamRate
+            domain:         streamDomain
+#           reset:          Reset
+            },
+        reaction Adder {
+            output:         Sum
+            onExecution:    AdderReset              # Is this Add's or Adder's Reset? (SCOPE)
+            terminateWhen:  Terminate
+            blocks:  [
+                signal Index {
+                        default:        1
+                        #domain:         streamDomain
+                        #reset:          AdderReset
                 },
-                port ResetProperty {
-                        name: "reset"
-                        block: Reset
-                }
-        ]
-        blocks:  [
-                constant Size { value: 2 },
-                trigger Reset {},
-#                signal Inputs [Size] {
-#                        type:           [ 'Stream Real', 'Stream Integer' ]
-#                        default :       [ 0.0 , 0 ]
-#                        #rate:           streamRate
-#                        domain:         streamDomain
-#                        #reset:          Reset
-#                },
-                signal Output {
-#                        type:           [ 'Stream Real', 'Stream Integer' ]
-                        default :       [ 0.0 , 0 ]
-                        #rate:           streamRate
-                        domain:         streamDomain
-                        #reset:          Reset
-                },
-                reaction Adder {
-                        output:         Sum
-                        onExecution:    AdderReset              # Is this Add's or Adder's Reset? (SCOPE)
-                        terminateWhen:  Terminate
-                        blocks:  [
-                                signal Index {
-                                        default:        1
-                                        #domain:         streamDomain
-                                        #reset:          AdderReset
-                                },
-                                signal Sum      {
+                signal Sum      {
 #                                        type:           [ 'Stream Real', 'Stream Integer' ]
-                                        default:        [ 0.0 , 0 ]
-                                        #domain:         streamDomain
-                                        #reset:          AdderReset
-                                },
-                                trigger AdderReset  { },
-                                trigger Terminate { }
-                        ]
-                        streams:        [
-                                #Inputs[Index] + Sum >> Sum;
-                                Index + 1 >> Index;
-#                                [ Index , Size ] >> Greater () >> Terminate;
-                        ]
-                }
-        ]
-        streams:        Adder () >> Output;
+                        default:        [ 0.0 , 0 ]
+                        #domain:         streamDomain
+                        #reset:          AdderReset
+                },
+                trigger AdderReset  { },
+                trigger Terminate { }
+            ]
+            streams:        [
+#               Inputs[Index] + Sum >> Sum;
+                Index + 1 >> Index;
+#               [ Index , Size ] >> Greater () >> Terminate;
+            ]
+        }
+    ]
+    streams:        Adder () >> Output;
 }
-

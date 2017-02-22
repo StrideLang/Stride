@@ -1,54 +1,53 @@
 use Gamma version 1.0 on PC
 
 constant Integers [4] {
-        value: [ 2, 32, 64, 128 ]
-        meta: 	'Integer bundle.'
+    value:  [ 2, 32, 64, 128 ]
+    meta:   'Integer bundle.'
 }
 
 constant Floats [4] {
-        value: [ 16.1, 32.2, 64, 128.3  ]
-        meta: 	'Real bundle.'
+    value:  [ 16.1, 32.2, 64, 128.3  ]
+    meta:   'Real bundle.'
 }
 
 constant Strings [4] {
-        value: [ 'a', 'b', 'c', 'd' ]
-        meta: 	'String bundle.'
+    value:  [ 'a', 'b', 'c', 'd' ]
+    meta:   'String bundle.'
 }
 
 
 # Should work
 constant Array_Int[ Integers[1] ] { value: [2,3] }
 constant Value_Meta {
-    value: Integers[1];
-    meta: Strings[2]
+    value:  Integers[1];
+    meta:   Strings[2]
 }
 constant Value_Meta_1[4] {
-    value: Integers;
+    value:  Integers;
 }
 
 constant Values_1[4] {
-    value: Floats;
+    value:  Floats;
 }
 
 constant Values_2[2] {
-    value: Floats[1:2];
+    value:  Floats[1:2];
 }
 
 #Should fail
 
 constant Bad_Value_Meta {
-    value: Strings[2]
-    meta: Floats[2] # meta needs string not real
+    value:  Strings[2]
+    meta:   Floats[2] # meta needs string not real
 }
 
 constant Values_Mismatch[3] {
-    value: Floats; # size mismatch
+    value:  Floats; # size mismatch
 }
 
 constant Values_Mismatch_2[3] {
-    value: Floats[1:2]; # size mismatch
+    value:  Floats[1:2]; # size mismatch
 }
 
 constant Array_Float[ Floats[1] ] { value: 1 } # index must be integer
 constant Array_String[ Strings[1] ] { value: 1 } # index must be integer
-

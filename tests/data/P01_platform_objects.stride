@@ -5,38 +5,38 @@ invalid InvalidType {
 }
 
 signal Name {
-    meta: "hello"
+    meta:   "hello"
 }
 # Should fail
 signal WrongObject {
-    meta: 34
+    meta:   34
 }
 
 switch Switch {
-    default: off
+    default:    off
 }
 
 # Should fail
 switch WrongSwitch {
-    default: 35
+    default:    35
 }
 
 
 signal Signal {
-    rate: 44100
-    meta: "signal"
+    rate:   44100
+    meta:   "signal"
 }
 
 # Wrong properties for type
 signal Signal2 {
-    badproperty: none
-    meta: "badproperty"
+    badproperty:    none
+    meta:           "badproperty"
 }
 
 constant Const {
-    value: 3.1
+    value:  3.1
 }
 # Should fail
 constant WrongConst {
-    value: Signal2
+    value:  Signal2
 }

@@ -1,12 +1,12 @@
 use Gamma version 1.0 on PC
 
 constant Const {
-        value: 16
+    value:  16
 }
 
 constant Size [4] {
-	value: [ 16, 32, 64, 128 ]
-	meta: 	'Array Sizes.'
+    value:  [ 16, 32, 64, 128 ]
+    meta:   'Array Sizes.'
 }
 
 switch Const { }
