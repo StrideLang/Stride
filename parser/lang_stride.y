@@ -1220,7 +1220,7 @@ AST *parse(const char *filename){
     }
 
     parseErrors.clear();
-    fopen_s(&file, filename, "r");
+    file = fopen(filename, "r");
 
     if (!file){
         LangError newError;
