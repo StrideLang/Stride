@@ -1,4 +1,3 @@
-
 unix {
     !macx {
         use_lua {
@@ -20,11 +19,10 @@ unix {
         }
     }
 }
-win32 {
 
-    FLEX_BIN_PATH = C:\Tools\flex-2.5.4\bin
-    FLEX_LIB_PATH = C:\Tools\flex-2.5.4\lib
-    BISON_BIN_PATH = C:\Tools\bison-2.4.1\bin
+win32-msvc2015 {
+    FLEX_BIN_PATH = C:\Tools\winflexbison\bin\Release
+    BISON_BIN_PATH = C:\Tools\winflexbison\bin\Release
     use_lua {
 # These need to be revised for windows.
       LUA_INCLUDE_PATH += C:\Tools\Lua\5.1\include

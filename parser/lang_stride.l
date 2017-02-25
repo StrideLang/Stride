@@ -1,5 +1,6 @@
 %{
-#include <stdio.h>
+#include <cstdio>
+#include <cstdlib>
 #include "lang_stride.parser.hpp"
 #define YY_DECL extern "C" int yylex()
 
@@ -33,7 +34,7 @@ CLETTER     [A-Z]
 ","     { return COMMA; }
 "."     { return DOT; }
 ":"     { return COLON; }
-"::"     { return COLONCOLON; }
+"::"    { return COLONCOLON; }
 ";"     { return SEMICOLON; }
 ">>"    { return STREAM; }
 
@@ -61,8 +62,8 @@ CLETTER     [A-Z]
 
 "streamRate"    { return STREAMRATE; }
 
-{DIGIT}+\.{DIGIT}*  { yylval.fval = atof(yytext); return FLOAT; }
-{DIGIT}*\.{DIGIT}+  { yylval.fval = atof(yytext); return FLOAT; }
+{DIGIT}+\.{DIGIT}*  { yylval.fval = strtod(yytext, NULL); return REAL; }
+{DIGIT}*\.{DIGIT}+  { yylval.fval = strtod(yytext, NULL); return REAL; }
 {DIGIT}+            { yylval.ival = atoi(yytext); return INT; }
 
 (_)*{CLETTER}({LETTER}|{CLETTER}|{DIGIT}|_)*    { yylval.sval = strdup(yytext); return UVAR; }

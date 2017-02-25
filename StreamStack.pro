@@ -4,11 +4,12 @@ SUBDIRS = parser \
           editor \
           codegen \
           tests \
-    compiler
+          compiler
 
-editor.depends = parser codegen
 codegen.depends = parser
 tests.depends = parser codegen
+editor.depends = parser codegen
+compiler.depends = parser codegen
 
 use_lua {
     message(Building LUA support)

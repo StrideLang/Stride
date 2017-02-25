@@ -1,10 +1,7 @@
 %{
 #include <iostream>
-#include <string>
 #include <vector>
-
 #include <cstdio>   // For fopen
-#include <cstdarg>  // For var args
 #include <cerrno>   // For error codes
 #include <cstring>  // For strerror
 
@@ -12,18 +9,27 @@
 
 using namespace std;
 
-extern "C" int yylex();
-extern "C" int yylineno;
-extern "C" char * yytext;
-extern "C" FILE *yyin;
-extern "C" int errno ;
+#ifdef __GNUC__
+    extern "C" int yylex();
+    extern "C" FILE *yyin;
+    extern "C" int yylineno;
+    extern "C" char * yytext;
+    extern "C" int errno;
+#else
+    extern "C" {
+        int yylex();
+        FILE *yyin;
+        int yylineno;
+        char * yytext;
+//        int errno;        // THIS IS CAUSING A LINKING WARNING WITH MSVC 2015
+    }
+#endif
 
-extern void yyrestart  (FILE * input_file );
+extern void yyrestart (FILE *input_file );
 
 std::vector<LangError> parseErrors;
 
-void yyerror(const char *s, ...);
-void syntaxError(const char *s, ...);
+void yyerror(const char *s);
 
 AST *tree_head;
 
@@ -135,7 +141,7 @@ NullStream nstream;
 
 /* declare tokens */
 %token  <ival>  INT
-%token  <fval>  FLOAT
+%token  <fval>  REAL
 %token  <sval>  UVAR
 %token  <sval>  WORD
 %token  <sval>  STRING
@@ -189,7 +195,8 @@ start:
             COUT << "Stream Definition Resolved!" << ENDL;
         }
     |   ERROR       {
-            syntaxError("Unrecognized character", $1, yyloc.first_line);
+            COUT << "Unrecognized Character: " << $1 << ENDL;
+            yyerror($1);
         }
     ;
 
@@ -228,7 +235,7 @@ languagePlatform:
             COUT << "Platform: " << $2 << ENDL << " Using latest version!" << ENDL;
             free($2);
         }
-    |   USE UVAR VERSION FLOAT  {
+    |   USE UVAR VERSION REAL  {
             string s;
             s.append($2); /* string constructor leaks otherwise! */
             $$ = new PlatformNode(s, $4, currentFile, yyloc.first_line);
@@ -246,7 +253,7 @@ targetPlatform:
              COUT << "Target platform: " << $2 << ENDL << "Target Version: Current!" << ENDL;
              free($2);
         }
-    |   ON UVAR VERSION FLOAT   {
+    |   ON UVAR VERSION REAL   {
             HwPlatform *hwPlatform = new HwPlatform;
             hwPlatform->name = $2;
             hwPlatform->version = $4;
@@ -1119,7 +1126,7 @@ valueComp:
             $$ = new ValueNode($1, currentFile, yyloc.first_line);
             COUT << "Integer: " << $1 << ENDL;
         }
-    |   FLOAT           {
+    |   REAL           {
             $$ = new ValueNode($1, currentFile, yyloc.first_line);
             COUT << "Real: " << $1 << ENDL;
         }
@@ -1173,7 +1180,7 @@ valueComp:
 
 %%
 
-void yyerror(const char *s, ...){
+void yyerror(const char *s){
 
 //    This function is called by the lexer. We do not know how many arguments exist when
 //    called. It is safer not to get the arguments to avoid an out of bound read.
@@ -1199,25 +1206,6 @@ void yyerror(const char *s, ...){
     parseErrors.push_back(newError);
 }
 
-void syntaxError(const char *s, ...){
-
-    va_list ap;
-    va_start(ap, s);
-    const char *errorString = va_arg(ap, char*);
-    int line = va_arg(ap, int);
-    COUT << ENDL << ENDL << "ERROR: " << s << ENDL;
-//    yytext can be replaced by errorString
-    COUT << "Unexpected Character: " << yytext << " on line: " << line << ENDL;
-    va_end(ap);
-
-    LangError newError;
-    newError.type = LangError::Syntax;
-    newError.errorTokens.push_back(std::string(yytext));
-    newError.filename = string(currentFile);
-    newError.lineNumber = yylineno;
-    parseErrors.push_back(newError);
-}
-
 std::vector<LangError> getErrors() {
     return parseErrors;
 }
@@ -1232,7 +1220,7 @@ AST *parse(const char *filename){
     }
 
     parseErrors.clear();
-    file = fopen(filename, "r");
+    fopen_s(&file, filename, "r");
 
     if (!file){
         LangError newError;
@@ -1244,6 +1232,7 @@ AST *parse(const char *filename){
         COUT << "Can't open " << filename << ENDL;;
         return NULL;
     }
+
     currentFile = filename;
 
     COUT << "Analysing: " << filename << ENDL;

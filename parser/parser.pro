@@ -1,9 +1,17 @@
-
 TARGET = StrideParser
 TEMPLATE = lib
 
 CONFIG += staticlib
 CONFIG += c++11
+
+win32-msvc2015 {
+    CONFIG += stl_off
+    CONFIG += exceptions_off
+    QMAKE_CXXFLAGS += -clr
+    QMAKE_CXXFLAGS += -EHa
+}
+
+message(Building $${TARGET})
 
 SOURCES += ast.cpp \
            streamnode.cpp \
@@ -50,17 +58,8 @@ FLEXSOURCES = lang_stride.l
 include(../config.pri)
 include(parser.pri)
 
-win32 {
-    LIBS += -L${FLEX_LIB_PATH}
-    LIBS += -lfl
-}
-
 unix {
     !macx {
         LIBS += -lfl
-    }
-    macx {
-#        LIBS += -L${FLEX_LIB_PATH}
-#        LIBS += -ll
     }
 }
