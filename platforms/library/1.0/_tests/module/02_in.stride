@@ -1,7 +1,6 @@
 use Gamma version 1.0 on PC
 
-import generators
-
+import Generators
 
 module Test {
 	ports: [

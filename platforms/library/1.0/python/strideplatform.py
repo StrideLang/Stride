@@ -712,13 +712,14 @@ class BundleAtom(NameAtom):
                                  self) ]
                                   
         else:
-            instances = [BundleInstance(str(default_value),
-                                 self.scope_index,
-                                 self.domain,
-                                 'real',
-                                 self.handle,
-                                 self.declaration['size'],
-                                 self) ]
+            if 'size' in self.declaration:
+                instances = [BundleInstance(str(default_value),
+                                     self.scope_index,
+                                     self.domain,
+                                     'real',
+                                     self.handle,
+                                     self.declaration['size'],
+                                     self) ]
             
                 
         return instances
@@ -776,7 +777,7 @@ class BundleAtom(NameAtom):
     
 
 class ModuleAtom(Atom):
-    def __init__(self, module, function, platform_code, token_index, platform, scope_index):
+    def __init__(self, module, function, platform_code, token_index, platform, scope_index, connected_blocks):
         super(ModuleAtom, self).__init__()
         self.scope_index = scope_index
         self.name = module["name"]
@@ -790,14 +791,15 @@ class ModuleAtom(Atom):
         self.rate = -1 # Should modules have rates?
         self.function = function
         self.domain = None
+        self.connected_blocks = connected_blocks
         if 'domain' in self.function['ports']:
             if 'value' in self.function['ports']['domain']:
                 self.domain = self.function['ports']['domain']['value']
             else:
                 # FIXME we need to read the value from the name (not get its name)
-                self.domain = self.function['ports']['domain']['name']['name']
+                self.domain = self.function['ports']['domain']['name']['name'] 
             self.function['ports'].pop('domain')
-        
+
         self.port_name_atoms = {}
         
         self._process_module(self.module["streams"])
@@ -827,6 +829,9 @@ class ModuleAtom(Atom):
         declarations += outer_declarations
         domain_code = self.code['domain_code']
 
+        for block in self.connected_blocks:
+            declarations += block.get_declarations()
+            
         header_code = ''
         init_code = ''
         process_code = {}
@@ -883,6 +888,10 @@ class ModuleAtom(Atom):
                 inst.post = False
                 inst.add_dependent(module_instance)
                 instances.append(inst)
+                
+        for block in self.connected_blocks:
+            instances += block.get_instances()
+                
 #        for atoms in self.port_name_atoms.values():
 #            for atom in atoms:
 #                instances += atom.get_instances()
@@ -916,7 +925,13 @@ class ModuleAtom(Atom):
         
     def get_inline_processing_code(self, in_tokens):
         code = ''
-        out_tokens = self.out_tokens
+        
+        if len(self._output_blocks) > 0:
+            if 'size' in self._output_blocks[0]:
+                out_tokens = ['_' + self.name + '_%03i_out'%self._index]
+            else:
+                out_tokens = self.out_tokens
+        
         domain = ''
         for in_block in self._input_blocks:
             domain = in_block['domain']
@@ -963,7 +978,7 @@ class ModuleAtom(Atom):
                 if port_atom_name == module_port_name:
                     for port_value in self.port_name_atoms[port_atom_name]:
                         # TODO implement for output ports
-                        if type(port_value) is ValueAtom and module_port_direction == 'input':
+                        if type(port_value) is ValueAtom and module_port_direction == 'input' and not module_block['domain'] == self._output_blocks[0]['domain']:
                             #if port_atom.
                             module_call = templates.module_processing_code(self.handle, port_value.get_handles(), [], module_port_domain)
                             code += templates.expression(module_call)
@@ -995,6 +1010,21 @@ class ModuleAtom(Atom):
         code = '' 
         out_tokens = self.out_tokens
         domain = self.domain
+    
+        # First adjust input tokens to match input block sizes/bundles     
+        for input_block in self._input_blocks:
+            if 'size' in input_block:
+                # TODO check type of input ports
+                connector_name = '_bundle_connector_' + str(self.platform.unique_id)
+                self.platform.unique_id += 1
+                code += templates.declaration_bundle_real(connector_name, input_block['size'])
+                for i in range(input_block['size']):
+                    if len(in_tokens) > 0:
+                        code += templates.assignment(templates.bundle_indexing(connector_name, i+ 1),
+                                                     in_tokens[0])
+                        in_tokens.pop(0)
+                in_tokens.insert(0, connector_name)
+        
         
         # Process port domains
         domain_proc_code = {}
@@ -1523,13 +1553,17 @@ class PlatformFunctions:
             new_atom = BundleAtom(platform_type, declaration, member['bundle']['index'], self.unique_id, scope_index, member['bundle']['line'],member['bundle']['filename'])
         elif "function" in member:
             platform_type, declaration = self.find_block(member['function']['name'], self.tree)
+            connected_blocks = []            
+            for port_name, value in member['function']['ports'].items():
+                if 'block' or 'bundle' in value:
+                    connected_blocks.append(self.make_atom(value))
             if declaration['type'] == 'module':
                 if 'type' in platform_type['block']:
-                    new_atom = ModuleAtom(declaration, member['function'], platform_type, self.unique_id, self, scope_index)
+                    new_atom = ModuleAtom(declaration, member['function'], platform_type, self.unique_id, self, scope_index, connected_blocks)
                 else:
                     raise ValueError("Invalid or unavailable platform type.")
             elif declaration['type'] == 'reaction':
-                new_atom = ReactionAtom(declaration, member['function'], platform_type, self.unique_id, self, scope_index)
+                new_atom = ReactionAtom(declaration, member['function'], platform_type, self.unique_id, self, scope_index, connected_blocks)
         elif "expression" in member:
             if 'value' in member['expression']: # Unary expression
                 left_atom = self.make_atom(member['expression']['value'])
@@ -1620,13 +1654,17 @@ class PlatformFunctions:
         code = ''
         if not instance.get_code() == '':
             if instance.get_type() == 'real':
-                code = templates.assignment(instance.get_name(), instance.get_code())
+                value = instance.get_code()
+                if value:
+                    code = templates.assignment(instance.get_name(), value)
             elif instance.get_type() == 'bool':
                 value = instance.get_code()
-                code = templates.assignment(instance.get_name(), value)
+                if value:
+                    code = templates.assignment(instance.get_name(), value)
             elif instance.get_type() == 'string':
-                value = '"' + instance.get_code() + '"'
-                code = templates.assignment(instance.get_name(), value)
+                if instance.get_code():
+                    value = '"' + instance.get_code() + '"'
+                    code = templates.assignment(instance.get_name(), value)
             elif instance.get_type() == 'bundle':
                 for i in range(instance.get_size()):
                     elem_instance = Instance(instance.get_code(),

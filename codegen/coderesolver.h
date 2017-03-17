@@ -54,11 +54,13 @@ private:
     DeclarationNode *createDomainDeclaration(QString name);
     DeclarationNode *createSignalDeclaration(QString name, int size = 1);
     std::vector<AST *> declareUnknownName(BlockNode *name, int size, QVector<AST *> localScope, AST *tree);
+    std::vector<AST *> declareUnknownBundle(BundleNode *name, int size, QVector<AST *> localScope, AST *tree);
     DeclarationNode *createConstantDeclaration(string name, AST *value);
     void declareIfMissing(string name, AST *blockList, AST *value);
-    DeclarationNode *createSignalBridge(string name, DeclarationNode *declaration, AST * outDomain, int size = 1);
+    DeclarationNode *createSignalBridge(string name, AST *defaultValue, AST *inDomain, AST * outDomain, const string filename, int line, int size = 1);
 
     std::vector<AST *> declareUnknownExpressionSymbols(ExpressionNode *expr, int size, QVector<AST *> scopeStack, AST * tree);
+    std::vector<AST *> declareUnknownFunctionSymbols(FunctionNode *func, QVector<AST *> scopeStack, AST * tree);
     ListNode *expandNameToList(BlockNode *name, int size);
     void expandNamesToBundles(StreamNode *stream, AST *tree);
     std::vector<AST *> declareUnknownStreamSymbols(const StreamNode *stream, AST *previousStreamMember, QVector<AST *> localScope, AST *tree);

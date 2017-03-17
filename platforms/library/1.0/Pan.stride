@@ -15,15 +15,15 @@ module Pan {
 		port PositionProperty {
 			name: "position"
 			block: Position
+			domain: PositionDomain
 			meta: "Sets the panning position with range [-1, 1]."
 		}
 
 	]
 	blocks: [
 		signal Output[2] {},
-		signal Position {},
-		signal GainLeft {},
-		signal GainRight {}
+		signal GainLeft {domain: PositionDomain},
+		signal GainRight {domain: PositionDomain}
 	]
 	streams: [
 		(Position + 1) /2 >> GainRight;

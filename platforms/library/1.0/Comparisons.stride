@@ -14,9 +14,11 @@ module Greater {
     }
     ]
     blocks: [
+        signal Input[2] {},
+		_greaterType GreaterBlock {}
     ]
     streams: [
-#       Input[1] > Input[2] >> Output;
+       [Input[1], Input[2]] >> GreaterBlock >> Output;
     ]
     meta: ""
 }
@@ -135,7 +137,6 @@ module NotEqual {
     meta: ""
 }
 
- # FIXME AudioRate needs to be streamRate
 module Select {
 
 	ports: [
@@ -154,13 +155,13 @@ module Select {
 			name: "whenOn"
 			block: WhenOn
 			meta: ""
-			domain: WhenOnDomain
+#			domain: WhenOnDomain
         },
 		port WhenOffProperty {
 			name: "whenOff"
 			block: WhenOff
 			meta: ""
-			domain: WhenOffDomain
+#			domain: WhenOffDomain
         }
     ]
     blocks: [
@@ -168,6 +169,36 @@ module Select {
     ]
     streams: [
         [Input, WhenOn, WhenOff]  >> SelectBlock >> Output;
+    ]
+    meta: ""
+}
+
+module Choose {
+
+	ports: [
+		port OutputPort {
+			name:       'output'
+			main: on
+			direction:  'output'
+		},
+		port InputPort {
+			name:       'input'
+			main: on
+			block: Input
+			direction:  'input'
+		},
+		port ConditionPort {
+			name: "condition"
+			block: Condition
+			meta: ""
+        }
+    ]
+    blocks: [
+		signal Input[2] {}
+        _chooseType ChooseBlock {}
+    ]
+    streams: [
+        [Condition, Input[1], Input[2]]  >> ChooseBlock >> Output;
     ]
     meta: ""
 }

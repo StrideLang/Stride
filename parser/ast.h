@@ -29,11 +29,12 @@ public:
         Int = 0x80,
         Real = 0x81,
         String = 0x82,
+        Switch = 0x83,
+
         Block = 0x20,
         Expression = 0x21,
         Function = 0x22,
-        Switch = 0x23,
-        Keyword = 0x24,
+        Keyword = 0x23,
 
         // Invalid
         Invalid

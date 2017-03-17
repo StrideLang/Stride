@@ -21,7 +21,7 @@ module Test {
 		}
 	]
 	blocks: [
-#		signal Amp { domain: TestDomain }
+#	Amp should be auto declared in OutputDomain
 	]
 	streams: [
 		TestBlock * 2 >> Amp;

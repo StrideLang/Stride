@@ -35,6 +35,10 @@ constant ConstInt6 {value: -ConstInt1}
 #constant ConstInt9 {value: ~(ConstInt1 * 15)}
 
 #In streams
-
 Unknown1 * (2 * 3.5) >> Unknown2;
+
+# In lists
+
+signal A[2] {}
+[Const1 + (2.0 * Const3), Const1 + (Const2 * 1.0)] >> A;
 

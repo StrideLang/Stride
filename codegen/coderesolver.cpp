@@ -293,7 +293,11 @@ void CodeResolver::declareModuleInternalBlocks()
                             AST *internalBlocks = block->getPropertyValue("blocks");
                             DeclarationNode *newSignal = CodeValidator::findDeclaration(QString::fromStdString(name), QVector<AST *>(), internalBlocks);
                             if (!newSignal) {
-                                newSignal = createSignalDeclaration(QString::fromStdString(name));
+                                int size = 1;
+                                if (sizePortValue->getNodeType() == AST::Int) {
+                                    size = static_cast<ValueNode *>(sizePortValue)->getIntValue();
+                                }
+                                newSignal = createSignalDeclaration(QString::fromStdString(name), size);
                                 internalBlocks->addChild(newSignal);
                                 newSignal->setDomainString(domainName);
                                 AST *portDefault = portBlock->getPropertyValue("default");
@@ -823,26 +827,32 @@ void CodeResolver::insertBuiltinObjectsForNode(AST *node, QList<AST *> &objects)
             insertBuiltinObjectsForNode(expr->getLeft(), objects);
             insertBuiltinObjectsForNode(expr->getRight(), objects);
         }
-    }else if (node->getNodeType() == AST::Function) {
+    } else if (node->getNodeType() == AST::Function) {
+        FunctionNode *func = static_cast<FunctionNode *>(node);
+        // Look for module/reaction declaration in library
         for (AST *object : objects) {
             if (object->getNodeType() == AST::Declaration) {
-                DeclarationNode *block = static_cast<DeclarationNode *>(object);
-                if (block->getObjectType() == "module"
-                        || block->getObjectType() == "reaction") {
-                    FunctionNode *func = static_cast<FunctionNode *>(node);
-                    if (block->getName() == func->getName()
-                            && !blockList.contains(block)) {
+                DeclarationNode *declaration = static_cast<DeclarationNode *>(object);
+                if (declaration->getObjectType() == "module"
+                        || declaration->getObjectType() == "reaction") {
+                    if (declaration->getName() == func->getName()
+                            && !blockList.contains(declaration)) {
 //                        AST *usedObject = object->deepCopy();
 ////                        fillDefaultPropertiesForNode(usedObject);
 //                        m_tree->addChild(usedObject);
 //                        objects.removeOne(object);
 //                        blockList << object;
-                        blockList << block;
+                        blockList << declaration;
                         break;
                     }
                 }
             }
         }
+        // Look for declarations of blocks present in function properties
+        for(PropertyNode *property :func->getProperties()) {
+            insertBuiltinObjectsForNode(property->getValue(), objects);
+        }
+
         for (DeclarationNode *usedBlock : blockList) {
             if (!CodeValidator::findDeclaration(QString::fromStdString(usedBlock->getName()), QVector<AST *>(), m_tree)) {
                 AST *newBlock = usedBlock->deepCopy();
@@ -1054,11 +1064,16 @@ std::string CodeResolver::processDomainsForNode(AST *node, QVector<AST *> scopeS
             }
         }
     } else if (node->getNodeType() == AST::List) {
+        QList<AST *> listDomainStack;
         for (AST * member : node->getChildren()) {
-            domainName = processDomainsForNode(member, scopeStack, domainStack);
-            if (domainName.size() == 0) {
+            string memberName = processDomainsForNode(member, scopeStack, domainStack);
+            if (domainName.size() == 0 && memberName.size() > 0) {
+                domainName = memberName; // list takes domain from first element that has a domain
+            }
+            if (memberName.size() == 0) {
                 // Put declaration in stack to set domain once domain is resolved
-//                domainStack << member;
+
+                listDomainStack << member;
                 // FIMXE: This is very simplistic (or plain wrong....)
                 // It assumes that the next found domain affects all elements
                 // in the list that don't have domains. This is likely a
@@ -1066,18 +1081,29 @@ std::string CodeResolver::processDomainsForNode(AST *node, QVector<AST *> scopeS
                 // the port to which they are connected.
             }
         }
+        if (domainName.size() > 0) {
+            setDomainForStack(listDomainStack, domainName, scopeStack);
+        } else {
+            domainStack << listDomainStack; // If list has no defined domain, pass all elements to be set later
+        }
     } else if (node->getNodeType() == AST::Expression) {
         QList<AST *> expressionDomainStack;
         for(AST * member : node->getChildren()) {
-            domainName = processDomainsForNode(member, scopeStack, domainStack);
-            if (domainName.size() == 0) {
+            string newDomainName = processDomainsForNode(member, scopeStack, domainStack);
+            if (newDomainName.size() == 0) {
                 // Put declaration in stack to set domain once domain is resolved
                 expressionDomainStack << member;
             } else {
+                domainName = newDomainName;
                 setDomainForStack(expressionDomainStack, domainName, scopeStack);
             }
         }
-
+        if (domainName.size() > 0) {
+            setDomainForStack(expressionDomainStack, domainName, scopeStack);
+            expressionDomainStack.clear(); // Resolve domains according to expression neighbors
+        } else {
+            domainStack << expressionDomainStack; // Otherwise pass on to resolve elsewhere
+        }
     }
     return domainName;
 }
@@ -1144,16 +1170,30 @@ DeclarationNode *CodeResolver::createSignalDeclaration(QString name, int size)
 
 std::vector<AST *> CodeResolver::declareUnknownName(BlockNode *name, int size, QVector<AST *> localScope, AST *tree)
 {
-	std::vector<AST *> declarations;
+    std::vector<AST *> declarations;
     DeclarationNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), localScope, tree);
     if (!block) { // Not declared, so make declaration
         DeclarationNode *newSignal = createSignalDeclaration(QString::fromStdString(name->getName()), size);
 //        tree->addChild(newSignal);
         double rate = getNodeRate(newSignal, QVector<AST *>(), tree);
         name->setRate(rate);
-		declarations.push_back(newSignal);
+        declarations.push_back(newSignal);
     }
 	return declarations;
+}
+
+std::vector<AST *> CodeResolver::declareUnknownBundle(BundleNode *bundle, int size, QVector<AST *> localScope, AST *tree)
+{
+	std::vector<AST *> declarations;
+    DeclarationNode *block = CodeValidator::findDeclaration(QString::fromStdString(bundle->getName()), localScope, tree);
+    if (!block) { // Not declared, so make declaration
+        DeclarationNode *newSignal = createSignalDeclaration(QString::fromStdString(bundle->getName()), size);
+//        tree->addChild(newSignal);
+        double rate = getNodeRate(newSignal, QVector<AST *>(), tree);
+        bundle->setRate(rate);
+        declarations.push_back(newSignal);
+    }
+    return declarations;
 }
 
 DeclarationNode *CodeResolver::createConstantDeclaration(string name, AST *value)
@@ -1192,7 +1232,7 @@ void CodeResolver::declareIfMissing(string name, AST *blocks, AST * value)
     }
 }
 
-DeclarationNode *CodeResolver::createSignalBridge(string name, DeclarationNode *declaration, AST *outDomain, int size)
+DeclarationNode *CodeResolver::createSignalBridge(string name, AST *defaultValue, AST *inDomain, AST *outDomain, const string filename, int line, int size)
 {
     DeclarationNode *newBridge;
     if (size == 1) {
@@ -1201,15 +1241,11 @@ DeclarationNode *CodeResolver::createSignalBridge(string name, DeclarationNode *
         newBridge = new DeclarationNode(new BundleNode(name, new ListNode(new ValueNode(size, "", -1), "", -1), "", -1),
                                                               "signalbridge", nullptr, "", -1);
     }
+    newBridge->addProperty(new PropertyNode("default", defaultValue->deepCopy(), filename.c_str(), line));
+    newBridge->addProperty(new PropertyNode("inputDomain", inDomain->deepCopy(), filename.c_str(), line));
+    newBridge->addProperty(new PropertyNode("domain", inDomain->deepCopy(), filename.c_str(), line));
+    newBridge->addProperty(new PropertyNode("outputDomain", outDomain->deepCopy(), filename.c_str(), line));
 
-    newBridge->addProperty(new PropertyNode("default", declaration->getPropertyValue("default")->deepCopy(),
-                                            declaration->getFilename().c_str(), declaration->getLine()));
-    newBridge->addProperty(new PropertyNode("inputDomain", declaration->getDomain()->deepCopy(),
-                                            declaration->getFilename().c_str(), declaration->getLine()));
-    newBridge->addProperty(new PropertyNode("domain", declaration->getDomain()->deepCopy(),
-                                            declaration->getFilename().c_str(), declaration->getLine()));
-    newBridge->addProperty(new PropertyNode("outputDomain", outDomain->deepCopy(),
-                                            declaration->getFilename().c_str(), declaration->getLine()));
     return newBridge;
 }
 
@@ -1247,6 +1283,24 @@ std::vector<AST *> CodeResolver::declareUnknownExpressionSymbols(ExpressionNode 
             newDeclarations.insert(newDeclarations.end(), decls.begin(), decls.end());
         }
     }
+    return newDeclarations;
+}
+
+std::vector<AST *> CodeResolver::declareUnknownFunctionSymbols(FunctionNode *func, QVector<AST *> scopeStack, AST *tree)
+{
+    std::vector<AST *> newDeclarations;
+    vector<PropertyNode *> properties = func->getProperties();
+
+    for (PropertyNode *property:properties) {
+        AST *value = property->getValue();
+        if (value->getNodeType() == AST::Block) {
+            BlockNode *block = static_cast<BlockNode *>(value);
+            declareUnknownName(block, 1, scopeStack, tree);
+        } else  if (value->getNodeType() == AST::Bundle) {
+            // Can't autodeclare bundles...
+        }
+    }
+
     return newDeclarations;
 }
 
@@ -1346,6 +1400,10 @@ std::vector<AST *> CodeResolver::declareUnknownStreamSymbols(const StreamNode *s
         ExpressionNode *expr = static_cast<ExpressionNode *>(left);
         std::vector<AST *> declarations = declareUnknownExpressionSymbols(expr, size, localScope, tree);
         newDeclarations.insert(newDeclarations.end(), declarations.begin(), declarations.end());
+    } else if (left->getNodeType() == AST::Function) {
+        FunctionNode *func = static_cast<FunctionNode *>(left);
+        std::vector<AST *> declarations = declareUnknownFunctionSymbols(func, localScope, tree);
+        newDeclarations.insert(newDeclarations.end(), declarations.begin(), declarations.end());
     }
 
     if (right->getNodeType() == AST::Stream) {
@@ -1360,10 +1418,9 @@ std::vector<AST *> CodeResolver::declareUnknownStreamSymbols(const StreamNode *s
         }
         std::vector<AST *> declarations = declareUnknownName(name, size, localScope, tree);
         newDeclarations.insert(newDeclarations.end(), declarations.begin(), declarations.end());
-    } else if (left->getNodeType() == AST::Expression) {
-        int size = 1; // FIXME implement size detection for expressions
-        ExpressionNode *expr = static_cast<ExpressionNode *>(left);
-        std::vector<AST *> declarations = declareUnknownExpressionSymbols(expr, size, localScope, tree);
+    } else if (right->getNodeType() == AST::Function) {
+        FunctionNode *func = static_cast<FunctionNode *>(left);
+        std::vector<AST *> declarations = declareUnknownFunctionSymbols(func, localScope, tree);
         newDeclarations.insert(newDeclarations.end(), declarations.begin(), declarations.end());
     }
     return newDeclarations;
@@ -1409,7 +1466,9 @@ void CodeResolver::resolveStreamSymbols()
                         scopeStack.push_back(node);
                     }
                 }
-                for (const AST *streamNode: streams) {
+                auto rit = streams.rbegin();
+                while (rit != streams.rend()) {
+                    const AST *streamNode = *rit;
                     if (streamNode->getNodeType() == AST::Stream) {
                         const StreamNode *stream = static_cast<const StreamNode *>(streamNode);
                         std::vector<AST *> declarations = declareUnknownStreamSymbols(stream, NULL, scopeStack, m_tree);
@@ -1421,6 +1480,7 @@ void CodeResolver::resolveStreamSymbols()
 //                            m_tree->addChild(decl);
                         }
                     }
+                    rit++;
                 }
             }
         }
@@ -1637,9 +1697,21 @@ void CodeResolver::resolveConstantsInNode(AST *node, QVector<AST *> scope)
             }
         }
     } else if(node->getNodeType() == AST::List) {
+        std::map<AST *, AST*> replaceMap;
         for (AST *element : node->getChildren()) {
             resolveConstantsInNode(element, scope);
+            if (element->getNodeType() == AST::Expression) {
+                ValueNode *newValue = reduceConstExpression(static_cast<ExpressionNode *>(element), scope, m_tree);
+                if (newValue) {
+                    replaceMap[element] = newValue;
+                }
+            }
         }
+        ListNode *list = static_cast<ListNode *>(node);
+        for (auto& values: replaceMap) {
+            list->replaceMember(values.second, values.first);
+        }
+
     }
 }
 
@@ -1850,7 +1922,10 @@ QVector<AST *> CodeResolver::sliceStreamByDomain(StreamNode *stream, QVector<AST
                         Q_ASSERT(declaration->getBundle()->index()->getChildren()[0]->getNodeType() == AST::Int);
                         size = static_cast<ValueNode *>(declaration->getBundle()->index()->getChildren()[0])->getIntValue();
                     }
-                    streams.push_back(createSignalBridge(connectorName, declaration, new ValueNode("", -1), size)); // Add definition to stream
+                    streams.push_back(createSignalBridge(connectorName, declaration->getPropertyValue("default"),
+                                                         declaration->getDomain(), new ValueNode("", -1),
+                                                         declaration->getFilename(), declaration->getLine(),
+                                                         size)); // Add definition to stream
                     BlockNode *connectorNameNode = new BlockNode(connectorName, "", -1);
                     StreamNode *newStream = new StreamNode(value->deepCopy(), connectorNameNode, left->getFilename().c_str(), left->getLine());
                     prop->replaceValue(connectorNameNode->deepCopy());
@@ -1875,20 +1950,146 @@ QVector<AST *> CodeResolver::sliceStreamByDomain(StreamNode *stream, QVector<AST
                 if  (stack.back()->getNodeType() == AST::List) {
                     closingName = new ListNode(nullptr, "", -1);
                     newStart = new ListNode(nullptr, "", -1);
+                    DeclarationNode *groupDeclaration = nullptr;
+                    // First find a member that is declared
+                    for (unsigned int i = 0; i < stack.back()->getChildren().size(); i++) {
+                        AST *member = stack.back()->getChildren()[i];
+                        groupDeclaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(member, scopeStack, m_tree),
+                                                                     scopeStack, m_tree);
+                        if (groupDeclaration) {
+                            if (groupDeclaration->getObjectType() == "signal") {
+                                break;
+                            }
+                        }
+
+                    }
                     for (unsigned int i = 0; i < stack.back()->getChildren().size(); i++) {
                         string listMemberName = connectorName + "_" + std::to_string(i);
+
                         DeclarationNode *declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(stack.back()->getChildren()[i], scopeStack, m_tree),
-                                                                                scopeStack, m_tree);
-                        newDeclarations.push_back(createSignalBridge(listMemberName, declaration, new ValueNode("", -1)));
-                        closingName->addChild(new BlockNode(listMemberName, "", -1));
-                        newStart->addChild(new BlockNode(listMemberName, "", -1));
+                                                                                      scopeStack, m_tree);
+                        if (declaration) {
+                            AST *valueNode = declaration->getPropertyValue("default");
+                            if (!valueNode) {
+                                valueNode =  new ValueNode(0, "", -1);
+                            } else {
+                                valueNode = valueNode->deepCopy();
+                            }
+                            newDeclarations.push_back(createSignalBridge(listMemberName, valueNode,
+                                                                     declaration->getDomain(), new ValueNode("", -1),
+                                                                     declaration->getFilename(), declaration->getLine()));
+                            StreamNode *newStream = new StreamNode(stack.back()->getChildren()[i]->deepCopy(),
+                                                                   new BlockNode(listMemberName, "", -1),
+                                                                   declaration->getFilename().c_str(), declaration->getLine());
+                            newDeclarations.push_back(newStream);
+                            closingName->addChild(new BlockNode(listMemberName, "", -1));
+                            newStart->addChild(new BlockNode(listMemberName, "", -1));
+                        } else {
+                            std::string nodeDomainName = CodeValidator::getNodeDomainName(stack.back()->getChildren()[i], scopeStack, m_tree);
+                            if (nodeDomainName.size() > 0) {
+                                newDeclarations.push_back(createSignalBridge(listMemberName,  new AST,
+                                                                         new BlockNode(nodeDomainName, "", -1), new ValueNode("", -1),
+                                                                         stack.back()->getChildren()[i]->getFilename(), stack.back()->getChildren()[i]->getLine()));
+                                closingName->addChild(new BlockNode(listMemberName, "", -1));
+                                newStart->addChild(new BlockNode(listMemberName, "", -1));
+
+                            } else if (stack.back()->getChildren()[i]->getNodeType() == AST::Int
+                                       || stack.back()->getChildren()[i]->getNodeType() == AST::Real
+                                       || stack.back()->getChildren()[i]->getNodeType() == AST::String
+                                       || stack.back()->getChildren()[i]->getNodeType() == AST::Switch ){
+                                DeclarationNode * constDeclaration = createConstantDeclaration(listMemberName, stack.back()->getChildren()[i]);
+                                newDeclarations.push_back(constDeclaration);
+                                closingName->addChild(new BlockNode(listMemberName, "", -1));
+                                newStart = new BlockNode(listMemberName, "", -1);
+                            }
+                        }
+
+//                        DeclarationNode *declaration = nullptr;
+//                        string listMemberName = connectorName + "_" + std::to_string(i);
+//                        AST *member = stack.back()->getChildren()[i];
+
+//                        declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(member, scopeStack, m_tree),
+//                                                                     scopeStack, m_tree);
+
+//                        if (declaration) {
+//                            newDeclarations.push_back(createSignalBridge(listMemberName,  declaration->getPropertyValue("default"),
+//                                                                         declaration->getDomain(), new ValueNode("", -1),
+//                                                                         declaration->getFilename(), declaration->getLine()));
+//                        } else {
+//                            newDeclarations.push_back(createSignalBridge(listMemberName,  new ValueNode(0.0, "", -1),
+//                                                                         groupDeclaration->getDomain(), new ValueNode("", -1),
+//                                                                         groupDeclaration->getFilename(), groupDeclaration->getLine()));
+//                        }
+
+//                        if (member->getNodeType() == AST::Block) {
+//                            BlockNode *connectorNameNode = new BlockNode(listMemberName, "", -1);
+//                            StreamNode *newStream = new StreamNode(member->deepCopy(), connectorNameNode, member->getFilename().c_str(), member->getLine());
+//                            newDeclarations.push_back(newStream);
+//                            closingName->addChild(new BlockNode(listMemberName, "", -1));
+//                            newStart->addChild(new BlockNode(listMemberName, "", -1));
+//                        } else if (member->getNodeType() == AST::Bundle) {
+//                            BundleNode *bundle = static_cast<BundleNode *>(member);
+//                            ListNode * index = bundle->index();
+//                            if (index->size() == 1) {
+//                                if (index->getChildren().at(0)->getNodeType() == AST::Int) {
+//                                    ValueNode *indexValue = static_cast<ValueNode *>(index->getChildren().at(0));
+//                                    ListNode *indexList = new ListNode(indexValue->deepCopy(), "", -1);
+////                                    string bundleConnectorName = listMemberName + "_" + "_" + std::to_string(indexValue->getIntValue());
+//                                    BundleNode *connectorNameNode = new BundleNode(listMemberName, indexList, "", -1);
+//                                    StreamNode *newStream = new StreamNode(member->deepCopy(), connectorNameNode, member->getFilename().c_str(), member->getLine());
+//                                    newDeclarations.push_back(newStream);
+//                                    int size = static_cast<ValueNode *>(declaration->getBundle()->index()->getChildren().at(0))->getIntValue();
+
+//                                    bool isDeclared = false;
+//                                    for (AST *newDec: newDeclarations) {
+//                                        if (newDec->getNodeType() == AST::BundleDeclaration) {
+//                                            DeclarationNode *dec = static_cast<DeclarationNode *>(newDec);
+//                                            if (dec->getName() == listMemberName) {
+//                                                isDeclared = true;
+//                                                break;
+//                                            }
+//                                        }
+//                                    }
+//                                    DeclarationNode *existingDec = CodeValidator::findDeclaration(CodeValidator::streamMemberName(member, scopeStack, m_tree),
+//                                                                                                scopeStack, m_tree);
+//                                    if (existingDec) {
+//                                        isDeclared = true;
+//                                    }
+
+//                                    if (!isDeclared) {
+//                                        DeclarationNode *newConnectorDeclaration
+//                                                = createSignalBridge(listMemberName,  declaration->getPropertyValue("default"),
+//                                                                     declaration->getDomain(), new ValueNode("", -1),
+//                                                                     declaration->getFilename(), declaration->getLine(),
+//                                                                     size
+//                                                                     );
+//                                        newDeclarations.push_back(newConnectorDeclaration);
+//                                    }
+//                                    closingName->addChild(connectorNameNode->deepCopy());
+//                                    newStart->addChild(connectorNameNode->deepCopy());
+//                                } else {
+//                                    Q_ASSERT(false); // FIXME: implement
+//                                }
+//                            } else {
+//                                Q_ASSERT(false); // FIXME: implement
+//                            }
+//                        } else if (member->getNodeType() == AST::Expression) {
+//                            BlockNode *connectorNameNode = new BlockNode(listMemberName, "", -1);
+//                            StreamNode *newStream = new StreamNode(member->deepCopy(), connectorNameNode, member->getFilename().c_str(), member->getLine());
+//                            newDeclarations.push_back(newStream);
+//                            closingName->addChild(new BlockNode(listMemberName, "", -1));
+//                            newStart->addChild(new BlockNode(listMemberName, "", -1));
+//                        }
                     }
                     // Slice
                 } else {
                     DeclarationNode *declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(stack.back(), scopeStack, m_tree),
                                                                             scopeStack, m_tree);
                     if (declaration->getObjectType() == "signal") {
-                        newDeclarations.push_back(createSignalBridge(connectorName, declaration, new ValueNode("", -1), size));
+                        newDeclarations.push_back(createSignalBridge(connectorName,  declaration->getPropertyValue("default"),
+                                                                     declaration->getDomain(), new ValueNode("", -1),
+                                                                     declaration->getFilename(), declaration->getLine(),
+                                                                     size));
                     }
                     closingName = new BlockNode(connectorName, "", -1);
                     newStart = new BlockNode(connectorName, "", -1);
@@ -1947,7 +2148,9 @@ QVector<AST *> CodeResolver::processExpression(ExpressionNode *expr, QVector<AST
             if ( CodeValidator::getDomainNodeString(declaration->getDomain()) !=
                  CodeValidator::getDomainNodeString(outDomain)) {
                 std::string connectorName = "_BridgeSig_" + std::to_string(m_connectorCounter++);
-                streams.push_back(createSignalBridge(connectorName, declaration, outDomain)); // Add definition to stream
+                streams.push_back(createSignalBridge(connectorName, declaration->getPropertyValue("default"),
+                                                     declaration->getDomain(), outDomain,
+                                                     declaration->getFilename(), declaration->getLine())); // Add definition to stream
                 BlockNode *connectorNameNode = new BlockNode(connectorName, "", -1);
                 StreamNode *newStream = new StreamNode(exprLeft->deepCopy(), connectorNameNode, exprLeft->getFilename().c_str(), exprLeft->getLine());
                 expr->replaceLeft(new BlockNode(connectorName, "", -1));
@@ -1969,7 +2172,9 @@ QVector<AST *> CodeResolver::processExpression(ExpressionNode *expr, QVector<AST
                 if ( CodeValidator::getDomainNodeString(declaration->getDomain()) !=
                      CodeValidator::getDomainNodeString(outDomain)) {
                     std::string connectorName = "_BridgeSig_" + std::to_string(m_connectorCounter++);
-                    streams.push_back(createSignalBridge(connectorName, declaration, outDomain)); // Add definition to stream
+                    streams.push_back(createSignalBridge(connectorName,  declaration->getPropertyValue("default"),
+                                                         declaration->getDomain(), outDomain,
+                                                         declaration->getFilename(), declaration->getLine())); // Add definition to stream
                     BlockNode *connectorNameNode = new BlockNode(connectorName, "", -1);
                     StreamNode *newStream = new StreamNode(exprRight->deepCopy(), connectorNameNode, exprRight->getFilename().c_str(), exprRight->getLine());
                     expr->replaceRight(new BlockNode(connectorName, "", -1));

@@ -1450,7 +1450,8 @@ DeclarationNode *CodeValidator::getMainOutputPortBlock(DeclarationNode *moduleBl
     if (ports->getNodeType() == AST::List) {
         for (AST *port : ports->getChildren()) {
             DeclarationNode *portBlock = static_cast<DeclarationNode *>(port);
-            if (static_cast<ValueNode *>(portBlock->getPropertyValue("main"))->getSwitchValue()) {
+            ValueNode *mainValue = static_cast<ValueNode *>(portBlock->getPropertyValue("main"));
+            if (mainValue->getNodeType() == AST::Switch && mainValue->getSwitchValue()) {
                 AST *directionPortValue = portBlock->getPropertyValue("direction");
                 if (directionPortValue->getNodeType() == AST::String) {
                     std::string directionName = static_cast<ValueNode *>(directionPortValue)->getStringValue();
@@ -1475,7 +1476,8 @@ DeclarationNode *CodeValidator::getMainInputPortBlock(DeclarationNode *moduleBlo
     if (ports->getNodeType() == AST::List) {
         for (AST *port : ports->getChildren()) {
             DeclarationNode *portBlock = static_cast<DeclarationNode *>(port);
-            if (static_cast<ValueNode *>(portBlock->getPropertyValue("main"))->getSwitchValue()) {
+            ValueNode *mainValue = static_cast<ValueNode *>(portBlock->getPropertyValue("main"));
+            if (mainValue->getNodeType() == AST::Switch && mainValue->getSwitchValue()) {
                 AST *directionPortValue = portBlock->getPropertyValue("direction");
                 if (directionPortValue->getNodeType() == AST::String) {
                     std::string directionName = static_cast<ValueNode *>(directionPortValue)->getStringValue();

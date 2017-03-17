@@ -21,6 +21,7 @@ module Level {
 			name: "gain"
 			block: Gain
 			meta: "Amplifies or attenuates the signal."
+			default: 1.0
 		},
 		port OffsetProperty {
 			name: "offset"
