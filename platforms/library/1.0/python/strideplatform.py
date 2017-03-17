@@ -1874,7 +1874,9 @@ class PlatformFunctions:
                 # merge global groups from different streams...
                 for global_section in code['global_groups']:
                     if global_section in global_groups_code:
-                        global_groups_code[global_section] += code['global_groups'][global_section]
+                        for new_global in code['global_groups'][global_section]:
+                            if not new_global in global_groups_code[global_section]:
+                                global_groups_code[global_section].append(new_global)
                     else:
                         global_groups_code[global_section] = code['global_groups'][global_section]
                 for domain, header_code in code["header_code"].items():
