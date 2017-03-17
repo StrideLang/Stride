@@ -70,15 +70,17 @@ module Oscillator {
 			default :       0.0
 			domain: FrequencyDomain
 		}
-        signal NewPhase {}
+        signal IncPhase {
+			default :       0.0
+		}
         _sineType SineBlock {}
     ]
     streams: [
         Frequency * 2.0 * _Pi / AudioRate >> PhaseInc;
         Phase >> SineBlock >> Level(gain: Amplitude) >> Output;
-        Phase + PhaseInc >> Phase;
+        Phase + PhaseInc >> IncPhase;
         Phase -( 2 * _Pi) >> NewPhase;
-#        Phase > 1.0 >> Select(whenOn: NewPhase whenOff: Phase) >> Phase;
+        [IncPhase , ( 2 * _Pi) ] >> Greater() >> Select(whenOn: NewPhase whenOff: IncPhase) >> Phase;
 #		Reset >> Select(whenOn: StartPhase whenOff: Phase) >> ResetValue >> Phase; #This needs to be done in a reaction
     ]
 	meta: "Bipolar output [ -1. , 1. ] scaled by amplitude"
