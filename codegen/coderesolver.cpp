@@ -93,7 +93,10 @@ void CodeResolver::fillDefaultPropertiesForNode(AST *node)
                 PropertyNode *newProperty = new PropertyNode(propertyName,
                             defaultValueNode->deepCopy(),
                             portDescription->getFilename().data(), portDescription->getLine());
-                destBlock->addProperty(newProperty);
+                if (!destBlock->addProperty(newProperty)) {
+                    newProperty->deleteChildren();
+                    delete newProperty;
+                }
             }
         }
     } else if (node->getNodeType() == AST::Function) {
@@ -753,11 +756,11 @@ void CodeResolver::processDomains()
                     for (AST * stream: streamsNode->getChildren()) {
                         if (stream->getNodeType() == AST::Stream) {
                             QVector<AST *> streams = sliceStreamByDomain(static_cast<StreamNode *>(stream), scopeStack);
-                            for (AST * node: streams) {
-                                if (node->getNodeType() == AST::Stream) {
-                                    newStreamsList->addChild(node->deepCopy());
-                                } else if (node->getNodeType() == AST::Declaration || node->getNodeType() == AST::BundleDeclaration) {
-                                    blocksNode->addChild(node->deepCopy());
+                            for (AST * streamNode: streams) {
+                                if (streamNode->getNodeType() == AST::Stream) {
+                                    newStreamsList->addChild(streamNode->deepCopy());
+                                } else if (streamNode->getNodeType() == AST::Declaration || streamNode->getNodeType() == AST::BundleDeclaration) {
+                                    blocksNode->addChild(streamNode->deepCopy());
                                 } else {
                                     qDebug() << "Stream slicing must result in streams or blocks.";
                                 }
@@ -772,10 +775,11 @@ void CodeResolver::processDomains()
                 }
                 module->replacePropertyValue("streams", newStreamsList);
             }
-            new_tree.push_back(node);
+            new_tree.push_back(node->deepCopy());
         } else {
-            new_tree.push_back(node);
+            new_tree.push_back(node->deepCopy());
         }
+//        delete node;
     }
 
     m_tree->setChildren(new_tree);
@@ -1419,7 +1423,7 @@ std::vector<AST *> CodeResolver::declareUnknownStreamSymbols(const StreamNode *s
         std::vector<AST *> declarations = declareUnknownName(name, size, localScope, tree);
         newDeclarations.insert(newDeclarations.end(), declarations.begin(), declarations.end());
     } else if (right->getNodeType() == AST::Function) {
-        FunctionNode *func = static_cast<FunctionNode *>(left);
+        FunctionNode *func = static_cast<FunctionNode *>(right);
         std::vector<AST *> declarations = declareUnknownFunctionSymbols(func, localScope, tree);
         newDeclarations.insert(newDeclarations.end(), declarations.begin(), declarations.end());
     }
@@ -2110,9 +2114,9 @@ QVector<AST *> CodeResolver::sliceStreamByDomain(StreamNode *stream, QVector<AST
                 streams << declaration;
             }
             streams << newStream;
-            stack << newStart << left;
+            stack << newStart << left->deepCopy();
         } else {
-            stack << left;
+            stack << left->deepCopy();
         }
         previousDomainName = domainName;
 

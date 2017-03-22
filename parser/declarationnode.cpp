@@ -59,15 +59,16 @@ vector<PropertyNode *> DeclarationNode::getProperties() const
     return m_properties;
 }
 
-void DeclarationNode::addProperty(PropertyNode *newProperty)
+bool DeclarationNode::addProperty(PropertyNode *newProperty)
 {
     for (PropertyNode *prop:m_properties) {
         if (prop->getName() == newProperty->getName()) {
-            return; // Property is not replaced
+            return false; // Property is not replaced
         }
     }
     addChild(newProperty);
     m_properties.push_back(newProperty);
+	return true;
 }
 
 AST *DeclarationNode::getPropertyValue(string propertyName)

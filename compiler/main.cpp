@@ -32,8 +32,8 @@ int main(int argc, char *argv[])
     QString platformRootPath = parser.value(targetDirectoryOption);
     QString fileName = args.at(0);
 
-    qDebug() << args.at(0);
-    qDebug() << platformRootPath;
+//    qDebug() << args.at(0);
+//    qDebug() << platformRootPath;
 
     AST *tree;
     tree = AST::parseFile(fileName.toLocal8Bit().constData());
@@ -72,11 +72,10 @@ int main(int argc, char *argv[])
         //                delete m_lastValidTree;
         //            }
         //            m_lastValidTree = tree;
+        tree->deleteChildren();
         delete tree;
     } else {
         qDebug() << "Syntax error";
-
     }
-
     return 0;
 }

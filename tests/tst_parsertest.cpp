@@ -1,5 +1,6 @@
 #include <QString>
 #include <QtTest>
+#include <QScopedPointer>
 
 #include "strideparser.h"
 #include "strideplatform.hpp"
@@ -21,6 +22,10 @@ private:
 
 private Q_SLOTS:
 
+    // Code generation/Compiler
+    void testCompilation();
+
+    //
     void testConnectionCount();
     void testModuleDomains();
     void testPortTypeValidation();
@@ -92,6 +97,33 @@ void ParserTest::testMultichannelUgens()
 
     tree->deleteChildren();
     delete tree;
+}
+
+void ParserTest::testCompilation()
+{
+    QStringList testDirs;
+    QStringList testFiles;
+    QDirIterator directories(QFINDTESTDATA("/../platforms/library/1.0/_tests/"), QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
+    while(directories.hasNext()){
+        QDir subDir(directories.filePath());
+        for (auto entry: subDir.entryList(QStringList() << "*.stride", QDir::Files | QDir::NoDotAndDotDot | QDir::NoSymLinks)) {
+            testFiles << subDir.absolutePath() + QDir::separator()
+                         + entry;
+        }
+        directories.next();
+    }
+//    qDebug() << testFiles;
+    QString compilerBin = QDir::currentPath() + QDir::separator() + "../compiler/compiler";
+    QScopedPointer<QProcess> compilerProcess(new QProcess(this));
+    for (auto testFile:  testFiles) {
+        QStringList arguments;
+        arguments << "-p" + QFINDTESTDATA("/../platforms")
+                  << testFile;
+
+        int ret = compilerProcess->execute(compilerBin, arguments);
+        QVERIFY(ret == 0);
+    }
+//    qDebug() << compilerBin;
 }
 
 void ParserTest::testConnectionCount()

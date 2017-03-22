@@ -17,7 +17,7 @@ public:
     string getName() const;
     BundleNode *getBundle() const;
     vector<PropertyNode *> getProperties() const;
-    void addProperty(PropertyNode *newProperty);
+    bool addProperty(PropertyNode *newProperty);
     AST *getPropertyValue(string propertyName);
     void replacePropertyValue(string propertyName, AST *newValue);
 

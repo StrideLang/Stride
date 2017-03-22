@@ -925,6 +925,7 @@ class ModuleAtom(Atom):
         
     def get_inline_processing_code(self, in_tokens):
         code = ''
+        out_tokens = []
         
         if len(self._output_blocks) > 0:
             if 'size' in self._output_blocks[0]:
