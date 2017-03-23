@@ -35,8 +35,7 @@ ListNode *BundleNode::index() const
 
 void BundleNode::resolveScope(AST *scope)
 {
-    if (scope)
-    {
+    if (scope) {
         for (unsigned int i = 0; i < scope->getChildren().size(); i++) {
             assert(scope->getChildren().at(i)->getNodeType() == AST::Scope);
             m_scope.push_back((static_cast<ScopeNode *>(scope->getChildren().at(i)))->getName());

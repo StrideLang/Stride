@@ -416,6 +416,7 @@ void ParserTest::testDomains()
     QVERIFY(list->getNodeType() == AST::List);
     FunctionNode *func = static_cast<FunctionNode *>(list->getChildren()[0]);
     ValueNode *domainName = static_cast<ValueNode *>(func->getDomain());
+    QVERIFY(domainName);
     QVERIFY(domainName->getNodeType() == AST::String);
     QVERIFY(domainName->getStringValue() == "OSCInDomain");
     stream = static_cast<StreamNode *>(stream->getRight());

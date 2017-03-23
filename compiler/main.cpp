@@ -67,11 +67,6 @@ int main(int argc, char *argv[])
         builder->build(tree);
         qDebug() << "Built in directory:" << dirName;
 
-        //            if(m_lastValidTree) {
-        //                m_lastValidTree->deleteChildren();
-        //                delete m_lastValidTree;
-        //            }
-        //            m_lastValidTree = tree;
         tree->deleteChildren();
         delete tree;
     } else {

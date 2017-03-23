@@ -305,6 +305,7 @@ importDef:
             word.append($3); /* string constructor leaks otherwise! */
             $$ = new ImportNode(word, $2, currentFile, yyloc.first_line);
             AST *scope = $2;
+            scope->deleteChildren();
             delete scope;
             COUT << "Importing: " << $3 << " in scope!" << ENDL;
             free($3);
@@ -326,6 +327,7 @@ importDef:
             alias.append($5); /* string constructor leaks otherwise! */
             $$ = new ImportNode(word, $2, currentFile, yyloc.first_line, alias);
             AST *scope = $2;
+            scope->deleteChildren();
             delete scope;
             COUT << "Importing: " << $3 << " as " << $5 << " in scope!" << ENDL;
             free($3);
@@ -480,6 +482,7 @@ bundleDef:
             s.append($2); /* string constructor leaks otherwise! */
             $$ = new BundleNode(s, $1, $4, currentFile, yyloc.first_line);
             AST *scope = $1;
+            scope->deleteChildren();
             delete scope;
             COUT << "Bundle name: " << $2 << " in scope!" << ENDL;
             COUT << "Streaming ... " << ENDL;
@@ -504,6 +507,7 @@ functionDef:
             s.append($2);
             $$ = new FunctionNode(s, $1, NULL, FunctionNode::UserDefined, currentFile, yyloc.first_line);
             AST *scope = $1;
+            scope->deleteChildren();
             delete scope;
             COUT << "User function: " << $2 << " in scope!" << ENDL;
             free($2);
@@ -523,6 +527,7 @@ functionDef:
             s.append($2);
             $$ = new FunctionNode(s, $1, $4, FunctionNode::UserDefined, currentFile, yyloc.first_line);
             AST *scope = $1;
+            scope->deleteChildren();
             delete scope;
             AST *props = $4;
             delete props;
@@ -1066,6 +1071,7 @@ indexComp:
             s.append($2);
             $$ = new BlockNode(s, $1, currentFile, yyloc.first_line);
             AST *scope = $1;
+            scope->deleteChildren();
             delete scope;
             COUT << "Index/Size User variable: " << $2 << " in scope!" << ENDL;
             free($2);
@@ -1094,6 +1100,7 @@ streamComp:
             s.append($2);
             $$ = new BlockNode(s, $1, currentFile, yyloc.first_line);
             AST *scope = $1;
+            scope->deleteChildren();
             delete scope;
             COUT << "User variable: " << $2 << " in scope!" << ENDL;
             COUT << "Streaming ... " << ENDL;
@@ -1164,6 +1171,7 @@ valueComp:
             s.append($2);
             $$ = new BlockNode(s, $1, currentFile, yyloc.first_line);
             AST *scope = $1;
+            scope->deleteChildren();
             delete scope;
             COUT << "User variable: " << $2 << " in scope!" << ENDL;
             free($2);
