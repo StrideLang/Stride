@@ -11,8 +11,10 @@
 class CodeValidator
 {
 public:
-    CodeValidator(QString platformRootDir, AST * tree);
+    CodeValidator(QString platformRootDir, AST * tree = nullptr);
     ~CodeValidator();
+
+    void validateTree(QString platformRootDir, AST * tree);
 
     bool isValid();
     bool platformIsValid();

@@ -32,10 +32,10 @@ public:
 signals:
 
 public slots:
-    virtual void build(AST *tree);
-    virtual void flash() {}
-    virtual void run(bool pressed = true);
-    virtual bool isValid();
+    virtual bool build(AST *tree) override;
+    virtual bool flash() override { return true;}
+    virtual bool run(bool pressed = true) override;
+    virtual bool isValid() override;
 
     void consoleMessage();
 

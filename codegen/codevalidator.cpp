@@ -7,6 +7,19 @@
 CodeValidator::CodeValidator(QString platformRootDir, AST *tree):
     m_platform(nullptr), m_tree(tree)
 {
+    validateTree(platformRootDir, tree);
+}
+
+CodeValidator::~CodeValidator()
+{
+    if (m_platform) {
+        delete m_platform;
+    }
+}
+
+void CodeValidator::validateTree(QString platformRootDir, AST *tree)
+{
+    m_tree = tree;
     if(tree) {
         QMap<QString, QString> importList;
         foreach(AST *node, tree->getChildren()) {
@@ -31,13 +44,7 @@ CodeValidator::CodeValidator(QString platformRootDir, AST *tree):
             m_platform = new StridePlatform(platformRoots, "", "", importList);
         }
     }
-}
-
-CodeValidator::~CodeValidator()
-{
-    if (m_platform) {
-        delete m_platform;
-    }
+    validate();
 }
 
 bool CodeValidator::isValid()

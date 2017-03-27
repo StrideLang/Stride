@@ -77,7 +77,7 @@ void ParserTest::testMultichannelUgens()
     tree = AST::parseFile(QString(QFINDTESTDATA("data/E03_multichn_streams.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
-    generator.validate();
+//    generator.validate();
     QVERIFY(!generator.isValid());
 
     QList<LangError> errors = generator.getErrors();
@@ -133,7 +133,7 @@ void ParserTest::testConnectionCount()
     tree = AST::parseFile(QString(QFINDTESTDATA("data/13_connection_count.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
-    generator.validate();
+//    generator.validate();
     QVERIFY(generator.isValid());
 
 //    signal InSignal {}
@@ -307,7 +307,7 @@ void ParserTest::testModuleDomains()
     tree = AST::parseFile(QString(QFINDTESTDATA("data/12_modules_domains.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
-    generator.validate();
+//    generator.validate();
     QVERIFY(generator.isValid());
 
     DeclarationNode *block = static_cast<DeclarationNode *>(tree->getChildren()[1]);
@@ -337,7 +337,7 @@ void ParserTest::testPortTypeValidation()
     tree = AST::parseFile(QString(QFINDTESTDATA("data/P07_type_validation.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
-    generator.validate();
+//    generator.validate();
     QList<LangError> errors = generator.getErrors();
     LangError error = errors.at(0);
     QVERIFY(error.lineNumber == 55);
@@ -374,7 +374,7 @@ void ParserTest::testLibraryObjectInsertion()
     tree = AST::parseFile(QString(QFINDTESTDATA("data/E05_library_objects.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
-    generator.validate();
+//    generator.validate();
     QVERIFY(generator.isValid());
 
     DeclarationNode * decl = CodeValidator::findDeclaration("AudioIn", QVector<AST *>(), tree);
@@ -405,7 +405,7 @@ void ParserTest::testDomains()
     tree = AST::parseFile(QString(QFINDTESTDATA("data/P06_domains.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
-    generator.validate();
+//    generator.validate();
     QVERIFY(generator.isValid());
 
 //    [ OSCIn(address: "/val") , 1024.0] >> Divide() >> ValueInOSCDomain;
@@ -461,7 +461,7 @@ void ParserTest::testModules()
     tree = AST::parseFile(QString(QFINDTESTDATA("data/11_modules.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
-    generator.validate();
+//    generator.validate();
     QVERIFY(generator.isValid());
 
     DeclarationNode *moduleNode = static_cast<DeclarationNode *>(tree->getChildren().at(1));
@@ -510,7 +510,7 @@ void ParserTest::testImport()
     tree = AST::parseFile(QString(QFINDTESTDATA("data/P04_import.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
-    generator.validate();
+//    generator.validate();
     QVERIFY(generator.isValid());
 
     ImportNode *import = static_cast<ImportNode *>(tree->getChildren().at(5));
@@ -551,7 +551,7 @@ void ParserTest::testConstantResolution()
     tree = AST::parseFile(QString(QFINDTESTDATA("data/E01_constant_res.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
-    generator.validate();
+//    generator.validate();
     QVERIFY(generator.isValid());
 
     DeclarationNode *block = static_cast<DeclarationNode *>(tree->getChildren().at(4));
@@ -724,7 +724,7 @@ void ParserTest::testStreamRates()
     tree = AST::parseFile(QString(QFINDTESTDATA("data/E04_rates.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
-    generator.validate();
+//    generator.validate();
     QVERIFY(generator.isValid());
     QVERIFY(generator.platformIsValid());
 
@@ -805,7 +805,7 @@ void ParserTest::testStreamExpansion()
     tree = AST::parseFile(QString(QFINDTESTDATA("data/E02_stream_expansions.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
-    generator.validate();
+//    generator.validate();
     QVERIFY(generator.isValid());
     QVERIFY(generator.platformIsValid());
 
@@ -1250,7 +1250,7 @@ void ParserTest::testPlatformCommonObjects()
     tree = AST::parseFile(QString(QFINDTESTDATA("data/P01_platform_objects.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
-    generator.validate();
+//    generator.validate();
     QVERIFY(!generator.isValid());
     QList<LangError> errors = generator.getErrors();
     QVERIFY(generator.platformIsValid());
@@ -1294,7 +1294,7 @@ void ParserTest::testValueTypeBundleResolution()
     tree = AST::parseFile(QString(QFINDTESTDATA("data/P03_bundle_resolution.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
-    generator.validate();
+//    generator.validate();
     QVERIFY(generator.platformIsValid());
     QVERIFY(!generator.isValid());
     QList<LangError> errors = generator.getErrors();
@@ -1461,7 +1461,7 @@ void ParserTest::testDuplicates()
     tree = AST::parseFile(QString(QFINDTESTDATA("data/P02_check_duplicates.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
-    generator.validate();
+//    generator.validate();
     QVERIFY(!generator.isValid());
     QList<LangError> errors = generator.getErrors();
 
@@ -3065,7 +3065,7 @@ void ParserTest::testLibraryValidation()
     tree = AST::parseFile(QString(QFINDTESTDATA("data/L01_library_types_validation.stride")).toStdString().c_str());
     QVERIFY(tree);
     CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
-    generator.validate();
+//    generator.validate();
     QVERIFY(generator.isValid());
 
     tree->deleteChildren();

@@ -41,7 +41,7 @@ public:
 
 //    DeclarationNode *getFunction(QString functionName);
     QList<AST *> getBuiltinObjectsCopy();
-    QList<AST *> getBuiltinObjects();
+    QList<AST *> getBuiltinObjectsReference();
 
 //    bool typeHasPort(QString typeName, QString propertyName);
 

@@ -248,11 +248,11 @@ AST * CodeModel::getOptimizedTree()
     return optimizedTree;
 }
 
-Builder *CodeModel::createBuilder(QString projectDir)
-{
-    QMutexLocker locker(&m_validTreeLock);
-    return m_platform->createBuilder(projectDir);
-}
+//Builder *CodeModel::createBuilder(QString projectDir)
+//{
+//    QMutexLocker locker(&m_validTreeLock);
+//    return m_platform->createBuilder(projectDir);
+//}
 
 QStringList CodeModel::getTypes()
 {
@@ -339,10 +339,10 @@ void CodeModel::updateCodeAnalysis(QString code, QString platformRootPath)
 
         if (tree) {
             CodeValidator validator(platformRootPath, tree);
-            validator.validate();
+//            validator.validate();
             m_types = validator.getPlatform()->getPlatformTypeNames();
             m_funcs = validator.getPlatform()->getFunctionNames();
-            QList<AST *> objects = validator.getPlatform()->getBuiltinObjects();
+            QList<AST *> objects = validator.getPlatform()->getBuiltinObjectsReference();
             m_objectNames.clear();
             foreach (AST *platObject, objects) {
                 if (platObject->getNodeType() == AST::Block) {
@@ -350,7 +350,7 @@ void CodeModel::updateCodeAnalysis(QString code, QString platformRootPath)
                 }
             }
             m_errors = validator.getErrors();
-            m_platform = validator.getPlatform();
+//            m_platform = validator.getPlatform();
 
             if(m_lastValidTree) {
                 m_lastValidTree->deleteChildren();

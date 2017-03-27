@@ -658,7 +658,7 @@ double CodeResolver::getNodeRate(AST *node, QVector<AST *> scope, AST *tree)
 void CodeResolver::insertBuiltinObjects()
 {
     QList<AST *> requiredDeclarations;
-    QList<AST *> bultinObjects = m_platform->getBuiltinObjects();
+    QList<AST *> bultinObjects = m_platform->getBuiltinObjectsReference();
 
     // First pass to add required elements.
     // We need to add the fundamental types: "type" "platformType" "signal" "signalbridge"

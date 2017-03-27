@@ -27,9 +27,9 @@ public:
     virtual ~Builder() {}
 
 public slots:
-    virtual void build(AST *tree) = 0;
-    virtual void flash() = 0;
-    virtual void run(bool pressed = true) = 0;
+    virtual bool build(AST *tree) = 0;
+    virtual bool flash() = 0;
+    virtual bool run(bool pressed = true) = 0;
     // TODO this would need to send encrypted strings or remove the code sections?
     virtual QString requestTypesJson() {return "";}
     virtual QString requestFunctionsJson() {return "";}

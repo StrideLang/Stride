@@ -22,7 +22,7 @@ public:
     // Caller owns and must free the returned AST tree
     AST *getOptimizedTree();
 
-    Builder *createBuilder(QString projectDir);
+//    Builder *createBuilder(QString projectDir);
 
     QStringList getTypes();
     QStringList getFunctions();
@@ -37,7 +37,7 @@ public slots:
 
 private:
 //    QList<AST *> m_platformObjects;
-    StridePlatform *m_platform;
+//    StridePlatform *m_platform;
     QStringList m_types;
     QStringList m_funcs;
     QStringList m_objectNames;

@@ -37,7 +37,7 @@ PythonProject::~PythonProject()
     m_runningProcess.waitForFinished();
 }
 
-void PythonProject::build(AST *tree)
+bool PythonProject::build(AST *tree)
 {
     writeAST(tree);
     QStringList arguments;
@@ -45,7 +45,7 @@ void PythonProject::build(AST *tree)
         m_buildProcess.close();
         if (!m_buildProcess.waitForFinished(5000)) {
             qDebug() << "Could not stop build process. Not starting again.";
-            return;
+            return false;
         }
      }
     m_buildProcess.setWorkingDirectory(m_platformPath + "/../../../");
@@ -61,25 +61,32 @@ void PythonProject::build(AST *tree)
         }
         qApp->processEvents();
     }
+    if (m_buildProcess.state() == QProcess::Running) {
+        m_buildProcess.kill(); // Taking too long...
+    }
     emit outputText("Done building.");
-   // m_buildProcess.close();
-//    pythonProcess.terminate();
-//    qDebug() << stdOut;
-//    qDebug() << stdErr;
+
+    if (m_buildProcess.exitStatus() == QProcess::ExitStatus::NormalExit
+            && m_buildProcess.exitCode() == 0) {
+        return true;
+    } else {
+        return false;
+    }
+
 }
 
-void PythonProject::run(bool pressed)
+bool PythonProject::run(bool pressed)
 {
     if (!pressed) {
         stopRunning();
-        return;
+        return false;
     }
     QStringList arguments;
     if (m_runningProcess.state() == QProcess::Running) {
        m_runningProcess.close();
        if (!m_runningProcess.waitForFinished(5000)) {
            qDebug() << "Could not stop running process. Not starting again.";
-           return;
+           return false;
        }
     }
     m_runningProcess.setWorkingDirectory(m_platformPath + "/../../../");
@@ -96,6 +103,13 @@ void PythonProject::run(bool pressed)
     }
     emit outputText("Done.");
     m_runningProcess.close();
+
+    if (m_runningProcess.exitStatus() == QProcess::ExitStatus::NormalExit
+            && m_runningProcess.exitCode() == 0) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 void PythonProject::stopRunning()

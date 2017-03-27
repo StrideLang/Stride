@@ -169,7 +169,7 @@ QStringList StridePlatform::getPlatformTypeNames()
             }
         }
     }
-    vector<AST *> libObjects = m_library.getNodes();
+    vector<AST *> libObjects = m_library.getLibraryMembers();
     foreach(AST *node, libObjects) {
         if (node->getNodeType() == AST::Declaration) {
             DeclarationNode *block = static_cast<DeclarationNode *>(node);
@@ -187,7 +187,7 @@ QStringList StridePlatform::getPlatformTypeNames()
 QStringList StridePlatform::getFunctionNames()
 {
     QStringList typeNames;
-    foreach(AST* node, getBuiltinObjects()) {
+    foreach(AST* node, getBuiltinObjectsReference()) {
         if (node->getNodeType() == AST::Declaration) {
             DeclarationNode *block = static_cast<DeclarationNode *>(node);
             if (block->getObjectType() == "module") {
@@ -227,7 +227,7 @@ Builder *StridePlatform::createBuilder(QString projectDir)
 
 QString StridePlatform::getPlatformDomain()
 {
-    QList<AST *> libObjects = getBuiltinObjects();
+    QList<AST *> libObjects = getBuiltinObjectsReference();
     foreach(AST *object, libObjects) {
         if (object->getNodeType() == AST::Declaration) {
             DeclarationNode *block = static_cast<DeclarationNode *>(object);
@@ -245,14 +245,14 @@ QString StridePlatform::getPlatformDomain()
 QList<AST *> StridePlatform::getBuiltinObjectsCopy()
 {
     QList<AST *> objects;
-    QList<AST *> libObjects = getBuiltinObjects();
+    QList<AST *> libObjects = getBuiltinObjectsReference();
     foreach(AST *object, libObjects) {
         objects << object->deepCopy();
     }
     return objects;
 }
 
-QList<AST *> StridePlatform::getBuiltinObjects()
+QList<AST *> StridePlatform::getBuiltinObjectsReference()
 {
     QList<AST *> objects;
     QMapIterator<QString, AST *> blockGroup(m_platform);
@@ -266,7 +266,7 @@ QList<AST *> StridePlatform::getBuiltinObjects()
             }
         }
     }
-    vector<AST *> libObjects = m_library.getNodes();
+    vector<AST *> libObjects = m_library.getLibraryMembers();
     foreach(AST *object, libObjects) {
         objects << object;
     }

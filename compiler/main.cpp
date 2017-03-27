@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 
     if (tree) {
         CodeValidator validator(platformRootPath, tree);
-        validator.validate();
+//        validator.validate();
         //            QStringList m_types = validator.getPlatform()->getPlatformTypeNames();
         //            m_funcs = validator.getPlatform()->getFunctionNames();
         //            QList<AST *> objects = validator.getPlatform()->getBuiltinObjects();

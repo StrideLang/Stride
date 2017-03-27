@@ -84,7 +84,7 @@ bool StrideLibrary::isValidBlock(DeclarationNode *block)
     return false;
 }
 
-std::vector<AST *> StrideLibrary::getNodes()
+std::vector<AST *> StrideLibrary::getLibraryMembers()
 {
     std::vector<AST *> nodes;
     foreach(AST *tree, m_libraryTrees) {

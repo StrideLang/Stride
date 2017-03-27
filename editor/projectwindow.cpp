@@ -18,6 +18,7 @@
 #include "codeeditor.h"
 #include "configdialog.h"
 #include "savechangeddialog.h"
+#include "codevalidator.h"
 
 #include "pythonproject.h"
 
@@ -96,25 +97,78 @@ void ProjectWindow::build()
     if (errors.size() > 0) {
         return;
     }
-    AST *optimizedTree = m_codeModel.getOptimizedTree();
-    if (optimizedTree) {
+
+    AST *tree;
+    tree = AST::parseFile(editor->filename().toLocal8Bit().constData());
+
+    if (tree) {
+
+        CodeValidator validator(m_environment["platformRootPath"].toString(), tree);
+//      `  validator.validate();
+        //            QStringList m_types = validator.getPlatform()->getPlatformTypeNames();
+        //            m_funcs = validator.getPlatform()->getFunctionNames();
+        //            QList<AST *> objects = validator.getPlatform()->getBuiltinObjects();
+        //            m_objectNames.clear();
+        //            foreach (AST *platObject, objects) {
+        //                if (platObject->getNodeType() == AST::Block) {
+        //                    m_objectNames << QString::fromStdString(static_cast<BlockNode *>(platObject)->getName());
+        //                }
+        //            }
+        //            m_errors = validator.getErrors();
+        StridePlatform *platform = validator.getPlatform();
+
+        QFileInfo info(editor->filename());
+        QString dirName = info.absolutePath() + QDir::separator()
+                + info.fileName() + "_Products";
+        if (!QFile::exists(dirName)) {
+            if (!QDir().mkpath(dirName)) {
+                qDebug() << "Error creating project path";
+                tree->deleteChildren();
+                delete tree;
+            }
+        }
+
         if (m_builder) {
             delete m_builder;
         }
+
+        m_builder = platform->createBuilder(dirName);
+
+
         QString projectDir = makeProjectForCurrent();
-        m_builder = m_codeModel.createBuilder(projectDir);
         if (m_builder) {
             connect(m_builder, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
             connect(m_builder, SIGNAL(errorText(QString)), this, SLOT(printConsoleError(QString)));
-            m_builder->build(optimizedTree);
+            m_builder->build(tree);
+//            builder->build(optimizedTree);
         } else {
             printConsoleText(tr("Done. No builder set."));
             qDebug() << "Can't create builder";
 //            Q_ASSERT(false);
         }
-        optimizedTree->deleteChildren();
-        delete optimizedTree;
+        tree->deleteChildren();
+        delete tree;
     }
+
+//    AST *optimizedTree = m_codeModel.getOptimizedTree();
+//    if (optimizedTree) {
+//        if (m_builder) {
+//            delete m_builder;
+//        }
+//        QString projectDir = makeProjectForCurrent();
+//        m_builder = m_codeModel.createBuilder(projectDir);
+//        if (m_builder) {
+//            connect(m_builder, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
+//            connect(m_builder, SIGNAL(errorText(QString)), this, SLOT(printConsoleError(QString)));
+//            m_builder->build(optimizedTree);
+//        } else {
+//            printConsoleText(tr("Done. No builder set."));
+//            qDebug() << "Can't create builder";
+////            Q_ASSERT(false);
+//        }
+//        optimizedTree->deleteChildren();
+//        delete optimizedTree;
+//    }
     //    m_project->build();
 }
 
@@ -667,12 +721,12 @@ void ProjectWindow::updateCodeAnalysis()
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     if ((QApplication::activeWindow() == this  && editor->document()->isModified())
             || m_startingUp) {
-        m_codeModel.updateCodeAnalysis(editor->document()->toPlainText(),
-                                       m_environment["platformRootPath"].toString());
-        m_highlighter->setBlockTypes(m_codeModel.getTypes());
-        m_highlighter->setFunctions(m_codeModel.getFunctions());
-        m_highlighter->setBuiltinObjects(m_codeModel.getObjectNames());
-        editor->setErrors(m_codeModel.getErrors());
+//        m_codeModel.updateCodeAnalysis(editor->document()->toPlainText(),
+//                                       m_environment["platformRootPath"].toString());
+//        m_highlighter->setBlockTypes(m_codeModel.getTypes());
+//        m_highlighter->setFunctions(m_codeModel.getFunctions());
+//        m_highlighter->setBuiltinObjects(m_codeModel.getObjectNames());
+//        editor->setErrors(m_codeModel.getErrors());
     }
 //    QTextCursor cursor = editor->textCursor();
 //    cursor.select(QTextCursor::WordUnderCursor);

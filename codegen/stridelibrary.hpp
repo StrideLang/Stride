@@ -23,7 +23,7 @@ public:
 
     bool isValidBlock(DeclarationNode *block);
 
-    std::vector<AST *> getNodes();
+    std::vector<AST *> getLibraryMembers();
 
 private:
 
