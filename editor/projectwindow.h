@@ -43,7 +43,7 @@ protected:
     virtual bool eventFilter(QObject *obj, QEvent *event);
 
 private slots:
-    void build();
+    bool build();
     void flash();
     void run(bool pressed);
     void stop();

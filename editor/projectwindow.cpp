@@ -80,96 +80,81 @@ ProjectWindow::~ProjectWindow()
     delete ui;
 }
 
-void ProjectWindow::build()
+bool ProjectWindow::build()
 {
+    bool buildOK = false;
     ui->consoleText->clear();
     saveFile();
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
-    m_codeModel.updateCodeAnalysis(editor->document()->toPlainText(),
-                                   m_environment["platformRootPath"].toString());
 
-    QList<LangError> errors = m_codeModel.getErrors();
-    editor->setErrors(errors);
-
-    foreach(LangError error, errors) {
-        ui->consoleText->insertPlainText(QString::fromStdString(error.getErrorText()) + "\n");
-    }
-    if (errors.size() > 0) {
-        return;
-    }
+    QList<LangError> errors;
+    vector<LangError> syntaxErrors;
 
     AST *tree;
     tree = AST::parseFile(editor->filename().toLocal8Bit().constData());
 
+    syntaxErrors = AST::getParseErrors();
+
+    if (errors.size() > 0) {
+        for (auto syntaxError:syntaxErrors) {
+            errors << syntaxError;
+        }
+        editor->setErrors(errors);
+
+        foreach(LangError error, errors) {
+            printConsoleText(QString::fromStdString(error.getErrorText()) + "\n");
+        }
+        return false;
+    }
+
     if (tree) {
 
         CodeValidator validator(m_environment["platformRootPath"].toString(), tree);
-//      `  validator.validate();
-        //            QStringList m_types = validator.getPlatform()->getPlatformTypeNames();
-        //            m_funcs = validator.getPlatform()->getFunctionNames();
-        //            QList<AST *> objects = validator.getPlatform()->getBuiltinObjects();
-        //            m_objectNames.clear();
-        //            foreach (AST *platObject, objects) {
-        //                if (platObject->getNodeType() == AST::Block) {
-        //                    m_objectNames << QString::fromStdString(static_cast<BlockNode *>(platObject)->getName());
-        //                }
-        //            }
-        //            m_errors = validator.getErrors();
+        errors << validator.getErrors();
+
+        if (errors.size() > 0) {
+            editor->setErrors(errors);
+
+            foreach(LangError error, errors) {
+                printConsoleText(QString::fromStdString(error.getErrorText()) + "\n");
+            }
+            return false;
+        }
+
+
         StridePlatform *platform = validator.getPlatform();
 
-        QFileInfo info(editor->filename());
-        QString dirName = info.absolutePath() + QDir::separator()
-                + info.fileName() + "_Products";
-        if (!QFile::exists(dirName)) {
-            if (!QDir().mkpath(dirName)) {
-                qDebug() << "Error creating project path";
-                tree->deleteChildren();
-                delete tree;
-            }
+        QString projectDir = makeProjectForCurrent();
+        if (projectDir.isEmpty()) {
+            printConsoleText(tr("Error creating project output path. Aborting build."));
+            qDebug() << "Error creating project path";
+            tree->deleteChildren();
+            delete tree;
+            return false;
         }
 
         if (m_builder) {
             delete m_builder;
         }
 
-        m_builder = platform->createBuilder(dirName);
+        m_builder = platform->createBuilder(projectDir);
 
-
-        QString projectDir = makeProjectForCurrent();
         if (m_builder) {
             connect(m_builder, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
             connect(m_builder, SIGNAL(errorText(QString)), this, SLOT(printConsoleError(QString)));
-            m_builder->build(tree);
+            buildOK = m_builder->build(tree);
 //            builder->build(optimizedTree);
         } else {
-            printConsoleText(tr("Done. No builder set."));
+            printConsoleText(tr("Aborting. No builder available."));
             qDebug() << "Can't create builder";
+            return false;
 //            Q_ASSERT(false);
         }
         tree->deleteChildren();
         delete tree;
     }
 
-//    AST *optimizedTree = m_codeModel.getOptimizedTree();
-//    if (optimizedTree) {
-//        if (m_builder) {
-//            delete m_builder;
-//        }
-//        QString projectDir = makeProjectForCurrent();
-//        m_builder = m_codeModel.createBuilder(projectDir);
-//        if (m_builder) {
-//            connect(m_builder, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
-//            connect(m_builder, SIGNAL(errorText(QString)), this, SLOT(printConsoleError(QString)));
-//            m_builder->build(optimizedTree);
-//        } else {
-//            printConsoleText(tr("Done. No builder set."));
-//            qDebug() << "Can't create builder";
-////            Q_ASSERT(false);
-//        }
-//        optimizedTree->deleteChildren();
-//        delete optimizedTree;
-//    }
-    //    m_project->build();
+    return buildOK;
 }
 
 void ProjectWindow::commentSection()
@@ -253,13 +238,14 @@ void ProjectWindow::run(bool pressed)
     //    QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
 
     if (pressed) {
-        build();
-//        ui->consoleText->clear();
-        if (m_builder) {
-            m_builder->run();
-        } else {
-            ui->actionRun->setChecked(false);
-            printConsoleError(tr("Can't run. No builder available."));
+        if (build()) {
+            //        ui->consoleText->clear();
+            if (m_builder) {
+                m_builder->run();
+            } else {
+                ui->actionRun->setChecked(false);
+                printConsoleError(tr("Can't run. No builder available."));
+            }
         }
     } else {
         stop();
