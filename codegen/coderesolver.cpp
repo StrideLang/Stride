@@ -162,7 +162,30 @@ void CodeResolver::declareModuleInternalBlocks()
         if (node->getNodeType() == AST::Declaration) {
             DeclarationNode *block = static_cast<DeclarationNode *>(node);
             AST *internalBlocks = block->getPropertyValue("blocks");
-            if (block->getObjectType() == "module") {
+            if (block->getObjectType() == "reaction") {
+                DeclarationNode *reactionInput = new DeclarationNode("_TriggerInput", "port", nullptr,"", -1);
+                reactionInput->setPropertyValue("rate", new ValueNode("", -1));
+                reactionInput->setPropertyValue("domain", new BlockNode(string("_TriggerDomain"), "", -1));
+                reactionInput->setPropertyValue("size", new ValueNode(1, "", -1));
+                reactionInput->setPropertyValue("block", new BlockNode("_Trigger", "", -1));
+                reactionInput->setPropertyValue("direction", new ValueNode(string("input"), "", -1));
+
+                ListNode *ports = static_cast<ListNode *>(block->getPropertyValue("ports"));
+                if (ports->getNodeType() == AST::None) {
+                    block->replacePropertyValue("ports", new ListNode(nullptr, "", -1));
+                    ports = static_cast<ListNode *>(block->getPropertyValue("ports"));
+                }
+                ports->addChild(reactionInput);
+//                ListNode *streams = static_cast<ListNode *>(block->getPropertyValue("streams"));
+//                if (streams->getNodeType() == AST::None) {
+//                    block->replacePropertyValue("streams", new ListNode(nullptr, "", -1));
+//                    streams = static_cast<ListNode *>(block->getPropertyValue("streams"));
+//                }
+//                streams->addChild(new StreamNode(new BlockNode(string("_Trigger"),"", -1),
+//                                                 new BlockNode(string("_TriggerCache"),"", -1),
+//                                                 "", -1));
+            }
+            if (block->getObjectType() == "module" || block->getObjectType() == "reaction") {
                 // First insert and resolve input and output domains for main ports. The input port takes the output domain if undefined.
                 DeclarationNode *outputPortBlock = CodeValidator::getMainOutputPortBlock(block);
                 if (outputPortBlock) {
@@ -1935,20 +1958,26 @@ QVector<AST *> CodeResolver::sliceStreamByDomain(StreamNode *stream, QVector<AST
                 if (value->getNodeType() == AST::Block) {
                     DeclarationNode *declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(value, scopeStack, m_tree),
                                                                             scopeStack, m_tree);
-                    std::string connectorName = "_BridgeSig_" + std::to_string(m_connectorCounter++);
-                    int size = 1;
-                    if (declaration->getNodeType() == AST::BundleDeclaration) {
-                        Q_ASSERT(declaration->getBundle()->index()->getChildren()[0]->getNodeType() == AST::Int);
-                        size = static_cast<ValueNode *>(declaration->getBundle()->index()->getChildren()[0])->getIntValue();
+                    if (declaration) {
+                        std::string connectorName = "_BridgeSig_" + std::to_string(m_connectorCounter++);
+                        int size = 1;
+                        if (declaration->getNodeType() == AST::BundleDeclaration) {
+                            Q_ASSERT(declaration->getBundle()->index()->getChildren()[0]->getNodeType() == AST::Int);
+                            size = static_cast<ValueNode *>(declaration->getBundle()->index()->getChildren()[0])->getIntValue();
+                        }
+                        AST *defaultProperty = declaration->getPropertyValue("default");
+                        AST *bridgeDomain = declaration->getDomain();
+                        if (defaultProperty && bridgeDomain) {
+                            streams.push_back(createSignalBridge(connectorName, defaultProperty,
+                                                                 bridgeDomain, new ValueNode("", -1),
+                                                                 declaration->getFilename(), declaration->getLine(),
+                                                                 size)); // Add definition to stream
+                            BlockNode *connectorNameNode = new BlockNode(connectorName, "", -1);
+                            StreamNode *newStream = new StreamNode(value->deepCopy(), connectorNameNode, left->getFilename().c_str(), left->getLine());
+                            prop->replaceValue(connectorNameNode->deepCopy());
+                            streams.push_back(newStream);
+                        }
                     }
-                    streams.push_back(createSignalBridge(connectorName, declaration->getPropertyValue("default"),
-                                                         declaration->getDomain(), new ValueNode("", -1),
-                                                         declaration->getFilename(), declaration->getLine(),
-                                                         size)); // Add definition to stream
-                    BlockNode *connectorNameNode = new BlockNode(connectorName, "", -1);
-                    StreamNode *newStream = new StreamNode(value->deepCopy(), connectorNameNode, left->getFilename().c_str(), left->getLine());
-                    prop->replaceValue(connectorNameNode->deepCopy());
-                    streams.push_back(newStream);
 
                 } else if (value->getNodeType() == AST::Bundle) {
                     std::string connectorName = "_BridgeSig_" + std::to_string(m_connectorCounter++);

@@ -962,6 +962,9 @@ class ModuleAtom(Atom):
         # Go through the module ports and check if the function is setting any by
         # value. This means that the call needs to be put into the initialization
         # of the domain
+        if not self.module['ports']:
+            return ''
+        
         for module_port in self.module['ports']:
             module_port_domain = ''
             if 'block' in module_port:
@@ -1029,29 +1032,30 @@ class ModuleAtom(Atom):
         
         # Process port domains
         domain_proc_code = {}
-        for module_port in self.module['ports']:
-            module_port_domain = ''
-            if 'block' in module_port:
-                module_block = module_port['block']
-            elif 'blockbundle' in module_port:
-                module_block = module_port['blockbundle']
-            if  'domain' in module_block and module_block['domain']:
-                if type(module_block['domain']) == str or type(module_block['domain']) == unicode:
-                    module_port_domain = module_block['domain']
-                else:
-                    module_port_domain = module_block['domain']['name']['name']
-            module_port_name = module_block['name']
-            module_port_direction = module_block['direction']
-            for port_atom_name in self.port_name_atoms:
-                if port_atom_name == module_port_name:
-                    for port_value in self.port_name_atoms[port_atom_name]:
-                        # TODO implement for output ports
-                        if not type(port_value) is ValueAtom and module_port_direction == 'input':
-                            #if port_atom.
-                            if not module_port_domain in domain_proc_code:
-                                domain_proc_code[module_port_domain] = {'handles': []}
-                            domain_proc_code[module_port_domain]['handles'] += port_value.get_handles()
-                    pass        
+        if self.module['ports']:
+            for module_port in self.module['ports']:
+                module_port_domain = ''
+                if 'block' in module_port:
+                    module_block = module_port['block']
+                elif 'blockbundle' in module_port:
+                    module_block = module_port['blockbundle']
+                if  'domain' in module_block and module_block['domain']:
+                    if type(module_block['domain']) == str or type(module_block['domain']) == unicode:
+                        module_port_domain = module_block['domain']
+                    else:
+                        module_port_domain = module_block['domain']['name']['name']
+                module_port_name = module_block['name']
+                module_port_direction = module_block['direction']
+                for port_atom_name in self.port_name_atoms:
+                    if port_atom_name == module_port_name:
+                        for port_value in self.port_name_atoms[port_atom_name]:
+                            # TODO implement for output ports
+                            if not type(port_value) is ValueAtom and module_port_direction == 'input':
+                                #if port_atom.
+                                if not module_port_domain in domain_proc_code:
+                                    domain_proc_code[module_port_domain] = {'handles': []}
+                                domain_proc_code[module_port_domain]['handles'] += port_value.get_handles()
+                        pass        
                 
         for module_port_domain, values  in domain_proc_code.iteritems():
             if module_port_domain == self._output_blocks[0]['domain']:
@@ -1142,6 +1146,9 @@ class ModuleAtom(Atom):
         self._blocks = []
         for block in blocks:
             self._blocks.append(block)
+        
+        if not self.module['ports']:
+            return
             
         for port in self.module['ports']: 
             internal_block = self.find_internal_block(port['block']['block']['name']['name'])
@@ -1210,231 +1217,47 @@ class PlatformModuleAtom(ModuleAtom):
         
     
 # TODO complete work on reaction block
-class ReactionAtom(Atom):
-    def __init__(self, reaction, function, platform_code, token_index, platform, scope_index):
-        super(ReactionAtom, self).__init__()
-        self.scope_index = scope_index
-        self.name = reaction["name"]
-        self.handle = self.name + '_%03i'%token_index;
-#        self._platform_code = platform_code
-        self._output_block = None
-        self._index = token_index
-        self.platform = platform
+class ReactionAtom(ModuleAtom):
+    def __init__(self, reaction, function, platform_code, token_index, platform, scope_index, connected_blocks):
+        super(ReactionAtom, self).__init__(reaction, function, platform_code, token_index, platform, scope_index, connected_blocks)
         self.reaction = reaction
-        self.function = function
-        self.rate = -1 # Should reactions have rates?
         
-        self.domain = None
-        if 'domain' in self.function['ports']:
-            self.domain = self.function['ports']['domain']['value']
-            self.function['ports'].pop('domain')
-        
-        self.port_name_atoms = {}
-        
-        self._init_blocks(reaction["blocks"], reaction["output"])
-                          
-        if self._output_block and 'size' in self._output_block:
-            self.out_tokens = ['_' + self.name + '_%03i_out[%i]'%(self._index, i) for i in range(self._output_block['size'])]
-        else:
-            self.out_tokens = ['_' + self.name + '_%03i_out'%self._index]
-        self._process_reaction(self.reaction["streams"])
-        self.set_inline(False)
-                         
-            
-    def set_inline(self, inline):
-        if inline:
-            self.out_tokens = []
-        else:
-            if self._output_block and 'size' in self._output_block:
-                self.out_tokens = ['_' + self.name + '_%03i_out[%i]'%(self._index, i) for i in range(self._output_block['size'])]
-            else:
-                self.out_tokens = ['_' + self.name + '_%03i_out'%self._index]
-        self._process_reaction(self.reaction["streams"])
-        self.inline = inline
-        
-    def get_declarations(self):
-        declarations = []
-        outer_declarations = []
-        if "other_scope_declarations" in self.code:
-            for other_declaration in self.code["other_scope_declarations"]:
-                other_declaration.domain = self.domain
-                
-                outer_declarations.append(other_declaration)
-
-        declarations += outer_declarations
-        domain_code = self.code['domain_code']        
-        
-#        properties_code = self._get_internal_properties_code()
-        for domain, code in domain_code.items():
-            header_code = code['header_code'] 
-            init_code = code['init_code']
-            process_code = '\n'.join(code['processing_code'])
-            properties_domain_code = ''
-#            if domain in properties_code:
-#                properties_domain_code = '\n'.join(properties_code[domain])
-#            elif domain == '' and 'streamDomain' in properties_code:
-#                properties_domain_code = '\n'.join(properties_code['streamDomain'])
-#            elif (domain == self.domain or self.domain == None) and None in properties_code:
-#                properties_domain_code = '\n'.join(properties_code[None])
-#            elif None in properties_code:
-#                properties_domain_code = '\n'.join(properties_code[None])
-            
-        
-            declaration_text = templates.reaction_declaration(
-                    self.name, header_code + properties_domain_code, 
-                    init_code, self._output_block,  process_code)
-                    
-            declaration = Declaration(self.reaction['stack_index'],
-                                            self.domain,
-                                            self.name,
-                                            declaration_text)
-
-            for outer_dec in outer_declarations:
-                outer_dec.add_dependent(declaration)
-            declarations.append(declaration)
-        return declarations
-    
-    def get_instances(self):
-        instances = []
-        module_instance = ModuleInstance(self.scope_index,
-                                 self.domain,
-                                 self.name,
-                                 self.handle,
-                                 self)
-        if "other_scope_instances" in self.code:
-            for inst in self.code["other_scope_instances"]:
-                inst.post = False
-                inst.add_dependent(module_instance)
-                instances.append(inst)
-        for atoms in self.port_name_atoms.itervalues():
-            for atom in atoms:
-                instances += atom.get_instances()
-                # TODO is there a difference for reactions here? i.e. not ModuleInstance
-        instances += [ module_instance ]
-        if len(self.out_tokens) > 0 and self.reaction['output']:
-            out_block = self.find_internal_block(self.reaction['output']['name']['name'])
-            # FIXME support bundles
-            block_types = self.get_block_types(out_block);
-            default_value = ''
-            instances += [Instance(default_value,
-                                 self.scope_index,
-                                 self.domain,
-                                 block_types[0],
-                                 self.out_tokens[0],
-                                 self) ]
-        return instances      
         
     def get_inline_processing_code(self, in_tokens):
-        if self._output_block:
-            if 'size' in self._output_block:
-                code = templates.reaction_processing_code(self.handle, in_tokens, '_' + self.name + '_%03i_out'%self._index)
-            else:
-                code = templates.reaction_processing_code(self.handle, in_tokens, self.out_tokens[0])
-        else:
-            code = templates.reaction_processing_code(self.handle, in_tokens, '')
-        return code
-        
-    def get_preprocessing_code(self, in_tokens):
-        # TODO Reactions and properties??
         code = ''
-#        ports = self.function['ports']
-#        for port_name in ports:
-#            if 'value' in ports[port_name]:
-#                port_in_token = [str(ports[port_name]['value']['value'])]
-#            elif 'name' in ports[port_name]:
-#                port_in_token = [ports[port_name]['name']['name']]
-#            elif 'expression' in ports[port_name]:
-#                port_in_token = ['']
-#            else:
-#                port_in_token = ['____XXX___'] # TODO implement
-           # code += templates.module_set_property(self.handle, port_name, port_in_token)
-        return code
-        
+            
+        code = templates.module_processing_code(self.handle, 
+                                                in_tokens,
+                                                self.out_tokens,
+                                                'TriggerDomain'
+                                                )
+        return code                       
+                       
+                       
     def get_processing_code(self, in_tokens):
         #code = self.get_preprocessing_code(in_tokens)
-        code = ''
-        out_tokens = []
-        domain = self.domain
-        if 'output' in self.reaction and not self.reaction['output'] is None:
-            if self.inline:
-                code += self.get_handles()[0]
-            else:
-                if 'size' in self._output_block:
-                    code += templates.expression(self.get_inline_processing_code(in_tokens))
-                else:
-                    code += templates.expression(self.get_inline_processing_code(in_tokens))
-            out_tokens = self.out_tokens
-        else:
-            code += templates.expression(self.get_inline_processing_code(in_tokens))
-            out_tokens = self.out_tokens
-        return {domain : [code, out_tokens] }
-        
-    def _get_internal_header_code(self):
-        code = self.code['header_code']
-        return code
-        
-    def _get_internal_processing_code(self):
-        code = self.code['processing_code']
-        code += templates.module_output_code(self._output_block) 
-        return code
-        
-    def _get_internal_properties_code(self):
-        members = ''
-        functions = ''
-#        if self.module['properties']:
-#            for prop in self.module['properties']:
-#                if 'block' in prop:
-#                    functions += templates.module_property_setter(prop['block']['name'],
-#                                             prop['block']['block']['name']['name'],
-#                                             'real')
-        
-        return {}
-        
-    def _process_reaction(self, streams):
-                
-        tree = streams
-        instanced = []
+        #processing_code = super(ReactionAtom, self).get_processing_code(in_tokens)
+    
+        processing_code = {}
             
-        if 'ports' in self.function:
-            for name,port_value in self.function['ports'].iteritems():
-                new_atom = self.platform.make_atom(port_value)
-                new_atom.scope_index += 1 # Hack to bring it up to the right scope...
-                if name in self.port_name_atoms:
-                    self.port_name_atoms[name].append(new_atom)
-                else:
-                    self.port_name_atoms[name] = [new_atom]
-        
-        self.code = self.platform.generate_code(tree, self._blocks,
-                                                instanced = instanced)                   
-        
-        self.globals = {}
-        for section in self.global_sections:
-            if section in self.globals:
-                if section in self.code['global_groups']:
-                    self.globals[section].extend(self.code['global_groups'][section])
-                else:
-                    pass
-            else:
-                if section in self.code['global_groups']:
-                    self.globals[section] = self.code['global_groups'][section]
+        for each_domain in self.code['domain_code']:
+            if not each_domain in processing_code:
+                processing_code[each_domain] = ['', []]
+            processing_code[each_domain][0] += "if (" + in_tokens[0] + ") {\n"
+            processing_code[each_domain][0] += templates.expression(
+                    templates.module_processing_code(self.handle, 
+                                                    [],
+                                                    self.out_tokens,
+                                                    each_domain
+                                                    ))
+                                                    
+            processing_code[each_domain][0] += "}\n"
+                                                    
+        return processing_code
+         
 
+#    def _process_module(self, streams):
         
-    def _init_blocks(self, blocks, output_name):
-        self._blocks = []
-        if blocks:
-            for block in blocks:
-                self._blocks.append(block)
-                if 'block' in block:
-                    block_type = 'block'
-                elif 'blockbundle' in block:
-                    block_type = 'blockbundle'
-                if output_name and 'name' in output_name and  self._blocks[-1][block_type]['name'] == output_name["name"]["name"]:
-                    self._output_block = self._blocks[-1]
-                
-    def find_internal_block(self, block_name):
-        for block in self._blocks:
-            if block['name'] == block_name:
-                return block
     
 
 # --------------------- Common platform functions
@@ -1788,6 +1611,8 @@ class PlatformFunctions:
                     #self.log_debug("Code:  " + str(code))
                     if not domain:
                         domain = current_domain
+                    if not domain in processing_code:
+                        processing_code[domain] = ''
                     processing_code[domain] += code + '\n'
                     if domain == current_domain:
                         in_tokens = out_tokens

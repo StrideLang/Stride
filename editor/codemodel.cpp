@@ -173,15 +173,17 @@ QString CodeModel::getTooltipText(QString symbol)
                         DeclarationNode *portBlock = static_cast<DeclarationNode *>(member);
                         Q_ASSERT(portBlock->getNodeType() == AST::Declaration);
                         if (portBlock->getNodeType() == AST::Declaration) {
-                            QString portName = QString::fromStdString(
-                                        static_cast<ValueNode *>(portBlock->getPropertyValue("name"))->getStringValue());
-                            if (portName != "inherits" && portName != "meta") {
-                                AST *portMetaNode = portBlock->getPropertyValue("meta");
-                                QString portMeta;
-                                if (portMetaNode) {
-                                    portMeta = QString::fromStdString(static_cast<ValueNode *>(portMetaNode)->getStringValue());
+                            if (portBlock->getPropertyValue("name")) {
+                                QString portName = QString::fromStdString(
+                                            static_cast<ValueNode *>(portBlock->getPropertyValue("name"))->getStringValue());
+                                if (portName != "inherits" && portName != "meta") {
+                                    AST *portMetaNode = portBlock->getPropertyValue("meta");
+                                    QString portMeta;
+                                    if (portMetaNode) {
+                                        portMeta = QString::fromStdString(static_cast<ValueNode *>(portMetaNode)->getStringValue());
+                                    }
+                                    text += "<i>" + portName + "</i>:" + portMeta + "\n";
                                 }
-                                text += "<i>" + portName + "</i>:" + portMeta + "\n";
                             }
                         }
                     }

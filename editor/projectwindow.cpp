@@ -62,6 +62,8 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
     m_codeModelTimer.setInterval(2000);
     connect(&m_codeModelTimer, SIGNAL(timeout()), this, SLOT(updateCodeAnalysis()));
 
+    m_codeModelTimer.start();
+
 //    ui->documentationWidget->setHtml("<h1>Welcome to Stride</h1> A declarative and reactive domain specific programming language for real-time sound synthesis, processing, and interaction design. By Andrés Cabrera and Joseph Tilbian.");
     ui->documentationDockWidget->setFeatures(QDockWidget::DockWidgetClosable
                           | QDockWidget::DockWidgetMovable
@@ -707,16 +709,16 @@ void ProjectWindow::updateCodeAnalysis()
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     if ((QApplication::activeWindow() == this  && editor->document()->isModified())
             || m_startingUp) {
-//        m_codeModel.updateCodeAnalysis(editor->document()->toPlainText(),
-//                                       m_environment["platformRootPath"].toString());
-//        m_highlighter->setBlockTypes(m_codeModel.getTypes());
-//        m_highlighter->setFunctions(m_codeModel.getFunctions());
-//        m_highlighter->setBuiltinObjects(m_codeModel.getObjectNames());
-//        editor->setErrors(m_codeModel.getErrors());
+        m_codeModel.updateCodeAnalysis(editor->document()->toPlainText(),
+                                       m_environment["platformRootPath"].toString());
+        m_highlighter->setBlockTypes(m_codeModel.getTypes());
+        m_highlighter->setFunctions(m_codeModel.getFunctions());
+        m_highlighter->setBuiltinObjects(m_codeModel.getObjectNames());
+        editor->setErrors(m_codeModel.getErrors());
     }
-//    QTextCursor cursor = editor->textCursor();
-//    cursor.select(QTextCursor::WordUnderCursor);
-//    editor->setToolTipText(m_codeModel.getTooltipText(cursor.selectedText()));
+    QTextCursor cursor = editor->textCursor();
+    cursor.select(QTextCursor::WordUnderCursor);
+    editor->setToolTipText(m_codeModel.getTooltipText(cursor.selectedText()));
     m_codeModelTimer.start();
 }
 

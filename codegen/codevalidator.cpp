@@ -1458,7 +1458,7 @@ DeclarationNode *CodeValidator::getMainOutputPortBlock(DeclarationNode *moduleBl
         for (AST *port : ports->getChildren()) {
             DeclarationNode *portBlock = static_cast<DeclarationNode *>(port);
             ValueNode *mainValue = static_cast<ValueNode *>(portBlock->getPropertyValue("main"));
-            if (mainValue->getNodeType() == AST::Switch && mainValue->getSwitchValue()) {
+            if (mainValue && mainValue->getNodeType() == AST::Switch && mainValue->getSwitchValue()) {
                 AST *directionPortValue = portBlock->getPropertyValue("direction");
                 if (directionPortValue->getNodeType() == AST::String) {
                     std::string directionName = static_cast<ValueNode *>(directionPortValue)->getStringValue();

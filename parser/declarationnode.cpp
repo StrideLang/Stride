@@ -81,6 +81,15 @@ AST *DeclarationNode::getPropertyValue(string propertyName)
     return NULL;
 }
 
+void DeclarationNode::setPropertyValue(string propertyName, AST *value)
+{
+    if (getPropertyValue(propertyName)) {
+        replacePropertyValue(propertyName, value);
+    } else {
+        addProperty(new PropertyNode(propertyName, value, value->getFilename().c_str(), value->getLine()));
+    }
+}
+
 void DeclarationNode::replacePropertyValue(string propertyName, AST *newValue)
 {
     for (unsigned int i = 0; i < m_properties.size(); i++) {

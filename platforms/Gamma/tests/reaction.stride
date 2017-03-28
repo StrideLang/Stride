@@ -1,19 +1,21 @@
 use Gamma version 1.0 on PC
 
-import generators
+import Generators
 
-signal Frequency2 { 
+signal Frequency { 
 	default: 440
+	domain: AudioDomain
 }
 
 reaction Test {
 	streams: [
-		Frequency2 + 50 >> Frequency2;
+		Frequency + 50 >> Frequency;
 	]
-	defaultDomain: AudioDomain
 }
 
-Impulse(frequency:1) == 1 >> Test();
+Impulse(frequency:1) >> Trig;
 
-Oscillator(frequency: Frequency2) >> Level(gain:0.2) >> AudioOut;
+[ Trig, 1 ] >> Equal() >> Test();
+
+Oscillator(frequency: Frequency) >> Level(gain:0.2) >> AudioOut;
 
