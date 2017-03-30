@@ -1866,7 +1866,11 @@ class GeneratorBase(object):
         f.close()
         
     def write_code(self, code, filename):
-        
+        templates.set_property('sample_rate', self.sample_rate)
+        templates.set_property('block_size', self.block_size)
+        templates.set_property('num_out_chnls', self.num_out_chnls)
+        templates.set_property('num_in_chnls', self.num_in_chnls)
+        templates.set_property('audio_device', self.audio_device)
         domains = self.platform.get_domains()
         globals_code = templates.get_globals_code(code['global_groups'])
         for platform_domain in domains:
@@ -1874,8 +1878,7 @@ class GeneratorBase(object):
                break
         self.write_section_in_file(platform_domain['globalsTag'], globals_code, filename)
         
-        template_init_code = templates.get_config_code(self.sample_rate, self.block_size,
-                        self.num_out_chnls, self.num_in_chnls, self.audio_device)
+        template_init_code = templates.get_config_code()
         config_code = templates.get_configuration_code(code['global_groups']['initializations'])
         self.write_section_in_file(platform_domain['initializationTag'], template_init_code + config_code, filename)
         processing_code = {}

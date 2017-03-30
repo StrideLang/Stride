@@ -74,14 +74,28 @@ module Oscillator {
 			default :       0.0
 		}
         _sineType SineBlock {}
+		reaction WrapPhase {
+		ports: [
+		]	
+		streams: [
+			Phase -( 2 * _Pi) >> NewPhase;
+			]
+		}
+		reaction ResetPhase {
+		ports: [
+		]	
+		streams: [
+			ResetValue >> NewPhase;
+			]
+		}
     ]
     streams: [
         Frequency * 2.0 * _Pi / AudioRate >> PhaseInc;
         Phase >> SineBlock >> Level(gain: Amplitude) >> Output;
         Phase + PhaseInc >> IncPhase;
-        Phase -( 2 * _Pi) >> NewPhase;
+		Phase -( 2 * _Pi) >> NewPhase;
         [IncPhase , ( 2 * _Pi) ] >> Greater() >> Select(whenOn: NewPhase whenOff: IncPhase) >> Phase;
-#		Reset >> Select(whenOn: StartPhase whenOff: Phase) >> ResetValue >> Phase; #This needs to be done in a reaction
+		#Reset >> ResetPhase();
     ]
 	meta: "Bipolar output [ -1. , 1. ] scaled by amplitude"
 }
@@ -93,32 +107,21 @@ module Impulse {
 			main: on
 			direction: "output"
 			block: Output
+			domain: OutputDomain
 		},
 		port FrequencyPort {
 			name: "frequency"
 			block: Frequency
+			default: 440.0
 			meta: "The frequency of the oscillator."
+			domain: FrequencyDomain
 		},
 		port AmplitudePort {
 			name: "amplitude"
 			block: Amplitude
+			default: 1.0
 			meta: "The amplitude of the oscillator."
 		}
-#			port TypeProperty {
-#				name: "type"
-#				block: Type
-#				meta: "Possible options are 'Sine', 'Triangle', 'Saw', 'ReverseSaw', 'Square'."
-#			},
-#			port PhaseProperty {
-#				name: "phase"
-#				block: StartPhase
-#				meta: "The starting phase of the oscillator."
-#			},
-#			port ResetProperty {
-#				name: "reset"
-#				block: Reset
-#				meta: "Resets the oscillator to the starting phase."
-#			}
     ]
     blocks: [
 #        signal Frequency {
@@ -148,23 +151,23 @@ module Impulse {
 #		}
         signal Phase {
                 default :       0.0
-                rate:           AudioRate # FIXME needs to be streamRate
-                domain:         streamDomain
+                domain:         OutputDomain
 		}
         signal PhaseInc {
-                default :       0.0
-                rate:           AudioRate # FIXME needs to be streamRate
-                domain:         streamDomain
+			default :       0.0
+			domain: FrequencyDomain
 		}
-        signal NewPhase {}
+        signal IncPhase {
+			default :       0.0
+		}
     ]
     streams: [
         Frequency / AudioRate >> PhaseInc;
-        Phase + PhaseInc >> Phase;
+        Phase + PhaseInc >> IncPhase;
         Phase - 1.0 >> NewPhase;
-#		Phase > 1.0 >> Select(whenOn: Amplitude whenOff: 0.0) >> Output;
-#        Phase > 1.0 >> Select(whenOn: NewPhase whenOff: Phase) >> Phase;
-		#Reset >> Select(whenOn: StartPhase whenOff: Phase) >> Phase;
+		
+        [IncPhase , 1 ] >> Greater() >> Select(whenOn: 1 whenOff: 0) >> Output;
+        [IncPhase , 1 ] >> Greater() >> Select(whenOn: NewPhase whenOff: IncPhase) >> Phase;
     ]
 	meta: "Bipolar output [ -1. , 1. ] scaled by amplitude"
 }

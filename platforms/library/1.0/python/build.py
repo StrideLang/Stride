@@ -31,7 +31,20 @@ if __name__ == '__main__':
     parser.add_argument("products_dir",
                         help="The directory where stride products where generated",
                         nargs='?',
-                        default= cur_path + '/Gamma/tests/modulation.stride_Products'
+                        default= cur_path + '/Gamma/tests/reaction.stride_Products'
+#                        default= cur_path + '/Gamma/tests/pan.stride_Products'
+#                        default= cur_path + '/Gamma/tests/modulation.stride_Products'
+#                        default= cur_path + '/Gamma/tests/greater.stride_Products'
+#                        default= cur_path + '/library/1.0/_tests/module/01_out.stride_Products'
+#                        default= cur_path + '/library/1.0/_tests/module/02_in.stride_Products'
+#                        default= cur_path + '/library/1.0/_tests/module/03_in_and_out.stride_Products'
+#                        default= cur_path + '/library/1.0/_tests/module/04_port.stride_Products'
+#                        default= cur_path + '/library/1.0/_tests/module/05_port_domain.stride_Products'
+#                        default= cur_path + '/library/1.0/_tests/module/06_port_domain.stride_Products'
+#                        default= cur_path + '/library/1.0/_tests/module/09_bundle_out.stride_Products'
+#                        default = cur_path + '/library/1.0/_tests/module/10_bundle_in.stride_Products'
+
+#                        default= cur_path + '/Gamma/icmc/ICMC_01.stride_Products'
 #                        default= cur_path + '/Wiring/examples/test.stride_Products'
 #                        default='/home/andres/Documents/src/Stride/StreamStack/platforms/Arduino/examples/test.stride_Products'
 #                        default= cur_path + '/Discovery_M7/examples/test.stride_Products'
@@ -41,8 +54,7 @@ if __name__ == '__main__':
                         help="The directory of the platform to be used",
                         nargs='?',
 #                        default= cur_path + '/Wiring/1.0'
-#                        default=this_path + '/../../../Arduino/1.0'
-#                       default = cur_path + '/Discovery_M7/1.0'
+#                       default = cur_path + '/STM32F7/1.0'
                         default = cur_path + '/Gamma/1.0'
                         )
     args = parser.parse_args()

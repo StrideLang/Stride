@@ -1,8 +1,8 @@
 # Frequency Modulation with Signal Declaration
 
-use Gamma version 1.0 on PC
+use RtAudio version 1.0 on PC
 
-import generators
+import Generators
 
 signal Modulator {
     default:    0.0

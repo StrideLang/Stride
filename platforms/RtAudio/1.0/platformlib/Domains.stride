@@ -16,11 +16,19 @@ _domainDefinition AudioDomain {
 	initializationTag: "Initialization"
 	cleanupTag: "Cleanup"
 	domainFunction: '
-	void audioCB(AudioIOData & io)
+	int audio_buffer_process( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
+           double streamTime, RtAudioStreamStatus status, void *data )
 {
-    while(io()){
+  if ( status ) std::cout << "Stream over/underflow detected." << std::endl;
+  //unsigned long *bytes = (unsigned long *) data;
+  MY_TYPE *in = (MY_TYPE *)inputBuffer;
+  MY_TYPE *out = (MY_TYPE *)outputBuffer;
+  while(nBufferFrames-- > 0) {
 %%domainCode%%
-	}		
+			in += NUM_IN_CHANNELS;
+			out += NUM_OUT_CHANNELS;
+  }
+  return 0;
 }
 '
 }

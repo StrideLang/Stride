@@ -18,6 +18,8 @@ import re
 class BaseCTemplate(object):
     def __init__(self, domain_rate = 44100):
         
+        self.properties = {}
+        
         self.rate_stack = []
         self.rate_nested = 0
         self.rate_counter = 0
@@ -521,9 +523,16 @@ public:
         return code
         
     # Configuration code -----------------------------------------------------
-    def get_config_code(self, sample_rate = 44100, block_size = 512,
-                        num_out_chnls = 2, num_in_chnls = 2, device = -1):
+    def get_config_code(self):
         config_template_code = '''
         '''
-
+        
         return config_template_code
+    
+    def set_property(self, name, value):
+        self.properties[name] = value
+        
+    def set_properties(self, properties):
+        if type(properties) == dict:
+            self.properties = properties
+

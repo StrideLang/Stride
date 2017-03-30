@@ -1,8 +1,14 @@
 use Gamma version 1.0 on PC
 
+import osc
+import generators
 
 signal Slow {
 	rate: 2
 }
 
 AudioIn[1] >> Slow >> OSCOut(address: '/val');
+
+OSCIn() >> Frequency;
+
+Oscillator(frequency: 440) >> AudioOut[1];

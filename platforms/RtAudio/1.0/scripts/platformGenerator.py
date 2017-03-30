@@ -22,7 +22,7 @@ class Generator(GeneratorBase):
         # TODO get gamma sources and build and install if not available
         # Question: building requires cmake, should binaries be distributed instead?
         # What about secondary deps like portaudio and libsndfile?
-        self.log("Building Gamma project")
+        self.log("Building RtAudio project")
         self.log("Buiding in directory: " + self.out_dir)
 
     def generate_code(self):
@@ -45,6 +45,9 @@ class Generator(GeneratorBase):
 
         filename = self.out_dir + "/main.cpp"
         shutil.copyfile(self.project_dir + "/template.cpp", filename)
+        if os.path.isdir(self.out_dir + "/rtaudio"):
+            shutil.rmtree(self.out_dir + "/rtaudio")
+        shutil.copytree(self.project_dir + "/rtaudio-4.1.2", self.out_dir + "/rtaudio")
 
         self.write_code(code,filename)
 
@@ -82,6 +85,8 @@ class Generator(GeneratorBase):
             new_flag = "-I" + include_dir
             if not new_flag in self.build_flags:
                 self.build_flags.append(new_flag)
+                
+        self.build_flags.append("-I" + self.out_dir + "/rtaudio")
 
         self.log("Platform code generation finished!")
 
@@ -94,22 +99,41 @@ class Generator(GeneratorBase):
 
         if platform.system() == "Windows":
 
+            source_files = [self.out_file, self.out_dir + "/rtaudio/RtAudio.cpp"]
             cpp_compiler = "c++"
 
-            flags = "-std=c++11 -I"+ self.platform_dir +"include -O3 -DNDEBUG -o " \
-                + self.out_dir +"/main.cpp.o -c "+ self.out_dir +"/main.cpp"
-
-            args = [cpp_compiler] + flags.split()
-
-            outtext = ck_out(args)
-            self.log(outtext)
+            for f in source_files:
+                short_f = f[f.rindex("/") + 1:]
+                flags = ["-std=c++11",
+                         "-I"+ self.platform_dir +"include",
+                         "-O3",
+                         "-DNDEBUG",
+                         "-D__WINDOWS_WASAPI__",
+                         "-Irtaudio/include"
+                         "-o " + short_f + ".o",
+                         "-c "+ f]
+    
+                args = [cpp_compiler] + flags
+    
+                outtext = ck_out(args)
+                self.log(outtext)
 
             # Link ------------------------
-            flags = "-O3 -DNDEBUG "+ self.out_dir + "/main.cpp.o -o " \
-                + self.out_dir +"/app -L " \
-                + self.platform_dir + "/lib -lGamma -lportaudio_x86 -lsndfile-1"
+            flags = ["-O3",
+                     "-DNDEBUG",
+                     "-D__WINDOWS_WASAPI__",
+                     "-Irtaudio/include"]
+                     
+                     
+            flags += [f[f.rindex("/") + 1:] + ".o" for f in source_files]
+            flags += ["-o " + self.out_dir +"/app",
+                     "-lole32",
+                     "-lwinmm",
+                     "-lksuser",
+                     "-luuid"
+                     ]
 
-            args = [cpp_compiler] + flags.split()
+            args = [cpp_compiler] + flags
 
             outtext = ck_out(args)
             self.log(outtext)
@@ -119,54 +143,47 @@ class Generator(GeneratorBase):
             cpp_compiler = "/usr/bin/g++"
 
             args = [cpp_compiler,
-                    "-I" + self.platform_dir + "/include",
+#                    "-I" + self.platform_dir + "/include",
                     "-O3",
                     "-std=c++11",
                     "-DNDEBUG",
-                     "-o" + self.out_file + ".o",
-                     "-c",
-                     self.out_file]
+                    "-D__LINUX_ALSA__ ",
+                     "-o" + self.out_dir +"/app",
+                     self.out_file,
+                     self.out_dir + "/rtaudio/RtAudio.cpp",
+                     "-lasound",
+                     "-lpthread"
+                     ]
 
             self.log(args)
             outtext = ck_out(args)
 
             self.log(outtext)
 
-            # Link ------------------------
-            gamma_flags = ["-lGamma", "-lpthread", "-lportaudio", "-lsndfile"]
-
-            args = [cpp_compiler,
-                    "-O3",
-                    "-DNDEBUG",
-                    self.out_file + ".o",
-                    "-o" + self.out_dir +"/app",
-                    "-rdynamic",
-                    "-L" + self.platform_dir + "/lib"]
-
-            args += gamma_flags + self.build_flags + self.link_flags
-
-            self.log(args)
-
-            outtext = ck_out(args)
-            self.log(outtext)
 
         elif platform.system() == "Darwin":
+            
+            source_files = [self.out_file, self.out_dir + "/rtaudio/RtAudio.cpp"]
 
             cpp_compiler = "/usr/bin/c++"
-
-            args = [cpp_compiler,
-                    "-I" + self.platform_dir + "/include",
-                    "-O3" ,
-                    "-std=c++11",
-                    "-DNDEBUG",
-                     "-o" + self.out_file + ".o",
-                     "-c",
-                     self.out_file]
-
-            self.log(args)
-
-            outtext = ck_out(args)
-            self.log(outtext)
+            
+            for f in source_files:
+                short_f = f[f.rindex("/") + 1:]
+                args = [cpp_compiler,
+                        "-I" + self.platform_dir + "/include",
+                        "-O3" ,
+                        "-std=c++11",
+                        "-DNDEBUG",
+                        "-D__MACOSX_CORE__",
+                        "-Irtaudio"
+                         "-o" + short_f + ".o",
+                         "-c",
+                         f]
+    
+                self.log(args)
+    
+                outtext = ck_out(args)
+                self.log(outtext)
 
             # Link ------------------------
             args = [cpp_compiler,
@@ -175,17 +192,13 @@ class Generator(GeneratorBase):
                     "-DNDEBUG",
                     "-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk",
                     "-Wl,-search_paths_first",
-                    "-Wl,-headerpad_max_install_names",
-                    self.out_file + ".o",
-                    "-o" + self.out_dir + "/app",
-                    "/usr/local/lib/libportaudio.dylib",
-                    "/usr/local/lib/libsndfile.dylib",
-                    "-framework AudioUnit",
+                    "-Wl,-headerpad_max_install_names"]
+                    
+                    
+            args += [f[f.rindex("/") + 1:] + ".o" for f in source_files]
+            args += ["-o" + self.out_dir + "/app",
                     "-framework CoreAudio",
-                    "-framework CoreServices",
-                    "-framework AudioToolbox",
-                    "-L" + self.platform_dir + "/lib",
-                    "-lGamma"
+                    "-lpthread"
                     ]
 
             args += self.build_flags + self.link_flags

@@ -1,7 +1,7 @@
 # Sine Oscillator
 
-use Gamma version 1.0 on PC
+use RtAudio version 1.0 on PC
 
-import generators
+import Generators
 
 Oscillator ( frequency: 440.0 amplitude: 0.1 ) >> AudioOut;

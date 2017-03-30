@@ -17,5 +17,6 @@ Impulse(frequency:1) >> Trig;
 
 [ Trig, 1 ] >> Equal() >> Test();
 
+
 Oscillator(frequency: Frequency) >> Level(gain:0.2) >> AudioOut;
 

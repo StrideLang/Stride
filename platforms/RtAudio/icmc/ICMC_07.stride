@@ -1,8 +1,8 @@
 # Frequency and Amplitude Modulation with Panning
 
-use Gamma version 1.0 on PC
+use RtAudio version 1.0 on PC
 
-import generators
+import Generators
 
 Oscillator ( frequency: [ 3.0, 1.0, 1.0 ] amplitude: [ 40.0, 0.1, 1.0 ] ) >> Modulator;
 

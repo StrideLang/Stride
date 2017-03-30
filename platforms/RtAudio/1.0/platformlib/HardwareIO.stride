@@ -16,7 +16,7 @@ platformType _HwInput {
 #    linkTo: []
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
-    processing: "io.in(%%bundle_index%%)"
+    processing: "in[%%bundle_index%%]"
     inherits: ['signal']
 }
 
@@ -28,7 +28,7 @@ platformType _HwOutput {
 #    linkTo: []
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
-    processing: "io.out(%%bundle_index%%) = %%intoken:0%%;"
+    processing: "out[%%bundle_index%%] = %%intoken:0%%;"
     inherits: ['signal']
 }
 
@@ -69,11 +69,13 @@ platformType _OscInType {
 		int foo_handler(const char *path, const char *types, lo_arg ** argv,
                 int argc, void *data, void *user_data) {
 				
-			%%token%% = argv[0]->f;
+			float %%token%% = argv[0]->f;
+			
+			%%processing%%
 			}
 		']
     initializations: ['
-	lo_server_thread st = lo_server_thread_new(std::to_string(%%intoken:0%%).c_str(), error);
+	lo_server_thread st = lo_server_thread_new(%%intoken:0%%.c_str(), error);
 
     lo_server_thread_add_method(st, "/foo/bar", "fi", foo_handler, NULL);
 
@@ -87,6 +89,18 @@ platformType _OscInType {
 
 platformType _SelectType {
     typeName: '_selectType'
+    inputs: ["bool", "any", "any"]
+	outputs: ["any"]
+#    include: []
+#    linkTo: []
+#    declarations: []
+    initializations: ["// %%token%% = 0;"]
+    processing: "%%intoken:0%% ? %%intoken:1%% : %%intoken:2%%"
+    inherits: ['signal']
+}
+
+platformType _ChooseType {
+    typeName: '_chooseType'
     inputs: ["bool", "any", "any"]
 	outputs: ["any"]
 #    include: []

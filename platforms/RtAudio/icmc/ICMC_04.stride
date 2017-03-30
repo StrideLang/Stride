@@ -1,8 +1,8 @@
 # Frequency Modulation with Signal Declaration and Integer Rate
 
-use Gamma version 1.0 on PC
+use RtAudio version 1.0 on PC
 
-import generators
+import Generators
 
 signal Modulator {
     rate:       9.0

@@ -1,0 +1,12 @@
+use Gamma version 1.0 on PC
+
+import Generators
+
+
+Oscillator(frequency: 0.5) >> PanPos;
+#Impulse(frequency: 0.5) >> PanPos;
+
+#AudioIn[1] >> Pan(position: PanPos) >> AudioOut;
+
+Oscillator(frequency: 440 amplitude: 0.2) >> Pan(position: PanPos) >> AudioOut;
+
