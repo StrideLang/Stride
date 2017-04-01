@@ -1,4 +1,4 @@
-use Gamma version 1.0 on PC
+use RtAudio version 1.0 on PC
 
 constant Const1 {value: 2.0}
 constant Const2 {value: 3.1}
@@ -41,4 +41,18 @@ Unknown1 * (2 * 3.5) >> Unknown2;
 
 signal A[2] {}
 [Const1 + (2.0 * Const3), Const1 + (Const2 * 1.0)] >> A;
+
+# In Module Ports
+
+constant AutoBlock {value: 440 }
+module Test {
+  ports: [
+    port InputPort {
+      block: AutoBlock
+    }
+   ]
+}
+
+
+
 

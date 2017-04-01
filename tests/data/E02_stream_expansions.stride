@@ -1,4 +1,4 @@
-use Gamma version 1.0 on PC
+use RtAudio version 1.0 on PC
 
 # This should be expanded into lists of equal size:
 AudioIn >> Level(gain: 1.5) >> AudioOut;

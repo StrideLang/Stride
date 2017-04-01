@@ -120,12 +120,6 @@ void PythonProject::stopRunning()
 
 void PythonProject::writeAST(AST *tree)
 {
-    QFile saveFile(m_projectDir + QDir::separator() + "tree.json");
-
-    if (!saveFile.open(QIODevice::WriteOnly)) {
-        qWarning("Couldn't open save file.");
-        return;
-    }
 
     QJsonArray treeObject;
     foreach(AST *node, tree->getChildren()) {
@@ -140,6 +134,12 @@ void PythonProject::writeAST(AST *tree)
             astToJson(node, nodeObject);
         }
         treeObject.append(nodeObject);
+    }
+    QFile saveFile(m_projectDir + QDir::separator() + "tree.json");
+
+    if (!saveFile.open(QIODevice::WriteOnly)) {
+        qWarning("Couldn't open save file.");
+        return;
     }
     QJsonDocument saveDoc(treeObject);
     saveFile.write(saveDoc.toJson());

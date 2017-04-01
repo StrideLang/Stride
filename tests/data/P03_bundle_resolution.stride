@@ -1,4 +1,4 @@
-use Gamma version 1.0 on PC
+use RtAudio version 1.0 on PC
 
 constant Integers [4] {
     value:  [ 2, 32, 64, 128 ]
