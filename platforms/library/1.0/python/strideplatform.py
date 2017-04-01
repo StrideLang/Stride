@@ -15,11 +15,13 @@ from code_objects import Instance, BundleInstance, ModuleInstance, Declaration
 try:
     unicode_exists_test = type('a') == unicode
 except:
-    unicode = str # for python 3  
-  
+    unicode = str  # for python 3  
+
+
 def signal_type_string(signal_declaration):
     return type(signal_declaration['default']) == unicode
-    
+
+
 class Atom(object):
     def __init__(self):
         self.rate = -1
@@ -31,16 +33,16 @@ class Atom(object):
         self.filename = ""
         self.writes = 0
         self.reads = 0
-        
+
         # FIXME these sections should be driven by the platform definition
         self.global_sections = ['include', 'includeDir', 'linkTo', 'linkDir']
-        
+
     def set_inline(self, inline):
         self.inline = inline
-    
+
     def is_inline(self):
         return self.inline
-        
+
     def get_handles(self):
         if self.is_inline():
             return [self.get_inline_processing_code([])]
@@ -52,65 +54,67 @@ class Atom(object):
             return self.out_tokens
         else:
             return [self.handle]
-            
+
     def get_globals(self):
         return self.globals
-    
+
     def get_declarations(self):
         return []
-    
+
     def get_instances(self):
         return []
-        
+
     def get_initialization_code(self, in_tokens):
         '''Returns code that should be executed only once per construction of
         the block'''
         return ''
-        
+
     def get_preprocessing_code(self, in_tokens):
         ''' Returns code that needs to be run asynchronously but can't be
         inlined, so needs to be run separately previous to the processing
         code'''
-        return ''    
-        
+        return ''
+
     def get_processing_code(self, in_tokens):
         '''Processing code includes both the pre-processing and the
         inline processing code. The inline processing code will be provided
         ready to insert rather than ready to inline.'''
         return None
-    
+
     def get_postproc_once(self):
         return None
-        
+
     def get_inline_processing_code(self, in_tokens):
         ''' This returns the processing code itself, so this can be used
-        when the output is used only once, and an intermediate symbol to 
+        when the output is used only once, and an intermediate symbol to
         represent it is not needed'''
         return None
-        
+
     def get_rate(self):
         return self.rate
-        
+
     def get_scope_index(self):
         return self.scope_index
-        
+
     def get_domain(self):
         return self.domain
-    
+
     def get_line(self):
         return self.line
-        
+
     def get_filename(self):
         return self.filename
-        
+
     def get_num_writes(self):
         return self.writes
-        
+
     def get_num_reads(self):
         return self.reads
-         
+
+
 class PlatformTypeAtom(Atom):
-    def __init__(self, module, function, platform_type, token_index, platform, scope_index):
+    def __init__(self, module, function, platform_type, token_index,
+                 platform, scope_index):
         super(PlatformTypeAtom, self).__init__()
         self.module = module
         self.platform_type = platform_type
@@ -118,9 +122,9 @@ class PlatformTypeAtom(Atom):
         self.platform = platform
         self.function = function
         self.scope_index = scope_index
-        
+
         self.set_inline(False)
-        
+
     def get_handles(self):
         if self.is_inline():
             return [self.get_inline_processing_code([])]
@@ -132,46 +136,47 @@ class PlatformTypeAtom(Atom):
             return self.out_tokens
         else:
             return [self.handle]
-        
+
     def get_processing_code(self, in_tokens):
         return 'PROC_CODEEEEE'
-        
+
     def get_inline_processing_code(self, in_tokens):
         return 'INLINE_CODEEEEE'
-        
+
+
 class ValueAtom(Atom):
     def __init__(self, value_node, index, scope_index):
         super(ValueAtom, self).__init__()
         self.index = index
         self.value = value_node
-        self.handle = '__value_%03i'%index
+        self.handle = '__value_%03i' % index
         self.rate = 0
         self.inline = True
         self.scope_index = scope_index
-        
+
     def get_handles(self):
         if self.is_inline():
             return [self.get_inline_processing_code([])]
         else:
             return [self.handle]
-            
+
     def get_out_tokens(self):
         if self.is_inline():
             return [str(self.value)]
         else:
             return [self.handle]
-    
+
     def get_instances(self):
         if self.is_inline():
             return []
         else:
             if type(self.value) == unicode:
-                return [Instance('"' +self.get_inline_processing_code([]) + '"',
+                return [Instance('"' + self.get_inline_processing_code([]) + '"',
                                  self.scope_index,
                                  self.domain,
                                  'string',
                                  self.handle),
-                                 self]
+                        self]
             else:
                 return [Instance(self.get_inline_processing_code([]),
                                  self.scope_index,
@@ -179,12 +184,13 @@ class ValueAtom(Atom):
                                  'real',
                                  self.handle,
                                  self)]
-        
+
     def get_inline_processing_code(self, in_token):
         return templates.value_real(self.value)
-        
+
     def get_processing_code(self, in_tokens):
-        return { None : ['', [self.get_inline_processing_code(in_tokens)] ]}       
+        return {None: ['', [self.get_inline_processing_code(in_tokens)]]}
+
 
 class ExpressionAtom(Atom):
     def __init__(self, expr_type, left_atom, right_atom, index, scope_index):
@@ -194,49 +200,48 @@ class ExpressionAtom(Atom):
         self.left_atom = left_atom
         self.right_atom = right_atom
         self.index = index
-        self.handle = '__expr_%03i'%index
+        self.handle = '__expr_%03i' % index
         self.rate = -1
         if isinstance(self.left_atom, ModuleAtom) or isinstance(self.right_atom, ModuleAtom):
             self.set_inline(False)
         else:
             self.set_inline(True)
-        
+
         self.domain = left_atom.get_domain()
         if not self.domain == right_atom.get_domain():
-            print ("ERROR! domains must match inside expressions!")
-        
+            print("ERROR! domains must match inside expressions!")
+
     def set_inline(self, inline):
         self.left_atom.set_inline(inline)
         if self.right_atom:
             self.right_atom.set_inline(inline)
         self.inline = inline
-            
+
     def get_declarations(self):
         declarations = self.left_atom.get_declarations()
         if self.right_atom:
             declarations += self.right_atom.get_declarations()
         return declarations
-    
+
     def get_instances(self):
         instances = self.left_atom.get_instances()
         if self.right_atom:
             instances += self.right_atom.get_instances()
         if not self.is_inline():
             instances.append(Instance('',
-                                 self.scope_index,
-                                 self.domain,
-                                 self._expression_out_type(),
-                                 self.handle,
-                                 self))
+                                      self.scope_index,
+                                      self.domain,
+                                      self._expression_out_type(),
+                                      self.handle,
+                                      self))
         return instances
-        
+
     def get_inline_processing_code(self, in_tokens):
         if self.left_atom.is_inline():
             left_token = self.left_atom.get_inline_processing_code([])
         else:
             left_token = self.left_atom.get_out_tokens()[0]
 
-            
         if self.right_atom:
             if self.right_atom.is_inline():
                 right_token = self.right_atom.get_inline_processing_code([])
@@ -244,11 +249,10 @@ class ExpressionAtom(Atom):
                 right_token = self.right_atom.get_out_tokens()[0]
         else:
             right_token = None
-            
+
         code = '(' + self._operator_symbol(left_token, right_token) + ')'
         return code
-    
-    
+
     def get_initialization_code(self, in_tokens):
         left_code = self.left_atom.get_initialization_code(in_tokens)
         right_code = ''
@@ -256,16 +260,15 @@ class ExpressionAtom(Atom):
             right_code = self.right_atom.get_initialization_code(in_tokens)
         return left_code + right_code
 
-        
     def get_preprocessing_code(self, in_tokens):
         left_code = self.left_atom.get_preprocessing_code([])
         right_code = ''
         if self.right_atom:
             right_code = self.right_atom.get_preprocessing_code([])
         return left_code + right_code
-    
-    def get_processing_code(self, in_tokens):       
-        #code = self.get_preprocessing_code(in_tokens)
+
+    def get_processing_code(self, in_tokens):
+        # code = self.get_preprocessing_code(in_tokens)
         code = ''
         domain = None
         if self.is_inline():
@@ -279,14 +282,13 @@ class ExpressionAtom(Atom):
                 right_code = ''
                 right_tokens = None
             code += left_code + right_code
-            
+
             code += templates.assignment(self.handle,
                                          self._operator_symbol(self.left_atom.get_out_tokens()[0],
                                                                right_tokens))
             out_tokens = [self.handle]
-        return {domain : [code, out_tokens] }
-        
-        
+        return {domain: [code, out_tokens]}
+
     def _expression_out_type(self):
         if self.expr_type == 'Add':
             out_type = 'real'
@@ -317,8 +319,8 @@ class ExpressionAtom(Atom):
         elif self.expr_type == 'LesserEqual':
             out_type = 'bool'
         return out_type
-        
-    def _operator_symbol(self, left, right = None):
+
+    def _operator_symbol(self, left, right=None):
         code = '' if right is None else left
         if self.expr_type == 'Add':
             code += ' + '
@@ -350,8 +352,8 @@ class ExpressionAtom(Atom):
             code += ' <= '
         code += left if right is None else right
         return code
-        
-        
+
+
 class ListAtom(Atom):
     def __init__(self, list_node, scope_index):
         super(ListAtom, self).__init__()
@@ -359,59 +361,58 @@ class ListAtom(Atom):
         self.list_node = list_node
         self.rate = -1
         self.inline = True
-        
+
         self.handles = [elem.get_handles() for elem in list_node] # TODO make this recursive
         self.out_tokens = [elem.get_out_tokens() for elem in list_node]
         self.instances = []
         for elem in list_node:
             self.instances += elem.get_instances()
-        
+
         self.globals = {}
         for atom in self.list_node:
             new_globals = atom.get_globals()
             self.globals.update(new_globals)
-            
-        
+
     def get_handles(self, index = -1):
         return self.handles
-            
+
     def get_out_tokens(self, index = -1):
         return self.out_tokens[index]
-        
+
     def get_declarations(self, index = -1):
         declarations = []
         for elem in self.list_node:
             elem_declarations = elem.get_declarations()
             declarations += elem_declarations
         return declarations
-    
+
     def get_instances(self, index = -1):
         if index == -1:
             return self.instances
         return self.instances[index]
-        
+
     def get_inline_processing_code(self, in_tokens):
         return str(self.value)
-        
+
     def get_initialization_code(self, in_tokens):
         code = ''
         for i,elem in enumerate(self.list_node):
             new_code = elem.get_initialization_code(in_tokens)
             code += new_code
         return code
-        
+
     def get_preprocessing_code(self, in_tokens):
         code = ''
         for i,elem in enumerate(self.list_node):
             if len(in_tokens) > 0:
-                index = i%len(in_tokens)
+                index = i % len(in_tokens)
                 new_code = elem.get_preprocessing_code([in_tokens[index]])
                 code += new_code
             else:
-                 new_code = elem.get_preprocessing_code([])
-                 code += new_code
+                new_code = elem.get_preprocessing_code([])
+                code += new_code
         return code
-        
+
     def get_postproc_once(self):
         postproc = []
         for i,elem in enumerate(self.list_node):
@@ -419,12 +420,12 @@ class ListAtom(Atom):
             if new_postproc:
                 postproc += new_postproc
         return postproc
-        
+
     def get_processing_code(self, in_tokens):
         proc_code = {}
         for i,elem in enumerate(self.list_node):
             if len(in_tokens) > 0:
-                index = i%len(in_tokens)
+                index = i % len(in_tokens)
                 elem_proc_code = elem.get_processing_code([in_tokens[index]])
             else:
                 elem_proc_code = elem.get_processing_code([])
@@ -435,14 +436,15 @@ class ListAtom(Atom):
                 proc_code[domain][0] += new_code
                 proc_code[domain][1] += new_out_tokens
         return proc_code
-        
+
 
 class NameAtom(Atom):
-    def __init__(self, platform_type, declaration, token_index, scope_index, line, filename):
+    def __init__(self, platform_type, declaration, token_index,
+                 scope_index, line, filename):
         super(NameAtom, self).__init__()
         self.scope_index = scope_index
         self.name = declaration['name']
-        self.handle = self.name # + '_%03i'%token_index;
+        self.handle = self.name  # + '_%03i'%token_index;
         self.platform_type = platform_type
         self.declaration = declaration
         self.domain = None
@@ -450,12 +452,11 @@ class NameAtom(Atom):
         self.filename = filename
         if 'domain' in self.declaration:
             if type(self.declaration['domain']) == dict:
-                #FIXME this should be set by the code validator
-                self.domain = self.declaration['domain']['name']['name'] 
+                # FIXME this should be set by the code validator
+                self.domain = self.declaration['domain']['name']['name']
             else:
                 self.domain = self.declaration['domain']
-            
-        
+
         for section in self.global_sections:
             if section in platform_type['block']:
                 if section in self.globals:
@@ -781,7 +782,7 @@ class ModuleAtom(Atom):
         super(ModuleAtom, self).__init__()
         self.scope_index = scope_index
         self.name = module["name"]
-        self.handle = self.name + '_%03i'%token_index;
+        self.handle = self.name + '_%03i'%token_index
         #self._platform_code = platform_code
         self._input_blocks = []
         self._output_blocks = []
@@ -897,7 +898,7 @@ class ModuleAtom(Atom):
 #                instances += atom.get_instances()
                 #FIXME do we need to support multiple output blocks?
         if len(self.out_tokens) > 0:
-            block_types = self.get_block_types(self._output_blocks[0]);
+            block_types = self.get_block_types(self._output_blocks[0])
             default_value = ''
             instances += [Instance(default_value,
                                  self.scope_index,
@@ -1057,7 +1058,7 @@ class ModuleAtom(Atom):
                                 domain_proc_code[module_port_domain]['handles'] += port_value.get_handles()
                         pass        
                 
-        for module_port_domain, values  in domain_proc_code.iteritems():
+        for module_port_domain, values  in domain_proc_code.items():
             if module_port_domain == self._output_blocks[0]['domain']:
                 in_tokens += values['handles']
             else:
@@ -1150,8 +1151,8 @@ class ModuleAtom(Atom):
         if not self.module['ports']:
             return
             
-        for port in self.module['ports']: 
-            internal_block = self.find_internal_block(port['block']['block']['name']['name'])
+        for port in self.module['ports']:
+            internal_block = self.find_internal_block(port['block']['block']['name']['name'])                
             if 'main' in port['block'] and port['block']['main']['value'] == True:
                 internal_block['main'] = True
                 internal_block['port_block'] = True
@@ -1539,9 +1540,9 @@ class PlatformFunctions:
                     reads[current_domain] = []
                 
                 if (atom.get_num_writes() > 0):
-                    writes[current_domain].append(atom.get_handles());
+                    writes[current_domain].append(atom.get_handles())
                 if (atom.get_num_reads() > 0):
-                    reads[current_domain].append(atom.get_handles());
+                    reads[current_domain].append(atom.get_handles())
                 #Process Inlcudes
                 new_globals = atom.get_globals()
                 if len(new_globals) > 0:
@@ -1875,7 +1876,7 @@ class GeneratorBase(object):
         globals_code = templates.get_globals_code(code['global_groups'])
         for platform_domain in domains:
             if platform_domain['domainName'] == self.platform.get_platform_domain():
-               break
+                break
         self.write_section_in_file(platform_domain['globalsTag'], globals_code, filename)
         
         template_init_code = templates.get_config_code()
