@@ -22,8 +22,6 @@ private:
 
 private Q_SLOTS:
 
-    // Code generation/Compiler
-    void testCompilation();
 
     //
     void testConnectionCount();
@@ -63,6 +61,9 @@ private Q_SLOTS:
     // Library
     void testLibraryBasicTypes();
     void testLibraryValidation();
+
+    // Code generation/Compiler
+    void testCompilation();
 
 };
 
@@ -713,6 +714,23 @@ void ParserTest::testConstantResolution()
     value = static_cast<ValueNode *>(list->getChildren().at(1));
     QVERIFY(value->getNodeType() == AST::Real);
     QVERIFY(value->getRealValue() == 5.1);
+
+//    constant AutoBlock {value: 440 }
+//    module Test {
+//      ports: [
+//        port InputPort {
+//          block: AutoBlock
+//        }
+//       ]
+//    }
+    DeclarationNode *module = static_cast<DeclarationNode *>(tree->getChildren().at(24));
+    QVERIFY(module->getNodeType() == AST::Declaration);
+    QVERIFY(module->getObjectType() == "module");
+    ListNode *ports = static_cast<ListNode *>(module->getPropertyValue("ports"));
+    QVERIFY(ports->getNodeType() == AST::List);
+    BlockNode *portBlock = static_cast<BlockNode *>(static_cast<DeclarationNode *>(ports->getChildren().at(0))->getPropertyValue("block"));
+    QVERIFY(portBlock->getNodeType() == AST::Block);
+    QVERIFY(portBlock->getName() == "AutoBlock");
 
     tree->deleteChildren();
     delete tree;

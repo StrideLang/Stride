@@ -1660,7 +1660,7 @@ void CodeResolver::resolveConstantsInNode(AST *node, QVector<AST *> scope)
         ListNode *internalBlocks = static_cast<ListNode *>(block->getPropertyValue("blocks"));
         if (internalBlocks) {
             if (internalBlocks->getNodeType() == AST::List) {
-                scope << QVector<AST *>::fromStdVector(internalBlocks->getChildren());
+                scope = QVector<AST *>::fromStdVector(internalBlocks->getChildren()) + scope;
             }
         }
         for(PropertyNode *property : properties) {

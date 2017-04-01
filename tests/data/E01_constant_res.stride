@@ -48,7 +48,7 @@ constant AutoBlock {value: 440 }
 module Test {
   ports: [
     port InputPort {
-      block: AutoBlock
+      block: AutoBlock #This AutoBlock should be a new signal Block within the Test module scope
     }
    ]
 }
