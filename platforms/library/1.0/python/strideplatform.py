@@ -746,7 +746,7 @@ class BundleAtom(NameAtom):
         code = ''
         out_tokens = [self._get_token_name(self.index)]
         proc_code = self.get_inline_processing_code(in_tokens)
-        domain = None
+        domain = self.domain
         if len(proc_code) > 0:
             if 'processing' in self.platform_type['block']:
                 if self.inline:
@@ -1619,7 +1619,7 @@ class PlatformFunctions:
                     if not domain in processing_code:
                         processing_code[domain] = ''
                     processing_code[domain] += code + '\n'
-                    if domain == current_domain:
+                    if domain == current_domain or not current_domain:
                         in_tokens = out_tokens
 
             previous_atom = atom
