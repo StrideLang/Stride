@@ -1,13 +1,12 @@
 # Frequency Modulation
 
 use RtAudio version 1.0 on PC
-#use STM32F7 version 1.0 on Discovery
 
 import Generators
 
 signal Modulator {
-	rate: 441
-	domain: AudioDomain
+	rate:      441
+	domain:    AudioDomain
 }
 
 Oscillator ( frequency: 0.5 amplitude: 100.0 ) >> Modulator;
