@@ -15,7 +15,7 @@ AST::AST()
 AST::AST(Token token, const char *filename, int line)
 {
     m_token = token;
-    m_filename = filename;
+    m_filename.append(filename);
     m_line = line;
     m_rate = -1;
 }

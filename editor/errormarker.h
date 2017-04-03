@@ -23,6 +23,7 @@ protected:
 
 private:
     int m_lineNumber;
+    bool m_expand;
     QString m_errorText;
     QWidget *m_text;
 };

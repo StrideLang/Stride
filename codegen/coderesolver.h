@@ -37,6 +37,7 @@ private:
     void resolveRates();
     void processDomains();
     void analyzeConnections();
+    void processStreamRateBlock();
 
     // Sub functions
     void resolveStreamRates(StreamNode *stream);
@@ -91,6 +92,7 @@ private:
 
 //    QVector<AST *> expandStreamNode(StreamNode *stream);
 //    AST *expandStream(AST *node, int index, int rightNumInputs, int leftNumOutputs);
+    AST * makeConnector(AST * node, string connectorName, int size, const QVector<AST *> &scopeStack);
     QVector<AST *> sliceStreamByDomain(StreamNode *stream, QVector<AST *> scopeStack);
 //    StreamNode *splitStream(StreamNode *stream, AST *closingNode, AST *endNode);
     QVector<AST *> processExpression(ExpressionNode *expr, QVector<AST *> scopeStack, AST *outDOmain);

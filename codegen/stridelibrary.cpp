@@ -145,7 +145,7 @@ void StrideLibrary::readLibrary(QString rootDir, QMap<QString, QString> importLi
     QString basepath = QString("/library/%1.%2").arg(m_majorVersion).arg(m_minorVersion);
     QStringList subPaths;
     subPaths << "";
-    QMapIterator<QString, QString> it(importList);
+     QMapIterator<QString, QString> it(importList);
     while (it.hasNext()) {
         it.next();
         subPaths << it.key();
