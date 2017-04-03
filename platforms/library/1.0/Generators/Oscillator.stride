@@ -90,7 +90,7 @@ module Oscillator {
 		}
     ]
     streams: [
-        Frequency * 2.0 * _Pi / AudioRate >> PhaseInc;
+        Frequency * 2.0 * _Pi / StreamRate >> PhaseInc;
         Phase >> SineBlock >> Level(gain: Amplitude) >> Output;
         Phase + PhaseInc >> IncPhase;
 		Phase -( 2 * _Pi) >> NewPhase;

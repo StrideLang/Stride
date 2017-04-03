@@ -793,6 +793,11 @@ class ModuleAtom(Atom):
         self.function = function
         self.domain = None
         self.connected_blocks = connected_blocks
+        self.instance_consts = {}
+
+        self._process_flags()
+
+
         if 'domain' in self.function['ports']:
             if 'value' in self.function['ports']['domain']:
                 self.domain = self.function['ports']['domain']['value']
@@ -862,9 +867,12 @@ class ModuleAtom(Atom):
                     if block['domain'] == domain:
                         process_code[domain]['output_blocks'].append(block)
 
+        init_code += self.flags_init_code
+
         declaration_text = templates.module_declaration(
                 self.name, header_code,
-                init_code, process_code)
+                init_code, process_code,
+                self.instance_consts)
 
         declaration = Declaration(self.module['stack_index'],
                                         self.domain,
@@ -879,11 +887,17 @@ class ModuleAtom(Atom):
 
     def get_instances(self):
         instances = []
+        instance_consts = []
+        for name, info in self.instance_consts.items():
+            if name == "sampleRate":
+                instance_consts.append(self.rate)
         module_instance = ModuleInstance(self.scope_index,
                                  self.domain,
                                  self.name,
                                  self.handle,
-                                 self)
+                                 self,
+                                 instance_consts
+                                 )
         if "other_scope_instances" in self.code:
             for inst in self.code["other_scope_instances"]:
                 inst.post = False
@@ -959,44 +973,7 @@ class ModuleAtom(Atom):
         return code
 
     def get_initialization_code(self, in_tokens):
-        code = ''
-        # Go through the module ports and check if the function is setting any by
-        # value. This means that the call needs to be put into the initialization
-        # of the domain
-        if not self.module['ports']:
-            return ''
-
-        for module_port in self.module['ports']:
-            module_port_domain = ''
-            if 'block' in module_port:
-                module_block = module_port['block']
-            elif 'blockbundle' in module_port:
-                module_block = module_port['blockbundle']
-            if  'domain' in module_block and module_block['domain']:
-                if type(module_block['domain']) == str or type(module_block['domain']) == unicode:
-                    module_port_domain = module_block['domain']
-                else:
-                    module_port_domain = module_block['domain']['name']['name']
-            module_port_name = module_block['name']
-            module_port_direction = module_block['direction']
-            for port_atom_name in self.port_name_atoms:
-                if port_atom_name == module_port_name:
-                    for port_value in self.port_name_atoms[port_atom_name]:
-                        # TODO implement for output ports
-                        if type(port_value) is ValueAtom and module_port_direction == 'input' and not module_block['domain'] == self._output_blocks[0]['domain']:
-                            #if port_atom.
-                            module_call = templates.module_processing_code(self.handle, port_value.get_handles(), [], module_port_domain)
-                            code += templates.expression(module_call)
-                    pass
-
-        # FIXME this needs fixing
-#        for in_block in self._input_blocks:
-#            if 'size' in in_block:
-#                new_code = templates.declaration_bundle_real('_%s_in'%self.handle, len(in_tokens)) + '\n'
-#                for i in range(len(in_tokens)):
-#                    new_code += templates.assignment('_%s_in[%i]'%(self.handle, i), in_tokens[i])
-#                code += new_code
-        return code
+        return self.initialization_code
 
     def get_preprocessing_code(self, in_tokens):
         code = ''
@@ -1143,6 +1120,45 @@ class ModuleAtom(Atom):
                 self.globals[section] = self.code['global_groups'][section]
 
 
+        # Initialization Code
+        # Go through the module ports and check if the function is setting any by
+        # value. This means that the call needs to be put into the initialization
+        # of the domain
+
+        self.initialization_code = ''
+        if self.module['ports']:
+            for module_port in self.module['ports']:
+                module_port_domain = ''
+                if 'block' in module_port:
+                    module_block = module_port['block']
+                elif 'blockbundle' in module_port:
+                    module_block = module_port['blockbundle']
+                if 'domain' in module_block and module_block['domain']:
+                    if type(module_block['domain']) == str or type(module_block['domain']) == unicode:
+                        module_port_domain = module_block['domain']
+                    else:
+                        module_port_domain = module_block['domain']['name']['name']
+                module_port_name = module_block['name']
+                module_port_direction = module_block['direction']
+                for port_atom_name in self.port_name_atoms:
+                    if port_atom_name == module_port_name:
+                        for port_value in self.port_name_atoms[port_atom_name]:
+                            # TODO implement for output ports
+                            if type(port_value) is ValueAtom and module_port_direction == 'input' and not module_block['domain'] == self._output_blocks[0]['domain']:
+                                #if port_atom.
+                                module_call = templates.module_processing_code(self.handle, port_value.get_handles(), [], module_port_domain)
+                                self.initialization_code += templates.expression(module_call)
+                        pass
+
+        # FIXME this needs fixing
+#        for in_block in self._input_blocks:
+#            if 'size' in in_block:
+#                new_code = templates.declaration_bundle_real('_%s_in'%self.handle, len(in_tokens)) + '\n'
+#                for i in range(len(in_tokens)):
+#                    new_code += templates.assignment('_%s_in[%i]'%(self.handle, i), in_tokens[i])
+#                code += new_code
+
+
     def _init_blocks(self, blocks):
         self._blocks = []
         for block in blocks:
@@ -1211,6 +1227,20 @@ class ModuleAtom(Atom):
         elif type(right) is ExpressionAtom:
             instances += self._get_expression_instances(right)
         return instances
+
+    def _process_flags(self):
+        self.flags_init_code = ''
+        self.flags_constructor_consts = ''
+        if not '_flags' in self.module:
+            return
+        flags = self.module['_flags']
+        for flag in flags:
+            if flag['value'] == '_UsesStreamRate':
+                self.instance_consts['sampleRate'] = {'type': 'int'}
+                self.flags_init_code = templates.assignment("StreamRate", 'sampleRate')
+                self.flags_constructor_consts = [self.function['rate']]
+
+
 
 class PlatformModuleAtom(ModuleAtom):
     def __init__(self, module, function, platform_code, token_index, platform, scope_index):
@@ -1467,7 +1497,7 @@ class PlatformFunctions:
             else:
                 raise ValueError("Unsupported bundle type.")
         elif instance.get_type() == 'module':
-            code = templates.declaration_module(instance.get_module_type(), instance.get_name())
+            code = templates.declaration_module(instance.get_module_type(), instance.get_name(), instance.get_instance_consts())
         elif instance.get_type() == 'reaction':
             code = templates.declaration_reaction(instance.get_module_type(), instance.get_name())
         else:

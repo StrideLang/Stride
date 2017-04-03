@@ -26,6 +26,7 @@ void CodeResolver::preProcess()
     resolveRates();
     processDomains();
     analyzeConnections();
+    processStreamRateBlock();
 }
 
 void CodeResolver::resolveRates()
@@ -843,6 +844,39 @@ void CodeResolver::analyzeConnections()
 
         } else if (object->getNodeType() == AST::Stream) {
             checkStreamConnections(static_cast<StreamNode *>(object), QVector<AST *>(), true);
+        }
+    }
+}
+
+void CodeResolver::processStreamRateBlock()
+{
+    for (AST *node : m_tree->getChildren()) {
+        if (node->getNodeType() == AST::Declaration) {
+            DeclarationNode *declaration = static_cast<DeclarationNode *>(node);
+            if (declaration->getObjectType() == "module") { // TODO Should reactions be included here too?
+                AST *blocksProperty = declaration->getPropertyValue("blocks");
+                if (blocksProperty && blocksProperty->getNodeType() == AST::List) {
+                    ListNode *blocks = static_cast<ListNode *>(blocksProperty);
+                    for (AST *blockNode: blocks->getChildren()) {
+                        if (blockNode->getNodeType() == AST::Declaration) {
+                            if (static_cast<DeclarationNode *>(blockNode)->getName() == "StreamRate") {
+                                PropertyNode *flagsProperty;
+                                ListNode *flagsProperties;
+                                if (!declaration->getPropertyValue("_flags")) {
+                                    flagsProperties = new ListNode(nullptr, node->getFilename().c_str(), node->getLine());
+                                    flagsProperty = new PropertyNode("_flags", flagsProperties, node->getFilename().c_str(), node->getLine());
+                                    declaration->addProperty(flagsProperty);
+                                } else {
+                                    flagsProperties = static_cast<ListNode *>(declaration->getPropertyValue("_flags"));
+                                    Q_ASSERT(flagsProperties->getNodeType() == AST::List);
+                                }
+
+                                flagsProperties->addChild(new ValueNode(string("_UsesStreamRate"), node->getFilename().c_str(), node->getLine()));
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -1915,10 +1949,40 @@ QVector<AST *> CodeResolver::sliceStreamByDomain(StreamNode *stream, QVector<AST
     std::string domainName = CodeValidator::getNodeDomainName(left, CodeValidator::getBlocksInScope(left, scopeStack, m_tree), m_tree);
     std::string previousDomainName = CodeValidator::getNodeDomainName(left, CodeValidator::getBlocksInScope(left, scopeStack, m_tree), m_tree);
     while (right) {
+        domainName = CodeValidator::getNodeDomainName(left, CodeValidator::getBlocksInScope(left, scopeStack, m_tree), m_tree);
         if (left == right) { // If this is is the last pass then make last slice
-            StreamNode *newStream;
-            AST *lastNode = stack.back();
+            AST *lastNode = nullptr;
+//            if (previousDomainName != domainName) {
+//                std::string connectorName = "_BridgeSig_" + std::to_string(m_connectorCounter++);
+//                DeclarationNode *declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(left, scopeStack, m_tree),
+//                                                                              scopeStack, m_tree);
+//                if (declaration) {
+//                    int size = 1;
+//                    if (declaration->getNodeType() == AST::BundleDeclaration) {
+//                        Q_ASSERT(declaration->getBundle()->index()->getChildren()[0]->getNodeType() == AST::Int);
+//                        size = static_cast<ValueNode *>(declaration->getBundle()->index()->getChildren()[0])->getIntValue();
+//                    }
+//                    if (declaration->getObjectType() == "signal") {
+//                        DeclarationNode *newSignal = createSignalBridge(connectorName,  declaration->getPropertyValue("default"),
+//                                                                        declaration->getDomain(), new ValueNode("", -1),
+//                                                                        declaration->getFilename(), declaration->getLine(),
+//                                                                        size);
+//                        streams << newSignal;
+//                        lastNode = new BlockNode(connectorName, "", -1);
+//                    } else {
+
+//                        lastNode = stack.back();
+//                        stack.pop_back();
+//                    }
+//                }
+//            } else {
+//                lastNode = stack.back();
+//                stack.pop_back();
+//            }
+
+            lastNode = stack.back();
             stack.pop_back();
+            StreamNode *newStream;
             newStream = new StreamNode(lastNode->deepCopy(), left->deepCopy(), lastNode->getFilename().c_str(), lastNode->getLine());
             while (stack.size() > 0) {
                 lastNode = stack.back();
@@ -1997,19 +2061,19 @@ QVector<AST *> CodeResolver::sliceStreamByDomain(StreamNode *stream, QVector<AST
                 if  (stack.back()->getNodeType() == AST::List) {
                     closingName = new ListNode(nullptr, "", -1);
                     newStart = new ListNode(nullptr, "", -1);
-                    DeclarationNode *groupDeclaration = nullptr;
-                    // First find a member in the list that is declared to determine the list's domain
-                    for (unsigned int i = 0; i < stack.back()->getChildren().size(); i++) {
-                        AST *member = stack.back()->getChildren()[i];
-                        groupDeclaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(member, scopeStack, m_tree),
-                                                                     scopeStack, m_tree);
-                        if (groupDeclaration) {
-                            if (groupDeclaration->getObjectType() == "signal") {
-                                break;
-                            }
-                        }
+//                    DeclarationNode *groupDeclaration = nullptr;
+//                    // First find a member in the list that is declared to determine the list's domain
+//                    for (unsigned int i = 0; i < stack.back()->getChildren().size(); i++) {
+//                        AST *member = stack.back()->getChildren()[i];
+//                        groupDeclaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(member, scopeStack, m_tree),
+//                                                                     scopeStack, m_tree);
+//                        if (groupDeclaration) {
+//                            if (groupDeclaration->getObjectType() == "signal") {
+//                                break;
+//                            }
+//                        }
 
-                    }
+//                    }
                     // Set the domain for all members of list
                     for (unsigned int i = 0; i < stack.back()->getChildren().size(); i++) {
                         string listMemberName = connectorName + "_" + std::to_string(i);
