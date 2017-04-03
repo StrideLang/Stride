@@ -244,11 +244,11 @@ public:
             declaration += ';\n'
         return declaration
 
-    def declaration_module(self, moduletype, handle, instance_consts = {}, close=True):
+    def declaration_module(self, moduletype, handle, instance_consts = [], close=True):
         declaration = moduletype + ' ' + handle
         if len(instance_consts) > 0:
             declaration += '{'
-            for const, value in instance_consts.items():
+            for value in instance_consts:
                 declaration += str(value)
             declaration += '}'
         if close:

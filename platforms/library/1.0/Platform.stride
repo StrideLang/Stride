@@ -197,6 +197,12 @@ type _PlatformType {
 			default: none
 			required: off
 		},
+		typeProperty Rate {
+			name: "rate"
+			types: [""] # _platform
+			default: PlatformRate
+			required: off
+		},
 		typeProperty Inherits { # TODO should this be done differently? e.g. not as a port but through inheritance merging ports?
 			name: "inherits"
 			types: ["CSP", _Type]

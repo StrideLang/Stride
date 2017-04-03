@@ -673,6 +673,19 @@ double CodeResolver::getNodeRate(AST *node, QVector<AST *> scope, AST *tree)
         }
         bundle->setRate(rate);
         return rate;
+    }  else if (node->getNodeType() == AST::List
+                || node->getNodeType() == AST::Expression) {
+        double rate = -1.0;
+        for (AST *element:node->getChildren()) {
+            double elementRate = getNodeRate(element, scope, tree);
+            if (elementRate != -1.0) {
+                if (rate != elementRate) {
+                    qDebug() << "Warning: List has different rates!";
+                }
+                rate = elementRate;
+            }
+        }
+        return rate;
     } else if (node->getNodeType() == AST::Function) {
         return -1;
     }
