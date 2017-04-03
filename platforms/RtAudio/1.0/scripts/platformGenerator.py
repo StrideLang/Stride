@@ -85,7 +85,7 @@ class Generator(GeneratorBase):
             new_flag = "-I" + include_dir
             if not new_flag in self.build_flags:
                 self.build_flags.append(new_flag)
-                
+
         self.build_flags.append("-I" + self.out_dir + "/rtaudio")
 
         self.log("Platform code generation finished!")
@@ -112,9 +112,9 @@ class Generator(GeneratorBase):
                          "-Irtaudio/include"
                          "-o " + short_f + ".o",
                          "-c "+ f]
-    
+
                 args = [cpp_compiler] + flags
-    
+
                 outtext = ck_out(args)
                 self.log(outtext)
 
@@ -123,8 +123,8 @@ class Generator(GeneratorBase):
                      "-DNDEBUG",
                      "-D__WINDOWS_WASAPI__",
                      "-Irtaudio/include"]
-                     
-                     
+
+
             flags += [f[f.rindex("/") + 1:] + ".o" for f in source_files]
             flags += ["-o " + self.out_dir +"/app",
                      "-lole32",
@@ -140,33 +140,90 @@ class Generator(GeneratorBase):
 
         elif platform.system() == "Linux":
 
+            source_files = [self.out_file, self.out_dir + "/rtaudio/RtAudio.cpp"]
+
             cpp_compiler = "/usr/bin/g++"
 
+            pulse_defines = ['-D__LINUX_PULSE__']
+            pulse_link_flags = ['-lpthread', '-lpulse-simple', '-lpulse']
+
+            alsa_defines = ['-D__LINUX_ALSA__']
+            alsa_link_flags = [ "-lasound", '-lpthread']
+
+            module = 'pulse'
+
+            if module == 'pulse':
+                defines = pulse_defines
+                link_flags = pulse_link_flags
+            elif module == 'alsa':
+                defines = alsa_defines
+                link_flags = alsa_link_flags
+
+            for f in source_files:
+                short_f = f[f.rindex("/") + 1:]
+                args = [cpp_compiler,
+#                        "-I" + self.platform_dir + "/include",
+                        "-I"+ self.out_dir + "/rtaudio",
+                        "-O3" ,
+                        "-std=c++11",
+                        "-DNDEBUG"]
+                args += defines
+                args += ["-o" + short_f + ".o",
+                         "-c",
+                         f]
+
+                self.log(args)
+
+                outtext = ck_out(args)
+                self.log(outtext)
+
+             # Link ------------------------
             args = [cpp_compiler,
-#                    "-I" + self.platform_dir + "/include",
                     "-O3",
                     "-std=c++11",
-                    "-DNDEBUG",
-                    "-D__LINUX_ALSA__ ",
-                     "-o" + self.out_dir +"/app",
-                     self.out_file,
-                     self.out_dir + "/rtaudio/RtAudio.cpp",
-                     "-lasound",
-                     "-lpthread"
-                     ]
+                    "-DNDEBUG"
+                    ]
+
+
+            args += [f[f.rindex("/") + 1:] + ".o" for f in source_files]
+            args += ["-o" + self.out_dir + "/app"]
+            args += link_flags
+
+            args += self.build_flags + self.link_flags
 
             self.log(args)
+
+#            # ck_out didn't work properly on OS X
+#            os.system(' '.join(args))
+#
+#
+#
+#            args = [cpp_compiler,
+##                    "-I" + self.platform_dir + "/include",
+#                    "-O3",
+#                    "-std=c++11",
+#                    "-I"+ self.out_dir + "/rtaudio",
+#                    "-DNDEBUG",
+#                    "-D__LINUX_ALSA__ ",
+#                     "-o" + self.out_dir +"/app",
+#                     self.out_file,
+#                     self.out_dir + "/rtaudio/RtAudio.cpp",
+#                     "-lasound",
+#                     "-lpthread"
+#                     ]
+#
+#            self.log(args)
             outtext = ck_out(args)
 
             self.log(outtext)
 
 
         elif platform.system() == "Darwin":
-            
+
             source_files = [self.out_file, self.out_dir + "/rtaudio/RtAudio.cpp"]
 
             cpp_compiler = "/usr/bin/c++"
-            
+
             for f in source_files:
                 short_f = f[f.rindex("/") + 1:]
                 args = [cpp_compiler,
@@ -179,9 +236,9 @@ class Generator(GeneratorBase):
                          "-o" + short_f + ".o",
                          "-c",
                          f]
-    
+
                 self.log(args)
-    
+
                 outtext = ck_out(args)
                 self.log(outtext)
 
@@ -193,8 +250,8 @@ class Generator(GeneratorBase):
                     "-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk",
                     "-Wl,-search_paths_first",
                     "-Wl,-headerpad_max_install_names"]
-                    
-                    
+
+
             args += [f[f.rindex("/") + 1:] + ".o" for f in source_files]
             args += ["-o" + self.out_dir + "/app",
                     "-framework CoreAudio",
