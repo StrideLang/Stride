@@ -1,0 +1,23 @@
+
+platformType _GreaterType {
+    typeName: '_greaterType'
+    inputs: ["real", "real"]
+	outputs: ["real"]
+#    linkTo: []
+#    declarations: ['']
+#    initializations: ["// %%token%% = 0;"]
+    processing: "%%intoken:0%% > %%intoken:1%%"
+    inherits: ['signal']
+}
+
+platformType _EqualType {
+    typeName: '_equalType'
+    inputs: ["real", "real"]
+	outputs: ["real"]
+#    linkTo: []	
+#    declarations: ['']
+#    initializations: ["// %%token%% = 0;"]
+    processing: "%%intoken:0%% == %%intoken:1%%"
+    inherits: ['signal']
+}
+
