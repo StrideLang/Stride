@@ -1779,16 +1779,17 @@ string CodeValidator::getNodeDomainName(AST *node, QVector<AST *> scopeStack, AS
 
 string CodeValidator::getDomainNodeString(AST *domainNode)
 {
-    Q_ASSERT(domainNode);
     string domainName;
-    if (domainNode->getNodeType() == AST::String) {
-        domainName = static_cast<ValueNode *>(domainNode)->getStringValue();
-    } else if (domainNode->getNodeType() == AST::Declaration) {
-        DeclarationNode *domainBlock = static_cast<DeclarationNode *>(domainNode);
-        if (domainBlock->getObjectType() == "_domain") {
-            AST *domainValue = domainBlock->getPropertyValue("domainName");
-            if (domainValue->getNodeType() == AST::String) {
-                domainName = static_cast<ValueNode *>(domainValue)->getStringValue();
+    if (domainNode) {
+        if (domainNode->getNodeType() == AST::String) {
+            domainName = static_cast<ValueNode *>(domainNode)->getStringValue();
+        } else if (domainNode->getNodeType() == AST::Declaration) {
+            DeclarationNode *domainBlock = static_cast<DeclarationNode *>(domainNode);
+            if (domainBlock->getObjectType() == "_domain") {
+                AST *domainValue = domainBlock->getPropertyValue("domainName");
+                if (domainValue->getNodeType() == AST::String) {
+                    domainName = static_cast<ValueNode *>(domainValue)->getStringValue();
+                }
             }
         }
     }

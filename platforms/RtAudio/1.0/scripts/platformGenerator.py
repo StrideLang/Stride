@@ -97,6 +97,8 @@ class Generator(GeneratorBase):
 
         import platform
 
+        os.chdir(self.out_dir)
+
         if platform.system() == "Windows":
 
             source_files = [self.out_file, self.out_dir + "/rtaudio/RtAudio.cpp"]
@@ -227,12 +229,12 @@ class Generator(GeneratorBase):
             for f in source_files:
                 short_f = f[f.rindex("/") + 1:]
                 args = [cpp_compiler,
-                        "-I" + self.platform_dir + "/include",
+                        "-I"+ self.out_dir + "/rtaudio",
                         "-O3" ,
                         "-std=c++11",
                         "-DNDEBUG",
                         "-D__MACOSX_CORE__",
-                        "-Irtaudio"
+                        "-Irtaudio",
                          "-o" + short_f + ".o",
                          "-c",
                          f]
@@ -247,13 +249,14 @@ class Generator(GeneratorBase):
                     "-O3",
                     "-std=c++11",
                     "-DNDEBUG",
-                    "-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk",
+                    "-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk",
                     "-Wl,-search_paths_first",
                     "-Wl,-headerpad_max_install_names"]
 
 
             args += [f[f.rindex("/") + 1:] + ".o" for f in source_files]
             args += ["-o" + self.out_dir + "/app",
+                    "-framework CoreFoundation",
                     "-framework CoreAudio",
                     "-lpthread"
                     ]

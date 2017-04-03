@@ -806,6 +806,10 @@ void ProjectWindow::readSettings()
     }
     settings.endGroup();
 
+    settings.beginGroup("environment");
+    m_environment["platformRootPath"] = settings.value("platformRootPath", "../../StreamStack/platforms").toString();
+    settings.endGroup();
+
     settings.beginGroup("GUI");
     if (settings.contains("geometry")) {
         this->restoreGeometry(settings.value("geometry").toByteArray());
@@ -836,10 +840,6 @@ void ProjectWindow::readSettings()
     }
     int lastIndex = settings.value("lastIndex", -1).toInt(); // Used later after files are loaded
     ui->tabWidget->setCurrentIndex(lastIndex);
-    settings.endGroup();
-
-    settings.beginGroup("environment");
-    m_environment["platformRootPath"] = settings.value("platformRootPath", "../../StreamStack/platforms").toString();
     settings.endGroup();
 }
 
