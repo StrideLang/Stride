@@ -63,7 +63,7 @@ static uint16_t Buffer[BUFFER_SIZE] = { 0,0 };
 // 0x33 =  -6 dB
 // 0x39 =   0 db
 // 0x3F =  +6 db
-static uint32_t OutputVolume = 0x2D;
+static uint32_t OutputVolume = 0x27;
 
 // 0x00 = -71.625 dB
 // 0x90 = -18.000 dB

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 
 include(CMakeForceCompiler)
 
-#set(CXX11 -std=c++11)
+set(CXX11_FLAGS -std=gnu++11)
 
 set(CMAKE_ASM_COMPILER arm-none-eabi-as)
 enable_language(ASM)
@@ -16,7 +16,7 @@ set(LINK_FLAGS ${COMMON_FLAGS})
 set(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_LINKER> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
 
 set(CMAKE_C_FLAGS "${COMMON_FLAGS} -Os -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0")
-set(CMAKE_CXX_FLAGS "${COMMON_FLAGS} -Os -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0 ${CXX11}")
+set(CMAKE_CXX_FLAGS "${COMMON_FLAGS} -Os -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0 ${CXX11_FLAGS}")
 
 set(CMAKE_ASM_FLAGS ${COMMON_FLAGS})
 
