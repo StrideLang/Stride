@@ -1,6 +1,6 @@
 use Wiring version 1.0 on Uno
 
-import generators
+import Generators
 
 signal DownSample {
 	rate: 1
@@ -9,5 +9,5 @@ signal DownSample {
 #AnalogIn[1] * 4 >> DownSample >> SerialOut();
 1 + AnalogIn[1] * (1.0/128.0) >> Frequency;
 
-Oscillator (frequency: Frequency) > 0 >> DigitalOut[14];
+[Oscillator (frequency: Frequency) , 0 ] >> Greater() >> DigitalOut[14];
 

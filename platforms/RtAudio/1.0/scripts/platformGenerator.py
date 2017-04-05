@@ -28,11 +28,11 @@ class Generator(GeneratorBase):
     def generate_code(self):
         # Generate code from tree
         # TODO These defaults should be set from the platform definition file
-        self.block_size = 512
-        self.sample_rate = 44100
-        self.num_out_chnls = 2
-        self.num_in_chnls = 2
-        self.audio_device = -1
+#        self.block_size = 512
+#        self.sample_rate = 44100
+#        self.num_out_chnls = 2
+#        self.num_in_chnls = 2
+#        self.audio_device = -1
 
         self.log("Platform code generation starting...")
 
