@@ -1,6 +1,7 @@
 #include <QMutexLocker>
 #include <QTemporaryFile>
 #include <QVector>
+#include <QDebug>
 
 #include "codemodel.hpp"
 
@@ -33,6 +34,33 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
     if (!m_lastValidTree) {
         return tr("Parsing error. Can't update tree.");
     }
+    QString header = R"(<head>
+                     <style>
+           body {
+               background-color: lighgrey;
+               font-family: Mono;
+               font-size: small;
+           }
+           h1 {
+               color: maroon;
+               margin-left: 40px;
+               border-bottom:1px solid #CCC;
+               padding-bottom:3px;
+           }
+           h2{
+               color: maroon;
+               margin-left: 30px;
+               border-bottom:1px solid #CCC;
+               padding-bottom:2px;
+           }
+           table {
+               width: 100%;
+           }
+
+           th, td {
+               border-bottom: 1px solid #ddd;
+           }
+           </style></head>)";
     QList<LangError> errors;
     if (symbol[0].toLower() == symbol[0]) {
         QMutexLocker locker(&m_validTreeLock);
@@ -45,8 +73,8 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
                 QString docHtml = "<h1>" + symbol + "</h1>\n";
                 docHtml += QString::fromStdString(static_cast<ValueNode *>(metaValue)->getStringValue());
                 vector<PropertyNode *> properties = typeBlock->getProperties();
-                QString propertiesTable = "<table><tr><td><b>Name</b></td><td><b>Type</b></td><td><b>Default</b></td><td><b>Direction</b></td></tr>";
                 QString propertiesHtml = tr("<h2>Ports</h2>") + "\n";
+                QString propertiesTable = "<table><tr><td><b>Name</b></td><td><b>Types</b></td><td><b>Default</b></td><td><b>Direction</b></td></tr>";
                 QVector<AST *> ports = CodeValidator::getPortsForTypeBlock(typeBlock, QVector<AST *>(), m_lastValidTree);
                 foreach(AST *port, ports) {
                     DeclarationNode *portBlock = static_cast<DeclarationNode *>(port);
@@ -63,8 +91,8 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
                             propertiesHtml += "<h3>" + portName + "</h3>" + portMeta;
                             propertiesTable += "<tr><td>" + portName;
                             AST *portTypesValue = portBlock->getPropertyValue("types");
-                            Q_ASSERT(portTypesValue);
-                            Q_ASSERT(portTypesValue->getNodeType() == AST::List);
+//                            Q_ASSERT(portTypesValue);
+//                            Q_ASSERT(portTypesValue->getNodeType() == AST::List);
                             if (portTypesValue && portTypesValue->getNodeType() == AST::List) {
                                 ListNode *validTypesList = static_cast<ListNode *>(portTypesValue);
                                 QString typesText;
@@ -76,23 +104,36 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
                                         string typeName = static_cast<BlockNode *>(validTypeNode)->getName();
                                         typesText += QString::fromStdString(typeName + ", ");
                                     } else {
-                                        typesText += "  ";
+                                        typesText += "---";
                                     }
-
                                 }
                                 typesText.chop(2);
                                 propertiesTable += "<td>" + typesText + "</td>";
+                            }
+                            AST *defaultValue = portBlock->getPropertyValue("default");
+                            if (defaultValue) {
+                                if (defaultValue->getNodeType() == AST::None) {
+                                    propertiesTable += "<td>None</td>";
+                                } else if (defaultValue->getNodeType() == AST::String) {
+                                    propertiesTable += "<td>" + QString::fromStdString(static_cast<ValueNode *>(defaultValue)->getStringValue()) + "</td>";
+                                } else if (defaultValue->getNodeType() == AST::Int) {
+                                    propertiesTable += "<td>" +  QString("%1").arg(static_cast<ValueNode *>(defaultValue)->getIntValue()) + "</td>";
+                                } else if (defaultValue->getNodeType() == AST::Real) {
+                                    propertiesTable += "<td>" +  QString("%1").arg(static_cast<ValueNode *>(defaultValue)->getRealValue()) + "</td>";
+                                } else {
+                                    propertiesTable += "<td>---</td>";
+                                }
                             }
                             propertiesTable += "</tr>";
                         }
                     }
                 }
                 propertiesTable += "</table>";
-                return docHtml + propertiesHtml + propertiesTable;
+                QString finalHtml = "<html>" + header + "<body>" +  docHtml + propertiesHtml + propertiesTable;
+                finalHtml += "</body></html>";
+                return finalHtml;
             }
-
         }
-
     } else if (symbol[0].toUpper() == symbol[0]) { // Check if it is a declared module
         QMutexLocker locker(&m_validTreeLock);
         DeclarationNode *declaration = CodeValidator::findDeclaration(symbol, QVector<AST *>(), m_lastValidTree);
@@ -103,7 +144,7 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
                 Q_ASSERT(metaValue->getNodeType() == AST::String);
                 QString docHtml = "<h1>" + symbol + "</h1>\n";
                 docHtml += QString::fromStdString(static_cast<ValueNode *>(metaValue)->getStringValue());
-                QString propertiesTable = "<table> <tr><td><b>Name</b></td><td><b>Type</b></td><td><b>Default</b></td><td><b>Direction</b></td></tr>";
+                QString propertiesTable = "<table> <tr><td><b>Name</b></td><td><b>Main</b></td><td><b>Default</b></td><td><b>Direction</b></td></tr>";
                 QString propertiesHtml = tr("<h2>Ports</h2>") + "\n";
                 AST *properties = declaration->getPropertyValue("ports");
                 if (properties && properties->getNodeType() == AST::List) {
@@ -122,10 +163,20 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
                                     portMeta = QString::fromStdString(static_cast<ValueNode *>(portMetaNode)->getStringValue());
                                 }
                                 propertiesHtml += "<h3>" + portName + "</h3>" + portMeta;
-//                                propertiesTable += "<tr><td>" + portName;
+                                propertiesTable += "<tr><td>" + portName + "</td>";
+                                AST *mainPort = portBlock->getPropertyValue("main");
+                                if (mainPort && mainPort->getNodeType() == AST::Switch) {
+                                    if (static_cast<ValueNode *>(mainPort)->getSwitchValue()) {
+                                        propertiesTable += "<td>on</td>";
+                                    } else {
+                                        propertiesTable += "<td>off</td>";
+                                    }
+                                } else {
+                                    propertiesTable += "<td>---</td>";
+                                }
 //                                AST *portTypesValue = portBlock->getPropertyValue("types");
-//                                Q_ASSERT(portTypesValue);
-//                                Q_ASSERT(portTypesValue->getNodeType() == AST::List);
+////                                Q_ASSERT(portTypesValue);
+////                                Q_ASSERT(portTypesValue->getNodeType() == AST::List);
 //                                if (portTypesValue && portTypesValue->getNodeType() == AST::List) {
 //                                    ListNode *validTypesList = static_cast<ListNode *>(portTypesValue);
 //                                    foreach(AST *validTypeNode, validTypesList->getChildren()) {
@@ -133,19 +184,43 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
 //                                            string typeName = static_cast<ValueNode *>(validTypeNode)->getStringValue();
 //                                            propertiesTable += QString::fromStdString("<td>" + typeName + "</td>");
 //                                        } else if (validTypeNode->getNodeType() == AST::Block) {
-//                                            string typeName = static_cast<NameNode *>(validTypeNode)->getName();
+//                                            string typeName = static_cast<BlockNode *>(validTypeNode)->getName();
 //                                            propertiesTable += QString::fromStdString("<td>" + typeName + "</td>");
 //                                        } else {
 //                                            propertiesTable += "<td>---</td>";
 //                                        }
 //                                    }
 //                                }
-//                                propertiesTable += "</tr>";
+                                AST *defaultValue = portBlock->getPropertyValue("default");
+                                if (defaultValue) {
+                                    if (defaultValue->getNodeType() == AST::None) {
+                                        propertiesTable += "<td>None</td>";
+                                    } else if (defaultValue->getNodeType() == AST::String) {
+                                        propertiesTable += "<td>" + QString::fromStdString(static_cast<ValueNode *>(defaultValue)->getStringValue()) + "</td>";
+                                    } else if (defaultValue->getNodeType() == AST::Int) {
+                                        propertiesTable += "<td>" +  QString("%1").arg(static_cast<ValueNode *>(defaultValue)->getIntValue()) + "</td>";
+                                    } else if (defaultValue->getNodeType() == AST::Real) {
+                                        propertiesTable += "<td>" +  QString("%1").arg(static_cast<ValueNode *>(defaultValue)->getRealValue()) + "</td>";
+                                    } else {
+                                        propertiesTable += "<td>---</td>";
+                                    }
+                                }
+                                AST *direction = portBlock->getPropertyValue("direction");
+                                if (direction && direction->getNodeType() == AST::String) {
+                                    propertiesTable += "<td>" + QString::fromStdString(static_cast<ValueNode *>(direction)->getStringValue()) + "</td>";
+                                } else {
+                                    propertiesTable += "<td>---</td>";
+                                }
+                                propertiesTable += "</tr>";
                             }
                         }
                     }
                     propertiesTable += "</table>";
-                    return docHtml + propertiesHtml + propertiesTable;
+
+                    QString finalHtml = "<html>" + header + "<body>" +  docHtml + propertiesHtml + propertiesTable;
+                    finalHtml += "</body></html>";
+                    qDebug() << finalHtml;
+                    return finalHtml;
                 }
             }
 

@@ -11,6 +11,7 @@
 #include <QFileInfo>
 #include <QSignalMapper>
 #include <QDesktopServices>
+#include <QWebEngineSettings>
 
 #include "projectwindow.h"
 #include "ui_projectwindow.h"
@@ -326,7 +327,8 @@ void ProjectWindow::showDocumentation()
         html = tr("Unknown type: %1").arg(word);
         ui->documentationWidget->setHtml(html);
     } else {
-        ui->documentationWidget->load(QUrl(html));
+        ui->documentationWidget->setHtml(html);
+//        ui->documentationWidget->load(QUrl(html));
     }
 }
 
