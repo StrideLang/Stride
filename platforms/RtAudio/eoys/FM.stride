@@ -1,0 +1,65 @@
+use RtAudio version 1.0 on DISCO
+
+import generators
+
+signal CarrierFreq	{ default: 220 }
+signal CMRatio 		{ default: 5 }
+signal Index 		{ default: 5.0 }
+
+signal Env 			{ default: 1.0 }
+constant Factor 		{ value: 0.9999 }
+
+signal One			{ default: 0.3 }
+
+reaction TriggerEnv {
+	streams: 		[
+		One >> Env;
+	]
+}
+
+Impulse(frequency: 1) ==  1 >> TriggerEnv();
+
+Env * Factor >> Env;
+
+Oscillator (frequency: 1 amplitude: 0.2) >> X;
+
+Oscillator (
+	frequency:	0.5 + X
+	amplitude:	CarrierFreq * 0.01
+)
++ 220
+>> CarrierFreq;
+
+Oscillator (
+	frequency:	ModFreq
+)
+>> Modulator;
+
+#Oscillator (
+#	frequency:      0.1
+#)
+#+ 1
+#>> CMRatio;
+
+CarrierFreq * CMRatio
+>> ModFreq;
+
+#Oscillator(
+#	frequency: 	0.9
+#	amplitude: 	0.25
+#)
+#+ 1.5
+#>> Index;
+
+Oscillator (
+	frequency:      0.2
+	amplitude:      CarrierFreq * 0.1
+)
+>> CarrierFreqModulator;
+
+Oscillator (
+	frequency: CarrierFreqModulator + CarrierFreq + Modulator * (CarrierFreq * Index)
+	amplitude: Env
+)
+>> Level (gain: 0.3)
+>> AudioOut;
