@@ -270,24 +270,34 @@ class ExpressionAtom(Atom):
     def get_processing_code(self, in_tokens):
         # code = self.get_preprocessing_code(in_tokens)
         code = ''
-        domain = None
+        #domain = None
+        processing_code = {self.domain: ['', []]}
+        right_tokens = []
         if self.is_inline():
             out_tokens = [self.get_inline_processing_code(in_tokens)]
+            processing_code[self.domain] = ['', out_tokens]
         else:
-            left_code = self.left_atom.get_processing_code([])[0]
+            left_proc_code = self.left_atom.get_processing_code([])
+            for proc_domain, [code, tokens] in left_proc_code.items():
+                if not proc_domain in processing_code:
+                    processing_code[proc_domain] = ['', []]
+                processing_code[proc_domain][0] += code
+                processing_code[proc_domain][1] += tokens
             if self.right_atom:
-                right_code = self.right_atom.get_processing_code([])[0]
-                right_tokens = self.right_atom.get_out_tokens()[0]
-            else:
-                right_code = ''
-                right_tokens = None
-            code += left_code + right_code
+                for proc_domain, [code, tokens] in self.right_atom.get_processing_code([]).items():
+                    if not proc_domain in processing_code:
+                        processing_code[proc_domain] = ['', []]
 
-            code += templates.assignment(self.handle,
+                    processing_code[proc_domain][0] += code
+                    processing_code[proc_domain][1] += tokens
+                    right_tokens = self.right_atom.get_out_tokens()[0]
+
+
+            processing_code[self.domain][0] += templates.assignment(self.handle,
                                          self._operator_symbol(self.left_atom.get_out_tokens()[0],
                                                                right_tokens))
-            out_tokens = [self.handle]
-        return {domain: [code, out_tokens]}
+            processing_code[self.domain][1] += [self.handle]
+        return processing_code #{domain: [code, out_tokens]}
 
     def _expression_out_type(self):
         if self.expr_type == 'Add':
@@ -1930,11 +1940,6 @@ class GeneratorBase(object):
         f.close()
 
     def write_code(self, code, filename):
-#        templates.set_property('sample_rate', self.sample_rate)
-#        templates.set_property('block_size', self.block_size)
-#        templates.set_property('num_out_chnls', self.num_out_chnls)
-#        templates.set_property('num_in_chnls', self.num_in_chnls)
-#        templates.set_property('audio_device', self.audio_device)
         domains = self.platform.get_domains()
         globals_code = templates.get_globals_code(code['global_groups'])
         for platform_domain in domains:
