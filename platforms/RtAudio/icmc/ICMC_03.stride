@@ -5,10 +5,10 @@ use RtAudio version 1.0 on PC
 import Generators
 
 signal Modulator {
-    default:    0.0
-    rate:       AudioRate
-    domain:     AudioDomain
-    meta:       "The frequency modulation signal."
+    default:		0.0
+    rate:			AudioRate
+    domain:	AudioDomain
+    meta:		"The frequency modulation signal."
 }
 
 Oscillator ( frequency: 3.0 amplitude: 40.0 ) >> Modulator;

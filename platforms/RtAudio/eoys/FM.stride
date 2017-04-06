@@ -1,23 +1,25 @@
-use RtAudio version 1.0 on DISCO
+use RtAudio version 1.0 on PC
 
-import generators
+import Generators
 
 signal CarrierFreq	{ default: 220 }
 signal CMRatio 		{ default: 5 }
-signal Index 		{ default: 5.0 }
+signal Index 			{ default: 5.0 }
 
-signal Env 			{ default: 1.0 }
+signal Env 				{ default: 1.0 }
 constant Factor 		{ value: 0.9999 }
 
-signal One			{ default: 0.3 }
+signal One				{ default: 0.3 }
 
 reaction TriggerEnv {
-	streams: 		[
+	streams:       [ 
 		One >> Env;
-	]
+		]
 }
 
-Impulse(frequency: 1) ==  1 >> TriggerEnv();
+Impulse(frequency:1) >> Trig;
+
+[ Trig, 1 ] >> Equal () >> TriggerEnv();
 
 Env * Factor >> Env;
 

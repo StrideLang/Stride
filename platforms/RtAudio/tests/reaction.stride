@@ -1,8 +1,8 @@
-use Gamma version 1.0 on PC
+use RtAudio version 1.0 on PC
 
 import Generators
 
-signal Frequency { 
+signal Frequency {
 	default: 440
 	domain: AudioDomain
 }
@@ -19,4 +19,3 @@ Impulse(frequency:1) >> Trig;
 
 
 Oscillator(frequency: Frequency) >> Level(gain:0.2) >> AudioOut;
-
