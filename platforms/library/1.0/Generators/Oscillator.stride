@@ -93,7 +93,7 @@ module Oscillator {
         Frequency * 2.0 * _Pi / StreamRate >> PhaseInc;
         Phase >> SineBlock >> Level(gain: Amplitude) >> Output;
         Phase + PhaseInc >> IncPhase;
-		Phase -( 2 * _Pi) >> NewPhase;
+		IncPhase -( 2 * _Pi) >> NewPhase;
         [IncPhase , ( 2 * _Pi) ] >> Greater() >> Select(whenOn: NewPhase whenOff: IncPhase) >> Phase;
 		#Reset >> ResetPhase();
     ]
@@ -164,7 +164,7 @@ module Impulse {
     streams: [
         Frequency / AudioRate >> PhaseInc;
         Phase + PhaseInc >> IncPhase;
-        Phase - 1.0 >> NewPhase;
+        IncPhase - 1.0 >> NewPhase;
 		
         [IncPhase , 1 ] >> Greater() >> Select(whenOn: 1 whenOff: 0) >> Output;
         [IncPhase , 1 ] >> Greater() >> Select(whenOn: NewPhase whenOff: IncPhase) >> Phase;
