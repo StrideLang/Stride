@@ -1,14 +1,16 @@
-# Frequency Modulation
+# Frequency Modulation with Signal Declaration
 
 use RtAudio version 1.0 on PC
 
-import Generators
+import generators
 
 signal Modulator {
-	rate:      441
-	domain:    AudioDomain
+    default:    0.0
+    rate:       AudioRate
+    domain:     AudioDomain
+    meta:       "The frequency modulation signal."
 }
 
-Oscillator ( frequency: 0.5 amplitude: 100.0 ) >> Modulator;
+Oscillator ( frequency: 3.0 amplitude: 40.0 ) >> Modulator;
 
-Oscillator ( frequency: 440.0 + Modulator amplitude: 0.1 ) >> Pan (position: Modulator/100) >> AudioOut;
+Oscillator ( frequency: 440.0 + Modulator amplitude: 0.1 ) >> AudioOut;
