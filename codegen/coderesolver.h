@@ -21,7 +21,7 @@
 class CodeResolver
 {
 public:
-    CodeResolver(StridePlatform *platform, AST *tree);
+    CodeResolver(vector<StridePlatform *> platforms, AST *tree);
     ~CodeResolver();
 
     void preProcess();
@@ -104,7 +104,7 @@ private:
     AST *getDefaultPortValueForType(QString type, QString portName);
 
 
-    StridePlatform *m_platform;
+    vector<StridePlatform *> m_platforms;
     AST *m_tree;
     int m_connectorCounter;
 };

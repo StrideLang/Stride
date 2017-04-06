@@ -40,17 +40,6 @@ int main(int argc, char *argv[])
 
     if (tree) {
         CodeValidator validator(platformRootPath, tree);
-//        validator.validate();
-        //            QStringList m_types = validator.getPlatform()->getPlatformTypeNames();
-        //            m_funcs = validator.getPlatform()->getFunctionNames();
-        //            QList<AST *> objects = validator.getPlatform()->getBuiltinObjects();
-        //            m_objectNames.clear();
-        //            foreach (AST *platObject, objects) {
-        //                if (platObject->getNodeType() == AST::Block) {
-        //                    m_objectNames << QString::fromStdString(static_cast<BlockNode *>(platObject)->getName());
-        //                }
-        //            }
-        //            m_errors = validator.getErrors();
         StridePlatform *platform = validator.getPlatform();
 
         QFileInfo info(fileName);

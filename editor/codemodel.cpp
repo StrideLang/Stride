@@ -417,9 +417,13 @@ void CodeModel::updateCodeAnalysis(QString code, QString platformRootPath)
         if (tree) {
             CodeValidator validator(platformRootPath, tree);
 //            validator.validate();
-            m_types = validator.getPlatform()->getPlatformTypeNames();
-            m_funcs = validator.getPlatform()->getFunctionNames();
-            QList<AST *> objects = validator.getPlatform()->getBuiltinObjectsReference();
+            StridePlatform *platform = validator.getPlatform();
+            QList<AST *> objects;
+            if (platform) {
+                m_types = platform->getPlatformTypeNames();
+                m_funcs = platform->getFunctionNames();
+                objects = platform->getBuiltinObjectsReference();
+            }
             m_objectNames.clear();
             foreach (AST *platObject, objects) {
                 if (platObject->getNodeType() == AST::Block) {

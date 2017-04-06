@@ -66,13 +66,15 @@ DISTFILES += \
     data/P06_domains.stride \
     data/P07_type_validation.stride \
     data/P08_scope.stride \
+    data/P09_port_property.stride \
+    data/P10_platform_validity.stride \
     data/E01_constant_res.stride \
     data/E02_stream_expansions.stride \
     data/E03_multichn_streams.stride \
     data/E04_rates.stride \
     data/E05_library_objects.stride \
     data/L01_library_types_validation.stride \
-    data/P09_port_property.stride
+    data/14_members.stride
 
 # Link to codegen library
 

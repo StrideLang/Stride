@@ -1,0 +1,7 @@
+use RtAudio version 1.0 on PC
+
+signal Sig {
+    rate: 10
+}
+
+A + Sig.rate >> Out;

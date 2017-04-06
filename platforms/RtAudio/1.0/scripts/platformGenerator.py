@@ -19,20 +19,11 @@ class Generator(GeneratorBase):
 
         super(Generator, self).__init__(out_dir, platform_dir, debug)
 
-        # TODO get gamma sources and build and install if not available
-        # Question: building requires cmake, should binaries be distributed instead?
-        # What about secondary deps like portaudio and libsndfile?
         self.log("Building RtAudio project")
         self.log("Buiding in directory: " + self.out_dir)
 
     def generate_code(self):
         # Generate code from tree
-        # TODO These defaults should be set from the platform definition file
-#        self.block_size = 512
-#        self.sample_rate = 44100
-#        self.num_out_chnls = 2
-#        self.num_in_chnls = 2
-#        self.audio_device = -1
 
         self.log("Platform code generation starting...")
 
@@ -51,22 +42,7 @@ class Generator(GeneratorBase):
 
         self.write_code(code,filename)
 
-        #print(str(domains))
-
-        if platform.system() == "Linux":
-            try:
-                self.log("Running astyle...")
-                ck_out(['astyle', self.out_file ])
-            except:
-                self.log("Error running astyle!")
-        elif platform.system() == "Darwin":
-            try:
-                self.log("Running astyle...")
-                ck_out(['/usr/local/bin/astyle', self.out_file ])
-            except:
-                self.log("Error running astyle!")
-        else:
-            self.log("Platform '%s' not supported!"%platform.system())
+        self.make_code_pretty()
 
 
         self.link_flags = []
@@ -94,8 +70,6 @@ class Generator(GeneratorBase):
     def compile(self):
 
         self.log("Platform code compilation started...")
-
-        import platform
 
         os.chdir(self.out_dir)
 
@@ -195,26 +169,6 @@ class Generator(GeneratorBase):
 
             self.log(args)
 
-#            # ck_out didn't work properly on OS X
-#            os.system(' '.join(args))
-#
-#
-#
-#            args = [cpp_compiler,
-##                    "-I" + self.platform_dir + "/include",
-#                    "-O3",
-#                    "-std=c++11",
-#                    "-I"+ self.out_dir + "/rtaudio",
-#                    "-DNDEBUG",
-#                    "-D__LINUX_ALSA__ ",
-#                     "-o" + self.out_dir +"/app",
-#                     self.out_file,
-#                     self.out_dir + "/rtaudio/RtAudio.cpp",
-#                     "-lasound",
-#                     "-lpthread"
-#                     ]
-#
-#            self.log(args)
             outtext = ck_out(args)
 
             self.log(outtext)

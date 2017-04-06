@@ -21,25 +21,7 @@ class Templates(BaseCTemplate):
         self.properties['block_size'] = 512
 
     def get_config_code(self):
-#        config_template_code = '''
-#    %%device%%
-#
-#    AudioIO io(%%block_size%%, %%sample_rate%%, audioCB, NULL, %%num_out_chnls%%, %%num_in_chnls%%);
-#        '''
-#        device_code = '''
-#    AudioDevice adevi = AudioDevice::defaultInput();
-#    AudioDevice adevo = AudioDevice::defaultOutput();
-#    '''
-#        if device >= 0:
-#            device_code = '''
-#    AudioDevice adevi(%i);
-#    AudioDevice adevo(%i);
-#    '''%(device, device)
-#
-#        device_code += '''
-#        adevi.print();
-#        adevo.print();
-#        '''
+
         config_template_code = '''
     RtAudio adac;
     if ( adac.getDeviceCount() < 1 ) {

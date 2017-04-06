@@ -24,6 +24,8 @@ private Q_SLOTS:
 
 
     //
+    void testPlatformVality();
+    void testBlockMembers();
     void testConnectionCount();
     void testModuleDomains();
     void testPortTypeValidation();
@@ -100,6 +102,18 @@ void ParserTest::testMultichannelUgens()
     delete tree;
 }
 
+void ParserTest::testPlatformVality()
+{
+    AST *tree;
+    tree = AST::parseFile(QString(QFINDTESTDATA("data/P10_platform_validity.stride")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    generator.validate();
+    QVERIFY(!generator.isValid());
+    tree->deleteChildren();
+    delete tree;
+}
+
 void ParserTest::testCompilation()
 {
     QStringList testDirs;
@@ -127,6 +141,18 @@ void ParserTest::testCompilation()
 //    qDebug() << compilerBin;
 }
 
+void ParserTest::testBlockMembers()
+{
+    AST *tree;
+    tree = AST::parseFile(QString(QFINDTESTDATA("data/14_members.stride")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+//    generator.validate();
+    QVERIFY(generator.isValid());
+
+    tree->deleteChildren();
+    delete tree;
+}
 void ParserTest::testConnectionCount()
 {
 

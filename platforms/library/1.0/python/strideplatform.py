@@ -890,7 +890,7 @@ class ModuleAtom(Atom):
         instance_consts = []
         for name, info in self.instance_consts.items():
             if name == "sampleRate":
-                instance_consts.append(self.rate)
+                instance_consts.append(self.flags_constructor_consts["sampleRate"])
         module_instance = ModuleInstance(self.scope_index,
                                  self.domain,
                                  self.name,
@@ -1238,7 +1238,10 @@ class ModuleAtom(Atom):
             if flag['value'] == '_UsesStreamRate':
                 self.instance_consts['sampleRate'] = {'type': 'int'}
                 self.flags_init_code = templates.assignment("StreamRate", 'sampleRate')
-                self.flags_constructor_consts = [self.function['rate']]
+                rate = self.function['rate']
+                if self.function['rate'] == -1:
+                    rate = self.platform.get_domain_default_rate(self.domain)
+                self.flags_constructor_consts = {"sampleRate" : rate}
 
 
 
@@ -1314,7 +1317,9 @@ class PlatformFunctions:
             print(text)
 
 
-    def find_declaration_in_tree(self, block_name, tree):
+    def find_declaration_in_tree(self, block_name, tree = None):
+        if not tree:
+            tree = self.tree
         for node in tree:
             if 'block' in node:
                 if node["block"]["name"] == block_name:
@@ -1337,7 +1342,9 @@ class PlatformFunctions:
 #        raise ValueError("Declaration not found for " + block_name)
         return None
 
-    def find_stride_type(self, type_name):
+    def find_stride_type(self, type_name, tree=None):
+        if not tree:
+            tree = self.tree
         for element in self.tree:
             if 'block' in element:
                 element["block"]['stack_index'] = 0
@@ -1354,7 +1361,9 @@ class PlatformFunctions:
                     if element['block']['name'] == type_name:
                         return element
 
-    def find_block(self, name, tree):
+    def find_block(self, name, tree=None):
+        if not tree:
+            tree = self.tree
         block_declaration = self.find_declaration_in_tree(name, tree)
         if 'type' in block_declaration:
             platform_type = self.find_stride_type(block_declaration["type"])
@@ -1362,7 +1371,9 @@ class PlatformFunctions:
             platform_type =  self.find_stride_type(block_declaration["platformType"])
         return platform_type, block_declaration
 
-    def find_port_value(self, object_name, port_name, tree):
+    def find_port_value(self, object_name, port_name, tree=None):
+        if not tree:
+            tree = self.tree
         platform_type, block_declaration = self.find_block(object_name, tree)
         # first look in declaration
         for port in block_declaration["ports"]:
@@ -1386,6 +1397,22 @@ class PlatformFunctions:
             if instance.get_name() == handle:
                 return instance
         return None
+
+    def get_domain_default_rate(self, domain_name, tree=None):
+
+        if not tree:
+            tree = self.tree
+        for node in tree:
+            if 'block' in node:
+                if node["block"]["type"] == "_domainDefinition":
+                    pass
+                    # FIXME the rate needs to be searched according to platform and domain
+        rate_node = self.find_declaration_in_tree("PlatformRate", tree) # Horrible horrible hack for now
+        domain_rate = -1
+        if rate_node:
+            domain_rate = rate_node['value']
+
+        return domain_rate
 
 
     def bool_to_str(self, bool_val):
@@ -1855,8 +1882,10 @@ class PlatformFunctions:
                 "other_scope_instances" : other_scope_instances,
                 "other_scope_declarations" : other_scope_declarations}
 
-
+# ----------------------------------------------------------
 import json
+from subprocess import check_output as ck_out
+import platform
 
 class GeneratorBase(object):
     def __init__(self, out_dir = '',
@@ -1950,6 +1979,21 @@ class GeneratorBase(object):
 
                     self.write_section_in_file(platform_domain['processingTag'], code, filename)
 
+    def make_code_pretty(self):
+        if platform.system() == "Linux":
+            try:
+                self.log("Running astyle...")
+                ck_out(['astyle', self.out_file ])
+            except:
+                self.log("Error running astyle!")
+        elif platform.system() == "Darwin":
+            try:
+                self.log("Running astyle...")
+                ck_out(['/usr/local/bin/astyle', self.out_file ])
+            except:
+                self.log("Error running astyle!")
+        else:
+            self.log("Platform '%s' not supported!"%platform.system())
 
 if __name__ == '__main__':
     pass

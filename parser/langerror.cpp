@@ -57,6 +57,9 @@ std::string LangError::getErrorText() {
     case SystemError:
         errorText += "Undeclared Symbol '" + errorTokens[0] + "'";
         break;
+    case UnknownPlatform:
+        errorText += "Unknown Platform '" + errorTokens[0] + "'";
+        break;
     case None:
         errorText += "Unknown error";
         break;

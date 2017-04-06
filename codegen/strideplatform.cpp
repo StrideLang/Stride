@@ -16,7 +16,7 @@ StridePlatform::StridePlatform(QStringList platformPaths, QString platform, QStr
     QString functionsJson;
 //    QString platformPath = m_platformRootPath + QDir::separator() + m_platformName
 //            + QDir::separator() + m_version + QDir::separator() + "plugins";
-    platformPaths << "/home/andres/Documents/src/Stride/StreamStack/platforms"; // TODO: un hard-code this
+    platformPaths << "/home/andres/Documents/src/Stride/StreamStack/platforms"; // Add this default for my own convenience :)
     foreach(QString path, platformPaths) {
         if (m_api != NullPlatform) {
             break; // Stop looking if platform has been found.

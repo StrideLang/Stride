@@ -467,22 +467,6 @@ public:
         code += ')'
         return code
 
-#    def module_property_setter(self, name, block_name, prop_type):
-#        code = ''
-#        if prop_type == 'real':
-#            code += 'void set_' + name + '(float value) {\n'
-#            code += block_name + ' = value;\n'
-#            code += '\n}\n'
-#        elif prop_type == 'bool':
-#            code += 'void set_' + name + '(bool value) {\n'
-#            code += block_name + ' = value;\n'
-#            code += '\n}\n'
-#        elif prop_type == 'string':
-#            code += 'void set_' + name + '(' + self.string_type + ' value) {\n'
-#            code += block_name + ' = value;\n'
-#            code += '\n}\n'
-#        return code
-
     def module_output_code(self, output_block):
         code = ''
         if output_block and 'block' in output_block:

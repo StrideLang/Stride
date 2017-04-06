@@ -1122,6 +1122,10 @@ streamComp:
             COUT << "Resolving list definition ... " << ENDL;
             COUT << "Streaming ... " << ENDL;
         }
+    |   portPropertyDef     {
+            COUT << "Resolving port property definition ... " << ENDL;
+            COUT << "Streaming ... " << ENDL;
+        }
     ;
 
 // ================================= 
@@ -1183,6 +1187,9 @@ valueComp:
     |   functionDef     {
             $$ = $1;
             COUT << "Resolving function definition ..." << ENDL;
+        }
+    |   portPropertyDef     {
+            COUT << "Resolving port property definition ... " << ENDL;
         }
     ;
 

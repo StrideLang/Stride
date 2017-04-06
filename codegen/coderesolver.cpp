@@ -4,8 +4,8 @@
 #include "coderesolver.h"
 #include "codevalidator.h"
 
-CodeResolver::CodeResolver(StridePlatform *platform, AST *tree) :
-    m_platform(platform), m_tree(tree), m_connectorCounter(0)
+CodeResolver::CodeResolver(vector<StridePlatform *> platforms, AST *tree) :
+    m_platforms(platforms), m_tree(tree), m_connectorCounter(0)
 {
 
 }
@@ -695,7 +695,10 @@ double CodeResolver::getNodeRate(AST *node, QVector<AST *> scope, AST *tree)
 void CodeResolver::insertBuiltinObjects()
 {
     QList<AST *> requiredDeclarations;
-    QList<AST *> bultinObjects = m_platform->getBuiltinObjectsReference();
+    QList<AST *> bultinObjects;
+    if (m_platforms.size() > 0) {
+        bultinObjects = m_platforms.at(0)->getBuiltinObjectsReference();
+    }
 
     // First pass to add required elements.
     // We need to add the fundamental types: "type" "platformType" "signal" "signalbridge"
@@ -1074,7 +1077,9 @@ void CodeResolver::resolveDomainsForStream(const StreamNode *stream, QVector<AST
             // to input ports on other objects. Domains are not
             // propagated across secondary ports
             if (contextDomain.isEmpty()) {
-                domainName = m_platform->getPlatformDomain().toStdString();
+                if (m_platforms.size() > 0) {
+                    domainName = m_platforms.at(0)->getPlatformDomain().toStdString();
+                }
             } else {
                 domainName = contextDomain.toStdString();
             }

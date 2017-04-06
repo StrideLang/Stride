@@ -22,6 +22,7 @@ public:
         StreamMemberSizeMismatch,
         UndeclaredSymbol,
         SystemError,
+        UnknownPlatform,
         None
     } ErrorType;
 

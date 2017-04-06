@@ -17,12 +17,12 @@ public:
     void validateTree(QString platformRootDir, AST * tree);
 
     bool isValid();
-    bool platformIsValid();
+    bool platformIsValid(int index = 0);
 
     QList<LangError> getErrors();
-    QStringList getPlatformErrors();
+    QStringList getPlatformErrors(int index = 0);
 
-    StridePlatform *getPlatform();
+    StridePlatform *getPlatform(int index = 0);
 
     static DeclarationNode *findDeclaration(QString streamMemberName, QVector<AST *> scopeStack, AST *tree);
     static QString streamMemberName(AST * node, QVector<AST *> scopeStack, AST *tree);
@@ -84,6 +84,7 @@ private:
 
     QVector<PlatformNode *> getPlatformNodes();
 
+    void validatePlatform(AST *node, QVector<AST *> scopeStack);
     void validateTypes(AST *node, QVector<AST *> scopeStack);
     void validateStreamMembers(StreamNode *node, QVector<AST *> scopeStack);
     void validateBundleIndeces(AST *node, QVector<AST *> scope);
@@ -100,7 +101,7 @@ private:
 
     QString getNodeText(AST *node);
 
-    StridePlatform *m_platform;
+    vector<StridePlatform *> m_platforms;
     AST *m_tree;
     QList<LangError> m_errors;
 };
