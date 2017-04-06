@@ -126,7 +126,10 @@ class Generator(GeneratorBase):
             alsa_defines = ['-D__LINUX_ALSA__']
             alsa_link_flags = [ "-lasound", '-lpthread']
 
-            module = 'pulse'
+            jack_defines = ['-D__UNIX_JACK__']
+            jack_link_flags = [ "-ljack", '-lpthread']
+
+            module = 'jack'
 
             if module == 'pulse':
                 defines = pulse_defines
@@ -134,6 +137,9 @@ class Generator(GeneratorBase):
             elif module == 'alsa':
                 defines = alsa_defines
                 link_flags = alsa_link_flags
+            elif module == 'jack':
+                defines = jack_defines
+                link_flags = jack_link_flags
 
             for f in source_files:
                 short_f = f[f.rindex("/") + 1:]
