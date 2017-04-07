@@ -1,4 +1,4 @@
-use RtAudio version 1.0 on PC
+use STM32F7 version 1.0 on Discovery
 
 import Generators
 
@@ -10,5 +10,6 @@ Oscillators[1]
 + Oscillators[4]
 + Oscillators[5]
 + Oscillators[6]
->> Level( gain: 0.2 )
+>> Level ( gain: 0.2 )
 >> AudioOut;
+
