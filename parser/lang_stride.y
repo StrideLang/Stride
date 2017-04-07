@@ -610,10 +610,6 @@ propertyType:
             $$ = $1;
             COUT << "Stream as property value!" << ENDL;
         }
-    |   portPropertyDef     {
-            $$ = $1;
-            COUT << "Port property as property value!" << ENDL;
-        }
     ;
 
 // =================================
@@ -1120,10 +1116,6 @@ streamComp:
         }
     |   streamListDef   {
             COUT << "Resolving list definition ... " << ENDL;
-            COUT << "Streaming ... " << ENDL;
-        }
-    |   portPropertyDef     {
-            COUT << "Resolving port property definition ... " << ENDL;
             COUT << "Streaming ... " << ENDL;
         }
     ;
