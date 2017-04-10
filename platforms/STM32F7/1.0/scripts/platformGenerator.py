@@ -21,10 +21,10 @@ class Generator(GeneratorBase):
     def __init__(self, out_dir = '',
                  platform_dir = '',
                  debug = False):
-                     
+
         super(Generator, self).__init__(out_dir, platform_dir, debug)
 
-        self.out_file = self.out_dir + "/project/Src/main.cpp"   
+        self.out_file = self.out_dir + "/project/Src/main.cpp"
 
         self.log("Building STM32F7 project")
         self.log("Buiding in directory: " + self.out_dir)
@@ -42,7 +42,7 @@ class Generator(GeneratorBase):
         self.audio_device = 0
 
         self.log("Platform code generation starting...")
-        
+
         domain = "STM32F7_Domain"
         code = self.platform.generate_code(self.tree,domain)
 
@@ -51,7 +51,7 @@ class Generator(GeneratorBase):
             shutil.copytree(self.project_dir, self.out_dir + "/project")
 
         filename = self.out_file
-        
+
         self.write_code(code, filename)
 
         if platform.system() == "Linux":
@@ -268,7 +268,7 @@ class Generator(GeneratorBase):
                 if os.path.exists(directory + "/" + openOCD_bin):
                     openOCD_dir = directory
                     break
-                     
+
             openOCD_cfg_file = self.platform_dir + "/openOCD/stm32f746g_disco.cfg"
             openOCD_bin_file = self.out_dir + "/project/app.bin"
 
@@ -346,7 +346,7 @@ class Generator(GeneratorBase):
             self.log(outtext)
 
             # The following lines work when run from: Spyder and StreamStacker
-            openOCD_dir = "/Applications/GNU ARM Eclipse/OpenOCD/0.10.0-201601101000-dev/scripts"
+            openOCD_dir = "/Applications/GNU ARM Eclipse/OpenOCD/0.10.0-201701241841/scripts"
             openOCD_bin = "../bin/openocd"
             openOCD_cfg_file = self.platform_dir + "/openOCD/stm32f746g_disco.cfg"
             openOCD_bin_file = self.out_dir + "/project/app.bin"

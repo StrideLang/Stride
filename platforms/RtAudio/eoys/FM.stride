@@ -2,22 +2,24 @@ use RtAudio version 1.0 on PC
 
 import Generators
 
-signal CarrierFreq	{ default: 220 }
-signal CMRatio 		{ default: 5 }
-signal Index 			{ default: 5.0 }
 
-signal Env 				{ default: 1.0 }
+signal CarrierFreq	{ default: 220 domain: AudioDomain }
+signal CMRatio 		{ default: 5 domain: AudioDomain }
+signal Index 			{ default: 5.0 domain: AudioDomain }
+
 constant Factor 		{ value: 0.9999 }
 
-signal One				{ default: 0.3 }
+signal Env 				{ default: 1.0 domain: AudioDomain }
+signal One				{ default: 0.3 domain: AudioDomain }
+signal Trig				{ default: 1.0 domain: AudioDomain }
 
 reaction TriggerEnv {
-	streams:       [ 
+	streams:       [
 		One >> Env;
 		]
 }
 
-Impulse(frequency:1) >> Trig;
+Impulse (frequency: 3) >> Trig;
 
 [ Trig, 1 ] >> Equal () >> TriggerEnv();
 
