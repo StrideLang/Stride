@@ -2,6 +2,9 @@ use RtAudio version 1.0 on PC
 
 import Generators
 
+signal CarrierFreq	{ default: 220 }
+signal CMRatio 		{ default: 5 }
+signal Index 			{ default: 5.0 }
 
 signal CarrierFreq	{ default: 220 domain: AudioDomain }
 signal CMRatio 		{ default: 5 domain: AudioDomain }

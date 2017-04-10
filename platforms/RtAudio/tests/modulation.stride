@@ -1,9 +1,9 @@
-use Gamma version 1.0 on PC
+use RtAudio version 1.0 on PC
 
 import Generators
 
 constant CarrierFreq { value: 440}
-constant CMRatio { value: 0.5 }
+constant CMRatio { value: 1.0 }
 constant ModFreq { value: CarrierFreq * CMRatio }
 constant Index { value: 2 }
 

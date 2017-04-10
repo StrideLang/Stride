@@ -1,6 +1,6 @@
 use STM32F7 version 1.0 on PC
 
-import generators
+import Generators
 
 signal Oscillators[6] {
 	domain: "AudioDomain"
