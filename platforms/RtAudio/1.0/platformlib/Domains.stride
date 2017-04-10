@@ -36,7 +36,7 @@ _domainDefinition AudioDomain {
 # OSC Domains
 _domainDefinition OSCInDomain {
 	domainName: "OSCInDomain"
-	platform: _GammaPlatform
+	platform: _RtAudioPlatform
 	globalsTag: "Includes" 
 	declarationsTag: "Declarations"
 	processingTag: "OSC:Processing"
@@ -48,7 +48,7 @@ _domainDefinition OSCInDomain {
 
 _domainDefinition SerialInDomain {
 	domainName: "SerialInDomain"
-	platform: _GammaPlatform
+	platform: _RtAudioPlatform
 	globalsTag: "Includes" 
 	declarationsTag: "SerialIn:Declarations"
 	processingTag: "SerialIn:Processing"
@@ -58,7 +58,7 @@ _domainDefinition SerialInDomain {
 
 _domainDefinition SerialOutDomain {
 	domainName: "SerialOutDomain"
-	platform: _GammaPlatform
+	platform: _RtAudioPlatform
 	globalsTag: "Includes" 
 	declarationsTag: "SerialOut:Declarations"
 	processingTag: "SerialOut:Processing"
