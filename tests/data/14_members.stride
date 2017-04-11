@@ -4,4 +4,10 @@ signal Sig {
     rate: 10
 }
 
-A + Sig.rate >> Out;
+Sig.rate >> Out1;
+Sig.rate + 1 >> Out2;
+2 + Sig.rate >> Out3;
+2 + Sig.rate + 1 >> Out4;
+A + Sig.rate >> Out5;
+#[Sig.rate, 4] >> Out6;
+

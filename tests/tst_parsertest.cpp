@@ -150,6 +150,54 @@ void ParserTest::testBlockMembers()
 //    generator.validate();
     QVERIFY(generator.isValid());
 
+//    signal Sig {
+//        rate: 10
+//    }
+
+//    Sig.rate >> Out1;
+
+    StreamNode *stream = static_cast<StreamNode *>(tree->getChildren().at(2));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    ValueNode *value = static_cast<ValueNode *>(stream->getLeft());
+    QVERIFY(value->getNodeType() == AST::Int);
+    QVERIFY(value->getIntValue() == 10);
+
+    //    Sig.rate + 1 >> Out2
+
+    stream = static_cast<StreamNode *>(tree->getChildren().at(3));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    value = static_cast<ValueNode *>(stream->getLeft());
+    QVERIFY(value->getNodeType() == AST::Int);
+    QVERIFY(value->getIntValue() == 11);
+
+//    2 + Sig.rate >> Out3;
+
+    stream = static_cast<StreamNode *>(tree->getChildren().at(4));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    value = static_cast<ValueNode *>(stream->getLeft());
+    QVERIFY(value->getNodeType() == AST::Int);
+    QVERIFY(value->getIntValue() == 12);
+
+//    2 + Sig.rate + 1 >> Out4;
+    stream = static_cast<StreamNode *>(tree->getChildren().at(5));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    value = static_cast<ValueNode *>(stream->getLeft());
+    QVERIFY(value->getNodeType() == AST::Int);
+    QVERIFY(value->getIntValue() == 13);
+
+    //    A + Sig.rate >> Out5;
+
+    stream = static_cast<StreamNode *>(tree->getChildren().at(6));
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    ExpressionNode *expr = static_cast<ExpressionNode *>(stream->getLeft());
+    QVERIFY(expr->getNodeType() == AST::Expression);
+    value = static_cast<ValueNode *>(expr->getRight());
+    QVERIFY(value->getNodeType() == AST::Int);
+    QVERIFY(value->getIntValue() == 10);
+
+    //    #[Sig.rate, 4] >> Out4;
+
+
     tree->deleteChildren();
     delete tree;
 }

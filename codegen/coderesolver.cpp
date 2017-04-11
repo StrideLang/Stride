@@ -26,7 +26,7 @@ void CodeResolver::preProcess()
     resolveRates();
     processDomains();
     analyzeConnections();
-    processStreamRateBlock();
+    processStreamRateBlock(); // FIXME: This is a hack that needs to be removed once block properties are completely supported.
 }
 
 void CodeResolver::resolveRates()
@@ -1680,6 +1680,19 @@ ValueNode *CodeResolver::resolveConstant(AST* value, QVector<AST *> scope)
         }
     } else if (value->getNodeType() == AST::Bundle) {
 
+    } else if(value->getNodeType() == AST::PortProperty) {
+        PortPropertyNode *propertyNode = static_cast<PortPropertyNode *>(value);
+        DeclarationNode *block = CodeValidator::findDeclaration(QString::fromStdString(propertyNode->getPortName()), scope, m_tree);
+        if (block) {
+            AST *propertyValue = block->getPropertyValue(propertyNode->getName());
+            if (propertyValue) {
+//                || propertyValue->getNodeType() == AST::Block || propertyValue->getNodeType() == AST::Bundle
+                if (propertyValue->getNodeType() == AST::Int || propertyValue->getNodeType() == AST::Real
+                        || propertyValue->getNodeType() == AST::String ) {
+                    return static_cast<ValueNode *>(propertyValue->deepCopy());
+                }
+            }
+        }
     }
     return NULL;
 }
@@ -1694,6 +1707,21 @@ void CodeResolver::resolveConstantsInNode(AST *node, QVector<AST *> scope)
             ValueNode *newValue = reduceConstExpression(expr, scope, m_tree);
             if (newValue) {
                 stream->setLeft(newValue);
+            }
+        } else if(stream->getLeft()->getNodeType() == AST::PortProperty) {
+            PortPropertyNode *propertyNode = static_cast<PortPropertyNode *>(stream->getLeft());
+            DeclarationNode *block = CodeValidator::findDeclaration(QString::fromStdString(propertyNode->getPortName()), scope, m_tree);
+            if (block) {
+                AST *property = block->getPropertyValue(propertyNode->getName());
+                if (property) { // First replace if pointing to a name
+                    if (property->getNodeType() == AST::Block || property->getNodeType() == AST::Bundle) {
+                        stream->setLeft(property->deepCopy());
+                    }
+                    ValueNode *newValue = resolveConstant(stream->getLeft(), scope);
+                    if (newValue) {
+                        stream->setLeft(newValue);
+                    }
+                }
             }
         }
         resolveConstantsInNode(stream->getRight(), scope);
