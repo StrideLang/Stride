@@ -37,7 +37,6 @@ private:
     void resolveRates();
     void processDomains();
     void analyzeConnections();
-    void processStreamRateBlock();
 
     // Sub functions
     void resolveStreamRates(StreamNode *stream);

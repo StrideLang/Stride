@@ -129,16 +129,19 @@ class Generator(GeneratorBase):
             jack_defines = ['-D__UNIX_JACK__']
             jack_link_flags = [ "-ljack", '-lpthread']
 
-            module = 'jack'
+            modules = ['jack', 'alsa', 'pulse']
 
-            if module == 'pulse':
-                defines = pulse_defines
-                link_flags = pulse_link_flags
-            elif module == 'alsa':
-                defines = alsa_defines
-                link_flags = alsa_link_flags
-            elif module == 'jack':
-                defines = jack_defines
+            defines = []
+            link_flags = []
+
+            if modules.count('pulse') > 0:
+                defines += pulse_defines
+                link_flags += pulse_link_flags
+            elif modules.count('alsa') > 0:
+                defines += alsa_defines
+                link_flags += alsa_link_flags
+            elif modules.count('jack') > 0:
+                defines += jack_defines
                 link_flags = jack_link_flags
 
             for f in source_files:

@@ -26,17 +26,18 @@ void CodeResolver::preProcess()
     resolveRates();
     processDomains();
     analyzeConnections();
-    processStreamRateBlock(); // FIXME: This is a hack that needs to be removed once block properties are completely supported.
 }
 
 void CodeResolver::resolveRates()
 {
-    vector<AST *> nodes = m_tree->getChildren();
-    for(unsigned int i = 0; i < nodes.size(); i++) {
-        AST* node = nodes.at(i);
+    vector<AST *> children = m_tree->getChildren();
+    vector<AST *>::reverse_iterator rit = children.rbegin();
+    while(rit != children.rend()) {
+        AST *node = *rit;
         if (node->getNodeType() == AST::Stream) {
             resolveStreamRates(static_cast<StreamNode *>(node));
         }
+        rit++;
     }
 }
 
@@ -50,10 +51,17 @@ void CodeResolver::resolveStreamRates(StreamNode *stream)
         resolveStreamRates(static_cast<StreamNode *>(right));
         rightRate = static_cast<StreamNode *>(right)->getLeft()->getRate();
     } else {
-        rightRate = getNodeRate(right, QVector<AST *>(), m_tree); // TODO need to propagate rate across streams e.g. : NoRate >> NoRate2; NoRate2 >> WithRate;
+        rightRate = getNodeRate(right, QVector<AST *>(), m_tree);
     }
     if (rate < 0 && rightRate >= 0) {
         left->setRate(rightRate);
+        if ((left->getNodeType() == AST::List) || (left->getNodeType() == AST::Expression)) {
+            for (AST *child: left->getChildren()) {
+                if (child->getRate() == -1.0) {
+                    child->setRate(rightRate);
+                }
+            }
+        }
         rate = rightRate;
     }
 //    Q_ASSERT(rate != -1);
@@ -193,7 +201,7 @@ void CodeResolver::declareModuleInternalBlocks()
                     AST *outDomain = outputPortBlock->getPropertyValue("domain");
                     if (!outDomain || outDomain->getNodeType() == AST::None) {
                         BlockNode *outBlockName = new BlockNode("_OutputDomain", "", -1);
-                        outputPortBlock->replacePropertyValue("domain", outBlockName);
+                        outputPortBlock->replacePropertyValue("domain", outBlockName); // FIXME We should we issue a warning that we are overwriting declared domain
                         outDomain = outBlockName;
                         AST *outDomainDeclaration = CodeValidator::findDeclaration("_OutputDomain", QVector<AST *>(), internalBlocks);
                         if (!outDomainDeclaration) {
@@ -325,6 +333,7 @@ void CodeResolver::declareModuleInternalBlocks()
                                     size = static_cast<ValueNode *>(sizePortValue)->getIntValue();
                                 }
                                 newSignal = createSignalDeclaration(QString::fromStdString(name), size);
+                                newSignal->replacePropertyValue("rate", new ValueNode("", -1));
                                 internalBlocks->addChild(newSignal);
                                 newSignal->setDomainString(domainName);
                                 AST *portDefault = portBlock->getPropertyValue("default");
@@ -860,39 +869,6 @@ void CodeResolver::analyzeConnections()
 
         } else if (object->getNodeType() == AST::Stream) {
             checkStreamConnections(static_cast<StreamNode *>(object), QVector<AST *>(), true);
-        }
-    }
-}
-
-void CodeResolver::processStreamRateBlock()
-{
-    for (AST *node : m_tree->getChildren()) {
-        if (node->getNodeType() == AST::Declaration) {
-            DeclarationNode *declaration = static_cast<DeclarationNode *>(node);
-            if (declaration->getObjectType() == "module") { // TODO Should reactions be included here too?
-                AST *blocksProperty = declaration->getPropertyValue("blocks");
-                if (blocksProperty && blocksProperty->getNodeType() == AST::List) {
-                    ListNode *blocks = static_cast<ListNode *>(blocksProperty);
-                    for (AST *blockNode: blocks->getChildren()) {
-                        if (blockNode->getNodeType() == AST::Declaration) {
-                            if (static_cast<DeclarationNode *>(blockNode)->getName() == "StreamRate") {
-                                PropertyNode *flagsProperty;
-                                ListNode *flagsProperties;
-                                if (!declaration->getPropertyValue("_flags")) {
-                                    flagsProperties = new ListNode(nullptr, node->getFilename().c_str(), node->getLine());
-                                    flagsProperty = new PropertyNode("_flags", flagsProperties, node->getFilename().c_str(), node->getLine());
-                                    declaration->addProperty(flagsProperty);
-                                } else {
-                                    flagsProperties = static_cast<ListNode *>(declaration->getPropertyValue("_flags"));
-                                    Q_ASSERT(flagsProperties->getNodeType() == AST::List);
-                                }
-
-                                flagsProperties->addChild(new ValueNode(string("_UsesStreamRate"), node->getFilename().c_str(), node->getLine()));
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 }

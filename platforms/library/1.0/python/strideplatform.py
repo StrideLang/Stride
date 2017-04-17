@@ -496,7 +496,6 @@ class NameAtom(Atom):
         if '_writes' in declaration:
             self.writes = len(declaration['_writes'])
 
-        print(self.writes)
         if '_reads' in declaration:
             self.reads = len(declaration['_reads'])
        # else:
@@ -731,6 +730,10 @@ class PortPropertyAtom(Atom):
                                 if self.portproperty['name'] in node.declaration:
                                     self.resolved_value = node.declaration[self.portproperty['name']]
                                     parent.add_instance_const(self.handle, 'int', self.resolved_value)
+                    elif isinstance(out_block, ModuleAtom):
+                        if self.portproperty['name'] in out_block.function:
+                            self.resolved_value = out_block.function[self.portproperty['name']]
+                            parent.add_instance_const(self.handle, 'int', self.resolved_value)
                     else:
                         self.platform.log_debug("ERROR: Can't resolve port property value")
 
@@ -898,7 +901,7 @@ class ModuleAtom(Atom):
             else:
                 # FIXME we need to read the value from the name (not get its name)
                 self.domain = self.function['ports']['domain']['name']['name']
-            self.function['ports'].pop('domain')
+            #self.function['ports'].pop('domain')
 
         self.port_name_atoms = {}
 
@@ -1550,12 +1553,12 @@ class PlatformFunctions:
                 new_atom = ReactionAtom(declaration, member['function'], platform_type, self.unique_id, self, scope_index, connected_blocks, previous_atom, next_atom)
         elif "expression" in member:
             if 'value' in member['expression']: # Unary expression
-                left_atom = self.make_atom(member['expression']['value'])
+                left_atom = self.make_atom(member['expression']['value'], previous_atom, next_atom)
                 right_atom = None
             else:
-                left_atom = self.make_atom(member['expression']['left'])
+                left_atom = self.make_atom(member['expression']['left'], previous_atom, next_atom)
                 self.unique_id += 1
-                right_atom = self.make_atom(member['expression']['right'])
+                right_atom = self.make_atom(member['expression']['right'], previous_atom, next_atom)
             expression_type = member['expression']['type']
             new_atom = ExpressionAtom(expression_type, left_atom, right_atom, self.unique_id, scope_index)
         elif "value" in member:
@@ -1604,7 +1607,7 @@ class PlatformFunctions:
         for member in stream: #Only instantiate whatever is used in streams. Discard the rest
             previous_atom = new_atom
             next_atom = None
-            if 'function' in member:
+            if 'function' in member or 'expression' in member:
                 index = stream.index(member)
                 if index < len(stream) - 1:
                     next_atom = self.make_atom(stream[index + 1])
@@ -1820,8 +1823,8 @@ class PlatformFunctions:
         new_code = self.generate_code_from_groups(node_groups, global_groups)
         header_code, init_code, new_processing_code, scope_instances, scope_declarations, reads, writes = new_code
 
-        self.log_debug("READS------ " + str(reads) )
-        self.log_debug("WRITES------ " + str(writes) )
+#        self.log_debug("READS------ " + str(reads) )
+#        self.log_debug("WRITES------ " + str(writes) )
         self.log_debug("-- End stream")
 
         for domain in new_processing_code.keys():
@@ -2061,12 +2064,12 @@ class GeneratorBase(object):
             for platform_domain in domains:
                 if platform_domain['domainName'] == domain or not domain:
                     if domain:
-                        print("--- Domain found:" + domain)
-                        print('\n'.join(sections['processing_code']))
+                        self.platform.log_debug("--- Domain found:" + domain)
+                        #self.platform.log_debug('\n'.join(sections['processing_code']))
                     else:
                         domain = self.platform.get_platform_domain()
-                        print("--- Domain none.")
-                        print('\n'.join(sections['processing_code']))
+                        self.platform.log_debug("--- Domain none.")
+                        #self.platform.log_debug('\n'.join(sections['processing_code']))
                     if not domain in processing_code:
                         processing_code[domain] = ""
                     processing_code[domain] += '\n'.join(sections['processing_code'])
@@ -2078,7 +2081,7 @@ class GeneratorBase(object):
                     domain_matched = True
                     break
             if not domain_matched:
-                print('WARNING: Domain not matched: ' + str(domain))
+                self.platform.log_debug('WARNING: Domain not matched: ' + str(domain))
 
         for domain in processing_code:
             for platform_domain in domains:
