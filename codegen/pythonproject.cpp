@@ -305,6 +305,11 @@ void PythonProject::astToJson(AST *node, QJsonObject &obj)
         obj["list"] = list;
     } else if (node->getNodeType() == AST::None) {
         obj = QJsonObject(); // Null value
+    } else if (node->getNodeType() == AST::PortProperty) {
+        QJsonObject newObj;
+        newObj["name"] = QString::fromStdString(static_cast<PortPropertyNode *>(node)->getName());
+        newObj["portname"] = QString::fromStdString(static_cast<PortPropertyNode *>(node)->getPortName());
+        obj["portproperty"] = newObj;
     } else {
         obj["type"] = QString("Unsupported");
     }

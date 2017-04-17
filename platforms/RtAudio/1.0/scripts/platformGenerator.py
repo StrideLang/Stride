@@ -27,8 +27,8 @@ class Generator(GeneratorBase):
 
         self.log("Platform code generation starting...")
 
-        domain = "AudioDomain"
-        code = self.platform.generate_code(self.tree, domain)
+        #domain = "AudioDomain"
+        code = self.platform.generate_code(self.tree)
 
         #var_declaration = ''.join(['double stream_%02i;\n'%i for i in range(stream_index)])
         #declare_code = var_declaration + declare_code

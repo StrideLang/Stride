@@ -1,7 +1,7 @@
 # Sine Oscillator
 
-use RtAudio version 1.0 on PC
+use STM32F7 version 1.0 on PC
 
 import Generators
 
-Oscillator ( frequency: 440.0 amplitude: 0.1 ) >> AudioOut;
+Oscillator ( frequency: 440.0 amplitude: 0.005 ) >> AudioOut;

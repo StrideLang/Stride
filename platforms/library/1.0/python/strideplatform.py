@@ -23,14 +23,14 @@ def signal_type_string(signal_declaration):
 
 
 class Atom(object):
-    def __init__(self):
+    def __init__(self, line = -1, filename = ''):
         self.rate = -1
         self.inline = False
         self.globals = {}
         self.handle = ''
         self.domain = None
-        self.line = -1
-        self.filename = ""
+        self.line = line
+        self.filename = filename
         self.writes = 0
         self.reads = 0
 
@@ -40,8 +40,6 @@ class Atom(object):
     def set_inline(self, inline):
         self.inline = inline
 
-    def is_inline(self):
-        return self.inline
 
     def get_handles(self):
         if self.is_inline():
@@ -54,9 +52,6 @@ class Atom(object):
             return self.out_tokens
         else:
             return [self.handle]
-
-    def get_globals(self):
-        return self.globals
 
     def get_declarations(self):
         return []
@@ -89,6 +84,12 @@ class Atom(object):
         when the output is used only once, and an intermediate symbol to
         represent it is not needed'''
         return None
+
+    def is_inline(self):
+        return self.inline
+
+    def get_globals(self):
+        return self.globals
 
     def get_rate(self):
         return self.rate
@@ -453,8 +454,7 @@ class NameAtom(Atom):
                  scope_index, line, filename):
         super(NameAtom, self).__init__()
         self.scope_index = scope_index
-        self.name = declaration['name']
-        self.handle = self.name  # + '_%03i'%token_index;
+        self.handle = declaration['name']  # + '_%03i'%token_index;
         self.platform_type = platform_type
         self.declaration = declaration
         self.domain = None
@@ -688,9 +688,87 @@ class NameAtom(Atom):
             else:
                 default_value = 0.0
         else:
-            print("Forced default value to 0 for " + self.name)
+            print("Forced default value to 0 for " + self.handle)
             default_value = 0.0
         return default_value
+
+
+class PortPropertyAtom(Atom):
+    def __init__(self, portproperty, platform, scope_index):
+        super(PortPropertyAtom, self).__init__()
+#        self.rate = -1
+#        self.inline = False
+#        self.globals = {}
+#        self.handle = ''
+#        self.domain = None
+#        self.writes = 0
+#        self.reads = 0
+
+        self.portproperty = portproperty
+
+        self.scope_index = scope_index
+        self.platform = platform
+        self.resolved_value = None
+
+        self.handle = "_%s_%s"%(self.portproperty['portname'], self.portproperty['name'])
+
+        parent = platform.parent_stack[-1]
+
+        if parent._input:
+            for name, in_block in parent._input.items():
+                print(in_block)
+        if parent._output:
+            for name, out_block in parent._output.items():
+                if name == self.portproperty['portname']:
+                    if isinstance(out_block, NameAtom) or isinstance(out_block, BundleAtom):
+                        if self.portproperty['name'] in out_block.declaration:
+                            self.resolved_value = out_block.declaration[self.portproperty['name']]
+                            parent.add_instance_const(self.handle, 'int', self.resolved_value)
+                    elif isinstance(out_block, ListAtom):
+                    # FIXME There needs to be a way to know what member of the list we are actually connectiong to...
+                        for node in out_block.list_node:
+                            if isinstance(node, NameAtom) or isinstance(node, BundleAtom):
+                                if self.portproperty['name'] in node.declaration:
+                                    self.resolved_value = node.declaration[self.portproperty['name']]
+                                    parent.add_instance_const(self.handle, 'int', self.resolved_value)
+                    else:
+                        self.platform.log_debug("ERROR: Can't resolve port property value")
+
+#        declaration = self.platform.find_declaration_in_tree(self.portproperty['portname'])
+#        if declaration:
+#            if self.portproperty['name'] in declaration:
+#                pass
+
+
+    def get_declarations(self):
+        return []
+
+    def get_instances(self):
+        return []
+
+    def get_initialization_code(self, in_tokens):
+        '''Returns code that should be executed only once per construction of
+        the block'''
+        return ''
+
+    def get_preprocessing_code(self, in_tokens):
+        ''' Returns code that needs to be run asynchronously but can't be
+        inlined, so needs to be run separately previous to the processing
+        code'''
+        return ''
+
+    def get_processing_code(self, in_tokens):
+        code = 'XXXX'
+        return {None: code}
+
+    def get_postproc_once(self):
+        return None
+
+    def get_inline_processing_code(self, in_tokens):
+        ''' This returns the processing code itself, so this can be used
+        when the output is used only once, and an intermediate symbol to
+        represent it is not needed'''
+        return self.handle
 
 class BundleAtom(NameAtom):
     def __init__(self, platform_type, declaration, index, token_index, scope_index, line, filename):
@@ -788,7 +866,7 @@ class BundleAtom(NameAtom):
 
 
 class ModuleAtom(Atom):
-    def __init__(self, module, function, platform_code, token_index, platform, scope_index, connected_blocks):
+    def __init__(self, module, function, platform_code, token_index, platform, scope_index, connected_blocks, previous_atom, next_atom):
         super(ModuleAtom, self).__init__()
         self.scope_index = scope_index
         self.name = module["name"]
@@ -804,6 +882,12 @@ class ModuleAtom(Atom):
         self.domain = None
         self.connected_blocks = connected_blocks
         self.instance_consts = {}
+        self.input_atom = previous_atom
+        self.output_atom = next_atom
+        self._input = None
+        self._output = None
+
+        self.constructor_consts = {}
 
         self._process_flags()
 
@@ -877,7 +961,14 @@ class ModuleAtom(Atom):
                     if block['domain'] == domain:
                         process_code[domain]['output_blocks'].append(block)
 
-        init_code += self.flags_init_code
+        for const_name, const_info in self.instance_consts.items():
+            init_code += templates.assignment(const_name, "_" + const_name)
+            dec = Declaration(self.module['stack_index'],
+                        None,
+                        const_name,
+                        '')
+            declarations.append(dec) #templates.declaration_real(const_name)
+            header_code += templates.declaration_real(const_name);
 
         declaration_text = templates.module_declaration(
                 self.name, header_code,
@@ -899,8 +990,7 @@ class ModuleAtom(Atom):
         instances = []
         instance_consts = []
         for name, info in self.instance_consts.items():
-            if name == "sampleRate":
-                instance_consts.append(self.flags_constructor_consts["sampleRate"])
+            instance_consts.append(info['value'])
         module_instance = ModuleInstance(self.scope_index,
                                  self.domain,
                                  self.name,
@@ -1093,6 +1183,7 @@ class ModuleAtom(Atom):
 #        if self._input_block: # Mark input block as instanced so it doesn't get instantiated as other blocks
 #            instanced = [[self._input_block['name'], self.scope_index]]
 
+
         if 'ports' in self.function:
             for name,port_value in self.function['ports'].items():
                 new_atom = self.platform.make_atom(port_value)
@@ -1103,7 +1194,8 @@ class ModuleAtom(Atom):
                     self.port_name_atoms[name] = [new_atom]
 
         self.code = self.platform.generate_code(tree, self._blocks,
-                                                instanced = instanced)
+                                                instanced = instanced,
+                                                parent = self)
 
 #        if self.module['ports']:
 #                for prop in self.module['ports']:
@@ -1193,8 +1285,11 @@ class ModuleAtom(Atom):
 #                        break
                 if 'direction' in port['block'] and port['block']['direction'] == 'input':
                     self._input_blocks.append(internal_block)
+                    self._input = {internal_block['name'] : self.input_atom }
                 elif 'direction' in port['block'] and port['block']['direction'] == 'output':
                     self._output_blocks.append(internal_block)
+
+                    self._output = {internal_block['name'] : self.output_atom }
             else: # Not a main port
                 internal_block['main'] = False
                 internal_block['port_block'] = True
@@ -1202,6 +1297,7 @@ class ModuleAtom(Atom):
                     self._input_blocks.append(internal_block)
                 elif 'direction' in port['block'] and port['block']['direction'] == 'output':
                     self._output_blocks.append(internal_block)
+#            self._blocks.append(port)
 
 
     def find_internal_block(self, block_name):
@@ -1238,22 +1334,15 @@ class ModuleAtom(Atom):
             instances += self._get_expression_instances(right)
         return instances
 
+    def add_instance_const(self, name, consttype, value):
+        self.instance_consts[name] = {'type': consttype, 'value' : value}
+
     def _process_flags(self):
-        self.flags_init_code = ''
-        self.flags_constructor_consts = ''
         if not '_flags' in self.module:
             return
         flags = self.module['_flags']
         for flag in flags:
-            if flag['value'] == '_UsesStreamRate':
-                self.instance_consts['sampleRate'] = {'type': 'int'}
-                self.flags_init_code = templates.assignment("StreamRate", 'sampleRate')
-                rate = self.function['rate']
-                if self.function['rate'] == -1:
-                    rate = self.platform.get_domain_default_rate(self.domain)
-                self.flags_constructor_consts = {"sampleRate" : rate}
-
-
+            pass
 
 class PlatformModuleAtom(ModuleAtom):
     def __init__(self, module, function, platform_code, token_index, platform, scope_index):
@@ -1262,8 +1351,8 @@ class PlatformModuleAtom(ModuleAtom):
 
 # TODO complete work on reaction block
 class ReactionAtom(ModuleAtom):
-    def __init__(self, reaction, function, platform_code, token_index, platform, scope_index, connected_blocks):
-        super(ReactionAtom, self).__init__(reaction, function, platform_code, token_index, platform, scope_index, connected_blocks)
+    def __init__(self, reaction, function, platform_code, token_index, platform, scope_index, connected_blocks, previous_atom, next_atom):
+        super(ReactionAtom, self).__init__(reaction, function, platform_code, token_index, platform, scope_index, connected_blocks, previous_atom, next_atom)
         self.reaction = reaction
 
 
@@ -1313,6 +1402,7 @@ class PlatformFunctions:
 
         self.tree = tree
         self.scope_stack = []
+        self.parent_stack = []
 
         self.sample_rate = 44100 # Set this as default but this should be overriden by platform:
         for elem in tree:
@@ -1330,6 +1420,18 @@ class PlatformFunctions:
     def find_declaration_in_tree(self, block_name, tree = None):
         if not tree:
             tree = self.tree
+        # First look within scope stack
+        for i, scope in enumerate(self.scope_stack[::-1]):
+            for node in scope:
+                if 'block' in node:
+                    if node["block"]["name"] == block_name:
+                        node["block"]['stack_index'] = len(self.scope_stack) - 1 - i
+                        return node["block"]
+                if 'blockbundle' in node:
+                    if node["blockbundle"]["name"] == block_name:
+                        node["blockbundle"]['stack_index'] = len(self.scope_stack) - 1 - i
+                        return node["blockbundle"]
+        # Then look for declarations in tree root
         for node in tree:
             if 'block' in node:
                 if node["block"]["name"] == block_name:
@@ -1339,16 +1441,6 @@ class PlatformFunctions:
                 if node["blockbundle"]["name"] == block_name:
                     node["blockbundle"]['stack_index'] = 0
                     return node["blockbundle"]
-        for i, scope in enumerate(self.scope_stack[::-1]):
-            for node in scope: # Now look within scope
-                if 'block' in node:
-                    if node["block"]["name"] == block_name:
-                        node["block"]['stack_index'] = len(self.scope_stack) - 1 - i
-                        return node["block"]
-                if 'blockbundle' in node:
-                    if node["blockbundle"]["name"] == block_name:
-                        node["blockbundle"]['stack_index'] = len(self.scope_stack) - 1 - i
-                        return node["blockbundle"]
 #        raise ValueError("Declaration not found for " + block_name)
         return None
 
@@ -1435,7 +1527,7 @@ class PlatformFunctions:
 
     # Code generation functions
 
-    def make_atom(self, member):
+    def make_atom(self, member, previous_atom = None, next_atom = None):
         scope_index = len(self.scope_stack) -1
         if "name" in member:
             platform_type, declaration = self.find_block(member['name']['name'], self.tree)
@@ -1451,11 +1543,11 @@ class PlatformFunctions:
                     connected_blocks.append(self.make_atom(value))
             if declaration['type'] == 'module':
                 if 'type' in platform_type['block']:
-                    new_atom = ModuleAtom(declaration, member['function'], platform_type, self.unique_id, self, scope_index, connected_blocks)
+                    new_atom = ModuleAtom(declaration, member['function'], platform_type, self.unique_id, self, scope_index, connected_blocks, previous_atom, next_atom)
                 else:
                     raise ValueError("Invalid or unavailable platform type.")
             elif declaration['type'] == 'reaction':
-                new_atom = ReactionAtom(declaration, member['function'], platform_type, self.unique_id, self, scope_index, connected_blocks)
+                new_atom = ReactionAtom(declaration, member['function'], platform_type, self.unique_id, self, scope_index, connected_blocks, previous_atom, next_atom)
         elif "expression" in member:
             if 'value' in member['expression']: # Unary expression
                 left_atom = self.make_atom(member['expression']['value'])
@@ -1486,24 +1578,37 @@ class PlatformFunctions:
 #            else:
 #                platform_type =  self.find_stride_type(member['blockbundle']["platformType"])
 #            new_atom = NameAtom(platform_type, member['blockbundle'], self.unique_id, scope_index)
+        elif "portproperty" in member:
+            new_atom = PortPropertyAtom(member['portproperty'], self, scope_index)
         else:
             raise ValueError("Unsupported type")
         return new_atom
 
-    def push_scope(self, scope):
+    def push_scope(self, scope, parent):
+        if not type(scope) == list:
+            raise ValueError("Scopes must be lists")
         self.scope_stack.append(scope)
+        self.parent_stack.append(parent)
 
     def pop_scope(self):
         self.scope_stack.pop()
+        self.parent_stack.pop()
 
     def make_stream_nodes(self, stream):
         node_groups = [[]] # Nodes are grouped by domain
         current_domain = None
         cur_group = node_groups[-1]
+        previous_atom = None
+        new_atom = None
 
         for member in stream: #Only instantiate whatever is used in streams. Discard the rest
-
-            new_atom = self.make_atom(member)
+            previous_atom = new_atom
+            next_atom = None
+            if 'function' in member:
+                index = stream.index(member)
+                if index < len(stream) - 1:
+                    next_atom = self.make_atom(stream[index + 1])
+            new_atom = self.make_atom(member, previous_atom, next_atom)
             if hasattr("domain", "new_atom"):
                 if not current_domain == new_atom.domain:
                     current_domain = new_atom.domain
@@ -1666,7 +1771,7 @@ class PlatformFunctions:
                             # Do we need to order the post processing code?
                             if not postproc_present:
                                 post_processing[current_domain].append(new_postproc)
-                if atom.rate > 0:
+                if atom.rate and atom.rate > 0:
                     if atom.rate != current_rate:
                         new_inst, new_init, new_proc = templates.rate_start(atom.rate)
                         processing_code[current_domain] += new_proc
@@ -1751,7 +1856,7 @@ class PlatformFunctions:
 
     def generate_code(self, tree, current_scope = [],
                       global_groups = {'include':[], 'includeDir':[], 'initializations' : [], 'linkTo' : [], 'linkDir' : []},
-                      instanced = []):
+                      instanced = [], parent = None):
         stream_index = 0
         other_scope_instances = []
         other_scope_declarations = []
@@ -1759,7 +1864,7 @@ class PlatformFunctions:
         scope_instances = []
 
         self.log_debug("* New Generation ----- scopes: " + str(len(self.scope_stack)))
-        self.push_scope(current_scope)
+        self.push_scope(current_scope, parent)
 
         domain_code = {}
         global_groups_code = {}

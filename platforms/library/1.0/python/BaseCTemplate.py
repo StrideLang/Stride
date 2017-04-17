@@ -445,7 +445,7 @@ public:
             process_functions += self.str_function_declaration%(out_type, 'process_' + str(domain), input_declaration, domain_proc_code)
 
         for const_name, props in instance_consts.items():
-            constructor_args += "float " + const_name + ","
+            constructor_args += "float _" + const_name + ","
         if len(constructor_args) > 0 and constructor_args[-1] == ',':
             constructor_args = constructor_args[:-1]
         declaration = self.str_module_declaration%(name, header_code, name, constructor_args, init_code, process_functions)

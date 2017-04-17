@@ -1,6 +1,4 @@
 module Level {
-	input: Input
-	output: Output
 	ports: [
 		port InputPort {
 			main: on

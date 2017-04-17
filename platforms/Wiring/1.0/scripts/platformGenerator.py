@@ -34,8 +34,8 @@ class Generator(GeneratorBase):
 
         self.log("Platform code generation starting...")
 
-        domain = "WiringDomain"
-        code = self.platform.generate_code(self.tree, domain)
+        #domain = "WiringDomain"
+        code = self.platform.generate_code(self.tree)
 
         shutil.copyfile(self.project_dir + "/template.ino", self.out_file)
 
