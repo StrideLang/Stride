@@ -220,26 +220,34 @@ public:
                 declaration = self.declaration_int(name, close)
         return declaration
 
-    def declaration_real(self, name, close=True):
+    def declaration_real(self, name, close=True, default = None):
         declaration = self.real_type + " " + name
+        if default:
+            declaration += ' = ' + str(default)
         if close:
             declaration += ';\n'
         return declaration
 
-    def declaration_int(self, name, close=True):
+    def declaration_int(self, name, close=True, default = None):
         declaration = self.int_type + " " + name
+        if default:
+            declaration += ' = ' + str(default)
         if close:
             declaration += ';\n'
         return declaration
 
-    def declaration_bool(self, name, close=True):
+    def declaration_bool(self, name, close=True, default = None):
         declaration = self.bool_type + " " + name
+        if default:
+            declaration += ' = ' + str(default)
         if close:
             declaration += ';\n'
         return declaration
 
-    def declaration_string(self, name, close=True):
+    def declaration_string(self, name, close=True, default = None):
         declaration = self.string_type + " " + name
+        if default:
+            declaration += ' = ' + str(default)
         if close:
             declaration += ';\n'
         return declaration
