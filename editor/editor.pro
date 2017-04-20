@@ -63,23 +63,10 @@ else:unix: PRE_TARGETDEPS += $$OUT_PWD/../parser/libStrideParser.a
 
 
 OTHER_FILES += \
-    qml/Editor.qml \
-    templates/simple/Makefile \
-    templates/simple/src/main.xc \
-    templates/simple/lua_scripts/generator.lua \
-    templates/simple/lua_scripts/process_template.lua \
-    templates/simple/lua_scripts/build_project.lua \
-    templates/simple/lua_scripts/parse_code.lua \
-    templates/simple/lua_scripts/re.lua \
-    templates/simple/code/code.st
+    qml/Editor.qml
 
 RESOURCES += \
     qmlfiles.qrc
-
-use_lua {
-    INCLUDEPATH += $${LUA_INCLUDE_PATH}
-    unix|win32-msvc2015: LIBS += -L$${LUA_LIB_PATH} -l$${LUA_LIB}
-}
 
 win32-msvc2015:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../codegen/release/ -lcodegen
 else:win32-msvc2015:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../codegen/debug/ -lcodegen
