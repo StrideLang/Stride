@@ -17,10 +17,36 @@ platforms/Gamma/1.0/lib
 platforms/Wiring/1.0/scripts/*.pyc
 platforms/STM32F7/1.0/scripts/*.pyc
 platforms/Gamma/1.0/scripts/*.pyc
-platforms/library/1.0/python/*.pyc
+platforms/library/*/python/*.pyc
+platforms/library/*/_tests/*_Products*
+platforms/library/*/_tests/*/*_Products*
 
 platforms/*/examples/*_Products*
 platforms/*/tests/*_Products*
 platforms/*/icmc/*_Products*
+platforms/*/eoys/*_Products*
+platforms/RtAudio/*/project/rtaudio-*
+platforms/RtAudio/*/project/rtaudio-*/*
+platforms/RtAudio/*/project/rtaudio-*/*/*
+
+strideroot/platforms/Wiring/1.0/arduino-1*
+strideroot/platforms/STM32F7/1.0/STM32Cube_FW_F7*
+strideroot/platforms/Gamma/1.0/include
+strideroot/platforms/Gamma/1.0/lib
+
+strideroot/platforms/Wiring/1.0/scripts/*.pyc
+strideroot/platforms/STM32F7/1.0/scripts/*.pyc
+strideroot/platforms/Gamma/*/scripts/*.pyc
+strideroot/platforms/library/*/python/*.pyc
+
+
+strideroot/platforms/*/examples/*_Products*
+strideroot/platforms/*/tests/*_Products*
+strideroot/platforms/*/icmc/*_Products*
+strideroot/platforms/*/_tests/*_Products*
+strideroot/platforms/RtAudio/*/project/rtaudio-*
+strideroot/platforms/RtAudio/*/project/rtaudio-*/*
+strideroot/platforms/RtAudio/*/project/rtaudio-*/*/*
+
 
 *.DS_Store

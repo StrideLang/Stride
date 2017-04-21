@@ -55,13 +55,14 @@
 class CodeResolver
 {
 public:
-    CodeResolver(vector<StridePlatform *> platforms, AST *tree);
+    CodeResolver(StrideSystem * system, AST *tree);
     ~CodeResolver();
 
     void preProcess();
 
 private:
     // Main processing functions
+    void processSystem();
     void insertBuiltinObjects();
     void fillDefaultProperties();
     void declareModuleInternalBlocks();
@@ -137,7 +138,7 @@ private:
     AST *getDefaultPortValueForType(QString type, QString portName);
 
 
-    vector<StridePlatform *> m_platforms;
+    StrideSystem * m_system;
     AST *m_tree;
     int m_connectorCounter;
 };

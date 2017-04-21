@@ -231,14 +231,16 @@ languagePlatform:
         USE UVAR                {
             string s;
             s.append($2); /* string constructor leaks otherwise! */
-            $$ = new PlatformNode(s, -1, currentFile, yyloc.first_line);
+            $$ = new PlatformNode(s, -1, -1, currentFile, yyloc.first_line);
             COUT << "Platform: " << $2 << ENDL << " Using latest version!" << ENDL;
             free($2);
         }
     |   USE UVAR VERSION REAL  {
             string s;
             s.append($2); /* string constructor leaks otherwise! */
-            $$ = new PlatformNode(s, $4, currentFile, yyloc.first_line);
+            int major = int($4);
+            int minor = int(($4 - int($4))*10);
+            $$ = new PlatformNode(s, major, minor, currentFile, yyloc.first_line);
             COUT << "Platform: " << $2 << ENDL << "Version: " << $4 << " line " << yylineno << ENDL;
             free($2);
         }

@@ -42,10 +42,10 @@
 #include "codevalidator.h"
 
 
-PythonProject::PythonProject(QString platformPath,
+PythonProject::PythonProject(QString platformPath, QString strideRoot,
                              QString projectDir,
                              QString pythonExecutable) :
-    Builder(projectDir, platformPath),
+    Builder(projectDir, strideRoot, platformPath),
     m_runningProcess(this),
     m_buildProcess(this)
 
@@ -82,7 +82,7 @@ bool PythonProject::build(AST *tree)
             return false;
         }
      }
-    m_buildProcess.setWorkingDirectory(m_platformPath + "/../../../");
+    m_buildProcess.setWorkingDirectory(m_strideRoot);
     // FIXME un hard-code library version
     arguments << "library/1.0/python/build.py" << m_projectDir << m_platformPath + "/../";
     m_buildProcess.start(m_pythonExecutable, arguments);
@@ -159,7 +159,6 @@ void PythonProject::writeAST(AST *tree)
     foreach(AST *node, tree->getChildren()) {
         QJsonObject nodeObject;
         if (node->getNodeType() == AST::Platform) {
-            nodeObject["platform"] = QString::fromStdString(static_cast<PlatformNode *>(node)->platformName());
         } else if (node->getNodeType() == AST::Stream) {
             astToJson(node, nodeObject);
         } else if (node->getNodeType() == AST::Declaration) {
@@ -344,6 +343,12 @@ void PythonProject::astToJson(AST *node, QJsonObject &obj)
         newObj["name"] = QString::fromStdString(static_cast<PortPropertyNode *>(node)->getName());
         newObj["portname"] = QString::fromStdString(static_cast<PortPropertyNode *>(node)->getPortName());
         obj["portproperty"] = newObj;
+    } if (node->getNodeType() == AST::Platform) {
+        QJsonObject newObj;
+        newObj["name"] = QString::fromStdString(static_cast<PlatformNode *>(node)->platformName());
+        newObj["majorVersion"] = static_cast<PlatformNode *>(node)->majorVersion();
+        newObj["minorVersion"] = static_cast<PlatformNode *>(node)->minorVersion();
+        obj["system"] = newObj;
     } else {
         obj["type"] = QString("Unsupported");
     }

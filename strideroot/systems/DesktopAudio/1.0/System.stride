@@ -1,0 +1,48 @@
+
+platform PC {
+	framework: "RtAudio"
+	frameworkVersion: "1.0"
+	hardware: "Local"
+	hardwareVersion: "1.0"
+	required: on
+}
+
+platform Wiring {
+	framework: "Wiring"
+	frameworkVersion: "1.0"
+	hardware: none
+	hardwareVersion: none
+	required: off
+}
+	
+
+connection PCToWiringSerial {
+	source: PC
+	destination: Wiring
+	sourceImports: ["Serial"]
+	sourceStreams: [
+		Token >> Serial();
+	]
+	destinationImports: ["Serial"]
+	destinationStreams: [
+		Token >> Serial();
+	]
+}
+
+connection WiringToPCSerial {
+	source: Wiring
+	destination: PC
+	sourceImports: ["Serial"]
+	sourceStreams: [
+		Token >> Serial();
+	]
+	destinationImports: ["Serial"]
+	destinationStreams: [
+		Token >> Serial();
+	]
+}
+
+system DesktopAudio {
+    platforms: [PC, Wiring]
+    connections: [PCToWiringSerial, WiringToPCSerial]
+}

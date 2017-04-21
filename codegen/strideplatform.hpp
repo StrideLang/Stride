@@ -50,13 +50,14 @@
 
 #include "builder.h"
 
-class StridePlatform
+class StrideSystem
 {
 public:
-    StridePlatform() {}
-    StridePlatform(QStringList platformPaths, QString platform, QString version,
+    StrideSystem() {}
+    StrideSystem(QStringList platformPaths, QString platform,
+                   int majorVersion, int minorVersion,
                    QMap<QString, QString> importList);
-    ~StridePlatform();
+    ~StrideSystem();
 
     typedef enum {
         PythonTools,
@@ -87,10 +88,11 @@ private:
 
     QString readFile(QString fileName);
 
-    QString m_platformRootPath;
+    QString m_strideRoot;
     QString m_platformPath;
     QString m_platformName;
-    QString m_version;
+    int m_majorVersion;
+    int m_minorVersion;
     QString m_pluginName;
     PlatformAPI m_api;
 

@@ -51,12 +51,12 @@ public:
     void validateTree(QString platformRootDir, AST * tree);
 
     bool isValid();
-    bool platformIsValid(int index = 0);
+    bool platformIsValid();
 
     QList<LangError> getErrors();
-    QStringList getPlatformErrors(int index = 0);
+    QStringList getPlatformErrors();
 
-    StridePlatform *getPlatform(int index = 0);
+    StrideSystem *getPlatform();
 
     static DeclarationNode *findDeclaration(QString streamMemberName, QVector<AST *> scopeStack, AST *tree);
     static QString streamMemberName(AST * node, QVector<AST *> scopeStack, AST *tree);
@@ -87,7 +87,7 @@ public:
     static DeclarationNode *getMainInputPortBlock(DeclarationNode *moduleBlock);
 
     /// Number of parallel streams that a single stream can be broken up into
-    static int numParallelStreams(StreamNode *stream, StridePlatform &platform, QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
+    static int numParallelStreams(StreamNode *stream, StrideSystem &platform, QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
 
     /// Get the number of parallel nodes implicit in node. i.e. into how many parallel streams
     /// can the node be broken up.
@@ -135,7 +135,7 @@ private:
 
     QString getNodeText(AST *node);
 
-    vector<StridePlatform *> m_platforms;
+    StrideSystem * m_system;
     AST *m_tree;
     QList<LangError> m_errors;
 };

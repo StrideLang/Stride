@@ -38,8 +38,8 @@
 #include "coderesolver.h"
 #include "codevalidator.h"
 
-CodeResolver::CodeResolver(vector<StridePlatform *> platforms, AST *tree) :
-    m_platforms(platforms), m_tree(tree), m_connectorCounter(0)
+CodeResolver::CodeResolver(StrideSystem *system, AST *tree) :
+    m_system(system), m_tree(tree), m_connectorCounter(0)
 {
 
 }
@@ -60,6 +60,17 @@ void CodeResolver::preProcess()
     resolveRates();
     processDomains();
     analyzeConnections();
+}
+
+void CodeResolver::processSystem()
+{
+    for (AST *node: m_tree->getChildren()) {
+        if (node->getNodeType() == AST::Platform) {
+            PlatformNode *platform = static_cast<PlatformNode *>(node);
+//            std::string systemFile = platform->platformName();
+//            AST::parseFile()
+        }
+    }
 }
 
 void CodeResolver::resolveRates()
@@ -739,8 +750,8 @@ void CodeResolver::insertBuiltinObjects()
 {
     QList<AST *> requiredDeclarations;
     QList<AST *> bultinObjects;
-    if (m_platforms.size() > 0) {
-        bultinObjects = m_platforms.at(0)->getBuiltinObjectsReference();
+    if (m_system) {
+        bultinObjects = m_system->getBuiltinObjectsReference();
     }
 
     // First pass to add required elements.
@@ -1087,8 +1098,8 @@ void CodeResolver::resolveDomainsForStream(const StreamNode *stream, QVector<AST
             // to input ports on other objects. Domains are not
             // propagated across secondary ports
             if (contextDomain.isEmpty()) {
-                if (m_platforms.size() > 0) {
-                    domainName = m_platforms.at(0)->getPlatformDomain().toStdString();
+                if (m_system) {
+                    domainName = m_system->getPlatformDomain().toStdString();
                 }
             } else {
                 domainName = contextDomain.toStdString();

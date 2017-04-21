@@ -1,5 +1,5 @@
 
-_platform _STM32F7_Platform {
+_platformDescription _STM32F7_Platform {
     name: "STM32F7"
 }
 

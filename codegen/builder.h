@@ -56,8 +56,9 @@ class Builder : public QObject
 {
     Q_OBJECT
 public:
-    Builder(QString projectDir, QString platformPath)
-        : m_projectDir(projectDir), m_platformPath(platformPath) {}
+    Builder(QString projectDir, QString strideRoot, QString platformPath)
+        : m_projectDir(projectDir), m_strideRoot(strideRoot),
+          m_platformPath(platformPath) {}
     virtual ~Builder() {}
 
 public slots:
@@ -72,6 +73,7 @@ public slots:
 
 protected:
     QString m_projectDir;
+    QString m_strideRoot;
     QString m_platformPath;
 
 private:

@@ -59,6 +59,7 @@ class PythonProject : public Builder
     Q_OBJECT
 public:
     explicit PythonProject(QString platformPath,
+                           QString strideRoot,
                            QString projectDir = QString(),
                            QString pythonExecutable = QString());
     virtual ~PythonProject();

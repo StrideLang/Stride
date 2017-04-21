@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
 
     if (tree) {
         CodeValidator validator(platformRootPath, tree);
-        StridePlatform *platform = validator.getPlatform();
+        StrideSystem *platform = validator.getPlatform();
 
         QFileInfo info(fileName);
         QString dirName = info.absolutePath() + QDir::separator()

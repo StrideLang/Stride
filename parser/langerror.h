@@ -57,6 +57,7 @@ public:
         UndeclaredSymbol,
         SystemError,
         UnknownPlatform,
+        SystemRedefinition,
         None
     } ErrorType;
 

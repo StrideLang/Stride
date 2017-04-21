@@ -1,0 +1,36 @@
+use RtAudio version 1.0 on PC
+
+module Test {
+	ports: [
+		port OutputPort {
+			main: on
+			direction: "output"
+			block: Output
+			domain: OutputDomain
+			size: 2
+		}
+		port InputPort {
+			main: on
+			direction: "input"
+			block: Input
+			size: 2
+		}
+		port TestPort {
+			name: "test"
+			direction: "input"
+			block: TestBlock
+			default: 1.0
+		}
+	]
+	blocks: [
+	]
+	streams: [
+		Input[1] + Input[2] >> Output[2];
+	]
+}
+
+signal SigIn[2] { domain: AudioDomain }
+
+SigIn >> Test() >> AudioOut;
+[SigIn[1], SigIn[2]] >> Test() >> Out;
+

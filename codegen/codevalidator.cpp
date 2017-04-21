@@ -46,8 +46,8 @@ CodeValidator::CodeValidator(QString platformRootDir, AST *tree):
 
 CodeValidator::~CodeValidator()
 {
-    for (StridePlatform *platform: m_platforms) {
-        delete platform;
+    if (m_system) {
+        delete m_system;
     }
 }
 
@@ -68,14 +68,23 @@ void CodeValidator::validateTree(QString platformRootDir, AST *tree)
         QStringList platformRoots;
         platformRoots << platformRootDir;
 
-        for (PlatformNode *platformNode: platforms) {
-            m_platforms.push_back(new StridePlatform(platformRoots,
-                                                     QString::fromStdString(platformNode->platformName()),
-                                                     QString::number(platformNode->version(),'f',  1),
-                                                     importList));
-        }
-        if (m_platforms.size() == 0) { // Make a default platform that only inlcudes the common library
-            m_platforms.push_back(new StridePlatform(platformRoots, "", "", importList));
+        if (platforms.size () > 0) {
+            PlatformNode *platformNode = platforms.at(0);
+            m_system = new StrideSystem(platformRoots,
+                                        QString::fromStdString(platformNode->platformName()),
+                                        platformNode->majorVersion(), platformNode->minorVersion(),
+                                        importList);
+            for (int i = 1; i < platforms.size(); i++) {
+                qDebug() << "Ignoring system: " << QString::fromStdString(platformNode->platformName());
+                LangError error;
+                error.type = LangError::SystemRedefinition;
+                error.errorTokens.push_back(platformNode->platformName());
+                error.filename = platformNode->getFilename();
+                error.lineNumber = platformNode->getLine();
+                m_errors.append(error);
+            }
+        } else { // Make a default platform that only inlcudes the common library
+            m_system = new StrideSystem(platformRoots, "", -1, -1, importList);
         }
         validate();
     }
@@ -86,12 +95,9 @@ bool CodeValidator::isValid()
     return m_errors.size() == 0;
 }
 
-bool CodeValidator::platformIsValid(int index)
+bool CodeValidator::platformIsValid()
 {
-    if (index >= 0 && index < m_platforms.size()) {
-        return m_platforms.at(index)->getErrors().size() == 0;
-    }
-    return false;
+    return m_system->getErrors().size() == 0;
 }
 
 QVector<PlatformNode *> CodeValidator::getPlatformNodes()
@@ -102,9 +108,9 @@ QVector<PlatformNode *> CodeValidator::getPlatformNodes()
 //    }
     QVector<PlatformNode *> platformNodes;
     vector<AST *> nodes = m_tree->getChildren();
-    for(unsigned int i = 0; i < nodes.size(); i++) {
-        if (nodes.at(i)->getNodeType() == AST::Platform) {
-            platformNodes.push_back(static_cast<PlatformNode *>(nodes.at(i)));
+    for(AST *node: nodes) {
+        if (node->getNodeType() == AST::Platform) {
+            platformNodes.push_back(static_cast<PlatformNode *>(node));
         }
     }
     return platformNodes;
@@ -167,29 +173,21 @@ QList<LangError> CodeValidator::getErrors()
     return m_errors;
 }
 
-QStringList CodeValidator::getPlatformErrors(int index)
+QStringList CodeValidator::getPlatformErrors()
 {
-    if (index >= 0 && index < m_platforms.size()) {
-        return m_platforms.at(index)->getErrors();
-    } else {
-        return QStringList();
-    }
+    return m_system->getErrors();
 }
 
-StridePlatform *CodeValidator::getPlatform(int index)
+StrideSystem *CodeValidator::getPlatform()
 {
-    if (index >= 0 && index < m_platforms.size()) {
-        return m_platforms.at(index);
-    } else {
-        return nullptr;
-    }
+    return m_system;
 }
 
 void CodeValidator::validate()
 {
     m_errors.clear();
     if(m_tree) {
-        CodeResolver resolver(m_platforms, m_tree);
+        CodeResolver resolver(m_system, m_tree);
         resolver.preProcess();
         validatePlatform(m_tree, QVector<AST *>());
         validateTypes(m_tree, QVector<AST *>());
@@ -1596,7 +1594,7 @@ QVector<AST *> CodeValidator::getPortsForTypeBlock(DeclarationNode *block, QVect
     return outList;
 }
 
-int CodeValidator::numParallelStreams(StreamNode *stream, StridePlatform &platform, QVector<AST *> &scope, AST *tree, QList<LangError> &errors)
+int CodeValidator::numParallelStreams(StreamNode *stream, StrideSystem &platform, QVector<AST *> &scope, AST *tree, QList<LangError> &errors)
 {
     AST *left = stream->getLeft();
     AST *right = stream->getRight();

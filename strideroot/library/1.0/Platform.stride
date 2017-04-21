@@ -73,8 +73,8 @@ type _Domain {
 	inherits: ["base"]
 }
 
-type _Platform {
-	typeName: "_platform"
+type _PlatformDescription {
+	typeName: "_platformDescription"
 	properties: [
 		typeProperty Name {
 			name: "name"
@@ -211,4 +211,102 @@ type _PlatformType {
 		}
 	]
 	inherits: ["base"]
+}
+
+
+type _PlatformType {
+	typeName: "platform"
+	properties: [
+		typeProperty Framework {
+			name: "framework"
+			types: ["CSP"]
+			default: none
+			required: on
+		},
+		typeProperty FrameworkVersion {
+			name: "frameworkVersion"
+			types: ["CSP"]
+			default: none
+			required: off
+		},
+		typeProperty Hardware {
+			name: "hardware"
+			types: ["CSP"]
+			default: none
+			required: off
+		},
+		typeProperty HardwareVersion {
+			name: "hardwareVersion"
+			types: ["CSP"]
+			default: none
+			required: off
+		},
+		typeProperty Required {
+			name: "required"
+			types: ["CBP"]
+			default: none
+			required: on
+		}
+	]
+}
+
+type _ConnectionType {
+	typeName: "connection"
+	properties: [
+		typeProperty Source {
+			name: "source"
+			types: [""]
+			default: none
+			required: on
+		},
+		typeProperty Destination {
+			name: "destination"
+			types: [""]
+			default: none
+			required: on
+		},
+		typeProperty SourceImports {
+			name: "sourceImports"
+			types: [""]
+			default: none
+			required: off
+		},
+		typeProperty SourceStreams {
+			name: "sourceStreams"
+			types: [""]
+			default: none
+			required: on
+		},
+		typeProperty DestinationImports {
+			name: "destinationImports"
+			types: [""]
+			default: none
+			required: off
+		},
+		typeProperty DestinationStreams {
+			name: "destinationStreams"
+			types: [""]
+			default: none
+			required: on
+		}
+	]
+}
+
+
+type _SystemType {
+	typeName: "system"
+	properties: [
+		typeProperty Platforms {
+			name: "platforms"
+			types: [""]
+			default: none
+			required: on
+		},
+		typeProperty Connections {
+			name: "connections"
+			types: [""]
+			default: none
+			required: off
+		}
+	]
 }

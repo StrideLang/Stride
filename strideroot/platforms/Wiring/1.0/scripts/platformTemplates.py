@@ -32,35 +32,21 @@
 
     Authors: Andres Cabrera and Joseph Tilbian
 """
-from __future__ import print_function
-from __future__ import division
 
-import os
-import sys
-from subprocess import check_output as ck_out
-
-#try:
-#    from PySide import QtWidgets
-#except:
-#    from PyQt5 import QtWidgets
+from BaseCTemplate import BaseCTemplate
 
 
-class Runner:
-    def __init__(self):
-        pass
+class Templates(BaseCTemplate):
+    def __init__(self, domain_rate = 44100):
+        super(Templates, self).__init__(domain_rate)
 
-out_dir = sys.argv[1]
-app_name = "app"
-
-def log(text):
-    print(text)
-
-print("Running python.")
-
-os.chdir(out_dir)
-log("Running in directory: " + out_dir)
+        self.string_type = "String"
+        self.properties['num_in_channels'] = 2
+        self.properties['num_out_channels'] = 2
+#        self.properties['audio_device'] = 0
+        self.properties['sample_rate'] = 44100
+        self.properties['block_size'] = 2048
 
 
-#args = ['pasuspender', '--', "./" + app_name]
-args = ["./" + app_name]
-outtext = ck_out(args)
+
+templates = Templates()

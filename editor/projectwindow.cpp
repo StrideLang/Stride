@@ -158,7 +158,7 @@ bool ProjectWindow::build()
         }
 
 
-        StridePlatform *platform = validator.getPlatform();
+        StrideSystem *platform = validator.getPlatform();
 
         QString projectDir = makeProjectForCurrent();
         if (projectDir.isEmpty()) {

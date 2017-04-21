@@ -49,15 +49,15 @@ typedef struct {
 class PlatformNode : public AST
 {
 public:
-    PlatformNode(string platformName, double version, const char *filename, int line, string hwPlatform = string(), double hwVersion = -1);
+    PlatformNode(string platformName, int majorVersion, int minorVersion, const char *filename, int line, string hwPlatform = string(), double hwVersion = -1);
 
     ~PlatformNode();
 
     string platformName() const;
     void setPlatformName(const string &platformName);
 
-    double version() const;
-    void setVersion(double version);
+    int majorVersion() const;
+    int minorVersion() const;
 
     string hwPlatform() const;
     void setHwPlatform(const string &hwPlatform);
@@ -68,7 +68,8 @@ public:
     AST *deepCopy();
 
 private:
-    double m_version;
+    int m_minorVersion;
+    int m_majorVersion;
     string m_platformName;
     HwPlatform m_targetPlatform;
 };

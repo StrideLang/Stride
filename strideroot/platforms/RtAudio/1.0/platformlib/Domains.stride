@@ -1,5 +1,5 @@
 
-_platform _RtAudioPlatform {
+_platformDescription _RtAudioPlatform {
     name: "RtAudio"
 }
 
