@@ -48,5 +48,23 @@ strideroot/platforms/RtAudio/*/project/rtaudio-*
 strideroot/platforms/RtAudio/*/project/rtaudio-*/*
 strideroot/platforms/RtAudio/*/project/rtaudio-*/*/*
 
+strideroot/frameworks/Wiring/1.0/arduino-1*
+strideroot/frameworks/STM32F7/1.0/STM32Cube_FW_F7*
+strideroot/frameworks/Gamma/1.0/include
+strideroot/frameworks/Gamma/1.0/lib
+
+strideroot/frameworks/Wiring/1.0/scripts/*.pyc
+strideroot/frameworks/STM32F7/1.0/scripts/*.pyc
+strideroot/frameworks/Gamma/*/scripts/*.pyc
+strideroot/frameworks/library/*/python/*.pyc
+
+
+strideroot/frameworks/*/examples/*_Products*
+strideroot/frameworks/*/tests/*_Products*
+strideroot/frameworks/*/icmc/*_Products*
+strideroot/frameworks/*/_tests/*_Products*
+strideroot/frameworks/RtAudio/*/project/rtaudio-*
+strideroot/frameworks/RtAudio/*/project/rtaudio-*/*
+strideroot/frameworks/RtAudio/*/project/rtaudio-*/*/*
 
 *.DS_Store

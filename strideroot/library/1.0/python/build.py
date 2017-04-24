@@ -3,20 +3,32 @@
 from __future__ import print_function
 from __future__ import division
 
-import sys, os
+import sys
+import os
+import json
 
 # ---------------------
 
-def build(platform_dir, products_dir, debug = False):
+def build(strideroot, products_dir, debug = False):
+
+    jsonfile = open(products_dir + '/tree.json')
+    tree = json.load(jsonfile)
+
+    platform_dir = None
+    for node in tree:
+        if "system" in node:
+            platform_dir = node['system']['platforms'][0]['path']
+            break
 
     # Add platform scritps path to python module search paths
     sys.path.append(platform_dir + "/scripts")
 
-    print("Using :" + platform_dir + "/scripts")
+    print("Using strideroot:" + strideroot)
+    print("Using platform: " + platform_dir)
     # Get gerenator
     from platformGenerator import Generator
 
-    gen = Generator(products_dir, platform_dir, debug)
+    gen = Generator(products_dir, platform_dir, tree, debug)
     gen.generate_code()
     print("Building done...")
     gen.compile()
@@ -46,24 +58,21 @@ if __name__ == '__main__':
 #                        default = cur_path + '/library/1.0/_tests/modulation.stride_Products'
 
 #                        default= cur_path + '/RtAudio/icmc/ICMC_06.stride_Products'
-                        default= cur_path + '/RtAudio/eoys/FM.stride_Products'
+                        default= cur_path + '/../examples/eoys/FM.stride_Products'
 #                        default= cur_path + '/RtAudio/tests/bundles.stride_Products'
 #                        default= cur_path + '/Wiring/examples/test.stride_Products'
 #                        default='/home/andres/Documents/src/Stride/StreamStack/platforms/Arduino/examples/test.stride_Products'
 #                        default= cur_path + '/STM32F7/examples/test.stride_Products'
 #                        default= cur_path + '/../tests/data/P06_domains.stride_Products'
                         )
-    parser.add_argument("platform_dir",
-                        help="The directory of the platform to be used",
+    parser.add_argument("strideroot",
+                        help="The directory of the strideroot",
                         nargs='?',
 #                        default = cur_path + '/Wiring/1.0'
 #                       default = cur_path + '/STM32F7/1.0'
-                        default = cur_path + '/RtAudio/1.0'
+                        default = cur_path
                         )
     args = parser.parse_args()
 
-    platform_dir = args.platform_dir
-    products_dir = args.products_dir
-
-    build(platform_dir, products_dir, True)
+    build(args.strideroot, args.products_dir, True)
 

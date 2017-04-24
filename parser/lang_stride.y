@@ -84,7 +84,7 @@ NullStream nstream;
     double  fval;
     char    *sval;
     AST     *ast;
-    PlatformNode *platformNode;
+    PlatformNode *systemNode;
     HwPlatform *hwPlatform;
     DeclarationNode *declarationNode;
     StreamNode *streamNode;
@@ -102,10 +102,8 @@ NullStream nstream;
 }
 
 /* declare types for nodes */
-%type <platformNode> platformDef
-%type <platformNode> languagePlatform
-%type <ast> auxPlatformDef
-%type <hwPlatform> targetPlatform
+%type <systemNode> systemDef
+%type <systemNode> languagePlatform
 %type <importNode> importDef
 %type <forNode> forDef
 %type <ast> forPlatformDef
@@ -174,9 +172,9 @@ entry:
     ;
 
 start:
-        platformDef {
+        systemDef {
             tree_head->addChild($1);
-            COUT << "Platform Definition Resolved!" << ENDL;
+            COUT << "System Definition Resolved!" << ENDL;
         }
     |   importDef   {
             tree_head->addChild($1);
@@ -204,26 +202,10 @@ start:
 //  PLATFORM DEFINITION
 // =================================
 
-platformDef:
-        languagePlatform targetPlatform                     {
-            PlatformNode *platformNode = $1;
-            HwPlatform *hwPlatform = $2;
-            platformNode->setHwPlatform(hwPlatform->name);
-            platformNode->setHwVersion(hwPlatform->version);
-            delete $2;
-            $$ = platformNode;
-        }
-    |   languagePlatform targetPlatform WITH auxPlatformDef {
-            PlatformNode *platformNode = $1;
-            HwPlatform *hwPlatform = $2;
-            AST *aux = $4;
-            platformNode->setHwPlatform(hwPlatform->name);
-            platformNode->setHwVersion(hwPlatform->version);
-            vector<AST *> children = aux->getChildren();
-            platformNode->setChildren(children);
-            delete $2;
-            delete $4;
-            $$ = platformNode;
+systemDef:
+        languagePlatform {
+            PlatformNode *systemNode = $1;
+            $$ = systemNode;
         }
     ;
 
@@ -246,49 +228,6 @@ languagePlatform:
         }
     ;
 
-targetPlatform:
-        ON UVAR                 {
-             HwPlatform *hwPlatform = new HwPlatform;
-             hwPlatform->name = $2;
-             hwPlatform->version = -1;
-             $$ = hwPlatform;
-             COUT << "Target platform: " << $2 << ENDL << "Target Version: Current!" << ENDL;
-             free($2);
-        }
-    |   ON UVAR VERSION REAL   {
-            HwPlatform *hwPlatform = new HwPlatform;
-            hwPlatform->name = $2;
-            hwPlatform->version = $4;
-            $$ = hwPlatform;
-            COUT << "Target platform: " << $2 << ENDL << "Target Version: " << $4 << ENDL;
-            free($2);
-         }
-    ;
-
-auxPlatformDef:
-        UVAR                    {
-            string word;
-            word.append($1); /* string constructor leaks otherwise! */
-            AST *temp = new AST();
-            temp->addChild(new BlockNode(word, currentFile, yyloc.first_line));
-            $$ = temp;
-            COUT << "With additional platform: " << $1 << ENDL;
-            free($1);
-        }
-    |   auxPlatformDef AND UVAR {
-            AST *temp = new AST();
-            AST *aux = $1;
-            aux->giveChildren(temp);
-            string word;
-            word.append($3); /* string constructor leaks otherwise! */
-            temp->addChild(new BlockNode(word, currentFile, yyloc.first_line));
-            $$ = temp;
-            aux->deleteChildren();
-            delete aux;
-            COUT << "With additional platform: " << $3 << ENDL;
-            free($3);
-        }
-    ;
 
 // =================================
 //  IMPORT DEFINITION

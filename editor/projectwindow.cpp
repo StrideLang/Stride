@@ -158,7 +158,7 @@ bool ProjectWindow::build()
         }
 
 
-        StrideSystem *platform = validator.getPlatform();
+        StrideSystem *system = validator.getSystem();
 
         QString projectDir = makeProjectForCurrent();
         if (projectDir.isEmpty()) {
@@ -173,7 +173,7 @@ bool ProjectWindow::build()
             delete m_builder;
         }
 
-        m_builder = platform->createBuilder(projectDir);
+        m_builder = system->createBuilder(projectDir);
 
         if (m_builder) {
             connect(m_builder, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));

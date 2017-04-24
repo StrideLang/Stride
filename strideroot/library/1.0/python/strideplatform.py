@@ -1856,6 +1856,14 @@ class PlatformFunctions:
 
         return domain
 
+    def make_platform_directory(self, strideroot):
+        platform_dir = None
+        for node in self.tree:
+            if "system" in node:
+                return node['system']['platforms'][0]['path']
+
+
+        return platform_dir
 
     def generate_code(self, tree, current_scope = [],
                       global_groups = {'include':[], 'includeDir':[], 'initializations' : [], 'linkTo' : [], 'linkDir' : []},
@@ -2001,25 +2009,23 @@ class PlatformFunctions:
                 "other_scope_declarations" : other_scope_declarations}
 
 # ----------------------------------------------------------
-import json
 from subprocess import check_output as ck_out
 import platform
 
 class GeneratorBase(object):
     def __init__(self, out_dir = '',
-                 platform_dir = '',
+                 strideroot = '',
+                 tree = None,
                  debug = False):
 
         self.out_dir = out_dir
-        self.platform_dir = platform_dir
-
-        self.project_dir = platform_dir + '/project'
-        self.out_file = self.out_dir + '/main.cpp'
-
-        jsonfile = open(self.out_dir + '/tree.json')
-        self.tree = json.load(jsonfile)
+        self.strideroot = strideroot
+        self.tree = tree
 
         self.platform = PlatformFunctions(self.tree, debug)
+
+        self.project_dir = strideroot + '/project'
+        self.out_file = self.out_dir + '/main.cpp'
 
         self.last_num_outs = 0
 

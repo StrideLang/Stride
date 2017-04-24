@@ -1,12 +1,8 @@
-use RtAudio version 1.0 on PC
+use DesktopAudio version 1.0
 
 import Generators
 
-signal CarrierFreq	{ default: 220 }
-signal CMRatio 		{ default: 5 }
-signal Index 			{ default: 5.0 }
-
-signal CarrierFreq	{ default: 220 domain: AudioDomain }
+signal CarrierFreq	{ default: 220 rate: AudioRate  domain: AudioDomain }
 signal CMRatio 		{ default: 5 domain: AudioDomain }
 signal Index 			{ default: 5.0 domain: AudioDomain }
 
@@ -15,6 +11,10 @@ constant Factor 		{ value: 0.9999 }
 signal Env 				{ default: 1.0 domain: AudioDomain }
 signal One				{ default: 0.3 domain: AudioDomain }
 signal Trig				{ default: 1.0 domain: AudioDomain }
+
+#adding for now as auto dectection failing...
+signal Modulator		{ default: 0.0 rate: AudioRate domain: AudioDomain }
+signal CarrierFreqModulator { default: 0.0 rate: AudioRate domain: AudioDomain }
 
 reaction TriggerEnv {
 	streams:       [
@@ -42,21 +42,10 @@ Oscillator (
 )
 >> Modulator;
 
-#Oscillator (
-#	frequency:      0.1
-#)
-#+ 1
-#>> CMRatio;
 
 CarrierFreq * CMRatio
 >> ModFreq;
 
-#Oscillator(
-#	frequency: 	0.9
-#	amplitude: 	0.25
-#)
-#+ 1.5
-#>> Index;
 
 Oscillator (
 	frequency:      0.2

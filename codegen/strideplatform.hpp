@@ -35,29 +35,37 @@
 #ifndef STREAMPLATFORM_H
 #define STREAMPLATFORM_H
 
-#include <QList>
-#include <QString>
-#include <QStringList>
-#include <QLibrary>
-#include <QMap>
+#include <string>
+#include <map>
 
+#include <QList>
 
 #include "ast.h"
-#include "propertynode.h"
-#include "declarationnode.h"
-#include "strideparser.h"
-#include "stridelibrary.hpp"
 
-#include "builder.h"
+class StridePlatform;
 
-class StrideSystem
-{
+class StrideConnection {
 public:
-    StrideSystem() {}
-    StrideSystem(QStringList platformPaths, QString platform,
-                   int majorVersion, int minorVersion,
-                   QMap<QString, QString> importList);
-    ~StrideSystem();
+
+private:
+    StridePlatform *m_source;
+    StridePlatform *m_destination;
+    AST *m_sourceImports;
+    AST *m_sourceStreams;
+    AST *m_destinationImports;
+    AST *m_destinationStreams;
+};
+
+class StridePlatform {
+public:
+    StridePlatform(string framework, string fwVersion,
+                   string hardware = "", string hardwareVersion = "") :
+        m_framework(framework), m_frameworkVersion(fwVersion),
+        m_hardware(hardware), m_hardwareVersion(hardwareVersion)
+    {
+    }
+
+    ~StridePlatform();
 
     typedef enum {
         PythonTools,
@@ -65,45 +73,28 @@ public:
         NullPlatform
     } PlatformAPI;
 
-    QStringList getErrors();
-    QStringList getWarnings();
-    QStringList getPlatformTypeNames();
-    QStringList getFunctionNames();
-    PlatformAPI getAPI() {return m_api;}
-    Builder *createBuilder(QString projectDir);
+    string getFramework() const;
+    string getFrameworkVersion() const;
+    string getHardware() const;
+    string getHardwareVersion() const;
+    bool getRequired() const;
+    PlatformAPI getAPI() const;
+    string buildPlatformPath(string strideRoot);
+    string buildLibPath(string strideRoot);
 
-    QString getPlatformDomain();  // The platform's default domain
-
-//    DeclarationNode *getFunction(QString functionName);
-    QList<AST *> getBuiltinObjectsCopy();
-    QList<AST *> getBuiltinObjectsReference();
-
-//    bool typeHasPort(QString typeName, QString propertyName);
-
-    QString getPlatformPath(); // Path for the specific platform
+    void addTree(string treeName, AST *treeRoot);
+    QList<AST *> getPlatformObjects();
 
 private:
-    QVector<AST *> getPortsForTypeBlock(DeclarationNode *block);
-//    ListNode *getPortsForFunction(QString typeName);
-
-    QString readFile(QString fileName);
-
-    QString m_strideRoot;
-    QString m_platformPath;
-    QString m_platformName;
-    int m_majorVersion;
-    int m_minorVersion;
-    QString m_pluginName;
-    PlatformAPI m_api;
-
-    QStringList m_errors;
-    QStringList m_warnings;
-
-    QStringList m_types;
-
-    QMap<QString, AST *> m_platform;
-    QMap<QString, QString> m_importList;
-    StrideLibrary m_library;
+    string m_framework;
+    string m_frameworkVersion;
+    string m_hardware;
+    string m_hardwareVersion;
+    bool m_required;
+    PlatformAPI m_api {PythonTools}; //TODO Put back support for plugin platforms
+    map<string, AST *> m_platformTrees;
 };
+
+
 
 #endif // STREAMPLATFORM_H

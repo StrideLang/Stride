@@ -61,7 +61,7 @@ StrideLibrary::~StrideLibrary()
     }
 }
 
-void StrideLibrary::setLibraryPath(QString libraryPath, QMap<QString, QString> importList)
+void StrideLibrary::setLibraryPath(QString strideRootPath, QMap<QString, QString> importList)
 {
     foreach(AST *node, m_libraryTrees) {
         node->deleteChildren();
@@ -69,7 +69,7 @@ void StrideLibrary::setLibraryPath(QString libraryPath, QMap<QString, QString> i
     }
     m_libraryTrees.clear();
 
-    readLibrary(libraryPath, importList);
+    readLibrary(strideRootPath, importList);
 }
 
 DeclarationNode *StrideLibrary::findTypeInLibrary(QString typeName)

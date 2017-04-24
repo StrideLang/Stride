@@ -38,7 +38,7 @@
 #include <QCoreApplication>
 
 #include "pythonproject.h"
-#include "strideplatform.hpp"
+#include "stridesystem.hpp"
 #include "codevalidator.h"
 
 
@@ -84,7 +84,7 @@ bool PythonProject::build(AST *tree)
      }
     m_buildProcess.setWorkingDirectory(m_strideRoot);
     // FIXME un hard-code library version
-    arguments << "library/1.0/python/build.py" << m_projectDir << m_platformPath + "/../";
+    arguments << "library/1.0/python/build.py" << m_projectDir << m_strideRoot;
     m_buildProcess.start(m_pythonExecutable, arguments);
 
     m_buildProcess.waitForStarted(15000);
@@ -125,7 +125,7 @@ bool PythonProject::run(bool pressed)
     }
     m_runningProcess.setWorkingDirectory(m_platformPath + "/../../../");
     // TODO un hard-code library version
-    arguments << "library/1.0/python/run.py" << m_projectDir;
+    arguments << "library/1.0/python/run.py" << m_projectDir << "RtAudio/app";
     m_runningProcess.start(m_pythonExecutable, arguments);
     m_runningProcess.waitForStarted(15000);
     m_running.store(1);
@@ -159,6 +159,7 @@ void PythonProject::writeAST(AST *tree)
     foreach(AST *node, tree->getChildren()) {
         QJsonObject nodeObject;
         if (node->getNodeType() == AST::Platform) {
+            astToJson(node, nodeObject);
         } else if (node->getNodeType() == AST::Stream) {
             astToJson(node, nodeObject);
         } else if (node->getNodeType() == AST::Declaration) {
@@ -348,6 +349,11 @@ void PythonProject::astToJson(AST *node, QJsonObject &obj)
         newObj["name"] = QString::fromStdString(static_cast<PlatformNode *>(node)->platformName());
         newObj["majorVersion"] = static_cast<PlatformNode *>(node)->majorVersion();
         newObj["minorVersion"] = static_cast<PlatformNode *>(node)->minorVersion();
+        QJsonObject platformInfo;
+        platformInfo["path"] = m_platformPath;
+        QJsonArray platformList;
+        platformList.append(platformInfo);
+        newObj["platforms"] = platformList;
         obj["system"] = newObj;
     } else {
         obj["type"] = QString("Unsupported");

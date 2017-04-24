@@ -1,4 +1,6 @@
-use STM32F7 version 1.0 on Discovery
+#use STM32F7 version 1.0 on Discovery
+
+use DesktopAudio version 1.0
 
 import Generators
 

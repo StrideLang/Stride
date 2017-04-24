@@ -56,8 +56,8 @@ int main(int argc, char *argv[])
     parser.addPositionalArgument("source", QCoreApplication::translate("main", "Source file to build."));
 //    parser.addPositionalArgument("destination", QCoreApplication::translate("main", "Destination directory."));
 
-    QCommandLineOption targetDirectoryOption(QStringList() << "p" << "platform-root",
-                                             QCoreApplication::translate("main", "Path to Stride Platforms directory"),
+    QCommandLineOption targetDirectoryOption(QStringList() << "s" << "stride-root",
+                                             QCoreApplication::translate("main", "Path to strideroot directory"),
                                              QCoreApplication::translate("main", "directory"));
     parser.addOption(targetDirectoryOption);
     parser.process(app);
@@ -65,6 +65,10 @@ int main(int argc, char *argv[])
     const QStringList args = parser.positionalArguments();
     QString platformRootPath = parser.value(targetDirectoryOption);
     QString fileName = args.at(0);
+
+    if (platformRootPath.isEmpty()) {
+        platformRootPath = "/home/andres/Documents/src/Stride/StreamStack/strideroot"; // For my convenience :)
+    }
 
 //    qDebug() << args.at(0);
 //    qDebug() << platformRootPath;
@@ -74,7 +78,15 @@ int main(int argc, char *argv[])
 
     if (tree) {
         CodeValidator validator(platformRootPath, tree);
-        StrideSystem *platform = validator.getPlatform();
+
+        if (!validator.isValid()) {
+            QList<LangError> errors = validator.getErrors();
+            for (LangError error: errors) {
+                qDebug() << QString::fromStdString(error.getErrorText());
+            }
+            return -1;
+        }
+        StrideSystem *platform = validator.getSystem();
 
         QFileInfo info(fileName);
         QString dirName = info.absolutePath() + QDir::separator()
@@ -87,13 +99,19 @@ int main(int argc, char *argv[])
         }
         Builder * builder = platform->createBuilder(dirName);
 
-        builder->build(tree);
-        qDebug() << "Built in directory:" << dirName;
+        if (builder->build(tree)) {
+            qDebug() << "Built in directory:" << dirName;
+        } else {
+            qDebug() << "Build failed.";
+        }
 
         tree->deleteChildren();
         delete tree;
     } else {
-        qDebug() << "Syntax error";
+        vector<LangError> errors = AST::getParseErrors();
+        for (LangError err: errors) {
+           qDebug() << QString::fromStdString(err.getErrorText());
+        }
     }
     return 0;
 }

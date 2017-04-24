@@ -32,42 +32,69 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-#ifndef STRIDELIBRARY_HPP
-#define STRIDELIBRARY_HPP
+#ifndef STRIDESYSTEM_HPP
+#define STRIDESYSTEM_HPP
 
-#include <vector>
-
-#include <QString>
 #include <QList>
+#include <QString>
+#include <QStringList>
+#include <QLibrary>
 #include <QMap>
 
-#include "declarationnode.h"
-#include "langerror.h"
+#include "strideparser.h"
+#include "stridelibrary.hpp"
+#include "strideplatform.hpp"
 
-class StrideLibrary
+#include "builder.h"
+
+class StrideSystem
 {
 public:
-    StrideLibrary();
-    StrideLibrary(QString libraryPath, QMap<QString,QString> importList = QMap<QString,QString>());
-   ~StrideLibrary();
+    StrideSystem() {}
+    StrideSystem(QString strideRoot, QString systemName,
+                 int majorVersion, int minorVersion,
+                 QMap<QString, QString> importList);
+    ~StrideSystem();
 
-    void setLibraryPath(QString strideRootPath, QMap<QString,QString> importList = QMap<QString,QString>());
+    QStringList getErrors();
+    QStringList getWarnings();
+    QStringList getPlatformTypeNames();
+    QStringList getFunctionNames();
+    Builder *createBuilder(QString projectDir);
 
-    DeclarationNode *findTypeInLibrary(QString typeName);
+    QString getPlatformDomain();  // The platform's default domain
 
-    bool isValidBlock(DeclarationNode *block);
+//    DeclarationNode *getFunction(QString functionName);
+    QList<AST *> getBuiltinObjectsCopy();
+    QList<AST *> getBuiltinObjectsReference();
 
-    std::vector<AST *> getLibraryMembers();
+//    bool typeHasPort(QString typeName, QString propertyName);
+
+    QString getPlatformPath(); // Path for the specific platform
 
 private:
+    QVector<AST *> getPortsForTypeBlock(DeclarationNode *block);
+//    ListNode *getPortsForFunction(QString typeName);
 
-    bool isValidProperty(PropertyNode *property, DeclarationNode *type);
-    QList<DeclarationNode *> getParentTypes(DeclarationNode *type);
+    QString readFile(QString fileName);
 
-    void readLibrary(QString rootDir, QMap<QString, QString> importList);
-    QList<AST *> m_libraryTrees;
+    void parseSystemTree(AST *systemTree);
+
+    QString m_strideRoot;
+    QString m_systemName;
     int m_majorVersion;
     int m_minorVersion;
+    QString m_pluginName;
+
+    QStringList m_errors;
+    QStringList m_warnings;
+
+    QStringList m_types;
+
+    vector<StridePlatform *> m_platforms; // First platform is default
+
+    QMap<QString, QString> m_importList;
+    StrideLibrary m_library;
 };
 
-#endif // STRIDELIBRARY_HPP
+#endif // STRIDESYSTEM_HPP

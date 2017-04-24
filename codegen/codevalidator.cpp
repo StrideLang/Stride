@@ -65,12 +65,10 @@ void CodeValidator::validateTree(QString platformRootDir, AST *tree)
         }
 
         QVector<PlatformNode *> platforms = getPlatformNodes();
-        QStringList platformRoots;
-        platformRoots << platformRootDir;
 
         if (platforms.size () > 0) {
             PlatformNode *platformNode = platforms.at(0);
-            m_system = new StrideSystem(platformRoots,
+            m_system = new StrideSystem(platformRootDir,
                                         QString::fromStdString(platformNode->platformName()),
                                         platformNode->majorVersion(), platformNode->minorVersion(),
                                         importList);
@@ -84,7 +82,7 @@ void CodeValidator::validateTree(QString platformRootDir, AST *tree)
                 m_errors.append(error);
             }
         } else { // Make a default platform that only inlcudes the common library
-            m_system = new StrideSystem(platformRoots, "", -1, -1, importList);
+            m_system = new StrideSystem(platformRootDir, "", -1, -1, importList);
         }
         validate();
     }
@@ -178,7 +176,7 @@ QStringList CodeValidator::getPlatformErrors()
     return m_system->getErrors();
 }
 
-StrideSystem *CodeValidator::getPlatform()
+StrideSystem *CodeValidator::getSystem()
 {
     return m_system;
 }

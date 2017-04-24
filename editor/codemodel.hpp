@@ -39,7 +39,7 @@
 #include <QMutex>
 
 #include "ast.h"
-#include "strideplatform.hpp"
+#include "stridesystem.hpp"
 
 class CodeModel : public QObject
 {

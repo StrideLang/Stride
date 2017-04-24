@@ -39,8 +39,7 @@
 #include <QVector>
 #include <QSharedPointer>
 
-#include "strideplatform.hpp"
-#include "stridelibrary.hpp"
+#include "stridesystem.hpp"
 
 #include "ast.h"
 #include "streamnode.h"

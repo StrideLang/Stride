@@ -1,13 +1,13 @@
 
-platform PC {
+platform _PCPlatform {
 	framework: "RtAudio"
 	frameworkVersion: "1.0"
 	hardware: "Local"
 	hardwareVersion: "1.0"
-	required: on
+	required: on #TODO validation of "required" is not yet implemented
 }
 
-platform Wiring {
+platform _WiringPlatform {
 	framework: "Wiring"
 	frameworkVersion: "1.0"
 	hardware: none
@@ -16,33 +16,33 @@ platform Wiring {
 }
 	
 
-connection PCToWiringSerial {
+connection _PCToWiringSerial {
 	source: PC
 	destination: Wiring
 	sourceImports: ["Serial"]
 	sourceStreams: [
-		Token >> Serial();
+		_Connection_Token >> Serial();
 	]
 	destinationImports: ["Serial"]
 	destinationStreams: [
-		Token >> Serial();
+		_Connection_Token >> Serial();
 	]
 }
 
-connection WiringToPCSerial {
+connection _WiringToPCSerial {
 	source: Wiring
 	destination: PC
 	sourceImports: ["Serial"]
 	sourceStreams: [
-		Token >> Serial();
+		_Connection_Token >> Serial();
 	]
 	destinationImports: ["Serial"]
 	destinationStreams: [
-		Token >> Serial();
+		_Connection_Token >> Serial();
 	]
 }
 
 system DesktopAudio {
-    platforms: [PC, Wiring]
-    connections: [PCToWiringSerial, WiringToPCSerial]
+    platforms: [_PCPlatform, _WiringPlatform]
+    connections: [_PCToWiringSerial, _WiringToPCSerial]
 }

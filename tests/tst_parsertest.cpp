@@ -59,11 +59,11 @@ private:
 
 private Q_SLOTS:
 
+    void testConnectionCount();
 
     //
     void testPlatformVality();
     void testBlockMembers();
-    void testConnectionCount();
     void testModuleDomains();
     void testPortTypeValidation();
 
@@ -169,7 +169,7 @@ void ParserTest::testCompilation()
     QScopedPointer<QProcess> compilerProcess(new QProcess(this));
     for (auto testFile:  testFiles) {
         QStringList arguments;
-        arguments << "-p" + QFINDTESTDATA(STRIDEROOT)
+        arguments << "-s" + QFINDTESTDATA(STRIDEROOT)
                   << testFile;
 
         int ret = compilerProcess->execute(compilerBin, arguments);

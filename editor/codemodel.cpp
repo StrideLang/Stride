@@ -451,7 +451,7 @@ void CodeModel::updateCodeAnalysis(QString code, QString platformRootPath)
         if (tree) {
             CodeValidator validator(platformRootPath, tree);
 //            validator.validate();
-            StrideSystem *platform = validator.getPlatform();
+            StrideSystem *platform = validator.getSystem();
             QList<AST *> objects;
             if (platform) {
                 m_types = platform->getPlatformTypeNames();

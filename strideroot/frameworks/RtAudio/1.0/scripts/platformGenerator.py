@@ -44,10 +44,14 @@ from platformTemplates import templates # Perhaps we should acces this through P
 class Generator(GeneratorBase):
     def __init__(self, out_dir = '',
                  platform_dir = '',
+                 tree = None,
                  debug = False):
 
-        super(Generator, self).__init__(out_dir, platform_dir, debug)
+        super(Generator, self).__init__(out_dir, platform_dir, tree, debug)
 
+        self.out_dir += "/RtAudio"
+        if not os.path.isdir(self.out_dir):
+            os.mkdir(self.out_dir)
         self.log("Building RtAudio project")
         self.log("Buiding in directory: " + self.out_dir)
 
@@ -63,13 +67,13 @@ class Generator(GeneratorBase):
         #declare_code = var_declaration + declare_code
 
 
-        filename = self.out_dir + "/main.cpp"
-        shutil.copyfile(self.project_dir + "/template.cpp", filename)
+        self.out_file = self.out_dir + "/main.cpp"
+        shutil.copyfile(self.project_dir + "/template.cpp", self.out_file)
         if os.path.isdir(self.out_dir + "/rtaudio"):
             shutil.rmtree(self.out_dir + "/rtaudio")
         shutil.copytree(self.project_dir + "/rtaudio-4.1.2", self.out_dir + "/rtaudio")
 
-        self.write_code(code,filename)
+        self.write_code(code,self.out_file)
 
         self.make_code_pretty()
 

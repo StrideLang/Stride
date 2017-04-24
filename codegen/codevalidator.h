@@ -39,8 +39,7 @@
 
 #include "strideparser.h"
 #include "porttypes.h"
-#include "strideplatform.hpp"
-#include "stridelibrary.hpp"
+#include "stridesystem.hpp"
 
 class CodeValidator
 {
@@ -56,7 +55,7 @@ public:
     QList<LangError> getErrors();
     QStringList getPlatformErrors();
 
-    StrideSystem *getPlatform();
+    StrideSystem *getSystem();
 
     static DeclarationNode *findDeclaration(QString streamMemberName, QVector<AST *> scopeStack, AST *tree);
     static QString streamMemberName(AST * node, QVector<AST *> scopeStack, AST *tree);
