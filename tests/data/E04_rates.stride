@@ -1,5 +1,5 @@
 
-use RtAudio version 1.0 on PC
+use DesktopAudio version 1.0
 
 AudioIn[1] >> Signal >> AudioOut[1];
 

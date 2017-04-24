@@ -1,13 +1,8 @@
-use RtAudio version 1.0 on PC
+use DesktopAudio version 1.0
 
-use FakePlatform version 1.0 on PC
+use DesktopAudio
 
-use RtAudio version 1.0 on FakeHardware
+use FakeSystem version 1.0
 
-#invalid hardware version
-use RtAudio version 1.0 on PC version 10000000.0
-
-#invalid platform version
-use RtAudio version 1000000.0 on PC version 10000000.0
 
 

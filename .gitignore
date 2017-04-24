@@ -9,6 +9,9 @@ editor/templates/simple/lua_scripts/liblpeg.a
 editor/templates/simple/lua_scripts/lpeg.dll
 editor/templates/simple/.metadata
 
+examples/*_Products*
+strideroot/frameworks/*/*/*_Products*
+
 platforms/Wiring/1.0/arduino-1*
 platforms/STM32F7/1.0/STM32Cube_FW_F7*
 platforms/Gamma/1.0/include

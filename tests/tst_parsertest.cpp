@@ -92,7 +92,6 @@ private Q_SLOTS:
     void testBasicBundle();
     void testBasicBlocks();
     void testHeader();
-    void testParser();
 
     //PlatformConsistency
     void testLists();
@@ -153,16 +152,15 @@ void ParserTest::testPlatformVality()
 
 void ParserTest::testCompilation()
 {
-    QStringList testDirs;
     QStringList testFiles;
-    QDirIterator directories(QFINDTESTDATA("/../platforms/library/1.0/_tests/"), QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
+    QDirIterator directories(QFINDTESTDATA(STRIDEROOT "/library/1.0/_tests/"), QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot);
     while(directories.hasNext()){
+        directories.next();
         QDir subDir(directories.filePath());
         for (auto entry: subDir.entryList(QStringList() << "*.stride", QDir::Files | QDir::NoDotAndDotDot | QDir::NoSymLinks)) {
             testFiles << subDir.absolutePath() + QDir::separator()
                          + entry;
         }
-        directories.next();
     }
 //    qDebug() << testFiles;
     QString compilerBin = QDir::currentPath() + QDir::separator() + "../compiler/compiler";
@@ -2989,14 +2987,11 @@ void ParserTest::testHeader()
 
     QVERIFY(tree != NULL);
     vector<AST *> nodes = tree->getChildren();
-    QVERIFY(nodes.size() == 14);
     PlatformNode *node = static_cast<PlatformNode *>(nodes.at(0));
     QVERIFY(node->getNodeType() == AST::Platform);
     QVERIFY(node->platformName() == "PufferFish");
     QVERIFY(node->majorVersion() == 1);
     QVERIFY(node->minorVersion() == 1);
-    QVERIFY(node->hwPlatform() == "PufferFish");
-    QVERIFY(node->hwVersion() == -1.0);
     QVERIFY(node->getChildren().size() == 0);
     QVERIFY(node->getLine() == 1);
 
@@ -3005,139 +3000,30 @@ void ParserTest::testHeader()
     QVERIFY(node->platformName() == "Gamma");
     QVERIFY(node->majorVersion() == -1);
     QVERIFY(node->minorVersion() == -1);
-    QVERIFY(node->hwPlatform() == "PC");
-    QVERIFY(node->hwVersion() == -1.0);
     QVERIFY(node->getChildren().size() == 0);
     QVERIFY(node->getLine() == 3);
 
-    node = static_cast<PlatformNode *>(nodes.at(2));
-    QVERIFY(node->getNodeType() == AST::Platform);
-    QVERIFY(node->platformName() == "Gamma");
-    QVERIFY(node->majorVersion() == 1);
-    QVERIFY(node->minorVersion() == 0);
-    QVERIFY(node->hwPlatform() == "PC");
-    QVERIFY(node->hwVersion() == -1.0);
-    QVERIFY(node->getChildren().size() == 0);
-    QVERIFY(node->getLine() == 4);
-
-    node = static_cast<PlatformNode *>(nodes.at(3));
-    QVERIFY(node->getNodeType() == AST::Platform);
-    QVERIFY(node->platformName() == "Gamma");
-    QVERIFY(node->majorVersion() == 1);
-    QVERIFY(node->minorVersion() == 0);
-    QVERIFY(node->hwPlatform() == "PC");
-    QVERIFY(node->hwVersion() == 1.0);
-    QVERIFY(node->getChildren().size() == 0);
-    QVERIFY(node->getLine() == 5);
-
-    node = static_cast<PlatformNode *>(nodes.at(4));
-    QVERIFY(node->getNodeType() == AST::Platform);
-    QVERIFY(node->platformName() == "Gamma");
-    QVERIFY(node->majorVersion() == -1);
-    QVERIFY(node->minorVersion() == -1);
-    QVERIFY(node->hwPlatform() == "PC");
-    QVERIFY(node->hwVersion() == -1.0);
-    QVERIFY(node->getChildren().size() == 1);
-    BlockNode *nameNode = static_cast<BlockNode *>(node->getChildren().at(0));
-    QVERIFY(nameNode->getNodeType() == AST::Block);
-    QVERIFY(nameNode->getName() == "Arduino");
-    QVERIFY(node->getLine() == 7);
-
-    node = static_cast<PlatformNode *>(nodes.at(5));
-    QVERIFY(node->getNodeType() == AST::Platform);
-    QVERIFY(node->platformName() == "Gamma");
-    QVERIFY(node->majorVersion() == 1);
-    QVERIFY(node->minorVersion() == 0);
-    QVERIFY(node->hwPlatform() == "PC");
-    QVERIFY(node->hwVersion() == -1.0);
-    QVERIFY(node->getChildren().size() == 1);
-    nameNode = static_cast<BlockNode *>(node->getChildren().at(0));
-    QVERIFY(nameNode->getNodeType() == AST::Block);
-    QVERIFY(nameNode->getName() == "Arduino");
-    QVERIFY(node->getLine() == 8);
-
-    node = static_cast<PlatformNode *>(nodes.at(6));
-    QVERIFY(node->getNodeType() == AST::Platform);
-    QVERIFY(node->platformName() == "Gamma");
-    QVERIFY(node->majorVersion() == 1);
-    QVERIFY(node->minorVersion() == 0);
-    QVERIFY(node->hwPlatform() == "PC");
-    QVERIFY(node->hwVersion() == 1.0);
-    QVERIFY(node->getChildren().size() == 1);
-    nameNode = static_cast<BlockNode *>(node->getChildren().at(0));
-    QVERIFY(nameNode->getNodeType() == AST::Block);
-    QVERIFY(nameNode->getName() == "Arduino");
-    QVERIFY(node->getLine() == 9);
-
-    node = static_cast<PlatformNode *>(nodes.at(7));
-    QVERIFY(node->getNodeType() == AST::Platform);
-    QVERIFY(node->platformName() == "Gamma");
-    QVERIFY(node->majorVersion() == -1);
-    QVERIFY(node->minorVersion() == -1);
-    QVERIFY(node->hwPlatform() == "PC");
-    QVERIFY(node->hwVersion() == -1.0);
-    QVERIFY(node->getChildren().size() == 2);
-    nameNode = static_cast<BlockNode *>(node->getChildren().at(0));
-    QVERIFY(nameNode->getNodeType() == AST::Block);
-    QVERIFY(nameNode->getName() == "Arduino");
-    nameNode = static_cast<BlockNode *>(node->getChildren().at(1));
-    QVERIFY(nameNode->getNodeType() == AST::Block);
-    QVERIFY(nameNode->getName() == "RPi");
-    QVERIFY(node->getLine() == 11);
-
-    node = static_cast<PlatformNode *>(nodes.at(8));
-    QVERIFY(node->getNodeType() == AST::Platform);
-    QVERIFY(node->platformName() == "Gamma");
-    QVERIFY(node->majorVersion() == 1);
-    QVERIFY(node->minorVersion() == 0);
-    QVERIFY(node->hwPlatform() == "PC");
-    QVERIFY(node->hwVersion() == -1.0);
-    QVERIFY(node->getChildren().size() == 2);
-    nameNode = static_cast<BlockNode *>(node->getChildren().at(0));
-    QVERIFY(nameNode->getNodeType() == AST::Block);
-    QVERIFY(nameNode->getName() == "Arduino");
-    nameNode = static_cast<BlockNode *>(node->getChildren().at(1));
-    QVERIFY(nameNode->getNodeType() == AST::Block);
-    QVERIFY(nameNode->getName() == "RPi");
-    QVERIFY(node->getLine() == 12);
-
-    node = static_cast<PlatformNode *>(nodes.at(9));
-    QVERIFY(node->getNodeType() == AST::Platform);
-    QVERIFY(node->platformName() == "Gamma");
-    QVERIFY(node->majorVersion() == 1);
-    QVERIFY(node->minorVersion() == 0);
-    QVERIFY(node->hwPlatform() == "PC");
-    QVERIFY(node->hwVersion() == 1.0);
-    QVERIFY(node->getChildren().size() == 2);
-    nameNode = static_cast<BlockNode *>(node->getChildren().at(0));
-    QVERIFY(nameNode->getNodeType() == AST::Block);
-    QVERIFY(nameNode->getName() == "Arduino");
-    nameNode = static_cast<BlockNode *>(node->getChildren().at(1));
-    QVERIFY(nameNode->getNodeType() == AST::Block);
-    QVERIFY(nameNode->getName() == "RPi");
-    QVERIFY(node->getLine() == 13);
-
-    ImportNode *importnode = static_cast<ImportNode *>(nodes.at(10));
+    ImportNode *importnode = static_cast<ImportNode *>(nodes.at(2));
     QVERIFY(importnode->getNodeType() == AST::Import);
     QVERIFY(importnode->importName() == "File");
     QVERIFY(importnode->importAlias() == "");
-    QVERIFY(importnode->getLine() == 15);
+    QVERIFY(importnode->getLine() == 5);
 
-    importnode = static_cast<ImportNode *>(nodes.at(11));
+    importnode = static_cast<ImportNode *>(nodes.at(3));
     QVERIFY(importnode->getNodeType() == AST::Import);
     QVERIFY(importnode->importName() == "File");
     QVERIFY(importnode->importAlias() == "F");
-    QVERIFY(importnode->getLine() == 16);
+    QVERIFY(importnode->getLine() == 6);
 
-    ForNode *fornode = static_cast<ForNode *>(nodes.at(12));
+    ForNode *fornode = static_cast<ForNode *>(nodes.at(4));
     QVERIFY(fornode->getNodeType() == AST::For);
     vector<AST *> fornames = fornode->getChildren();
     QVERIFY(fornames.size() == 1);
-    nameNode = static_cast<BlockNode *>(fornames.at(0));
+    BlockNode *nameNode = static_cast<BlockNode *>(fornames.at(0));
     QVERIFY(nameNode->getName() == "Gamma");
-    QVERIFY(fornode->getLine() == 18);
+    QVERIFY(fornode->getLine() == 8);
 
-    fornode = static_cast<ForNode *>(nodes.at(13));
+    fornode = static_cast<ForNode *>(nodes.at(5));
     QVERIFY(fornode->getNodeType() == AST::For);
     fornames = fornode->getChildren();
     QVERIFY(fornames.size() == 2);
@@ -3145,41 +3031,10 @@ void ParserTest::testHeader()
     QVERIFY(nameNode->getName() == "Gamma");
     nameNode = static_cast<BlockNode *>(fornames.at(1));
     QVERIFY(nameNode->getName() == "PufferFish");
-    QVERIFY(fornode->getLine() == 19);
+    QVERIFY(fornode->getLine() == 9);
 
     tree->deleteChildren();
     delete tree;
-}
-
-void ParserTest::testParser()
-{
-    // TODO: This test can probably ne removed as it is covered in the individual tests above.
-    // Could be used perhaps to test parsing errors?
-    AST *tree;
-    QStringList files;
-    files
-            //            << "data/01_header.stride" << "data/02_basic_blocks.stride" << "data/03_basic_bundle.stride"
-            //          << "data/04_basic_stream.stride" << "data/05_basic_functions.stride"
-            //          << "data/06_basic_noneswitch.stride" << "data/07_bundle_indeces.stride"
-            //          << "data/08_namespace.stride" << "data/09_lists.stride"
-
-            //          << "data/P01_platform_objects.stride" << "data/P02_check_duplicates.stride"
-            //          << "data/P03_bundle_resolution.stride"
-
-            //          << "data/E01_constant_res.stride" << "data/E02_stream_expansions.stride"
-            //          << "data/E03_multichn_streams.stride" << "data/E03_rates.stride"
-
-            << "data/list.stride"
-            << "data/introBlock.stride"
-            << "data/introConverter.stride" << "data/introFeedback.stride"
-            << "data/introGenerator.stride" << "data/introProcessor.stride"
-            << "data/introRemote.stride";
-    foreach (QString file, files) {
-        tree = AST::parseFile(QString(QFINDTESTDATA(file)).toStdString().c_str());
-        QVERIFY2(tree != NULL, QString("file:" + file).toStdString().c_str());
-        tree->deleteChildren();
-        delete tree;
-    }
 }
 
 void ParserTest::testLibraryBasicTypes()
