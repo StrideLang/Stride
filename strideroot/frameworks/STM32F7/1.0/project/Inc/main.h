@@ -1,7 +1,7 @@
 /**
   ******************************************************************************
-  * @file    stm32f7xx_it.h
-  * @brief   This file contains the headers of the interrupt handlers.
+  * File Name          : main.h
+  * Description        : This file contains the common defines of the application
   ******************************************************************************
   *
   * COPYRIGHT(c) 2017 STMicroelectronics
@@ -30,36 +30,41 @@
   *
   ******************************************************************************
   */
-
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __STM32F7xx_IT_H
-#define __STM32F7xx_IT_H
+#ifndef __MAIN_H
+#define __MAIN_H
+  /* Includes ------------------------------------------------------------------*/
 
-#ifdef __cplusplus
- extern "C" {
-#endif 
+/* USER CODE BEGIN Includes */
 
-/* Includes ------------------------------------------------------------------*/
-/* Exported types ------------------------------------------------------------*/
-/* Exported constants --------------------------------------------------------*/
-/* Exported macro ------------------------------------------------------------*/
-/* Exported functions ------------------------------------------------------- */
+/* USER CODE END Includes */
 
-void NMI_Handler(void);
-void HardFault_Handler(void);
-void MemManage_Handler(void);
-void BusFault_Handler(void);
-void UsageFault_Handler(void);
-void SVC_Handler(void);
-void DebugMon_Handler(void);
-void PendSV_Handler(void);
-void SysTick_Handler(void);
-void DMA1_Stream4_IRQHandler(void);
+/* Private define ------------------------------------------------------------*/
 
-#ifdef __cplusplus
-}
-#endif
+#define CLK_NOEB_Pin GPIO_PIN_3
+#define CLK_NOEB_GPIO_Port GPIOJ
+#define AK4558_PDN_Pin GPIO_PIN_12
+#define AK4558_PDN_GPIO_Port GPIOJ
+#define TPA4411_PDN_Pin GPIO_PIN_13
+#define TPA4411_PDN_GPIO_Port GPIOJ
+#define TPA2012_PDN_Pin GPIO_PIN_14
+#define TPA2012_PDN_GPIO_Port GPIOJ
+#define LED_RED_Pin GPIO_PIN_3
+#define LED_RED_GPIO_Port GPIOK
+#define LED_GREEN_Pin GPIO_PIN_4
+#define LED_GREEN_GPIO_Port GPIOK
 
-#endif /* __STM32F7xx_IT_H */
+/* USER CODE BEGIN Private defines */
 
+/* USER CODE END Private defines */
+
+/**
+  * @}
+  */ 
+
+/**
+  * @}
+*/ 
+
+#endif /* __MAIN_H */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

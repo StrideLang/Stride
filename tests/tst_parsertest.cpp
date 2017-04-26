@@ -42,7 +42,6 @@
 #include "coderesolver.h"
 
 #define STRIDEROOT "../strideroot"
-//#define PLATFORMDIR "../strideroot/platforms"
 
 extern AST *parse(const char* fileName);
 
@@ -57,21 +56,18 @@ private:
 
     void testMultichannelUgens(); // Need to complete support for this.
 
+
 private Q_SLOTS:
 
     void testConnectionCount();
 
+    // Code generation/Compiler
+    void testCompilation();
+
     //
-    void testPlatformVality();
     void testBlockMembers();
     void testModuleDomains();
     void testPortTypeValidation();
-
-    //Expansion
-    void testLibraryObjectInsertion();
-    void testStreamRates();
-    void testStreamExpansion();
-    void testConstantResolution();
 
     //PlatformConsistency
     void testPlatformCommonObjects();
@@ -80,6 +76,19 @@ private Q_SLOTS:
     void testValueTypeBundleResolution();
     void testImport();
     void testDomains();
+
+    //PlatformConsistency
+    void testLists();
+
+    // Library
+    void testLibraryBasicTypes();
+    void testLibraryValidation();
+
+    //Expansion
+    void testLibraryObjectInsertion();
+    void testStreamRates();
+    void testStreamExpansion();
+    void testConstantResolution();
 
     // Parser
     void testModules();
@@ -93,15 +102,7 @@ private Q_SLOTS:
     void testBasicBlocks();
     void testHeader();
 
-    //PlatformConsistency
-    void testLists();
 
-    // Library
-    void testLibraryBasicTypes();
-    void testLibraryValidation();
-
-    // Code generation/Compiler
-    void testCompilation();
 
 };
 
@@ -138,18 +139,6 @@ void ParserTest::testMultichannelUgens()
     delete tree;
 }
 
-void ParserTest::testPlatformVality()
-{
-    AST *tree;
-    tree = AST::parseFile(QString(QFINDTESTDATA("data/P10_platform_validity.stride")).toStdString().c_str());
-    QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
-    generator.validate();
-    QVERIFY(!generator.isValid());
-    tree->deleteChildren();
-    delete tree;
-}
-
 void ParserTest::testCompilation()
 {
     QStringList testFiles;
@@ -182,7 +171,7 @@ void ParserTest::testBlockMembers()
     tree = AST::parseFile(QString(QFINDTESTDATA("data/14_members.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
-    generator.validate();
+//    generator.validate();
     QVERIFY(generator.isValid());
 
 //    signal Sig {
@@ -636,7 +625,7 @@ void ParserTest::testImport()
     tree = AST::parseFile(QString(QFINDTESTDATA("data/P05_import_fail.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
     CodeValidator generator2(QFINDTESTDATA(STRIDEROOT), tree);
-    generator2.validate();
+//    generator2.validate();
     QVERIFY(!generator2.isValid());
     QList<LangError> errors = generator2.getErrors();
     LangError error = errors.front();

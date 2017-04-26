@@ -27,12 +27,10 @@ module SizeTest {
         signal Input [InputPortSize] {
             rate:       InputPortRate
             domain:     InputPortDomain
-            reset:      none
         },
         signal Output [OutputPortSize] {
             rate:       OutputPortRate
             domain:     OutputPortDomain
-            reset:      none
         }
         constant InputPortSize { value: 3}
         constant OutputPortSize {value: 2}

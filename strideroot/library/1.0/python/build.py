@@ -20,15 +20,18 @@ def build(strideroot, products_dir, debug = False):
             platform_dir = node['system']['platforms'][0]['path']
             break
 
+    # Add python path inside strideroot to module search paths
+    sys.path.append(args.strideroot + "/library/1.0/python")
     # Add platform scritps path to python module search paths
     sys.path.append(platform_dir + "/scripts")
 
     print("Using strideroot:" + strideroot)
     print("Using platform: " + platform_dir)
     # Get gerenator
+
     from platformGenerator import Generator
 
-    gen = Generator(products_dir, platform_dir, tree, debug)
+    gen = Generator(products_dir, strideroot, platform_dir, tree, debug)
     gen.generate_code()
     print("Building done...")
     gen.compile()
@@ -36,7 +39,6 @@ def build(strideroot, products_dir, debug = False):
 if __name__ == '__main__':
     import argparse
     cur_path = os.getcwd()
-    sys.path.append(cur_path + "/library/1.0/python")
     # First parse command line arguments
     parser = argparse.ArgumentParser()
 
@@ -58,7 +60,7 @@ if __name__ == '__main__':
 #                        default = cur_path + '/library/1.0/_tests/modulation.stride_Products'
 
 #                        default= cur_path + '/RtAudio/icmc/ICMC_06.stride_Products'
-                        default= cur_path + '/../examples/eoys/FM.stride_Products'
+                        default= cur_path + '/../examples/eoys/Beating.stride_Products'
 #                        default= cur_path + '/RtAudio/tests/bundles.stride_Products'
 #                        default= cur_path + '/Wiring/examples/test.stride_Products'
 #                        default='/home/andres/Documents/src/Stride/StreamStack/platforms/Arduino/examples/test.stride_Products'

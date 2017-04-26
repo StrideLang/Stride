@@ -98,12 +98,13 @@ bool PythonProject::build(AST *tree)
     if (m_buildProcess.state() == QProcess::Running) {
         m_buildProcess.kill(); // Taking too long...
     }
-    emit outputText("Done building.");
 
     if (m_buildProcess.exitStatus() == QProcess::ExitStatus::NormalExit
             && m_buildProcess.exitCode() == 0) {
+        emit outputText("Done building. Success.");
         return true;
     } else {
+        emit outputText("Done building. Failed.");
         return false;
     }
 

@@ -1,9 +1,0 @@
-# Frequency and Amplitude Modulation
-
-use RtAudio version 1.0 on PC
-
-import Generators
-
-Oscillator ( frequency: [ 3.0, 1.0 ] amplitude: [ 40.0, 0.1 ] ) >> Modulator;
-
-Oscillator ( frequency: 440.0 + Modulator[1] amplitude: Modulator[2] ) >> AudioOut;

@@ -104,7 +104,7 @@ public:
     virtual void resolveScope(AST* scope);
 
     void addScope(string newScope);
-    unsigned int getScopeLevels ();
+    size_t getScopeLevels();
     string getScopeAt(unsigned int scopeLevel);
 
 protected:

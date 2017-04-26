@@ -32,10 +32,10 @@ _domainDefinition OSCInDomain {
 	domainName: "OSCInDomain"
 	platform: _STM32F7_Platform
 	globalsTag: "Includes" 
-	declarationsTag: "OSC:Declarations"
+	declarationsTag: "Declarations"
 	processingTag: "OSC:Processing"
-	initializationTag: "OSC:Initialization"
-	cleanupTag: "OSC:Cleanup"
+	initializationTag: "Initialization"
+	cleanupTag: "Cleanup"
 }
 
 # Serial domains
@@ -43,19 +43,19 @@ _domainDefinition SerialInDomain {
 	domainName: "SerialInDomain"
 	platform: _STM32F7_Platform
 	globalsTag: "Includes" 
-	declarationsTag: "SerialIn:Declarations"
+	declarationsTag: "Declarations"
 	processingTag: "SerialIn:Processing"
-	initializationTag: "SerialIn:Initialization"
-	cleanupTag: "SerialIn:Cleanup"
+	initializationTag: "Initialization"
+	cleanupTag: "Cleanup"
 }
 
 _domainDefinition SerialOutDomain {
 	domainName: "SerialOutDomain"
 	platform: _STM32F7_Platform
 	globalsTag: "Includes" 
-	declarationsTag: "SerialOut:Declarations"
+	declarationsTag: "Declarations"
 	processingTag: "SerialOut:Processing"
-	initializationTag: "SerialOut:Initialization"
-	cleanupTag: "SerialOut:Cleanup"
+	initializationTag: "Initialization"
+	cleanupTag: "Cleanup"
 }
 

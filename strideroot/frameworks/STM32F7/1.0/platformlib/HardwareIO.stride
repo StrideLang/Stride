@@ -27,7 +27,7 @@ platformType _HwOutput {
 	inputs: ["real", "real"]
     domain: AudioDomain
 #	numOutputs: 0
-#    include: []
+    include: ["arm_math.h"]
 #    linkTo: []
     declarations: ['static q15_t Sample_q15[2];']
 #    initializations: ["// %%token%% = 0;"]
@@ -35,9 +35,11 @@ platformType _HwOutput {
 		arm_float_to_q15(&%%intoken:0%%,&Sample_q15[%%bundle_index%%],1);	
 	"
 	postProcessingOnce: "
-		hsai_BlockA2.Instance->DR = Sample_q15[0];
-		hsai_BlockA2.Instance->DR = Sample_q15[1];	
+    *I2S_TX_Buffer_p++ = Sample_q15[0];
+    *I2S_TX_Buffer_p++ = Sample_q15[1];
 
+    if (I2S_TX_Buffer_p == I2S_TX_Buffer + BUFFER_SIZE) 	// REQUIRED FOR BUFFER
+    I2S_TX_Buffer_p = (q15_t *) I2S_TX_Buffer;
 	"
     inherits: ['signal']
 }

@@ -5,7 +5,7 @@
   *                      the dma.c file
   ******************************************************************************
   *
-  * COPYRIGHT(c) 2016 STMicroelectronics
+  * COPYRIGHT(c) 2017 STMicroelectronics
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -41,8 +41,10 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f7xx_hal.h"
+#include "main.h"
 
 /* DMA memory to memory transfer handles -------------------------------------*/
+extern void Error_Handler(void);
 
 /* USER CODE BEGIN Includes */
 

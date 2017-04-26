@@ -4,7 +4,7 @@
   * Description        : Main program body
   ******************************************************************************
   *
-  * COPYRIGHT(c) 2016 STMicroelectronics
+  * COPYRIGHT(c) 2017 STMicroelectronics
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -31,19 +31,15 @@
   ******************************************************************************
   */
 /* Includes ------------------------------------------------------------------*/
+#include "main.h"
 #include "stm32f7xx_hal.h"
 #include "dma.h"
 #include "i2c.h"
-#include "sai.h"
+#include "i2s.h"
 #include "gpio.h"
 
 /* USER CODE BEGIN Includes */
-#include "codec.h"
-#include "math.h"
-#include "arm_math.h"
-
 //[[Includes]]
-
 //[[/Includes]]
 /* USER CODE END Includes */
 
@@ -51,62 +47,181 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-#define AUDIO_I2C_ADDRESS           ((uint16_t)0x34)
-extern AUDIO_DrvTypeDef wm8994_drv;
+#define SI5351C_ADDRESS_W				0xC0
+#define SI5351C_ADDRESS_R				0xC1
 
-#define BUFFER_SIZE				2
-static uint16_t Buffer[BUFFER_SIZE] = { 0,0 };
+#define AK4558_ADDRESS_W				0x20
+#define AK4558_ADDRESS_R				0x21
 
-// 0x00 = -57 dB
-// 0x27 = -18dB
-// 0x2D = -12 dB
-// 0x33 =  -6 dB
-// 0x39 =   0 db
-// 0x3F =  +6 db
-static uint32_t OutputVolume = 0x27;
+#define SI5351C_NUM_REGS                75
+#define AK4558_NUM_REGS					5
 
-// 0x00 = -71.625 dB
-// 0x90 = -18.000 dB
-// 0xA0 = -12.000 dB
-// 0xB0 =  -6.000 dB
-// 0xC0 =   0.000 dB
-// 0cFF = +17.625 dB
+#define BUFFER_SIZE						4
 
-static uint32_t InputVolume = 0xA0;
+  typedef struct
+  {
+      unsigned char address;	/* 8-bit register address */
+      unsigned char value;		/* 8-bit register data */
 
+  } si5351c_register_t;
+
+  si5351c_register_t const si5351c_revb_registers[SI5351C_NUM_REGS] =
+  {
+
+      { 0x03, 0xFF },       // Disable Outputs
+      { 0x10, 0x80 },       // Power Down Output 0
+      { 0x11, 0x80 },       // Power Down Output 1
+      { 0x12, 0x80 },       // Power Down Output 2
+      { 0x13, 0x80 },       // Power Down Output 3
+      { 0x14, 0x80 },       // Power Down Output 4
+      { 0x15, 0x80 },       // Power Down Output 5
+      { 0x16, 0x80 },       // Power Down Output 6
+      { 0x17, 0x80 },		// Power Down Output 7
+      { 0x02, 0x40 },		// Do Not Mask: SYS_INIT, LOL_A (Loss of Lock), LOS (Loss of Signal CLKIN)
+      { 0x0F, 0x04 },       // Select CLKIN as PLLA reference
+      { 0x10, 0x0F },
+      { 0x11, 0x0F },
+      { 0x12, 0x0F },
+      { 0x13, 0x0F },
+      { 0x14, 0x8C },
+      { 0x15, 0x8C },
+      { 0x16, 0x8C },
+      { 0x17, 0x8C },
+      { 0x1A, 0x0C },
+      { 0x1B, 0x35 },
+      { 0x1C, 0x00 },
+      { 0x1D, 0x0F },
+      { 0x1E, 0xF0 },
+      { 0x1F, 0x00 },
+      { 0x20, 0x09 },
+      { 0x21, 0x50 },
+      { 0x2A, 0x0C },
+      { 0x2B, 0x35 },
+      { 0x2C, 0x00 },
+      { 0x2D, 0x0F },
+      { 0x2E, 0xF0 },
+      { 0x2F, 0x00 },
+      { 0x30, 0x09 },
+      { 0x31, 0x50 },
+      { 0x32, 0x00 },
+      { 0x33, 0x7D },
+      { 0x34, 0x00 },
+      { 0x35, 0x10 },
+      { 0x36, 0xB0 },
+      { 0x37, 0x00 },
+      { 0x38, 0x00 },
+      { 0x39, 0x10 },
+      { 0x3A, 0x00 },
+      { 0x3B, 0x04 },
+      { 0x3C, 0x00 },
+      { 0x3D, 0x07 },
+      { 0x3E, 0x20 },
+      { 0x3F, 0x00 },
+      { 0x40, 0x00 },
+      { 0x41, 0x00 },
+      { 0x42, 0x00 },
+      { 0x43, 0x02 },
+      { 0x44, 0x00 },
+      { 0x45, 0x10 },
+      { 0x46, 0x40 },
+      { 0x47, 0x00 },
+      { 0x48, 0x00 },
+      { 0x49, 0x00 },
+      { 0x5A, 0x00 },
+      { 0x5B, 0x00 },
+      { 0x95, 0x00 },
+      { 0x96, 0x00 },
+      { 0x97, 0x00 },
+      { 0x98, 0x00 },
+      { 0x99, 0x00 },
+      { 0x9A, 0x00 },
+      { 0x9B, 0x00 },
+      { 0xA2, 0x00 },
+      { 0xA3, 0x00 },
+      { 0xA4, 0x00 },
+      { 0xB7, 0x12 },
+      { 0x75, 0xAC },
+      { 0x03, 0xF0 },		// Enable Outputs
+      { 0x09, 0xF0 }		// NOEB Pin Control Enable
+
+  };
+
+  typedef struct
+  {
+		unsigned char address;	/* 8-bit register address */
+		unsigned char value;	/* 8-bit register data */
+  } ak4558_register_t;
+
+  ak4558_register_t const ak4558_registers[AK4558_NUM_REGS] =
+  {
+      { 0x03, 0x18 },		// DACs Enables / ADCs Disabled
+	  { 0x04, 0x00 },		// Not Required
+	  { 0x08, 0xD7 },		// -12.0 dB with HP Amp
+	  { 0x09, 0xD7 },		// -12.0 dB with HP Amp
+      { 0x00, 0x07 }
+  };
+
+  // These need to be replaced with read > modify > write
+  ak4558_register_t const ak4558_soft_mute_enable = {0x03, 0x19};
+  ak4558_register_t const ak4558_soft_mute_disable = {0x03, 0x18};
+
+  uint8_t LED = 0;
+  q15_t I2S_TX_Buffer[BUFFER_SIZE] = {0};
+  q15_t *I2S_TX_Buffer_p = (q15_t *) I2S_TX_Buffer;
 
 //[[Declarations]]
-static float32_t PhaseInc_f32[4];
-static float32_t Phase_f32[4];
-static float32_t Partials_f32[4];
-static float32_t Sample_f32;
-static q15_t Sample_q15;
-
-//Rate for CODEC hardcoded 'AUDIO_FREQUENCY_48K'
-//static float32_t Fs = 48000;
-
-
-static float32_t Freq[4] = { 110.00, 3.0, 440.0, 10.0 };
-static float32_t Amp[4] = { 0.4, 0.3, 0.2, 0.1 };
-
 //[[/Declarations]]
 
-
-//[[Instances]]
-//[[/Instances]]
-
+  //[[Instances]]
+  //[[/Instances]]
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+void Error_Handler(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
-static void Codec_Init(void);
+
+//void EnableCodec(void);						// PJ12 (Active High - Pull Up)
+//void EnableDAC(uint8_t);					// 0x00 - D1: PMDAL(L), D2: PMDAR(L) (Active High)
+//void EnableADC(uint8_t);					// 0x00 - D3: PMADL(L), D3: PMADR(L) (Active High)
+//void EnableSoftMute(void);					// 0x03 - D0: SMUTE(L) (Active High - DAC Muted)
+//void DisableSoftMute(void);
+//void FormatMode(uint8_t);					// 0x03 - D3: DIF0(H), D4: DIF1(H), D5: DIF2(H) (Table 23 / HHL)
+//void SamplingSpeed(uint8_t);				// 0x04 - D1: DFS0(L), D2: DFS1(L) (Table 8 / LL)
+//void MasterClockFrequencySelect(uint8_t);	// 0x04 - D3: MCKS0(L), D4: MCKS1(H) (Table 9 / LL)
+//void EnablePowerSave(void);					// 0x05 - D0: LOPS(L) (Active High)
+//void DisablePowerSave(void);
+//void LeftVolume(uint8_t);					// 0x08 - FF (0dB)
+//void RightVolume(uint8_t);					// 0x09 - FF (0dB)
+
+
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
+
+void osc()
+{
+//[[OSC:Processing]]
+//[[OSC:Processing]]
+}
+
+void serialIn()
+{
+//[[SerialIn:Processing]]
+//[[SerialIn:Processing]]
+
+}
+
+void serialOut()
+{
+//[[SerialOut:Processing]]
+//[[SerialOut:Processing]]
+
+}
+//[[/Initialization]]
 
 /* USER CODE END 0 */
 
@@ -114,18 +229,9 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
 //[[Initialization]]
-
 //[[/Initialization]]
-
   /* USER CODE END 1 */
-
-  /* Enable I-Cache-------------------------------------------------------------*/
-  SCB_EnableICache();
-
-  /* Enable D-Cache-------------------------------------------------------------*/
-  SCB_EnableDCache();
 
   /* MCU Configuration----------------------------------------------------------*/
 
@@ -138,16 +244,109 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
-  MX_I2C3_Init();
-  MX_SAI2_Init();
+  MX_I2C1_Init();
+  MX_I2S2_Init();
+  MX_I2S3_Init();
 
   /* USER CODE BEGIN 2 */
 
-  __HAL_SAI_ENABLE(&hsai_BlockA2);
+  HAL_StatusTypeDef status_i2c;
 
-  Codec_Init();
+  for (uint16_t i = 0; i < SI5351C_NUM_REGS; i++)
+  {
+    status_i2c = HAL_I2C_Master_Transmit(&hi2c1, SI5351C_ADDRESS_W, (uint8_t *) &si5351c_revb_registers[i], 2, 25);
+    if (status_i2c == HAL_ERROR)
+    {
+      while(1)
+	  {
+		HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
+		HAL_Delay(50);
+	  }
+    }
+  }
 
-  HAL_SAI_Transmit_IT(&hsai_BlockA2,(uint8_t *) Buffer, BUFFER_SIZE );
+  // Enable Clock Output (Active Low)
+  HAL_GPIO_WritePin(CLK_NOEB_GPIO_Port, CLK_NOEB_Pin, GPIO_PIN_RESET);
+  HAL_Delay(25);
+
+  // Enable Audio Codec (Active High)
+  HAL_GPIO_WritePin(AK4558_PDN_GPIO_Port, AK4558_PDN_Pin, GPIO_PIN_SET);
+  HAL_Delay(25);
+
+  for (uint16_t i = 0; i < AK4558_NUM_REGS; i++)
+  {
+    status_i2c = HAL_I2C_Master_Transmit(&hi2c1, AK4558_ADDRESS_W, (uint8_t *) &ak4558_registers[i], 2, 25);
+    if (status_i2c == HAL_ERROR)
+    {
+      while(1)
+	  {
+		HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
+		HAL_Delay(50);
+	  }
+    }
+  }
+
+      // Test I2C Read
+
+  //    uint8_t address = 0x03;
+  //    uint8_t data = 0x00;
+  //
+  //    status_i2c = HAL_I2C_Master_Transmit(&hi2c1, SI5351C_ADDRESS_W, &address, 1, 25);
+  //    if (status_i2c == HAL_ERROR)
+  //    {
+  //        while(1)
+  //        {
+  //            HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
+  //            HAL_Delay(50);
+  //        }
+  //    }
+  //
+  //    status_i2c = HAL_I2C_Master_Receive(&hi2c1, SI5351C_ADDRESS_R, &data, 1, 25);
+  //    if (status_i2c == HAL_ERROR)
+  //    {
+  //        while(1)
+  //        {
+  //            HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
+  //            HAL_Delay(50);
+  //        }
+  //    }
+
+
+  // Enable Soft Mute
+  status_i2c = HAL_I2C_Master_Transmit(&hi2c1, AK4558_ADDRESS_W, (uint8_t *) &ak4558_soft_mute_enable, 2, 25);
+  if (status_i2c == HAL_ERROR)
+  {
+	  while(1)
+	  {
+		HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
+		HAL_Delay(50);
+	  }
+  }
+
+  // Start DMA
+  if (HAL_I2S_Transmit_DMA(&hi2s2, (uint16_t *) I2S_TX_Buffer, BUFFER_SIZE) != HAL_OK)
+  {
+	  Error_Handler();
+  }
+
+  HAL_Delay(50);
+
+  // Enable HP Amp
+  HAL_GPIO_WritePin(TPA4411_PDN_GPIO_Port, TPA4411_PDN_Pin, GPIO_PIN_SET);
+  // Enable Speakers
+  HAL_GPIO_WritePin(TPA2012_PDN_GPIO_Port, TPA2012_PDN_Pin, GPIO_PIN_RESET);
+  HAL_Delay(25);
+
+  // Disable Soft Mute
+  status_i2c = HAL_I2C_Master_Transmit(&hi2c1, AK4558_ADDRESS_W, (uint8_t *) &ak4558_soft_mute_disable, 2, 25);
+  if (status_i2c == HAL_ERROR)
+  {
+	  while(1)
+	  {
+		HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
+		HAL_Delay(50);
+	  }
+  }
 
   /* USER CODE END 2 */
 
@@ -155,16 +354,28 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
   /* USER CODE END WHILE */
 
-    //[[Processing]]
-    //[[/Processing]]
   /* USER CODE BEGIN 3 */
+  //[[Processing]]
+  //[[/Processing]]
+      switch ( LED ) {
+            case 0:
+                //HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
+                break;
+            case 1:
+                HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
+                break;
+            default:
+                break;
+        }
 
+        LED += 1;
+        LED = LED % 2;
+        HAL_Delay(150);
   }
-    //[[Cleanup]]
-    //[[/Cleanup]]
+  //[[Cleanup]]
+  //[[/Cleanup]]
   /* USER CODE END 3 */
 
 }
@@ -178,10 +389,14 @@ void SystemClock_Config(void)
   RCC_ClkInitTypeDef RCC_ClkInitStruct;
   RCC_PeriphCLKInitTypeDef PeriphClkInitStruct;
 
+    /**Configure the main internal regulator output voltage
+    */
   __HAL_RCC_PWR_CLK_ENABLE();
 
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
+    /**Initializes the CPU, AHB and APB busses clocks
+    */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
@@ -190,30 +405,48 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLN = 432;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 2;
-  HAL_RCC_OscConfig(&RCC_OscInitStruct);
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
 
-  HAL_PWREx_EnableOverDrive();
+    /**Activate the Over-Drive mode
+    */
+  if (HAL_PWREx_EnableOverDrive() != HAL_OK)
+  {
+    Error_Handler();
+  }
 
+    /**Initializes the CPU, AHB and APB busses clocks
+    */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
-  HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_7);
 
-  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SAI2|RCC_PERIPHCLK_I2C3;
-  PeriphClkInitStruct.PLLI2S.PLLI2SN = 344;
-  PeriphClkInitStruct.PLLI2S.PLLI2SP = 1;
-  PeriphClkInitStruct.PLLI2S.PLLI2SR = 2;
-  PeriphClkInitStruct.PLLI2S.PLLI2SQ = 7;
-  PeriphClkInitStruct.PLLI2SDivQ = 1;
-  PeriphClkInitStruct.Sai2ClockSelection = RCC_SAI2CLKSOURCE_PLLI2S;
-  PeriphClkInitStruct.I2c3ClockSelection = RCC_I2C3CLKSOURCE_PCLK1;
-  HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct);
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_7) != HAL_OK)
+  {
+    Error_Handler();
+  }
 
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_I2C1|RCC_PERIPHCLK_I2S;
+  PeriphClkInitStruct.I2sClockSelection = RCC_I2SCLKSOURCE_EXT;
+  PeriphClkInitStruct.I2c1ClockSelection = RCC_I2C1CLKSOURCE_PCLK1;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  HAL_RCC_MCOConfig(RCC_MCO1, RCC_MCO1SOURCE_HSE, RCC_MCODIV_1);
+
+    /**Configure the Systick interrupt time
+    */
   HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
 
+    /**Configure the Systick
+    */
   HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
 
   /* SysTick_IRQn interrupt configuration */
@@ -221,66 +454,35 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-void Codec_Init(void)
+void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
 {
-	uint32_t deviceid = 0x00;
-	deviceid = wm8994_drv.ReadID(AUDIO_I2C_ADDRESS);
-
-	if((deviceid) == WM8994_ID)
+	for (uint8_t i = 0; i < (BUFFER_SIZE / 4); i++)
 	{
-		wm8994_drv.Reset(AUDIO_I2C_ADDRESS);
-		wm8994_drv.Init(AUDIO_I2C_ADDRESS, OUTPUT_DEVICE_HEADPHONE, OutputVolume, InputVolume, AUDIO_FREQUENCY_48K);
-
-		HAL_GPIO_TogglePin(GPIOI,GPIO_PIN_1);
-	}
-}
-
-void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai)
-{
-
-
-	for (uint8_t i = 0; i < 4 ; i++)
-	{
-
 //[[AudioProcessing]]
-
-		Sample_f32 = 0.0f;
-
-		for (uint8_t j = 0; j < 4 ; j++)
-		{
-			Phase_f32[j] += PhaseInc_f32[j];
-
-			if (Phase_f32[j] > 6.28318530718f) Phase_f32[j] -= 6.28318530718f;
-
-			Partials_f32[j] = arm_sin_f32 (Phase_f32[j]);
-
-			Sample_f32 += Partials_f32[j] * Amp[j];
-		}
-
-		Sample_f32  = Partials_f32[0] * Partials_f32[1] * Amp[0] + Partials_f32[2] * Partials_f32[3] * Amp[1];
-
-		arm_float_to_q15(&Sample_f32,&Sample_q15,1);
-
-		hsai_BlockA2.Instance->DR = Sample_q15;
-		hsai_BlockA2.Instance->DR = Sample_q15;
-
-
 //[[/AudioProcessing]]
 	}
-
-	__HAL_SAI_ENABLE_IT(&hsai_BlockA2,SAI_IT_FREQ);
 }
 
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
 {
-	if (GPIO_Pin == GPIO_PIN_11 )
-	{
-
-	}
+	HAL_I2S_TxHalfCpltCallback(hi2s);
 }
-
-
 /* USER CODE END 4 */
+
+/**
+  * @brief  This function is executed in case of error occurrence.
+  * @param  None
+  * @retval None
+  */
+void Error_Handler(void)
+{
+  /* USER CODE BEGIN Error_Handler */
+  /* User can add his own implementation to report the HAL error return state */
+  while(1)
+  {
+  }
+  /* USER CODE END Error_Handler */
+}
 
 #ifdef USE_FULL_ASSERT
 

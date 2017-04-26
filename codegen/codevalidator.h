@@ -47,8 +47,6 @@ public:
     CodeValidator(QString platformRootDir, AST * tree = nullptr);
     ~CodeValidator();
 
-    void validateTree(QString platformRootDir, AST * tree);
-
     bool isValid();
     bool platformIsValid();
 
@@ -111,10 +109,11 @@ public:
     static std::string getDomainNodeString(AST *node);
     static QVector<AST *> getBlocksInScope(AST *root, QVector<AST *> scopeStack, AST *tree);
 
-    void validate();
 
 private:
 
+    void validateTree(QString platformRootDir, AST * tree);
+    void validate();
     QVector<PlatformNode *> getPlatformNodes();
 
     void validatePlatform(AST *node, QVector<AST *> scopeStack);

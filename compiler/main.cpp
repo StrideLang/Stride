@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
     QString fileName = args.at(0);
 
     if (platformRootPath.isEmpty()) {
-        platformRootPath = "/home/andres/Documents/src/Stride/StreamStack/strideroot"; // For my convenience :)
+        platformRootPath = "/home/andres/Documents/src/Stride/Stride/strideroot"; // For my convenience :)
     }
 
 //    qDebug() << args.at(0);

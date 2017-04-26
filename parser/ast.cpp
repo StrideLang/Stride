@@ -124,6 +124,7 @@ void AST::setFilename(const string &filename)
 
 void AST::resolveScope(AST* scope)
 {
+    (void) scope; // To remove warning
     assert(0 == 1); // Each type should resolve its scope
 }
 
@@ -132,7 +133,7 @@ void AST::addScope(string newScope)
     m_scope.push_back(newScope);
 }
 
-unsigned int AST::getScopeLevels()
+size_t AST::getScopeLevels()
 {
     return m_scope.size();
 }

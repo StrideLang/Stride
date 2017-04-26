@@ -105,9 +105,8 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
 //                m_api = PythonTools;
 //                m_types = getPlatformTypeNames();
             }
-
-
-
+            systemTree->deleteChildren();
+            delete systemTree;
         } else {
             qDebug() << "Error parsing system tree in:" << systemFile;
         }

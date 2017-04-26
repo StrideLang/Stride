@@ -1,7 +1,0 @@
-# Sine Oscillator
-
-use STM32F7 version 1.0 on PC
-
-import Generators
-
-Oscillator ( frequency: 440.0 amplitude: 0.005 ) >> AudioOut;

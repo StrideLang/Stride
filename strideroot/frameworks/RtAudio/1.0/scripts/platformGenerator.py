@@ -43,11 +43,12 @@ from platformTemplates import templates # Perhaps we should acces this through P
 
 class Generator(GeneratorBase):
     def __init__(self, out_dir = '',
+                 strideroot = '',
                  platform_dir = '',
                  tree = None,
                  debug = False):
 
-        super(Generator, self).__init__(out_dir, platform_dir, tree, debug)
+        super(Generator, self).__init__(out_dir, strideroot, platform_dir, tree, debug)
 
         self.out_dir += "/RtAudio"
         if not os.path.isdir(self.out_dir):

@@ -1,9 +1,0 @@
-# Frequency Modulation with Signal Declaration
-
-use RtAudio version 1.0 on PC
-
-import Generators
-
-Oscillator ( frequency: 3.0 amplitude: 40.0 ) >> Modulator;
-
-Oscillator ( frequency: 440.0 + Modulator amplitude: 0.1 ) >> AudioOut;

@@ -39,7 +39,7 @@
 #include "coderesolver.h"
 
 CodeValidator::CodeValidator(QString platformRootDir, AST *tree):
-    m_tree(tree)
+    m_system(nullptr), m_tree(tree)
 {
     validateTree(platformRootDir, tree);
 }
@@ -236,55 +236,57 @@ void CodeValidator::validateTypes(AST *node, QVector<AST *> scopeStack)
                         // Then check type passed to port is valid
                         bool typeIsValid = false;
                         AST *portValue = port->getValue();
-                        QString typeName = getPortTypeName(resolveNodeOutType(portValue, scopeStack, m_tree));
-                        QStringList validTypeNames;
-                        for (AST *validType: portTypesList) {
-                            if (validType->getNodeType() == AST::String) {
-                                std::string typeCode = static_cast<ValueNode *>(validType)->getStringValue();
-                                validTypeNames << QString::fromStdString(typeCode);
-                                if (!typeName.isEmpty()) {
-                                    if (typeName.toStdString() == typeCode || typeCode == "") {
+                        if (portValue) {
+                            QString typeName = getPortTypeName(resolveNodeOutType(portValue, scopeStack, m_tree));
+                            QStringList validTypeNames;
+                            for (AST *validType: portTypesList) {
+                                if (validType->getNodeType() == AST::String) {
+                                    std::string typeCode = static_cast<ValueNode *>(validType)->getStringValue();
+                                    validTypeNames << QString::fromStdString(typeCode);
+                                    if (!typeName.isEmpty()) {
+                                        if (typeName.toStdString() == typeCode || typeCode == "") {
+                                            typeIsValid = true;
+                                            break;
+                                        }
+                                    } else if (portValue->getNodeType() == AST::Block) {
+                                        QList<LangError> errors;
+                                        std::string validTypeName = CodeValidator::evaluateConstString(portValue, scopeStack, m_tree, errors);
+                                        if (validTypeName == typeCode) {
+                                            typeIsValid = true;
+                                            break;
+                                        }
+                                    } else { // FIXME for now empty string means any type allowed...
                                         typeIsValid = true;
                                         break;
                                     }
-                                } else if (portValue->getNodeType() == AST::Block) {
-                                    QList<LangError> errors;
-                                    std::string validTypeName = CodeValidator::evaluateConstString(portValue, scopeStack, m_tree, errors);
-                                    if (validTypeName == typeCode) {
-                                        typeIsValid = true;
-                                        break;
+                                } else if (validType->getNodeType() == AST::Block) {
+                                    BlockNode * blockNode = static_cast<BlockNode *>(validType);
+                                    DeclarationNode *declaration = findDeclaration(QString::fromStdString(blockNode->getName()), scopeStack, m_tree);
+                                    AST *typeNameValue = declaration->getPropertyValue("typeName");
+                                    Q_ASSERT(typeNameValue->getNodeType() == AST::String);
+                                    string validTypeName = static_cast<ValueNode *>(typeNameValue)->getStringValue();
+                                    if (portValue->getNodeType() == AST::Block) {
+                                        BlockNode *currentTypeNameNode = static_cast<BlockNode *>(portValue);
+                                        DeclarationNode *valueDeclaration = findDeclaration(
+                                                    QString::fromStdString(currentTypeNameNode->getName()), scopeStack, m_tree);
+                                        if (valueDeclaration && validTypeName == valueDeclaration->getObjectType()) {
+                                            typeIsValid = true;
+                                            break;
+                                        }
                                     }
-                                } else { // FIXME for now empty string means any type allowed...
-                                    typeIsValid = true;
-                                    break;
-                                }
-                            } else if (validType->getNodeType() == AST::Block) {
-                                BlockNode * blockNode = static_cast<BlockNode *>(validType);
-                                DeclarationNode *declaration = findDeclaration(QString::fromStdString(blockNode->getName()), scopeStack, m_tree);
-                                AST *typeNameValue = declaration->getPropertyValue("typeName");
-                                Q_ASSERT(typeNameValue->getNodeType() == AST::String);
-                                string validTypeName = static_cast<ValueNode *>(typeNameValue)->getStringValue();
-                                if (portValue->getNodeType() == AST::Block) {
-                                    BlockNode *currentTypeNameNode = static_cast<BlockNode *>(portValue);
-                                    DeclarationNode *valueDeclaration = findDeclaration(
-                                                QString::fromStdString(currentTypeNameNode->getName()), scopeStack, m_tree);
-                                    if (valueDeclaration && validTypeName == valueDeclaration->getObjectType()) {
-                                        typeIsValid = true;
-                                        break;
-                                    }
-                                }
-                            } // TODO Add support for checking of bundle types
-                        }
-                        if (!typeIsValid) {
-                            LangError error;
-                            error.type = LangError::InvalidPortType;
-                            error.lineNumber = port->getLine();
-                            error.errorTokens.push_back(blockType.toStdString());
-                            error.errorTokens.push_back(portName.toStdString());
-                            error.errorTokens.push_back(typeName.toStdString());
-                            error.errorTokens.push_back(validTypeNames.join(",").toStdString());
-                            error.filename = port->getFilename();
-                            m_errors << error;
+                                } // TODO Add support for checking of bundle types
+                            }
+                            if (!typeIsValid) {
+                                LangError error;
+                                error.type = LangError::InvalidPortType;
+                                error.lineNumber = port->getLine();
+                                error.errorTokens.push_back(blockType.toStdString());
+                                error.errorTokens.push_back(portName.toStdString());
+                                error.errorTokens.push_back(typeName.toStdString());
+                                error.errorTokens.push_back(validTypeNames.join(",").toStdString());
+                                error.filename = port->getFilename();
+                                m_errors << error;
+                            }
                         }
                     }
                 }
