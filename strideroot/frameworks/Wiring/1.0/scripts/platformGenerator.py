@@ -41,13 +41,16 @@ import glob
 
 from strideplatform import GeneratorBase
 
+
 from platformTemplates import templates # Perhaps we should acces this through PlatformFunctions ?
+
+from platformConfiguration import configuration
 
 class Generator(GeneratorBase):
     def __init__(self, out_dir = '',
                  strideroot = '',
                  platform_dir = '',
-                 tree,
+                 tree = None,
                  debug = False):
 
         super(Generator, self).__init__(out_dir, strideroot, platform_dir, tree, debug)
@@ -55,6 +58,7 @@ class Generator(GeneratorBase):
         self.log("Building Wiring project")
         self.log("Buiding in directory: " + self.out_dir)
 
+        self.project_dir = platform_dir + "/project"
         if not os.path.exists(self.out_dir + "/template"):
             os.mkdir(self.out_dir + "/template")
 
@@ -86,7 +90,9 @@ class Generator(GeneratorBase):
             arduino_dir = glob.glob(self.platform_dir + "/arduino-*")
 
             cpp_compiler = arduino_dir[0] + "/arduino"
-            flags =  '--upload --board arduino:avr:uno --port /dev/ttyACM1 --pref sketchbook.path=' + self.platform_dir + '/sketchbook'
+            port = "/dev/ttyACM0"
+            #port = "/dev/ttyUSB0"
+            flags =  '--upload --board arduino:avr:uno --port ' + port + ' --pref sketchbook.path=' + self.platform_dir + '/sketchbook'
             args = [cpp_compiler] + flags.split() + [self.out_file]
 
             outtext = ck_out(args)

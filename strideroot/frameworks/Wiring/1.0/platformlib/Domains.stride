@@ -1,5 +1,5 @@
 
-_platformDescription WiringPlatform {
+_platformDescription _WiringPlatform {
     name: "Wiring"
 }
 
@@ -9,7 +9,7 @@ constant PlatformDomain {
 
 _domainDefinition WiringDomain {
 	domainName: "WiringDomain"
-	platform: WiringPlatform
+	platform: _WiringPlatform
 	declarationsTag: "Declarations"
 	processingTag: "Processing"
 	initializationTag: "Initialization"
@@ -34,4 +34,3 @@ _domainDefinition WiringDomain {
 #	initializationTag: "SerialOut:Initialization"
 #	cleanupTag: "SerialOut:Cleanup"
 #}
-
