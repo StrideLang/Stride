@@ -36,6 +36,14 @@ int inout( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
 }
 //[[/Processing]]
 
+//[[OSC:Processing]]
+//[[/OSC:Processing]]
+//[[SerialIn:Processing]]
+//[[/SerialIn:Processing]]
+//[[SerialOut:Processing]]
+//[[/SerialOut:Processing]]
+
+
 int main() {
 //[[Initialization]]
     RtAudio adac;

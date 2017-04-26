@@ -50,6 +50,7 @@ class Generator(GeneratorBase):
 
         super(Generator, self).__init__(out_dir, strideroot, platform_dir, tree, debug)
 
+        self.project_dir = platform_dir + "/project"
         self.out_dir += "/RtAudio"
         if not os.path.isdir(self.out_dir):
             os.mkdir(self.out_dir)

@@ -1285,7 +1285,9 @@ void CodeResolver::setDomainForStack(QList<AST *> domainStack, string domainName
         if (relatedNode->getNodeType() == AST::Declaration
                 || relatedNode->getNodeType() == AST::BundleDeclaration ) {
             DeclarationNode *block = static_cast<DeclarationNode *>(relatedNode);
-            block->setDomainString(domainName);
+            if (block) {
+                block->setDomainString(domainName);
+            }
         } else if (relatedNode->getNodeType() == AST::Block) {
             DeclarationNode *declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(relatedNode, scopeStack, m_tree), scopeStack, m_tree);
             if(declaration) {
@@ -1293,21 +1295,29 @@ void CodeResolver::setDomainForStack(QList<AST *> domainStack, string domainName
             }
         } else if (relatedNode->getNodeType() == AST::Function) {
             FunctionNode *func = static_cast<FunctionNode *>(relatedNode);
-            func->setDomain(domainName);
+            if (func) {
+                func->setDomain(domainName);
+            }
         }  else if (relatedNode->getNodeType() == AST::List
                     || relatedNode->getNodeType() == AST::Expression) {
             for(AST * member : relatedNode->getChildren()) {
                 if (member->getNodeType() == AST::Block) {
                     string name = static_cast<BlockNode *>(member)->getName();
                     DeclarationNode *block =  CodeValidator::findDeclaration(QString::fromStdString(name), scopeStack, m_tree);
-                    block->setDomainString(domainName);
+                    if (block) {
+                        block->setDomainString(domainName);
+                    }
                 } else if (member->getNodeType() == AST::Bundle) {
                     string name = static_cast<BundleNode *>(member)->getName();
                     DeclarationNode *block =  CodeValidator::findDeclaration(QString::fromStdString(name), scopeStack, m_tree);
-                    block->setDomainString(domainName);
+                    if (block) {
+                        block->setDomainString(domainName);
+                    }
                 } else if (member->getNodeType() == AST::Function) {
                     FunctionNode *func = static_cast<FunctionNode *>(member);
-                    func->setDomain(domainName);
+                    if (func) {
+                        func->setDomain(domainName);
+                    }
                 }
             }
         }
@@ -1413,8 +1423,13 @@ DeclarationNode *CodeResolver::createSignalBridge(string name, AST *defaultValue
                                                               "signalbridge", nullptr, "", -1);
     }
     newBridge->addProperty(new PropertyNode("default", defaultValue->deepCopy(), filename.c_str(), line));
-    newBridge->addProperty(new PropertyNode("inputDomain", inDomain->deepCopy(), filename.c_str(), line));
-    newBridge->addProperty(new PropertyNode("domain", inDomain->deepCopy(), filename.c_str(), line));
+    if (inDomain) {
+        newBridge->addProperty(new PropertyNode("inputDomain", inDomain->deepCopy(), filename.c_str(), line));
+        newBridge->addProperty(new PropertyNode("domain", inDomain->deepCopy(), filename.c_str(), line));
+    } else {
+        newBridge->addProperty(new PropertyNode("inputDomain", new ValueNode("", -1), filename.c_str(), line));
+        newBridge->addProperty(new PropertyNode("domain", new ValueNode("", -1), filename.c_str(), line));
+    }
     newBridge->addProperty(new PropertyNode("outputDomain", outDomain->deepCopy(), filename.c_str(), line));
 
     return newBridge;
@@ -2271,7 +2286,7 @@ QVector<AST *> CodeResolver::processExpression(ExpressionNode *expr, QVector<AST
         AST *exprRight = expr->getRight();
 
         if (exprRight->getNodeType() == AST::Expression) {
-            streams << processExpression(static_cast<ExpressionNode *>(exprLeft), scopeStack, outDomain);
+            streams << processExpression(static_cast<ExpressionNode *>(exprRight), scopeStack, outDomain);
         } else if (exprRight->getNodeType() == AST::Block) {
             BlockNode *exprName = static_cast<BlockNode *>(exprRight);
             DeclarationNode *declaration = CodeValidator::findDeclaration(QString::fromStdString(exprName->getName()),

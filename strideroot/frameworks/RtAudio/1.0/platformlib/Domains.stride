@@ -50,18 +50,18 @@ _domainDefinition SerialInDomain {
 	domainName: "SerialInDomain"
 	platform: _RtAudioPlatform
 	globalsTag: "Includes" 
-	declarationsTag: "SerialIn:Declarations"
+	declarationsTag: "Declarations"
 	processingTag: "SerialIn:Processing"
-	initializationTag: "SerialIn:Initialization"
-	cleanupTag: "SerialIn:Cleanup"
+	initializationTag: "Initialization"
+	cleanupTag: "Cleanup"
 }
 
 _domainDefinition SerialOutDomain {
 	domainName: "SerialOutDomain"
 	platform: _RtAudioPlatform
 	globalsTag: "Includes" 
-	declarationsTag: "SerialOut:Declarations"
+	declarationsTag: "Declarations"
 	processingTag: "SerialOut:Processing"
-	initializationTag: "SerialOut:Initialization"
-	cleanupTag: "SerialOut:Cleanup"
+	initializationTag: "Initialization"
+	cleanupTag: "Cleanup"
 }

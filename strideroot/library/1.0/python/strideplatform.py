@@ -1322,7 +1322,6 @@ class ModuleAtom(Atom):
                     self._input = {internal_block['name'] : self.input_atom }
                 elif 'direction' in port['block'] and port['block']['direction'] == 'output':
                     self._output_blocks.append(internal_block)
-
                     self._output = {internal_block['name'] : self.output_atom }
             else: # Not a main port
                 internal_block['main'] = False
@@ -1596,8 +1595,25 @@ class PlatformFunctions:
             new_atom = ValueAtom(member['value'], self.unique_id, scope_index)
         elif "list" in member:
             list_atoms = []
-            for element in member['list']:
-                element_atom = self.make_atom(element)
+            # FIXME this assumes that atoms connect one to one...
+            previous_elements = []
+            if previous_atom:
+                if isinstance(previous_atom, ListAtom):
+                    previous_elements = previous_atom.list_node
+                else:
+                    previous_elements.append(previous_atom)
+            while len(previous_elements) < len(member['list']):
+                previous_elements.append(None)
+            next_elements = []
+            if next_atom:
+                if isinstance(next_atom, ListAtom):
+                    next_elements = next_atom.list_node
+                else:
+                    next_elements.append(next_atom)
+            while len(next_elements) < len(member['list']):
+                next_elements.append(None)
+            for element, previous_element, next_element in zip(member['list'], previous_elements, next_elements):
+                element_atom = self.make_atom(element, previous_element, next_element)
                 list_atoms.append(element_atom)
             new_atom = ListAtom(list_atoms, scope_index)
 #        elif "block" in member:
@@ -1642,6 +1658,11 @@ class PlatformFunctions:
                 index = stream.index(member)
                 if index < len(stream) - 1:
                     next_atom = self.make_atom(stream[index + 1])
+            if 'list' in member:
+                index = stream.index(member)
+                if index < len(stream) - 1:
+                    next_atom = self.make_atom(stream[index + 1])
+
             new_atom = self.make_atom(member, previous_atom, next_atom)
             if hasattr("domain", "new_atom"):
                 if not current_domain == new_atom.domain:
