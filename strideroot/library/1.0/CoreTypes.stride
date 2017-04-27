@@ -116,12 +116,6 @@ type _Signal {
 			default: none
 			required: off
 		},
-		typeProperty Mode {
-			name: "mode"
-			types: ["CSP"]
-			default: "realtime"
-			required: off
-		},
 		typeProperty Rate {
 			name: "rate"
 			types: [""]

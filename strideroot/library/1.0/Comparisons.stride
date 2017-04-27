@@ -3,13 +3,14 @@ module Greater {
     ports: [
     port OutputPort {
         name:       'output'
+        block: Output
         main: on
         direction:  'output'
     },
     port InputPort {
         name:       'input'
+        block: Input
         main: on
-        size: 2
         direction:  'input'
     }
     ]

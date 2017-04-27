@@ -14,18 +14,18 @@ platform _WiringPlatform {
 	hardwareVersion: none
 	required: off
 }
-	
+
 
 connection _PCToWiringSerial {
 	source: PC
 	destination: Wiring
 	sourceImports: ["Serial"]
 	sourceStreams: [
-		_Connection_Token >> Serial();
+		_Connection_Token >> SerialOut();
 	]
 	destinationImports: ["Serial"]
 	destinationStreams: [
-		_Connection_Token >> Serial();
+		SerialIn() >> _Connection_Token;
 	]
 }
 
@@ -34,11 +34,11 @@ connection _WiringToPCSerial {
 	destination: PC
 	sourceImports: ["Serial"]
 	sourceStreams: [
-		_Connection_Token >> Serial();
+		_Connection_Token >> SerialOut();
 	]
 	destinationImports: ["Serial"]
 	destinationStreams: [
-		_Connection_Token >> Serial();
+		SerialIn() >> _Connection_Token;
 	]
 }
 
