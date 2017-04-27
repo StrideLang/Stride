@@ -1,3 +1,37 @@
+/*
+    Stride is licensed under the terms of the 3-clause BSD license.
+
+    Copyright (C) 2017. The Regents of the University of California.
+    All rights reserved.
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions are met:
+
+        Redistributions of source code must retain the above copyright notice,
+        this list of conditions and the following disclaimer.
+
+        Redistributions in binary form must reproduce the above copyright
+        notice, this list of conditions and the following disclaimer in the
+        documentation and/or other materials provided with the distribution.
+
+        Neither the name of the copyright holder nor the names of its
+        contributors may be used to endorse or promote products derived from
+        this software without specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+    AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+    ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+    LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+    INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+    CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+    ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+    POSSIBILITY OF SUCH DAMAGE.
+
+    Authors: Andres Cabrera and Joseph Tilbian
+*/
+
 #include <QString>
 #include <QtTest>
 #include <QScopedPointer>
@@ -6,6 +40,8 @@
 #include "strideplatform.hpp"
 #include "codevalidator.h"
 #include "coderesolver.h"
+
+#define STRIDEROOT "../strideroot"
 
 extern AST *parse(const char* fileName);
 
@@ -20,21 +56,18 @@ private:
 
     void testMultichannelUgens(); // Need to complete support for this.
 
+
 private Q_SLOTS:
 
+    void testConnectionCount();
+
+    // Code generation/Compiler
+    void testCompilation();
 
     //
-    void testPlatformVality();
     void testBlockMembers();
-    void testConnectionCount();
     void testModuleDomains();
     void testPortTypeValidation();
-
-    //Expansion
-    void testLibraryObjectInsertion();
-    void testStreamRates();
-    void testStreamExpansion();
-    void testConstantResolution();
 
     //PlatformConsistency
     void testPlatformCommonObjects();
@@ -43,6 +76,19 @@ private Q_SLOTS:
     void testValueTypeBundleResolution();
     void testImport();
     void testDomains();
+
+    //PlatformConsistency
+    void testLists();
+
+    // Library
+    void testLibraryBasicTypes();
+    void testLibraryValidation();
+
+    //Expansion
+    void testLibraryObjectInsertion();
+    void testStreamRates();
+    void testStreamExpansion();
+    void testConstantResolution();
 
     // Parser
     void testModules();
@@ -55,17 +101,8 @@ private Q_SLOTS:
     void testBasicBundle();
     void testBasicBlocks();
     void testHeader();
-    void testParser();
 
-    //PlatformConsistency
-    void testLists();
 
-    // Library
-    void testLibraryBasicTypes();
-    void testLibraryValidation();
-
-    // Code generation/Compiler
-    void testCompilation();
 
 };
 
@@ -79,7 +116,7 @@ void ParserTest::testMultichannelUgens()
     AST *tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/E03_multichn_streams.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
 //    generator.validate();
     QVERIFY(!generator.isValid());
 
@@ -102,37 +139,24 @@ void ParserTest::testMultichannelUgens()
     delete tree;
 }
 
-void ParserTest::testPlatformVality()
-{
-    AST *tree;
-    tree = AST::parseFile(QString(QFINDTESTDATA("data/P10_platform_validity.stride")).toStdString().c_str());
-    QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
-    generator.validate();
-    QVERIFY(!generator.isValid());
-    tree->deleteChildren();
-    delete tree;
-}
-
 void ParserTest::testCompilation()
 {
-    QStringList testDirs;
     QStringList testFiles;
-    QDirIterator directories(QFINDTESTDATA("/../platforms/library/1.0/_tests/"), QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
+    QDirIterator directories(QFINDTESTDATA(STRIDEROOT "/library/1.0/_tests/"), QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot);
     while(directories.hasNext()){
+        directories.next();
         QDir subDir(directories.filePath());
         for (auto entry: subDir.entryList(QStringList() << "*.stride", QDir::Files | QDir::NoDotAndDotDot | QDir::NoSymLinks)) {
             testFiles << subDir.absolutePath() + QDir::separator()
                          + entry;
         }
-        directories.next();
     }
 //    qDebug() << testFiles;
     QString compilerBin = QDir::currentPath() + QDir::separator() + "../compiler/compiler";
     QScopedPointer<QProcess> compilerProcess(new QProcess(this));
     for (auto testFile:  testFiles) {
         QStringList arguments;
-        arguments << "-p" + QFINDTESTDATA("/../platforms")
+        arguments << "-s" + QFINDTESTDATA(STRIDEROOT)
                   << testFile;
 
         int ret = compilerProcess->execute(compilerBin, arguments);
@@ -146,7 +170,7 @@ void ParserTest::testBlockMembers()
     AST *tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/14_members.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
 //    generator.validate();
     QVERIFY(generator.isValid());
 
@@ -207,7 +231,7 @@ void ParserTest::testConnectionCount()
     AST *tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/13_connection_count.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
 //    generator.validate();
     QVERIFY(generator.isValid());
 
@@ -381,7 +405,7 @@ void ParserTest::testModuleDomains()
     AST *tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/12_modules_domains.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
 //    generator.validate();
     QVERIFY(generator.isValid());
 
@@ -411,7 +435,7 @@ void ParserTest::testPortTypeValidation()
     AST *tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/P07_type_validation.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
 //    generator.validate();
     QList<LangError> errors = generator.getErrors();
     LangError error = errors.at(0);
@@ -448,7 +472,7 @@ void ParserTest::testLibraryObjectInsertion()
     AST *tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/E05_library_objects.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
 //    generator.validate();
     QVERIFY(generator.isValid());
 
@@ -479,7 +503,7 @@ void ParserTest::testDomains()
     AST *tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/P06_domains.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
 //    generator.validate();
     QVERIFY(generator.isValid());
 
@@ -535,7 +559,7 @@ void ParserTest::testModules()
     AST *tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/11_modules.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
 //    generator.validate();
     QVERIFY(generator.isValid());
 
@@ -584,7 +608,7 @@ void ParserTest::testImport()
     AST *tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/P04_import.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
 //    generator.validate();
     QVERIFY(generator.isValid());
 
@@ -600,8 +624,8 @@ void ParserTest::testImport()
 
     tree = AST::parseFile(QString(QFINDTESTDATA("data/P05_import_fail.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    CodeValidator generator2(QFINDTESTDATA("/../platforms"), tree);
-    generator2.validate();
+    CodeValidator generator2(QFINDTESTDATA(STRIDEROOT), tree);
+//    generator2.validate();
     QVERIFY(!generator2.isValid());
     QList<LangError> errors = generator2.getErrors();
     LangError error = errors.front();
@@ -625,7 +649,7 @@ void ParserTest::testConstantResolution()
     AST *tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/E01_constant_res.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
 //    generator.validate();
     QVERIFY(generator.isValid());
 
@@ -815,7 +839,7 @@ void ParserTest::testStreamRates()
     AST *tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/E04_rates.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
 //    generator.validate();
     QVERIFY(generator.isValid());
     QVERIFY(generator.platformIsValid());
@@ -896,7 +920,7 @@ void ParserTest::testStreamExpansion()
     AST *tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/E02_stream_expansions.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
 //    generator.validate();
     QVERIFY(generator.isValid());
     QVERIFY(generator.platformIsValid());
@@ -1341,7 +1365,7 @@ void ParserTest::testPlatformCommonObjects()
     AST *tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/P01_platform_objects.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
 //    generator.validate();
     QVERIFY(!generator.isValid());
     QList<LangError> errors = generator.getErrors();
@@ -1385,7 +1409,7 @@ void ParserTest::testValueTypeBundleResolution()
     AST *tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/P03_bundle_resolution.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
 //    generator.validate();
     QVERIFY(generator.platformIsValid());
     QVERIFY(!generator.isValid());
@@ -1552,7 +1576,7 @@ void ParserTest::testDuplicates()
     AST *tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/P02_check_duplicates.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
 //    generator.validate();
     QVERIFY(!generator.isValid());
     QList<LangError> errors = generator.getErrors();
@@ -2952,145 +2976,43 @@ void ParserTest::testHeader()
 
     QVERIFY(tree != NULL);
     vector<AST *> nodes = tree->getChildren();
-    QVERIFY(nodes.size() == 14);
     PlatformNode *node = static_cast<PlatformNode *>(nodes.at(0));
     QVERIFY(node->getNodeType() == AST::Platform);
     QVERIFY(node->platformName() == "PufferFish");
-    QVERIFY(node->version() == 1.1);
-    QVERIFY(node->hwPlatform() == "PufferFish");
-    QVERIFY(node->hwVersion() == -1.0);
+    QVERIFY(node->majorVersion() == 1);
+    QVERIFY(node->minorVersion() == 1);
     QVERIFY(node->getChildren().size() == 0);
     QVERIFY(node->getLine() == 1);
 
     node = static_cast<PlatformNode *>(nodes.at(1));
     QVERIFY(node->getNodeType() == AST::Platform);
     QVERIFY(node->platformName() == "Gamma");
-    QVERIFY(node->version() == -1.0);
-    QVERIFY(node->hwPlatform() == "PC");
-    QVERIFY(node->hwVersion() == -1.0);
+    QVERIFY(node->majorVersion() == -1);
+    QVERIFY(node->minorVersion() == -1);
     QVERIFY(node->getChildren().size() == 0);
     QVERIFY(node->getLine() == 3);
 
-    node = static_cast<PlatformNode *>(nodes.at(2));
-    QVERIFY(node->getNodeType() == AST::Platform);
-    QVERIFY(node->platformName() == "Gamma");
-    QVERIFY(node->version() == 1.0);
-    QVERIFY(node->hwPlatform() == "PC");
-    QVERIFY(node->hwVersion() == -1.0);
-    QVERIFY(node->getChildren().size() == 0);
-    QVERIFY(node->getLine() == 4);
-
-    node = static_cast<PlatformNode *>(nodes.at(3));
-    QVERIFY(node->getNodeType() == AST::Platform);
-    QVERIFY(node->platformName() == "Gamma");
-    QVERIFY(node->version() == 1.0);
-    QVERIFY(node->hwPlatform() == "PC");
-    QVERIFY(node->hwVersion() == 1.0);
-    QVERIFY(node->getChildren().size() == 0);
-    QVERIFY(node->getLine() == 5);
-
-    node = static_cast<PlatformNode *>(nodes.at(4));
-    QVERIFY(node->getNodeType() == AST::Platform);
-    QVERIFY(node->platformName() == "Gamma");
-    QVERIFY(node->version() == -1.0);
-    QVERIFY(node->hwPlatform() == "PC");
-    QVERIFY(node->hwVersion() == -1.0);
-    QVERIFY(node->getChildren().size() == 1);
-    BlockNode *nameNode = static_cast<BlockNode *>(node->getChildren().at(0));
-    QVERIFY(nameNode->getNodeType() == AST::Block);
-    QVERIFY(nameNode->getName() == "Arduino");
-    QVERIFY(node->getLine() == 7);
-
-    node = static_cast<PlatformNode *>(nodes.at(5));
-    QVERIFY(node->getNodeType() == AST::Platform);
-    QVERIFY(node->platformName() == "Gamma");
-    QVERIFY(node->version() == 1.0);
-    QVERIFY(node->hwPlatform() == "PC");
-    QVERIFY(node->hwVersion() == -1.0);
-    QVERIFY(node->getChildren().size() == 1);
-    nameNode = static_cast<BlockNode *>(node->getChildren().at(0));
-    QVERIFY(nameNode->getNodeType() == AST::Block);
-    QVERIFY(nameNode->getName() == "Arduino");
-    QVERIFY(node->getLine() == 8);
-
-    node = static_cast<PlatformNode *>(nodes.at(6));
-    QVERIFY(node->getNodeType() == AST::Platform);
-    QVERIFY(node->platformName() == "Gamma");
-    QVERIFY(node->version() == 1.0);
-    QVERIFY(node->hwPlatform() == "PC");
-    QVERIFY(node->hwVersion() == 1.0);
-    QVERIFY(node->getChildren().size() == 1);
-    nameNode = static_cast<BlockNode *>(node->getChildren().at(0));
-    QVERIFY(nameNode->getNodeType() == AST::Block);
-    QVERIFY(nameNode->getName() == "Arduino");
-    QVERIFY(node->getLine() == 9);
-
-    node = static_cast<PlatformNode *>(nodes.at(7));
-    QVERIFY(node->getNodeType() == AST::Platform);
-    QVERIFY(node->platformName() == "Gamma");
-    QVERIFY(node->version() == -1.0);
-    QVERIFY(node->hwPlatform() == "PC");
-    QVERIFY(node->hwVersion() == -1.0);
-    QVERIFY(node->getChildren().size() == 2);
-    nameNode = static_cast<BlockNode *>(node->getChildren().at(0));
-    QVERIFY(nameNode->getNodeType() == AST::Block);
-    QVERIFY(nameNode->getName() == "Arduino");
-    nameNode = static_cast<BlockNode *>(node->getChildren().at(1));
-    QVERIFY(nameNode->getNodeType() == AST::Block);
-    QVERIFY(nameNode->getName() == "RPi");
-    QVERIFY(node->getLine() == 11);
-
-    node = static_cast<PlatformNode *>(nodes.at(8));
-    QVERIFY(node->getNodeType() == AST::Platform);
-    QVERIFY(node->platformName() == "Gamma");
-    QVERIFY(node->version() == 1.0);
-    QVERIFY(node->hwPlatform() == "PC");
-    QVERIFY(node->hwVersion() == -1.0);
-    QVERIFY(node->getChildren().size() == 2);
-    nameNode = static_cast<BlockNode *>(node->getChildren().at(0));
-    QVERIFY(nameNode->getNodeType() == AST::Block);
-    QVERIFY(nameNode->getName() == "Arduino");
-    nameNode = static_cast<BlockNode *>(node->getChildren().at(1));
-    QVERIFY(nameNode->getNodeType() == AST::Block);
-    QVERIFY(nameNode->getName() == "RPi");
-    QVERIFY(node->getLine() == 12);
-
-    node = static_cast<PlatformNode *>(nodes.at(9));
-    QVERIFY(node->getNodeType() == AST::Platform);
-    QVERIFY(node->platformName() == "Gamma");
-    QVERIFY(node->version() == 1.0);
-    QVERIFY(node->hwPlatform() == "PC");
-    QVERIFY(node->hwVersion() == 1.0);
-    QVERIFY(node->getChildren().size() == 2);
-    nameNode = static_cast<BlockNode *>(node->getChildren().at(0));
-    QVERIFY(nameNode->getNodeType() == AST::Block);
-    QVERIFY(nameNode->getName() == "Arduino");
-    nameNode = static_cast<BlockNode *>(node->getChildren().at(1));
-    QVERIFY(nameNode->getNodeType() == AST::Block);
-    QVERIFY(nameNode->getName() == "RPi");
-    QVERIFY(node->getLine() == 13);
-
-    ImportNode *importnode = static_cast<ImportNode *>(nodes.at(10));
+    ImportNode *importnode = static_cast<ImportNode *>(nodes.at(2));
     QVERIFY(importnode->getNodeType() == AST::Import);
     QVERIFY(importnode->importName() == "File");
     QVERIFY(importnode->importAlias() == "");
-    QVERIFY(importnode->getLine() == 15);
+    QVERIFY(importnode->getLine() == 5);
 
-    importnode = static_cast<ImportNode *>(nodes.at(11));
+    importnode = static_cast<ImportNode *>(nodes.at(3));
     QVERIFY(importnode->getNodeType() == AST::Import);
     QVERIFY(importnode->importName() == "File");
     QVERIFY(importnode->importAlias() == "F");
-    QVERIFY(importnode->getLine() == 16);
+    QVERIFY(importnode->getLine() == 6);
 
-    ForNode *fornode = static_cast<ForNode *>(nodes.at(12));
+    ForNode *fornode = static_cast<ForNode *>(nodes.at(4));
     QVERIFY(fornode->getNodeType() == AST::For);
     vector<AST *> fornames = fornode->getChildren();
     QVERIFY(fornames.size() == 1);
-    nameNode = static_cast<BlockNode *>(fornames.at(0));
+    BlockNode *nameNode = static_cast<BlockNode *>(fornames.at(0));
     QVERIFY(nameNode->getName() == "Gamma");
-    QVERIFY(fornode->getLine() == 18);
+    QVERIFY(fornode->getLine() == 8);
 
-    fornode = static_cast<ForNode *>(nodes.at(13));
+    fornode = static_cast<ForNode *>(nodes.at(5));
     QVERIFY(fornode->getNodeType() == AST::For);
     fornames = fornode->getChildren();
     QVERIFY(fornames.size() == 2);
@@ -3098,46 +3020,15 @@ void ParserTest::testHeader()
     QVERIFY(nameNode->getName() == "Gamma");
     nameNode = static_cast<BlockNode *>(fornames.at(1));
     QVERIFY(nameNode->getName() == "PufferFish");
-    QVERIFY(fornode->getLine() == 19);
+    QVERIFY(fornode->getLine() == 9);
 
     tree->deleteChildren();
     delete tree;
 }
 
-void ParserTest::testParser()
-{
-    // TODO: This test can probably ne removed as it is covered in the individual tests above.
-    // Could be used perhaps to test parsing errors?
-    AST *tree;
-    QStringList files;
-    files
-            //            << "data/01_header.stride" << "data/02_basic_blocks.stride" << "data/03_basic_bundle.stride"
-            //          << "data/04_basic_stream.stride" << "data/05_basic_functions.stride"
-            //          << "data/06_basic_noneswitch.stride" << "data/07_bundle_indeces.stride"
-            //          << "data/08_namespace.stride" << "data/09_lists.stride"
-
-            //          << "data/P01_platform_objects.stride" << "data/P02_check_duplicates.stride"
-            //          << "data/P03_bundle_resolution.stride"
-
-            //          << "data/E01_constant_res.stride" << "data/E02_stream_expansions.stride"
-            //          << "data/E03_multichn_streams.stride" << "data/E03_rates.stride"
-
-            << "data/list.stride"
-            << "data/introBlock.stride"
-            << "data/introConverter.stride" << "data/introFeedback.stride"
-            << "data/introGenerator.stride" << "data/introProcessor.stride"
-            << "data/introRemote.stride";
-    foreach (QString file, files) {
-        tree = AST::parseFile(QString(QFINDTESTDATA(file)).toStdString().c_str());
-        QVERIFY2(tree != NULL, QString("file:" + file).toStdString().c_str());
-        tree->deleteChildren();
-        delete tree;
-    }
-}
-
 void ParserTest::testLibraryBasicTypes()
 {
-    StrideLibrary library(QFINDTESTDATA("/../platforms"));
+    StrideLibrary library(QFINDTESTDATA(STRIDEROOT));
     DeclarationNode *type;
     QStringList typesToCheck;
     typesToCheck << "rated" << "domainMember" << "type" << "base" << "port"
@@ -3156,7 +3047,7 @@ void ParserTest::testLibraryValidation()
     AST *tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/L01_library_types_validation.stride")).toStdString().c_str());
     QVERIFY(tree);
-    CodeValidator generator(QFINDTESTDATA("/../platforms"), tree);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
 //    generator.validate();
     QVERIFY(generator.isValid());
 

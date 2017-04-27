@@ -1,4 +1,0 @@
-use RtAudio version 1.0 on PC
-
-AudioIn[1] >> AudioOut[2];
-

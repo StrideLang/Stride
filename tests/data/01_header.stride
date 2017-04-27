@@ -1,16 +1,6 @@
-use PufferFish version 1.1 on PufferFish
+use PufferFish version 1.1
 
-use Gamma on PC
-use Gamma version 1.0 on PC
-use Gamma version 1.0 on PC version 1.0
-
-use Gamma on PC with Arduino
-use Gamma version 1.0 on PC with Arduino
-use Gamma version 1.0 on PC version 1.0 with Arduino
-
-use Gamma on PC with Arduino and RPi
-use Gamma version 1.0  on PC with Arduino and RPi
-use Gamma version 1.0  on PC version 1.0 with Arduino and RPi
+use Gamma
 
 import File
 import File as F

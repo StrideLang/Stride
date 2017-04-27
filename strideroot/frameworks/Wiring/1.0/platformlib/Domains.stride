@@ -1,0 +1,36 @@
+
+_platformDescription _WiringPlatform {
+    name: "Wiring"
+}
+
+constant PlatformDomain {
+    value: "WiringDomain"
+}
+
+_domainDefinition WiringDomain {
+	domainName: "WiringDomain"
+	platform: _WiringPlatform
+	declarationsTag: "Declarations"
+	processingTag: "Processing"
+	initializationTag: "Initialization"
+	cleanupTag: "Cleanup"
+}
+
+# Serial domains
+#_domainDefinition SerialInDomain {
+#	domainName: "SerialInDomain"
+#	platform: _Discovery_M7_Platform
+#	declarationsTag: "SerialIn:Declarations"
+#	processingTag: "SerialIn:Processing"
+#	initializationTag: "SerialIn:Initialization"
+#	cleanupTag: "SerialIn:Cleanup"
+#}
+
+#_domainDefinition SerialOutDomain {
+#	domainName: "SerialOutDomain"
+#	platform: _Discovery_M7_Platform
+#	declarationsTag: "SerialOut:Declarations"
+#	processingTag: "SerialOut:Processing"
+#	initializationTag: "SerialOut:Initialization"
+#	cleanupTag: "SerialOut:Cleanup"
+#}

@@ -19,8 +19,17 @@ include("../config.pri")
 unix {
     !macx {
         LIBS += -lfl
+
+        code_coverage {
+            QMAKE_CXXFLAGS += -g -Wall -fprofile-arcs -ftest-coverage -O0
+            QMAKE_LFLAGS += -g -Wall -fprofile-arcs -ftest-coverage  -O0
+            LIBS += \
+                -lgcov
+        }
+
     }
 }
+
 
 folder_01.source = data/
 folder_01.target = data/

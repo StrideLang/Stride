@@ -19,7 +19,8 @@ SOURCES += \
     codevalidator.cpp \
     coderesolver.cpp \
     stridelibrary.cpp \
-    strideplatform.cpp
+    strideplatform.cpp \
+    stridesystem.cpp
 
 HEADERS += \
     pythonproject.h \
@@ -28,7 +29,8 @@ HEADERS += \
     builder.h \
     stridelibrary.hpp \
     strideplatform.hpp \
-    porttypes.h
+    porttypes.h \
+    stridesystem.hpp
 
 win32-msvc2015:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../parser/release/ -lStrideParser
 else:win32-msvc2015:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../parser/debug/ -lStrideParser
@@ -42,6 +44,4 @@ else:win32-msvc2015:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/..
 else:unix: PRE_TARGETDEPS += $$OUT_PWD/../parser/libStrideParser.a
 
 DISTFILES += \
-    ../platforms/common/builtin_types.json \
-    ../platforms/PufferFish/common/types.json \
     ../platforms/Gamma/1.0/scripts/run.py

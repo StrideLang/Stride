@@ -1,9 +1,9 @@
-use RtAudio version 1.0 on PC
+use DesktopAudio version 1.0
 
 #import Filters
 
 # This line should fail as LowPass is declared in "filters"
 AudioIn[1] >> LowPass() >> AudioOut[1];
 
-# This line shoud fail as LowPass not in scope f
+# This line shoud fail as LowPass not in scope F
 AudioIn[1] >> F::LowPass() >> AudioOut[1];

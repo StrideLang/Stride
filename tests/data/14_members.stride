@@ -1,4 +1,4 @@
-use RtAudio version 1.0 on PC
+use DesktopAudio version 1.0
 
 signal Sig {
     rate: 10

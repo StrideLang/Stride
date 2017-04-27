@@ -1,0 +1,67 @@
+
+_platformDescription _RtAudioPlatform {
+    name: "RtAudio"
+}
+
+constant PlatformDomain {
+    value: "AudioDomain"
+}
+
+_domainDefinition AudioDomain {
+	domainName: "AudioDomain"
+	platform: _RtAudioPlatform
+	globalsTag: "Includes" 
+	declarationsTag: "Declarations" 
+	processingTag: "Processing"
+	initializationTag: "Initialization"
+	cleanupTag: "Cleanup"
+	domainFunction: '
+	int audio_buffer_process( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
+           double streamTime, RtAudioStreamStatus status, void *data )
+{
+  if ( status ) std::cout << "Stream over/underflow detected." << std::endl;
+  //unsigned long *bytes = (unsigned long *) data;
+  MY_TYPE *in = (MY_TYPE *)inputBuffer;
+  MY_TYPE *out = (MY_TYPE *)outputBuffer;
+  while(nBufferFrames-- > 0) {
+%%domainCode%%
+			in += NUM_IN_CHANNELS;
+			out += NUM_OUT_CHANNELS;
+  }
+  return 0;
+}
+'
+}
+
+# OSC Domains
+_domainDefinition OSCInDomain {
+	domainName: "OSCInDomain"
+	platform: _RtAudioPlatform
+	globalsTag: "Includes" 
+	declarationsTag: "Declarations"
+	processingTag: "OSC:Processing"
+	initializationTag: "Initialization"
+	cleanupTag: "Cleanup"
+}
+
+# Serial Domains
+
+_domainDefinition SerialInDomain {
+	domainName: "SerialInDomain"
+	platform: _RtAudioPlatform
+	globalsTag: "Includes" 
+	declarationsTag: "Declarations"
+	processingTag: "SerialIn:Processing"
+	initializationTag: "Initialization"
+	cleanupTag: "Cleanup"
+}
+
+_domainDefinition SerialOutDomain {
+	domainName: "SerialOutDomain"
+	platform: _RtAudioPlatform
+	globalsTag: "Includes" 
+	declarationsTag: "Declarations"
+	processingTag: "SerialOut:Processing"
+	initializationTag: "Initialization"
+	cleanupTag: "Cleanup"
+}

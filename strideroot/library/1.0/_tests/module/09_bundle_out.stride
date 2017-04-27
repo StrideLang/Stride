@@ -1,0 +1,35 @@
+use DesktopAudio version 1.0
+
+module Test {
+	ports: [
+		port OutputPort {
+			main: on
+			direction: "output"
+			block: Output
+			domain: OutputDomain
+		}
+		port InputPort {
+			main: on
+			direction: "input"
+			block: Input
+		}
+		port TestPort {
+			name: "test"
+			direction: "input"
+			block: TestBlock
+			default: 1.0
+		}
+	]
+	blocks: [
+		signal Output[2] {}
+	]
+	streams: [
+		Input * TestBlock >> Output[1];
+		Input >> Output[2];
+	]
+}
+
+signal SigIn[2] { domain: AudioDomain }
+
+SigIn[1] >> Test(test: SigIn[2]) >> AudioOut;
+

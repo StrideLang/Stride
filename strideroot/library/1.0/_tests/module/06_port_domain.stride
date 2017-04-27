@@ -1,0 +1,32 @@
+use DesktopAudio version 1.0
+
+module Test {
+	ports: [
+		port OutputPort {
+			main: on
+			direction: "output"
+			block: Output
+			domain: OutputDomain
+		}
+		port InputPort {
+			main: on
+			direction: "input"
+			block: Input
+		}
+		port TestPort {
+			name: "test"
+			direction: "input"
+			block: TestBlock
+			domain: OutputDomain
+		}
+	]
+	blocks: [
+#	Amp should be auto declared in OutputDomain
+	]
+	streams: [
+		TestBlock * 2 >> Amp;
+		Input * Amp >> Output;
+	]
+}
+
+AudioIn[1] >> Test(test: AudioIn[2]) >> AudioOut[1];

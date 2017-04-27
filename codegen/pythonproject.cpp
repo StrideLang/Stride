@@ -1,17 +1,51 @@
+/*
+    Stride is licensed under the terms of the 3-clause BSD license.
+
+    Copyright (C) 2017. The Regents of the University of California.
+    All rights reserved.
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions are met:
+
+        Redistributions of source code must retain the above copyright notice,
+        this list of conditions and the following disclaimer.
+
+        Redistributions in binary form must reproduce the above copyright
+        notice, this list of conditions and the following disclaimer in the
+        documentation and/or other materials provided with the distribution.
+
+        Neither the name of the copyright holder nor the names of its
+        contributors may be used to endorse or promote products derived from
+        this software without specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+    AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+    ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+    LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+    INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+    CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+    ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+    POSSIBILITY OF SUCH DAMAGE.
+
+    Authors: Andres Cabrera and Joseph Tilbian
+*/
+
 
 #include <QDebug>
 #include <QDir>
 #include <QCoreApplication>
 
 #include "pythonproject.h"
-#include "strideplatform.hpp"
+#include "stridesystem.hpp"
 #include "codevalidator.h"
 
 
-PythonProject::PythonProject(QString platformPath,
+PythonProject::PythonProject(QString platformPath, QString strideRoot,
                              QString projectDir,
                              QString pythonExecutable) :
-    Builder(projectDir, platformPath),
+    Builder(projectDir, strideRoot, platformPath),
     m_runningProcess(this),
     m_buildProcess(this)
 
@@ -48,9 +82,9 @@ bool PythonProject::build(AST *tree)
             return false;
         }
      }
-    m_buildProcess.setWorkingDirectory(m_platformPath + "/../../../");
+    m_buildProcess.setWorkingDirectory(m_strideRoot);
     // FIXME un hard-code library version
-    arguments << "library/1.0/python/build.py" << m_projectDir << m_platformPath + "/../";
+    arguments << "library/1.0/python/build.py" << m_projectDir << m_strideRoot;
     m_buildProcess.start(m_pythonExecutable, arguments);
 
     m_buildProcess.waitForStarted(15000);
@@ -64,12 +98,13 @@ bool PythonProject::build(AST *tree)
     if (m_buildProcess.state() == QProcess::Running) {
         m_buildProcess.kill(); // Taking too long...
     }
-    emit outputText("Done building.");
 
     if (m_buildProcess.exitStatus() == QProcess::ExitStatus::NormalExit
             && m_buildProcess.exitCode() == 0) {
+        emit outputText("Done building. Success.");
         return true;
     } else {
+        emit outputText("Done building. Failed.");
         return false;
     }
 
@@ -91,7 +126,7 @@ bool PythonProject::run(bool pressed)
     }
     m_runningProcess.setWorkingDirectory(m_platformPath + "/../../../");
     // TODO un hard-code library version
-    arguments << "library/1.0/python/run.py" << m_projectDir;
+    arguments << "library/1.0/python/run.py" << m_projectDir << "RtAudio/app";
     m_runningProcess.start(m_pythonExecutable, arguments);
     m_runningProcess.waitForStarted(15000);
     m_running.store(1);
@@ -125,7 +160,7 @@ void PythonProject::writeAST(AST *tree)
     foreach(AST *node, tree->getChildren()) {
         QJsonObject nodeObject;
         if (node->getNodeType() == AST::Platform) {
-            nodeObject["platform"] = QString::fromStdString(static_cast<PlatformNode *>(node)->platformName());
+            astToJson(node, nodeObject);
         } else if (node->getNodeType() == AST::Stream) {
             astToJson(node, nodeObject);
         } else if (node->getNodeType() == AST::Declaration) {
@@ -310,6 +345,17 @@ void PythonProject::astToJson(AST *node, QJsonObject &obj)
         newObj["name"] = QString::fromStdString(static_cast<PortPropertyNode *>(node)->getName());
         newObj["portname"] = QString::fromStdString(static_cast<PortPropertyNode *>(node)->getPortName());
         obj["portproperty"] = newObj;
+    } if (node->getNodeType() == AST::Platform) {
+        QJsonObject newObj;
+        newObj["name"] = QString::fromStdString(static_cast<PlatformNode *>(node)->platformName());
+        newObj["majorVersion"] = static_cast<PlatformNode *>(node)->majorVersion();
+        newObj["minorVersion"] = static_cast<PlatformNode *>(node)->minorVersion();
+        QJsonObject platformInfo;
+        platformInfo["path"] = m_platformPath;
+        QJsonArray platformList;
+        platformList.append(platformInfo);
+        newObj["platforms"] = platformList;
+        obj["system"] = newObj;
     } else {
         obj["type"] = QString("Unsupported");
     }
