@@ -32,14 +32,14 @@ platformType _HwOutput {
     inherits: ['signal']
 }
 
-constant _NumInputChannels {value: 2}
+#constant _NumInputChannels {value: 2}
 
-_hwInput AudioIn[_NumInputChannels] {
+_hwInput AudioIn[2] {
     rate: AudioRate
     domain: AudioDomain
 }
 
-constant _NumOutputChannels {value: 2}
+#constant _NumOutputChannels {value: 2}
 _hwOutput AudioOut[2] {
     rate: AudioRate
     domain: AudioDomain
