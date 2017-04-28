@@ -842,7 +842,7 @@ void ProjectWindow::readSettings()
     settings.endGroup();
 
     settings.beginGroup("environment");
-    m_environment["platformRootPath"] = settings.value("platformRootPath", "../../StreamStack/platforms").toString();
+    m_environment["platformRootPath"] = settings.value("platformRootPath", "../../Stride/strideroot").toString();
     settings.endGroup();
 
     settings.beginGroup("GUI");
