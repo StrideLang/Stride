@@ -56,8 +56,9 @@ PythonProject::PythonProject(QString platformPath, QString strideRoot,
         m_pythonExecutable = pythonExecutable;
     }
 
-    connect(&m_buildProcess, SIGNAL(readyRead()), this, SLOT(consoleMessage()));
-    connect(&m_runningProcess, SIGNAL(readyRead()), this, SLOT(consoleMessage()));
+    QObject::connect(&m_buildProcess, SIGNAL(readyReadStandardOutput()) , this, SLOT(consoleMessage()));
+    QObject::connect(&m_buildProcess, SIGNAL(readyReadStandardError()) , this, SLOT(consoleMessage()));
+    QObject::connect(&m_runningProcess, SIGNAL(readyRead()), this, SLOT(consoleMessage()));
 }
 
 PythonProject::~PythonProject()

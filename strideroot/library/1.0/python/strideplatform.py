@@ -215,7 +215,7 @@ class ValueAtom(Atom):
                                  self)]
 
     def get_inline_processing_code(self, in_token):
-        if type(self.value) == str:
+        if type(self.value) == str or type(self.value) == unicode:
             return self.value
         else:
             return templates.value_real(self.value)
