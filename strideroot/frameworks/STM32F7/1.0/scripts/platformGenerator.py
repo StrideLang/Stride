@@ -308,6 +308,8 @@ class Generator(GeneratorBase):
             if platform.system() == "Darwin":
                 run_prefix = '/usr/local/bin/'
             build_dir = self.out_dir + '/STM32F7'
+            if os.path.exists(build_dir + '/app.elf'):
+                os.remove(build_dir + '/app.elf')
 
             # The following two lines work when run from: Spyder
             # StreamStacker >> Completes execution without having run cmake
