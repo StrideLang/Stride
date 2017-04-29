@@ -64,6 +64,11 @@ int main(int argc, char *argv[])
 
     const QStringList args = parser.positionalArguments();
     QString platformRootPath = parser.value(targetDirectoryOption);
+
+    if (args.size() < 1) {
+        parser.helpText();
+        return -1;
+    }
     QString fileName = args.at(0);
 
     if (platformRootPath.isEmpty()) {

@@ -11,7 +11,7 @@ INCLUDEPATH += ../parser
 TEMPLATE = app
 
 SOURCES += tst_parsertest.cpp
-DEFINES += SRCDIR=\\\"$$PWD/\\\"
+DEFINES += BUILDPATH=\\\"$$OUT_PWD/\\\"
 CONFIG += c++11
 
 include("../config.pri")
