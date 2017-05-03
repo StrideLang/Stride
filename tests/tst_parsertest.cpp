@@ -59,6 +59,7 @@ private:
 
 private Q_SLOTS:
 
+    void testConnectionErrors();
     void testConnectionCount();
 
     // Code generation/Compiler
@@ -226,6 +227,7 @@ void ParserTest::testBlockMembers()
     tree->deleteChildren();
     delete tree;
 }
+
 void ParserTest::testConnectionCount()
 {
 
@@ -425,6 +427,22 @@ void ParserTest::testModuleDomains()
     domainName = static_cast<BlockNode *>(portBlock->getPropertyValue("domain"));
     QVERIFY(domainName->getNodeType() == AST::Block);
     QVERIFY(domainName->getName() == "_OutputDomain");
+
+    tree->deleteChildren();
+    delete tree;
+}
+
+void ParserTest::testConnectionErrors()
+{
+    AST *tree;
+    tree = AST::parseFile(QString(QFINDTESTDATA("data/15_connection_errors.stride")).toStdString().c_str());
+    QVERIFY(tree != NULL);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
+
+    QList<LangError> errors = generator.getErrors();
+
+    LangError error = errors.at(0);
+    QVERIFY(error.type == LangError::StreamMemberSizeMismatch);
 
     tree->deleteChildren();
     delete tree;

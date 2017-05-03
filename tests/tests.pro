@@ -83,7 +83,8 @@ DISTFILES += \
     data/E04_rates.stride \
     data/E05_library_objects.stride \
     data/L01_library_types_validation.stride \
-    data/14_members.stride
+    data/14_members.stride \
+    data/15_connection_errors.stride
 
 # Link to codegen library
 

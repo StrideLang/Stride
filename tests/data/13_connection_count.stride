@@ -34,3 +34,4 @@ module Test2 {
         Sig4 >> Sig3;
     ]
 }
+
