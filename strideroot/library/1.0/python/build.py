@@ -7,34 +7,47 @@ import sys
 import os
 import json
 
+from time import sleep
+
 # ---------------------
+class Builder(object):
+    def __init__(self, strideroot, products_dir, debug = False):
+        self.strideroot = strideroot
+        self.products_dir = products_dir
+        self.debug = debug
 
-def build(strideroot, products_dir, debug = False):
+        jsonfile = open(self.products_dir + '/tree.json')
+        tree = json.load(jsonfile)
 
-    jsonfile = open(products_dir + '/tree.json')
-    tree = json.load(jsonfile)
+        platform_dir = None
+        for node in tree:
+            if "system" in node:
+                platform_dir = node['system']['platforms'][0]['path']
+                break
 
-    platform_dir = None
-    for node in tree:
-        if "system" in node:
-            platform_dir = node['system']['platforms'][0]['path']
-            break
+        # Add python path inside strideroot to module search paths
+        sys.path.append(self.strideroot + "/library/1.0/python")
+        # Add platform scritps path to python module search paths
+        sys.path.append(platform_dir + "/scripts")
 
-    # Add python path inside strideroot to module search paths
-    sys.path.append(args.strideroot + "/library/1.0/python")
-    # Add platform scritps path to python module search paths
-    sys.path.append(platform_dir + "/scripts")
+        print("Using strideroot:" + strideroot)
+        print("Using platform: " + platform_dir)
+        # Get gerenator
 
-    print("Using strideroot:" + strideroot)
-    print("Using platform: " + platform_dir)
-    # Get gerenator
+        from platformGenerator import Generator
 
-    from platformGenerator import Generator
+        self.gen = Generator(products_dir, strideroot, platform_dir, tree, debug)
 
-    gen = Generator(products_dir, strideroot, platform_dir, tree, debug)
-    gen.generate_code()
-    print("Building done...")
-    gen.compile()
+    def build(self):
+        self.gen.generate_code()
+        print("Building done...")
+        self.gen.compile()
+
+    def run(self):
+        self.gen.run()
+
+    def stop(self):
+        self.gen.stop()
 
 if __name__ == '__main__':
     import argparse
@@ -62,7 +75,7 @@ if __name__ == '__main__':
 #                        default= cur_path + '/RtAudio/icmc/ICMC_06.stride_Products'
                         default= cur_path + '/../examples/eoys/Beating.stride_Products'
 #                        default= cur_path + '/RtAudio/tests/bundles.stride_Products'
-#                        default= cur_path + '/Wiring/examples/test.stride_Products'
+#                        default= cur_path + '/../platforms/Wiring/examples/test.stride_Products'
 #                        default='/home/andres/Documents/src/Stride/StreamStack/platforms/Arduino/examples/test.stride_Products'
 #                        default= cur_path + '/STM32F7/examples/test.stride_Products'
 #                        default= cur_path + '/../tests/data/P06_domains.stride_Products'
@@ -74,7 +87,25 @@ if __name__ == '__main__':
 #                       default = cur_path + '/STM32F7/1.0'
                         default = cur_path
                         )
+    parser.add_argument("command",
+                        help="Commands to execute",
+                        nargs='?',
+#                        default = cur_path + '/Wiring/1.0'
+#                       default = cur_path + '/STM32F7/1.0'
+                        default = "build&run"
+                        )
     args = parser.parse_args()
 
-    build(args.strideroot, args.products_dir, True)
+    builder = Builder(args.strideroot, args.products_dir, True)
+
+    commands = args.command.split("&")
+    print(commands)
+    for command in commands:
+        if command == "build":
+            builder.build()
+        elif command == "run":
+            builder.run()
+        else:
+            builder.custom_command(command)
+
 

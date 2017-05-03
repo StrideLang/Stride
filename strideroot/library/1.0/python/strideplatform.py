@@ -2163,7 +2163,16 @@ class GeneratorBase(object):
             except:
                 self.log("Error running astyle!")
         else:
-            self.log("Platform '%s' not supported!"%platform.system())
+            self.log("Platform '%s' not supported!"%platform.system())\
+
+    def run(self):
+        pass
+
+    def stop(self):
+        pass
+
+    def custom_command(self, command):
+        self.log("Custom command:" + command)
 
 if __name__ == '__main__':
     pass

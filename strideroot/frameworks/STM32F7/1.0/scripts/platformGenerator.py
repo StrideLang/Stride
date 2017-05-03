@@ -54,6 +54,7 @@ class Generator(GeneratorBase):
 
         self.project_dir = platform_dir + '/project'
         self.out_file = self.out_dir + "/STM32F7/Src/main.cpp"
+        self.target_name = 'app.elf'
 
         self.log("Building STM32F7 project")
         self.log("Buiding in directory: " + self.out_dir)
@@ -217,7 +218,7 @@ class Generator(GeneratorBase):
 
             args =  cxx_linker \
                     + ['@objects.list'] \
-                    + ['-o', 'app.elf'] \
+                    + ['-o', self.target_name] \
                     + common_flags \
                     + library_dir \
                     + linker_flags \
@@ -229,7 +230,7 @@ class Generator(GeneratorBase):
             args =  [   'arm-none-eabi-objcopy',
                         '-O',
                         'binary',
-                        'app.elf',
+                        self.target_name,
                         'app.bin'
                     ]
             # self.log(' '.join(args))
@@ -254,62 +255,14 @@ class Generator(GeneratorBase):
             self.log(' '.join(args))
             Popen(' '.join(args))
 
-#        elif platform.system() == "Linux":
-#
-#            args = ['cmake', '.', '-DSTRIDE_PLATFORM_ROOT=' + self.platform_dir ]
-#            outtext = ck_out(args, cwd=self.out_dir + "/STM32F7")
-#            self.log(outtext)
-#
-#            args = ['make', '-j4']
-#            outtext = ck_out(args, cwd=self.out_dir + "/STM32F7")
-#            self.log(outtext)
-#
-#            args = ['arm-none-eabi-objcopy', '-O', 'binary', 'app.elf', 'app.bin']
-#            outtext = ck_out(args, cwd=self.out_dir + "/STM32F7")
-#            self.log(outtext)
-#
-#            openOCD_dirs = ["/opt/gnuarmeclipse/openocd/0.10.0-201601101000-dev/", "/home/andres/Documents/src/openocd/0.10.0-201601101000-dev"]
-#            openOCD_bin = "bin/openocd"
-#            for directory in openOCD_dirs:
-#                if os.path.exists(directory + "/" + openOCD_bin):
-#                    openOCD_dir = directory
-#                    break
-#
-#            openOCD_cfg_file = self.platform_dir + "/openOCD/stm32f746g_disco.cfg"
-#            openOCD_bin_file = self.out_dir + "/STM32F7/app.bin"
-#
-#            args = [openOCD_bin,
-#                    '-f' + openOCD_cfg_file,
-#                    '-c init',
-#                    '-c reset init',
-#                    '-c halt',
-#                    '-c flash write_image erase ' + openOCD_bin_file + ' 0x08000000',
-#                    '-c reset',
-#                    '-c shutdown']
-#
-#            outtext = ck_out(args, cwd=openOCD_dir)
-#            self.log(outtext)
-#
-##
-##           THE FOLLOWING CODE CAN BE REMOVED // STLINK REPLACED WITH OPENOCD
-##
-#
-##            args = [self.platform_dir + '/stlink/st-flash', '--reset', 'write', 'app.bin', '0x8000000']
-##            outtext = ck_out(args, cwd=self.out_dir + "/STM32F7")
-##            self.log(outtext)
-##
-##            args = [self.platform_dir + '/stlink/st-flash', '-rst']
-##            outtext = ck_out(args, cwd=self.out_dir + "/STM32F7")
-##            self.log(outtext)
-
         elif platform.system() == "Darwin" or platform.system() == "Linux":
 
             run_prefix = ''
             if platform.system() == "Darwin":
                 run_prefix = '/usr/local/bin/'
             build_dir = self.out_dir + '/STM32F7'
-            if os.path.exists(build_dir + '/app.elf'):
-                os.remove(build_dir + '/app.elf')
+            if os.path.exists(build_dir + "/" + self.target_name):
+                os.remove(build_dir + "/" + self.target_name)
 
             # The following two lines work when run from: Spyder
             # StreamStacker >> Completes execution without having run cmake
@@ -341,18 +294,18 @@ class Generator(GeneratorBase):
             # Since 'make' is executing in a "different" shell we need to wait for it to complete
             # 50 * 0.1 sec = 5 sec
             time_out = 50
-            while (not os.path.isfile(build_dir + '/app.elf') and time_out):
+            while (not os.path.isfile(build_dir + '/' + self.target_name) and time_out):
                 time.sleep(0.1)
                 time_out -= 1
 
             # Wait for the file to be written to
             # TODO THIS IS NOT A PROPER SOLUTION!
             # 1 second might not be enough
-            if not os.path.exists(build_dir + '/app.elf') or os.stat(build_dir + '/app.elf').st_size == 0:
+            if not os.path.exists(build_dir + '/' + self.target_name) or os.stat(build_dir + '/' + self.target_name).st_size == 0:
                 time.sleep(1)
 
             # The following two lines work when run from: Spyder and StreamStacker
-            args = [run_prefix + 'arm-none-eabi-objcopy', '-O', 'binary', build_dir +  '/app.elf', build_dir + '/app.bin']
+            args = [run_prefix + 'arm-none-eabi-objcopy', '-O', 'binary', build_dir +  '/' + self.target_name, build_dir + '/' + self.target_name]
             outtext = ck_out(args, cwd=build_dir)
             self.log(outtext)
 
@@ -382,3 +335,6 @@ class Generator(GeneratorBase):
             self.log("Platform '%s' not supported!"%platform.system())
 
         self.log("Platform code compilation finished!")
+
+    def run(self):
+        self.log("Run has no effect on STM32F7 framework.")

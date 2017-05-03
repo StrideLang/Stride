@@ -85,10 +85,11 @@ bool PythonProject::build(AST *tree)
      }
     m_buildProcess.setWorkingDirectory(m_strideRoot);
     // FIXME un hard-code library version
-    arguments << "library/1.0/python/build.py" << m_projectDir << m_strideRoot;
+    arguments << "library/1.0/python/build.py" << m_projectDir << m_strideRoot << "build";
     m_buildProcess.start(m_pythonExecutable, arguments);
 
     m_buildProcess.waitForStarted(15000);
+    qDebug() << "pid:" << m_buildProcess.pid();
     m_building.store(1);
     while(m_building.load() == 1) {
         if(m_buildProcess.waitForFinished(50)) {
@@ -96,10 +97,8 @@ bool PythonProject::build(AST *tree)
         }
         qApp->processEvents();
     }
-    if (m_buildProcess.state() == QProcess::Running) {
-        m_buildProcess.kill(); // Taking too long...
-    }
 
+    qApp->processEvents();
     if (m_buildProcess.exitStatus() == QProcess::ExitStatus::NormalExit
             && m_buildProcess.exitCode() == 0) {
         emit outputText("Done building. Success.");
@@ -108,7 +107,6 @@ bool PythonProject::build(AST *tree)
         emit outputText("Done building. Failed.");
         return false;
     }
-
 }
 
 bool PythonProject::run(bool pressed)
@@ -119,17 +117,19 @@ bool PythonProject::run(bool pressed)
     }
     QStringList arguments;
     if (m_runningProcess.state() == QProcess::Running) {
-       m_runningProcess.close();
-       if (!m_runningProcess.waitForFinished(5000)) {
-           qDebug() << "Could not stop running process. Not starting again.";
-           return false;
-       }
-    }
-    m_runningProcess.setWorkingDirectory(m_platformPath + "/../../../");
-    // TODO un hard-code library version
-    arguments << "library/1.0/python/run.py" << m_projectDir << "RtAudio/app";
+        m_runningProcess.close();
+        if (!m_runningProcess.waitForFinished(5000)) {
+            qDebug() << "Could not stop run process. Not starting again.";
+            return false;
+        }
+     }
+    m_runningProcess.setWorkingDirectory(m_strideRoot);
+    // FIXME un hard-code library version
+    arguments << "library/1.0/python/build.py" << m_projectDir << m_strideRoot << "run";
     m_runningProcess.start(m_pythonExecutable, arguments);
+
     m_runningProcess.waitForStarted(15000);
+    qDebug() << "run pid:" << m_runningProcess.pid();
     m_running.store(1);
     while(m_running.load() == 1) {
         if(m_runningProcess.waitForFinished(50)) {
@@ -137,20 +137,29 @@ bool PythonProject::run(bool pressed)
         }
         qApp->processEvents();
     }
-    emit outputText("Done.");
-    m_runningProcess.close();
-
+    emit programStopped();
+    qApp->processEvents();
     if (m_runningProcess.exitStatus() == QProcess::ExitStatus::NormalExit
             && m_runningProcess.exitCode() == 0) {
+        emit outputText("Done running.");
         return true;
     } else {
+        emit outputText("Done running.");
         return false;
     }
 }
 
 void PythonProject::stopRunning()
 {
+    m_building.store(0);
     m_running.store(0);
+    if (m_buildProcess.state() == QProcess::Running) {
+        m_buildProcess.kill(); // Taking too long...
+    }
+    if (m_runningProcess.state() == QProcess::Running) {
+        m_runningProcess.kill(); // Taking too long...
+    }
+//    qDebug() << "Stopping.";
     //m_runningProcess.waitForFinished();
 }
 

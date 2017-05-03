@@ -178,6 +178,7 @@ bool ProjectWindow::build()
         if (m_builder) {
             connect(m_builder, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
             connect(m_builder, SIGNAL(errorText(QString)), this, SLOT(printConsoleError(QString)));
+            connect(m_builder, SIGNAL(programStopped()), this, SLOT(programStopped()));
             buildOK = m_builder->build(tree);
 //            builder->build(optimizedTree);
         } else {
@@ -282,6 +283,8 @@ void ProjectWindow::run(bool pressed)
                 ui->actionRun->setChecked(false);
                 printConsoleError(tr("Can't run. No builder available."));
             }
+        } else {
+            programStopped();
         }
     } else {
         stop();

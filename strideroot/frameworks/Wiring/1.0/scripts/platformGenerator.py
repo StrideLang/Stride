@@ -130,3 +130,6 @@ class Generator(GeneratorBase):
             self.log("Platform '%s' not supported!"%platform.system())
 
         self.log("Platform code compilation finished!")
+
+    def run(self):
+        self.log("Run has no effect on Wiring framework.")

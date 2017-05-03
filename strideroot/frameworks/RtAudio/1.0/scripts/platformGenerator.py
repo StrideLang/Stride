@@ -33,13 +33,93 @@
     Authors: Andres Cabrera and Joseph Tilbian
 """
 
+import subprocess
 from subprocess import check_output as ck_out
+from time import sleep
+
+from threading  import Thread
+try:
+    from Queue import Queue
+except ImportError:
+    from queue import Queue # python 3.x
+
 import platform
 import shutil
 import os
 from strideplatform import GeneratorBase
 
 from platformTemplates import templates # Perhaps we should acces this through PlatformFunctions ?
+
+class ExternalProcess(object):
+    def __init__(self):
+        self.stdoutqueue = Queue()
+        self.stderrqueue = Queue()
+        self.stdout = ''
+        self.stderr = ''
+        self.internal_process = None
+
+    def start(self, command_list):
+
+        self.internal_process = subprocess.Popen(command_list,
+                       shell=True,
+                       stdout=subprocess.PIPE,
+                       stderr=subprocess.PIPE)
+        if self.internal_process.pid <= 0:
+            self._debug_print("Process failed to start.")
+        t = Thread(target=self.enqueue_output, args=(self.internal_process.stdout, self.stdoutqueue))
+        t.daemon = True # thread dies with the program
+        t.start()
+        terr = Thread(target=self.enqueue_output, args=(self.internal_process.stderr, self.stderrqueue))
+        terr.daemon = True # thread dies with the program
+        terr.start()
+
+    def stop(self):
+        self.terminate()
+        self.internal_process.poll()
+        retcode = self.internal_process.returncode
+        self.internal_process = None
+        return retcode
+
+    def read_messages(self):
+        self.flush_messages()
+        std = self.stdout
+        err = self.stderr
+        self.stdout = ''
+        self.stderr = ''
+        return std, err
+
+    def flush_messages(self):
+        while not self.stdoutqueue.empty():
+            line = self.stdoutqueue.get() # or q.get(timeout=.1)
+            self.stdout += line
+
+        while not self.stderrqueue.empty():
+            line = self.stderrqueue.get() # or q.get(timeout=.1)
+            self.stderr += line
+
+    def is_done(self):
+        if self.internal_process:
+            return self.internal_process.poll() is not None
+        else:
+            return True
+
+    def wait_until_done(self):
+        if not self.internal_process:
+            return 0
+        self.internal_process.wait()
+        self.flush_messages()
+        #self._debug_print("Done building '%s' on %s."%(self.name, self.hostname) + '\n')
+        return self.internal_process.returncode
+
+    def terminate(self):
+        if self.internal_process and not self.is_done():
+            self.internal_process.kill()
+
+    def enqueue_output(self, out, queue):
+        for line in iter(out.readline, b''):
+            queue.put(line)
+        out.close()
+
 
 class Generator(GeneratorBase):
     def __init__(self, out_dir = '',
@@ -52,10 +132,14 @@ class Generator(GeneratorBase):
 
         self.project_dir = platform_dir + "/project"
         self.out_dir += "/RtAudio"
+        self.target_name = 'rtaudio_app'
+        self.run_process = None
+        self.stop_requested = False
         if not os.path.isdir(self.out_dir):
             os.mkdir(self.out_dir)
         self.log("Building RtAudio project")
         self.log("Buiding in directory: " + self.out_dir)
+
 
     def generate_code(self):
         # Generate code from tree
@@ -137,7 +221,7 @@ class Generator(GeneratorBase):
 
 
             flags += [f[f.rindex("/") + 1:] + ".o" for f in source_files]
-            flags += ["-o " + self.out_dir +"/app",
+            flags += ["-o " + self.out_dir +"/" + self.target_name,
                      "-lole32",
                      "-lwinmm",
                      "-lksuser",
@@ -206,7 +290,7 @@ class Generator(GeneratorBase):
 
 
             args += [f[f.rindex("/") + 1:] + ".o" for f in source_files]
-            args += ["-o" + self.out_dir + "/app"]
+            args += ["-o" + self.out_dir + "/" + self.target_name]
             args += link_flags
 
             args += self.build_flags + self.link_flags
@@ -253,7 +337,7 @@ class Generator(GeneratorBase):
 
 
             args += [f[f.rindex("/") + 1:] + ".o" for f in source_files]
-            args += ["-o" + self.out_dir + "/app",
+            args += ["-o" + self.out_dir + "/" + self.target_name,
                     "-framework CoreFoundation",
                     "-framework CoreAudio",
                     "-lpthread"
@@ -270,3 +354,31 @@ class Generator(GeneratorBase):
             self.log("Platform '%s' not supported!"%platform.system())
 
         self.log("Platform code compilation finished!")
+
+    def run(self):
+
+        os.chdir(self.out_dir)
+        self.log("Running: " + self.out_dir + "/" + self.target_name)
+        self.log("Running in directory: " + self.out_dir)
+
+        args = [self.out_dir + "/" + self.target_name]
+        outtext = ck_out(args)
+        self.log(outtext)
+#        self.process = ExternalProcess()
+
+#        self.process.start(args)
+
+#        while not self.process.is_done():
+#            out, err = self.process.read_messages()
+#            self.log(out)
+#            self.log(err)
+#            sleep(0.2)
+
+    def stop(self):
+        self.stop_requested = True
+#        self.run_process.kill()
+#        outs, errs = self.run_process.communicate()
+#        self.log(outs)
+#        self.log(errs)
+
+
