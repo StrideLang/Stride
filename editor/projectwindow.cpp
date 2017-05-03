@@ -359,6 +359,7 @@ void ProjectWindow::showDocumentation()
     }
     QString word = cursor.selectedText();
     QString html = m_codeModel.getHtmlDocumentation(word);
+    ui->documentationDockWidget->show();
     if (html.isEmpty()) {
         html = tr("Unknown type: %1").arg(word);
         ui->documentationWidget->setHtml(html);
