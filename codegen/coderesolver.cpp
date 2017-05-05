@@ -101,6 +101,7 @@ void CodeResolver::resolveStreamRates(StreamNode *stream)
     }
     if (rate < 0 && rightRate >= 0) {
         left->setRate(rightRate);
+        // TODO should issue a warning or error if rate has been set for a member and it is different.
         if ((left->getNodeType() == AST::List) || (left->getNodeType() == AST::Expression)) {
             for (AST *child: left->getChildren()) {
                 if (child->getRate() == -1.0) {
@@ -382,6 +383,7 @@ void CodeResolver::declareModuleInternalBlocks()
                                     newSignal->replacePropertyValue("rate", new ValueNode("", -1));
                                     internalBlocks->addChild(newSignal);
                                     newSignal->setDomainString(domainName);
+                                    // TODO This default needs to be done per instance
                                     AST *portDefault = portBlock->getPropertyValue("default");
                                     if (portDefault && portDefault->getNodeType() != AST::None) {
                                         Q_ASSERT(newSignal->getPropertyValue("default"));
@@ -400,21 +402,29 @@ void CodeResolver::declareModuleInternalBlocks()
                                     }
                                 }
                             } else if (blockPortValue->getNodeType() == AST::None) {
-                                std::string directionName = static_cast<ValueNode *>(directionPortValue)->getStringValue();
-                                Q_ASSERT(directionName == "input" || directionName == "output");
-                                string defaultName;
-                                if (directionName == "input") {
-                                    defaultName = "Input";
-                                } else if (directionName == "output") {
-                                    defaultName = "Output";
-                                }
-                                BlockNode *name = new BlockNode(defaultName, "", -1);
-                                portBlock->replacePropertyValue("block", name);
-                                DeclarationNode *newSignal = CodeValidator::findDeclaration(QString::fromStdString(defaultName), QVector<AST *>(), internalBlocks);
-                                if (!newSignal) {
-                                    newSignal = createSignalDeclaration(QString::fromStdString(defaultName));
-                                    internalBlocks->addChild(newSignal);
-                                    newSignal->setDomainString(domainName);
+                                AST *mainPortValue = portBlock->getPropertyValue("main");
+                                if (mainPortValue && mainPortValue->getNodeType() == AST::Switch) {
+                                    ValueNode *mainValue = static_cast<ValueNode *>(mainPortValue);
+                                    if (mainValue->getSwitchValue()) {
+                                        std::string directionName = static_cast<ValueNode *>(directionPortValue)->getStringValue();
+
+                                        if (directionName == "input" || directionName == "output") {
+                                            string defaultName;
+                                            if (directionName == "input") {
+                                                defaultName = "Input";
+                                            } else if (directionName == "output") {
+                                                defaultName = "Output";
+                                            }
+                                            BlockNode *name = new BlockNode(defaultName, "", -1);
+                                            portBlock->replacePropertyValue("block", name);
+                                            DeclarationNode *newSignal = CodeValidator::findDeclaration(QString::fromStdString(defaultName), QVector<AST *>(), internalBlocks);
+                                            if (!newSignal) {
+                                                newSignal = createSignalDeclaration(QString::fromStdString(defaultName));
+                                                internalBlocks->addChild(newSignal);
+                                                newSignal->setDomainString(domainName);
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -468,7 +478,7 @@ void CodeResolver::expandParallelStream(StreamNode *stream, QVector<AST *> scope
             io.first = CodeValidator::getNodeNumInputs(right, scopeStack, m_tree, errors);
             io.second = CodeValidator::getNodeNumOutputs(right, scopeStack, m_tree, errors);
             IOs << io;
-            right = NULL;
+            right = nullptr;
         }
     }
     // Now go through comparing number of outputs to number of inputs to figure out if we
@@ -493,7 +503,6 @@ void CodeResolver::expandParallelStream(StreamNode *stream, QVector<AST *> scope
                 break;
             }
         } else if (numPrevOut < numCurIn && numPrevOut > 0) { // Need to clone all existing left side
-            Q_ASSERT(numPrevOut > 0);
             if (numCurIn/(float)numPrevOut == numCurIn/numPrevOut) {
 //                        int newNumCopies = numCurIn/numPrevOut;
 //                        for(int i = 0; i < numCopies.size(); ++i) {
@@ -640,6 +649,7 @@ AST *CodeResolver::expandFunctionFromProperties(FunctionNode *func, QVector<AST 
                     }
 
                 } else if (value->getNodeType() == AST::List) {
+                    // FIXME we need to split the list according to the expected size. This currently assumes size == 1
                     vector<AST *> values = static_cast<ListNode *>(value)->getChildren();
                     vector<AST *> functions = static_cast<ListNode *>(newFunctions)->getChildren();
                     Q_ASSERT(values.size() == functions.size());
@@ -1627,8 +1637,8 @@ std::vector<const AST *> CodeResolver::getModuleStreams(DeclarationNode *module)
 
 void CodeResolver::resolveStreamSymbols()
 {
-    QVector<AST *> children = QVector<AST *>::fromStdVector(m_tree->getChildren());
-    for(AST *node : children) {
+    // FIMXE we need to resolve the streams in the root tree in reverse order as we do for streams within modules.
+    for(AST *node : m_tree->getChildren()) {
         if(node->getNodeType() == AST::Stream) {
             StreamNode *stream = static_cast<StreamNode *>(node);
             std::vector<AST *> declarations = declareUnknownStreamSymbols(stream, NULL, QVector<AST *>(), m_tree); // FIXME Is this already done in expandParallelFunctions?

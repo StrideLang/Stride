@@ -640,6 +640,7 @@ int CodeValidator::getFunctionDataSize(FunctionNode *func, QVector<AST *> scope,
     int size = 1;
     foreach(PropertyNode *port, ports) {
         AST *value = port->getValue();
+        // FIXME need to decide the size by also looking at the port block size
         int newSize = CodeValidator::getNodeNumOutputs(value, scope, tree, errors);
         if (size != newSize) {
             if (size == 1) {
