@@ -44,7 +44,7 @@
 class CodeValidator
 {
 public:
-    CodeValidator(QString platformRootDir, AST * tree = nullptr);
+    CodeValidator(QString striderootDir, AST * tree = nullptr);
     ~CodeValidator();
 
     bool isValid();
@@ -109,6 +109,7 @@ public:
     static std::string getDomainNodeString(AST *node);
     static QVector<AST *> getBlocksInScope(AST *root, QVector<AST *> scopeStack, AST *tree);
 
+    static std::vector<std::string> getUsedFrameworks(AST *tree);
 
 private:
 

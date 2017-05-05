@@ -80,7 +80,7 @@ private:
     AST *expandFunctionFromProperties(FunctionNode *func, QVector<AST *> scope, AST *tree);
     void fillDefaultPropertiesForNode(AST *node);
 
-    void insertBuiltinObjectsForNode(AST *node, QList<AST *> &objects);
+    void insertBuiltinObjectsForNode(AST *node, map<string, vector<AST *> > &objects);
 
     void resolveDomainsForStream(const StreamNode *func, QVector<AST *> scopeStack, QString contextDomain = "");
     string processDomainsForNode(AST *node, QVector<AST *> scopeStack, QList<AST *> &domainStack);

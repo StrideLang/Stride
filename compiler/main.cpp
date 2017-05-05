@@ -102,12 +102,14 @@ int main(int argc, char *argv[])
                 return -1;
             }
         }
-        Builder * builder = platform->createBuilder(dirName);
+        vector<Builder *> builders = platform->createBuilders(dirName);
 
-        if (builder->build(tree)) {
-            qDebug() << "Built in directory:" << dirName;
-        } else {
-            qDebug() << "Build failed.";
+        for (auto builder: builders) {
+            if (builder->build(tree)) {
+                qDebug() << "Built in directory:" << dirName;
+            } else {
+                qDebug() << "Build failed.";
+            }
         }
 
         tree->deleteChildren();

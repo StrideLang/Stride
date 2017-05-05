@@ -32,6 +32,8 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
+#include <cassert>
+
 #include <QDir>
 #include <QFile>
 #include <QTextStream>
@@ -70,9 +72,8 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
                 it.next();
                 subPaths.push_back(it.key().toStdString());
             }
-            // Iterate through platforms reading them. Should optimize this to
-            // not reread platform if already done.
-            // Only required if includes have changed
+            // Iterate through platforms reading them.
+            // TODO Should optimize this to not reread platform if already done.
             for(StridePlatform *platform: m_platforms) {
                 QStringList nameFilters;
                 nameFilters.push_back("*.stride");
@@ -84,7 +85,7 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
                         QString fileName = includeSubPath + QDir::separator() + file;
                         AST *tree = AST::parseFile(fileName.toLocal8Bit().data());
                         if(tree) {
-                            platform->addTree(file.toStdString(),tree);
+                            platform->addTree(file.toStdString(),tree); // TODO check if this is being freed
                         } else {
                             vector<LangError> errors = AST::getParseErrors();
                             foreach(LangError error, errors) {
@@ -296,28 +297,44 @@ QStringList StrideSystem::getPlatformTypeNames()
 
 QStringList StrideSystem::getFunctionNames()
 {
-    QStringList typeNames;
-    foreach(AST* node, getBuiltinObjectsReference()) {
-        if (node->getNodeType() == AST::Declaration) {
-            DeclarationNode *block = static_cast<DeclarationNode *>(node);
-            if (block->getObjectType() == "module") {
-                typeNames << QString::fromStdString(block->getName());
+    QStringList funcNames;
+
+    map<string, vector<AST *>> refObjects = getBuiltinObjectsReference();
+
+    for (auto it = refObjects.begin(); it != refObjects.end(); it++ ) {
+
+        foreach(AST* node, it->second) {
+            if (node->getNodeType() == AST::Declaration) {
+                DeclarationNode *block = static_cast<DeclarationNode *>(node);
+                if (block->getObjectType() == "module") {
+                    if (it->first.size() > 0) {
+                        funcNames << QString::fromStdString(it->first) + ":" + QString::fromStdString(block->getName());
+                    } else {
+                        funcNames << QString::fromStdString(block->getName());
+                    }
+                }
             }
         }
     }
-    return typeNames;
+    return funcNames;
 }
 
-Builder *StrideSystem::createBuilder(QString projectDir)
+vector<Builder *> StrideSystem::createBuilders(QString projectDir)
 {
-    // FIXME create multiple builders when more than one framework.
-    Builder *builder = NULL;
-    StridePlatform *platform = m_platforms.at(0); // FIXME support multiple platforms
-    if (platform->getAPI() == StridePlatform::PythonTools) {
-        QString pythonExec = "python";
-        builder = new PythonProject(QString::fromStdString(platform->buildPlatformPath(m_strideRoot.toStdString())),
-                                    m_strideRoot, projectDir, pythonExec);
-    }/* else if(m_api == StrideSystem::PluginPlatform) {
+    vector<Builder *> builders;
+    for (StridePlatform *platform: m_platforms) {
+        if (platform->getAPI() == StridePlatform::PythonTools) {
+            QString pythonExec = "python";
+            Builder *builder = new PythonProject(QString::fromStdString(platform->buildPlatformPath(m_strideRoot.toStdString())),
+                                        m_strideRoot, projectDir, pythonExec);
+            if (builder) {
+                if (builder->isValid()) {
+                    builders.push_back(builder);
+                } else {
+                    delete builder;
+                }
+            }
+        }/* else if(m_api == StrideSystem::PluginPlatform) {
         QString xmosRoot = "/home/andres/Documents/src/XMOS/xTIMEcomposer/Community_13.0.2";
 
         QLibrary pluginLibrary(m_pluginName);
@@ -331,17 +348,18 @@ Builder *StrideSystem::createBuilder(QString projectDir)
         }
         pluginLibrary.unload();
     }*/
-    if (builder && !builder->isValid()) {
-        delete builder;
-        builder = NULL;
     }
-    return builder;
+    return builders;
 }
 
-QString StrideSystem::getPlatformDomain()
+QString StrideSystem::getPlatformDomain(string namespaceName)
 {
-    QList<AST *> libObjects = getBuiltinObjectsReference();
-    foreach(AST *object, libObjects) {
+    map<string, vector<AST *>> libObjects = getBuiltinObjectsReference();
+    if (libObjects.find(namespaceName) == libObjects.end()) { // Invalid namespace
+        assert(0 == 1);
+        return "";
+    }
+    for(AST *object:libObjects[namespaceName]) {
         if (object->getNodeType() == AST::Declaration) {
             DeclarationNode *block = static_cast<DeclarationNode *>(object);
             if (block->getObjectType() == "constant"
@@ -355,25 +373,46 @@ QString StrideSystem::getPlatformDomain()
     return "";
 }
 
-QList<AST *> StrideSystem::getBuiltinObjectsCopy()
+vector<string> StrideSystem::getFrameworkNames()
 {
-    QList<AST *> objects;
-    QList<AST *> libObjects = getBuiltinObjectsReference();
-    foreach(AST *object, libObjects) {
-        objects << object->deepCopy();
+    vector<string> names;
+    for(auto platform: m_platforms) {
+        names.push_back(platform->getFramework());
+    }
+    return names;
+}
+
+map<string, vector<AST *> > StrideSystem::getBuiltinObjectsCopy()
+{
+    map<string, vector<AST *>> objects;
+    map<string, vector<AST *>> refObjects = getBuiltinObjectsReference();
+
+    for (auto it = refObjects.begin(); it != refObjects.end(); it++ ) {
+        objects[it->first] = vector<AST *>();
+        for(AST *object: it->second) {
+            objects[it->first].push_back(object->deepCopy());
+        }
     }
     return objects;
 }
 
-QList<AST *> StrideSystem::getBuiltinObjectsReference()
+map<string, vector<AST *>> StrideSystem::getBuiltinObjectsReference()
 {
-    QList<AST *> objects;
+    map<string, vector<AST *>> objects;
+    objects[""] = vector<AST *>();
+    // first put first platform's objects in default namespace
     if (m_platforms.size() > 0) {
-        objects = m_platforms.at(0)->getPlatformObjects();
+        objects[""] = m_platforms.at(0)->getPlatformObjectsReference();
     }
+    // Then add all platform objects with their namespace name
+    for (auto platform: m_platforms) {
+        objects[platform->getFramework()] = platform->getPlatformObjectsReference();
+    }
+
+    // finally add library objects.
     vector<AST *> libObjects = m_library.getLibraryMembers();
     foreach(AST *object, libObjects) {
-        objects << object;
+        objects[""].push_back(object);
     }
     return objects;
 }

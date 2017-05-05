@@ -452,11 +452,11 @@ void CodeModel::updateCodeAnalysis(QString code, QString platformRootPath)
             CodeValidator validator(platformRootPath, tree);
 //            validator.validate();
             StrideSystem *platform = validator.getSystem();
-            QList<AST *> objects;
+            vector<AST *> objects;
             if (platform) {
                 m_types = platform->getPlatformTypeNames();
                 m_funcs = platform->getFunctionNames();
-                objects = platform->getBuiltinObjectsReference();
+                objects = platform->getBuiltinObjectsReference()[""];
             }
             m_objectNames.clear();
             foreach (AST *platObject, objects) {

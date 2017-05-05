@@ -61,7 +61,6 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
     ui(new Ui::ProjectWindow),
     m_searchWidget(new SearchWidget(this)),
     m_codeModelTimer(this),
-    m_builder(NULL),
     m_helperMenu(this),
     m_startingUp(true)
 {
@@ -131,13 +130,13 @@ bool ProjectWindow::build()
 
     syntaxErrors = AST::getParseErrors();
 
-    if (errors.size() > 0) {
+    if (syntaxErrors.size() > 0) {
         for (auto syntaxError:syntaxErrors) {
             errors << syntaxError;
         }
         editor->setErrors(errors);
 
-        foreach(LangError error, errors) {
+        foreach(LangError error, syntaxErrors) {
             printConsoleText(QString::fromStdString(error.getErrorText()) + "\n");
         }
         return false;
@@ -169,23 +168,23 @@ bool ProjectWindow::build()
             return false;
         }
 
-        if (m_builder) {
-            delete m_builder;
+        for (auto builder: m_builders) {
+            delete builder;
         }
 
-        m_builder = system->createBuilder(projectDir);
-
-        if (m_builder) {
-            connect(m_builder, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
-            connect(m_builder, SIGNAL(errorText(QString)), this, SLOT(printConsoleError(QString)));
-            connect(m_builder, SIGNAL(programStopped()), this, SLOT(programStopped()));
-            buildOK = m_builder->build(tree);
-//            builder->build(optimizedTree);
-        } else {
+        std::vector<std::string> frameworks = CodeValidator::getUsedFrameworks(tree);
+        m_builders = system->createBuilders(projectDir);
+        buildOK = true;
+        for (auto builder: m_builders) {
+            connect(builder, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
+            connect(builder, SIGNAL(errorText(QString)), this, SLOT(printConsoleError(QString)));
+            connect(builder, SIGNAL(programStopped()), this, SLOT(programStopped()));
+            buildOK &= builder->build(tree);
+        }
+        if (m_builders.size() == 0) {
             printConsoleText(tr("Aborting. No builder available."));
             qDebug() << "Can't create builder";
             return false;
-//            Q_ASSERT(false);
         }
         tree->deleteChildren();
         delete tree;
@@ -277,9 +276,10 @@ void ProjectWindow::run(bool pressed)
     if (pressed) {
         if (build()) {
             //        ui->consoleText->clear();
-            if (m_builder) {
-                m_builder->run();
-            } else {
+            for(auto builder: m_builders) {
+                builder->run();
+            }
+            if (m_builders.size() == 0) {
                 ui->actionRun->setChecked(false);
                 printConsoleError(tr("Can't run. No builder available."));
             }
@@ -293,8 +293,8 @@ void ProjectWindow::run(bool pressed)
 
 void ProjectWindow::stop()
 {
-    if (m_builder) {
-        m_builder->run(false);
+    for(auto builder: m_builders) {
+        builder->run(false);
     }
     // For some reason setChecked triggers the run action the wrong way... so need to disbale these signals
     ui->actionRun->blockSignals(true);
@@ -995,10 +995,11 @@ void ProjectWindow::closeEvent(QCloseEvent *event)
 {
     if (maybeSave()) {
         writeSettings();
-        if (m_builder) {
-            m_builder->run(false);
-            delete m_builder;
+        for (auto builder: m_builders) {
+            builder->run(false);
+            delete builder;
         }
+        m_builders.clear();
         event->accept();
     } else {
         event->ignore();

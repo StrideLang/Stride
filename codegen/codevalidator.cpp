@@ -38,10 +38,10 @@
 #include "codevalidator.h"
 #include "coderesolver.h"
 
-CodeValidator::CodeValidator(QString platformRootDir, AST *tree):
+CodeValidator::CodeValidator(QString striderootDir, AST *tree):
     m_system(nullptr), m_tree(tree)
 {
-    validateTree(platformRootDir, tree);
+    validateTree(striderootDir, tree);
 }
 
 CodeValidator::~CodeValidator()
@@ -164,6 +164,22 @@ QVector<AST *> CodeValidator::getBlocksInScope(AST *root, QVector<AST *> scopeSt
     }
 
     return blocks;
+}
+
+std::vector<string> CodeValidator::getUsedFrameworks(AST *tree)
+{
+    std::vector<string> frameworks;
+    for (AST *node: tree->getChildren()) {
+        if (node->getNodeType() == AST::Declaration
+                || node->getNodeType() == AST::BundleDeclaration) {
+            string domainName = CodeValidator::getNodeDomainName(node, QVector<AST *>(), tree);
+            if (domainName.size() > 0) {
+                
+                qDebug() << QString::fromStdString(domainName);
+            }
+        }
+    }
+    return frameworks;
 }
 
 QList<LangError> CodeValidator::getErrors()
@@ -963,8 +979,9 @@ DeclarationNode *CodeValidator::findDeclaration(QString objectName, QVector<AST 
             }
         }
     }
-    if (!tree) { return nullptr;}
-    globalAndLocal << QVector<AST *>::fromStdVector(tree->getChildren());
+    if (tree) {
+        globalAndLocal << QVector<AST *>::fromStdVector(tree->getChildren());
+    }
     for(AST *node : globalAndLocal) {
         if (node->getNodeType() == AST::BundleDeclaration) {
             DeclarationNode *block = static_cast<DeclarationNode *>(node);
@@ -1845,7 +1862,7 @@ string CodeValidator::getDomainNodeString(AST *domainNode)
             domainName = static_cast<ValueNode *>(domainNode)->getStringValue();
         } else if (domainNode->getNodeType() == AST::Declaration) {
             DeclarationNode *domainBlock = static_cast<DeclarationNode *>(domainNode);
-            if (domainBlock->getObjectType() == "_domain") {
+            if (domainBlock->getObjectType() == "_domainDefinition") {
                 AST *domainValue = domainBlock->getPropertyValue("domainName");
                 if (domainValue->getNodeType() == AST::String) {
                     domainName = static_cast<ValueNode *>(domainValue)->getStringValue();

@@ -122,7 +122,7 @@ private:
     QTimer m_codeModelTimer;
     CodeModel m_codeModel;
     QFont m_font;
-    Builder *m_builder;
+    std::vector<Builder *> m_builders;
     QMenu m_helperMenu;
     bool m_startingUp;
 };

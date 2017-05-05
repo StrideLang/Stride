@@ -60,13 +60,14 @@ public:
     QStringList getWarnings();
     QStringList getPlatformTypeNames();
     QStringList getFunctionNames();
-    Builder *createBuilder(QString projectDir);
+    vector<Builder *> createBuilders(QString projectDir);
 
-    QString getPlatformDomain();  // The platform's default domain
+    QString getPlatformDomain(string namespaceName = "");  // The platform's default domain
 
 //    DeclarationNode *getFunction(QString functionName);
-    QList<AST *> getBuiltinObjectsCopy();
-    QList<AST *> getBuiltinObjectsReference();
+    vector<string> getFrameworkNames();
+    map<string, vector<AST *>> getBuiltinObjectsCopy();
+    map<string, vector<AST *>> getBuiltinObjectsReference(); // The key to the map is the namespace name
 
 //    bool typeHasPort(QString typeName, QString propertyName);
 

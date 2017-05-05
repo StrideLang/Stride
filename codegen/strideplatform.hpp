@@ -83,7 +83,7 @@ public:
     string buildLibPath(string strideRoot);
 
     void addTree(string treeName, AST *treeRoot);
-    QList<AST *> getPlatformObjects();
+    vector<AST *> getPlatformObjectsReference();
 
 private:
     string m_framework;

@@ -114,16 +114,16 @@ void StridePlatform::addTree(string treeName, AST *treeRoot)
     m_platformTrees[treeName] = treeRoot;
 }
 
-QList<AST *> StridePlatform::getPlatformObjects()
+vector<AST *> StridePlatform::getPlatformObjectsReference()
 {
-    QList<AST *> objects;
+    vector<AST *> objects;
     auto blockGroup = m_platformTrees.begin();
     while (blockGroup != m_platformTrees.end()) {
         foreach(AST *element, blockGroup->second->getChildren()) {
             if (element->getNodeType() == AST::Declaration) {
-                objects << element;
+                objects.push_back(element);
             } else {
-                objects << element; // TODO: This inserts everything. Only insert what is needed
+                objects.push_back(element); // TODO: This inserts everything. Only insert what is needed
             }
         }
         blockGroup++;
