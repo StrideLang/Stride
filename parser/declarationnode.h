@@ -44,8 +44,8 @@
 class DeclarationNode : public AST
 {
 public:
-    DeclarationNode(string name, string objectType, AST *propertiesList, const char *filename, int line);
-    DeclarationNode(BundleNode *bundle, string objectType, AST *propertiesList, const char *filename, int line);
+    DeclarationNode(string name, string objectType, AST *propertiesList, const char *filename, int line, vector<string> scope = vector<string>());
+    DeclarationNode(BundleNode *bundle, string objectType, AST *propertiesList, const char *filename, int line, vector<string> scope = vector<string>());
     ~DeclarationNode();
 
     string getName() const;

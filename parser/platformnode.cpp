@@ -39,68 +39,59 @@
 
 #include "platformnode.h"
 
-PlatformNode::PlatformNode(string platformName, int majorVersion, int minorVersion, const char *filename, int line, string hwPlatform, double hwVersion) :
+SystemNode::SystemNode(string platformName, int majorVersion, int minorVersion, const char *filename, int line, vector<string> hwPlatform) :
     AST(AST::Platform, filename, line)
 {
-    m_platformName = platformName;
+    m_systemName = platformName;
     m_majorVersion = majorVersion;
     m_minorVersion = minorVersion;
-    m_targetPlatform.name = hwPlatform;
-    m_targetPlatform.version = hwVersion;
+    m_targetPlatforms = hwPlatform;
 }
 
-PlatformNode::~PlatformNode()
+SystemNode::~SystemNode()
 {
 
 }
 
-int PlatformNode::majorVersion() const
+int SystemNode::majorVersion() const
 {
     return m_majorVersion;
 }
 
-int PlatformNode::minorVersion() const
+int SystemNode::minorVersion() const
 {
     return m_minorVersion;
 }
 
 
-AST *PlatformNode::deepCopy()
+AST *SystemNode::deepCopy()
 {
-    AST *newnode = new PlatformNode(m_platformName, m_majorVersion, m_minorVersion,
-                                    m_filename.data() , m_line, m_targetPlatform.name, m_targetPlatform.version);
+    SystemNode *newnode = new SystemNode(m_systemName, m_majorVersion, m_minorVersion,
+                                    m_filename.data() , m_line, m_targetPlatforms);
     vector<AST *> children = getChildren();
     for (unsigned int i = 0; i < children.size(); i++) {
         newnode->addChild(children.at(i)->deepCopy());
     }
     return newnode;
 }
-string PlatformNode::hwPlatform() const
+
+vector<string> SystemNode::hwPlatforms() const
 {
-    return m_targetPlatform.name;
+    return m_targetPlatforms;
 }
 
-void PlatformNode::setHwPlatform(const string &hwPlatform)
+void SystemNode::setHwPlatforms(const vector<string> &hwPlatform)
 {
-    m_targetPlatform.name = hwPlatform;
-}
-double PlatformNode::hwVersion() const
-{
-    return m_targetPlatform.version;
+    m_targetPlatforms = hwPlatform;
 }
 
-void PlatformNode::setHwVersion(double hwVersion)
+string SystemNode::platformName() const
 {
-    m_targetPlatform.version = hwVersion;
+    return m_systemName;
 }
 
-string PlatformNode::platformName() const
+void SystemNode::setPlatformName(const string &platformName)
 {
-    return m_platformName;
-}
-
-void PlatformNode::setPlatformName(const string &platformName)
-{
-    m_platformName = platformName;
+    m_systemName = platformName;
 }
 

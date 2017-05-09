@@ -47,7 +47,6 @@
 #include "streamnode.h"
 #include "valuenode.h"
 #include "importnode.h"
-#include "fornode.h"
 #include "rangenode.h"
 #include "scopenode.h"
 #include "portpropertynode.h"

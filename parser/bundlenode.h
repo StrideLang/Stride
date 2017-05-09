@@ -43,7 +43,7 @@
 class BundleNode : public AST
 {
 public:
-    BundleNode(string name, ListNode *indexList, const char *filename, int line);
+    BundleNode(string name, ListNode *indexList, const char *filename, int line, vector<string> scope = vector<string>());
     BundleNode(string name, AST *scope, ListNode *indexList, const char *filename, int line);
     virtual ~BundleNode();
 

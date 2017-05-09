@@ -229,7 +229,7 @@ void StrideSystem::parseSystemTree(AST *systemTree)
                 while(defIt != definition.end()) {
                     if (defIt->first == "framework") {
                         framework = defIt->second;
-                        qDebug() << "Found framework:" << QString::fromStdString(framework);
+//                        qDebug() << "Found framework:" << QString::fromStdString(framework);
                     } else if (defIt->first == "frameworkVersion") {
                         framworkVersion = defIt->second;
                     } else if (defIt->first == "hardware") {

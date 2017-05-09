@@ -37,8 +37,8 @@
 #include "bundlenode.h"
 #include "scopenode.h"
 
-BundleNode::BundleNode(string name, ListNode *indexList, const char *filename, int line) :
-    AST(AST::Bundle, filename, line)
+BundleNode::BundleNode(string name, ListNode *indexList, const char *filename, int line, vector<string> scope) :
+    AST(AST::Bundle, filename, line, scope)
 {
     addChild(indexList);
     m_name = name;

@@ -46,12 +46,13 @@ AST::AST()
     m_rate = -1;
 }
 
-AST::AST(Token token, const char *filename, int line)
+AST::AST(Token token, const char *filename, int line, vector<string> scope)
 {
     m_token = token;
     m_filename.append(filename);
     m_line = line;
     m_rate = -1;
+    m_scope = scope;
 }
 
 AST::~AST()
@@ -133,6 +134,16 @@ void AST::addScope(string newScope)
     m_scope.push_back(newScope);
 }
 
+void AST::setRootScope(string scopeName)
+{
+    if (scopeName != "") {
+        if (m_scope.size() == 0 || m_scope.at(0) != scopeName) {
+            m_scope.insert(m_scope.begin(), scopeName);
+        }
+    }
+}
+
+
 size_t AST::getScopeLevels()
 {
     return m_scope.size();
@@ -141,4 +152,14 @@ size_t AST::getScopeLevels()
 string AST::getScopeAt(unsigned int scopeLevel)
 {
     return m_scope.at(scopeLevel);
+}
+
+vector<string> AST::getNamespaceList()
+{
+    return m_scope;
+}
+
+void AST::setNamespaceList(vector<string> list)
+{
+    m_scope = list;
 }

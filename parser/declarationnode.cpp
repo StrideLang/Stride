@@ -38,8 +38,8 @@
 #include "valuenode.h"
 
 DeclarationNode::DeclarationNode(string name, string objectType, AST *propertiesList,
-                     const char *filename, int line):
-    AST(AST::Declaration, filename, line)
+                     const char *filename, int line, vector<string> scope):
+    AST(AST::Declaration, filename, line, scope)
 {
     m_name = name;
     m_objectType = objectType;
@@ -53,8 +53,8 @@ DeclarationNode::DeclarationNode(string name, string objectType, AST *properties
 }
 
 DeclarationNode::DeclarationNode(BundleNode *bundle, string objectType, AST *propertiesList,
-                     const char *filename, int line) :
-    AST(AST::BundleDeclaration, filename, line)
+                     const char *filename, int line, vector<string> scope) :
+    AST(AST::BundleDeclaration, filename, line, scope)
 {
     addChild(bundle);
     m_objectType = objectType;
@@ -163,9 +163,9 @@ AST *DeclarationNode::deepCopy()
     }
     if (getNodeType() == AST::BundleDeclaration) {
         node = new DeclarationNode(static_cast<BundleNode *>(getBundle()->deepCopy()),
-                             m_objectType, newProps, m_filename.data(), m_line);
+                             m_objectType, newProps, m_filename.data(), m_line, m_scope);
     } else if (getNodeType() == AST::Declaration) {
-        node = new DeclarationNode(m_name, m_objectType, newProps, m_filename.data(), m_line);
+        node = new DeclarationNode(m_name, m_objectType, newProps, m_filename.data(), m_line, m_scope);
     }
     assert(node);
     node->setRate(m_rate);

@@ -165,7 +165,6 @@ void PythonProject::stopRunning()
 
 void PythonProject::writeAST(AST *tree)
 {
-
     QJsonArray treeObject;
     foreach(AST *node, tree->getChildren()) {
         QJsonObject nodeObject;
@@ -355,11 +354,11 @@ void PythonProject::astToJson(AST *node, QJsonObject &obj)
         newObj["name"] = QString::fromStdString(static_cast<PortPropertyNode *>(node)->getName());
         newObj["portname"] = QString::fromStdString(static_cast<PortPropertyNode *>(node)->getPortName());
         obj["portproperty"] = newObj;
-    } if (node->getNodeType() == AST::Platform) {
+    } else if (node->getNodeType() == AST::Platform) {
         QJsonObject newObj;
-        newObj["name"] = QString::fromStdString(static_cast<PlatformNode *>(node)->platformName());
-        newObj["majorVersion"] = static_cast<PlatformNode *>(node)->majorVersion();
-        newObj["minorVersion"] = static_cast<PlatformNode *>(node)->minorVersion();
+        newObj["name"] = QString::fromStdString(static_cast<SystemNode *>(node)->platformName());
+        newObj["majorVersion"] = static_cast<SystemNode *>(node)->majorVersion();
+        newObj["minorVersion"] = static_cast<SystemNode *>(node)->minorVersion();
         QJsonObject platformInfo;
         platformInfo["path"] = m_platformPath;
         QJsonArray platformList;

@@ -172,7 +172,7 @@ bool ProjectWindow::build()
             delete builder;
         }
 
-        std::vector<std::string> frameworks = CodeValidator::getUsedFrameworks(tree);
+        std::vector<std::string> frameworks = system->getFrameworkNames();
         m_builders = system->createBuilders(projectDir);
         buildOK = true;
         for (auto builder: m_builders) {

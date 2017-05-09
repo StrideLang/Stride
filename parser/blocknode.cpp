@@ -37,8 +37,8 @@
 #include "blocknode.h"
 #include "scopenode.h"
 
-BlockNode::BlockNode(string name, const char *filename, int line) :
-    AST(AST::Block, filename, line)
+BlockNode::BlockNode(string name, const char *filename, int line, vector<string> scope) :
+    AST(AST::Block, filename, line, scope)
 {
     m_name = name;
 }
@@ -67,10 +67,7 @@ void BlockNode::resolveScope(AST *scope)
 
 AST *BlockNode::deepCopy()
 {
-    BlockNode *newNode = new BlockNode(m_name, m_filename.data(), m_line);
+    BlockNode *newNode = new BlockNode(m_name, m_filename.data(), m_line, m_scope);
     newNode->setRate(m_rate);
-    for (unsigned int i = 0; i < this->getScopeLevels(); i++) {
-        newNode->addScope(this->getScopeAt(i));
-    }
     return newNode;
 }

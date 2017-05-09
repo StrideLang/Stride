@@ -41,17 +41,14 @@
 
 using namespace std;
 
-typedef struct {
-  string name;
-  double version;
-} HwPlatform;
 
-class PlatformNode : public AST
+class SystemNode : public AST
 {
 public:
-    PlatformNode(string platformName, int majorVersion, int minorVersion, const char *filename, int line, string hwPlatform = string(), double hwVersion = -1);
+    SystemNode(string platformName, int majorVersion, int minorVersion, const char *filename, int line,
+                 vector<string> hwPlatforms = vector<string>());
 
-    ~PlatformNode();
+    ~SystemNode();
 
     string platformName() const;
     void setPlatformName(const string &platformName);
@@ -59,19 +56,16 @@ public:
     int majorVersion() const;
     int minorVersion() const;
 
-    string hwPlatform() const;
-    void setHwPlatform(const string &hwPlatform);
-
-    double hwVersion() const;
-    void setHwVersion(double hwVersion);
+    vector<string> hwPlatforms() const;
+    void setHwPlatforms(const vector<string> &hwPlatforms);
 
     AST *deepCopy();
 
 private:
     int m_minorVersion;
     int m_majorVersion;
-    string m_platformName;
-    HwPlatform m_targetPlatform;
+    string m_systemName;
+    vector<string> m_targetPlatforms;
 };
 
 #endif // PLATFORMNODE_H

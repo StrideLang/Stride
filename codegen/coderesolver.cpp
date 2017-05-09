@@ -67,7 +67,7 @@ void CodeResolver::processSystem()
 {
     for (AST *node: m_tree->getChildren()) {
         if (node->getNodeType() == AST::Platform) {
-            PlatformNode *platform = static_cast<PlatformNode *>(node);
+            SystemNode *platform = static_cast<SystemNode *>(node);
 //            std::string systemFile = platform->platformName();
 //            AST::parseFile()
         }
@@ -633,7 +633,7 @@ AST *CodeResolver::expandFunctionFromProperties(FunctionNode *func, QVector<AST 
                 } else if (value->getNodeType() == AST::Block) {
                     BlockNode *name = static_cast<BlockNode *>(value);
                     DeclarationNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()),
-                                                                      scopeStack, tree);
+                                                                      scopeStack, tree, name->getNamespaceList());
                     int size = CodeValidator::getBlockDeclaredSize(block, scopeStack, tree, errors);
                     Q_ASSERT(size == dataSize);
                     for (int i = 0; i < size; ++i) {
@@ -682,8 +682,9 @@ double CodeResolver::findRateInProperties(vector<PropertyNode *> properties, QVe
                 rate = CodeValidator::evaluateConstReal(propertyValue, QVector<AST *>(), tree, errors);
                 return rate;
             } else if (propertyValue->getNodeType() == AST::Block) {
+                BlockNode * block = static_cast<BlockNode *>(propertyValue);
                 DeclarationNode* valueDeclaration =  CodeValidator::findDeclaration(
-                            QString::fromStdString(static_cast<BlockNode *>(propertyValue)->getName()), scope, tree);
+                            QString::fromStdString(block->getName()), scope, tree, block->getNamespaceList());
                 if (valueDeclaration && valueDeclaration->getObjectType() == "constant") {
                     PropertyNode *property = CodeValidator::findPropertyByName(valueDeclaration->getProperties(), "value");
                     if (property) {
@@ -711,7 +712,7 @@ double CodeResolver::getNodeRate(AST *node, QVector<AST *> scope, AST *tree)
     }
     if (node->getNodeType() == AST::Block) {
         BlockNode *name = static_cast<BlockNode *>(node);
-        DeclarationNode* declaration =  CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scope, tree);
+        DeclarationNode* declaration =  CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scope, tree, name->getNamespaceList());
         if (!declaration) {
             return -1;
         }
@@ -726,7 +727,7 @@ double CodeResolver::getNodeRate(AST *node, QVector<AST *> scope, AST *tree)
         return rate;
     } else if (node->getNodeType() == AST::Bundle) {
         BundleNode *bundle = static_cast<BundleNode *>(node);
-        DeclarationNode* declaration =  CodeValidator::findDeclaration(QString::fromStdString(bundle->getName()), scope, tree);
+        DeclarationNode* declaration =  CodeValidator::findDeclaration(QString::fromStdString(bundle->getName()), scope, tree, bundle->getNamespaceList());
         if (!declaration) {
             return -1;
         }
@@ -793,11 +794,14 @@ void CodeResolver::insertBuiltinObjects()
 //        insertBuiltinObjectsForNode(declaration, bultinObjects);
         m_tree->addChild(declaration->deepCopy());
 //        AST *inherited -declaration->getPropertyValue("inherits");
-        vector<AST *> &namespaceObjects = bultinObjects[""];
-        auto position = std::find(namespaceObjects.begin(), namespaceObjects.end(), declaration);
-        if (position != namespaceObjects.end()) {
-            namespaceObjects.erase(position);
+
+        for (auto it = bultinObjects.begin(); it != bultinObjects.end(); it++)  {
+            vector<AST *> &namespaceObjects = it->second;
         }
+//        auto position = std::find(namespaceObjects.begin(), namespaceObjects.end(), declaration);
+//        if (position != namespaceObjects.end()) {
+//            namespaceObjects.erase(position);
+//        }
     }
 
     // Second pass to add elements that depend on the user's code
@@ -813,7 +817,7 @@ void CodeResolver::processDomains()
     // First we need to traverse the streams backwards to make sure we propagate the streams from the furthest point down the line
     vector<AST *> children = m_tree->getChildren();
     vector<AST *>::reverse_iterator rit = children.rbegin();
-    QVector<AST *> scopeStack = QVector<AST*>::fromStdVector(children);
+    QVector<AST *> scopeStack; // = QVector<AST*>::fromStdVector(children);
     while(rit != children.rend()) {
         AST *node = *rit;
         if (node->getNodeType() == AST::Stream) {
@@ -960,11 +964,28 @@ void CodeResolver::insertBuiltinObjectsForNode(AST *node, map<string, vector<AST
         }
     } else if (node->getNodeType() == AST::Function) {
         FunctionNode *func = static_cast<FunctionNode *>(node);
-        // TODO check if name has namespace, currently ignoring...
-        AST *declaration  = CodeValidator::findDeclaration(QString::fromStdString(func->getName()),
-                                                           QVector<AST *>::fromStdVector(objects[""]), nullptr);
-        if (declaration) {
-            blockList << static_cast<DeclarationNode *>(declaration);
+        for (auto it = objects.begin(); it != objects.end(); it++)  {
+            DeclarationNode *declaration  = CodeValidator::findDeclaration(QString::fromStdString(func->getName()),
+                                                                           QVector<AST *>::fromStdVector(it->second), nullptr);
+            if (declaration) {
+                declaration->setRootScope(it->first);
+                for(auto child: declaration->getChildren()) { // Check if declaration is in current namespace. If it is, set as the namespace of the child
+                    DeclarationNode *childDeclaration = nullptr;
+                    if (child->getNodeType() == AST::Block) {
+                        childDeclaration = CodeValidator::findDeclaration(QString::fromStdString(static_cast<BlockNode *>(child)->getName()),
+                                                                                       QVector<AST *>::fromStdVector(it->second), nullptr,
+                                                                                       declaration->getNamespaceList());
+                    } else if (child->getNodeType() == AST::Bundle) {
+                        childDeclaration = CodeValidator::findDeclaration(QString::fromStdString(static_cast<BundleNode *>(child)->getName()),
+                                                                                       QVector<AST *>::fromStdVector(it->second), nullptr,
+                                                                                       declaration->getNamespaceList());
+                    } // FIXME need to implement for expressions, lists, etc.
+                    if (childDeclaration) {
+                        child->setNamespaceList(declaration->getNamespaceList());
+                    }
+                }
+                blockList << declaration; // TODO this currently inserts the object from all available namespaces. This should be optimized, and only the needed ones should be inserted.
+            }
         }
         // Look for declarations of blocks present in function properties
         for(PropertyNode *property :func->getProperties()) {
@@ -972,7 +993,7 @@ void CodeResolver::insertBuiltinObjectsForNode(AST *node, map<string, vector<AST
         }
         for (DeclarationNode *usedBlock : blockList) {
             // Add declarations to tree if not there
-            if (!CodeValidator::findDeclaration(QString::fromStdString(usedBlock->getName()), QVector<AST *>(), m_tree)) {
+            if (!CodeValidator::findDeclaration(QString::fromStdString(usedBlock->getName()), QVector<AST *>(), m_tree, usedBlock->getNamespaceList())) {
                 AST *newBlock = usedBlock->deepCopy();
                 m_tree->addChild(newBlock);
                 insertBuiltinObjectsForNode(usedBlock, objects);
@@ -985,28 +1006,53 @@ void CodeResolver::insertBuiltinObjectsForNode(AST *node, map<string, vector<AST
                || node->getNodeType() == AST::BundleDeclaration) {
         QList<DeclarationNode *> blockList;
         DeclarationNode *userBlock = static_cast<DeclarationNode *>(node);
+        vector<AST *> namespaceObjects;
+        if (userBlock->getScopeLevels() > 0) {
+            namespaceObjects = objects[userBlock->getScopeAt(0)]; // TODO need to implement for namespaces that are more than one level deep...
+        }
+
+        for(auto child: userBlock->getChildren()) { // Check if declaration is in current namespace. If it is, set as the namespace of the child
+            DeclarationNode *childDeclaration = nullptr;
+            if (child->getNodeType() == AST::Block) {
+                childDeclaration = CodeValidator::findDeclaration(QString::fromStdString(static_cast<BlockNode *>(child)->getName()),
+                                                                  QVector<AST *>::fromStdVector(namespaceObjects), nullptr,
+                                                                  userBlock->getNamespaceList());
+            } else if (child->getNodeType() == AST::Bundle) {
+                childDeclaration = CodeValidator::findDeclaration(QString::fromStdString(static_cast<BundleNode *>(child)->getName()),
+                                                                  QVector<AST *>::fromStdVector(namespaceObjects), nullptr,
+                                                                  userBlock->getNamespaceList());
+            } // FIXME need to implement for expressions, lists, etc.
+            if (childDeclaration) {
+                child->setNamespaceList(userBlock->getNamespaceList());
+            }
+        }
         // Find type declaration and insert it if needed
         QList<LangError> errors;
         // Check if type is already declared
-        DeclarationNode *typeDeclaration = CodeValidator::findTypeDeclarationByName(QString::fromStdString(userBlock->getObjectType()),
-                                                                                    QVector<AST *>(), m_tree, errors);
+        DeclarationNode *typeDeclaration = CodeValidator::findTypeDeclaration(userBlock,  QVector<AST *>(), m_tree, errors);
         if (!typeDeclaration) { // Otherwise find declaration
-            vector<AST *> rootNamespace = objects[""]; // TODO need to look inside namespaces too
-            typeDeclaration = CodeValidator::findTypeDeclarationByName(
-                        QString::fromStdString(userBlock->getObjectType()),
-                        QVector<AST *>::fromStdVector(rootNamespace), m_tree, errors);
-            if (typeDeclaration && !blockList.contains(typeDeclaration)) {
-                blockList << typeDeclaration;
+            for (auto it = objects.begin(); it != objects.end(); it++)  {
+                vector<AST *> rootNamespace = it->second;
 
-                // Insert declaration for inherited types
-                QStringList inheritedTypes = CodeValidator::getInheritedTypeNames(typeDeclaration, QVector<AST *>::fromStdVector(rootNamespace), m_tree);
+                typeDeclaration = CodeValidator::findTypeDeclarationByName(
+                            QString::fromStdString(userBlock->getObjectType()),
+                            QVector<AST *>::fromStdVector(rootNamespace), m_tree, errors,
+                            userBlock->getNamespaceList());
+                if (typeDeclaration && !blockList.contains(typeDeclaration)) {
+                    typeDeclaration->setRootScope(it->first);
+                    blockList << typeDeclaration;
 
-                for(QString typeName : inheritedTypes) {
-                    AST *existingDeclaration = CodeValidator::findTypeDeclarationByName(typeName, QVector<AST *>(), m_tree, errors);
-                    if (!existingDeclaration) {
-                        typeDeclaration = CodeValidator::findTypeDeclarationByName(typeName, QVector<AST *>::fromStdVector(rootNamespace), nullptr, errors);
-                        if (typeDeclaration && !blockList.contains(typeDeclaration)) {
-                            blockList << typeDeclaration;
+                    // Insert declaration for inherited types
+                    QStringList inheritedTypes = CodeValidator::getInheritedTypeNames(typeDeclaration, QVector<AST *>::fromStdVector(rootNamespace), m_tree);
+
+                    for(QString typeName : inheritedTypes) {
+                        AST *existingDeclaration = CodeValidator::findTypeDeclarationByName(typeName, QVector<AST *>(), m_tree, errors);
+                        if (!existingDeclaration) {
+                            typeDeclaration = CodeValidator::findTypeDeclarationByName(typeName, QVector<AST *>::fromStdVector(rootNamespace), nullptr, errors);
+                            if (typeDeclaration && !blockList.contains(typeDeclaration)) {
+                                typeDeclaration->setRootScope(it->first);
+                                blockList << typeDeclaration;
+                            }
                         }
                     }
                 }
@@ -1018,20 +1064,22 @@ void CodeResolver::insertBuiltinObjectsForNode(AST *node, map<string, vector<AST
             // Make subscope in case this is a module declaration
             AST *blocks = usedBlock->getPropertyValue("blocks");
             if (blocks) {
-                for(AST *DeclarationNode : blocks->getChildren()) {
-                    if (DeclarationNode->getNodeType() == AST::Declaration
-                            || DeclarationNode->getNodeType() == AST::BundleDeclaration) {
-                        subscope << DeclarationNode;
+                for(AST *declarationNode : blocks->getChildren()) {
+                    if (declarationNode->getNodeType() == AST::Declaration
+                            || declarationNode->getNodeType() == AST::BundleDeclaration) {
+                        subscope << declarationNode;
                     }
                 }
             }
             // Add type. It shouldn't be there as this has been checked above
             AST *newBlock = usedBlock->deepCopy();
             m_tree->addChild(newBlock);
-            vector<AST *> &namespaceObjects = objects[""];
-            auto position = std::find(namespaceObjects.begin(), namespaceObjects.end(), usedBlock);
-            if (position != namespaceObjects.end()) {
-                namespaceObjects.erase(position);
+            for (auto it = objects.begin(); it != objects.end(); it++)  {
+                vector<AST *> &namespaceObjects = it->second;
+                auto position = std::find(namespaceObjects.begin(), namespaceObjects.end(), usedBlock);
+                if (position != namespaceObjects.end()) {
+                    namespaceObjects.erase(position);
+                }
             }
             //            insertBuiltinObjectsForNode(newBlock, objects);
             for(PropertyNode *property : usedBlock->getProperties()) {
@@ -1045,61 +1093,73 @@ void CodeResolver::insertBuiltinObjectsForNode(AST *node, map<string, vector<AST
 
     } else if (node->getNodeType() == AST::Block) {
         QList<DeclarationNode *> blockList;
-        for(AST *object : objects[""]) {
-            if (object->getNodeType() == AST::Declaration
-                    || object->getNodeType() == AST::BundleDeclaration) {
-                BlockNode *name = static_cast<BlockNode *>(node);
-                DeclarationNode *block = static_cast<DeclarationNode *>(object);
-                if (block->getName() == name->getName()
-                        && !blockList.contains(block)) {
-                    if (!CodeValidator::findDeclaration(QString::fromStdString(block->getName()), QVector<AST *>(), m_tree)) {
-//                        AST *usedObject = object->deepCopy();
-//                        fillDefaultPropertiesForNode(usedObject);
-//                        m_tree->addChild(usedObject);
-                        blockList << block;
-                    }
-                    break;
+        BlockNode *name = static_cast<BlockNode *>(node);
 
+        for (auto it = objects.begin(); it != objects.end(); it++)  {
+            for(AST *object : it->second) {
+                if (object->getNodeType() == AST::Declaration
+                        || object->getNodeType() == AST::BundleDeclaration) {
+                    DeclarationNode *block = static_cast<DeclarationNode *>(object);
+                    if (block->getName() == name->getName()
+                            && !blockList.contains(block)) {
+                        if (!CodeValidator::findDeclaration(QString::fromStdString(block->getName()), QVector<AST *>(), m_tree, block->getNamespaceList())) {
+                            //                        AST *usedObject = object->deepCopy();
+                            //                        fillDefaultPropertiesForNode(usedObject);
+                            //                        m_tree->addChild(usedObject);
+                            block->setRootScope(it->first);
+                            blockList << block;
+                        }
+                        break;
+
+                    }
                 }
             }
         }
         for(DeclarationNode *usedBlock : blockList) {
             AST *newBlock = usedBlock->deepCopy();
             m_tree->addChild(newBlock);
-            vector<AST *> &namespaceObjects = objects[""];
-            auto position = std::find(namespaceObjects.begin(), namespaceObjects.end(), usedBlock);
-            if (position != namespaceObjects.end()) {
-                namespaceObjects.erase(position);
+            for (auto it = objects.begin(); it != objects.end(); it++)  {
+                vector<AST *> &namespaceObjects = it->second;
+                auto position = std::find(namespaceObjects.begin(), namespaceObjects.end(), usedBlock);
+                if (position != namespaceObjects.end()) {
+                    namespaceObjects.erase(position);
+                }
             }
             insertBuiltinObjectsForNode(newBlock, objects);
         }
     } else if (node->getNodeType() == AST::Bundle) {
         QList<DeclarationNode *> blockList;
-        for(AST *object : objects[""]) {
-            if (object->getNodeType() == AST::Declaration
-                    || object->getNodeType() == AST::BundleDeclaration) {
-                BundleNode *bundle = static_cast<BundleNode *>(node);
-                DeclarationNode *block = static_cast<DeclarationNode *>(object);
-                if (block->getName() == bundle->getName()
-                        && !blockList.contains(block)) {
-                    if (!CodeValidator::findDeclaration(QString::fromStdString(block->getName()), QVector<AST *>(), m_tree)) {
-//                        AST *usedObject = object->deepCopy();
-//                        fillDefaultPropertiesForNode(usedObject);
-//                        m_tree->addChild(usedObject);
-                        blockList << block;
-                    }
-                    break;
+        for (auto it = objects.begin(); it != objects.end(); it++)  {
+            for(AST *object : it->second) {
+                if (object->getNodeType() == AST::Declaration
+                        || object->getNodeType() == AST::BundleDeclaration) {
+                    BundleNode *bundle = static_cast<BundleNode *>(node);
+                    DeclarationNode *block = static_cast<DeclarationNode *>(object);
+                    if (block->getName() == bundle->getName()
+                            && !blockList.contains(block)) {
+                        if (!CodeValidator::findDeclaration(QString::fromStdString(block->getName()), QVector<AST *>(), m_tree, block->getNamespaceList())) {
+                            //                        AST *usedObject = object->deepCopy();
+                            //                        fillDefaultPropertiesForNode(usedObject);
+                            //                        m_tree->addChild(usedObject);
 
+                            block->setRootScope(it->first);
+                            blockList << block;
+                        }
+                        break;
+
+                    }
                 }
             }
         }
         for(DeclarationNode *usedBlock : blockList) {
             AST *newBlock = usedBlock->deepCopy();
             m_tree->addChild(newBlock);
-            vector<AST *> &namespaceObjects = objects[""];
-            auto position = std::find(namespaceObjects.begin(), namespaceObjects.end(), usedBlock);
-            if (position != namespaceObjects.end()) {
-                namespaceObjects.erase(position);
+            for (auto it = objects.begin(); it != objects.end(); it++)  {
+                vector<AST *> &namespaceObjects = it->second;
+                auto position = std::find(namespaceObjects.begin(), namespaceObjects.end(), usedBlock);
+                if (position != namespaceObjects.end()) {
+                    namespaceObjects.erase(position);
+                }
             }
             insertBuiltinObjectsForNode(newBlock, objects);
         }
@@ -1155,7 +1215,7 @@ std::string CodeResolver::processDomainsForNode(AST *node, QVector<AST *> scopeS
     resolveDomainForStreamNode(node, scopeStack);
     if (node->getNodeType() == AST::Block
             || node->getNodeType() == AST::Bundle) {
-        DeclarationNode *declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(node, scopeStack, m_tree), scopeStack, m_tree);
+        DeclarationNode *declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(node, scopeStack, m_tree), scopeStack, m_tree, node->getNamespaceList());
         if(declaration) {
             AST *domain = declaration->getDomain();
             if (!domain) {
@@ -1267,17 +1327,21 @@ void CodeResolver::setDomainForStack(QList<AST *> domainStack, string domainName
         if (m_system) {
             bultinObjects = m_system->getBuiltinObjectsReference();
         }
-        for (AST *object : bultinObjects[""]) {
-            if (object->getNodeType() == AST::Declaration) {
-                DeclarationNode *block = static_cast<DeclarationNode *>(object);
-                if (block->getObjectType() == "_domainDefinition") {
-                    AST *nameNode = block->getPropertyValue("domainName");
-                    if (nameNode->getNodeType() == AST::String) {
-                        ValueNode *typeName = static_cast<ValueNode *>(nameNode);
-                        if (typeName->getStringValue() == domainName) {
-                            m_tree->addChild(block->deepCopy());
-                            fillDefaultPropertiesForNode(m_tree->getChildren().back());
-                            break;
+
+        for (auto it = bultinObjects.begin(); it != bultinObjects.end(); it++)  {
+            for (AST *object : it->second) {
+                if (object->getNodeType() == AST::Declaration) {
+                    DeclarationNode *block = static_cast<DeclarationNode *>(object);
+                    if (block->getObjectType() == "_domainDefinition") {
+                        AST *nameNode = block->getPropertyValue("domainName");
+                        if (nameNode->getNodeType() == AST::String) {
+                            ValueNode *typeName = static_cast<ValueNode *>(nameNode);
+                            if (typeName->getStringValue() == domainName) {
+                                block->setRootScope(it->first);
+                                m_tree->addChild(block->deepCopy());
+                                fillDefaultPropertiesForNode(m_tree->getChildren().back());
+                                break;
+                            }
                         }
                     }
                 }
@@ -1299,7 +1363,7 @@ void CodeResolver::setDomainForStack(QList<AST *> domainStack, string domainName
         } else if (relatedNode->getNodeType() == AST::Function) {
             FunctionNode *func = static_cast<FunctionNode *>(relatedNode);
             if (func) {
-                func->setDomain(domainName);
+                func->setDomainString(domainName);
             }
         }  else if (relatedNode->getNodeType() == AST::List
                     || relatedNode->getNodeType() == AST::Expression) {
@@ -1319,7 +1383,7 @@ void CodeResolver::setDomainForStack(QList<AST *> domainStack, string domainName
                 } else if (member->getNodeType() == AST::Function) {
                     FunctionNode *func = static_cast<FunctionNode *>(member);
                     if (func) {
-                        func->setDomain(domainName);
+                        func->setDomainString(domainName);
                     }
                 }
             }
@@ -1355,7 +1419,7 @@ DeclarationNode *CodeResolver::createSignalDeclaration(QString name, int size)
 std::vector<AST *> CodeResolver::declareUnknownName(BlockNode *name, int size, QVector<AST *> localScope, AST *tree)
 {
     std::vector<AST *> declarations;
-    DeclarationNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), localScope, tree);
+    DeclarationNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), localScope, tree, name->getNamespaceList());
     if (!block) { // Not declared, so make declaration
         DeclarationNode *newSignal = createSignalDeclaration(QString::fromStdString(name->getName()), size);
 //        tree->addChild(newSignal);
@@ -1369,7 +1433,7 @@ std::vector<AST *> CodeResolver::declareUnknownName(BlockNode *name, int size, Q
 std::vector<AST *> CodeResolver::declareUnknownBundle(BundleNode *bundle, int size, QVector<AST *> localScope, AST *tree)
 {
 	std::vector<AST *> declarations;
-    DeclarationNode *block = CodeValidator::findDeclaration(QString::fromStdString(bundle->getName()), localScope, tree);
+    DeclarationNode *block = CodeValidator::findDeclaration(QString::fromStdString(bundle->getName()), localScope, tree, bundle->getNamespaceList());
     if (!block) { // Not declared, so make declaration
         DeclarationNode *newSignal = createSignalDeclaration(QString::fromStdString(bundle->getName()), size);
 //        tree->addChild(newSignal);
@@ -1522,7 +1586,7 @@ void CodeResolver::expandNamesToBundles(StreamNode *stream, AST *tree)
     if (left->getNodeType() == AST::Block) {
         BlockNode *name = static_cast<BlockNode *>(left);
         QVector<AST *> scope;
-        DeclarationNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scope, tree);
+        DeclarationNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scope, tree, name->getNamespaceList());
         int size = 0;
         if (block) {
             if (block->getNodeType() == AST::BundleDeclaration) {
@@ -1540,7 +1604,7 @@ void CodeResolver::expandNamesToBundles(StreamNode *stream, AST *tree)
     if (right->getNodeType() == AST::Block) {
         BlockNode *name = static_cast<BlockNode *>(right);
         QVector<AST *> scope;
-        DeclarationNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scope, tree);
+        DeclarationNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scope, tree, name->getNamespaceList());
         int size = 0;
         if (block) {
             if (block->getNodeType() == AST::BundleDeclaration) {
@@ -1766,7 +1830,7 @@ ValueNode *CodeResolver::resolveConstant(AST* value, QVector<AST *> scope)
         return newValue;
     } else if(value->getNodeType() == AST::Block) {
         BlockNode *name = static_cast<BlockNode *>(value);
-        DeclarationNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scope, m_tree);
+        DeclarationNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scope, m_tree, name->getNamespaceList());
         if (block && block->getNodeType() == AST::Declaration && block->getObjectType() == "constant") { // Size == 1
             AST *blockValue = block->getPropertyValue("value");
             if (blockValue->getNodeType() == AST::Int || blockValue->getNodeType() == AST::Real
@@ -2320,7 +2384,7 @@ void CodeResolver::resolveDomainForStreamNode(AST *node, QVector<AST *> scopeSta
     AST *domain = NULL;
     if (node->getNodeType() == AST::Block
             || node->getNodeType() == AST::Bundle) {
-        DeclarationNode *declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(node, scopeStack, m_tree), scopeStack, m_tree);
+        DeclarationNode *declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(node, scopeStack, m_tree), scopeStack, m_tree, node->getNamespaceList());
         if (declaration) {
             domain = static_cast<DeclarationNode *>(declaration)->getDomain();
         }
@@ -2361,9 +2425,11 @@ void CodeResolver::resolveDomainForStreamNode(AST *node, QVector<AST *> scopeSta
                         DeclarationNode *declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(node, scopeStack, m_tree), scopeStack, m_tree);
                         declaration->setDomainString(domainName);
                     } else if (node->getNodeType() == AST::Function) {
-                         static_cast<FunctionNode *>(node)->setDomain(domainName);
+                         static_cast<FunctionNode *>(node)->setDomainString(domainName);
                     }
                 }
+            } else {
+
             }
         }
     }

@@ -66,7 +66,6 @@ NullStream nstream;
 %code requires { #include "bundlenode.h" }
 %code requires { #include "declarationnode.h" }
 %code requires { #include "expressionnode.h" }
-%code requires { #include "fornode.h" }
 %code requires { #include "functionnode.h" }
 %code requires { #include "importnode.h" }
 %code requires { #include "keywordnode.h" }
@@ -84,8 +83,7 @@ NullStream nstream;
     double  fval;
     char    *sval;
     AST     *ast;
-    PlatformNode *systemNode;
-    HwPlatform *hwPlatform;
+    SystemNode *systemNode;
     DeclarationNode *declarationNode;
     StreamNode *streamNode;
     PropertyNode *propertyNode;
@@ -94,7 +92,6 @@ NullStream nstream;
     ExpressionNode *expressionNode;
     ListNode *listNode;
     ImportNode *importNode;
-    ForNode *forNode;
     RangeNode *rangeNode;
     KeywordNode *keywordNode;
     ScopeNode *scopeNode;
@@ -105,8 +102,6 @@ NullStream nstream;
 %type <systemNode> systemDef
 %type <systemNode> languagePlatform
 %type <importNode> importDef
-%type <forNode> forDef
-%type <ast> forPlatformDef
 %type <declarationNode> blockDef
 %type <ast> blockType
 %type <ast> properties
@@ -180,10 +175,6 @@ start:
             tree_head->addChild($1);
             COUT << "Import Definition Resolved!" << ENDL;
         }
-    |   forDef      {
-            tree_head->addChild($1);
-            COUT << "For Definition Resolved!" << ENDL;
-        }
     |   blockDef    {
             tree_head->addChild($1);
             COUT << "Block Resolved!" << ENDL;
@@ -204,7 +195,7 @@ start:
 
 systemDef:
         languagePlatform {
-            PlatformNode *systemNode = $1;
+            SystemNode *systemNode = $1;
             $$ = systemNode;
         }
     ;
@@ -213,7 +204,7 @@ languagePlatform:
         USE UVAR                {
             string s;
             s.append($2); /* string constructor leaks otherwise! */
-            $$ = new PlatformNode(s, -1, -1, currentFile, yyloc.first_line);
+            $$ = new SystemNode(s, -1, -1, currentFile, yyloc.first_line);
             COUT << "Platform: " << $2 << ENDL << " Using latest version!" << ENDL;
             free($2);
         }
@@ -222,7 +213,7 @@ languagePlatform:
             s.append($2); /* string constructor leaks otherwise! */
             int major = int($4);
             int minor = int(($4 - int($4))*10);
-            $$ = new PlatformNode(s, major, minor, currentFile, yyloc.first_line);
+            $$ = new SystemNode(s, major, minor, currentFile, yyloc.first_line);
             COUT << "Platform: " << $2 << ENDL << "Version: " << $4 << " line " << yylineno << ENDL;
             free($2);
         }
@@ -273,46 +264,6 @@ importDef:
             COUT << "Importing: " << $3 << " as " << $5 << " in scope!" << ENDL;
             free($3);
             free($5);
-        }
-    ;
-
-// =================================
-//  FOR DEFINITION
-// =================================
-
-forDef:
-        FOR forPlatformDef      {
-            AST* aux = $2;
-            ForNode *fornode = new ForNode(currentFile, yyloc.first_line);
-            vector<AST *> children = aux->getChildren();
-            fornode->setChildren(children);
-            $$ = fornode;
-            delete $2;
-        }
-    ;
-
-forPlatformDef:
-        UVAR                    {
-            string word;
-            word.append($1); /* string constructor leaks otherwise! */
-            AST *temp = new AST();
-            temp->addChild(new BlockNode(word, currentFile, yyloc.first_line));
-            $$ = temp;
-            COUT << "For platform: " << $1 << ENDL;
-            free($1);
-        }
-    |   forPlatformDef AND UVAR {
-            AST *temp = new AST();
-            AST *aux = $1;
-            aux->giveChildren(temp);
-            string word;
-            word.append($3); /* string constructor leaks otherwise! */
-            temp->addChild(new BlockNode(word, currentFile, yyloc.first_line));
-            $$ = temp;
-            aux->deleteChildren();
-            delete aux;
-            COUT << "For platform: " << $3 << ENDL;
-            free($3);
         }
     ;
 

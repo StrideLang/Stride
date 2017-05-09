@@ -74,7 +74,7 @@ public:
         Invalid
     } Token;
 
-    AST(Token token, const char *filename, int line = -1);
+    AST(Token token, const char *filename, int line = -1, vector<string> scope = vector<string>());
     virtual ~AST();
 
     Token getNodeType() const { return m_token; }
@@ -101,13 +101,17 @@ public:
     string getFilename() const;
     void setFilename(const string &filename);
 
-    virtual void resolveScope(AST* scope);
-
     void addScope(string newScope);
+    void setRootScope(string scopeName);
     size_t getScopeLevels();
     string getScopeAt(unsigned int scopeLevel);
 
+    vector<string> getNamespaceList();
+    void setNamespaceList(vector<string> list);
+
 protected:
+    virtual void resolveScope(AST* scope);
+
     Token m_token; // From which token did we create node?
     vector<AST *> m_children; // normalized list of children
     string m_filename; // file where the node was generated

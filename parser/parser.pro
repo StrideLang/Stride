@@ -22,7 +22,6 @@ SOURCES += ast.cpp \
     expressionnode.cpp \
     listnode.cpp \
     importnode.cpp \
-    fornode.cpp \
     rangenode.cpp \
     langerror.cpp \
     keywordnode.cpp \
@@ -41,7 +40,6 @@ HEADERS += ast.h \
     expressionnode.h \
     listnode.h \
     importnode.h \
-    fornode.h \
     rangenode.h \
     langerror.h \
     strideparser.h \

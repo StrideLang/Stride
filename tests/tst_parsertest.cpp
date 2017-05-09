@@ -56,14 +56,14 @@ private:
 
     void testMultichannelUgens(); // Need to complete support for this.
 
+    // Code generation/Compiler
+    void testCompilation();
 
 private Q_SLOTS:
 
     void testConnectionErrors();
     void testConnectionCount();
 
-    // Code generation/Compiler
-    void testCompilation();
 
     //
     void testBlockMembers();
@@ -1605,13 +1605,13 @@ void ParserTest::testDuplicates()
     QVERIFY(error.type == LangError::DuplicateSymbol);
     QVERIFY(error.lineNumber == 12);
     QVERIFY(error.errorTokens[0] == "Const");
-    QVERIFY(error.errorTokens[1] == "3");
+    QVERIFY(error.errorTokens[2] == "3");
 
     error = errors.takeFirst();
     QVERIFY(error.type == LangError::DuplicateSymbol);
     QVERIFY(error.lineNumber == 18);
     QVERIFY(error.errorTokens[0] == "Size");
-    QVERIFY(error.errorTokens[1] == "7");
+    QVERIFY(error.errorTokens[2] == "7");
 
     tree->deleteChildren();
     delete tree;
@@ -2995,7 +2995,7 @@ void ParserTest::testHeader()
 
     QVERIFY(tree != NULL);
     vector<AST *> nodes = tree->getChildren();
-    PlatformNode *node = static_cast<PlatformNode *>(nodes.at(0));
+    SystemNode *node = static_cast<SystemNode *>(nodes.at(0));
     QVERIFY(node->getNodeType() == AST::Platform);
     QVERIFY(node->platformName() == "PufferFish");
     QVERIFY(node->majorVersion() == 1);
@@ -3003,7 +3003,7 @@ void ParserTest::testHeader()
     QVERIFY(node->getChildren().size() == 0);
     QVERIFY(node->getLine() == 1);
 
-    node = static_cast<PlatformNode *>(nodes.at(1));
+    node = static_cast<SystemNode *>(nodes.at(1));
     QVERIFY(node->getNodeType() == AST::Platform);
     QVERIFY(node->platformName() == "Gamma");
     QVERIFY(node->majorVersion() == -1);
@@ -3022,24 +3022,6 @@ void ParserTest::testHeader()
     QVERIFY(importnode->importName() == "File");
     QVERIFY(importnode->importAlias() == "F");
     QVERIFY(importnode->getLine() == 6);
-
-    ForNode *fornode = static_cast<ForNode *>(nodes.at(4));
-    QVERIFY(fornode->getNodeType() == AST::For);
-    vector<AST *> fornames = fornode->getChildren();
-    QVERIFY(fornames.size() == 1);
-    BlockNode *nameNode = static_cast<BlockNode *>(fornames.at(0));
-    QVERIFY(nameNode->getName() == "Gamma");
-    QVERIFY(fornode->getLine() == 8);
-
-    fornode = static_cast<ForNode *>(nodes.at(5));
-    QVERIFY(fornode->getNodeType() == AST::For);
-    fornames = fornode->getChildren();
-    QVERIFY(fornames.size() == 2);
-    nameNode = static_cast<BlockNode *>(fornames.at(0));
-    QVERIFY(nameNode->getName() == "Gamma");
-    nameNode = static_cast<BlockNode *>(fornames.at(1));
-    QVERIFY(nameNode->getName() == "PufferFish");
-    QVERIFY(fornode->getLine() == 9);
 
     tree->deleteChildren();
     delete tree;

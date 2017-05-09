@@ -88,7 +88,7 @@ AST *FunctionNode::getDomain()
     return domainValue;
 }
 
-void FunctionNode::setDomain(string domain)
+void FunctionNode::setDomainString(string domain)
 {
     bool domainSet = false;
     for (unsigned int i = 0; i < m_properties.size(); i++) {

@@ -63,7 +63,7 @@ public:
     AST *getPropertyValue(string propertyName);
 
     AST *getDomain();
-    void setDomain(string domain);
+    void setDomainString(string domain);
 
     void resolveScope(AST* scope);
 

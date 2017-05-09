@@ -76,7 +76,8 @@ std::string LangError::getErrorText() {
         errorText += "Array Index out of Range Error";
         break;
     case DuplicateSymbol:
-        errorText += "Duplicate Symbol Error";
+        errorText += "Duplicate Symbol Error. '" +  errorTokens[0]
+                + "' redefined in " + errorTokens[1] + ":" + errorTokens[2] + "";
         break;
     case InconsistentList:
         errorText += "Inconsistent List Error";

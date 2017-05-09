@@ -64,10 +64,10 @@ void CodeValidator::validateTree(QString platformRootDir, AST *tree)
             }
         }
 
-        QVector<PlatformNode *> platforms = getPlatformNodes();
+        QVector<SystemNode *> platforms = getPlatformNodes();
 
         if (platforms.size () > 0) {
-            PlatformNode *platformNode = platforms.at(0);
+            SystemNode *platformNode = platforms.at(0);
             m_system = new StrideSystem(platformRootDir,
                                         QString::fromStdString(platformNode->platformName()),
                                         platformNode->majorVersion(), platformNode->minorVersion(),
@@ -84,6 +84,10 @@ void CodeValidator::validateTree(QString platformRootDir, AST *tree)
         } else { // Make a default platform that only inlcudes the common library
             m_system = new StrideSystem(platformRootDir, "", -1, -1, importList);
         }
+        if (platforms.size() > 0) { // Store system details in tree
+            platforms.at(0)->setHwPlatforms(m_system->getFrameworkNames());
+        }
+        m_frameworks = m_system->getFrameworkNames();
         validate();
     }
 }
@@ -98,17 +102,17 @@ bool CodeValidator::platformIsValid()
     return m_system->getErrors().size() == 0;
 }
 
-QVector<PlatformNode *> CodeValidator::getPlatformNodes()
+QVector<SystemNode *> CodeValidator::getPlatformNodes()
 {
     Q_ASSERT(m_tree);
 //    if (!m_tree) {
 //        return QVector<PlatformNode *>();
 //    }
-    QVector<PlatformNode *> platformNodes;
+    QVector<SystemNode *> platformNodes;
     vector<AST *> nodes = m_tree->getChildren();
     for(AST *node: nodes) {
         if (node->getNodeType() == AST::Platform) {
-            platformNodes.push_back(static_cast<PlatformNode *>(node));
+            platformNodes.push_back(static_cast<SystemNode *>(node));
         }
     }
     return platformNodes;
@@ -118,7 +122,7 @@ void CodeValidator::validatePlatform(AST *tree, QVector<AST *> scopeStack)
 {
     for(AST *node: tree->getChildren()) {
         if (node->getNodeType() == AST::Platform) {
-            PlatformNode *platformNode = static_cast<PlatformNode *>(node);
+            SystemNode *platformNode = static_cast<SystemNode *>(node);
 //            string platformName() const;
 
 //            double version() const;
@@ -166,7 +170,7 @@ QVector<AST *> CodeValidator::getBlocksInScope(AST *root, QVector<AST *> scopeSt
     return blocks;
 }
 
-std::vector<string> CodeValidator::getUsedFrameworks(AST *tree)
+std::vector<string> CodeValidator::getUsedDomains(AST *tree)
 {
     std::vector<string> frameworks;
     for (AST *node: tree->getChildren()) {
@@ -174,12 +178,53 @@ std::vector<string> CodeValidator::getUsedFrameworks(AST *tree)
                 || node->getNodeType() == AST::BundleDeclaration) {
             string domainName = CodeValidator::getNodeDomainName(node, QVector<AST *>(), tree);
             if (domainName.size() > 0) {
-                
                 qDebug() << QString::fromStdString(domainName);
             }
         }
     }
     return frameworks;
+}
+
+bool CodeValidator::scopesMatch(QStringList scopeList, AST *node)
+{
+    if (scopeList.size() != node->getScopeLevels()) {
+        return false;
+    }
+    for(size_t i = 0; i < node->getScopeLevels(); i++) {
+        if (scopeList.at(i) != QString::fromStdString(node->getScopeAt(i))) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool CodeValidator::nodeInScope(std::vector<string> scopeList, AST *node)
+{
+    if (node->getNamespaceList().size() == 0) {
+        return true;
+    }
+    if (scopeList.size() != node->getScopeLevels()) {
+        return false;
+    }
+    for(size_t i = 0; i < node->getScopeLevels(); i++) {
+        if (scopeList.at(i) != node->getScopeAt(i)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool CodeValidator::scopesMatch(AST *node1, AST *node2)
+{
+    if (node1->getScopeLevels() != node2->getScopeLevels()) {
+        return false;
+    }
+    for(size_t i = 0; i < node1->getScopeLevels(); i++) {
+        if (node1->getScopeAt(i) != node2->getScopeAt(i)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 QList<LangError> CodeValidator::getErrors()
@@ -217,7 +262,7 @@ void CodeValidator::validate()
     sortErrors();
 }
 
-void CodeValidator::validateTypes(AST *node, QVector<AST *> scopeStack)
+void CodeValidator::validateTypes(AST *node, QVector<AST *> scopeStack, vector<string> parentNamespace)
 {
     if (node->getNodeType() == AST::BundleDeclaration
             || node->getNodeType() == AST::Declaration) {
@@ -312,6 +357,11 @@ void CodeValidator::validateTypes(AST *node, QVector<AST *> scopeStack)
         if (subScope) {
             scopeStack.append(subScope);
         }
+        // For BundleDeclarations in particular, we need to ingnore the bundle when delcaring types. The inner bundle has no scope set, and trying to find it will fail if the declaration is scoped....
+        foreach(auto property, block->getProperties()) {
+            validateTypes(property->getValue(), scopeStack, block->getNamespaceList());
+        }
+        return;
     } else if (node->getNodeType() == AST::Stream) {
         validateStreamMembers(static_cast<StreamNode *>(node), scopeStack);
         return; // Children are validated when validating stream
@@ -319,7 +369,9 @@ void CodeValidator::validateTypes(AST *node, QVector<AST *> scopeStack)
          // Children are checked automatically below
     } else if (node->getNodeType() == AST::Block) {
         BlockNode *block = static_cast<BlockNode *>(node);
-        DeclarationNode *declaration = CodeValidator::findDeclaration(QString::fromStdString(block->getName()), scopeStack, m_tree);
+        vector<string> namespaces = block->getNamespaceList();
+        namespaces.insert(namespaces.begin(), parentNamespace.begin(), parentNamespace.end());
+        DeclarationNode *declaration = CodeValidator::findDeclaration(QString::fromStdString(block->getName()), scopeStack, m_tree, namespaces);
         if (!declaration) {
             LangError error;
             error.type = LangError::UndeclaredSymbol;
@@ -343,7 +395,7 @@ void CodeValidator::validateTypes(AST *node, QVector<AST *> scopeStack)
 
     } else if (node->getNodeType() == AST::Bundle) {
         BundleNode *bundle = static_cast<BundleNode *>(node);
-        DeclarationNode *declaration = CodeValidator::findDeclaration(QString::fromStdString(bundle->getName()), scopeStack, m_tree);
+        DeclarationNode *declaration = CodeValidator::findDeclaration(QString::fromStdString(bundle->getName()), scopeStack, m_tree, bundle->getNamespaceList());
         if (!declaration) {
             LangError error;
             error.type = LangError::UndeclaredSymbol;
@@ -366,7 +418,7 @@ void CodeValidator::validateTypes(AST *node, QVector<AST *> scopeStack)
         }
     } else if (node->getNodeType() == AST::Function) {
         FunctionNode *func = static_cast<FunctionNode *>(node);
-        DeclarationNode *declaration = CodeValidator::findDeclaration(QString::fromStdString(func->getName()), scopeStack, m_tree);
+        DeclarationNode *declaration = CodeValidator::findDeclaration(QString::fromStdString(func->getName()), scopeStack, m_tree, func->getNamespaceList());
         if (!declaration) {
             LangError error;
             error.type = LangError::UndeclaredSymbol;
@@ -481,12 +533,16 @@ void CodeValidator::validateSymbolUniqueness(AST *node, QVector<AST *> scope)
                 nodeName = QString::fromStdString(static_cast<DeclarationNode *>(node)->getName());
             }
             if (!nodeName.isEmpty() && !siblingName.isEmpty() && nodeName == siblingName) {
-                LangError error;
-                error.type = LangError::DuplicateSymbol;
-                error.lineNumber = sibling->getLine();
-                error.errorTokens.push_back(nodeName.toStdString());
-                error.errorTokens.push_back(QString::number(node->getLine()).toStdString());
-                m_errors << error;
+                if (CodeValidator::scopesMatch(node, sibling)) {
+                    LangError error;
+                    error.type = LangError::DuplicateSymbol;
+                    error.lineNumber = sibling->getLine();
+                    error.filename = sibling->getFilename();
+                    error.errorTokens.push_back(nodeName.toStdString());
+                    error.errorTokens.push_back(node->getFilename());
+                    error.errorTokens.push_back(std::to_string(node->getLine()));
+                    m_errors << error;
+                }
             }
         }
     }
@@ -967,7 +1023,7 @@ int CodeValidator::getTypeNumInputs(DeclarationNode *blockDeclaration, const QVe
     return 0;
 }
 
-DeclarationNode *CodeValidator::findDeclaration(QString objectName, QVector<AST *> scopeStack, AST *tree)
+DeclarationNode *CodeValidator::findDeclaration(QString objectName, QVector<AST *> scopeStack, AST *tree, vector<string> scope, vector<string> defaultNamespaces)
 {
     QVector<AST *> globalAndLocal;
     for (AST *scope : scopeStack) {
@@ -983,19 +1039,39 @@ DeclarationNode *CodeValidator::findDeclaration(QString objectName, QVector<AST 
     if (tree) {
         globalAndLocal << QVector<AST *>::fromStdVector(tree->getChildren());
     }
+    QStringList scopesList = objectName.split(":");
+    objectName = scopesList.back();
+    scopesList.pop_back();
+    for(string ns:scope) {
+        scopesList.push_back(QString::fromStdString(ns));
+    }
     for(AST *node : globalAndLocal) {
         if (node->getNodeType() == AST::BundleDeclaration) {
             DeclarationNode *block = static_cast<DeclarationNode *>(node);
             BundleNode *bundle = block->getBundle();
             QString name = QString::fromStdString(bundle->getName());
-            if (name == objectName) {
+            if (name == objectName and CodeValidator::scopesMatch(scopesList, block)) {
                 return block;
+            }
+            for (auto ns: defaultNamespaces) {
+                QStringList prefixedScopesList = scopesList;
+                prefixedScopesList.prepend(QString::fromStdString(ns));
+                if (name == objectName and CodeValidator::scopesMatch(scopesList, block)) {
+                    return block;
+                }
             }
         } else if (node->getNodeType() == AST::Declaration) {
             DeclarationNode *block = static_cast<DeclarationNode *>(node);
             QString name = QString::fromStdString(block->getName());
-            if (name == objectName) {
+            if (name == objectName and CodeValidator::scopesMatch(scopesList, block)) {
                 return block;
+            }
+            for (auto ns: defaultNamespaces) {
+                QStringList prefixedScopesList = scopesList;
+                prefixedScopesList.prepend(QString::fromStdString(ns));
+                if (name == objectName and CodeValidator::scopesMatch(scopesList, block)) {
+                    return block;
+                }
             }
         }
     }
@@ -1207,7 +1283,7 @@ double CodeValidator::evaluateConstReal(AST *node, QVector<AST *> scope, AST *tr
     } else if (node->getNodeType() == AST::Block) {
         BlockNode *blockNode = static_cast<BlockNode *>(node);
         QString name = QString::fromStdString(blockNode->getName());
-        DeclarationNode *declaration = findDeclaration(name, scope, tree);
+        DeclarationNode *declaration = findDeclaration(name, scope, tree, blockNode->getNamespaceList());
         if (!declaration) {
             LangError error;
             error.type = LangError::UndeclaredSymbol;
@@ -1262,7 +1338,7 @@ std::string CodeValidator::evaluateConstString(AST *node, QVector<AST *> scope, 
     } else if (node->getNodeType() == AST::Block) {
         BlockNode *blockNode = static_cast<BlockNode *>(node);
         QString name = QString::fromStdString(blockNode->getName());
-        DeclarationNode *declaration = findDeclaration(name, scope, tree);
+        DeclarationNode *declaration = findDeclaration(name, scope, tree, blockNode->getNamespaceList());
         if (!declaration) {
             LangError error;
             error.type = LangError::UndeclaredSymbol;
@@ -1380,7 +1456,9 @@ QVector<AST *> CodeValidator::validTypesForPort(DeclarationNode *typeDeclaration
     return validTypes;
 }
 
-DeclarationNode *CodeValidator::findTypeDeclarationByName(QString typeName, QVector<AST *> scopeStack, AST *tree, QList<LangError> &errors)
+DeclarationNode *CodeValidator::findTypeDeclarationByName(QString typeName, QVector<AST *> scopeStack, AST *tree,
+                                                          QList<LangError> &errors,
+                                                          std::vector<string> namespaces)
 {
     for(AST *scope: scopeStack) {
         if (scope) {
@@ -1398,7 +1476,8 @@ DeclarationNode *CodeValidator::findTypeDeclarationByName(QString typeName, QVec
                         AST *valueNode = declarationNode->getPropertyValue("typeName");
                         if (valueNode->getNodeType() == AST::String) {
                             ValueNode *value = static_cast<ValueNode *>(valueNode);
-                            if (typeName == QString::fromStdString( value->getStringValue())) {
+                            if (typeName == QString::fromStdString( value->getStringValue())
+                                    && CodeValidator::nodeInScope(namespaces, node) ) {
                                 return declarationNode;
                             }
                         }
@@ -1416,7 +1495,8 @@ DeclarationNode *CodeValidator::findTypeDeclarationByName(QString typeName, QVec
                     AST *valueNode = declarationNode->getPropertyValue("typeName");
                     if (valueNode && valueNode->getNodeType() == AST::String) {
                         ValueNode *value = static_cast<ValueNode *>(valueNode);
-                        if (typeName == QString::fromStdString( value->getStringValue())) {
+                        if (typeName == QString::fromStdString( value->getStringValue())
+                                && CodeValidator::nodeInScope(namespaces, node) ) {
                             return declarationNode;
                         }
                     }
@@ -1430,7 +1510,7 @@ DeclarationNode *CodeValidator::findTypeDeclarationByName(QString typeName, QVec
 DeclarationNode *CodeValidator::findTypeDeclaration(DeclarationNode *block, QVector<AST *> scope, AST *tree, QList<LangError> &errors)
 {
     QString typeName = QString::fromStdString(block->getObjectType());
-    return CodeValidator::findTypeDeclarationByName(typeName, scope, tree, errors);
+    return CodeValidator::findTypeDeclarationByName(typeName, scope, tree, errors, block->getNamespaceList());
 }
 
 QVector<AST *> CodeValidator::getPortsForType(QString typeName, QVector<AST *> scope, AST* tree)
@@ -1760,9 +1840,9 @@ QString CodeValidator::getPortTypeName(PortType type)
     return "";
 }
 
-string CodeValidator::getNodeDomainName(AST *node, QVector<AST *> scopeStack, AST *tree)
+
+AST* CodeValidator::getNodeDomain(AST *node, QVector<AST *> scopeStack, AST *tree)
 {
-    std::string domainName;
     AST *domainNode = nullptr;
 
     if (node->getNodeType() == AST::Block) {
@@ -1810,10 +1890,10 @@ string CodeValidator::getNodeDomainName(AST *node, QVector<AST *> scopeStack, AS
                 allEqual = false;
             }
         }
-        if (allEqual) {
-            return tempDomainName;
+        if (allEqual && node->getChildren().size() > 0) {
+            return node->getChildren().at(0);
         } else {
-            return "";
+            return nullptr;
         }
     } else if (node->getNodeType() == AST::Declaration || node->getNodeType() == AST::BundleDeclaration) {
         domainNode = static_cast<DeclarationNode *>(node)->getDomain();
@@ -1826,8 +1906,8 @@ string CodeValidator::getNodeDomainName(AST *node, QVector<AST *> scopeStack, AS
         } else {
             AST *left = expr->getLeft();
             AST *right = expr->getRight();
-            string leftDomain = CodeValidator::getNodeDomainName(left, scopeStack, tree);
-            string rightDomain = CodeValidator::getNodeDomainName(right, scopeStack, tree);
+            AST *leftDomain = CodeValidator::getNodeDomain(left, scopeStack, tree);
+            AST *rightDomain = CodeValidator::getNodeDomain(right, scopeStack, tree);
             if (left->getNodeType() == AST::Int
                     || left->getNodeType() == AST::Real
                     || left->getNodeType() == AST::String
@@ -1840,17 +1920,25 @@ string CodeValidator::getNodeDomainName(AST *node, QVector<AST *> scopeStack, AS
                     || right->getNodeType() == AST::Switch) {
                 rightDomain = leftDomain;
             }
-            if (leftDomain == rightDomain) {
-                return leftDomain;
+            if (leftDomain && rightDomain) {
+                if (CodeValidator::getDomainNodeString(leftDomain)
+                        == CodeValidator::getDomainNodeString(rightDomain)) {
+                    return leftDomain;
+                }
             } else {
-                return "";
+                return nullptr;
             }
         }
     }
+    return domainNode;
+}
 
+string CodeValidator::getNodeDomainName(AST *node, QVector<AST *> scopeStack, AST *tree)
+{
+    std::string domainName;
+    AST *domainNode = CodeValidator::getNodeDomain(node, scopeStack, tree);
     if (domainNode) {
-        domainName = getDomainNodeString(domainNode);
-
+        domainName = CodeValidator::getDomainNodeString(domainNode);
     }
     return domainName;
 }
