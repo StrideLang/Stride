@@ -18,7 +18,7 @@ Rate1 >> Rate2 >> Output1;
 
 Signal1 >> Rate1 >> Signal2 >> Rate2 >> GetAudioRate >> Output2;
 
-TestModule() >> Rate1 >> Level(gain: 0.5) >> Output3;
+TestModule() >> Rate1 >> Level(gain: 0.5) >> AudioOut[1];
 
 module TestModule {
     ports: [

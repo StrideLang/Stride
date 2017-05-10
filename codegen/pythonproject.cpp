@@ -42,7 +42,7 @@
 #include "codevalidator.h"
 
 
-PythonProject::PythonProject(QString platformPath, QString strideRoot,
+PythonProject::PythonProject(QString platformName, QString platformPath, QString strideRoot,
                              QString projectDir,
                              QString pythonExecutable) :
     Builder(projectDir, strideRoot, platformPath),
@@ -55,6 +55,8 @@ PythonProject::PythonProject(QString platformPath, QString strideRoot,
     } else {
         m_pythonExecutable = pythonExecutable;
     }
+
+    m_jsonFilename = m_projectDir + QDir::separator() + "tree-" + platformName + ".json";
 
     QObject::connect(&m_buildProcess, SIGNAL(readyReadStandardOutput()) , this, SLOT(consoleMessage()));
     QObject::connect(&m_buildProcess, SIGNAL(readyReadStandardError()) , this, SLOT(consoleMessage()));
@@ -85,7 +87,7 @@ bool PythonProject::build(AST *tree)
      }
     m_buildProcess.setWorkingDirectory(m_strideRoot);
     // FIXME un hard-code library version
-    arguments << "library/1.0/python/build.py" << m_projectDir << m_strideRoot << "build";
+    arguments << "library/1.0/python/build.py" << m_jsonFilename << m_projectDir << m_strideRoot << "build";
     m_buildProcess.start(m_pythonExecutable, arguments);
 
     m_buildProcess.waitForStarted(15000);
@@ -179,7 +181,7 @@ void PythonProject::writeAST(AST *tree)
         }
         treeObject.append(nodeObject);
     }
-    QFile saveFile(m_projectDir + QDir::separator() + "tree.json");
+    QFile saveFile(m_jsonFilename);
 
     if (!saveFile.open(QIODevice::WriteOnly)) {
         qWarning("Couldn't open save file.");
@@ -211,18 +213,16 @@ void PythonProject::astToJson(AST *node, QJsonObject &obj)
             // FIXME implement support for Range
             // Are ranges and lists always unraveled by the compiler?
         }
-        newObj["rate"] = node->getRate();
+        newObj["rate"] = CodeValidator::getNodeRate(node);
         obj["bundle"] = newObj;
     } else if (node->getNodeType() == AST::Block) {
         QJsonObject newObj;
         newObj["name"] = QString::fromStdString(static_cast<BundleNode *>(node)->getName());
-        newObj["rate"] = node->getRate();
         newObj["filename"] = QString::fromStdString(node->getFilename());
         newObj["line"] = node->getLine();
         obj["name"] = newObj;
     } else if (node->getNodeType() == AST::Expression) {
         QJsonObject newObj;
-        newObj["rate"] = node->getRate();
         expressionToJson(static_cast<ExpressionNode *>(node), newObj);
         newObj["filename"] = QString::fromStdString(node->getFilename());
         newObj["line"] = node->getLine();
@@ -410,7 +410,7 @@ void PythonProject::functionToJson(FunctionNode *node, QJsonObject &obj)
         }
     }
     obj["ports"] = propObject;
-    obj["rate"] = node->getRate();
+    obj["rate"] = CodeValidator::getNodeRate(node);
 }
 
 void PythonProject::expressionToJson(ExpressionNode *node, QJsonObject &obj)

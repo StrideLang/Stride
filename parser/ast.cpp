@@ -43,7 +43,6 @@ AST::AST()
 {
     m_token = AST::None;
     m_line = -1;
-    m_rate = -1;
 }
 
 AST::AST(Token token, const char *filename, int line, vector<string> scope)
@@ -51,7 +50,6 @@ AST::AST(Token token, const char *filename, int line, vector<string> scope)
     m_token = token;
     m_filename.append(filename);
     m_line = line;
-    m_rate = -1;
     m_scope = scope;
 }
 
@@ -101,16 +99,6 @@ AST *AST::parseFile(const char *fileName)
 vector<LangError> AST::getParseErrors()
 {
     return getErrors();
-}
-
-double AST::getRate() const
-{
-    return m_rate;
-}
-
-void AST::setRate(double rate)
-{
-    m_rate = rate;
 }
 
 string AST::getFilename() const

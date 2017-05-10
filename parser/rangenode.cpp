@@ -57,7 +57,6 @@ AST *RangeNode::deepCopy()
 {
     AST *newRangeNode = new RangeNode(startIndex()->deepCopy(), endIndex()->deepCopy(),
                                 m_filename.data(), m_line);
-    newRangeNode->setRate(m_rate);
     return newRangeNode;
 }
 

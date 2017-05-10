@@ -47,6 +47,7 @@ FunctionNode::FunctionNode(string name, AST *propertiesList, FunctionType type,
         propertiesList->giveChildren(this);
     }
     m_type = type;
+    m_rate = -1;
 }
 
 FunctionNode::FunctionNode(string name, AST* scope, AST *propertiesList, FunctionType type,
@@ -59,6 +60,7 @@ FunctionNode::FunctionNode(string name, AST* scope, AST *propertiesList, Functio
     }
     m_type = type;
     resolveScope(scope);
+    m_rate = -1;
 }
 
 FunctionNode::~FunctionNode()
@@ -147,13 +149,23 @@ AST *FunctionNode::deepCopy()
     for(unsigned int i = 0; i< m_properties.size(); i++) {
         newProps->addChild(m_properties[i]->deepCopy());
     }
-    AST *newFunctionNode = new FunctionNode(m_name, newProps, m_type, m_filename.data(), m_line);
+    FunctionNode *newFunctionNode = new FunctionNode(m_name, newProps, m_type, m_filename.data(), m_line);
     newProps->deleteChildren();
     delete newProps;
-    newFunctionNode->setRate(m_rate);
     for (unsigned int i = 0; i < this->getScopeLevels(); i++) {
         newFunctionNode->addScope(this->getScopeAt(i));
     }
+    newFunctionNode->setRate(getRate());
     return newFunctionNode;
+}
+
+double FunctionNode::getRate() const
+{
+    return m_rate;
+}
+
+void FunctionNode::setRate(double rate)
+{
+    m_rate = rate;
 }
 

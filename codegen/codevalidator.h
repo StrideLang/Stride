@@ -115,9 +115,18 @@ public:
 
     static std::vector<std::string> getUsedDomains(AST *tree);
 
+    static double findRateInProperties(vector<PropertyNode *> properties, QVector<AST *> scope, AST *tree);
+    static double getNodeRate(AST *node,  QVector<AST *> scope = QVector<AST *>(), AST *tree = nullptr);
+    static void setNodeRate(AST *node, double rate,  QVector<AST *> scope = QVector<AST *>(), AST *tree = nullptr);
+
+    static double getDefaultForTypeAsDouble(QString type, QString port, QVector<AST *> scope, AST *tree);
+    static AST *getDefaultPortValueForType(QString type, QString portName, QVector<AST *> scope, AST *tree);
+
     static bool scopesMatch(QStringList scopeList, AST *node);
     static bool scopesMatch(AST *node1, AST *node2);
     static bool nodeInScope(std::vector<string> scopeList, AST *node);
+
+    static vector<StreamNode *> getStreamsAtLine(AST *tree, int line);
 
 private:
 

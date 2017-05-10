@@ -874,61 +874,61 @@ void ParserTest::testStreamRates()
 
     BlockNode *name = static_cast<BlockNode *>(stream->getLeft());
     QVERIFY(name->getNodeType() == AST::Block);
-    QVERIFY(name->getRate() == 44100);
+    QVERIFY(CodeValidator::getNodeRate(name, QVector<AST *>(), tree) == 44100);
 
     BundleNode *bundle = static_cast<BundleNode *>(stream->getRight());
     QVERIFY(bundle->getNodeType() == AST::Bundle);
-    QVERIFY(bundle->getRate() == 44100);
+    QVERIFY(CodeValidator::getNodeRate(bundle, QVector<AST *>(), tree) == 44100);
 
     // Rate1 >> Rate2 >> Output1;
     stream = static_cast<StreamNode *>(nodes.at(4));
     QVERIFY(stream->getNodeType() == AST::Stream);
-    QVERIFY(stream->getLeft()->getRate() == 22050);
+    QVERIFY(CodeValidator::getNodeRate(stream->getLeft(), QVector<AST *>(), tree) == 22050);
 
     stream = static_cast<StreamNode *>(stream->getRight());
     QVERIFY(stream->getNodeType() == AST::Stream);
-    QVERIFY(stream->getLeft()->getRate() == 11025);
+    QVERIFY(CodeValidator::getNodeRate(stream->getLeft(), QVector<AST *>(), tree) == 11025);
 
     BlockNode *nameNode = static_cast<BlockNode *>(stream->getRight());
     QVERIFY(nameNode->getNodeType() == AST::Block);
-    QVERIFY(nameNode->getRate() == 44100);
+    QVERIFY(CodeValidator::getNodeRate(nameNode, QVector<AST *>(), tree) == -1);
 
-    // GetRate1 >> Rate1 >> GetRate2 >> Rate2 >> GetAudioRate >> Output2;
+    // Signal1 >> Rate1 >> Signal2 >> Rate2 >> GetAudioRate >> Output2;
     stream = static_cast<StreamNode *>(nodes.at(5));
     QVERIFY(stream->getNodeType() == AST::Stream);
-    QVERIFY(stream->getLeft()->getRate() == 44100);
+    QVERIFY(CodeValidator::getNodeRate(stream->getLeft(), QVector<AST *>(), tree) == 22050);
 
     stream = static_cast<StreamNode *>(stream->getRight());
     QVERIFY(stream->getNodeType() == AST::Stream);
-    QVERIFY(stream->getLeft()->getRate() == 22050);
+    QVERIFY(CodeValidator::getNodeRate(stream->getLeft(), QVector<AST *>(), tree) == 22050);
 
     stream = static_cast<StreamNode *>(stream->getRight());
     QVERIFY(stream->getNodeType() == AST::Stream);
-    QVERIFY(stream->getLeft()->getRate() == 44100);
+    QVERIFY(CodeValidator::getNodeRate(stream->getLeft(), QVector<AST *>(), tree) == 11025);
 
     stream = static_cast<StreamNode *>(stream->getRight());
     QVERIFY(stream->getNodeType() == AST::Stream);
-    QVERIFY(stream->getLeft()->getRate() == 11025);
+    QVERIFY(CodeValidator::getNodeRate(stream->getLeft(), QVector<AST *>(), tree) == 11025);
 
     stream = static_cast<StreamNode *>(stream->getRight());
     QVERIFY(stream->getNodeType() == AST::Stream);
-    QVERIFY(stream->getLeft()->getRate() == 44100);
+    QVERIFY(CodeValidator::getNodeRate(stream->getLeft(), QVector<AST *>(), tree) == -1);
 
     name = static_cast<BlockNode *>(stream->getRight());
     QVERIFY(name->getNodeType() == AST::Block);
-    QVERIFY(name->getRate() == 44100);
+    QVERIFY(CodeValidator::getNodeRate(name, QVector<AST *>(), tree) == -1);
 
     //    Oscillator() >> Rate1 >> LowPass() >> Output3;
     stream = static_cast<StreamNode *>(nodes.at(6));
     QVERIFY(stream->getNodeType() == AST::Stream);
-    QVERIFY(stream->getLeft()->getRate() == 22050);
+    QVERIFY(CodeValidator::getNodeRate(stream->getLeft(), QVector<AST *>(), tree) == 22050);
     stream = static_cast<StreamNode *>(stream->getRight());
     QVERIFY(stream->getNodeType() == AST::Stream);
-    QVERIFY(stream->getLeft()->getRate() == 22050);
+    QVERIFY(CodeValidator::getNodeRate(stream->getLeft(), QVector<AST *>(), tree) == 22050);
     stream = static_cast<StreamNode *>(stream->getRight());
     QVERIFY(stream->getNodeType() == AST::Stream);
-    QVERIFY(stream->getLeft()->getRate() == 44100);
-    QVERIFY(stream->getRight()->getRate() == 44100);
+    QVERIFY(CodeValidator::getNodeRate(stream->getLeft(), QVector<AST *>(), tree) == 44100);
+    QVERIFY(CodeValidator::getNodeRate(stream->getRight(), QVector<AST *>(), tree) == 44100);
 
     tree->deleteChildren();
     delete tree;
@@ -1076,10 +1076,22 @@ void ParserTest::testStreamExpansion()
     QVERIFY(value->getIntValue() == 2);
 
     //# Signals should be delcared as blocks of size 2
-    //InSignal2 >> [PassThru(), PassThru()] >> OutSignal2;
+    //InSignal2 >> [Level(gain: 1.0), Level(gain: 1.0)] >> OutSignal2;
 
-    stream = static_cast<StreamNode *>(nodes.at(5));
-    QVERIFY(stream->getNodeType() == AST::Stream);
+    vector<StreamNode *> streams = CodeValidator::getStreamsAtLine(tree, 17);
+    DeclarationNode *decl = CodeValidator::findDeclaration("OutSignal2", QVector<AST *>(), tree);
+
+    QVERIFY(decl->getNodeType() == AST::BundleDeclaration);
+    bundle = decl->getBundle();
+    index = bundle->index();
+
+    QVERIFY(index->getNodeType() == AST::List);
+    QVERIFY(index->getChildren().size() == 1);
+    value = static_cast<ValueNode *>(index->getChildren().at(0));
+    QVERIFY(value->getNodeType() == AST::Int);
+    QVERIFY(value->getIntValue() == 2);
+
+    stream = streams.at(0);
 
     BlockNode *name = static_cast<BlockNode *>(stream->getLeft());
     QVERIFY(name->getNodeType() == AST::Block);
@@ -1111,16 +1123,17 @@ void ParserTest::testStreamExpansion()
     QVERIFY(value->getNodeType() == AST::Int);
     QVERIFY(value->getIntValue() == 2);
 
+    //# Level() should be duplicated and OutSignal3 declared as a bundle size 2
     //    In >> Level(gain: 1.0) >> OutSignal3;
-    stream = static_cast<StreamNode *>(nodes.at(6));
-
-    QVERIFY(stream->getNodeType() == AST::Stream);
+    streams = CodeValidator::getStreamsAtLine(tree, 20);
+    QVERIFY(streams.size() == 1);
+    stream = streams.at(0);
 
     list = static_cast<ListNode *>(stream->getLeft());
     QVERIFY(list->getNodeType() == AST::List);
     QVERIFY(list->getChildren().size() == 2);
 
-    DeclarationNode *decl = CodeValidator::findDeclaration("OutSignal3", QVector<AST *>(), tree);
+    decl = CodeValidator::findDeclaration("OutSignal3", QVector<AST *>(), tree);
     QVERIFY(decl->getNodeType() == AST::BundleDeclaration);
     ListNode *bundleIndex = static_cast<ListNode *>(decl->getBundle()->index());
     QVERIFY(bundleIndex->size() == 1);
@@ -1159,8 +1172,9 @@ void ParserTest::testStreamExpansion()
 
 //    signal StereoOut[2] { }
 //    MonoSignal >> Level(gain: 1.0) >> StereoOut;
-    stream = static_cast<StreamNode *>(nodes.at(8));
-    QVERIFY(stream->getNodeType() == AST::Stream);
+    streams = CodeValidator::getStreamsAtLine(tree, 24);
+    QVERIFY(streams.size() == 1);
+    stream = streams.at(0);
     name = static_cast<BlockNode *>(stream->getLeft());
     QVERIFY(name->getNodeType() == AST::Block);
     QVERIFY(name->getName() == "MonoSignal");
@@ -1173,8 +1187,9 @@ void ParserTest::testStreamExpansion()
     QVERIFY(list->getChildren().size() == 2);
 
 //    MonoSignal2 >> Level(gain: [1.0, 1.0]) >> StereoOut;
-    stream = static_cast<StreamNode *>(nodes.at(9));
-    QVERIFY(stream->getNodeType() == AST::Stream);
+    streams = CodeValidator::getStreamsAtLine(tree, 27);
+    QVERIFY(streams.size() == 1);
+    stream = streams.at(0);
     name = static_cast<BlockNode *>(stream->getLeft());
     QVERIFY(name->getNodeType() == AST::Block);
     QVERIFY(name->getName() == "MonoSignal2");
@@ -1220,7 +1235,9 @@ void ParserTest::testStreamExpansion()
 //    Out >> Level(gain: 1.0) >> NewSignal;
 //    NewSignal >> Level(gain: 1.0) >> NewSignal2;
 
-    stream = static_cast<StreamNode *>(nodes.at(10));
+    streams = CodeValidator::getStreamsAtLine(tree, 30);
+    QVERIFY(streams.size() == 1);
+    stream = streams.at(0);
     list = static_cast<ListNode *>(stream->getLeft());
     QVERIFY(list->getNodeType() == AST::List);
     QVERIFY(list->size() == 2);
@@ -1279,7 +1296,9 @@ void ParserTest::testStreamExpansion()
     QVERIFY(value->getNodeType() == AST::Int);
     QVERIFY(value->getIntValue() == 2);
 
-    stream = static_cast<StreamNode *>(nodes.at(11));
+    streams = CodeValidator::getStreamsAtLine(tree, 31);
+    QVERIFY(streams.size() == 1);
+    stream = streams.at(0);
     list = static_cast<ListNode *>(stream->getLeft());
     QVERIFY(list->getNodeType() == AST::List);
     QVERIFY(list->size() == 2);
@@ -1374,6 +1393,8 @@ void ParserTest::testStreamExpansion()
     value = static_cast<ValueNode *>(indexList->getChildren().at(0));
     QVERIFY(value->getNodeType() == AST::Int);
     QVERIFY(value->getIntValue() == 2);
+
+    streams = CodeValidator::getStreamsAtLine(tree, 22);
 
     tree->deleteChildren();
     delete tree;

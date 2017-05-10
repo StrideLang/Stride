@@ -14,6 +14,13 @@ type _DomainDefinition {
 			default: none
 			required: on
 		},
+		typeProperty DomainRate {
+			name: "rate"
+			types: ["CRP", "CIP", ""]
+			default: none
+			required: on
+			meta: "The domain's rate. A value of none indicates an asynchronous or immediate domain."
+		},
 		typeProperty GlobalsTag {
 			name: "globalsTag"
 			types: ["CSP"]

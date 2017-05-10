@@ -325,8 +325,9 @@ vector<Builder *> StrideSystem::createBuilders(QString projectDir)
     for (StridePlatform *platform: m_platforms) {
         if (platform->getAPI() == StridePlatform::PythonTools) {
             QString pythonExec = "python";
-            Builder *builder = new PythonProject(QString::fromStdString(platform->buildPlatformPath(m_strideRoot.toStdString())),
-                                        m_strideRoot, projectDir, pythonExec);
+            Builder *builder = new PythonProject(QString::fromStdString(platform->getFramework()),
+                                                 QString::fromStdString(platform->buildPlatformPath(m_strideRoot.toStdString())),
+                                                 m_strideRoot, projectDir, pythonExec);
             if (builder) {
                 if (builder->isValid()) {
                     builders.push_back(builder);

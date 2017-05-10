@@ -58,7 +58,8 @@ class PythonProject : public Builder
 {
     Q_OBJECT
 public:
-    explicit PythonProject(QString platformPath,
+    explicit PythonProject(QString platformName,
+                           QString platformPath,
                            QString strideRoot,
                            QString projectDir = QString(),
                            QString pythonExecutable = QString());
@@ -86,10 +87,12 @@ private:
     void appendStreamToArray(AST *node, QJsonArray &array);
 
     QString m_pythonExecutable;
+    QString m_jsonFilename;
     QAtomicInt m_running;
     QProcess m_runningProcess;
     QAtomicInt m_building;
     QProcess m_buildProcess;
+
 };
 
 #endif // PYTHONPROJECT_H

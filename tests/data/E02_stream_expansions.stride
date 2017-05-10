@@ -36,5 +36,11 @@ import Generators
 
 Oscillator(frequency: [440,2] amplitude: 1.0) >> Osc;
 
-# Need to check bundle and name into properties and correct expansion
+# List into single Function
+signal AudioSig {
+    domain: AudioDomain
+}
 
+[Oscillator(frequency: 440), 1] >> Greater() >> AudioSig;
+
+# Need to check bundle and name into properties and correct expansion

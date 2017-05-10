@@ -11,12 +11,12 @@ from time import sleep
 
 # ---------------------
 class Builder(object):
-    def __init__(self, strideroot, products_dir, debug = False):
+    def __init__(self, jsonfilename, strideroot, products_dir, debug = False):
         self.strideroot = strideroot
         self.products_dir = products_dir
         self.debug = debug
 
-        jsonfile = open(self.products_dir + '/tree.json')
+        jsonfile = open(jsonfilename)
         tree = json.load(jsonfile)
 
         platform_dir = None
@@ -54,7 +54,11 @@ if __name__ == '__main__':
     cur_path = os.getcwd()
     # First parse command line arguments
     parser = argparse.ArgumentParser()
-
+    parser.add_argument("jsonfile",
+                        help="JSON file containing parsed tree",
+                        nargs='?',
+                        default = cur_path + '/../examples/eoys/Beating.stride_Products/tree-RtAudio.json'
+                        )
     parser.add_argument("products_dir",
                         help="The directory where stride products where generated",
                         nargs='?',
@@ -96,7 +100,7 @@ if __name__ == '__main__':
                         )
     args = parser.parse_args()
 
-    builder = Builder(args.strideroot, args.products_dir, True)
+    builder = Builder(args.jsonfile, args.strideroot, args.products_dir, True)
 
     commands = args.command.split("&")
     print(commands)

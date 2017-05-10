@@ -168,7 +168,6 @@ AST *DeclarationNode::deepCopy()
         node = new DeclarationNode(m_name, m_objectType, newProps, m_filename.data(), m_line, m_scope);
     }
     assert(node);
-    node->setRate(m_rate);
     delete newProps;
     return node;
 }

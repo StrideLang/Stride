@@ -1004,6 +1004,13 @@ class ModuleAtom(Atom):
             declarations.append(dec) #templates.declaration_real(const_name)
             header_code += templates.declaration_real(const_name);
 
+
+        for domain, code in domain_code.items():
+            if domain is None: # Process constants
+                header_code += code['header_code']
+                init_code += code['init_code']
+
+
         declaration_text = templates.module_declaration(
                 self.name, header_code,
                 init_code, process_code,
@@ -1534,15 +1541,19 @@ class PlatformFunctions:
         return None
 
     def get_domain_default_rate(self, domain_name, tree=None):
-
+        rate_node = None
         if not tree:
             tree = self.tree
         for node in tree:
             if 'block' in node:
                 if node["block"]["type"] == "_domainDefinition":
-                    pass
-                    # FIXME the rate needs to be searched according to platform and domain
-        rate_node = self.find_declaration_in_tree("PlatformRate", tree) # Horrible horrible hack for now
+                    if "domainName" in node["block"] and node["block"]["domainName"] == domain_name:
+                        if "rate" in node["block"]:
+                            rate_node = node["block"]["rate"]
+                            break
+
+        if not rate_node:
+            rate_node = self.find_declaration_in_tree("PlatformRate", tree) # Horrible horrible hack for now
         domain_rate = -1
         if rate_node:
             domain_rate = rate_node['value']

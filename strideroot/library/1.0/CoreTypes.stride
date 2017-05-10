@@ -119,7 +119,7 @@ type _Signal {
 		typeProperty Rate {
 			name: "rate"
 			types: [""]
-			default: PlatformRate
+			default: none
 			required: off
 		},
 		typeProperty _Reads {

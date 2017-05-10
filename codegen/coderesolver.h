@@ -87,7 +87,7 @@ private:
     void setDomainForStack(QList<AST *> domainStack, string domainName,  QVector<AST *> scopeStack);
     DeclarationNode *createDomainDeclaration(QString name);
     DeclarationNode *createSignalDeclaration(QString name, int size = 1);
-    std::vector<AST *> declareUnknownName(BlockNode *name, int size, QVector<AST *> localScope, AST *tree);
+    std::vector<AST *> declareUnknownName(BlockNode *block, int size, QVector<AST *> localScope, AST *tree);
     std::vector<AST *> declareUnknownBundle(BundleNode *name, int size, QVector<AST *> localScope, AST *tree);
     DeclarationNode *createConstantDeclaration(string name, AST *value);
     void declareIfMissing(string name, AST *blockList, AST *value);
@@ -121,13 +121,6 @@ private:
     AST * makeConnector(AST * node, string connectorName, int size, const QVector<AST *> &scopeStack);
     QVector<AST *> sliceStreamByDomain(StreamNode *stream, QVector<AST *> scopeStack);
     QVector<AST *> processExpression(ExpressionNode *expr, QVector<AST *> scopeStack, AST *outDOmain);
-
-    // TODO move these four functions to CodeValidator with the rest of querying functions
-    double findRateInProperties(vector<PropertyNode *> properties, QVector<AST *> scope, AST *tree);
-    double getNodeRate(AST *node, QVector<AST *> scope, AST *tree);
-    double getDefaultForTypeAsDouble(QString type, QString port);
-    AST *getDefaultPortValueForType(QString type, QString portName);
-
 
     StrideSystem * m_system;
     AST *m_tree;

@@ -253,7 +253,7 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
 
                     QString finalHtml = "<html>" + header + "<body>" +  docHtml + propertiesHtml + propertiesTable;
                     finalHtml += "</body></html>";
-                    qDebug() << finalHtml;
+//                    qDebug() << finalHtml;
                     return finalHtml;
                 }
             }

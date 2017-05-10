@@ -10,6 +10,7 @@ constant PlatformDomain {
 _domainDefinition AudioDomain {
 	domainName: "AudioDomain"
 	platform: _RtAudioPlatform
+	rate: AudioRate
 	globalsTag: "Includes" 
 	declarationsTag: "Declarations" 
 	processingTag: "Processing"

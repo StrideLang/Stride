@@ -82,7 +82,6 @@ AST *BundleNode::deepCopy()
     assert(getNodeType() == AST::Bundle);
     if(getNodeType() == AST::Bundle) {
         AST *newBundle = new BundleNode(m_name, static_cast<ListNode *>(index()->deepCopy()), m_filename.data(), m_line);
-        newBundle->setRate(m_rate);
         for (unsigned int i = 0; i < this->getScopeLevels(); i++) {
             newBundle->addScope(this->getScopeAt(i));
         }

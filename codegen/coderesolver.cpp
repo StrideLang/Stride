@@ -91,23 +91,26 @@ void CodeResolver::resolveStreamRates(StreamNode *stream)
 {
     AST *left = stream->getLeft();
     AST *right = stream->getRight();
-    double rate = getNodeRate(left, QVector<AST *>(), m_tree);
+    double rate = CodeValidator::getNodeRate(left, QVector<AST *>(), m_tree);
     double rightRate = -1;
     if (right->getNodeType() == AST::Stream) {
         resolveStreamRates(static_cast<StreamNode *>(right));
-        rightRate = static_cast<StreamNode *>(right)->getLeft()->getRate();
+        rightRate = CodeValidator::getNodeRate(static_cast<StreamNode *>(right)->getLeft(), QVector<AST *>(), m_tree);
     } else {
-        rightRate = getNodeRate(right, QVector<AST *>(), m_tree);
+        rightRate = CodeValidator::getNodeRate(right, QVector<AST *>(), m_tree);
     }
     if (rate < 0 && rightRate >= 0) {
-        left->setRate(rightRate);
+        CodeValidator::setNodeRate(left, rightRate, QVector<AST *>(), m_tree);
         // TODO should issue a warning or error if rate has been set for a member and it is different.
-        if ((left->getNodeType() == AST::List) || (left->getNodeType() == AST::Expression)) {
+        if ((left->getNodeType() == AST::List)
+                || (left->getNodeType() == AST::Expression)) {
             for (AST *child: left->getChildren()) {
-                if (child->getRate() == -1.0) {
-                    child->setRate(rightRate);
+                if (CodeValidator::getNodeRate(child, QVector<AST *>(), m_tree) == -1.0) {
+                    CodeValidator::setNodeRate(child, rightRate, QVector<AST *>(), m_tree);
                 }
             }
+        } else if (left->getNodeType() == AST::Function) {
+            CodeValidator::setNodeRate(left, rightRate, QVector<AST *>(), m_tree);
         }
         rate = rightRate;
     }
@@ -668,97 +671,6 @@ AST *CodeResolver::expandFunctionFromProperties(FunctionNode *func, QVector<AST 
     return newFunctions;
 }
 
-double CodeResolver::findRateInProperties(vector<PropertyNode *> properties, QVector<AST *> scope, AST *tree)
-{
-    for (PropertyNode *property : properties) {
-        if (property->getName() == "rate") { // FIXME this assumes that a property named rate always applies to stream rate...
-            AST *propertyValue = property->getValue();
-            QList<LangError> errors;
-            int rate = -1;
-            if (propertyValue->getNodeType() == AST::Int) {
-                rate = CodeValidator::evaluateConstInteger(propertyValue, QVector<AST *>(), tree, errors);
-                return rate;
-            } else if (propertyValue->getNodeType() == AST::Real) {
-                rate = CodeValidator::evaluateConstReal(propertyValue, QVector<AST *>(), tree, errors);
-                return rate;
-            } else if (propertyValue->getNodeType() == AST::Block) {
-                BlockNode * block = static_cast<BlockNode *>(propertyValue);
-                DeclarationNode* valueDeclaration =  CodeValidator::findDeclaration(
-                            QString::fromStdString(block->getName()), scope, tree, block->getNamespaceList());
-                if (valueDeclaration && valueDeclaration->getObjectType() == "constant") {
-                    PropertyNode *property = CodeValidator::findPropertyByName(valueDeclaration->getProperties(), "value");
-                    if (property) {
-                        ValueNode *propertyValue = static_cast<ValueNode *>(property->getValue());
-                        if (propertyValue->getNodeType() == AST::Int) {
-                            rate = CodeValidator::evaluateConstInteger(propertyValue, QVector<AST *>(), tree, errors);
-                        } else if (propertyValue->getNodeType() ==AST::Real) {
-                            rate = CodeValidator::evaluateConstReal(propertyValue, QVector<AST *>(), tree, errors);
-                        }
-                    }
-                }
-                if (errors.size() == 0) {
-                    return rate;
-                }
-            }
-        }
-    }
-    return -1;
-}
-
-double CodeResolver::getNodeRate(AST *node, QVector<AST *> scope, AST *tree)
-{
-    if (node->getRate() != -1) {
-        return node->getRate();
-    }
-    if (node->getNodeType() == AST::Block) {
-        BlockNode *name = static_cast<BlockNode *>(node);
-        DeclarationNode* declaration =  CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scope, tree, name->getNamespaceList());
-        if (!declaration) {
-            return -1;
-        }
-        double rate = findRateInProperties(declaration->getProperties(), scope, tree);
-        if (rate == -1) {
-            QString typeName = QString::fromStdString(declaration->getObjectType());
-            rate = getDefaultForTypeAsDouble(typeName, "rate");
-//            ValueNode *value = new ValueNode(rate, -1);
-//            declaration->addProperty(new PropertyNode("rate", value, -1));
-        }
-        name->setRate(rate);
-        return rate;
-    } else if (node->getNodeType() == AST::Bundle) {
-        BundleNode *bundle = static_cast<BundleNode *>(node);
-        DeclarationNode* declaration =  CodeValidator::findDeclaration(QString::fromStdString(bundle->getName()), scope, tree, bundle->getNamespaceList());
-        if (!declaration) {
-            return -1;
-        }
-        double rate = findRateInProperties(declaration->getProperties(), scope, tree);
-        if (rate == -1) {
-            QString typeName = QString::fromStdString(declaration->getObjectType());
-            rate = getDefaultForTypeAsDouble(typeName, "rate");
-//            ValueNode *value = new ValueNode(rate, -1);
-//            declaration->addProperty(new PropertyNode("rate", value, -1));
-        }
-        bundle->setRate(rate);
-        return rate;
-    }  else if (node->getNodeType() == AST::List
-                || node->getNodeType() == AST::Expression) {
-        double rate = -1.0;
-        for (AST *element:node->getChildren()) {
-            double elementRate = getNodeRate(element, scope, tree);
-            if (elementRate != -1.0) {
-                if (rate != elementRate) {
-                    qDebug() << "Warning: List has different rates!";
-                }
-                rate = elementRate;
-            }
-        }
-        return rate;
-    } else if (node->getNodeType() == AST::Function) {
-        return -1;
-    }
-    return -1;
-}
-
 void CodeResolver::insertBuiltinObjects()
 {
     QList<DeclarationNode *> requiredDeclarations;
@@ -778,7 +690,7 @@ void CodeResolver::insertBuiltinObjects()
                     if (typeName->getStringValue() == "type"
                             || typeName->getStringValue() == "platformType"
                             || typeName->getStringValue() == "signal"
-                            || typeName->getStringValue() == "_domainDefinition"
+//                            || typeName->getStringValue() == "_domainDefinition"
                             || typeName->getStringValue() == "signalbridge") {
                         requiredDeclarations << block;
                     }
@@ -1416,15 +1328,16 @@ DeclarationNode *CodeResolver::createSignalDeclaration(QString name, int size)
     return newBlock;
 }
 
-std::vector<AST *> CodeResolver::declareUnknownName(BlockNode *name, int size, QVector<AST *> localScope, AST *tree)
+std::vector<AST *> CodeResolver::declareUnknownName(BlockNode *block, int size, QVector<AST *> localScope, AST *tree)
 {
     std::vector<AST *> declarations;
-    DeclarationNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), localScope, tree, name->getNamespaceList());
-    if (!block) { // Not declared, so make declaration
-        DeclarationNode *newSignal = createSignalDeclaration(QString::fromStdString(name->getName()), size);
+    DeclarationNode *decl = CodeValidator::findDeclaration(QString::fromStdString(block->getName()), localScope, tree, block->getNamespaceList());
+    if (!decl) { // Not declared, so make declaration
+        DeclarationNode *newSignal = createSignalDeclaration(QString::fromStdString(block->getName()), size);
 //        tree->addChild(newSignal);
-        double rate = getNodeRate(newSignal, QVector<AST *>(), tree);
-        name->setRate(rate);
+        double rate = CodeValidator::getNodeRate(newSignal, QVector<AST *>(), tree);
+
+        CodeValidator::setNodeRate(block, rate, localScope, tree);
         declarations.push_back(newSignal);
     }
 	return declarations;
@@ -1437,8 +1350,8 @@ std::vector<AST *> CodeResolver::declareUnknownBundle(BundleNode *bundle, int si
     if (!block) { // Not declared, so make declaration
         DeclarationNode *newSignal = createSignalDeclaration(QString::fromStdString(bundle->getName()), size);
 //        tree->addChild(newSignal);
-        double rate = getNodeRate(newSignal, QVector<AST *>(), tree);
-        bundle->setRate(rate);
+        double rate = CodeValidator::getNodeRate(newSignal, QVector<AST *>(), tree);
+        CodeValidator::setNodeRate(bundle, rate, localScope, tree);
         declarations.push_back(newSignal);
     }
     return declarations;
@@ -1586,7 +1499,7 @@ void CodeResolver::expandNamesToBundles(StreamNode *stream, AST *tree)
     if (left->getNodeType() == AST::Block) {
         BlockNode *name = static_cast<BlockNode *>(left);
         QVector<AST *> scope;
-        DeclarationNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scope, tree, name->getNamespaceList());
+        DeclarationNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scope, tree);
         int size = 0;
         if (block) {
             if (block->getNodeType() == AST::BundleDeclaration) {
@@ -1830,7 +1743,7 @@ ValueNode *CodeResolver::resolveConstant(AST* value, QVector<AST *> scope)
         return newValue;
     } else if(value->getNodeType() == AST::Block) {
         BlockNode *name = static_cast<BlockNode *>(value);
-        DeclarationNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scope, m_tree, name->getNamespaceList());
+        DeclarationNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scope, m_tree);
         if (block && block->getNodeType() == AST::Declaration && block->getObjectType() == "constant") { // Size == 1
             AST *blockValue = block->getPropertyValue("value");
             if (blockValue->getNodeType() == AST::Int || blockValue->getNodeType() == AST::Real
@@ -1999,39 +1912,6 @@ void CodeResolver::resolveConstantsInNode(AST *node, QVector<AST *> scope)
     }
 }
 
-double CodeResolver::getDefaultForTypeAsDouble(QString type, QString port)
-{
-    double outValue = 0.0;
-    AST *value = getDefaultPortValueForType(type, port);
-    QList<LangError> errors;
-    if (value) {
-        outValue = CodeValidator::evaluateConstReal(value, QVector<AST *>(), m_tree, errors);
-    }
-    return outValue;
-}
-
-AST *CodeResolver::getDefaultPortValueForType(QString type, QString portName)
-{
-    QVector<AST *> ports = CodeValidator::getPortsForType(type, QVector<AST *>(), m_tree);
-    if (!ports.isEmpty()) {
-        for (AST *port : ports) {
-            DeclarationNode *block = static_cast<DeclarationNode *>(port);
-            Q_ASSERT(block->getNodeType() == AST::Declaration);
-            Q_ASSERT(block->getObjectType() == "typeProperty");
-            AST *platPortNameNode = block->getPropertyValue("name");
-            ValueNode *platPortName = static_cast<ValueNode *>(platPortNameNode);
-            Q_ASSERT(platPortName->getNodeType() == AST::String);
-            if (platPortName->getStringValue() == portName.toStdString()) {
-                AST *platPortDefault = block->getPropertyValue("default");
-                if (platPortDefault) {
-                    return platPortDefault;
-                }
-            }
-        }
-    }
-    return NULL;
-}
-
 ValueNode *CodeResolver::multiply(ValueNode *left, ValueNode *right)
 {
     if (left->getNodeType() == AST::Int && right->getNodeType() == AST::Int) {
@@ -2134,7 +2014,6 @@ QVector<AST *> CodeResolver::sliceStreamByDomain(StreamNode *stream, QVector<AST
     std::string domainName = CodeValidator::getNodeDomainName(left, CodeValidator::getBlocksInScope(left, scopeStack, m_tree), m_tree);
     std::string previousDomainName = CodeValidator::getNodeDomainName(left, CodeValidator::getBlocksInScope(left, scopeStack, m_tree), m_tree);
     while (right) {
-        domainName = CodeValidator::getNodeDomainName(left, CodeValidator::getBlocksInScope(left, scopeStack, m_tree), m_tree);
         if (left == right) { // If this is is the last pass then make last slice
             AST *lastNode = nullptr;
             lastNode = stack.back();
@@ -2295,7 +2174,7 @@ QVector<AST *> CodeResolver::sliceStreamByDomain(StreamNode *stream, QVector<AST
             }
             while (stack.size() > 0) {
                 AST *lastNode = stack.back();
-                newStream = new StreamNode(lastNode, newStream, lastNode->getFilename().c_str(), lastNode->getLine());
+                newStream = new StreamNode(lastNode, newStream, newStream->getFilename().c_str(), newStream->getLine());
                 stack.pop_back();
             }
             for (AST *declaration: newDeclarations) {

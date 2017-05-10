@@ -59,6 +59,7 @@ public:
     string getName() const { return m_name; }
     vector<PropertyNode *> getProperties() const;
 
+
     void addProperty(PropertyNode *newProperty);
     AST *getPropertyValue(string propertyName);
 
@@ -69,7 +70,11 @@ public:
 
     AST *deepCopy();
 
+    double getRate() const;
+    void setRate(double rate);
+
 private:
+    double m_rate;
     string m_name;
     FunctionType m_type;
     vector<PropertyNode *> m_properties;

@@ -68,6 +68,5 @@ void BlockNode::resolveScope(AST *scope)
 AST *BlockNode::deepCopy()
 {
     BlockNode *newNode = new BlockNode(m_name, m_filename.data(), m_line, m_scope);
-    newNode->setRate(m_rate);
     return newNode;
 }

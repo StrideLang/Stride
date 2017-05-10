@@ -95,9 +95,6 @@ public:
     static AST * parseFile(const char *fileName);
     static vector<LangError> getParseErrors();
 
-    double getRate() const;
-    void setRate(double rate);
-
     string getFilename() const;
     void setFilename(const string &filename);
 
@@ -116,7 +113,6 @@ protected:
     vector<AST *> m_children; // normalized list of children
     string m_filename; // file where the node was generated
     int m_line;
-    double m_rate;
     vector<string> m_scope;
 };
 
