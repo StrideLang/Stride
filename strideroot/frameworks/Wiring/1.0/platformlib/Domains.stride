@@ -1,5 +1,5 @@
 
-_platformDescription _WiringPlatform {
+_frameworkDescription _WiringFramework {
     name: "Wiring"
 }
 
@@ -9,7 +9,7 @@ constant PlatformDomain {
 
 _domainDefinition WiringDomain {
 	domainName: "WiringDomain"
-	platform: _WiringPlatform
+	framework: _WiringFramework
 	declarationsTag: "Declarations"
 	processingTag: "Processing"
 	initializationTag: "Initialization"

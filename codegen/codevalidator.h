@@ -36,6 +36,7 @@
 #define CODEGEN_H
 
 #include <QString>
+#include <QVector>
 
 #include "strideparser.h"
 #include "porttypes.h"
@@ -114,6 +115,7 @@ public:
     static QVector<AST *> getBlocksInScope(AST *root, QVector<AST *> scopeStack, AST *tree);
 
     static std::vector<std::string> getUsedDomains(AST *tree);
+    static std::string getFrameworkForDomain(std::string domainName, AST *tree);
 
     static double findRateInProperties(vector<PropertyNode *> properties, QVector<AST *> scope, AST *tree);
     static double getNodeRate(AST *node,  QVector<AST *> scope = QVector<AST *>(), AST *tree = nullptr);

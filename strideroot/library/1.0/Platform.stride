@@ -8,8 +8,8 @@ type _DomainDefinition {
 			default: none
 			required: on
 		},
-		typeProperty Platform {
-			name: "platform"
+		typeProperty Framework {
+			name: "framework"
 			types: ["CSP", ""] # Allow _Platform
 			default: none
 			required: on
@@ -80,8 +80,8 @@ type _Domain {
 	inherits: ["base"]
 }
 
-type _PlatformDescription {
-	typeName: "_platformDescription"
+type _FrameworkDescription {
+	typeName: "_frameworkDescription"
 	properties: [
 		typeProperty Name {
 			name: "name"
@@ -192,21 +192,21 @@ type _PlatformType {
 			default: ""
 			required: off
 		},
-		typeProperty Platform {
-			name: "platform"
-			types: [""] # _platform
+		typeProperty Framework {
+			name: "framework"
+			types: [""] #
 			default: none
 			required: on
 		},
 		typeProperty Domain {
 			name: "domain"
-			types: [""] # _platform
+			types: [""] #
 			default: none
 			required: off
 		},
 		typeProperty Rate {
 			name: "rate"
-			types: [""] # _platform
+			types: [""] #
 			default: PlatformRate
 			required: off
 		},

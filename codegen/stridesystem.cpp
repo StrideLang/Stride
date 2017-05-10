@@ -319,23 +319,25 @@ QStringList StrideSystem::getFunctionNames()
     return funcNames;
 }
 
-vector<Builder *> StrideSystem::createBuilders(QString projectDir)
+vector<Builder *> StrideSystem::createBuilders(QString projectDir, vector<string> usedFrameworks)
 {
     vector<Builder *> builders;
     for (StridePlatform *platform: m_platforms) {
-        if (platform->getAPI() == StridePlatform::PythonTools) {
-            QString pythonExec = "python";
-            Builder *builder = new PythonProject(QString::fromStdString(platform->getFramework()),
-                                                 QString::fromStdString(platform->buildPlatformPath(m_strideRoot.toStdString())),
-                                                 m_strideRoot, projectDir, pythonExec);
-            if (builder) {
-                if (builder->isValid()) {
-                    builders.push_back(builder);
-                } else {
-                    delete builder;
+        if ( (usedFrameworks.size() == 0)
+                || (std::find(usedFrameworks.begin(), usedFrameworks.end(), platform->getFramework()) != usedFrameworks.end())) {
+            if (platform->getAPI() == StridePlatform::PythonTools) {
+                QString pythonExec = "python";
+                Builder *builder = new PythonProject(QString::fromStdString(platform->getFramework()),
+                                                     QString::fromStdString(platform->buildPlatformPath(m_strideRoot.toStdString())),
+                                                     m_strideRoot, projectDir, pythonExec);
+                if (builder) {
+                    if (builder->isValid()) {
+                        builders.push_back(builder);
+                    } else {
+                        delete builder;
+                    }
                 }
-            }
-        }/* else if(m_api == StrideSystem::PluginPlatform) {
+            }/* else if(m_api == StrideSystem::PluginPlatform) {
         QString xmosRoot = "/home/andres/Documents/src/XMOS/xTIMEcomposer/Community_13.0.2";
 
         QLibrary pluginLibrary(m_pluginName);
@@ -349,6 +351,7 @@ vector<Builder *> StrideSystem::createBuilders(QString projectDir)
         }
         pluginLibrary.unload();
     }*/
+        }
     }
     return builders;
 }

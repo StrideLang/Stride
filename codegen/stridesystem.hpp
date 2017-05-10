@@ -60,7 +60,7 @@ public:
     QStringList getWarnings();
     QStringList getPlatformTypeNames();
     QStringList getFunctionNames();
-    vector<Builder *> createBuilders(QString projectDir);
+    vector<Builder *> createBuilders(QString projectDir, vector<string> usedFrameworks = vector<string>());
 
     QString getPlatformDomain(string namespaceName = "");  // The platform's default domain
 

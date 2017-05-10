@@ -172,17 +172,50 @@ QVector<AST *> CodeValidator::getBlocksInScope(AST *root, QVector<AST *> scopeSt
 
 std::vector<string> CodeValidator::getUsedDomains(AST *tree)
 {
-    std::vector<string> frameworks;
+    std::vector<string> domains;
     for (AST *node: tree->getChildren()) {
-        if (node->getNodeType() == AST::Declaration
-                || node->getNodeType() == AST::BundleDeclaration) {
+        if (node->getNodeType() == AST::Stream) {
             string domainName = CodeValidator::getNodeDomainName(node, QVector<AST *>(), tree);
             if (domainName.size() > 0) {
-                qDebug() << QString::fromStdString(domainName);
+                if (std::find(domains.begin(), domains.end(), domainName) == domains.end()) {
+                    domains.push_back(domainName);
+                }
             }
         }
     }
-    return frameworks;
+    return domains;
+}
+
+string CodeValidator::getFrameworkForDomain(string domainName, AST *tree)
+{
+    for(AST *node: tree->getChildren()) {
+        if (node->getNodeType() == AST::Declaration) {
+            DeclarationNode *decl = static_cast<DeclarationNode *>(node);
+            if (decl->getObjectType() == "_domainDefinition") {
+                AST *domainNameValue = decl->getPropertyValue("domainName");
+                if (domainNameValue->getNodeType() == AST::String) {
+                    string declDomainName = static_cast<ValueNode *>(domainNameValue)->getStringValue();
+                    if (declDomainName == domainName) {
+                        AST *frameworkNameValue = decl->getPropertyValue("framework");
+                        if (frameworkNameValue->getNodeType() == AST::String) {
+                            return static_cast<ValueNode *>(frameworkNameValue)->getStringValue();
+                        } else if (frameworkNameValue->getNodeType() == AST::Block) {
+                            BlockNode *fwBlock = static_cast<BlockNode *>(frameworkNameValue);
+                            DeclarationNode *fwDeclaration = CodeValidator::findDeclaration(QString::fromStdString(fwBlock->getName()),
+                                                                                            QVector<AST *>(), tree);
+                            if (fwDeclaration && (fwDeclaration->getObjectType() == "_frameworkDescription")) {
+                                AST *frameworkName = fwDeclaration->getPropertyValue("name");
+                                if (frameworkName && frameworkName->getNodeType() == AST::String) {
+                                    return static_cast<ValueNode *>(frameworkName)->getStringValue();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return string();
 }
 
 double CodeValidator::findRateInProperties(vector<PropertyNode *> properties, QVector<AST *> scope, AST *tree)
@@ -2096,6 +2129,15 @@ AST* CodeValidator::getNodeDomain(AST *node, QVector<AST *> scopeStack, AST *tre
             } else {
                 return nullptr;
             }
+        }
+    } else if (node->getNodeType() == AST::Stream) {
+        StreamNode *stream = static_cast<StreamNode *>(node);
+        AST *leftDomain = getNodeDomain(stream->getLeft(),scopeStack, tree);
+        AST *rightDomain = getNodeDomain(stream->getRight(),scopeStack, tree);
+        if ((leftDomain && rightDomain)
+                && (getNodeDomainName(leftDomain,scopeStack, tree)
+                == getNodeDomainName(rightDomain,scopeStack, tree))) {
+            return leftDomain;
         }
     }
     return domainNode;

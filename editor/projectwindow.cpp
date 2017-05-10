@@ -172,8 +172,12 @@ bool ProjectWindow::build()
             delete builder;
         }
 
-        std::vector<std::string> frameworks = system->getFrameworkNames();
-        m_builders = system->createBuilders(projectDir);
+        std::vector<std::string> domains = CodeValidator::getUsedDomains(tree);
+        std::vector<std::string> usedFrameworks;
+        for (string domain: domains) {
+            usedFrameworks.push_back(CodeValidator::getFrameworkForDomain(domain, tree));
+        }
+        m_builders = system->createBuilders(projectDir, usedFrameworks);
         buildOK = true;
         for (auto builder: m_builders) {
             connect(builder, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));

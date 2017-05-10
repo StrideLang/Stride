@@ -1,5 +1,5 @@
 
-_platformDescription _STM32F7_Platform {
+_frameworkDescription _STM32F7_Framework {
     name: "STM32F7"
 }
 
@@ -9,7 +9,7 @@ constant PlatformDomain {
 
 _domainDefinition STM32F7_Domain {
 	domainName: "STM32F7_Domain"
-	platform: _STM32F7_Platform
+	framework: _STM32F7_Framework
 	globalsTag: "Includes" 
 	declarationsTag: "Declarations"
 	processingTag: "Processing"
@@ -19,7 +19,7 @@ _domainDefinition STM32F7_Domain {
 
 _domainDefinition AudioDomain {
 	domainName: "AudioDomain"
-	platform: _STM32F7_Platform
+	framework: _STM32F7_Framework
 	globalsTag: "Includes" 
 	declarationsTag: "Declarations"
 	processingTag: "AudioProcessing"
@@ -30,7 +30,7 @@ _domainDefinition AudioDomain {
 # OSC Domains
 _domainDefinition OSCInDomain {
 	domainName: "OSCInDomain"
-	platform: _STM32F7_Platform
+	framework: _STM32F7_Framework
 	globalsTag: "Includes" 
 	declarationsTag: "Declarations"
 	processingTag: "OSC:Processing"
@@ -41,7 +41,7 @@ _domainDefinition OSCInDomain {
 # Serial domains
 _domainDefinition SerialInDomain {
 	domainName: "SerialInDomain"
-	platform: _STM32F7_Platform
+	framework: _STM32F7_Framework
 	globalsTag: "Includes" 
 	declarationsTag: "Declarations"
 	processingTag: "SerialIn:Processing"
@@ -51,7 +51,7 @@ _domainDefinition SerialInDomain {
 
 _domainDefinition SerialOutDomain {
 	domainName: "SerialOutDomain"
-	platform: _STM32F7_Platform
+	framework: _STM32F7_Framework
 	globalsTag: "Includes" 
 	declarationsTag: "Declarations"
 	processingTag: "SerialOut:Processing"
