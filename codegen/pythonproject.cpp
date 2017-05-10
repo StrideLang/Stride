@@ -127,7 +127,7 @@ bool PythonProject::run(bool pressed)
      }
     m_runningProcess.setWorkingDirectory(m_strideRoot);
     // FIXME un hard-code library version
-    arguments << "library/1.0/python/build.py" << m_projectDir << m_strideRoot << "run";
+    arguments << "library/1.0/python/build.py" << m_jsonFilename << m_projectDir << m_strideRoot << "run";
     m_runningProcess.start(m_pythonExecutable, arguments);
 
     m_runningProcess.waitForStarted(15000);

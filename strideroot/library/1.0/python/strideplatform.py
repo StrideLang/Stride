@@ -410,6 +410,13 @@ class ListAtom(Atom):
         for elem in list_node:
             self.instances += elem.get_instances()
 
+        element_rates = [elem.get_rate() for elem in list_node]
+
+        if (len(set(element_rates)) <= 1):
+            if len(element_rates) > 0:
+                self.rate = element_rates[0]
+
+
         self.globals = {}
         for atom in self.list_node:
             new_globals = atom.get_globals()
@@ -1838,7 +1845,9 @@ class PlatformFunctions:
                             if not postproc_present:
                                 post_processing[current_domain].append(new_postproc)
                 if atom.rate and atom.rate > 0:
-                    if atom.rate != current_rate:
+                    if current_rate == -1:
+                        current_rate = atom.rate
+                    elif atom.rate != current_rate:
                         new_inst, new_init, new_proc = templates.rate_start(atom.rate)
                         processing_code[current_domain] += new_proc
                         header_code[current_domain] += new_inst

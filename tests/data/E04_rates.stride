@@ -1,6 +1,8 @@
 
 use DesktopAudio version 1.0
 
+import Generators
+
 AudioIn[1] >> Signal >> AudioOut[1];
 
 
@@ -13,12 +15,18 @@ signal Rate2 {
     rate: 11025
 }
 
+signal AudioRateSig {
+    rate: AudioRate
+}
+
 
 Rate1 >> Rate2 >> Output1;
 
 Signal1 >> Rate1 >> Signal2 >> Rate2 >> GetAudioRate >> Output2;
 
-TestModule() >> Rate1 >> Level(gain: 0.5) >> AudioOut[1];
+TestModule() >> Rate1 >> Level(gain: 0.5) >> AudioRateSig;
+
+Oscillator() >> AudioOut;
 
 module TestModule {
     ports: [
