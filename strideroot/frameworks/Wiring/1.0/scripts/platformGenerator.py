@@ -118,7 +118,7 @@ class Generator(GeneratorBase):
             self.log("Buidling and uploading Arduino on OS X..")
 
             cpp_compiler = "/Applications/Arduino.app/Contents/MacOS/Arduino"
-            flags =  '--upload --board arduino:avr:uno --port /dev/cu.usbmodem1411' # --pref sketchbook.path=' + self.platform_dir + '/sketchbook'
+            flags =  '--upload --board arduino:avr:leonardo --port /dev/cu.usbmodem1411' # --pref sketchbook.path=' + self.platform_dir + '/sketchbook'
             args = [cpp_compiler] + flags.split() + [self.out_file]
 
             outtext = ck_out(args)
