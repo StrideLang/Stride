@@ -92,7 +92,7 @@ class Generator(GeneratorBase):
             cpp_compiler = arduino_dir[0] + "/arduino"
             port = "/dev/ttyACM0"
             #port = "/dev/ttyUSB0"
-            flags =  '--upload --board arduino:avr:uno --port ' + port + ' --pref sketchbook.path=' + self.platform_dir + '/sketchbook'
+            flags =  '--upload --board arduino:avr:leonardo --port ' + port + ' --pref sketchbook.path=' + self.platform_dir + '/sketchbook'
             args = [cpp_compiler] + flags.split() + [self.out_file]
 
             outtext = ck_out(args)
