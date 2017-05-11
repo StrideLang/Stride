@@ -1,27 +1,18 @@
 
-module SerialOut {
+module SerialPrint {
     ports: [
         port InputPort {
             name:       'input'
             main: on
             direction:  'input'
         }
-		port AddressProperty {
-			name: "address"
-			block: Address
-			meta: "The address that identifies the data sent."
-		}
 	]
     blocks: [
-        signal Address {
-                default :       "/Stride"
-        },
-        _serialOutType SerialOutBlock {}
+        _serialPrintType SerialPrintBlock {}
     ]
     streams: [
-        [Input, Address] >> SerialOutBlock;
+        Input >> SerialPrintBlock;
     ]
-	domain: SerialOutDomain
 }
 
 module SerialIn {
@@ -41,5 +32,4 @@ module SerialIn {
     streams: [
         SerialInBlock >> Output;
     ]
-	domain: SerialInDomain
 }

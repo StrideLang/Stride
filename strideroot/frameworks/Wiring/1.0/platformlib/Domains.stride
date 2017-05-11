@@ -14,6 +14,7 @@ _domainDefinition WiringDomain {
 	processingTag: "Processing"
 	initializationTag: "Initialization"
 	cleanupTag: "Cleanup"
+	rate:1000
 }
 
 # Serial domains
@@ -26,11 +27,11 @@ _domainDefinition WiringDomain {
 #	cleanupTag: "SerialIn:Cleanup"
 #}
 
-#_domainDefinition SerialOutDomain {
-#	domainName: "SerialOutDomain"
-#	platform: _Discovery_M7_Platform
-#	declarationsTag: "SerialOut:Declarations"
-#	processingTag: "SerialOut:Processing"
-#	initializationTag: "SerialOut:Initialization"
-#	cleanupTag: "SerialOut:Cleanup"
-#}
+_domainDefinition SerialOutDomain {
+	domainName: "SerialOutDomain"
+	framework: _WiringFramework
+	declarationsTag: "Declarations"
+	processingTag: "Processing"
+	initializationTag: "Initialization"
+	cleanupTag: "Cleanup"
+}
