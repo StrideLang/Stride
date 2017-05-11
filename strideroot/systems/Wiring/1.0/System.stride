@@ -1,0 +1,29 @@
+
+platform _WiringPlatform {
+	framework: "Wiring"
+	frameworkVersion: "1.0"
+	hardware: "Uno"
+	hardwareVersion: "1.0"
+	required: on #TODO validation of "required" is not yet implemented
+}
+
+	
+
+#connection _PCToWiringSerial {
+#	source: PC
+#	destination: Wiring
+#	sourceImports: ["Serial"]
+#	sourceStreams: [
+#		_Connection_Token >> Serial();
+#	]
+#	destinationImports: ["Serial"]
+#	destinationStreams: [
+#		_Connection_Token >> Serial();
+#	]
+#}
+
+
+system Wiring {
+    platforms: [_WiringPlatform]
+    connections: []
+}
