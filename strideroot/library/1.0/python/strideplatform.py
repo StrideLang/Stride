@@ -405,7 +405,9 @@ class ListAtom(Atom):
         self.inline = True
 
         self.handles = [elem.get_handles() for elem in list_node] # TODO make this recursive
-        self.out_tokens = [elem.get_out_tokens() for elem in list_node]
+        self.out_tokens = []
+        for elem in list_node:
+            self.out_tokens += elem.get_out_tokens()
         self.instances = []
         for elem in list_node:
             self.instances += elem.get_instances()
@@ -1869,6 +1871,7 @@ class PlatformFunctions:
                         atom.set_inline(False)
                         current_rate = atom.rate
 
+                in_tokens = []
                 for domain in new_processing_code:
                     code, out_tokens = new_processing_code[domain]
                     #self.log_debug("Code:  " + str(code))
@@ -1878,7 +1881,7 @@ class PlatformFunctions:
                         processing_code[domain] = ''
                     processing_code[domain] += code + '\n'
                     if domain == current_domain or not current_domain:
-                        in_tokens = out_tokens
+                        in_tokens += out_tokens
 
             previous_atom = atom
 
