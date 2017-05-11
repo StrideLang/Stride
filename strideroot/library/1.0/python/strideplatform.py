@@ -472,6 +472,7 @@ class ListAtom(Atom):
 
     def get_processing_code(self, in_tokens):
         proc_code = {}
+        list_domain = self._get_list_domain()
         for i,elem in enumerate(self.list_node):
             if len(in_tokens) > 0:
                 index = i % len(in_tokens)
@@ -479,12 +480,22 @@ class ListAtom(Atom):
             else:
                 elem_proc_code = elem.get_processing_code([])
             for domain in elem_proc_code:
+                domain_proc_code = elem_proc_code[domain]
+                if not domain and isinstance(elem, ValueAtom):
+                    domain = list_domain
                 if not domain in proc_code:
                     proc_code[domain] = ['', []]
-                new_code, new_out_tokens = elem_proc_code[domain]
+                new_code, new_out_tokens = domain_proc_code
                 proc_code[domain][0] += new_code
                 proc_code[domain][1] += new_out_tokens
         return proc_code
+
+    def _get_list_domain(self):
+        for elem in self.list_node:
+            new_domain = elem.get_domain()
+            if len(new_domain) > 0:
+                return new_domain
+        return None
 
 
 class NameAtom(Atom):
