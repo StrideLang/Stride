@@ -1572,11 +1572,13 @@ class PlatformFunctions:
                             rate_node = node["block"]["rate"]
                             break
 
-        if not rate_node:
-            rate_node = self.find_declaration_in_tree("PlatformRate", tree) # Horrible horrible hack for now
+        #if not rate_node:
+        #    rate_node = self.find_declaration_in_tree("PlatformRate", tree) # Horrible horrible hack for now
         domain_rate = -1
-        if rate_node:
+        if type(rate_node) == dict:
             domain_rate = rate_node['value']
+        else:
+            domain_rate = rate_node
 
         return domain_rate
 
@@ -1780,6 +1782,9 @@ class PlatformFunctions:
 
         self.log_debug(">>> Start stream generation")
         for group in node_groups:
+            streamdomain = self.get_stream_domain(group)
+            current_rate = self.get_domain_default_rate(streamdomain)
+
             in_tokens = []
             previous_atom = None
             for atom in group:
@@ -1940,6 +1945,17 @@ class PlatformFunctions:
         if declaration:
             domain = declaration['value']
 
+        return domain
+
+    def get_stream_domain(self, stream):
+        domain = None
+        for atom in stream:
+            atom_domain = atom.get_domain()
+            if not domain:
+                domain = atom_domain;
+            elif atom_domain and not atom_domain == domain:
+                self.log_debug("ERROR: Domains don't match within stream!")
+                return None
         return domain
 
     def make_platform_directory(self, strideroot):
