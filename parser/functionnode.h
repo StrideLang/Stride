@@ -70,6 +70,7 @@ public:
 
     AST *deepCopy();
 
+    // FIXME We should provide input and output rates for functions.
     double getRate() const;
     void setRate(double rate);
 

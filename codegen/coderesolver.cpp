@@ -101,18 +101,6 @@ void CodeResolver::resolveStreamRates(StreamNode *stream)
     }
     if (rate < 0 && rightRate >= 0) {
         CodeValidator::setNodeRate(left, rightRate, QVector<AST *>(), m_tree);
-        // TODO should issue a warning or error if rate has been set for a member and it is different.
-        if ((left->getNodeType() == AST::List)
-                || (left->getNodeType() == AST::Expression)) {
-            for (AST *child: left->getChildren()) {
-                if (CodeValidator::getNodeRate(child, QVector<AST *>(), m_tree) == -1.0) {
-                    CodeValidator::setNodeRate(child, rightRate, QVector<AST *>(), m_tree);
-                }
-            }
-        } else if (left->getNodeType() == AST::Function) {
-            CodeValidator::setNodeRate(left, rightRate, QVector<AST *>(), m_tree);
-        }
-        rate = rightRate;
     }
 //    Q_ASSERT(rate != -1);
 //    stream->setRate(rate);
@@ -777,9 +765,23 @@ void CodeResolver::processDomains()
             }
         } else if (node->getNodeType() == AST::Declaration) {
             DeclarationNode *module = static_cast<DeclarationNode *>(node);
-            if (module->getObjectType() == "module") {
+            if (module->getObjectType() == "module") { // TODO add handling of reactions
                 AST *streamsNode = module->getPropertyValue("streams");
                 AST *blocksNode = module->getPropertyValue("blocks");
+
+                if (!blocksNode) {
+                   module->setPropertyValue("blocks", new ListNode(NULL, "", -1));
+                   blocksNode = module->getPropertyValue("blocks");
+                } else if (blocksNode->getNodeType() == AST::None) {
+                    module->replacePropertyValue("blocks", new ListNode(NULL, "", -1));
+                    blocksNode = module->getPropertyValue("blocks");
+                }
+
+                if (!streamsNode) {
+                   module->setPropertyValue("streams", new ListNode(NULL, "", -1));
+                   streamsNode = module->getPropertyValue("streams");
+                }
+
                 ListNode *newStreamsList = new ListNode(nullptr, "", -1);
                 QVector<AST *> scopeStack;
                 scopeStack << CodeValidator::getBlocksInScope(module, QVector<AST *>(), m_tree);
@@ -809,9 +811,6 @@ void CodeResolver::processDomains()
                             qDebug() << "Stream slicing must result in streams or blocks.";
                         }
                     }
-                }
-                if (module->getPropertyValue("blocks")->getNodeType() == AST::None) {
-                    module->replacePropertyValue("blocks", new ListNode(NULL, "", -1));
                 }
                 module->replacePropertyValue("streams", newStreamsList);
             }
@@ -1227,6 +1226,7 @@ void CodeResolver::setDomainForStack(QList<AST *> domainStack, string domainName
                 AST *domainNameNode = decl->getPropertyValue("domainName");
                 if (domainNameNode->getNodeType() == AST::String) {
                     if (static_cast<ValueNode *>(domainNameNode)->getStringValue() == domainName) {
+                        // FIXME We need to check the namespace of the domain!
                         domainFound = true;
                         break;
                     }
@@ -1240,6 +1240,7 @@ void CodeResolver::setDomainForStack(QList<AST *> domainStack, string domainName
             bultinObjects = m_system->getBuiltinObjectsReference();
         }
 
+        // FIXME shouldnt this have happened in the insert built-in objects function
         for (auto it = bultinObjects.begin(); it != bultinObjects.end(); it++)  {
             for (AST *object : it->second) {
                 if (object->getNodeType() == AST::Declaration) {
@@ -1249,6 +1250,7 @@ void CodeResolver::setDomainForStack(QList<AST *> domainStack, string domainName
                         if (nameNode->getNodeType() == AST::String) {
                             ValueNode *typeName = static_cast<ValueNode *>(nameNode);
                             if (typeName->getStringValue() == domainName) {
+                                // FIXME We need to check the namespace of the domain!
                                 block->setRootScope(it->first);
                                 m_tree->addChild(block->deepCopy());
                                 fillDefaultPropertiesForNode(m_tree->getChildren().back());

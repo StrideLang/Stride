@@ -307,7 +307,6 @@ double CodeValidator::getNodeRate(AST *node, QVector<AST *> scope, AST *tree)
 
 void CodeValidator::setNodeRate(AST *node, double rate, QVector<AST *> scope, AST *tree)
 {
-
     if (node->getNodeType() == AST::Block) {
         BlockNode *name = static_cast<BlockNode *>(node);
         DeclarationNode* declaration =  CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scope, tree, name->getNamespaceList());
@@ -331,9 +330,6 @@ void CodeValidator::setNodeRate(AST *node, double rate, QVector<AST *> scope, AS
         for (AST *element:node->getChildren()) {
             double elementRate = CodeValidator::getNodeRate(element, scope, tree);
             if (elementRate != -1.0) {
-                if (rate != elementRate) {
-                    qDebug() << "Warning: List has different rates!";
-                }
                CodeValidator::setNodeRate(element, rate, scope, tree);
             }
         }
