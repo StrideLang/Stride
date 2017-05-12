@@ -116,16 +116,16 @@ platformType _ChooseType {
 
 # Serial ------------------------
 
-platformType _SerialOutType {
-    typeName: '_serialOutType'
+platformType _SerialPrintType {
+    typeName: '_serialPrintType'
 	inputs: ["string", "string"]
 #	outputs: 0
-    include: ["serial/serial.h", "iostream"]
+#   include: ["serial/serial.h", "iostream"]
 	linkDir: ["serial/build"]
-    linkTo: ["serial"]
+#    linkTo: ["serial"]
 #    declarations: ['']
     initializations: ["// Not implemented"]
-    processing: "my_serial.write(test_string);
+    processing: "//my_serial.write(test_string);
 "
     inherits: ['signal']
 }
