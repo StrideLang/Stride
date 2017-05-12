@@ -240,7 +240,7 @@ class ExpressionAtom(Atom):
             self.set_inline(True)
 
         self.domain = left_atom.get_domain()
-        if not self.domain == right_atom.get_domain():
+        if not self.domain == right_atom.get_domain() and right_atom.get_domain() is not None:
             print("ERROR! domains must match inside expressions!")
 
     def set_inline(self, inline):
@@ -314,14 +314,14 @@ class ExpressionAtom(Atom):
                 if not proc_domain in processing_code:
                     processing_code[proc_domain] = ['', []]
                 processing_code[proc_domain][0] += code
-                processing_code[proc_domain][1] += tokens
+                #processing_code[proc_domain][1] += tokens
             if self.right_atom:
                 for proc_domain, [code, tokens] in self.right_atom.get_processing_code([]).items():
                     if not proc_domain in processing_code:
                         processing_code[proc_domain] = ['', []]
 
                     processing_code[proc_domain][0] += code
-                    processing_code[proc_domain][1] += tokens
+                    #processing_code[proc_domain][1] += tokens
                     right_tokens = self.right_atom.get_out_tokens()[0]
 
 
