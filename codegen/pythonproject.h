@@ -92,7 +92,6 @@ private:
     QProcess m_runningProcess;
     QAtomicInt m_building;
     QProcess m_buildProcess;
-
 };
 
 #endif // PYTHONPROJECT_H

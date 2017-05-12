@@ -61,6 +61,10 @@ public:
           m_platformPath(platformPath) {}
     virtual ~Builder() {}
 
+    QString getPlatformPath() {return m_platformPath;}
+    QString getStdErr() const {return m_stdErr;}
+    QString getStdOut() const {return m_stdOut;}
+
 public slots:
     virtual bool build(AST *tree) = 0;
     virtual bool flash() = 0;
@@ -75,12 +79,15 @@ protected:
     QString m_projectDir;
     QString m_strideRoot;
     QString m_platformPath;
+    QString m_stdOut;
+    QString m_stdErr;
 
 private:
 
     PluginInterface m_interface;
     QLibrary *m_pluginLibrary;
     Builder *m_project;
+
 
 signals:
     void outputText(QString text);

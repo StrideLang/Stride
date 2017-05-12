@@ -85,13 +85,15 @@ bool PythonProject::build(AST *tree)
             return false;
         }
      }
+    m_stdErr.clear();
+    m_stdOut.clear();
     m_buildProcess.setWorkingDirectory(m_strideRoot);
     // FIXME un hard-code library version
     arguments << "library/1.0/python/build.py" << m_jsonFilename << m_projectDir << m_strideRoot << "build";
     m_buildProcess.start(m_pythonExecutable, arguments);
 
     m_buildProcess.waitForStarted(15000);
-    qDebug() << "pid:" << m_buildProcess.pid();
+//    qDebug() << "pid:" << m_buildProcess.pid();
     m_building.store(1);
     while(m_building.load() == 1) {
         if(m_buildProcess.waitForFinished(50)) {
@@ -125,6 +127,8 @@ bool PythonProject::run(bool pressed)
             return false;
         }
      }
+    m_stdErr.clear();
+    m_stdOut.clear();
     m_runningProcess.setWorkingDirectory(m_strideRoot);
     // FIXME un hard-code library version
     arguments << "library/1.0/python/build.py" << m_jsonFilename << m_projectDir << m_strideRoot << "run";
@@ -445,6 +449,8 @@ void PythonProject::appendStreamToArray(AST *node, QJsonArray &array)
 }
 
 
+
+
 bool PythonProject::isValid()
 {
     return true;
@@ -464,9 +470,11 @@ void PythonProject::consoleMessage()
         qDebug() << "WARNING: consoleMessage() called but nothing running";
     }
     if (!stdOut.isEmpty()) {
+        m_stdOut.append(stdOut);
         emit outputText(stdOut);
     }
     if (!stdErr.isEmpty()) {
+        m_stdErr.append(stdErr);
         emit errorText(stdErr);
     }
 }

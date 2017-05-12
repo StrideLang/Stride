@@ -2130,6 +2130,8 @@ AST* CodeValidator::getNodeDomain(AST *node, QVector<AST *> scopeStack, AST *tre
         StreamNode *stream = static_cast<StreamNode *>(node);
         AST *leftDomain = getNodeDomain(stream->getLeft(),scopeStack, tree);
         AST *rightDomain = getNodeDomain(stream->getRight(),scopeStack, tree);
+        if (!leftDomain) {leftDomain = rightDomain;}
+        else if (!rightDomain) {rightDomain = leftDomain;}
         if ((leftDomain && rightDomain)
                 && (getNodeDomainName(leftDomain,scopeStack, tree)
                 == getNodeDomainName(rightDomain,scopeStack, tree))) {

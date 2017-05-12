@@ -81,6 +81,7 @@ int main(int argc, char *argv[])
     AST *tree;
     tree = AST::parseFile(fileName.toLocal8Bit().constData());
 
+    bool buildOK = true;
     if (tree) {
         CodeValidator validator(platformRootPath, tree);
 
@@ -102,13 +103,22 @@ int main(int argc, char *argv[])
                 return -1;
             }
         }
-        vector<Builder *> builders = platform->createBuilders(dirName);
-
+        std::vector<std::string> domains = CodeValidator::getUsedDomains(tree);
+        std::vector<std::string> usedFrameworks;
+        for (string domain: domains) {
+            usedFrameworks.push_back(CodeValidator::getFrameworkForDomain(domain, tree));
+        }
+        vector<Builder *> builders = platform->createBuilders(dirName, usedFrameworks);
         for (auto builder: builders) {
             if (builder->build(tree)) {
                 qDebug() << "Built in directory:" << dirName;
             } else {
-                qDebug() << "Build failed.";
+                qDebug() << "Build failed for " << fileName;
+                qDebug() << "Using framework: " << builder->getPlatformPath();
+
+                qDebug() << builder->getStdOut();
+                qDebug() << builder->getStdErr();
+                buildOK = false;
             }
         }
 
@@ -119,6 +129,7 @@ int main(int argc, char *argv[])
         for (LangError err: errors) {
            qDebug() << QString::fromStdString(err.getErrorText());
         }
+        buildOK = false;
     }
-    return 0;
+    return buildOK ? 0: -1;
 }

@@ -495,7 +495,7 @@ class ListAtom(Atom):
     def _get_list_domain(self):
         for elem in self.list_node:
             new_domain = elem.get_domain()
-            if len(new_domain) > 0:
+            if new_domain and len(new_domain) > 0:
                 return new_domain
         return None
 

@@ -56,21 +56,15 @@ private:
 
     void testMultichannelUgens(); // Need to complete support for this.
 
+
+private Q_SLOTS:
     // Code generation/Compiler
     void testCompilation();
 
-private Q_SLOTS:
-    //Expansion
-    void testStreamExpansion();
-
-
-
-
+    // Connections
     void testConnectionErrors();
     void testConnectionCount();
 
-
-    //
     void testBlockMembers();
     void testModuleDomains();
     void testPortTypeValidation();
@@ -82,8 +76,6 @@ private Q_SLOTS:
     void testValueTypeBundleResolution();
     void testImport();
     void testDomains();
-
-    //PlatformConsistency
     void testLists();
 
     // Library
@@ -92,6 +84,7 @@ private Q_SLOTS:
 
     //Expansion
     void testLibraryObjectInsertion();
+    void testStreamExpansion();
     void testStreamRates();
     void testConstantResolution();
 
@@ -164,7 +157,7 @@ void ParserTest::testCompilation()
         QStringList arguments;
         arguments << "-s" + QFINDTESTDATA(STRIDEROOT)
                   << testFile;
-
+        qDebug() << arguments.join(" ");
         int ret = compilerProcess->execute(compilerBin, arguments);
         QVERIFY(ret == 0);
     }
