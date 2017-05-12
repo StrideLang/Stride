@@ -90,8 +90,12 @@ class Generator(GeneratorBase):
             arduino_dir = glob.glob(self.platform_dir + "/arduino-*")
 
             cpp_compiler = arduino_dir[0] + "/arduino"
-            port = "/dev/ttyACM0"
-            #port = "/dev/ttyUSB0"
+            # FIXME find better way to detect board...
+            port = "/dev/ttyUSB0"
+            for i in range(64):
+                if os.path.exists("/dev/ttyACM%i"%i):
+                    port = "/dev/ttyACM%i"%i
+
             flags =  '--upload --board arduino:avr:leonardo --port ' + port + ' --pref sketchbook.path=' + self.platform_dir + '/sketchbook'
             args = [cpp_compiler] + flags.split() + [self.out_file]
 
