@@ -73,6 +73,7 @@ private:
     void analyzeConnections();
 
     // Sub functions
+    void resolveStreamRatesReverse(StreamNode *stream);
     void resolveStreamRates(StreamNode *stream);
     void expandParallelStream(StreamNode *stream, QVector<AST *> scopeStack, AST *tree);
 
@@ -103,6 +104,7 @@ private:
     ValueNode *reduceConstExpression(ExpressionNode *expr, QVector<AST *> scope, AST *tree);
     ValueNode *resolveConstant(AST *value, QVector<AST *> scope);
     void resolveConstantsInNode(AST *node, QVector<AST *> scope);
+    void propagateDomainsForNode(AST *node, QVector<AST *> scopeStack);
     void resolveDomainForStreamNode(AST *node, QVector<AST *> scope);
 
     void checkStreamConnections(const StreamNode *stream, QVector<AST *> scopeStack, bool start = true);

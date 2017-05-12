@@ -58,8 +58,6 @@ private:
 
 
 private Q_SLOTS:
-    // Code generation/Compiler
-    void testCompilation();
 
     // Connections
     void testConnectionErrors();
@@ -100,6 +98,8 @@ private Q_SLOTS:
     void testBasicBlocks();
     void testHeader();
 
+    // Code generation/Compiler
+    void testCompilation();
 
 
 };
@@ -888,7 +888,7 @@ void ParserTest::testStreamRates()
 
     BlockNode *nameNode = static_cast<BlockNode *>(stream->getRight());
     QVERIFY(nameNode->getNodeType() == AST::Block);
-    QVERIFY(CodeValidator::getNodeRate(nameNode, QVector<AST *>(), tree) == -1);
+    QVERIFY(CodeValidator::getNodeRate(nameNode, QVector<AST *>(), tree) == 11025);
 
     // Signal1 >> Rate1 >> Signal2 >> Rate2 >> GetAudioRate >> Output2;
     stream = static_cast<StreamNode *>(nodes.at(7));
@@ -909,11 +909,11 @@ void ParserTest::testStreamRates()
 
     stream = static_cast<StreamNode *>(stream->getRight());
     QVERIFY(stream->getNodeType() == AST::Stream);
-    QVERIFY(CodeValidator::getNodeRate(stream->getLeft(), QVector<AST *>(), tree) == -1);
+    QVERIFY(CodeValidator::getNodeRate(stream->getLeft(), QVector<AST *>(), tree) == 11025);
 
     name = static_cast<BlockNode *>(stream->getRight());
     QVERIFY(name->getNodeType() == AST::Block);
-    QVERIFY(CodeValidator::getNodeRate(name, QVector<AST *>(), tree) == -1);
+    QVERIFY(CodeValidator::getNodeRate(name, QVector<AST *>(), tree) == 11025);
 
     //    Oscillator() >> Rate1 >> LowPass() >> Output3;
     stream = static_cast<StreamNode *>(nodes.at(8));

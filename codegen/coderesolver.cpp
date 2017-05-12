@@ -77,14 +77,40 @@ void CodeResolver::processSystem()
 void CodeResolver::resolveRates()
 {
     vector<AST *> children = m_tree->getChildren();
+    // First go through backwards to prioritize pull
     vector<AST *>::reverse_iterator rit = children.rbegin();
     while(rit != children.rend()) {
         AST *node = *rit;
         if (node->getNodeType() == AST::Stream) {
-            resolveStreamRates(static_cast<StreamNode *>(node));
+            resolveStreamRatesReverse(static_cast<StreamNode *>(node));
         }
         rit++;
     }
+    // Then do it again from the top to try to resolve the rest
+    for(AST *node: children) {
+        if (node->getNodeType() == AST::Stream) {
+            resolveStreamRates(static_cast<StreamNode *>(node));
+        }
+    }
+}
+
+void CodeResolver::resolveStreamRatesReverse(StreamNode *stream)
+{
+    AST *left = stream->getLeft();
+    AST *right = stream->getRight();
+    double rate = CodeValidator::getNodeRate(left, QVector<AST *>(), m_tree);
+    double rightRate = -1;
+    if (right->getNodeType() == AST::Stream) {
+        resolveStreamRatesReverse(static_cast<StreamNode *>(right));
+        rightRate = CodeValidator::getNodeRate(static_cast<StreamNode *>(right)->getLeft(), QVector<AST *>(), m_tree);
+    } else {
+        rightRate = CodeValidator::getNodeRate(right, QVector<AST *>(), m_tree);
+    }
+    if (rate < 0 && rightRate >= 0) {
+        CodeValidator::setNodeRate(left, rightRate, QVector<AST *>(), m_tree);
+    }
+//    Q_ASSERT(rate != -1);
+    //    stream->setRate(rate);
 }
 
 void CodeResolver::resolveStreamRates(StreamNode *stream)
@@ -94,16 +120,17 @@ void CodeResolver::resolveStreamRates(StreamNode *stream)
     double rate = CodeValidator::getNodeRate(left, QVector<AST *>(), m_tree);
     double rightRate = -1;
     if (right->getNodeType() == AST::Stream) {
-        resolveStreamRates(static_cast<StreamNode *>(right));
         rightRate = CodeValidator::getNodeRate(static_cast<StreamNode *>(right)->getLeft(), QVector<AST *>(), m_tree);
+        if (rightRate <= 0 && rate >= 0) {
+            CodeValidator::setNodeRate(static_cast<StreamNode *>(right)->getLeft(), rate, QVector<AST *>(), m_tree);
+        }
+        resolveStreamRates(static_cast<StreamNode *>(right));
     } else {
         rightRate = CodeValidator::getNodeRate(right, QVector<AST *>(), m_tree);
+        if (rightRate <= 0 && rate >= 0) {
+            CodeValidator::setNodeRate(right, rate, QVector<AST *>(), m_tree);
+        }
     }
-    if (rate < 0 && rightRate >= 0) {
-        CodeValidator::setNodeRate(left, rightRate, QVector<AST *>(), m_tree);
-    }
-//    Q_ASSERT(rate != -1);
-//    stream->setRate(rate);
 }
 
 void CodeResolver::fillDefaultPropertiesForNode(AST *node)
@@ -714,45 +741,17 @@ void CodeResolver::insertBuiltinObjects()
 void CodeResolver::processDomains()
 {
     // Fill missing domain information (propagate domains)
-    // First we need to traverse the streams backwards to make sure we propagate the streams from the furthest point down the line
+    // First we need to traverse the streams backwards to make sure we propagate the domains from the furthest point down the line
     vector<AST *> children = m_tree->getChildren();
     vector<AST *>::reverse_iterator rit = children.rbegin();
     QVector<AST *> scopeStack; // = QVector<AST*>::fromStdVector(children);
     while(rit != children.rend()) {
         AST *node = *rit;
-        if (node->getNodeType() == AST::Stream) {
-            resolveDomainsForStream(static_cast<StreamNode *>(node), scopeStack);
-        } else if (node->getNodeType() == AST::Declaration) {
-            DeclarationNode *module = static_cast<DeclarationNode *>(node);
-            if (module->getObjectType() == "module") {
-                vector<const AST *> streamsNode = getModuleStreams(module);
-                vector<const AST *>::reverse_iterator streamIt = streamsNode.rbegin();
-                while(streamIt != streamsNode.rend()) {
-                    const AST *streamNode = *streamIt;
-                    if (streamNode->getNodeType() == AST::Stream) {
-                        ListNode *blocks = static_cast<ListNode *>(module->getPropertyValue("blocks"));
-                        Q_ASSERT(blocks->getNodeType() == AST::List);
-                        scopeStack = QVector<AST*>::fromStdVector(blocks->getChildren()) + scopeStack; // Prepend internal scope
-                        DeclarationNode *domainBlock = CodeValidator::getMainOutputPortBlock(module);
-                        QString domainName;
-                        if (domainBlock) {
-                            AST *domainNode = domainBlock->getPropertyValue("domain");
-                            if (domainNode->getNodeType() == AST::Block) {
-                                domainName = QString::fromStdString(static_cast<BlockNode *>(domainNode)->getName());
-                            } else if (domainNode->getNodeType() == AST::String) {
-                                domainName = QString::fromStdString(static_cast<ValueNode *>(domainNode)->getStringValue());
-                            }
-                        }
-                        resolveDomainsForStream(static_cast<const StreamNode *>(streamNode), scopeStack, domainName);
-                    } else {
-                        qDebug() << "ERROR: Expecting stream.";
-                    }
-                    streamIt++;
-                }
-            }
-        }
+        propagateDomainsForNode(node, scopeStack);
         rit++;
     }
+
+    // TODO We need to propagate domains forward too
 
     // Now split streams when there is a domain change
     // FIXME this section is leaking...
@@ -1914,6 +1913,41 @@ void CodeResolver::resolveConstantsInNode(AST *node, QVector<AST *> scope)
     }
 }
 
+void CodeResolver::propagateDomainsForNode(AST *node, QVector<AST *> scopeStack)
+{
+    if (node->getNodeType() == AST::Stream) {
+        resolveDomainsForStream(static_cast<StreamNode *>(node), scopeStack);
+    } else if (node->getNodeType() == AST::Declaration) {
+        DeclarationNode *module = static_cast<DeclarationNode *>(node);
+        if (module->getObjectType() == "module") {
+            vector<const AST *> streamsNode = getModuleStreams(module);
+            vector<const AST *>::reverse_iterator streamIt = streamsNode.rbegin();
+            while(streamIt != streamsNode.rend()) {
+                const AST *streamNode = *streamIt;
+                if (streamNode->getNodeType() == AST::Stream) {
+                    ListNode *blocks = static_cast<ListNode *>(module->getPropertyValue("blocks"));
+                    Q_ASSERT(blocks->getNodeType() == AST::List);
+                    scopeStack = QVector<AST*>::fromStdVector(blocks->getChildren()) + scopeStack; // Prepend internal scope
+                    DeclarationNode *domainBlock = CodeValidator::getMainOutputPortBlock(module);
+                    QString domainName;
+                    if (domainBlock) {
+                        AST *domainNode = domainBlock->getPropertyValue("domain");
+                        if (domainNode->getNodeType() == AST::Block) {
+                            domainName = QString::fromStdString(static_cast<BlockNode *>(domainNode)->getName());
+                        } else if (domainNode->getNodeType() == AST::String) {
+                            domainName = QString::fromStdString(static_cast<ValueNode *>(domainNode)->getStringValue());
+                        }
+                    }
+                    resolveDomainsForStream(static_cast<const StreamNode *>(streamNode), scopeStack, domainName);
+                } else {
+                    qDebug() << "ERROR: Expecting stream.";
+                }
+                streamIt++;
+            }
+        }
+    }
+}
+
 ValueNode *CodeResolver::multiply(ValueNode *left, ValueNode *right)
 {
     if (left->getNodeType() == AST::Int && right->getNodeType() == AST::Int) {
@@ -2163,6 +2197,16 @@ QVector<AST *> CodeResolver::sliceStreamByDomain(StreamNode *stream, QVector<AST
                                                                      declaration->getDomain(), new ValueNode("", -1),
                                                                      declaration->getFilename(), declaration->getLine(),
                                                                      size));
+                    } else if (stack.back()->getNodeType() == AST::Expression
+                               || stack.back()->getNodeType() == AST::Function){
+//                        AST *domain = CodeValidator::
+                        // TODO set in/out domains correctly
+                        // FIXME set default value correctly
+                        newDeclarations.push_back(createSignalBridge(connectorName, new ValueNode(0.0,"", -1),
+                                                                     new ValueNode("", -1), new ValueNode("", -1),
+                                                                     stack.back()->getFilename(), stack.back()->getLine(),
+                                                                     size));
+
                     }
                     closingName = new BlockNode(connectorName, "", -1);
                     newStart = new BlockNode(connectorName, "", -1);
