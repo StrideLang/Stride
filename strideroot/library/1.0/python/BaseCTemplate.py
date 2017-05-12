@@ -64,7 +64,7 @@ class BaseCTemplate(object):
         self.int_type = 'int'
 
         # Internal templates
-        self.str_rate_begin_code = '{ // Start new rate %i\n'
+        self.str_rate_begin_code = '{ // Start new rate %f old: %f\n'
         self.str_rate_end_code = '\n}  // Close Rate %i\n'
         self.str_assignment = '%s = %s;\n'
         self.str_increment = '%s += %s;\n'
@@ -418,10 +418,10 @@ public:
         index = self.rate_counter
         if not rate == parent_rate:
             if rate < parent_rate:
-                code += self.str_rate_begin_code%rate
+                code += self.str_rate_begin_code%(rate, parent_rate)
                 code += 'if (_counter_%03i >= 1.0) {\n_counter_%03i -= 1.0;\n'%(index, index)
             else:
-                code += self.str_rate_begin_code%rate
+                code += self.str_rate_begin_code%(rate, parent_rate)
                 code += 'while (_counter_%03i < 1.0) {\n'%(index)
             self.rate_nested += 1
         return code

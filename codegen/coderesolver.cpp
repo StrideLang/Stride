@@ -2158,7 +2158,7 @@ QVector<AST *> CodeResolver::sliceStreamByDomain(StreamNode *stream, QVector<AST
                 } else {
                     DeclarationNode *declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(stack.back(), scopeStack, m_tree),
                                                                             scopeStack, m_tree);
-                    if (declaration->getObjectType() == "signal") {
+                    if (declaration && declaration->getObjectType() == "signal") {
                         newDeclarations.push_back(createSignalBridge(connectorName,  declaration->getPropertyValue("default"),
                                                                      declaration->getDomain(), new ValueNode("", -1),
                                                                      declaration->getFilename(), declaration->getLine(),
