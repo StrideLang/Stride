@@ -95,6 +95,9 @@ std::string LangError::getErrorText() {
     case UnknownPlatform:
         errorText += "Unknown Platform '" + errorTokens[0] + "'";
         break;
+    case UnresolvedRate:
+        errorText += "Rate Unresolved for '" + errorTokens[0] + "'";
+        break;
     case None:
         errorText += "Unknown error";
         break;

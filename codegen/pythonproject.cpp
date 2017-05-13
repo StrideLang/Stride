@@ -84,7 +84,7 @@ bool PythonProject::build(AST *tree)
             qDebug() << "Could not stop build process. Not starting again.";
             return false;
         }
-     }
+    }
     m_stdErr.clear();
     m_stdOut.clear();
     m_buildProcess.setWorkingDirectory(m_strideRoot);
@@ -174,13 +174,10 @@ void PythonProject::writeAST(AST *tree)
     QJsonArray treeObject;
     foreach(AST *node, tree->getChildren()) {
         QJsonObject nodeObject;
-        if (node->getNodeType() == AST::Platform) {
-            astToJson(node, nodeObject);
-        } else if (node->getNodeType() == AST::Stream) {
-            astToJson(node, nodeObject);
-        } else if (node->getNodeType() == AST::Declaration) {
-            astToJson(node, nodeObject);
-        } else if (node->getNodeType() == AST::BundleDeclaration) {
+        if (node->getNodeType() == AST::Platform
+                || node->getNodeType() == AST::Stream
+                || node->getNodeType() == AST::Declaration
+                || node->getNodeType() == AST::BundleDeclaration) {
             astToJson(node, nodeObject);
         }
         treeObject.append(nodeObject);

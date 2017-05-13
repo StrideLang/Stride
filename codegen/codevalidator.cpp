@@ -38,8 +38,8 @@
 #include "codevalidator.h"
 #include "coderesolver.h"
 
-CodeValidator::CodeValidator(QString striderootDir, AST *tree):
-    m_system(nullptr), m_tree(tree)
+CodeValidator::CodeValidator(QString striderootDir, AST *tree, Options options):
+    m_system(nullptr), m_tree(tree), m_options(options)
 {
     validateTree(striderootDir, tree);
 }
@@ -87,7 +87,7 @@ void CodeValidator::validateTree(QString platformRootDir, AST *tree)
         if (platforms.size() > 0) { // Store system details in tree
             platforms.at(0)->setHwPlatforms(m_system->getFrameworkNames());
         }
-        m_frameworks = m_system->getFrameworkNames();
+        // FIXME move validate up so that we don't create a system if code is not valid
         validate();
     }
 }
@@ -288,7 +288,7 @@ double CodeValidator::getNodeRate(AST *node, QVector<AST *> scope, AST *tree)
     } else if (node->getNodeType() == AST::Function) {
         FunctionNode *func = static_cast<FunctionNode *>(node);
         return func->getRate();
-    }  else if (node->getNodeType() == AST::List
+    } else if (node->getNodeType() == AST::List
                 || node->getNodeType() == AST::Expression) {
         double rate = -1.0;
         for (AST *element:node->getChildren()) {
@@ -452,6 +452,7 @@ void CodeValidator::validate()
         validateSymbolUniqueness(m_tree, QVector<AST *>());
         validateListTypeConsistency(m_tree, QVector<AST *>());
         validateStreamSizes(m_tree, QVector<AST *>());
+        validateRates(m_tree);
 
 //         TODO: validate expression type consistency
 //         TODO: validate expression list operations
@@ -677,11 +678,10 @@ void CodeValidator::validateBundleIndeces(AST *node, QVector<AST *> scope)
             m_errors << error;
         }
     }
-    QVector<AST *> children = QVector<AST *>::fromStdVector(node->getChildren());
-    foreach(AST *node, children) {
-        QVector<AST *> subScope = getBlocksInScope(node, scope, m_tree);
+    for(AST *child: node->getChildren()) {
+        QVector<AST *> subScope = getBlocksInScope(child, scope, m_tree);
         scope << subScope;
-        validateBundleIndeces(node, scope);
+        validateBundleIndeces(child, scope);
     }
 }
 
@@ -690,6 +690,7 @@ void CodeValidator::validateBundleSizes(AST *node, QVector<AST *> scope)
     if (node->getNodeType() == AST::BundleDeclaration) {
         QList<LangError> errors;
         DeclarationNode *block = static_cast<DeclarationNode *>(node);
+        // FIXME this needs to be rewritten looking at the port block size
         int size = getBlockDeclaredSize(block, scope, m_tree, errors);
         int datasize = getBlockDataSize(block, scope, errors);
         if(size != datasize && datasize > 1) {
@@ -745,7 +746,7 @@ void CodeValidator::validateSymbolUniqueness(AST *node, QVector<AST *> scope)
     }
 
     QVector<AST *> children = QVector<AST *>::fromStdVector(node->getChildren());
-    foreach(AST *node, children) {
+    for(AST *node: children) {
         validateSymbolUniqueness(node, children);
     }
 }
@@ -773,13 +774,61 @@ void CodeValidator::validateListTypeConsistency(AST *node, QVector<AST *> scope)
 
 void CodeValidator::validateStreamSizes(AST *tree, QVector<AST *> scope)
 {
-    QVector<AST *> children = QVector<AST *>::fromStdVector(tree->getChildren());
-    foreach(AST *node, children) {
-        if(node->getNodeType() == AST:: Stream) {
+    for(AST *node: tree->getChildren()) {
+        if(node->getNodeType() == AST::Stream) {
             StreamNode *stream = static_cast<StreamNode *>(node);
             validateStreamInputSize(stream, scope, m_errors);
+        } else if (node->getNodeType() == AST::Declaration) {
+            DeclarationNode *decl = static_cast<DeclarationNode *>(node);
+            if (decl) {
+                if (decl->getObjectType() == "module"
+                        || decl->getObjectType() == "reaction") {
+
+                    // FIXME we need to validate streams within modules and reactions
+                }
+            }
         }
     }
+}
+
+void CodeValidator::validateRates(AST *tree)
+{
+    if ((m_options & NO_RATE_VALIDATION) == 0) {
+        for(AST *node: tree->getChildren()) {
+            validateNodeRate(node, tree);
+        }
+    }
+}
+
+void CodeValidator::validateNodeRate(AST *node, AST *tree)
+{
+    if(node->getNodeType() == AST::Declaration
+            || node->getNodeType() == AST::BundleDeclaration) {
+        DeclarationNode *decl = static_cast<DeclarationNode *>(node);
+        if (decl->getObjectType() == "signal") {
+            if (findRateInProperties(decl->getProperties(), QVector<AST *>(), tree) < 0) {
+                LangError error;
+                error.type = LangError::UnresolvedRate;
+                error.lineNumber = node->getLine();
+                error.filename = node->getFilename();
+                error.errorTokens.push_back(decl->getName());
+                m_errors << error;
+            }
+        }
+    } else if(node->getNodeType() == AST::Stream) {
+        StreamNode *stream = static_cast<StreamNode *>(node);
+        validateNodeRate(stream->getLeft(), tree);
+        validateNodeRate(stream->getRight(), tree);
+    } else if(node->getNodeType() == AST::Expression) {
+        for(AST *child: node->getChildren()) {
+            validateNodeRate(child, tree);
+        }
+    } else if(node->getNodeType() == AST::Function) {
+        for(PropertyNode *prop: static_cast<FunctionNode *>(node)->getProperties()) {
+            validateNodeRate(prop->getValue(), tree);
+        }
+    }
+    // TODO also need to validate rates within module and reaction streams
 }
 
 bool errorLineIsLower(const LangError &err1, const LangError &err2)

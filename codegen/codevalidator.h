@@ -45,7 +45,13 @@
 class CodeValidator
 {
 public:
-    CodeValidator(QString striderootDir, AST * tree = nullptr);
+
+    typedef enum {
+        DEFAULT_OPTIONS = 0x00,
+        NO_RATE_VALIDATION = 0x01
+    } Options;
+
+    CodeValidator(QString striderootDir, AST * tree = nullptr, Options options = DEFAULT_OPTIONS);
     ~CodeValidator();
 
     bool isValid();
@@ -144,19 +150,21 @@ private:
     void validateSymbolUniqueness(AST *node, QVector<AST *> scope);
     void validateListTypeConsistency(AST *node, QVector<AST *> scope);
     void validateStreamSizes(AST *tree, QVector<AST *> scope);
+    void validateRates(AST *tree);
 
     void sortErrors();
 
     void validateStreamInputSize(StreamNode *stream, QVector<AST *> scope, QList<LangError> &errors);
+    void validateNodeRate(AST *node, AST *tree);
 
     int getBlockDataSize(DeclarationNode *block, QVector<AST *> scope, QList<LangError> &errors);
 
     QString getNodeText(AST *node);
 
     StrideSystem * m_system;
-    vector<string> m_frameworks;
     AST *m_tree;
     QList<LangError> m_errors;
+    Options m_options;
 };
 
 #endif // CODEGEN_H

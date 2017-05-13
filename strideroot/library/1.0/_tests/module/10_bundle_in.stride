@@ -29,7 +29,8 @@ module Test {
 	]
 }
 
-signal SigIn[2] { domain: AudioDomain }
+signal SigIn[2] { rate: AudioRate domain: AudioDomain }
+signal Out[2] { rate: AudioRate domain: AudioDomain }
 
 SigIn >> Test() >> AudioOut;
 [SigIn[1], SigIn[2]] >> Test() >> Out;

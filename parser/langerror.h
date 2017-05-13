@@ -58,6 +58,7 @@ public:
         SystemError,
         UnknownPlatform,
         SystemRedefinition,
+        UnresolvedRate,
         None
     } ErrorType;
 

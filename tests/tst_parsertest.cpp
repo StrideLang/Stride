@@ -169,7 +169,7 @@ void ParserTest::testBlockMembers()
     AST *tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/14_members.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree, CodeValidator::NO_RATE_VALIDATION);
 //    generator.validate();
     QVERIFY(generator.isValid());
 
@@ -231,7 +231,7 @@ void ParserTest::testConnectionCount()
     AST *tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/13_connection_count.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree, CodeValidator::NO_RATE_VALIDATION);
 //    generator.validate();
     QVERIFY(generator.isValid());
 
@@ -405,7 +405,7 @@ void ParserTest::testModuleDomains()
     AST *tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/12_modules_domains.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree, CodeValidator::NO_RATE_VALIDATION);
 //    generator.validate();
     QVERIFY(generator.isValid());
 
@@ -434,7 +434,7 @@ void ParserTest::testConnectionErrors()
     AST *tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/15_connection_errors.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree, CodeValidator::NO_RATE_VALIDATION);
 
     QList<LangError> errors = generator.getErrors();
 
@@ -451,7 +451,7 @@ void ParserTest::testPortTypeValidation()
     AST *tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/P07_type_validation.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree, CodeValidator::NO_RATE_VALIDATION);
 //    generator.validate();
     QList<LangError> errors = generator.getErrors();
     LangError error = errors.at(0);
@@ -488,7 +488,7 @@ void ParserTest::testLibraryObjectInsertion()
     AST *tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/E05_library_objects.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree, CodeValidator::NO_RATE_VALIDATION);
 //    generator.validate();
     QVERIFY(generator.isValid());
 
@@ -519,7 +519,7 @@ void ParserTest::testDomains()
     AST *tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/P06_domains.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree, CodeValidator::NO_RATE_VALIDATION);
 //    generator.validate();
     QVERIFY(generator.isValid());
 
@@ -575,7 +575,7 @@ void ParserTest::testModules()
     AST *tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/11_modules.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree, CodeValidator::NO_RATE_VALIDATION);
 //    generator.validate();
     QVERIFY(generator.isValid());
 
@@ -624,7 +624,7 @@ void ParserTest::testImport()
     AST *tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/P04_import.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree, CodeValidator::NO_RATE_VALIDATION);
 //    generator.validate();
     QVERIFY(generator.isValid());
 
@@ -665,7 +665,7 @@ void ParserTest::testConstantResolution()
     AST *tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/E01_constant_res.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree, CodeValidator::NO_RATE_VALIDATION);
 //    generator.validate();
     QVERIFY(generator.isValid());
 
@@ -942,7 +942,7 @@ void ParserTest::testStreamExpansion()
     AST *tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/E02_stream_expansions.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree, CodeValidator::NO_RATE_VALIDATION);
 //    generator.validate();
     QVERIFY(generator.isValid());
     QVERIFY(generator.platformIsValid());
@@ -1408,7 +1408,7 @@ void ParserTest::testPlatformCommonObjects()
     AST *tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/P01_platform_objects.stride")).toStdString().c_str());
     QVERIFY(tree != NULL);
-    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree, CodeValidator::NO_RATE_VALIDATION);
 //    generator.validate();
     QVERIFY(!generator.isValid());
     QList<LangError> errors = generator.getErrors();

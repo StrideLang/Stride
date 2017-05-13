@@ -73,6 +73,9 @@ module Oscillator {
         signal IncPhase {
 			default :       0.0
 		}
+        signal NewPhase {
+			default :       0.0
+		}
         _sineType SineBlock {}
 		reaction WrapPhase {
 		ports: [

@@ -7,8 +7,6 @@ import sys
 import os
 import json
 
-from time import sleep
-
 # ---------------------
 class Builder(object):
     def __init__(self, jsonfilename, strideroot, products_dir, debug = False):
