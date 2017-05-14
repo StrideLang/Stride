@@ -204,7 +204,7 @@ string CodeValidator::getFrameworkForDomain(string domainName, AST *tree)
                             DeclarationNode *fwDeclaration = CodeValidator::findDeclaration(QString::fromStdString(fwBlock->getName()),
                                                                                             QVector<AST *>(), tree);
                             if (fwDeclaration && (fwDeclaration->getObjectType() == "_frameworkDescription")) {
-                                AST *frameworkName = fwDeclaration->getPropertyValue("name");
+                                AST *frameworkName = fwDeclaration->getPropertyValue("frameworkName");
                                 if (frameworkName && frameworkName->getNodeType() == AST::String) {
                                     return static_cast<ValueNode *>(frameworkName)->getStringValue();
                                 }
