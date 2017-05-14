@@ -326,10 +326,9 @@ void CodeValidator::setNodeRate(AST *node, double rate, QVector<AST *> scope, AS
         func->setRate(rate);
     }  else if (node->getNodeType() == AST::List
                 || node->getNodeType() == AST::Expression) {
-        double rate = -1.0;
         for (AST *element:node->getChildren()) {
             double elementRate = CodeValidator::getNodeRate(element, scope, tree);
-            if (elementRate != -1.0) {
+            if (elementRate < 0.0) {
                CodeValidator::setNodeRate(element, rate, scope, tree);
             }
         }
