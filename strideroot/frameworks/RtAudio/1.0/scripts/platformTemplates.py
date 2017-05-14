@@ -46,6 +46,8 @@ class Templates(BaseCTemplate):
         self.properties['sample_rate'] = 44100
         self.properties['block_size'] = 512
 
+        self.framework = "RtAudio"
+
     def get_config_code(self):
 
         config_template_code = '''
