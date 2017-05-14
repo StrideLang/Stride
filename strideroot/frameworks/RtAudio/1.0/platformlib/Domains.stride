@@ -1,6 +1,6 @@
 
 _frameworkDescription _RtAudioFramework {
-    name: "RtAudio"
+    frameworkName: "RtAudio"
 }
 
 constant PlatformDomain {

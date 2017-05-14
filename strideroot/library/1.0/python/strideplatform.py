@@ -1465,10 +1465,11 @@ class PlatformFunctions:
         self.parent_stack = []
 
         self.sample_rate = 44100 # Set this as default but this should be overriden by platform:
-        for elem in tree:
-            if 'block' in elem:
-                if elem['block']['name'] == 'PlatformRate':
-                    self.sample_rate = elem['block']['value']
+
+        decl = self.find_declaration_in_tree('PlatformRate')
+
+        if decl:
+            self.sample_rate = decl['value']
         templates.domain_rate = self.sample_rate
         self.unique_id = 0
 
@@ -1548,7 +1549,7 @@ class PlatformFunctions:
     #                return type[
         return None
 
-    def find_port_direction(self, prot_block):
+    def find_port_direction(self, port_block):
         return port_block['block']['direction']
 
     def find_function_property(self, func, property_name):
@@ -1905,15 +1906,38 @@ class PlatformFunctions:
 
     def generate_stream_code(self, stream, stream_index, global_groups):
         self.log_debug("-- Start stream")
-        node_groups = self.make_stream_nodes(stream)
+        streamdomain = None
 
-        first_line = node_groups[0][0].get_line()
-        #last_line = node_groups[0][-1].get_line()
-        stream_filename = node_groups[0][0].get_filename()
+        for member in stream:
+            member_domain = self.get_stream_member_domain(member)
+            if not streamdomain == None:
+                if not streamdomain == member_domain:
+                    return None
+            else:
+                streamdomain = member_domain
 
-        new_code = self.generate_code_from_groups(node_groups, global_groups)
-        header_code, init_code, new_processing_code, scope_instances, scope_declarations, reads, writes = new_code
+        domain_decl = self.find_declaration_in_tree(streamdomain)
+        if domain_decl and type(domain_decl) == dict:
+            decl = None
+            domain_framework = domain_decl['framework']
+            if domain_framework:
+                decl = self.find_declaration_in_tree(domain_decl['framework']['name']['name'])
+            if decl and 'frameworkName' in decl:
+                framework_name = decl['frameworkName']
+            else:
+                framework_name = None
+        else:
+            framework_name = None
+        if framework_name == templates.framework:
+            node_groups = self.make_stream_nodes(stream)
+            first_line = node_groups[0][0].get_line()
+            #last_line = node_groups[0][-1].get_line()
+            stream_filename = node_groups[0][0].get_filename()
 
+            new_code = self.generate_code_from_groups(node_groups, global_groups)
+            header_code, init_code, new_processing_code, scope_instances, scope_declarations, reads, writes = new_code
+        else:
+            header_code, init_code, new_processing_code, scope_instances, scope_declarations, reads, writes = [{} for i in range(7)]
 #        self.log_debug("READS------ " + str(reads) )
 #        self.log_debug("WRITES------ " + str(writes) )
         self.log_debug("-- End stream")
@@ -1948,8 +1972,10 @@ class PlatformFunctions:
         return domain
 
     def get_stream_domain(self, stream):
+
+    def get_stream_domain(self, atomstream):
         domain = None
-        for atom in stream:
+        for atom in atomstream:
             atom_domain = atom.get_domain()
             if not domain:
                 domain = atom_domain;

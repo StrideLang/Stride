@@ -83,8 +83,8 @@ type _Domain {
 type _FrameworkDescription {
 	typeName: "_frameworkDescription"
 	properties: [
-		typeProperty Name {
-			name: "name"
+		typeProperty FrameworkName {
+			name: "frameworkName"
 			types: ["CSP"]
 			default: none
 			required: on

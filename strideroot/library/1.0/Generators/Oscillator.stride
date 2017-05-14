@@ -156,6 +156,9 @@ module Impulse {
                 default :       0.0
                 domain:         OutputDomain
 		}
+        signal NewPhase {
+			default :       0.0
+		}
         signal PhaseInc {
 			default :       0.0
 			domain: FrequencyDomain

@@ -47,6 +47,7 @@ class Templates(BaseCTemplate):
         self.properties['sample_rate'] = 44100
         self.properties['block_size'] = 2048
 
+        self.framework = "Wiring"
 
 
 templates = Templates()

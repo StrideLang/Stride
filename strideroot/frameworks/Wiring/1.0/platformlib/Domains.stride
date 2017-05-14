@@ -1,6 +1,6 @@
 
 _frameworkDescription _WiringFramework {
-    name: "Wiring"
+    frameworkName: "Wiring"
 }
 
 constant PlatformDomain {
