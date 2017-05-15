@@ -1758,6 +1758,24 @@ DeclarationNode *CodeValidator::findTypeDeclaration(DeclarationNode *block, QVec
     return CodeValidator::findTypeDeclarationByName(typeName, scope, tree, errors, block->getNamespaceList());
 }
 
+DeclarationNode *CodeValidator::findDomainDeclaration(string domainName, AST *tree)
+{
+    for (AST *node: tree->getChildren()) {
+        if (node->getNodeType() == AST::Declaration) {
+            DeclarationNode *decl = static_cast<DeclarationNode *>(node);
+            if (decl->getObjectType() == "_domainDefinition") {
+                AST *domainNameValue = decl->getPropertyValue("domainName");
+                if (domainNameValue->getNodeType() == AST::String) {
+                    if (domainName == static_cast<ValueNode *>(domainNameValue)->getStringValue() ) {
+                        return decl;
+                    }
+                }
+            }
+        }
+    }
+    return nullptr;
+}
+
 QVector<AST *> CodeValidator::getPortsForType(QString typeName, QVector<AST *> scope, AST* tree)
 {
     QVector<AST *> portList;

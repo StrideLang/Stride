@@ -84,6 +84,7 @@ public:
                                                       QList<LangError> &errors,
                                                       std::vector<std::string> namespaces = std::vector<std::string>());
     static DeclarationNode *findTypeDeclaration(DeclarationNode *block, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
+    static DeclarationNode *findDomainDeclaration(string domainName, AST *tree);
 
     static QVector<AST *> getPortsForTypeBlock(DeclarationNode *block, QVector<AST *> scope, AST *tree);
     static QVector<AST *> getPortsForType(QString typeName, QVector<AST *> scope, AST *tree);

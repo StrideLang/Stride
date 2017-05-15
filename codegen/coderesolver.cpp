@@ -826,6 +826,32 @@ void CodeResolver::processDomains()
         delete node;
     }
     m_tree->setChildren(new_tree);
+
+    // Finally, any signals without domain are assigned to the platform domain
+    for(AST *node: m_tree->getChildren()) {
+        if (node->getNodeType() == AST::Declaration
+                || node->getNodeType() == AST::BundleDeclaration) {
+            DeclarationNode *decl = static_cast<DeclarationNode *>(node);
+            if (decl->getObjectType() == "signal") {
+                // Check if signal has domain
+                AST * nodeDomain = CodeValidator::getNodeDomain(decl, QVector<AST *>(), m_tree);
+                if (!nodeDomain || nodeDomain->getNodeType() == AST::None) {
+                    decl->setDomainString(m_system->getPlatformDomain().toStdString());
+                    if (CodeValidator::getNodeRate(decl, QVector<AST *>(), m_tree) < 0) {
+                        DeclarationNode *domainDeclaration = CodeValidator::findDomainDeclaration(m_system->getPlatformDomain().toStdString(), m_tree);
+                        AST *rateValue = domainDeclaration->getPropertyValue("rate");
+                        if (rateValue->getNodeType() == AST::Int
+                                || rateValue->getNodeType() == AST::Real) {
+                            double rate = static_cast<ValueNode *>(rateValue)->toReal();
+                            CodeValidator::setNodeRate(decl, rate, QVector<AST *>(), m_tree);
+                        } else {
+                            qDebug() << "Unexpected type for rate in domain declaration: " << m_system->getPlatformDomain();
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 void CodeResolver::analyzeConnections()
