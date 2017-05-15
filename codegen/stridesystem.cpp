@@ -199,6 +199,7 @@ void StrideSystem::parseSystemTree(AST *systemTree)
                 }
                 platformDefinitions.push_back(definition);
                 platformDefinitionNames.push_back(declaration->getName());
+                m_platformDefinitions.push_back(declaration);
             } else if (declaration->getObjectType() == "connection") {
                 // FIXME add connections
 //                connectionDefinitions.push_back(declaration->deepCopy());
@@ -414,9 +415,11 @@ map<string, vector<AST *>> StrideSystem::getBuiltinObjectsReference()
     }
 
     // finally add library objects.
-    vector<AST *> libObjects = m_library.getLibraryMembers();
-    foreach(AST *object, libObjects) {
+    for(AST *object: m_library.getLibraryMembers()) {
         objects[""].push_back(object);
+    }
+    for(DeclarationNode *decl: m_platformDefinitions) {
+        objects[""].push_back(decl);
     }
     return objects;
 }

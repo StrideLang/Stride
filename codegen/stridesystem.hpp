@@ -93,6 +93,7 @@ private:
     QStringList m_types;
 
     vector<StridePlatform *> m_platforms; // First platform is default
+    vector<DeclarationNode *> m_platformDefinitions;
 
     QMap<QString, QString> m_importList;
     StrideLibrary m_library;

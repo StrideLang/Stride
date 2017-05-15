@@ -57,8 +57,8 @@ void CodeResolver::preProcess()
     resolveConstants();
     expandParallel(); // Find better name this expands bundles, functions and declares undefined bundles
     resolveStreamSymbols();
-    resolveRates();
     processDomains();
+    resolveRates();
     analyzeConnections();
     processSystem();
 }
@@ -118,6 +118,19 @@ void CodeResolver::resolveStreamRates(StreamNode *stream)
     AST *left = stream->getLeft();
     AST *right = stream->getRight();
     double rate = CodeValidator::getNodeRate(left, QVector<AST *>(), m_tree);
+    if (rate < 0) { // Force node rate to platform rate
+        DeclarationNode *domainDeclaration = CodeValidator::findDomainDeclaration(m_system->getPlatformDomain().toStdString(), m_tree);
+        if (domainDeclaration) {
+            AST *rateValue = domainDeclaration->getPropertyValue("rate");
+            if (rateValue->getNodeType() == AST::Int
+                    || rateValue->getNodeType() == AST::Real) {
+                double rate = static_cast<ValueNode *>(rateValue)->toReal();
+                CodeValidator::setNodeRate(left, rate, QVector<AST *>(), m_tree);
+            } else {
+                qDebug() << "Unexpected type for rate in domain declaration: " << m_system->getPlatformDomain();
+            }
+        }
+    }
     double rightRate = -1;
     if (right->getNodeType() == AST::Stream) {
         rightRate = CodeValidator::getNodeRate(static_cast<StreamNode *>(right)->getLeft(), QVector<AST *>(), m_tree);
@@ -839,13 +852,15 @@ void CodeResolver::processDomains()
                     decl->setDomainString(m_system->getPlatformDomain().toStdString());
                     if (CodeValidator::getNodeRate(decl, QVector<AST *>(), m_tree) < 0) {
                         DeclarationNode *domainDeclaration = CodeValidator::findDomainDeclaration(m_system->getPlatformDomain().toStdString(), m_tree);
-                        AST *rateValue = domainDeclaration->getPropertyValue("rate");
-                        if (rateValue->getNodeType() == AST::Int
-                                || rateValue->getNodeType() == AST::Real) {
-                            double rate = static_cast<ValueNode *>(rateValue)->toReal();
-                            CodeValidator::setNodeRate(decl, rate, QVector<AST *>(), m_tree);
-                        } else {
-                            qDebug() << "Unexpected type for rate in domain declaration: " << m_system->getPlatformDomain();
+                        if (domainDeclaration) {
+                            AST *rateValue = domainDeclaration->getPropertyValue("rate");
+                            if (rateValue->getNodeType() == AST::Int
+                                    || rateValue->getNodeType() == AST::Real) {
+                                double rate = static_cast<ValueNode *>(rateValue)->toReal();
+                                CodeValidator::setNodeRate(decl, rate, QVector<AST *>(), m_tree);
+                            } else {
+                                qDebug() << "Unexpected type for rate in domain declaration: " << m_system->getPlatformDomain();
+                            }
                         }
                     }
                 }
