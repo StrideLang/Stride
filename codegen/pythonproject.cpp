@@ -46,6 +46,7 @@ PythonProject::PythonProject(QString platformName, QString platformPath, QString
                              QString projectDir,
                              QString pythonExecutable) :
     Builder(projectDir, strideRoot, platformPath),
+    m_platformName(platformName),
     m_runningProcess(this),
     m_buildProcess(this)
 
@@ -252,6 +253,13 @@ void PythonProject::astToJson(AST *node, QJsonObject &obj)
         QJsonObject newObject;
         newObject["name"] = QString::fromStdString(block->getName());
         newObject["type"] = QString::fromStdString(block->getObjectType());
+        vector<string> nsList = block->getNamespaceList();
+        QString ns;
+        for (string name: nsList) {
+            ns += QString::fromStdString(name) + "::";
+        }
+        ns.chop(2);
+        newObject["namespace"] = ns;
         vector<PropertyNode *> props = block->getProperties();
         foreach(PropertyNode *prop, props) {
             AST *propValue = prop->getValue();
@@ -294,6 +302,13 @@ void PythonProject::astToJson(AST *node, QJsonObject &obj)
         BundleNode *bundle = block->getBundle();
         newObject["name"] = QString::fromStdString(bundle->getName());
         newObject["type"] = QString::fromStdString(block->getObjectType());
+        vector<string> nsList = block->getNamespaceList();
+        QString ns;
+        for (string name: nsList) {
+            ns += QString::fromStdString(name) + "::";
+        }
+        ns.chop(2);
+        newObject["namespace"] = ns;
         ListNode *indexList = bundle->index();
         Q_ASSERT(indexList->size() == 1);
         AST *bundleIndex = indexList->getChildren().at(0);
@@ -362,6 +377,7 @@ void PythonProject::astToJson(AST *node, QJsonObject &obj)
         newObj["minorVersion"] = static_cast<SystemNode *>(node)->minorVersion();
         QJsonObject platformInfo;
         platformInfo["path"] = m_platformPath;
+        platformInfo["name"] = m_platformName;
         QJsonArray platformList;
         platformList.append(platformInfo);
         newObj["platforms"] = platformList;

@@ -12,6 +12,7 @@ module Greater {
         block: Input
         main: on
         direction:  'input'
+		meta: "A list with the two values to be compared"
     }
     ]
     blocks: [
@@ -21,7 +22,7 @@ module Greater {
     streams: [
        [Input[1], Input[2]] >> GreaterBlock >> Output;
     ]
-    meta: ""
+    meta: "Compare two input values."
 }
 
 module GreaterOrEqual {

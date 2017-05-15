@@ -86,6 +86,7 @@ private:
     void expressionToJson(ExpressionNode *node, QJsonObject &obj);
     void appendStreamToArray(AST *node, QJsonArray &array);
 
+    QString m_platformName;
     QString m_pythonExecutable;
     QString m_jsonFilename;
     QAtomicInt m_running;

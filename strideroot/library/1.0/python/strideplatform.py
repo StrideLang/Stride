@@ -1487,21 +1487,25 @@ class PlatformFunctions:
                 if 'block' in node:
                     if node["block"]["name"] == block_name:
                         node["block"]['stack_index'] = len(self.scope_stack) - 1 - i
-                        return node["block"]
+                        if (not 'namespace' in node['block']) or node['block']['namespace'] == "" or node['block']['namespace'] == templates.framework:
+                            return node["block"]
                 if 'blockbundle' in node:
                     if node["blockbundle"]["name"] == block_name:
                         node["blockbundle"]['stack_index'] = len(self.scope_stack) - 1 - i
-                        return node["blockbundle"]
+                        if (not 'namespace' in node['blockbundle']) or node['blockbundle']['namespace'] == "" or node['blockbundle']['namespace'] == templates.framework:
+                            return node["blockbundle"]
         # Then look for declarations in tree root
         for node in tree:
             if 'block' in node:
                 if node["block"]["name"] == block_name:
-                    node["block"]['stack_index'] = 0
-                    return node["block"]
+                    if (not 'namespace' in node['block']) or (node['block']['namespace'] == "") or (node['block']['namespace'] == templates.framework):
+                        node["block"]['stack_index'] = 0
+                        return node["block"]
             if 'blockbundle' in node:
                 if node["blockbundle"]["name"] == block_name:
-                    node["blockbundle"]['stack_index'] = 0
-                    return node["blockbundle"]
+                    if (not 'namespace' in node['blockbundle']) or node['blockbundle']['namespace'] == "" or node['blockbundle']['namespace'] == templates.framework:
+                        node["blockbundle"]['stack_index'] = 0
+                        return node["blockbundle"]
 #        raise ValueError("Declaration not found for " + block_name)
         return None
 
@@ -1908,13 +1912,13 @@ class PlatformFunctions:
         self.log_debug("-- Start stream")
         streamdomain = None
 
-        for member in stream:
-            member_domain = self.get_stream_member_domain(member)
-            if not streamdomain == None:
-                if not streamdomain == member_domain:
-                    return None
-            else:
-                streamdomain = member_domain
+#        for member in stream:
+#            member_domain = self.get_stream_member_domain(member)
+#            if not streamdomain == None:
+#                if not streamdomain == member_domain:
+#                    return None
+#            else:
+#                streamdomain = member_domain
 
         domain_decl = self.find_declaration_in_tree(streamdomain)
         if domain_decl and type(domain_decl) == dict:
@@ -1928,7 +1932,7 @@ class PlatformFunctions:
                 framework_name = None
         else:
             framework_name = None
-        if framework_name == templates.framework:
+        if not framework_name or (framework_name == templates.framework):
             node_groups = self.make_stream_nodes(stream)
             first_line = node_groups[0][0].get_line()
             #last_line = node_groups[0][-1].get_line()
@@ -1971,7 +1975,80 @@ class PlatformFunctions:
 
         return domain
 
-    def get_stream_domain(self, stream):
+    def get_stream_member_domain(self, stream_member):
+        member_domain = None
+        if "name" in stream_member:
+            declaration = self.find_declaration_in_tree(stream_member['name']['name'])
+            if declaration and 'domain' in declaration:
+                if type(declaration['domain']) == dict:
+                    # FIXME this should be set by the code validator
+                    domain = declaration['domain']['name']['name']
+                else:
+                    domain = declaration['domain']
+                if not member_domain == None:
+                    if not member_domain == domain:
+                        return None
+                else:
+                    member_domain = domain
+        elif "bundle" in stream_member:
+            declaration = self.find_declaration_in_tree(stream_member['bundle']['name'])
+            if declaration and 'domain' in declaration:
+                if type(declaration['domain']) == dict:
+                    # FIXME this should be set by the code validator
+                    domain = declaration['domain']['name']['name']
+                else:
+                    domain = declaration['domain']
+                if not member_domain == None:
+                    if not member_domain == domain:
+                        return None
+                else:
+                    member_domain = domain
+        elif "function" in stream_member:
+            if 'domain' in stream_member['function']['ports']:
+                if 'value' in stream_member['function']['ports']['domain']:
+                    domain = stream_member['function']['ports']['domain']['value']
+                else:
+                    # FIXME we need to read the value from the name (not get its name)
+                    domain = stream_member['function']['ports']['domain']['name']['name']
+                if not member_domain == None:
+                    if not member_domain == domain:
+                        return None
+                else:
+                    member_domain = domain
+        elif "block" in stream_member:
+            declaration =  stream_member['block']
+            if declaration and 'domain' in declaration:
+                if type(declaration['domain']) == dict:
+                    # FIXME this should be set by the code validator
+                    domain = declaration['domain']['name']['name']
+                else:
+                    domain = declaration['domain']
+                if not member_domain == None:
+                    if not member_domain == domain:
+                        return None
+                else:
+                    member_domain = domain
+        elif "expression" in stream_member:
+            left_domain = self.get_stream_member_domain(stream_member['expression']['left'])
+            right_domain = self.get_stream_member_domain(stream_member['expression']['right'])
+            if not left_domain :
+                left_domain = right_domain
+            elif not right_domain:
+                right_domain = left_domain
+            if left_domain == right_domain:
+                member_domain = left_domain
+        elif "value" in stream_member:
+            pass
+        elif "list" in stream_member:
+            for inner_member in stream_member['list']:
+                new_domain = self.get_stream_member_domain(inner_member)
+                if not member_domain == None:
+                    if not member_domain == new_domain:
+                        return None
+                else:
+                    member_domain = new_domain
+        return member_domain
+
 
     def get_stream_domain(self, atomstream):
         domain = None

@@ -711,7 +711,9 @@ void CodeResolver::insertBuiltinObjects()
                     }
                 }
             }
-            else if (block->getObjectType() == "_domainDefinition") {
+            else if (block->getObjectType() == "_domainDefinition"
+                     || block->getObjectType() == "_frameworkDescription") // Hack... this should be getting inserted when resolving symbols...)
+            {
                 requiredDeclarations << block;
             }
             continue;
@@ -1746,6 +1748,9 @@ ValueNode *CodeResolver::resolveConstant(AST* value, QVector<AST *> scope)
         BlockNode *name = static_cast<BlockNode *>(value);
         DeclarationNode *block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scope, m_tree);
         if (block && block->getNodeType() == AST::Declaration && block->getObjectType() == "constant") { // Size == 1
+//            string namespaceValue = name->getScopeAt(0);
+            AST *declarationNamespace = block->getPropertyValue("namespace");
+//            if (namespaceValue.size() == 0 || namespaceValue)
             AST *blockValue = block->getPropertyValue("value");
             if (blockValue->getNodeType() == AST::Int || blockValue->getNodeType() == AST::Real
                      || blockValue->getNodeType() == AST::String ) {

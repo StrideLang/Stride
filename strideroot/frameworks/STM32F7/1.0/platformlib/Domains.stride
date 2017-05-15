@@ -1,6 +1,6 @@
 
 _frameworkDescription _STM32F7_Framework {
-    name: "STM32F7"
+    frameworkName: "STM32F7"
 }
 
 constant PlatformDomain {
