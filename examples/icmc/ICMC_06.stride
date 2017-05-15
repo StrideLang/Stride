@@ -1,0 +1,11 @@
+# Frequency and Amplitude Modulation
+
+#use DesktopAudio version 1.0
+use SaturnM7 version 1.0
+
+import Generators
+
+signal Modulator[2] {rate: AudioRate}
+Oscillator ( frequency: [ 3.0, 1.0 ] amplitude: [ 40.0, 0.1 ] ) >> Modulator;
+
+Oscillator ( frequency: 440.0 + Modulator[1] amplitude: Modulator[2] ) >> AudioOut;

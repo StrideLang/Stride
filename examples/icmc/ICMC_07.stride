@@ -1,0 +1,14 @@
+# Frequency and Amplitude Modulation with Panning
+
+#use DesktopAudio version 1.0
+use SaturnM7 version 1.0
+
+import Generators
+
+signal Modulator[3] {rate: AudioRate}
+
+Oscillator ( frequency: [ 3.0, 1.0, 1.0 ] amplitude: [ 40.0, 0.1, 1.0 ] ) >> Modulator;
+
+Oscillator ( frequency: 440.0 + Modulator[1] amplitude: Modulator[2] )
+>> Pan ( position: Modulator[3] )
+>> AudioOut;

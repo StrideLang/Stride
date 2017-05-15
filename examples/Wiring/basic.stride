@@ -1,0 +1,19 @@
+use Wiring version 1.0
+
+import Generators
+#import Serial
+
+signal DownSample {
+	rate: 1
+}
+
+signal Frequency {
+	domain: PlatformDomain
+	}
+
+#AnalogIn[1] * 4 >> DownSample >> SerialOut();
+1 + AnalogIn[1] * (1.0/128.0) >> Frequency;
+
+#constant Frequency { value: 1}
+
+[Oscillator (frequency: Frequency) , 0 ] >> Greater() >> DigitalOut[14];

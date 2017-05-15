@@ -1,0 +1,7 @@
+# Sine Oscillator
+
+use SaturnM7 version 1.0
+
+import Generators
+
+Oscillator ( frequency: 440.0 amplitude: 0.1 ) >> AudioOut;
