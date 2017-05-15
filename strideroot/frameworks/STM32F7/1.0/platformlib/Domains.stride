@@ -4,7 +4,7 @@ _frameworkDescription _STM32F7_Framework {
 }
 
 constant PlatformDomain {
-    value: "STM32F7_Domain"
+    value: "AudioDomain"
 }
 
 _domainDefinition STM32F7_Domain {

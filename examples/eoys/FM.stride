@@ -1,20 +1,22 @@
-use DesktopAudio version 1.0
+use SaturnM7 version 1.0
 
 import Generators
 
-signal CarrierFreq	{ default: 220 rate: AudioRate  domain: AudioDomain }
-signal CMRatio 		{ default: 5 domain: AudioDomain }
-signal Index 			{ default: 5.0 domain: AudioDomain }
+signal CarrierFreq	{ default: 220 rate: AudioRate }
+signal CMRatio 		{ default: 5 rate: AudioRate }
+signal Index 			{ default: 5.0 rate: AudioRate }
 
 constant Factor 		{ value: 0.9999 }
 
-signal Env 				{ default: 1.0 domain: AudioDomain }
-signal One				{ default: 0.3 domain: AudioDomain }
-signal Trig				{ default: 1.0 domain: AudioDomain }
+signal Env 				{ default: 1.0 rate: AudioRate}
+signal One				{ default: 0.3 rate: AudioRate}
+signal Trig				{ default: 1.0 rate: AudioRate}
 
 #adding for now as auto dectection failing...
-signal Modulator		{ default: 0.0 rate: AudioRate domain: AudioDomain }
-signal CarrierFreqModulator { default: 0.0 rate: AudioRate domain: AudioDomain }
+signal Modulator		{ default: 0.0 rate: AudioRate}
+signal CarrierFreqModulator { default: 0.0 rate: AudioRate}
+signal X		{ default: 0.0 rate: AudioRate}
+
 
 reaction TriggerEnv {
 	streams:       [

@@ -1,6 +1,5 @@
-#use STM32F7 version 1.0 on Discovery
-
-use DesktopAudio version 1.0
+#use DesktopAudio version 1.0
+use SaturnM7 version 1.0
 
 import Generators
 
@@ -12,6 +11,6 @@ Oscillators[1]
 + Oscillators[4]
 + Oscillators[5]
 + Oscillators[6]
->> Level ( gain: 0.2 )
+>> Level ( gain: 0.5 )
 >> AudioOut;
 
