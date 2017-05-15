@@ -947,12 +947,12 @@ void CodeResolver::insertBuiltinObjectsForNode(AST *node, map<string, vector<AST
         for (DeclarationNode *usedBlock : blockList) {
             // Add declarations to tree if not there
             if (!CodeValidator::findDeclaration(QString::fromStdString(usedBlock->getName()), QVector<AST *>(), m_tree, usedBlock->getNamespaceList())) {
-                AST *newBlock = usedBlock->deepCopy();
-                m_tree->addChild(newBlock);
                 insertBuiltinObjectsForNode(usedBlock, objects);
                 for (PropertyNode *property : usedBlock->getProperties()) {
                     insertBuiltinObjectsForNode(property->getValue(), objects);
                 }
+                AST *newBlock = usedBlock->deepCopy();
+                m_tree->addChild(newBlock);
             }
         }
     } else if (node->getNodeType() == AST::Declaration

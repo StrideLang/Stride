@@ -59,9 +59,11 @@ private:
 class StridePlatform {
 public:
     StridePlatform(string framework, string fwVersion,
-                   string hardware = "", string hardwareVersion = "") :
+                   string hardware = "", string hardwareVersion = "",
+                   string identifier = "") :
         m_framework(framework), m_frameworkVersion(fwVersion),
-        m_hardware(hardware), m_hardwareVersion(hardwareVersion)
+        m_hardware(hardware), m_hardwareVersion(hardwareVersion),
+        m_identifier(identifier)
     {
     }
 
@@ -90,6 +92,7 @@ private:
     string m_frameworkVersion;
     string m_hardware;
     string m_hardwareVersion;
+    string m_identifier;
     bool m_required;
     PlatformAPI m_api {PythonTools}; //TODO Put back support for plugin platforms
     map<string, AST *> m_platformTrees;
