@@ -305,7 +305,7 @@ class Generator(GeneratorBase):
                 time.sleep(1)
 
             # The following two lines work when run from: Spyder and StreamStacker
-            args = [run_prefix + 'arm-none-eabi-objcopy', '-O', 'binary', build_dir +  '/' + self.target_name, build_dir + '/' + self.target_name]
+            args = [run_prefix + 'arm-none-eabi-objcopy', '-O', 'binary', build_dir +  '/' + self.target_name, build_dir + '/app.bin']
             outtext = ck_out(args, cwd=build_dir)
             self.log(outtext)
 
@@ -326,6 +326,8 @@ class Generator(GeneratorBase):
                     '-c flash write_image erase ' + openOCD_bin_file + ' 0x08000000',
                     '-c reset',
                     '-c shutdown']
+
+            self.log(' '.join(args))
 
             outtext = ck_out(args, cwd=openOCD_dir  )
             self.log(outtext)
