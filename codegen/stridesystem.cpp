@@ -409,13 +409,13 @@ map<string, vector<AST *>> StrideSystem::getBuiltinObjectsReference()
 {
     map<string, vector<AST *>> objects;
     objects[""] = vector<AST *>();
-    // first put first platform's objects in default namespace
-    if (m_platforms.size() > 0) {
-        objects[""] = m_platforms.at(0)->getPlatformObjectsReference();
-    }
-    // Then add all platform objects with their namespace name
+    // Add all platform objects with their namespace name, so the namespaced version is picked up first
     for (auto platform: m_platforms) {
         objects[platform->getFramework()] = platform->getPlatformObjectsReference();
+    }
+    // Then put first platform's objects in default namespace
+    if (m_platforms.size() > 0) {
+        objects[""] = m_platforms.at(0)->getPlatformObjectsReference();
     }
 
     // finally add library objects.

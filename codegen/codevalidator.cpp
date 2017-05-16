@@ -600,7 +600,9 @@ void CodeValidator::validateTypes(AST *node, QVector<AST *> scopeStack, vector<s
 
     } else if (node->getNodeType() == AST::Bundle) {
         BundleNode *bundle = static_cast<BundleNode *>(node);
-        DeclarationNode *declaration = CodeValidator::findDeclaration(QString::fromStdString(bundle->getName()), scopeStack, m_tree, bundle->getNamespaceList());
+        vector<string> namespaces = bundle->getNamespaceList();
+        namespaces.insert(namespaces.begin(), parentNamespace.begin(), parentNamespace.end());
+        DeclarationNode *declaration = CodeValidator::findDeclaration(QString::fromStdString(bundle->getName()), scopeStack, m_tree, namespaces);
         if (!declaration) {
             LangError error;
             error.type = LangError::UndeclaredSymbol;
