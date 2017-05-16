@@ -1,6 +1,7 @@
 # Sine Oscillator
 
-use SaturnM7 version 1.0
+use DesktopAudio version 1.0
+#use SaturnM7 version 1.0
 
 import Generators
 

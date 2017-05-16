@@ -1,12 +1,12 @@
-# Frequency Modulation with Signal Declaration and Integer Rate
+# Frequency Modulation with Signal Declaration and Real Rate
 
-#use DesktopAudio version 1.0
-use SaturnM7 version 1.0
+use DesktopAudio version 1.0
+#use SaturnM7 version 1.0
 
 import Generators
 
 signal Modulator {
-    rate:       9.0
+    rate:       8.90
 }
 
 Oscillator ( frequency: 3.0 amplitude: 40.0 ) >> Modulator;
