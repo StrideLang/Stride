@@ -1,0 +1,5 @@
+use SaturnM7 version 1.0
+
+signal Silence { default: 0.0 }
+
+Silence >> AudioOut;
