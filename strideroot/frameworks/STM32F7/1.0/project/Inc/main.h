@@ -41,6 +41,10 @@
 
 /* Private define ------------------------------------------------------------*/
 
+#define DP83640_PDN_Pin GPIO_PIN_12
+#define DP83640_PDN_GPIO_Port GPIOI
+#define DP3640_nRESET_Pin GPIO_PIN_15
+#define DP3640_nRESET_GPIO_Port GPIOI
 #define CLK_NOEB_Pin GPIO_PIN_3
 #define CLK_NOEB_GPIO_Port GPIOJ
 #define AK4558_PDN_Pin GPIO_PIN_12
@@ -49,10 +53,14 @@
 #define TPA4411_PDN_GPIO_Port GPIOJ
 #define TPA2012_PDN_Pin GPIO_PIN_14
 #define TPA2012_PDN_GPIO_Port GPIOJ
+#define USB3300_PDN_Pin GPIO_PIN_15
+#define USB3300_PDN_GPIO_Port GPIOJ
 #define LED_RED_Pin GPIO_PIN_3
 #define LED_RED_GPIO_Port GPIOK
 #define LED_GREEN_Pin GPIO_PIN_4
 #define LED_GREEN_GPIO_Port GPIOK
+#define BTN_USER_Pin GPIO_PIN_7
+#define BTN_USER_GPIO_Port GPIOK
 
 /* USER CODE BEGIN Private defines */
 
