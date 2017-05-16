@@ -77,6 +77,27 @@ platformType _SerialPrintType {
     inherits: ['signal']
 }
 
+platformType _SerialOutType {
+    typeName: '_serialOutType'
+	inputs: ["real"]
+#    include: []
+#    linkTo: []
+    declarations: ['byte channel = 0;']
+    initializations: ["Serial1.begin(115200);"
+    ]
+    processing: '
+    channel = %%bundle_index%%;
+    Serial1.write((byte *) &channel, 1);
+    Serial1.write((byte *) &%%intoken:0%%, 4);
+	'
+    inherits: ['signal']
+}
+
+_serialOutType SerialOut[3] {
+    rate:   PlatformRate
+    domain: SerialOutDomain
+}
+
 platformType _SerialInType {
     typeName: '_serialInType'
 	outputs: ["string"]

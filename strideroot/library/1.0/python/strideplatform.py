@@ -511,6 +511,7 @@ class NameAtom(Atom):
         self.domain = None
         self.line = line
         self.filename = filename
+        self.token_index = token_index
 
         if 'domain' in self.declaration:
             if type(self.declaration['domain']) == dict:
@@ -560,8 +561,9 @@ class NameAtom(Atom):
             for i,dec in enumerate(self.platform_type['block']['declarations']):
                 declarations.append(Declaration(self.scope_index,
                                                 self.domain,
-                                                "_dec_%03i"%i,
+                                                "_dec_%03i"%self.token_index, # This gives it a unique "id"... hacky
                                                 dec['value'] + '\n'))
+                self.platform_type['block']['declarations'] = [] # declarations have been consumed
         return declarations
 
     def get_instances(self):
@@ -681,7 +683,7 @@ class NameAtom(Atom):
                 for value in code:
                     merged_code += value['value'] + '\n'
                 code = merged_code
-            code = templates.get_platform_initialization_code(code,
+            code += templates.get_platform_initialization_code(code,
                             in_tokens,
                             len(self.platform_type['block']['inputs']),
                             [self.handle]
