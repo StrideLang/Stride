@@ -122,7 +122,11 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
 
 StrideSystem::~StrideSystem()
 {
-    foreach(auto platform, m_platforms) {
+    for(DeclarationNode *node: m_platformDefinitions) {
+        node->deleteChildren();
+        delete node;
+    }
+    for(auto platform: m_platforms) {
         delete platform;
     }
 }
@@ -199,7 +203,7 @@ void StrideSystem::parseSystemTree(AST *systemTree)
                 }
                 platformDefinitions.push_back(definition);
                 platformDefinitionNames.push_back(declaration->getName());
-                m_platformDefinitions.push_back(declaration);
+                m_platformDefinitions.push_back(static_cast<DeclarationNode *>(declaration->deepCopy()));
             } else if (declaration->getObjectType() == "connection") {
                 // FIXME add connections
 //                connectionDefinitions.push_back(declaration->deepCopy());
