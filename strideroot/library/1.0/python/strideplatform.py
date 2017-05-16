@@ -1091,12 +1091,17 @@ class ModuleAtom(Atom):
                 #FIXME do we need to support multiple output blocks?
         if len(self.out_tokens) > 0:
             block_types = self.get_block_types(self._output_blocks[0])
+            token_name = self.out_tokens[0]
+            if 'size' in self._output_blocks[0]:
+                out_token_name = '_' + self.name + '_%03i_out'%self._index
+                token_name = templates.bundle_indexing(out_token_name, self._output_blocks[0]['size'] + 1)
+
             default_value = ''
             instances += [Instance(default_value,
                                  self.scope_index,
                                  self.domain,
                                  block_types[0],
-                                 self.out_tokens[0],
+                                 token_name,
                                  self) ]
 
         for name, atoms in self.port_name_atoms.items():
