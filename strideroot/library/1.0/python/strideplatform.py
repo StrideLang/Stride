@@ -511,6 +511,7 @@ class NameAtom(Atom):
         self.domain = None
         self.line = line
         self.filename = filename
+
         if 'domain' in self.declaration:
             if type(self.declaration['domain']) == dict:
                 # FIXME this should be set by the code validator
@@ -702,7 +703,20 @@ class NameAtom(Atom):
         code = ''
         out_tokens = [self.handle]
         proc_code = self.get_inline_processing_code(in_tokens)
-        domain = None
+        domain = self.domain
+        domain_proc_code = {}
+        domain_proc_code[domain] = ['', []]
+
+        outdomain = None
+        if 'outputDomain' in self.declaration:
+            if type(self.declaration['outputDomain']) == dict:
+                # FIXME this should be set by the code validator
+                outdomain = self.declaration['outputDomain']['name']['name']
+            else:
+                outdomain = self.declaration['outputDomain']
+            out_tokens = []
+            domain_proc_code[outdomain] = ['', [self.handle]]
+
         if len(proc_code) > 0:
             if 'processing' in self.platform_type['block']:
                 if self.inline:
@@ -714,7 +728,10 @@ class NameAtom(Atom):
                         code = templates.expression(proc_code)
             else:
                 code = templates.assignment(self.handle, proc_code)
-        return {domain : [code, out_tokens] }
+
+            domain_proc_code[domain][0] += code
+            domain_proc_code[domain][1] += out_tokens
+        return domain_proc_code
 
     def get_postproc_once(self):
         if 'block' in self.platform_type and self.platform_type['block']['type'] == "platformType":
@@ -1085,7 +1102,7 @@ class ModuleAtom(Atom):
         for name, atoms in self.port_name_atoms.items():
             for atom in atoms:
                 decl = self.platform.find_declaration_in_tree(atom.get_handles(),
-                                                              self.platform.tree + self.module['blocks'])
+                                                              self.module['blocks'] + self.platform.tree)
                 if not decl:
                     if type(atom) is NameAtom:
                         default_value = 0.0
@@ -1798,7 +1815,7 @@ class PlatformFunctions:
                 if atom.domain: # Make "None" domain reuse existing domain
                     if type(atom.domain) == dict:
                         # FIMXE this is for the case where domains are internal
-                        # Should be resolved by the code validator
+                        # Should have been already resolved by the code validator
                         current_domain = atom.domain['name']['name']
                     else:
                         current_domain = atom.domain
@@ -1941,6 +1958,7 @@ class PlatformFunctions:
             new_code = self.generate_code_from_groups(node_groups, global_groups)
             header_code, init_code, new_processing_code, scope_instances, scope_declarations, reads, writes = new_code
         else:
+            stream_filename = ''
             header_code, init_code, new_processing_code, scope_instances, scope_declarations, reads, writes = [{} for i in range(7)]
 #        self.log_debug("READS------ " + str(reads) )
 #        self.log_debug("WRITES------ " + str(writes) )

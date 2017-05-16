@@ -2150,10 +2150,13 @@ QVector<AST *> CodeResolver::sliceStreamByDomain(StreamNode *stream, QVector<AST
                         AST *defaultProperty = declaration->getPropertyValue("default");
                         AST *bridgeDomain = declaration->getDomain();
                         if (defaultProperty && bridgeDomain) {
+
+                            ValueNode *noneValue = new ValueNode("", -1);
                             streams.push_back(createSignalBridge(connectorName, defaultProperty,
-                                                                 bridgeDomain, new ValueNode("", -1),
+                                                                 bridgeDomain, noneValue,
                                                                  declaration->getFilename(), declaration->getLine(),
                                                                  size)); // Add definition to stream
+                            delete noneValue;
                             BlockNode *connectorNameNode = new BlockNode(connectorName, "", -1);
                             StreamNode *newStream = new StreamNode(value->deepCopy(), connectorNameNode, left->getFilename().c_str(), left->getLine());
                             prop->replaceValue(connectorNameNode->deepCopy());
@@ -2203,11 +2206,19 @@ QVector<AST *> CodeResolver::sliceStreamByDomain(StreamNode *stream, QVector<AST
                             if (!valueNode) {
                                 valueNode =  new ValueNode(0, "", -1);
                             }
-                            ValueNode *noneValue = new ValueNode("", -1);
-                            newDeclarations.push_back(createSignalBridge(listMemberName, valueNode,
-                                                                     declaration->getDomain(), noneValue,
+                            DeclarationNode *nextDecl = CodeValidator::findDeclaration(CodeValidator::streamMemberName(left, scopeStack, m_tree),
+                                                                           scopeStack, m_tree);
+                            if (nextDecl) {
+                                newDeclarations.push_back(createSignalBridge(listMemberName, valueNode,
+                                                                     declaration->getDomain(), nextDecl->getDomain(),
                                                                      declaration->getFilename(), declaration->getLine()));
-                            delete noneValue;
+                            } else {
+                                ValueNode *noneValue = new ValueNode("", -1);
+                                newDeclarations.push_back(createSignalBridge(listMemberName, valueNode,
+                                                                             declaration->getDomain(), noneValue,
+                                                                             declaration->getFilename(), declaration->getLine()));
+                                delete noneValue;
+                            }
                             StreamNode *newStream = new StreamNode(stack.back()->getChildren()[i]->deepCopy(),
                                                                    new BlockNode(listMemberName, "", -1),
                                                                    declaration->getFilename().c_str(), declaration->getLine());
@@ -2261,18 +2272,24 @@ QVector<AST *> CodeResolver::sliceStreamByDomain(StreamNode *stream, QVector<AST
             if (stack.size() == 0) {
                 newStream = new StreamNode(closingName, left->deepCopy(), left->getFilename().c_str(), left->getLine());
             } else {
-                newStream = new StreamNode(stack.back()->deepCopy(), closingName, left->getFilename().c_str(), left->getLine());
+                if (stack.back()->getNodeType() != AST::List) { // Lists have already been processed above
+                    newStream = new StreamNode(stack.back()->deepCopy(), closingName, left->getFilename().c_str(), left->getLine());
+                }
                 stack.pop_back();
             }
             while (stack.size() > 0) {
                 AST *lastNode = stack.back();
-                newStream = new StreamNode(lastNode, newStream, newStream->getFilename().c_str(), newStream->getLine());
+                if (stack.back()->getNodeType() != AST::List) { // Lists have already been processed above
+                    newStream = new StreamNode(lastNode, newStream, newStream->getFilename().c_str(), newStream->getLine());
+                }
                 stack.pop_back();
             }
             for (AST *declaration: newDeclarations) {
                 streams << declaration;
             }
-            streams << newStream;
+            if (newStream) {
+                streams << newStream;
+            }
             stack << newStart << left;
         } else {
             stack << left;
