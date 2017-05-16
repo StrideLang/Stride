@@ -311,14 +311,22 @@ void CodeValidator::setNodeRate(AST *node, double rate, QVector<AST *> scope, AS
         BlockNode *name = static_cast<BlockNode *>(node);
         DeclarationNode* declaration =  CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scope, tree, name->getNamespaceList());
         if (declaration) {
-            declaration->replacePropertyValue("rate", new ValueNode(rate, "", -1));
+            ValueNode *value = new ValueNode(rate, "", -1);
+            if (!declaration->replacePropertyValue("rate", value)) {
+                qDebug() << "Couldn't set rate. Rate property does not exist.";
+                delete value;
+            }
         }
         return;
     } else if (node->getNodeType() == AST::Bundle) {
         BundleNode *bundle = static_cast<BundleNode *>(node);
         DeclarationNode* declaration =  CodeValidator::findDeclaration(QString::fromStdString(bundle->getName()), scope, tree, bundle->getNamespaceList());
         if (declaration) {
-            declaration->replacePropertyValue("rate", new ValueNode(rate, "", -1));
+            ValueNode *value = new ValueNode(rate, "", -1);
+            if (!declaration->replacePropertyValue("rate", value)) {
+                qDebug() << "Couldn't set rate. Rate property does not exist.";
+                delete value;
+            }
         }
         return;
     } else if (node->getNodeType() == AST::Function) {

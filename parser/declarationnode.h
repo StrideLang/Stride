@@ -54,7 +54,7 @@ public:
     bool addProperty(PropertyNode *newProperty);
     AST *getPropertyValue(string propertyName);
     void setPropertyValue(string propertyName, AST *value);
-    void replacePropertyValue(string propertyName, AST *newValue);
+    bool replacePropertyValue(string propertyName, AST *newValue);
 
     AST *getDomain();
     void setDomainString(string domain);

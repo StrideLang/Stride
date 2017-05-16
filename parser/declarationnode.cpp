@@ -124,14 +124,17 @@ void DeclarationNode::setPropertyValue(string propertyName, AST *value)
     }
 }
 
-void DeclarationNode::replacePropertyValue(string propertyName, AST *newValue)
+bool DeclarationNode::replacePropertyValue(string propertyName, AST *newValue)
 {
+    bool replaced = false;
     for (unsigned int i = 0; i < m_properties.size(); i++) {
         if (m_properties.at(i)->getName() == propertyName) {
             m_properties.at(i)->replaceValue(newValue);
+            replaced = true;
             break;
         }
     }
+    return replaced;
 }
 
 AST *DeclarationNode::getDomain()
