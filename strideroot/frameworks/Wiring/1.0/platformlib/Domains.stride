@@ -34,4 +34,5 @@ _domainDefinition SerialOutDomain {
 	processingTag: "Processing"
 	initializationTag: "Initialization"
 	cleanupTag: "Cleanup"
+	rate: 1000
 }

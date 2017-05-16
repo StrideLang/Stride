@@ -16,4 +16,6 @@ signal Frequency {
 
 AnalogIn[2] + AnalogIn[3] >> DownSample >> SerialPrint();
 
+AnalogIn[2] >> SerialOut[1];
+
 [ Oscillator ( frequency: Frequency ) , 0 ] >> Greater() >> DigitalOut[14];
