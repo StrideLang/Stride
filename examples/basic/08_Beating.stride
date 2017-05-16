@@ -1,5 +1,7 @@
-#use DesktopAudio version 1.0
-use SaturnM7 version 1.0
+# Beating
+
+use DesktopAudio version 1.0
+#use SaturnM7 version 1.0
 
 import Generators
 
@@ -13,4 +15,3 @@ Oscillators[1]
 + Oscillators[6]
 >> Level ( gain: 0.5 )
 >> AudioOut;
-
