@@ -26,7 +26,7 @@ void setup() {
 int tickEvent = t.every(1, process);
 //[[Initialization]]
 
-  Serial.begin(9600);
+  Serial.begin(115200);
   pinMode(led, OUTPUT);
 //[[/Initialization]]
 }
