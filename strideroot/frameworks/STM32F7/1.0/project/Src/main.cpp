@@ -197,15 +197,6 @@
   q15_t MEMS_BottomLeft = 0;		// M1
   q15_t MEMS_BottomRight = 0;		// M2
 
-#define SRAM_BANK_ADDRESS			((uint32_t) 0x68000000)
-
-#define SRAM_TEST_BUFFER_SIZE		((uint32_t) 0x8000)
-#define SRAM_WR_ADDRESS				((uint32_t) 0x0800)
-#define SRAM_W_OFFSET				((uint32_t) 0xC20F)
-
-  uint16_t SRAM_TX_BUFFER[SRAM_TEST_BUFFER_SIZE];
-  uint16_t SRAM_RX_BUFFER[SRAM_TEST_BUFFER_SIZE];
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -213,23 +204,7 @@ void SystemClock_Config(void);
 void Error_Handler(void);
 
 /* USER CODE BEGIN PFP */
-static void FillBuffer (uint16_t *pBuffer, uint32_t size, uint32_t offset);
-static uint8_t CompareBuffer ( uint16_t *pBuffer1, uint16_t *pBuffer2, uint16_t length);
 /* Private function prototypes -----------------------------------------------*/
-
-//void EnableCodec(void);						// PJ12 (Active High - Pull Up)
-//void EnableDAC(uint8_t);					// 0x00 - D1: PMDAL(L), D2: PMDAR(L) (Active High)
-//void EnableADC(uint8_t);					// 0x00 - D3: PMADL(L), D3: PMADR(L) (Active High)
-//void EnableSoftMute(void);					// 0x03 - D0: SMUTE(L) (Active High - DAC Muted)
-//void DisableSoftMute(void);
-//void FormatMode(uint8_t);					// 0x03 - D3: DIF0(H), D4: DIF1(H), D5: DIF2(H) (Table 23 / HHL)
-//void SamplingSpeed(uint8_t);				// 0x04 - D1: DFS0(L), D2: DFS1(L) (Table 8 / LL)
-//void MasterClockFrequencySelect(uint8_t);	// 0x04 - D3: MCKS0(L), D4: MCKS1(H) (Table 9 / LL)
-//void EnablePowerSave(void);					// 0x05 - D0: LOPS(L) (Active High)
-//void DisablePowerSave(void);
-//void LeftVolume(uint8_t);					// 0x08 - FF (0dB)
-//void RightVolume(uint8_t);					// 0x09 - FF (0dB)
-
 
 /* USER CODE END PFP */
 
@@ -281,23 +256,6 @@ int main(void)
   MX_TIM3_Init();
 
   /* USER CODE BEGIN 2 */
-//  FillBuffer(SRAM_TX_BUFFER,SRAM_TEST_BUFFER_SIZE,SRAM_W_OFFSET);
-//
-//  if (HAL_SRAM_Write_16b(&hsram1, (uint32_t*) (SRAM_BANK_ADDRESS + SRAM_WR_ADDRESS), SRAM_TX_BUFFER,SRAM_TEST_BUFFER_SIZE) != HAL_OK)
-//  {
-//	  Error_Handler();
-//  }
-//
-//  if (HAL_SRAM_Read_16b(&hsram1, (uint32_t*) (SRAM_BANK_ADDRESS + SRAM_WR_ADDRESS), SRAM_RX_BUFFER,SRAM_TEST_BUFFER_SIZE) != HAL_OK)
-//  {
-//	  Error_Handler();
-//  }
-//
-//  if (CompareBuffer(SRAM_TX_BUFFER, SRAM_RX_BUFFER,SRAM_TEST_BUFFER_SIZE))
-//  {
-//	  Error_Handler();
-//  }
-
   HAL_StatusTypeDef status_i2c;
 
   for (uint16_t i = 0; i < SI5351C_NUM_REGS; i++)
@@ -333,32 +291,6 @@ int main(void)
 	  }
     }
   }
-
-      // Test I2C Read
-
-  //    uint8_t address = 0x03;
-  //    uint8_t data = 0x00;
-  //
-  //    status_i2c = HAL_I2C_Master_Transmit(&hi2c1, SI5351C_ADDRESS_W, &address, 1, 25);
-  //    if (status_i2c == HAL_ERROR)
-  //    {
-  //        while(1)
-  //        {
-  //            HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
-  //            HAL_Delay(50);
-  //        }
-  //    }
-  //
-  //    status_i2c = HAL_I2C_Master_Receive(&hi2c1, SI5351C_ADDRESS_R, &data, 1, 25);
-  //    if (status_i2c == HAL_ERROR)
-  //    {
-  //        while(1)
-  //        {
-  //            HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
-  //            HAL_Delay(50);
-  //        }
-  //    }
-
 
   // Enable Soft Mute
   status_i2c = HAL_I2C_Master_Transmit(&hi2c1, AK4558_ADDRESS_W, (uint8_t *) &ak4558_soft_mute_enable, 2, 25);
@@ -601,30 +533,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port,LED_GREEN_Pin);
-}
-
-static void FillBuffer (uint16_t *pBuffer, uint32_t size, uint32_t offset)
-{
-	uint32_t index = 0;
-	for (index = 0; index < size;  index++ )
-	{
-		pBuffer[index] = index + offset;
-	}
-}
-static uint8_t CompareBuffer ( uint16_t *pBuffer1, uint16_t *pBuffer2, uint16_t length)
-{
-	while (length--)
-	{
-		if (*pBuffer1 != *pBuffer2)
-		{
-			return 1;
-		}
-
-		pBuffer1++;
-		pBuffer2++;
-	}
-
-	return 0;
 }
 /* USER CODE END 4 */
 
