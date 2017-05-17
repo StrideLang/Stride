@@ -92,6 +92,9 @@ class Atom(object):
         the block'''
         return ''
 
+    def get_preproc_once(self):
+        return None
+
     def get_preprocessing_code(self, in_tokens):
         ''' Returns code that needs to be run asynchronously but can't be
         inlined, so needs to be run separately previous to the processing
@@ -103,6 +106,9 @@ class Atom(object):
         inline processing code. The inline processing code will be provided
         ready to insert rather than ready to inline.'''
         return None
+
+    def get_postprocessing_code(self, in_tokens):
+        return ''
 
     def get_postproc_once(self):
         return None
@@ -331,6 +337,13 @@ class ExpressionAtom(Atom):
             processing_code[self.domain][1] += [self.handle]
         return processing_code #{domain: [code, out_tokens]}
 
+    def get_postprocessing_code(self, in_tokens):
+        left_code = self.left_atom.get_postprocessing_code([])
+        right_code = ''
+        if self.right_atom:
+            right_code = self.right_atom.get_postprocessing_code([])
+        return left_code + right_code
+
     def _expression_out_type(self):
         if self.expr_type == 'Add':
             out_type = 'real'
@@ -452,6 +465,14 @@ class ListAtom(Atom):
             code += new_code
         return code
 
+    def get_preproc_once(self):
+        preproc = []
+        for i,elem in enumerate(self.list_node):
+            new_preproc = elem.get_preproc_once()
+            if new_preproc:
+                preproc += new_preproc
+        return preproc
+
     def get_preprocessing_code(self, in_tokens):
         code = ''
         for i,elem in enumerate(self.list_node):
@@ -463,14 +484,6 @@ class ListAtom(Atom):
                 new_code = elem.get_preprocessing_code([])
                 code += new_code
         return code
-
-    def get_postproc_once(self):
-        postproc = []
-        for i,elem in enumerate(self.list_node):
-            new_postproc = elem.get_postproc_once()
-            if new_postproc:
-                postproc += new_postproc
-        return postproc
 
     def get_processing_code(self, in_tokens):
         proc_code = {}
@@ -491,6 +504,26 @@ class ListAtom(Atom):
                 proc_code[domain][0] += new_code
                 proc_code[domain][1] += new_out_tokens
         return proc_code
+
+    def get_postprocessing_code(self, in_tokens):
+        code = ''
+        for i,elem in enumerate(self.list_node):
+            if len(in_tokens) > 0:
+                index = i % len(in_tokens)
+                new_code = elem.get_postprocessing_code([in_tokens[index]])
+                code += new_code
+            else:
+                new_code = elem.get_postprocessing_code([])
+                code += new_code
+        return code
+
+    def get_postproc_once(self):
+        postproc = []
+        for i,elem in enumerate(self.list_node):
+            new_postproc = elem.get_postproc_once()
+            if new_postproc:
+                postproc += new_postproc
+        return postproc
 
     def _get_list_domain(self):
         for elem in self.list_node:
@@ -683,12 +716,20 @@ class NameAtom(Atom):
                 for value in code:
                     merged_code += value['value'] + '\n'
                 code = merged_code
+
+            self.platform_type['block']['initializations'] = [] # initializations have been consumed
             code += templates.get_platform_initialization_code(code,
                             in_tokens,
                             len(self.platform_type['block']['inputs']),
                             [self.handle]
                             )
         return code
+
+    def get_preproc_once(self):
+        if 'block' in self.platform_type and self.platform_type['block']['type'] == "platformType":
+            if not self.platform_type['block']['preProcessingOnce'] == '':
+                return [[self.platform_type['block']['name'], self.platform_type['block']['preProcessingOnce']]]
+        return None
 
     def get_preprocessing_code(self, in_tokens):
         code = ''
@@ -734,6 +775,17 @@ class NameAtom(Atom):
             domain_proc_code[domain][0] += code
             domain_proc_code[domain][1] += out_tokens
         return domain_proc_code
+
+    def get_postprocessing_code(self, in_tokens):
+        code = ''
+        if 'postProcessing' in self.platform_type['block']:
+            code = self.platform_type['block']['postProcessing']
+            code = templates.get_platform_postprocessing_code(code,
+                            in_tokens,
+                            len(self.platform_type['block']['inputs']),
+                            [self.handle]
+                            )
+        return code
 
     def get_postproc_once(self):
         if 'block' in self.platform_type and self.platform_type['block']['type'] == "platformType":
@@ -834,9 +886,6 @@ class PortPropertyAtom(Atom):
         code = 'XXXX'
         return {None: code}
 
-    def get_postproc_once(self):
-        return None
-
     def get_inline_processing_code(self, in_tokens):
         ''' This returns the processing code itself, so this can be used
         when the output is used only once, and an intermediate symbol to
@@ -903,6 +952,18 @@ class BundleAtom(NameAtom):
                 code = self._get_token_name(self.index)
         return  code
 
+    def get_preprocessing_code(self, in_tokens):
+        code = ''
+        if 'preProcessing' in self.platform_type['block']:
+            code = self.platform_type['block']['preProcessing']
+            code = templates.get_platform_preprocessing_code(code,
+                            in_tokens,
+                            len(self.platform_type['block']['inputs']),
+                            [self.handle],
+                            self.index
+                            )
+        return code
+
     def get_processing_code(self, in_tokens):
         code = ''
         out_tokens = [self._get_token_name(self.index)]
@@ -930,6 +991,18 @@ class BundleAtom(NameAtom):
 #
 #        out_tokens = [self._get_token_name(self.index)]
         return {domain : [code, out_tokens] }
+
+    def get_postprocessing_code(self, in_tokens):
+        code = ''
+        if 'postProcessing' in self.platform_type['block']:
+            code = self.platform_type['block']['postProcessing']
+            code = templates.get_platform_postprocessing_code(code,
+                            in_tokens,
+                            len(self.platform_type['block']['inputs']),
+                            [self.handle],
+                            self.index
+                            )
+        return code
 
     def _get_token_name(self, index):
         if type(index) == int:
@@ -1173,7 +1246,6 @@ class ModuleAtom(Atom):
         return code
 
     def get_processing_code(self, in_tokens):
-        #code = self.get_preprocessing_code(in_tokens)
         code = ''
         out_tokens = self.out_tokens
         domain = self.domain
@@ -1242,6 +1314,19 @@ class ModuleAtom(Atom):
 #    def _get_internal_header_code(self):
 #        code = self.code['domain_code']['header_code']
 #        return code
+
+
+    def get_postprocessing_code(self, in_tokens):
+        code = ''
+
+        # FIXME this needs fixing
+#        for in_block in self._input_blocks:
+#            if 'size' in in_block:
+#                new_code = templates.declaration_bundle_real('_%s_in'%self.handle, len(in_tokens)) + '\n'
+#                for i in range(len(in_tokens)):
+#                    new_code += templates.assignment('_%s_in[%i]'%(self.handle, i), in_tokens[i])
+#                code += new_code
+        return code
 
     def _get_internal_processing_code(self):
         code = self.code['domain_code']['processing_code']
@@ -1452,9 +1537,6 @@ class ReactionAtom(ModuleAtom):
 
 
     def get_processing_code(self, in_tokens):
-        #code = self.get_preprocessing_code(in_tokens)
-        #processing_code = super(ReactionAtom, self).get_processing_code(in_tokens)
-
         processing_code = {}
 
         for each_domain in self.code['domain_code']:
@@ -1796,6 +1878,7 @@ class PlatformFunctions:
 
         init_code = {}
         header_code = {}
+        pre_processing = {}
         processing_code = {}
         post_processing = {}
         writes = {}
@@ -1810,6 +1893,7 @@ class PlatformFunctions:
         current_rate = -1;
 
         self.log_debug(">>> Start stream generation")
+
         for group in node_groups:
             streamdomain = self.get_stream_domain(group)
             current_rate = self.get_domain_default_rate(streamdomain)
@@ -1871,11 +1955,44 @@ class PlatformFunctions:
                     init_code[current_domain] = ""
                 init_code[current_domain] += atom.get_initialization_code(in_tokens)
 
+                # Pre-processing-once code
+                new_preprocs = atom.get_preproc_once()
+                if not current_domain in pre_processing:
+                    pre_processing[current_domain] = []
+                if new_preprocs:
+                    for new_preproc in new_preprocs:
+                        if new_preproc:
+                            preproc_present = False
+                            for preproc in pre_processing[current_domain]:
+                                if preproc[0] == new_preproc[0]:
+                                    preproc_present = True
+                                    break
+                            # Do we need to order the post processing code?
+                            if not preproc_present:
+                                pre_processing[current_domain].append(new_preproc)
+
+                # Processing code
                 if not current_domain in processing_code:
                     processing_code[current_domain] = ""
-                processing_code[current_domain] += atom.get_preprocessing_code(in_tokens)
-                # Process processing code
+                processing_code[current_domain] += atom.get_preprocessing_code(in_tokens) + "\n"
+
                 new_processing_code = atom.get_processing_code(in_tokens)
+
+                next_in_tokens = []
+                for domain in new_processing_code:
+                    code, out_tokens = new_processing_code[domain]
+                    #self.log_debug("Code:  " + str(code))
+                    if not domain:
+                        domain = current_domain
+                    if not domain in processing_code:
+                        processing_code[domain] = ''
+                    processing_code[domain] += code + '\n'
+                    if domain == current_domain or not current_domain:
+                        next_in_tokens += out_tokens
+
+                processing_code[current_domain] += atom.get_postprocessing_code(in_tokens) + "\n"
+
+                # Post processing code
                 new_postprocs = atom.get_postproc_once()
 
                 if not current_domain in post_processing:
@@ -1905,19 +2022,14 @@ class PlatformFunctions:
                         atom.set_inline(False)
                         current_rate = atom.rate
 
-                in_tokens = []
-                for domain in new_processing_code:
-                    code, out_tokens = new_processing_code[domain]
-                    #self.log_debug("Code:  " + str(code))
-                    if not domain:
-                        domain = current_domain
-                    if not domain in processing_code:
-                        processing_code[domain] = ''
-                    processing_code[domain] += code + '\n'
-                    if domain == current_domain or not current_domain:
-                        in_tokens += out_tokens
+                in_tokens = next_in_tokens
+                previous_atom = atom
 
-            previous_atom = atom
+
+
+        for domain in pre_processing:
+            for preprocdomain in pre_processing[domain]:
+                processing_code[domain] = preprocdomain[1] + processing_code[domain] + '\n'
 
         for domain in post_processing:
             for postprocdomain in post_processing[domain]:

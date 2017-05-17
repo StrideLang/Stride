@@ -147,6 +147,23 @@ public:
             code = code.replace('%%token%%', token)
         return code
 
+    def get_platform_postprocessing_code(self, code, token_names, num_inputs, out_tokens, bundle_index = -1):
+        p = re.compile("%%intoken:[a-zA-Z0-9_]+%%") ## TODO tweak this better
+        matches = p.findall(code)
+        if num_inputs > 0: # has inputs
+            if bundle_index >= 0:
+                code = code.replace('%%bundle_index%%', str(bundle_index))
+            for match in matches:
+                index = int(match[match.rfind(":") + 1:-2])
+                code = code.replace(match, token_names[index])
+                code = code.replace('%%bundle_index%%', str(bundle_index))
+        else: # Output only
+            if bundle_index >= 0:
+                code = code.replace('%%bundle_index%%', str(bundle_index))
+        for token in out_tokens:
+            code = code.replace('%%token%%', token)
+        return code
+
 
     def get_platform_inline_processing_code(self, code, token_names, num_inputs, num_outputs, bundle_index = -1):
         p = re.compile("%%intoken:[a-zA-Z0-9_]+%%") ## TODO tweak this better

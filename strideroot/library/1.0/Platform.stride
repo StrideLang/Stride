@@ -168,6 +168,12 @@ type _PlatformType {
 			default: []
 			required: on
 		},
+		typeProperty PreProcessingOnce {
+			name: "preProcessingOnce"
+			types: ["CSP"]
+			default: ""
+			required: off
+		},
 		typeProperty PreProcessing {
 			name: "preProcessing"
 			types: ["CSP"]
@@ -178,6 +184,12 @@ type _PlatformType {
 			name: "processing"
 			types: ["CSP"]
 			default: none
+			required: on
+		},
+		typeProperty PostProcessing {
+			name: "postProcessing"
+			types: ["CSP"]
+			default: ""
 			required: on
 		},
 		typeProperty PostProcessingOnce {
