@@ -524,7 +524,7 @@ void CodeResolver::expandParallelStream(StreamNode *stream, QVector<AST *> scope
             continue;
         }
         if (numPrevOut > numCurIn) { // Need to clone next
-            if (numPrevOut/(float)numCurIn == numPrevOut/numCurIn) {
+            if (numCurIn > 0 && numPrevOut/(float)numCurIn == numPrevOut/numCurIn) {
                 numCopies << numPrevOut/numCurIn;
             } else {
                 // Stream size mismatch. Stop expansion. The error will be reported later by

@@ -14,22 +14,3 @@ module SerialPrint {
         Input >> SerialPrintBlock;
     ]
 }
-
-module SerialIn {
-    ports: [
-        port OutputPort {
-            name:       'output'
-            main: on
-            direction:  'output'
-        }
-    ]
-    blocks: [
-        signal Output {
-                default :       ""
-        },
-        _serialInType SerialInBlock {}
-    ]
-    streams: [
-        SerialInBlock >> Output;
-    ]
-}

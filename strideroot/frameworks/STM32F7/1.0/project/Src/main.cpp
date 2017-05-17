@@ -33,10 +33,16 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f7xx_hal.h"
+#include "dfsdm.h"
 #include "dma.h"
 #include "i2c.h"
 #include "i2s.h"
+#include "quadspi.h"
+#include "sai.h"
+#include "tim.h"
+#include "usart.h"
 #include "gpio.h"
+#include "fmc.h"
 
 /* USER CODE BEGIN Includes */
 //[[Includes]]
@@ -56,7 +62,9 @@
 #define SI5351C_NUM_REGS                75
 #define AK4558_NUM_REGS					5
 
-#define BUFFER_SIZE						4
+#define AUDIO_BUFFER_SIZE				4
+#define UART_BUFFER_SIZE				10
+#define DFSDM_BUFFER_SIZE				32
 
   typedef struct
   {
@@ -166,7 +174,7 @@
   ak4558_register_t const ak4558_soft_mute_disable = {0x03, 0x18};
 
   uint8_t LED = 0;
-  q15_t I2S_TX_Buffer[BUFFER_SIZE] = {0};
+  q15_t I2S_TX_Buffer[AUDIO_BUFFER_SIZE] = {0};
   q15_t *I2S_TX_Buffer_p = (q15_t *) I2S_TX_Buffer;
 
 //[[Declarations]]
@@ -175,6 +183,29 @@
   //[[Instances]]
   //[[/Instances]]
 
+  uint8_t state = 0;
+  uint8_t channel = 0;
+  uint8_t UART_RX_Buffer[UART_BUFFER_SIZE] = {0};
+
+  int32_t DFSDM_Buffer_TopLeft[DFSDM_BUFFER_SIZE] = {0};
+  int32_t DFSDM_Buffer_TopRight[DFSDM_BUFFER_SIZE] = {0};
+  int32_t DFSDM_Buffer_BottomLeft[DFSDM_BUFFER_SIZE] = {0};
+  int32_t DFSDM_Buffer_BottomRight[DFSDM_BUFFER_SIZE] = {0};
+
+  q15_t MEMS_TopLeft = 0;			// M4
+  q15_t MEMS_TopRight = 0;			// M3
+  q15_t MEMS_BottomLeft = 0;		// M1
+  q15_t MEMS_BottomRight = 0;		// M2
+
+#define SRAM_BANK_ADDRESS			((uint32_t) 0x68000000)
+
+#define SRAM_TEST_BUFFER_SIZE		((uint32_t) 0x8000)
+#define SRAM_WR_ADDRESS				((uint32_t) 0x0800)
+#define SRAM_W_OFFSET				((uint32_t) 0xC20F)
+
+  uint16_t SRAM_TX_BUFFER[SRAM_TEST_BUFFER_SIZE];
+  uint16_t SRAM_RX_BUFFER[SRAM_TEST_BUFFER_SIZE];
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -182,6 +213,8 @@ void SystemClock_Config(void);
 void Error_Handler(void);
 
 /* USER CODE BEGIN PFP */
+static void FillBuffer (uint16_t *pBuffer, uint32_t size, uint32_t offset);
+static uint8_t CompareBuffer ( uint16_t *pBuffer1, uint16_t *pBuffer2, uint16_t length);
 /* Private function prototypes -----------------------------------------------*/
 
 //void EnableCodec(void);						// PJ12 (Active High - Pull Up)
@@ -206,13 +239,6 @@ void osc()
 {
 //[[OSC:Processing]]
 //[[OSC:Processing]]
-}
-
-void serialIn()
-{
-//[[SerialIn:Processing]]
-//[[SerialIn:Processing]]
-
 }
 
 void serialOut()
@@ -244,11 +270,33 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
-  MX_I2C1_Init();
   MX_I2S2_Init();
   MX_I2S3_Init();
+  MX_I2C1_Init();
+  MX_UART5_Init();
+  MX_DFSDM1_Init();
+  MX_SAI2_Init();
+  MX_QUADSPI_Init();
+  MX_FMC_Init();
+  MX_TIM3_Init();
 
   /* USER CODE BEGIN 2 */
+//  FillBuffer(SRAM_TX_BUFFER,SRAM_TEST_BUFFER_SIZE,SRAM_W_OFFSET);
+//
+//  if (HAL_SRAM_Write_16b(&hsram1, (uint32_t*) (SRAM_BANK_ADDRESS + SRAM_WR_ADDRESS), SRAM_TX_BUFFER,SRAM_TEST_BUFFER_SIZE) != HAL_OK)
+//  {
+//	  Error_Handler();
+//  }
+//
+//  if (HAL_SRAM_Read_16b(&hsram1, (uint32_t*) (SRAM_BANK_ADDRESS + SRAM_WR_ADDRESS), SRAM_RX_BUFFER,SRAM_TEST_BUFFER_SIZE) != HAL_OK)
+//  {
+//	  Error_Handler();
+//  }
+//
+//  if (CompareBuffer(SRAM_TX_BUFFER, SRAM_RX_BUFFER,SRAM_TEST_BUFFER_SIZE))
+//  {
+//	  Error_Handler();
+//  }
 
   HAL_StatusTypeDef status_i2c;
 
@@ -323,10 +371,31 @@ int main(void)
 	  }
   }
 
-  // Start DMA
-  if (HAL_I2S_Transmit_DMA(&hi2s2, (uint16_t *) I2S_TX_Buffer, BUFFER_SIZE) != HAL_OK)
+  // Start DFSDM DMA (MEMS Microphones)
+  if (HAL_DFSDM_FilterRegularStart_DMA(&hdfsdm1_filter3, DFSDM_Buffer_TopLeft, DFSDM_BUFFER_SIZE) != HAL_OK)
   {
-	  Error_Handler();
+    Error_Handler();
+  }
+
+  if (HAL_DFSDM_FilterRegularStart_DMA(&hdfsdm1_filter2, DFSDM_Buffer_TopRight, DFSDM_BUFFER_SIZE) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  if (HAL_DFSDM_FilterRegularStart_DMA(&hdfsdm1_filter1, DFSDM_Buffer_BottomRight, DFSDM_BUFFER_SIZE) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  if (HAL_DFSDM_FilterRegularStart_DMA(&hdfsdm1_filter0, DFSDM_Buffer_BottomLeft, DFSDM_BUFFER_SIZE) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  // Start Audio DMA
+  if (HAL_I2S_Transmit_DMA(&hi2s2, (uint16_t *) I2S_TX_Buffer, AUDIO_BUFFER_SIZE) != HAL_OK)
+  {
+    Error_Handler();
   }
 
   HAL_Delay(50);
@@ -348,6 +417,15 @@ int main(void)
 	  }
   }
 
+  if (HAL_UART_Receive_DMA(&huart5, (uint8_t *) UART_RX_Buffer, UART_BUFFER_SIZE) != HAL_OK)
+  {
+      Error_Handler();
+  }
+
+  if (HAL_TIM_Base_Start_IT(&htim3) !=HAL_OK)
+  {
+      Error_Handler();
+  }
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -361,10 +439,10 @@ int main(void)
   //[[/Processing]]
       switch ( LED ) {
             case 0:
-                //HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
+                HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
                 break;
             case 1:
-                HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
+                // HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
                 break;
             default:
                 break;
@@ -431,9 +509,17 @@ void SystemClock_Config(void)
     Error_Handler();
   }
 
-  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_I2C1|RCC_PERIPHCLK_I2S;
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_DFSDM1_AUDIO|RCC_PERIPHCLK_DFSDM1
+                              |RCC_PERIPHCLK_UART5|RCC_PERIPHCLK_SAI1
+                              |RCC_PERIPHCLK_SAI2|RCC_PERIPHCLK_I2C1
+                              |RCC_PERIPHCLK_I2S;
   PeriphClkInitStruct.I2sClockSelection = RCC_I2SCLKSOURCE_EXT;
+  PeriphClkInitStruct.Sai1ClockSelection = RCC_SAI1CLKSOURCE_PIN;
+  PeriphClkInitStruct.Sai2ClockSelection = RCC_SAI2CLKSOURCE_PIN;
+  PeriphClkInitStruct.Uart5ClockSelection = RCC_UART5CLKSOURCE_PCLK1;
   PeriphClkInitStruct.I2c1ClockSelection = RCC_I2C1CLKSOURCE_PCLK1;
+  PeriphClkInitStruct.Dfsdm1AudioClockSelection = RCC_DFSDM1AUDIOCLKSOURCE_SAI1;
+  PeriphClkInitStruct.Dfsdm1ClockSelection = RCC_DFSDM1CLKSOURCE_SYSCLK;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -456,7 +542,7 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
 {
-	for (uint8_t i = 0; i < (BUFFER_SIZE / 4); i++)
+	for (uint8_t i = 0; i < (AUDIO_BUFFER_SIZE / 4); i++)
 	{
 //[[AudioProcessing]]
 //[[/AudioProcessing]]
@@ -466,6 +552,79 @@ void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
 void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
 {
 	HAL_I2S_TxHalfCpltCallback(hi2s);
+}
+
+void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart)
+{
+
+	static float32_t temp = 0.0f;
+
+	if (state == 0)
+	{
+
+		channel = UART_RX_Buffer[0];
+		memcpy((uint8_t*) &temp, (uint8_t*) &UART_RX_Buffer[1],4);
+
+		state = 1;
+	}
+	else
+	{
+		channel = UART_RX_Buffer[5];
+		memcpy((uint8_t*) &temp, (uint8_t*) &UART_RX_Buffer[6],4);
+
+		state = 0;
+	}
+
+    switch(channel) {
+//[[SerialIn:Processing]]
+		case 0:
+//			if (temp > 1 || temp < 0) temp = 0.5;
+//			Gain = temp;
+			break;
+		case 1:
+//			PhaseInc1 = temp;
+			break;
+		case 2:
+//			PhaseInc2 = temp;
+			break;
+		default:
+			break;
+//[[/SerialIn:Processing]]
+    }
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	HAL_UART_RxHalfCpltCallback(huart);
+}
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port,LED_GREEN_Pin);
+}
+
+static void FillBuffer (uint16_t *pBuffer, uint32_t size, uint32_t offset)
+{
+	uint32_t index = 0;
+	for (index = 0; index < size;  index++ )
+	{
+		pBuffer[index] = index + offset;
+	}
+}
+static uint8_t CompareBuffer ( uint16_t *pBuffer1, uint16_t *pBuffer2, uint16_t length)
+{
+	while (length--)
+	{
+		if (*pBuffer1 != *pBuffer2)
+		{
+			return 1;
+		}
+
+		pBuffer1++;
+		pBuffer2++;
+	}
+
+	return 0;
 }
 /* USER CODE END 4 */
 
@@ -480,6 +639,8 @@ void Error_Handler(void)
   /* User can add his own implementation to report the HAL error return state */
   while(1)
   {
+	HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
+	HAL_Delay(100);
   }
   /* USER CODE END Error_Handler */
 }
