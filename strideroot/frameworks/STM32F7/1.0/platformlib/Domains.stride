@@ -25,6 +25,7 @@ _domainDefinition AudioDomain {
 	processingTag: "AudioProcessing"
 	initializationTag: "Initialization"
 	cleanupTag: "Cleanup"
+	rate: 48000
 }
 
 # OSC Domains

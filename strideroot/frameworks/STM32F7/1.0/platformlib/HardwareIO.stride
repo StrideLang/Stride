@@ -1,7 +1,7 @@
 
 
 constant PlatformRate {
-    value: 48000
+    value: AudioDomain.rate
 }
 
 constant AudioRate {
@@ -123,7 +123,7 @@ platformType _SerialInType {
     typeName: '_serialInType'
 	outputs: [real]
 	includeDir: [""]
-    include: [""]
+    include: ["string.h"]
 	linkDir: [""]
     linkTo: [""]
     declarations: ['
@@ -149,6 +149,7 @@ platformType _SerialInType {
 
 _serialInType SerialIn[3] {
     domain: SerialInDomain
+	rate: none
 }
 
 

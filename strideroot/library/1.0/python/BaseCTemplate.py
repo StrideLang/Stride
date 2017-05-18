@@ -44,19 +44,20 @@ except:
 import re
 
 class BaseCTemplate(object):
-    def __init__(self, domain_rate = 44100):
+    def __init__(self):
 
         self.properties = {}
 
         self.rate_stack = []
         self.rate_nested = 0
         self.rate_counter = 0
-        self.domain_rate = domain_rate # TODO set this from domain configuration
+        self.domain_rate = None
 
         self.str_true = "true"
         self.str_false = "false"
-        self.stream_begin_code = '// Starting stream %02i -------------------------\n{\n'
-        self.stream_end_code = '} // Stream End %02i\n'
+        self.stream_begin_code = '// Starting stream %02i -------------------------\n ' #{\n'
+#        self.stream_end_code = '} // Stream End %02i\n'
+        self.stream_end_code = '// Stream End %02i\n'
 
         self.string_type = "std::string"
         self.real_type = 'float'
@@ -575,6 +576,9 @@ public:
         '''
 
         return config_template_code
+
+    def set_domain_rate(self, rate):
+        self.domain_rate = rate
 
     def set_property(self, name, value):
         self.properties[name] = value

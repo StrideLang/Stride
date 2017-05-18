@@ -410,7 +410,7 @@ class ExpressionAtom(Atom):
 
 
 class ListAtom(Atom):
-    def __init__(self, list_node, scope_index):
+    def __init__(self, list_node, scope_index, domain):
         super(ListAtom, self).__init__()
         self.scope_index = scope_index
         self.list_node = list_node
@@ -436,6 +436,8 @@ class ListAtom(Atom):
         for atom in self.list_node:
             new_globals = atom.get_globals()
             self.globals.update(new_globals)
+
+        self.domain = domain
 
     def get_handles(self, index = -1):
         return self.handles
@@ -1759,7 +1761,8 @@ class PlatformFunctions:
             for element, previous_element, next_element in zip(member['list'], previous_elements, next_elements):
                 element_atom = self.make_atom(element, previous_element, next_element)
                 list_atoms.append(element_atom)
-            new_atom = ListAtom(list_atoms, scope_index)
+            domain = self.get_stream_member_domain(member)
+            new_atom = ListAtom(list_atoms, scope_index, domain)
 #        elif "block" in member:
 #            if 'type' in member['block']:
 #                platform_type = self.find_stride_type(member['block']["type"])
@@ -1953,12 +1956,32 @@ class PlatformFunctions:
 
                 if not current_domain in init_code:
                     init_code[current_domain] = ""
+                if not current_domain in pre_processing:
+                    pre_processing[current_domain] = []
+                if not current_domain in processing_code:
+                    processing_code[current_domain] = ""
+                if not current_domain in post_processing:
+                    post_processing[current_domain] = []
+
                 init_code[current_domain] += atom.get_initialization_code(in_tokens)
+
+                if atom.rate and atom.rate > 0:
+                    if current_rate == -1 or not current_rate:
+                        current_rate = atom.rate
+                    elif atom.rate != current_rate:
+                        templates.set_domain_rate(self.get_domain_default_rate(current_domain))
+                        new_inst, new_init, new_proc = templates.rate_start(atom.rate)
+                        processing_code[current_domain] += new_proc
+                        header_code[current_domain] += new_inst
+                        init_code[current_domain] += new_init
+                        # We want to avoid inlining across rate boundaries
+                        if previous_atom:
+                            previous_atom.set_inline(False)
+                        atom.set_inline(False)
+                        current_rate = atom.rate
 
                 # Pre-processing-once code
                 new_preprocs = atom.get_preproc_once()
-                if not current_domain in pre_processing:
-                    pre_processing[current_domain] = []
                 if new_preprocs:
                     for new_preproc in new_preprocs:
                         if new_preproc:
@@ -1972,8 +1995,6 @@ class PlatformFunctions:
                                 pre_processing[current_domain].append(new_preproc)
 
                 # Processing code
-                if not current_domain in processing_code:
-                    processing_code[current_domain] = ""
                 processing_code[current_domain] += atom.get_preprocessing_code(in_tokens) + "\n"
 
                 new_processing_code = atom.get_processing_code(in_tokens)
@@ -1995,8 +2016,6 @@ class PlatformFunctions:
                 # Post processing code
                 new_postprocs = atom.get_postproc_once()
 
-                if not current_domain in post_processing:
-                    post_processing[current_domain] = []
                 if new_postprocs:
                     for new_postproc in new_postprocs:
                         if new_postproc:
@@ -2008,19 +2027,7 @@ class PlatformFunctions:
                             # Do we need to order the post processing code?
                             if not postproc_present:
                                 post_processing[current_domain].append(new_postproc)
-                if atom.rate and atom.rate > 0:
-                    if current_rate == -1:
-                        current_rate = atom.rate
-                    elif atom.rate != current_rate:
-                        new_inst, new_init, new_proc = templates.rate_start(atom.rate)
-                        processing_code[current_domain] += new_proc
-                        header_code[current_domain] += new_inst
-                        init_code[current_domain] += new_init
-                        # We want to avoid inlining across rate boundaries
-                        if previous_atom:
-                            previous_atom.set_inline(False)
-                        atom.set_inline(False)
-                        current_rate = atom.rate
+
 
                 in_tokens = next_in_tokens
                 previous_atom = atom
@@ -2211,20 +2218,22 @@ class PlatformFunctions:
                       global_groups = {'include':[], 'includeDir':[], 'initializations' : [], 'linkTo' : [], 'linkDir' : []},
                       instanced = [], parent = None):
         stream_index = 0
-        other_scope_instances = []
-        other_scope_declarations = []
-        scope_declarations = []
-        scope_instances = []
 
         self.log_debug("* New Generation ----- scopes: " + str(len(self.scope_stack)))
         self.push_scope(current_scope, parent)
 
+        other_scope_instances = []
+        other_scope_declarations = []
+        scope_declarations = []
+        scope_instances = []
         domain_code = {}
         global_groups_code = {}
 
-
         for node in tree:
             if 'stream' in node: # Everything grows from streams.
+                # TODO this can be cleaned up by not passing global_groups to generate_code_stream. It's not needed inside these functions
+                # TODO Since the CodeResolver is making sure that streams belong to a single domain, we can simplfy code generation through this assumption
+                # TODO processing code does not need to be a list any more?
                 code = self.generate_stream_code(node["stream"], stream_index,
                                                  global_groups)
                 # merge global groups from different streams...
@@ -2266,7 +2275,8 @@ class PlatformFunctions:
 
         is_sorted = False
         # TODO do a more efficient sort
-        if len(header_elements) > 0:
+
+        if len(header_elements) > 0: # TODO We probably need to check domain here while sorting
             while not is_sorted:
                 for i in range(len(header_elements)):
                     for j in range(i):

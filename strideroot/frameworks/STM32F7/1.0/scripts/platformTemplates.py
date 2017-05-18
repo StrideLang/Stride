@@ -37,8 +37,8 @@ from BaseCTemplate import BaseCTemplate
 
 
 class Templates(BaseCTemplate):
-    def __init__(self, domain_rate = 48000):
-        super(Templates, self).__init__(domain_rate)
+    def __init__(self):
+        super(Templates, self).__init__()
 
         self.real_type = 'float32_t'
 
