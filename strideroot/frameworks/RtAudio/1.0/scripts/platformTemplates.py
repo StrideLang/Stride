@@ -37,8 +37,8 @@ from BaseCTemplate import BaseCTemplate
 
 
 class Templates(BaseCTemplate):
-    def __init__(self, domain_rate = 44100):
-        super(Templates, self).__init__(domain_rate)
+    def __init__(self):
+        super(Templates, self).__init__()
 
         self.properties['num_in_channels'] = 2
         self.properties['num_out_channels'] = 2
