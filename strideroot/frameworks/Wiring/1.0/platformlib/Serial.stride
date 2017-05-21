@@ -1,0 +1,66 @@
+
+# Serial domains
+#_domainDefinition SerialInDomain {
+#	domainName: "SerialInDomain"
+#	platform: _Discovery_M7_Platform
+#	declarationsTag: "SerialIn:Declarations"
+#	processingTag: "SerialIn:Processing"
+#	initializationTag: "SerialIn:Initialization"
+#	cleanupTag: "SerialIn:Cleanup"
+#}
+
+_domainDefinition SerialOutDomain {
+	domainName: "SerialOutDomain"
+	framework: _WiringFramework
+	declarationsTag: "Declarations"
+	processingTag: "Processing"
+	initializationTag: "Initialization"
+	cleanupTag: "Cleanup"
+	rate: 1000
+}
+
+platformType _SerialPrintType {
+    typeName: '_serialPrintType'
+	inputs: ["real"]
+#    include: []
+#    linkTo: []
+#    declarations: ['']
+    initializations: ["Serial.begin(9600);"]
+    processing: '
+	Serial.println(%%intoken:0%%);
+	'
+    inherits: ['signal']
+}
+
+platformType _SerialOutType {
+    typeName: '_serialOutType'
+	inputs: ["real"]
+#    include: []
+#    linkTo: []
+    declarations: ['byte channel = 0;']
+    initializations: ["Serial1.begin(115200);"
+    ]
+    processing: '
+    channel = %%bundle_index%%;
+    Serial1.write((byte *) &channel, 1);
+    Serial1.write((byte *) &%%intoken:0%%, 4);
+	'
+	postProcessing: '// Post'
+    inherits: ['signal']
+}
+
+_serialOutType SerialOut[3] {
+    rate:   PlatformRate
+    domain: SerialOutDomain
+}
+
+platformType _SerialInType {
+    typeName: '_serialInType'
+	outputs: ["string"]
+#    include: []
+#    linkTo: []
+#    declarations: ['']
+    initializations: [""]
+    processing: ""
+    inherits: ['signal']
+}

@@ -1,0 +1,17 @@
+
+platformType _AnalogInput {
+    typeName: '_analogInput'
+	inputs: ['real']
+	outputs: ['real']
+    include: []
+    linkTo: []
+    declarations: ['int sensorPin[6] = {A0, A1, A2, A3, A4, A5};']
+    initializations: ['// init analog input']
+    processing: "analogRead(sensorPin[%%bundle_index%%])"
+    inherits: ['signal']
+}
+
+_analogInput AnalogIn[2] {
+    rate: PlatformRate
+    domain: STM32F7_Domain
+}

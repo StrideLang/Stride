@@ -1,0 +1,16 @@
+
+platformType _DigitalOutput {
+    typeName: '_digitalOutput'
+	inputs: ["bool"]
+#    include: []
+#    linkTo: []
+#    declarations: ['']
+    initializations: ['pinMode(13, OUTPUT);']
+    processing: "digitalWrite(%%bundle_index%%, %%intoken:0%% ? HIGH : LOW);"
+    inherits: ['signal']
+}
+
+_digitalOutput DigitalOut[14] {
+    rate: PlatformRate
+    domain: WiringDomain
+}

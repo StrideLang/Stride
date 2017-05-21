@@ -4,59 +4,20 @@ _frameworkDescription _STM32F7_Framework {
 }
 
 constant PlatformDomain {
-    value: "AudioDomain"
+    value: AudioDomain.domainName
 }
+
+constant PlatformRate {
+    value: AudioDomain.rate
+}
+
 
 _domainDefinition STM32F7_Domain {
 	domainName: "STM32F7_Domain"
 	framework: _STM32F7_Framework
-	globalsTag: "Includes" 
+	globalsTag: "Includes"
 	declarationsTag: "Declarations"
 	processingTag: "Processing"
 	initializationTag: "Initialization"
 	cleanupTag: "Cleanup"
 }
-
-_domainDefinition AudioDomain {
-	domainName: "AudioDomain"
-	framework: _STM32F7_Framework
-	globalsTag: "Includes" 
-	declarationsTag: "Declarations"
-	processingTag: "AudioProcessing"
-	initializationTag: "Initialization"
-	cleanupTag: "Cleanup"
-	rate: 48000
-}
-
-# OSC Domains
-_domainDefinition OSCInDomain {
-	domainName: "OSCInDomain"
-	framework: _STM32F7_Framework
-	globalsTag: "Includes" 
-	declarationsTag: "Declarations"
-	processingTag: "OSC:Processing"
-	initializationTag: "Initialization"
-	cleanupTag: "Cleanup"
-}
-
-# Serial domains
-_domainDefinition SerialInDomain {
-	domainName: "SerialInDomain"
-	framework: _STM32F7_Framework
-	globalsTag: "Includes" 
-	declarationsTag: "Declarations"
-	processingTag: "SerialIn:Processing"
-	initializationTag: "Initialization"
-	cleanupTag: "Cleanup"
-}
-
-_domainDefinition SerialOutDomain {
-	domainName: "SerialOutDomain"
-	framework: _STM32F7_Framework
-	globalsTag: "Includes" 
-	declarationsTag: "Declarations"
-	processingTag: "SerialOut:Processing"
-	initializationTag: "Initialization"
-	cleanupTag: "Cleanup"
-}
-

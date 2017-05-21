@@ -1,0 +1,29 @@
+
+
+# OSC Domains
+_domainDefinition OSCInDomain {
+	domainName: "OSCInDomain"
+	framework: _STM32F7_Framework
+	globalsTag: "Includes"
+	declarationsTag: "Declarations"
+	processingTag: "OSC:Processing"
+	initializationTag: "Initialization"
+	cleanupTag: "Cleanup"
+}
+
+platformType _OscOutType {
+    typeName: '_oscOutType'
+    inputs: ["string", "string", "string", "int"]
+#	numOutputs: 0
+    include: ["lo/lo.h"]
+    linkTo: ["lo"]
+#    declarations: []
+#    initializations: ["// INIT OSC"]
+    processing: '
+	char portStr[16];
+	sprintf(portStr, "%d", (int) %%intoken:3%%);
+	lo_address addr = lo_address_new(%%intoken:2%%.c_str(), portStr);
+    lo_send(addr, %%intoken:1%%.c_str() , "f", %%intoken:0%%);
+	'
+    inherits: ['signal']
+}
