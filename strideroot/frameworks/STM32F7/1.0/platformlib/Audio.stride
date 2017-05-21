@@ -1,0 +1,62 @@
+
+
+constant AudioRate {
+    value: 48000
+}
+
+_domainDefinition AudioDomain {
+	domainName: "AudioDomain"
+	framework: _STM32F7_Framework
+	globalsTag: "Includes"
+	declarationsTag: "Declarations"
+	processingTag: "AudioProcessing"
+	initializationTag: "Initialization"
+	cleanupTag: "Cleanup"
+	rate: AudioRate
+}
+
+# Audio ---------------
+platformType _HwInput {
+    typeName: '_hwInput'
+#	numInputs: 0
+	outputs: ["real", "real"]
+    domain: AudioDomain
+#    include: []
+#    linkTo: []
+#    declarations: ['']
+#    initializations: ["// %%token%% = 0;"]
+    processing: "io.in(%%bundle_index%%)"
+    inherits: ['signal']
+}
+
+platformType _HwOutput {
+    typeName: '_hwOutput'
+	inputs: ["real", "real"]
+    domain: AudioDomain
+#	numOutputs: 0
+    include: ["arm_math.h"]
+#    linkTo: []
+    declarations: ['static q15_t Sample_q15[2];']
+#    initializations: ["// %%token%% = 0;"]
+    processing: "
+		arm_float_to_q15(&%%intoken:0%%,&Sample_q15[%%bundle_index%%],1);
+	"
+	postProcessingOnce: "
+    *I2S_TX_Buffer_p++ = Sample_q15[0];
+    *I2S_TX_Buffer_p++ = Sample_q15[1];
+
+    if (I2S_TX_Buffer_p == I2S_TX_Buffer + AUDIO_BUFFER_SIZE) 	// REQUIRED FOR BUFFER
+    I2S_TX_Buffer_p = (q15_t *) I2S_TX_Buffer;
+	"
+    inherits: ['signal']
+}
+
+_hwInput AudioIn[2] {
+    rate: AudioRate
+    domain: AudioDomain
+}
+
+_hwOutput AudioOut[2] {
+    rate: AudioRate
+    domain: AudioDomain
+}

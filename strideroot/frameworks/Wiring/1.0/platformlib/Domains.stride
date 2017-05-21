@@ -7,6 +7,10 @@ constant PlatformDomain {
     value: "WiringDomain"
 }
 
+constant PlatformRate {
+    value: 1000 # TODO allow setting this from the configuration file
+}
+
 _domainDefinition WiringDomain {
 	domainName: "WiringDomain"
 	framework: _WiringFramework
@@ -15,24 +19,4 @@ _domainDefinition WiringDomain {
 	initializationTag: "Initialization"
 	cleanupTag: "Cleanup"
 	rate:1000
-}
-
-# Serial domains
-#_domainDefinition SerialInDomain {
-#	domainName: "SerialInDomain"
-#	platform: _Discovery_M7_Platform
-#	declarationsTag: "SerialIn:Declarations"
-#	processingTag: "SerialIn:Processing"
-#	initializationTag: "SerialIn:Initialization"
-#	cleanupTag: "SerialIn:Cleanup"
-#}
-
-_domainDefinition SerialOutDomain {
-	domainName: "SerialOutDomain"
-	framework: _WiringFramework
-	declarationsTag: "Declarations"
-	processingTag: "Processing"
-	initializationTag: "Initialization"
-	cleanupTag: "Cleanup"
-	rate: 1000
 }

@@ -1,0 +1,81 @@
+
+# Serial Domains
+
+_domainDefinition SerialInDomain {
+	domainName: "SerialInDomain"
+	framework: _RtAudioFramework
+	globalsTag: "Includes"
+	declarationsTag: "Declarations"
+	processingTag: "SerialIn:Processing"
+	initializationTag: "Initialization"
+	cleanupTag: "Cleanup"
+}
+
+_domainDefinition SerialOutDomain {
+	domainName: "SerialOutDomain"
+	framework: _RtAudioFramework
+	globalsTag: "Includes"
+	declarationsTag: "Declarations"
+	processingTag: "SerialOut:Processing"
+	initializationTag: "Initialization"
+	cleanupTag: "Cleanup"
+}
+
+# Serial ------------------------
+
+platformType _SerialPrintType {
+    typeName: '_serialPrintType'
+	inputs: ["string", "string"]
+#	outputs: 0
+#   include: ["serial/serial.h", "iostream"]
+	linkDir: ["serial/build"]
+#    linkTo: ["serial"]
+#    declarations: ['']
+    initializations: ["// Not implemented"]
+    processing: "//my_serial.write(test_string);
+"
+    inherits: ['signal']
+}
+#
+##ifdef _WIN32
+#//      Sleep(milliseconds); // 100 ms
+##else
+#//      usleep(milliseconds*1000); // 100 ms
+##endif
+
+
+
+
+platformType _SerialInType {
+    typeName: '_serialInType'
+#	inputs: 0
+	outputs: ["string"]
+	includeDir: ["serial/include"]
+    include: ["serial/serial.h", "iostream"]
+	linkDir: ["serial/build"]
+    linkTo: ["serial"]
+    declarations: ['
+  unsigned long baud = 9600;
+  std::string port ="";
+  serial::Serial my_serial;'
+	]
+	constructors: [ 'my_serial(port, baud, serial::Timeout::simpleTimeout(1000))' ]
+    initializations: ['
+  if(my_serial.isOpen())
+    std::cout << "Serial opened successfully." << std::endl;
+  else
+    std::cout << "ERROR: Failed to open serial.		" << std::endl;
+		']
+	globalDeclarations: []
+	globalInitializations: []
+	preProcessing: '
+	std::string tempVar;
+	std::string newChar;
+	do {
+		tempVar += newChar;
+		newChar += my_serial.read(1);
+		} while (newChar.size() > 0 && newChar != "\n");
+	'
+    processing: "tempVar"
+    inherits: ['signal']
+}

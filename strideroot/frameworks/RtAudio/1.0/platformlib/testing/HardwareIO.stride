@@ -1,0 +1,46 @@
+
+constant PlatformRate {
+    value: 44100
+}
+
+constant AudioRate {
+    value: PlatformRate
+}
+
+# Audio ---------------
+platformType _HwInput {
+    typeName: '_hwInput'
+#	numInputs: 0
+	outputs: ["real"]
+#    include: []
+#    linkTo: []
+#    declarations: ['']
+#    initializations: ["// %%token%% = 0;"]
+    processing: "in[%%bundle_index%%]"
+    inherits: ['signal']
+}
+
+platformType _HwOutput {
+    typeName: '_hwOutput'
+	inputs: ["real"]
+#	numOutputs: 0
+#    include: []
+#    linkTo: []
+#    declarations: ['']
+#    initializations: ["// %%token%% = 0;"]
+    processing: "out[%%bundle_index%%] = %%intoken:0%%;"
+    inherits: ['signal']
+}
+
+#constant _NumInputChannels {value: 2}
+
+_hwInput AudioIn[2] {
+    rate: AudioRate
+    domain: AudioDomain
+}
+
+#constant _NumOutputChannels {value: 2}
+_hwOutput AudioOut[2] {
+    rate: AudioRate
+    domain: AudioDomain
+}

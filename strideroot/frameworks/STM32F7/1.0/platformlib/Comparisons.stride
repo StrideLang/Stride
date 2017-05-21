@@ -14,10 +14,21 @@ platformType _EqualType {
     typeName: '_equalType'
     inputs: ["real", "real"]
 	outputs: ["real"]
-#    linkTo: []	
+#    linkTo: []
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
     processing: "%%intoken:0%% == %%intoken:1%%"
     inherits: ['signal']
 }
 
+platformType _SelectType {
+    typeName: '_selectType'
+    inputs: ["bool", "any", "any"]
+	outputs: ["any"]
+#    include: []
+#    linkTo: []
+#    declarations: []
+    initializations: ["// %%token%% = 0;"]
+    processing: "%%intoken:0%% ? %%intoken:1%% : %%intoken:2%%"
+    inherits: ['signal']
+}

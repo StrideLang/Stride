@@ -1,4 +1,30 @@
 
+
+platformType _SelectType {
+    typeName: '_selectType'
+    inputs: ["bool", "any", "any"]
+	outputs: ["any"]
+#    include: []
+#    linkTo: []
+#    declarations: []
+    initializations: ["// %%token%% = 0;"]
+    processing: "%%intoken:0%% ? %%intoken:1%% : %%intoken:2%%"
+    inherits: ['signal']
+}
+
+platformType _ChooseType {
+    typeName: '_chooseType'
+    inputs: ["bool", "any", "any"]
+	outputs: ["any"]
+#    include: []
+#    linkTo: []
+#    declarations: []
+    initializations: ["// %%token%% = 0;"]
+    processing: "%%intoken:0%% ? %%intoken:1%% : %%intoken:2%%"
+    inherits: ['signal']
+}
+
+
 platformType _GreaterType {
     typeName: '_greaterType'
     inputs: ["real", "real"]
@@ -20,4 +46,3 @@ platformType _EqualType {
     processing: "%%intoken:0%% == %%intoken:1%%"
     inherits: ['signal']
 }
-
