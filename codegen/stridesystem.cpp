@@ -44,6 +44,7 @@
 #include "propertynode.h"
 #include "declarationnode.h"
 #include "pythonproject.h"
+#include "codevalidator.h"
 
 
 StrideSystem::StrideSystem(QString strideRoot, QString systemName,
@@ -95,7 +96,7 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
                         }
                         QString namespaceName = importList[QString::fromStdString(subPath)];
                         if (!namespaceName.isEmpty()) {
-                            foreach(AST *node, tree->getChildren()) {
+                            for(AST *node : tree->getChildren()) {
                                 // Do we need to set namespace recursively or would this do?
                                 //                            node->setNamespace(namespaceName.toStdString());
                             }
@@ -373,9 +374,15 @@ QString StrideSystem::getPlatformDomain(string namespaceName)
             DeclarationNode *block = static_cast<DeclarationNode *>(object);
             if (block->getObjectType() == "constant"
                     && block->getName() == "PlatformDomain") {
-                ValueNode *domainValue = static_cast<ValueNode *>(block->getPropertyValue("value"));
-                Q_ASSERT(domainValue->getNodeType() == AST::String);
-                return QString::fromStdString(domainValue->getStringValue());
+                QList<LangError> errors;
+                std::string domainName;
+
+                if (block->getPropertyValue("value")->getNodeType() == AST::Block) {
+
+                } else {
+                    domainName = CodeValidator::evaluateConstString(block->getPropertyValue("value"), QVector<AST *>::fromStdVector(libObjects[namespaceName]), nullptr, errors);
+                }
+                return QString::fromStdString(domainName);
             }
         }
     }

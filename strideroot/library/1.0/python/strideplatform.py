@@ -2405,10 +2405,11 @@ class GeneratorBase(object):
         f.close()
 
     def write_code(self, code, filename):
+        # First write globals to the platform default domain
         domains = self.platform.get_domains()
         globals_code = templates.get_globals_code(code['global_groups'])
         for platform_domain in domains:
-            if platform_domain['domainName'] == self.platform.get_platform_domain():
+            if platform_domain['domainName'] == self.platform.get_platform_domain(): # Platform domain found
                 break
         self.write_section_in_file(platform_domain['globalsTag'], globals_code, filename)
 
@@ -2416,6 +2417,8 @@ class GeneratorBase(object):
         config_code = templates.get_configuration_code(code['global_groups']['initializations'])
         self.write_section_in_file(platform_domain['initializationTag'], template_init_code + config_code, filename)
         processing_code = {}
+
+        # Write generated code
         for domain,sections in code['domain_code'].items():
             domain_matched = False
             for platform_domain in domains:
@@ -2440,6 +2443,22 @@ class GeneratorBase(object):
             if not domain_matched:
                 self.platform.log_debug('WARNING: Domain not matched: ' + str(domain))
 
+        # First insert domain specific code (except processing code that depends on code generation)
+        for domain in processing_code:
+            for platform_domain in domains:
+                if platform_domain['domainName'] == domain: # Check if domain is used in code (perhaps this should be cleanup by by the code resolver instread of having to check here?)
+                    if platform_domain['domainIncludes']:
+                        inc_text = templates.get_includes_code(platform_domain['domainIncludes'])
+                        self.write_section_in_file(platform_domain['declarationsTag'], inc_text, filename)
+                    if platform_domain['domainDeclarations']:
+                        for declaration in platform_domain['domainDeclarations']:
+                            self.write_section_in_file(platform_domain['declarationsTag'], templates.process_code(declaration['value']) + '\n', filename)
+                    if platform_domain['domainInitialization']:
+                        self.write_section_in_file(platform_domain['initializationTag'], templates.process_code(platform_domain['domainInitialization']) + '\n', filename)
+                    if platform_domain['domainCleanup']:
+                        self.write_section_in_file(platform_domain['cleanupTag'], templates.process_code(platform_domain['domainCleanup']) + '\n', filename)
+
+        # Now join processing code from code generation with processing function from domain declaration
         for domain in processing_code:
             for platform_domain in domains:
                 if platform_domain['domainName'] == domain:
@@ -2448,6 +2467,7 @@ class GeneratorBase(object):
                         code = platform_domain['domainFunction'].replace("%%domainCode%%", code)
 
                     self.write_section_in_file(platform_domain['processingTag'], code, filename)
+
 
     def make_code_pretty(self):
         if platform.system() == "Linux":

@@ -51,8 +51,32 @@ type _DomainDefinition {
 			default: ""
 			required: off
 		},
+		typeProperty DomainIncludes {
+			name: "domainIncludes"
+			types: [""] # Should take a list
+			default: ""
+			required: off
+		},
+		typeProperty DomainDeclarations {
+			name: "domainDeclarations"
+			types: [""]
+			default: ""
+			required: off
+		},
+		typeProperty DomainInitialization {
+			name: "domainInitialization"
+			types: ["CSP"]
+			default: ""
+			required: off
+		},
 		typeProperty DomainFunction {
 			name: "domainFunction"
+			types: ["CSP"]
+			default: ""
+			required: off
+		},
+		typeProperty DomainCleanup {
+			name: "domainCleanup"
 			types: ["CSP"]
 			default: ""
 			required: off

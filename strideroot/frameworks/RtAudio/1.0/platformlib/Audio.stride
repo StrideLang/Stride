@@ -13,6 +13,61 @@ _domainDefinition AudioDomain {
 	processingTag: "Processing"
 	initializationTag: "Initialization"
 	cleanupTag: "Cleanup"
+    domainIncludes: ["RtAudio.h"]
+    domainDeclarations: ['#define NUM_IN_CHANNELS 2',
+    '#define NUM_OUT_CHANNELS 2',
+    'typedef float MY_TYPE;',
+    '#define FORMAT RTAUDIO_FLOAT32'
+]
+    domainInitialization: '
+    RtAudio adac;
+    if ( adac.getDeviceCount() < 1 ) {
+        std::cout << std::endl << "No audio devices found!" << std::endl;
+        exit( -1 );
+    }
+    // Set the same number of channels for both input and output.
+    unsigned int bufferBytes;
+    unsigned int bufferFrames = %%block_size%%;
+    int iDevice = 0;
+    int oDevice = 0;
+    unsigned int fs = %%sample_rate%%;
+
+
+    RtAudio::StreamOptions options;
+    //options.flags |= RTAUDIO_NONINTERLEAVED;
+
+    RtAudio::StreamParameters iParams, oParams;
+    iParams.deviceId = %%device%%; // first available device
+    iParams.nChannels = %%num_in_chnls%%;
+    oParams.deviceId = %%device%%; // first available device
+    oParams.nChannels = %%num_out_chnls%%;
+
+    bufferBytes = bufferFrames * NUM_OUT_CHANNELS * sizeof( MY_TYPE );
+
+    if ( iDevice == 0 )
+      iParams.deviceId = adac.getDefaultInputDevice();
+    if ( oDevice == 0 )
+        oParams.deviceId = adac.getDefaultOutputDevice();
+    try {
+        adac.openStream( &oParams, &iParams, FORMAT, fs, &bufferFrames, &audio_buffer_process, (void *)&bufferBytes, &options);
+    }
+    catch ( RtAudioError& e ) {
+        e.printMessage();
+        exit( -1 );
+    }
+    RtAudio::DeviceInfo info = adac.getDeviceInfo(%%device%%);
+    std::cout << "Device = " << %%device%% << std::endl;
+    std::cout << "Name = " << info.name << std::endl;
+    std::cout << ": maximum output channels = " << info.outputChannels << std::endl;
+    try {
+      adac.startStream();
+    }
+    catch ( RtAudioError& e ) {
+      e.printMessage();
+      if ( adac.isStreamOpen() ) adac.closeStream();
+      exit (-1);
+    }
+    '
 	domainFunction: '
 	int audio_buffer_process( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
            double streamTime, RtAudioStreamStatus status, void *data )
@@ -29,6 +84,16 @@ _domainDefinition AudioDomain {
   return 0;
 }
 '
+    domainCleanup: '
+    // Stop the stream.
+    try {
+        if ( adac.isStreamRunning() ) adac.stopStream();
+        if ( adac.isStreamOpen() ) adac.closeStream();
+    }
+    catch ( RtAudioError& e ) {
+      e.printMessage();
+    }
+    '
 }
 
 
@@ -41,7 +106,7 @@ platformType _HwInput {
 #    include: []
 #    linkTo: []
 #    declarations: ['']
-#    initializations: ["// %%token%% = 0;"]
+#    initializations: [""]
     processing: "in[%%bundle_index%%]"
     inherits: ['signal']
 }

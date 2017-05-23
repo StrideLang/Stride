@@ -302,10 +302,12 @@ class Generator(GeneratorBase):
             # TODO THIS IS NOT A PROPER SOLUTION!
             # 1 second might not be enough
             if not os.path.exists(build_dir + '/' + self.target_name) or os.stat(build_dir + '/' + self.target_name).st_size == 0:
-                time.sleep(1)
+                time.sleep(2)
 
             # The following two lines work when run from: Spyder and StreamStacker
             args = [run_prefix + 'arm-none-eabi-objcopy', '-O', 'binary', build_dir +  '/' + self.target_name, build_dir + '/app.bin']
+
+            self.log(' '.join(args))
             outtext = ck_out(args, cwd=build_dir)
             self.log(outtext)
 

@@ -47,6 +47,7 @@ class BaseCTemplate(object):
     def __init__(self):
 
         self.properties = {}
+        self.included = [] # Accumulates include statements
 
         self.rate_stack = []
         self.rate_nested = 0
@@ -97,6 +98,11 @@ public:
 '''
 
         pass
+
+
+    def process_code(self, code):
+        ''' This function should be overridden to do text replacement for hardware properties '''
+        return code
 
     def source_marker(self, line, filename):
         if line == -1:
@@ -372,7 +378,6 @@ public:
 
     def get_includes_code(self, includes):
         code = ''
-        self.included = []
         code += self.includes_code(includes)
         return code
 
@@ -389,6 +394,8 @@ public:
         includes_code = ''
         for include in includes:
             if not include in self.included:
+                if type(include) == dict and 'value' in include:
+                    include = include['value']
                 if not include == '':
                     includes_code += "#include <%s>\n"%include
                     self.included.append(include)
