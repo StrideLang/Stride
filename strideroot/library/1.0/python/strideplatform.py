@@ -2028,6 +2028,23 @@ class PlatformFunctions:
                             if not postproc_present:
                                 post_processing[current_domain].append(new_postproc)
 
+                processing_code[current_domain] += atom.get_postprocessing_code(in_tokens) + "\n"
+
+                # Post processing code
+                new_postprocs = atom.get_postproc_once()
+
+                if new_postprocs:
+                    for new_postproc in new_postprocs:
+                        if new_postproc:
+                            postproc_present = False
+                            for postproc in post_processing[current_domain]:
+                                if postproc[0] == new_postproc[0]:
+                                    postproc_present = True
+                                    break
+                            # Do we need to order the post processing code?
+                            if not postproc_present:
+                                post_processing[current_domain].append(new_postproc)
+
 
                 in_tokens = next_in_tokens
                 previous_atom = atom

@@ -1305,26 +1305,26 @@ DeclarationNode *CodeValidator::findDeclaration(QString objectName, QVector<AST 
             DeclarationNode *block = static_cast<DeclarationNode *>(node);
             BundleNode *bundle = block->getBundle();
             QString name = QString::fromStdString(bundle->getName());
-            if (name == objectName and CodeValidator::scopesMatch(scopesList, block)) {
+            if (name == objectName && CodeValidator::scopesMatch(scopesList, block)) {
                 return block;
             }
             for (auto ns: defaultNamespaces) {
                 QStringList prefixedScopesList = scopesList;
                 prefixedScopesList.prepend(QString::fromStdString(ns));
-                if (name == objectName and CodeValidator::scopesMatch(scopesList, block)) {
+                if (name == objectName && CodeValidator::scopesMatch(scopesList, block)) {
                     return block;
                 }
             }
         } else if (node->getNodeType() == AST::Declaration) {
             DeclarationNode *block = static_cast<DeclarationNode *>(node);
             QString name = QString::fromStdString(block->getName());
-            if (name == objectName and CodeValidator::scopesMatch(scopesList, block)) {
+            if (name == objectName && CodeValidator::scopesMatch(scopesList, block)) {
                 return block;
             }
             for (auto ns: defaultNamespaces) {
                 QStringList prefixedScopesList = scopesList;
                 prefixedScopesList.prepend(QString::fromStdString(ns));
-                if (name == objectName and CodeValidator::scopesMatch(scopesList, block)) {
+                if (name == objectName && CodeValidator::scopesMatch(scopesList, block)) {
                     return block;
                 }
             }
