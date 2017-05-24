@@ -64,6 +64,8 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
         AST *systemTree = AST::parseFile(systemFile.toStdString().c_str());
         if (systemTree) {
             parseSystemTree(systemTree);
+            systemTree->deleteChildren();
+            delete systemTree;
 
             // Add subpaths for included modules
             vector<string> subPaths;
@@ -107,8 +109,29 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
 //                m_api = PythonTools;
 //                m_types = getPlatformTypeNames();
             }
-            systemTree->deleteChildren();
-            delete systemTree;
+
+            // Load testing trees
+            for(StridePlatform *platform: m_platforms) {
+                QStringList nameFilters;
+                nameFilters.push_back("*.stride");
+                string platformPath = platform->buildTestingLibPath(m_strideRoot.toStdString());
+                QFileInfoList libraryFiles =  QDir(QString::fromStdString(platformPath)).entryInfoList(nameFilters);
+                foreach (auto fileInfo, libraryFiles) {
+                    AST *tree = AST::parseFile(fileInfo.absoluteFilePath().toLocal8Bit().data());
+                    if(tree) {
+                        platform->addTestingTree(fileInfo.baseName().toStdString(),tree); // TODO check if this is being freed
+                    } else {
+                        vector<LangError> errors = AST::getParseErrors();
+                        foreach(LangError error, errors) {
+                            qDebug() << QString::fromStdString(error.getErrorText());
+                        }
+                        continue;
+                    }
+                }
+            }
+//                m_platformPath = fullPath;
+//                m_api = PythonTools;
+//                m_types = getPlatformTypeNames();
         } else {
             qDebug() << "Error parsing system tree in:" << systemFile;
         }
@@ -309,7 +332,7 @@ QStringList StrideSystem::getFunctionNames()
 
     for (auto it = refObjects.begin(); it != refObjects.end(); it++ ) {
 
-        foreach(AST* node, it->second) {
+        for(AST* node : it->second) {
             if (node->getNodeType() == AST::Declaration) {
                 DeclarationNode *block = static_cast<DeclarationNode *>(node);
                 if (block->getObjectType() == "module") {
@@ -325,9 +348,19 @@ QStringList StrideSystem::getFunctionNames()
     return funcNames;
 }
 
-vector<Builder *> StrideSystem::createBuilders(QString projectDir, vector<string> usedFrameworks)
+void StrideSystem::enableTesting(bool enable)
+{
+    m_testing = enable;
+}
+
+vector<Builder *> StrideSystem::createBuilders(QString fileName, vector<string> usedFrameworks)
 {
     vector<Builder *> builders;
+    QString projectDir = makeProject(fileName);
+    if (projectDir.isEmpty()) {
+        qDebug() << "Error creating project path";
+        return builders;
+    }
     for (StridePlatform *platform: m_platforms) {
         if ( (usedFrameworks.size() == 0)
                 || (std::find(usedFrameworks.begin(), usedFrameworks.end(), platform->getFramework()) != usedFrameworks.end())) {
@@ -416,13 +449,35 @@ map<string, vector<AST *>> StrideSystem::getBuiltinObjectsReference()
 {
     map<string, vector<AST *>> objects;
     objects[""] = vector<AST *>();
-    // Add all platform objects with their namespace name, so the namespaced version is picked up first
     for (auto platform: m_platforms) {
-        objects[platform->getFramework()] = platform->getPlatformObjectsReference();
-    }
-    // Then put first platform's objects in default namespace
-    if (m_platforms.size() > 0) {
-        objects[""] = m_platforms.at(0)->getPlatformObjectsReference();
+        vector<AST *> platformObjects = platform->getPlatformObjectsReference();
+        if (m_testing) {
+            vector<AST *> testingObjs = platform->getPlatformTestingObjectsRef();
+            for (size_t i = 0; i < testingObjs.size(); i++) {
+                if(platformObjects[i]->getNodeType() == AST::Declaration
+                        || platformObjects[i]->getNodeType() == AST::BundleDeclaration) {
+                    DeclarationNode *decl = static_cast<DeclarationNode *>(platformObjects[i]);
+                    for(AST *testingObj: testingObjs) {
+                        if (testingObj->getNodeType() == AST::Declaration
+                                || testingObj->getNodeType() == AST::BundleDeclaration) {
+                            DeclarationNode *testDecl = static_cast<DeclarationNode *>(testingObj);
+                            if (decl->getName() == testDecl->getName()) { // FIXME we need to check for namespace too
+                                platformObjects[i] = testDecl;
+                                break;
+                            }
+                        } else {
+                            qDebug() << "Unexpected node in testing file.";
+                        }
+                    }
+                }
+            }
+        }
+        // Add all platform objects with their namespace name
+        objects[platform->getFramework()] = platformObjects;
+        // Then put first platform's objects in default namespace
+        if (m_platforms.at(0) == platform) {
+            objects[""] = platformObjects;
+        }
     }
 
     // finally add library objects.
@@ -434,3 +489,17 @@ map<string, vector<AST *>> StrideSystem::getBuiltinObjectsReference()
     }
     return objects;
 }
+
+QString StrideSystem::makeProject(QString fileName)
+{
+    QFileInfo info(fileName);
+    QString dirName = info.absolutePath() + QDir::separator()
+            + info.fileName() + "_Products";
+    if (!QFile::exists(dirName)) {
+        if (!QDir().mkpath(dirName)) {
+            return QString();
+        }
+    }
+    return dirName;
+}
+

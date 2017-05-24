@@ -40,6 +40,8 @@
 #include <QStringList>
 #include <QLibrary>
 #include <QMap>
+#include <QFileInfo>
+#include <QDir>
 
 #include "strideparser.h"
 #include "stridelibrary.hpp"
@@ -60,7 +62,10 @@ public:
     QStringList getWarnings();
     QStringList getPlatformTypeNames();
     QStringList getFunctionNames();
-    vector<Builder *> createBuilders(QString projectDir, vector<string> usedFrameworks = vector<string>());
+
+    void enableTesting(bool enable); // Uses testing objects instead of regular platform objects
+
+    vector<Builder *> createBuilders(QString fileName, vector<string> usedFrameworks = vector<string>());
 
     QString getPlatformDomain(string namespaceName = "");  // The platform's default domain
 
@@ -77,6 +82,8 @@ private:
     QVector<AST *> getPortsForTypeBlock(DeclarationNode *block);
 //    ListNode *getPortsForFunction(QString typeName);
 
+    QString makeProject(QString fileName);
+
     QString readFile(QString fileName);
 
     void parseSystemTree(AST *systemTree);
@@ -86,6 +93,7 @@ private:
     int m_majorVersion;
     int m_minorVersion;
     QString m_pluginName;
+    bool m_testing;
 
     QStringList m_errors;
     QStringList m_warnings;

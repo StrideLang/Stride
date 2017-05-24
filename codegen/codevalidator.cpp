@@ -64,15 +64,15 @@ void CodeValidator::validateTree(QString platformRootDir, AST *tree)
             }
         }
 
-        QVector<SystemNode *> platforms = getPlatformNodes();
+        QVector<SystemNode *> systems = getPlatformNodes();
 
-        if (platforms.size () > 0) {
-            SystemNode *platformNode = platforms.at(0);
+        if (systems.size () > 0) {
+            SystemNode *platformNode = systems.at(0);
             m_system = new StrideSystem(platformRootDir,
                                         QString::fromStdString(platformNode->platformName()),
                                         platformNode->majorVersion(), platformNode->minorVersion(),
                                         importList);
-            for (int i = 1; i < platforms.size(); i++) {
+            for (int i = 1; i < systems.size(); i++) {
                 qDebug() << "Ignoring system: " << QString::fromStdString(platformNode->platformName());
                 LangError error;
                 error.type = LangError::SystemRedefinition;
@@ -84,10 +84,9 @@ void CodeValidator::validateTree(QString platformRootDir, AST *tree)
         } else { // Make a default platform that only inlcudes the common library
             m_system = new StrideSystem(platformRootDir, "", -1, -1, importList);
         }
-        if (platforms.size() > 0) { // Store system details in tree
-            platforms.at(0)->setHwPlatforms(m_system->getFrameworkNames());
+        if (systems.size() > 0) { // Store system details in tree
+            systems.at(0)->setHwPlatforms(m_system->getFrameworkNames());
         }
-        // FIXME move validate up so that we don't create a system if code is not valid
         validate();
     }
 }
@@ -450,6 +449,9 @@ void CodeValidator::validate()
 {
     m_errors.clear();
     if(m_tree) {
+        if(m_options & USE_TESTING) {
+            m_system->enableTesting(m_tree);
+        }
         CodeResolver resolver(m_system, m_tree);
         resolver.preProcess();
         validatePlatform(m_tree, QVector<AST *>());
@@ -463,6 +465,8 @@ void CodeValidator::validate()
 
 //         TODO: validate expression type consistency
 //         TODO: validate expression list operations
+
+
     }
     sortErrors();
 }

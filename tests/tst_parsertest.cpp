@@ -40,6 +40,7 @@
 #include "strideplatform.hpp"
 #include "codevalidator.h"
 #include "coderesolver.h"
+#include "buildtester.hpp"
 
 #define STRIDEROOT "../strideroot"
 
@@ -58,6 +59,8 @@ private:
 
 
 private Q_SLOTS:
+    // Test code generation
+    void testCodeGeneration();
 
     // Connections
     void testConnectionErrors();
@@ -135,6 +138,28 @@ void ParserTest::testMultichannelUgens()
 
     tree->deleteChildren();
     delete tree;
+}
+
+void ParserTest::testCodeGeneration()
+{
+    QStringList testFiles;
+    QDirIterator directories(QFINDTESTDATA(STRIDEROOT "/library/1.0/_tests/"), QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot);
+
+    BuildTester tester(QFINDTESTDATA(STRIDEROOT).toStdString());
+    while (directories.hasNext()) {
+        QDir dir(directories.next());
+        dir.setFilter(QDir::Files | QDir::NoDotAndDotDot | QDir::NoSymLinks);
+        dir.setSorting(QDir::Name);
+        QStringList nameFilters;
+        nameFilters << "*.stride";
+
+        QFileInfoList list = dir.entryInfoList(nameFilters);
+        for (auto fileInfo : list) {
+            qDebug() << "Testing: " << fileInfo.absoluteFilePath();
+            QString expectedName = fileInfo.absolutePath() + QDir::separator() + fileInfo.baseName() + ".expected";
+            QVERIFY(tester.test(fileInfo.absoluteFilePath().toStdString(), expectedName.toStdString()));
+        }
+      }
 }
 
 void ParserTest::testCompilation()

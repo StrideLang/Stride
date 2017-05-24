@@ -1,0 +1,90 @@
+
+constant AudioRate {
+    value: 44100 # TODO this needs to be set from the hardware configuration file
+}
+
+
+_domainDefinition AudioDomain {
+	domainName: "AudioDomain"
+	framework: _RtAudioFramework
+	rate: AudioRate
+	globalsTag: "Includes"
+	declarationsTag: "Declarations"
+	processingTag: "Processing"
+	initializationTag: "Initialization"
+	cleanupTag: "Cleanup"
+    domainIncludes: ["iostream"]
+    domainDeclarations: ['#define NUM_IN_CHANNELS %%num_in_chnls%%',
+    '#define NUM_OUT_CHANNELS %%num_out_chnls%%',
+    '#define NUM_SAMPLES 44100',
+    'float inbuf[NUM_SAMPLES * NUM_IN_CHANNELS];',
+    'float outbuf[NUM_SAMPLES * NUM_OUT_CHANNELS];'
+]
+    domainInitialization: '
+    for(int i = 0; i < NUM_SAMPLES; i++) {
+        inbuf[i* NUM_IN_CHANNELS] = (i * 2.0 / NUM_SAMPLES) - 1; // -1 -> 1
+        inbuf[i* NUM_IN_CHANNELS + 1] = 1 - (i * 2.0 / NUM_SAMPLES); // 1 -> -1
+    }
+    audio_buffer_process();
+    '
+	domainFunction: '
+	int audio_buffer_process()
+{
+int nBufferFrames = NUM_SAMPLES;
+    float *in = inbuf;
+    float *out = outbuf;
+  while(nBufferFrames-- > 0) {
+
+%%domainCode%%
+    in += NUM_IN_CHANNELS;
+    out += NUM_OUT_CHANNELS;
+  }
+  return 0;
+}
+'
+    domainCleanup: '
+    for(int i = 0; i < NUM_SAMPLES; i++) {
+        std::cout << outbuf[i] << std::endl;
+    }
+    '
+}
+
+
+
+# Audio ---------------
+platformType _HwInput {
+    typeName: '_hwInput'
+#	numInputs: 0
+	outputs: ["real"]
+#    include: []
+#    linkTo: []
+#    declarations: ['']
+#    initializations: [""]
+    processing: "in[%%bundle_index%%]"
+    inherits: ['signal']
+}
+
+platformType _HwOutput {
+    typeName: '_hwOutput'
+	inputs: ["real"]
+#	numOutputs: 0
+#    include: []
+#    linkTo: []
+#    declarations: ['']
+#    initializations: ["// %%token%% = 0;"]
+    processing: "out[%%bundle_index%%] = %%intoken:0%%;"
+    inherits: ['signal']
+}
+
+#constant _NumInputChannels {value: 2}
+
+_hwInput AudioIn[2] {
+    rate: AudioRate
+    domain: AudioDomain
+}
+
+#constant _NumOutputChannels {value: 2}
+_hwOutput AudioOut[2] {
+    rate: AudioRate
+    domain: AudioDomain
+}

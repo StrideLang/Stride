@@ -48,7 +48,8 @@ public:
 
     typedef enum {
         DEFAULT_OPTIONS = 0x00,
-        NO_RATE_VALIDATION = 0x01
+        NO_RATE_VALIDATION = 0x01,
+        USE_TESTING = 0x01,
     } Options;
 
     CodeValidator(QString striderootDir, AST * tree = nullptr, Options options = DEFAULT_OPTIONS);

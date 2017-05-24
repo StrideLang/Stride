@@ -143,7 +143,6 @@ bool ProjectWindow::build()
     }
 
     if (tree) {
-
         CodeValidator validator(m_environment["platformRootPath"].toString(), tree);
         errors << validator.getErrors();
 
@@ -155,18 +154,7 @@ bool ProjectWindow::build()
             }
             return false;
         }
-
-
         StrideSystem *system = validator.getSystem();
-
-        QString projectDir = makeProjectForCurrent();
-        if (projectDir.isEmpty()) {
-            printConsoleText(tr("Error creating project output path. Aborting build."));
-            qDebug() << "Error creating project path";
-            tree->deleteChildren();
-            delete tree;
-            return false;
-        }
 
         for (auto builder: m_builders) {
             delete builder;
@@ -177,18 +165,20 @@ bool ProjectWindow::build()
         for (string domain: domains) {
             usedFrameworks.push_back(CodeValidator::getFrameworkForDomain(domain, tree));
         }
-        m_builders = system->createBuilders(projectDir, usedFrameworks);
+        m_builders = system->createBuilders(editor->filename(), usedFrameworks);
+        if (m_builders.size() == 0) {
+            printConsoleText(tr("Aborting. No builder available."));
+            qDebug() << "Can't create builder";
+            tree->deleteChildren();
+            delete tree;
+            return false;
+        }
         buildOK = true;
         for (auto builder: m_builders) {
             connect(builder, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
             connect(builder, SIGNAL(errorText(QString)), this, SLOT(printConsoleError(QString)));
             connect(builder, SIGNAL(programStopped()), this, SLOT(programStopped()));
             buildOK &= builder->build(tree);
-        }
-        if (m_builders.size() == 0) {
-            printConsoleText(tr("Aborting. No builder available."));
-            qDebug() << "Can't create builder";
-            return false;
         }
         tree->deleteChildren();
         delete tree;
@@ -948,23 +938,6 @@ void ProjectWindow::updateEditorSettings()
 
         editor->setAutoComplete(m_options["editor.autoComplete"].toBool());
     }
-}
-
-
-QString ProjectWindow::makeProjectForCurrent()
-{
-    CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
-    Q_ASSERT(!editor->filename().isEmpty());
-    QFileInfo info(editor->filename());
-    QString dirName = info.absolutePath() + QDir::separator()
-            + info.fileName() + "_Products";
-    if (!QFile::exists(dirName)) {
-        if (!QDir().mkpath(dirName)) {
-            qDebug() << "Error creating project path";
-            return QString();
-        }
-    }
-    return dirName;
 }
 
 void ProjectWindow::newFile()

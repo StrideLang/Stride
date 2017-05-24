@@ -64,6 +64,7 @@ public:
     QString getPlatformPath() {return m_platformPath;}
     QString getStdErr() const {return m_stdErr;}
     QString getStdOut() const {return m_stdOut;}
+    void clearBuffers() { m_stdErr = ""; m_stdOut = "";}
 
 public slots:
     virtual bool build(AST *tree) = 0;

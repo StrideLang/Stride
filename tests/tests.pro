@@ -10,7 +10,8 @@ INCLUDEPATH += ../parser
 
 TEMPLATE = app
 
-SOURCES += tst_parsertest.cpp
+SOURCES += tst_parsertest.cpp \
+    buildtester.cpp
 DEFINES += BUILDPATH=\\\"$$OUT_PWD/\\\"
 CONFIG += c++11
 
@@ -110,4 +111,7 @@ DEPENDPATH += $$PWD/../parser
 win32-msvc2015:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../parser/release/StrideParser.lib
 else:win32-msvc2015:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../parser/debug/StrideParser.lib
 else:unix: PRE_TARGETDEPS += $$OUT_PWD/../parser/libStrideParser.a
+
+HEADERS += \
+    buildtester.hpp
 

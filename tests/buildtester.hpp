@@ -32,76 +32,20 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-#ifndef STREAMPLATFORM_H
-#define STREAMPLATFORM_H
+#ifndef BUILDTESTER_HPP
+#define BUILDTESTER_HPP
 
 #include <string>
-#include <map>
 
-#include <QList>
 
-#include "ast.h"
-
-class StridePlatform;
-
-class StrideConnection {
+class BuildTester
+{
 public:
-
+    BuildTester(std::string strideRoot = "/home/andres/Documents/src/Stride/Stride/strideroot");
+    bool test(std::string filename, std::string expectedResultFile);
+    
 private:
-    StridePlatform *m_source;
-    StridePlatform *m_destination;
-    AST *m_sourceImports;
-    AST *m_sourceStreams;
-    AST *m_destinationImports;
-    AST *m_destinationStreams;
+    std::string m_StrideRoot;
 };
 
-class StridePlatform {
-public:
-    StridePlatform(string framework, string fwVersion,
-                   string hardware = "", string hardwareVersion = "",
-                   string identifier = "") :
-        m_framework(framework), m_frameworkVersion(fwVersion),
-        m_hardware(hardware), m_hardwareVersion(hardwareVersion),
-        m_identifier(identifier)
-    {
-    }
-
-    ~StridePlatform();
-
-    typedef enum {
-        PythonTools,
-        PluginPlatform,
-        NullPlatform
-    } PlatformAPI;
-
-    string getFramework() const;
-    string getFrameworkVersion() const;
-    string getHardware() const;
-    string getHardwareVersion() const;
-    bool getRequired() const;
-    PlatformAPI getAPI() const;
-    string buildPlatformPath(string strideRoot);
-    string buildLibPath(string strideRoot);
-    string buildTestingLibPath(string strideRoot);
-
-    void addTree(string treeName, AST *treeRoot);
-    void addTestingTree(string treeName, AST *treeRoot);
-    vector<AST *> getPlatformObjectsReference();
-    vector<AST *> getPlatformTestingObjectsRef();
-
-private:
-    string m_framework;
-    string m_frameworkVersion;
-    string m_hardware;
-    string m_hardwareVersion;
-    string m_identifier;
-    bool m_required;
-    PlatformAPI m_api {PythonTools}; //TODO Put back support for plugin platforms
-    map<string, AST *> m_platformTrees;
-    map<string, AST *> m_platformTestTrees;
-};
-
-
-
-#endif // STREAMPLATFORM_H
+#endif // BUILDTESTER_HPP

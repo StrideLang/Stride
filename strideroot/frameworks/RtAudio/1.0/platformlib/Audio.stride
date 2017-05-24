@@ -14,8 +14,8 @@ _domainDefinition AudioDomain {
 	initializationTag: "Initialization"
 	cleanupTag: "Cleanup"
     domainIncludes: ["RtAudio.h"]
-    domainDeclarations: ['#define NUM_IN_CHANNELS 2',
-    '#define NUM_OUT_CHANNELS 2',
+    domainDeclarations: ['#define NUM_IN_CHANNELS %%num_in_chnls%%',
+    '#define NUM_OUT_CHANNELS %%num_out_chnls%%',
     'typedef float MY_TYPE;',
     '#define FORMAT RTAUDIO_FLOAT32'
 ]
@@ -67,6 +67,9 @@ _domainDefinition AudioDomain {
       if ( adac.isStreamOpen() ) adac.closeStream();
       exit (-1);
     }
+    char input;
+    std::cout << "\nRunning ... press <enter> to quit.\n";
+    std::cin.get(input);
     '
 	domainFunction: '
 	int audio_buffer_process( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,

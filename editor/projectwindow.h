@@ -108,8 +108,6 @@ private:
 
     void updateEditorSettings();
 
-    QString makeProjectForCurrent();
-
     Ui::ProjectWindow *ui;
 
     QScopedPointer<SearchWidget> m_searchWidget;

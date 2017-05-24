@@ -105,6 +105,13 @@ string StridePlatform::buildLibPath(string strideRoot)
     return path;
 }
 
+string StridePlatform::buildTestingLibPath(string strideRoot)
+{
+    string path = buildPlatformPath(strideRoot) + "/";
+    path += "platformlib/testing";
+    return path;
+}
+
 void StridePlatform::addTree(string treeName, AST *treeRoot)
 {
     if (m_platformTrees.find(treeName) != m_platformTrees.end()) {
@@ -114,11 +121,37 @@ void StridePlatform::addTree(string treeName, AST *treeRoot)
     m_platformTrees[treeName] = treeRoot;
 }
 
+void StridePlatform::addTestingTree(string treeName, AST *treeRoot)
+{
+    if (m_platformTestTrees.find(treeName) != m_platformTestTrees.end()) {
+        m_platformTestTrees[treeName]->deleteChildren();
+        delete m_platformTestTrees[treeName];
+    }
+    m_platformTestTrees[treeName] = treeRoot;
+}
+
 vector<AST *> StridePlatform::getPlatformObjectsReference()
 {
     vector<AST *> objects;
     auto blockGroup = m_platformTrees.begin();
     while (blockGroup != m_platformTrees.end()) {
+        foreach(AST *element, blockGroup->second->getChildren()) {
+            if (element->getNodeType() == AST::Declaration) {
+                objects.push_back(element);
+            } else {
+                objects.push_back(element); // TODO: This inserts everything. Only insert what is needed
+            }
+        }
+        blockGroup++;
+    }
+    return objects;
+}
+
+vector<AST *> StridePlatform::getPlatformTestingObjectsRef()
+{
+    vector<AST *> objects;
+    auto blockGroup = m_platformTestTrees.begin();
+    while (blockGroup != m_platformTestTrees.end()) {
         foreach(AST *element, blockGroup->second->getChildren()) {
             if (element->getNodeType() == AST::Declaration) {
                 objects.push_back(element);
