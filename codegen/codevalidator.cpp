@@ -1621,6 +1621,18 @@ std::string CodeValidator::evaluateConstString(AST *node, QVector<AST *> scope, 
                 // Do something?
             }
         }
+    } else if(node->getNodeType() == AST::PortProperty) {
+        PortPropertyNode *propertyNode = static_cast<PortPropertyNode *>(node);
+        DeclarationNode *block = CodeValidator::findDeclaration(QString::fromStdString(propertyNode->getPortName()), scope, tree);
+        if (block) {
+            AST *propertyValue = block->getPropertyValue(propertyNode->getName());
+            if (propertyValue) {
+//                || propertyValue->getNodeType() == AST::Block || propertyValue->getNodeType() == AST::Bundle
+                if (propertyValue->getNodeType() == AST::String ) {
+                    return static_cast<ValueNode *>(propertyValue)->toString();
+                }
+            }
+        }
     } else {
         LangError error;
         error.type = LangError::InvalidType;

@@ -50,4 +50,6 @@ class Templates(BaseCTemplate):
         self.framework = "Wiring"
 
 
+    def process_code(self, code):
+        return code
 templates = Templates()
