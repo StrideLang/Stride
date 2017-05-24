@@ -316,8 +316,9 @@ QStringList StrideSystem::getPlatformTypeNames()
             if (block->getObjectType() == "platformType"
                     || block->getObjectType() == "type") {
                 ValueNode *name = static_cast<ValueNode *>(block->getPropertyValue("typeName"));
-                Q_ASSERT(name->getNodeType() == AST::String);
-                typeNames << QString::fromStdString(name->getStringValue());
+                if (name && name->getNodeType() == AST::String) {
+                    typeNames << QString::fromStdString(name->getStringValue());
+                }
             }
         }
     }
