@@ -538,14 +538,12 @@ class ListAtom(Atom):
 class NameAtom(Atom):
     def __init__(self, platform_type, declaration, token_index,
                  scope_index, line, filename):
-        super(NameAtom, self).__init__()
+        super(NameAtom, self).__init__(line, filename)
         self.scope_index = scope_index
         self.handle = declaration['name']  # + '_%03i'%token_index;
         self.platform_type = platform_type
         self.declaration = declaration
         self.domain = None
-        self.line = line
-        self.filename = filename
         self.token_index = token_index
 
         if 'domain' in self.declaration:
@@ -555,6 +553,8 @@ class NameAtom(Atom):
             else:
                 self.domain = self.declaration['domain']
 
+        # TODO we should just add all sections found in platform_type['block'][section]
+        # And not worry wat exists already in self.global_sections
         for section in self.global_sections:
             if section in platform_type['block']:
                 if section in self.globals:
@@ -567,7 +567,6 @@ class NameAtom(Atom):
                 self.globals['initializations'] += platform_type['block']['initializations']
             else:
                 self.globals['initializations'] = platform_type['block']['initializations']
-
 
         self.set_inline(False)
 
@@ -1007,10 +1006,7 @@ class BundleAtom(NameAtom):
         return code
 
     def _get_token_name(self, index):
-        if type(index) == int:
-            return '%s[%i]'%(self.handle, index)
-        else:
-            return '%s[%s]'%(self.handle, index)
+        return templates.bundle_indexing(self.handle, index)
 
 
 class ModuleAtom(Atom):
@@ -1779,6 +1775,7 @@ class PlatformFunctions:
             new_atom = PortPropertyAtom(member['portproperty'], self, scope_index)
         else:
             raise ValueError("Unsupported type")
+        self.unique_id += 1
         return new_atom
 
     def push_scope(self, scope, parent):
@@ -1814,6 +1811,7 @@ class PlatformFunctions:
             if hasattr("domain", "new_atom"):
                 if not current_domain == new_atom.domain:
                     current_domain = new_atom.domain
+                    # TODO this can be simplified as we can assume that streams belong to the same domain
                     print("New domain!" + current_domain)
                     node_groups.append([])
                     cur_group = node_groups[-1]
@@ -1823,7 +1821,6 @@ class PlatformFunctions:
             self.log_debug("New atom: " + str(new_atom.handle) + " domain: :" + str(current_domain) + ' (' + str(type(new_atom)) + ')')
             cur_group.append(new_atom)
 
-            self.unique_id += 1
         return node_groups
 
     def instantiation_code(self, instance):
@@ -1935,9 +1932,6 @@ class PlatformFunctions:
                 declares = atom.get_declarations()
                 new_instances = atom.get_instances()
 
-                if not current_domain in header_code:
-                    header_code[current_domain] = ""
-
                 # append new declarations if not there in the list already
                 for new_dec in declares:
                     if self.find_instance_by_handle(new_dec.get_name(), scope_declarations):
@@ -1954,6 +1948,8 @@ class PlatformFunctions:
                 #scope_instances += new_instances
 #                header.append([declares, new_instances])
 
+                if not current_domain in header_code:
+                    header_code[current_domain] = ""
                 if not current_domain in init_code:
                     init_code[current_domain] = ""
                 if not current_domain in pre_processing:
@@ -2072,6 +2068,7 @@ class PlatformFunctions:
         self.log_debug("-- Start stream")
         streamdomain = None
 
+# FIXME Bridge signals throuw this check off... But this check should be here
 #        for member in stream:
 #            member_domain = self.get_stream_member_domain(member)
 #            if not streamdomain == None:

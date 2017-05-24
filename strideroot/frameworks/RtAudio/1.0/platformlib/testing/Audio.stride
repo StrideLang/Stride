@@ -13,7 +13,7 @@ _domainDefinition AudioDomain {
 	processingTag: "Processing"
 	initializationTag: "Initialization"
 	cleanupTag: "Cleanup"
-    domainIncludes: ["iostream"]
+    domainIncludes: ["iostream", "iomanip"]
     domainDeclarations: ['#define NUM_IN_CHANNELS %%num_in_chnls%%',
     '#define NUM_OUT_CHANNELS %%num_out_chnls%%',
     '#define NUM_SAMPLES 44100',
@@ -44,7 +44,7 @@ int nBufferFrames = NUM_SAMPLES;
 '
     domainCleanup: '
     for(int i = 0; i < NUM_SAMPLES; i++) {
-        std::cout << outbuf[i] << std::endl;
+        std::cout << std::setprecision(10) << outbuf[i] << std::endl;
     }
     '
 }

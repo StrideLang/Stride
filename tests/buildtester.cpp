@@ -117,14 +117,14 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile)
                  }
 
                  int counter = 0;
-                 while (!expectedResult.atEnd() and !counter >= expectedLines.size()) {
+                 while (!expectedResult.atEnd() and !(counter >= expectedLines.size())) {
                      QByteArray line = expectedResult.readLine();
                      if (line.endsWith("\n")) {
                          line.chop(1);
                      }
                      double out = line.toDouble();
                      double expected = expectedLines.at(counter).toDouble();
-                     if (!(std::fabs(out - expected) < 0.0002)) {
+                     if (!(std::fabs(out - expected) < 0.000002)) {
                           std::cerr << "Failed comparison at line " << counter + 1 << std::endl;
                           std::cerr << "Got " << line.toStdString() << " Expected " << expectedLines.at(counter).toStdString() << std::endl;
                          return false;

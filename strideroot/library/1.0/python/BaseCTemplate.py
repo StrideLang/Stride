@@ -333,7 +333,10 @@ public:
         return value
 
     def bundle_indexing(self, bundle_name, index):
-        return bundle_name + '[' + str(index - 1) + ']'
+        if type(index) == int:
+            return '%s[%i]'%(bundle_name, index)
+        else:
+            return '%s[%s]'%(bundle_name, index)
 
     def expression(self, expression):
         return expression + ';\n'

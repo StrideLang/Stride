@@ -450,7 +450,7 @@ void CodeValidator::validate()
     m_errors.clear();
     if(m_tree) {
         if(m_options & USE_TESTING) {
-            m_system->enableTesting(m_tree);
+            m_system->enableTesting(true);
         }
         CodeResolver resolver(m_system, m_tree);
         resolver.preProcess();

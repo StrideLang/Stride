@@ -43,9 +43,9 @@ int main() {
 
 //[[/Initialization]]
 
-char input;
-std::cout << "\nRunning ... press <enter> to quit.\n";
-std::cin.get(input);
+// char input;
+// std::cout << "\nRunning ... press <enter> to quit.\n";
+// std::cin.get(input);
 
 //[[Cleanup]]
 //[[/Cleanup]]

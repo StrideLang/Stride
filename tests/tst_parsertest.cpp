@@ -157,7 +157,9 @@ void ParserTest::testCodeGeneration()
         for (auto fileInfo : list) {
             qDebug() << "Testing: " << fileInfo.absoluteFilePath();
             QString expectedName = fileInfo.absolutePath() + QDir::separator() + fileInfo.baseName() + ".expected";
-            QVERIFY(tester.test(fileInfo.absoluteFilePath().toStdString(), expectedName.toStdString()));
+            if (QFile::exists(expectedName)) {
+                QVERIFY(tester.test(fileInfo.absoluteFilePath().toStdString(), expectedName.toStdString()));
+            }
         }
       }
 }
