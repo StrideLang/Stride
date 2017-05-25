@@ -143,7 +143,7 @@ void ParserTest::testMultichannelUgens()
 void ParserTest::testCodeGeneration()
 {
     QStringList testFiles;
-    QDirIterator directories(QFINDTESTDATA(STRIDEROOT "/library/1.0/_tests/"), QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot);
+    QDirIterator directories(QFINDTESTDATA(STRIDEROOT "/frameworks/RtAudio/1.0/_tests/"), QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot);
 
     BuildTester tester(QFINDTESTDATA(STRIDEROOT).toStdString());
     while (directories.hasNext()) {
@@ -167,7 +167,7 @@ void ParserTest::testCodeGeneration()
 void ParserTest::testCompilation()
 {
     QStringList testFiles;
-    QDirIterator directories(QFINDTESTDATA(STRIDEROOT "/library/1.0/_tests/"), QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot);
+    QDirIterator directories(QFINDTESTDATA(STRIDEROOT "/frameworks/RtAudio/1.0/_tests/"), QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot);
     while(directories.hasNext()){
         directories.next();
         QDir subDir(directories.filePath());

@@ -108,26 +108,33 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile)
                  builder->clearBuffers();
                  buildOK &= builder->run();
                  QFile expectedResult(QString::fromStdString(expectedResultFile));
-                 QStringList expectedLines = builder->getStdOut().split("\n");
+                 QStringList outputLines = builder->getStdOut().split("\n");
                  if (!expectedResult.open(QIODevice::ReadOnly | QIODevice::Text)) {
                      return false;
                  }
                  for(int i = 0; i < 7; i++) {
-                     expectedLines.pop_front(); // Hack to remove initial text
+                     outputLines.pop_front(); // Hack to remove initial text
                  }
 
                  int counter = 0;
-                 while (!expectedResult.atEnd() and !(counter >= expectedLines.size())) {
+                 while (!expectedResult.atEnd() and (counter < outputLines.size())) {
                      QByteArray line = expectedResult.readLine();
                      if (line.endsWith("\n")) {
                          line.chop(1);
                      }
-                     double out = line.toDouble();
-                     double expected = expectedLines.at(counter).toDouble();
-                     if (!(std::fabs(out - expected) < 0.000002)) {
-                          std::cerr << "Failed comparison at line " << counter + 1 << std::endl;
-                          std::cerr << "Got " << line.toStdString() << " Expected " << expectedLines.at(counter).toStdString() << std::endl;
-                         return false;
+                     if (line.size() > 0 && outputLines.at(counter).size() > 0) {
+                         double out = line.toDouble();
+                         double expected = outputLines.at(counter).toDouble();
+                         if (!(std::fabs(out - expected) < 0.000002)) {
+                             std::cerr << "Failed comparison at line " << counter + 1 << std::endl;
+                             std::cerr << "Got " << line.toStdString() << " Expected " << outputLines.at(counter).toStdString() << std::endl;
+                             QFile failedOutput("failed.output");
+                             if (failedOutput.open(QIODevice::WriteOnly)) {
+                                 failedOutput.write(builder->getStdOut().toLocal8Bit());
+                                 failedOutput.close();
+                             }
+                             return false;
+                         }
                      }
                      counter++;
                  }

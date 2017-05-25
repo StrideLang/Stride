@@ -127,7 +127,7 @@ bool PythonProject::run(bool pressed)
             qDebug() << "Could not stop run process. Not starting again.";
             return false;
         }
-     }
+    }
     m_stdErr.clear();
     m_stdOut.clear();
     m_runningProcess.setWorkingDirectory(m_strideRoot);
