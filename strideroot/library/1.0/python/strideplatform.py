@@ -903,13 +903,13 @@ class BundleAtom(NameAtom):
             self.index = index - 1
         else:
             ## FIXME we need to get handle for index object
-            self.index = index
+            self.index = index - 1
         self.set_inline(False)
 #        if not 'blockbundle' in self.platform_type and not 'platformType' in self.platform_type['block']['type']:
 #            raise ValueError("Need a block bundle platform type to make a Bundle Atom.")
 
     def get_handles(self):
-        return [templates.bundle_indexing(self.handle, self.index + 1)]
+        return [templates.bundle_indexing(self.handle, self.index)]
 
     def get_instances(self):
         default_value = self._get_default_value()
@@ -1167,7 +1167,7 @@ class ModuleAtom(Atom):
             token_name = self.out_tokens[0]
             if 'size' in self._output_blocks[0]:
                 out_token_name = '_' + self.name + '_%03i_out'%self._index
-                token_name = templates.bundle_indexing(out_token_name, self._output_blocks[0]['size'] + 1)
+                token_name = templates.bundle_indexing(out_token_name, self._output_blocks[0]['size'])
 
             default_value = ''
             instances += [Instance(default_value,
@@ -1257,7 +1257,7 @@ class ModuleAtom(Atom):
                 code += templates.declaration_bundle_real(connector_name, input_block['size'])
                 for i in range(input_block['size']):
                     if len(in_tokens) > 0:
-                        code += templates.assignment(templates.bundle_indexing(connector_name, i+ 1),
+                        code += templates.assignment(templates.bundle_indexing(connector_name, i),
                                                      in_tokens[0])
                         in_tokens.pop(0)
                 in_tokens.insert(0, connector_name)
