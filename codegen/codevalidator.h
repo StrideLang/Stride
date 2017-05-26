@@ -47,12 +47,12 @@ class CodeValidator
 public:
 
     typedef enum {
-        DEFAULT_OPTIONS = 0x00,
+        NO_OPTIONS = 0x00,
         NO_RATE_VALIDATION = 0x01,
-        USE_TESTING = 0x01,
+        USE_TESTING = 0x02,
     } Options;
 
-    CodeValidator(QString striderootDir, AST * tree = nullptr, Options options = DEFAULT_OPTIONS);
+    CodeValidator(QString striderootDir, AST * tree = nullptr, Options options = NO_OPTIONS);
     ~CodeValidator();
 
     bool isValid();
