@@ -117,7 +117,7 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile)
                  }
 
                  int counter = 0;
-                 while (!expectedResult.atEnd() && !(counter >= expectedLines.size())) {
+                 while (!expectedResult.atEnd() && !(counter >= outputLines.size())) {
                      QByteArray line = expectedResult.readLine();
                      if (line.endsWith("\n")) {
                          line.chop(1);
