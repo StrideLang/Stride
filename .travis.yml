@@ -1,0 +1,58 @@
+language: cpp
+
+os:
+  - linux
+  - osx
+
+# branches:
+#   only:
+#     - develop
+#     - master
+#     - testing
+
+env:
+  matrix:
+    #- CONFIG=release
+    - CONFIG=debug
+
+before_install:
+    - sudo add-apt-repository --yes ppa:ubuntu-sdk-team/ppa
+    - sudo apt-get -qq update
+    - sudo apt-get install qtbase5-dev qtdeclarative5-dev libqt5webkit5-dev libsqlite3-dev
+    - sudo apt-get install qt5-default qttools5-dev-tools
+
+install:
+  - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
+         lsb_release -a
+
+      && export CXX="g++-4.8"
+      && export CC="gcc-4.8"
+      ;
+    else
+         brew update > /dev/null
+      && brew install qt5
+      && chmod -R 755 /usr/local/opt/qt5/*
+      ;
+    fi
+
+script:
+  - qmake -project
+  - qmake Ultron.pro
+  - make
+
+notifications:
+  recipients:
+    - mantaraya36@gmail.com
+  email:
+    on_success: change
+    on_failure: change
+  # irc:
+  #   # https://docs.travis-ci.com/user/notifications/#IRC-notification
+  #   channels:
+  #     - "chat.freenode.net#qownnotes"
+  #   template:
+  #     - "[%{commit}] %{repository} (%{branch}): %{message} | Commit message: %{commit_message} | Changes: %{compare_url} | Build details: %{build_url}"
+  #   on_success: always
+  #   on_failure: always
+  #   use_notice: true
+  #   skip_join: true
