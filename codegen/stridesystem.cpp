@@ -50,7 +50,8 @@
 StrideSystem::StrideSystem(QString strideRoot, QString systemName,
                            int majorVersion, int minorVersion,
                            QMap<QString, QString> importList) :
-    m_strideRoot(strideRoot), m_systemName(systemName), m_majorVersion(majorVersion), m_minorVersion(minorVersion)
+    m_strideRoot(strideRoot), m_systemName(systemName), m_majorVersion(majorVersion), m_minorVersion(minorVersion),
+    m_testing(false)
 {
     QString versionString = QString("%1.%2").arg(m_majorVersion).arg(m_minorVersion);
     QString fullPath = QDir(strideRoot + QDir::separator()
