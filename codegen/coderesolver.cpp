@@ -529,9 +529,9 @@ void CodeResolver::expandParallelStream(StreamNode *stream, QVector<AST *> scope
             } else {
                 // Stream size mismatch. Stop expansion. The error will be reported later by
                 // CodeValidator.
+                numCopies << 1;
                 qDebug() << "Could not clone " << IOs[i - 1].second * numCopies.back()
                          << " outputs into " << IOs[i].first << " inputs.";
-                break;
             }
         } else if (numPrevOut < numCurIn && numPrevOut > 0) { // Need to clone all existing left side
             if (numCurIn/(float)numPrevOut == numCurIn/numPrevOut) {
@@ -546,7 +546,7 @@ void CodeResolver::expandParallelStream(StreamNode *stream, QVector<AST *> scope
                 // CodeValidator.
                 qDebug() << "Could not clone " << IOs[i - 1].second
                          << " outputs into " << IOs[i].first << " inputs.";
-                break;
+                numCopies << 1;
             }
 
         } else { // Size match, no need to clone
@@ -1454,7 +1454,11 @@ DeclarationNode *CodeResolver::createSignalBridge(string name, AST *defaultValue
         newBridge->addProperty(new PropertyNode("inputDomain", new ValueNode("", -1), filename.c_str(), line));
         newBridge->addProperty(new PropertyNode("domain", new ValueNode("", -1), filename.c_str(), line));
     }
-    newBridge->addProperty(new PropertyNode("outputDomain", outDomain->deepCopy(), filename.c_str(), line));
+    if (outDomain) {
+        newBridge->addProperty(new PropertyNode("outputDomain", outDomain->deepCopy(), filename.c_str(), line));
+    } else {
+        newBridge->addProperty(new PropertyNode("outputDomain", new ValueNode("", -1), filename.c_str(), line));
+    }
 
     return newBridge;
 }
