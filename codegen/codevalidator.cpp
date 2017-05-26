@@ -1071,7 +1071,6 @@ AST *CodeValidator::getBlockSubScope(DeclarationNode *block)
 
 int CodeValidator::getNodeNumOutputs(AST *node, const QVector<AST *> &scope, AST *tree, QList<LangError> &errors)
 {
-    Q_ASSERT(node->getNodeType() != AST::Stream); // Stream nodes should not be on the left...
     if (node->getNodeType() == AST::List) {
         int size = 0;
         foreach(AST *member, node->getChildren()) {
