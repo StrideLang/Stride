@@ -77,7 +77,7 @@ private:
     void resolveStreamRates(StreamNode *stream);
     void expandParallelStream(StreamNode *stream, QVector<AST *> scopeStack, AST *tree);
 
-    void expandStreamToSizes(StreamNode *stream, QVector<int> &size, QVector<AST *> scopeStack);
+    void expandStreamToSizes(StreamNode *stream, QVector<int> &size, int previousOutSize, QVector<AST *> scopeStack);
     AST *expandFunctionFromProperties(FunctionNode *func, QVector<AST *> scope, AST *tree);
     void fillDefaultPropertiesForNode(AST *node);
 

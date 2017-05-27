@@ -555,34 +555,43 @@ void CodeResolver::expandParallelStream(StreamNode *stream, QVector<AST *> scope
     }
     if (numCopies.size() == IOs.size()) { // Expansion calculation went fine, so expand
 //                qDebug() << "Will expand";
-        expandStreamToSizes(stream, numCopies, scopeStack);
+        expandStreamToSizes(stream, numCopies, -1, scopeStack);
     }
 }
 
 void CodeResolver::expandParallel()
 {
-    for (AST *node : m_tree->getChildren()) {
+    std::vector<AST *> children = m_tree->getChildren();
+    for (AST *node : children) {
         QVector<AST *> scopeStack;
         if (node->getNodeType() == AST::Stream) {
             StreamNode *stream = static_cast<StreamNode *>(node);
             expandParallelStream(stream, scopeStack, m_tree);
+            // We need to process unknown symbols to make sure we can expand the following streams to the right size.
+            std::vector<AST *> declarations = declareUnknownStreamSymbols(stream, nullptr, QVector<AST *>(), m_tree);
+            for(AST *decl: declarations) {
+                m_tree->addChild(decl);
+            }
         }
     }
 }
 
-void CodeResolver::expandStreamToSizes(StreamNode *stream, QVector<int> &size, QVector<AST *> scopeStack)
+void CodeResolver::expandStreamToSizes(StreamNode *stream, QVector<int> &neededCopies, int previousOutSize, QVector<AST *> scopeStack)
 {
     QList<LangError> errors;
     QVector<AST *> scope;
 //    int leftNumOuts = CodeValidator::getNodeNumOutputs(stream, *m_platform, scope, m_tree, errors);
     AST *left = stream->getLeft();
     int leftSize = CodeValidator::getNodeSize(left, m_tree);
+    if (previousOutSize == -1) {
+        previousOutSize = 1;
+    }
 
     if (left->getNodeType() == AST::Block
             || left->getNodeType() == AST::Function) {
-        int numCopies = size.front();
+        int numCopies = neededCopies.front();
         if (leftSize < 0 && left->getNodeType() == AST::Block) {
-            std::vector<AST *> newDeclaration = declareUnknownName(static_cast<BlockNode *>(left), abs(numCopies), scopeStack, m_tree);
+            std::vector<AST *> newDeclaration = declareUnknownName(static_cast<BlockNode *>(left), previousOutSize, scopeStack, m_tree);
             for(AST *decl:newDeclaration) {
                 m_tree->addChild(decl);
             }
@@ -595,17 +604,21 @@ void CodeResolver::expandStreamToSizes(StreamNode *stream, QVector<int> &size, Q
             stream->setLeft(newLeft); // This will take care of the deallocation internally
         }
     }
-    size.pop_front();
+    previousOutSize = neededCopies.front() * leftSize;
+    if (previousOutSize < 0) {
+        previousOutSize = 1;
+    }
+    neededCopies.pop_front();
     AST *right = stream->getRight();
     if (right->getNodeType() == AST::Stream) {
-        expandStreamToSizes(static_cast<StreamNode *>(right), size, scopeStack);
+        expandStreamToSizes(static_cast<StreamNode *>(right), neededCopies, previousOutSize, scopeStack);
     } else {
         int rightSize = CodeValidator::getNodeSize(right, m_tree);
         if (right->getNodeType() == AST::Block
                 || right->getNodeType() == AST::Function) {
-            int numCopies = size.front();
+            int numCopies = neededCopies.front();
             if (rightSize < 0 && right->getNodeType() == AST::Block) {
-                std::vector<AST *> newDeclaration = declareUnknownName(static_cast<BlockNode *>(right), abs(numCopies), scopeStack, m_tree);
+                std::vector<AST *> newDeclaration = declareUnknownName(static_cast<BlockNode *>(right), previousOutSize, scopeStack, m_tree);
                 for(AST *decl:newDeclaration) {
                     m_tree->addChild(decl);
                 }
@@ -618,8 +631,8 @@ void CodeResolver::expandStreamToSizes(StreamNode *stream, QVector<int> &size, Q
             }
 
         }
-        size.pop_front();
-        Q_ASSERT(size.size() == 0); // This is the end of the stream there should be no sizes left
+        neededCopies.pop_front();
+        Q_ASSERT(neededCopies.size() == 0); // This is the end of the stream there should be no sizes left
     }
 }
 
