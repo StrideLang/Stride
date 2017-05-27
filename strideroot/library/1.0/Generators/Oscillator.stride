@@ -64,41 +64,27 @@ module Oscillator {
 		}
         signal Phase {
             default :       0.0
+			reset: Reset
 			domain: OutputDomain
 		}
         signal PhaseInc {
 			default :       0.0
 			domain: FrequencyDomain
 		}
-        signal IncPhase {
-			default :       0.0
-		}
-        signal NewPhase {
-			default :       0.0
-		}
         _sineType SineBlock {}
 		reaction WrapPhase {
 		ports: [
 		]	
 		streams: [
-			Phase -( 2 * _Pi) >> NewPhase;
-			]
-		}
-		reaction ResetPhase {
-		ports: [
-		]	
-		streams: [
-			ResetValue >> NewPhase;
+			Phase -( 2 * _Pi) >> Phase;
 			]
 		}
     ]
     streams: [
         Frequency * 2.0 * _Pi / Output.rate >> PhaseInc;
         Phase >> SineBlock >> Level(gain: Amplitude) >> Output;
-        Phase + PhaseInc >> IncPhase;
-		IncPhase -( 2 * _Pi) >> NewPhase;
-        [IncPhase , ( 2 * _Pi) ] >> Greater() >> Select(whenOn: NewPhase whenOff: IncPhase) >> Phase;
-		#Reset >> ResetPhase();
+        Phase + PhaseInc >> Phase;
+        [Phase , ( 2 * _Pi) ] >> Greater() >> WrapPhase();
     ]
 	meta: "Bipolar output [ -1. , 1. ] scaled by amplitude"
 }

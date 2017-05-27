@@ -544,40 +544,53 @@ public:
     # Reactions code
 
     def reaction_declaration(self, name, header_code, init_code,
-                           output_block, process_code):
-        if output_block:
-            if 'block' in output_block:
-                output_block = output_block['block']
-            elif 'blockbundle' in output_block:
-                output_block = output_block['blockbundle']
-            if output_block['type'] == 'signal':
-                if 'size' in output_block:
-                    out_type = 'void'
-                else:
-                    if type(output_block['default']) == unicode:
-                        out_type = self.string_type
-                    else:
-                        out_type = self.real_type
-            elif output_block['type'] == 'switch':
-                out_type = 'bool'
-            else:
-                raise ValueError("Unknown type")
-            out_declaration = self.declaration_reference(output_block, False)
-        else:
-            out_type = 'void'
-            out_declaration = ''
+                             process_code, instance_consts = {}):
 
-        declaration = self.str_reaction_declaration%(name, header_code, name, init_code,
-                                                     out_type, out_declaration, process_code)
+        out_type = 'void'
+
+        process_functions = ''
+#        constructor_args = ''
+        for domain, domain_components in process_code.items():
+            domain_proc_code = domain_components['code']
+            input_declaration = ''
+            for input_block in domain_components['input_blocks']:
+    #            if 'blockbundle' in input_block:
+    #                for i in range(input_block['blockbundle']['size']):
+    #                    block_type = self.get_block_type(input_block)
+    #                    block_name = input_block['blockbundle']['name']
+    #                    if block_type == 'real':
+    #                        input_declaration += self.declaration_real(block_name + str(i), close = False) + ", "
+    #                input_declaration = input_declaration[:-2]
+    #            else:
+                input_declaration += self.declaration(input_block, close = False) + ", "
+            for output_block in domain_components['output_blocks']:
+                input_declaration +=  self.declaration_reference(output_block, False) + ", "
+
+            if len(input_declaration) > 0:
+                input_declaration = input_declaration[:-2]
+
+            process_functions += self.str_function_declaration%(out_type, name + '_process_' + str(domain), input_declaration, domain_proc_code)
+#
+#        for const_name, props in instance_consts.items():
+#            constructor_args += "float _" + const_name + ","
+#        if len(constructor_args) > 0 and constructor_args[-1] == ',':
+#            constructor_args = constructor_args[:-1]
+        declaration = process_functions
         return declaration
 
-    def reaction_processing_code(self, handle, in_tokens, out_token):
-        code = "if ("+ in_tokens[0] + ") {\n"
-        if out_token:
-            code += handle + '.execute(' + out_token +  ');\n'
-        else:
-            code += handle + '.execute();\n'
-        code += "}\n"
+
+    def reaction_processing_code(self, reaction_name, in_tokens, out_tokens, domain_name):
+#        code = handle + '.process_' + str(domain_name) + '('
+        code =  reaction_name + '_process_' + str(domain_name) + '('
+        for in_token in in_tokens:
+            code += in_token + ", "
+
+        for out_token in out_tokens:
+            code += out_token + ", "
+        if (len(in_tokens) > 0 and len(out_tokens) == 0) or (len(out_tokens) > 0):
+            code = code[:-2] # Chop off extra comma
+        code += ')'
+        return code
         return code
 
     # Configuration code -----------------------------------------------------

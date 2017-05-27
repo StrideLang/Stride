@@ -1526,7 +1526,7 @@ class ReactionAtom(ModuleAtom):
     def get_inline_processing_code(self, in_tokens):
         code = ''
 
-        code = templates.module_processing_code(self.handle,
+        code = templates.reaction_processing_code(self.handle,
                                                 in_tokens,
                                                 self.out_tokens,
                                                 'TriggerDomain'
@@ -1542,7 +1542,7 @@ class ReactionAtom(ModuleAtom):
                 processing_code[each_domain] = ['', []]
             processing_code[each_domain][0] += "if (" + in_tokens[0] + ") {\n"
             processing_code[each_domain][0] += templates.expression(
-                    templates.module_processing_code(self.handle,
+                    templates.reaction_processing_code(self.reaction['name'],
                                                     [],
                                                     self.out_tokens,
                                                     each_domain
@@ -1552,9 +1552,89 @@ class ReactionAtom(ModuleAtom):
 
         return processing_code
 
+    def get_declarations(self):
+        declarations = []
+        outer_declarations = []
+        secondary_domain = ''
+        #FIXME do we need to support more than 1 output block?
+        if len(self._output_blocks) > 0:
+            secondary_domain = self._output_blocks[0]['domain']
 
-#    def _process_module(self, streams):
+        if "other_scope_declarations" in self.code:
+            for other_declaration in self.code["other_scope_declarations"]:
+                if not other_declaration.domain or other_declaration.domain == secondary_domain:
+                    other_declaration.domain = self.domain
+                outer_declarations.append(other_declaration)
 
+        declarations += outer_declarations
+        domain_code = self.code['domain_code']
+
+        for block in self.connected_blocks:
+            declarations += block.get_declarations()
+
+        header_code = ''
+        init_code = ''
+        process_code = {}
+        #properties_domain_code = ''
+        for domain, code in domain_code.items():
+            if domain is not None: # To get rid of domains from constants
+                header_code += code['header_code']
+                init_code += code['init_code']
+                if not domain in process_code:
+                    process_code[domain] = {"code": '', "input_blocks" : [], "output_blocks" : []}
+
+    #            if 'input_blocks' in self.code['domain_code'][domain]:
+    #                for input_block in self.code['domain_code'][domain]['input_blocks']:
+    #                    if type(input_block.atom) == NameAtom or type(input_block.atom) == BundleAtom:
+    #                        process_code[domain]['input_blocks'].append(input_block.atom.declaration)
+    #            if 'output_blocks' in self.code['domain_code'][domain]:
+    #                for output_block in self.code['domain_code'][domain]['output_blocks']:
+    #                    if type(output_block.atom) == NameAtom or type(output_block.atom) == BundleAtom:
+    #                        process_code[domain]['output_blocks'].append(output_block.atom.declaration)
+
+                process_code[domain]['code'] += '\n'.join(code['processing_code'])
+                for block in self._input_blocks:
+                    if block['domain'] == domain:
+                        process_code[domain]['input_blocks'].append(block)
+
+                for block in self._output_blocks:
+                    if block['domain'] == domain:
+                        process_code[domain]['output_blocks'].append(block)
+
+        for const_name, const_info in self.instance_consts.items():
+            init_code += templates.assignment(const_name, "_" + const_name)
+            dec = Declaration(self.module['stack_index'],
+                        None,
+                        const_name,
+                        '')
+            declarations.append(dec) #templates.declaration_real(const_name)
+            header_code += templates.declaration_real(const_name);
+
+
+        for domain, code in domain_code.items():
+            if domain is None: # Process constants
+                header_code += code['header_code']
+                init_code += code['init_code']
+
+
+        declaration_text = templates.reaction_declaration(
+                self.reaction['name'], header_code,
+                init_code, process_code,
+                self.instance_consts)
+
+        declaration = Declaration(self.module['stack_index'],
+                                        self.domain,
+                                        self.name,
+                                        declaration_text)
+
+        for outer_dec in outer_declarations:
+            outer_dec.add_dependent(declaration)
+
+        declarations.append(declaration)
+        return declarations
+
+    def get_instances(self):
+        return []
 
 
 # --------------------- Common platform functions
