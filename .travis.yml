@@ -47,6 +47,7 @@ script:
   # - qmake -project
   - qmake Stride.pro
   - make
+  - tests/tst_parsertest
 
 notifications:
   recipients:
