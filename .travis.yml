@@ -29,6 +29,11 @@ before_install:
 install:
     # - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
 
+sudo: false
+
+cache:
+    apt: true
+
 addons:
   apt:
     sources:
