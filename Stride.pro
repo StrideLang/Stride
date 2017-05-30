@@ -1,3 +1,5 @@
+message("Building Stride")
+
 TEMPLATE = subdirs
 
 SUBDIRS = parser \

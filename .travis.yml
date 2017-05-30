@@ -1,8 +1,13 @@
 language: cpp
+dist: trusty
 
 os:
   - linux
-  - osx
+#  - osx
+
+compiler:
+      - gcc
+    #   - clang
 
 # branches:
 #   only:
@@ -16,28 +21,31 @@ env:
     - CONFIG=debug
 
 before_install:
-    - sudo add-apt-repository --yes ppa:beineri/opt-qt562
-    - sudo apt-get -qq update
-    - sudo apt-get install qt56base qt56tools
-    - /opt/qt56/bin/qt56-env.sh
+    # - sudo add-apt-repository --yes ppa:beineri/opt-qt562
+    # - sudo apt-get -qq update
+    # - sudo apt-get install qt56base qt56tools
+    # - /opt/qt56/bin/qt56-env.sh
 
 install:
-  - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
-         lsb_release -a
+    # - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
 
-      && export CXX="g++-4.8"
-      && export CC="gcc-4.8"
-      ;
-    else
-         brew update > /dev/null
-      && brew install qt5
-      && chmod -R 755 /usr/local/opt/qt5/*
-      ;
-    fi
+addons:
+  apt:
+    sources:
+    - sourceline: 'ppa:beineri/opt-qt58-trusty'
+    - sourceline: 'ppa:ubuntu-toolchain-r/test'
+    packages:
+    - g++-6
+    - qt58-meta-full
+    - clang
+
+before_script:
+    - QT_ENV_SCRIPT=$(find /opt -name 'qt*-env.sh')
+    - source $QT_ENV_SCRIPT
 
 script:
-  - qmake -project
-  - qmake Ultron.pro
+  # - qmake -project
+  - qmake Stride.pro
   - make
 
 notifications:
