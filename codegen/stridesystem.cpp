@@ -455,7 +455,7 @@ map<string, vector<AST *>> StrideSystem::getBuiltinObjectsReference()
         vector<AST *> platformObjects = platform->getPlatformObjectsReference();
         if (m_testing) {
             vector<AST *> testingObjs = platform->getPlatformTestingObjectsRef();
-            for (size_t i = 0; i < testingObjs.size(); i++) {
+            for (size_t i = 0; i < platformObjects.size(); i++) {
                 if(platformObjects[i]->getNodeType() == AST::Declaration
                         || platformObjects[i]->getNodeType() == AST::BundleDeclaration) {
                     DeclarationNode *decl = static_cast<DeclarationNode *>(platformObjects[i]);
