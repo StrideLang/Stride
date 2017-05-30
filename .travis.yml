@@ -50,6 +50,7 @@ before_script:
 
 script:
   # - qmake -project
+  - git clone --depth 1 -b 4.1.2 https://github.com/thestk/rtaudio.git strideroot/frameworks/RtAudio/1.0/project/rtaudio-4.1.2
   - qmake Stride.pro
   - make
   - tests/tst_parsertest
