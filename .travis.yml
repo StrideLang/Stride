@@ -41,7 +41,8 @@ addons:
     - sourceline: 'ppa:ubuntu-toolchain-r/test'
     packages:
     - g++-6
-    - qt58-meta-full
+    - qt58-meta-minimal
+    - qt58webengine
     - clang
     - libasound2-dev
 
