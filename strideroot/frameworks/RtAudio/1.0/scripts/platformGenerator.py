@@ -157,7 +157,10 @@ class Generator(GeneratorBase):
         shutil.copyfile(self.project_dir + "/template.cpp", self.out_file)
         if os.path.isdir(self.out_dir + "/rtaudio"):
             shutil.rmtree(self.out_dir + "/rtaudio")
-        shutil.copytree(self.project_dir + "/rtaudio-4.1.2", self.out_dir + "/rtaudio")
+        if os.path.isdir(self.project_dir + "/rtaudio-4.1.2"):
+            shutil.copytree(self.project_dir + "/rtaudio-4.1.2", self.out_dir + "/rtaudio")
+        else:
+            self.log("RtAudio 4.1.2 required. Not copying to project.")
 
         self.write_code(code,self.out_file)
 
@@ -235,7 +238,11 @@ class Generator(GeneratorBase):
 
         elif platform.system() == "Linux":
 
-            source_files = [self.out_file, self.out_dir + "/rtaudio/RtAudio.cpp"]
+            source_files = [self.out_file]
+            modules = []
+            if os.path.exists(self.out_dir + "/rtaudio/RtAudio.cpp"):
+                source_files.append(self.out_dir + "/rtaudio/RtAudio.cpp")
+                modules = ['alsa']
 
             cpp_compiler = "/usr/bin/g++"
 
@@ -247,8 +254,6 @@ class Generator(GeneratorBase):
 
             jack_defines = ['-D__UNIX_JACK__']
             jack_link_flags = [ "-ljack", '-lpthread']
-
-            modules = ['jack', 'alsa', 'pulse']
 
             defines = []
             link_flags = []

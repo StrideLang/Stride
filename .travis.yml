@@ -43,6 +43,7 @@ addons:
     - g++-6
     - qt58-meta-full
     - clang
+    - libasound2-dev
 
 before_script:
     - QT_ENV_SCRIPT=$(find /opt -name 'qt*-env.sh')

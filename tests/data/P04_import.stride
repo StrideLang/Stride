@@ -4,8 +4,8 @@ import Filters
 
 AudioIn[1] >> LowPass() >> AudioOut[1];
 
-import Filters as F
+#import Filters as F
 
-AudioIn[1] >> F::LowPass() >> AudioOut[1];
+#AudioIn[1] >> F::LowPass() >> AudioOut[1];
 
 import Platform::Filters::Filter

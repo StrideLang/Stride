@@ -655,12 +655,12 @@ void ParserTest::testImport()
 //    generator.validate();
     QVERIFY(generator.isValid());
 
-    ImportNode *import = static_cast<ImportNode *>(tree->getChildren().at(5));
-    QVERIFY(import->getNodeType() == AST::Import);
-    QVERIFY(import->importName() == "Filter");
-    QVERIFY(import->getScopeLevels() == 2);
-    QVERIFY(import->getScopeAt(0) == "Platform");
-    QVERIFY(import->getScopeAt(1) == "Filters");
+//    ImportNode *import = static_cast<ImportNode *>(tree->getChildren().at(5));
+//    QVERIFY(import->getNodeType() == AST::Import);
+//    QVERIFY(import->importName() == "Filter");
+//    QVERIFY(import->getScopeLevels() == 2);
+//    QVERIFY(import->getScopeAt(0) == "Platform");
+//    QVERIFY(import->getScopeAt(1) == "Filters");
 
     tree->deleteChildren();
     delete tree;
