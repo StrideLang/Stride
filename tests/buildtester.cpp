@@ -138,6 +138,7 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile)
                      }
                      counter++;
                  }
+				 std::cerr << "Passed comparison." << std::endl;
 //                 std::cout << builder->getStdOut().toStdString() << std::endl;
              }
          }

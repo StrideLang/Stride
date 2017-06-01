@@ -31,5 +31,6 @@ strideroot/frameworks/*/_tests/*_Products*
 strideroot/frameworks/RtAudio/*/project/rtaudio-*
 strideroot/frameworks/RtAudio/*/project/rtaudio-*/*
 strideroot/frameworks/RtAudio/*/project/rtaudio-*/*/*
+strideroot/frameworks/RtAudio/*/_tests/*/*_Products*
 
 *.DS_Store
