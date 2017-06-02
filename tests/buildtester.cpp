@@ -127,7 +127,7 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile)
                          double expected = outputLines.at(counter).toDouble();
                          if (!(std::fabs(out - expected) < 0.000002)) {
                              std::cerr << "Failed comparison at line " << counter + 1 << std::endl;
-                             std::cerr << "Got " << line.toStdString() << " Expected " << outputLines.at(counter).toStdString() << std::endl;
+                             std::cerr << "Got " << outputLines.at(counter).toStdString() << " Expected " << line.toStdString() << std::endl;
                              QFile failedOutput("failed.output");
                              if (failedOutput.open(QIODevice::WriteOnly)) {
                                  failedOutput.write(builder->getStdOut().toLocal8Bit());
