@@ -26,5 +26,8 @@ module Test {
 		]
 }
 
-AudioIn[1] >> Test(test: 0.5) >> AudioOut[1];
-AudioIn[2] >> Test(test: 0.25) >> AudioOut[2];
+constant Half {value: 0.5}
+constant Quarter {value: 0.25}
+
+AudioIn[1] >> Test(test: Half) >> AudioOut[1];
+AudioIn[2] >> Test(test: Quarter) >> AudioOut[2];
