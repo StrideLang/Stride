@@ -819,14 +819,14 @@ void CodeValidator::validateNodeRate(AST *node, AST *tree)
             || node->getNodeType() == AST::BundleDeclaration) {
         DeclarationNode *decl = static_cast<DeclarationNode *>(node);
         if (decl->getObjectType() == "signal") {
-            if (findRateInProperties(decl->getProperties(), QVector<AST *>(), tree) < 0) {
-                LangError error;
-                error.type = LangError::UnresolvedRate;
-                error.lineNumber = node->getLine();
-                error.filename = node->getFilename();
-                error.errorTokens.push_back(decl->getName());
-                m_errors << error;
-            }
+//            if (findRateInProperties(decl->getProperties(), QVector<AST *>(), tree) < 0) {
+//                LangError error;
+//                error.type = LangError::UnresolvedRate;
+//                error.lineNumber = node->getLine();
+//                error.filename = node->getFilename();
+//                error.errorTokens.push_back(decl->getName());
+//                m_errors << error;
+//            }
         }
     } else if(node->getNodeType() == AST::Stream) {
         StreamNode *stream = static_cast<StreamNode *>(node);
