@@ -1,0 +1,10 @@
+use DesktopAudio version 1.0
+
+signal DownSampled {
+	rate: AudioRate/2
+	default: 0.0
+}
+
+DownSampled + 1 >> DownSampled;
+
+DownSampled >> AudioOut[1];

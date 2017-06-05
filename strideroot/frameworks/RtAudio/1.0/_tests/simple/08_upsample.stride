@@ -1,0 +1,10 @@
+use DesktopAudio version 1.0
+
+signal Upsampled {
+	rate: AudioRate*3
+	default: 0.0
+}
+
+Upsampled + 1 >> Upsampled;
+
+Upsampled >> AudioOut[1];
