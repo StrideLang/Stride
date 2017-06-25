@@ -43,16 +43,16 @@ class BlockNode : public AST
 {
 public:
     BlockNode(string name, const char *filename, int line, vector<string> scope = vector<string>());
-    BlockNode(string name, AST *scope, const char *filename, int line);
+    BlockNode(string name, ASTNode scope, const char *filename, int line);
 
     ~BlockNode();
 
     string getName() const {return m_name;}
 
-    AST *deepCopy();
+    virtual ASTNode deepCopy() override;
 
 private:
-    void resolveScope(AST *scope);
+    void resolveScope(ASTNode scope);
     string m_name;
 };
 

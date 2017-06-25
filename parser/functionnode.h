@@ -48,27 +48,28 @@ public:
         UserDefined
     } FunctionType;
 
-    FunctionNode(string name, AST *propertiesList, FunctionType type, const char *filename, int line);
-    FunctionNode(string name, AST *scope, AST *propertiesList, FunctionType type, const char *filename, int line);
+    FunctionNode(string name, ASTNode propertiesList, FunctionType type, const char *filename, int line);
+    FunctionNode(string name, ASTNode scope, ASTNode propertiesList, FunctionType type, const char *filename, int line);
     ~FunctionNode();
 
-    void addChild(AST *t);
-    void setChildren(vector<AST *> &newChildren);
-    void deleteChildren();
+    virtual void addChild(ASTNode t) override;
+    virtual void setChildren(vector<ASTNode > &newChildren) override;
+//    virtual void deleteChildren() override;
 
     string getName() const { return m_name; }
-    vector<PropertyNode *> getProperties() const;
+    vector<std::shared_ptr<PropertyNode>> getProperties() const;
 
+    void addProperty(std::shared_ptr<PropertyNode> newProperty);
+    ASTNode getPropertyValue(string propertyName);
+    void setPropertyValue(string propertyName, ASTNode value);
+    bool replacePropertyValue(string propertyName, ASTNode newValue);
 
-    void addProperty(PropertyNode *newProperty);
-    AST *getPropertyValue(string propertyName);
-
-    AST *getDomain();
+    ASTNode getDomain();
     void setDomainString(string domain);
 
-    void resolveScope(AST* scope);
+    virtual void resolveScope(ASTNode scope) override;
 
-    AST *deepCopy();
+    virtual ASTNode deepCopy() override;
 
     // FIXME We should provide input and output rates for functions.
     double getRate() const;
@@ -78,7 +79,7 @@ private:
     double m_rate;
     string m_name;
     FunctionType m_type;
-    vector<PropertyNode *> m_properties;
+    vector<std::shared_ptr<PropertyNode>> m_properties;
 };
 
 #endif // FUNCTIONNODE_H

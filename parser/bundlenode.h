@@ -43,16 +43,16 @@
 class BundleNode : public AST
 {
 public:
-    BundleNode(string name, ListNode *indexList, const char *filename, int line, vector<string> scope = vector<string>());
-    BundleNode(string name, AST *scope, ListNode *indexList, const char *filename, int line);
+    BundleNode(string name, std::shared_ptr<ListNode> indexList, const char *filename, int line, vector<string> scope = vector<string>());
+    BundleNode(string name, ASTNode scope, std::shared_ptr<ListNode> indexList, const char *filename, int line);
     virtual ~BundleNode();
 
     string getName() const;
-    ListNode *index() const;
+    std::shared_ptr<ListNode>index() const;
 
-    void resolveScope(AST *scope);
+    virtual void resolveScope(ASTNode scope) override;
 
-    AST *deepCopy();
+    virtual ASTNode deepCopy() override;
 
 private:
     string m_name;

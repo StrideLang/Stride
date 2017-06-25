@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 //    qDebug() << args.at(0);
 //    qDebug() << platformRootPath;
 
-    AST *tree;
+    ASTNode tree;
     tree = AST::parseFile(fileName.toLocal8Bit().constData());
 
     bool buildOK = true;
@@ -121,9 +121,6 @@ int main(int argc, char *argv[])
                 buildOK = false;
             }
         }
-
-        tree->deleteChildren();
-        delete tree;
     } else {
         vector<LangError> errors = AST::getParseErrors();
         for (LangError err: errors) {

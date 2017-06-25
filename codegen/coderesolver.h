@@ -54,7 +54,7 @@
 class CodeResolver
 {
 public:
-    CodeResolver(StrideSystem * system, AST *tree);
+    CodeResolver(StrideSystem * system, ASTNode tree);
     ~CodeResolver();
 
     void preProcess();
@@ -73,59 +73,59 @@ private:
     void analyzeConnections();
 
     // Sub functions
-    void resolveStreamRatesReverse(StreamNode *stream);
-    void resolveStreamRates(StreamNode *stream);
-    void expandParallelStream(StreamNode *stream, QVector<AST *> scopeStack, AST *tree);
+    void resolveStreamRatesReverse(std::shared_ptr<StreamNode> stream);
+    void resolveStreamRates(std::shared_ptr<StreamNode> stream);
+    void expandParallelStream(std::shared_ptr<StreamNode> stream, QVector<ASTNode> scopeStack, ASTNode tree);
 
-    void expandStreamToSizes(StreamNode *stream, QVector<int> &size, int previousOutSize, QVector<AST *> scopeStack);
-    AST *expandFunctionFromProperties(FunctionNode *func, QVector<AST *> scope, AST *tree);
-    void fillDefaultPropertiesForNode(AST *node);
+    void expandStreamToSizes(std::shared_ptr<StreamNode> stream, QVector<int> &size, int previousOutSize, QVector<ASTNode > scopeStack);
+    ASTNode expandFunctionFromProperties(std::shared_ptr<FunctionNode> func, QVector<ASTNode > scope, ASTNode tree);
+    void fillDefaultPropertiesForNode(ASTNode node);
 
-    void insertBuiltinObjectsForNode(AST *node, map<string, vector<AST *> > &objects);
+    void insertBuiltinObjectsForNode(ASTNode node, map<string, vector<ASTNode> > &objects);
 
-    void resolveDomainsForStream(const StreamNode *func, QVector<AST *> scopeStack, QString contextDomain = "");
-    string processDomainsForNode(AST *node, QVector<AST *> scopeStack, QList<AST *> &domainStack);
-    void setDomainForStack(QList<AST *> domainStack, string domainName,  QVector<AST *> scopeStack);
-    DeclarationNode *createDomainDeclaration(QString name);
-    DeclarationNode *createSignalDeclaration(QString name, int size = 1);
-    std::vector<AST *> declareUnknownName(BlockNode *block, int size, QVector<AST *> localScope, AST *tree);
-    std::vector<AST *> declareUnknownBundle(BundleNode *name, int size, QVector<AST *> localScope, AST *tree);
-    DeclarationNode *createConstantDeclaration(string name, AST *value);
-    void declareIfMissing(string name, AST *blockList, AST *value);
-    DeclarationNode *createSignalBridge(string name, AST *defaultValue, AST *inDomain, AST * outDomain, const string filename, int line, int size = 1);
+    void resolveDomainsForStream(std::shared_ptr<StreamNode> func, QVector<ASTNode > scopeStack, QString contextDomain = "");
+    string processDomainsForNode(ASTNode node, QVector<ASTNode > scopeStack, QList<ASTNode > &domainStack);
+    void setDomainForStack(QList<ASTNode > domainStack, string domainName,  QVector<ASTNode > scopeStack);
+    std::shared_ptr<DeclarationNode> createDomainDeclaration(QString name);
+    std::shared_ptr<DeclarationNode> createSignalDeclaration(QString name, int size = 1);
+    std::vector<ASTNode> declareUnknownName(std::shared_ptr<BlockNode> block, int size, QVector<ASTNode> localScope, ASTNode tree);
+    std::vector<ASTNode> declareUnknownBundle(std::shared_ptr<BundleNode> name, int size, QVector<ASTNode > localScope, ASTNode tree);
+    std::shared_ptr<DeclarationNode> createConstantDeclaration(string name, ASTNode value);
+    void declareIfMissing(string name, ASTNode blockList, ASTNode value);
+    std::shared_ptr<DeclarationNode> createSignalBridge(string name, ASTNode defaultValue, ASTNode inDomain, ASTNode  outDomain, const string filename, int line, int size = 1);
 
-    std::vector<AST *> declareUnknownExpressionSymbols(ExpressionNode *expr, int size, QVector<AST *> scopeStack, AST * tree);
-    std::vector<AST *> declareUnknownFunctionSymbols(FunctionNode *func, QVector<AST *> scopeStack, AST * tree);
-    ListNode *expandNameToList(BlockNode *name, int size);
-    void expandNamesToBundles(StreamNode *stream, AST *tree);
-    std::vector<AST *> declareUnknownStreamSymbols(const StreamNode *stream, AST *previousStreamMember, QVector<AST *> localScope, AST *tree);
-    std::vector<const AST *> getModuleStreams(DeclarationNode *module);
+    std::vector<ASTNode > declareUnknownExpressionSymbols(std::shared_ptr<ExpressionNode> expr, int size, QVector<ASTNode > scopeStack, ASTNode  tree);
+    std::vector<ASTNode > declareUnknownFunctionSymbols(std::shared_ptr<FunctionNode> func, QVector<ASTNode > scopeStack, ASTNode  tree);
+    std::shared_ptr<ListNode> expandNameToList(BlockNode *name, int size);
+    void expandNamesToBundles(std::shared_ptr<StreamNode> stream, ASTNode tree);
+    std::vector<ASTNode > declareUnknownStreamSymbols(std::shared_ptr<StreamNode> stream, ASTNode previousStreamMember, QVector<ASTNode > localScope, ASTNode tree);
+    std::vector<ASTNode > getModuleStreams(std::shared_ptr<DeclarationNode> module);
 
-    ValueNode *reduceConstExpression(ExpressionNode *expr, QVector<AST *> scope, AST *tree);
-    ValueNode *resolveConstant(AST *value, QVector<AST *> scope);
-    void resolveConstantsInNode(AST *node, QVector<AST *> scope);
-    void propagateDomainsForNode(AST *node, QVector<AST *> scopeStack);
-    void resolveDomainForStreamNode(AST *node, QVector<AST *> scope);
+    std::shared_ptr<ValueNode> reduceConstExpression(std::shared_ptr<ExpressionNode> expr, QVector<ASTNode > scope, ASTNode tree);
+    std::shared_ptr<ValueNode> resolveConstant(ASTNode value, QVector<ASTNode > scope);
+    void resolveConstantsInNode(ASTNode node, QVector<ASTNode > scope);
+    void propagateDomainsForNode(ASTNode node, QVector<ASTNode > scopeStack);
+    void resolveDomainForStreamNode(ASTNode node, QVector<ASTNode > scope);
 
-    void checkStreamConnections(const StreamNode *stream, QVector<AST *> scopeStack, bool start = true);
-    void markConnectionForNode(AST *node, QVector<AST *> scopeStack, bool start);
+    void checkStreamConnections(std::shared_ptr<StreamNode> stream, QVector<ASTNode > scopeStack, bool start = true);
+    void markConnectionForNode(ASTNode node, QVector<ASTNode > scopeStack, bool start);
 
     // Operators
-    ValueNode *multiply(ValueNode *left, ValueNode *right);
-    ValueNode *divide(ValueNode *left, ValueNode *right);
-    ValueNode *add(ValueNode *left, ValueNode *right);
-    ValueNode *subtract(ValueNode *left, ValueNode *right);
-    ValueNode *unaryMinus(ValueNode *value);
-    ValueNode *logicalAnd(ValueNode *left, ValueNode *right);
-    ValueNode *logicalOr(ValueNode *left, ValueNode *right);
-    ValueNode *logicalNot(ValueNode *left);
+    std::shared_ptr<ValueNode>  multiply(std::shared_ptr<ValueNode>  left, std::shared_ptr<ValueNode>  right);
+    std::shared_ptr<ValueNode>  divide(std::shared_ptr<ValueNode>  left, std::shared_ptr<ValueNode>  right);
+    std::shared_ptr<ValueNode>  add(std::shared_ptr<ValueNode>  left, std::shared_ptr<ValueNode>  right);
+    std::shared_ptr<ValueNode>  subtract(std::shared_ptr<ValueNode>  left, std::shared_ptr<ValueNode>  right);
+    std::shared_ptr<ValueNode>  unaryMinus(std::shared_ptr<ValueNode>  value);
+    std::shared_ptr<ValueNode>  logicalAnd(std::shared_ptr<ValueNode>  left, std::shared_ptr<ValueNode>  right);
+    std::shared_ptr<ValueNode>  logicalOr(std::shared_ptr<ValueNode>  left, std::shared_ptr<ValueNode>  right);
+    std::shared_ptr<ValueNode>  logicalNot(std::shared_ptr<ValueNode>  left);
 
-    AST * makeConnector(AST * node, string connectorName, int size, const QVector<AST *> &scopeStack);
-    QVector<AST *> sliceStreamByDomain(StreamNode *stream, QVector<AST *> scopeStack);
-    QVector<AST *> processExpression(ExpressionNode *expr, QVector<AST *> scopeStack, AST *outDOmain);
+    ASTNode  makeConnector(ASTNode  node, string connectorName, int size, const QVector<ASTNode > &scopeStack);
+    QVector<ASTNode > sliceStreamByDomain(std::shared_ptr<StreamNode> stream, QVector<ASTNode > scopeStack);
+    QVector<ASTNode > processExpression(std::shared_ptr<ExpressionNode> expr, QVector<ASTNode > scopeStack, ASTNode outDOmain);
 
     StrideSystem * m_system;
-    AST *m_tree;
+    ASTNode m_tree;
     int m_connectorCounter;
 };
 

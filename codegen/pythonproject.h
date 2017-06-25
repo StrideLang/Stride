@@ -68,7 +68,7 @@ public:
 signals:
 
 public slots:
-    virtual bool build(AST *tree) override;
+    virtual bool build(ASTNode tree) override;
     virtual bool flash() override { return true;}
     virtual bool run(bool pressed = true) override;
     virtual bool isValid() override;
@@ -78,13 +78,13 @@ public slots:
     void stopRunning();
 
 private:
-    void writeAST(AST *tree);
-    void astToJson(AST *node, QJsonObject &obj);
-    void listToJsonArray(ListNode *node, QJsonArray &obj);
-    void streamToJsonArray(StreamNode *node, QJsonArray &array);
-    void functionToJson(FunctionNode *node, QJsonObject &obj);
-    void expressionToJson(ExpressionNode *node, QJsonObject &obj);
-    void appendStreamToArray(AST *node, QJsonArray &array);
+    void writeAST(ASTNode tree);
+    void astToJson(ASTNode node, QJsonObject &obj);
+    void listToJsonArray(std::shared_ptr<ListNode> node, QJsonArray &obj);
+    void streamToJsonArray(std::shared_ptr<StreamNode> node, QJsonArray &array);
+    void functionToJson(std::shared_ptr<FunctionNode> node, QJsonObject &obj);
+    void expressionToJson(std::shared_ptr<ExpressionNode> node, QJsonObject &obj);
+    void appendStreamToArray(ASTNode node, QJsonArray &array);
 
     QString m_platformName;
     QString m_pythonExecutable;

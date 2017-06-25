@@ -1,0 +1,22 @@
+use DesktopAudio version 1.0
+
+module TestModule {
+    ports: [
+	    port Valid {
+		    name: "valid"
+            block: Valid
+		}
+        port Output {
+		    name: "output"
+            direction: "output"
+            main: on
+            block: Output
+		}
+    ]
+    streams : [
+        Valid >> Output;
+    ]
+
+}
+
+TestModule(valid: 1.0 invalid: 1.0) >> Sig;

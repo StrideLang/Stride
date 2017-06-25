@@ -40,7 +40,7 @@
 class ListNode : public AST
 {
 public:
-    ListNode(AST *newMember, const char *filename, int line);
+    ListNode(ASTNode newMember, const char *filename, int line);
     ~ListNode();
 
     void stealMembers(ListNode *list);
@@ -48,9 +48,9 @@ public:
 
     int size();
 
-    void replaceMember(AST *replacement, AST *member);
+    void replaceMember(ASTNode replacement, ASTNode member);
 
-    AST *deepCopy();
+    virtual ASTNode deepCopy() override;
 };
 
 #endif // LISTNODE_H

@@ -54,24 +54,24 @@ public:
         BitNot
     } ExpressionType;
 
-    ExpressionNode(ExpressionType type, AST *left, AST *right, const char *filename, int line);
-    ExpressionNode(ExpressionType type, AST *value, const char *filename, int line);
+    ExpressionNode(ExpressionType type, ASTNode left, ASTNode right, const char *filename, int line);
+    ExpressionNode(ExpressionType type, ASTNode value, const char *filename, int line);
     ~ExpressionNode();
 
     bool isUnary() const;
 
-    AST *getLeft() const;
-    AST *getRight() const;
+    ASTNode getLeft() const;
+    ASTNode getRight() const;
 
-    void replaceLeft(AST *newLeft);
-    void replaceRight(AST *newRight);
-    void replaceValue(AST *newValue);
+    void replaceLeft(ASTNode newLeft);
+    void replaceRight(ASTNode newRight);
+    void replaceValue(ASTNode newValue);
 
-    AST *getValue() const;
+    ASTNode getValue() const;
 
     ExpressionType getExpressionType() const;
     string getExpressionTypeString() const;
-    AST *deepCopy();
+    virtual ASTNode deepCopy() override;
 
 private:
     ExpressionType m_type;

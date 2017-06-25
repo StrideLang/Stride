@@ -36,27 +36,27 @@
 
 #include "rangenode.h"
 
-RangeNode::RangeNode(AST *start, AST *end, const char *filename, int line):
+RangeNode::RangeNode(ASTNode start, ASTNode end, const char *filename, int line):
     AST(AST::Range, filename, line)
 {
     addChild(start);
     addChild(end);
 }
 
-AST *RangeNode::startIndex() const
+ASTNode RangeNode::startIndex() const
 {
     return m_children.at(0);
 }
 
-AST *RangeNode::endIndex() const
+ASTNode RangeNode::endIndex() const
 {
     return m_children.at(1);
 }
 
-AST *RangeNode::deepCopy()
+ASTNode RangeNode::deepCopy()
 {
-    AST *newRangeNode = new RangeNode(startIndex()->deepCopy(), endIndex()->deepCopy(),
-                                m_filename.data(), m_line);
+    ASTNode newRangeNode = std::make_shared<RangeNode>(startIndex(), endIndex(),
+                                         m_filename.data(), m_line);
     return newRangeNode;
 }
 

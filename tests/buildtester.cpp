@@ -54,7 +54,7 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile)
      QList<LangError> errors;
      vector<LangError> syntaxErrors;
 
-     AST *tree;
+     ASTNode tree;
      tree = AST::parseFile(filename.c_str());
 
      syntaxErrors = AST::getParseErrors();
@@ -80,7 +80,7 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile)
              return false;
          }
          StrideSystem *system = validator.getSystem();
-         system->enableTesting(tree);
+         system->enableTesting(tree.get());
 
          std::vector<Builder *> m_builders;
 
@@ -92,8 +92,6 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile)
          m_builders = system->createBuilders(QString::fromStdString(filename), usedFrameworks);
          if (m_builders.size() == 0) {
              std::cerr << "Can't create builder" << std::endl;
-             tree->deleteChildren();
-             delete tree;
              return false;
          }
          buildOK = true;
@@ -138,13 +136,10 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile)
                      }
                      counter++;
                  }
-				 std::cerr << "Passed comparison." << std::endl;
+                 std::cerr << "Passed comparison." << std::endl;
 //                 std::cout << builder->getStdOut().toStdString() << std::endl;
              }
          }
-
-         tree->deleteChildren();
-         delete tree;
          for (auto builder: m_builders) {
              delete builder;
          }

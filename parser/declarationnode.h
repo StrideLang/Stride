@@ -44,28 +44,28 @@
 class DeclarationNode : public AST
 {
 public:
-    DeclarationNode(string name, string objectType, AST *propertiesList, const char *filename, int line, vector<string> scope = vector<string>());
-    DeclarationNode(BundleNode *bundle, string objectType, AST *propertiesList, const char *filename, int line, vector<string> scope = vector<string>());
+    DeclarationNode(string name, string objectType, ASTNode propertiesList, const char *filename, int line, vector<string> scope = vector<string>());
+    DeclarationNode(std::shared_ptr<BundleNode> bundle, string objectType, ASTNode propertiesList, const char *filename, int line, vector<string> scope = vector<string>());
     ~DeclarationNode();
 
     string getName() const;
     BundleNode *getBundle() const;
-    vector<PropertyNode *> getProperties() const;
-    bool addProperty(PropertyNode *newProperty);
-    AST *getPropertyValue(string propertyName);
-    void setPropertyValue(string propertyName, AST *value);
-    bool replacePropertyValue(string propertyName, AST *newValue);
+    vector<std::shared_ptr<PropertyNode>> getProperties() const;
+    bool addProperty(std::shared_ptr<PropertyNode> newProperty);
+    ASTNode getPropertyValue(string propertyName);
+    void setPropertyValue(string propertyName, ASTNode value);
+    bool replacePropertyValue(string propertyName, ASTNode newValue);
 
-    AST *getDomain();
+    ASTNode getDomain();
     void setDomainString(string domain);
 
     string getObjectType() const;
-    AST *deepCopy();
+    virtual ASTNode deepCopy() override;
 
 private:
     string m_name;
     string m_objectType;
-    vector<PropertyNode *> m_properties;
+    vector<std::shared_ptr<PropertyNode>> m_properties;
 };
 
 #endif // DECLARATIONNODE_H

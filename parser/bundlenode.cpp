@@ -37,14 +37,14 @@
 #include "bundlenode.h"
 #include "scopenode.h"
 
-BundleNode::BundleNode(string name, ListNode *indexList, const char *filename, int line, vector<string> scope) :
+BundleNode::BundleNode(string name, std::shared_ptr<ListNode> indexList, const char *filename, int line, vector<string> scope) :
     AST(AST::Bundle, filename, line, scope)
 {
     addChild(indexList);
     m_name = name;
 }
 
-BundleNode::BundleNode(string name, AST *scope, ListNode *indexList, const char *filename, int line) :
+BundleNode::BundleNode(string name, ASTNode scope, std::shared_ptr<ListNode> indexList, const char *filename, int line) :
     AST(AST::Bundle, filename, line)
 {
     addChild(indexList);
@@ -62,26 +62,26 @@ string BundleNode::getName() const
     return m_name;
 }
 
-ListNode *BundleNode::index() const
+std::shared_ptr<ListNode> BundleNode::index() const
 {
-    return static_cast<ListNode *>(m_children.at(0));
+    return std::static_pointer_cast<ListNode>(m_children.at(0));
 }
 
-void BundleNode::resolveScope(AST *scope)
+void BundleNode::resolveScope(ASTNode scope)
 {
     if (scope) {
         for (unsigned int i = 0; i < scope->getChildren().size(); i++) {
             assert(scope->getChildren().at(i)->getNodeType() == AST::Scope);
-            m_scope.push_back((static_cast<ScopeNode *>(scope->getChildren().at(i)))->getName());
+            m_scope.push_back((static_cast<ScopeNode *>(scope->getChildren().at(i).get()))->getName());
         }
     }
 }
 
-AST *BundleNode::deepCopy()
+ASTNode BundleNode::deepCopy()
 {
     assert(getNodeType() == AST::Bundle);
     if(getNodeType() == AST::Bundle) {
-        AST *newBundle = new BundleNode(m_name, static_cast<ListNode *>(index()->deepCopy()), m_filename.data(), m_line);
+        std::shared_ptr<BundleNode> newBundle = std::make_shared<BundleNode>(m_name, static_pointer_cast<ListNode>(index()->deepCopy()), m_filename.data(), m_line);
         for (unsigned int i = 0; i < this->getScopeLevels(); i++) {
             newBundle->addScope(this->getScopeAt(i));
         }

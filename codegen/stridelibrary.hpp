@@ -53,19 +53,19 @@ public:
 
     void setLibraryPath(QString strideRootPath, QMap<QString,QString> importList = QMap<QString,QString>());
 
-    DeclarationNode *findTypeInLibrary(QString typeName);
+    std::shared_ptr<DeclarationNode> findTypeInLibrary(QString typeName);
 
     bool isValidBlock(DeclarationNode *block);
 
-    std::vector<AST *> getLibraryMembers();
+    std::vector<ASTNode> getLibraryMembers();
 
 private:
 
-    bool isValidProperty(PropertyNode *property, DeclarationNode *type);
+    bool isValidProperty(std::shared_ptr<PropertyNode> property, DeclarationNode *type);
     QList<DeclarationNode *> getParentTypes(DeclarationNode *type);
 
     void readLibrary(QString rootDir, QMap<QString, QString> importList);
-    QList<AST *> m_libraryTrees;
+    QList<ASTNode> m_libraryTrees;
     int m_majorVersion;
     int m_minorVersion;
 };

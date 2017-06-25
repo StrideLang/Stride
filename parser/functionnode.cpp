@@ -38,25 +38,29 @@
 #include "scopenode.h"
 #include "valuenode.h"
 
-FunctionNode::FunctionNode(string name, AST *propertiesList, FunctionType type,
+FunctionNode::FunctionNode(string name, ASTNode propertiesList, FunctionType type,
                            const char *filename, int line) :
     AST(AST::Function, filename, line)
 {
     m_name = name;
     if (propertiesList) {
-        propertiesList->giveChildren(this);
+        for (ASTNode child: propertiesList->getChildren()) {
+            addChild(child);
+        }
     }
     m_type = type;
     m_rate = -1;
 }
 
-FunctionNode::FunctionNode(string name, AST* scope, AST *propertiesList, FunctionType type,
+FunctionNode::FunctionNode(string name, ASTNode scope, ASTNode propertiesList, FunctionType type,
                            const char *filename, int line) :
     AST(AST::Function, filename, line)
 {
     m_name = name;
     if (propertiesList) {
-        propertiesList->giveChildren(this);
+        for (ASTNode child: propertiesList->getChildren()) {
+            addChild(child);
+        }
     }
     m_type = type;
     resolveScope(scope);
@@ -68,25 +72,27 @@ FunctionNode::~FunctionNode()
 
 }
 
-void FunctionNode::addChild(AST *t)
+void FunctionNode::addChild(ASTNode t)
 {
     AST::addChild(t);
     assert(t->getNodeType() == AST::Property);
-    m_properties.push_back(static_cast<PropertyNode *>(t));
+    m_properties.push_back(static_pointer_cast<PropertyNode>(t));
 }
 
-void FunctionNode::setChildren(vector<AST *> &newChildren)
+
+
+void FunctionNode::setChildren(vector<ASTNode> &newChildren)
 {
     AST::setChildren(newChildren);
     for (unsigned int i = 0; i < m_children.size(); i++) {
         assert(m_children.at(i)->getNodeType() == AST::Property);
-        m_properties.push_back(static_cast<PropertyNode *>(m_children.at(i)));
+        m_properties.push_back(static_pointer_cast<PropertyNode>(m_children.at(i)));
     }
 }
 
-AST *FunctionNode::getDomain()
+ASTNode FunctionNode::getDomain()
 {
-    AST *domainValue = getPropertyValue("domain");
+    ASTNode domainValue = getPropertyValue("domain");
     return domainValue;
 }
 
@@ -95,27 +101,27 @@ void FunctionNode::setDomainString(string domain)
     bool domainSet = false;
     for (unsigned int i = 0; i < m_properties.size(); i++) {
         if (m_properties.at(i)->getName() == "domain") {
-            m_properties.at(i)->replaceValue(new ValueNode(domain, "", -1));
+            m_properties.at(i)->replaceValue(std::make_shared<ValueNode>(domain, "", -1));
             domainSet = true;
         }
     }
     if (!domainSet) {
-        addProperty(new PropertyNode("domain", new ValueNode(domain, "", -1), "", -1));
+        addProperty(std::make_shared<PropertyNode>("domain", std::make_shared<ValueNode>(domain, "", -1), "", -1));
     }
 }
 
-void FunctionNode::deleteChildren()
-{
-    AST::deleteChildren();
-    m_properties.clear();
-}
+//void FunctionNode::deleteChildren()
+//{
+////    AST::deleteChildren();
+////    m_properties.clear();
+//}
 
-vector<PropertyNode *> FunctionNode::getProperties() const
+vector<std::shared_ptr<PropertyNode>> FunctionNode::getProperties() const
 {
     return m_properties;
 }
 
-void FunctionNode::addProperty(PropertyNode *newProperty)
+void FunctionNode::addProperty(std::shared_ptr<PropertyNode> newProperty)
 {
     if (!getPropertyValue(newProperty->getName())) {
         addChild(newProperty);
@@ -123,35 +129,55 @@ void FunctionNode::addProperty(PropertyNode *newProperty)
     }
 }
 
-AST *FunctionNode::getPropertyValue(string propertyName)
+ASTNode FunctionNode::getPropertyValue(string propertyName)
 {
     for (unsigned int i = 0; i < m_properties.size(); i++) {
         if (m_properties.at(i)->getName() == propertyName) {
             return m_properties.at(i)->getValue();
         }
     }
-    return NULL;
+    return nullptr;
 }
 
-void FunctionNode::resolveScope(AST *scope)
+void FunctionNode::setPropertyValue(string propertyName, ASTNode value)
+{
+    if (getPropertyValue(propertyName)) {
+        replacePropertyValue(propertyName, value);
+    } else {
+        addProperty(std::make_shared<PropertyNode>(propertyName, value, value->getFilename().c_str(), value->getLine()));
+    }
+}
+
+bool FunctionNode::replacePropertyValue(string propertyName, ASTNode newValue)
+{
+    bool replaced = false;
+    for (unsigned int i = 0; i < m_properties.size(); i++) {
+        if (m_properties.at(i)->getName() == propertyName) {
+            m_properties.at(i)->replaceValue(newValue);
+            replaced = true;
+            break;
+        }
+    }
+    return replaced;
+}
+
+void FunctionNode::resolveScope(ASTNode scope)
 {
     if (scope) {
         for (unsigned int i = 0; i < scope->getChildren().size(); i++) {
             assert(scope->getChildren().at(i)->getNodeType() == AST::Scope);
-            m_scope.push_back((static_cast<ScopeNode *>(scope->getChildren().at(i)))->getName());
+            m_scope.push_back((static_pointer_cast<ScopeNode>(scope->getChildren().at(i)))->getName());
         }
     }
 }
 
-AST *FunctionNode::deepCopy()
+ASTNode FunctionNode::deepCopy()
 {
-    AST * newProps = new AST();
+    AST *newProps = new AST();
     for(unsigned int i = 0; i< m_properties.size(); i++) {
         newProps->addChild(m_properties[i]->deepCopy());
     }
-    FunctionNode *newFunctionNode = new FunctionNode(m_name, newProps, m_type, m_filename.data(), m_line);
-    newProps->deleteChildren();
-    delete newProps;
+    std::shared_ptr<FunctionNode> newFunctionNode = std::make_shared<FunctionNode>(m_name, std::shared_ptr<AST>(newProps), m_type, m_filename.data(), m_line);
     for (unsigned int i = 0; i < this->getScopeLevels(); i++) {
         newFunctionNode->addScope(this->getScopeAt(i));
     }

@@ -40,16 +40,16 @@
 class StreamNode : public AST
 {
 public:
-    StreamNode(AST *left, AST *right, const char *filename, int line);
+    StreamNode(ASTNode left, ASTNode right, const char *filename, int line);
     ~StreamNode();
 
-    AST *getLeft() const {return m_children.at(0); }
-    AST *getRight() const { return m_children.at(1); }
+    ASTNode getLeft() const {return m_children.at(0); }
+    ASTNode getRight() const { return m_children.at(1); }
 
-    void setLeft(AST *newLeft);
-    void setRight(AST *newRight);
+    void setLeft(ASTNode newLeft);
+    void setRight(ASTNode newRight);
 
-    AST *deepCopy();
+    virtual ASTNode deepCopy() override;
 private:
 };
 

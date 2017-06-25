@@ -62,7 +62,7 @@ public:
 
     bool getSwitchValue() const;
 
-    AST *deepCopy();
+    virtual ASTNode deepCopy() override;
 
 private:
     int m_intValue;

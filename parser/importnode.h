@@ -42,7 +42,7 @@
 class ImportNode : public AST
 {
 public:
-    ImportNode(string name, AST *scope, const char *filename, int line, string alias = string());
+    ImportNode(string name, ASTNode scope, const char *filename, int line, string alias = string());
     ImportNode(string name, const char *filename, int line, string alias = string());
 
     string importName() const;
@@ -51,9 +51,9 @@ public:
     string importAlias() const;
     void setImportAlias(const string &importAlias);
 
-    void resolveScope(AST *scope);
+    virtual void resolveScope(ASTNode scope) override;
 
-    AST *deepCopy();
+    virtual ASTNode deepCopy() override;
 
 private:
     string m_importName;

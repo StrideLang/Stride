@@ -44,7 +44,7 @@ public:
 
     std::string keyword() {return m_kw;}
 
-    virtual AST *deepCopy();
+//    virtual AST *deepCopy();
 
 private:
     std::string m_kw;

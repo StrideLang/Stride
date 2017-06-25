@@ -43,7 +43,7 @@ BlockNode::BlockNode(string name, const char *filename, int line, vector<string>
     m_name = name;
 }
 
-BlockNode::BlockNode(string name, AST *scope, const char *filename, int line) :
+BlockNode::BlockNode(string name, ASTNode scope, const char *filename, int line) :
     AST(AST::Block, filename, line)
 {
     m_name = name;
@@ -55,18 +55,18 @@ BlockNode::~BlockNode()
 
 }
 
-void BlockNode::resolveScope(AST *scope)
+void BlockNode::resolveScope(ASTNode scope)
 {
     if (scope) {
         for (unsigned int i = 0; i < scope->getChildren().size(); i++) {
             assert(scope->getChildren().at(i)->getNodeType() == AST::Scope);
-            m_scope.push_back((static_cast<ScopeNode *>(scope->getChildren().at(i)))->getName());
+            m_scope.push_back((static_cast<ScopeNode *>(scope->getChildren().at(i).get()))->getName());
         }
     }
 }
 
-AST *BlockNode::deepCopy()
+ASTNode BlockNode::deepCopy()
 {
-    BlockNode *newNode = new BlockNode(m_name, m_filename.data(), m_line, m_scope);
+    std::shared_ptr<BlockNode> newNode = std::make_shared<BlockNode>(m_name, m_filename.data(), m_line, m_scope);
     return newNode;
 }

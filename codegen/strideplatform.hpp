@@ -85,10 +85,10 @@ public:
     string buildLibPath(string strideRoot);
     string buildTestingLibPath(string strideRoot);
 
-    void addTree(string treeName, AST *treeRoot);
-    void addTestingTree(string treeName, AST *treeRoot);
-    vector<AST *> getPlatformObjectsReference();
-    vector<AST *> getPlatformTestingObjectsRef();
+    void addTree(string treeName, ASTNode treeRoot);
+    void addTestingTree(string treeName, ASTNode treeRoot);
+    vector<ASTNode> getPlatformObjectsReference();
+    vector<ASTNode> getPlatformTestingObjectsRef();
 
 private:
     string m_framework;
@@ -98,8 +98,8 @@ private:
     string m_identifier;
     bool m_required;
     PlatformAPI m_api {PythonTools}; //TODO Put back support for plugin platforms
-    map<string, AST *> m_platformTrees;
-    map<string, AST *> m_platformTestTrees;
+    map<string, ASTNode> m_platformTrees;
+    map<string, ASTNode> m_platformTestTrees;
 };
 
 

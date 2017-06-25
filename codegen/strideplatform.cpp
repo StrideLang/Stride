@@ -53,12 +53,12 @@
 
 StridePlatform::~StridePlatform()
 {
-    auto it = m_platformTrees.begin();
-    while(it != m_platformTrees.end()) {
-        it->second->deleteChildren();
-        delete it->second;
-        it++;
-    }
+//    auto it = m_platformTrees.begin();
+//    while(it != m_platformTrees.end()) {
+//        it->second->deleteChildren();
+////        delete it->second;
+//        it++;
+//    }
 }
 
 string StridePlatform::getFramework() const
@@ -112,30 +112,30 @@ string StridePlatform::buildTestingLibPath(string strideRoot)
     return path;
 }
 
-void StridePlatform::addTree(string treeName, AST *treeRoot)
+void StridePlatform::addTree(string treeName, ASTNode treeRoot)
 {
-    if (m_platformTrees.find(treeName) != m_platformTrees.end()) {
-        m_platformTrees[treeName]->deleteChildren();
-        delete m_platformTrees[treeName];
-    }
+//    if (m_platformTrees.find(treeName) != m_platformTrees.end()) {
+//        m_platformTrees[treeName]->deleteChildren();
+////        delete m_platformTrees[treeName];
+//    }
     m_platformTrees[treeName] = treeRoot;
 }
 
-void StridePlatform::addTestingTree(string treeName, AST *treeRoot)
+void StridePlatform::addTestingTree(string treeName, ASTNode treeRoot)
 {
-    if (m_platformTestTrees.find(treeName) != m_platformTestTrees.end()) {
-        m_platformTestTrees[treeName]->deleteChildren();
-        delete m_platformTestTrees[treeName];
-    }
+//    if (m_platformTestTrees.find(treeName) != m_platformTestTrees.end()) {
+//        m_platformTestTrees[treeName]->deleteChildren();
+////        delete m_platformTestTrees[treeName];
+//    }
     m_platformTestTrees[treeName] = treeRoot;
 }
 
-vector<AST *> StridePlatform::getPlatformObjectsReference()
+vector<ASTNode> StridePlatform::getPlatformObjectsReference()
 {
-    vector<AST *> objects;
+    vector<ASTNode> objects;
     auto blockGroup = m_platformTrees.begin();
     while (blockGroup != m_platformTrees.end()) {
-        foreach(AST *element, blockGroup->second->getChildren()) {
+        for(ASTNode element : blockGroup->second->getChildren()) {
             if (element->getNodeType() == AST::Declaration) {
                 objects.push_back(element);
             } else {
@@ -147,12 +147,12 @@ vector<AST *> StridePlatform::getPlatformObjectsReference()
     return objects;
 }
 
-vector<AST *> StridePlatform::getPlatformTestingObjectsRef()
+vector<ASTNode> StridePlatform::getPlatformTestingObjectsRef()
 {
-    vector<AST *> objects;
+    vector<ASTNode> objects;
     auto blockGroup = m_platformTestTrees.begin();
     while (blockGroup != m_platformTestTrees.end()) {
-        foreach(AST *element, blockGroup->second->getChildren()) {
+        for(ASTNode element : blockGroup->second->getChildren()) {
             if (element->getNodeType() == AST::Declaration) {
                 objects.push_back(element);
             } else {

@@ -133,18 +133,18 @@ bool ValueNode::getSwitchValue() const
     return m_switch;
 }
 
-AST *ValueNode::deepCopy()
+ASTNode ValueNode::deepCopy()
 {
     if (getNodeType() == AST::Int) {
-        return new ValueNode(getIntValue(), m_filename.c_str(), getLine());
+        return std::make_shared<ValueNode>(getIntValue(), m_filename.c_str(), getLine());
     } else if (getNodeType() == AST::Real) {
-        return new ValueNode(getRealValue(), m_filename.c_str(), getLine());
+        return std::make_shared<ValueNode>(getRealValue(), m_filename.c_str(), getLine());
     } else if (getNodeType() == AST::String) {
-        return new ValueNode(getStringValue(), m_filename.c_str(), getLine());
+        return std::make_shared<ValueNode>(getStringValue(), m_filename.c_str(), getLine());
     } else if (getNodeType() == AST::Switch) {
-        return new ValueNode(getSwitchValue(), m_filename.c_str(), getLine());
+        return std::make_shared<ValueNode>(getSwitchValue(), m_filename.c_str(), getLine());
     } else if (getNodeType() == AST::None) {
-        return new ValueNode(m_filename.data(), getLine());
+        return std::make_shared<ValueNode>(m_filename.data(), getLine());
     }  else {
         assert(0); // Invalid type
     }

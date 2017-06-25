@@ -24,7 +24,7 @@ signal StereoOut[2] { }
 MonoSignal >> Level(gain: 1.0) >> StereoOut;
 
 # Level should be expanded into a list
-MonoSignal2 >> Level(gain: [1.0, 1.0]) >> StereoOut2;
+MonoSignal2 >> Level(gain: [1.0, 2.0]) >> StereoOut2;
 
 # NewSignal2 should be auto declared as a bundle with size 2
 Out >> Level(gain: 1.0) >> NewSignal;

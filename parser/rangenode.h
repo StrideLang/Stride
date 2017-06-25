@@ -41,11 +41,11 @@
 class RangeNode : public AST
 {
 public:
-  RangeNode(AST *start, AST *end, const char *filename, int line);
+  RangeNode(ASTNode start, ASTNode end, const char *filename, int line);
 
-  AST *startIndex() const;
-  AST *endIndex() const;
-  AST *deepCopy();
+  ASTNode startIndex() const;
+  ASTNode endIndex() const;
+  virtual ASTNode deepCopy() override;
 
 private:
 

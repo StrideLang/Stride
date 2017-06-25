@@ -48,7 +48,7 @@ public:
     string getName() const {return m_name;}
     string getPortName() const {return m_port;}
 
-    AST *deepCopy();
+    virtual ASTNode deepCopy() override;
 
 private:
     string m_name;

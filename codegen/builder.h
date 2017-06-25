@@ -39,7 +39,8 @@
 #include <QString>
 #include <QLibrary>
 
-class AST;
+#include "ast.h"
+
 class Builder;
 
 typedef Builder* (*create_object_t)(QString platformPath, const char *projectDir, const char *xmosToolchainRoot);
@@ -67,7 +68,7 @@ public:
     void clearBuffers() { m_stdErr = ""; m_stdOut = "";}
 
 public slots:
-    virtual bool build(AST *tree) = 0;
+    virtual bool build(ASTNode tree) = 0;
     virtual bool flash() = 0;
     virtual bool run(bool pressed = true) = 0;
     // TODO this would need to send encrypted strings or remove the code sections?

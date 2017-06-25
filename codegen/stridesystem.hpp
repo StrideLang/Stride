@@ -71,22 +71,22 @@ public:
 
 //    DeclarationNode *getFunction(QString functionName);
     vector<string> getFrameworkNames();
-    map<string, vector<AST *>> getBuiltinObjectsCopy();
-    map<string, vector<AST *>> getBuiltinObjectsReference(); // The key to the map is the namespace name
+    map<string, vector<ASTNode>> getBuiltinObjectsCopy();
+    map<string, vector<ASTNode> > getBuiltinObjectsReference(); // The key to the map is the namespace name
 
 //    bool typeHasPort(QString typeName, QString propertyName);
 
     QString getPlatformPath(); // Path for the specific platform
 
 private:
-    QVector<AST *> getPortsForTypeBlock(DeclarationNode *block);
+    QVector<ASTNode> getPortsForTypeBlock(DeclarationNode *block);
 //    ListNode *getPortsForFunction(QString typeName);
 
     QString makeProject(QString fileName);
 
     QString readFile(QString fileName);
 
-    void parseSystemTree(AST *systemTree);
+    void parseSystemTree(ASTNode systemTree);
 
     QString m_strideRoot;
     QString m_systemName;
@@ -100,8 +100,8 @@ private:
 
     QStringList m_types;
 
-    vector<StridePlatform *> m_platforms; // First platform is default
-    vector<DeclarationNode *> m_platformDefinitions;
+    vector<std::shared_ptr<StridePlatform>> m_platforms; // First platform is default
+    vector<std::shared_ptr<DeclarationNode>> m_platformDefinitions;
 
     QMap<QString, QString> m_importList;
     StrideLibrary m_library;

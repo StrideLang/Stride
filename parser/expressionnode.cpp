@@ -36,7 +36,7 @@
 
 #include "expressionnode.h"
 
-ExpressionNode::ExpressionNode(ExpressionType type, AST *left, AST *right,
+ExpressionNode::ExpressionNode(ExpressionType type, ASTNode left, ASTNode right,
                                const char *filename, int line) :
     AST(AST::Expression, filename, line)
 {
@@ -46,7 +46,7 @@ ExpressionNode::ExpressionNode(ExpressionType type, AST *left, AST *right,
     addChild(right);
 }
 
-ExpressionNode::ExpressionNode(ExpressionNode::ExpressionType type, AST *value,
+ExpressionNode::ExpressionNode(ExpressionNode::ExpressionType type, ASTNode value,
                                const char *filename, int line) :
     AST(AST::Expression, filename, line)
 {
@@ -65,48 +65,49 @@ bool ExpressionNode::isUnary() const
     return (m_type == ExpressionNode::UnaryMinus || m_type == ExpressionNode::LogicalNot);
 }
 
-AST *ExpressionNode::getLeft() const
+ASTNode ExpressionNode::getLeft() const
 {
     assert(!this->isUnary());
     return m_children.at(0);
 }
 
-AST *ExpressionNode::getRight() const
+ASTNode ExpressionNode::getRight() const
 {
     assert(!this->isUnary());
     return m_children.at(1);
 }
 
-void ExpressionNode::replaceLeft(AST *newLeft)
+void ExpressionNode::replaceLeft(ASTNode newLeft)
 {
     assert(!this->isUnary());
-    AST *right = getRight();
-    getLeft()->deleteChildren();
-    delete getLeft();
-    m_children.clear();
-    addChild(newLeft);
-    addChild(right);
+    m_children.at(0) = newLeft;
+//    ASTNode right = getRight();
+////    getLeft()->deleteChildren();
+//    m_children.clear();
+//    addChild(newLeft);
+//    addChild(right);
 }
 
-void ExpressionNode::replaceRight(AST *newRight)
+void ExpressionNode::replaceRight(ASTNode newRight)
 {
     assert(!this->isUnary());
-    AST *left = getLeft();
-    getRight()->deleteChildren();
-    delete getRight();
-    m_children.clear();
-    addChild(left);
-    addChild(newRight);
+    m_children.at(1) = newRight;
+//    ASTNode left = getLeft();
+//    getRight()->deleteChildren();
+//    m_children.clear();
+//    addChild(left);
+//    addChild(newRight);
 }
 
-void ExpressionNode::replaceValue(AST *newValue)
+void ExpressionNode::replaceValue(ASTNode newValue)
 {
 	assert(this->isUnary());
-    deleteChildren();
-    m_children.push_back(newValue);
+    m_children.at(0) = newValue;
+//    deleteChildren();
+//    m_children.push_back(newValue);
 }
 
-AST *ExpressionNode::getValue() const
+ASTNode ExpressionNode::getValue() const
 {
     assert(isUnary());
     return m_children.at(0);
@@ -122,39 +123,31 @@ string ExpressionNode::getExpressionTypeString() const
     switch (m_type) {
     case Multiply:
         return "Multiply";
-        break;
     case Divide:
         return "Divide";
-        break;
     case Add:
         return "Add";
-        break;
     case Subtract:
         return "Subtract";
-        break;
     case And:
         return "And";
-        break;
     case Or:
         return "Or";
-        break;
     case UnaryMinus:
         return "UnaryMinus";
-        break;
     case LogicalNot:
         return "LogicalNot";
-        break;
     default:
         return "";
     }
 }
 
-AST *ExpressionNode::deepCopy()
+ASTNode ExpressionNode::deepCopy()
 {
     if (m_type == ExpressionNode::UnaryMinus || m_type == ExpressionNode::LogicalNot) {
-        return new ExpressionNode(m_type, m_children.at(0)->deepCopy(), m_filename.data(), m_line);
+        return std::make_shared<ExpressionNode>(m_type, m_children.at(0)->deepCopy(), m_filename.data(), m_line);
     } else {
-        return new ExpressionNode(m_type, m_children.at(0)->deepCopy(), m_children.at(1)->deepCopy(), m_filename.data(), m_line);
+        return std::make_shared<ExpressionNode>(m_type, m_children.at(0)->deepCopy(), m_children.at(1)->deepCopy(), m_filename.data(), m_line);
     }
 }
 

@@ -168,19 +168,19 @@ entry:
 
 start:
         systemDef {
-            tree_head->addChild($1);
+            tree_head->addChild(std::shared_ptr<SystemNode>($1));
             COUT << "System Definition Resolved!" << ENDL;
         }
     |   importDef   {
-            tree_head->addChild($1);
+            tree_head->addChild(std::shared_ptr<ImportNode>($1));
             COUT << "Import Definition Resolved!" << ENDL;
         }
     |   blockDef    {
-            tree_head->addChild($1);
+            tree_head->addChild(std::shared_ptr<DeclarationNode>($1));
             COUT << "Block Resolved!" << ENDL;
         }
     |   streamDef   {
-            tree_head->addChild($1);
+            tree_head->addChild(std::shared_ptr<StreamNode>($1));
             COUT << "Stream Definition Resolved!" << ENDL;
         }
     |   ERROR       {
@@ -235,10 +235,10 @@ importDef:
     |   IMPORT scopeDef UVAR    {
             string word;
             word.append($3); /* string constructor leaks otherwise! */
-            $$ = new ImportNode(word, $2, currentFile, yyloc.first_line);
-            AST *scope = $2;
-            scope->deleteChildren();
-            delete scope;
+            $$ = new ImportNode(word, std::shared_ptr<AST>($2), currentFile, yyloc.first_line);
+//            AST *scope = $2;
+//            scope->deleteChildren();
+//            delete scope;
             COUT << "Importing: " << $3 << " in scope!" << ENDL;
             free($3);
         }
@@ -257,10 +257,10 @@ importDef:
             word.append($3); /* string constructor leaks otherwise! */
             string alias;
             alias.append($5); /* string constructor leaks otherwise! */
-            $$ = new ImportNode(word, $2, currentFile, yyloc.first_line, alias);
-            AST *scope = $2;
-            scope->deleteChildren();
-            delete scope;
+            $$ = new ImportNode(word, std::shared_ptr<AST>($2), currentFile, yyloc.first_line, alias);
+//            AST *scope = $2;
+//            scope->deleteChildren();
+//            delete scope;
             COUT << "Importing: " << $3 << " as " << $5 << " in scope!" << ENDL;
             free($3);
             free($5);
@@ -277,9 +277,9 @@ blockDef:
             word.append($1); /* string constructor leaks otherwise! */
             string uvar;
             uvar.append($2); /* string constructor leaks otherwise! */
-            $$ = new DeclarationNode(uvar, word, $3, currentFile, yyloc.first_line);
+            $$ = new DeclarationNode(uvar, word, std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             AST *props = $3;
-            delete props;
+//            delete props;
             COUT << "Block: " << $1 << ", Labelled: " << $2 << ENDL;
             free($1);
             free($2);
@@ -287,17 +287,17 @@ blockDef:
     |   WORD UVAR '[' indexExp ']' blockType    {
             string name;
             name.append($2); /* string constructor leaks otherwise! */
-            ListNode *list = new ListNode($4, currentFile, yyloc.first_line);
-            BundleNode *bundle = new BundleNode(name, list, currentFile, yyloc.first_line);
+            std::shared_ptr<ListNode> list = std::make_shared<ListNode>(std::shared_ptr<AST>($4), currentFile, yyloc.first_line);
+            std::shared_ptr<BundleNode> bundle = std::make_shared<BundleNode>(name, list, currentFile, yyloc.first_line);
             COUT << "Bundle name: " << name << ENDL;
             string type;
             type.append($1); /* string constructor leaks otherwise! */
-            $$ = new DeclarationNode(bundle, type, $6, currentFile, yyloc.first_line);
+            $$ = new DeclarationNode(bundle, type, std::shared_ptr<AST>($6), currentFile, yyloc.first_line);
             COUT << "Block Bundle: " << $1 << ", Labelled: " << $2 << ENDL;
             free($2);
             free($1);
-            AST *propertyContainer = $6;
-            delete propertyContainer;
+//            AST *propertyContainer = $6;
+//            delete propertyContainer;
          }
     ;
 
@@ -317,15 +317,15 @@ blockType:
 
 streamDef:
         valueExp STREAM streamExp SEMICOLON         {
-            $$ = new StreamNode($1, $3, currentFile, yyloc.first_line);
+            $$ = new StreamNode(std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Stream Resolved!" << ENDL;
         }
     |   valueListExp STREAM streamExp SEMICOLON     {
-            $$ = new StreamNode($1, $3, currentFile, yyloc.first_line);
+            $$ = new StreamNode(std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Stream Resolved!" << ENDL;
         }
     |   streamListDef STREAM streamExp SEMICOLON    {
-            $$ = new StreamNode($1, $3, currentFile, yyloc.first_line);
+            $$ = new StreamNode(std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Stream Resolved!" << ENDL;
         }
     ;
@@ -337,12 +337,12 @@ streamDef:
 scopeDef:
         scopeDef scope  {
             AST *scope = $1;
-            scope->addChild($2);
+            scope->addChild(std::shared_ptr<AST>($2));
             $$ = scope;
         }
     |   scope           {
             AST *temp = new AST();
-            temp->addChild($1);
+            temp->addChild(std::shared_ptr<AST>($1));
             $$ = temp;
         }
     ;
@@ -365,17 +365,17 @@ bundleDef:
         UVAR '[' indexList ']'          {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
-            $$ = new BundleNode(s, $3, currentFile, yyloc.first_line);
+            $$ = new BundleNode(s, std::shared_ptr<ListNode>($3), currentFile, yyloc.first_line);
             COUT << "Bundle name: " << $1 << ENDL;
             free($1);
         }
     |   scopeDef UVAR '[' indexList ']' {
             string s;
             s.append($2); /* string constructor leaks otherwise! */
-            $$ = new BundleNode(s, $1, $4, currentFile, yyloc.first_line);
-            AST *scope = $1;
-            scope->deleteChildren();
-            delete scope;
+            $$ = new BundleNode(s, std::shared_ptr<AST>($1), std::shared_ptr<ListNode>($4), currentFile, yyloc.first_line);
+//            AST *scope = $1;
+//            scope->deleteChildren();
+//            delete scope;
             COUT << "Bundle name: " << $2 << " in scope!" << ENDL;
             COUT << "Streaming ... " << ENDL;
             free($2);
@@ -397,19 +397,19 @@ functionDef:
     |   scopeDef UVAR '(' ')'               {
             string s;
             s.append($2);
-            $$ = new FunctionNode(s, $1, NULL, FunctionNode::UserDefined, currentFile, yyloc.first_line);
-            AST *scope = $1;
-            scope->deleteChildren();
-            delete scope;
+            $$ = new FunctionNode(s, std::shared_ptr<AST>($1), NULL, FunctionNode::UserDefined, currentFile, yyloc.first_line);
+//            AST *scope = $1;
+//            scope->deleteChildren();
+//            delete scope;
             COUT << "User function: " << $2 << " in scope!" << ENDL;
             free($2);
         }
     |   UVAR '(' properties ')'             {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
-            $$ = new FunctionNode(s, $3, FunctionNode::UserDefined, currentFile, yyloc.first_line);
+            $$ = new FunctionNode(s, std::shared_ptr<AST>($3), FunctionNode::UserDefined, currentFile, yyloc.first_line);
             AST *props = $3;
-            delete props;
+//            delete props;
             COUT << "Properties () ..." << ENDL;
             COUT << "User function: " << $1 << ENDL;
             free($1);
@@ -417,12 +417,12 @@ functionDef:
     |   scopeDef UVAR '(' properties ')'               {
             string s;
             s.append($2);
-            $$ = new FunctionNode(s, $1, $4, FunctionNode::UserDefined, currentFile, yyloc.first_line);
-            AST *scope = $1;
-            scope->deleteChildren();
-            delete scope;
+            $$ = new FunctionNode(s, std::shared_ptr<AST>($1), std::shared_ptr<AST>($4), FunctionNode::UserDefined, currentFile, yyloc.first_line);
+//            AST *scope = $1;
+//            scope->deleteChildren();
+//            delete scope;
             AST *props = $4;
-            delete props;
+//            delete props;
             COUT << "Properties () ..." << ENDL;
             COUT << "User function: " << $2 << " in scope!" << ENDL;
             free($2);
@@ -436,24 +436,24 @@ functionDef:
 properties:
         properties property SEMICOLON   {
             AST *props = $1;
-            props->addChild($2);
+            props->addChild(std::shared_ptr<AST>($2));
             $$ = props;
             COUT << "Ignoring semicolon!" << ENDL;
         }
     |   properties property             {
             AST *props = $1;
-            props->addChild($2);
+            props->addChild(std::shared_ptr<AST>($2));
             $$ = props;
         }
     |   property SEMICOLON              {
             AST *temp = new AST();
-            temp->addChild($1);
+            temp->addChild(std::shared_ptr<AST>($1));
             $$ = temp;
             COUT << "Ignoring semicolon!" << ENDL;
         }
     |   property                        {
             AST *temp = new AST();
-            temp->addChild($1);
+            temp->addChild(std::shared_ptr<AST>($1));
             $$ = temp;
         }
     ;
@@ -462,14 +462,14 @@ property:
         WORD COLON propertyType {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
-            $$ = new PropertyNode(s, $3, currentFile, yyloc.first_line);
+            $$ = new PropertyNode(s, std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Property: " << $1 << ENDL << "New property ... " << ENDL;
             free($1);
         }
     |   WORD COLON STREAMRATE   {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
-            PropertyNode * node = new PropertyNode(s, new ValueNode((string) "streamRate", "", -1), currentFile, yyloc.first_line);
+            PropertyNode * node = new PropertyNode(s, std::make_shared<ValueNode>((string) "streamRate", "", -1), currentFile, yyloc.first_line);
             $$ = node;
             COUT << "Property: " << $1 << ENDL << "New property ... " << ENDL;
             free($1);
@@ -486,9 +486,9 @@ propertyType:
             COUT << "Value expression as property value!" << ENDL;
         }
     |   blockType           {
-            $$ = new DeclarationNode("", "" , $1, currentFile, yyloc.first_line);
-            AST *props = $1;
-            delete props;
+            $$ = new DeclarationNode("", "" , std::shared_ptr<AST>($1), currentFile, yyloc.first_line);
+//            AST *props = $1;
+//            delete props;
             COUT << "Block as property value!" << ENDL;
         }
     |   listDef             {
@@ -546,13 +546,13 @@ valueList:
             list->stealMembers($1);
             ListNode *oldList = $1;
             delete oldList;
-            list->addChild($3);
+            list->addChild(std::shared_ptr<AST>($3));
             $$ = list;
             COUT << "Value expression ..." << ENDL;
             COUT << "New list item ... " << ENDL;
         }
     |   valueExp                    {
-            $$ = new ListNode($1, currentFile, yyloc.first_line);
+            $$ = new ListNode(std::shared_ptr<AST>($1), currentFile, yyloc.first_line);
             COUT << "Value expression ..." << ENDL;
             COUT << "New list item ... " << ENDL;
         }
@@ -564,11 +564,11 @@ valueListList:
             list->stealMembers($1);
             ListNode *oldList = $1;
             delete oldList;
-            list->addChild($3);
+            list->addChild(std::shared_ptr<AST>($3));
             $$ = list;
         }
     |   valueListDef                        {
-            $$ = new ListNode($1, currentFile, yyloc.first_line);
+            $$ = new ListNode(std::shared_ptr<AST>($1), currentFile, yyloc.first_line);
         }
     ;
 
@@ -593,7 +593,7 @@ blockList:
             list->stealMembers($1);
             ListNode *oldList = $1;
             delete oldList;
-            list->addChild($3);
+            list->addChild(std::shared_ptr<AST>($3));
             $$ = list;
             COUT << "Block definition ... " << ENDL;
             COUT << "New list item ... " << ENDL;
@@ -603,13 +603,13 @@ blockList:
             list->stealMembers($1);
             ListNode *oldList = $1;
             delete oldList;
-            list->addChild($2);
+            list->addChild(std::shared_ptr<AST>($2));
             $$ = list;
             COUT << "Block definition ... " << ENDL;
             COUT << "New list item ... " << ENDL;
         }
     |   blockDef                    {
-            $$ = new ListNode($1, currentFile, yyloc.first_line);
+            $$ = new ListNode(std::shared_ptr<AST>($1), currentFile, yyloc.first_line);
             COUT << "Block definition ... " << ENDL;
             COUT << "New list item ... " << ENDL;
         }
@@ -621,7 +621,7 @@ streamList:
             list->stealMembers($1);
             ListNode *oldList = $1;
             delete oldList;
-            list->addChild($3);
+            list->addChild(std::shared_ptr<AST>($3));
             $$ = list;
             COUT << "Stream definition ... " << ENDL;
             COUT << "New list item ... " << ENDL;
@@ -631,13 +631,13 @@ streamList:
             list->stealMembers($1);
             ListNode *oldList = $1;
             delete oldList;
-            list->addChild($2);
+            list->addChild(std::shared_ptr<AST>($2));
             $$ = list;
             COUT << "Stream definition ... " << ENDL;
             COUT << "New list item ... " << ENDL;
         }
     |   streamDef                   {
-            $$ = new ListNode($1, currentFile, yyloc.first_line);
+            $$ = new ListNode(std::shared_ptr<AST>($1), currentFile, yyloc.first_line);
             COUT << "Stream definition ... " << ENDL;
             COUT << "New list item ... " << ENDL;
         }
@@ -649,13 +649,13 @@ listList:
             list->stealMembers($1);
             ListNode *oldList = $1;
             delete oldList;
-            list->addChild($3);
+            list->addChild(std::shared_ptr<AST>($3));
             $$ = list;
             COUT << "List of lists ..." << ENDL;
             COUT << "New list item ... " << ENDL;
         }
     |   listDef                 {
-            $$ = new ListNode($1, currentFile, yyloc.first_line);
+            $$ = new ListNode(std::shared_ptr<AST>($1), currentFile, yyloc.first_line);
             COUT << "List of lists ..." << ENDL;
             COUT << "New list item ... " << ENDL;
         }
@@ -669,7 +669,7 @@ indexList:
         indexList COMMA indexExp        {
             ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line);
             list->stealMembers($1);
-            list->addChild($3);
+            list->addChild(std::shared_ptr<AST>($3));
             $$ = list;
             delete $1;
             COUT << "Resolving Index List Element ..." << ENDL;
@@ -678,19 +678,19 @@ indexList:
             COUT << "Resolving Index List Element ..." << ENDL;
             ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line);
             list->stealMembers($1);
-            list->addChild($3);
+            list->addChild(std::shared_ptr<AST>($3));
             $$ = list;
             delete $1;
         }
     |   indexExp                        {
             ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line);
-            list->addChild($1);
+            list->addChild(std::shared_ptr<AST>($1));
             $$ = list;
             COUT << "Resolving Index List Element ..." << ENDL;
         }
     |   indexRange                      {
             ListNode *list = new ListNode(NULL, currentFile, yyloc.first_line);
-            list->addChild($1);
+            list->addChild(std::shared_ptr<AST>($1));
             $$ = list;
             COUT << "Resolving Index List Range ..." << ENDL;
         }
@@ -702,7 +702,7 @@ indexList:
 
 indexRange:
         indexExp COLON indexExp         {
-            $$ = new RangeNode($1, $3, currentFile, yyloc.first_line);
+            $$ = new RangeNode(std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Resolving Index Range ..." << ENDL;
         }
     ;
@@ -713,31 +713,31 @@ indexRange:
 
 indexExp:
         indexExp '+' indexExp           {
-            $$ = new ExpressionNode(ExpressionNode::Add, $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::Add, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Index/Size adding ... " << ENDL;
         }
     |   indexExp '-' indexExp           {
-            $$ = new ExpressionNode(ExpressionNode::Subtract, $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::Subtract, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Index/Size subtracting ... " << ENDL;
         }
     |   indexExp '*' indexExp           {
-            $$ = new ExpressionNode(ExpressionNode::Multiply , $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::Multiply, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Index/Size multiplying ... " << ENDL;
         }
     |   indexExp '/' indexExp           {
-            $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::Divide, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Index/Size dividing ... " << ENDL;
         }
     |   indexExp BITAND indexExp        {
-           $$ = new ExpressionNode(ExpressionNode::BitAnd, $1, $3, currentFile, yyloc.first_line);
+           $$ = new ExpressionNode(ExpressionNode::BitAnd, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Index/Size Bitwise and ... " << ENDL;
         }
     |   indexExp BITOR indexExp         {
-            $$ = new ExpressionNode(ExpressionNode::BitOr , $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::BitOr, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Index/Size Bitwise or ... " << ENDL;
         }
     |   indexExp BITNOT indexExp        {
-            $$ = new ExpressionNode(ExpressionNode::BitNot , $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::BitNot, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Index/Size Bitwise not ... " << ENDL;
         }
     |   '(' indexExp ')'                {
@@ -755,111 +755,111 @@ indexExp:
 
 valueListExp:
         valueListDef '+' valueExp               {
-            $$ = new ExpressionNode(ExpressionNode::Add, $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::Add, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Adding ... " << ENDL;
         }
     |   valueListDef '-' valueExp               {
-            $$ = new ExpressionNode(ExpressionNode::Subtract, $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::Subtract, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Subtracting ... " << ENDL;
         }
     |   valueListDef '*' valueExp               {
-            $$ = new ExpressionNode(ExpressionNode::Multiply, $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::Multiply, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Multiplying ... " << ENDL;
         }
     |   valueListDef '/' valueExp               {
-            $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::Divide, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Dividing ... " << ENDL;
         }
     |   valueListDef BITAND valueExp            {
-            $$ = new ExpressionNode(ExpressionNode::BitAnd , $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::BitAnd , std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Index/Size Bitwise and ... " << ENDL;
         }
     |   valueListDef BITOR valueExp             {
-            $$ = new ExpressionNode(ExpressionNode::BitOr , $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::BitOr , std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Index/Size Bitwise or ... " << ENDL;
         }
     |   valueListDef BITNOT valueExp            {
-            $$ = new ExpressionNode(ExpressionNode::BitNot , $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::BitNot , std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Index/Size Bitwise not ... " << ENDL;
         }
     |   valueListDef AND valueExp               {
-            $$ = new ExpressionNode(ExpressionNode::And, $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::And, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Logical AND ..." << ENDL;
         }
     |   valueListDef OR valueExp                {
-            $$ = new ExpressionNode(ExpressionNode::Or, $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::Or, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Logical OR ... " << ENDL;
         }
     |   valueExp '+' valueListDef               {
-            $$ = new ExpressionNode(ExpressionNode::Add , $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::Add , std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Adding ... " << ENDL;
         }
     |   valueExp '-' valueListDef               {
-            $$ = new ExpressionNode(ExpressionNode::Subtract, $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::Subtract, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Subtracting ... " << ENDL;
         }
     |   valueExp '*' valueListDef               {
-            $$ = new ExpressionNode(ExpressionNode::Multiply, $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::Multiply, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Multiplying ... " << ENDL;
         }
     |   valueExp '/' valueListDef               {
-            $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::Divide, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Dividing ... " << ENDL;
         }
     |   valueExp BITAND valueListDef            {
-            $$ = new ExpressionNode(ExpressionNode::BitAnd , $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::BitAnd , std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Index/Size Bitwise and ... " << ENDL;
         }
     |   valueExp BITOR valueListDef             {
-            $$ = new ExpressionNode(ExpressionNode::BitOr , $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::BitOr , std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Index/Size bitwise or ... " << ENDL;
         }
     |   valueExp BITNOT valueListDef            {
-            $$ = new ExpressionNode(ExpressionNode::BitNot , $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::BitNot , std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Index/Size Bitwise not ... " << ENDL;
         }
     |   valueExp AND valueListDef               {
-            $$ = new ExpressionNode(ExpressionNode::And, $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::And, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Logical AND ..." << ENDL;
         }
     |   valueExp OR valueListDef                {
-            $$ = new ExpressionNode(ExpressionNode::Or, $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::Or, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Logical OR ... " << ENDL;
         }
     |   valueListDef '+' valueListDef           {
-            $$ = new ExpressionNode(ExpressionNode::Add, $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::Add, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Adding Lists ... " << ENDL;
         }
     |   valueListDef '-' valueListDef           {
-            $$ = new ExpressionNode(ExpressionNode::Subtract, $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::Subtract, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Subtracting Lists ... " << ENDL;
         }
     |   valueListDef '*' valueListDef           {
-            $$ = new ExpressionNode(ExpressionNode::Multiply, $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::Multiply, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Multiplying Lists ... " << ENDL;
         }
     |   valueListDef '/' valueListDef           {
-            $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::Divide, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Dividing Lists ... " << ENDL;
         }
     |   valueListDef BITAND valueListDef        {
-            $$ = new ExpressionNode(ExpressionNode::BitAnd , $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::BitAnd , std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Index/Size Bitwise And ... " << ENDL;
         }
     |   valueListDef BITOR valueListDef         {
-            $$ = new ExpressionNode(ExpressionNode::BitOr , $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::BitOr , std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Index/Size Bitwise Or ... " << ENDL;
         }
     |   valueListDef BITNOT valueListDef        {
-            $$ = new ExpressionNode(ExpressionNode::BitNot , $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::BitNot , std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Index/Size Bitwise Not ... " << ENDL;
         }
     |   valueListDef AND valueListDef           {
-            $$ = new ExpressionNode(ExpressionNode::And, $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::And, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Logical AND Lists ... " << ENDL;
         }
     |   valueListDef OR valueListDef            {
-            $$ = new ExpressionNode(ExpressionNode::Or, $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::Or, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Logical OR Lists ... " << ENDL;
         }
     |   valueListDef                            {
@@ -873,39 +873,39 @@ valueListExp:
 
 valueExp:
         valueExp '+' valueExp           {
-            $$ = new ExpressionNode(ExpressionNode::Add, $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::Add, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Adding ... " << ENDL;
         }
     |   valueExp '-' valueExp           {
-            $$ = new ExpressionNode(ExpressionNode::Subtract, $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::Subtract, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Subtracting ... " << ENDL;
         }
     |   valueExp '*' valueExp           {
-            $$ = new ExpressionNode(ExpressionNode::Multiply, $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::Multiply, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Multiplying ... " << ENDL;
         }
     |   valueExp '/' valueExp           {
-            $$ = new ExpressionNode(ExpressionNode::Divide, $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::Divide, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Dividing ... " << ENDL;
         }
     |   valueExp AND valueExp           {
-            $$ = new ExpressionNode(ExpressionNode::And, $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::And, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Logical AND ... " << ENDL;
         }
     |   valueExp OR valueExp            {
-            $$ = new ExpressionNode(ExpressionNode::Or, $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::Or, std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Logical OR ... " << ENDL;
         }
     |   valueExp BITAND valueExp        {
-            $$ = new ExpressionNode(ExpressionNode::BitAnd , $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::BitAnd , std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Index/Size Bitwise and ... " << ENDL;
         }
     |   valueExp BITOR valueExp         {
-            $$ = new ExpressionNode(ExpressionNode::BitOr , $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::BitOr , std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Index/Size Bitwise or ... " << ENDL;
         }
     |   valueExp BITNOT valueExp        {
-            $$ = new ExpressionNode(ExpressionNode::BitNot , $1, $3, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::BitNot , std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Index/Size Bitwise not ... " << ENDL;
         }
     |   '(' valueExp ')'                {
@@ -913,11 +913,11 @@ valueExp:
             COUT << "Enclosure ..." << ENDL;
         }
     |   '-' valueExp %prec UMINUS       {
-            $$ = new ExpressionNode(ExpressionNode::UnaryMinus, $2, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::UnaryMinus, std::shared_ptr<AST>($2), currentFile, yyloc.first_line);
             COUT << "Unary minus ... " << ENDL;
         }
     |   NOT valueExp %prec NOT          {
-            $$ = new ExpressionNode(ExpressionNode::LogicalNot, $2, currentFile, yyloc.first_line);
+            $$ = new ExpressionNode(ExpressionNode::LogicalNot, std::shared_ptr<AST>($2), currentFile, yyloc.first_line);
             COUT << "Logical NOT ... " << ENDL;
         }
     |   valueComp                       {
@@ -931,7 +931,7 @@ valueExp:
 
 streamExp:
         streamComp STREAM streamExp {
-            $$ = new StreamNode($1, $3, currentFile, yyloc.first_line);
+            $$ = new StreamNode(std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
         }
     |   streamComp                  {
             $$ = $1;
@@ -957,10 +957,10 @@ indexComp:
     |   scopeDef UVAR   {
             string s;
             s.append($2);
-            $$ = new BlockNode(s, $1, currentFile, yyloc.first_line);
-            AST *scope = $1;
-            scope->deleteChildren();
-            delete scope;
+            $$ = new BlockNode(s, std::shared_ptr<AST>($1), currentFile, yyloc.first_line);
+//            AST *scope = $1;
+//            scope->deleteChildren();
+//            delete scope;
             COUT << "Index/Size User variable: " << $2 << " in scope!" << ENDL;
             free($2);
         }
@@ -986,10 +986,10 @@ streamComp:
     |   scopeDef UVAR   {
             string s;
             s.append($2);
-            $$ = new BlockNode(s, $1, currentFile, yyloc.first_line);
-            AST *scope = $1;
-            scope->deleteChildren();
-            delete scope;
+            $$ = new BlockNode(s, std::shared_ptr<AST>($1), currentFile, yyloc.first_line);
+//            AST *scope = $1;
+//            scope->deleteChildren();
+//            delete scope;
             COUT << "User variable: " << $2 << " in scope!" << ENDL;
             COUT << "Streaming ... " << ENDL;
             free($2);
@@ -1057,10 +1057,10 @@ valueComp:
     |   scopeDef UVAR   {
             string s;
             s.append($2);
-            $$ = new BlockNode(s, $1, currentFile, yyloc.first_line);
+            $$ = new BlockNode(s, std::shared_ptr<AST>($1), currentFile, yyloc.first_line);
             AST *scope = $1;
-            scope->deleteChildren();
-            delete scope;
+//            scope->deleteChildren();
+//            delete scope;
             COUT << "User variable: " << $2 << " in scope!" << ENDL;
             free($2);
         }

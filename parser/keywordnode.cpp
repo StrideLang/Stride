@@ -40,6 +40,6 @@ KeywordNode::KeywordNode(string keyword, const char *filename, int line)
     m_kw = keyword;
 }
 
-AST *KeywordNode::deepCopy() {
-    return new KeywordNode(keyword(), m_filename.data(), getLine());
-}
+//AST *KeywordNode::deepCopy() {
+//    return new KeywordNode(keyword(), m_filename.data(), getLine());
+//}

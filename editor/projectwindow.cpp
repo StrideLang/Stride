@@ -125,7 +125,7 @@ bool ProjectWindow::build()
     QList<LangError> errors;
     vector<LangError> syntaxErrors;
 
-    AST *tree;
+    ASTNode tree;
     tree = AST::parseFile(editor->filename().toLocal8Bit().constData());
 
     syntaxErrors = AST::getParseErrors();
@@ -169,8 +169,8 @@ bool ProjectWindow::build()
         if (m_builders.size() == 0) {
             printConsoleText(tr("Aborting. No builder available."));
             qDebug() << "Can't create builder";
-            tree->deleteChildren();
-            delete tree;
+//            tree->deleteChildren();
+//            delete tree;
             return false;
         }
         buildOK = true;
@@ -180,8 +180,8 @@ bool ProjectWindow::build()
             connect(builder, SIGNAL(programStopped()), this, SLOT(programStopped()));
             buildOK &= builder->build(tree);
         }
-        tree->deleteChildren();
-        delete tree;
+//        tree->deleteChildren();
+//        delete tree;
     }
 
     return buildOK;
@@ -428,9 +428,9 @@ void ProjectWindow::showHelperMenu(QPoint where)
     }
     QMenu *functionMenu = m_helperMenu.addMenu(tr("New function"));
     AST *optimizedTree = m_codeModel.getOptimizedTree();
-    foreach(AST *node, optimizedTree->getChildren()) {
+    for(ASTNode node : optimizedTree->getChildren()) {
         if (node->getNodeType() == AST::Declaration) {
-            DeclarationNode *block = static_cast<DeclarationNode *>(node);
+            DeclarationNode *block = static_cast<DeclarationNode *>(node.get());
             if (block->getObjectType() == "module") {
                 QAction *newAction = functionMenu->addAction(QString::fromStdString(block->getName()), this, SLOT(insertText()));
 //                QString text = QString::fromStdString(block->getNamespace());
@@ -446,21 +446,21 @@ void ProjectWindow::showHelperMenu(QPoint where)
                     }
                 }
                 text += QString::fromStdString(block->getName()) + "(";
-                ListNode *portList = static_cast<ListNode *>(block->getPropertyValue("ports"));
+                ListNode *portList = static_cast<ListNode *>(block->getPropertyValue("ports").get());
                 if (portList && portList->getNodeType() == AST::List) {
-                    foreach(AST *port, portList->getChildren()) {
-                        DeclarationNode *portBlock = static_cast<DeclarationNode *>(port);
-                        AST *portName = portBlock->getPropertyValue("name");
+                    for(ASTNode port : portList->getChildren()) {
+                        DeclarationNode *portBlock = static_cast<DeclarationNode *>(port.get());
+                        ASTNode portName = portBlock->getPropertyValue("name");
                         if (portName && portName->getNodeType() == AST::String) {
-                            text += QString::fromStdString(static_cast<ValueNode *>(portName)->getStringValue()) + ":  ";
+                            text += QString::fromStdString(static_cast<ValueNode *>(portName.get())->getStringValue()) + ":  ";
                         }
                     }
                 }
                 text += ") ";
                 newAction->setData(text);
             }
-            node->deleteChildren();
-            delete node;
+//            node->deleteChildren();
+//            delete node;
         }
     }
     delete optimizedTree;

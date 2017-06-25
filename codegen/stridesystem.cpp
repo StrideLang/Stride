@@ -62,11 +62,9 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
 
     m_library.setLibraryPath(strideRoot, importList);
     if (QFile::exists(systemFile)) {
-        AST *systemTree = AST::parseFile(systemFile.toStdString().c_str());
+        ASTNode systemTree = AST::parseFile(systemFile.toStdString().c_str());
         if (systemTree) {
             parseSystemTree(systemTree);
-            systemTree->deleteChildren();
-            delete systemTree;
 
             // Add subpaths for included modules
             vector<string> subPaths;
@@ -78,7 +76,7 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
             }
             // Iterate through platforms reading them.
             // TODO Should optimize this to not reread platform if already done.
-            for(StridePlatform *platform: m_platforms) {
+            for(std::shared_ptr<StridePlatform> platform: m_platforms) {
                 QStringList nameFilters;
                 nameFilters.push_back("*.stride");
                 string platformPath = platform->buildLibPath(m_strideRoot.toStdString());
@@ -87,7 +85,7 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
                     QStringList libraryFiles =  QDir(includeSubPath).entryList(nameFilters);
                     foreach (QString file, libraryFiles) {
                         QString fileName = includeSubPath + QDir::separator() + file;
-                        AST *tree = AST::parseFile(fileName.toLocal8Bit().data());
+                        ASTNode tree = AST::parseFile(fileName.toLocal8Bit().data());
                         if(tree) {
                             platform->addTree(file.toStdString(),tree); // TODO check if this is being freed
                         } else {
@@ -99,7 +97,7 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
                         }
                         QString namespaceName = importList[QString::fromStdString(subPath)];
                         if (!namespaceName.isEmpty()) {
-                            for(AST *node : tree->getChildren()) {
+                            for(ASTNode node : tree->getChildren()) {
                                 // Do we need to set namespace recursively or would this do?
                                 //                            node->setNamespace(namespaceName.toStdString());
                             }
@@ -112,13 +110,13 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
             }
 
             // Load testing trees
-            for(StridePlatform *platform: m_platforms) {
+            for(std::shared_ptr<StridePlatform> platform: m_platforms) {
                 QStringList nameFilters;
                 nameFilters.push_back("*.stride");
                 string platformPath = platform->buildTestingLibPath(m_strideRoot.toStdString());
                 QFileInfoList libraryFiles =  QDir(QString::fromStdString(platformPath)).entryInfoList(nameFilters);
                 foreach (auto fileInfo, libraryFiles) {
-                    AST *tree = AST::parseFile(fileInfo.absoluteFilePath().toLocal8Bit().data());
+                    ASTNode tree = AST::parseFile(fileInfo.absoluteFilePath().toLocal8Bit().data());
                     if(tree) {
                         platform->addTestingTree(fileInfo.baseName().toStdString(),tree); // TODO check if this is being freed
                     } else {
@@ -147,13 +145,6 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
 
 StrideSystem::~StrideSystem()
 {
-    for(DeclarationNode *node: m_platformDefinitions) {
-        node->deleteChildren();
-        delete node;
-    }
-    for(auto platform: m_platforms) {
-        delete platform;
-    }
 }
 
 //ListNode *StreamPlatform::getPortsForFunction(QString typeName)
@@ -177,7 +168,7 @@ StrideSystem::~StrideSystem()
 //            }
 //        }
 //    }
-//    return NULL;
+//    return nullptr;
 //}
 
 //DeclarationNode *StreamPlatform::getFunction(QString functionName)
@@ -205,40 +196,40 @@ StrideSystem::~StrideSystem()
 //            }
 //        }
 //    }
-//    return NULL;
+//    return nullptr;
 //}
 
-void StrideSystem::parseSystemTree(AST *systemTree)
+void StrideSystem::parseSystemTree(ASTNode systemTree)
 {
     vector<string> usedPlatformNames;
     vector<map<string, string>> platformDefinitions;
     vector<string> platformDefinitionNames;
-    vector<AST *> connectionDefinitions;
-    for(AST *systemNode:systemTree->getChildren()) {
+    vector<AST *> connectionDefinitions; // TODO process connection definitions
+    for(ASTNode systemNode:systemTree->getChildren()) {
         if(systemNode->getNodeType() == AST::Declaration) {
-            DeclarationNode *declaration = static_cast<DeclarationNode *>(systemNode);
+            std::shared_ptr<DeclarationNode> declaration = static_pointer_cast<DeclarationNode>(systemNode);
             if (declaration->getObjectType() == "platform") {
                 map<string, string> definition;
-                vector<PropertyNode *> properties = declaration->getProperties();
-                for (PropertyNode *prop: properties) {
+                vector<std::shared_ptr<PropertyNode>> properties = declaration->getProperties();
+                for (std::shared_ptr<PropertyNode> prop: properties) {
                     if (prop->getValue()->getNodeType() == AST::String) {
                         definition[prop->getName()] =
-                                static_cast<ValueNode *>(prop->getValue())->getStringValue();
+                                static_cast<ValueNode *>(prop->getValue().get())->getStringValue();
                     }
                 }
                 platformDefinitions.push_back(definition);
                 platformDefinitionNames.push_back(declaration->getName());
-                m_platformDefinitions.push_back(static_cast<DeclarationNode *>(declaration->deepCopy()));
+                m_platformDefinitions.push_back(static_pointer_cast<DeclarationNode>(declaration));
             } else if (declaration->getObjectType() == "connection") {
                 // FIXME add connections
 //                connectionDefinitions.push_back(declaration->deepCopy());
             } else if (declaration->getObjectType() == "system") {
-                AST *platforms = declaration->getPropertyValue("platforms");
+                ASTNode platforms = declaration->getPropertyValue("platforms");
                 if (platforms->getNodeType() == AST::List) {
-                    ListNode *platformsList = static_cast<ListNode *>(platforms);
-                    for(AST *platformName:platformsList->getChildren()) {
+                    ListNode *platformsList = static_cast<ListNode *>(platforms.get());
+                    for(ASTNode platformName:platformsList->getChildren()) {
                         if (platformName->getNodeType() == AST::Block) {
-                            usedPlatformNames.push_back(static_cast<BlockNode *>(platformName)->getName());
+                            usedPlatformNames.push_back(static_cast<BlockNode *>(platformName.get())->getName());
                         }
                     }
                 }
@@ -271,7 +262,7 @@ void StrideSystem::parseSystemTree(AST *systemTree)
                     }
                     defIt++;
                 }
-                StridePlatform *newPlatform = new StridePlatform(framework, framworkVersion, hardware, hardwareVersion);
+                std::shared_ptr<StridePlatform> newPlatform = std::make_shared<StridePlatform>(framework, framworkVersion, hardware, hardwareVersion);
                 m_platforms.push_back(newPlatform);
             } else {
                 // TODO add error
@@ -310,13 +301,13 @@ QStringList StrideSystem::getPlatformTypeNames()
 //            }
 //        }
 //    }
-    vector<AST *> libObjects = m_library.getLibraryMembers();
-    foreach(AST *node, libObjects) {
+    vector<ASTNode> libObjects = m_library.getLibraryMembers();
+    for(ASTNode node : libObjects) {
         if (node->getNodeType() == AST::Declaration) {
-            DeclarationNode *block = static_cast<DeclarationNode *>(node);
+            std::shared_ptr<DeclarationNode> block = static_pointer_cast<DeclarationNode>(node);
             if (block->getObjectType() == "platformType"
                     || block->getObjectType() == "type") {
-                ValueNode *name = static_cast<ValueNode *>(block->getPropertyValue("typeName"));
+                ValueNode *name = static_cast<ValueNode *>(block->getPropertyValue("typeName").get());
                 if (name && name->getNodeType() == AST::String) {
                     typeNames << QString::fromStdString(name->getStringValue());
                 }
@@ -330,13 +321,13 @@ QStringList StrideSystem::getFunctionNames()
 {
     QStringList funcNames;
 
-    map<string, vector<AST *>> refObjects = getBuiltinObjectsReference();
+    map<string, vector<ASTNode>> refObjects = getBuiltinObjectsReference();
 
     for (auto it = refObjects.begin(); it != refObjects.end(); it++ ) {
 
-        for(AST* node : it->second) {
+        for(ASTNode node : it->second) {
             if (node->getNodeType() == AST::Declaration) {
-                DeclarationNode *block = static_cast<DeclarationNode *>(node);
+                DeclarationNode *block = static_cast<DeclarationNode *>(node.get());
                 if (block->getObjectType() == "module") {
                     if (it->first.size() > 0) {
                         funcNames << QString::fromStdString(it->first) + ":" + QString::fromStdString(block->getName());
@@ -363,7 +354,7 @@ vector<Builder *> StrideSystem::createBuilders(QString fileName, vector<string> 
         qDebug() << "Error creating project path";
         return builders;
     }
-    for (StridePlatform *platform: m_platforms) {
+    for (auto platform: m_platforms) {
         if ( (usedFrameworks.size() == 0)
                 || (std::find(usedFrameworks.begin(), usedFrameworks.end(), platform->getFramework()) != usedFrameworks.end())) {
             if (platform->getAPI() == StridePlatform::PythonTools) {
@@ -384,7 +375,7 @@ vector<Builder *> StrideSystem::createBuilders(QString fileName, vector<string> 
         QLibrary pluginLibrary(m_pluginName);
         if (!pluginLibrary.load()) {
             qDebug() << pluginLibrary.errorString();
-            return NULL;
+            return nullptr;
         }
         create_object_t create = (create_object_t) pluginLibrary.resolve("create_object");
         if (create) {
@@ -399,14 +390,14 @@ vector<Builder *> StrideSystem::createBuilders(QString fileName, vector<string> 
 
 QString StrideSystem::getPlatformDomain(string namespaceName)
 {
-    map<string, vector<AST *>> libObjects = getBuiltinObjectsReference();
+    map<string, vector<ASTNode>> libObjects = getBuiltinObjectsReference();
     if (libObjects.find(namespaceName) == libObjects.end()) { // Invalid namespace
         assert(0 == 1);
         return "";
     }
-    for(AST *object:libObjects[namespaceName]) {
+    for(ASTNode object:libObjects[namespaceName]) {
         if (object->getNodeType() == AST::Declaration) {
-            DeclarationNode *block = static_cast<DeclarationNode *>(object);
+            std::shared_ptr<DeclarationNode> block = static_pointer_cast<DeclarationNode>(object);
             if (block->getObjectType() == "constant"
                     && block->getName() == "PlatformDomain") {
                 QList<LangError> errors;
@@ -415,7 +406,7 @@ QString StrideSystem::getPlatformDomain(string namespaceName)
                 if (block->getPropertyValue("value")->getNodeType() == AST::Block) {
 
                 } else {
-                    domainName = CodeValidator::evaluateConstString(block->getPropertyValue("value"), QVector<AST *>::fromStdVector(libObjects[namespaceName]), nullptr, errors);
+                    domainName = CodeValidator::evaluateConstString(block->getPropertyValue("value"), QVector<ASTNode >::fromStdVector(libObjects[namespaceName]), nullptr, errors);
                 }
                 return QString::fromStdString(domainName);
             }
@@ -433,36 +424,36 @@ vector<string> StrideSystem::getFrameworkNames()
     return names;
 }
 
-map<string, vector<AST *> > StrideSystem::getBuiltinObjectsCopy()
+map<string, vector<ASTNode> > StrideSystem::getBuiltinObjectsCopy()
 {
-    map<string, vector<AST *>> objects;
-    map<string, vector<AST *>> refObjects = getBuiltinObjectsReference();
+    map<string, vector<ASTNode>> objects;
+    map<string, vector<ASTNode>> refObjects = getBuiltinObjectsReference();
 
     for (auto it = refObjects.begin(); it != refObjects.end(); it++ ) {
-        objects[it->first] = vector<AST *>();
-        for(AST *object: it->second) {
+        objects[it->first] = vector<ASTNode>();
+        for(ASTNode object: it->second) {
             objects[it->first].push_back(object->deepCopy());
         }
     }
     return objects;
 }
 
-map<string, vector<AST *>> StrideSystem::getBuiltinObjectsReference()
+map<string, vector<ASTNode>> StrideSystem::getBuiltinObjectsReference()
 {
-    map<string, vector<AST *>> objects;
-    objects[""] = vector<AST *>();
+    map<string, vector<ASTNode>> objects;
+    objects[""] = vector<ASTNode>();
     for (auto platform: m_platforms) {
-        vector<AST *> platformObjects = platform->getPlatformObjectsReference();
+        vector<ASTNode> platformObjects = platform->getPlatformObjectsReference();
         if (m_testing) {
-            vector<AST *> testingObjs = platform->getPlatformTestingObjectsRef();
+            vector<ASTNode> testingObjs = platform->getPlatformTestingObjectsRef();
             for (size_t i = 0; i < platformObjects.size(); i++) {
                 if(platformObjects[i]->getNodeType() == AST::Declaration
                         || platformObjects[i]->getNodeType() == AST::BundleDeclaration) {
-                    DeclarationNode *decl = static_cast<DeclarationNode *>(platformObjects[i]);
-                    for(AST *testingObj: testingObjs) {
+                    std::shared_ptr<DeclarationNode> decl = static_pointer_cast<DeclarationNode>(platformObjects[i]);
+                    for(ASTNode testingObj: testingObjs) {
                         if (testingObj->getNodeType() == AST::Declaration
                                 || testingObj->getNodeType() == AST::BundleDeclaration) {
-                            DeclarationNode *testDecl = static_cast<DeclarationNode *>(testingObj);
+                            std::shared_ptr<DeclarationNode> testDecl = static_pointer_cast<DeclarationNode>(testingObj);
                             if (decl->getName() == testDecl->getName()) { // FIXME we need to check for namespace too
                                 platformObjects[i] = testDecl;
                                 break;
@@ -483,10 +474,10 @@ map<string, vector<AST *>> StrideSystem::getBuiltinObjectsReference()
     }
 
     // finally add library objects.
-    for(AST *object: m_library.getLibraryMembers()) {
+    for(ASTNode object: m_library.getLibraryMembers()) {
         objects[""].push_back(object);
     }
-    for(DeclarationNode *decl: m_platformDefinitions) {
+    for(std::shared_ptr<DeclarationNode> decl: m_platformDefinitions) {
         objects[""].push_back(decl);
     }
     return objects;

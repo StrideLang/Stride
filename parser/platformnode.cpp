@@ -63,17 +63,16 @@ int SystemNode::minorVersion() const
     return m_minorVersion;
 }
 
-
-AST *SystemNode::deepCopy()
-{
-    SystemNode *newnode = new SystemNode(m_systemName, m_majorVersion, m_minorVersion,
-                                    m_filename.data() , m_line, m_targetPlatforms);
-    vector<AST *> children = getChildren();
-    for (unsigned int i = 0; i < children.size(); i++) {
-        newnode->addChild(children.at(i)->deepCopy());
-    }
-    return newnode;
-}
+//AST *SystemNode::deepCopy()
+//{
+//    SystemNode *newnode = new SystemNode(m_systemName, m_majorVersion, m_minorVersion,
+//                                    m_filename.data() , m_line, m_targetPlatforms);
+//    vector<AST *> children = getChildren();
+//    for (unsigned int i = 0; i < children.size(); i++) {
+//        newnode->addChild(children.at(i)->deepCopy());
+//    }
+//    return newnode;
+//}
 
 vector<string> SystemNode::hwPlatforms() const
 {

@@ -46,8 +46,8 @@ PortPropertyNode::~PortPropertyNode()
 
 }
 
-AST *PortPropertyNode::deepCopy()
+ASTNode PortPropertyNode::deepCopy()
 {
-    PortPropertyNode *newPortPropertyNode = new PortPropertyNode(m_name, m_port, m_filename.data(), m_line);
+    std::shared_ptr<PortPropertyNode> newPortPropertyNode = make_shared<PortPropertyNode>(m_name, m_port, m_filename.data(), m_line);
     return newPortPropertyNode;
 }

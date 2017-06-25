@@ -36,10 +36,10 @@
 
 #include "propertynode.h"
 
-PropertyNode::PropertyNode(string name, AST *value, const char *filename, int line):
+PropertyNode::PropertyNode(string name, ASTNode value, const char *filename, int line):
     AST(AST::Property, filename, line)
 {
-    assert(value != NULL);
+    assert(value != nullptr);
     m_name = name;
     addChild(value);
 }
@@ -49,14 +49,17 @@ PropertyNode::~PropertyNode()
 
 }
 
-void PropertyNode::replaceValue(AST *newValue)
+void PropertyNode::replaceValue(ASTNode newValue)
 {
-    deleteChildren();
-    addChild(newValue);
+    if (m_children.size() > 0) {
+        m_children.at(0) = newValue;
+    } else {
+        addChild(newValue);
+    }
 }
 
-AST *PropertyNode::deepCopy()
+ASTNode PropertyNode::deepCopy()
 {
-    return new PropertyNode(m_name, m_children.at(0)->deepCopy(), m_filename.data(), m_line);
+    return std::make_shared<PropertyNode>(m_name, m_children.at(0)->deepCopy(), m_filename.data(), m_line);
 }
 

@@ -58,42 +58,42 @@ AST::~AST()
 
 }
 
-void AST::addChild(AST *t) {
+void AST::addChild(ASTNode t) {
     m_children.push_back(t);
 }
 
-void AST::giveChildren(AST *p)
-{
-    for(size_t i = 0; i < m_children.size(); i++) {
-        p->addChild(m_children.at(i));
-    }
-    m_children.clear();
-}
+//void AST::giveChildren(ASTNode p)
+//{
+//    for(size_t i = 0; i < m_children.size(); i++) {
+//        p->addChild(m_children.at(i));
+//    }
+//    m_children.clear();
+//}
 
-void AST::setChildren(vector<AST *> &newChildren)
+void AST::setChildren(vector<ASTNode> &newChildren)
 {
 //    deleteChildren();
     m_children = newChildren;
 }
 
-void AST::deleteChildren()
-{
-    for(size_t i = 0; i < m_children.size(); i++) {
-        m_children.at(i)->deleteChildren();
-        delete m_children.at(i);
-    }
-    m_children.clear();
-}
+//void AST::deleteChildren()
+//{
+////    for(size_t i = 0; i < m_children.size(); i++) {
+////        m_children.at(i)->deleteChildren();
+////        m_children.at(i).reset();
+////    }
+////    m_children.clear();
+//}
 
-AST *AST::deepCopy()
+ASTNode AST::deepCopy()
 {
     assert(0 == 1); // can't deep copy base AST
-    return NULL;
+    return nullptr;
 }
 
-AST *AST::parseFile(const char *fileName)
+ASTNode AST::parseFile(const char *fileName)
 {
-    return parse(fileName);
+    return std::shared_ptr<AST>(parse(fileName));
 }
 
 vector<LangError> AST::getParseErrors()
@@ -111,7 +111,7 @@ void AST::setFilename(const string &filename)
     m_filename = filename;
 }
 
-void AST::resolveScope(AST* scope)
+void AST::resolveScope(ASTNode scope)
 {
     (void) scope; // To remove warning
     assert(0 == 1); // Each type should resolve its scope

@@ -76,7 +76,7 @@ private:
     QStringList m_objectNames;
     QList<LangError> m_errors;
     QMutex m_validTreeLock;
-    AST *m_lastValidTree;
+    ASTNode m_lastValidTree;
 };
 
 #endif // CODEMODEL_HPP

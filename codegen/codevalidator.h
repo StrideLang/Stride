@@ -52,7 +52,7 @@ public:
         USE_TESTING = 0x02,
     } Options;
 
-    CodeValidator(QString striderootDir, AST * tree = nullptr, Options options = NO_OPTIONS);
+    CodeValidator(QString striderootDir, ASTNode tree = nullptr, Options options = NO_OPTIONS);
     ~CodeValidator();
 
     bool isValid();
@@ -63,108 +63,112 @@ public:
 
     StrideSystem *getSystem();
 
-    static DeclarationNode *findDeclaration(QString streamMemberName, QVector<AST *> scopeStack, AST *tree,
+    static std::shared_ptr<DeclarationNode> findDeclaration(QString streamMemberName, QVector<ASTNode> scopeStack, ASTNode tree,
                                             vector<string> scope = vector<string>(), vector<string> defaultNamespaces = vector<string>());
-    static QString streamMemberName(AST * node, QVector<AST *> scopeStack, AST *tree);
-    static PortType resolveBundleType(BundleNode *bundle, QVector<AST *> scope, AST *tree);
-    static PortType resolveNameType(BlockNode *name, QVector<AST *> scope, AST *tree);
-    static PortType resolveNodeOutType(AST *node, QVector<AST *> scope, AST *tree);
-    static PortType resolveListType(ListNode *listnode, QVector<AST *> scope, AST *tree);
-    static PortType resolveExpressionType(ExpressionNode *exprnode, QVector<AST *> scope, AST *tree);
-    static PortType resolveRangeType(RangeNode *rangenode, QVector<AST *> scope, AST *tree);
+    static QString streamMemberName(ASTNode  node, QVector<ASTNode > scopeStack, ASTNode tree);
+    static PortType resolveBundleType(BundleNode *bundle, QVector<ASTNode > scope, ASTNode tree);
+    static PortType resolveNameType(BlockNode *name, QVector<ASTNode > scope, ASTNode tree);
+    static PortType resolveNodeOutType(ASTNode node, QVector<ASTNode > scope, ASTNode tree);
+    static PortType resolveListType(ListNode *listnode, QVector<ASTNode > scope, ASTNode tree);
+    static PortType resolveExpressionType(ExpressionNode *exprnode, QVector<ASTNode > scope, ASTNode tree);
+    static PortType resolveRangeType(RangeNode *rangenode, QVector<ASTNode > scope, ASTNode tree);
 
-    static int evaluateConstInteger(AST *node, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
-    static double evaluateConstReal(AST *node, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
-    static std::string evaluateConstString(AST *node, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
-    static AST *getMemberfromBlockBundle(DeclarationNode *block, int index, QList<LangError> &errors);
-    static AST *getValueFromConstBlock(DeclarationNode *block);
-    static AST *getMemberFromList(ListNode *node, int index, QList<LangError> &errors);
-    static PropertyNode *findPropertyByName(vector<PropertyNode *> properties, QString propertyName);
-    static QVector<AST *> validTypesForPort(DeclarationNode *typeDeclaration, QString portName, QVector<AST *> scope, AST *tree);
-    static DeclarationNode *findTypeDeclarationByName(QString typeName, QVector<AST *> scopeStack, AST *tree,
+    static int evaluateConstInteger(ASTNode node, QVector<ASTNode> scope, ASTNode tree, QList<LangError> &errors);
+    static double evaluateConstReal(ASTNode node, QVector<ASTNode > scope, ASTNode tree, QList<LangError> &errors);
+    static std::string evaluateConstString(ASTNode node, QVector<ASTNode > scope, ASTNode tree, QList<LangError> &errors);
+    static ASTNode getMemberfromBlockBundle(DeclarationNode *block, int index, QList<LangError> &errors);
+    static ASTNode getValueFromConstBlock(DeclarationNode *block);
+    static ASTNode getMemberFromList(ListNode *node, int index, QList<LangError> &errors);
+    static std::shared_ptr<PropertyNode> findPropertyByName(vector<std::shared_ptr<PropertyNode> > properties, QString propertyName);
+    static QVector<ASTNode > validTypesForPort(std::shared_ptr<DeclarationNode> typeDeclaration, QString portName, QVector<ASTNode > scope, ASTNode tree);
+    static std::shared_ptr<DeclarationNode> findTypeDeclarationByName(QString typeName, QVector<ASTNode > scopeStack, ASTNode tree,
                                                       QList<LangError> &errors,
                                                       std::vector<std::string> namespaces = std::vector<std::string>());
-    static DeclarationNode *findTypeDeclaration(DeclarationNode *block, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
-    static DeclarationNode *findDomainDeclaration(string domainName, AST *tree);
+    static std::shared_ptr<DeclarationNode> findTypeDeclaration(DeclarationNode *block, QVector<ASTNode> scope, ASTNode tree, QList<LangError> &errors);
+    static std::shared_ptr<DeclarationNode> findDomainDeclaration(string domainName, ASTNode tree);
 
-    static QVector<AST *> getPortsForTypeBlock(DeclarationNode *block, QVector<AST *> scope, AST *tree);
-    static QVector<AST *> getPortsForType(QString typeName, QVector<AST *> scope, AST *tree);
-    static QVector<AST *> getInheritedPorts(DeclarationNode *block, QVector<AST *> scope, AST *tree);
-    static QStringList getInheritedTypeNames(DeclarationNode *block, QVector<AST *> scope, AST *tree);
+    static QVector<ASTNode> getPortsForTypeBlock(std::shared_ptr<DeclarationNode> block, QVector<ASTNode> scope, ASTNode tree);
+    static QVector<ASTNode> getPortsForType(QString typeName, QVector<ASTNode> scope, ASTNode tree);
+    static QVector<ASTNode > getInheritedPorts(std::shared_ptr<DeclarationNode> block, QVector<ASTNode > scope, ASTNode tree);
+    static QStringList getInheritedTypeNames(std::shared_ptr<DeclarationNode> block, QVector<ASTNode > scope, ASTNode tree);
 
-    static DeclarationNode *getMainOutputPortBlock(DeclarationNode *moduleBlock);
-    static DeclarationNode *getMainInputPortBlock(DeclarationNode *moduleBlock);
+    static std::shared_ptr<DeclarationNode> getMainOutputPortBlock(std::shared_ptr<DeclarationNode> moduleBlock);
+    static std::shared_ptr<DeclarationNode> getMainInputPortBlock(std::shared_ptr<DeclarationNode> moduleBlock);
 
     /// Number of parallel streams that a single stream can be broken up into
-    static int numParallelStreams(StreamNode *stream, StrideSystem &platform, QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
+    static int numParallelStreams(StreamNode *stream, StrideSystem &platform, QVector<ASTNode > &scope, ASTNode tree, QList<LangError> &errors);
 
     /// Get the number of parallel nodes implicit in node. i.e. into how many parallel streams
     /// can the node be broken up.
-    static int getNodeSize(AST *node, AST *tree);
+    static int getNodeSize(ASTNode node, ASTNode tree);
 
-    static int getFunctionDataSize(FunctionNode *func, QVector<AST *> scope, AST * tree, QList<LangError> &errors);
-    static int getNodeNumOutputs(AST *node, const QVector<AST *> &scope, AST *tree, QList<LangError> &errors);    bool validateNodeDeclaration(QString name, QVector<AST *> scopeStack, AST *tree);
-    static int getNodeNumInputs(AST *node, const QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
-    static int getTypeNumOutputs(DeclarationNode *blockDeclaration, const QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
-    static int getTypeNumInputs(DeclarationNode *blockDeclaration, const QVector<AST *> &scope, AST *tree, QList<LangError> &errors);
+    static std::vector<std::string> getFunctionPropertyNames(std::shared_ptr<DeclarationNode> blockDeclaration);
+    static int getFunctionDataSize(std::shared_ptr<FunctionNode> func, QVector<ASTNode > scope, ASTNode  tree, QList<LangError> &errors);
+    static int getNodeNumOutputs(ASTNode node, const QVector<ASTNode> &scope, ASTNode tree, QList<LangError> &errors);    bool validateNodeDeclaration(QString name, QVector<ASTNode > scopeStack, ASTNode tree);
+    static int getNodeNumInputs(ASTNode node, const QVector<ASTNode > &scope, ASTNode tree, QList<LangError> &errors);
+    static int getTypeNumOutputs(std::shared_ptr<DeclarationNode> blockDeclaration, const QVector<ASTNode > &scope, ASTNode tree, QList<LangError> &errors);
+    static int getTypeNumInputs(std::shared_ptr<DeclarationNode> blockDeclaration, const QVector<ASTNode > &scope, ASTNode tree, QList<LangError> &errors);
 
-    static int getBlockDeclaredSize(DeclarationNode *block, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
+    static int getBlockDeclaredSize(std::shared_ptr<DeclarationNode> block, QVector<ASTNode > scope, ASTNode tree, QList<LangError> &errors);
 
-    static int getLargestPropertySize(vector<PropertyNode *> &properties, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
+    static int getLargestPropertySize(vector<std::shared_ptr<PropertyNode >> &properties, QVector<ASTNode > scope, ASTNode tree, QList<LangError> &errors);
 
-    static AST *getBlockSubScope(DeclarationNode *block);
-    static int getBundleSize(BundleNode *bundle, QVector<AST *> scope, AST *tree, QList<LangError> &errors);
+    static ASTNode getBlockSubScope(std::shared_ptr<DeclarationNode> block);
+    static int getBundleSize(BundleNode *bundle, QVector<ASTNode> scope, ASTNode tree, QList<LangError> &errors);
 
     static QString getPortTypeName(PortType type);
 
-    static AST* getNodeDomain(AST *node, QVector<AST *> scopeStack, AST *tree);
-    static std::string getNodeDomainName(AST *node, QVector<AST *> scopeStack, AST *tree);
-    static std::string getDomainNodeString(AST *node);
-    static QVector<AST *> getBlocksInScope(AST *root, QVector<AST *> scopeStack, AST *tree);
+    static ASTNode getNodeDomain(ASTNode node, QVector<ASTNode > scopeStack, ASTNode tree);
+    static std::string getNodeDomainName(ASTNode node, QVector<ASTNode > scopeStack, ASTNode tree);
+    static std::string getDomainNodeString(ASTNode node);
+    static QVector<ASTNode > getBlocksInScope(ASTNode root, QVector<ASTNode > scopeStack, ASTNode tree);
 
-    static std::vector<std::string> getUsedDomains(AST *tree);
-    static std::string getFrameworkForDomain(std::string domainName, AST *tree);
+    static std::vector<std::string> getUsedDomains(ASTNode tree);
+    static std::string getFrameworkForDomain(std::string domainName, ASTNode tree);
 
-    static double findRateInProperties(vector<PropertyNode *> properties, QVector<AST *> scope, AST *tree);
-    static double getNodeRate(AST *node,  QVector<AST *> scope = QVector<AST *>(), AST *tree = nullptr);
-    static void setNodeRate(AST *node, double rate,  QVector<AST *> scope = QVector<AST *>(), AST *tree = nullptr);
+    static double findRateInProperties(vector<std::shared_ptr<PropertyNode>> properties, QVector<ASTNode > scope, ASTNode tree);
+    static double getNodeRate(ASTNode node,  QVector<ASTNode> scope = QVector<ASTNode >(), ASTNode tree = nullptr);
+    static void setNodeRate(ASTNode node, double rate,  QVector<ASTNode> scope = QVector<ASTNode >(), ASTNode tree = nullptr);
 
-    static double getDefaultForTypeAsDouble(QString type, QString port, QVector<AST *> scope, AST *tree);
-    static AST *getDefaultPortValueForType(QString type, QString portName, QVector<AST *> scope, AST *tree);
+    static double getDefaultForTypeAsDouble(QString type, QString port, QVector<ASTNode > scope, ASTNode tree);
+    static ASTNode getDefaultPortValueForType(QString type, QString portName, QVector<ASTNode > scope, ASTNode tree);
 
-    static bool scopesMatch(QStringList scopeList, AST *node);
-    static bool scopesMatch(AST *node1, AST *node2);
-    static bool nodeInScope(std::vector<string> scopeList, AST *node);
+    static bool scopesMatch(QStringList scopeList, ASTNode node);
+    static bool scopesMatch(ASTNode node1, ASTNode node2);
+    static bool nodeInScope(std::vector<string> scopeList, ASTNode node);
 
-    static vector<StreamNode *> getStreamsAtLine(AST *tree, int line);
+    static vector<StreamNode *> getStreamsAtLine(ASTNode tree, int line);
+
+    ASTNode getTree() const;
+    void setTree(const ASTNode &tree);
 
 private:
 
-    void validateTree(QString platformRootDir, AST * tree);
+    void validateTree(QString platformRootDir, ASTNode tree);
     void validate();
-    QVector<SystemNode *> getPlatformNodes();
+    QVector<std::shared_ptr<SystemNode> > getPlatformNodes();
 
-    void validatePlatform(AST *node, QVector<AST *> scopeStack);
-    void validateTypes(AST *node, QVector<AST *> scopeStack, vector<string> parentNamespace = vector<string>());
-    void validateStreamMembers(StreamNode *node, QVector<AST *> scopeStack);
-    void validateBundleIndeces(AST *node, QVector<AST *> scope);
-    void validateBundleSizes(AST *node, QVector<AST *> scope);
-    void validateSymbolUniqueness(AST *node, QVector<AST *> scope);
-    void validateListTypeConsistency(AST *node, QVector<AST *> scope);
-    void validateStreamSizes(AST *tree, QVector<AST *> scope);
-    void validateRates(AST *tree);
+    void validatePlatform(ASTNode node, QVector<ASTNode > scopeStack);
+    void validateTypes(ASTNode node, QVector<ASTNode > scopeStack, vector<string> parentNamespace = vector<string>());
+    void validateStreamMembers(StreamNode *node, QVector<ASTNode > scopeStack);
+    void validateBundleIndeces(ASTNode node, QVector<ASTNode > scope);
+    void validateBundleSizes(ASTNode node, QVector<ASTNode > scope);
+    void validateSymbolUniqueness(ASTNode node, QVector<ASTNode > scope);
+    void validateListTypeConsistency(ASTNode node, QVector<ASTNode > scope);
+    void validateStreamSizes(ASTNode tree, QVector<ASTNode > scope);
+    void validateRates(ASTNode tree);
 
     void sortErrors();
 
-    void validateStreamInputSize(StreamNode *stream, QVector<AST *> scope, QList<LangError> &errors);
-    void validateNodeRate(AST *node, AST *tree);
+    void validateStreamInputSize(StreamNode *stream, QVector<ASTNode > scope, QList<LangError> &errors);
+    void validateNodeRate(ASTNode node, ASTNode tree);
 
-    int getBlockDataSize(DeclarationNode *block, QVector<AST *> scope, QList<LangError> &errors);
+    int getBlockDataSize(std::shared_ptr<DeclarationNode> block, QVector<ASTNode > scope, QList<LangError> &errors);
 
-    QString getNodeText(AST *node);
+    QString getNodeText(ASTNode node);
 
     StrideSystem * m_system;
-    AST *m_tree;
+    ASTNode m_tree;
     QList<LangError> m_errors;
     Options m_options;
 };

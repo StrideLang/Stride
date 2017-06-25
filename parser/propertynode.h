@@ -42,14 +42,14 @@
 class PropertyNode : public AST
 {
 public:
-    PropertyNode(string name, AST *value, const char *filename, int line);
+    PropertyNode(string name, ASTNode value, const char *filename, int line);
     ~PropertyNode();
 
     string getName() const { return m_name; }
-    AST *getValue() const { return m_children[0]; }
-    void replaceValue(AST *newValue);
+    ASTNode getValue() const { return m_children[0]; }
+    void replaceValue(ASTNode newValue);
 
-    AST *deepCopy();
+    virtual ASTNode deepCopy() override;
 
 private:
     string m_name;

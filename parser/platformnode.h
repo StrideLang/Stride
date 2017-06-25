@@ -59,7 +59,7 @@ public:
     vector<string> hwPlatforms() const;
     void setHwPlatforms(const vector<string> &hwPlatforms);
 
-    AST *deepCopy();
+//    AST *deepCopy();
 
 private:
     int m_minorVersion;

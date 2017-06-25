@@ -1803,6 +1803,10 @@ class PlatformFunctions:
                     raise ValueError("Invalid or unavailable platform type.")
             elif declaration['type'] == 'reaction':
                 new_atom = ReactionAtom(declaration, member['function'], platform_type, self.unique_id, self, scope_index, connected_blocks, previous_atom, next_atom)
+            else: # Assume we are using a platform type (allow function notation for platform types)
+                # This should be exactly the same as the if "name" in member branch
+                platform_type, declaration = self.find_block(member['function']['name'], self.tree)
+                new_atom = NameAtom(platform_type, declaration, self.unique_id, scope_index, member['function']['line'], member['function']['filename'])
         elif "expression" in member:
             if 'value' in member['expression']: # Unary expression
                 left_atom = self.make_atom(member['expression']['value'], previous_atom, next_atom)

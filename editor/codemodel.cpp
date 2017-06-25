@@ -47,20 +47,13 @@
 
 CodeModel::CodeModel(QObject *parent) :
     QObject(parent),
-    m_lastValidTree(NULL)
+    m_lastValidTree(nullptr)
 {
 
 }
 
 CodeModel::~CodeModel()
 {
-    QMutexLocker locker(&m_validTreeLock);
-    if (m_lastValidTree) {
-        foreach(AST * node, m_lastValidTree->getChildren()) {
-            node->deleteChildren();
-            delete node;
-        }
-    }
 }
 
 QString CodeModel::getHtmlDocumentation(QString symbol)
@@ -98,44 +91,44 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
     QList<LangError> errors;
     if (symbol[0].toLower() == symbol[0]) {
         QMutexLocker locker(&m_validTreeLock);
-        DeclarationNode *typeBlock = CodeValidator::findTypeDeclarationByName(symbol, QVector<AST *>(), m_lastValidTree, errors);
+        std::shared_ptr<DeclarationNode> typeBlock = CodeValidator::findTypeDeclarationByName(symbol, QVector<ASTNode>(), m_lastValidTree, errors);
         if (typeBlock) {
-            AST *metaValue = typeBlock->getPropertyValue("meta");
+            AST *metaValue = typeBlock->getPropertyValue("meta").get();
             if (metaValue) {
                 Q_ASSERT(metaValue);
                 Q_ASSERT(metaValue->getNodeType() == AST::String);
                 QString docHtml = "<h1>" + symbol + "</h1>\n";
                 docHtml += QString::fromStdString(static_cast<ValueNode *>(metaValue)->getStringValue());
-                vector<PropertyNode *> properties = typeBlock->getProperties();
+                vector<std::shared_ptr<PropertyNode> > properties = typeBlock->getProperties();
                 QString propertiesHtml = tr("<h2>Ports</h2>") + "\n";
                 QString propertiesTable = "<table><tr><td><b>Name</b></td><td><b>Types</b></td><td><b>Default</b></td><td><b>Direction</b></td></tr>";
-                QVector<AST *> ports = CodeValidator::getPortsForTypeBlock(typeBlock, QVector<AST *>(), m_lastValidTree);
-                foreach(AST *port, ports) {
-                    DeclarationNode *portBlock = static_cast<DeclarationNode *>(port);
+                QVector<ASTNode> ports = CodeValidator::getPortsForTypeBlock(typeBlock, QVector<ASTNode>(), m_lastValidTree);
+                for(ASTNode port : ports) {
+                    DeclarationNode *portBlock = static_cast<DeclarationNode *>(port.get());
                     Q_ASSERT(portBlock->getNodeType() == AST::Declaration);
                     if (portBlock->getNodeType() == AST::Declaration) {
                         QString portName = QString::fromStdString(
-                                    static_cast<ValueNode *>(portBlock->getPropertyValue("name"))->getStringValue());
+                                    static_cast<ValueNode *>(portBlock->getPropertyValue("name").get())->getStringValue());
                         if (portName != "inherits" && portName != "meta") {
-                            AST *portMetaNode = portBlock->getPropertyValue("meta");
+                            AST *portMetaNode = portBlock->getPropertyValue("meta").get();
                             QString portMeta;
                             if (portMetaNode) {
                                 portMeta = QString::fromStdString(static_cast<ValueNode *>(portMetaNode)->getStringValue());
                             }
                             propertiesHtml += "<h3>" + portName + "</h3>" + portMeta;
                             propertiesTable += "<tr><td>" + portName;
-                            AST *portTypesValue = portBlock->getPropertyValue("types");
+                            AST *portTypesValue = portBlock->getPropertyValue("types").get();
 //                            Q_ASSERT(portTypesValue);
 //                            Q_ASSERT(portTypesValue->getNodeType() == AST::List);
                             if (portTypesValue && portTypesValue->getNodeType() == AST::List) {
                                 ListNode *validTypesList = static_cast<ListNode *>(portTypesValue);
                                 QString typesText;
-                                foreach(AST *validTypeNode, validTypesList->getChildren()) {
+                                for(ASTNode validTypeNode : validTypesList->getChildren()) {
                                     if (validTypeNode->getNodeType() == AST::String) {
-                                        string typeName = static_cast<ValueNode *>(validTypeNode)->getStringValue();
+                                        string typeName = static_cast<ValueNode *>(validTypeNode.get())->getStringValue();
                                         typesText += QString::fromStdString(typeName + ", ");
                                     } else if (validTypeNode->getNodeType() == AST::Block) {
-                                        string typeName = static_cast<BlockNode *>(validTypeNode)->getName();
+                                        string typeName = static_cast<BlockNode *>(validTypeNode.get())->getName();
                                         typesText += QString::fromStdString(typeName + ", ");
                                     } else {
                                         typesText += "---";
@@ -144,7 +137,7 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
                                 typesText.chop(2);
                                 propertiesTable += "<td>" + typesText + "</td>";
                             }
-                            AST *defaultValue = portBlock->getPropertyValue("default");
+                            AST *defaultValue = portBlock->getPropertyValue("default").get();
                             if (defaultValue) {
                                 if (defaultValue->getNodeType() == AST::None) {
                                     propertiesTable += "<td>None</td>";
@@ -170,9 +163,9 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
         }
     } else if (symbol[0].toUpper() == symbol[0]) { // Check if it is a declared module
         QMutexLocker locker(&m_validTreeLock);
-        DeclarationNode *declaration = CodeValidator::findDeclaration(symbol, QVector<AST *>(), m_lastValidTree);
+        std::shared_ptr<DeclarationNode> declaration = CodeValidator::findDeclaration(symbol, QVector<ASTNode>(), m_lastValidTree);
         if (declaration) {
-            AST *metaValue = declaration->getPropertyValue("meta");
+            AST *metaValue = declaration->getPropertyValue("meta").get();
             Q_ASSERT(metaValue);
             if (metaValue) {
                 Q_ASSERT(metaValue->getNodeType() == AST::String);
@@ -180,25 +173,25 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
                 docHtml += QString::fromStdString(static_cast<ValueNode *>(metaValue)->getStringValue());
                 QString propertiesTable = "<table> <tr><td><b>Name</b></td><td><b>Main</b></td><td><b>Default</b></td><td><b>Direction</b></td></tr>";
                 QString propertiesHtml = tr("<h2>Ports</h2>") + "\n";
-                AST *properties = declaration->getPropertyValue("ports");
+                AST *properties = declaration->getPropertyValue("ports").get();
                 if (properties && properties->getNodeType() == AST::List) {
                     Q_ASSERT(properties->getNodeType() == AST::List);
                     ListNode *propertiesList = static_cast<ListNode *>(properties);
-                    foreach(AST *member, propertiesList->getChildren()) {
-                        DeclarationNode *portBlock = static_cast<DeclarationNode *>(member);
+                    for(ASTNode member : propertiesList->getChildren()) {
+                        DeclarationNode *portBlock = static_cast<DeclarationNode *>(member.get());
                         Q_ASSERT(portBlock->getNodeType() == AST::Declaration);
                         if (portBlock->getNodeType() == AST::Declaration) {
                             QString portName = QString::fromStdString(
-                                        static_cast<ValueNode *>(portBlock->getPropertyValue("name"))->getStringValue());
+                                        static_cast<ValueNode *>(portBlock->getPropertyValue("name").get())->getStringValue());
                             if (portName != "inherits" && portName != "meta") {
-                                AST *portMetaNode = portBlock->getPropertyValue("meta");
+                                AST *portMetaNode = portBlock->getPropertyValue("meta").get();
                                 QString portMeta;
                                 if (portMetaNode) {
                                     portMeta = QString::fromStdString(static_cast<ValueNode *>(portMetaNode)->getStringValue());
                                 }
                                 propertiesHtml += "<h3>" + portName + "</h3>" + portMeta;
                                 propertiesTable += "<tr><td>" + portName + "</td>";
-                                AST *mainPort = portBlock->getPropertyValue("main");
+                                AST *mainPort = portBlock->getPropertyValue("main").get();
                                 if (mainPort && mainPort->getNodeType() == AST::Switch) {
                                     if (static_cast<ValueNode *>(mainPort)->getSwitchValue()) {
                                         propertiesTable += "<td>on</td>";
@@ -225,7 +218,7 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
 //                                        }
 //                                    }
 //                                }
-                                AST *defaultValue = portBlock->getPropertyValue("default");
+                                AST *defaultValue = portBlock->getPropertyValue("default").get();
                                 if (defaultValue) {
                                     if (defaultValue->getNodeType() == AST::None) {
                                         propertiesTable += "<td>None</td>";
@@ -239,7 +232,7 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
                                         propertiesTable += "<td>---</td>";
                                     }
                                 }
-                                AST *direction = portBlock->getPropertyValue("direction");
+                                AST *direction = portBlock->getPropertyValue("direction").get();
                                 if (direction && direction->getNodeType() == AST::String) {
                                     propertiesTable += "<td>" + QString::fromStdString(static_cast<ValueNode *>(direction)->getStringValue()) + "</td>";
                                 } else {
@@ -268,25 +261,25 @@ QString CodeModel::getTooltipText(QString symbol)
     QString text;
     if (symbol[0].toUpper() == symbol[0]) { // Check if it is a declared module
         QMutexLocker locker(&m_validTreeLock);
-        DeclarationNode *declaration = CodeValidator::findDeclaration(symbol, QVector<AST *>(), m_lastValidTree);
+        std::shared_ptr<DeclarationNode> declaration = CodeValidator::findDeclaration(symbol, QVector<ASTNode>(), m_lastValidTree);
         if (declaration) {
-            AST *metaValue = declaration->getPropertyValue("meta");
+            AST *metaValue = declaration->getPropertyValue("meta").get();
             if (metaValue) {
                 Q_ASSERT(metaValue->getNodeType() == AST::String);
-                AST *properties = declaration->getPropertyValue("ports");
+                AST *properties = declaration->getPropertyValue("ports").get();
                 if (properties && properties->getNodeType() == AST::List) {
                     text += "<b>" + symbol + "</b>\n(";
                     Q_ASSERT(properties->getNodeType() == AST::List);
                     ListNode *propertiesList = static_cast<ListNode *>(properties);
-                    foreach(AST *member, propertiesList->getChildren()) {
-                        DeclarationNode *portBlock = static_cast<DeclarationNode *>(member);
+                    for(ASTNode member : propertiesList->getChildren()) {
+                        DeclarationNode *portBlock = static_cast<DeclarationNode *>(member.get());
                         Q_ASSERT(portBlock->getNodeType() == AST::Declaration);
                         if (portBlock->getNodeType() == AST::Declaration) {
                             if (portBlock->getPropertyValue("name")) {
                                 QString portName = QString::fromStdString(
-                                            static_cast<ValueNode *>(portBlock->getPropertyValue("name"))->getStringValue());
+                                            static_cast<ValueNode *>(portBlock->getPropertyValue("name").get())->getStringValue());
                                 if (portName != "inherits" && portName != "meta") {
-                                    AST *portMetaNode = portBlock->getPropertyValue("meta");
+                                    AST *portMetaNode = portBlock->getPropertyValue("meta").get();
                                     QString portMeta;
                                     if (portMetaNode) {
                                         portMeta = QString::fromStdString(static_cast<ValueNode *>(portMetaNode)->getStringValue());
@@ -302,7 +295,7 @@ QString CodeModel::getTooltipText(QString symbol)
         }
     } else { // word starts with lower case letter
         QList<LangError> errors;
-        DeclarationNode *typeBlock = CodeValidator::findTypeDeclarationByName(symbol, QVector<AST *>(), m_lastValidTree, errors);
+        std::shared_ptr<DeclarationNode> typeBlock = CodeValidator::findTypeDeclarationByName(symbol, QVector<ASTNode>(), m_lastValidTree, errors);
         if (typeBlock) {
             text = "type: " + symbol;
         }
@@ -318,10 +311,10 @@ QPair<QString, int> CodeModel::getSymbolLocation(QString symbol)
     }
 
     QMutexLocker locker(&m_validTreeLock);
-    foreach(AST *node, m_lastValidTree->getChildren()) {
+    for(ASTNode node : m_lastValidTree->getChildren()) {
         if (node->getNodeType() == AST::Declaration ||
                 node->getNodeType() == AST::BundleDeclaration) {
-            DeclarationNode *block = static_cast<DeclarationNode *>(node);
+            DeclarationNode *block = static_cast<DeclarationNode *>(node.get());
             if (block->getName() == symbol.toStdString()) {
                 QString fileName = QString::fromStdString(block->getFilename());
                 location.first = fileName;
@@ -329,7 +322,7 @@ QPair<QString, int> CodeModel::getSymbolLocation(QString symbol)
                 return location;
             }
             if (block->getObjectType() == "type") {
-                AST *namePropertyValue = block->getPropertyValue("typeName");
+                AST *namePropertyValue = block->getPropertyValue("typeName").get();
                 Q_ASSERT(namePropertyValue);
                 if (namePropertyValue->getNodeType() == AST::String) {
                     ValueNode *nameValue = static_cast<ValueNode *>(namePropertyValue);
@@ -349,10 +342,10 @@ QPair<QString, int> CodeModel::getSymbolLocation(QString symbol)
 AST * CodeModel::getOptimizedTree()
 {
     QMutexLocker locker(&m_validTreeLock);
-    AST * optimizedTree = NULL;
+    AST * optimizedTree = nullptr;
     if (m_lastValidTree) {
         optimizedTree = new AST;
-        foreach(AST *node, m_lastValidTree->getChildren()) {
+        for(ASTNode node : m_lastValidTree->getChildren()) {
             optimizedTree->addChild(node->deepCopy());
         }
     }
@@ -391,23 +384,23 @@ QString CodeModel::getFunctionSyntax(QString symbol)
     QString text;
     if (symbol[0].toUpper() == symbol[0]) { // Check if it is a declared module
         QMutexLocker locker(&m_validTreeLock);
-        DeclarationNode *declaration = CodeValidator::findDeclaration(symbol, QVector<AST *>(), m_lastValidTree);
+        std::shared_ptr<DeclarationNode> declaration = CodeValidator::findDeclaration(symbol, QVector<ASTNode>(), m_lastValidTree);
         if (declaration) {
-            AST *metaValue = declaration->getPropertyValue("meta");
+            AST *metaValue = declaration->getPropertyValue("meta").get();
             Q_ASSERT(metaValue);
             if (metaValue) {
                 Q_ASSERT(metaValue->getNodeType() == AST::String);
-                AST *properties = declaration->getPropertyValue("ports");
+                AST *properties = declaration->getPropertyValue("ports").get();
                 if (properties && properties->getNodeType() == AST::List) {
                     text += symbol +  "(";
                     Q_ASSERT(properties->getNodeType() == AST::List);
                     ListNode *propertiesList = static_cast<ListNode *>(properties);
-                    foreach(AST *member, propertiesList->getChildren()) {
-                        DeclarationNode *portBlock = static_cast<DeclarationNode *>(member);
+                    for(ASTNode member : propertiesList->getChildren()) {
+                        DeclarationNode *portBlock = static_cast<DeclarationNode *>(member.get());
                         Q_ASSERT(portBlock->getNodeType() == AST::Declaration);
                         if (portBlock->getNodeType() == AST::Declaration) {
                             QString portName = QString::fromStdString(
-                                        static_cast<ValueNode *>(portBlock->getPropertyValue("name"))->getStringValue());
+                                        static_cast<ValueNode *>(portBlock->getPropertyValue("name").get())->getStringValue());
                             if (portName != "inherits" && portName != "meta") {
 //                                AST *portMetaNode = portBlock->getPropertyValue("meta");
 //                                QString portMeta;
@@ -415,7 +408,7 @@ QString CodeModel::getFunctionSyntax(QString symbol)
 //                                    portMeta = QString::fromStdString(static_cast<ValueNode *>(portMetaNode)->getStringValue());
 //                                }
                                 QString defaultValue;
-                                AST *portDefaultNode = portBlock->getPropertyValue("default");
+                                AST *portDefaultNode = portBlock->getPropertyValue("default").get();
                                 if (portDefaultNode) {
                                     ValueNode * valueNode = static_cast<ValueNode *>(portDefaultNode);
                                     defaultValue = QString::fromStdString(valueNode->toString());
@@ -445,31 +438,27 @@ void CodeModel::updateCodeAnalysis(QString code, QString platformRootPath)
     if (tmpFile.open()) {
         tmpFile.write(code.toLocal8Bit());
         tmpFile.close();
-        AST *tree;
+        ASTNode tree;
         tree = AST::parseFile(tmpFile.fileName().toLocal8Bit().constData());
 
         if (tree) {
             CodeValidator validator(platformRootPath, tree);
-//            validator.validate();
             StrideSystem *platform = validator.getSystem();
-            vector<AST *> objects;
+            vector<ASTNode> objects;
             if (platform) {
                 m_types = platform->getPlatformTypeNames();
                 m_funcs = platform->getFunctionNames();
                 objects = platform->getBuiltinObjectsReference()[""];
             }
             m_objectNames.clear();
-            foreach (AST *platObject, objects) {
+            for(ASTNode platObject : objects) {
                 if (platObject->getNodeType() == AST::Block) {
-                    m_objectNames << QString::fromStdString(static_cast<BlockNode *>(platObject)->getName());
+                    m_objectNames << QString::fromStdString(static_cast<BlockNode *>(platObject.get())->getName());
                 }
             }
             m_errors = validator.getErrors();
-//            m_platform = validator.getPlatform();
 
             if(m_lastValidTree) {
-                m_lastValidTree->deleteChildren();
-                delete m_lastValidTree;
             }
             m_lastValidTree = tree;
         } else { // !tree
