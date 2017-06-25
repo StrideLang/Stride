@@ -236,9 +236,6 @@ importDef:
             string word;
             word.append($3); /* string constructor leaks otherwise! */
             $$ = new ImportNode(word, std::shared_ptr<AST>($2), currentFile, yyloc.first_line);
-//            AST *scope = $2;
-//            scope->deleteChildren();
-//            delete scope;
             COUT << "Importing: " << $3 << " in scope!" << ENDL;
             free($3);
         }
@@ -258,9 +255,6 @@ importDef:
             string alias;
             alias.append($5); /* string constructor leaks otherwise! */
             $$ = new ImportNode(word, std::shared_ptr<AST>($2), currentFile, yyloc.first_line, alias);
-//            AST *scope = $2;
-//            scope->deleteChildren();
-//            delete scope;
             COUT << "Importing: " << $3 << " as " << $5 << " in scope!" << ENDL;
             free($3);
             free($5);
@@ -278,8 +272,6 @@ blockDef:
             string uvar;
             uvar.append($2); /* string constructor leaks otherwise! */
             $$ = new DeclarationNode(uvar, word, std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
-            AST *props = $3;
-//            delete props;
             COUT << "Block: " << $1 << ", Labelled: " << $2 << ENDL;
             free($1);
             free($2);
@@ -296,8 +288,6 @@ blockDef:
             COUT << "Block Bundle: " << $1 << ", Labelled: " << $2 << ENDL;
             free($2);
             free($1);
-//            AST *propertyContainer = $6;
-//            delete propertyContainer;
          }
     ;
 
@@ -373,9 +363,6 @@ bundleDef:
             string s;
             s.append($2); /* string constructor leaks otherwise! */
             $$ = new BundleNode(s, std::shared_ptr<AST>($1), std::shared_ptr<ListNode>($4), currentFile, yyloc.first_line);
-//            AST *scope = $1;
-//            scope->deleteChildren();
-//            delete scope;
             COUT << "Bundle name: " << $2 << " in scope!" << ENDL;
             COUT << "Streaming ... " << ENDL;
             free($2);
@@ -398,9 +385,6 @@ functionDef:
             string s;
             s.append($2);
             $$ = new FunctionNode(s, std::shared_ptr<AST>($1), NULL, FunctionNode::UserDefined, currentFile, yyloc.first_line);
-//            AST *scope = $1;
-//            scope->deleteChildren();
-//            delete scope;
             COUT << "User function: " << $2 << " in scope!" << ENDL;
             free($2);
         }
@@ -408,8 +392,6 @@ functionDef:
             string s;
             s.append($1); /* string constructor leaks otherwise! */
             $$ = new FunctionNode(s, std::shared_ptr<AST>($3), FunctionNode::UserDefined, currentFile, yyloc.first_line);
-            AST *props = $3;
-//            delete props;
             COUT << "Properties () ..." << ENDL;
             COUT << "User function: " << $1 << ENDL;
             free($1);
@@ -418,11 +400,6 @@ functionDef:
             string s;
             s.append($2);
             $$ = new FunctionNode(s, std::shared_ptr<AST>($1), std::shared_ptr<AST>($4), FunctionNode::UserDefined, currentFile, yyloc.first_line);
-//            AST *scope = $1;
-//            scope->deleteChildren();
-//            delete scope;
-            AST *props = $4;
-//            delete props;
             COUT << "Properties () ..." << ENDL;
             COUT << "User function: " << $2 << " in scope!" << ENDL;
             free($2);
@@ -487,8 +464,6 @@ propertyType:
         }
     |   blockType           {
             $$ = new DeclarationNode("", "" , std::shared_ptr<AST>($1), currentFile, yyloc.first_line);
-//            AST *props = $1;
-//            delete props;
             COUT << "Block as property value!" << ENDL;
         }
     |   listDef             {
@@ -958,9 +933,6 @@ indexComp:
             string s;
             s.append($2);
             $$ = new BlockNode(s, std::shared_ptr<AST>($1), currentFile, yyloc.first_line);
-//            AST *scope = $1;
-//            scope->deleteChildren();
-//            delete scope;
             COUT << "Index/Size User variable: " << $2 << " in scope!" << ENDL;
             free($2);
         }
@@ -987,9 +959,6 @@ streamComp:
             string s;
             s.append($2);
             $$ = new BlockNode(s, std::shared_ptr<AST>($1), currentFile, yyloc.first_line);
-//            AST *scope = $1;
-//            scope->deleteChildren();
-//            delete scope;
             COUT << "User variable: " << $2 << " in scope!" << ENDL;
             COUT << "Streaming ... " << ENDL;
             free($2);
@@ -1058,9 +1027,6 @@ valueComp:
             string s;
             s.append($2);
             $$ = new BlockNode(s, std::shared_ptr<AST>($1), currentFile, yyloc.first_line);
-            AST *scope = $1;
-//            scope->deleteChildren();
-//            delete scope;
             COUT << "User variable: " << $2 << " in scope!" << ENDL;
             free($2);
         }
