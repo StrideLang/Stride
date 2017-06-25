@@ -1146,7 +1146,6 @@ AST *parse(const char *filename){
 
     if (parseErrors.size() > 0) {
         COUT << ENDL << "Number of Errors: " << parseErrors.size() << ENDL;
-        tree_head->deleteChildren();
         delete tree_head;
         return NULL;
     }
