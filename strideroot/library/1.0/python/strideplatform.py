@@ -1537,18 +1537,18 @@ class ReactionAtom(ModuleAtom):
     def get_processing_code(self, in_tokens):
         processing_code = {}
 
-        for each_domain in self.code['domain_code']:
-            if not each_domain in processing_code:
-                processing_code[each_domain] = ['', []]
-            processing_code[each_domain][0] += "if (" + in_tokens[0] + ") {\n"
-            processing_code[each_domain][0] += templates.expression(
-                    templates.reaction_processing_code(self.reaction['name'],
-                                                    [],
-                                                    self.out_tokens,
-                                                    each_domain
-                                                    ))
+        domain = self.input_atom.domain # Reaction is triggered/called in the domain of the input signal
+        if not domain in processing_code:
+            processing_code[domain] = ['', []]
+        processing_code[domain][0] += "if (" + in_tokens[0] + ") {\n"
+        processing_code[domain][0] += templates.expression(
+                templates.reaction_processing_code(self.reaction['name'],
+                                                [],
+                                                self.out_tokens,
+                                                domain
+                                                ))
 
-            processing_code[each_domain][0] += "}\n"
+        processing_code[domain][0] += "}\n"
 
         return processing_code
 
@@ -1633,8 +1633,8 @@ class ReactionAtom(ModuleAtom):
         declarations.append(declaration)
         return declarations
 
-    def get_instances(self):
-        return []
+#    def get_instances(self):
+#        return []
 
 
 # --------------------- Common platform functions
