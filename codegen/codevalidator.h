@@ -102,7 +102,7 @@ public:
     /// can the node be broken up.
     static int getNodeSize(ASTNode node, ASTNode tree);
 
-    static std::vector<std::string> getFunctionPropertyNames(std::shared_ptr<DeclarationNode> blockDeclaration);
+    static std::vector<std::string> getModulePropertyNames(std::shared_ptr<DeclarationNode> blockDeclaration);
     static int getFunctionDataSize(std::shared_ptr<FunctionNode> func, QVector<ASTNode > scope, ASTNode  tree, QList<LangError> &errors);
     static int getNodeNumOutputs(ASTNode node, const QVector<ASTNode> &scope, ASTNode tree, QList<LangError> &errors);    bool validateNodeDeclaration(QString name, QVector<ASTNode > scopeStack, ASTNode tree);
     static int getNodeNumInputs(ASTNode node, const QVector<ASTNode > &scope, ASTNode tree, QList<LangError> &errors);

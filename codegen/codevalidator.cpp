@@ -647,7 +647,7 @@ void CodeValidator::validateTypes(ASTNode node, QVector<ASTNode > scopeStack, ve
         } else {
             for (std::shared_ptr<PropertyNode> property : func->getProperties()) {
                 string propertyName = property->getName();
-                vector<string> validPorts = getFunctionPropertyNames(declaration);
+                vector<string> validPorts = getModulePropertyNames(declaration);
                 // TODO "domain" port is being allowed forcefully. Should this be specified in a different way?
                 if (propertyName.at(0) != '_' && propertyName != "domain" && std::find(validPorts.begin(), validPorts.end(), propertyName) == validPorts.end()){
                     LangError error;
@@ -2125,22 +2125,25 @@ int CodeValidator::getNodeSize(ASTNode node, ASTNode tree)
     return size;
 }
 
-std::vector<string> CodeValidator::getFunctionPropertyNames(std::shared_ptr<DeclarationNode> blockDeclaration)
+std::vector<string> CodeValidator::getModulePropertyNames(std::shared_ptr<DeclarationNode> blockDeclaration)
 {
     std::vector<string> portNames;
-    ListNode *portsList = static_cast<ListNode *>(blockDeclaration->getPropertyValue("ports").get());
-    Q_ASSERT(portsList->getNodeType() == AST::List || portsList->getNodeType() == AST::None);
-    if (portsList->getNodeType() == AST::List) {
-        for (ASTNode portDeclaration: portsList->getChildren()) {
-            if (portDeclaration->getNodeType() == AST::Declaration) {
-                DeclarationNode *port = static_cast<DeclarationNode *>(portDeclaration.get());
-                ASTNode nameProperty = port->getPropertyValue("name");
-                Q_ASSERT(nameProperty->getNodeType() == AST::String);
-                if (nameProperty->getNodeType() == AST::String) {
-                    portNames.push_back(static_cast<ValueNode *>(nameProperty.get())->toString());
+    if (blockDeclaration->getObjectType() == "module") {
+        ListNode *portsList = static_cast<ListNode *>(blockDeclaration->getPropertyValue("ports").get());
+        if (portsList->getNodeType() == AST::List) {
+            for (ASTNode portDeclaration: portsList->getChildren()) {
+                if (portDeclaration->getNodeType() == AST::Declaration) {
+                    DeclarationNode *port = static_cast<DeclarationNode *>(portDeclaration.get());
+                    ASTNode nameProperty = port->getPropertyValue("name");
+                    Q_ASSERT(nameProperty->getNodeType() == AST::String);
+                    if (nameProperty->getNodeType() == AST::String) {
+                        portNames.push_back(static_cast<ValueNode *>(nameProperty.get())->toString());
+                    }
                 }
             }
         }
+    } else { // TODO implement for platform types
+
     }
     return portNames;
 }
