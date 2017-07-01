@@ -87,6 +87,9 @@ class Atom(object):
     def get_instances(self):
         return []
 
+    def get_header_code(self):
+        return ''
+
     def get_initialization_code(self, in_tokens):
         '''Returns code that should be executed only once per construction of
         the block'''
@@ -1047,6 +1050,8 @@ class ModuleAtom(Atom):
         self.port_name_atoms = {}
 
         self._process_module(self.module["streams"])
+        self._prepare_declaration()
+
         self.set_inline(False)
 
 
@@ -1056,30 +1061,13 @@ class ModuleAtom(Atom):
             return
         self.inline = inline
 
-    def get_declarations(self):
-        declarations = []
-        outer_declarations = []
-        secondary_domain = ''
-        #FIXME do we need to support more than 1 output block?
-        if len(self._output_blocks) > 0:
-            secondary_domain = self._output_blocks[0]['domain']
-
-        if "other_scope_declarations" in self.code:
-            for other_declaration in self.code["other_scope_declarations"]:
-                if not other_declaration.domain or other_declaration.domain == secondary_domain:
-                    other_declaration.domain = self.domain
-                outer_declarations.append(other_declaration)
-
-        declarations += outer_declarations
-        domain_code = self.code['domain_code']
-
-        for block in self.connected_blocks:
-            declarations += block.get_declarations()
-
+    def _prepare_declaration(self):
         header_code = ''
         init_code = ''
         process_code = {}
-        #properties_domain_code = ''
+
+        domain_code = self.code['domain_code']
+
         for domain, code in domain_code.items():
             if domain is not None: # To get rid of domains from constants
                 header_code += code['header_code']
@@ -1107,11 +1095,6 @@ class ModuleAtom(Atom):
 
         for const_name, const_info in self.instance_consts.items():
             init_code += templates.assignment(const_name, "_" + const_name)
-            dec = Declaration(self.module['stack_index'],
-                        None,
-                        const_name,
-                        '')
-            declarations.append(dec) #templates.declaration_real(const_name)
             header_code += templates.declaration_real(const_name);
 
 
@@ -1126,15 +1109,41 @@ class ModuleAtom(Atom):
                 init_code, process_code,
                 self.instance_consts)
 
-        declaration = Declaration(self.module['stack_index'],
+        self.declaration = Declaration(self.module['stack_index'],
                                         self.domain,
                                         self.name,
                                         declaration_text)
 
-        for outer_dec in outer_declarations:
-            outer_dec.add_dependent(declaration)
+    def get_declarations(self):
+        declarations = []
+        outer_declarations = []
+        secondary_domain = ''
+        #FIXME do we need to support more than 1 output block?
+        if len(self._output_blocks) > 0:
+            secondary_domain = self._output_blocks[0]['domain']
 
-        declarations.append(declaration)
+        if "other_scope_declarations" in self.code:
+            for other_declaration in self.code["other_scope_declarations"]:
+                if not other_declaration.domain or other_declaration.domain == secondary_domain:
+                    other_declaration.domain = self.domain
+                outer_declarations.append(other_declaration)
+                other_declaration.add_dependent(self.declaration)
+#                self.declaration.add_dependent(other_declaration)
+
+        declarations += outer_declarations
+
+        for block in self.connected_blocks:
+            declarations += block.get_declarations()
+
+        for const_name, const_info in self.instance_consts.items():
+            dec = Declaration(self.module['stack_index'],
+                        None,
+                        const_name,
+                        '')
+            declarations.append(dec) #templates.declaration_real(const_name)
+
+
+        declarations.append(self.declaration)
         return declarations
 
     def get_instances(self):
@@ -1149,10 +1158,11 @@ class ModuleAtom(Atom):
                                  self,
                                  instance_consts
                                  )
+        self.declaration.add_dependent(module_instance)
         if "other_scope_instances" in self.code:
             for inst in self.code["other_scope_instances"]:
                 inst.post = False
-                inst.add_dependent(module_instance)
+                self.declaration.add_dependent(inst)
                 instances.append(inst)
 
         for block in self.connected_blocks:
@@ -1361,9 +1371,11 @@ class ModuleAtom(Atom):
                 else:
                     self.port_name_atoms[name] = [new_atom]
 
+        defer_header = self.module['type'] == 'reaction'
         self.code = self.platform.generate_code(tree, self._blocks,
                                                 instanced = instanced,
-                                                parent = self)
+                                                parent = self,
+                                                defer_header = defer_header)
 
 #        if self.module['ports']:
 #                for prop in self.module['ports']:
@@ -1519,9 +1531,21 @@ class PlatformModuleAtom(ModuleAtom):
 # TODO complete work on reaction block
 class ReactionAtom(ModuleAtom):
     def __init__(self, reaction, function, platform_code, token_index, platform, scope_index, connected_blocks, previous_atom, next_atom):
-        super(ReactionAtom, self).__init__(reaction, function, platform_code, token_index, platform, scope_index, connected_blocks, previous_atom, next_atom)
+        # We need to force a scope to avoid having declarations and instances
+        # generate code in the header. Unlike modules, reactions don't have an
+        # internal scope where these things will go, they need to go in the
+        # global scope, so their code generation needs to be postponed.
         self.reaction = reaction
+        super(ReactionAtom, self).__init__(reaction, function, platform_code, token_index, platform, scope_index, connected_blocks, previous_atom, next_atom)
 
+
+    def get_header_code(self):
+        domain_code = self.code['domain_code']
+        header_code = ''
+
+        for domain,code in domain_code.items():
+            header_code += code['header_code']
+        return header_code
 
     def get_inline_processing_code(self, in_tokens):
         code = ''
@@ -1552,30 +1576,13 @@ class ReactionAtom(ModuleAtom):
 
         return processing_code
 
-    def get_declarations(self):
-        declarations = []
-        outer_declarations = []
-        secondary_domain = ''
-        #FIXME do we need to support more than 1 output block?
-        if len(self._output_blocks) > 0:
-            secondary_domain = self._output_blocks[0]['domain']
-
-        if "other_scope_declarations" in self.code:
-            for other_declaration in self.code["other_scope_declarations"]:
-                if not other_declaration.domain or other_declaration.domain == secondary_domain:
-                    other_declaration.domain = self.domain
-                outer_declarations.append(other_declaration)
-
-        declarations += outer_declarations
-        domain_code = self.code['domain_code']
-
-        for block in self.connected_blocks:
-            declarations += block.get_declarations()
-
+    def _prepare_declaration(self):
         header_code = ''
         init_code = ''
         process_code = {}
-        #properties_domain_code = ''
+
+        domain_code = self.code['domain_code']
+
         for domain, code in domain_code.items():
             if domain is not None: # To get rid of domains from constants
                 header_code += code['header_code']
@@ -1603,13 +1610,7 @@ class ReactionAtom(ModuleAtom):
 
         for const_name, const_info in self.instance_consts.items():
             init_code += templates.assignment(const_name, "_" + const_name)
-            dec = Declaration(self.module['stack_index'],
-                        None,
-                        const_name,
-                        '')
-            declarations.append(dec) #templates.declaration_real(const_name)
             header_code += templates.declaration_real(const_name);
-
 
         for domain, code in domain_code.items():
             if domain is None: # Process constants
@@ -1622,19 +1623,93 @@ class ReactionAtom(ModuleAtom):
                 init_code, process_code,
                 self.instance_consts)
 
-        declaration = Declaration(self.module['stack_index'],
+        self.declaration = Declaration(self.module['stack_index'],
                                         self.domain,
                                         self.name,
                                         declaration_text)
 
-        for outer_dec in outer_declarations:
-            outer_dec.add_dependent(declaration)
+    def get_declarations(self):
+        declarations = []
+        outer_declarations = []
+        secondary_domain = ''
+        #FIXME do we need to support more than 1 output block?
+        if len(self._output_blocks) > 0:
+            secondary_domain = self._output_blocks[0]['domain']
 
-        declarations.append(declaration)
+        if "other_scope_declarations" in self.code:
+            for other_declaration in self.code["other_scope_declarations"]:
+                if not other_declaration.domain or other_declaration.domain == secondary_domain:
+                    other_declaration.domain = self.domain
+                outer_declarations.append(other_declaration)
+                other_declaration.add_dependent(self.declaration)
+
+        declarations += outer_declarations
+
+        for block in self.connected_blocks:
+            declarations += block.get_declarations()
+
+        for const_name, const_info in self.instance_consts.items():
+            dec = Declaration(self.module['stack_index'],
+                        None,
+                        const_name,
+                        '')
+            declarations.append(dec) #templates.declaration_real(const_name)
+
+        declarations.append(self.declaration)
         return declarations
 
-#    def get_instances(self):
-#        return []
+    def get_instances(self):
+        instances = []
+
+        # A reaction is not instanced. It is a function. We only need to return internally generated instances
+
+        if "other_scope_instances" in self.code:
+            for inst in self.code["other_scope_instances"]:
+                inst.post = False
+                # FIXME this needs to be made a dependent of the reaction function generated in get_declarations
+#                self.declaration.add_dependent(inst)
+
+#                inst.add_dependent(self.declaration)
+#                inst.scope -= 1 # Force instances  and declarations to be deferred to upper scope
+                instances.append(inst)
+
+        for block in self.connected_blocks:
+            instances += block.get_instances()
+
+#        for atoms in self.port_name_atoms.values():
+#            for atom in atoms:
+#                instances += atom.get_instances()
+# #               FIXME do we need to support multiple output blocks?
+#        if len(self.out_tokens) > 0:
+#            block_types = self.get_block_types(self._output_blocks[0])
+#            token_name = self.out_tokens[0]
+#            if 'size' in self._output_blocks[0]:
+#                out_token_name = '_' + self.name + '_%03i_out'%self._index
+#                token_name = templates.bundle_indexing(out_token_name, self._output_blocks[0]['size'])
+#
+#            default_value = ''
+#            instances += [Instance(default_value,
+#                                 self.scope_index,
+#                                 self.domain,
+#                                 block_types[0],
+#                                 token_name,
+#                                 self) ]
+
+        for name, atoms in self.port_name_atoms.items():
+            for atom in atoms:
+                decl = self.platform.find_declaration_in_tree(atom.get_handles(),
+                                                              self.module['blocks'] + self.platform.tree)
+                if not decl:
+                    if type(atom) is NameAtom:
+                        default_value = 0.0
+                        if not self.platform.find_instance_by_handle(atom.get_handles()[0], instances):
+                            instances += atom.get_instances()
+                    elif type(atom) is ExpressionAtom:
+                        for new_inst in self._get_expression_instances(atom):
+                            if not self.platform.find_instance_by_handle(new_inst.get_name(), instances):
+                                instances += [new_inst]
+
+        return instances
 
 
 # --------------------- Common platform functions
@@ -1660,6 +1735,10 @@ class PlatformFunctions:
     def log_debug(self, text):
         if self.debug_messages:
             print(text)
+
+    def append_eol(self, text):
+        if len(text) > 0 and not text[-1] == '\n':
+            text += '\n'
 
 
     def find_declaration_in_tree(self, block_name, tree = None):
@@ -2043,6 +2122,8 @@ class PlatformFunctions:
                 if not current_domain in post_processing:
                     post_processing[current_domain] = []
 
+                header_code[current_domain] += atom.get_header_code()
+
                 init_code[current_domain] += atom.get_initialization_code(in_tokens)
 
                 if atom.rate and atom.rate > 0:
@@ -2075,7 +2156,8 @@ class PlatformFunctions:
                                 pre_processing[current_domain].append(new_preproc)
 
                 # Processing code
-                processing_code[current_domain] += atom.get_preprocessing_code(in_tokens) + "\n"
+                processing_code[current_domain] += atom.get_preprocessing_code(in_tokens)
+                self.append_eol(processing_code[current_domain])
 
                 new_processing_code = atom.get_processing_code(in_tokens)
 
@@ -2087,28 +2169,17 @@ class PlatformFunctions:
                         domain = current_domain
                     if not domain in processing_code:
                         processing_code[domain] = ''
-                    processing_code[domain] += code + '\n'
+                    processing_code[domain] += code
+                    self.append_eol(processing_code[domain])
                     if domain == current_domain or not current_domain:
                         next_in_tokens += out_tokens
 
-                processing_code[current_domain] += atom.get_postprocessing_code(in_tokens) + "\n"
+                processing_code[current_domain] += atom.get_postprocessing_code(in_tokens)
+                self.append_eol(processing_code[current_domain])
 
                 # Post processing code
-                new_postprocs = atom.get_postproc_once()
-
-                if new_postprocs:
-                    for new_postproc in new_postprocs:
-                        if new_postproc:
-                            postproc_present = False
-                            for postproc in post_processing[current_domain]:
-                                if postproc[0] == new_postproc[0]:
-                                    postproc_present = True
-                                    break
-                            # Do we need to order the post processing code?
-                            if not postproc_present:
-                                post_processing[current_domain].append(new_postproc)
-
-                processing_code[current_domain] += atom.get_postprocessing_code(in_tokens) + "\n"
+                processing_code[current_domain] += atom.get_postprocessing_code(in_tokens)
+                self.append_eol(processing_code[current_domain])
 
                 # Post processing code
                 new_postprocs = atom.get_postproc_once()
@@ -2133,11 +2204,13 @@ class PlatformFunctions:
 
         for domain in pre_processing:
             for preprocdomain in pre_processing[domain]:
-                processing_code[domain] = preprocdomain[1] + processing_code[domain] + '\n'
+                processing_code[domain] = preprocdomain[1] + processing_code[domain]
+                self.append_eol(processing_code[domain])
 
         for domain in post_processing:
             for postprocdomain in post_processing[domain]:
-                processing_code[domain] += postprocdomain[1] + '\n'
+                processing_code[domain] += postprocdomain[1]
+                self.append_eol(processing_code[domain])
 
         # Close pending rates in this stream
         while not parent_rates_size == templates.rate_stack_size():
@@ -2314,7 +2387,7 @@ class PlatformFunctions:
 
     def generate_code(self, tree, current_scope = [],
                       global_groups = {'include':[], 'includeDir':[], 'initializations' : [], 'linkTo' : [], 'linkDir' : []},
-                      instanced = [], parent = None):
+                      instanced = [], parent = None, defer_header = False):
         stream_index = 0
 
         self.log_debug("* New Generation ----- scopes: " + str(len(self.scope_stack)))
@@ -2374,18 +2447,39 @@ class PlatformFunctions:
         is_sorted = False
         # TODO do a more efficient sort
 
-        if len(header_elements) > 0: # TODO We probably need to check domain here while sorting
-            while not is_sorted:
-                for i in range(len(header_elements)):
-                    for j in range(i):
-                        if header_elements[i].depended_by(header_elements[j]):
-                            header_elements[i], header_elements[j] = header_elements[j], header_elements[i]
-                            break
-                    if i == len(header_elements) - 1:
-                        is_sorted = True
+#        if len(header_elements) > 0: # TODO We probably need to check domain here while sorting
+#            while not is_sorted:
+#                for i in range(len(header_elements)):
+#                    for j in range(i):
+#                        if header_elements[i].depended_by(header_elements[j]):
+#                            header_elements[i], header_elements[j] = header_elements[j], header_elements[i]
+#                            break
+#                    if i == len(header_elements) - 1:
+#                        is_sorted = True
 
-        for new_element in header_elements:
-            if new_element.get_scope() >= len(self.scope_stack) - 1: # if declaration in this scope
+        # Topological sort using Kahn's algorithm https://en.wikipedia.org/wiki/Topological_sorting
+
+        sorted_elements = []
+        head_nodes = []
+
+        for element in header_elements:
+            if len(element.get_dependents()) == 0:
+                head_nodes.append(element)
+
+        if len(head_nodes) > 0:
+            while len(head_nodes) > 0:
+                head = head_nodes[0]
+                sorted_elements.insert(0,head)
+                head_nodes.remove(head)
+                for element in header_elements[:]:
+                    if head in element.get_dependents():
+                        element.get_dependents().remove(head)
+                        if len(element.get_dependents()) == 0:
+                            head_nodes.append(element)
+                            header_elements.remove(element)
+
+        for new_element in sorted_elements:
+            if not defer_header and (new_element.get_scope() >= len(self.scope_stack) - 1): # if declaration in this scope
                 self.log_debug(':::--- Domain : '+ str(new_element.get_domain()) + ":::" + new_element.get_name() + '::: scope ' + str(new_element.get_scope()) )
                 tempdict = new_element.__dict__  # For debugging. This shows the contents in the spyder variable explorer
                 #self.log_debug(new_element.get_code())
@@ -2415,10 +2509,7 @@ class PlatformFunctions:
                             domain_code[new_element.get_domain()] =  { "header_code": '',
                                 "init_code" : '',
                                 "processing_code" : [] }
-                        if new_element.post:
-                            domain_code[new_element.get_domain()]["header_code"] += new_inst_code
-                        else:
-                            domain_code[new_element.get_domain()]["header_code"] = new_inst_code + domain_code[new_element.get_domain()]["header_code"]
+                        domain_code[new_element.get_domain()]["header_code"] += new_inst_code
                         domain_code[new_element.get_domain()]["init_code"] +=  self.initialization_code(new_element)
                         instanced.append([new_element.get_name(), new_element.get_scope() ])
 #                    if not "input_blocks" in domain_code[new_element.get_domain()]:
@@ -2448,7 +2539,10 @@ class PlatformFunctions:
 #                    if not contained:
 #                        domain_code[new_element.atom.get_domain()]["output_blocks"].append(new_element)
             else:
-                other_scope_declarations.append(new_element)
+                if type(new_element) == Instance or issubclass(type(new_element), Instance):
+                    other_scope_instances.append(new_element)
+                else:
+                    other_scope_declarations.append(new_element)
 
         self.pop_scope()
         self.log_debug("* Ending Generation ----- scopes: " + str(len(self.scope_stack)))

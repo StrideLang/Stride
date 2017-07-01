@@ -1,0 +1,18 @@
+use DesktopAudio version 1.0
+
+import Generators
+
+signal Value {
+    default: 0
+}
+
+reaction Adder {
+    streams: [
+        Value + 10 >> Value;
+    ]
+	domain: AudioDomain
+}
+
+AudioIn >> Greater() >> Adder();
+
+Value >> AudioOut[1];

@@ -1,0 +1,37 @@
+use DesktopAudio version 1.0
+
+import Generators
+
+signal Value {
+    default: 0
+}
+
+module Add10 {
+    ports: [
+		port OutputPort {
+			main: on
+			direction: "output"
+			block: Output
+            size: 1
+		}
+		port InputPort {
+			main: on
+			direction: "input"
+			block: Input
+            size: 1
+		}
+    ]
+    streams: [
+        Input + 10 >> Output;
+    ]
+}
+
+reaction Adder {
+    streams: [
+        Value >> Add10() >> Value;
+    ]
+}
+
+AudioIn >> Greater() >> Adder();
+
+Value >> AudioOut[1];
