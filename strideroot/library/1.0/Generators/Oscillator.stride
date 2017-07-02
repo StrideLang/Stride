@@ -154,7 +154,7 @@ module Impulse {
 		}
     ]
     streams: [
-        Frequency / AudioRate >> PhaseInc;
+        Frequency / Output.rate >> PhaseInc;
         Phase + PhaseInc >> IncPhase;
         IncPhase - 1.0 >> NewPhase;
 		
