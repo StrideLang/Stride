@@ -1,0 +1,59 @@
+use DesktopAudio version 1.0
+
+module UsedInTest {
+	ports: [
+		port OutputPort {
+			main: on
+			direction: "output"
+			block: Output
+		}
+		port InputPort {
+			main: on
+			direction: "input"
+			block: Input
+		}
+	]
+	streams: [
+		Input - 1 >> Output;
+	]
+}
+
+module Test {
+	ports: [
+		port OutputPort {
+			main: on
+			direction: "output"
+			block: Output
+		}
+		port InputPort {
+			main: on
+			direction: "input"
+			block: Input
+		}
+	]
+	streams: [
+		Input * 2 >> UsedInTest() >> Output;
+	]
+}
+
+
+module Test2 {
+	ports: [
+		port OutputPort {
+			main: on
+			direction: "output"
+			block: Output
+		}
+		port InputPort {
+			main: on
+			direction: "input"
+			block: Input
+		}
+	]
+	streams: [
+		Input / 3 >> UsedInTest() >> Output;
+	]
+}
+
+
+AudioIn >> Test() >>  Test2() >>AudioOut;

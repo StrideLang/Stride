@@ -1,0 +1,44 @@
+use DesktopAudio version 1.0
+
+import Generators
+
+# This module uses the Select module. The Select module is also used by Oscillator 
+# internally. This causes issues if the order of declarations is not sorted correctly
+# according to dependencies
+module UsedInTest {
+	ports: [
+		port OutputPort {
+			main: on
+			direction: "output"
+			block: Output
+		}
+		port InputPort {
+			main: on
+			direction: "input"
+			block: Input
+		}
+	]
+	streams: [
+		Input >> Select(whenOn: 0 whenOff: 1) >> Output;
+	]
+}
+
+module Test {
+	ports: [
+		port OutputPort {
+			main: on
+			direction: "output"
+			block: Output
+		}
+		port InputPort {
+			main: on
+			direction: "input"
+			block: Input
+		}
+	]
+	streams: [
+		Input * 2 >> UsedInTest() >> Output;
+	]
+}
+
+Oscillator(frequency: 1) >> Test() >>AudioOut;

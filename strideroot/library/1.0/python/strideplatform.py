@@ -1033,6 +1033,8 @@ class ModuleAtom(Atom):
         self.output_atom = next_atom
         self._input = None
         self._output = None
+        self.declaration = None
+        self.instance = None
 
         self.constructor_consts = {}
 
@@ -1109,7 +1111,7 @@ class ModuleAtom(Atom):
                 init_code, process_code,
                 self.instance_consts)
 
-        self.declaration = Declaration(self.module['stack_index'],
+        self.code_declaration = Declaration(self.module['stack_index'],
                                         self.domain,
                                         self.name,
                                         declaration_text)
@@ -1122,13 +1124,14 @@ class ModuleAtom(Atom):
         if len(self._output_blocks) > 0:
             secondary_domain = self._output_blocks[0]['domain']
 
+        #FIXME check for scope match
         if "other_scope_declarations" in self.code:
             for other_declaration in self.code["other_scope_declarations"]:
                 if not other_declaration.domain or other_declaration.domain == secondary_domain:
                     other_declaration.domain = self.domain
+                other_declaration.add_dependent(self.code_declaration)
                 outer_declarations.append(other_declaration)
-                other_declaration.add_dependent(self.declaration)
-#                self.declaration.add_dependent(other_declaration)
+#                self.code_declaration.add_dependent(other_declaration)
 
         declarations += outer_declarations
 
@@ -1143,7 +1146,7 @@ class ModuleAtom(Atom):
             declarations.append(dec) #templates.declaration_real(const_name)
 
 
-        declarations.append(self.declaration)
+        declarations.append(self.code_declaration)
         return declarations
 
     def get_instances(self):
@@ -1151,18 +1154,18 @@ class ModuleAtom(Atom):
         instance_consts = []
         for name, info in self.instance_consts.items():
             instance_consts.append(info['value'])
-        module_instance = ModuleInstance(self.scope_index,
+        self.instance = ModuleInstance(self.scope_index,
                                  self.domain,
                                  self.name,
                                  self.handle,
                                  self,
                                  instance_consts
                                  )
-        self.declaration.add_dependent(module_instance)
+        self.code_declaration.add_dependent(self.instance)
         if "other_scope_instances" in self.code:
             for inst in self.code["other_scope_instances"]:
                 inst.post = False
-                self.declaration.add_dependent(inst)
+                self.code_declaration.add_dependent(inst)
                 instances.append(inst)
 
         for block in self.connected_blocks:
@@ -1186,6 +1189,7 @@ class ModuleAtom(Atom):
                                  block_types[0],
                                  token_name,
                                  self) ]
+            self.code_declaration.add_dependent(instances[-1])
 
         for name, atoms in self.port_name_atoms.items():
             for atom in atoms:
@@ -1196,12 +1200,14 @@ class ModuleAtom(Atom):
                         default_value = 0.0
                         if not self.platform.find_instance_by_handle(atom.get_handles()[0], instances):
                             instances += atom.get_instances()
+                            instances[-1].add_dependent(self.code_declaration)
                     elif type(atom) is ExpressionAtom:
                         for new_inst in self._get_expression_instances(atom):
                             if not self.platform.find_instance_by_handle(new_inst.get_name(), instances):
                                 instances += [new_inst]
+                                instances[-1].add_dependent(self.code_declaration)
 
-        instances += [module_instance ]
+        instances += [self.instance]
         return instances
 
     def get_inline_processing_code(self, in_tokens):
@@ -1593,11 +1599,11 @@ class ReactionAtom(ModuleAtom):
     #            if 'input_blocks' in self.code['domain_code'][domain]:
     #                for input_block in self.code['domain_code'][domain]['input_blocks']:
     #                    if type(input_block.atom) == NameAtom or type(input_block.atom) == BundleAtom:
-    #                        process_code[domain]['input_blocks'].append(input_block.atom.declaration)
+    #                        process_code[domain]['input_blocks'].append(input_block.atom.code_declaration)
     #            if 'output_blocks' in self.code['domain_code'][domain]:
     #                for output_block in self.code['domain_code'][domain]['output_blocks']:
     #                    if type(output_block.atom) == NameAtom or type(output_block.atom) == BundleAtom:
-    #                        process_code[domain]['output_blocks'].append(output_block.atom.declaration)
+    #                        process_code[domain]['output_blocks'].append(output_block.atom.code_declaration)
 
                 process_code[domain]['code'] += '\n'.join(code['processing_code'])
                 for block in self._input_blocks:
@@ -1623,7 +1629,7 @@ class ReactionAtom(ModuleAtom):
                 init_code, process_code,
                 self.instance_consts)
 
-        self.declaration = Declaration(self.module['stack_index'],
+        self.code_declaration = Declaration(self.module['stack_index'],
                                         self.domain,
                                         self.name,
                                         declaration_text)
@@ -1641,7 +1647,7 @@ class ReactionAtom(ModuleAtom):
                 if not other_declaration.domain or other_declaration.domain == secondary_domain:
                     other_declaration.domain = self.domain
                 outer_declarations.append(other_declaration)
-                other_declaration.add_dependent(self.declaration)
+                other_declaration.add_dependent(self.code_declaration)
 
         declarations += outer_declarations
 
@@ -1655,7 +1661,7 @@ class ReactionAtom(ModuleAtom):
                         '')
             declarations.append(dec) #templates.declaration_real(const_name)
 
-        declarations.append(self.declaration)
+        declarations.append(self.code_declaration)
         return declarations
 
     def get_instances(self):
@@ -1667,9 +1673,9 @@ class ReactionAtom(ModuleAtom):
             for inst in self.code["other_scope_instances"]:
                 inst.post = False
                 # FIXME this needs to be made a dependent of the reaction function generated in get_declarations
-#                self.declaration.add_dependent(inst)
+#                self.code_declaration.add_dependent(inst)
 
-#                inst.add_dependent(self.declaration)
+#                inst.add_dependent(self.code_declaration)
 #                inst.scope -= 1 # Force instances  and declarations to be deferred to upper scope
                 instances.append(inst)
 
@@ -1704,10 +1710,12 @@ class ReactionAtom(ModuleAtom):
                         default_value = 0.0
                         if not self.platform.find_instance_by_handle(atom.get_handles()[0], instances):
                             instances += atom.get_instances()
+                            instances[-1].add_dependent(self.code_declaration)
                     elif type(atom) is ExpressionAtom:
                         for new_inst in self._get_expression_instances(atom):
                             if not self.platform.find_instance_by_handle(new_inst.get_name(), instances):
                                 instances += [new_inst]
+                                instances[-1].add_dependent(self.code_declaration)
 
         return instances
 
@@ -2095,18 +2103,16 @@ class PlatformFunctions:
                 declares = atom.get_declarations()
                 new_instances = atom.get_instances()
 
-                # append new declarations if not there in the list already
                 for new_dec in declares:
-                    if self.find_instance_by_handle(new_dec.get_name(), scope_declarations):
-                        print ("Declaration already queued: " + new_dec.get_name())
-                    else:
-                        scope_declarations.append(new_dec)
+#                    # add this atom's declaration as a dependent of the existing declaration
+#                    if hasattr(atom, "code_declaration") and atom.code_declaration:
+#                        new_dec.add_dependent(atom.declaration)
+                    scope_declarations.append(new_dec)
 
                 for new_inst in new_instances:
-                    if self.find_instance_by_handle(new_inst.get_name(), scope_instances):
-                        print ("Instance already queued: " + new_inst.handle)
-                    else:
-                        scope_instances.append(new_inst)
+#                    if hasattr(atom, "code_declaration") and atom.code_declaration:
+#                        new_inst.add_dependent(atom.declaration)
+                    scope_instances.append(new_inst)
 
                 #scope_instances += new_instances
 #                header.append([declares, new_instances])
@@ -2385,6 +2391,31 @@ class PlatformFunctions:
 
         return platform_dir
 
+    def visit_element(self, element, marked, temp_marked, sorted_list, elements):
+        if element in temp_marked:
+            print("ERROR! not a DAG.")
+            return
+        if not element in marked:
+            temp_marked.append(element)
+            for e in elements:
+                if e is not element and e.get_dependents() == element:
+                    visit_element(e, marked, temp_marked, sorted_list, elements)
+            marked.append(element)
+            temp_marked.remove(element)
+            sorted_list.insert(0, element)
+
+
+
+    def sort_elements(self, elements):
+        sorted_list = []
+        marked = []
+        temp_marked = []
+#        L ← Empty list that will contain the sorted nodes
+        for element in elements:
+            if not element in marked:
+                self.visit_element(element, marked, temp_marked, sorted_list, elements)
+        return sorted_list[::-1]
+
     def generate_code(self, tree, current_scope = [],
                       global_groups = {'include':[], 'includeDir':[], 'initializations' : [], 'linkTo' : [], 'linkDir' : []},
                       instanced = [], parent = None, defer_header = False):
@@ -2416,6 +2447,8 @@ class PlatformFunctions:
                     else:
                         global_groups_code[global_section] = code['global_groups'][global_section]
                 for domain, header_code in code["header_code"].items():
+                    if not domain:
+                        domain = self.get_platform_domain()
                     if not domain in domain_code:
                         domain_code[domain] = { "header_code": '',
                         "init_code" : '',
@@ -2423,6 +2456,8 @@ class PlatformFunctions:
                     domain_code[domain]["header_code"] += header_code
 
                 for domain, init_code in code["init_code"].items():
+                    if not domain:
+                        domain = self.get_platform_domain()
                     if not domain in domain_code:
                         domain_code[domain] =  { "header_code": '',
                         "init_code" : '',
@@ -2430,6 +2465,8 @@ class PlatformFunctions:
                     domain_code[domain]["init_code"] += init_code
 
                 for domain, processing_code in code["processing_code"].items():
+                    if not domain:
+                        domain = self.get_platform_domain()
                     if not domain in domain_code:
                         domain_code[domain] =  { "header_code": '',
                         "init_code" : '',
@@ -2440,78 +2477,59 @@ class PlatformFunctions:
                 scope_instances += code["scope_instances"]
                 stream_index += 1
 
-        declared = []
-
         header_elements = scope_declarations + scope_instances
 
-        is_sorted = False
-        # TODO do a more efficient sort
+# Use this line when things are not decalred in the right order on a
+# platform and not on another. It's likely due to ordering.
+#        header_elements = header_elements[::-1]
 
-#        if len(header_elements) > 0: # TODO We probably need to check domain here while sorting
-#            while not is_sorted:
-#                for i in range(len(header_elements)):
-#                    for j in range(i):
-#                        if header_elements[i].depended_by(header_elements[j]):
-#                            header_elements[i], header_elements[j] = header_elements[j], header_elements[i]
-#                            break
-#                    if i == len(header_elements) - 1:
-#                        is_sorted = True
+        # Remove duplicate elements while keeping dependencies
+        clean_list = []
+        for new_element in header_elements:
+            is_declared = False
+            self.log_debug('////// ' + new_element.get_name() + ' // Dependents : '+ ' '.join([e.get_name() for e in new_element.get_dependents()]))
+            for d in clean_list:
+                if d.get_name() == new_element.get_name() and d.get_scope() == new_element.get_scope():
+                    is_declared = True
+                    break
+            if not is_declared:
+                clean_list.append(new_element)
+            else:
+                for dep in new_element.get_dependents():
+                    if not dep in d.get_dependents():
+                        d.add_dependent(dep)
+                print ("Element already queued: " + new_element.get_name())
 
-        # Topological sort using Kahn's algorithm https://en.wikipedia.org/wiki/Topological_sorting
+        # Topological sort https://en.wikipedia.org/wiki/Topological_sorting
+        sorted_elements = self.sort_elements(clean_list)
 
-        sorted_elements = []
-        head_nodes = []
-
-        for element in header_elements:
-            if len(element.get_dependents()) == 0:
-                head_nodes.append(element)
-
-        if len(head_nodes) > 0:
-            while len(head_nodes) > 0:
-                head = head_nodes[0]
-                sorted_elements.insert(0,head)
-                head_nodes.remove(head)
-                for element in header_elements[:]:
-                    if head in element.get_dependents():
-                        element.get_dependents().remove(head)
-                        if len(element.get_dependents()) == 0:
-                            head_nodes.append(element)
-                            header_elements.remove(element)
-
+        # Generate code from elements
         for new_element in sorted_elements:
             if not defer_header and (new_element.get_scope() >= len(self.scope_stack) - 1): # if declaration in this scope
                 self.log_debug(':::--- Domain : '+ str(new_element.get_domain()) + ":::" + new_element.get_name() + '::: scope ' + str(new_element.get_scope()) )
                 tempdict = new_element.__dict__  # For debugging. This shows the contents in the spyder variable explorer
                 #self.log_debug(new_element.get_code())
                 if type(new_element) == Declaration or issubclass(type(new_element), Declaration):
-                    is_declared = False
-                    # TODO can this go? Shouldn't we have chacked if already declared by now?
-                    for d in declared:
-                        if d[0] == new_element.get_name() and d[1] == new_element.get_scope():
-                            is_declared = True
-                            break
-                    if not is_declared:
-                        if not new_element.get_domain() in domain_code:
-                            domain_code[new_element.get_domain()] =  { "header_code": '',
-                                "init_code" : '',
-                                "processing_code" : [] }
-                        declared.append( [new_element.get_name(), new_element.get_scope() ])
-                        domain_code[new_element.get_domain()]['header_code'] += new_element.get_code()
+                    new_element_domain = new_element.get_domain()
+                    if not new_element_domain:
+                        new_element_domain = self.get_platform_domain()
+                    if not new_element_domain in domain_code:
+                        domain_code[new_element_domain] =  { "header_code": '',
+                            "init_code" : '',
+                            "processing_code" : [] }
+                    domain_code[new_element_domain]['header_code'] += new_element.get_code()
                 elif type(new_element) == Instance or issubclass(type(new_element), Instance):
-                    is_declared = False
-                    for i in instanced:
-                        if i[0] == new_element.get_name() and i[1] == new_element.get_scope():
-                            is_declared = True
-                            break
-                    if not is_declared:
-                        new_inst_code = self.instantiation_code(new_element)
-                        if not new_element.get_domain() in domain_code:
-                            domain_code[new_element.get_domain()] =  { "header_code": '',
-                                "init_code" : '',
-                                "processing_code" : [] }
-                        domain_code[new_element.get_domain()]["header_code"] += new_inst_code
-                        domain_code[new_element.get_domain()]["init_code"] +=  self.initialization_code(new_element)
-                        instanced.append([new_element.get_name(), new_element.get_scope() ])
+                    new_element_domain = new_element.get_domain()
+                    if not new_element_domain:
+                        new_element_domain = self.get_platform_domain()
+                    if not new_element.get_domain() in domain_code:
+                        domain_code[new_element_domain] =  { "header_code": '',
+                            "init_code" : '',
+                            "processing_code" : [] }
+                    new_inst_code = self.instantiation_code(new_element)
+                    domain_code[new_element_domain]["header_code"] += new_inst_code
+                    domain_code[new_element_domain]["init_code"] +=  self.initialization_code(new_element)
+                    instanced.append(new_element)
 #                    if not "input_blocks" in domain_code[new_element.get_domain()]:
 #                        domain_code[new_element.atom.get_domain()]["input_blocks"] = []
 #                    contained = False
