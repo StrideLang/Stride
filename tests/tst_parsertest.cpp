@@ -575,12 +575,19 @@ void ParserTest::testDomains()
 //    Oscillator(frequency: 5) >> Modulator;
 //    Oscillator(frequency:440) >> Level(gain: Modulator) >> AudioOut;
 
-    DeclarationNode *block = static_cast<DeclarationNode *>(tree->getChildren()[8].get());
+    std::shared_ptr<DeclarationNode> block = CodeValidator::findDeclaration("Modulator", QVector<ASTNode>(), tree);
     QVERIFY(block->getNodeType() == AST::Declaration);
     ValueNode *domain = static_cast<ValueNode *>(block->getDomain().get());
     QVERIFY(domain->getNodeType() == AST::String);
     QVERIFY(domain->getStringValue() == "AudioDomain");
+
+    block = CodeValidator::findDeclaration("Signal", QVector<ASTNode>(), tree);
+    QVERIFY(block->getNodeType() == AST::Declaration);
+    domain = static_cast<ValueNode *>(block->getDomain().get());
+    QVERIFY(domain->getNodeType() == AST::String);
+    QVERIFY(domain->getStringValue() == "AudioDomain");
 }
+
 
 void ParserTest::testModules()
 {
