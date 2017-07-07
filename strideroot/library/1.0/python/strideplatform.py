@@ -1672,10 +1672,7 @@ class ReactionAtom(ModuleAtom):
         if "other_scope_instances" in self.code:
             for inst in self.code["other_scope_instances"]:
                 inst.post = False
-                # FIXME this needs to be made a dependent of the reaction function generated in get_declarations
-#                self.code_declaration.add_dependent(inst)
-
-#                inst.add_dependent(self.code_declaration)
+                inst.add_dependent(self.code_declaration)
 #                inst.scope -= 1 # Force instances  and declarations to be deferred to upper scope
                 instances.append(inst)
 
@@ -1700,6 +1697,7 @@ class ReactionAtom(ModuleAtom):
 #                                 block_types[0],
 #                                 token_name,
 #                                 self) ]
+#            self.code_declaration.add_dependent(instances[-1])
 
         for name, atoms in self.port_name_atoms.items():
             for atom in atoms:
@@ -2398,13 +2396,11 @@ class PlatformFunctions:
         if not element in marked:
             temp_marked.append(element)
             for e in elements:
-                if e is not element and e.get_dependents() == element:
-                    visit_element(e, marked, temp_marked, sorted_list, elements)
+                if e is not element and element in e.get_dependents():
+                    self.visit_element(e, marked, temp_marked, sorted_list, elements)
             marked.append(element)
             temp_marked.remove(element)
             sorted_list.insert(0, element)
-
-
 
     def sort_elements(self, elements):
         sorted_list = []
@@ -2487,7 +2483,6 @@ class PlatformFunctions:
         clean_list = []
         for new_element in header_elements:
             is_declared = False
-            self.log_debug('////// ' + new_element.get_name() + ' // Dependents : '+ ' '.join([e.get_name() for e in new_element.get_dependents()]))
             for d in clean_list:
                 if d.get_name() == new_element.get_name() and d.get_scope() == new_element.get_scope():
                     is_declared = True
@@ -2507,12 +2502,13 @@ class PlatformFunctions:
         for new_element in sorted_elements:
             if not defer_header and (new_element.get_scope() >= len(self.scope_stack) - 1): # if declaration in this scope
                 self.log_debug(':::--- Domain : '+ str(new_element.get_domain()) + ":::" + new_element.get_name() + '::: scope ' + str(new_element.get_scope()) )
+                self.log_debug('////// ' + new_element.get_name() + ' // Dependents : '+ ' '.join([e.get_name() for e in new_element.get_dependents()]))
                 tempdict = new_element.__dict__  # For debugging. This shows the contents in the spyder variable explorer
                 #self.log_debug(new_element.get_code())
                 if type(new_element) == Declaration or issubclass(type(new_element), Declaration):
                     new_element_domain = new_element.get_domain()
-                    if not new_element_domain:
-                        new_element_domain = self.get_platform_domain()
+#                    if not new_element_domain:
+#                        new_element_domain = self.get_platform_domain()
                     if not new_element_domain in domain_code:
                         domain_code[new_element_domain] =  { "header_code": '',
                             "init_code" : '',
@@ -2520,8 +2516,8 @@ class PlatformFunctions:
                     domain_code[new_element_domain]['header_code'] += new_element.get_code()
                 elif type(new_element) == Instance or issubclass(type(new_element), Instance):
                     new_element_domain = new_element.get_domain()
-                    if not new_element_domain:
-                        new_element_domain = self.get_platform_domain()
+#                    if not new_element_domain:
+#                        new_element_domain = self.get_platform_domain()
                     if not new_element.get_domain() in domain_code:
                         domain_code[new_element_domain] =  { "header_code": '',
                             "init_code" : '',

@@ -729,6 +729,10 @@ void CodeResolver::insertBuiltinObjects()
                         requiredDeclarations << block;
                     }
                 }
+            } if (block->getObjectType() == "constant") {
+                if (block->getName() == "PlatformDomain" || block->getName() == "PlatformRate") {
+                    requiredDeclarations << block;
+                }
             }
             else if (block->getObjectType() == "_domainDefinition"
                      || block->getObjectType() == "_frameworkDescription") // Hack... this should be getting inserted when resolving symbols...)
