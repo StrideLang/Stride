@@ -1683,21 +1683,21 @@ class ReactionAtom(ModuleAtom):
 #            for atom in atoms:
 #                instances += atom.get_instances()
 # #               FIXME do we need to support multiple output blocks?
-#        if len(self.out_tokens) > 0:
-#            block_types = self.get_block_types(self._output_blocks[0])
-#            token_name = self.out_tokens[0]
-#            if 'size' in self._output_blocks[0]:
-#                out_token_name = '_' + self.name + '_%03i_out'%self._index
-#                token_name = templates.bundle_indexing(out_token_name, self._output_blocks[0]['size'])
-#
-#            default_value = ''
-#            instances += [Instance(default_value,
-#                                 self.scope_index,
-#                                 self.domain,
-#                                 block_types[0],
-#                                 token_name,
-#                                 self) ]
-#            self.code_declaration.add_dependent(instances[-1])
+        if len(self.out_tokens) > 0:
+            block_types = self.get_block_types(self._output_blocks[0])
+            token_name = self.out_tokens[0]
+            if 'size' in self._output_blocks[0]:
+                out_token_name = '_' + self.name + '_%03i_out'%self._index
+                token_name = templates.bundle_indexing(out_token_name, self._output_blocks[0]['size'])
+
+            default_value = ''
+            instances += [Instance(default_value,
+                                 self.scope_index,
+                                 self.domain,
+                                 block_types[0],
+                                 token_name,
+                                 self) ]
+            self.code_declaration.add_dependent(instances[-1])
 
         for name, atoms in self.port_name_atoms.items():
             for atom in atoms:
