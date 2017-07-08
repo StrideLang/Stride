@@ -101,6 +101,8 @@ private:
     std::vector<ASTNode > declareUnknownStreamSymbols(std::shared_ptr<StreamNode> stream, ASTNode previousStreamMember, QVector<ASTNode > localScope, ASTNode tree);
     std::vector<ASTNode > getModuleStreams(std::shared_ptr<DeclarationNode> module);
 
+    void declareInternalBlocksForNode(ASTNode node);
+
     std::shared_ptr<ValueNode> reduceConstExpression(std::shared_ptr<ExpressionNode> expr, QVector<ASTNode > scope, ASTNode tree);
     std::shared_ptr<ValueNode> resolveConstant(ASTNode value, QVector<ASTNode > scope);
     void resolveConstantsInNode(ASTNode node, QVector<ASTNode > scope);
