@@ -50,7 +50,7 @@ module UsedInTest2 {
 		}
 	]
 	streams: [
-		Input - 1 >> Output;
+		Input + 2 >> Output;
 	]
 }
 
@@ -86,7 +86,7 @@ module UsedInTest3 {
 		}
 	]
 	streams: [
-		Input - 1 >> Output;
+		Input - 3 >> Output;
 	]
 }
 
