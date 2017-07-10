@@ -2502,7 +2502,7 @@ class PlatformFunctions:
                 # domains.
                 new_element_domain = new_element.get_domain()
                 if not new_element_domain:
-                    new_element_domain = self.get_platform_domain()
+                    new_element.domain = self.get_platform_domain()
                 clean_list.append(new_element)
             else:
                 for dep in new_element.get_dependents():
