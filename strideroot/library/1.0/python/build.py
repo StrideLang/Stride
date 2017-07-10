@@ -50,17 +50,19 @@ class Builder(object):
 if __name__ == '__main__':
     import argparse
     cur_path = os.getcwd()
+    default_file = '/home/andres/Documents/src/Stride/Stride/strideroot/frameworks/RtAudio/1.0/_tests/module/16_recursive_module_shared.stride'
+#    default_file = '/home/andres/Documents/src/Stride/Stride/strideroot/frameworks/RtAudio/1.0/_tests/reactions/02_module_in_reaction.stride'
     # First parse command line arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("jsonfile",
                         help="JSON file containing parsed tree",
                         nargs='?',
-                        default = '/home/andres/Desktop/examples-old/pan.stride_Products/tree-RtAudio.json'
+                        default = default_file + '_Products/tree-RtAudio.json'
                         )
     parser.add_argument("products_dir",
                         help="The directory where stride products where generated",
                         nargs='?',
-                        default='/home/andres/Desktop/examples-old/pan.stride_Products'
+                        default=default_file + '_Products'
 
                         )
     parser.add_argument("strideroot",

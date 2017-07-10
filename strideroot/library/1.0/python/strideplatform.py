@@ -59,8 +59,6 @@ class Atom(object):
         self.domain = None
         self.line = line
         self.filename = filename
-        self.writes = 0
-        self.reads = 0
 
         # FIXME these sections should be driven by the platform definition
         self.global_sections = ['include', 'includeDir', 'linkTo', 'linkDir']
@@ -142,12 +140,6 @@ class Atom(object):
 
     def get_filename(self):
         return self.filename
-
-    def get_num_writes(self):
-        return self.writes
-
-    def get_num_reads(self):
-        return self.reads
 
 
 class PlatformTypeAtom(Atom):
@@ -583,15 +575,6 @@ class NameAtom(Atom):
             else:
                 self.rate = declaration['rate']
 
-        if '_writes' in declaration:
-            self.writes = len(declaration['_writes'])
-
-        if '_reads' in declaration:
-            self.reads = len(declaration['_reads'])
-       # else:
-            #raise ValueError("Parser must fill defaults.")
-            #this should never happen... The parser should fill defaults...
-
     def get_declarations(self):
         declarations = []
         if 'declarations' in self.platform_type['block']:
@@ -848,18 +831,18 @@ class PortPropertyAtom(Atom):
                     if isinstance(out_block, NameAtom) or isinstance(out_block, BundleAtom):
                         if self.portproperty['name'] in out_block.declaration:
                             self.resolved_value = out_block.declaration[self.portproperty['name']]
-                            parent.add_instance_const(self.handle, 'int', self.resolved_value)
+                            parent.add_instance_const(self.handle, 'integer', self.resolved_value)
                     elif isinstance(out_block, ListAtom):
                     # FIXME There needs to be a way to know what member of the list we are actually connectiong to...
                         for node in out_block.list_node:
                             if isinstance(node, NameAtom) or isinstance(node, BundleAtom):
                                 if self.portproperty['name'] in node.declaration:
                                     self.resolved_value = node.declaration[self.portproperty['name']]
-                                    parent.add_instance_const(self.handle, 'int', self.resolved_value)
+                                    parent.add_instance_const(self.handle, 'integer', self.resolved_value)
                     elif isinstance(out_block, ModuleAtom):
                         if self.portproperty['name'] in out_block.function:
                             self.resolved_value = out_block.function[self.portproperty['name']]
-                            parent.add_instance_const(self.handle, 'int', self.resolved_value)
+                            parent.add_instance_const(self.handle, 'integer', self.resolved_value)
                     else:
                         self.platform.log_debug("ERROR: Can't resolve port property value")
 
@@ -1052,6 +1035,14 @@ class ModuleAtom(Atom):
         self.port_name_atoms = {}
 
         self._process_module(self.module["streams"])
+
+        if self.code['writes']:
+            for domain, atoms in self.code['writes'].items():
+                print(domain)
+                for atom in atoms:
+                    if atom.scope_index < self.scope_index:
+                        self.add_instance_const()
+
         self._prepare_declaration()
 
         self.set_inline(False)
@@ -1616,7 +1607,12 @@ class ReactionAtom(ModuleAtom):
 
         for const_name, const_info in self.instance_consts.items():
             init_code += templates.assignment(const_name, "_" + const_name)
-            header_code += templates.declaration_real(const_name);
+            if const_info.type == 'real':
+                header_code += templates.declaration_real(const_name);
+            elif const_info.type == 'integer':
+                header_code += templates.declaration_int(const_name);
+            elif const_info.type == 'string':
+                header_code += templates.declaration_string(const_name);
 
         for domain, code in domain_code.items():
             if domain is None: # Process constants
@@ -2086,10 +2082,12 @@ class PlatformFunctions:
                 if not current_domain in reads:
                     reads[current_domain] = []
 
-                if (atom.get_num_writes() > 0):
-                    writes[current_domain].append(atom.get_handles())
-                if (atom.get_num_reads() > 0):
-                    reads[current_domain].append(atom.get_handles())
+                if type(atom) == NameAtom or type(atom) == BundleAtom:
+                    if group.index(atom) > 0:
+                        writes[current_domain].append(atom)
+                    if group.index(atom) < len(group) -1:
+                        reads[current_domain].append(atom)
+
                 #Process Inlcudes
                 new_globals = atom.get_globals()
                 if len(new_globals) > 0:
@@ -2275,7 +2273,9 @@ class PlatformFunctions:
                 "init_code" : init_code,
                 "processing_code" : new_processing_code,
                 "scope_instances": scope_instances,
-                "scope_declarations": scope_declarations
+                "scope_declarations": scope_declarations,
+                "reads" : reads,
+                "writes" : writes
                 }
 
     def get_domains(self):
@@ -2426,6 +2426,8 @@ class PlatformFunctions:
         scope_instances = []
         domain_code = {}
         global_groups_code = {}
+        writes = {}
+        reads = {}
 
         for node in tree:
             if 'stream' in node: # Everything grows from streams.
@@ -2473,6 +2475,9 @@ class PlatformFunctions:
                 scope_instances += code["scope_instances"]
                 stream_index += 1
 
+                reads.update(code['reads'])
+                writes.update(code['writes'])
+
         header_elements = scope_declarations + scope_instances
 
 # Use this line when things are not decalred in the right order on a
@@ -2488,6 +2493,16 @@ class PlatformFunctions:
                     is_declared = True
                     break
             if not is_declared:
+                # FIXME This assigns the platform domain when domain is not specified
+                # The right way is to know which domains it is required in.
+                # e.g. a module declaration might need to be put in various
+                # domains where it is used. For example, each use of a module
+                # needs to mark the input and output domains -and perhaps even
+                # internally used domains- and then assign here to each of these
+                # domains.
+                new_element_domain = new_element.get_domain()
+                if not new_element_domain:
+                    new_element_domain = self.get_platform_domain()
                 clean_list.append(new_element)
             else:
                 for dep in new_element.get_dependents():
@@ -2507,8 +2522,6 @@ class PlatformFunctions:
                 #self.log_debug(new_element.get_code())
                 if type(new_element) == Declaration or issubclass(type(new_element), Declaration):
                     new_element_domain = new_element.get_domain()
-#                    if not new_element_domain:
-#                        new_element_domain = self.get_platform_domain()
                     if not new_element_domain in domain_code:
                         domain_code[new_element_domain] =  { "header_code": '',
                             "init_code" : '',
@@ -2516,8 +2529,6 @@ class PlatformFunctions:
                     domain_code[new_element_domain]['header_code'] += new_element.get_code()
                 elif type(new_element) == Instance or issubclass(type(new_element), Instance):
                     new_element_domain = new_element.get_domain()
-#                    if not new_element_domain:
-#                        new_element_domain = self.get_platform_domain()
                     if not new_element.get_domain() in domain_code:
                         domain_code[new_element_domain] =  { "header_code": '',
                             "init_code" : '',
@@ -2564,7 +2575,9 @@ class PlatformFunctions:
         return {"global_groups" : global_groups_code,
                 "domain_code": domain_code,
                 "other_scope_instances" : other_scope_instances,
-                "other_scope_declarations" : other_scope_declarations}
+                "other_scope_declarations" : other_scope_declarations,
+                "writes" : writes,
+                "reads" : reads}
 
 # ----------------------------------------------------------
 from subprocess import check_output as ck_out
