@@ -92,7 +92,7 @@ private:
     std::vector<ASTNode> declareUnknownBundle(std::shared_ptr<BundleNode> name, int size, QVector<ASTNode > localScope, ASTNode tree);
     std::shared_ptr<DeclarationNode> createConstantDeclaration(string name, ASTNode value);
     void declareIfMissing(string name, ASTNode blockList, ASTNode value);
-    std::shared_ptr<DeclarationNode> createSignalBridge(string name, ASTNode defaultValue, ASTNode inDomain, ASTNode  outDomain, const string filename, int line, int size = 1);
+    std::shared_ptr<DeclarationNode> createSignalBridge(string bridgeName, string originalName, ASTNode defaultValue, ASTNode inDomain, ASTNode  outDomain, const string filename, int line, int size = 1);
 
     std::vector<ASTNode > declareUnknownExpressionSymbols(std::shared_ptr<ExpressionNode> expr, int size, QVector<ASTNode > scopeStack, ASTNode  tree);
     std::vector<ASTNode > declareUnknownFunctionSymbols(std::shared_ptr<FunctionNode> func, QVector<ASTNode > scopeStack, ASTNode  tree);
@@ -100,6 +100,7 @@ private:
     void expandNamesToBundles(std::shared_ptr<StreamNode> stream, ASTNode tree);
     std::vector<ASTNode > declareUnknownStreamSymbols(std::shared_ptr<StreamNode> stream, ASTNode previousStreamMember, QVector<ASTNode > localScope, ASTNode tree);
     std::vector<ASTNode > getModuleStreams(std::shared_ptr<DeclarationNode> module);
+    std::vector<ASTNode > getModuleBlocks(std::shared_ptr<DeclarationNode> module);
 
     void declareInternalBlocksForNode(ASTNode node);
 
@@ -124,11 +125,13 @@ private:
 
     ASTNode  makeConnector(ASTNode  node, string connectorName, int size, const QVector<ASTNode > &scopeStack);
     QVector<ASTNode > sliceStreamByDomain(std::shared_ptr<StreamNode> stream, QVector<ASTNode > scopeStack);
+    void sliceDomainsInNode(std::shared_ptr<DeclarationNode> stream, QVector<ASTNode > scopeStack);
     QVector<ASTNode > processExpression(std::shared_ptr<ExpressionNode> expr, QVector<ASTNode > scopeStack, ASTNode outDOmain);
 
     StrideSystem * m_system;
     ASTNode m_tree;
     int m_connectorCounter;
+    std::vector<std::vector<string>> m_bridgeAliases; //< 1: bridge signal 2: original name 3: domain
 };
 
 #endif // CODERESOLVER_H

@@ -532,7 +532,7 @@ class ListAtom(Atom):
 
 class NameAtom(Atom):
     def __init__(self, platform_type, declaration, token_index,
-                 scope_index, line, filename):
+                 scope_index, line, filename, previous_atom, next_atom):
         super(NameAtom, self).__init__(line, filename)
         self.scope_index = scope_index
         self.handle = declaration['name']  # + '_%03i'%token_index;
@@ -547,6 +547,13 @@ class NameAtom(Atom):
                 self.domain = self.declaration['domain']['name']['name']
             else:
                 self.domain = self.declaration['domain']
+
+        if self.declaration['type'] == "signalbridge":
+            if not previous_atom:
+                self.domain = self.declaration['outputDomain']
+            else:
+                self.domain = self.declaration['inputDomain']
+
 
         # TODO we should just add all sections found in platform_type['block'][section]
         # And not worry wat exists already in self.global_sections
@@ -880,10 +887,10 @@ class PortPropertyAtom(Atom):
         return self.handle
 
 class BundleAtom(NameAtom):
-    def __init__(self, platform_type, declaration, index, token_index, scope_index, line, filename):
+    def __init__(self, platform_type, declaration, index, token_index, scope_index, line, filename, previous_atom, next_atom):
         ''' index indexes from 1, internal index from 0
         '''
-        super(BundleAtom, self).__init__(platform_type, declaration, token_index, scope_index, line, filename)
+        super(BundleAtom, self).__init__(platform_type, declaration, token_index, scope_index, line, filename, previous_atom, next_atom)
         self.scope_index = scope_index
         if type(index) == int:
             self.index = index - 1
@@ -1867,10 +1874,10 @@ class PlatformFunctions:
         scope_index = len(self.scope_stack) -1
         if "name" in member:
             platform_type, declaration = self.find_block(member['name']['name'], self.tree)
-            new_atom = NameAtom(platform_type, declaration, self.unique_id, scope_index, member['name']['line'], member['name']['filename'])
+            new_atom = NameAtom(platform_type, declaration, self.unique_id, scope_index, member['name']['line'], member['name']['filename'], previous_atom, next_atom)
         elif "bundle" in member:
             platform_type, declaration = self.find_block(member['bundle']['name'], self.tree)
-            new_atom = BundleAtom(platform_type, declaration, member['bundle']['index'], self.unique_id, scope_index, member['bundle']['line'],member['bundle']['filename'])
+            new_atom = BundleAtom(platform_type, declaration, member['bundle']['index'], self.unique_id, scope_index, member['bundle']['line'],member['bundle']['filename'], previous_atom, next_atom)
         elif "function" in member:
             platform_type, declaration = self.find_block(member['function']['name'], self.tree)
             connected_blocks = []
