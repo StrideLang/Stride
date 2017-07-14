@@ -2301,9 +2301,10 @@ QVector<ASTNode > CodeResolver::sliceStreamByDomain(std::shared_ptr<StreamNode> 
         }
         previousDomainName = domainName;
         if(right->getNodeType() == AST::Stream) {
-            stream = static_pointer_cast<StreamNode>(right);
-            left = stream->getLeft();
-            right = stream->getRight();
+//            stream = static_pointer_cast<StreamNode>(right);
+            StreamNode *subStream = static_cast<StreamNode *>(right.get());
+            left = subStream->getLeft();
+            right = subStream->getRight();
         } else {
             left = right; // Last pass (process right, call it left)
         }
