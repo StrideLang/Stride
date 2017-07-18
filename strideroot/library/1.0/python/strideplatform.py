@@ -532,13 +532,15 @@ class ListAtom(Atom):
 
 class NameAtom(Atom):
     def __init__(self, platform_type, declaration, token_index,
-                 scope_index, line, filename, previous_atom, next_atom):
+                 platform, scope_index, line, filename, previous_atom, next_atom):
         super(NameAtom, self).__init__(line, filename)
+        self.platform = platform
         self.scope_index = scope_index
         self.handle = declaration['name']  # + '_%03i'%token_index;
         self.platform_type = platform_type
         self.declaration = declaration
         self.domain = None
+        self.signalbridge = None # Stores signalbridge name if applicable
         self.token_index = token_index
 
         if 'domain' in self.declaration:
@@ -553,6 +555,17 @@ class NameAtom(Atom):
                 self.domain = self.declaration['outputDomain']
             else:
                 self.domain = self.declaration['inputDomain']
+
+        if self.declaration['type'] == 'signal':
+            # TODO we need checking of scope and domain here
+            for scope_decl in self.platform.scope_stack[-1]:
+                # Do we need to support blockbundle here or are all signal bridges blocks?
+                if 'block' in scope_decl and 'type' in scope_decl['block'] and scope_decl['block']['type'] == "signalbridge":
+                    if scope_decl['block']['signal'] == self.handle:
+                        print(scope_decl['block']['signal'])
+                        # Do we actually need to store this here? It seems that this is not really accesible
+                        # where needed and we still have to go through the scope declarations anyway...
+                        self.signalbridge = scope_decl['block']['name']
 
 
         # TODO we should just add all sections found in platform_type['block'][section]
@@ -582,6 +595,7 @@ class NameAtom(Atom):
             else:
                 self.rate = declaration['rate']
 
+
     def get_declarations(self):
         declarations = []
         if 'declarations' in self.platform_type['block']:
@@ -595,8 +609,10 @@ class NameAtom(Atom):
 
     def get_instances(self):
 
-        if 'port_block' in self.declaration and self.declaration['port_block']:
-            return [] # Atoms for main ports need not be de
+#        if 'port_block' in self.declaration and self.declaration['port_block']:
+#            return [] # Atoms for main ports need not be declared
+                # But we need to know the declarations for reactions to
+                # to known what they ned to be passed...
         default_value = self._get_default_value()
         if 'type' in self.declaration and self.declaration['type'] == 'signal':
             if signal_type_string(self.declaration):
@@ -887,10 +903,10 @@ class PortPropertyAtom(Atom):
         return self.handle
 
 class BundleAtom(NameAtom):
-    def __init__(self, platform_type, declaration, index, token_index, scope_index, line, filename, previous_atom, next_atom):
+    def __init__(self, platform_type, declaration, index, token_index, platform, scope_index, line, filename, previous_atom, next_atom):
         ''' index indexes from 1, internal index from 0
         '''
-        super(BundleAtom, self).__init__(platform_type, declaration, token_index, scope_index, line, filename, previous_atom, next_atom)
+        super(BundleAtom, self).__init__(platform_type, declaration, token_index, platform, scope_index, line, filename, previous_atom, next_atom)
         self.scope_index = scope_index
         if type(index) == int:
             self.index = index - 1
@@ -1043,12 +1059,12 @@ class ModuleAtom(Atom):
 
         self._process_module(self.module["streams"])
 
-        if self.code['writes']:
-            for domain, atoms in self.code['writes'].items():
-                print(domain)
-                for atom in atoms:
-                    if atom.scope_index < self.scope_index:
-                        self.add_instance_const()
+#        if self.code['writes']:
+#            for domain, atoms in self.code['writes'].items():
+#                print(domain)
+#                for atom in atoms:
+#                    if atom.get_scope() < self.scope_index:
+#                        self.add_instance_const()
 
         self._prepare_declaration()
 
@@ -1518,7 +1534,8 @@ class ModuleAtom(Atom):
         return instances
 
     def add_instance_const(self, name, consttype, value):
-        self.instance_consts[name] = {'type': consttype, 'value' : value}
+        if not name in self.instance_consts:
+            self.instance_consts[name] = {'type': consttype, 'value' : value}
 
     def _process_flags(self):
         if not '_flags' in self.module:
@@ -1566,13 +1583,24 @@ class ReactionAtom(ModuleAtom):
         processing_code = {}
 
         domain = self.input_atom.domain # Reaction is triggered/called in the domain of the input signal
+        parameter_tokens = [ref.get_name() for ref in self.references]
+        for i in range(len(parameter_tokens)):
+            # TODO we need checking of scope and domain here
+            for scope_decl in self.platform.scope_stack[-1]:
+                # Do we need to support blockbundle here or are all signal bridges blocks?
+                if 'block' in scope_decl and 'type' in scope_decl['block'] and scope_decl['block']['type'] == "signalbridge":
+                    if scope_decl['block']['signal'] == parameter_tokens[i]:
+                        print(scope_decl['block']['signal'])
+                        parameter_tokens[i] = scope_decl['block']['name']
+
+
         if not domain in processing_code:
             processing_code[domain] = ['', []]
         processing_code[domain][0] += "if (" + in_tokens[0] + ") {\n"
         processing_code[domain][0] += templates.expression(
                 templates.reaction_processing_code(self.reaction['name'],
-                                                [],
-                                                self.out_tokens,
+                                                parameter_tokens,
+                                                [], # out tokens should already be included in the parameter tokens.
                                                 domain
                                                 ))
 
@@ -1587,11 +1615,31 @@ class ReactionAtom(ModuleAtom):
 
         domain_code = self.code['domain_code']
 
+        self.references = []
+        referenced = []
+        for domain, writes in self.code['writes'].items():
+            for write in writes:
+                if not write.get_name() in referenced:
+                    referenced += [write.get_name()]
+                    self.references.append(write)
+        for domain, reads in self.code['reads'].items():
+            for read in reads:
+                if not read.get_name() in referenced:
+                    referenced += [read.get_name()]
+                    self.references.append(read)
+
         for domain, code in domain_code.items():
             if domain is not None: # To get rid of domains from constants
                 header_code += code['header_code']
                 init_code += code['init_code']
                 if not domain in process_code:
+                    # Hack to turn all computation in a reaction within the right domain
+                    if self.input_atom:
+                        # self.input_atom can be None when computing "next_atom"
+                        # On next pass it should get the right value
+                        # This should be optimized out. When computing "next_atom" not everything needs to
+
+                        domain = self.input_atom.get_domain()
                     process_code[domain] = {"code": '', "input_blocks" : [], "output_blocks" : []}
 
     #            if 'input_blocks' in self.code['domain_code'][domain]:
@@ -1612,6 +1660,12 @@ class ReactionAtom(ModuleAtom):
                     if block['domain'] == domain:
                         process_code[domain]['output_blocks'].append(block)
 
+        if self.code['reads']:
+            for domain, declarations in self.code['reads'].items():
+                for decl in declarations:
+                    if decl.get_scope() < self.scope_index:
+                        self.add_instance_const(decl.get_name(), decl.get_type(), 0)
+
         for const_name, const_info in self.instance_consts.items():
             init_code += templates.assignment(const_name, "_" + const_name)
             if const_info.type == 'real':
@@ -1626,11 +1680,10 @@ class ReactionAtom(ModuleAtom):
                 header_code += code['header_code']
                 init_code += code['init_code']
 
-
         declaration_text = templates.reaction_declaration(
                 self.reaction['name'], header_code,
                 init_code, process_code,
-                self.instance_consts)
+                self.references)
 
         self.code_declaration = Declaration(self.module['stack_index'],
                                         self.domain,
@@ -1672,35 +1725,46 @@ class ReactionAtom(ModuleAtom):
 
         # A reaction is not instanced. It is a function. We only need to return internally generated instances
 
+        port_atom_names = []
+        for atoms in self.port_name_atoms.values():
+            for atom in atoms:
+                port_atom_names += atom.get_handles();
+
+        if self.output_atom:
+            port_atom_names += self.output_atom.get_handles()
+
+        # A reaction should trigger no instances from internals. It is stateless.
         if "other_scope_instances" in self.code:
             for inst in self.code["other_scope_instances"]:
                 inst.post = False
                 inst.add_dependent(self.code_declaration)
 #                inst.scope -= 1 # Force instances  and declarations to be deferred to upper scope
                 instances.append(inst)
+                if inst.get_scope() > self.scope_index and not type(inst) == ModuleInstance:
+                    if inst.get_name() in port_atom_names:
+                        inst.enabled = False
 
         for block in self.connected_blocks:
             instances += block.get_instances()
 
-#        for atoms in self.port_name_atoms.values():
-#            for atom in atoms:
+
 #                instances += atom.get_instances()
 # #               FIXME do we need to support multiple output blocks?
-        if len(self.out_tokens) > 0:
-            block_types = self.get_block_types(self._output_blocks[0])
-            token_name = self.out_tokens[0]
-            if 'size' in self._output_blocks[0]:
-                out_token_name = '_' + self.name + '_%03i_out'%self._index
-                token_name = templates.bundle_indexing(out_token_name, self._output_blocks[0]['size'])
-
-            default_value = ''
-            instances += [Instance(default_value,
-                                 self.scope_index,
-                                 self.domain,
-                                 block_types[0],
-                                 token_name,
-                                 self) ]
-            self.code_declaration.add_dependent(instances[-1])
+#        if len(self.out_tokens) > 0:
+#            block_types = self.get_block_types(self._output_blocks[0])
+#            token_name = self.out_tokens[0]
+#            if 'size' in self._output_blocks[0]:
+#                out_token_name = '_' + self.name + '_%03i_out'%self._index
+#                token_name = templates.bundle_indexing(out_token_name, self._output_blocks[0]['size'])
+#
+#            default_value = ''
+#            instances += [Instance(default_value,
+#                                 self.scope_index,
+#                                 self.domain,
+#                                 block_types[0],
+#                                 token_name,
+#                                 self) ]
+#            self.code_declaration.add_dependent(instances[-1])
 
         for name, atoms in self.port_name_atoms.items():
             for atom in atoms:
@@ -1874,10 +1938,10 @@ class PlatformFunctions:
         scope_index = len(self.scope_stack) -1
         if "name" in member:
             platform_type, declaration = self.find_block(member['name']['name'], self.tree)
-            new_atom = NameAtom(platform_type, declaration, self.unique_id, scope_index, member['name']['line'], member['name']['filename'], previous_atom, next_atom)
+            new_atom = NameAtom(platform_type, declaration, self.unique_id, self, scope_index, member['name']['line'], member['name']['filename'], previous_atom, next_atom)
         elif "bundle" in member:
             platform_type, declaration = self.find_block(member['bundle']['name'], self.tree)
-            new_atom = BundleAtom(platform_type, declaration, member['bundle']['index'], self.unique_id, scope_index, member['bundle']['line'],member['bundle']['filename'], previous_atom, next_atom)
+            new_atom = BundleAtom(platform_type, declaration, member['bundle']['index'], self.unique_id, self, scope_index, member['bundle']['line'],member['bundle']['filename'], previous_atom, next_atom)
         elif "function" in member:
             platform_type, declaration = self.find_block(member['function']['name'], self.tree)
             connected_blocks = []
@@ -1894,7 +1958,7 @@ class PlatformFunctions:
             else: # Assume we are using a platform type (allow function notation for platform types)
                 # This should be exactly the same as the if "name" in member branch
                 platform_type, declaration = self.find_block(member['function']['name'], self.tree)
-                new_atom = NameAtom(platform_type, declaration, self.unique_id, scope_index, member['function']['line'], member['function']['filename'])
+                new_atom = NameAtom(platform_type, declaration, self.unique_id, self, scope_index, member['function']['line'], member['function']['filename'], previous_atom, next_atom)
         elif "expression" in member:
             if 'value' in member['expression']: # Unary expression
                 left_atom = self.make_atom(member['expression']['value'], previous_atom, next_atom)
@@ -2089,11 +2153,10 @@ class PlatformFunctions:
                 if not current_domain in reads:
                     reads[current_domain] = []
 
-                if type(atom) == NameAtom or type(atom) == BundleAtom:
-                    if group.index(atom) > 0:
-                        writes[current_domain].append(atom)
-                    if group.index(atom) < len(group) -1:
-                        reads[current_domain].append(atom)
+                if group.index(atom) > 0 and (type(atom) == NameAtom or type(atom) == BundleAtom):
+                    writes[current_domain] += atom.get_instances()
+                if group.index(atom) < len(group) -1 and (type(atom) == NameAtom or type(atom) == BundleAtom):
+                    reads[current_domain] += atom.get_instances()
 
                 #Process Inlcudes
                 new_globals = atom.get_globals()
@@ -2522,7 +2585,7 @@ class PlatformFunctions:
 
         # Generate code from elements
         for new_element in sorted_elements:
-            if not defer_header and (new_element.get_scope() >= len(self.scope_stack) - 1): # if declaration in this scope
+            if not defer_header and (new_element.get_scope() >= len(self.scope_stack) - 1) and new_element.get_enabled(): # if declaration in this scope
                 self.log_debug(':::--- Domain : '+ str(new_element.get_domain()) + ":::" + new_element.get_name() + '::: scope ' + str(new_element.get_scope()) )
                 self.log_debug('////// ' + new_element.get_name() + ' // Dependents : '+ ' '.join([e.get_name() for e in new_element.get_dependents()]))
                 tempdict = new_element.__dict__  # For debugging. This shows the contents in the spyder variable explorer

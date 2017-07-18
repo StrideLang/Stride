@@ -59,6 +59,12 @@ private:
 
 private Q_SLOTS:
 
+    // Code generation/Compiler
+    void testCompilation();
+
+    // Test code generation
+    void testCodeGeneration();
+
     // Connections
     void testConnectionErrors();
     void testConnectionCount();
@@ -97,13 +103,6 @@ private Q_SLOTS:
     void testBasicBundle();
     void testBasicBlocks();
     void testHeader();
-
-    // Test code generation
-    void testCodeGeneration();
-
-    // Code generation/Compiler
-    void testCompilation();
-
 };
 
 ParserTest::ParserTest()

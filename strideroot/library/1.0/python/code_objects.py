@@ -14,6 +14,7 @@ class Code(object):
         self.dependents = []
         self.line = -1
         self.filename = ''
+        self.enabled = True
 
     def get_code(self):
         return self.code
@@ -42,6 +43,11 @@ class Code(object):
     def get_filename(self):
         return self.filename
 
+    def get_enabled(self):
+        # Reactions need to know about instances, but these instances should
+        # not generate code. This flag enables this
+        return self.enabled
+
 class Instance(Code):
     def __init__(self, code, scope, domain, vartype, handle, atom, post = True):
         self.code = code
@@ -51,6 +57,7 @@ class Instance(Code):
         self.handle = handle
         self.line = atom.get_line()
         self.filename = atom.get_filename()
+        self.enabled = True
         self.post = post
         self.dependents = []
         self.atom = atom
@@ -103,6 +110,7 @@ class Declaration(Code):
         self.name = name
         self.code = code
         self.dependents = []
+        self.enabled = True
 
     def get_name(self):
         return self.name

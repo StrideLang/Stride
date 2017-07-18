@@ -1178,6 +1178,8 @@ std::shared_ptr<DeclarationNode> CodeResolver::createSignalBridge(string bridgeN
                                                               "signalbridge", nullptr, "", -1);
     }
     newBridge->addProperty(std::make_shared<PropertyNode>("default", defaultValue, filename.c_str(), line));
+    newBridge->addProperty(std::make_shared<PropertyNode>("signal", std::make_shared<ValueNode>(originalName, filename.c_str(), line),
+                                                          filename.c_str(), line));
     if (inDomain) {
         newBridge->addProperty(std::make_shared<PropertyNode>("inputDomain", inDomain, filename.c_str(), line));
         newBridge->addProperty(std::make_shared<PropertyNode>("domain", inDomain, filename.c_str(), line));

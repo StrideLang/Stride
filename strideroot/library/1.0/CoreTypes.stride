@@ -169,6 +169,12 @@ type _SignalBridge {
 			default: ""
 			required: off
 		}
+		typeProperty Signal {
+			name: "signal"
+			types: ["CSP"]
+			default: ""
+			required: on
+		}
 	]
 	inherits: ["base"]
 }

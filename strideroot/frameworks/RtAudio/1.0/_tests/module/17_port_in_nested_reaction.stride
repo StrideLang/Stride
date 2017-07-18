@@ -1,0 +1,45 @@
+use DesktopAudio version 1.0
+
+
+module Test {
+	ports: [
+		port OutputPort {
+			main: on
+			direction: "output"
+			block: Output
+			size: 2
+		}
+		port InputPort {
+			main: on
+			direction: "input"
+			block: Input
+		}
+		port VarPort {
+			main: off
+			block: Var
+		}
+	]
+	blocks: [
+		reaction UsesVar {
+			ports: [
+				port InputPort {
+					main: on
+					direction: "input"
+					block: Input
+				}
+			]
+			streams: [
+				Var + 0.001 >> Var;
+			]
+		}
+	]
+	streams: [
+		[Input, 0] >> Greater() >> UsesVar();
+		Input * Var >> Output[1];
+		Var >> Output[2]; # This Var should be connected to the bridge signal
+		
+	]
+}
+
+AudioIn[1] >> Test() >>AudioOut;
+

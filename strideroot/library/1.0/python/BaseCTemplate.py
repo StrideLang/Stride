@@ -272,6 +272,22 @@ public:
                 declaration = self.declaration_int(name, close)
         return declaration
 
+    def declaration_reference_from_instance(self, instance, close=True):
+        declaration = ''
+        vartype = instance.get_type()
+        name = instance.get_name()
+        # FIXME support bundles
+        name = "&" + name
+        if vartype == 'real':
+            declaration = self.declaration_real(name, close)
+        elif vartype == 'string':
+            declaration = self.declaration_string(name, close)
+        elif vartype == 'bool':
+            declaration = self.declaration_bool(name, close)
+        elif vartype == 'int':
+            declaration = self.declaration_int(name, close)
+        return declaration
+
     def declaration_real(self, name, close=True, default = None):
         declaration = self.real_type + " " + name
         if default:
@@ -544,30 +560,27 @@ public:
     # Reactions code
 
     def reaction_declaration(self, name, header_code, init_code,
-                             process_code, instance_consts = {}):
+                             process_code, references = []):
 
         out_type = 'void'
 
         process_functions = ''
+        declared_references = []
 #        constructor_args = ''
         for domain, domain_components in process_code.items():
             domain_proc_code = domain_components['code']
             input_declaration = ''
-            for input_block in domain_components['input_blocks']:
-    #            if 'blockbundle' in input_block:
-    #                for i in range(input_block['blockbundle']['size']):
-    #                    block_type = self.get_block_type(input_block)
-    #                    block_name = input_block['blockbundle']['name']
-    #                    if block_type == 'real':
-    #                        input_declaration += self.declaration_real(block_name + str(i), close = False) + ", "
-    #                input_declaration = input_declaration[:-2]
-    #            else:
-                input_declaration += self.declaration(input_block, close = False) + ", "
-            for output_block in domain_components['output_blocks']:
-                input_declaration +=  self.declaration_reference(output_block, False) + ", "
+#            for output_block in domain_components['output_blocks']:
+#                input_declaration +=  self.declaration_reference(output_block, False) + ", "
+
+            for ref in references:
+                if not ref.get_name() in declared_references:
+                    input_declaration +=  self.declaration_reference_from_instance(ref, False) + ", "
+                    declared_references.append(ref.get_name())
 
             if len(input_declaration) > 0:
                 input_declaration = input_declaration[:-2]
+
 
             process_functions += self.str_function_declaration%(out_type, name + '_process_' + str(domain), input_declaration, domain_proc_code)
 #
