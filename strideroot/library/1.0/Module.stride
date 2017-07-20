@@ -1,30 +1,46 @@
-type _Port {
-	typeName: "port"
+type _MainInputPort {
+	typeName: "mainInputPort"
+	inherits: ["port", "_portAttributes"]
+	meta: ""
+}
+
+type _MainOutputPort {
+	typeName: "mainOutputPort"
+	inherits: ["port", "_portAttributes"]
+	meta: ""
+}
+
+type _PropertyInputPort {
+	typeName: "propertyInputPort"
 	properties: [
-		typeProperty Name {
-			name: "name"
-			types: ["CSP"]
-			default: ""
-			required: off
-		},
-		typeProperty Main {
-			name: "main"
-			types: ["CBP"]
-			default: off
-			required: off
-		},
-		typeProperty Direction {
-			name: "direction"
-			types: ["CSP"]
-			default: "input"
-			required: off
-		},
-		typeProperty Block {
-			name: "block"
-			types: [""] # This should be made to accept type handles
+		typeProperty Default {
+			name: "default"
+			types: [""]
 			default: none
-			required: on
-		},
+			required: off
+		}
+	]
+	inherits: ["port", "_portAttributes"]
+	meta: ""
+}
+
+type _PropertyOutputPort {
+	typeName: "propertyOutputPort"
+	properties: [
+		typeProperty Default {
+			name: "default"
+			types: [""]
+			default: none
+			required: off
+		}
+	]
+	inherits: ["port", "_portAttributes"]
+	meta: ""
+}
+
+type _PortAttributes {
+	typeName: "_portAttributes"
+	properties: [
 		typeProperty Rate {
 			name: "rate"
 			types: [""]
@@ -43,18 +59,26 @@ type _Port {
 			default: none
 			required: off
 		}
-		typeProperty Default {
-			name: "default"
-			types: [""]
-			default: none
+	]
+	inherits: [""]
+	meta: ""
+}
+
+type _Port {
+	typeName: "port"
+	properties: [
+		typeProperty Name {
+			name: "name"
+			types: ["CSP"]
+			default: ""
 			required: off
-		} #,
-#		typeProperty Types {
-#			name: "types"
-#			types: [""] # This should be made to accept type handles
-#			default: [""]
-#			required: off
-#		}
+		},
+		typeProperty Block {
+			name: "block"
+			types: [""] # This should be made to accept type handles
+			default: none
+			required: on
+		}
 	]
 	inherits: ["base"]
 	meta: ""
