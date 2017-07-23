@@ -1,22 +1,20 @@
 
 module OSCOut {
 	ports: [
-		port InputPort {
+		mainInputPort InputPort {
 			name:       'input'
-			main: on
-			direction:  'input'
 		},
-		port OSCAddressProperty {
+		propertyInputPort OSCAddressProperty {
 			name: "address"
 			block: Address
 			meta: "The OSC address"
 		},
-		port IPProperty {
+		propertyInputPort IPProperty {
 			name: "ip"
 			block: IP
 			meta: "The IP address to send to."
 		},
-		port PortProperty {
+		propertyInputPort PortProperty {
 			name: "port"
 			block: Port
 			meta: "The Network port to send the data to."
@@ -36,22 +34,20 @@ module OSCOut {
 
 module OSCIn {
 	ports: [
-		port OutputPort {
+		mainOutputPort OutputPort {
 			name:       'output'
-			main: on
-			direction:  'output'
 		},
-		port OSCAddressProperty {
+		propertyInputPort OSCAddressProperty {
 			name: "address"
 			block: Address
 			meta: "The OSC address"
 		},
-		port IPProperty {
+		propertyInputPort IPProperty {
 			name: "ip"
 			block: IP
 			meta: "The IP address to receive from."
 		},
-		port PortProperty {
+		propertyInputPort PortProperty {
 			name: "port"
 			block: Port
 			meta: "The Network port to receive the data from."

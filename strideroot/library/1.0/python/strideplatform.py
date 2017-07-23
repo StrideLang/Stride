@@ -1297,18 +1297,17 @@ class ModuleAtom(Atom):
         domain_proc_code = {}
         if self.module['ports']:
             for module_port in self.module['ports']:
-                module_port_domain = ''
                 if 'block' in module_port:
                     module_block = module_port['block']
                 elif 'blockbundle' in module_port:
                     module_block = module_port['blockbundle']
-                if  'domain' in module_block and module_block['domain']:
-                    if type(module_block['domain']) == str or type(module_block['domain']) == unicode:
-                        module_port_domain = module_block['domain']
-                    else:
-                        module_port_domain = module_block['domain']['name']['name']
                 module_port_name = module_block['name']
-                module_port_direction = module_block['direction']
+
+                module_port_domain = ''
+                block_decl = self.find_internal_block(module_block['block']['name']['name'])
+                if block_decl:
+                    module_port_domain = block_decl['domain']
+                module_port_direction = 'input' if 'Input' in module_block['type'] else 'output'
                 for port_atom_name in self.port_name_atoms:
                     if port_atom_name == module_port_name:
                         for port_value in self.port_name_atoms[port_atom_name]:
@@ -1430,18 +1429,17 @@ class ModuleAtom(Atom):
         self.initialization_code = ''
         if self.module['ports']:
             for module_port in self.module['ports']:
-                module_port_domain = ''
                 if 'block' in module_port:
                     module_block = module_port['block']
                 elif 'blockbundle' in module_port:
                     module_block = module_port['blockbundle']
-                if 'domain' in module_block and module_block['domain']:
-                    if type(module_block['domain']) == str or type(module_block['domain']) == unicode:
-                        module_port_domain = module_block['domain']
-                    else:
-                        module_port_domain = module_block['domain']['name']['name']
+
+                module_port_domain = ''
                 module_port_name = module_block['name']
-                module_port_direction = module_block['direction']
+                block_decl = self.find_internal_block(module_block['block']['name']['name'])
+                if block_decl:
+                    module_port_domain = block_decl['domain']
+                module_port_direction = 'input' if 'Input' in module_block['type'] else 'output'
                 for port_atom_name in self.port_name_atoms:
                     if port_atom_name == module_port_name:
                         for port_value in self.port_name_atoms[port_atom_name]:
@@ -1471,7 +1469,7 @@ class ModuleAtom(Atom):
 
         for port in self.module['ports']:
             internal_block = self.find_internal_block(port['block']['block']['name']['name'])
-            if 'main' in port['block'] and port['block']['main']['value'] == True:
+            if port['block'] and 'main' in port['block']['type']:
                 internal_block['main'] = True
                 internal_block['port_block'] = True
 #                for block in self._blocks:
@@ -1483,18 +1481,18 @@ class ModuleAtom(Atom):
 #                    if internal_block['name'] == name:
 #                        self._blocks.remove(block)
 #                        break
-                if 'direction' in port['block'] and port['block']['direction'] == 'input':
+                if 'Input' in port['block']['type']:
                     self._input_blocks.append(internal_block)
                     self._input = {internal_block['name'] : self.input_atom }
-                elif 'direction' in port['block'] and port['block']['direction'] == 'output':
+                elif 'Output' in port['block']['type']:
                     self._output_blocks.append(internal_block)
                     self._output = {internal_block['name'] : self.output_atom }
             else: # Not a main port
                 internal_block['main'] = False
                 internal_block['port_block'] = True
-                if 'direction' in port['block'] and port['block']['direction'] == 'input':
+                if 'Input' in port['block']['type']:
                     self._input_blocks.append(internal_block)
-                elif 'direction' in port['block'] and port['block']['direction'] == 'output':
+                elif 'Output' in port['block']['type']:
                     self._output_blocks.append(internal_block)
 #            self._blocks.append(port)
 
@@ -1888,9 +1886,6 @@ class PlatformFunctions:
     #            if key == "name" and type["ports"]["name"] == port_name:
     #                return type[
         return None
-
-    def find_port_direction(self, port_block):
-        return port_block['block']['direction']
 
     def find_function_property(self, func, property_name):
         return func["ports"][property_name]

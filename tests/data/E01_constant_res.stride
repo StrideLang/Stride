@@ -45,10 +45,11 @@ signal A[2] {}
 # In Module Ports
 
 constant AutoBlock {value: 440 }
+
 module Test {
   ports: [
-    port InputPort {
-      block: AutoBlock #This AutoBlock should be a new signal Block within the Test module scope
+    mainInputPort InputPort {
+      block: AutoBlock #This AutoBlock must be a new signal Block within the Test module scope, not the AutoBlock declared outside
     }
    ]
 }

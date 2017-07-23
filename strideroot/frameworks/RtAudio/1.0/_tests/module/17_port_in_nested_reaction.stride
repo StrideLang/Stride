@@ -3,43 +3,35 @@ use DesktopAudio version 1.0
 
 module Test {
 	ports: [
-		port OutputPort {
-			main: on
-			direction: "output"
+		mainOutputPort OutputPort {
 			block: Output
-			size: 2
+			domain: OutputDomain
 		}
-		port InputPort {
-			main: on
-			direction: "input"
+		mainInputPort InputPort {
 			block: Input
+			domain: OutputDomain
 		}
-		port VarPort {
-			main: off
+		propertyInputPort VarPort {
+			name:"var"
 			block: Var
 		}
 	]
 	blocks: [
 		reaction UsesVar {
 			ports: [
-				port InputPort {
-					main: on
-					direction: "input"
-					block: Input
-				}
 			]
 			streams: [
 				Var + 0.001 >> Var;
 			]
 		}
+		signal Output[2] {}
 	]
 	streams: [
 		[Input, 0] >> Greater() >> UsesVar();
 		Input * Var >> Output[1];
 		Var >> Output[2]; # This Var should be connected to the bridge signal
-		
+
 	]
 }
 
 AudioIn[1] >> Test() >>AudioOut;
-

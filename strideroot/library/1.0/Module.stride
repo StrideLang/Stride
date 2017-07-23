@@ -144,27 +144,9 @@ type _Reaction {
 			default: none
 			required: off
 		},
-		typeProperty OnExecution {
-			name: "onExecution"
-			types: [""]
-			default: none
-			required: on
-		},
-		typeProperty OnTermination {
-			name: "onTermination"
-			types: [""]
-			default: none
-			required: on
-		},
-		typeProperty TerminateWhen {
-			name: "terminateWhen"
-			types: [""]
-			default: none
-			required: off
-		},
-		typeProperty InternalBlocks {
+		typeProperty Blocks { # User shouldn't have access to this set of blocks, how to implement that?
 			name: "blocks"
-			types: [""]
+			types: [""] # TODO how to accept lists?
 			default: []
 			required: on
 		},
@@ -173,13 +155,38 @@ type _Reaction {
 			types: [""]
 			default: none
 			required: on
-		} #,
-#		typeProperty DefaultDomain {
-#			name: "defaultDomain"
-#			types: ["CSP", "" ] #  Should allow _Domain
-#			default: PlatformDomain
-#			required: off
-#		}
+		}
+	]
+	inherits: ["domainMember"]
+}
+
+type _Loop {
+	typeName: "loop"
+	properties: [
+		typeProperty Output {
+			name: "output"
+			types: [""]
+			default: none
+			required: on
+		},
+		typeProperty Ports {
+			name: "ports"
+			types: [ "" ]  # TODO: How can we define list types here?
+			default: none
+			required: off
+		},
+		typeProperty Blocks { # User shouldn't have access to this set of blocks, how to implement that?
+			name: "blocks"
+			types: [""] # TODO how to accept lists?
+			default: []
+			required: on
+		},
+		typeProperty Streams {
+			name: "streams"
+			types: [""]
+			default: none
+			required: on
+		}
 	]
 	inherits: ["domainMember"]
 }

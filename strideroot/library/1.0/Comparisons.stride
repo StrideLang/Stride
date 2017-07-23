@@ -1,19 +1,15 @@
 
 module Greater {
     ports: [
-    port OutputPort {
-        name:       'output'
-        block: Output
-        main: on
-        direction:  'output'
-    },
-    port InputPort {
-        name:       'input'
-        block: Input
-        main: on
-        direction:  'input'
-		meta: "A list with the two values to be compared"
-    }
+        mainOutputPort OutputPort {
+            name:       'output'
+            block: Output
+        },
+        mainInputPort InputPort {
+            name:       'input'
+            block: Input
+    		meta: "A list with the two values to be compared"
+        }
     ]
     blocks: [
         signal Input[2] {},
@@ -27,19 +23,15 @@ module Greater {
 
 module GreaterOrEqual {
     ports: [
-    port OutputPort {
-        name:       'output'
-        main: on
-        direction:  'output'
-    },
-    port InputPort {
-        name:       'input'
-        main: on
-        size: 2
-        direction:  'input'
-    }
+        mainOutputPort OutputPort {
+            name:       'output'
+        },
+        mainInputPort InputPort {
+            name:       'input'
+        }
     ]
     blocks: [
+	signal Input[2] {}
     ]
     streams: [
 #       Input[1] >= Input[2] >> Output;
@@ -50,19 +42,15 @@ module GreaterOrEqual {
 module Less {
 
 ports: [
-port OutputPort {
+mainOutputPort OutputPort {
     name:       'output'
-    main: on
-    direction:  'output'
 },
-port InputPort {
+mainInputPort InputPort {
     name:       'input'
-    main: on
-    size: 2
-    direction:  'input'
 }
 ]
     blocks: [
+	signal Input[2] {}
     ]
     streams: [
 #       Input[1] < Input[2] >> Output;
@@ -73,19 +61,15 @@ port InputPort {
 module LessOrEqual {
 
 ports: [
-port OutputPort {
+mainOutputPort OutputPort {
     name:       'output'
-    main: on
-    direction:  'output'
 },
-port InputPort {
+mainInputPort InputPort {
     name:       'input'
-    main: on
-    size: 2
-    direction:  'input'
 }
 ]
     blocks: [
+	signal Input[2] {}
     ]
     streams: [
 #       Input[1] <= Input[2] >> Output;
@@ -96,16 +80,11 @@ port InputPort {
 module Equal {
 
 ports: [
-port OutputPort {
+mainOutputPort OutputPort {
     name:       'output'
-    main: on
-    direction:  'output'
 },
-port InputPort {
+mainInputPort InputPort {
     name:       'input'
-    main: on
-    size: 2
-    direction:  'input'
 }
 ]
     blocks: [
@@ -121,16 +100,11 @@ port InputPort {
 module NotEqual {
 
 	ports: [
-		port OutputPort {
+		mainOutputPort OutputPort {
 			name:       'output'
-			main: on
-			direction:  'output'
 		},
-		port InputPort {
+		mainInputPort InputPort {
 			name:       'input'
-			main: on
-			size: 2
-			direction:  'input'
 		}
 	]
     blocks: [
@@ -144,28 +118,25 @@ module NotEqual {
 module Select {
 
 	ports: [
-		port OutputPort {
+		mainOutputPort OutputPort {
 			name:       'output'
-			main: on
-			direction:  'output'
+			block: Output
 		},
-		port InputPort {
+		mainInputPort InputPort {
 			name:       'input'
-			main: on
 			block: Input
-			direction:  'input'
 		},
-		port WhenOnProperty {
+		propertyInputPort WhenOnProperty {
 			name: "whenOn"
 			block: WhenOn
 			meta: ""
-			domain: WhenOnDomain
+#			domain: WhenOnDomain
         },
-		port WhenOffProperty {
+		propertyInputPort WhenOffProperty {
 			name: "whenOff"
 			block: WhenOff
 			meta: ""
-			domain: WhenOffDomain
+#			domain: WhenOffDomain
         }
     ]
     blocks: [

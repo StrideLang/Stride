@@ -30,9 +30,7 @@ Oscillator() >> AudioOut;
 
 module TestModule {
     ports: [
-        port OutputPort {
-            main: on
-            direction: "output"
+        mainOutputPort OutputPort {
             block: Output
         }
     ]

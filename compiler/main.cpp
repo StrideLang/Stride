@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 
         QFileInfo info(fileName);
         QString dirName = info.absolutePath() + QDir::separator()
-                + info.fileName() + "_Products";
+                + info.fileName();
         if (!QFile::exists(dirName)) {
             if (!QDir().mkpath(dirName)) {
                 qDebug() << "Error creating project path";

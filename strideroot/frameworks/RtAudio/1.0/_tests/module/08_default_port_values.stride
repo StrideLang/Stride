@@ -2,20 +2,16 @@ use DesktopAudio version 1.0
 
 module Test {
 	ports: [
-		port OutputPort {
-			main: on
-			direction: "output"
+		mainOutputPort OutputPort {
 			block: Output
 			domain: OutputDomain
 		}
-		port InputPort {
-			main: on
-			direction: "input"
+		mainInputPort InputPort {
 			block: Input
+			domain: OutputDomain
 		}
-		port TestPort {
+		propertyInputPort TestPort {
 			name: "test"
-			direction: "input"
 			block: TestBlock
 			default: 1.0
 		}
@@ -29,5 +25,5 @@ module Test {
 
 signal SigIn[2] { domain: AudioDomain }
 
-SigIn[1] >> Test(test: SigIn[2]) >> AudioOut[1];
-
+AudioIn[1] >> Test(test: AudioIn[2]) >> AudioOut[1];
+AudioIn[2] >> Test() >> AudioOut[2];

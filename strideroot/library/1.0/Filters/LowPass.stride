@@ -1,27 +1,23 @@
 
 module LowPass {
     ports:  [
-		port OutputPort {
+		mainOutputPort OutputPort {
             name:       'output'
-            main: on
-            direction:  'output'
         },
-        port InputPort {
+        mainInputPort InputPort {
             name:       'input'
-            main: on
-            direction:  'input'
         },
-		port FrequencyProperty {
+		propertyInputPort FrequencyProperty {
 			name: "frequency"
 			block: CenterFrequency
 			meta: "The frequency of the filter."
 		},
-		port QFactorProperty {
+		propertyInputPort QFactorProperty {
 			name: "qFactor"
 			block: QFactor
 			meta: "The Q value of the filter."
 		},
-		port GainProperty {
+		propertyInputPort GainProperty {
 			name: "gain"
 			block: Gain
 			meta: ""
