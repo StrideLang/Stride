@@ -2,25 +2,19 @@ use DesktopAudio version 1.0
 
 module Test {
 	ports: [
-		port OutputPort {
-			main: on
-			direction: "output"
+		mainOutputPort OutputPort {
 			block: Output
 		}
-		port InputPort {
-			main: on
-			direction: "input"
+		mainInputPort InputPort {
 			block: Input
 		}
-		port TestPort {
+		propertyInputPort TestPort {
 			name: "test"
-			direction: "input"
 			block: TestBlock
-			domain: TestDomain
 		}
 	]
 	blocks: [
-		signal Amp { domain: TestDomain }
+		signal Amp { domain: TestPort.domain }
 	]
 	streams: [
 		TestBlock * 2 >> Amp;

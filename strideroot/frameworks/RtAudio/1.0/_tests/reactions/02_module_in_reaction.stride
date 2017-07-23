@@ -8,17 +8,13 @@ signal Value {
 
 module Add10 {
     ports: [
-		port OutputPort {
-			main: on
-			direction: "output"
+		mainOutputPort OutputPort {
 			block: Output
-            size: 1
+			domain: OutputDomain
 		}
-		port InputPort {
-			main: on
-			direction: "input"
+		mainInputPort InputPort {
 			block: Input
-            size: 1
+			domain: OutputDomain
 		}
     ]
     streams: [

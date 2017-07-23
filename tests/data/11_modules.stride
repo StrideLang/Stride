@@ -2,35 +2,25 @@ use DesktopAudio version 1.0
 
 module SizeTest {
     ports:          [
-        port InputPort {
+        mainInputPort InputPort {
             name:       'input'
-            main: on
-            direction:  'input'
             block:      Input
-            rate:       InputPortRate
-            domain:     InputPortDomain
-            size:       InputPortSize
             meta:       "The module's primary input port."
         },
-        port OutputPort {
+        mainOutputPort OutputPort {
             name:       'output'
-            main: on
-            direction:  'output'
             block:      Output
-            rate:       OutputPortRate
-            domain:     OutputPortDomain
-            size:       OutputPortSize
             meta:       "The module's primary output port."
         }
     ]
     blocks:         [
         signal Input [InputPortSize] {
-            rate:       InputPortRate
-            domain:     InputPortDomain
+            rate:       InputPort.rate
+            domain:     InputPort.domain
         },
         signal Output [OutputPortSize] {
-            rate:       OutputPortRate
-            domain:     OutputPortDomain
+            rate:       OutputPort.rate
+            domain:     OutputPort.domain
         }
         constant InputPortSize { value: 3}
         constant OutputPortSize {value: 2}
@@ -43,24 +33,14 @@ module SizeTest {
 # Check auto declaration of input and output blocks
 module BlocksTest {
     ports:          [
-        port InputPort {
+        mainInputPort InputPort {
             name:       'input'
-            main: on
-            direction:  'input'
             block:      Input
-            rate:       InputPortRate
-            domain:     InputPortDomain
-            size:       InputPortSize
             meta:       "The module's primary input port."
         },
-        port OutputPort {
+        mainOutputPort OutputPort {
             name:       'output'
-            main: on
-            direction:  'output'
             block:      Output
-            rate:       OutputPortRate
-            domain:     OutputPortDomain
-            size:       OutputPortSize
             meta:       "The module's primary output port."
     }
 ]
@@ -83,10 +63,8 @@ InSignal >> SizeTest() >> OutSignal;
 
 module DuplicatePortName {
     ports:          [
-        port InputPort {
+        mainInputPort InputPort {
             name:       'input'
-            main: on
-            direction:  'input'
             block:      Input
         }
         ]

@@ -4,31 +4,28 @@ import Generators
 
 module Test {
 	ports: [
-		port OutputPort {
-			main: on
-			direction: "output"
+		mainOutputPort OutputPort {
 			block: Output
+			domain: OutputDomain
 		}
-		port InputPort {
-			main: on
-			direction: "input"
+		mainInputPort InputPort {
 			block: Input
+			domain: OutputDomain
 		}
 	]
 	blocks: [
 		reaction InternalReaction {
 			ports: [
-				port OutputPort {
-					main: on
-					direction: "output"
+				mainOutputPort OutputPort {
 					block: Output
+					domain: OutputDomain
 				}
 			]
 			streams: [
 				Value + 1 >> Output;
 			]
 		}
-		signal Value { default: 0}	
+		signal Value { default: 0}
 	]
 	streams: [
 		[Input, 0] >> Greater() >> InternalReaction() >> Output;

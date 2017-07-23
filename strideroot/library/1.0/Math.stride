@@ -5,15 +5,11 @@ constant _Pi {
 
 module Cos {
 	ports: [ # A property could be the type of input, (degrees, radians, etc.)
-		port OutputPort {
-			main: on
-			direction: "output"
+		mainOutputPort OutputPort {
 			block: Output
 			meta : "The cosine of the angle." 
 		},
-		port InputPort {
-			main: on
-			direction: "input"
+		mainInputPort InputPort {
 			block: Input
 			meta: "Input angle in radians"
 		}
@@ -31,15 +27,11 @@ module Cos {
 
 module Sin {
 	ports: [ # A property could be the type of input, (degrees, radians, etc.)
-		port OutputPort {
-			main: on
-			direction: "output"
+		mainOutputPort OutputPort {
 			block: Output
 			meta : "The sine of the angle." 
 		},
-		port InputPort {
-			main: on
-			direction: "input"
+		mainInputPort InputPort {
 			block: Input
 			meta: "Input angle in radians"
 		}
@@ -56,15 +48,11 @@ module Sin {
 
 module Divide {
 	ports: [
-		port OutputPort {
-			main: on
-			direction: "output"
+		mainOutputPort OutputPort {
 			block: Output
 			meta : "The result of the division" 
 		},
-		port InputPort {
-			main: on
-			direction: "input"
+		mainInputPort InputPort {
 			block: Input
 			meta: "Input values" 
 		}
@@ -85,15 +73,13 @@ module Divide {
 
 module Multiply {	
 	ports: [
-		port OutputPort {
+		mainOutputPort OutputPort {
 			main: on
 			direction: "output"
 			block: Output
 			meta : "The result of the multiplication" 
 		},
-		port InputPort {
-			main: on
-			direction: "input"
+		mainInputPort InputPort {
 			block: Input
 			meta: "Values to multiply"
 		}

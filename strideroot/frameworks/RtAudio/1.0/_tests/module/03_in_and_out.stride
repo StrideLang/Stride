@@ -5,14 +5,10 @@ import Generators
 
 module Test {
 	ports: [
-		port OutputPort {
-			main: on
-			direction: "output"
+		mainOutputPort OutputPort {
 			block: Output
 		}
-		port InputPort {
-			main: on
-			direction: "input"
+		mainInputPort InputPort {
 			block: Input
 		}
 	]

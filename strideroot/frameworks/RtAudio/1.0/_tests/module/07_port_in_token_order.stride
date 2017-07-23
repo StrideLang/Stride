@@ -2,26 +2,21 @@ use DesktopAudio version 1.0
 
 module Test {
 	ports: [
-		port OutputPort {
-			main: on
-			direction: "output"
+		mainOutputPort OutputPort {
 			block: Output
 			domain: OutputDomain
 		}
-		port InputPort {
-			main: on
-			direction: "input"
+		mainInputPort InputPort {
 			block: Input
+			domain: OutputDomain
 		}
-		port TestPort {
+		propertyInputPort TestPort {
 			name: "test"
-			direction: "input"
 			block: TestBlock
 			domain: OutputDomain
 		}
-		port TestPort2 {
+		propertyInputPort TestPort2 {
 			name: "test2"
-			direction: "input"
 			block: TestBlock2
 			domain: OutputDomain
 		}
@@ -37,26 +32,21 @@ module Test {
 
 module Test2 {
 	ports: [
-		port TestPort2 {
+		propertyInputPort TestPort2 {
 			name: "test2"
-			direction: "input"
 			block: TestBlock2
 			domain: OutputDomain
 		}
-		port InputPort {
-			main: on
-			direction: "input"
+		mainInputPort InputPort {
 			block: Input
+			domain: OutputDomain
 		}
-		port TestPort {
+		propertyInputPort TestPort {
 			name: "test"
-			direction: "input"
 			block: TestBlock
 			domain: OutputDomain
 		}
-		port OutputPort {
-			main: on
-			direction: "output"
+		mainOutputPort OutputPort {
 			block: Output
 			domain: OutputDomain
 		}

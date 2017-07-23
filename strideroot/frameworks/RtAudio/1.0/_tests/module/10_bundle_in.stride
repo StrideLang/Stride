@@ -2,27 +2,25 @@ use DesktopAudio version 1.0
 
 module Test {
 	ports: [
-		port OutputPort {
-			main: on
-			direction: "output"
+		mainOutputPort OutputPort {
 			block: Output
 			domain: OutputDomain
-			size: 2
+#			size: 2
 		}
-		port InputPort {
-			main: on
-			direction: "input"
+		mainInputPort InputPort {
 			block: Input
-			size: 2
+			domain: OutputDomain
+#			size: 2
 		}
-		port TestPort {
+		propertyInputPort TestPort {
 			name: "test"
-			direction: "input"
 			block: TestBlock
 			default: 1.0
 		}
 	]
 	blocks: [
+		signal Input[2] {}
+		signal Output[2] {}
 	]
 	streams: [
 		Input[1] + Input[2] >> Output[2];
@@ -34,4 +32,3 @@ signal Out[2] { rate: AudioRate domain: AudioDomain }
 
 SigIn >> Test() >> AudioOut;
 [SigIn[1], SigIn[2]] >> Test() >> Out;
-

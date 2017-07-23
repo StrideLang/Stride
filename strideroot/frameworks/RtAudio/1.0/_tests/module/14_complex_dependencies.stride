@@ -7,15 +7,13 @@ import Generators
 # according to dependencies
 module UsedInTest {
 	ports: [
-		port OutputPort {
-			main: on
-			direction: "output"
+		mainOutputPort OutputPort {
 			block: Output
+			domain: OutputDomain
 		}
-		port InputPort {
-			main: on
-			direction: "input"
+		mainInputPort InputPort {
 			block: Input
+			domain: OutputDomain
 		}
 	]
 	streams: [
@@ -25,15 +23,13 @@ module UsedInTest {
 
 module Test {
 	ports: [
-		port OutputPort {
-			main: on
-			direction: "output"
+		mainOutputPort OutputPort {
 			block: Output
+			domain: OutputDomain
 		}
-		port InputPort {
-			main: on
-			direction: "input"
+		mainInputPort InputPort {
 			block: Input
+			domain: OutputDomain
 		}
 	]
 	streams: [

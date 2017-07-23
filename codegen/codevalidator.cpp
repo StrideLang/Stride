@@ -1177,38 +1177,21 @@ int CodeValidator::getTypeNumOutputs(std::shared_ptr<DeclarationNode> blockDecla
         return getBlockDeclaredSize(blockDeclaration, scope, tree, errors);
     } else if (blockDeclaration->getNodeType() == AST::Declaration) {
         if (blockDeclaration->getObjectType() == "module") {
-            ListNode *blockList = static_cast<ListNode *>(blockDeclaration->getPropertyValue("blocks").get());
-            BlockNode *outputName = nullptr;
-            ListNode *portList = static_cast<ListNode *>(blockDeclaration->getPropertyValue("ports").get());
-            if (portList && portList->getNodeType() != AST::None) {
-                Q_ASSERT(portList->getNodeType() == AST::List);
-                foreach(ASTNode port, portList->getChildren()) {
-                    if (port->getNodeType() == AST::Declaration) {
-                        DeclarationNode *portBlock = static_cast<DeclarationNode *>(port.get());
-                        ASTNode mainProperty = portBlock->getPropertyValue("main");
-                        if (mainProperty && mainProperty->getNodeType() == AST::Switch) {
-                            ValueNode *mainSwitch = static_cast<ValueNode *>(mainProperty.get());
-                            if (mainSwitch->getSwitchValue()) {
-                                ASTNode direction = portBlock->getPropertyValue("direction");
-                                if (direction && direction->getNodeType() == AST::String) {
-                                    ValueNode *directionValue = static_cast<ValueNode *>(direction.get());
-                                    if (directionValue->getStringValue() == "output") {
-                                        if (portBlock->getPropertyValue("block")->getNodeType() == AST::Block) {
-                                            outputName = static_cast<BlockNode *>(portBlock->getPropertyValue("block").get());
-                                        } else {
-                                            qDebug() << "WARNING: Expecting name node for output block";
-                                        }
-                                    }
-                                }
+            std::shared_ptr<DeclarationNode> portBlock = getMainOutputPortBlock(blockDeclaration);
 
-                            }
-                        }
-                    }
+            BlockNode *outputName = nullptr;
+            if (portBlock) {
+                if (portBlock->getPropertyValue("block")->getNodeType() == AST::Block) {
+                    outputName = static_cast<BlockNode *>(portBlock->getPropertyValue("block").get());
+                } else {
+                    qDebug() << "WARNING: Expecting name node for output block";
                 }
             }
             if (!outputName ||outputName->getNodeType() == AST::None) {
                 return 0;
             }
+
+            ListNode *blockList = static_cast<ListNode *>(blockDeclaration->getPropertyValue("blocks").get());
             Q_ASSERT(blockList->getNodeType() == AST::List);
             Q_ASSERT(outputName->getNodeType() == AST::Block);
             QString outputBlockName = QString::fromStdString(outputName->getName());
@@ -1241,31 +1224,13 @@ int CodeValidator::getTypeNumInputs(std::shared_ptr<DeclarationNode> blockDeclar
         if (blockDeclaration->getObjectType() == "module") {
             ListNode *blockList = static_cast<ListNode *>(blockDeclaration->getPropertyValue("blocks").get());
             BlockNode *inputName = nullptr;
-            ListNode *portList = static_cast<ListNode *>(blockDeclaration->getPropertyValue("ports").get());
-            if (portList && portList->getNodeType() != AST::None) {
-                Q_ASSERT(portList->getNodeType() == AST::List);
-                foreach(ASTNode port, portList->getChildren()) {
-                    if (port->getNodeType() == AST::Declaration) {
-                        DeclarationNode *portBlock = static_cast<DeclarationNode *>(port.get());
-                        ASTNode mainProperty = portBlock->getPropertyValue("main");
-                        if (mainProperty && mainProperty->getNodeType() == AST::Switch) {
-                            ValueNode *mainSwitch = static_cast<ValueNode *>(mainProperty.get());
-                            if (mainSwitch->getSwitchValue()) {
-                                ASTNode direction = portBlock->getPropertyValue("direction");
-                                if (direction && direction->getNodeType() == AST::String) {
-                                    ValueNode *directionValue = static_cast<ValueNode *>(direction.get());
-                                    if (directionValue->getStringValue() == "input") {
-                                        if (portBlock->getPropertyValue("block")->getNodeType() == AST::Block) {
-                                            inputName = static_cast<BlockNode *>(portBlock->getPropertyValue("block").get());
-                                        } else {
-                                            qDebug() << "WARNING: Expecting name node for input block";
-                                        }
-                                    }
-                                }
 
-                            }
-                        }
-                    }
+            std::shared_ptr<DeclarationNode> portBlock = getMainInputPortBlock(blockDeclaration);
+            if (portBlock) {
+                if (portBlock->getPropertyValue("block")->getNodeType() == AST::Block) {
+                    inputName = static_cast<BlockNode *>(portBlock->getPropertyValue("block").get());
+                } else {
+                    qDebug() << "WARNING: Expecting name node for input block";
                 }
             }
             Q_ASSERT(blockList->getNodeType() == AST::List);
@@ -1923,16 +1888,8 @@ std::shared_ptr<DeclarationNode> CodeValidator::getMainOutputPortBlock(std::shar
     if (ports->getNodeType() == AST::List) {
         for (ASTNode port : ports->getChildren()) {
             std::shared_ptr<DeclarationNode> portBlock = static_pointer_cast<DeclarationNode>(port);
-            ValueNode *mainValue = static_cast<ValueNode *>(portBlock->getPropertyValue("main").get());
-            if (mainValue && mainValue->getNodeType() == AST::Switch && mainValue->getSwitchValue()) {
-                ASTNode directionPortValue = portBlock->getPropertyValue("direction");
-                if (directionPortValue->getNodeType() == AST::String) {
-                    std::string directionName = static_cast<ValueNode *>(directionPortValue.get())->getStringValue();
-                    Q_ASSERT(directionName == "output" || directionName == "input");
-                    if (directionName == "output") {
-                        return portBlock;
-                    }
-                }
+            if (portBlock->getObjectType() == "mainOutputPort") {
+                return portBlock;
             }
         }
     } else if (ports->getNodeType() == AST::None) {
@@ -1946,19 +1903,12 @@ std::shared_ptr<DeclarationNode> CodeValidator::getMainOutputPortBlock(std::shar
 std::shared_ptr<DeclarationNode> CodeValidator::getMainInputPortBlock(std::shared_ptr<DeclarationNode> moduleBlock)
 {
     ListNode *ports = static_cast<ListNode *>(moduleBlock->getPropertyValue("ports").get());
+    Q_ASSERT(ports->getNodeType() == AST::List);
     if (ports->getNodeType() == AST::List) {
         for (ASTNode port : ports->getChildren()) {
             std::shared_ptr<DeclarationNode> portBlock = std::static_pointer_cast<DeclarationNode>(port);
-            ValueNode *mainValue = static_cast<ValueNode *>(portBlock->getPropertyValue("main").get());
-            if (mainValue && mainValue->getNodeType() == AST::Switch && mainValue->getSwitchValue()) {
-                ASTNode directionPortValue = portBlock->getPropertyValue("direction");
-                if (directionPortValue->getNodeType() == AST::String) {
-                    std::string directionName = static_cast<ValueNode *>(directionPortValue.get())->getStringValue();
-                    Q_ASSERT(directionName == "output" || directionName == "input");
-                    if (directionName == "input") {
-                        return portBlock;
-                    }
-                }
+            if (portBlock->getObjectType() == "mainInputPort") {
+                return portBlock;
             }
         }
     } else if (ports->getNodeType() == AST::None) {

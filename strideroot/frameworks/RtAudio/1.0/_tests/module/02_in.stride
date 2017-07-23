@@ -4,15 +4,12 @@ import Generators
 
 module Test {
 	ports: [
-		port InputPort {
-			main: on
-			direction: "input"
+		mainInputPort InputPort {
 			block: Input
-			domain: InputDomain
 		}
 	]
 	blocks: [
-		signal Dummy { domain: InputDomain }
+		signal Dummy { domain: Input.domain }
 	]
 	streams: [
 		Input >> Dummy;

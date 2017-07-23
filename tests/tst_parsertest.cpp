@@ -146,7 +146,7 @@ void ParserTest::testPortNameValidation()
     QVERIFY(errors.size() == 1);
     LangError error = errors.takeFirst();
     QVERIFY(error.type == LangError::InvalidPort);
-    QVERIFY(error.lineNumber == 22);
+    QVERIFY(error.lineNumber == 20);
     QVERIFY(error.errorTokens[0] == "TestModule");
     QVERIFY(error.errorTokens[1] == "invalid");
 }
@@ -452,6 +452,23 @@ void ParserTest::testModuleDomains()
     domainName = static_cast<BlockNode *>(portBlock->getPropertyValue("domain").get());
     QVERIFY(domainName->getNodeType() == AST::Block);
     QVERIFY(domainName->getName() == "_OutputDomain");
+
+    // Both the input and output blocks should be autodeclared to belong to the output domain
+    ListNode *blockList = static_cast<ListNode *>(block->getPropertyValue("blocks").get());
+    QVERIFY(blockList->getNodeType() == AST::List);
+    DeclarationNode *internalBlock = static_cast<DeclarationNode *>(blockList->getChildren().at(1).get());
+    QVERIFY(internalBlock->getNodeType() == AST::Declaration);
+    ValueNode *domainValue = static_cast<ValueNode *>(internalBlock->getPropertyValue("domain").get());
+    QVERIFY(domainValue);
+    QVERIFY(domainValue->getNodeType() == AST::String);
+    QVERIFY(domainValue->getStringValue() == "_OutputDomain");
+
+    internalBlock = static_cast<DeclarationNode *>(blockList->getChildren().at(2).get());
+    QVERIFY(internalBlock->getNodeType() == AST::Declaration);
+    domainValue = static_cast<ValueNode *>(internalBlock->getPropertyValue("domain").get());
+    QVERIFY(domainValue);
+    QVERIFY(domainValue->getNodeType() == AST::String);
+    QVERIFY(domainValue->getStringValue() == "_OutputDomain");
 }
 
 void ParserTest::testConnectionErrors()
@@ -616,10 +633,10 @@ void ParserTest::testModules()
     QVERIFY(blockList->getNodeType() == AST::List);
     QStringList blockNames;
 //    blockNames << "Test";
-    blockNames << "InputPortRate" << "InputPortDomain" << "InputPortSize" << "Input";
-    blockNames << "OutputPortRate" << "OutputPortDomain" << "OutputPortSize" << "Output";
+    blockNames << "Input";
+    blockNames << "Output";
     blockNames << "AutoDeclared";
-    for(size_t i = 1; i < blockList->getChildren().size(); i++) {
+    for(size_t i = 2; i < blockList->getChildren().size(); i++) {
         AST *member = blockList->getChildren().at(i).get();
         if (member->getNodeType() == AST::Declaration) {
             DeclarationNode *block = static_cast<DeclarationNode *>(member);
@@ -632,7 +649,7 @@ void ParserTest::testModules()
     QVERIFY(block->getDomain());
     QVERIFY(block->getDomain()->getNodeType() == AST::String);
     string domain = static_cast<ValueNode *>(block->getDomain().get())->toString();
-    QVERIFY(domain == "OutputPortDomain");
+    QVERIFY(domain == "_OutputDomain");
 }
 
 void ParserTest::testImport()

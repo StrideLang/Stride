@@ -2,16 +2,12 @@ use DesktopAudio version 1.0
 
 module SimpleTest {
     ports: [
-        port InputPort {
+        mainInputPort InputPort {
             name: 'input'
-            main: on
-            direction: 'input'
             block: Input
         },
-        port OutputPort {
+        mainOutputPort OutputPort {
             name: 'output'
-            main: on
-            direction: 'output'
             block: Output
         }
     ]

@@ -191,15 +191,11 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
                                 }
                                 propertiesHtml += "<h3>" + portName + "</h3>" + portMeta;
                                 propertiesTable += "<tr><td>" + portName + "</td>";
-                                AST *mainPort = portBlock->getPropertyValue("main").get();
-                                if (mainPort && mainPort->getNodeType() == AST::Switch) {
-                                    if (static_cast<ValueNode *>(mainPort)->getSwitchValue()) {
-                                        propertiesTable += "<td>on</td>";
-                                    } else {
-                                        propertiesTable += "<td>off</td>";
-                                    }
+                                if (portBlock->getObjectType() == "mainInputPort"
+                                        || portBlock->getObjectType() == "mainOutputPort") {
+                                    propertiesTable += "<td>on</td>";
                                 } else {
-                                    propertiesTable += "<td>---</td>";
+                                    propertiesTable += "<td>off</td>";
                                 }
 //                                AST *portTypesValue = portBlock->getPropertyValue("types");
 ////                                Q_ASSERT(portTypesValue);
