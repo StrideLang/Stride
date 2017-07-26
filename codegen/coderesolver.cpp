@@ -1672,7 +1672,7 @@ void CodeResolver::processResets()
             shared_ptr<DeclarationNode> decl = static_pointer_cast<DeclarationNode>(node);
             if (decl->getObjectType() == "signal") {
                 ASTNode resetValue = decl->getPropertyValue("reset");
-                if (resetValue->getNodeType() == AST::Block) {
+                if (resetValue && resetValue->getNodeType() == AST::Block) {
                     resetMap[decl] = static_pointer_cast<BlockNode>(resetValue)->getName();
                 }
             }
