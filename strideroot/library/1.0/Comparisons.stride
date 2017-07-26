@@ -23,12 +23,14 @@ module Greater {
 
 module GreaterOrEqual {
     ports: [
-        mainOutputPort OutputPort {
-            name:       'output'
-        },
-        mainInputPort InputPort {
-            name:       'input'
-        }
+		mainOutputPort OutputPort {
+    			name:       'output'
+			block: Output
+		},
+		mainInputPort InputPort {
+    			name:       'input'
+			block: Input
+		}
     ]
     blocks: [
 	signal Input[2] {}
@@ -41,14 +43,16 @@ module GreaterOrEqual {
 
 module Less {
 
-ports: [
-mainOutputPort OutputPort {
-    name:       'output'
-},
-mainInputPort InputPort {
-    name:       'input'
-}
-]
+	ports: [
+		mainOutputPort OutputPort {
+    			name:       'output'
+			block: Output
+		},
+		mainInputPort InputPort {
+    			name:       'input'
+			block: Input
+		}
+	]
     blocks: [
 	signal Input[2] {}
     ]
@@ -60,14 +64,16 @@ mainInputPort InputPort {
 
 module LessOrEqual {
 
-ports: [
-mainOutputPort OutputPort {
-    name:       'output'
-},
-mainInputPort InputPort {
-    name:       'input'
-}
-]
+	ports: [
+		mainOutputPort OutputPort {
+    			name:       'output'
+			block: Output
+		},
+		mainInputPort InputPort {
+    			name:       'input'
+			block: Input
+		}
+	]
     blocks: [
 	signal Input[2] {}
     ]
@@ -79,14 +85,16 @@ mainInputPort InputPort {
 
 module Equal {
 
-ports: [
-mainOutputPort OutputPort {
-    name:       'output'
-},
-mainInputPort InputPort {
-    name:       'input'
-}
-]
+	ports: [
+		mainOutputPort OutputPort {
+    			name:       'output'
+			block: Output
+		},
+		mainInputPort InputPort {
+    			name:       'input'
+			block: Input
+		}
+	]
     blocks: [
         signal Input[2] {},
 		_equalType EqualBlock {}
@@ -101,10 +109,12 @@ module NotEqual {
 
 	ports: [
 		mainOutputPort OutputPort {
-			name:       'output'
+    			name:       'output'
+			block: Output
 		},
 		mainInputPort InputPort {
-			name:       'input'
+    			name:       'input'
+			block: Input
 		}
 	]
     blocks: [
@@ -151,18 +161,15 @@ module Select {
 module Choose {
 
 	ports: [
-		port OutputPort {
-			name:       'output'
-			main: on
-			direction:  'output'
+		mainOutputPort OutputPort {
+    			name:       'output'
+			block: Output
 		},
-		port InputPort {
-			name:       'input'
-			main: on
+		mainInputPort InputPort {
+    			name:       'input'
 			block: Input
-			direction:  'input'
-		},
-		port ConditionPort {
+		}
+		propertyInputPort ConditionPort {
 			name: "condition"
 			block: Condition
 			meta: ""
@@ -178,35 +185,24 @@ module Choose {
     meta: ""
 }
 
- # FIXME AudioRate needs to be streamRate
 module OnChange {
 
-ports: [
-port OutputPort {
-    name:       'output'
-    main: on
-    block: Output
-    direction:  'output'
-},
-port InputPort {
-    name:       'input'
-    main: on
-    block: Input
-    direction:  'input'
-}
-]
-    ports:  [
-    ]
+	ports: [
+		mainOutputPort OutputPort {
+    			name:       'output'
+			block: Output
+		},
+		mainInputPort InputPort {
+    			name:       'input'
+			block: Input
+		}
+	]
     blocks: [
         switch Input {
                 default :       off
-                rate:           AudioRate
-                domain:         streamDomain
         },
         switch Output {
                 default :       off
-                rate:           AudioRate
-                domain:         streamDomain
         },
 		switch OldInput {},
 		reaction OnChangedReaction {

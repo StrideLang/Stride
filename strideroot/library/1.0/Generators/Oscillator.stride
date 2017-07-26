@@ -87,37 +87,29 @@ module Oscillator {
 
 module Impulse {
     ports: [
-		port OutputPort {
-			main: on
-			direction: "output"
+		mainOutputPort OutputPort {
 			block: Output
-			domain: OutputDomain
+#			domain: OutputDomain
 		},
-		port FrequencyPort {
+		propertyInputPort FrequencyPort {
 			name: "frequency"
 			block: Frequency
-			default: 440.0
+#			default: 440.0
 			meta: "The frequency of the oscillator."
-			domain: FrequencyDomain
 		},
-		port AmplitudePort {
+		propertyInputPort AmplitudePort {
 			name: "amplitude"
 			block: Amplitude
-			default: 1.0
 			meta: "The amplitude of the oscillator."
 		}
     ]
     blocks: [
-#        signal Frequency {
-#                default :       0.0
-#                rate:           AudioRate # FIXME needs to be streamRate
-#                domain:         streamDomain
-#		},
-#        signal Amplitude {
-#                default :       1.0
-#                rate:           AudioRate # FIXME needs to be streamRate
-#                domain:         streamDomain
-#		},
+        signal Frequency {
+                default :       440.0
+		},
+        signal Amplitude {
+                default :       1.0
+		},
 #        signal Type {
 #                default :       0.0
 #                rate:           AudioRate # FIXME needs to be streamRate
@@ -135,14 +127,14 @@ module Impulse {
 #		}
         signal Phase {
                 default :       0.0
-                domain:         OutputDomain
+                domain:         OutputPort.domain
 		}
         signal NewPhase {
 			default :       0.0
 		}
         signal PhaseInc {
 			default :       0.0
-			domain: FrequencyDomain
+			domain: FrequencyPort.domain
 		}
         signal IncPhase {
 			default :       0.0
