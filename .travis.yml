@@ -16,9 +16,11 @@ compiler:
 #     - testing
 
 env:
+  - QTEST_FUNCTION_TIMEOUT=3000000
   matrix:
     #- CONFIG=release
     - CONFIG=debug
+
 
 before_install:
     # - sudo add-apt-repository --yes ppa:beineri/opt-qt562
