@@ -16,8 +16,9 @@ compiler:
 #     - testing
 
 env:
-  - QTEST_FUNCTION_TIMEOUT=3000000
-  matrix:
+    - QTEST_FUNCTION_TIMEOUT=3000000
+
+matrix:
     #- CONFIG=release
     - CONFIG=debug
 
@@ -54,17 +55,17 @@ before_script:
 
 script:
   # - qmake -project
-  - git clone --depth 1 -b 4.1.2 https://github.com/thestk/rtaudio.git strideroot/frameworks/RtAudio/1.0/project/rtaudio-4.1.2
-  - qmake Stride.pro
-  - make
-  - tests/tst_parsertest
+    - git clone --depth 1 -b 4.1.2 https://github.com/thestk/rtaudio.git strideroot/frameworks/RtAudio/1.0/project/rtaudio-4.1.2
+    - qmake Stride.pro
+    - make
+    - tests/tst_parsertest
 
 notifications:
-  recipients:
-    - mantaraya36@gmail.com
-  email:
-    on_success: change
-    on_failure: change
+    recipients:
+      - mantaraya36@gmail.com
+    email:
+      on_success: change
+      on_failure: change
   # irc:
   #   # https://docs.travis-ci.com/user/notifications/#IRC-notification
   #   channels:
