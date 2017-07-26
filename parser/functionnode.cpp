@@ -38,7 +38,7 @@
 #include "scopenode.h"
 #include "valuenode.h"
 
-FunctionNode::FunctionNode(string name, ASTNode propertiesList, FunctionType type,
+FunctionNode::FunctionNode(string name, ASTNode propertiesList,
                            const char *filename, int line) :
     AST(AST::Function, filename, line)
 {
@@ -48,11 +48,10 @@ FunctionNode::FunctionNode(string name, ASTNode propertiesList, FunctionType typ
             addChild(child);
         }
     }
-    m_type = type;
     m_rate = -1;
 }
 
-FunctionNode::FunctionNode(string name, ASTNode scope, ASTNode propertiesList, FunctionType type,
+FunctionNode::FunctionNode(string name, ASTNode scope, ASTNode propertiesList,
                            const char *filename, int line) :
     AST(AST::Function, filename, line)
 {
@@ -62,7 +61,6 @@ FunctionNode::FunctionNode(string name, ASTNode scope, ASTNode propertiesList, F
             addChild(child);
         }
     }
-    m_type = type;
     resolveScope(scope);
     m_rate = -1;
 }
@@ -177,7 +175,8 @@ ASTNode FunctionNode::deepCopy()
     for(unsigned int i = 0; i< m_properties.size(); i++) {
         newProps->addChild(m_properties[i]->deepCopy());
     }
-    std::shared_ptr<FunctionNode> newFunctionNode = std::make_shared<FunctionNode>(m_name, std::shared_ptr<AST>(newProps), m_type, m_filename.data(), m_line);
+    std::shared_ptr<FunctionNode> newFunctionNode
+            = std::make_shared<FunctionNode>(m_name, std::shared_ptr<AST>(newProps), m_filename.data(), m_line);
     for (unsigned int i = 0; i < this->getScopeLevels(); i++) {
         newFunctionNode->addScope(this->getScopeAt(i));
     }

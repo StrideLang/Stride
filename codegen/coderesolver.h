@@ -68,6 +68,7 @@ private:
     void resolveStreamSymbols();
     void expandParallel();
     void resolveConstants();
+    void processResets();
     void resolveRates();
     void processDomains();
     void analyzeConnections();

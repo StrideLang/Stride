@@ -377,21 +377,21 @@ functionDef:
         UVAR '(' ')'                        {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
-            $$ = new FunctionNode(s, NULL, FunctionNode::UserDefined, currentFile, yyloc.first_line);
+            $$ = new FunctionNode(s, NULL, currentFile, yyloc.first_line);
             COUT << "User function: " << $1 << ENDL;
             free($1);
         }
     |   scopeDef UVAR '(' ')'               {
             string s;
             s.append($2);
-            $$ = new FunctionNode(s, std::shared_ptr<AST>($1), NULL, FunctionNode::UserDefined, currentFile, yyloc.first_line);
+            $$ = new FunctionNode(s, std::shared_ptr<AST>($1), NULL, currentFile, yyloc.first_line);
             COUT << "User function: " << $2 << " in scope!" << ENDL;
             free($2);
         }
     |   UVAR '(' properties ')'             {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
-            $$ = new FunctionNode(s, std::shared_ptr<AST>($3), FunctionNode::UserDefined, currentFile, yyloc.first_line);
+            $$ = new FunctionNode(s, std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Properties () ..." << ENDL;
             COUT << "User function: " << $1 << ENDL;
             free($1);
@@ -399,7 +399,7 @@ functionDef:
     |   scopeDef UVAR '(' properties ')'               {
             string s;
             s.append($2);
-            $$ = new FunctionNode(s, std::shared_ptr<AST>($1), std::shared_ptr<AST>($4), FunctionNode::UserDefined, currentFile, yyloc.first_line);
+            $$ = new FunctionNode(s, std::shared_ptr<AST>($1), std::shared_ptr<AST>($4), currentFile, yyloc.first_line);
             COUT << "Properties () ..." << ENDL;
             COUT << "User function: " << $2 << " in scope!" << ENDL;
             free($2);

@@ -43,13 +43,9 @@
 class FunctionNode : public AST
 {
 public:
-    typedef enum {
-        BuiltIn,
-        UserDefined
-    } FunctionType;
 
-    FunctionNode(string name, ASTNode propertiesList, FunctionType type, const char *filename, int line);
-    FunctionNode(string name, ASTNode scope, ASTNode propertiesList, FunctionType type, const char *filename, int line);
+    FunctionNode(string name, ASTNode propertiesList, const char *filename, int line);
+    FunctionNode(string name, ASTNode scope, ASTNode propertiesList, const char *filename, int line);
     ~FunctionNode();
 
     virtual void addChild(ASTNode t) override;
@@ -78,7 +74,6 @@ public:
 private:
     double m_rate;
     string m_name;
-    FunctionType m_type;
     vector<std::shared_ptr<PropertyNode>> m_properties;
 };
 

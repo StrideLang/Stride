@@ -2085,9 +2085,11 @@ std::vector<string> CodeValidator::getModulePropertyNames(std::shared_ptr<Declar
                 if (portDeclaration->getNodeType() == AST::Declaration) {
                     DeclarationNode *port = static_cast<DeclarationNode *>(portDeclaration.get());
                     ASTNode nameProperty = port->getPropertyValue("name");
-                    Q_ASSERT(nameProperty->getNodeType() == AST::String);
-                    if (nameProperty->getNodeType() == AST::String) {
-                        portNames.push_back(static_cast<ValueNode *>(nameProperty.get())->toString());
+                    if (nameProperty) {
+                        Q_ASSERT(nameProperty->getNodeType() == AST::String);
+                        if (nameProperty->getNodeType() == AST::String) {
+                            portNames.push_back(static_cast<ValueNode *>(nameProperty.get())->toString());
+                        }
                     }
                 }
             }

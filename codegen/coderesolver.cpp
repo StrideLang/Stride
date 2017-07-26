@@ -56,6 +56,7 @@ void CodeResolver::preProcess()
     declareModuleInternalBlocks();
     resolveConstants();
     expandParallel(); // Find better name this expands bundles, functions and declares undefined bundles
+    processResets();
     resolveStreamSymbols();
     processDomains();
     resolveRates();
@@ -505,7 +506,7 @@ void CodeResolver::insertBuiltinObjects()
                             || typeName->getStringValue() == "signal"
                             || typeName->getStringValue() == "propertyInputPort"
                             || typeName->getStringValue() == "propertyOutputPort"
-//                            || typeName->getStringValue() == "_domainDefinition"
+                            || typeName->getStringValue() == "reaction"
                             || typeName->getStringValue() == "signalbridge") {
                         requiredDeclarations << block;
                     }
@@ -1659,6 +1660,101 @@ void CodeResolver::resolveConstants()
     QVector<ASTNode > children = QVector<ASTNode >::fromStdVector(m_tree->getChildren());
     for(ASTNode node : children) {
         resolveConstantsInNode(node, children);
+    }
+}
+
+void CodeResolver::processResets()
+{
+    auto children = m_tree->getChildren();
+    map<std::shared_ptr<DeclarationNode>, string> resetMap; // Key is variable name, value is reset symbol
+    for(ASTNode node : children) {
+        if (node->getNodeType() == AST::Declaration) {
+            shared_ptr<DeclarationNode> decl = static_pointer_cast<DeclarationNode>(node);
+            if (decl->getObjectType() == "signal") {
+                ASTNode resetValue = decl->getPropertyValue("reset");
+                if (resetValue->getNodeType() == AST::Block) {
+                    resetMap[decl] = static_pointer_cast<BlockNode>(resetValue)->getName();
+                }
+            }
+        }
+    }
+    for(const auto& pair : resetMap ) {
+        std::string reactionName = "_" + pair.first->getName() + "Reset";
+        std::shared_ptr<DeclarationNode> newReaction
+                = std::make_shared<DeclarationNode>(reactionName,
+                                                    "reaction",
+                                                    nullptr,
+                                                    "", -1);
+        std::shared_ptr<ListNode> streamList = std::make_shared<ListNode>(nullptr, "", -1);
+
+        std::shared_ptr<StreamNode> stream
+                = std::make_shared<StreamNode>(pair.first->getPropertyValue("default"),
+                                               std::make_shared<BlockNode>(pair.first->getName(), "", -1), "", -1);
+        fillDefaultPropertiesForNode(stream);
+        streamList->addChild(stream);
+        newReaction->setPropertyValue("streams", streamList);
+        newReaction->setPropertyValue("blocks", std::make_shared<ListNode>(nullptr, "", -1));
+        newReaction->setPropertyValue("ports", std::make_shared<ListNode>(nullptr, "", -1));
+        m_tree->addChild(newReaction);
+
+        // Find where to put the triggering stream
+        children = m_tree->getChildren();
+        vector<int> positions;
+        for(size_t i = 0; i < children.size(); i++) {
+            ASTNode &node = children[i];
+            if (node->getNodeType() == AST::Stream) {
+                bool triggerInStream = false;
+                std::shared_ptr<StreamNode> stream = static_pointer_cast<StreamNode>(node);
+                // We need to skip the first stream member as we need to check when the trigger
+                // is written to.
+                ASTNode left, right;
+                right = stream->getRight();
+                if (right->getNodeType() == AST::Stream) {
+                    left = static_pointer_cast<StreamNode>(right)->getLeft();
+                    right = static_pointer_cast<StreamNode>(right)->getRight();
+                } else {
+                    left = right;
+                    right = nullptr;
+                }
+                while(left) {
+                    if (left->getNodeType() == AST::Block) {
+                        std::shared_ptr<BlockNode> block = static_pointer_cast<BlockNode>(left);
+                        if (block->getName() == pair.second) {
+                            triggerInStream = true;
+                            break;
+                        }
+                    }
+                    if (right) {
+                        if (right->getNodeType() == AST::Stream) {
+                            left = static_pointer_cast<StreamNode>(right)->getLeft();
+                            right = static_pointer_cast<StreamNode>(right)->getRight();
+                        } else {
+                            left = right;
+                            right = nullptr;
+                        }
+                    } else {
+                        left = nullptr; // End of stream
+                    }
+                }
+
+                if(triggerInStream) {
+                    positions.push_back(i);
+                }
+            }
+        }
+
+        // Insert triggering streams in right place
+        int numInsertions = 0;
+        for (int pos : positions) {
+            children.insert(children.begin() + pos + 1 + numInsertions++,
+                            std::make_shared<StreamNode>(std::make_shared<BlockNode>(pair.second, "", -1),
+                                                         std::make_shared<FunctionNode>(reactionName,
+                                                                                        std::make_shared<ListNode>(nullptr, "", -1),
+                                                                                        "", -1), "", -1)
+                    );
+        }
+        m_tree->setChildren(children);
+
     }
 }
 
