@@ -87,8 +87,11 @@ void AST::setChildren(vector<ASTNode> &newChildren)
 
 ASTNode AST::deepCopy()
 {
-    assert(0 == 1); // can't deep copy base AST
-    return nullptr;
+    ASTNode newNode = std::make_shared<AST>(AST::None, m_filename.data(), m_line, m_scope);
+    for(unsigned int i = 0; i < m_children.size(); i++) {
+        newNode->addChild(m_children.at(i)->deepCopy());
+    }
+    return newNode;
 }
 
 ASTNode AST::parseFile(const char *fileName)

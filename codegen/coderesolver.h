@@ -102,12 +102,14 @@ private:
     std::vector<ASTNode > declareUnknownStreamSymbols(std::shared_ptr<StreamNode> stream, ASTNode previousStreamMember, QVector<ASTNode > localScope, ASTNode tree);
     std::vector<ASTNode > getModuleStreams(std::shared_ptr<DeclarationNode> module);
     std::vector<ASTNode > getModuleBlocks(std::shared_ptr<DeclarationNode> module);
+    ASTNode getSignalReset(std::shared_ptr<DeclarationNode> signal);
 
     void declareInternalBlocksForNode(ASTNode node);
 
     std::shared_ptr<ValueNode> reduceConstExpression(std::shared_ptr<ExpressionNode> expr, QVector<ASTNode > scope, ASTNode tree);
     std::shared_ptr<ValueNode> resolveConstant(ASTNode value, QVector<ASTNode > scope);
     void resolveConstantsInNode(ASTNode node, QVector<ASTNode > scope);
+    void processResetForNode(ASTNode thisScope, ASTNode streamScope, ASTNode upperScope);
     void propagateDomainsForNode(ASTNode node, QVector<ASTNode > scopeStack);
     void resolveDomainForStreamNode(ASTNode node, QVector<ASTNode > scope);
 
