@@ -1,0 +1,14 @@
+use DesktopAudio version 1.0
+
+import Generators
+
+switch Reset {}
+	
+signal Value {
+	reset: Reset
+	default: 1
+}
+
+Value >> AudioOut[1];
+Value + 1 >> Value;
+[Value, 10] >> Equal() >> Reset;
