@@ -163,21 +163,15 @@ type _Reaction {
 type _Loop {
 	typeName: "loop"
 	properties: [
-		typeProperty Output {
-			name: "output"
-			types: [""]
-			default: none
-			required: on
-		},
 		typeProperty Ports {
 			name: "ports"
-			types: [ "" ]  # TODO: How can we define list types here?
+			types: [ "" ]
 			default: none
 			required: off
 		},
-		typeProperty Blocks { # User shouldn't have access to this set of blocks, how to implement that?
+		typeProperty Blocks { 
 			name: "blocks"
-			types: [""] # TODO how to accept lists?
+			types: [""] 
 			default: []
 			required: on
 		},
@@ -186,6 +180,24 @@ type _Loop {
 			types: [""]
 			default: none
 			required: on
+		},
+		typeProperty OnExecute {
+			name: "onExecute"
+			types: [""]
+			default: none
+			required: off
+		},
+		typeProperty OnTermination {
+			name: "onExecute"
+			types: [""]
+			default: none
+			required: off
+		},
+		typeProperty TerminateWhen {
+			name: "terminateWhen"
+			types: [""]
+			default: none
+			required: off
 		}
 	]
 	inherits: ["domainMember"]
