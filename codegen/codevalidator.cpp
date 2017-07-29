@@ -1085,6 +1085,8 @@ ASTNode CodeValidator::getBlockSubScope(std::shared_ptr<DeclarationNode> block)
         internalBlocks = block->getPropertyValue("blocks");
     } else if (block->getObjectType() == "reaction") {
         internalBlocks = block->getPropertyValue("blocks");
+    } else if (block->getObjectType() == "loop") {
+        internalBlocks = block->getPropertyValue("blocks");
     }
     return internalBlocks;
 }
@@ -1137,8 +1139,9 @@ int CodeValidator::getNodeNumInputs(ASTNode node, const QVector<ASTNode > &scope
                 return 1; // Reactions always have one input as main port
             } else {
                 QVector<ASTNode > internalScope = scope;
-                if (platformFunc->getPropertyValue("blocks")) {
-                    internalScope << QVector<ASTNode >::fromStdVector(platformFunc->getPropertyValue("blocks")->getChildren());
+                ASTNode subScope = CodeValidator::getBlockSubScope(platformFunc);
+                if (subScope) {
+                    internalScope << QVector<ASTNode >::fromStdVector(subScope->getChildren());
                 }
                 return getTypeNumInputs(platformFunc, internalScope, tree, errors) * dataSize;
             }
@@ -1190,21 +1193,23 @@ int CodeValidator::getTypeNumOutputs(std::shared_ptr<DeclarationNode> blockDecla
             if (!outputName ||outputName->getNodeType() == AST::None) {
                 return 0;
             }
-
-            ListNode *blockList = static_cast<ListNode *>(blockDeclaration->getPropertyValue("blocks").get());
-            Q_ASSERT(blockList->getNodeType() == AST::List);
-            Q_ASSERT(outputName->getNodeType() == AST::Block);
-            QString outputBlockName = QString::fromStdString(outputName->getName());
-            foreach(ASTNode internalDeclarationNode, blockList->getChildren()) {
-                if (internalDeclarationNode->getNodeType() == AST::BundleDeclaration || internalDeclarationNode->getNodeType() == AST::Declaration) {
-                    QString blockName = QString::fromStdString(static_cast<DeclarationNode *>(internalDeclarationNode.get())->getName());
-                    if (blockName == outputBlockName) {
-                        std::shared_ptr<DeclarationNode> intBlock = static_pointer_cast<DeclarationNode>(internalDeclarationNode);
-                        if (intBlock->getName() == outputBlockName.toStdString()) {
-                            if (internalDeclarationNode->getNodeType() == AST::BundleDeclaration) {
-                                return getBlockDeclaredSize(intBlock, scope, tree, errors);
-                            } else if (internalDeclarationNode->getNodeType() == AST::Declaration) {
-                                return 1;
+            ASTNode subScope = CodeValidator::getBlockSubScope(static_pointer_cast<DeclarationNode>(blockDeclaration));
+            if (subScope) {
+                ListNode *blockList = static_cast<ListNode *>(subScope.get());
+                Q_ASSERT(blockList->getNodeType() == AST::List);
+                Q_ASSERT(outputName->getNodeType() == AST::Block);
+                QString outputBlockName = QString::fromStdString(outputName->getName());
+                foreach(ASTNode internalDeclarationNode, blockList->getChildren()) {
+                    if (internalDeclarationNode->getNodeType() == AST::BundleDeclaration || internalDeclarationNode->getNodeType() == AST::Declaration) {
+                        QString blockName = QString::fromStdString(static_cast<DeclarationNode *>(internalDeclarationNode.get())->getName());
+                        if (blockName == outputBlockName) {
+                            std::shared_ptr<DeclarationNode> intBlock = static_pointer_cast<DeclarationNode>(internalDeclarationNode);
+                            if (intBlock->getName() == outputBlockName.toStdString()) {
+                                if (internalDeclarationNode->getNodeType() == AST::BundleDeclaration) {
+                                    return getBlockDeclaredSize(intBlock, scope, tree, errors);
+                                } else if (internalDeclarationNode->getNodeType() == AST::Declaration) {
+                                    return 1;
+                                }
                             }
                         }
                     }
@@ -1222,41 +1227,45 @@ int CodeValidator::getTypeNumInputs(std::shared_ptr<DeclarationNode> blockDeclar
         return getBlockDeclaredSize(blockDeclaration, scope, tree, errors);
     } else if (blockDeclaration->getNodeType() == AST::Declaration) {
         if (blockDeclaration->getObjectType() == "module") {
-            ListNode *blockList = static_cast<ListNode *>(blockDeclaration->getPropertyValue("blocks").get());
-            BlockNode *inputName = nullptr;
 
-            std::shared_ptr<DeclarationNode> portBlock = getMainInputPortBlock(blockDeclaration);
-            if (portBlock) {
-                if (portBlock->getPropertyValue("block")->getNodeType() == AST::Block) {
-                    inputName = static_cast<BlockNode *>(portBlock->getPropertyValue("block").get());
-                } else {
-                    qDebug() << "WARNING: Expecting name node for input block";
-                }
-            }
-            Q_ASSERT(blockList->getNodeType() == AST::List);
-            if (!inputName || inputName->getNodeType() == AST::None) {
-                return 0;
-            }
-            Q_ASSERT(inputName->getNodeType() == AST::Block);
-            QString inputBlockName = QString::fromStdString(inputName->getName());
-            foreach(ASTNode internalDeclarationNode, blockList->getChildren()) {
-//                Q_ASSERT(internalDeclarationNode->getNodeType() == AST::BundleDeclaration || internalDeclarationNode->getNodeType() == AST::Declaration);
-                if (!internalDeclarationNode) {
-                    return -1;
-                }
-                if (internalDeclarationNode->getNodeType() == AST::Declaration || internalDeclarationNode->getNodeType() == AST::BundleDeclaration) {
-                    QString blockName = QString::fromStdString(static_cast<DeclarationNode *>(internalDeclarationNode.get())->getName());
-                    if (blockName == inputBlockName) {
-                        if (internalDeclarationNode->getNodeType() == AST::BundleDeclaration) {
-                            std::shared_ptr<DeclarationNode> intBlock = static_pointer_cast<DeclarationNode>(internalDeclarationNode);
-                            Q_ASSERT(intBlock->getNodeType() == AST::BundleDeclaration);
-                            return getBlockDeclaredSize(intBlock, scope, tree, errors);
-                        } else if (internalDeclarationNode->getNodeType() == AST::Declaration) {
-                            return 1;
-                        }
+            ASTNode subScope = CodeValidator::getBlockSubScope(static_pointer_cast<DeclarationNode>(blockDeclaration));
+            if (subScope) {
+                ListNode *blockList = static_cast<ListNode *>(subScope.get());
+                BlockNode *inputName = nullptr;
+
+                std::shared_ptr<DeclarationNode> portBlock = getMainInputPortBlock(blockDeclaration);
+                if (portBlock) {
+                    if (portBlock->getPropertyValue("block")->getNodeType() == AST::Block) {
+                        inputName = static_cast<BlockNode *>(portBlock->getPropertyValue("block").get());
+                    } else {
+                        qDebug() << "WARNING: Expecting name node for input block";
                     }
                 }
-//                return -1; // Should never get here!
+                Q_ASSERT(blockList->getNodeType() == AST::List);
+                if (!inputName || inputName->getNodeType() == AST::None) {
+                    return 0;
+                }
+                Q_ASSERT(inputName->getNodeType() == AST::Block);
+                QString inputBlockName = QString::fromStdString(inputName->getName());
+                foreach(ASTNode internalDeclarationNode, blockList->getChildren()) {
+                    //                Q_ASSERT(internalDeclarationNode->getNodeType() == AST::BundleDeclaration || internalDeclarationNode->getNodeType() == AST::Declaration);
+                    if (!internalDeclarationNode) {
+                        return -1;
+                    }
+                    if (internalDeclarationNode->getNodeType() == AST::Declaration || internalDeclarationNode->getNodeType() == AST::BundleDeclaration) {
+                        QString blockName = QString::fromStdString(static_cast<DeclarationNode *>(internalDeclarationNode.get())->getName());
+                        if (blockName == inputBlockName) {
+                            if (internalDeclarationNode->getNodeType() == AST::BundleDeclaration) {
+                                std::shared_ptr<DeclarationNode> intBlock = static_pointer_cast<DeclarationNode>(internalDeclarationNode);
+                                Q_ASSERT(intBlock->getNodeType() == AST::BundleDeclaration);
+                                return getBlockDeclaredSize(intBlock, scope, tree, errors);
+                            } else if (internalDeclarationNode->getNodeType() == AST::Declaration) {
+                                return 1;
+                            }
+                        }
+                    }
+                    //                return -1; // Should never get here!
+                }
             }
         }
         return 1;

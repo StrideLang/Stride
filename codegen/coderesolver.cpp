@@ -1437,7 +1437,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node)
             }
             ports->addChild(reactionInput);
         }
-        if (block->getObjectType() == "module" || block->getObjectType() == "reaction") {
+        if (block->getObjectType() == "module" || block->getObjectType() == "reaction" || block->getObjectType() == "loop" ) {
             // First insert and resolve input and output domains for main ports. The input port takes the output domain if undefined.
             std::shared_ptr<DeclarationNode> outputPortBlock = CodeValidator::getMainOutputPortBlock(block);
             if (outputPortBlock) {

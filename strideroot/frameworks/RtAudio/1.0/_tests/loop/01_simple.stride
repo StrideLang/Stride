@@ -1,0 +1,32 @@
+use DesktopAudio version 1.0
+
+signal Accum {}
+signal OuterCounter { reset: ResetOuter}
+
+loop Loop {
+	ports: [
+		mainInputPort InputPort {
+			block: Input
+		}
+		mainOutputPort OutputPort {
+			block: Output
+		}		
+	]
+	blocks: [
+		signal Counter { reset: CounterReset }
+		switch CounterReset {}
+	]
+	streams: [
+		Counter + 1 >> Counter;
+		[Counter, 10] >> Equal() >> CounterReset;
+	]
+	terminateWhen: CounterReset
+}
+
+[OuterCounter, 0] >> Equal() >> Loop(); 
+
+OuterCounter + 1 >> OuterCounter;
+[OuterCounter, 20] >> Equal() >> ResetOuter; 
+
+
+Accum >> AudioOut[1];

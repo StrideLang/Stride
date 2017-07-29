@@ -81,18 +81,12 @@ public:
     %s
 };
 '''
-        self.str_reaction_declaration = '''
-class %s {
-public:
-    %s %s() {
-        %s
-    }
-    %s execute(%s) {
-        %s
-    }
-};
-'''
+
         self.str_function_declaration = '''%s %s(%s) {
+        %s
+    }
+'''
+        self.str_while_declaration = '''while (%s) {
         %s
     }
 '''
@@ -593,6 +587,55 @@ public:
 
 
     def reaction_processing_code(self, reaction_name, in_tokens, out_tokens, domain_name):
+#        code = handle + '.process_' + str(domain_name) + '('
+        code =  reaction_name + '_process_' + str(domain_name) + '('
+        for in_token in in_tokens:
+            code += in_token + ", "
+
+        for out_token in out_tokens:
+            code += out_token + ", "
+        if (len(in_tokens) > 0 and len(out_tokens) == 0) or (len(out_tokens) > 0):
+            code = code[:-2] # Chop off extra comma
+        code += ')'
+        return code
+        return code
+
+    def loop_declaration(self, name, header_code, condition, init_code,
+                             process_code, references = []):
+
+        out_type = 'void'
+
+        process_functions = ''
+        declared_references = []
+#        constructor_args = ''
+        for domain, domain_components in process_code.items():
+            domain_proc_code = domain_components['code']
+            input_declaration = ''
+#            for output_block in domain_components['output_blocks']:
+#                input_declaration +=  self.declaration_reference(output_block, False) + ", "
+
+            for ref in references:
+                if not ref.get_name() in declared_references:
+                    input_declaration +=  self.declaration_reference_from_instance(ref, False) + ", "
+                    declared_references.append(ref.get_name())
+
+            if len(input_declaration) > 0:
+                input_declaration = input_declaration[:-2]
+
+            internal_loop = self.str_while_declaration%(condition, domain_proc_code)
+
+            process_functions += self.str_function_declaration%(out_type, name + '_process_' + str(domain),
+                                                                input_declaration, internal_loop)
+#
+#        for const_name, props in instance_consts.items():
+#            constructor_args += "float _" + const_name + ","
+#        if len(constructor_args) > 0 and constructor_args[-1] == ',':
+#            constructor_args = constructor_args[:-1]
+        declaration = process_functions
+        return declaration
+
+
+    def loop_processing_code(self, reaction_name, in_tokens, out_tokens, domain_name):
 #        code = handle + '.process_' + str(domain_name) + '('
         code =  reaction_name + '_process_' + str(domain_name) + '('
         for in_token in in_tokens:
