@@ -806,7 +806,13 @@ class NameAtom(Atom):
 
     def _get_default_value(self):
         if 'default' in self.declaration:
-            default_value = self.declaration['default']
+            if type(self) == NameAtom:
+                default_value = self.declaration['default']
+            elif type(self) == BundleAtom:
+                if type(self.declaration['default']) == list:
+                    default_value = [value['value'] for value in self.declaration['default']]
+                else:
+                    default_value = [self.declaration['default'] for i in range(self.declaration['size'])]
         elif 'block' in self.platform_type:
             if 'default' in self.platform_type['block']:
                 default_value = self.platform_type['block']['default'] # FIXME inheritance is not being handled here
@@ -911,8 +917,9 @@ class BundleAtom(NameAtom):
         if type(index) == int:
             self.index = index - 1
         else:
-            ## FIXME we need to get handle for index object
-            self.index = index - 1
+            decl = platform.find_declaration_in_tree(index)
+            ## FIXME we need to get correct handle for index object
+            self.index = '(int)' + decl['name']
         self.set_inline(False)
 #        if not 'blockbundle' in self.platform_type and not 'platformType' in self.platform_type['block']['type']:
 #            raise ValueError("Need a block bundle platform type to make a Bundle Atom.")
@@ -921,10 +928,10 @@ class BundleAtom(NameAtom):
         return [templates.bundle_indexing(self.handle, self.index)]
 
     def get_instances(self):
-        default_value = self._get_default_value()
+        default_values = self._get_default_value()
 
         if 'default' in self.declaration and signal_type_string(self.declaration):
-            instances = [BundleInstance(default_value,
+            instances = [BundleInstance(default_values,
                                  self.scope_index,
                                  self.domain,
                                  'string',
@@ -934,7 +941,7 @@ class BundleAtom(NameAtom):
 
         else:
             if 'size' in self.declaration:
-                instances = [BundleInstance(str(default_value),
+                instances = [BundleInstance([str(default) for default in default_values],
                                      self.scope_index,
                                      self.domain,
                                      'real',
@@ -2328,7 +2335,7 @@ class PlatformFunctions:
                     code = templates.assignment(instance.get_name(), value)
             elif instance.get_type() == 'bundle':
                 for i in range(instance.get_size()):
-                    elem_instance = Instance(instance.get_code(),
+                    elem_instance = Instance(instance.get_code()[i],
                                              instance.get_scope(),
                                              instance.get_domain(),
                                              instance.get_bundle_type(),
@@ -2840,32 +2847,6 @@ class PlatformFunctions:
                     instanced.append(new_element)
                     self.log_debug('////// ' + new_element.get_name() + ' // Dependents : '+ ' '.join([e.get_name() for e in new_element.get_dependents()]))
 
-#                    if not "input_blocks" in domain_code[new_element.get_domain()]:
-#                        domain_code[new_element.atom.get_domain()]["input_blocks"] = []
-#                    contained = False
-#                    for elem in domain_code[new_element.atom.get_domain()]["input_blocks"]:
-#                        if new_element.get_name() == elem.get_name():
-#                            contained = True
-#                            break
-#
-#                    if not contained:
-#                        domain_code[new_element.atom.get_domain()]["input_blocks"].append(new_element)
-#
-#                    if not "output_blocks" in domain_code[new_element.get_domain()]:
-#                        domain_code[new_element.atom.get_domain()]["output_blocks"] = []
-#                    contained = False
-#                    for elem in domain_code[new_element.atom.get_domain()]["output_blocks"]:
-#                        if new_element.get_name() == elem.get_name():
-#                            contained = True
-#                            break
-##                    # Don't include as output if it is already an input
-#                    for elem in domain_code[new_element.atom.get_domain()]["input_blocks"]:
-#                        if new_element.get_name() == elem.get_name():
-#                            contained = True
-#                            break
-#
-#                    if not contained:
-#                        domain_code[new_element.atom.get_domain()]["output_blocks"].append(new_element)
             else:
                 if type(new_element) == Instance or issubclass(type(new_element), Instance):
                     other_scope_instances.append(new_element)
