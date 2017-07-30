@@ -2795,7 +2795,8 @@ class PlatformFunctions:
             is_declared = False
             matched_declaration = None
             for d in clean_list:
-                if d.get_name() == new_element.get_name() and d.get_scope() == new_element.get_scope():
+                # FIXME we need to check scope here to... It's tricky because of the hacks in module, reaction and loop to bring the declarations to the right scope
+                if d.get_name() == new_element.get_name(): # and d.get_scope() == new_element.get_scope():
                     is_declared = True
                     matched_declaration = d
                     break
