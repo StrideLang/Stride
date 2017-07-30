@@ -241,7 +241,7 @@ void StrideSystem::parseSystemTree(ASTNode systemTree)
 
     // Now connect platforms referenced in system with defined platforms
     for(string usedPlatformName:usedPlatformNames) {
-        for (int i = 0; i < platformDefinitionNames.size(); i++) {
+        for (size_t i = 0; i < platformDefinitionNames.size(); i++) {
             map<string, string> &definition = platformDefinitions.at(i);
             string &name = platformDefinitionNames.at(i);
             if (name == usedPlatformName) {

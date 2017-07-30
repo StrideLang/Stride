@@ -471,7 +471,7 @@ ASTNode CodeResolver::expandFunctionFromProperties(std::shared_ptr<FunctionNode>
                     vector<ASTNode > values = static_pointer_cast<ListNode>(value)->getChildren();
                     vector<ASTNode > functions = newFunctions->getChildren();
                     Q_ASSERT(values.size() == functions.size());
-                    for (size_t i = 0 ; i < dataSize; ++i) {
+                    for (size_t i = 0 ; i < (size_t) dataSize; ++i) {
                         std::shared_ptr<PropertyNode> newProp = static_pointer_cast<PropertyNode>(prop);
                         static_pointer_cast<FunctionNode>(functions[i])->setPropertyValue(newProp->getName(), values[i]->deepCopy());
                     }
@@ -1414,11 +1414,6 @@ std::vector<ASTNode> CodeResolver::getModuleBlocks(std::shared_ptr<DeclarationNo
         }
     }
     return blocks;
-}
-
-ASTNode CodeResolver::getSignalReset(std::shared_ptr<DeclarationNode> signal)
-{
-
 }
 
 void CodeResolver::declareInternalBlocksForNode(ASTNode node)

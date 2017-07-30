@@ -102,7 +102,6 @@ private:
     std::vector<ASTNode > declareUnknownStreamSymbols(std::shared_ptr<StreamNode> stream, ASTNode previousStreamMember, QVector<ASTNode > localScope, ASTNode tree);
     std::vector<ASTNode > getModuleStreams(std::shared_ptr<DeclarationNode> module);
     std::vector<ASTNode > getModuleBlocks(std::shared_ptr<DeclarationNode> module);
-    ASTNode getSignalReset(std::shared_ptr<DeclarationNode> signal);
 
     void declareInternalBlocksForNode(ASTNode node);
 

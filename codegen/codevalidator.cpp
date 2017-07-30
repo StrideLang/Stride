@@ -372,7 +372,7 @@ ASTNode CodeValidator::getDefaultPortValueForType(QString type, QString portName
 
 bool CodeValidator::scopesMatch(QStringList scopeList, ASTNode node)
 {
-    if (scopeList.size() != node->getScopeLevels()) {
+    if ((size_t) scopeList.size() != node->getScopeLevels()) {
         return false;
     }
     for(size_t i = 0; i < node->getScopeLevels(); i++) {
