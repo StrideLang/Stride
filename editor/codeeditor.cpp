@@ -89,6 +89,16 @@ bool CodeEditor::isChanged()
     return document()->isModified();
 }
 
+bool CodeEditor::changedSinceParse()
+{
+    return m_changedSinceParse.load() != 0;
+}
+
+void CodeEditor::markParsed()
+{
+    m_changedSinceParse.store(0);
+}
+
 void CodeEditor::setAutoComplete(bool enable)
 {
     m_autoComplete = enable;
@@ -201,6 +211,7 @@ void CodeEditor::updateAutoCompleteMenu(QString currentWord)
 void CodeEditor::markChanged(bool changed)
 {
     document()->setModified(changed);
+    m_changedSinceParse.store(1);
 }
 
 bool CodeEditor::eventFilter(QObject *obj, QEvent *event)

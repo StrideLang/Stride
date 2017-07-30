@@ -39,6 +39,7 @@
 #include <QList>
 #include <QTimer>
 #include <QPushButton>
+#include <QAtomicInt>
 
 #include "langerror.h"
 #include "errormarker.h"
@@ -55,6 +56,8 @@ public:
     void lineNumberAreaPaintEvent(QPaintEvent *event);
     int lineNumberAreaWidth();
     bool isChanged();
+    bool changedSinceParse();
+    void markParsed();
 
     void setAutoComplete(bool enable);
 
@@ -93,6 +96,7 @@ private:
     QVector<ErrorMarker *> m_errorMarkers;
     QTimer m_ButtonTimer;
     QTimer m_mouseIdleTimer;
+    QAtomicInt m_changedSinceParse {1};
 
     // Properties
     QString m_filename;

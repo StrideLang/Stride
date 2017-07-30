@@ -587,7 +587,7 @@ bool ProjectWindow::saveFile(int index)
     if (editor->filename().isEmpty()) {
         return saveFileAs();
     }
-    if (!editor->document()->isModified()) {
+    if (!editor->isChanged()) {
         return true;
     }
     QString code = editor->toPlainText();
@@ -700,7 +700,7 @@ void ProjectWindow::openOptionsDialog()
     // First set current values
     ConfigDialog config(this);
     QFont font = QFont(m_options["editor.fontFamily"].toString(),
-            m_options["editor.fontSize"].toDouble(),
+            m_options["editor.fontSize"].toInt(),
             m_options["editor.fontWeight"].toInt(),
             m_options["editor.fontItalic"].toBool());
     font.setPointSizeF(m_options["editor.fontSize"].toDouble()); // Font constructor takes int
@@ -740,8 +740,9 @@ void ProjectWindow::updateCodeAnalysis()
 {
     m_codeModelTimer.stop();
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
-    if ((QApplication::activeWindow() == this  && editor->document()->isModified())
+    if ((QApplication::activeWindow() == this  && editor->changedSinceParse())
             || m_startingUp) {
+        editor->markParsed();
         m_codeModel.updateCodeAnalysis(editor->document()->toPlainText(),
                                        m_environment["platformRootPath"].toString());
         m_highlighter->setBlockTypes(m_codeModel.getTypes());
@@ -924,7 +925,7 @@ void ProjectWindow::updateEditorSettings()
 {
     for(int i = 0; i < ui->tabWidget->count(); i++) {
         QString fontFamily = m_options["editor.fontFamily"].toString();
-        double fontSize = m_options["editor.fontSize"].toDouble();
+        int fontSize = m_options["editor.fontSize"].toInt();
         int fontWeight = m_options["editor.fontWeight"].toInt();
         bool fontItalic= m_options["editor.fontItalic"].toBool();
         QFont font = QFont(fontFamily, fontSize, fontWeight, fontItalic);
@@ -959,7 +960,7 @@ void ProjectWindow::markModified()
     int currentIndex = ui->tabWidget->currentIndex();
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     QColor textColor;
-    if (editor->document()->isModified()) {
+    if (editor->isChanged()) {
         textColor = Qt::red;
     } else {
         QPalette p = this->palette();
