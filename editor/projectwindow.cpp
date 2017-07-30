@@ -619,6 +619,7 @@ bool ProjectWindow::saveFileAs(int index)
         fileName.append(".stride");
     }
     editor->setFilename(fileName);
+    editor->markChanged(true); // Needed as saveFile() exists without saving if file is not marked as modified.
     ui->tabWidget->setTabText(ui->tabWidget->currentIndex(),
                               QFileInfo(fileName).fileName());
 
