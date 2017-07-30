@@ -94,22 +94,17 @@ module Impulse {
 		propertyInputPort FrequencyPort {
 			name: "frequency"
 			block: Frequency
-#			default: 440.0
+			default: 440.0
 			meta: "The frequency of the oscillator."
 		},
 		propertyInputPort AmplitudePort {
 			name: "amplitude"
 			block: Amplitude
+			default: 1.0
 			meta: "The amplitude of the oscillator."
 		}
     ]
     blocks: [
-        signal Frequency {
-                default :       440.0
-		},
-        signal Amplitude {
-                default :       1.0
-		},
 #        signal Type {
 #                default :       0.0
 #                rate:           AudioRate # FIXME needs to be streamRate
@@ -126,27 +121,26 @@ module Impulse {
 #                domain:         streamDomain
 #		}
         signal Phase {
-                default :       0.0
+                default :       1.0
                 domain:         OutputPort.domain
-		}
-        signal NewPhase {
-			default :       0.0
 		}
         signal PhaseInc {
 			default :       0.0
 			domain: FrequencyPort.domain
 		}
-        signal IncPhase {
-			default :       0.0
+		reaction WrapPhase {
+			streams: [
+				Phase - 1.0 >> Phase;
+			]
 		}
+		
     ]
     streams: [
         Frequency / Output.rate >> PhaseInc;
-        Phase + PhaseInc >> IncPhase;
-        IncPhase - 1.0 >> NewPhase;
+        Phase + PhaseInc >> Phase;
 
-        [IncPhase , 1 ] >> Greater() >> Select(whenOn: 1 whenOff: 0) >> Output;
-        [IncPhase , 1 ] >> Greater() >> Select(whenOn: NewPhase whenOff: IncPhase) >> Phase;
+        [Phase , 1 ] >> Greater() >> Select(whenOn: 1 whenOff: 0) >> Output;
+        [Phase , 1 ] >> Greater() >> WrapPhase();
     ]
 	meta: "Bipolar output [ -1. , 1. ] scaled by amplitude"
 }
