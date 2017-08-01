@@ -1391,13 +1391,16 @@ class ModuleAtom(Atom):
         if 'ports' in self.function:
             for name,port_value in self.function['ports'].items():
                 new_atom = self.platform.make_atom(port_value)
-                new_atom.scope_index += 1 # Hack to bring it up to the right scope...
+                if type(new_atom) == LoopAtom:
+                    pass
+                else:
+                    new_atom.scope_index += 1 # Hack to bring it up to the right scope...
                 if name in self.port_name_atoms:
                     self.port_name_atoms[name].append(new_atom)
                 else:
                     self.port_name_atoms[name] = [new_atom]
         # FIXME This should be handled with scope index not with this boolean flag
-        defer_header = self.module['type'] == 'reaction' or self.module['type'] == 'loop'
+        defer_header = self.module['type'] == 'reaction'
         self.code = self.platform.generate_code(tree, self._blocks,
                                                 instanced = instanced,
                                                 parent = self,
@@ -1795,11 +1798,12 @@ class LoopAtom(ModuleAtom):
 
 
     def get_header_code(self):
-        domain_code = self.code['domain_code']
+#        domain_code = self.code['domain_code']
         header_code = ''
 
-        for domain,code in domain_code.items():
-            header_code += code['header_code']
+        # All header code has been consumed already and put inside the reaction, right?
+#        for domain,code in domain_code.items():
+#            header_code += code['header_code']
         return header_code
 
     def get_inline_processing_code(self, in_tokens):
@@ -1852,15 +1856,18 @@ class LoopAtom(ModuleAtom):
         self.references = []
         referenced = []
         for domain, writes in self.code['writes'].items():
-            for write in writes:
-                if not write.get_name() in referenced:
-                    referenced += [write.get_name()]
-                    self.references.append(write)
+            # Don't include internal blocks in the input/output args
+            if domain: # Is this a good way to identify internal blocks?
+                for write in writes:
+                    if not write.get_name() in referenced:
+                        referenced += [write.get_name()]
+                        self.references.append(write)
         for domain, reads in self.code['reads'].items():
-            for read in reads:
-                if not read.get_name() in referenced:
-                    referenced += [read.get_name()]
-                    self.references.append(read)
+            if domain: # Is this a good way to identify internal blocks?
+                for read in reads:
+                    if not read.get_name() in referenced:
+                        referenced += [read.get_name()]
+                        self.references.append(read)
 
         for domain, code in domain_code.items():
             if domain is not None: # To get rid of domains from constants
@@ -1980,8 +1987,8 @@ class LoopAtom(ModuleAtom):
                     if inst.get_name() in port_atom_names:
                         inst.enabled = False
 
-        for block in self.connected_blocks:
-            instances += block.get_instances()
+#        for block in self.connected_blocks:
+#            instances += block.get_instances()
 
 
 #                instances += atom.get_instances()
@@ -2002,21 +2009,21 @@ class LoopAtom(ModuleAtom):
 #                                 self) ]
 #            self.code_declaration.add_dependent(instances[-1])
 
-        for name, atoms in self.port_name_atoms.items():
-            for atom in atoms:
-                decl = self.platform.find_declaration_in_tree(atom.get_handles(),
-                                                              self.module['blocks'] + self.platform.tree)
-                if not decl:
-                    if type(atom) is NameAtom:
-                        default_value = 0.0
-                        if not self.platform.find_instance_by_handle(atom.get_handles()[0], instances):
-                            instances += atom.get_instances()
-                            instances[-1].add_dependent(self.code_declaration)
-                    elif type(atom) is ExpressionAtom:
-                        for new_inst in self._get_expression_instances(atom):
-                            if not self.platform.find_instance_by_handle(new_inst.get_name(), instances):
-                                instances += [new_inst]
-                                instances[-1].add_dependent(self.code_declaration)
+#        for name, atoms in self.port_name_atoms.items():
+#            for atom in atoms:
+#                decl = self.platform.find_declaration_in_tree(atom.get_handles(),
+#                                                              self.module['blocks'] + self.platform.tree)
+#                if not decl:
+#                    if type(atom) is NameAtom:
+#                        default_value = 0.0
+#                        if not self.platform.find_instance_by_handle(atom.get_handles()[0], instances):
+#                            instances += atom.get_instances()
+#                            instances[-1].add_dependent(self.code_declaration)
+#                    elif type(atom) is ExpressionAtom:
+#                        for new_inst in self._get_expression_instances(atom):
+#                            if not self.platform.find_instance_by_handle(new_inst.get_name(), instances):
+#                                instances += [new_inst]
+#                                instances[-1].add_dependent(self.code_declaration)
 
         return instances
 
