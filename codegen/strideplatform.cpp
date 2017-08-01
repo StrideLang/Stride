@@ -114,19 +114,11 @@ string StridePlatform::buildTestingLibPath(string strideRoot)
 
 void StridePlatform::addTree(string treeName, ASTNode treeRoot)
 {
-//    if (m_platformTrees.find(treeName) != m_platformTrees.end()) {
-//        m_platformTrees[treeName]->deleteChildren();
-////        delete m_platformTrees[treeName];
-//    }
     m_platformTrees[treeName] = treeRoot;
 }
 
 void StridePlatform::addTestingTree(string treeName, ASTNode treeRoot)
 {
-//    if (m_platformTestTrees.find(treeName) != m_platformTestTrees.end()) {
-//        m_platformTestTrees[treeName]->deleteChildren();
-////        delete m_platformTestTrees[treeName];
-//    }
     m_platformTestTrees[treeName] = treeRoot;
 }
 

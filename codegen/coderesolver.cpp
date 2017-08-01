@@ -1664,7 +1664,7 @@ void CodeResolver::resolveConstants()
 {
     QVector<ASTNode > children = QVector<ASTNode >::fromStdVector(m_tree->getChildren());
     for(auto override = m_systemConfig.overrides["all"].constBegin(); override != m_systemConfig.overrides["all"].constEnd() ; ++override) {
-        qDebug() << override.key();
+//        qDebug() << override.key();
        std::shared_ptr<DeclarationNode> decl = CodeValidator::findDeclaration(override.key(), QVector<ASTNode>(), m_tree);
        if (decl) {
            if (decl->getObjectType() == "constant") {

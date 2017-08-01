@@ -87,7 +87,7 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
                         QString fileName = includeSubPath + QDir::separator() + file;
                         ASTNode tree = AST::parseFile(fileName.toLocal8Bit().data());
                         if(tree) {
-                            platform->addTree(file.toStdString(),tree); // TODO check if this is being freed
+                            platform->addTree(file.toStdString(),tree);
                         } else {
                             vector<LangError> errors = AST::getParseErrors();
                             foreach(LangError error, errors) {
@@ -118,7 +118,7 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
                 for (auto fileInfo : libraryFiles) {
                     ASTNode tree = AST::parseFile(fileInfo.absoluteFilePath().toLocal8Bit().data());
                     if(tree) {
-                        platform->addTestingTree(fileInfo.baseName().toStdString(),tree); // TODO check if this is being freed
+                        platform->addTestingTree(fileInfo.baseName().toStdString(),tree);
                     } else {
                         vector<LangError> errors = AST::getParseErrors();
                         foreach(LangError error, errors) {
