@@ -203,7 +203,7 @@
      <x>0</x>
      <y>0</y>
      <width>784</width>
-     <height>19</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuProject">
@@ -222,6 +222,7 @@
     <property name="title">
      <string>Build</string>
     </property>
+    <addaction name="actionConfigure_System"/>
     <addaction name="actionBuild"/>
     <addaction name="actionUpload"/>
     <addaction name="actionRename"/>
@@ -401,6 +402,11 @@
   <action name="actionClean_Project">
    <property name="text">
     <string>Clean Project</string>
+   </property>
+  </action>
+  <action name="actionConfigure_System">
+   <property name="text">
+    <string>Configure System</string>
    </property>
   </action>
  </widget>

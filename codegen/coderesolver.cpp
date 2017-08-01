@@ -38,8 +38,9 @@
 #include "coderesolver.h"
 #include "codevalidator.h"
 
-CodeResolver::CodeResolver(StrideSystem *system, ASTNode tree) :
-    m_system(system), m_tree(tree), m_connectorCounter(0)
+CodeResolver::CodeResolver(std::shared_ptr<StrideSystem> system, ASTNode tree,
+                           SystemConfiguration systemConfig) :
+    m_system(system), m_tree(tree), m_systemConfig(systemConfig), m_connectorCounter(0)
 {
 
 }
@@ -781,6 +782,10 @@ void CodeResolver::insertBuiltinObjectsForNode(ASTNode node, map<string, vector<
         // Insert needed objects for things in module properties
         for(std::shared_ptr<PropertyNode> property : userBlock->getProperties()) {
             insertBuiltinObjectsForNode(property->getValue(), objects);
+        }
+        // Process index for bundle declarations
+        if (node->getNodeType() == AST::BundleDeclaration) {
+            insertBuiltinObjectsForNode(userBlock->getBundle()->index(), objects);
         }
 
     } else if (node->getNodeType() == AST::Block) {
@@ -1658,6 +1663,23 @@ void CodeResolver::resolveStreamSymbols()
 void CodeResolver::resolveConstants()
 {
     QVector<ASTNode > children = QVector<ASTNode >::fromStdVector(m_tree->getChildren());
+    for(auto override = m_systemConfig.overrides["all"].constBegin(); override != m_systemConfig.overrides["all"].constEnd() ; ++override) {
+        qDebug() << override.key();
+       std::shared_ptr<DeclarationNode> decl = CodeValidator::findDeclaration(override.key(), QVector<ASTNode>(), m_tree);
+       if (decl) {
+           if (decl->getObjectType() == "constant") {
+               if (override.value().type() == QVariant::String) {
+                   decl->replacePropertyValue("value", std::make_shared<ValueNode>(override.value().toString().toStdString(), "", -1));
+               } else if (override.value().type() == QVariant::Int) {
+                   decl->replacePropertyValue("value", std::make_shared<ValueNode>(override.value().toInt(), "", -1));
+               }
+           } else {
+               qDebug() << "WARNING: Ignoring configuration override '" + override.key() + "'. Not constant.";
+           }
+       } else {
+           qDebug() << "WARNING: Configuration override not found: " + override.key();
+       }
+    }
     for(ASTNode node : children) {
         resolveConstantsInNode(node, children);
     }
@@ -1848,24 +1870,25 @@ void CodeResolver::resolveConstantsInNode(ASTNode node, QVector<ASTNode > scope)
                 property->replaceValue(newValue);
             }
         }
-        BundleNode *bundle = block->getBundle();
-        std::shared_ptr<ListNode> indexList = bundle->index();
-        vector<ASTNode > elements = indexList->getChildren();
-        for (ASTNode element : elements) {
-            if (element->getNodeType() == AST::Expression) {
-                std::shared_ptr<ExpressionNode> expr = static_pointer_cast<ExpressionNode>(element);
-                resolveConstantsInNode(expr, scope);
-                std::shared_ptr<ValueNode> newValue = reduceConstExpression(expr, scope, m_tree);
-                if (newValue) {
-                    indexList->replaceMember(newValue, element);
-                }
-            } else if (element->getNodeType() == AST::Block) {
-                std::shared_ptr<ValueNode> newValue = resolveConstant(element, scope);
-                if (newValue) {
-                    indexList->replaceMember(newValue, element);
-                }
-            }
-        }
+        std::shared_ptr<BundleNode> bundle = block->getBundle();
+//        std::shared_ptr<ListNode> indexList = bundle->index();
+//        vector<ASTNode > elements = indexList->getChildren();
+//        for (ASTNode element : elements) {
+//            if (element->getNodeType() == AST::Expression) {
+//                std::shared_ptr<ExpressionNode> expr = static_pointer_cast<ExpressionNode>(element);
+//                resolveConstantsInNode(expr, scope);
+//                std::shared_ptr<ValueNode> newValue = reduceConstExpression(expr, scope, m_tree);
+//                if (newValue) {
+//                    indexList->replaceMember(newValue, element);
+//                }
+//            } else if (element->getNodeType() == AST::Block) {
+//                std::shared_ptr<ValueNode> newValue = resolveConstant(element, scope);
+//                if (newValue) {
+//                    indexList->replaceMember(newValue, element);
+//                }
+//            }
+//        }
+        resolveConstantsInNode(bundle->index(), scope);
     } else if(node->getNodeType() == AST::Expression) {
         std::shared_ptr<ExpressionNode> expr = static_pointer_cast<ExpressionNode>(node);
         if (expr->isUnary()) {
@@ -1899,11 +1922,15 @@ void CodeResolver::resolveConstantsInNode(ASTNode node, QVector<ASTNode > scope)
         std::map<ASTNode , ASTNode> replaceMap;
         for (ASTNode element : node->getChildren()) {
             resolveConstantsInNode(element, scope);
+            std::shared_ptr<ValueNode> newValue;
             if (element->getNodeType() == AST::Expression) {
-                std::shared_ptr<ValueNode> newValue = reduceConstExpression(std::static_pointer_cast<ExpressionNode>(element), scope, m_tree);
-                if (newValue) {
-                    replaceMap[element] = newValue;
-                }
+                newValue = reduceConstExpression(std::static_pointer_cast<ExpressionNode>(element), scope, m_tree);
+
+            } else {
+                newValue = resolveConstant(element, scope);
+            }
+            if (newValue) {
+                replaceMap[element] = newValue;
             }
         }
         std::shared_ptr<ListNode> list = static_pointer_cast<ListNode>(node);
@@ -1911,6 +1938,10 @@ void CodeResolver::resolveConstantsInNode(ASTNode node, QVector<ASTNode > scope)
             list->replaceMember(values.second, values.first);
         }
 
+    } else if(node->getNodeType() == AST::Bundle) {
+        std::shared_ptr<BundleNode> bundle = static_pointer_cast<BundleNode>(node);
+        std::shared_ptr<ListNode> index = bundle->index();
+        resolveConstantsInNode(index, scope);
     }
 }
 

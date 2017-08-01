@@ -86,10 +86,10 @@ string DeclarationNode::getName() const
     return string();
 }
 
-BundleNode *DeclarationNode::getBundle() const
+std::shared_ptr<BundleNode> DeclarationNode::getBundle() const
 {
     assert(getNodeType() == AST::BundleDeclaration);
-    return static_cast<BundleNode *>(m_children.at(0).get());
+    return static_pointer_cast<BundleNode>(m_children.at(0));
 }
 
 vector<std::shared_ptr<PropertyNode> > DeclarationNode::getProperties() const

@@ -54,11 +54,11 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
     m_testing(false)
 {
     QString versionString = QString("%1.%2").arg(m_majorVersion).arg(m_minorVersion);
-    QString fullPath = QDir(strideRoot + QDir::separator()
+    m_systemPath = QDir(strideRoot + QDir::separator()
                             + "systems" + QDir::separator()
                             + systemName + QDir::separator()
                             + versionString).absolutePath();
-    QString systemFile = fullPath + QDir::separator() + "System.stride";
+    QString systemFile = m_systemPath + QDir::separator() + "System.stride";
 
     m_library.setLibraryPath(strideRoot, importList);
     if (QFile::exists(systemFile)) {
@@ -115,7 +115,7 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
                 nameFilters.push_back("*.stride");
                 string platformPath = platform->buildTestingLibPath(m_strideRoot.toStdString());
                 QFileInfoList libraryFiles =  QDir(QString::fromStdString(platformPath)).entryInfoList(nameFilters);
-                foreach (auto fileInfo, libraryFiles) {
+                for (auto fileInfo : libraryFiles) {
                     ASTNode tree = AST::parseFile(fileInfo.absoluteFilePath().toLocal8Bit().data());
                     if(tree) {
                         platform->addTestingTree(fileInfo.baseName().toStdString(),tree); // TODO check if this is being freed
@@ -483,6 +483,24 @@ map<string, vector<ASTNode>> StrideSystem::getBuiltinObjectsReference()
     return objects;
 }
 
+vector<ASTNode> StrideSystem::getOptionTrees()
+{
+    vector<ASTNode> optionTrees;
+    QStringList nameFilters;
+    nameFilters.push_back("*.stride");
+    QString optionPath = m_systemPath + QDir::separator() + "options";
+    QFileInfoList optionFiles =  QDir(optionPath).entryInfoList(nameFilters);
+    for (auto fileInfo : optionFiles) {
+        ASTNode optionTree = AST::parseFile(fileInfo.absoluteFilePath().toStdString().c_str());
+        if (optionTree) {
+            optionTrees.push_back(optionTree);
+        } else {
+            qDebug() << "Error parsing option file: " << fileInfo.absolutePath();
+        }
+    }
+    return optionTrees;
+}
+
 QString StrideSystem::makeProject(QString fileName)
 {
     QFileInfo info(fileName);
@@ -495,4 +513,3 @@ QString StrideSystem::makeProject(QString fileName)
     }
     return dirName;
 }
-

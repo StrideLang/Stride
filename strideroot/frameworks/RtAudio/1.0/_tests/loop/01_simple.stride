@@ -8,7 +8,7 @@ loop Loop {
 	ports: [		
 	]
 	blocks: [
-		signal Counter { reset: CounterReset }
+		signal Counter {}
 		switch CounterReset {}
 	]
 	streams: [

@@ -76,7 +76,7 @@ public:
 
 //    bool typeHasPort(QString typeName, QString propertyName);
 
-    QString getPlatformPath(); // Path for the specific platform
+    vector<ASTNode> getOptionTrees();
 
 private:
     QVector<ASTNode> getPortsForTypeBlock(DeclarationNode *block);
@@ -93,6 +93,7 @@ private:
     int m_majorVersion;
     int m_minorVersion;
     QString m_pluginName;
+    QString m_systemPath;
     bool m_testing;
 
     QStringList m_errors;
@@ -106,5 +107,7 @@ private:
     QMap<QString, QString> m_importList;
     StrideLibrary m_library;
 };
+
+
 
 #endif // STRIDESYSTEM_HPP

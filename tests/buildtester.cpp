@@ -79,7 +79,7 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile)
              }
              return false;
          }
-         StrideSystem *system = validator.getSystem();
+         std::shared_ptr<StrideSystem> system = validator.getSystem();
          system->enableTesting(tree.get());
 
          std::vector<Builder *> m_builders;

@@ -32,23 +32,23 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
+#include <memory>
+
 #include <QVector>
 #include <QDebug>
 
 #include "codevalidator.h"
 #include "coderesolver.h"
 
-CodeValidator::CodeValidator(QString striderootDir, ASTNode tree, Options options):
-    m_system(nullptr), m_tree(tree), m_options(options)
+CodeValidator::CodeValidator(QString striderootDir, ASTNode tree, Options options,
+                             SystemConfiguration systemConfig):
+    m_system(nullptr), m_tree(tree), m_options(options), m_systemConfig(systemConfig)
 {
     validateTree(striderootDir, tree);
 }
 
 CodeValidator::~CodeValidator()
 {
-    if (m_system) {
-        delete m_system;
-    }
 }
 
 void CodeValidator::validateTree(QString platformRootDir, ASTNode tree)
@@ -68,10 +68,10 @@ void CodeValidator::validateTree(QString platformRootDir, ASTNode tree)
 
         if (systems.size () > 0) {
             std::shared_ptr<SystemNode> platformNode = systems.at(0);
-            m_system = new StrideSystem(platformRootDir,
-                                        QString::fromStdString(platformNode->platformName()),
-                                        platformNode->majorVersion(), platformNode->minorVersion(),
-                                        importList);
+            m_system = std::make_shared<StrideSystem>(platformRootDir,
+                                                      QString::fromStdString(platformNode->platformName()),
+                                                      platformNode->majorVersion(), platformNode->minorVersion(),
+                                                      importList);
             for (int i = 1; i < systems.size(); i++) {
                 qDebug() << "Ignoring system: " << QString::fromStdString(platformNode->platformName());
                 LangError error;
@@ -82,7 +82,7 @@ void CodeValidator::validateTree(QString platformRootDir, ASTNode tree)
                 m_errors.append(error);
             }
         } else { // Make a default platform that only inlcudes the common library
-            m_system = new StrideSystem(platformRootDir, "", -1, -1, importList);
+            m_system =  std::make_shared<StrideSystem>(platformRootDir, "", -1, -1, importList);
         }
         if (systems.size() > 0) { // Store system details in tree
             systems.at(0)->setHwPlatforms(m_system->getFrameworkNames());
@@ -435,7 +435,7 @@ QStringList CodeValidator::getPlatformErrors()
     return m_system->getErrors();
 }
 
-StrideSystem *CodeValidator::getSystem()
+std::shared_ptr<StrideSystem> CodeValidator::getSystem()
 {
     return m_system;
 }
@@ -447,7 +447,7 @@ void CodeValidator::validate()
         if(m_options & USE_TESTING) {
             m_system->enableTesting(true);
         }
-        CodeResolver resolver(m_system, m_tree);
+        CodeResolver resolver(m_system, m_tree, m_systemConfig);
         resolver.preProcess();
         validatePlatform(m_tree, QVector<ASTNode >());
         validateTypes(m_tree, QVector<ASTNode >());
@@ -892,7 +892,7 @@ int CodeValidator::getBlockDeclaredSize(std::shared_ptr<DeclarationNode> block, 
 {
     int size = -1;
     Q_ASSERT(block->getNodeType() == AST::BundleDeclaration);
-    BundleNode *bundle = static_cast<BundleNode *>(block->getBundle());
+    BundleNode *bundle = static_cast<BundleNode *>(block->getBundle().get());
     if (bundle->getNodeType() == AST::Bundle) {
         size = 0;
         ListNode *indexList = bundle->index().get();
@@ -1298,7 +1298,7 @@ std::shared_ptr<DeclarationNode> CodeValidator::findDeclaration(QString objectNa
     for(ASTNode node : globalAndLocal) {
         if (node->getNodeType() == AST::BundleDeclaration) {
             shared_ptr<DeclarationNode> block = static_pointer_cast<DeclarationNode>(node);
-            BundleNode *bundle = block->getBundle();
+            std::shared_ptr<BundleNode> bundle = block->getBundle();
             QString name = QString::fromStdString(bundle->getName());
             if (name == objectName && CodeValidator::scopesMatch(scopesList, block)) {
                 return block;

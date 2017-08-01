@@ -40,12 +40,6 @@ class Templates(BaseCTemplate):
     def __init__(self):
         super(Templates, self).__init__()
 
-        self.properties['num_in_channels'] = 2
-        self.properties['num_out_channels'] = 2
-        self.properties['audio_device'] = 0
-        self.properties['sample_rate'] = 44100
-        self.properties['block_size'] = 512
-
         self.framework = "RtAudio"
 
     def process_code(self, code):

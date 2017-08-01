@@ -50,11 +50,13 @@
 #include "blocknode.h"
 #include "rangenode.h"
 #include "valuenode.h"
+#include "systemconfiguration.hpp"
 
 class CodeResolver
 {
 public:
-    CodeResolver(StrideSystem * system, ASTNode tree);
+    CodeResolver(std::shared_ptr<StrideSystem> system, ASTNode tree,
+                 SystemConfiguration systemConfig);
     ~CodeResolver();
 
     void preProcess();
@@ -130,7 +132,8 @@ private:
     void sliceDomainsInNode(std::shared_ptr<DeclarationNode> stream, QVector<ASTNode > scopeStack);
     QVector<ASTNode > processExpression(std::shared_ptr<ExpressionNode> expr, QVector<ASTNode > scopeStack, ASTNode outDOmain);
 
-    StrideSystem * m_system;
+    std::shared_ptr<StrideSystem> m_system;
+    SystemConfiguration m_systemConfig;
     ASTNode m_tree;
     int m_connectorCounter;
     std::vector<std::vector<string>> m_bridgeAliases; //< 1: bridge signal 2: original name 3: domain

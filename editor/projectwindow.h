@@ -44,6 +44,7 @@
 #include "builder.h"
 #include "searchwidget.h"
 #include "codemodel.hpp"
+#include "systemconfiguration.hpp"
 
 namespace Ui {
 class ProjectWindow;
@@ -71,6 +72,7 @@ public slots:
     void updateCodeAnalysis();
     void newFile();
     void markModified();
+    void configureSystem();
 
 protected:
     virtual void closeEvent(QCloseEvent *event);
@@ -107,6 +109,8 @@ private:
     void writeSettings();
 
     void updateEditorSettings();
+
+    SystemConfiguration readProjectConfiguration();
 
     Ui::ProjectWindow *ui;
 

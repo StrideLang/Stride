@@ -67,6 +67,11 @@ std::shared_ptr<ListNode> BundleNode::index() const
     return std::static_pointer_cast<ListNode>(m_children.at(0));
 }
 
+void BundleNode::setIndex(std::shared_ptr<ListNode> index)
+{
+    m_children[0] = index;
+}
+
 void BundleNode::resolveScope(ASTNode scope)
 {
     if (scope) {

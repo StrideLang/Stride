@@ -48,7 +48,9 @@ public:
     virtual ~BundleNode();
 
     string getName() const;
-    std::shared_ptr<ListNode>index() const;
+    std::shared_ptr<ListNode> index() const;
+
+    void setIndex(std::shared_ptr<ListNode> index);
 
     virtual void resolveScope(ASTNode scope) override;
 

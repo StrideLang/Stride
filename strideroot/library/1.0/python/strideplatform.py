@@ -2926,6 +2926,7 @@ class GeneratorBase(object):
         self.platform_dir = platform_dir
         self.tree = tree
 
+        self.templates = templates
         self.platform = PlatformFunctions(self.tree, debug)
 
         self.last_num_outs = 0

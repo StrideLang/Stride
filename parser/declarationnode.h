@@ -49,7 +49,7 @@ public:
     ~DeclarationNode();
 
     string getName() const;
-    BundleNode *getBundle() const;
+    std::shared_ptr<BundleNode> getBundle() const;
     vector<std::shared_ptr<PropertyNode>> getProperties() const;
     bool addProperty(std::shared_ptr<PropertyNode> newProperty);
     ASTNode getPropertyValue(string propertyName);

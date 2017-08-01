@@ -53,6 +53,8 @@ public:
     QString getTooltipText(QString symbol);
     QPair<QString, int> getSymbolLocation(QString symbol);
 
+    std::shared_ptr<StrideSystem> getSystem() { return m_system; }
+
     // Caller owns and must free the returned AST tree
     AST *getOptimizedTree();
 
@@ -71,6 +73,7 @@ public slots:
 
 private:
 //    QList<AST *> m_platformObjects;
+    std::shared_ptr<StrideSystem> m_system;
     QStringList m_types;
     QStringList m_funcs;
     QStringList m_objectNames;

@@ -46,6 +46,12 @@
 #include <QDesktopServices>
 #include <QWebEngineSettings>
 
+// For config dialogs
+#include <QDialogButtonBox>
+#include <QGroupBox>
+#include <QSpinBox>
+#include <QComboBox>
+
 #include "projectwindow.h"
 #include "ui_projectwindow.h"
 
@@ -143,7 +149,9 @@ bool ProjectWindow::build()
     }
 
     if (tree) {
-        CodeValidator validator(m_environment["platformRootPath"].toString(), tree);
+        SystemConfiguration systemConfig = readProjectConfiguration();
+        CodeValidator validator(m_environment["platformRootPath"].toString(), tree,
+                CodeValidator::NO_OPTIONS, systemConfig);
         errors << validator.getErrors();
 
         if (errors.size() > 0) {
@@ -154,7 +162,7 @@ bool ProjectWindow::build()
             }
             return false;
         }
-        StrideSystem *system = validator.getSystem();
+        std::shared_ptr<StrideSystem> system = validator.getSystem();
 
         for (auto builder: m_builders) {
             delete builder;
@@ -761,6 +769,7 @@ void ProjectWindow::connectActions()
 {
 
     connect(ui->actionNew_Project, SIGNAL(triggered()), this, SLOT(newFile()));
+    connect(ui->actionConfigure_System, SIGNAL(triggered()), this, SLOT(configureSystem()));
     connect(ui->actionBuild, SIGNAL(triggered()), this, SLOT(build()));
     connect(ui->actionComment, SIGNAL(triggered(bool)), this, SLOT(commentSection()));
     connect(ui->actionUpload, SIGNAL(triggered()), this, SLOT(flash()));
@@ -942,6 +951,59 @@ void ProjectWindow::updateEditorSettings()
     }
 }
 
+SystemConfiguration ProjectWindow::readProjectConfiguration()
+{
+    SystemConfiguration configuration;
+    CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+    QString configFilename = editor->filename() + ".config";
+    ASTNode configFile = AST::parseFile(configFilename.toLocal8Bit().data());
+    if (configFile) {
+        for (ASTNode configNode : configFile->getChildren()) {
+            if (configNode->getNodeType() == AST::Declaration) {
+                std::shared_ptr<DeclarationNode> configDecl = static_pointer_cast<DeclarationNode>(configNode);
+                if (configDecl->getObjectType() == "config") {
+                    for (auto configOptions : configDecl->getProperties()) {
+                        QString optionName = QString::fromStdString(configOptions->getName());
+                        // TODO more robust capitalization
+                        if (optionName[0] == "_") {
+                            optionName[1] = optionName[1].toUpper();
+                        } else {
+                            optionName[0] = optionName[0].toUpper();
+                        }
+                        ASTNode configValue = configOptions->getValue();
+                        if (configValue->getNodeType() == AST::String) {
+                            configuration.platformConfigurations["all"][optionName] =
+                                    QString::fromStdString(static_pointer_cast<ValueNode>(configValue)->getStringValue());
+                        } else if (configValue->getNodeType() == AST::Int){
+                            configuration.platformConfigurations["all"][optionName] =
+                                    static_pointer_cast<ValueNode>(configValue)->getIntValue();
+                        }
+                    }
+                } else if (configDecl->getObjectType() == "override") {
+                    for (auto configOptions : configDecl->getProperties()) {
+                        QString optionName = QString::fromStdString(configOptions->getName());
+                        // TODO more robust capitalization
+                        if (optionName[0] == "_") {
+                            optionName[1] = optionName[1].toUpper();
+                        } else {
+                            optionName[0] = optionName[0].toUpper();
+                        }
+                        ASTNode configValue = configOptions->getValue();
+                        if (configValue->getNodeType() == AST::String) {
+                            configuration.overrides["all"][optionName] =
+                                    QString::fromStdString(static_pointer_cast<ValueNode>(configValue)->getStringValue());
+                        } else if (configValue->getNodeType() == AST::Int){
+                            configuration.overrides["all"][optionName] =
+                                    static_pointer_cast<ValueNode>(configValue)->getIntValue();
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return configuration;
+}
+
 void ProjectWindow::newFile()
 {
     // Create editor tab
@@ -968,6 +1030,375 @@ void ProjectWindow::markModified()
         textColor = p.color(QPalette::Foreground);
     }
     ui->tabWidget->tabBar()->setTabTextColor(currentIndex, textColor);
+}
+
+void ProjectWindow::configureSystem()
+{
+    std::shared_ptr<StrideSystem> system = m_codeModel.getSystem();
+    vector<ASTNode> optionTrees = system->getOptionTrees();
+
+    // Read configuration from file
+   SystemConfiguration systemConfig = readProjectConfiguration();
+
+    QDialog optionsDialog(this);
+    QVBoxLayout *mainLayout = new QVBoxLayout;
+    QMap<QString, QSpinBox *> spinBoxes;
+    QMap<QString, QComboBox *> comboBoxes;
+    QMap<QString, QComboBox *> intComboBoxes;
+    QMap<QString, QSpinBox *> overrideSpinBoxes;
+    QMap<QString, QComboBox *> overrideComboBoxes;
+    QMap<QString, QComboBox *> overrideIntComboBoxes;
+    for(ASTNode optionTree: optionTrees) {
+        QGroupBox *groupBox = new QGroupBox("Options Group", &optionsDialog);
+        QVBoxLayout *groupLayout = new QVBoxLayout;
+
+        for (ASTNode option : optionTree->getChildren()) {
+            QWidget *optionWidget = new QWidget(groupBox);
+            QHBoxLayout *optionLayout = new QHBoxLayout(optionWidget);
+            if (option->getNodeType() == AST::Declaration) {
+                std::shared_ptr<DeclarationNode> optionDecl = static_pointer_cast<DeclarationNode>(option);
+                string type = optionDecl->getObjectType();
+                if (type == "optionGroup") {
+                    ASTNode nameNode = optionDecl->getPropertyValue("name");
+                    if (nameNode && nameNode->getNodeType() == AST::String) {
+                        groupBox->setTitle(QString::fromStdString(static_pointer_cast<ValueNode>(nameNode)->getStringValue()));
+                    }
+                } else if (type == "intOption") {
+                    QString optionName = "";
+                    ASTNode nameNode = optionDecl->getPropertyValue("name");
+                    if (nameNode && nameNode->getNodeType() == AST::String) {
+                        optionName = QString::fromStdString(static_pointer_cast<ValueNode>(nameNode)->getStringValue());
+                    }
+                    QStringList buildPlatforms;
+                    ASTNode buildPlatformsNode = optionDecl->getPropertyValue("buildPlatforms");
+                    if (buildPlatformsNode && buildPlatformsNode->getNodeType() == AST::List) {
+                        for (ASTNode member : buildPlatformsNode->getChildren()) {
+                            if (member->getNodeType() == AST::String) {
+                                buildPlatforms << QString::fromStdString(static_pointer_cast<ValueNode>(member)->getStringValue());
+                            }
+                        }
+                    }
+                    optionLayout->addWidget(new QLabel(optionName));
+
+                    ASTNode maxNode = optionDecl->getPropertyValue("maximum");
+                    ASTNode minNode = optionDecl->getPropertyValue("minimum");
+                    QSpinBox *spinBox = new QSpinBox(optionWidget);
+
+                    if (minNode && minNode->getNodeType() == AST::Int) {
+                        spinBox->setMinimum(static_pointer_cast<ValueNode>(minNode)->getIntValue());
+                    }
+                    if (maxNode && maxNode->getNodeType() == AST::Int) {
+                        spinBox->setMaximum(static_pointer_cast<ValueNode>(maxNode)->getIntValue());
+                    }
+
+                    if (systemConfig.platformConfigurations["all"].contains(QString::fromStdString(optionDecl->getName()))) {
+                        spinBox->setValue(systemConfig.platformConfigurations["all"][QString::fromStdString(optionDecl->getName())].toInt());
+                    } else { // Use default
+                        ASTNode defaultNode = optionDecl->getPropertyValue("default");
+                        if (defaultNode && defaultNode->getNodeType() == AST::Int) {
+                            spinBox->setValue(static_pointer_cast<ValueNode>(defaultNode)->getIntValue());
+                        }
+                    }
+                    optionLayout->addWidget(spinBox);
+
+                    ASTNode metaNode = optionDecl->getPropertyValue("meta");
+                    if (metaNode && metaNode->getNodeType() == AST::String) {
+                        optionWidget->setToolTip(QString::fromStdString(static_pointer_cast<ValueNode>(metaNode)->getStringValue()));
+                    }
+                    spinBoxes[QString::fromStdString(optionDecl->getName())] = spinBox;
+                } else if (type == "stringListOption") {
+                    QString optionName = "";
+                    ASTNode nameNode = optionDecl->getPropertyValue("name");
+                    if (nameNode && nameNode->getNodeType() == AST::String) {
+                        optionName = QString::fromStdString(static_pointer_cast<ValueNode>(nameNode)->getStringValue());
+                    }
+                    optionLayout->addWidget(new QLabel(optionName));
+
+                    QComboBox *combo = new QComboBox(optionWidget);
+
+                    ASTNode possiblesNode = optionDecl->getPropertyValue("possibleValues");
+
+                    QString defaultValue;
+                    ASTNode defaultNode = optionDecl->getPropertyValue("default");
+                    if (systemConfig.platformConfigurations["all"].contains(QString::fromStdString(optionDecl->getName()))) {
+                        defaultValue = systemConfig.platformConfigurations["all"][QString::fromStdString(optionDecl->getName())].toString();
+                    } else { // Use default
+                        ASTNode defaultNode = optionDecl->getPropertyValue("default");
+                        if (defaultNode && defaultNode->getNodeType() == AST::String) {
+                            defaultValue = QString::fromStdString(static_pointer_cast<ValueNode>(defaultNode)->getStringValue());
+                        }
+                    }
+                    int defaultIndex = 0;
+                    if (possiblesNode && possiblesNode->getNodeType() == AST::List) {
+                        std::shared_ptr<ListNode> list = static_pointer_cast<ListNode>(possiblesNode);
+                        for(ASTNode member : list->getChildren()) {
+                            if (member && member->getNodeType() == AST::String) {
+                                combo->addItem(QString::fromStdString(static_pointer_cast<ValueNode>(member)->getStringValue()));
+                                if (defaultValue == QString::fromStdString(static_pointer_cast<ValueNode>(member)->getStringValue())) {
+                                    defaultIndex = combo->count() - 1;
+                                }
+                            }
+                        }
+                    }
+                    if (defaultNode || systemConfig.platformConfigurations["all"].contains(QString::fromStdString(optionDecl->getName()))) {
+                        combo->setCurrentIndex(defaultIndex);
+                    }
+                    optionLayout->addWidget(combo);
+                    comboBoxes[QString::fromStdString(optionDecl->getName())] = combo;
+                } else if (type == "intListOption") {
+                    QString optionName = "----";
+                    ASTNode nameNode = optionDecl->getPropertyValue("name");
+                    if (nameNode && nameNode->getNodeType() == AST::String) {
+                        optionName = QString::fromStdString(static_pointer_cast<ValueNode>(nameNode)->getStringValue());
+                    }
+                    optionLayout->addWidget(new QLabel(optionName));
+
+                    QComboBox *combo = new QComboBox(optionWidget);
+
+                    ASTNode possiblesNode = optionDecl->getPropertyValue("possibleValues");
+                    ASTNode defaultNode = optionDecl->getPropertyValue("default");
+                    int defaultValue = 0;
+                    if (systemConfig.platformConfigurations["all"].contains(QString::fromStdString(optionDecl->getName()))) {
+                        defaultValue = systemConfig.platformConfigurations["all"][QString::fromStdString(optionDecl->getName())].toInt();
+                    } else { // Use default
+                        if (defaultNode && defaultNode->getNodeType() == AST::Int) {
+                            defaultValue = static_pointer_cast<ValueNode>(defaultNode)->getIntValue();
+                        }
+                    }
+                    int defaultIndex = 0;
+                    if (possiblesNode && possiblesNode->getNodeType() == AST::List) {
+                        std::shared_ptr<ListNode> list = static_pointer_cast<ListNode>(possiblesNode);
+                        for(ASTNode member : list->getChildren()) {
+                            if (member && member->getNodeType() == AST::Int) {
+                                combo->addItem(QString::number(static_pointer_cast<ValueNode>(member)->getIntValue()));
+                                if (defaultValue == static_pointer_cast<ValueNode>(member)->getIntValue()) {
+                                    defaultIndex = combo->count() - 1;
+                                }
+                            }
+
+                        }
+                    }
+                    if (defaultNode || systemConfig.platformConfigurations["all"].contains(QString::fromStdString(optionDecl->getName()))) {
+                        combo->setCurrentIndex(defaultIndex);
+                    }
+                    optionLayout->addWidget(combo);
+                    intComboBoxes[QString::fromStdString(optionDecl->getName())] = combo;
+                } else if (type == "intOverride") {
+                    QString optionName = "";
+                    ASTNode nameNode = optionDecl->getPropertyValue("name");
+                    if (nameNode && nameNode->getNodeType() == AST::String) {
+                        optionName = QString::fromStdString(static_pointer_cast<ValueNode>(nameNode)->getStringValue());
+                    }
+                    QStringList buildPlatforms;
+                    ASTNode buildPlatformsNode = optionDecl->getPropertyValue("buildPlatforms");
+                    if (buildPlatformsNode && buildPlatformsNode->getNodeType() == AST::List) {
+                        for (ASTNode member : buildPlatformsNode->getChildren()) {
+                            if (member->getNodeType() == AST::String) {
+                                buildPlatforms << QString::fromStdString(static_pointer_cast<ValueNode>(member)->getStringValue());
+                            }
+                        }
+                    }
+                    optionLayout->addWidget(new QLabel(optionName));
+
+                    ASTNode maxNode = optionDecl->getPropertyValue("maximum");
+                    ASTNode minNode = optionDecl->getPropertyValue("minimum");
+                    QSpinBox *spinBox = new QSpinBox(optionWidget);
+
+                    if (minNode && minNode->getNodeType() == AST::Int) {
+                        spinBox->setMinimum(static_pointer_cast<ValueNode>(minNode)->getIntValue());
+                    }
+                    if (maxNode && maxNode->getNodeType() == AST::Int) {
+                        spinBox->setMaximum(static_pointer_cast<ValueNode>(maxNode)->getIntValue());
+                    }
+
+                    if (systemConfig.overrides["all"].contains(QString::fromStdString(optionDecl->getName()))) {
+                        spinBox->setValue(systemConfig.overrides["all"][QString::fromStdString(optionDecl->getName())].toInt());
+                    } else { // Use default
+                        ASTNode defaultNode = optionDecl->getPropertyValue("default");
+                        if (defaultNode && defaultNode->getNodeType() == AST::Int) {
+                            spinBox->setValue(static_pointer_cast<ValueNode>(defaultNode)->getIntValue());
+                        }
+                    }
+                    optionLayout->addWidget(spinBox);
+
+                    ASTNode metaNode = optionDecl->getPropertyValue("meta");
+                    if (metaNode && metaNode->getNodeType() == AST::String) {
+                        optionWidget->setToolTip(QString::fromStdString(static_pointer_cast<ValueNode>(metaNode)->getStringValue()));
+                    }
+                    overrideSpinBoxes[QString::fromStdString(optionDecl->getName())] = spinBox;
+                } else if (type == "stringListOverride") {
+                    QString optionName = "";
+                    ASTNode nameNode = optionDecl->getPropertyValue("name");
+                    if (nameNode && nameNode->getNodeType() == AST::String) {
+                        optionName = QString::fromStdString(static_pointer_cast<ValueNode>(nameNode)->getStringValue());
+                    }
+                    optionLayout->addWidget(new QLabel(optionName));
+
+                    QComboBox *combo = new QComboBox(optionWidget);
+
+                    ASTNode possiblesNode = optionDecl->getPropertyValue("possibleValues");
+
+                    QString defaultValue;
+                    ASTNode defaultNode = optionDecl->getPropertyValue("default");
+                    if (systemConfig.overrides["all"].contains(QString::fromStdString(optionDecl->getName()))) {
+                        defaultValue = systemConfig.overrides["all"][QString::fromStdString(optionDecl->getName())].toString();
+                    } else { // Use default
+                        ASTNode defaultNode = optionDecl->getPropertyValue("default");
+                        if (defaultNode && defaultNode->getNodeType() == AST::String) {
+                            defaultValue = QString::fromStdString(static_pointer_cast<ValueNode>(defaultNode)->getStringValue());
+                        }
+                    }
+                    int defaultIndex = 0;
+                    if (possiblesNode && possiblesNode->getNodeType() == AST::List) {
+                        std::shared_ptr<ListNode> list = static_pointer_cast<ListNode>(possiblesNode);
+                        for(ASTNode member : list->getChildren()) {
+                            if (member && member->getNodeType() == AST::String) {
+                                combo->addItem(QString::fromStdString(static_pointer_cast<ValueNode>(member)->getStringValue()));
+                                if (defaultValue == QString::fromStdString(static_pointer_cast<ValueNode>(member)->getStringValue())) {
+                                    defaultIndex = combo->count() - 1;
+                                }
+                            }
+                        }
+                    }
+                    if (defaultNode || systemConfig.overrides["all"].contains(QString::fromStdString(optionDecl->getName()))) {
+                        combo->setCurrentIndex(defaultIndex);
+                    }
+                    optionLayout->addWidget(combo);
+                    overrideComboBoxes[QString::fromStdString(optionDecl->getName())] = combo;
+                } else if (type == "intListOverride") {
+                    QString optionName = "----";
+                    ASTNode nameNode = optionDecl->getPropertyValue("name");
+                    if (nameNode && nameNode->getNodeType() == AST::String) {
+                        optionName = QString::fromStdString(static_pointer_cast<ValueNode>(nameNode)->getStringValue());
+                    }
+                    optionLayout->addWidget(new QLabel(optionName));
+
+                    QComboBox *combo = new QComboBox(optionWidget);
+
+                    ASTNode possiblesNode = optionDecl->getPropertyValue("possibleValues");
+                    ASTNode defaultNode = optionDecl->getPropertyValue("default");
+                    int defaultValue = 0;
+                    if (systemConfig.overrides["all"].contains(QString::fromStdString(optionDecl->getName()))) {
+                        defaultValue = systemConfig.overrides["all"][QString::fromStdString(optionDecl->getName())].toInt();
+                    } else { // Use default
+                        if (defaultNode && defaultNode->getNodeType() == AST::Int) {
+                            defaultValue = static_pointer_cast<ValueNode>(defaultNode)->getIntValue();
+                        }
+                    }
+                    int defaultIndex = 0;
+                    if (possiblesNode && possiblesNode->getNodeType() == AST::List) {
+                        std::shared_ptr<ListNode> list = static_pointer_cast<ListNode>(possiblesNode);
+                        for(ASTNode member : list->getChildren()) {
+                            if (member && member->getNodeType() == AST::Int) {
+                                combo->addItem(QString::number(static_pointer_cast<ValueNode>(member)->getIntValue()));
+                                if (defaultValue == static_pointer_cast<ValueNode>(member)->getIntValue()) {
+                                    defaultIndex = combo->count() - 1;
+                                }
+                            }
+
+                        }
+                    }
+                    if (defaultNode || systemConfig.overrides["all"].contains(QString::fromStdString(optionDecl->getName()))) {
+                        combo->setCurrentIndex(defaultIndex);
+                    }
+                    optionLayout->addWidget(combo);
+                    overrideIntComboBoxes[QString::fromStdString(optionDecl->getName())] = combo;
+                }
+
+            }
+            optionWidget->setLayout(optionLayout);
+            groupLayout->addWidget(optionWidget);
+        }
+        groupBox->setLayout(groupLayout);
+        mainLayout->addWidget(groupBox);
+    }
+
+
+    QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
+                                     | QDialogButtonBox::Cancel);
+    connect(buttonBox, SIGNAL(accepted()), &optionsDialog, SLOT(accept()));
+    connect(buttonBox, SIGNAL(rejected()), &optionsDialog, SLOT(reject()));
+    mainLayout->addWidget(buttonBox);
+
+    optionsDialog.setLayout(mainLayout);
+    optionsDialog.exec();
+
+    if (optionsDialog.result() == QDialog::Accepted) {
+        for(auto comboBoxInfo = comboBoxes.constBegin(); comboBoxInfo != comboBoxes.constEnd(); ++comboBoxInfo) {
+            systemConfig.platformConfigurations["all"][comboBoxInfo.key()] = comboBoxInfo.value()->currentText();
+        }
+        for(auto comboBoxInfo = intComboBoxes.constBegin(); comboBoxInfo != intComboBoxes.constEnd(); ++comboBoxInfo) {
+            systemConfig.platformConfigurations["all"][comboBoxInfo.key()] = comboBoxInfo.value()->currentText().toInt();
+        }
+        for(auto spinBoxInfo = spinBoxes.constBegin(); spinBoxInfo != spinBoxes.constEnd(); ++spinBoxInfo) {
+            systemConfig.platformConfigurations["all"][spinBoxInfo.key()] = spinBoxInfo.value()->value();
+        }
+
+        for(auto comboBoxInfo = overrideComboBoxes.constBegin(); comboBoxInfo != overrideComboBoxes.constEnd(); ++comboBoxInfo) {
+            systemConfig.overrides["all"][comboBoxInfo.key()] = comboBoxInfo.value()->currentText();
+        }
+        for(auto comboBoxInfo = overrideIntComboBoxes.constBegin(); comboBoxInfo != overrideIntComboBoxes.constEnd(); ++comboBoxInfo) {
+            systemConfig.overrides["all"][comboBoxInfo.key()] = comboBoxInfo.value()->currentText().toInt();
+        }
+        for(auto spinBoxInfo = overrideSpinBoxes.constBegin(); spinBoxInfo != overrideSpinBoxes.constEnd(); ++spinBoxInfo) {
+            systemConfig.overrides["all"][spinBoxInfo.key()] = spinBoxInfo.value()->value();
+        }
+        // Write configuration to file
+        CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+        QFile configFile(editor->filename() + ".config");
+
+        if (!configFile.open(QIODevice::WriteOnly)) {
+            qDebug() << "Error opening code file for writing!";
+    //        throw;
+            return;
+        }
+        configFile.write("config Test {\n");
+        for(auto option = systemConfig.platformConfigurations["all"].constBegin(); option != systemConfig.platformConfigurations["all"].constEnd(); ++option) {
+            QString optionName = option.key();
+            // TODO more robust capitalization
+            if (optionName[0] == "_") {
+                optionName[1] = optionName[1].toLower();
+            } else {
+                optionName[0] = optionName[0].toLower();
+            }
+            configFile.write("    ");
+            configFile.write(optionName.toLocal8Bit());
+            configFile.write(": ");
+            if (option.value().type() == QVariant::String) {
+                configFile.write("\"");
+                configFile.write(option.value().toByteArray());
+                configFile.write("\"");
+            } else {
+                configFile.write(option.value().toString().toLocal8Bit());
+            }
+            configFile.write("\n");
+        }
+        configFile.write("}\n");
+        configFile.write("override Test {\n");
+        for(auto option = systemConfig.overrides["all"].constBegin(); option != systemConfig.overrides["all"].constEnd(); ++option) {
+            QString optionName = option.key();
+            // TODO more robust capitalization
+            if (optionName[0] == "_") {
+                optionName[1] = optionName[1].toLower();
+            } else {
+                optionName[0] = optionName[0].toLower();
+            }
+            configFile.write("    ");
+            configFile.write(optionName.toLocal8Bit());
+            configFile.write(": ");
+            if (option.value().type() == QVariant::String) {
+                configFile.write("\"");
+                configFile.write(option.value().toByteArray());
+                configFile.write("\"");
+            } else {
+                configFile.write(option.value().toString().toLocal8Bit());
+            }
+            configFile.write("\n");
+        }
+        configFile.write("}\n");
+        configFile.close();
+    }
+
 }
 
 void ProjectWindow::closeEvent(QCloseEvent *event)

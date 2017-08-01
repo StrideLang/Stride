@@ -299,7 +299,7 @@ void PythonProject::astToJson(ASTNode node, QJsonObject &obj)
     } else if (node->getNodeType() == AST::BundleDeclaration) {
         DeclarationNode *block = static_cast<DeclarationNode *>(node.get());
         QJsonObject newObject;
-        BundleNode *bundle = block->getBundle();
+        std::shared_ptr<BundleNode> bundle = block->getBundle();
         newObject["name"] = QString::fromStdString(bundle->getName());
         newObject["type"] = QString::fromStdString(block->getObjectType());
         vector<string> nsList = block->getNamespaceList();

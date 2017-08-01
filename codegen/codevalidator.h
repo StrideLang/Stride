@@ -37,10 +37,13 @@
 
 #include <QString>
 #include <QVector>
+#include <QMap>
+#include <QVariant>
 
 #include "strideparser.h"
 #include "porttypes.h"
 #include "stridesystem.hpp"
+#include "systemconfiguration.hpp"
 
 class CodeValidator
 {
@@ -52,7 +55,8 @@ public:
         USE_TESTING = 0x02,
     } Options;
 
-    CodeValidator(QString striderootDir, ASTNode tree = nullptr, Options options = NO_OPTIONS);
+    CodeValidator(QString striderootDir, ASTNode tree = nullptr, Options options = NO_OPTIONS,
+                  SystemConfiguration systemConfig = SystemConfiguration());
     ~CodeValidator();
 
     bool isValid();
@@ -61,7 +65,7 @@ public:
     QList<LangError> getErrors();
     QStringList getPlatformErrors();
 
-    StrideSystem *getSystem();
+    std::shared_ptr<StrideSystem> getSystem();
 
     static std::shared_ptr<DeclarationNode> findDeclaration(QString streamMemberName, QVector<ASTNode> scopeStack, ASTNode tree,
                                             vector<string> scope = vector<string>(), vector<string> defaultNamespaces = vector<string>());
@@ -167,10 +171,11 @@ private:
 
     QString getNodeText(ASTNode node);
 
-    StrideSystem * m_system;
+    std::shared_ptr<StrideSystem> m_system;
     ASTNode m_tree;
     QList<LangError> m_errors;
     Options m_options;
+    SystemConfiguration m_systemConfig;
 };
 
 #endif // CODEGEN_H

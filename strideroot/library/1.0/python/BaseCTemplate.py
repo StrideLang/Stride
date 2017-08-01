@@ -622,10 +622,11 @@ public:
             if len(input_declaration) > 0:
                 input_declaration = input_declaration[:-2]
 
+
             internal_loop = self.str_while_declaration%(condition, domain_proc_code)
 
             process_functions += self.str_function_declaration%(out_type, name + '_process_' + str(domain),
-                                                                input_declaration, internal_loop)
+                                                                input_declaration, header_code + init_code + internal_loop)
 #
 #        for const_name, props in instance_consts.items():
 #            constructor_args += "float _" + const_name + ","

@@ -48,8 +48,6 @@ import shutil
 import os
 from strideplatform import GeneratorBase
 
-from platformTemplates import templates # Perhaps we should acces this through PlatformFunctions ?
-
 class ExternalProcess(object):
     def __init__(self):
         self.stdoutqueue = Queue()
@@ -139,6 +137,27 @@ class Generator(GeneratorBase):
             os.mkdir(self.out_dir)
         self.log("Building RtAudio project")
         self.log("Buiding in directory: " + self.out_dir)
+
+        decl = self.platform.find_declaration_in_tree("AudioRate")
+        if decl:
+            self.templates.properties['sample_rate'] = decl['value']
+        else:
+            self.templates.properties['sample_rate'] = 44100
+
+        decl = self.platform.find_declaration_in_tree("_NumInputChannels")
+        if decl:
+            self.templates.properties['num_in_channels'] = decl['value']
+        else:
+            self.templates.properties['num_in_channels'] = 0
+
+        decl = self.platform.find_declaration_in_tree("_NumOutputChannels")
+        if decl:
+            self.templates.properties['num_out_channels'] = decl['value']
+        else:
+            self.templates.properties['num_out_channels'] = 0
+
+        self.templates.properties['audio_device'] = 0
+        self.templates.properties['block_size'] = 512
 
 
     def generate_code(self):

@@ -1,0 +1,12 @@
+use DesktopAudio version 1.0
+
+import Generators
+
+signal Val1 {default: 0.1}
+signal Val2 {default: 0.2}
+signal Val3 {default: 0.4}
+
+[Val1, Val2, Val3] >> Bundle;
+
+Bundle[1] >> AudioOut[1];
+Bundle[2] + Bundle[3] >> AudioOut[2];

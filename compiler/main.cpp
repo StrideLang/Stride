@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
             }
             return -1;
         }
-        StrideSystem *platform = validator.getSystem();
+        std::shared_ptr<StrideSystem> platform = validator.getSystem();
 
         QFileInfo info(fileName);
         QString dirName = info.absolutePath() + QDir::separator()
