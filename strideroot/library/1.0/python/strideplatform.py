@@ -654,7 +654,7 @@ class NameAtom(Atom):
                                  self.handle,
                                  self)]
         elif 'type' in self.declaration and self.declaration['type'] == 'switch':
-            inits = [Instance(templates.str_true if default_value['value'] else templates.str_false,
+            inits = [Instance(templates.str_true if default_value else templates.str_false,
                              self.declaration['stack_index'],
                              self.domain,
                              'bool',
@@ -805,28 +805,67 @@ class NameAtom(Atom):
 
 
     def _get_default_value(self):
-        if 'default' in self.declaration:
-            if type(self) == NameAtom:
-                default_value = self.declaration['default']
-            elif type(self) == BundleAtom:
-                if type(self.declaration['default']) == list:
-                    default_value = [value['value'] for value in self.declaration['default']]
+        if self.declaration['type'] == "signal":
+            if 'default' in self.declaration:
+                if type(self) == NameAtom:
+                    default_value = self.declaration['default']
+                elif type(self) == BundleAtom:
+                    if type(self.declaration['default']) == list:
+                        default_value = [value['value'] for value in self.declaration['default']]
+                    else:
+                        default_value = [self.declaration['default'] for i in range(self.declaration['size'])]
+            elif 'block' in self.platform_type:
+                if 'default' in self.platform_type['block']:
+                    default_value = self.platform_type['block']['default'] # FIXME inheritance is not being handled here
                 else:
-                    default_value = [self.declaration['default'] for i in range(self.declaration['size'])]
-        elif 'block' in self.platform_type:
-            if 'default' in self.platform_type['block']:
-                default_value = self.platform_type['block']['default'] # FIXME inheritance is not being handled here
+                    default_value = 0.0
+            elif 'blockbundle' in self.platform_type:
+                #Stride definition
+                if 'default' in self.platform_type['blockbundle']:
+                    default_value = self.platform_type['blockbundle']['default']
+                else:
+                    default_value = 0.0
             else:
+                print("Forced default value to 0 for " + self.handle)
                 default_value = 0.0
-        elif 'blockbundle' in self.platform_type:
-            #Stride definition
-            if 'default' in self.platform_type['blockbundle']:
-                default_value = self.platform_type['blockbundle']['default']
+        elif self.declaration['type'] == "constant":
+                if type(self) == NameAtom:
+                    default_value = self.declaration['value']
+                elif type(self) == BundleAtom:
+                    if type(self.declaration['value']) == list:
+                        default_value = [value['value'] for value in self.declaration['value']]
+                    else:
+                        default_value = [self.declaration['value'] for i in range(self.declaration['size'])]
+        elif self.declaration['type'] == "switch":
+            if 'default' in self.declaration:
+                if type(self) == NameAtom:
+                    default_value = self.declaration['default']['value']
+                elif type(self) == BundleAtom:
+                    if type(self.declaration['default']) == list:
+                        default_value = [value['value'] for value in self.declaration['default']]
+                    else:
+                        default_value = [self.declaration['default'] for i in range(self.declaration['size'])]
+            elif 'block' in self.platform_type:
+                if 'default' in self.platform_type['block']:
+                    default_value = self.platform_type['block']['default'] # FIXME inheritance is not being handled here
+                else:
+                    default_value = False
+            elif 'blockbundle' in self.platform_type:
+                #Stride definition
+                if 'default' in self.platform_type['blockbundle']:
+                    default_value = self.platform_type['blockbundle']['default']
+                else:
+                    default_value = False
             else:
-                default_value = 0.0
+                print("Forced default value to False for " + self.handle)
+                default_value = False
         else:
-            print("Forced default value to 0 for " + self.handle)
-            default_value = 0.0
+            if 'size' in self.declaration:
+                default_value = [0.0 for i in range(self.declaration['size'])]
+                print("Forced default value to 0 for " + self.handle)
+            else:
+                default_value = 0.0
+                print("Forced default value to 0 for " + self.handle)
         return default_value
 
 
