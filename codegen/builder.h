@@ -38,6 +38,8 @@
 #include <QObject>
 #include <QString>
 #include <QLibrary>
+#include <QMap>
+#include <QVariant>
 
 #include "ast.h"
 
@@ -62,6 +64,7 @@ public:
           m_platformPath(platformPath) {}
     virtual ~Builder() {}
 
+    void setConfiguration(QMap<QString, QVariant> config) { m_configuration = config; }
     QString getPlatformPath() {return m_platformPath;}
     QString getStdErr() const {return m_stdErr;}
     QString getStdOut() const {return m_stdOut;}
@@ -83,9 +86,9 @@ protected:
     QString m_platformPath;
     QString m_stdOut;
     QString m_stdErr;
+    QMap<QString, QVariant> m_configuration;
 
 private:
-
     PluginInterface m_interface;
     QLibrary *m_pluginLibrary;
     Builder *m_project;

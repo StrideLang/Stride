@@ -183,6 +183,7 @@ bool ProjectWindow::build()
         }
         buildOK = true;
         for (auto builder: m_builders) {
+            builder->setConfiguration(systemConfig.platformConfigurations["all"]);
             connect(builder, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
             connect(builder, SIGNAL(errorText(QString)), this, SLOT(printConsoleError(QString)));
             connect(builder, SIGNAL(programStopped()), this, SLOT(programStopped()));

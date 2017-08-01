@@ -138,6 +138,7 @@ class Generator(GeneratorBase):
         self.log("Building RtAudio project")
         self.log("Buiding in directory: " + self.out_dir)
 
+        # Configuration from stride code
         decl = self.platform.find_declaration_in_tree("AudioRate")
         if decl:
             self.templates.properties['sample_rate'] = decl['value']
@@ -148,16 +149,30 @@ class Generator(GeneratorBase):
         if decl:
             self.templates.properties['num_in_channels'] = decl['value']
         else:
-            self.templates.properties['num_in_channels'] = 0
+            self.templates.properties['num_in_channels'] = 2
 
+        # TODO: The number of input channels should determine if channel stream gets opened at all
         decl = self.platform.find_declaration_in_tree("_NumOutputChannels")
         if decl:
             self.templates.properties['num_out_channels'] = decl['value']
         else:
-            self.templates.properties['num_out_channels'] = 0
+            self.templates.properties['num_out_channels'] = 2
 
-        self.templates.properties['audio_device'] = 0
-        self.templates.properties['block_size'] = 512
+        # Additional platform config from config.json
+        if self.config and 'RtAudioAPI' in self.config:
+            self.templates.properties['rtaudio_api'] = self.config['RtAudioAPI']
+        else:
+            self.templates.properties['rtaudio_api'] = 'alsa'
+
+        if self.config and 'DeviceIndex' in self.config:
+            self.templates.properties['audio_device'] = self.config['DeviceIndex']
+        else:
+            self.templates.properties['audio_device'] = 0
+
+        if self.config and 'BlockSize' in self.config:
+            self.templates.properties['block_size'] = self.config['BlockSize']
+        else:
+            self.templates.properties['block_size'] = 512
 
 
     def generate_code(self):
@@ -261,7 +276,9 @@ class Generator(GeneratorBase):
             modules = []
             if os.path.exists(self.out_dir + "/rtaudio/RtAudio.cpp"):
                 source_files.append(self.out_dir + "/rtaudio/RtAudio.cpp")
-                modules = ['alsa']
+                modules = self.templates.properties['rtaudio_api']
+#                modules = ['alsa']
+
 
             cpp_compiler = "/usr/bin/g++"
 

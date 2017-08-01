@@ -86,6 +86,15 @@ bool PythonProject::build(ASTNode tree)
             return false;
         }
     }
+    // Write configuration file to json
+    QJsonDocument configJson = QJsonDocument::fromVariant(m_configuration);
+    QFile configFile(m_projectDir + QDir::separator() + "config.json");
+    if (configFile.open(QIODevice::WriteOnly)) {
+        configFile.write(configJson.toJson());
+        configFile.close();
+    }
+
+    // Start Build
     m_stdErr.clear();
     m_stdOut.clear();
     m_buildProcess.setWorkingDirectory(m_strideRoot);

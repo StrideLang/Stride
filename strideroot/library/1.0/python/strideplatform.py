@@ -2913,6 +2913,8 @@ class PlatformFunctions:
 # ----------------------------------------------------------
 from subprocess import check_output as ck_out
 import platform
+import os
+import json
 
 class GeneratorBase(object):
     def __init__(self, out_dir = '',
@@ -2925,6 +2927,12 @@ class GeneratorBase(object):
         self.strideroot = strideroot
         self.platform_dir = platform_dir
         self.tree = tree
+
+        if os.path.exists(out_dir + "/config.json"):
+            configfile = open(out_dir + "/config.json")
+            self.config = json.load(configfile)
+        else:
+            self.config = {}
 
         self.templates = templates
         self.platform = PlatformFunctions(self.tree, debug)
