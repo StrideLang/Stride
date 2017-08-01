@@ -479,7 +479,7 @@ void ParserTest::testConnectionErrors()
     CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree, CodeValidator::NO_RATE_VALIDATION);
 
     QList<LangError> errors = generator.getErrors();
-
+    QVERIFY(errors.size() > 0);
     LangError error = errors.at(0);
     QVERIFY(error.type == LangError::StreamMemberSizeMismatch);
 }
@@ -1100,7 +1100,7 @@ void ParserTest::testStreamExpansion()
     std::shared_ptr<DeclarationNode> decl = CodeValidator::findDeclaration("OutSignal2", QVector<ASTNode>(), tree);
 
     QVERIFY(decl->getNodeType() == AST::BundleDeclaration);
-    bundle = decl->getBundle();
+    bundle = decl->getBundle().get();
     index = bundle->index().get();
 
     QVERIFY(index->getNodeType() == AST::List);
@@ -1473,7 +1473,7 @@ void ParserTest::testValueTypeBundleResolution()
     QVERIFY(nodes.at(1)->getNodeType() == AST::BundleDeclaration);
     DeclarationNode *block = static_cast<DeclarationNode *>(nodes.at(1).get());
     QVERIFY(block->getObjectType() == "constant");
-    BundleNode *bundle = block->getBundle();
+    std::shared_ptr<BundleNode> bundle = block->getBundle();
     QVERIFY(bundle->getName() == "Integers");
     ListNode *index = static_cast<ListNode *>(bundle->index().get());
     QVERIFY(index->getNodeType() == AST::List);
@@ -2121,7 +2121,7 @@ void ParserTest::testBundleIndeces()
     block = static_cast<DeclarationNode *>(nodes.at(1).get());
     QVERIFY(block->getObjectType() == "constant");
     QVERIFY(block->getLine() == 13);
-    BundleNode *bundle = block->getBundle();
+    BundleNode *bundle = block->getBundle().get();
     QVERIFY(bundle->getName() == "SIZE");
     QVERIFY(bundle->getChildren().size() == 1);
     QVERIFY(bundle->getLine() == 13);
@@ -2161,7 +2161,7 @@ void ParserTest::testBundleIndeces()
     QVERIFY(block->getNodeType() == AST::BundleDeclaration);
     QVERIFY(block->getObjectType() == "constant");
     QVERIFY(block->getLine() == 23);
-    bundle = block->getBundle();
+    bundle = block->getBundle().get();
     QVERIFY(bundle->getName() == "Array_Parens");
     QVERIFY(bundle->getChildren().size() == 1);
     indexList = bundle->index().get();
@@ -2182,7 +2182,7 @@ void ParserTest::testBundleIndeces()
     QVERIFY(block->getNodeType() == AST::BundleDeclaration);
     QVERIFY(block->getLine() == 26);
     QVERIFY(block->getObjectType() == "constant");
-    bundle = block->getBundle();
+    bundle = block->getBundle().get();
     QVERIFY(bundle->getName() == "Array_Expr");
     QVERIFY(bundle->getLine() == 26);
     QVERIFY(bundle->getChildren().size() == 1);
@@ -2220,7 +2220,7 @@ void ParserTest::testBundleIndeces()
     QVERIFY(block->getNodeType() == AST::BundleDeclaration);
     QVERIFY(block->getObjectType() == "constant");
     QVERIFY(block->getLine() == 27);
-    bundle = block->getBundle();
+    bundle = block->getBundle().get();
     QVERIFY(bundle->getName() == "Array_Expr2");
     QVERIFY(bundle->getChildren().size() == 1);
     QVERIFY(bundle->getLine() == 27);
@@ -2637,7 +2637,7 @@ void ParserTest::testBasicBundle()
     QVERIFY(block->getNodeType() == AST::BundleDeclaration);
     QVERIFY(block->getObjectType() == "constant");
     QVERIFY(block->getLine() == 5);
-    BundleNode *bundle = block->getBundle();
+    std::shared_ptr<BundleNode> bundle = block->getBundle();
     QVERIFY(bundle->getName() == "Integer");
     QVERIFY(bundle->getLine() == 5);
     QVERIFY(bundle->getChildren().size() == 1);
