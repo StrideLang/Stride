@@ -1,44 +1,10 @@
 platformType _DebugPrintType {
     typeName: '_debugPrintType'
-    inputs: ["any"]
+    inputs: ["real"]
     include: ["iostream"]
 #    linkTo: []
 #    declarations: ['']
 #    initialization: [" "]
     processing: "std::cout << %%intoken:0%% << std::endl;"
     inherits: ['signal']
-}
-
-
-module DebugPrint {
-    input: Value
-    output: none
-	ports: [
-		port ValueProperty {
-			name: "value"
-			block: Value
-		}
-	]
-    blocks: [
-		switch Trigger {},
-		signal Null { default: ""},
-		signal Value { default: ""},
-		reaction Print {
-#			properties: [
-#			]
-#		onExecution:
-#		terminateWhen:
-			blocks: [
-				signal PrintValue {},
-     		   _debugPrintType DebugPrintBlock {}
-			]
-			streams: [
-				Value >> DebugPrintBlock;
-			]
-		}
-    ]
-    streams: [
-		Trigger >> Print();
-    ]
-    meta: ""
 }

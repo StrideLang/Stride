@@ -1,0 +1,28 @@
+module DebugPrint {
+	ports: [
+		mainInputPort ValueProperty {
+			name: "value"
+			block: Value
+		}
+		propertyInputPort Trigger {
+			name: "trigger"
+			block: Trigger
+		}
+	]
+    blocks: [
+		signal Value { default: 0.0 },
+		switch Trigger { default: on },
+		reaction Print {
+			blocks: [
+     		   _debugPrintType DebugPrintBlock {}
+			]
+			streams: [
+				Value >> DebugPrintBlock;
+			]
+		}
+    ]
+    streams: [
+		Trigger >> Print();
+    ]
+    meta: ""
+}
