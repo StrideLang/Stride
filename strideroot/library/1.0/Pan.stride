@@ -1,29 +1,25 @@
 
 module Pan {
 	ports: [
-    port OutputPort {
-        name:       'output'
-        main: on
-        block: Output
-        direction:  'output'
-    },
-    port InputPort {
-        name:       'input'
-        main: on
-        direction:  'input'
-    },
-		port PositionProperty {
+		mainOutputPort OutputPort {
+			name:       'output'
+			block: Output
+		},
+		mainInputPort InputPort {
+			name:       'input'
+			block: Input
+			},
+		propertyInputPort PositionPort {
 			name: "position"
 			block: Position
-			domain: PositionDomain
 			meta: "Sets the panning position with range [-1, 1]."
 		}
 
 	]
 	blocks: [
 		signal Output[2] {},
-		signal GainLeft {domain: PositionDomain},
-		signal GainRight {domain: PositionDomain}
+		signal GainLeft {domain: PositionPort.domain},
+		signal GainRight {domain: PositionPort.domain}
 	]
 	streams: [
 		(Position + 1) /2 >> GainRight;

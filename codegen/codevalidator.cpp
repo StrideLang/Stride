@@ -157,6 +157,12 @@ QVector<ASTNode > CodeValidator::getBlocksInScope(ASTNode root, QVector<ASTNode 
         if (declaration) {
             blocks = getBlocksInScope(declaration, scopeStack, tree);
         }
+    }  else if (root->getNodeType() == AST::Bundle) {
+        std::shared_ptr<BundleNode> name = static_pointer_cast<BundleNode>(root);
+        std::shared_ptr<DeclarationNode> declaration = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scopeStack, tree);
+        if (declaration) {
+            blocks = getBlocksInScope(declaration, scopeStack, tree);
+        }
     } else {
         foreach(ASTNode  child, root->getChildren()) {
             blocks << getBlocksInScope(child, scopeStack, tree);
@@ -291,7 +297,7 @@ double CodeValidator::getNodeRate(ASTNode node, QVector<ASTNode> scope, ASTNode 
             double elementRate = CodeValidator::getNodeRate(element, scope, tree);
             if (elementRate != -1.0) {
                 if (rate != elementRate) {
-                    qDebug() << "Warning: List has different rates!";
+//                    qDebug() << "Warning: List has different rates!";
                 }
                 rate = elementRate;
             }
@@ -1967,17 +1973,17 @@ int CodeValidator::numParallelStreams(StreamNode *stream, StrideSystem &platform
     int rightSize = 0;
 
     if (left->getNodeType() == AST::Block) {
-        leftSize = getNodeSize(left, tree);
+        leftSize = getNodeSize(left, scope, tree);
     } else if (left->getNodeType() == AST::List) {
-        leftSize = getNodeSize(left, tree);
+        leftSize = getNodeSize(left, scope, tree);
     } else {
         leftSize = getNodeNumOutputs(left, scope, tree, errors);
     }
     if (right->getNodeType() == AST::Block
             || right->getNodeType() == AST::List) {
-        rightSize = getNodeSize(right, tree);
+        rightSize = getNodeSize(right, scope, tree);
     } else if (right->getNodeType() == AST::Function) {
-        int functionNodeSize = getNodeSize(right, tree);
+        int functionNodeSize = getNodeSize(right, scope, tree);
         if (functionNodeSize == 1) {
             rightSize = leftSize;
         }
@@ -1988,12 +1994,12 @@ int CodeValidator::numParallelStreams(StreamNode *stream, StrideSystem &platform
         ASTNode firstMember = rightStream->getLeft();
         if (firstMember->getNodeType() == AST::Block
                 || firstMember->getNodeType() == AST::List) {
-            rightSize = getNodeSize(firstMember, tree);
+            rightSize = getNodeSize(firstMember, scope, tree);
         } else {
             rightSize = getNodeNumInputs(firstMember, scope, tree, errors);
         }
         if (firstMember->getNodeType() == AST::Function) {
-            int functionNodeSize = getNodeSize(firstMember, tree);
+            int functionNodeSize = getNodeSize(firstMember, scope, tree);
             if (functionNodeSize == 1) {
                 rightSize = getNodeNumInputs(firstMember, scope, tree, errors);;
             } else {
@@ -2031,7 +2037,7 @@ int CodeValidator::numParallelStreams(StreamNode *stream, StrideSystem &platform
     return numParallel;
 }
 
-int CodeValidator::getNodeSize(ASTNode node, ASTNode tree)
+int CodeValidator::getNodeSize(ASTNode node, QVector<ASTNode> &scopeStack, ASTNode tree)
 {
     int size = 1;
     if (node->getNodeType() == AST::Bundle) {
@@ -2047,10 +2053,10 @@ int CodeValidator::getNodeSize(ASTNode node, ASTNode tree)
     } else if (node->getNodeType() == AST::Expression) {
         ExpressionNode * expr = static_cast<ExpressionNode *>(node.get());
         if (expr->isUnary()) {
-            return getNodeSize(expr->getValue(), tree);
+            return getNodeSize(expr->getValue(), scopeStack, tree);
         } else {
-            int leftSize = getNodeSize(expr->getLeft(), tree);
-            int rightSize = getNodeSize(expr->getLeft(), tree);
+            int leftSize = getNodeSize(expr->getLeft(), scopeStack, tree);
+            int rightSize = getNodeSize(expr->getLeft(), scopeStack, tree);
             if (leftSize == rightSize) {
                 return leftSize;
             } else {
@@ -2059,7 +2065,7 @@ int CodeValidator::getNodeSize(ASTNode node, ASTNode tree)
         }
     } else if (node->getNodeType() == AST::Block) {
         BlockNode *blockNode = static_cast<BlockNode *>(node.get());
-        std::shared_ptr<DeclarationNode> block = findDeclaration(QString::fromStdString(blockNode->getName()), QVector<ASTNode >(), tree);
+        std::shared_ptr<DeclarationNode> block = findDeclaration(QString::fromStdString(blockNode->getName()), scopeStack, tree);
         if (!block) {
             size = -1; // Block not declared
         } else if (block->getNodeType() == AST::BundleDeclaration) {
@@ -2078,7 +2084,7 @@ int CodeValidator::getNodeSize(ASTNode node, ASTNode tree)
         size = node->getChildren().size();
     } else if (node->getNodeType() == AST::Stream) {
         StreamNode *st = static_cast<StreamNode *>(node.get());
-        size = getNodeSize(st->getLeft(), tree);
+        size = getNodeSize(st->getLeft(), scopeStack, tree);
     }
 
     return size;
@@ -2163,7 +2169,8 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, QVector<ASTNode > scopeStack,
                 if (declaration) {
                     tempDomainName = CodeValidator::getNodeDomainName(declaration, scopeStack, tree);
                 }
-            } if (member->getNodeType() == AST::Int
+            }
+            if (member->getNodeType() == AST::Int
                   || member->getNodeType() == AST::Real
                   || member->getNodeType() == AST::String
                   || member->getNodeType() == AST::Switch) {

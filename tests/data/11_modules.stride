@@ -14,19 +14,13 @@ module SizeTest {
         }
     ]
     blocks:         [
-        signal Input [InputPortSize] {
-            rate:       InputPort.rate
-            domain:     InputPort.domain
-        },
-        signal Output [OutputPortSize] {
-            rate:       OutputPort.rate
-            domain:     OutputPort.domain
-        }
+        signal Input [InputPortSize] {},
+        signal Output [OutputPortSize] {}
         constant InputPortSize { value: 3}
         constant OutputPortSize {value: 2}
     ]
     streams: [
-                Input[1] >> Input[InputPortSize];
+                Input[2] >> Output[3];
         ]
 }
 

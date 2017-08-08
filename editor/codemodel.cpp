@@ -166,7 +166,6 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
         std::shared_ptr<DeclarationNode> declaration = CodeValidator::findDeclaration(symbol, QVector<ASTNode>(), m_lastValidTree);
         if (declaration) {
             AST *metaValue = declaration->getPropertyValue("meta").get();
-            Q_ASSERT(metaValue);
             if (metaValue) {
                 Q_ASSERT(metaValue->getNodeType() == AST::String);
                 QString docHtml = "<h1>" + symbol + "</h1>\n";

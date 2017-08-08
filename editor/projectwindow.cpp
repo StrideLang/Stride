@@ -697,6 +697,7 @@ void ProjectWindow::loadFile(QString fileName)
     setEditorText(codeFile.readAll());
     editor->setFilename(QFileInfo(fileName).absoluteFilePath());
     updateCodeAnalysis();
+    qApp->processEvents();
     editor->markChanged(false);
     ui->tabWidget->setTabText(ui->tabWidget->currentIndex(),
                               QFileInfo(fileName).fileName());

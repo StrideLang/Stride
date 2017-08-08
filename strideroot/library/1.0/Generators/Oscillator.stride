@@ -5,7 +5,7 @@ module Oscillator {
 			block: Output
 #			domain: OutputDomain
 		}
-		propertyInputPort FrequencyProperty {
+		propertyInputPort FrequencyPort {
 			name: "frequency"
 			block: Frequency
 			default: 440.0
@@ -60,11 +60,11 @@ module Oscillator {
         signal Phase {
             default :       0.0
 			reset: Reset
-			domain: OutputDomain
+			domain: OutputPort.domain
 		}
         signal PhaseInc {
 			default :       0.0
-			domain: FrequencyDomain
+			domain: FrequencyPort.domain
 		}
         _sineType SineBlock {}
 		reaction WrapPhase {

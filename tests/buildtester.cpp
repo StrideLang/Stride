@@ -113,6 +113,9 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile)
                  for(int i = 0; i < 7; i++) {
                      outputLines.pop_front(); // Hack to remove initial text
                  }
+                 if (outputLines.size() <  10) {
+                     return false; // too few lines
+                 }
 
                  int counter = 0;
                  while (!expectedResult.atEnd() && !(counter >= outputLines.size())) {

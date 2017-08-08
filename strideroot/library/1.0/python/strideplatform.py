@@ -552,9 +552,14 @@ class NameAtom(Atom):
 
         if self.declaration['type'] == "signalbridge":
             if not previous_atom:
-                self.domain = self.declaration['outputDomain']
+                domainProp = self.declaration['outputDomain']
             else:
-                self.domain = self.declaration['inputDomain']
+                domainProp = self.declaration['inputDomain']
+
+            if type(domainProp) == dict:
+                self.domain = domainProp['name']['name']
+            else:
+                self.domain = domainProp
 
         if self.declaration['type'] == 'signal':
             # TODO we need checking of scope and domain here
@@ -805,7 +810,7 @@ class NameAtom(Atom):
 
 
     def _get_default_value(self):
-        if self.declaration['type'] == "signal":
+        if self.declaration['type'] == "signal" or self.declaration['type'] == "signalbridge":
             if 'default' in self.declaration:
                 if type(self) == NameAtom:
                     default_value = self.declaration['default']
@@ -828,6 +833,10 @@ class NameAtom(Atom):
             else:
                 print("Forced default value to 0 for " + self.handle)
                 default_value = 0.0
+            if type(default_value) == dict:
+                # FIXME this is a hoack while we decide how to handle boolean bridge signals
+                default_value = 1 if default_value['value'] else 0
+
         elif self.declaration['type'] == "constant":
                 if type(self) == NameAtom:
                     default_value = self.declaration['value']
@@ -839,7 +848,10 @@ class NameAtom(Atom):
         elif self.declaration['type'] == "switch":
             if 'default' in self.declaration:
                 if type(self) == NameAtom:
-                    default_value = self.declaration['default']['value']
+                    if type(self.declaration['default']['value']) == dict:
+                        default_value = self.declaration['default']['value']['value']
+                    else:
+                        default_value = self.declaration['default']['value']
                 elif type(self) == BundleAtom:
                     if type(self.declaration['default']) == list:
                         default_value = [value['value'] for value in self.declaration['default']]
@@ -958,7 +970,7 @@ class BundleAtom(NameAtom):
         else:
             decl = platform.find_declaration_in_tree(index)
             ## FIXME we need to get correct handle for index object
-            self.index = '(int)' + decl['name']
+            self.index = '(int)(' + decl['name'] + "-1)"
         self.set_inline(False)
 #        if not 'blockbundle' in self.platform_type and not 'platformType' in self.platform_type['block']['type']:
 #            raise ValueError("Need a block bundle platform type to make a Bundle Atom.")
@@ -1362,6 +1374,7 @@ class ModuleAtom(Atom):
                                 #if port_atom.
                                 if not module_port_domain in domain_proc_code:
                                     domain_proc_code[module_port_domain] = {'handles': []}
+                                code += templates.assignment(port_value.get_handles()[0], port_value.get_inline_processing_code(port_value.get_handles()))
                                 domain_proc_code[module_port_domain]['handles'] += port_value.get_handles()
                         pass
 
