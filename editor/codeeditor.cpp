@@ -67,6 +67,8 @@ CodeEditor::CodeEditor(QWidget *parent, CodeModel *codeModel) :
     connect(&m_mouseIdleTimer, SIGNAL(timeout()), this, SLOT(mouseIdleTimeout()));
     connect(&m_helperButton,SIGNAL(pressed()), this, SLOT(helperButtonClicked()));
     connect(this, SIGNAL(cursorPositionChanged()), this, SLOT(hideButton()));
+
+    m_toolTip.hide();
 }
 
 int CodeEditor::lineNumberAreaWidth()
@@ -198,12 +200,17 @@ void CodeEditor::updateAutoCompleteMenu(QString currentWord)
 {
     m_autoCompleteMenu.clear();
     QStringList functions = m_codeModel->getFunctions();
+    QAction *activeAction = nullptr;
     foreach(QString functionName, functions) {
         if (functionName.left(currentWord.size()) == currentWord) {
             QString syntaxText = m_codeModel->getFunctionSyntax(functionName);
             QAction *syntaxAction = m_autoCompleteMenu.addAction(functionName, this, SLOT(insertAutoComplete()));
             syntaxAction->setData(syntaxText);
+            if (!activeAction) { activeAction = syntaxAction; }
         }
+    }
+    if (activeAction) {
+        m_autoCompleteMenu.setActiveAction(activeAction);
     }
 //            m_autoCompleteMenu.setGeometry(20, 20, 50, 100);
 }
@@ -216,11 +223,12 @@ void CodeEditor::markChanged(bool changed)
 
 bool CodeEditor::eventFilter(QObject *obj, QEvent *event)
 {
+    // This function responds to events passed on from active auto complete menu
     if (m_autoComplete
             && obj == &m_autoCompleteMenu
             && event->type() == QEvent::KeyPress) {
         QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
-        qDebug("Ate key press %d", keyEvent->key());
+//        qDebug("Ate key press %d", keyEvent->key());
         QRegExp regex("\\w+");
         if (regex.indexIn(keyEvent->text()) >= 0) {
             this->insertPlainText(keyEvent->text());
@@ -229,6 +237,12 @@ bool CodeEditor::eventFilter(QObject *obj, QEvent *event)
             QString currentWord = cursor.selectedText();
             updateAutoCompleteMenu(currentWord);
             return true;
+        } else if (keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Tab) {
+            QAction *activeAction = this->m_autoCompleteMenu.activeAction();
+            if (activeAction) {
+                activeAction->trigger();
+            }
+            m_autoCompleteMenu.hide();
         } else {
             m_autoCompleteMenu.hide();
             return QObject::eventFilter(obj, event);
@@ -277,11 +291,12 @@ void CodeEditor::keyReleaseEvent(QKeyEvent *event)
         scopeLevel -= previousText.count("}") + previousText.count("]");
         for (int i = 0; i < scopeLevel; ++i) {
             if (m_IndentTabs) {
-                insertPlainText("\t");
+                cursor.insertText("\t");
             } else {
-                insertPlainText("    ");
+                cursor.insertText("    ");
             }
         }
+        setTextCursor(cursor);
     } else if (m_autoComplete && event->key() >= Qt::Key_A && event->key() <= Qt::Key_Z) {
         QTextCursor cursor = textCursor();
         cursor.select(QTextCursor::WordUnderCursor);

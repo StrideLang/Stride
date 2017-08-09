@@ -439,7 +439,9 @@ QString CodeModel::getFunctionSyntax(QString symbol)
                                     ValueNode * valueNode = static_cast<ValueNode *>(portDefaultNode);
                                     defaultValue = QString::fromStdString(valueNode->toString());
                                 }
-                                text += portName + ":" + defaultValue + " ";
+                                if (portName.size() > 0) {
+                                    text += portName + ":" + defaultValue + " ";
+                                }
                             }
                         }
                     }
