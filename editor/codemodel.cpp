@@ -91,7 +91,7 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
     QList<LangError> errors;
     if (symbol[0].toLower() == symbol[0]) {
         QMutexLocker locker(&m_validTreeLock);
-        std::shared_ptr<DeclarationNode> typeBlock = CodeValidator::findTypeDeclarationByName(symbol, QVector<ASTNode>(), m_lastValidTree, errors);
+        std::shared_ptr<DeclarationNode> typeBlock = CodeValidator::findTypeDeclarationByName(symbol.toStdString(), QVector<ASTNode>(), m_lastValidTree, errors);
         if (typeBlock) {
             AST *metaValue = typeBlock->getPropertyValue("meta").get();
             if (metaValue) {
@@ -317,7 +317,7 @@ QString CodeModel::getTooltipText(QString symbol)
         }
     } else { // word starts with lower case letter
         QList<LangError> errors;
-        std::shared_ptr<DeclarationNode> typeBlock = CodeValidator::findTypeDeclarationByName(symbol, QVector<ASTNode>(), m_lastValidTree, errors);
+        std::shared_ptr<DeclarationNode> typeBlock = CodeValidator::findTypeDeclarationByName(symbol.toStdString(), QVector<ASTNode>(), m_lastValidTree, errors);
         if (typeBlock) {
             text = "type: " + symbol;
 //            AST *metaValue = typeBlock->getPropertyValue("meta").get();

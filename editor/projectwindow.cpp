@@ -461,7 +461,10 @@ void ProjectWindow::showHelperMenu(QPoint where)
                         DeclarationNode *portBlock = static_cast<DeclarationNode *>(port.get());
                         ASTNode portName = portBlock->getPropertyValue("name");
                         if (portName && portName->getNodeType() == AST::String) {
-                            text += QString::fromStdString(static_cast<ValueNode *>(portName.get())->getStringValue()) + ":  ";
+                            string name =static_cast<ValueNode *>(portName.get())->getStringValue();
+                            if (name.size() > 0) {
+                                text += QString::fromStdString(name) + ":  ";
+                            }
                         }
                     }
                 }

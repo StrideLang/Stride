@@ -154,7 +154,7 @@ void CodeResolver::fillDefaultPropertiesForNode(ASTNode node)
         DeclarationNode *destBlock = static_cast<DeclarationNode *>(node.get());
         vector<std::shared_ptr<PropertyNode>> blockProperties = destBlock->getProperties();
         QVector<ASTNode> typeProperties = CodeValidator::getPortsForType(
-                    QString::fromStdString(destBlock->getObjectType()),
+                    destBlock->getObjectType(),
                     QVector<ASTNode>(), m_tree);
         if (typeProperties.isEmpty()) {
             qDebug() << "ERROR: fillDefaultProperties() No type definition for " << QString::fromStdString(destBlock->getObjectType());
@@ -740,7 +740,7 @@ void CodeResolver::insertBuiltinObjectsForNode(ASTNode node, map<string, vector<
                 vector<ASTNode > rootNamespace = it->second;
 
                 typeDeclaration = CodeValidator::findTypeDeclarationByName(
-                            QString::fromStdString(declaration->getObjectType()),
+                            declaration->getObjectType(),
                             QVector<ASTNode >::fromStdVector(rootNamespace), m_tree, errors,
                             declaration->getNamespaceList());
                 if (typeDeclaration && !blockList.contains(typeDeclaration)) {
@@ -748,9 +748,9 @@ void CodeResolver::insertBuiltinObjectsForNode(ASTNode node, map<string, vector<
                     blockList << typeDeclaration;
 
                     // Insert declaration for inherited types
-                    QStringList inheritedTypes = CodeValidator::getInheritedTypeNames(typeDeclaration, QVector<ASTNode >::fromStdVector(rootNamespace), m_tree);
+                    vector<string> inheritedTypes = CodeValidator::getInheritedTypeNames(typeDeclaration, QVector<ASTNode >::fromStdVector(rootNamespace), m_tree);
 
-                    for(QString typeName : inheritedTypes) {
+                    for(string &typeName : inheritedTypes) {
                         ASTNode existingDeclaration = CodeValidator::findTypeDeclarationByName(typeName, QVector<ASTNode >(), m_tree, errors);
                         if (!existingDeclaration) {
                             typeDeclaration = CodeValidator::findTypeDeclarationByName(typeName, QVector<ASTNode >::fromStdVector(rootNamespace), nullptr, errors);

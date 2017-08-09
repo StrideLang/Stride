@@ -85,16 +85,16 @@ public:
     static ASTNode getMemberFromList(ListNode *node, int index, QList<LangError> &errors);
     static std::shared_ptr<PropertyNode> findPropertyByName(vector<std::shared_ptr<PropertyNode> > properties, QString propertyName);
     static QVector<ASTNode > validTypesForPort(std::shared_ptr<DeclarationNode> typeDeclaration, QString portName, QVector<ASTNode > scope, ASTNode tree);
-    static std::shared_ptr<DeclarationNode> findTypeDeclarationByName(QString typeName, QVector<ASTNode > scopeStack, ASTNode tree,
+    static std::shared_ptr<DeclarationNode> findTypeDeclarationByName(string typeName, QVector<ASTNode > scopeStack, ASTNode tree,
                                                       QList<LangError> &errors,
                                                       std::vector<std::string> namespaces = std::vector<std::string>());
     static std::shared_ptr<DeclarationNode> findTypeDeclaration(DeclarationNode *block, QVector<ASTNode> scope, ASTNode tree, QList<LangError> &errors);
     static std::shared_ptr<DeclarationNode> findDomainDeclaration(string domainName, ASTNode tree);
 
     static QVector<ASTNode> getPortsForTypeBlock(std::shared_ptr<DeclarationNode> block, QVector<ASTNode> scope, ASTNode tree);
-    static QVector<ASTNode> getPortsForType(QString typeName, QVector<ASTNode> scope, ASTNode tree);
+    static QVector<ASTNode> getPortsForType(std::string typeName, QVector<ASTNode> scope, ASTNode tree);
     static QVector<ASTNode > getInheritedPorts(std::shared_ptr<DeclarationNode> block, QVector<ASTNode > scope, ASTNode tree);
-    static QStringList getInheritedTypeNames(std::shared_ptr<DeclarationNode> block, QVector<ASTNode > scope, ASTNode tree);
+    static vector<string> getInheritedTypeNames(std::shared_ptr<DeclarationNode> block, QVector<ASTNode > scope, ASTNode tree);
 
     static std::shared_ptr<DeclarationNode> getMainOutputPortBlock(std::shared_ptr<DeclarationNode> moduleBlock);
     static std::shared_ptr<DeclarationNode> getMainInputPortBlock(std::shared_ptr<DeclarationNode> moduleBlock);
@@ -134,8 +134,8 @@ public:
     static double getNodeRate(ASTNode node,  QVector<ASTNode> scope = QVector<ASTNode >(), ASTNode tree = nullptr);
     static void setNodeRate(ASTNode node, double rate,  QVector<ASTNode> scope = QVector<ASTNode >(), ASTNode tree = nullptr);
 
-    static double getDefaultForTypeAsDouble(QString type, QString port, QVector<ASTNode > scope, ASTNode tree);
-    static ASTNode getDefaultPortValueForType(QString type, QString portName, QVector<ASTNode > scope, ASTNode tree);
+    static double getDefaultForTypeAsDouble(string type, string port, QVector<ASTNode > scope, ASTNode tree);
+    static ASTNode getDefaultPortValueForType(string type, string portName, QVector<ASTNode > scope, ASTNode tree);
 
     static bool scopesMatch(QStringList scopeList, ASTNode node);
     static bool scopesMatch(ASTNode node1, ASTNode node2);
