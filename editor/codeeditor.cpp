@@ -175,8 +175,8 @@ void CodeEditor::mouseIdleTimeout()
                 int width = m_toolTip.fontMetrics().width(m_toolTip.text());
                 QRect boundingRect  = m_toolTip.fontMetrics().boundingRect(m_toolTip.text());
                 m_toolTip.setText(text);
-                m_toolTip.setGeometry(m_toolTip.x(), m_toolTip.y() + 30,
-                                      width, boundingRect.height() + 20);
+                m_toolTip.setGeometry(m_toolTip.x() + this->lineNumberAreaWidth(), m_toolTip.y() + 10,
+                                      width, boundingRect.height() + 50);
                 m_toolTip.show();
             }
         } else {
@@ -309,7 +309,7 @@ void CodeEditor::keyReleaseEvent(QKeyEvent *event)
 
 void CodeEditor::mouseMoveEvent(QMouseEvent *event)
 {
-    m_toolTip.setGeometry(event->x(), event->y(), 10, 10);
+//    m_toolTip.setGeometry(event->x(), event->y(), 10, 10);
     m_toolTip.hide();
     m_mouseIdleTimer.start();
     QPlainTextEdit::mouseMoveEvent(event);

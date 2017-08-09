@@ -761,8 +761,11 @@ void ProjectWindow::updateCodeAnalysis()
         m_highlighter->setBuiltinObjects(m_codeModel.getObjectNames());
         editor->setErrors(m_codeModel.getErrors());
     }
-    QTextCursor cursor = editor->textCursor();
+    QPoint position = editor->mapFromGlobal(QCursor::pos());
+    position.rx() -= editor->lineNumberAreaWidth();
+    QTextCursor cursor = editor->cursorForPosition(position) ;
     cursor.select(QTextCursor::WordUnderCursor);
+    qDebug() << cursor.selectedText();
     editor->setToolTipText(m_codeModel.getTooltipText(cursor.selectedText()));
     m_codeModelTimer.start();
 }

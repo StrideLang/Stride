@@ -258,14 +258,19 @@ QString CodeModel::getTooltipText(QString symbol)
         QMutexLocker locker(&m_validTreeLock);
         std::shared_ptr<DeclarationNode> declaration = CodeValidator::findDeclaration(symbol, QVector<ASTNode>(), m_lastValidTree);
         if (declaration) {
-            AST *metaValue = declaration->getPropertyValue("meta").get();
-            if (metaValue) {
-                Q_ASSERT(metaValue->getNodeType() == AST::String);
-                AST *properties = declaration->getPropertyValue("ports").get();
+//            AST *metaValue = declaration->getPropertyValue("meta").get();
+//            if (metaValue) {
+//                Q_ASSERT(metaValue->getNodeType() == AST::String);
+//            }
+            if (declaration->getObjectType() == "module"
+                    || declaration->getObjectType() == "reaction"
+                    || declaration->getObjectType() == "reaction") {
+
+                ASTNode properties = declaration->getPropertyValue("ports");
                 if (properties && properties->getNodeType() == AST::List) {
                     text += "<b>" + symbol + "</b>\n(";
                     Q_ASSERT(properties->getNodeType() == AST::List);
-                    ListNode *propertiesList = static_cast<ListNode *>(properties);
+                    std::shared_ptr<ListNode> propertiesList = static_pointer_cast<ListNode>(properties);
                     for(ASTNode member : propertiesList->getChildren()) {
                         DeclarationNode *portBlock = static_cast<DeclarationNode *>(member.get());
                         Q_ASSERT(portBlock->getNodeType() == AST::Declaration);
@@ -273,7 +278,7 @@ QString CodeModel::getTooltipText(QString symbol)
                             if (portBlock->getPropertyValue("name")) {
                                 QString portName = QString::fromStdString(
                                             static_cast<ValueNode *>(portBlock->getPropertyValue("name").get())->getStringValue());
-                                if (portName != "inherits" && portName != "meta") {
+                                if (portName != "inherits" && portName != "meta" && portName.size() > 0) {
                                     AST *portMetaNode = portBlock->getPropertyValue("meta").get();
                                     QString portMeta;
                                     if (portMetaNode) {
@@ -286,6 +291,28 @@ QString CodeModel::getTooltipText(QString symbol)
                     }
                     text += ")";
                 }
+            } else {
+                text = QString::fromStdString(declaration->getObjectType()) + " " + QString::fromStdString(declaration->getName()) + "\n";
+                ASTNode domain = declaration->getPropertyValue("domain");
+                if (domain) {
+                    if (domain->getNodeType() == AST::String) {
+                        text += "Domain: " + QString::fromStdString(static_pointer_cast<ValueNode>(domain)->getStringValue()) + "\n";
+                    } else if (domain->getNodeType() == AST::Block) {
+                        text += "Domain: " + QString::fromStdString(static_pointer_cast<BlockNode>(domain)->getName()) + "\n";
+                    }
+                }
+                ASTNode rate = declaration->getPropertyValue("rate");
+                if (rate) {
+                    if (rate->getNodeType() == AST::String) {
+                        text += "Rate: " + QString::fromStdString(static_pointer_cast<ValueNode>(rate)->getStringValue()) + "\n";
+                    } else if (rate->getNodeType() == AST::Int) {
+                        text += "Rate: " + QString::number(static_pointer_cast<ValueNode>(rate)->getIntValue()) + "\n";
+                    } else if (rate->getNodeType() == AST::Real) {
+                        text += "Rate: " + QString::number(static_pointer_cast<ValueNode>(rate)->getRealValue()) + "\n";
+                    } else if (rate->getNodeType() == AST::Block) {
+                        text += "Rate: " + QString::fromStdString(static_pointer_cast<BlockNode>(rate)->getName()) + "\n";
+                    }
+                }
             }
         }
     } else { // word starts with lower case letter
@@ -293,6 +320,10 @@ QString CodeModel::getTooltipText(QString symbol)
         std::shared_ptr<DeclarationNode> typeBlock = CodeValidator::findTypeDeclarationByName(symbol, QVector<ASTNode>(), m_lastValidTree, errors);
         if (typeBlock) {
             text = "type: " + symbol;
+//            AST *metaValue = typeBlock->getPropertyValue("meta").get();
+//            if (metaValue && metaValue->getNodeType() == AST::String) {
+//                text += " - " + QString::fromStdString(static_cast<ValueNode *>(metaValue)->getStringValue());
+//            }
         }
     }
     return text;
