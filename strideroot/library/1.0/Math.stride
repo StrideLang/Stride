@@ -1,3 +1,8 @@
+#
+# Authors:
+# Andres Cabrera mantaraya36@gmail.com
+# Keehong Youn younkeehong@gmail.com
+
 
 constant _Pi {
     value: 3.14159265358979323846264338327950288419716939937510
@@ -109,4 +114,114 @@ module Inverse {
 		-Input >> Output;
 	]
 	meta: "Invert (change the sign) of a value."
+}
+
+module Pow {	
+	ports: [
+		mainOutputPort OutputPort {
+			block: Output
+		},
+		mainInputPort InputPort {
+			block: Input
+			domain: OutputPort.domain
+			meta: "Values to power: Input[1]^Input[2]"
+		}
+	]
+	blocks: [
+		signal Input[2] { 
+			domain: OutputPort.domain
+		}
+		_powerType PowBlock {}
+	]
+	streams: [
+		[Input[1], Input[2]] >> PowBlock() >> Output;
+	]
+	meta: "power(Input[1], Input[2])"
+}
+
+module Exp {	
+	ports: [
+		mainOutputPort OutputPort {
+			block: Output
+		},
+		mainInputPort InputPort {
+			block: Input
+			domain: OutputPort.domain
+		}
+	]
+	blocks: [
+		_expType ExpBlock {}
+	]
+	streams: [
+		Input >> ExpBlock() >> Output;
+	]
+	meta: "exp(Input)"
+}
+
+module Max {
+	ports: [
+		mainOutputPort OutputPort {
+			block: Output
+		},
+		mainInputPort InputPort {
+			block: Input
+			domain: OutputPort.domain
+		}
+	]
+	blocks: [
+		signal Input[2] {
+			domain: OutputPort.domain
+			
+		}
+	]
+	streams: [
+		[Input[1], Input[2]] >> Greater() >> Select(whenOn: Input[1] whenOff: Input[2]) >> Output;
+	]
+}
+
+module Min {
+	ports: [
+		mainOutputPort OutputPort {
+			block: Output
+		},
+		mainInputPort InputPort {
+			block: Input
+			domain: OutputPort.domain
+		}
+	]
+	blocks: [
+		signal Input[2] {
+			domain: OutputPort.domain
+			
+		}
+	]
+	streams: [
+		[Input[1], Input[2]] >> Greater() >> Select(whenOn: Input[2] whenOff: Input[1]) >> Output;
+	]
+}
+
+module Clamp {
+	ports: [
+		mainOutputPort OutputPort {
+			block: Output
+		},
+		mainInputPort InputPort {
+			block: Input
+			domain: OutputPort.domain
+		}
+		propertyInputPort MinValPort {
+			name: "min"
+			block: MinVal
+		}
+		propertyInputPort MaxValPort {
+			name: "max"
+			block: MaxVal
+		}
+	]
+	streams: [
+		# One-liner would be:
+		# [[Input, MinVal] >> Max(), MaxVal] >> Min() >> Output;
+		[Input, MinVal] >> Max() >> T;
+		[T, MaxVal] >> Min() >> Output;
+	]
 }

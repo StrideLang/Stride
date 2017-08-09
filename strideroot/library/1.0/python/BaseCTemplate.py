@@ -378,6 +378,8 @@ public:
             return 'real'
         elif block['type'] == 'switch':
             return 'bool'
+        elif block['type'] == 'trigger':
+            return 'bool'
         elif block['type'] == 'Unsupported':
             return 'real'
 

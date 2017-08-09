@@ -241,8 +241,9 @@ class ExpressionAtom(Atom):
             self.set_inline(True)
 
         self.domain = left_atom.get_domain()
-        if not self.domain == right_atom.get_domain() and right_atom.get_domain() is not None:
-            print("ERROR! domains must match inside expressions!")
+        if right_atom:
+            if not self.domain == right_atom.get_domain() and right_atom.get_domain() is not None:
+                print("ERROR! domains must match inside expressions!")
 
     def set_inline(self, inline):
         self.left_atom.set_inline(inline)
@@ -665,6 +666,13 @@ class NameAtom(Atom):
                              'bool',
                              self.handle,
                              self)]
+        elif 'type' in self.declaration and self.declaration['type'] == 'trigger':
+            inits = [Instance(templates.str_true if default_value else templates.str_false,
+                             self.declaration['stack_index'],
+                             self.domain,
+                             'bool',
+                             self.handle,
+                             self)]
         elif 'block' in self.platform_type:
             inherits = self.platform_type['block']['inherits']
             if inherits == 'signal':
@@ -871,6 +879,8 @@ class NameAtom(Atom):
             else:
                 print("Forced default value to False for " + self.handle)
                 default_value = False
+        elif self.declaration['type'] == "trigger":
+             default_value = False
         else:
             if 'size' in self.declaration:
                 default_value = [0.0 for i in range(self.declaration['size'])]
@@ -1567,14 +1577,7 @@ class ModuleAtom(Atom):
                 return block['blockbundle']
 
     def get_block_types(self, block):
-        # FIXME implement for bundles
-        if 'default' in block and type(block['default']) == unicode:
-            block_type = 'string'
-        elif block['type'] == 'switch':
-            block_type = 'bool'
-        else:
-            block_type = 'real'
-        return [block_type]
+        return [templates.get_block_type(block)]
 
     def _get_expression_instances(self, atom):
         if not type(atom) is ExpressionAtom:

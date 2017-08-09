@@ -10,6 +10,16 @@ platformType _GreaterType {
     inherits: ['signal']
 }
 
+platformType _GreaterOrEqualType {
+    typeName: '_greaterOrEqualType'
+    inputs: ["real", "real"]
+	outputs: ["real"]
+#    linkTo: []
+#    declarations: ['']
+#    initializations: ["// %%token%% = 0;"]
+    processing: "%%intoken:0%% >= %%intoken:1%%"
+    inherits: ['signal']
+}
 platformType _EqualType {
     typeName: '_equalType'
     inputs: ["real", "real"]
@@ -30,5 +40,39 @@ platformType _SelectType {
 #    declarations: []
     initializations: ["// %%token%% = 0;"]
     processing: "%%intoken:0%% ? %%intoken:1%% : %%intoken:2%%"
+    inherits: ['signal']
+}
+
+
+platformType _LessOrEqualType {
+    typeName: '_lessOrEqualType'
+    inputs: ["real", "real"]
+	outputs: ["real"]
+#    linkTo: []
+#    declarations: ['']
+#    initializations: ["// %%token%% = 0;"]
+    processing: "%%intoken:0%% <= %%intoken:1%%"
+    inherits: ['signal']
+}
+
+platformType _LessType {
+    typeName: '_lessType'
+    inputs: ["real", "real"]
+	outputs: ["real"]
+#    linkTo: []
+#    declarations: ['']
+#    initializations: ["// %%token%% = 0;"]
+    processing: "%%intoken:0%% < %%intoken:1%%"
+    inherits: ['signal']
+}
+
+platformType _NotEqualType {
+    typeName: '_notEqualType'
+    inputs: ["real", "real"]
+	outputs: ["real"]
+#    linkTo: []
+#    declarations: ['']
+#    initializations: ["// %%token%% = 0;"]
+    processing: "%%intoken:0%% != %%intoken:1%%"
     inherits: ['signal']
 }

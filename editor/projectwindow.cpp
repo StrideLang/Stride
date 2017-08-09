@@ -768,7 +768,7 @@ void ProjectWindow::updateCodeAnalysis()
     position.rx() -= editor->lineNumberAreaWidth();
     QTextCursor cursor = editor->cursorForPosition(position) ;
     cursor.select(QTextCursor::WordUnderCursor);
-    qDebug() << cursor.selectedText();
+//    qDebug() << cursor.selectedText();
     editor->setToolTipText(m_codeModel.getTooltipText(cursor.selectedText()));
     m_codeModelTimer.start();
 }

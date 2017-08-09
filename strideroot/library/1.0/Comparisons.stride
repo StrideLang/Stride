@@ -33,16 +33,16 @@ module GreaterOrEqual {
 		}
     ]
     blocks: [
-	signal Input[2] {}
+		signal Input[2] {},
+		_greaterOrEqualType GreaterOrEqualBlock {}
     ]
     streams: [
-#       Input[1] >= Input[2] >> Output;
+       [Input[1], Input[2]] >> GreaterOrEqualBlock >> Output;
     ]
     meta: ""
 }
 
 module Less {
-
 	ports: [
 		mainOutputPort OutputPort {
     			name:       'output'
@@ -54,10 +54,11 @@ module Less {
 		}
 	]
     blocks: [
-	signal Input[2] {}
+		signal Input[2] {}
+		_lessType LessBlock {}
     ]
     streams: [
-#       Input[1] < Input[2] >> Output;
+       [Input[1], Input[2]] >> LessBlock >> Output;
     ]
     meta: ""
 }
@@ -75,10 +76,11 @@ module LessOrEqual {
 		}
 	]
     blocks: [
-	signal Input[2] {}
+		signal Input[2] {}
+		_lessOrEqualType LessOrEqualBlock {}
     ]
     streams: [
-#       Input[1] <= Input[2] >> Output;
+       [Input[1], Input[2]] >> LessOrEqualBlock >> Output;
     ]
     meta: ""
 }
@@ -118,9 +120,10 @@ module NotEqual {
 		}
 	]
     blocks: [
+		_notEqualType NotEqualBlock {}
     ]
     streams: [
-#       Input[1] != Input[2] >> Output;
+       [Input[1], Input[2]] >> NotEqualBlock >> Output;
     ]
     meta: ""
 }
