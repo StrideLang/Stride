@@ -1023,6 +1023,7 @@ void ProjectWindow::newFile()
     updateEditorSettings();
     m_highlighter->setDocument(editor->document());
     QObject::connect(editor, SIGNAL(textChanged()), this, SLOT(markModified()));
+    QObject::connect(editor, SIGNAL(textChanged()), this, SLOT(resetCodeTimer()));
     editor->setFocus();
 }
 
@@ -1407,6 +1408,12 @@ void ProjectWindow::configureSystem()
         configFile.close();
     }
 
+}
+
+void ProjectWindow::resetCodeTimer()
+{
+    m_codeModelTimer.stop();
+    m_codeModelTimer.start();
 }
 
 void ProjectWindow::closeEvent(QCloseEvent *event)

@@ -73,6 +73,7 @@ public slots:
     void newFile();
     void markModified();
     void configureSystem();
+    void resetCodeTimer();
 
 protected:
     virtual void closeEvent(QCloseEvent *event);
