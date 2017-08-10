@@ -271,15 +271,29 @@ public:
         vartype = instance.get_type()
         name = instance.get_name()
         # FIXME support bundles
-        name = "&" + name
-        if vartype == 'real':
-            declaration = self.declaration_real(name, close)
-        elif vartype == 'string':
-            declaration = self.declaration_string(name, close)
-        elif vartype == 'bool':
-            declaration = self.declaration_bool(name, close)
-        elif vartype == 'int':
-            declaration = self.declaration_int(name, close)
+        if vartype == 'bundle':
+            vartype = instance.get_bundle_type()
+            if vartype == 'real':
+                declaration = self.declaration_real(name, close)
+            elif vartype == 'string':
+                declaration = self.declaration_string(name, close)
+            elif vartype == 'bool':
+                declaration = self.declaration_bool(name, close)
+            elif vartype == 'int':
+                declaration = self.declaration_int(name, close)
+            declaration = self.bundle_indexing(declaration, instance.get_size())
+        else:
+            name = "&" + name
+            if vartype == 'real':
+                declaration = self.declaration_real(name, close)
+            elif vartype == 'string':
+                declaration = self.declaration_string(name, close)
+            elif vartype == 'bool':
+                declaration = self.declaration_bool(name, close)
+            elif vartype == 'int':
+                declaration = self.declaration_int(name, close)
+            else:
+                throw(ValueError("Unsupported type for reference"))
         return declaration
 
     def declaration_real(self, name, close=True, default = None):
@@ -342,11 +356,14 @@ public:
         value = str(value)
         return value
 
+    def value_bool(self, value):
+        return self.str_true if value else self.str_false
+
     def bundle_indexing(self, bundle_name, index):
         if type(index) == int:
             return '%s[%i]'%(bundle_name, index)
         else:
-            return '%s[%s]'%(bundle_name, index)
+            return '%s[%s]'%(bundle_name, str(index))
 
     def expression(self, expression):
         return expression + ';\n'

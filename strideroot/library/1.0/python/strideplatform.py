@@ -218,6 +218,8 @@ class ValueAtom(Atom):
     def get_inline_processing_code(self, in_token):
         if type(self.value) == str or type(self.value) == unicode:
             return self.value
+        if type(self.value) == bool:
+            return templates.value_bool(self.value)
         else:
             return templates.value_real(self.value)
 
@@ -915,6 +917,7 @@ class PortPropertyAtom(Atom):
         if parent._input:
             for name, in_block in parent._input.items():
                 print(in_block)
+
         if parent._output:
             for name, out_block in parent._output.items():
                 if name == self.portproperty['portname']:
@@ -936,10 +939,12 @@ class PortPropertyAtom(Atom):
                     else:
                         self.platform.log_debug("ERROR: Can't resolve port property value")
 
-#        declaration = self.platform.find_declaration_in_tree(self.portproperty['portname'])
-#        if declaration:
-#            if self.portproperty['name'] in declaration:
-#                pass
+        # FIXME we need to llok through the input port and also through the property ports
+
+    #        declaration = self.platform.find_declaration_in_tree(self.portproperty['portname'])
+    #        if declaration:
+    #            if self.portproperty['name'] in declaration:
+    #                pass
 
 
     def get_declarations(self):
@@ -2390,7 +2395,7 @@ class PlatformFunctions:
             elif instance.get_type() == 'bool':
                 value = instance.get_code()
                 if value:
-                    code = templates.assignment(instance.get_name(), value)
+                    code = templates.assignment(instance.get_name(), templates.value_bool(value))
             elif instance.get_type() == 'string':
                 if instance.get_code():
                     value = '"' + instance.get_code() + '"'
@@ -2896,7 +2901,7 @@ class PlatformFunctions:
                             "init_code" : '',
                             "processing_code" : [] }
                     domain_code[new_element_domain]['header_code'] += new_element.get_code()
-                    self.log_debug('////// ' + new_element.get_name() + ' // Dependents : '+ ' '.join([e.get_name() for e in new_element.get_dependents()]))
+#                    self.log_debug('////// ' + new_element.get_name() + ' // Dependents : '+ ' '.join([e.get_name() for e in new_element.get_dependents()]))
 
                 elif type(new_element) == Instance or issubclass(type(new_element), Instance):
                     new_element_domain = new_element.get_domain()
@@ -2908,7 +2913,7 @@ class PlatformFunctions:
                     domain_code[new_element_domain]["header_code"] += new_inst_code
                     domain_code[new_element_domain]["init_code"] +=  self.initialization_code(new_element)
                     instanced.append(new_element)
-                    self.log_debug('////// ' + new_element.get_name() + ' // Dependents : '+ ' '.join([e.get_name() for e in new_element.get_dependents()]))
+#                    self.log_debug('////// ' + new_element.get_name() + ' // Dependents : '+ ' '.join([e.get_name() for e in new_element.get_dependents()]))
 
             else:
                 if type(new_element) == Instance or issubclass(type(new_element), Instance):

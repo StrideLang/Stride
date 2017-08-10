@@ -225,3 +225,26 @@ module Clamp {
 		[T, MaxVal] >> Min() >> Output;
 	]
 }
+
+module Floor {	
+	ports: [
+		mainOutputPort OutputPort {
+			block: Output
+		},
+		mainInputPort InputPort {
+			block: Input
+			domain: OutputPort.domain
+			meta: "Floating point number input"
+		}
+	]
+	blocks: [
+		signal Input { 
+			domain: OutputPort.domain
+		}
+		_floorType FloorBlock {}
+	]
+	streams: [
+		Input >> FloorBlock() >> Output;
+	]
+	meta: "Returns float input value truncated to lower integer."
+}
