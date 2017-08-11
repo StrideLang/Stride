@@ -2395,7 +2395,7 @@ class PlatformFunctions:
             elif instance.get_type() == 'bool':
                 value = instance.get_code()
                 if value:
-                    code = templates.assignment(instance.get_name(), templates.value_bool(value))
+                    code = templates.assignment(instance.get_name(), instance.get_code())
             elif instance.get_type() == 'string':
                 if instance.get_code():
                     value = '"' + instance.get_code() + '"'
