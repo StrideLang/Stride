@@ -639,7 +639,16 @@ class NameAtom(Atom):
                                  self.handle,
                                  self)]
         elif 'type' in self.declaration and self.declaration['type'] == 'signalbridge':
-            if signal_type_string(self.declaration):
+            if self.declaration['bridgeType'] == 'switch':
+                inits = [Instance(default_value,
+                                 self.declaration['stack_index'],
+                                 self.domain,
+                                 'bool',
+                                 self.handle,
+                                 self
+                                 )]
+
+            elif signal_type_string(self.declaration):
                 inits = [Instance(default_value,
                                  self.declaration['stack_index'],
                                  self.domain,
@@ -1622,6 +1631,7 @@ class ReactionAtom(ModuleAtom):
         super(ReactionAtom, self).__init__(reaction, function, platform_code, token_index, platform, scope_index, connected_blocks, previous_atom, next_atom)
 
 
+
     def get_header_code(self):
         domain_code = self.code['domain_code']
         header_code = ''
@@ -1644,8 +1654,17 @@ class ReactionAtom(ModuleAtom):
     def get_processing_code(self, in_tokens):
         processing_code = {}
 
+        out_tokens = self.out_tokens
+
         domain = self.input_atom.domain # Reaction is triggered/called in the domain of the input signal
-        parameter_tokens = [ref.get_name() for ref in self.references]
+
+        parameter_tokens = []
+        out_names = [block['name'] for block in self._output_blocks]
+
+        for ref in self.references:
+            if not ref.get_name() in out_names:
+                parameter_tokens.append(ref.get_name())
+        parameter_tokens += self.out_tokens
         for i in range(len(parameter_tokens)):
             # TODO we need checking of scope and domain here
             for scope_decl in self.platform.scope_stack[-1]:
@@ -1667,6 +1686,7 @@ class ReactionAtom(ModuleAtom):
                                                 ))
 
         processing_code[domain][0] += "}\n"
+        processing_code[domain][1] = out_tokens
 
         return processing_code
 
@@ -1676,6 +1696,12 @@ class ReactionAtom(ModuleAtom):
         process_code = {}
 
         domain_code = self.code['domain_code']
+        # out_tokens for reaction are different
+        if len(self._output_blocks) > 0:
+            if 'size' in self._output_blocks[0]:
+                self.out_tokens = ['_' + self.name + '_%03i_out[%i]'%(self._index, i) for i in range(self._output_blocks[0]['size'])]
+            else:
+                self.out_tokens = ['_' + self.name + '_%03i_out'%self._index]
 
         self.references = []
         referenced = []
@@ -1812,21 +1838,21 @@ class ReactionAtom(ModuleAtom):
 
 #                instances += atom.get_instances()
 # #               FIXME do we need to support multiple output blocks?
-#        if len(self.out_tokens) > 0:
-#            block_types = self.get_block_types(self._output_blocks[0])
-#            token_name = self.out_tokens[0]
-#            if 'size' in self._output_blocks[0]:
-#                out_token_name = '_' + self.name + '_%03i_out'%self._index
-#                token_name = templates.bundle_indexing(out_token_name, self._output_blocks[0]['size'])
-#
-#            default_value = ''
-#            instances += [Instance(default_value,
-#                                 self.scope_index,
-#                                 self.domain,
-#                                 block_types[0],
-#                                 token_name,
-#                                 self) ]
-#            self.code_declaration.add_dependent(instances[-1])
+        if len(self.out_tokens) > 0:
+            block_types = self.get_block_types(self._output_blocks[0])
+            token_name = self.out_tokens[0]
+            if 'size' in self._output_blocks[0]:
+                out_token_name = '_' + self.name + '_%03i_out'%self._index
+                token_name = templates.bundle_indexing(out_token_name, self._output_blocks[0]['size'])
+
+            default_value = ''
+            instances += [Instance(default_value,
+                                 self.scope_index,
+                                 self.domain,
+                                 block_types[0],
+                                 token_name,
+                                 self) ]
+            self.code_declaration.add_dependent(instances[-1])
 
         for name, atoms in self.port_name_atoms.items():
             for atom in atoms:
@@ -2192,6 +2218,8 @@ class PlatformFunctions:
     #            if key == "name" and type["ports"]["name"] == port_name:
     #                return type[
         return None
+
+
 
     def find_function_property(self, func, property_name):
         return func["ports"][property_name]

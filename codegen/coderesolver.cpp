@@ -1198,7 +1198,10 @@ void CodeResolver::declareIfMissing(string name, ASTNode blocks, ASTNode value)
     }
 }
 
-std::shared_ptr<DeclarationNode> CodeResolver::createSignalBridge(string bridgeName, string originalName, ASTNode defaultValue, ASTNode inDomain, ASTNode outDomain, const string filename, int line, int size)
+std::shared_ptr<DeclarationNode> CodeResolver::createSignalBridge(string bridgeName, string originalName,
+                                                                  ASTNode defaultValue, ASTNode inDomain, ASTNode outDomain,
+                                                                  const string filename, int line, int size,
+                                                                  string type)
 {
     std::shared_ptr<DeclarationNode> newBridge;
     if (size == 1) {
@@ -1224,6 +1227,9 @@ std::shared_ptr<DeclarationNode> CodeResolver::createSignalBridge(string bridgeN
     }
     string domainName = CodeValidator::getDomainNodeString(outDomain);
     m_bridgeAliases.push_back({bridgeName, originalName, domainName});
+    newBridge->addProperty(std::make_shared<PropertyNode>("bridgeType",
+                                                          std::make_shared<ValueNode>(type, filename.c_str(), line),
+                                                          filename.c_str(), line));
     return newBridge;
 }
 
@@ -2237,6 +2243,7 @@ void CodeResolver::terminateStackWithBridge(ASTNode node, QVector<ASTNode > &str
                 std::shared_ptr<DeclarationNode> declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(stack.back()->getChildren()[i], scopeStack, m_tree),
                                                                                               scopeStack, m_tree);
                 if (declaration) {
+                    string type = declaration->getObjectType();
                     ASTNode valueNode = declaration->getPropertyValue("default");
                     if (!valueNode) {
                         valueNode =  std::make_shared<ValueNode>(0, "", -1);
@@ -2246,7 +2253,8 @@ void CodeResolver::terminateStackWithBridge(ASTNode node, QVector<ASTNode > &str
                         newDeclarations.push_back(createSignalBridge(listConnectorName, nodeDomainName,
                                                                      valueNode,
                                                                      std::make_shared<BlockNode>(nodeDomainName, "", -1), std::make_shared<ValueNode>("", -1),
-                                                                     stackBack->getChildren()[i]->getFilename(), stackBack->getChildren()[i]->getLine()));
+                                                                     stackBack->getChildren()[i]->getFilename(), stackBack->getChildren()[i]->getLine(),
+                                                                     1, type));
                         closingName->addChild(std::make_shared<BlockNode>(listConnectorName, "", -1));
                         newStart->addChild(std::make_shared<BlockNode>(listConnectorName, "", -1));
                         std::shared_ptr<StreamNode> newStream = std::make_shared<StreamNode>(stack.back()->getChildren()[i],
@@ -2291,7 +2299,7 @@ void CodeResolver::terminateStackWithBridge(ASTNode node, QVector<ASTNode > &str
                         newDeclarations.push_back(createSignalBridge(listConnectorName, nodeDomainName,
                                                                      std::make_shared<ValueNode>("", -1),
                                                                      std::make_shared<BlockNode>(nodeDomainName, "", -1), std::make_shared<ValueNode>("", -1),
-                                                                     stackBack->getChildren()[i]->getFilename(), stackBack->getChildren()[i]->getLine()));
+                                                                     stackBack->getChildren()[i]->getFilename(), stackBack->getChildren()[i]->getLine(), 1, "signal"));
                         closingName->addChild(std::make_shared<BlockNode>(listConnectorName, "", -1));
                         newStart->addChild(std::make_shared<BlockNode>(listConnectorName, "", -1));
 
@@ -2313,28 +2321,30 @@ void CodeResolver::terminateStackWithBridge(ASTNode node, QVector<ASTNode > &str
                     && (declaration->getObjectType() == "signal"
                         || declaration->getObjectType() == "switch")
                     ) {
+                string type = declaration->getObjectType();
                 newDeclarations.push_back(createSignalBridge(connectorName, memberName.toStdString(),
                                                              declaration->getPropertyValue("default"),
                                                              declaration->getDomain(), std::make_shared<ValueNode>("", -1),
                                                              declaration->getFilename(), declaration->getLine(),
-                                                             size));
+                                                             size, type));
             } else if (stackBack->getNodeType() == AST::Expression
                        || stackBack->getNodeType() == AST::Function){
 //                        ASTNode domain = CodeValidator::
                 // TODO set in/out domains correctly
                 // FIXME set default value correctly
+                string type = "signal"; // FIXME assumes that expressions and functions output signals...
                 newDeclarations.push_back(createSignalBridge(connectorName, memberName.toStdString(),
                                                              std::make_shared<ValueNode>(0.0,"", -1),
                                                              std::make_shared<ValueNode>("", -1), std::make_shared<ValueNode>("", -1),
                                                              stackBack->getFilename(), stackBack->getLine(),
-                                                             size));
+                                                             size, type));
 
             } else {
                 newDeclarations.push_back(createSignalBridge(connectorName, memberName.toStdString(),
                                                              std::make_shared<ValueNode>(0.0,"", -1),
                                                              std::make_shared<ValueNode>("", -1), std::make_shared<ValueNode>("", -1),
                                                              stackBack->getFilename(), stackBack->getLine(),
-                                                             size));
+                                                             size, "signal"));
             }
             closingName = std::make_shared<BlockNode>(connectorName, "", -1);
             newStart = std::make_shared<BlockNode>(connectorName, "", -1);
@@ -2433,10 +2443,11 @@ QVector<ASTNode > CodeResolver::sliceStreamByDomain(std::shared_ptr<StreamNode> 
                         if (defaultProperty && bridgeDomain) {
                             std::shared_ptr<BlockNode> block = static_pointer_cast<BlockNode>(value);
                             std::shared_ptr<ValueNode> noneValue = std::make_shared<ValueNode>("", -1);
+                            // FIXME this assumes the input to a function is a signal
                             streams.push_back(createSignalBridge(connectorName, block->getName(), defaultProperty,
                                                                  bridgeDomain, noneValue,
                                                                  declaration->getFilename(), declaration->getLine(),
-                                                                 size)); // Add definition to stream
+                                                                 size, "signal")); // Add definition to stream
                             std::shared_ptr<BlockNode> connectorNameNode = std::make_shared<BlockNode>(connectorName, "", -1);
                             std::shared_ptr<StreamNode> newStream = std::make_shared<StreamNode>(value, connectorNameNode, left->getFilename().c_str(), left->getLine());
                             prop->replaceValue(connectorNameNode);
@@ -2764,8 +2775,7 @@ void CodeResolver::sliceDomainsInNode(std::shared_ptr<DeclarationNode> module, Q
         }
 
         std::shared_ptr<ListNode> newStreamsList = std::make_shared<ListNode>(nullptr, "", -1);
-        QVector<ASTNode > scopeStack;
-        scopeStack << CodeValidator::getBlocksInScope(module, QVector<ASTNode >(), m_tree);
+        scopeStack << CodeValidator::getBlocksInScope(module, scopeStack, m_tree);
         if (streamsNode->getNodeType() == AST::List) {
             for (ASTNode  stream: streamsNode->getChildren()) {
                 if (stream->getNodeType() == AST::Stream) {
@@ -2824,14 +2834,17 @@ QVector<ASTNode> CodeResolver::processExpression(std::shared_ptr<ExpressionNode>
             if ( CodeValidator::getDomainNodeString(declaration->getDomain()) !=
                  CodeValidator::getDomainNodeString(outDomain)) {
                 std::string connectorName = "_BridgeSig_" + std::to_string(m_connectorCounter++);
-                streams.push_back(createSignalBridge(connectorName, memberName.toStdString(),
-                                                     declaration->getPropertyValue("default"),
-                                                     declaration->getDomain(), outDomain,
-                                                     declaration->getFilename(), declaration->getLine())); // Add definition to stream
-                std::shared_ptr<BlockNode> connectorNameNode = std::make_shared<BlockNode>(connectorName, "", -1);
-                std::shared_ptr<StreamNode> newStream = std::make_shared<StreamNode>(exprLeft, connectorNameNode, exprLeft->getFilename().c_str(), exprLeft->getLine());
-                expr->replaceLeft(std::make_shared<BlockNode>(connectorName, "", -1));
-                streams.push_back(newStream);
+                string type = declaration->getObjectType();
+                if (type == "switch" || type == "signal") { // This keeps constants away
+                    streams.push_back(createSignalBridge(connectorName, memberName.toStdString(),
+                                                         declaration->getPropertyValue("default"),
+                                                         declaration->getDomain(), outDomain,
+                                                         declaration->getFilename(), declaration->getLine(), 1, type)); // Add definition to stream
+                    std::shared_ptr<BlockNode> connectorNameNode = std::make_shared<BlockNode>(connectorName, "", -1);
+                    std::shared_ptr<StreamNode> newStream = std::make_shared<StreamNode>(exprLeft, connectorNameNode, exprLeft->getFilename().c_str(), exprLeft->getLine());
+                    expr->replaceLeft(std::make_shared<BlockNode>(connectorName, "", -1));
+                    streams.push_back(newStream);
+                }
                 // FIXME need to implement for bundles
             }
         }
@@ -2849,10 +2862,11 @@ QVector<ASTNode> CodeResolver::processExpression(std::shared_ptr<ExpressionNode>
                 if ( CodeValidator::getDomainNodeString(declaration->getDomain()) !=
                      CodeValidator::getDomainNodeString(outDomain)) {
                     std::string connectorName = "_BridgeSig_" + std::to_string(m_connectorCounter++);
+                    string type = declaration->getObjectType();
                     streams.push_back(createSignalBridge(connectorName, exprName->getName(),
                                                          declaration->getPropertyValue("default"),
                                                          declaration->getDomain(), outDomain,
-                                                         declaration->getFilename(), declaration->getLine())); // Add definition to stream
+                                                         declaration->getFilename(), declaration->getLine(),1 , type)); // Add definition to stream
                     std::shared_ptr<BlockNode> connectorNameNode = std::make_shared<BlockNode>(connectorName, "", -1);
                     std::shared_ptr<StreamNode> newStream = std::make_shared<StreamNode>(exprRight, connectorNameNode, exprRight->getFilename().c_str(), exprRight->getLine());
                     expr->replaceRight(std::make_shared<BlockNode>(connectorName, "", -1));

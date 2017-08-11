@@ -2171,9 +2171,10 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, QVector<ASTNode > scopeStack,
                 }
             }
             if (member->getNodeType() == AST::Int
-                  || member->getNodeType() == AST::Real
-                  || member->getNodeType() == AST::String
-                  || member->getNodeType() == AST::Switch) {
+                    || member->getNodeType() == AST::Real
+                    || member->getNodeType() == AST::String
+                    || member->getNodeType() == AST::Switch
+                    || member->getNodeType() == AST::PortProperty) {
                 continue; // Don't append empty domain to domainList, as a value should take any domain.
             }
             else {
@@ -2208,13 +2209,15 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, QVector<ASTNode > scopeStack,
             if (left->getNodeType() == AST::Int
                     || left->getNodeType() == AST::Real
                     || left->getNodeType() == AST::String
-                    || left->getNodeType() == AST::Switch) {
+                    || left->getNodeType() == AST::Switch
+                    || left->getNodeType() == AST::PortProperty) {
                 leftDomain = rightDomain;
             }
             if (right->getNodeType() == AST::Int
                     || right->getNodeType() == AST::Real
                     || right->getNodeType() == AST::String
-                    || right->getNodeType() == AST::Switch) {
+                    || right->getNodeType() == AST::Switch
+                    || right->getNodeType() == AST::PortProperty) {
                 rightDomain = leftDomain;
             }
             if (leftDomain && rightDomain) {

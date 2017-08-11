@@ -1,0 +1,15 @@
+use DesktopAudio version 1.0
+
+reaction ConstantSwitch {
+	ports: [
+		mainOutputPort OutputPort {
+			block: ReactionOutput
+		}
+	]
+	streams: [
+		1.8 >> ReactionOutput;
+	]
+}
+0.0 >> AudioOut[1];
+on >> ConstantSwitch() >> AudioOut[1];
+	

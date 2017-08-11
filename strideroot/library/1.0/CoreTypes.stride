@@ -175,6 +175,13 @@ type _SignalBridge {
 			default: ""
 			required: on
 		}
+		typeProperty Type {
+			name: "bridgeType"
+			types: ["CSP"]
+			default: "signal"
+			required: off
+			meta: "The type of the bridge signal. Can be signal or switch"
+		}
 	]
 	inherits: ["base"]
 }

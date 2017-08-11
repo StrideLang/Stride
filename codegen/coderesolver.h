@@ -95,7 +95,9 @@ private:
     std::vector<ASTNode> declareUnknownBundle(std::shared_ptr<BundleNode> name, int size, QVector<ASTNode > localScope, ASTNode tree);
     std::shared_ptr<DeclarationNode> createConstantDeclaration(string name, ASTNode value);
     void declareIfMissing(string name, ASTNode blockList, ASTNode value);
-    std::shared_ptr<DeclarationNode> createSignalBridge(string bridgeName, string originalName, ASTNode defaultValue, ASTNode inDomain, ASTNode  outDomain, const string filename, int line, int size = 1);
+    std::shared_ptr<DeclarationNode> createSignalBridge(string bridgeName, string originalName, ASTNode defaultValue,
+                                                        ASTNode inDomain, ASTNode  outDomain,
+                                                        const string filename, int line, int size = 1, string type = "signal");
 
     std::vector<ASTNode > declareUnknownExpressionSymbols(std::shared_ptr<ExpressionNode> expr, int size, QVector<ASTNode > scopeStack, ASTNode  tree);
     std::vector<ASTNode > declareUnknownFunctionSymbols(std::shared_ptr<FunctionNode> func, QVector<ASTNode > scopeStack, ASTNode  tree);
