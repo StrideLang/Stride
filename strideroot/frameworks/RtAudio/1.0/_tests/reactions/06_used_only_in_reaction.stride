@@ -1,0 +1,30 @@
+use DesktopAudio version 1.0
+
+module LinearEnvelope {
+    ports: [
+        mainOutputPort OutputPort {
+            block: Output
+        }
+        mainInputPort InputPort {
+            block: Input
+        }
+    ]
+	blocks: [
+        reaction PassThruReaction {
+			ports: [
+				mainOutputPort OutputPort {
+					block: Output
+				}
+			]
+            streams:    [
+                Input >> Output;
+            ]
+        }
+    ]
+    streams: [
+        on >> PassThruReaction() >> Output;
+    ]
+}
+
+
+AudioIn[1] >> LinearEnvelope () >> AudioOut;

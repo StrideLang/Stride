@@ -1,0 +1,30 @@
+use DesktopAudio version 1.0
+
+module Test {
+	ports: [
+		mainOutputPort OutputPort {
+			block: Output
+		}
+	]
+	blocks: [
+		signal Counter {}
+		reaction HasOuterPortProperty {
+			ports: [
+				mainOutputPort OutputPort {
+					block: ReactionOutput
+				}
+			]
+			streams: [
+				Counter + 1 >> Counter;
+				Counter / ReactionOutput.rate >> ReactionOutput;
+			]
+		}
+			
+	]
+	streams: [
+		on >> HasOuterPortProperty() >> Output;
+	]
+	
+}
+	
+Test() >> AudioOut[1];

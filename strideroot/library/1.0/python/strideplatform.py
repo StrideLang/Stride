@@ -902,6 +902,7 @@ class NameAtom(Atom):
         return default_value
 
 
+
 class PortPropertyAtom(Atom):
     def __init__(self, portproperty, platform, scope_index):
         super(PortPropertyAtom, self).__init__()
@@ -917,44 +918,60 @@ class PortPropertyAtom(Atom):
 
         self.scope_index = scope_index
         self.platform = platform
-        self.resolved_value = None
 
-        self.handle = "_%s_%s"%(self.portproperty['portname'], self.portproperty['name'])
+        self.handle = "__%s_%s"%(self.portproperty['portname'], self.portproperty['name'])
+
 
         parent = platform.parent_stack[-1]
-
         if parent._input:
             for name, in_block in parent._input.items():
                 print(in_block)
 
-        if parent._output:
-            for name, out_block in parent._output.items():
-                if name == self.portproperty['portname']:
-                    if isinstance(out_block, NameAtom) or isinstance(out_block, BundleAtom):
-                        if self.portproperty['name'] in out_block.declaration:
-                            self.resolved_value = out_block.declaration[self.portproperty['name']]
-                            parent.add_instance_const(self.handle, 'integer', self.resolved_value)
-                    elif isinstance(out_block, ListAtom):
-                    # FIXME There needs to be a way to know what member of the list we are actually connectiong to...
-                        for node in out_block.list_node:
-                            if isinstance(node, NameAtom) or isinstance(node, BundleAtom):
-                                if self.portproperty['name'] in node.declaration:
-                                    self.resolved_value = node.declaration[self.portproperty['name']]
-                                    parent.add_instance_const(self.handle, 'integer', self.resolved_value)
-                    elif isinstance(out_block, ModuleAtom):
-                        if self.portproperty['name'] in out_block.function:
-                            self.resolved_value = out_block.function[self.portproperty['name']]
-                            parent.add_instance_const(self.handle, 'integer', self.resolved_value)
-                    else:
-                        self.platform.log_debug("ERROR: Can't resolve port property value")
 
-        # FIXME we need to llok through the input port and also through the property ports
+        self.resolve_output_port_property(platform.parent_stack, self, self.handle)
+
+        # FIXME we need to look through the input port and also through the property ports
 
     #        declaration = self.platform.find_declaration_in_tree(self.portproperty['portname'])
     #        if declaration:
     #            if self.portproperty['name'] in declaration:
     #                pass
 
+
+    def resolve_output_port_property(self, parent_stack, atom, handle):
+        portproperty = atom.portproperty
+        parent = parent_stack[-1]
+        # TODO add support for instance constants that are not integer
+
+        if parent._output:
+            for name, out_block in parent._output.items():
+                if isinstance(out_block, NameAtom) or isinstance(out_block, BundleAtom):
+                    if portproperty['name'] in out_block.declaration:
+                        resolved_value = out_block.declaration[portproperty['name']]
+                        if not resolved_value:
+                            self.resolve_output_port_property(parent_stack[:-1], atom, handle)
+                        else:
+                            parent.add_instance_const(self.handle, 'integer', resolved_value)
+                        break
+                elif isinstance(out_block, ListAtom):
+                # FIXME There needs to be a way to know what member of the list we are actually connectiong to...
+                    for node in out_block.list_node:
+                        if isinstance(node, NameAtom) or isinstance(node, BundleAtom):
+                            if portproperty['name'] in node.declaration:
+                                resolved_value = node.declaration[portproperty['name']]
+                                if not resolved_value:
+                                    self.resolve_output_port_property(parent_stack[:-1], atom, handle)
+                                else:
+                                    parent.add_instance_const(self.handle, 'integer', resolved_value)
+                elif isinstance(out_block, ModuleAtom):
+                    if portproperty['name'] in out_block.function:
+                        resolved_value = out_block.function[portproperty['name']]
+                        if not resolved_value:
+                            self.resolve_output_port_property(parent_stack[:-1], atom, handle)
+                        else:
+                            parent.add_instance_const(self.handle, 'integer', resolved_value)
+                else:
+                    self.platform.log_debug("ERROR: Can't resolve port property value")
 
     def get_declarations(self):
         return []
@@ -1101,8 +1118,10 @@ class BundleAtom(NameAtom):
 
 
 class ModuleAtom(Atom):
-    def __init__(self, module, function, platform_code, token_index, platform, scope_index, connected_blocks, previous_atom, next_atom):
-        super(ModuleAtom, self).__init__()
+    def __init__(self, module, function, platform_code, token_index, platform,
+                 scope_index, connected_blocks, line, filename,
+                 previous_atom, next_atom):
+        super(ModuleAtom, self).__init__(line, filename)
         self.scope_index = scope_index
         self.name = module["name"]
         self.handle = self.name + '_%03i'%token_index
@@ -1622,13 +1641,16 @@ class ModuleAtom(Atom):
             pass
 
 class ReactionAtom(ModuleAtom):
-    def __init__(self, reaction, function, platform_code, token_index, platform, scope_index, connected_blocks, previous_atom, next_atom):
+    def __init__(self, reaction, function, platform_code, token_index,
+                 platform, scope_index, connected_blocks, line, filename,
+                 previous_atom, next_atom):
         # We need to force a scope to avoid having declarations and instances
         # generate code in the header. Unlike modules, reactions don't have an
         # internal scope where these things will go, they need to go in the
         # global scope, so their code generation needs to be postponed.
         self.reaction = reaction
-        super(ReactionAtom, self).__init__(reaction, function, platform_code, token_index, platform, scope_index, connected_blocks, previous_atom, next_atom)
+        super(ReactionAtom, self).__init__(reaction, function, platform_code, token_index,
+             platform, scope_index, connected_blocks, line, filename, previous_atom, next_atom)
 
 
 
@@ -1661,10 +1683,13 @@ class ReactionAtom(ModuleAtom):
         parameter_tokens = []
         out_names = [block['name'] for block in self._output_blocks]
 
+        out_tokens = self.out_tokens
         for ref in self.references:
             if not ref.get_name() in out_names:
                 parameter_tokens.append(ref.get_name())
-        parameter_tokens += self.out_tokens
+            else:
+                parameter_tokens.append(out_tokens[0])
+#                out_tokens.remove(out_tokens[0])
         for i in range(len(parameter_tokens)):
             # TODO we need checking of scope and domain here
             for scope_decl in self.platform.scope_stack[-1]:
@@ -1756,11 +1781,11 @@ class ReactionAtom(ModuleAtom):
 
         for const_name, const_info in self.instance_consts.items():
             init_code += templates.assignment(const_name, "_" + const_name)
-            if const_info.type == 'real':
+            if const_info['type'] == 'real':
                 header_code += templates.declaration_real(const_name);
-            elif const_info.type == 'integer':
+            elif const_info['type'] == 'integer':
                 header_code += templates.declaration_int(const_name);
-            elif const_info.type == 'string':
+            elif const_info['type'] == 'string':
                 header_code += templates.declaration_string(const_name);
 
         for domain, code in domain_code.items():
@@ -1873,14 +1898,17 @@ class ReactionAtom(ModuleAtom):
         return instances
 
 class LoopAtom(ModuleAtom):
-    def __init__(self, loop, function, platform_code, token_index, platform, scope_index, connected_blocks, previous_atom, next_atom):
+    def __init__(self, loop, function, platform_code, token_index,
+                 platform, scope_index, connected_blocks, line, filename,
+                 previous_atom, next_atom):
         # We need to force a scope to avoid having declarations and instances
         # generate code in the header. Unlike modules, reactions don't have an
         # internal scope where these things will go, they need to go in the
         # global scope, so their code generation needs to be postponed.
         self.loop = loop
         self._on_terminate = loop['terminateWhen']['name']['name']
-        super(LoopAtom, self).__init__(loop, function, platform_code, token_index, platform, scope_index, connected_blocks, previous_atom, next_atom)
+        super(LoopAtom, self).__init__(loop, function, platform_code, token_index, platform,
+             scope_index, connected_blocks, line, filename, previous_atom, next_atom)
 
 
     def get_header_code(self):
@@ -2279,13 +2307,13 @@ class PlatformFunctions:
                     connected_blocks.append(self.make_atom(value))
             if declaration['type'] == 'module':
                 if 'type' in platform_type['block']:
-                    new_atom = ModuleAtom(declaration, member['function'], platform_type, self.unique_id, self, scope_index, connected_blocks, previous_atom, next_atom)
+                    new_atom = ModuleAtom(declaration, member['function'], platform_type, self.unique_id, self, scope_index, connected_blocks, member['function']['line'], member['function']['filename'],previous_atom, next_atom)
                 else:
                     raise ValueError("Invalid or unavailable platform type.")
             elif declaration['type'] == 'reaction':
-                new_atom = ReactionAtom(declaration, member['function'], platform_type, self.unique_id, self, scope_index, connected_blocks, previous_atom, next_atom)
+                new_atom = ReactionAtom(declaration, member['function'], platform_type, self.unique_id, self, scope_index, connected_blocks, member['function']['line'], member['function']['filename'],previous_atom, next_atom)
             elif declaration['type'] == 'loop':
-                new_atom = LoopAtom(declaration, member['function'], platform_type, self.unique_id, self, scope_index, connected_blocks, previous_atom, next_atom)
+                new_atom = LoopAtom(declaration, member['function'], platform_type, self.unique_id, self, scope_index, connected_blocks, member['function']['line'], member['function']['filename'],previous_atom, next_atom)
             else: # Assume we are using a platform type (allow function notation for platform types)
                 # This should be exactly the same as the if "name" in member branch
                 platform_type, declaration = self.find_block(member['function']['name'], self.tree)
