@@ -2397,7 +2397,7 @@ QVector<ASTNode > CodeResolver::sliceStreamByDomain(std::shared_ptr<StreamNode> 
     std::string previousDomainName = CodeValidator::getNodeDomainName(left, CodeValidator::getBlocksInScope(left, scopeStack, m_tree), m_tree);
     while (left) {
         domainName = CodeValidator::getNodeDomainName(left, CodeValidator::getBlocksInScope(left, scopeStack, m_tree), m_tree);
-        if (left->getNodeType() == AST::Int || left->getNodeType() == AST::Real  || left->getNodeType() == AST::Real) {
+        if (left->getNodeType() == AST::Int || left->getNodeType() == AST::Real  || left->getNodeType() == AST::Switch) {
             // If constant, ignore domain and go to next member
             stack << left;
             if(right->getNodeType() == AST::Stream) {
@@ -2412,6 +2412,10 @@ QVector<ASTNode > CodeResolver::sliceStreamByDomain(std::shared_ptr<StreamNode> 
                     streams << makeStreamFromStack(stack);
                 }
                 break;
+            }
+            domainName = CodeValidator::getNodeDomainName(left, CodeValidator::getBlocksInScope(left, scopeStack, m_tree), m_tree);
+            if (previousDomainName.size() == 0) {
+                previousDomainName = domainName;
             }
         } else if (left->getNodeType() == AST::Expression) {
             // We might need to add bridge signals if expression members belong to different domains
