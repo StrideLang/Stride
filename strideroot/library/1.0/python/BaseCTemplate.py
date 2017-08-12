@@ -58,7 +58,7 @@ class BaseCTemplate(object):
         self.str_false = "false"
         self.stream_begin_code = '// Starting stream %02i -------------------------\n ' #{\n'
 #        self.stream_end_code = '} // Stream End %02i\n'
-        self.stream_end_code = '// Stream End %02i\n'
+        self.stream_end_code = '// Stream End %02i'
 
         self.string_type = "std::string"
         self.real_type = 'float'
@@ -102,7 +102,7 @@ public:
         if line == -1:
             marker = ''
         else:
-            marker = " //" + str(line) + ':' + filename + '\n'
+            marker = "#line " + str(line) + ' "' + filename + '"\n'
         return marker
 
     def number_to_string(self, number):
