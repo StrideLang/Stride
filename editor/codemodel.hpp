@@ -64,6 +64,7 @@ public:
     QStringList getFunctions();
     QStringList getObjectNames();
     QString getFunctionSyntax(QString symbol);
+    QString getTypeSyntax(QString symbol);
     QList<LangError> getErrors();
     void updateCodeAnalysis(QString code, QString platformRootPath);
 

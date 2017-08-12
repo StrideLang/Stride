@@ -199,14 +199,26 @@ void CodeEditor::insertAutoComplete()
 void CodeEditor::updateAutoCompleteMenu(QString currentWord)
 {
     m_autoCompleteMenu.clear();
-    QStringList functions = m_codeModel->getFunctions();
     QAction *activeAction = nullptr;
-    foreach(QString functionName, functions) {
-        if (functionName.left(currentWord.size()) == currentWord) {
-            QString syntaxText = m_codeModel->getFunctionSyntax(functionName);
-            QAction *syntaxAction = m_autoCompleteMenu.addAction(functionName, this, SLOT(insertAutoComplete()));
-            syntaxAction->setData(syntaxText);
-            if (!activeAction) { activeAction = syntaxAction; }
+    if (currentWord[0].toUpper() == currentWord[0]) {
+        QStringList functions = m_codeModel->getFunctions();
+        foreach(QString functionName, functions) {
+            if (functionName.left(currentWord.size()) == currentWord) {
+                QString syntaxText = m_codeModel->getFunctionSyntax(functionName);
+                QAction *syntaxAction = m_autoCompleteMenu.addAction(functionName, this, SLOT(insertAutoComplete()));
+                syntaxAction->setData(syntaxText);
+                if (!activeAction) { activeAction = syntaxAction; }
+            }
+        }
+    } else if (currentWord[0].toLower() == currentWord[0]) {
+        QStringList types = m_codeModel->getTypes();
+        foreach(QString typeName, types) {
+            if (typeName.left(currentWord.size()) == currentWord) {
+                QString syntaxText = m_codeModel->getTypeSyntax(typeName);
+                QAction *syntaxAction = m_autoCompleteMenu.addAction(typeName, this, SLOT(insertAutoComplete()));
+                syntaxAction->setData(syntaxText);
+                if (!activeAction) { activeAction = syntaxAction; }
+            }
         }
     }
     if (activeAction) {
