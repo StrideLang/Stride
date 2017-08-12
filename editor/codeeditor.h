@@ -107,6 +107,7 @@ private:
     ToolTip m_toolTip;
 
 signals:
+    void requestAssistant(QPoint point);
 
 };
 

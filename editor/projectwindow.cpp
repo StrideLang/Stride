@@ -309,9 +309,9 @@ void ProjectWindow::tabChanged(int index)
 {
     Q_UNUSED(index);
     if (index >= 0) {
-        QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
+        CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
         m_highlighter->setDocument(editor->document());
-        connect(editor, SIGNAL(customContextMenuRequested(QPoint)),
+        connect(editor, SIGNAL(requestAssistant(QPoint)),
                 this, SLOT(showHelperMenu(QPoint)));
     }
 }
@@ -427,55 +427,56 @@ void ProjectWindow::showHelperMenu(QPoint where)
 //            break;
 //        }
 //    }
-    QMenu *platformMenu = m_helperMenu.addMenu(tr("Platform"));
-    QStringList platformList, platformCode;
-    platformList << "Gamma" << "Arduino";
-    platformCode << "use Gamma version 1.0 on PC" << "use Arduino version 1.0 on Uno";
-    for (int i = 0; i < platformList.size(); ++i) {
-        QAction *newAction = platformMenu->addAction(platformList[i], this, SLOT(insertText()));
-        newAction->setData(platformCode[i]);
-    }
+//    QMenu *platformMenu = m_helperMenu.addMenu(tr("Platform"));
+//    QStringList platformList, platformCode;
+//    platformList << "Gamma" << "Arduino";
+//    platformCode << "use Gamma version 1.0 on PC" << "use Arduino version 1.0 on Uno";
+//    for (int i = 0; i < platformList.size(); ++i) {
+//        QAction *newAction = platformMenu->addAction(platformList[i], this, SLOT(insertText()));
+//        newAction->setData(platformCode[i]);
+//    }
     QMenu *functionMenu = m_helperMenu.addMenu(tr("New function"));
-    AST *optimizedTree = m_codeModel.getOptimizedTree();
-    for(ASTNode node : optimizedTree->getChildren()) {
-        if (node->getNodeType() == AST::Declaration) {
-            DeclarationNode *block = static_cast<DeclarationNode *>(node.get());
-            if (block->getObjectType() == "module") {
-                QAction *newAction = functionMenu->addAction(QString::fromStdString(block->getName()), this, SLOT(insertText()));
-//                QString text = QString::fromStdString(block->getNamespace());
-//                if (!text.isEmpty()) {
-//                    text += ".";
-//                }
-                QString text = "";
-                if (block->getScopeLevels()) {
-                    for (unsigned int i = 0; i < block->getScopeLevels(); i++)
-                    {
-                        text += QString::fromStdString(block->getScopeAt(i));
-                        text += "::";
+    map<string, vector<ASTNode>> objs = m_codeModel.getSystem()->getBuiltinObjectsReference();
+    for(auto namespaceGroup: objs) {
+        for(auto obj: namespaceGroup.second) {
+            if (obj->getNodeType() == AST::Declaration) {
+                DeclarationNode *block = static_cast<DeclarationNode *>(obj.get());
+                if (block->getObjectType() == "module") {
+                    QAction *newAction = functionMenu->addAction(QString::fromStdString(block->getName()), this, SLOT(insertText()));
+                    //                QString text = QString::fromStdString(block->getNamespace());
+                    //                if (!text.isEmpty()) {
+                    //                    text += ".";
+                    //                }
+                    QString text = "";
+                    if (block->getScopeLevels()) {
+                        for (unsigned int i = 0; i < block->getScopeLevels(); i++)
+                        {
+                            text += QString::fromStdString(block->getScopeAt(i));
+                            text += "::";
+                        }
                     }
-                }
-                text += QString::fromStdString(block->getName()) + "(";
-                ListNode *portList = static_cast<ListNode *>(block->getPropertyValue("ports").get());
-                if (portList && portList->getNodeType() == AST::List) {
-                    for(ASTNode port : portList->getChildren()) {
-                        DeclarationNode *portBlock = static_cast<DeclarationNode *>(port.get());
-                        ASTNode portName = portBlock->getPropertyValue("name");
-                        if (portName && portName->getNodeType() == AST::String) {
-                            string name =static_cast<ValueNode *>(portName.get())->getStringValue();
-                            if (name.size() > 0) {
-                                text += QString::fromStdString(name) + ":  ";
+                    text += QString::fromStdString(block->getName()) + "(";
+                    ListNode *portList = static_cast<ListNode *>(block->getPropertyValue("ports").get());
+                    if (portList && portList->getNodeType() == AST::List) {
+                        for(ASTNode port : portList->getChildren()) {
+                            DeclarationNode *portBlock = static_cast<DeclarationNode *>(port.get());
+                            ASTNode portName = portBlock->getPropertyValue("name");
+                            if (portName && portName->getNodeType() == AST::String) {
+                                string name =static_cast<ValueNode *>(portName.get())->getStringValue();
+                                if (name.size() > 0) {
+                                    text += QString::fromStdString(name) + ":  ";
+                                }
                             }
                         }
                     }
+                    text += ") ";
+                    newAction->setData(text);
                 }
-                text += ") ";
-                newAction->setData(text);
+                //            node->deleteChildren();
+                //            delete node;
             }
-//            node->deleteChildren();
-//            delete node;
         }
     }
-    delete optimizedTree;
 
     m_helperMenu.exec(ui->tabWidget->currentWidget()->mapToGlobal(where));
 }
@@ -1024,6 +1025,8 @@ void ProjectWindow::newFile()
     m_highlighter->setDocument(editor->document());
     QObject::connect(editor, SIGNAL(textChanged()), this, SLOT(markModified()));
     QObject::connect(editor, SIGNAL(textChanged()), this, SLOT(resetCodeTimer()));
+    QObject::connect(editor, SIGNAL(requestAssistant(QPoint)),
+                     this, SLOT(showHelperMenu(QPoint)));
     editor->setFocus();
 }
 

@@ -69,6 +69,7 @@ CodeEditor::CodeEditor(QWidget *parent, CodeModel *codeModel) :
     connect(this, SIGNAL(cursorPositionChanged()), this, SLOT(hideButton()));
 
     m_toolTip.hide();
+    setContextMenuPolicy(Qt::CustomContextMenu);
 }
 
 int CodeEditor::lineNumberAreaWidth()
@@ -161,7 +162,7 @@ void CodeEditor::hideButton()
 
 void CodeEditor::helperButtonClicked()
 {
-    emit(customContextMenuRequested(m_helperButton.pos()));
+    emit(requestAssistant(m_helperButton.pos()));
     m_helperButton.setChecked(false);
 }
 
