@@ -940,6 +940,8 @@ class PortPropertyAtom(Atom):
 
     def resolve_output_port_property(self, parent_stack, atom, handle):
         portproperty = atom.portproperty
+        if len(parent_stack) == 0:
+            return None
         parent = parent_stack[-1]
         # TODO add support for instance constants that are not integer
 
@@ -951,7 +953,7 @@ class PortPropertyAtom(Atom):
                         if not resolved_value:
                             self.resolve_output_port_property(parent_stack[:-1], atom, handle)
                         else:
-                            parent.add_instance_const(self.handle, 'integer', resolved_value)
+                            parent.add_instance_const(handle, 'integer', resolved_value)
                         break
                 elif isinstance(out_block, ListAtom):
                 # FIXME There needs to be a way to know what member of the list we are actually connectiong to...
@@ -962,16 +964,18 @@ class PortPropertyAtom(Atom):
                                 if not resolved_value:
                                     self.resolve_output_port_property(parent_stack[:-1], atom, handle)
                                 else:
-                                    parent.add_instance_const(self.handle, 'integer', resolved_value)
+                                    parent.add_instance_const(handle, 'integer', resolved_value)
                 elif isinstance(out_block, ModuleAtom):
                     if portproperty['name'] in out_block.function:
                         resolved_value = out_block.function[portproperty['name']]
                         if not resolved_value:
                             self.resolve_output_port_property(parent_stack[:-1], atom, handle)
                         else:
-                            parent.add_instance_const(self.handle, 'integer', resolved_value)
+                            parent.add_instance_const(handle, 'integer', resolved_value)
                 else:
                     self.platform.log_debug("ERROR: Can't resolve port property value")
+        else:
+            self.resolve_output_port_property(parent_stack[:-1], atom, handle)
 
     def get_declarations(self):
         return []
@@ -1410,7 +1414,8 @@ class ModuleAtom(Atom):
                     module_port_domain = block_decl['domain']
                 module_port_direction = 'input' if 'Input' in module_block['type'] else 'output'
                 for port_atom_name in self.port_name_atoms:
-                    if port_atom_name == module_port_name:
+                    # Check if domain name matches and domain has code
+                    if port_atom_name == module_port_name and module_port_domain in self.code['domain_code'].keys():
                         for port_value in self.port_name_atoms[port_atom_name]:
                             # TODO implement for output ports
                             if not type(port_value) is ValueAtom and module_port_direction == 'input':
@@ -2438,7 +2443,7 @@ class PlatformFunctions:
             code = templates.declaration_reaction(instance.get_module_type(), instance.get_name())
         else:
             raise ValueError('Unsupported type for instance')
-        code += templates.source_marker(instance.get_line(), instance.get_filename())
+#        code += templates.source_marker(instance.get_line(), instance.get_filename())
         return code
 
     def initialization_code(self, instance):
@@ -2487,7 +2492,7 @@ class PlatformFunctions:
 
         current_rate = -1;
 
-        self.log_debug(">>>>>>>>")
+#        self.log_debug(">>>>>>>>")
 
         for group in node_groups:
             streamdomain = self.get_stream_domain(group)
