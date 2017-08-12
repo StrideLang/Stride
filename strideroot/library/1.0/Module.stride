@@ -88,18 +88,6 @@ type _Port {
 type _Module {
 	typeName: "module"
 	properties: [
-		typeProperty Input {
-			name: "input"
-			types: [""]
-			default: none
-			required: off
-		},
-		typeProperty Output {
-			name: "output"
-			types: [""]
-			default: none
-			required: off
-		},
 		typeProperty Ports {
 			name: "ports"
 			types: [ "" ]  # TODO: How can we define list types here?
@@ -132,12 +120,6 @@ type _Module {
 type _Reaction {
 	typeName: "reaction"
 	properties: [
-		typeProperty Output {
-			name: "output"
-			types: [""]
-			default: none
-			required: on
-		},
 		typeProperty Ports {
 			name: "ports"
 			types: [ "" ]  # TODO: How can we define list types here?

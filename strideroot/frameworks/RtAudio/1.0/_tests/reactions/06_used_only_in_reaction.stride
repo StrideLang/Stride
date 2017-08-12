@@ -1,6 +1,6 @@
 use DesktopAudio version 1.0
 
-module LinearEnvelope {
+module InReaction {
     ports: [
         mainOutputPort OutputPort {
             block: Output
@@ -27,4 +27,4 @@ module LinearEnvelope {
 }
 
 
-AudioIn[1] >> LinearEnvelope () >> AudioOut;
+AudioIn[1] >> InReaction () >> AudioOut;
