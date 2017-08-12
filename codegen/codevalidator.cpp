@@ -878,8 +878,9 @@ void CodeValidator::validateStreamInputSize(StreamNode *stream, QVector<ASTNode 
     int leftOutSize = getNodeNumOutputs(left, scope, m_tree, errors);
     int rightInSize = getNodeNumInputs(right, scope, m_tree, errors);
 
-    if (leftOutSize != rightInSize
-            && ((int) (rightInSize/ (double) leftOutSize)) != (rightInSize/ (double) leftOutSize) ) {
+    if ((leftOutSize != rightInSize
+            && ((int) (rightInSize/ (double) leftOutSize)) != (rightInSize/ (double) leftOutSize))
+            || rightInSize == 0) {
         LangError error;
         error.type = LangError::StreamMemberSizeMismatch;
         error.lineNumber = right->getLine();
