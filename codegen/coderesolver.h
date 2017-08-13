@@ -115,6 +115,7 @@ private:
     void processResetForNode(ASTNode thisScope, ASTNode streamScope, ASTNode upperScope);
     void propagateDomainsForNode(ASTNode node, QVector<ASTNode > scopeStack);
     void resolveDomainForStreamNode(ASTNode node, QVector<ASTNode > scope);
+    ASTNode resolvePortProperty(std::shared_ptr<PortPropertyNode> portProperty, QVector<ASTNode > scopeStack);
 
     void checkStreamConnections(std::shared_ptr<StreamNode> stream, QVector<ASTNode > scopeStack, bool start = true);
     void markConnectionForNode(ASTNode node, QVector<ASTNode > scopeStack, bool start);

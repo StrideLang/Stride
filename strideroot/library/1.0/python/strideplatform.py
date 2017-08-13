@@ -1415,15 +1415,16 @@ class ModuleAtom(Atom):
                 module_port_direction = 'input' if 'Input' in module_block['type'] else 'output'
                 for port_atom_name in self.port_name_atoms:
                     # Check if domain name matches and domain has code
-                    if port_atom_name == module_port_name and module_port_domain in self.code['domain_code'].keys():
+                    if port_atom_name == module_port_name:
                         for port_value in self.port_name_atoms[port_atom_name]:
                             # TODO implement for output ports
-                            if not type(port_value) is ValueAtom and module_port_direction == 'input':
-                                #if port_atom.
-                                if not module_port_domain in domain_proc_code:
-                                    domain_proc_code[module_port_domain] = {'handles': []}
-                                code += templates.assignment(port_value.get_handles()[0], port_value.get_inline_processing_code(port_value.get_handles()))
-                                domain_proc_code[module_port_domain]['handles'] += port_value.get_handles()
+                            if module_port_direction == 'input':
+                                if module_port_domain in self.code['domain_code'].keys():
+                                    #if port_atom.
+                                    if not module_port_domain in domain_proc_code:
+                                        domain_proc_code[module_port_domain] = {'handles': []}
+                                    code += templates.assignment(port_value.get_handles()[0], port_value.get_inline_processing_code(port_value.get_handles()))
+                                    domain_proc_code[module_port_domain]['handles'] += port_value.get_handles()
                         pass
 
         for module_port_domain, values  in domain_proc_code.items():
@@ -1543,9 +1544,9 @@ class ModuleAtom(Atom):
                     module_block = module_port['block']
                 elif 'blockbundle' in module_port:
                     module_block = module_port['blockbundle']
+                module_port_name = module_block['name']
 
                 module_port_domain = ''
-                module_port_name = module_block['name']
                 block_decl = self.find_internal_block(module_block['block']['name']['name'])
                 if block_decl:
                     module_port_domain = block_decl['domain']
@@ -1554,10 +1555,11 @@ class ModuleAtom(Atom):
                     if port_atom_name == module_port_name:
                         for port_value in self.port_name_atoms[port_atom_name]:
                             # TODO implement for output ports
-                            if type(port_value) is ValueAtom and module_port_direction == 'input' and not module_block['domain'] == self._output_blocks[0]['domain']:
-                                #if port_atom.
-                                module_call = templates.module_processing_code(self.handle, port_value.get_handles(), [], module_port_domain)
-                                self.initialization_code += templates.expression(module_call)
+                            if module_port_direction == 'input':
+                                if type(port_value) is ValueAtom and not module_port_domain in self.code['domain_code'].keys():
+                                    #if port_atom.
+                                    module_call = templates.module_processing_code(self.handle, port_value.get_handles(), [], module_port_domain)
+                                    self.initialization_code += templates.expression(module_call)
                         pass
 
         # FIXME this needs fixing

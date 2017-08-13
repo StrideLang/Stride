@@ -944,8 +944,21 @@ std::string CodeResolver::processDomainsForNode(ASTNode node, QVector<ASTNode > 
                 } else if (domain->getNodeType() == AST::Block) {
                     QList<LangError> errors;
                     domainName = CodeValidator::evaluateConstString(domain, scopeStack, m_tree, errors);
-                } else if (domain->getNodeType() == AST::None) { // domain is streamDomain
+                } else if (domain->getNodeType() == AST::None) {
+                    // TODO does this need to be handled?
 //                    domainStack << declaration;
+                } else if (domain->getNodeType() == AST::PortProperty) {
+                    ASTNode resolvedDomain = resolvePortProperty(static_pointer_cast<PortPropertyNode>(domain),
+                                                         scopeStack);
+                    if (resolvedDomain) {
+                        if (resolvedDomain->getNodeType() == AST::String) {
+                            domainName = std::static_pointer_cast<ValueNode>(resolvedDomain)->getStringValue();
+                        } else {
+                            domainName = CodeValidator::getNodeDomainName(resolvedDomain, scopeStack, m_tree);
+                        }
+                        declaration->setDomainString(domainName);
+                    }
+                    //                    domainStack << declaration;
                 } else {
                     qDebug() << "WARNING: Unrecognized domain type"; // Should this trigger an error?
 //                    domainStack << declaration;
@@ -2087,7 +2100,17 @@ void CodeResolver::propagateDomainsForNode(ASTNode node, QVector<ASTNode > scope
             vector<ASTNode > streamsNode = getModuleStreams(module);
             vector<ASTNode >::reverse_iterator streamIt = streamsNode.rbegin();
             std::shared_ptr<ListNode> blocks = static_pointer_cast<ListNode>(module->getPropertyValue("blocks"));
+            ASTNode ports = module->getPropertyValue("ports");
             scopeStack = QVector<ASTNode>::fromStdVector(blocks->getChildren()) + scopeStack; // Prepend internal scope
+            if (ports && ports->getNodeType() == AST::List) { // We need to add ports to stack because users might need to query their properties e.g. Port.domain
+                scopeStack = QVector<ASTNode>::fromStdVector(ports->getChildren()) + scopeStack;
+            }
+
+//            scopeStack << CodeValidator::getBlockSubScope(declaration);
+//            ASTNode ports = declaration->getPropertyValue("ports");
+//            if (ports) {
+//                scopeStack << QVector<ASTNode>::fromStdVector(ports->getChildren());
+//            }
             while(streamIt != streamsNode.rend()) {
                 const ASTNode streamNode = *streamIt;
                 if (streamNode->getNodeType() == AST::Stream) {
@@ -2939,6 +2962,21 @@ void CodeResolver::resolveDomainForStreamNode(ASTNode node, QVector<ASTNode > sc
             }
         }
     }
+}
+
+ASTNode CodeResolver::resolvePortProperty(std::shared_ptr<PortPropertyNode> portProperty, QVector<ASTNode> scopeStack)
+{
+    ASTNode resolved;
+    auto decl
+            = CodeValidator::findDeclaration(QString::fromStdString(portProperty->getPortName()),
+                                             scopeStack, m_tree);
+    if (decl) {
+        resolved = decl->getPropertyValue(portProperty->getName());
+        if (resolved && resolved->getNodeType() == AST::PortProperty) {
+            resolved = resolvePortProperty(std::static_pointer_cast<PortPropertyNode>(resolved), scopeStack);
+        }
+    }
+    return resolved;
 }
 
 void CodeResolver::checkStreamConnections(std::shared_ptr<StreamNode> stream, QVector<ASTNode > scopeStack, bool start)
