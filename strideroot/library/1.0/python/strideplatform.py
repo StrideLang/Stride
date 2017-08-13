@@ -1149,9 +1149,6 @@ class ModuleAtom(Atom):
 
         self.constructor_consts = {}
 
-        self._process_flags()
-
-
         if 'domain' in self.function['ports']:
             if 'value' in self.function['ports']['domain']:
                 self.domain = self.function['ports']['domain']['value']
@@ -1625,13 +1622,6 @@ class ModuleAtom(Atom):
         if not name in self.instance_consts:
             self.instance_consts[name] = {'type': consttype, 'value' : value}
 
-    def _process_flags(self):
-        if not '_flags' in self.module:
-            return
-        flags = self.module['_flags']
-        for flag in flags:
-            pass
-
 class ReactionAtom(ModuleAtom):
     def __init__(self, reaction, function, platform_code, token_index,
                  platform, scope_index, connected_blocks, line, filename,
@@ -1641,12 +1631,13 @@ class ReactionAtom(ModuleAtom):
         super(ReactionAtom, self).__init__(reaction, function, platform_code, token_index,
              platform, scope_index, connected_blocks, line, filename, previous_atom, next_atom)
         # Pass by reference recursively, e.g. from main domain down tree of reactions
-        parent = self.platform.parent_stack[-1]
-        if (type(parent) == ReactionAtom
-                 or type(parent) == LoopAtom):
-            for ref in self.references:
-                if not ref.get_name() in [parent_ref.get_name() for parent_ref in parent.references]:
-                    parent.references.append(ref)
+        if len(self.platform.parent_stack) > 0:
+            parent = self.platform.parent_stack[-1]
+            if (type(parent) == ReactionAtom
+                     or type(parent) == LoopAtom):
+                for ref in self.references:
+                    if not ref.get_name() in [parent_ref.get_name() for parent_ref in parent.references]:
+                        parent.references.append(ref)
 
     def get_header_code(self):
         domain_code = self.code['domain_code']
@@ -1888,6 +1879,8 @@ class ReactionAtom(ModuleAtom):
                                 instances += [new_inst]
                                 instances[-1].add_dependent(self.code_declaration)
 
+
+        print(str([inst.get_name() for inst in instances]))
         return instances
 
 class LoopAtom(ModuleAtom):
@@ -2500,15 +2493,24 @@ class PlatformFunctions:
                         current_domain = atom.domain
 
                 # Accumulate reads and writes within domains
+                # TODO This should probably be moved to C++ CodeResolver...
                 if not current_domain in writes:
                     writes[current_domain] = []
                 if not current_domain in reads:
                     reads[current_domain] = []
 
-                if group.index(atom) > 0 and (type(atom) == NameAtom or type(atom) == BundleAtom):
-                    writes[current_domain] += atom.get_instances()
-                if group.index(atom) < len(group) -1 and (type(atom) == NameAtom or type(atom) == BundleAtom):
-                    reads[current_domain] += atom.get_instances()
+                # It's a write if not the first atom
+                if group.index(atom) > 0:
+                    if (type(atom) == NameAtom or type(atom) == BundleAtom):
+                        writes[current_domain] += atom.get_instances()
+                    elif (type(atom) == ListAtom or type(atom) == ExpressionAtom):
+                        writes[current_domain] += atom.get_instances()
+                # It's a read for any but the last
+                if group.index(atom) < len(group) -1:
+                    if (type(atom) == NameAtom or type(atom) == BundleAtom):
+                        reads[current_domain] += atom.get_instances()
+                    elif (type(atom) == ListAtom or type(atom) == ExpressionAtom):
+                        reads[current_domain] += atom.get_instances()
 
                 #Process Inlcudes
                 new_globals = atom.get_globals()
@@ -2678,10 +2680,14 @@ class PlatformFunctions:
             new_code = self.generate_code_from_groups(node_groups, global_groups)
             header_code, init_code, new_processing_code, scope_instances, scope_declarations, reads, writes = new_code
         else:
+            # Don't generate stream if it's not meant for this framework
             stream_filename = ''
             header_code, init_code, new_processing_code, scope_instances, scope_declarations, reads, writes = [{} for i in range(7)]
-#        self.log_debug("READS------ " + str(reads) )
-#        self.log_debug("WRITES------ " + str(writes) )
+
+        for domain,rs in reads.items():
+            self.log_debug("READS------ " + str(domain) + " --- "  + ','.join([r.get_name() for r in rs]) )
+        for domain,ws in writes.items():
+            self.log_debug("WRITES------ " + str(domain) + " --- " + ','.join([w.get_name() for w in ws]) )
 #        self.log_debug("-- End stream")
 
         for domain in new_processing_code.keys():
