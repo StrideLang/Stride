@@ -1342,19 +1342,9 @@ class ModuleAtom(Atom):
         domain = ''
         for in_block in self._input_blocks:
             domain = in_block['domain']
-#            if not in_block['main'] and in_block['domain'] == self._input_blocks[0]['domain']:
-#                if 'size' in in_block:
-#                    in_tokens.append('_%s_in'%in_block['name'])
-#                else:
-#                    in_tokens.append(in_block['name'])
 
         for out_block in self._output_blocks:
             domain = out_block['domain']
-#            if not out_block['main']and out_block['domain'] == self._output_blocks[0]['domain']:
-#                if 'size' in out_block:
-#                    out_tokens.append('_%s_%03i_out'%(out_block['name'], out_block['index']))
-#                else:
-#                    out_tokens.append(out_block['name'])
 
         code = templates.module_processing_code(self.handle,
                                                 in_tokens,
@@ -1445,11 +1435,6 @@ class ModuleAtom(Atom):
             pass
 
         return {domain : [code, out_tokens] }
-
-#    def _get_internal_header_code(self):
-#        code = self.code['domain_code']['header_code']
-#        return code
-
 
     def get_postprocessing_code(self, in_tokens):
         code = ''
@@ -1651,15 +1636,17 @@ class ReactionAtom(ModuleAtom):
     def __init__(self, reaction, function, platform_code, token_index,
                  platform, scope_index, connected_blocks, line, filename,
                  previous_atom, next_atom):
-        # We need to force a scope to avoid having declarations and instances
-        # generate code in the header. Unlike modules, reactions don't have an
-        # internal scope where these things will go, they need to go in the
-        # global scope, so their code generation needs to be postponed.
         self.reaction = reaction
+        self.references = []
         super(ReactionAtom, self).__init__(reaction, function, platform_code, token_index,
              platform, scope_index, connected_blocks, line, filename, previous_atom, next_atom)
-
-
+        # Pass by reference recursively, e.g. from main domain down tree of reactions
+        parent = self.platform.parent_stack[-1]
+        if (type(parent) == ReactionAtom
+                 or type(parent) == LoopAtom):
+            for ref in self.references:
+                if not ref.get_name() in [parent_ref.get_name() for parent_ref in parent.references]:
+                    parent.references.append(ref)
 
     def get_header_code(self):
         domain_code = self.code['domain_code']
@@ -1735,7 +1722,6 @@ class ReactionAtom(ModuleAtom):
             else:
                 self.out_tokens = ['_' + self.name + '_%03i_out'%self._index]
 
-        self.references = []
         referenced = []
         for domain, writes in self.code['writes'].items():
             for write in writes:
