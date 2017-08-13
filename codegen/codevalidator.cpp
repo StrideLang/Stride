@@ -134,11 +134,18 @@ QVector<ASTNode > CodeValidator::getBlocksInScope(ASTNode root, QVector<ASTNode 
 {
     QVector<ASTNode > blocks;
     if (root->getNodeType() == AST::Declaration || root->getNodeType() == AST::BundleDeclaration) {
-        vector<std::shared_ptr<PropertyNode>> properties = static_pointer_cast<DeclarationNode>(root)->getProperties();
-        blocks << root;
-        ASTNode subScope = CodeValidator::getBlockSubScope(static_pointer_cast<DeclarationNode>(root));
+        std::shared_ptr<DeclarationNode> decl = static_pointer_cast<DeclarationNode>(root);
+//        vector<std::shared_ptr<PropertyNode>> properties = decl->getProperties();
+//        blocks << root;
+        ASTNode subScope = CodeValidator::getBlockSubScope(decl);
         if (subScope) {
             for (ASTNode  block: subScope->getChildren()) {
+                blocks << block;
+                scopeStack << block;
+            }
+        }
+        if (decl->getPropertyValue("ports")) {
+            for (ASTNode  block: decl->getPropertyValue("ports")->getChildren()) {
                 blocks << block;
                 scopeStack << block;
             }

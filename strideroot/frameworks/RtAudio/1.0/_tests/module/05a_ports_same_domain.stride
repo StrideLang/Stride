@@ -1,5 +1,8 @@
 use DesktopAudio version 1.0
 
+import Generators
+
+
 module Test {
 	ports: [
 		mainOutputPort OutputPort {
@@ -11,16 +14,17 @@ module Test {
 		propertyInputPort TestPort {
 			name: "test"
 			block: TestBlock
-			domain: Output.domain
 		}
 	]
 	blocks: [
-#	Amp should be auto declared in OutputDomain
+		signal TestBlock {domain: Output.domain}
 	]
 	streams: [
-		TestBlock * 2 >> Amp;
-		Input * Amp >> Output;
-	]
+		Input * TestBlock >> Output;
+		]
 }
 
-AudioIn[1] >> Test(test: AudioIn[2]) >> AudioOut[1];
+signal Quarter {default: 0.25}
+
+AudioIn[1] >> Test(test: 0.5) >> AudioOut[1];
+AudioIn[2] >> Test(test: Quarter) >> AudioOut[2];

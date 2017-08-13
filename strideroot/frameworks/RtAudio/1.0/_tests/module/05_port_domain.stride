@@ -14,7 +14,7 @@ module Test {
 		}
 	]
 	blocks: [
-		signal Amp { domain: TestPort.domain }
+		signal Amp { domain: TestBlock.domain }
 	]
 	streams: [
 		TestBlock * 2 >> Amp;
