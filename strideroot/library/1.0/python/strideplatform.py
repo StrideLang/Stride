@@ -1631,13 +1631,19 @@ class ReactionAtom(ModuleAtom):
         super(ReactionAtom, self).__init__(reaction, function, platform_code, token_index,
              platform, scope_index, connected_blocks, line, filename, previous_atom, next_atom)
         # Pass by reference recursively, e.g. from main domain down tree of reactions
-        if len(self.platform.parent_stack) > 0:
-            parent = self.platform.parent_stack[-1]
-            if (type(parent) == ReactionAtom
-                     or type(parent) == LoopAtom):
-                for ref in self.references:
-                    if not ref.get_name() in [parent_ref.get_name() for parent_ref in parent.references]:
-                        parent.references.append(ref)
+        parent = self.platform.parent_stack[-1]
+        if (type(parent) == ReactionAtom
+                 or type(parent) == LoopAtom):
+            for ref in self.references:
+                if not ref.get_name() in [parent_ref.get_name() for parent_ref in parent.references]:
+                    parent.references.append(ref)
+
+        # out_tokens for reaction are different
+        if len(self._output_blocks) > 0:
+            if 'size' in self._output_blocks[0]:
+                self.out_tokens = ['_' + self.name + '_%03i_out[%i]'%(self._index, i) for i in range(self._output_blocks[0]['size'])]
+            else:
+                self.out_tokens = ['_' + self.name + '_%03i_out'%self._index]
 
     def get_header_code(self):
         domain_code = self.code['domain_code']
@@ -1671,10 +1677,13 @@ class ReactionAtom(ModuleAtom):
         out_tokens = self.out_tokens
         for ref in self.references:
             if not ref.get_name() in out_names:
-                parameter_tokens.append(ref.get_name())
+                parameter_tokens.append(ref.get_name()) # For inputs use same name
             else:
+                # For outputs use the output token
                 parameter_tokens.append(out_tokens[0])
 #                out_tokens.remove(out_tokens[0])
+
+        # For signal bridges,
         for i in range(len(parameter_tokens)):
             # TODO we need checking of scope and domain here
             for scope_decl in self.platform.scope_stack[-1]:
@@ -1701,52 +1710,19 @@ class ReactionAtom(ModuleAtom):
         return processing_code
 
     def _prepare_declaration(self):
-        header_code = ''
-        init_code = ''
         process_code = {}
 
         domain_code = self.code['domain_code']
-        # out_tokens for reaction are different
-        if len(self._output_blocks) > 0:
-            if 'size' in self._output_blocks[0]:
-                self.out_tokens = ['_' + self.name + '_%03i_out[%i]'%(self._index, i) for i in range(self._output_blocks[0]['size'])]
-            else:
-                self.out_tokens = ['_' + self.name + '_%03i_out'%self._index]
-
-        referenced = []
-        for domain, writes in self.code['writes'].items():
-            for write in writes:
-                if not write.get_name() in referenced:
-                    referenced += [write.get_name()]
-                    self.references.append(write)
-        for domain, reads in self.code['reads'].items():
-            for read in reads:
-                if not read.get_name() in referenced:
-                    referenced += [read.get_name()]
-                    self.references.append(read)
-
         for domain, code in domain_code.items():
             if domain is not None: # To get rid of domains from constants
-                header_code += code['header_code']
-                init_code += code['init_code']
                 if not domain in process_code:
                     # Hack to turn all computation in a reaction within the right domain
                     if self.input_atom:
                         # self.input_atom can be None when computing "next_atom"
                         # On next pass it should get the right value
-                        # This should be optimized out. When computing "next_atom" not everything needs to
-
+                        # This should be optimized. When computing "next_atom" not everything needs to
                         domain = self.input_atom.get_domain()
                     process_code[domain] = {"code": '', "input_blocks" : [], "output_blocks" : []}
-
-    #            if 'input_blocks' in self.code['domain_code'][domain]:
-    #                for input_block in self.code['domain_code'][domain]['input_blocks']:
-    #                    if type(input_block.atom) == NameAtom or type(input_block.atom) == BundleAtom:
-    #                        process_code[domain]['input_blocks'].append(input_block.atom.code_declaration)
-    #            if 'output_blocks' in self.code['domain_code'][domain]:
-    #                for output_block in self.code['domain_code'][domain]['output_blocks']:
-    #                    if type(output_block.atom) == NameAtom or type(output_block.atom) == BundleAtom:
-    #                        process_code[domain]['output_blocks'].append(output_block.atom.code_declaration)
 
                 process_code[domain]['code'] += '\n'.join(code['processing_code'])
                 for block in self._input_blocks:
@@ -1757,29 +1733,32 @@ class ReactionAtom(ModuleAtom):
                     if block['domain'] == domain:
                         process_code[domain]['output_blocks'].append(block)
 
-        if self.code['reads']:
-            for domain, declarations in self.code['reads'].items():
-                for decl in declarations:
-                    if decl.get_scope() < self.scope_index:
-                        self.add_instance_const(decl.get_name(), decl.get_type(), 0)
-
         for const_name, const_info in self.instance_consts.items():
-            init_code += templates.assignment(const_name, "_" + const_name)
-            if const_info['type'] == 'real':
-                header_code += templates.declaration_real(const_name);
-            elif const_info['type'] == 'integer':
-                header_code += templates.declaration_int(const_name);
-            elif const_info['type'] == 'string':
-                header_code += templates.declaration_string(const_name);
+            if const_name:
+                print("IGNORING CONST:" + const_name)
 
         for domain, code in domain_code.items():
-            if domain is None: # Process constants
-                header_code += code['header_code']
-                init_code += code['init_code']
+            if code['header_code']:
+                print("IGNORING HEADER CODE:" + code['header_code'])
+            if code['init_code']:
+                print("IGNORING INIT CODE:" + code['init_code'])
+
+        # Prepare list with referenced members in stream.
+        # All these references need to come in as reference arguments
+        referenced = []
+        for domain, writes in self.code['writes'].items():
+            for write in writes:
+                if not write.get_name() in self.references:
+                    referenced += [write.get_name()]
+                    self.references.append(write)
+        for domain, reads in self.code['reads'].items():
+            for read in reads:
+                if not read.get_name() in referenced:
+                    referenced += [read.get_name()]
+                    self.references.append(read)
 
         declaration_text = templates.reaction_declaration(
-                self.reaction['name'], header_code,
-                init_code, process_code,
+                self.reaction['name'], process_code,
                 self.references)
 
         self.code_declaration = Declaration(self.module['stack_index'],
@@ -1814,6 +1793,7 @@ class ReactionAtom(ModuleAtom):
                         '')
             declarations.append(dec) #templates.declaration_real(const_name)
 
+        # Insert reaction declaration that has been previously prepared
         declarations.append(self.code_declaration)
         return declarations
 
@@ -1879,8 +1859,6 @@ class ReactionAtom(ModuleAtom):
                                 instances += [new_inst]
                                 instances[-1].add_dependent(self.code_declaration)
 
-
-        print(str([inst.get_name() for inst in instances]))
         return instances
 
 class LoopAtom(ModuleAtom):
@@ -2492,26 +2470,6 @@ class PlatformFunctions:
                     else:
                         current_domain = atom.domain
 
-                # Accumulate reads and writes within domains
-                # TODO This should probably be moved to C++ CodeResolver...
-                if not current_domain in writes:
-                    writes[current_domain] = []
-                if not current_domain in reads:
-                    reads[current_domain] = []
-
-                # It's a write if not the first atom
-                if group.index(atom) > 0:
-                    if (type(atom) == NameAtom or type(atom) == BundleAtom):
-                        writes[current_domain] += atom.get_instances()
-                    elif (type(atom) == ListAtom or type(atom) == ExpressionAtom):
-                        writes[current_domain] += atom.get_instances()
-                # It's a read for any but the last
-                if group.index(atom) < len(group) -1:
-                    if (type(atom) == NameAtom or type(atom) == BundleAtom):
-                        reads[current_domain] += atom.get_instances()
-                    elif (type(atom) == ListAtom or type(atom) == ExpressionAtom):
-                        reads[current_domain] += atom.get_instances()
-
                 #Process Inlcudes
                 new_globals = atom.get_globals()
                 if len(new_globals) > 0:
@@ -2522,6 +2480,26 @@ class PlatformFunctions:
 
                 declares = atom.get_declarations()
                 new_instances = atom.get_instances()
+
+                # Accumulate reads and writes within domains
+                if not current_domain in writes:
+                    writes[current_domain] = []
+                if not current_domain in reads:
+                    reads[current_domain] = []
+
+                # It's a write if not the first atom
+                if group.index(atom) > 0:
+                    if (type(atom) == NameAtom or type(atom) == BundleAtom):
+                        writes[current_domain] += new_instances
+                    elif (type(atom) == ListAtom or type(atom) == ExpressionAtom):
+                        writes[current_domain] += new_instances
+                # It's a read for any but the last
+                if group.index(atom) < len(group) -1:
+                    if (type(atom) == NameAtom or type(atom) == BundleAtom):
+                        reads[current_domain] += new_instances
+                    elif (type(atom) == ListAtom or type(atom) == ExpressionAtom):
+                        reads[current_domain] += new_instances
+
 
                 for new_dec in declares:
 #                    # add this atom's declaration as a dependent of the existing declaration
@@ -2680,14 +2658,10 @@ class PlatformFunctions:
             new_code = self.generate_code_from_groups(node_groups, global_groups)
             header_code, init_code, new_processing_code, scope_instances, scope_declarations, reads, writes = new_code
         else:
-            # Don't generate stream if it's not meant for this framework
             stream_filename = ''
             header_code, init_code, new_processing_code, scope_instances, scope_declarations, reads, writes = [{} for i in range(7)]
-
-        for domain,rs in reads.items():
-            self.log_debug("READS------ " + str(domain) + " --- "  + ','.join([r.get_name() for r in rs]) )
-        for domain,ws in writes.items():
-            self.log_debug("WRITES------ " + str(domain) + " --- " + ','.join([w.get_name() for w in ws]) )
+#        self.log_debug("READS------ " + str(reads) )
+#        self.log_debug("WRITES------ " + str(writes) )
 #        self.log_debug("-- End stream")
 
         for domain in new_processing_code.keys():

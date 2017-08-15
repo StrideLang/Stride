@@ -20,11 +20,6 @@ module Test {
 		}
 		reaction ProcessInner {
 			streams: [
-				on >> ProcessInner2();
-			]
-		}
-		reaction ProcessInner2 {
-			streams: [
 				Input >>Output;
 			]
 		}

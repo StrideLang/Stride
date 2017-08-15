@@ -102,7 +102,7 @@ public:
         if line == -1:
             marker = ''
         else:
-            marker = "#line " + str(line) + ' "' + filename + '"\n'
+            marker = "//#line " + str(line) + ' "' + filename + '"\n'
         return marker
 
     def number_to_string(self, number):
@@ -572,20 +572,15 @@ public:
 
     # Reactions code
 
-    def reaction_declaration(self, name, header_code, init_code,
-                             process_code, references = []):
-
+    def reaction_declaration(self, name, process_code, references = []):
         out_type = 'void'
 
         process_functions = ''
         declared_references = []
-#        constructor_args = ''
+
         for domain, domain_components in process_code.items():
             domain_proc_code = domain_components['code']
             input_declaration = ''
-#            for output_block in domain_components['output_blocks']:
-#                input_declaration +=  self.declaration_reference(output_block, False) + ", "
-
             for ref in references:
                 if not ref.get_name() in declared_references:
                     input_declaration +=  self.declaration_reference_from_instance(ref, False) + ", "
@@ -596,11 +591,7 @@ public:
 
 
             process_functions += self.str_function_declaration%(out_type, name + '_process_' + str(domain), input_declaration, domain_proc_code)
-#
-#        for const_name, props in instance_consts.items():
-#            constructor_args += "float _" + const_name + ","
-#        if len(constructor_args) > 0 and constructor_args[-1] == ',':
-#            constructor_args = constructor_args[:-1]
+
         declaration = process_functions
         return declaration
 
