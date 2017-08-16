@@ -131,9 +131,6 @@
    </widget>
   </widget>
   <widget class="QDockWidget" name="projectDockWidget">
-   <property name="features">
-    <set>QDockWidget::DockWidgetMovable</set>
-   </property>
    <property name="windowTitle">
     <string>Project</string>
    </property>

@@ -564,10 +564,13 @@ QTreeWidgetItem *ProjectWindow::createTreeItem(ASTNode inputNode)
         QStringList itemText;
         itemText << QString::fromStdString(declaration->getName())
                  <<  QString::fromStdString(declaration->getObjectType());
-        newItem = new QTreeWidgetItem(itemText);
         QVariantList fileInfo;
         fileInfo << QString::fromStdString(inputNode->getFilename());
         fileInfo << inputNode->getLine();
+        if (declaration->getName()[0] == '_' || declaration->getObjectType()[0] == '_') {
+            return nullptr;
+        }
+        newItem = new QTreeWidgetItem(itemText);
         newItem->setData(0, Qt::UserRole, fileInfo);
         if (inputNode->getFilename() == "") {
             newItem->setBackgroundColor(0, Qt::green);
@@ -594,9 +597,8 @@ QTreeWidgetItem *ProjectWindow::createTreeItem(ASTNode inputNode)
             }
             if (property->getValue()->getNodeType() == AST::List) {
                 for (auto listMember: property->getValue()->getChildren()) {
-                    QTreeWidgetItem *subItem = createTreeItem(std::static_pointer_cast<DeclarationNode>(listMember));
+                    QTreeWidgetItem *subItem = createTreeItem(listMember);
                     if (subItem) {
-                        propertyItem->addChild(subItem);
                         QVariantList fileInfo;
                         fileInfo << QString::fromStdString(listMember->getFilename());
                         fileInfo << listMember->getLine();
@@ -608,13 +610,13 @@ QTreeWidgetItem *ProjectWindow::createTreeItem(ASTNode inputNode)
                             subItem->setBackgroundColor(0, Qt::lightGray);
                             subItem->setBackgroundColor(1, Qt::lightGray);
                         }
+                        propertyItem->addChild(subItem);
                     }
                 }
 
-            } else if (property->getValue()->getNodeType() == AST::Declaration) {
-                QTreeWidgetItem *subItem = createTreeItem(std::static_pointer_cast<DeclarationNode>(property->getValue()));
+            } else {
+                QTreeWidgetItem *subItem = createTreeItem(property->getValue());
                 if (subItem) {
-                    propertyItem->addChild(subItem);
                     QVariantList fileInfo;
                     fileInfo << QString::fromStdString(property->getValue()->getFilename());
                     fileInfo << property->getValue()->getLine();
@@ -626,6 +628,7 @@ QTreeWidgetItem *ProjectWindow::createTreeItem(ASTNode inputNode)
                         subItem->setBackgroundColor(0, Qt::lightGray);
                         subItem->setBackgroundColor(1, Qt::lightGray);
                     }
+                    propertyItem->addChild(subItem);
                 }
             }
             newItem->addChild(propertyItem);
@@ -1575,11 +1578,17 @@ void ProjectWindow::inspectorItemClicked(QTreeWidgetItem *item, int column)
 
         CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
         if (editor->filename() == fileName) {
-            editor->gotoLine(dataList[1].toInt());
+            int line = dataList[1].toInt();
+            if (line >= 0) {
+                editor->gotoLine(line);
+            }
         } else {
             loadFile(fileName);
             editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
-            editor->gotoLine(dataList[1].toInt());
+            int line = dataList[1].toInt();
+            if (line >= 0) {
+                editor->gotoLine(line);
+            }
         }
     }
 
