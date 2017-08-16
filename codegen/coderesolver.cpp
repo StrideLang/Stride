@@ -2509,7 +2509,19 @@ QVector<ASTNode > CodeResolver::sliceStreamByDomain(std::shared_ptr<StreamNode> 
         if (previousDomainName != domainName
                 && left != stream->getLeft() // domain change and not the first node in the stream
                 ) {
-            terminateStackWithBridge(left, streams, stack, scopeStack);
+            bool skipSlice = false;
+            if (left->getNodeType() == AST::Function) {
+                std::shared_ptr<FunctionNode> func = static_pointer_cast<FunctionNode>(left);
+                std::shared_ptr<DeclarationNode> decl = CodeValidator::findDeclaration(QString::fromStdString(func->getName()), scopeStack, m_tree);
+                if (decl->getObjectType() == "reaction"
+                        || decl->getObjectType() == "loop") {
+                    // TODO hack to avoid slice. The right thing should be to have reactions and loops take the right domain...
+                    skipSlice = true;
+                }
+            }
+            if (!skipSlice) {
+                terminateStackWithBridge(left, streams, stack, scopeStack);
+            }
         } else {
 //            if (left->getNodeType() == AST::Block) {
 //                std::shared_ptr<BlockNode> block = static_pointer_cast<BlockNode>(left);
@@ -2544,9 +2556,21 @@ QVector<ASTNode > CodeResolver::sliceStreamByDomain(std::shared_ptr<StreamNode> 
                 domainName = CodeValidator::getNodeDomainName(right, scopeStack, m_tree);
 
                 if (domainName != previousDomainName) {
-                    lastNode = stack.back();
-                    stack.pop_back();
-                    terminateStackWithBridge(lastNode, streams, stack, scopeStack);
+                    bool skipSlice = false;
+                    if (right->getNodeType() == AST::Function) {
+                        std::shared_ptr<FunctionNode> func = static_pointer_cast<FunctionNode>(right);
+                        std::shared_ptr<DeclarationNode> decl = CodeValidator::findDeclaration(QString::fromStdString(func->getName()), scopeStack, m_tree);
+                        if (decl->getObjectType() == "reaction"
+                                || decl->getObjectType() == "loop") {
+                            // TODO hack to avoid slice. The right thing should be to have reactions and loops take the right domain...
+                            skipSlice = true;
+                        }
+                    }
+                    if (!skipSlice) {
+                        lastNode = stack.back();
+                        stack.pop_back();
+                        terminateStackWithBridge(lastNode, streams, stack, scopeStack);
+                    }
                 }
 
                 if (stack.size() != 0) {
