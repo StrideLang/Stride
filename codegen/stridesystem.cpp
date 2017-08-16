@@ -62,7 +62,7 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
 
     m_library.setLibraryPath(strideRoot, importList);
     if (QFile::exists(systemFile)) {
-        ASTNode systemTree = AST::parseFile(systemFile.toStdString().c_str());
+        ASTNode systemTree = AST::parseFile(systemFile.toStdString().c_str(), nullptr);
         if (systemTree) {
             parseSystemTree(systemTree);
 
@@ -85,7 +85,7 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
                     QStringList libraryFiles =  QDir(includeSubPath).entryList(nameFilters);
                     foreach (QString file, libraryFiles) {
                         QString fileName = includeSubPath + QDir::separator() + file;
-                        ASTNode tree = AST::parseFile(fileName.toLocal8Bit().data());
+                        ASTNode tree = AST::parseFile(fileName.toLocal8Bit().data(), nullptr);
                         if(tree) {
                             platform->addTree(file.toStdString(),tree);
                         } else {
@@ -116,7 +116,7 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
                 string platformPath = platform->buildTestingLibPath(m_strideRoot.toStdString());
                 QFileInfoList libraryFiles =  QDir(QString::fromStdString(platformPath)).entryInfoList(nameFilters);
                 for (auto fileInfo : libraryFiles) {
-                    ASTNode tree = AST::parseFile(fileInfo.absoluteFilePath().toLocal8Bit().data());
+                    ASTNode tree = AST::parseFile(fileInfo.absoluteFilePath().toLocal8Bit().data(), nullptr);
                     if(tree) {
                         platform->addTestingTree(fileInfo.baseName().toStdString(),tree);
                     } else {
@@ -491,7 +491,7 @@ vector<ASTNode> StrideSystem::getOptionTrees()
     QString optionPath = m_systemPath + QDir::separator() + "options";
     QFileInfoList optionFiles =  QDir(optionPath).entryInfoList(nameFilters);
     for (auto fileInfo : optionFiles) {
-        ASTNode optionTree = AST::parseFile(fileInfo.absoluteFilePath().toStdString().c_str());
+        ASTNode optionTree = AST::parseFile(fileInfo.absoluteFilePath().toStdString().c_str(), nullptr);
         if (optionTree) {
             optionTrees.push_back(optionTree);
         } else {

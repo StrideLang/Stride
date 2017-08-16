@@ -55,7 +55,8 @@ public:
 
     std::shared_ptr<StrideSystem> getSystem() { return m_system; }
 
-    // Caller owns and must free the returned AST tree
+    // Copy of current tree, it is safe to use outside CodeModel
+    // But the caller must clean it up.
     AST *getOptimizedTree();
 
 //    Builder *createBuilder(QString projectDir);
@@ -66,7 +67,7 @@ public:
     QString getFunctionSyntax(QString symbol);
     QString getTypeSyntax(QString symbol);
     QList<LangError> getErrors();
-    void updateCodeAnalysis(QString code, QString platformRootPath);
+    void updateCodeAnalysis(QString code, QString platformRootPath, QString sourceFile);
 
 signals:
 

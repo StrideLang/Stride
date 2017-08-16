@@ -187,7 +187,7 @@ void StrideLibrary::readLibrary(QString rootDir, QMap<QString, QString> importLi
         QStringList libraryFiles =  QDir(rootDir + basepath + QDir::separator() + subPath).entryList(nameFilters);
         foreach (QString file, libraryFiles) {
             QString fileName = rootDir + basepath + QDir::separator() + subPath + QDir::separator() + file;
-            ASTNode tree = AST::parseFile(fileName.toLocal8Bit().data());
+            ASTNode tree = AST::parseFile(fileName.toLocal8Bit().data(), nullptr);
             if(tree) {
                 QString namespaceName = importList[subPath];
                 if (!namespaceName.isEmpty()) {

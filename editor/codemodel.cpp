@@ -365,10 +365,10 @@ QPair<QString, int> CodeModel::getSymbolLocation(QString symbol)
     return location;
 }
 
-AST * CodeModel::getOptimizedTree()
+AST *CodeModel::getOptimizedTree()
 {
     QMutexLocker locker(&m_validTreeLock);
-    AST * optimizedTree = nullptr;
+    AST *optimizedTree = nullptr;
     if (m_lastValidTree) {
         optimizedTree = new AST;
         for(ASTNode node : m_lastValidTree->getChildren()) {
@@ -502,7 +502,7 @@ QList<LangError> CodeModel::getErrors()
     return m_errors;
 }
 
-void CodeModel::updateCodeAnalysis(QString code, QString platformRootPath)
+void CodeModel::updateCodeAnalysis(QString code, QString platformRootPath, QString sourceFile)
 {
     QMutexLocker locker(&m_validTreeLock);
     QTemporaryFile tmpFile;
@@ -510,7 +510,8 @@ void CodeModel::updateCodeAnalysis(QString code, QString platformRootPath)
         tmpFile.write(code.toLocal8Bit());
         tmpFile.close();
         ASTNode tree;
-        tree = AST::parseFile(tmpFile.fileName().toLocal8Bit().constData());
+        tree = AST::parseFile(tmpFile.fileName().toLocal8Bit().constData(),
+                              sourceFile.toLocal8Bit().constData());
 
         if (tree) {
             CodeValidator validator(platformRootPath, tree);

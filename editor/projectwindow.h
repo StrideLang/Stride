@@ -39,6 +39,7 @@
 #include <QFile>
 #include <QTimer>
 #include <QMenu>
+#include <QTreeWidgetItem>
 
 #include "languagehighlighter.h"
 #include "builder.h"
@@ -69,11 +70,12 @@ public slots:
     void openOptionsDialog();
     void openGeneratedDir();
     void cleanProject();
-    void updateCodeAnalysis();
+    void updateCodeAnalysis(bool force = false);
     void newFile();
     void markModified();
     void configureSystem();
     void resetCodeTimer();
+    void inspectorItemClicked(QTreeWidgetItem *item, int column);
 
 protected:
     virtual void closeEvent(QCloseEvent *event);
@@ -112,6 +114,9 @@ private:
     void updateEditorSettings();
 
     SystemConfiguration readProjectConfiguration();
+
+    void fillInspectorTree();
+    QTreeWidgetItem *createTreeItem(ASTNode inputNode);
 
     Ui::ProjectWindow *ui;
 

@@ -35,6 +35,7 @@
 #include <QPainter>
 #include <QTextBlock>
 #include <QDebug>
+#include <QScrollBar>
 
 #include "codeeditor.h"
 #include "linenumberarea.h"
@@ -284,6 +285,20 @@ void CodeEditor::find(QString query)
         query = cursor.selectedText();
     }
     find(query);
+}
+
+void CodeEditor::gotoLine(int line)
+{
+    QTextCursor currentCursor = this->textCursor();
+    QTextCursor newCursor(this->document()->findBlockByNumber(line-1)); // ln-1 because line number starts from 0
+
+    if (currentCursor.blockNumber() < newCursor.blockNumber()) {
+        // This is hacky, but how else to do it???
+        // And it's not working....
+        newCursor.movePosition(QTextCursor::NextBlock, QTextCursor::MoveAnchor, 4);
+    }
+    this->setTextCursor(newCursor);
+    qDebug() << verticalScrollBar()->value() << " " << verticalScrollBar()->maximum();
 }
 
 void CodeEditor::resizeEvent(QResizeEvent *e)

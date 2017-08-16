@@ -162,15 +162,26 @@
        <property name="frameShape">
         <enum>QFrame::NoFrame</enum>
        </property>
+       <property name="iconSize">
+        <size>
+         <width>16</width>
+         <height>16</height>
+        </size>
+       </property>
        <property name="columnCount">
-        <number>1</number>
+        <number>2</number>
        </property>
        <attribute name="headerVisible">
-        <bool>false</bool>
+        <bool>true</bool>
        </attribute>
        <column>
         <property name="text">
          <string notr="true">1</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string notr="true">2</string>
         </property>
        </column>
       </widget>

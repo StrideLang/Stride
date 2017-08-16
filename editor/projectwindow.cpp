@@ -39,7 +39,6 @@
 #include <QDir>
 #include <QMenuBar>
 #include <QSettings>
-#include <QTemporaryFile>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QSignalMapper>
@@ -79,7 +78,6 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
 
     setWindowTitle("StrideIDE");
     updateMenus();
-    ui->projectDockWidget->setVisible(false);
     m_highlighter = new LanguageHighlighter(this);
 
     readSettings();
@@ -114,6 +112,11 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
     ui->belowEditorWidget->setLayout(layout);
 
     m_searchWidget->hide();
+
+    ui->projectDockWidget->setVisible(true);
+    connect(ui->treeWidget, SIGNAL(itemClicked(QTreeWidgetItem *, int )),
+            this, SLOT(inspectorItemClicked(QTreeWidgetItem *, int )));
+
 }
 
 ProjectWindow::~ProjectWindow()
@@ -309,10 +312,11 @@ void ProjectWindow::tabChanged(int index)
 {
     Q_UNUSED(index);
     if (index >= 0) {
-        CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+        CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->widget(index));
         m_highlighter->setDocument(editor->document());
         connect(editor, SIGNAL(requestAssistant(QPoint)),
                 this, SLOT(showHelperMenu(QPoint)));
+        updateCodeAnalysis(true);
     }
 }
 
@@ -551,6 +555,121 @@ void ProjectWindow::printConsoleError(QString text)
     }
 }
 
+QTreeWidgetItem *ProjectWindow::createTreeItem(ASTNode inputNode)
+{
+    CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+    QTreeWidgetItem *newItem = nullptr;
+    if (inputNode->getNodeType() == AST::Declaration) {
+        std::shared_ptr<DeclarationNode> declaration = std::static_pointer_cast<DeclarationNode>(inputNode);
+        QStringList itemText;
+        itemText << QString::fromStdString(declaration->getName())
+                 <<  QString::fromStdString(declaration->getObjectType());
+        newItem = new QTreeWidgetItem(itemText);
+        QVariantList fileInfo;
+        fileInfo << QString::fromStdString(inputNode->getFilename());
+        fileInfo << inputNode->getLine();
+        newItem->setData(0, Qt::UserRole, fileInfo);
+        if (inputNode->getFilename() == "") {
+            newItem->setBackgroundColor(0, Qt::green);
+            newItem->setBackgroundColor(1, Qt::green);
+        } else if (inputNode->getFilename() != editor->filename().toStdString()) {
+            newItem->setBackgroundColor(0, Qt::lightGray);
+            newItem->setBackgroundColor(1, Qt::lightGray);
+        }
+        for (auto property: declaration->getProperties()) {
+            QStringList propertyItemText;
+            propertyItemText << QString::fromStdString(property->getName());
+            //                         <<  QString::fromStdString(decl->getObjectType());
+            QTreeWidgetItem *propertyItem = new QTreeWidgetItem(propertyItemText);
+            QVariantList fileInfo;
+            fileInfo << QString::fromStdString(property->getFilename());
+            fileInfo << property->getLine();
+            propertyItem->setData(0, Qt::UserRole, fileInfo);
+            if (property->getFilename() == "") {
+                propertyItem->setBackgroundColor(0, Qt::green);
+                propertyItem->setBackgroundColor(1, Qt::green);
+            } else if (property->getFilename() != editor->filename().toStdString()) {
+                propertyItem->setBackgroundColor(0, Qt::lightGray);
+                propertyItem->setBackgroundColor(1, Qt::lightGray);
+            }
+            if (property->getValue()->getNodeType() == AST::List) {
+                for (auto listMember: property->getValue()->getChildren()) {
+                    QTreeWidgetItem *subItem = createTreeItem(std::static_pointer_cast<DeclarationNode>(listMember));
+                    if (subItem) {
+                        propertyItem->addChild(subItem);
+                        QVariantList fileInfo;
+                        fileInfo << QString::fromStdString(listMember->getFilename());
+                        fileInfo << listMember->getLine();
+                        subItem->setData(0, Qt::UserRole, fileInfo);
+                        if (listMember->getFilename() == "") {
+                            subItem->setBackgroundColor(0, Qt::green);
+                            subItem->setBackgroundColor(1, Qt::green);
+                        } else if (listMember->getFilename() != editor->filename().toStdString()) {
+                            subItem->setBackgroundColor(0, Qt::lightGray);
+                            subItem->setBackgroundColor(1, Qt::lightGray);
+                        }
+                    }
+                }
+
+            } else if (property->getValue()->getNodeType() == AST::Declaration) {
+                QTreeWidgetItem *subItem = createTreeItem(std::static_pointer_cast<DeclarationNode>(property->getValue()));
+                if (subItem) {
+                    propertyItem->addChild(subItem);
+                    QVariantList fileInfo;
+                    fileInfo << QString::fromStdString(property->getValue()->getFilename());
+                    fileInfo << property->getValue()->getLine();
+                    subItem->setData(0, Qt::UserRole, fileInfo);
+                    if (property->getValue()->getFilename() == "") {
+                        subItem->setBackgroundColor(0, Qt::green);
+                        subItem->setBackgroundColor(1, Qt::green);
+                    } else if (property->getValue()->getFilename() != editor->filename().toStdString()) {
+                        subItem->setBackgroundColor(0, Qt::lightGray);
+                        subItem->setBackgroundColor(1, Qt::lightGray);
+                    }
+                }
+            }
+            newItem->addChild(propertyItem);
+        }
+    } else if (inputNode->getNodeType() == AST::String) {
+        std::shared_ptr<ValueNode> stringValue = std::static_pointer_cast<ValueNode>(inputNode);
+        QStringList itemText;
+        itemText << "\"" + QString::fromStdString(stringValue->getStringValue() + "\"");
+        newItem = new QTreeWidgetItem(itemText);
+        QVariantList fileInfo;
+        fileInfo << QString::fromStdString(stringValue->getFilename());
+        fileInfo << stringValue->getLine();
+        newItem->setData(0, Qt::UserRole, fileInfo);
+    } else if (inputNode->getNodeType() == AST::Int) {
+        std::shared_ptr<ValueNode> intNode = std::static_pointer_cast<ValueNode>(inputNode);
+        QStringList itemText;
+        itemText << QString::number(intNode->getIntValue());
+        newItem = new QTreeWidgetItem(itemText);
+        QVariantList fileInfo;
+        fileInfo << QString::fromStdString(intNode->getFilename());
+        fileInfo << intNode->getLine();
+        newItem->setData(0, Qt::UserRole, fileInfo);
+    } else if (inputNode->getNodeType() == AST::Real) {
+        std::shared_ptr<ValueNode> realNode = std::static_pointer_cast<ValueNode>(inputNode);
+        QStringList itemText;
+        itemText << QString::number(realNode->getRealValue());
+        newItem = new QTreeWidgetItem(itemText);
+        QVariantList fileInfo;
+        fileInfo << QString::fromStdString(realNode->getFilename());
+        fileInfo << realNode->getLine();
+        newItem->setData(0, Qt::UserRole, fileInfo);
+    } else if (inputNode->getNodeType() == AST::Block) {
+        std::shared_ptr<BlockNode> blockNode = std::static_pointer_cast<BlockNode>(inputNode);
+        QStringList itemText;
+        itemText << QString::fromStdString(blockNode->getName());
+        newItem = new QTreeWidgetItem(itemText);
+        QVariantList fileInfo;
+        fileInfo << QString::fromStdString(blockNode->getFilename());
+        fileInfo << blockNode->getLine();
+        newItem->setData(0, Qt::UserRole, fileInfo);
+    }
+    return newItem;
+}
+
 void ProjectWindow::updateMenus()
 {
 //    QStringList deviceList = m_project->listDevices();
@@ -684,17 +803,17 @@ void ProjectWindow::loadFile()
 
 void ProjectWindow::loadFile(QString fileName)
 {
-    QFile codeFile(fileName);
-    if (!codeFile.open(QIODevice::ReadOnly)) { // ReadWrite creates the file if it doesn't exist
-        qDebug() << "Error opening code file!";
-        return;
-    }
     for(int i = 0; i < ui->tabWidget->count(); ++i) {
         CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->widget(i));
         if (editor->filename() == fileName) {
             ui->tabWidget->setCurrentWidget(editor);
             return;
         }
+    }
+    QFile codeFile(fileName);
+    if (!codeFile.open(QIODevice::ReadOnly)) { // ReadWrite creates the file if it doesn't exist
+        qDebug() << "Error opening code file!";
+        return;
     }
     newFile();
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
@@ -751,19 +870,21 @@ void ProjectWindow::openOptionsDialog()
     }
 }
 
-void ProjectWindow::updateCodeAnalysis()
+void ProjectWindow::updateCodeAnalysis(bool force)
 {
     m_codeModelTimer.stop();
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     if ((QApplication::activeWindow() == this  && editor->changedSinceParse())
-            || m_startingUp) {
+            || m_startingUp || force) {
         editor->markParsed();
         m_codeModel.updateCodeAnalysis(editor->document()->toPlainText(),
-                                       m_environment["platformRootPath"].toString());
+                                       m_environment["platformRootPath"].toString(),
+                editor->filename());
         m_highlighter->setBlockTypes(m_codeModel.getTypes());
         m_highlighter->setFunctions(m_codeModel.getFunctions());
         m_highlighter->setBuiltinObjects(m_codeModel.getObjectNames());
         editor->setErrors(m_codeModel.getErrors());
+        fillInspectorTree();
     }
     QPoint position = editor->mapFromGlobal(QCursor::pos());
     position.rx() -= editor->lineNumberAreaWidth();
@@ -771,6 +892,7 @@ void ProjectWindow::updateCodeAnalysis()
     cursor.select(QTextCursor::WordUnderCursor);
 //    qDebug() << cursor.selectedText();
     editor->setToolTipText(m_codeModel.getTooltipText(cursor.selectedText()));
+
     m_codeModelTimer.start();
 }
 
@@ -1011,6 +1133,32 @@ SystemConfiguration ProjectWindow::readProjectConfiguration()
         }
     }
     return configuration;
+}
+
+void ProjectWindow::fillInspectorTree()
+{
+    // Fill inspector tree
+    AST *tree = m_codeModel.getOptimizedTree();
+    ui->treeWidget->clear(); // TODO keep open leafs open
+    ui->treeWidget->setColumnCount(2);
+    ui->treeWidget->setHeaderLabels(QStringList() << "Name" << "Type");
+
+    ui->treeWidget->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    ui->treeWidget->header()->setSectionResizeMode(1, QHeaderView::Stretch);
+    if (tree) {
+        for (auto node: tree->getChildren()) {
+            if (node->getNodeType() == AST::Declaration) {
+                std::shared_ptr<DeclarationNode> decl = static_pointer_cast<DeclarationNode>(node);
+                QTreeWidgetItem *newItem = createTreeItem(decl);
+                if (newItem) {
+                    ui->treeWidget->addTopLevelItem(newItem);
+                }
+            } else if (node->getNodeType() == AST::Stream) {
+                // Should we display streams too?
+            }
+        }
+        delete tree;
+    }
 }
 
 void ProjectWindow::newFile()
@@ -1417,6 +1565,24 @@ void ProjectWindow::resetCodeTimer()
 {
     m_codeModelTimer.stop();
     m_codeModelTimer.start();
+}
+
+void ProjectWindow::inspectorItemClicked(QTreeWidgetItem *item, int column)
+{
+    QVariantList dataList = item->data(0, Qt::UserRole).toList();
+    if (dataList.size() == 2) {
+        QString fileName = dataList[0].toString();
+
+        CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+        if (editor->filename() == fileName) {
+            editor->gotoLine(dataList[1].toInt());
+        } else {
+            loadFile(fileName);
+            editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+            editor->gotoLine(dataList[1].toInt());
+        }
+    }
+
 }
 
 void ProjectWindow::closeEvent(QCloseEvent *event)

@@ -1075,9 +1075,12 @@ std::vector<LangError> getErrors() {
     return parseErrors;
 }
 
-AST *parse(const char *filename){
+AST *parse(const char *filename, const char*sourceFilename){
     FILE * file;
     AST *ast = NULL;
+    if (sourceFilename == nullptr) {
+        sourceFilename = filename;
+    }
 
     char *lc;
     if (!(lc =setlocale (LC_ALL, "C"))) {
@@ -1098,7 +1101,7 @@ AST *parse(const char *filename){
         return NULL;
     }
 
-    currentFile = filename;
+    currentFile = sourceFilename;
 
     COUT << "Analysing: " << filename << ENDL;
     COUT << "===========" << ENDL;

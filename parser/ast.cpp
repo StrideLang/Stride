@@ -36,7 +36,7 @@
 
 #include "ast.h"
 
-extern AST *parse(const char* fileName);
+extern AST *parse(const char* fileName, const char* sourceFilename);
 extern std::vector<LangError> getErrors();
 
 AST::AST()
@@ -94,9 +94,9 @@ ASTNode AST::deepCopy()
     return newNode;
 }
 
-ASTNode AST::parseFile(const char *fileName)
+ASTNode AST::parseFile(const char *fileName, const char* sourceFilename)
 {
-    return std::shared_ptr<AST>(parse(fileName));
+    return std::shared_ptr<AST>(parse(fileName, sourceFilename));
 }
 
 vector<LangError> AST::getParseErrors()

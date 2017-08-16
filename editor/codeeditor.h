@@ -68,6 +68,7 @@ public:
     void setFilename(const QString &filename);
 
     void find(QString query = "");
+    void gotoLine(int line);
 
 public slots:
     void markChanged(bool changed = true);
