@@ -1161,13 +1161,6 @@ class ModuleAtom(Atom):
 
         self._process_module(self.module["streams"])
 
-#        if self.code['writes']:
-#            for domain, atoms in self.code['writes'].items():
-#                print(domain)
-#                for atom in atoms:
-#                    if atom.get_scope() < self.scope_index:
-#                        self.add_instance_const()
-
         self._prepare_declaration()
 
         self.set_inline(False)
@@ -1415,7 +1408,7 @@ class ModuleAtom(Atom):
                         pass
 
         for module_port_domain, values  in domain_proc_code.items():
-            if module_port_domain == self._output_blocks[0]['domain']:
+            if len(self._output_blocks) > 0 and module_port_domain == self._output_blocks[0]['domain']:
                 in_tokens += values['handles']
             else:
                 module_call = templates.module_processing_code(self.handle, values['handles'], [], module_port_domain)
@@ -1470,7 +1463,7 @@ class ModuleAtom(Atom):
 #        if self._input_block: # Mark input block as instanced so it doesn't get instantiated as other blocks
 #            instanced = [[self._input_block['name'], self.scope_index]]
 
-
+        # Make atoms for ports in instance
         if 'ports' in self.function:
             for name,port_value in self.function['ports'].items():
                 new_atom = self.platform.make_atom(port_value)
@@ -1554,6 +1547,7 @@ class ModuleAtom(Atom):
 
 
     def _init_blocks(self, blocks):
+        # Finds module blocks for later use
         self._blocks = []
         for block in blocks:
             self._blocks.append(block)
@@ -1676,11 +1670,13 @@ class ReactionAtom(ModuleAtom):
 
         out_tokens = self.out_tokens
         for ref in self.references:
-            if not ref.get_name() in out_names:
-                parameter_tokens.append(ref.get_name()) # For inputs use same name
-            else:
-                # For outputs use the output token
-                parameter_tokens.append(out_tokens[0])
+                if not ref.get_name() in out_names:
+                    if not ref.get_name() in parameter_tokens:
+                        parameter_tokens.append(ref.get_name()) # For inputs use same name
+                else:
+                    # For outputs use the output token
+                    if not out_tokens[0] in parameter_tokens:
+                        parameter_tokens.append(out_tokens[0])
 #                out_tokens.remove(out_tokens[0])
 
         # For signal bridges,
@@ -1689,7 +1685,7 @@ class ReactionAtom(ModuleAtom):
             for scope_decl in self.platform.scope_stack[-1]:
                 # Do we need to support blockbundle here or are all signal bridges blocks?
                 if 'block' in scope_decl and 'type' in scope_decl['block'] and scope_decl['block']['type'] == "signalbridge":
-                    if scope_decl['block']['signal'] == parameter_tokens[i]:
+                    if scope_decl['block']['signal'] == parameter_tokens[i] and scope_decl['block']['outputDomain'] == self.domain:
                         print(scope_decl['block']['signal'])
                         parameter_tokens[i] = scope_decl['block']['name']
 
@@ -2489,16 +2485,20 @@ class PlatformFunctions:
 
                 # It's a write if not the first atom
                 if group.index(atom) > 0:
-                    if (type(atom) == NameAtom or type(atom) == BundleAtom):
-                        writes[current_domain] += new_instances
-                    elif (type(atom) == ListAtom or type(atom) == ExpressionAtom):
-                        writes[current_domain] += new_instances
+                    if (type(atom) == NameAtom or type(atom) == BundleAtom or
+                        type(atom) == ListAtom or type(atom) == ExpressionAtom):
+                        for new_inst in new_instances:
+                                # Don't count module instances. You only need its i/o tokens
+                            if not type(new_inst) == ModuleInstance and not type(new_inst) == Declaration:
+                                writes[current_domain].append(new_inst)
                 # It's a read for any but the last
                 if group.index(atom) < len(group) -1:
-                    if (type(atom) == NameAtom or type(atom) == BundleAtom):
-                        reads[current_domain] += new_instances
-                    elif (type(atom) == ListAtom or type(atom) == ExpressionAtom):
-                        reads[current_domain] += new_instances
+                    if (type(atom) == NameAtom or type(atom) == BundleAtom or
+                        type(atom) == ListAtom or type(atom) == ExpressionAtom):
+                        for new_inst in new_instances:
+                            if not type(new_inst) == ModuleInstance and not type(new_inst) == Declaration:
+                                # Don't count module instances. You only need its i/o tokens
+                                reads[current_domain].append(new_inst)
 
 
                 for new_dec in declares:
@@ -2876,8 +2876,14 @@ class PlatformFunctions:
                 scope_instances += code["scope_instances"]
                 stream_index += 1
 
-                reads.update(code['reads'])
-                writes.update(code['writes'])
+                for domain, read in code['reads'].items():
+                    if not domain in reads:
+                        reads[domain] = []
+                    reads[domain] += read
+                for domain, write in code['writes'].items():
+                    if not domain in writes:
+                        writes[domain] = []
+                    writes[domain] += write
 
         header_elements = scope_declarations + scope_instances
 

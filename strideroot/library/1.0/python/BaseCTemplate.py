@@ -293,7 +293,7 @@ public:
             elif vartype == 'int':
                 declaration = self.declaration_int(name, close)
             else:
-                throw(ValueError("Unsupported type for reference"))
+                print("Unsupported type for reference:" + vartype)
         return declaration
 
     def declaration_real(self, name, close=True, default = None):

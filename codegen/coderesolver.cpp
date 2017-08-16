@@ -2087,7 +2087,7 @@ void CodeResolver::processResetForNode(ASTNode thisScope, ASTNode streamScope, A
                 }
 
                 if(triggerInStream) {
-                    positions.push_back(i);
+                    positions.push_back(i + 1);
                 }
             }
         }
@@ -2095,7 +2095,7 @@ void CodeResolver::processResetForNode(ASTNode thisScope, ASTNode streamScope, A
         // Insert triggering streams in right place
         int numInsertions = 0;
         for (int pos : positions) {
-            childStreams.insert(childStreams.begin() + pos + 1 + numInsertions++,
+            childStreams.insert(childStreams.begin() + pos + numInsertions++,
                             std::make_shared<StreamNode>(std::make_shared<BlockNode>(pair.second, "", -1),
                                                          std::make_shared<FunctionNode>(reactionName,
                                                                                         std::make_shared<ListNode>(nullptr, "", -1),
@@ -2359,7 +2359,8 @@ void CodeResolver::terminateStackWithBridge(ASTNode node, QVector<ASTNode > &str
             std::shared_ptr<DeclarationNode> declaration = CodeValidator::findDeclaration(memberName, scopeStack, m_tree);
             if (declaration
                     && (declaration->getObjectType() == "signal"
-                        || declaration->getObjectType() == "switch")
+                        || declaration->getObjectType() == "switch"
+                        || declaration->getObjectType() == "trigger")
                     ) {
                 string type = declaration->getObjectType();
                 newDeclarations.push_back(createSignalBridge(connectorName, memberName.toStdString(),
@@ -2639,7 +2640,7 @@ QVector<ASTNode> CodeResolver::processExpression(std::shared_ptr<ExpressionNode>
                  CodeValidator::getDomainNodeString(outDomain)) {
                 std::string connectorName = "_BridgeSig_" + std::to_string(m_connectorCounter++);
                 string type = declaration->getObjectType();
-                if (type == "switch" || type == "signal") { // This keeps constants away
+                if (type == "switch" || type == "signal" || type == "trigger") { // This keeps constants away
                     streams.push_back(createSignalBridge(connectorName, memberName.toStdString(),
                                                          declaration->getPropertyValue("default"),
                                                          declaration->getDomain(), outDomain,
@@ -2774,7 +2775,9 @@ void CodeResolver::markConnectionForNode(ASTNode node, QVector<ASTNode > scopeSt
     if (node->getNodeType() == AST::Block) {
         QString name = QString::fromStdString(static_cast<BlockNode *>(node.get())->getName());
         std::shared_ptr<DeclarationNode> decl = CodeValidator::findDeclaration(name, scopeStack, m_tree);
-        if (decl && decl->getObjectType() == "signal") {
+        if (decl && (decl->getObjectType() == "signal"
+                     || decl->getObjectType() == "switch"
+                     || decl->getObjectType() == "trigger")) {
             if (start) { // not first element in stream, so it is being written to
                 std::shared_ptr<PropertyNode> readsProperty;
                 std::shared_ptr<ListNode> readsProperties;
@@ -2804,9 +2807,7 @@ void CodeResolver::markConnectionForNode(ASTNode node, QVector<ASTNode > scopeSt
             }
         }
     } else if (node->getNodeType() == AST::Bundle) {
-
-    } else if (node->getNodeType() == AST::Bundle) {
-
+        //TODO implement for bundles
     }
 }
 

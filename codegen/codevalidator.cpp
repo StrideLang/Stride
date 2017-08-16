@@ -2208,7 +2208,7 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, QVector<ASTNode > scopeStack,
     } else if (node->getNodeType() == AST::Expression) {
         ExpressionNode *expr = static_cast<ExpressionNode *>(node.get());
         if (expr->isUnary()) {
-            domainNode = expr->getValue();
+            domainNode = CodeValidator::getNodeDomain(expr->getValue(), scopeStack, tree);
         } else {
             ASTNode left = expr->getLeft();
             ASTNode right = expr->getRight();

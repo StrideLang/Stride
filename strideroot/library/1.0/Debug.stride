@@ -12,12 +12,10 @@ module DebugPrint {
     blocks: [
 		signal Value { default: 0.0 },
 		switch Trigger { default: on },
+		_debugPrintType DebugPrintBlock {}
 		reaction Print {
-			blocks: [
-     		   _debugPrintType DebugPrintBlock {}
-			]
 			streams: [
-				Value >> DebugPrintBlock;
+				Value >> DebugPrintBlock();
 			]
 		}
     ]
