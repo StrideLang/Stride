@@ -1908,15 +1908,31 @@ class LoopAtom(ModuleAtom):
 
         if not domain in processing_code:
             processing_code[domain] = ['', []]
-        processing_code[domain][0] += "if (" + in_tokens[0] + ") {\n"
-        processing_code[domain][0] += templates.expression(
-                templates.loop_processing_code(self.loop['name'],
-                                                parameter_tokens,
-                                                [], # out tokens should already be included in the parameter tokens.
-                                                domain
-                                                ))
 
-        processing_code[domain][0] += "}\n"
+        #TODO move this to BaseCTemplate
+        is_bool = False
+        if self.input_atom and type(self.input_atom.value) == bool:
+            is_bool = True
+
+        if not is_bool:
+            processing_code[domain][0] += "if (" + in_tokens[0] + ") {\n"
+            processing_code[domain][0] += templates.expression(
+                    templates.loop_processing_code(self.loop['name'],
+                                                    parameter_tokens,
+                                                    [], # out tokens should already be included in the parameter tokens.
+                                                    domain
+                                                    ))
+            processing_code[domain][0] += "}\n"
+        else:
+            if self.input_atom.value: # True here means always on, false means always off. Perhaps a warning should be issued by the compiler in this case
+                processing_code[domain][0] += templates.expression(
+                        templates.loop_processing_code(self.loop['name'],
+                                                    parameter_tokens,
+                                                    [], # out tokens should already be included in the parameter tokens.
+                                                    domain
+                                                    ))
+
+
 
         return processing_code
 
@@ -1985,6 +2001,7 @@ class LoopAtom(ModuleAtom):
             if domain is None: # Process constants
                 header_code += code['header_code']
                 init_code += code['init_code']
+
 
         condition = "!" + self._on_terminate
         declaration_text = templates.loop_declaration(
