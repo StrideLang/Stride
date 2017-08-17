@@ -1911,7 +1911,7 @@ class LoopAtom(ModuleAtom):
 
         #TODO move this to BaseCTemplate
         is_bool = False
-        if self.input_atom and type(self.input_atom.value) == bool:
+        if self.input_atom and type(self.input_atom) == ValueAtom and type(self.input_atom.value) == bool:
             is_bool = True
 
         if not is_bool:
