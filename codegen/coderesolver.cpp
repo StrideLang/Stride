@@ -889,15 +889,21 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream, Q
     while (right) {
         domainName = processDomainsForNode(left, scopeStack, domainStack);
         if (left == right && domainName.size() == 0) { // If this is is the last pass then set the unknown domains to platform domain
-            // This is needed in cases where signals with no set domain are connected
-            // to input ports on other objects. Domains are not
-            // propagated across secondary ports
-            if (contextDomain.isEmpty()) {
-                if (m_system) {
-                    domainName = m_system->getPlatformDomain().toStdString();
-                }
+            if (left->getNodeType() == AST::Function && domainName == "") {
+                // Have functions/loops/reactions be assigned to whatever they are connected to
+                // if they are final in a stream.
+                domainName = previousDomainName;
             } else {
-                domainName = contextDomain.toStdString();
+                // This is needed in cases where signals with no set domain are connected
+                // to input ports on other objects. Domains are not
+                // propagated across secondary ports
+                if (contextDomain.isEmpty()) {
+                    if (m_system) {
+                        domainName = m_system->getPlatformDomain().toStdString();
+                    }
+                } else {
+                    domainName = contextDomain.toStdString();
+                }
             }
             domainStack << left;
         }
