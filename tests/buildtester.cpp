@@ -139,7 +139,6 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile)
                      }
                      counter++;
                  }
-                 std::cerr << "Passed comparison." << std::endl;
 //                 std::cout << builder->getStdOut().toStdString() << std::endl;
              }
          }
@@ -147,6 +146,10 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile)
              delete builder;
          }
      }
-
+     if (!buildOK) {
+         std::cerr << "Error in python script build/run" << std::endl;
+     } else {
+         std::cerr << "Passed comparison." << std::endl;
+     }
      return buildOK;
 }

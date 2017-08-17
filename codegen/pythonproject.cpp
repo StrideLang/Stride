@@ -160,7 +160,7 @@ bool PythonProject::run(bool pressed)
         emit outputText("Done running.");
         return true;
     } else {
-        emit outputText("Done running.");
+        emit outputText("Abnormal run exit.");
         return false;
     }
 }

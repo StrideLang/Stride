@@ -352,6 +352,12 @@ public:
             declaration += ';\n'
         return declaration
 
+    def conditional_code(self, condition, code):
+        final_code =  "if (" + condition + ") {\n"
+        final_code += code
+        final_code += "}\n"
+        return final_code
+
     def value_real(self, value):
         value = str(value)
         return value

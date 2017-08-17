@@ -1692,15 +1692,32 @@ class ReactionAtom(ModuleAtom):
 
         if not domain in processing_code:
             processing_code[domain] = ['', []]
-        processing_code[domain][0] += "if (" + in_tokens[0] + ") {\n"
-        processing_code[domain][0] += templates.expression(
-                templates.reaction_processing_code(self.reaction['name'],
-                                                parameter_tokens,
-                                                [], # out tokens should already be included in the parameter tokens.
-                                                domain
-                                                ))
 
-        processing_code[domain][0] += "}\n"
+
+        is_bool = False
+        if self.input_atom and type(self.input_atom) == ValueAtom and type(self.input_atom.value) == bool:
+            is_bool = True
+
+        if not is_bool:
+            cond_code = templates.conditional_code(
+                    in_tokens[0],
+                    templates.expression(
+                            templates.reaction_processing_code(
+                                    self.reaction['name'],
+                                    parameter_tokens,
+                                    [], # out tokens should already be included in the parameter tokens.
+                                    domain
+                                    )))
+            processing_code[domain][0] += cond_code
+        else:
+            if self.input_atom.value: # True here means always on, false means always off. Perhaps a warning should be issued by the compiler in this case
+                processing_code[domain][0] += templates.expression(
+                        templates.reaction_processing_code(
+                                self.reaction['name'],
+                                parameter_tokens,
+                                [], # out tokens should already be included in the parameter tokens.
+                                domain
+                                ))
         processing_code[domain][1] = out_tokens
 
         return processing_code
@@ -1909,20 +1926,21 @@ class LoopAtom(ModuleAtom):
         if not domain in processing_code:
             processing_code[domain] = ['', []]
 
-        #TODO move this to BaseCTemplate
         is_bool = False
         if self.input_atom and type(self.input_atom) == ValueAtom and type(self.input_atom.value) == bool:
             is_bool = True
 
         if not is_bool:
-            processing_code[domain][0] += "if (" + in_tokens[0] + ") {\n"
-            processing_code[domain][0] += templates.expression(
-                    templates.loop_processing_code(self.loop['name'],
-                                                    parameter_tokens,
-                                                    [], # out tokens should already be included in the parameter tokens.
-                                                    domain
-                                                    ))
-            processing_code[domain][0] += "}\n"
+            cond_code = templates.conditional_code(in_tokens[0],
+                                                   templates.expression(
+                                                           templates.loop_processing_code(self.loop['name'],
+                                                                                          parameter_tokens,
+                                                                                          [], # out tokens should already be included in the parameter tokens.
+                                                                                          domain
+                                                                                          )
+                                                           )
+                                                   )
+            processing_code[domain][0] += cond_code
         else:
             if self.input_atom.value: # True here means always on, false means always off. Perhaps a warning should be issued by the compiler in this case
                 processing_code[domain][0] += templates.expression(
