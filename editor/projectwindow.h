@@ -127,6 +127,7 @@ private:
 //    QString m_platformsRootDir;
     QMap<QString, QVariant> m_options;
     QMap<QString, QVariant> m_environment;
+    QMap<QString, QVariant> m_guiOptions;
     QTimer m_codeModelTimer;
     CodeModel m_codeModel;
     QFont m_font;

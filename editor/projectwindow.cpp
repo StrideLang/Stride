@@ -567,7 +567,8 @@ QTreeWidgetItem *ProjectWindow::createTreeItem(ASTNode inputNode)
         QVariantList fileInfo;
         fileInfo << QString::fromStdString(inputNode->getFilename());
         fileInfo << inputNode->getLine();
-        if (declaration->getName()[0] == '_' || declaration->getObjectType()[0] == '_') {
+        if (!m_guiOptions["gui.inspectorShowInternal"].toBool()
+                && (declaration->getName()[0] == '_' || declaration->getObjectType()[0] == '_')) {
             return nullptr;
         }
         newItem = new QTreeWidgetItem(itemText);
@@ -1018,6 +1019,8 @@ void ProjectWindow::readSettings()
     }
     int lastIndex = settings.value("lastIndex", -1).toInt(); // Used later after files are loaded
     ui->tabWidget->setCurrentIndex(lastIndex);
+
+    m_guiOptions["gui.inspectorShowInternal"] = settings.value("gui.inspectorShowInternal", true).toBool();
     settings.endGroup();
 }
 
@@ -1026,43 +1029,47 @@ void ProjectWindow::writeSettings()
     QSettings settings("Stride", "StrideIDE", this);
     settings.beginGroup("project");
     QStringList keys = m_options.keys();
-     foreach(QString key, keys) {
-         settings.setValue(key, m_options[key]);
-     }
-     settings.endGroup();
+    for(QString key : keys) {
+        settings.setValue(key, m_options[key]);
+    }
+    settings.endGroup();
 
-     settings.beginGroup("highlighter");
-     QMapIterator<QString, QTextCharFormat> i(m_highlighter->formats());
-     while(i.hasNext()) {
-         i.next();
-         settings.beginGroup(i.key());
-         QTextCharFormat format = i.value();
-         settings.setValue("foreground", format.foreground());
-         settings.setValue("background", format.background());
-         settings.setValue("bold", format.fontWeight());
-         settings.setValue("italic", format.fontItalic());
-         settings.endGroup();
-     }
-     settings.endGroup();
+    settings.beginGroup("highlighter");
+    QMapIterator<QString, QTextCharFormat> i(m_highlighter->formats());
+    while(i.hasNext()) {
+        i.next();
+        settings.beginGroup(i.key());
+        QTextCharFormat format = i.value();
+        settings.setValue("foreground", format.foreground());
+        settings.setValue("background", format.background());
+        settings.setValue("bold", format.fontWeight());
+        settings.setValue("italic", format.fontItalic());
+        settings.endGroup();
+    }
+    settings.endGroup();
 
-     settings.beginGroup("GUI");
-     settings.setValue("geometry", saveGeometry());
-     settings.setValue("windowState", saveState());
-     settings.setValue("lastIndex", ui->tabWidget->currentIndex());
-     settings.beginWriteArray("openDocuments");
-     for(int i = 0; i < ui->tabWidget->count(); i++) {
-         CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->widget(i));
-         settings.setArrayIndex(i);
-         settings.setValue("fileName", editor->filename());
-     }
-     settings.endArray();
+    settings.beginGroup("GUI");
+    settings.setValue("geometry", saveGeometry());
+    settings.setValue("windowState", saveState());
+    settings.setValue("lastIndex", ui->tabWidget->currentIndex());
+    settings.beginWriteArray("openDocuments");
+    for(int i = 0; i < ui->tabWidget->count(); i++) {
+        CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->widget(i));
+        settings.setArrayIndex(i);
+        settings.setValue("fileName", editor->filename());
+    }
+    settings.endArray();
 
-     settings.endGroup();
+    settings.endGroup();
 
 
-     settings.beginGroup("environment");
-     settings.setValue("platformRootPath", m_environment["platformRootPath"]);
-     settings.endGroup();
+    settings.beginGroup("environment");
+    settings.setValue("platformRootPath", m_environment["platformRootPath"]);
+    QStringList guiKeys = m_guiOptions.keys();
+    for(QString key : guiKeys) {
+        settings.setValue(key, m_guiOptions[key]);
+    }
+    settings.endGroup();
 }
 
 void ProjectWindow::updateEditorSettings()
