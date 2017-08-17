@@ -189,7 +189,7 @@ void ParserTest::testCompilation()
     }
 //    qDebug() << testFiles;
     // BUILDPATH should be set by tests.pro from the current build directory
-    QString compilerBin = BUILDPATH "/../compiler/compiler";
+    QString compilerBin = BUILDPATH "../compiler/compiler";
     QScopedPointer<QProcess> compilerProcess(new QProcess(this));
     for (auto testFile:  testFiles) {
         QStringList arguments;
