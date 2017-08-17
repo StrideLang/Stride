@@ -995,8 +995,8 @@ class PortPropertyAtom(Atom):
         return ''
 
     def get_processing_code(self, in_tokens):
-        code = 'XXXX'
-        return {None: code}
+        code = ''
+        return {None: [code, '']}
 
     def get_inline_processing_code(self, in_tokens):
         ''' This returns the processing code itself, so this can be used
@@ -1476,7 +1476,7 @@ class ModuleAtom(Atom):
                 else:
                     self.port_name_atoms[name] = [new_atom]
         # FIXME This should be handled with scope index not with this boolean flag
-        defer_header = self.module['type'] == 'reaction'
+        defer_header = self.module['type'] == 'reaction' or self.module['type'] == 'loop'
         self.code = self.platform.generate_code(tree, self._blocks,
                                                 instanced = instanced,
                                                 parent = self,
@@ -1882,7 +1882,7 @@ class LoopAtom(ModuleAtom):
 
     def get_inline_processing_code(self, in_tokens):
         code = ''
-
+        # FIXME update for loop
         code = templates.reaction_processing_code(self.handle,
                                                 in_tokens,
                                                 self.out_tokens,
@@ -1956,15 +1956,6 @@ class LoopAtom(ModuleAtom):
 
                         domain = self.input_atom.get_domain()
                     process_code[domain] = {"code": '', "input_blocks" : [], "output_blocks" : []}
-
-    #            if 'input_blocks' in self.code['domain_code'][domain]:
-    #                for input_block in self.code['domain_code'][domain]['input_blocks']:
-    #                    if type(input_block.atom) == NameAtom or type(input_block.atom) == BundleAtom:
-    #                        process_code[domain]['input_blocks'].append(input_block.atom.code_declaration)
-    #            if 'output_blocks' in self.code['domain_code'][domain]:
-    #                for output_block in self.code['domain_code'][domain]['output_blocks']:
-    #                    if type(output_block.atom) == NameAtom or type(output_block.atom) == BundleAtom:
-    #                        process_code[domain]['output_blocks'].append(output_block.atom.code_declaration)
 
                 process_code[domain]['code'] += '\n'.join(code['processing_code'])
                 for block in self._input_blocks:
