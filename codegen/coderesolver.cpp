@@ -892,7 +892,17 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream, Q
             if (left->getNodeType() == AST::Function && domainName == "") {
                 // Have functions/loops/reactions be assigned to whatever they are connected to
                 // if they are final in a stream.
-                domainName = previousDomainName;
+                if (previousDomainName.size() != 0) {
+                    domainName = previousDomainName;
+                } else {
+                    if (contextDomain.isEmpty()) {
+                        if (m_system) {
+                            domainName = m_system->getPlatformDomain().toStdString();
+                        }
+                    } else {
+                        domainName = contextDomain.toStdString();
+                    }
+                }
             } else {
                 // This is needed in cases where signals with no set domain are connected
                 // to input ports on other objects. Domains are not
