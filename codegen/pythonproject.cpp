@@ -61,7 +61,8 @@ PythonProject::PythonProject(QString platformName, QString platformPath, QString
 
     QObject::connect(&m_buildProcess, SIGNAL(readyReadStandardOutput()) , this, SLOT(consoleMessage()));
     QObject::connect(&m_buildProcess, SIGNAL(readyReadStandardError()) , this, SLOT(consoleMessage()));
-    QObject::connect(&m_runningProcess, SIGNAL(readyRead()), this, SLOT(consoleMessage()));
+    QObject::connect(&m_runningProcess, SIGNAL(readyReadStandardOutput()), this, SLOT(consoleMessage()));
+    QObject::connect(&m_runningProcess, SIGNAL(readyReadStandardError()), this, SLOT(consoleMessage()));
 }
 
 PythonProject::~PythonProject()
@@ -143,6 +144,7 @@ bool PythonProject::run(bool pressed)
     // FIXME un hard-code library version
     arguments << "library/1.0/python/build.py" << m_jsonFilename << m_projectDir << m_strideRoot << "run";
     m_runningProcess.start(m_pythonExecutable, arguments);
+    qDebug() << arguments;
 
     m_runningProcess.waitForStarted(15000);
     qDebug() << "run pid:" << m_runningProcess.pid();

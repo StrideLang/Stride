@@ -1476,7 +1476,7 @@ class ModuleAtom(Atom):
                 else:
                     self.port_name_atoms[name] = [new_atom]
         # FIXME This should be handled with scope index not with this boolean flag
-        defer_header = self.module['type'] == 'reaction' or self.module['type'] == 'loop'
+        defer_header = self.module['type'] == 'reaction'
         self.code = self.platform.generate_code(tree, self._blocks,
                                                 instanced = instanced,
                                                 parent = self,
@@ -1964,15 +1964,24 @@ class LoopAtom(ModuleAtom):
         self.references = []
         referenced = []
         for domain, writes in self.code['writes'].items():
-            # Don't include internal blocks in the input/output args
-            if domain: # Is this a good way to identify internal blocks?
-                for write in writes:
+            for write in writes:
+                is_internal = False
+                for block in self._blocks:
+                    if block['block']['name'] == write.get_name():
+                        is_internal = True
+                        break
+                if not is_internal:
                     if not write.get_name() in referenced:
                         referenced += [write.get_name()]
                         self.references.append(write)
         for domain, reads in self.code['reads'].items():
-            if domain: # Is this a good way to identify internal blocks?
-                for read in reads:
+            for read in reads:
+                is_internal = False
+                for block in self._blocks:
+                    if block['block']['name'] == read.get_name():
+                        is_internal = True
+                        break
+                if not is_internal:
                     if not read.get_name() in referenced:
                         referenced += [read.get_name()]
                         self.references.append(read)
@@ -2020,6 +2029,9 @@ class LoopAtom(ModuleAtom):
                 header_code += code['header_code']
                 init_code += code['init_code']
 
+        # FIXME Hack to get things to work...
+
+        header_code += templates.assignment(self._on_terminate, False)
 
         condition = "!" + self._on_terminate
         declaration_text = templates.loop_declaration(
@@ -2032,6 +2044,7 @@ class LoopAtom(ModuleAtom):
                                         self.domain,
                                         self.name,
                                         declaration_text)
+
 
     def get_declarations(self):
         declarations = []

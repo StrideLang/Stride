@@ -105,16 +105,17 @@ type _Module {
 			types: [""]
 			default: none
 			required: on
-		} #,
-#		typeProperty DefaultDomain {
-#			name: "defaultDomain"
-#			types: ["CSP", "" ] #  Should allow _Domain
-#			default: PlatformDomain
-#			required: off
-#		}
+		}
+		typeProperty ContextDomain {
+			name: "contextDomain"
+			types: ["CSP", ""]
+			default: Output.domain
+			required: off
+		}
 
 	]
-	meta: "Module Type Doc"
+	inherits: ["domainMember"]
+	meta: "Modules encapsulate streams"
 }
 
 type _Reaction {
@@ -170,7 +171,7 @@ type _Loop {
 			required: off
 		},
 		typeProperty OnTermination {
-			name: "onExecute"
+			name: "onTermination"
 			types: [""]
 			default: none
 			required: off

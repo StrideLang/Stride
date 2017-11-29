@@ -135,7 +135,12 @@ private:
     std::shared_ptr<StreamNode> makeStreamFromStack(QVector<ASTNode > &stack);
     QVector<ASTNode > sliceStreamByDomain(std::shared_ptr<StreamNode> stream, QVector<ASTNode > scopeStack);
     void sliceDomainsInNode(std::shared_ptr<DeclarationNode> stream, QVector<ASTNode > scopeStack);
-    QVector<ASTNode > processExpression(std::shared_ptr<ExpressionNode> expr, QVector<ASTNode > scopeStack, ASTNode outDOmain);
+    QVector<ASTNode > processExpression(std::shared_ptr<ExpressionNode> expr, QVector<ASTNode > scopeStack, ASTNode outDomain);
+
+    std::string getContextDomainName(std::shared_ptr<DeclarationNode> node, QVector<ASTNode > &scopeStack);
+    void setContextDomain(vector<ASTNode> nodes, std::shared_ptr<DeclarationNode> domainDeclaration);
+    
+    void populateContextDomains(vector<ASTNode> nodes);
 
     std::shared_ptr<StrideSystem> m_system;
     SystemConfiguration m_systemConfig;

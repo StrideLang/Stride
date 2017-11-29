@@ -1927,7 +1927,6 @@ std::shared_ptr<DeclarationNode> CodeValidator::getMainOutputPortBlock(std::shar
 std::shared_ptr<DeclarationNode> CodeValidator::getMainInputPortBlock(std::shared_ptr<DeclarationNode> moduleBlock)
 {
     ListNode *ports = static_cast<ListNode *>(moduleBlock->getPropertyValue("ports").get());
-    Q_ASSERT(ports->getNodeType() == AST::List);
     if (ports->getNodeType() == AST::List) {
         for (ASTNode port : ports->getChildren()) {
             std::shared_ptr<DeclarationNode> portBlock = std::static_pointer_cast<DeclarationNode>(port);
@@ -2161,7 +2160,7 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, QVector<ASTNode > scopeStack,
         if (declaration) {
             domainNode = declaration->getDomain();
         }
-    }  else if (node->getNodeType() == AST::List) {
+    } else if (node->getNodeType() == AST::List) {
         std::vector<std::string> domainList;
         std::string tempDomainName;
         for (ASTNode member : node->getChildren()) {
