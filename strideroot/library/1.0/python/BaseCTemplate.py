@@ -62,6 +62,7 @@ class BaseCTemplate(object):
 
         self.string_type = "std::string"
         self.real_type = 'float'
+        self.real_postfix = 'f'
         self.bool_type = 'bool'
         self.int_type = 'int'
 
@@ -359,7 +360,10 @@ public:
         return final_code
 
     def value_real(self, value):
-        value = str(value)
+        if value == int(value):
+            value = str(value)
+        else:
+            value = str(value) + self.real_postfix
         return value
 
     def value_bool(self, value):
@@ -376,7 +380,9 @@ public:
 
     def assignment(self, assignee, value):
         code = ''
-        if not type(value) == str and not type(value) == unicode:
+        if type(value) == bool:
+            value = self.value_bool(value);
+        elif not type(value) == str and not type(value) == unicode:
             value = self.number_to_string(value)
         if not value == assignee:
             code = self.str_assignment%(assignee, value)
@@ -446,9 +452,9 @@ public:
         index = self.rate_counter
         if not rate == self.domain_rate:
             if rate < self.domain_rate:
-                code = '_counter_%03i = 1.0;\n'%(index)
+                code = self.assignment('_counter_%03i'%(index), 1.0) + ";"
             else:
-                code = '_counter_%03i = 0.0;\n'%(index)
+                code = self.assignment('_counter_%03i'%(index), 0.0) + ";"
         return code
 
     def rate_instance_code(self):
@@ -456,7 +462,7 @@ public:
         rate = self.rate_stack[-1]
         index = self.rate_counter
         if not rate == self.domain_rate:
-            code = 'float _counter_%03i;\n'%(index)
+            code = self.declaration_real(' _counter_%03i'%(index))
         return code
 
     def rate_start(self, rate):
