@@ -1,0 +1,17 @@
+use DesktopAudio version 1.0
+
+module TestMod {
+    blocks: [
+        loop TestLoop {
+            streams: [
+                Input >> Output;
+            ]
+        }
+    ]
+    streams: [
+        Input >> TestLoop() >> Output;
+    ]
+}
+
+AudioIn[1] >> TestMod() >> AudioOut[1];
+

@@ -85,7 +85,8 @@ DISTFILES += \
     data/L01_library_types_validation.stride \
     data/14_members.stride \
     data/15_connection_errors.stride \
-    data/P11_port_name_validation.stride
+    data/P11_port_name_validation.stride \
+    data/E06_context_domain.stride
 
 # Link to codegen library
 

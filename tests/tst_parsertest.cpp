@@ -59,11 +59,12 @@ private:
 
 private Q_SLOTS:
 
+    void testContextDomain();
+    // Test code generation
+    void testCodeGeneration();
     // Code generation/Compiler
     void testCompilation();
 
-    // Test code generation
-    void testCodeGeneration();
 
     // Connections
     void testConnectionErrors();
@@ -79,6 +80,7 @@ private Q_SLOTS:
     void testDuplicates();
     void testValueTypeBundleResolution();
     void testImport();
+//    void testContextDomain();
     void testDomains();
     void testLists();
     void testPortNameValidation();
@@ -544,6 +546,28 @@ void ParserTest::testLibraryObjectInsertion()
     // Oscillator is not used and there should be no declaration for it
     decl = CodeValidator::findDeclaration("Oscillator", QVector<ASTNode>(), tree);
     QVERIFY(!decl);
+}
+
+void ParserTest::testContextDomain()
+{
+    ASTNode tree;
+    tree = AST::parseFile(QString(QFINDTESTDATA("data/E06_context_domain.stride")).toStdString().c_str());
+    QVERIFY(tree != nullptr);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree, CodeValidator::NO_RATE_VALIDATION);
+//    QVERIFY(generator.isValid());
+    auto mod = CodeValidator::findDeclaration("TestMod", QVector<ASTNode>(), tree);
+    QVERIFY(mod);
+    auto contextDomain = mod->getPropertyValue("contextDomain");
+    QVERIFY(contextDomain);
+    QVERIFY(contextDomain->getNodeType() == AST::PortProperty);
+
+    auto loop = CodeValidator::findDeclaration("TestLoop",
+                                               QVector<ASTNode>::fromStdVector(mod->getPropertyValue("blocks")->getChildren()), tree);
+    QVERIFY(loop);
+    contextDomain = loop->getPropertyValue("contextDomain");
+    QVERIFY(contextDomain);
+    QVERIFY(contextDomain->getNodeType() == AST::PortProperty);
+
 }
 
 void ParserTest::testDomains()
