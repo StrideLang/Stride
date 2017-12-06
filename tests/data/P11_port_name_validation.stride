@@ -2,11 +2,11 @@ use DesktopAudio version 1.0
 
 module TestModule {
     ports: [
-	    propertyInputPort Valid {
+	    propertyInputPort ValidPort {
 		    name: "valid"
             block: Valid
 		}
-        mainOutputPort Output {
+        mainOutputPort OutputPort {
 		    name: "output"
             block: Output
 		}
