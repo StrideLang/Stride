@@ -54,17 +54,11 @@ public:
     ParserTest();
 
 private:
-
     void testMultichannelUgens(); // TODO Need to complete support for this.
 
 private Q_SLOTS:
 
-    void testContextDomain();
-    // Test code generation
-    void testCodeGeneration();
-    // Code generation/Compiler
-    void testCompilation();
-
+        void testNamespaces();
 
     // Connections
     void testConnectionErrors();
@@ -80,7 +74,7 @@ private Q_SLOTS:
     void testDuplicates();
     void testValueTypeBundleResolution();
     void testImport();
-//    void testContextDomain();
+    void testContextDomain();
     void testDomains();
     void testLists();
     void testPortNameValidation();
@@ -93,6 +87,7 @@ private Q_SLOTS:
     void testStreamExpansion();
     void testStreamRates();
     void testConstantResolution();
+//    void testNamespaces();
 
     // Parser
     void testModules();
@@ -105,6 +100,13 @@ private Q_SLOTS:
     void testBasicBundle();
     void testBasicBlocks();
     void testHeader();
+    void testLoop();
+    void testBuffer();
+
+    // Test code generation
+    void testCodeGeneration();
+    // Code generation/Compiler
+    void testCompilation();
 };
 
 ParserTest::ParserTest()
@@ -134,6 +136,85 @@ void ParserTest::testMultichannelUgens()
     QVERIFY(error.errorTokens[0] == "2");
     QVERIFY(error.errorTokens[1] == "DummyStereo");
     QVERIFY(error.errorTokens[2] == "1");
+}
+
+void ParserTest::testBuffer()
+{
+    ASTNode tree;
+    tree = AST::parseFile(QString(QFINDTESTDATA("data/16_buffer.stride")).toStdString().c_str());
+    QVERIFY(tree != nullptr);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
+    QVERIFY(generator.isValid());
+}
+
+void ParserTest::testLoop()
+{
+    ASTNode tree;
+    tree = AST::parseFile(QString(QFINDTESTDATA("data/17_loop.stride")).toStdString().c_str());
+    QVERIFY(tree != nullptr);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
+    QVERIFY(generator.isValid());
+
+    auto members = tree->getChildren();
+    auto loopIn = static_pointer_cast<DeclarationNode>(members[1]);
+    QVERIFY(loopIn->getNodeType() == AST::Declaration);
+    QVERIFY(loopIn->getName() == "LoopIn");
+    auto contextDomainNode = CodeValidator::findDeclaration("_ContextDomain",
+                                                            QVector<ASTNode>::fromStdVector(loopIn->getPropertyValue("blocks")->getChildren()),
+                                                            tree);
+    QVERIFY(contextDomainNode);
+    QVERIFY(contextDomainNode->getObjectType() == "constant");
+    auto contextDomain = std::static_pointer_cast<ValueNode>(contextDomainNode->getPropertyValue("value"));
+    QVERIFY(contextDomain->getStringValue() == "_InputPortDomain");
+
+    auto loopOut = static_pointer_cast<DeclarationNode>(members[2]);
+    QVERIFY(loopOut->getNodeType() == AST::Declaration);
+    QVERIFY(loopOut->getName() == "LoopOut");
+    contextDomainNode = CodeValidator::findDeclaration("_ContextDomain",
+                                                       QVector<ASTNode>::fromStdVector(loopOut->getPropertyValue("blocks")->getChildren()),
+                                                       tree);
+    QVERIFY(contextDomainNode);
+    QVERIFY(contextDomainNode->getObjectType() == "constant");
+    contextDomain = std::static_pointer_cast<ValueNode>(contextDomainNode->getPropertyValue("value"));
+    QVERIFY(contextDomain->getStringValue() == "_OutputDomain_0");
+
+    auto loopInOut = static_pointer_cast<DeclarationNode>(members[3]);
+    QVERIFY(loopInOut->getNodeType() == AST::Declaration);
+    QVERIFY(loopInOut->getName() == "LoopInOut");
+    contextDomainNode = CodeValidator::findDeclaration("_ContextDomain",
+                                                       QVector<ASTNode>::fromStdVector(loopInOut->getPropertyValue("blocks")->getChildren()),
+                                                       tree);
+    QVERIFY(contextDomainNode);
+    QVERIFY(contextDomainNode->getObjectType() == "constant");
+    contextDomain = std::static_pointer_cast<ValueNode>(contextDomainNode->getPropertyValue("value"));
+    QVERIFY(contextDomain->getStringValue() == "_OutputDomain_0");
+
+    auto module = static_pointer_cast<DeclarationNode>(members[4]);
+
+    QVERIFY(module->getNodeType() == AST::Declaration);
+    QVERIFY(module->getName() == "ContainsLoop");
+
+    auto loopInModule = static_pointer_cast<DeclarationNode>(module->getPropertyValue("blocks")->getChildren()[0]);
+    QVERIFY(loopInModule->getNodeType() == AST::Declaration);
+    QVERIFY(loopInModule->getName() == "InModule");
+    contextDomainNode = CodeValidator::findDeclaration("_ContextDomain",
+                                                       QVector<ASTNode>::fromStdVector(loopInModule->getPropertyValue("blocks")->getChildren()),
+                                                       tree);
+    QVERIFY(contextDomainNode);
+    QVERIFY(contextDomainNode->getObjectType() == "constant");
+    contextDomain = std::static_pointer_cast<ValueNode>(contextDomainNode->getPropertyValue("value"));
+    QVERIFY(contextDomain->getStringValue() == "_OutputDomain_0");
+
+    loopInModule = static_pointer_cast<DeclarationNode>(module->getPropertyValue("blocks")->getChildren()[1]);
+    QVERIFY(loopInModule->getNodeType() == AST::Declaration);
+    QVERIFY(loopInModule->getName() == "InModuleInput");
+    contextDomainNode = CodeValidator::findDeclaration("_ContextDomain",
+                                                       QVector<ASTNode>::fromStdVector(loopInModule->getPropertyValue("blocks")->getChildren()),
+                                                       tree);
+    QVERIFY(contextDomainNode);
+    QVERIFY(contextDomainNode->getObjectType() == "constant");
+    contextDomain = std::static_pointer_cast<ValueNode>(contextDomainNode->getPropertyValue("value"));
+    QVERIFY(contextDomain->getStringValue() == "_InputPortDomain");
 }
 
 void ParserTest::testPortNameValidation()
@@ -447,13 +528,13 @@ void ParserTest::testModuleDomains()
     QVERIFY(portBlock->getNodeType() == AST::Declaration);
     BlockNode *domainName = static_cast<BlockNode *>(portBlock->getPropertyValue("domain").get());
     QVERIFY(domainName->getNodeType() == AST::Block);
-    QVERIFY(domainName->getName() == "_OutputDomain");
+    QVERIFY(domainName->getName() == "_OutputDomain_0");
 
     portBlock = static_cast<DeclarationNode *>(portList->getChildren().at(1).get());
     QVERIFY(portBlock->getNodeType() == AST::Declaration);
     domainName = static_cast<BlockNode *>(portBlock->getPropertyValue("domain").get());
     QVERIFY(domainName->getNodeType() == AST::Block);
-    QVERIFY(domainName->getName() == "_OutputDomain");
+    QVERIFY(domainName->getName() == "_OutputDomain_0");
 
     // Both the input and output blocks should be autodeclared to belong to the output domain
     ListNode *blockList = static_cast<ListNode *>(block->getPropertyValue("blocks").get());
@@ -463,14 +544,14 @@ void ParserTest::testModuleDomains()
     ValueNode *domainValue = static_cast<ValueNode *>(internalBlock->getPropertyValue("domain").get());
     QVERIFY(domainValue);
     QVERIFY(domainValue->getNodeType() == AST::String);
-    QVERIFY(domainValue->getStringValue() == "_OutputDomain");
+    QVERIFY(domainValue->getStringValue() == "_OutputDomain_0");
 
     internalBlock = static_cast<DeclarationNode *>(blockList->getChildren().at(2).get());
     QVERIFY(internalBlock->getNodeType() == AST::Declaration);
     domainValue = static_cast<ValueNode *>(internalBlock->getPropertyValue("domain").get());
     QVERIFY(domainValue);
     QVERIFY(domainValue->getNodeType() == AST::String);
-    QVERIFY(domainValue->getStringValue() == "_OutputDomain");
+    QVERIFY(domainValue->getStringValue() == "_OutputDomain_0");
 }
 
 void ParserTest::testConnectionErrors()
@@ -557,16 +638,34 @@ void ParserTest::testContextDomain()
 //    QVERIFY(generator.isValid());
     auto mod = CodeValidator::findDeclaration("TestMod", QVector<ASTNode>(), tree);
     QVERIFY(mod);
-    auto contextDomain = mod->getPropertyValue("contextDomain");
+    auto contextDomain = CodeValidator::findDeclaration("_ContextDomain",
+                                                        QVector<ASTNode>::fromStdVector(mod->getPropertyValue("blocks")->getChildren()),
+                                                        nullptr);
     QVERIFY(contextDomain);
-    QVERIFY(contextDomain->getNodeType() == AST::PortProperty);
+    QVERIFY(contextDomain->getNodeType() == AST::Declaration);
+    QVERIFY(contextDomain->getObjectType() == "constant");
+    QVERIFY(contextDomain->getName() == "_ContextDomain");
+    auto valueNode = contextDomain->getPropertyValue("value");
+    QVERIFY(valueNode);
+    QVERIFY(valueNode->getNodeType() == AST::String);
+    auto value = std::static_pointer_cast<ValueNode>(valueNode);
+    QVERIFY(value->toString() == "_OutputDomain_0");
 
     auto loop = CodeValidator::findDeclaration("TestLoop",
                                                QVector<ASTNode>::fromStdVector(mod->getPropertyValue("blocks")->getChildren()), tree);
     QVERIFY(loop);
-    contextDomain = loop->getPropertyValue("contextDomain");
+    contextDomain = CodeValidator::findDeclaration("_ContextDomain",
+                                                   QVector<ASTNode>::fromStdVector(loop->getPropertyValue("blocks")->getChildren()),
+                                                   nullptr);
     QVERIFY(contextDomain);
-    QVERIFY(contextDomain->getNodeType() == AST::PortProperty);
+    QVERIFY(contextDomain->getNodeType() == AST::Declaration);
+    QVERIFY(contextDomain->getObjectType() == "constant");
+    QVERIFY(contextDomain->getName() == "_ContextDomain");
+    valueNode = contextDomain->getPropertyValue("value");
+    QVERIFY(valueNode);
+    QVERIFY(valueNode->getNodeType() == AST::String);
+    value = std::static_pointer_cast<ValueNode>(valueNode);
+    QVERIFY(value->toString() == "_OutputDomain_0");
 
 }
 
@@ -660,20 +759,17 @@ void ParserTest::testModules()
     blockNames << "Input";
     blockNames << "Output";
     blockNames << "AutoDeclared";
-    for(size_t i = 2; i < blockList->getChildren().size(); i++) {
-        AST *member = blockList->getChildren().at(i).get();
-        if (member->getNodeType() == AST::Declaration) {
-            DeclarationNode *block = static_cast<DeclarationNode *>(member);
-            QVERIFY(block->getName() == blockNames.front().toStdString());
-            blockNames.pop_front();
-        }
+    for(auto name: blockNames) {
+        auto decl = CodeValidator::findDeclaration(name,
+                                                   QVector<ASTNode>::fromStdVector(blockList->getChildren()), nullptr);
+        QVERIFY(decl);
     }
     // Check to make sure input and output domains have propagated correctly
     DeclarationNode *block = static_cast<DeclarationNode *>(blockList->getChildren().at(0).get());
     QVERIFY(block->getDomain());
     QVERIFY(block->getDomain()->getNodeType() == AST::String);
     string domain = static_cast<ValueNode *>(block->getDomain().get())->toString();
-    QVERIFY(domain == "_OutputDomain");
+    QVERIFY(domain == "_OutputDomain_0");
 }
 
 void ParserTest::testImport()
@@ -1437,6 +1533,18 @@ void ParserTest::testStreamExpansion()
     QVERIFY(value->getIntValue() == 2);
 
     streams = CodeValidator::getStreamsAtLine(tree, 22);
+}
+
+
+
+void ParserTest::testNamespaces()
+{
+    ASTNode tree;
+    tree = AST::parseFile(QString(QFINDTESTDATA("data/E07_namespaces.stride")).toStdString().c_str());
+    QVERIFY(tree != nullptr);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree, CodeValidator::NO_RATE_VALIDATION);
+    QVERIFY(generator.isValid());
+    QVERIFY(generator.platformIsValid());
 }
 
 void ParserTest::testPlatformCommonObjects()

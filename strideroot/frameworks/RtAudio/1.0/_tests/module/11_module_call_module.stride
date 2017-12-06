@@ -11,22 +11,39 @@ module UsedInTest {
 			domain: OutputDomain
 		}
 	]
+	blocks: [
+		signal Output {
+			rate: OutputPort.rate			
+			domain:	OutputPort.domain
+		}
+		signal Input {
+			rate: OutputPort.rate			
+			domain:	OutputPort.domain
+		}
+	]
 	streams: [
 		Input - 1 >> Output;
 	]
 }
+
 module Test {
 	ports: [
 		mainOutputPort OutputPort {
 			block: Output
-			domain: OutputDomain
 		}
 		mainInputPort InputPort {
 			block: Input
-			domain: OutputDomain
 		}
 	]
 	blocks: [
+		signal Output {
+			rate: OutputPort.rate			
+			domain:	OutputPort.domain
+		}
+		signal Input {
+			rate: OutputPort.rate			
+			domain:	OutputPort.domain
+		}
 	]
 	streams: [
 		Input * 2 >> UsedInTest() >> Output;

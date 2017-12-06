@@ -10,7 +10,6 @@ reaction Adder {
     streams: [
         Value + 10 >> Value;
     ]
-	domain: AudioDomain
 }
 
 AudioIn >> Greater() >> Adder();

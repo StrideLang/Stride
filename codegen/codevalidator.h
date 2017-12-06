@@ -94,7 +94,7 @@ public:
     static QVector<ASTNode> getPortsForTypeBlock(std::shared_ptr<DeclarationNode> block, QVector<ASTNode> scope, ASTNode tree);
     static QVector<ASTNode> getPortsForType(std::string typeName, QVector<ASTNode> scope, ASTNode tree);
     static QVector<ASTNode > getInheritedPorts(std::shared_ptr<DeclarationNode> block, QVector<ASTNode > scope, ASTNode tree);
-    static vector<string> getInheritedTypeNames(std::shared_ptr<DeclarationNode> block, QVector<ASTNode > scope, ASTNode tree);
+    static vector<string> getInheritedTypeNames(std::shared_ptr<DeclarationNode> typeDeclaration, QVector<ASTNode > scope, ASTNode tree);
 
     static std::shared_ptr<DeclarationNode> getMainOutputPortBlock(std::shared_ptr<DeclarationNode> moduleBlock);
     static std::shared_ptr<DeclarationNode> getMainInputPortBlock(std::shared_ptr<DeclarationNode> moduleBlock);
@@ -157,7 +157,7 @@ private:
     void validateStreamMembers(StreamNode *node, QVector<ASTNode > scopeStack);
     void validateBundleIndeces(ASTNode node, QVector<ASTNode > scope);
     void validateBundleSizes(ASTNode node, QVector<ASTNode > scope);
-    void validateSymbolUniqueness(ASTNode node, QVector<ASTNode > scope);
+    void validateSymbolUniqueness(QVector<ASTNode > scope);
     void validateListTypeConsistency(ASTNode node, QVector<ASTNode > scope);
     void validateStreamSizes(ASTNode tree, QVector<ASTNode > scope);
     void validateRates(ASTNode tree);

@@ -110,12 +110,6 @@ type _Signal {
 			default: 0.0
 			required: off
 		},
-		typeProperty Domain {
-			name: "domain"
-			types: ["CSP", ""]
-			default: none
-			required: off
-		},
 		typeProperty Rate {
 			name: "rate"
 			types: [""]
@@ -184,4 +178,40 @@ type _SignalBridge {
 		}
 	]
 	inherits: ["base"]
+}
+
+type _Buffer {
+	typeName: "buffer"
+	properties: [
+		typeProperty TypePort {
+			name: "type"
+			types: ["CSP", ""]
+			default: none
+			required: off
+		},
+		typeProperty SizePort {
+			name: "size"
+			types: ["CIP"]
+			default: 0
+			required: on
+		},
+		typeProperty RatePort {
+			name: "rate"
+			types: ["CIP", "CRP"]
+			default: none
+			required: off
+		},
+		typeProperty DomainPort {
+			name: "domain"
+			types: [""]
+			default: none
+			required: off
+		},
+		typeProperty DefaultPort {
+			name: "default"
+			types: [""]
+			default: none
+			required: off
+		}
+	]
 }

@@ -84,13 +84,14 @@ private:
     ASTNode expandFunctionFromProperties(std::shared_ptr<FunctionNode> func, QVector<ASTNode > scope, ASTNode tree);
     void fillDefaultPropertiesForNode(ASTNode node);
 
+    void insertDependentTypes(string typeName, map<string, vector<ASTNode>> &objects);
     void insertBuiltinObjectsForNode(ASTNode node, map<string, vector<ASTNode> > &objects);
 
     void resolveDomainsForStream(std::shared_ptr<StreamNode> func, QVector<ASTNode > scopeStack, QString contextDomain = "");
     string processDomainsForNode(ASTNode node, QVector<ASTNode > scopeStack, QList<ASTNode > &domainStack);
     void setDomainForStack(QList<ASTNode > domainStack, string domainName,  QVector<ASTNode > scopeStack);
     std::shared_ptr<DeclarationNode> createDomainDeclaration(QString name);
-    std::shared_ptr<DeclarationNode> createSignalDeclaration(QString name, int size = 1);
+    std::shared_ptr<DeclarationNode> createSignalDeclaration(QString name, int size, QVector<ASTNode> &scope);
     std::vector<ASTNode> declareUnknownName(std::shared_ptr<BlockNode> block, int size, QVector<ASTNode> localScope, ASTNode tree);
     std::vector<ASTNode> declareUnknownBundle(std::shared_ptr<BundleNode> name, int size, QVector<ASTNode > localScope, ASTNode tree);
     std::shared_ptr<DeclarationNode> createConstantDeclaration(string name, ASTNode value);
@@ -107,11 +108,11 @@ private:
     std::vector<ASTNode > getModuleStreams(std::shared_ptr<DeclarationNode> module);
     std::vector<ASTNode > getModuleBlocks(std::shared_ptr<DeclarationNode> module);
 
-    void declareInternalBlocksForNode(ASTNode node);
+    void declareInternalBlocksForNode(ASTNode node, QVector<ASTNode> scope);
 
     std::shared_ptr<ValueNode> reduceConstExpression(std::shared_ptr<ExpressionNode> expr, QVector<ASTNode > scope, ASTNode tree);
     std::shared_ptr<ValueNode> resolveConstant(ASTNode value, QVector<ASTNode > scope);
-    void resolveConstantsInNode(ASTNode node, QVector<ASTNode > scope);
+    void resolveConstantsInNode(ASTNode node, QVector<ASTNode> scope);
     void processResetForNode(ASTNode thisScope, ASTNode streamScope, ASTNode upperScope);
     void propagateDomainsForNode(ASTNode node, QVector<ASTNode > scopeStack);
     void resolveDomainForStreamNode(ASTNode node, QVector<ASTNode > scope);
@@ -137,7 +138,7 @@ private:
     void sliceDomainsInNode(std::shared_ptr<DeclarationNode> stream, QVector<ASTNode > scopeStack);
     QVector<ASTNode > processExpression(std::shared_ptr<ExpressionNode> expr, QVector<ASTNode > scopeStack, ASTNode outDomain);
 
-    std::string getContextDomainName(std::shared_ptr<DeclarationNode> node, QVector<ASTNode > &scopeStack);
+    std::string getContextDomainName(QVector<ASTNode > &scopeStack);
     void setContextDomain(vector<ASTNode> nodes, std::shared_ptr<DeclarationNode> domainDeclaration);
     
     void populateContextDomains(vector<ASTNode> nodes);

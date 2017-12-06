@@ -1,0 +1,34 @@
+use DesktopAudio version 1.0
+
+module LoopModule {
+	ports: [
+		mainOutputPort OutputPort { block: Output }
+	]
+	blocks:  [
+		signal Accumulator { default: 0}
+		loop Accumulate {
+			ports: [
+				mainInputPort InputPort {
+					block: Input
+				}
+			]
+			blocks: [
+				signal Counter {default: 0}
+				switch CounterReset {}
+			]
+			streams: [
+				Accumulator + 1.5 >> Accumulator;
+				Counter + 1 >> Counter;
+				[Counter, 10] >> Equal() >> CounterReset;
+			]
+			terminateWhen: CounterReset
+		}
+	]
+	streams: [
+		on >> Accumulate();
+		Accumulator >> Output;
+	]
+}
+
+LoopModule() >> AudioOut[1];
+

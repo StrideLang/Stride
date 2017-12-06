@@ -40,7 +40,6 @@ module BlocksTest {
 ]
     blocks: [
         signal Test {
-            domain: none
         }
 ]
     streams: [

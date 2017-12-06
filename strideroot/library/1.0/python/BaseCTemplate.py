@@ -630,25 +630,27 @@ public:
         process_functions = ''
         declared_references = []
 #        constructor_args = ''
-        for domain, domain_components in process_code.items():
-            domain_proc_code = domain_components['code']
-            input_declaration = ''
+        input_declaration = ''
 #            for output_block in domain_components['output_blocks']:
 #                input_declaration +=  self.declaration_reference(output_block, False) + ", "
 
-            for ref in references:
-                if not ref.get_name() in declared_references:
-                    input_declaration +=  self.declaration_reference_from_instance(ref, False) + ", "
-                    declared_references.append(ref.get_name())
+        for ref in references:
+            if not ref.get_name() in declared_references:
+                input_declaration +=  self.declaration_reference_from_instance(ref, False) + ", "
+                declared_references.append(ref.get_name())
 
-            if len(input_declaration) > 0:
-                input_declaration = input_declaration[:-2]
+        if len(input_declaration) > 0:
+            input_declaration = input_declaration[:-2]
 
+        domain_proc_code = ''
+        for domain, domain_components in process_code.items():
+            domain_proc_code += domain_components['code'] # We will join all domains together here.
+            # FIXME we probably need to fix this upstream as order of execution might be important. but maybe not....
 
-            internal_loop = self.str_while_declaration%(condition, domain_proc_code)
+        internal_loop = self.str_while_declaration%(condition, domain_proc_code)
 
-            process_functions += self.str_function_declaration%(out_type, name + '_process_' + str(domain),
-                                                                input_declaration, header_code + init_code + internal_loop)
+        process_functions += self.str_function_declaration%(out_type, name + '_process',
+                                                            input_declaration, header_code + init_code + internal_loop)
 #
 #        for const_name, props in instance_consts.items():
 #            constructor_args += "float _" + const_name + ","
@@ -658,9 +660,9 @@ public:
         return declaration
 
 
-    def loop_processing_code(self, reaction_name, in_tokens, out_tokens, domain_name):
+    def loop_processing_code(self, reaction_name, in_tokens, out_tokens):
 #        code = handle + '.process_' + str(domain_name) + '('
-        code =  reaction_name + '_process_' + str(domain_name) + '('
+        code =  reaction_name + '_process' + '('
         for in_token in in_tokens:
             code += in_token + ", "
 

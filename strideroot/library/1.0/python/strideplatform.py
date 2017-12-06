@@ -1911,7 +1911,7 @@ class LoopAtom(ModuleAtom):
     def get_processing_code(self, in_tokens):
         processing_code = {}
 
-        domain = self.input_atom.domain # Loop is triggered/called in the domain of the input signal
+        domain = None # Loop's domain is None
         parameter_tokens = [ref.get_name() for ref in self.references]
         for i in range(len(parameter_tokens)):
             # TODO we need checking of scope and domain here
@@ -1926,31 +1926,11 @@ class LoopAtom(ModuleAtom):
         if not domain in processing_code:
             processing_code[domain] = ['', []]
 
-        is_bool = False
-        if self.input_atom and type(self.input_atom) == ValueAtom and type(self.input_atom.value) == bool:
-            is_bool = True
-
-        if not is_bool:
-            cond_code = templates.conditional_code(in_tokens[0],
-                                                   templates.expression(
-                                                           templates.loop_processing_code(self.loop['name'],
-                                                                                          parameter_tokens,
-                                                                                          [], # out tokens should already be included in the parameter tokens.
-                                                                                          domain
-                                                                                          )
-                                                           )
-                                                   )
-            processing_code[domain][0] += cond_code
-        else:
-            if self.input_atom.value: # True here means always on, false means always off. Perhaps a warning should be issued by the compiler in this case
-                processing_code[domain][0] += templates.expression(
+        processing_code[domain][0] += templates.expression(
                         templates.loop_processing_code(self.loop['name'],
                                                     parameter_tokens,
-                                                    [], # out tokens should already be included in the parameter tokens.
-                                                    domain
+                                                    [] # out tokens should already be included in the parameter tokens.
                                                     ))
-
-
 
         return processing_code
 
@@ -1990,24 +1970,23 @@ class LoopAtom(ModuleAtom):
             if domain is not None: # To get rid of domains from constants
                 header_code += code['header_code']
                 init_code += code['init_code']
+                domain = None # For loops everything belongs to the None domain
                 if not domain in process_code:
                     # Hack to turn all computation in a reaction within the right domain
-                    if self.input_atom:
-                        # self.input_atom can be None when computing "next_atom"
-                        # On next pass it should get the right value
-                        # This should be optimized out. When computing "next_atom" not everything needs to
-
-                        domain = self.input_atom.get_domain()
+#                    if self.input_atom:
+#                        # self.input_atom can be None when computing "next_atom"
+#                        # On next pass it should get the right value
+#                        # This should be optimized out. When computing "next_atom" not everything needs to
+#
+#                        domain = self.input_atom.get_domain()
                     process_code[domain] = {"code": '', "input_blocks" : [], "output_blocks" : []}
 
                 process_code[domain]['code'] += '\n'.join(code['processing_code'])
                 for block in self._input_blocks:
-                    if block['domain'] == domain:
-                        process_code[domain]['input_blocks'].append(block)
+                    process_code[domain]['input_blocks'].append(block)
 
                 for block in self._output_blocks:
-                    if block['domain'] == domain:
-                        process_code[domain]['output_blocks'].append(block)
+                    process_code[domain]['output_blocks'].append(block)
 
         if self.code['reads']:
             for domain, declarations in self.code['reads'].items():
@@ -2056,6 +2035,7 @@ class LoopAtom(ModuleAtom):
 
         if "other_scope_declarations" in self.code:
             for other_declaration in self.code["other_scope_declarations"]:
+                other_declaration.domain = None # To force declaration
                 if not other_declaration.domain or other_declaration.domain == secondary_domain:
                     other_declaration.domain = self.domain
                 outer_declarations.append(other_declaration)

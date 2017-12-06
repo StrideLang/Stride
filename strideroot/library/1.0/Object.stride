@@ -1,4 +1,13 @@
 
+
+constant _ContextDomain {
+	value: PlatformDomain
+}
+
+constant _ContextRate {
+	value: PlatformRate
+}
+
 type _Streamable {
 	typeName: "streamable"
 	properties: [
@@ -24,7 +33,7 @@ type _Rated {
 		typeProperty Rate {
 			name: "rate"
 			types: ["CIP", "CRP", ""]
-			default: PlatformRate
+			default: _ContextRate
 			required: off
 		},
 		typeProperty Reset {
@@ -40,11 +49,11 @@ type _Rated {
 type _DomainMember {
 	typeName: "domainMember"
 	properties: [
-		typeProperty TypeName {
+		typeProperty Domain {
 			name: "domain"
-			types: ["CSP", ""]
-			default: none
-			required: on
+			types: ["CSP"]
+			default: _ContextDomain
+			required: off
 		},
 		typeProperty Realtime {
 			name: "realtime"

@@ -321,9 +321,7 @@ void CodeValidator::setNodeRate(ASTNode node, double rate, QVector<ASTNode> scop
         std::shared_ptr<DeclarationNode> declaration =  CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scope, tree, name->getNamespaceList());
         if (declaration) {
             std::shared_ptr<ValueNode> value = std::make_shared<ValueNode>(rate, "", -1);
-            if (!declaration->replacePropertyValue("rate", value)) {
-                qDebug() << "Couldn't set rate. Rate property does not exist.";
-            }
+            declaration->replacePropertyValue("rate", value);
         }
         return;
     } else if (node->getNodeType() == AST::Bundle) {
@@ -466,7 +464,7 @@ void CodeValidator::validate()
         validateTypes(m_tree, QVector<ASTNode >());
         validateBundleIndeces(m_tree, QVector<ASTNode >());
         validateBundleSizes(m_tree, QVector<ASTNode >());
-        validateSymbolUniqueness(m_tree, QVector<ASTNode >());
+        validateSymbolUniqueness(QVector<ASTNode>::fromStdVector(m_tree->getChildren()));
         validateListTypeConsistency(m_tree, QVector<ASTNode >());
         validateStreamSizes(m_tree, QVector<ASTNode >());
         validateRates(m_tree);
@@ -749,14 +747,11 @@ void CodeValidator::validateBundleSizes(ASTNode node, QVector<ASTNode > scope)
     }
 }
 
-void CodeValidator::validateSymbolUniqueness(ASTNode node, QVector<ASTNode > scope)
+void CodeValidator::validateSymbolUniqueness(QVector<ASTNode > scope)
 {
-    // TODO: This only checks symbol uniqueness within its scope...
-
-    while (!scope.isEmpty() && scope.takeFirst() != node) { ; }
-
-    foreach(ASTNode sibling, scope) {
-        if(node != sibling) {
+    while (!scope.isEmpty()) {
+        auto node = scope.takeFirst();
+        for(ASTNode sibling: scope) {
             QString nodeName, siblingName;
             if (sibling->getNodeType() == AST::Declaration
                     || sibling->getNodeType() == AST::BundleDeclaration) {
@@ -779,11 +774,16 @@ void CodeValidator::validateSymbolUniqueness(ASTNode node, QVector<ASTNode > sco
                 }
             }
         }
-    }
-
-    QVector<ASTNode > children = QVector<ASTNode >::fromStdVector(node->getChildren());
-    for(ASTNode node: children) {
-        validateSymbolUniqueness(node, children);
+        if (node->getNodeType() == AST::Declaration) {
+            auto decl = std::static_pointer_cast<DeclarationNode>(node);
+            if (decl->getObjectType() == "module" || decl->getObjectType() == "reaction" ||decl->getObjectType() == "loop") {
+                auto blocks = decl->getPropertyValue("blocks");
+                auto ports = decl->getPropertyValue("ports");
+                QVector<ASTNode> scope;
+                scope << QVector<ASTNode >::fromStdVector(blocks->getChildren()) << QVector<ASTNode >::fromStdVector(ports->getChildren());
+                validateSymbolUniqueness(scope);
+            }
+        }
     }
 }
 
@@ -1832,7 +1832,7 @@ QVector<ASTNode> CodeValidator::getPortsForType(string typeName, QVector<ASTNode
         }
     }
     if (tree) {
-        foreach(ASTNode node, tree->getChildren()) {
+        for(ASTNode node : tree->getChildren()) {
             if (node->getNodeType() == AST::Declaration) {
                 std::shared_ptr<DeclarationNode> block = static_pointer_cast<DeclarationNode>(node);
                 if (block->getObjectType() == "platformType"
@@ -1866,11 +1866,15 @@ QVector<ASTNode > CodeValidator::getInheritedPorts(std::shared_ptr<DeclarationNo
 {
     QVector<ASTNode > inheritedProperties;
     vector<string> inheritedTypes = CodeValidator::getInheritedTypeNames(block, scope, tree);
-    foreach(string typeName, inheritedTypes) {
+    QStringList inheritedName;
+    for(string typeName : inheritedTypes) {
         QVector<ASTNode > inheritedFromType = CodeValidator::getPortsForType(typeName, scope, tree);
         foreach(ASTNode property, inheritedFromType) {
             if (inheritedProperties.count(property) == 0) {
                 inheritedProperties << property;
+            }
+            if (property->getNodeType() == AST::Declaration) {
+                inheritedName << QString::fromStdString(std::static_pointer_cast<DeclarationNode>(property)->getName());
             }
         }
     }
@@ -1892,7 +1896,7 @@ vector<string> CodeValidator::getInheritedTypeNames(std::shared_ptr<DeclarationN
                     std::shared_ptr<DeclarationNode> inheritedDeclaration = CodeValidator::findTypeDeclarationByName(inheritsName, scope, tree, errors);
                     if (inheritedDeclaration) {
                         vector<string> parentTypes = CodeValidator::getInheritedTypeNames(inheritedDeclaration, scope, tree);
-                        inheritedTypes.insert(inheritedTypes.begin(), parentTypes.begin(), parentTypes.end());
+                        inheritedTypes.insert(inheritedTypes.end(), parentTypes.begin(), parentTypes.end());
                     }
                 }
             }
@@ -1949,24 +1953,12 @@ QVector<ASTNode> CodeValidator::getPortsForTypeBlock(std::shared_ptr<Declaration
     if (portsValue && portsValue->getNodeType() != AST::None) {
         Q_ASSERT(portsValue->getNodeType() == AST::List);
         ListNode *portList = static_cast<ListNode *>(portsValue.get());
-        foreach(ASTNode port, portList->getChildren()) {
+        for(ASTNode port : portList->getChildren()) {
             outList << port;
         }
     }
-    ASTNode inheritedPortsValue = block->getPropertyValue("inherits");
 
-    if (inheritedPortsValue){
-        if (inheritedPortsValue->getNodeType() == AST::String) {
-            string typeName =  static_cast<ValueNode *>(inheritedPortsValue.get())->getStringValue();
-            outList << getPortsForType(typeName, scope, tree);
-        } else if (inheritedPortsValue->getNodeType() == AST::List) {
-            for(ASTNode inheritedMember : inheritedPortsValue->getChildren()) {
-                Q_ASSERT(inheritedMember->getNodeType() == AST::String);
-                string typeName =  static_cast<ValueNode *>(inheritedMember.get())->getStringValue();
-                outList << getPortsForType(typeName, scope, tree);
-            }
-        }
-    }
+    outList << getInheritedPorts(block, scope, tree);
     return outList;
 }
 
@@ -2248,6 +2240,13 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, QVector<ASTNode > scopeStack,
             return leftDomain;
         }
     }
+
+    if (domainNode && domainNode->getNodeType() == AST::Block) {
+        // Resolve reference if domain is a block
+        string blockName = std::static_pointer_cast<BlockNode>(domainNode)->getName();
+        domainNode = CodeValidator::findDeclaration(QString::fromStdString(blockName), scopeStack, tree);
+    }
+
     return domainNode;
 }
 

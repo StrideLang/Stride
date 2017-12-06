@@ -68,6 +68,10 @@ DISTFILES += \
     data/11_modules.stride \
     data/12_modules_domains.stride \
     data/13_connection_count.stride \
+    data/14_members.stride \
+    data/15_connection_errors.stride \
+    data/16_buffer.stride \
+    data/17_loop.stride \
     data/P01_platform_objects.stride \
     data/P02_check_duplicates.stride \
     data/P03_bundle_resolution.stride \
@@ -77,16 +81,16 @@ DISTFILES += \
     data/P07_type_validation.stride \
     data/P08_scope.stride \
     data/P09_port_property.stride \
+    data/P10_platform_validity.stride \
+    data/P11_port_name_validation.stride \
     data/E01_constant_res.stride \
     data/E02_stream_expansions.stride \
     data/E03_multichn_streams.stride \
     data/E04_rates.stride \
     data/E05_library_objects.stride \
+    data/E06_context_domain.stride \
     data/L01_library_types_validation.stride \
-    data/14_members.stride \
-    data/15_connection_errors.stride \
-    data/P11_port_name_validation.stride \
-    data/E06_context_domain.stride
+    data/E07_namespaces.stride
 
 # Link to codegen library
 

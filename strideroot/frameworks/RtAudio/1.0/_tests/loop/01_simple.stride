@@ -1,8 +1,6 @@
 use DesktopAudio version 1.0
 
 signal Accum {}
-switch ResetOuter { }
-signal OuterCounter { reset: ResetOuter}
 
 loop Loop {
 	ports: [		
@@ -20,7 +18,6 @@ loop Loop {
 }
 
 
-[OuterCounter, 20] >> Equal() >> ResetOuter >> Loop(); 
-OuterCounter + 1 >> OuterCounter;
+on >> Loop();
 Accum >> AudioOut[1];
 

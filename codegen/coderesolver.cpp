@@ -248,8 +248,10 @@ void CodeResolver::fillDefaultProperties()
 void CodeResolver::declareModuleInternalBlocks()
 {
     for (ASTNode node : m_tree->getChildren()) {
-        declareInternalBlocksForNode(node);
+        declareInternalBlocksForNode(node, QVector<ASTNode>());
     }
+
+    populateContextDomains(m_tree->getChildren());
 }
 
 void CodeResolver::expandParallelStream(std::shared_ptr<StreamNode> stream, QVector<ASTNode > scopeStack, ASTNode tree)
@@ -505,41 +507,36 @@ void CodeResolver::insertBuiltinObjects()
                 ASTNode nameNode = block->getPropertyValue("typeName");
                 if (nameNode->getNodeType() == AST::String) {
                     ValueNode *typeName = static_cast<ValueNode *>(nameNode.get());
-                    if (typeName->getStringValue() == "type"
-                            || typeName->getStringValue() == "platformType"
-                            || typeName->getStringValue() == "signal"
+                    if (typeName->getStringValue() == "signal"
                             || typeName->getStringValue() == "propertyInputPort"
                             || typeName->getStringValue() == "propertyOutputPort"
                             || typeName->getStringValue() == "reaction"
                             || typeName->getStringValue() == "signalbridge") {
                         requiredDeclarations << block;
                     }
+                    if (typeName->getStringValue() == "type"
+                            || typeName->getStringValue() == "platformType") {
+                        m_tree->addChild(block); // We don't want to add dependent declarations for these as this will create an endless loop
+                    }
                 }
             } if (block->getObjectType() == "constant") {
-                if (block->getName() == "PlatformDomain" || block->getName() == "PlatformRate") {
-                    requiredDeclarations << block;
+                if (block->getName() == "PlatformDomain" || block->getName() == "PlatformRate"
+                        || block->getName() == "_ContextDomain" || block->getName() == "_ContextRate") {
+                    m_tree->addChild(block);
                 }
             }
             else if (block->getObjectType() == "_domainDefinition"
                      || block->getObjectType() == "_frameworkDescription") // Hack... this should be getting inserted when resolving symbols...)
             {
-                requiredDeclarations << block;
+                m_tree->addChild(block);
             }
             continue;
         }
     }
     for (std::shared_ptr<DeclarationNode> declaration : requiredDeclarations) {
 //        insertBuiltinObjectsForNode(declaration, bultinObjects);
+        insertDependentTypes(declaration->getObjectType(), bultinObjects);
         m_tree->addChild(declaration->deepCopy());
-//        ASTNode inherited -declaration->getPropertyValue("inherits");
-
-//        for (auto it = bultinObjects.begin(); it != bultinObjects.end(); it++)  {
-//            vector<ASTNode > &namespaceObjects = it->second;
-//        }
-//        auto position = std::find(namespaceObjects.begin(), namespaceObjects.end(), declaration);
-//        if (position != namespaceObjects.end()) {
-//            namespaceObjects.erase(position);
-//        }
     }
 
     // Second pass to add elements that depend on the user's code
@@ -557,7 +554,6 @@ void CodeResolver::processDomains()
     vector<ASTNode >::reverse_iterator rit = children.rbegin();
     QVector<ASTNode > scopeStack; // = QVector<AST*>::fromStdVector(children);
 
-    populateContextDomains(m_tree->getChildren());
     while(rit != children.rend()) {
         ASTNode node = *rit;
         propagateDomainsForNode(node, scopeStack);
@@ -572,8 +568,13 @@ void CodeResolver::processDomains()
 //        ++it;
 //    }
 
-    // TODO We need to propagate domains forward too
+    // TODO Do we need to propagate domains forward too
 
+    // Any signals without domain are assigned to the platform domain
+    std::shared_ptr<DeclarationNode> domainDecl = CodeValidator::findDomainDeclaration(m_system->getPlatformDomain().toStdString(), m_tree);
+    if (domainDecl) {
+        setContextDomain(m_tree->getChildren(),domainDecl);
+    }
     // Now split streams when there is a domain change
     vector<ASTNode > new_tree;
     for (ASTNode node : m_tree->getChildren()) {
@@ -592,12 +593,6 @@ void CodeResolver::processDomains()
     }
 
     m_tree->setChildren(new_tree);
-
-    // Any signals without domain are assigned to the platform domain
-    std::shared_ptr<DeclarationNode> domainDecl = CodeValidator::findDomainDeclaration(m_system->getPlatformDomain().toStdString(), m_tree);
-    if (domainDecl) {
-        setContextDomain(m_tree->getChildren(),domainDecl);
-    }
 }
 
 void CodeResolver::analyzeConnections()
@@ -625,6 +620,78 @@ void CodeResolver::analyzeConnections()
             checkStreamConnections(static_pointer_cast<StreamNode>(object), QVector<ASTNode >(), true);
         }
     }
+}
+
+void CodeResolver::insertDependentTypes(string typeName, map<string, vector<ASTNode>> &objects) {
+    QList<std::shared_ptr<DeclarationNode>> blockList;
+    QList<LangError> errors;
+//    auto is_declared = CodeValidator::findTypeDeclaration(decl, QVector<ASTNode >(), m_tree, errors);
+    std::shared_ptr<DeclarationNode> existingDecl = CodeValidator::findTypeDeclarationByName(typeName, QVector<ASTNode >(), m_tree, errors);
+    for (auto it = objects.begin(); it != objects.end(); it++)  {
+        // Look for type declaration in object lists
+        if(!existingDecl) {
+            auto newTypeDeclaration = CodeValidator::findTypeDeclarationByName(typeName, QVector<ASTNode >::fromStdVector(it->second), nullptr, errors);
+            if (newTypeDeclaration) { // type declaration found
+                newTypeDeclaration->setRootScope(it->first);
+                m_tree->addChild(newTypeDeclaration);
+                existingDecl = newTypeDeclaration;
+            }
+        }
+        if (existingDecl) {
+            vector<string> inheritedTypes = CodeValidator::getInheritedTypeNames(existingDecl, QVector<ASTNode>::fromStdVector(it->second), m_tree);
+            for (auto inheritedType: inheritedTypes) {
+                insertDependentTypes(inheritedType, objects);
+            }
+        }
+
+        //            if (typeDeclaration && !blockList.contains(typeDeclaration)) {
+        //                typeDeclaration->setRootScope(it->first);
+        //                blockList << typeDeclaration;
+
+        //                for(string &typeName : inheritedTypes) {
+        //                    ASTNode existingDeclaration = CodeValidator::findTypeDeclarationByName(typeName, QVector<ASTNode >(), m_tree, errors);
+        //                    if (!existingDeclaration) {
+        //                        auto newTypeDeclaration = CodeValidator::findTypeDeclarationByName(typeName, QVector<ASTNode >::fromStdVector(rootNamespace), nullptr, errors);
+        //                        if (newTypeDeclaration && !blockList.contains(newTypeDeclaration)) {
+        //                            newTypeDeclaration->setRootScope(it->first);
+        //                            blockList << newTypeDeclaration;
+        //                        }
+        //                    }
+        //                }
+        //            }
+    }
+
+    // Insert declaration for inherited types
+
+//    // Add types that need to be added
+//    for(auto usedBlock : blockList) {
+////        QVector<ASTNode > subscope;
+////        // Make subscope in case this is a module declaration
+////        ASTNode blocks = usedBlock->getPropertyValue("blocks");
+////        if (blocks) {
+////            for(ASTNode declarationNode : blocks->getChildren()) {
+////                if (declarationNode->getNodeType() == AST::Declaration
+////                        || declarationNode->getNodeType() == AST::BundleDeclaration) {
+////                    subscope << declarationNode;
+////                }
+////            }
+////        }
+//        // Add type. It shouldn't be there as this has been checked above
+//        if (!CodeValidator::findDeclaration(QString::fromStdString(usedBlock->getName()),
+//                                            QVector<ASTNode>(), m_tree)) {
+//            m_tree->addChild(usedBlock);
+//            for (auto it = objects.begin(); it != objects.end(); it++)  {
+//                vector<ASTNode > &namespaceObjects = it->second;
+//                auto position = std::find(namespaceObjects.begin(), namespaceObjects.end(), usedBlock);
+//                if (position != namespaceObjects.end()) {
+//                    namespaceObjects.erase(position);
+//                }
+//            }
+//            insertDependentTypes(usedBlock, objects);
+//            //            insertBuiltinObjectsForNode(newBlock, objects);
+//        }
+
+//    }
 }
 
 void CodeResolver::insertBuiltinObjectsForNode(ASTNode node, map<string, vector<ASTNode>> &objects)
@@ -688,7 +755,6 @@ void CodeResolver::insertBuiltinObjectsForNode(ASTNode node, map<string, vector<
         }
     } else if (node->getNodeType() == AST::Declaration
                || node->getNodeType() == AST::BundleDeclaration) {
-        QList<std::shared_ptr<DeclarationNode>> blockList;
         std::shared_ptr<DeclarationNode> declaration = static_pointer_cast<DeclarationNode>(node);
         vector<ASTNode > namespaceObjects;
         if (declaration->getScopeLevels() > 0) {
@@ -713,63 +779,9 @@ void CodeResolver::insertBuiltinObjectsForNode(ASTNode node, map<string, vector<
         // Find type declaration and insert it if needed
         QList<LangError> errors;
         // Check if type is already declared
-        std::shared_ptr<DeclarationNode> typeDeclaration = CodeValidator::findTypeDeclaration(declaration.get(),  QVector<ASTNode >(), m_tree, errors);
-        if (!typeDeclaration) { // Otherwise find declaration
-            for (auto it = objects.begin(); it != objects.end(); it++)  {
-                vector<ASTNode > rootNamespace = it->second;
 
-                typeDeclaration = CodeValidator::findTypeDeclarationByName(
-                            declaration->getObjectType(),
-                            QVector<ASTNode >::fromStdVector(rootNamespace), m_tree, errors,
-                            declaration->getNamespaceList());
-                if (typeDeclaration && !blockList.contains(typeDeclaration)) {
-                    typeDeclaration->setRootScope(it->first);
-                    blockList << typeDeclaration;
+        insertDependentTypes(declaration->getObjectType(), objects);
 
-                    // Insert declaration for inherited types
-                    vector<string> inheritedTypes = CodeValidator::getInheritedTypeNames(typeDeclaration, QVector<ASTNode >::fromStdVector(rootNamespace), m_tree);
-
-                    for(string &typeName : inheritedTypes) {
-                        ASTNode existingDeclaration = CodeValidator::findTypeDeclarationByName(typeName, QVector<ASTNode >(), m_tree, errors);
-                        if (!existingDeclaration) {
-                            typeDeclaration = CodeValidator::findTypeDeclarationByName(typeName, QVector<ASTNode >::fromStdVector(rootNamespace), nullptr, errors);
-                            if (typeDeclaration && !blockList.contains(typeDeclaration)) {
-                                typeDeclaration->setRootScope(it->first);
-                                blockList << typeDeclaration;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        // Add types that need to be added
-        for(auto usedBlock : blockList) {
-            QVector<ASTNode > subscope;
-            // Make subscope in case this is a module declaration
-            ASTNode blocks = usedBlock->getPropertyValue("blocks");
-            if (blocks) {
-                for(ASTNode declarationNode : blocks->getChildren()) {
-                    if (declarationNode->getNodeType() == AST::Declaration
-                            || declarationNode->getNodeType() == AST::BundleDeclaration) {
-                        subscope << declarationNode;
-                    }
-                }
-            }
-            // Add type. It shouldn't be there as this has been checked above
-            ASTNode newBlock = usedBlock;
-            m_tree->addChild(newBlock);
-            for (auto it = objects.begin(); it != objects.end(); it++)  {
-                vector<ASTNode > &namespaceObjects = it->second;
-                auto position = std::find(namespaceObjects.begin(), namespaceObjects.end(), usedBlock);
-                if (position != namespaceObjects.end()) {
-                    namespaceObjects.erase(position);
-                }
-            }
-//            insertBuiltinObjectsForNode(newBlock, objects);
-            for(std::shared_ptr<PropertyNode> property : usedBlock->getProperties()) {
-                insertBuiltinObjectsForNode(property->getValue(), objects);
-            }
-        }
         // Insert needed objects for things in module properties
         for(std::shared_ptr<PropertyNode> property : declaration->getProperties()) {
             insertBuiltinObjectsForNode(property->getValue(), objects);
@@ -874,25 +886,13 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream, Q
                 if (previousDomainName.size() != 0) {
                     domainName = previousDomainName;
                 } else {
-                    if (contextDomain.isEmpty()) {
-                        if (m_system) {
-                            domainName = m_system->getPlatformDomain().toStdString();
-                        }
-                    } else {
-                        domainName = contextDomain.toStdString();
-                    }
+                    domainName = contextDomain.toStdString();
                 }
             } else {
                 // This is needed in cases where signals with no set domain are connected
                 // to input ports on other objects. Domains are not
                 // propagated across secondary ports
-                if (contextDomain.isEmpty()) {
-                    if (m_system) {
-                        domainName = m_system->getPlatformDomain().toStdString();
-                    }
-                } else {
-                    domainName = contextDomain.toStdString();
-                }
+                domainName = contextDomain.toStdString();
             }
             domainStack << left;
         }
@@ -900,8 +900,6 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream, Q
         if (domainName.size() > 0 && previousDomainName != domainName) {
             setDomainForStack(domainStack, domainName, scopeStack);
             domainStack.clear();
-        } else if (domainName.size() == 0) { // Domain needs to be resolved
-            domainStack << left;
         }
         previousDomainName = domainName;
 
@@ -932,7 +930,7 @@ std::string CodeResolver::processDomainsForNode(ASTNode node, QVector<ASTNode > 
             ASTNode domain = declaration->getDomain();
             if (!domain) {
                 // Put declaration in stack to set domain once domain is resolved
-//                domainStack << declaration;
+                domainStack << declaration;
             } else {
                 if (domain->getNodeType() == AST::String) {
                     domainName = static_cast<ValueNode *>(domain.get())->getStringValue();
@@ -941,7 +939,7 @@ std::string CodeResolver::processDomainsForNode(ASTNode node, QVector<ASTNode > 
                     domainName = CodeValidator::evaluateConstString(domain, scopeStack, m_tree, errors);
                 } else if (domain->getNodeType() == AST::None) {
                     // TODO does this need to be handled?
-//                    domainStack << declaration;
+                    domainStack << declaration;
                 } else if (domain->getNodeType() == AST::PortProperty) {
                     ASTNode resolvedDomain = resolvePortProperty(static_pointer_cast<PortPropertyNode>(domain),
                                                          scopeStack);
@@ -955,8 +953,7 @@ std::string CodeResolver::processDomainsForNode(ASTNode node, QVector<ASTNode > 
                     }
                     //                    domainStack << declaration;
                 } else {
-                    qDebug() << "WARNING: Unrecognized domain type"; // Should this trigger an error?
-//                    domainStack << declaration;
+                    domainStack << declaration;
                 }
             }
         }
@@ -970,10 +967,10 @@ std::string CodeResolver::processDomainsForNode(ASTNode node, QVector<ASTNode > 
             if (domain->getNodeType() == AST::String) {
                 domainName = static_cast<ValueNode *>(domain.get())->getStringValue();
             } else if (domain->getNodeType() == AST::None) { // domain is streamDomain
-//                domainStack << node;
+                domainStack << node;
             } else {
                 qDebug() << "WARNING: Unrecognized domain type"; // Should this trigger an error?
-//                domainStack << node;
+                domainStack << node;
             }
         }
         for(auto member : func->getProperties()) {
@@ -1124,7 +1121,7 @@ std::shared_ptr<DeclarationNode>CodeResolver::createDomainDeclaration(QString na
     return newBlock;
 }
 
-std::shared_ptr<DeclarationNode> CodeResolver::createSignalDeclaration(QString name, int size)
+std::shared_ptr<DeclarationNode> CodeResolver::createSignalDeclaration(QString name, int size, QVector<ASTNode> &scope)
 {
     std::shared_ptr<DeclarationNode> newBlock = nullptr;
     Q_ASSERT(size > 0);
@@ -1137,6 +1134,8 @@ std::shared_ptr<DeclarationNode> CodeResolver::createSignalDeclaration(QString n
     }
     Q_ASSERT(newBlock);
     fillDefaultPropertiesForNode(newBlock);
+
+    resolveConstantsInNode(newBlock, scope);
     return newBlock;
 }
 
@@ -1145,7 +1144,7 @@ std::vector<ASTNode> CodeResolver::declareUnknownName(std::shared_ptr<BlockNode>
     std::vector<ASTNode > declarations;
     std::shared_ptr<DeclarationNode> decl = CodeValidator::findDeclaration(QString::fromStdString(block->getName()), localScope, tree, block->getNamespaceList());
     if (!decl) { // Not declared, so make declaration
-        std::shared_ptr<DeclarationNode> newSignal = createSignalDeclaration(QString::fromStdString(block->getName()), size);
+        std::shared_ptr<DeclarationNode> newSignal = createSignalDeclaration(QString::fromStdString(block->getName()), size, localScope);
         double rate = CodeValidator::getNodeRate(newSignal, QVector<ASTNode >(), tree);
 
         CodeValidator::setNodeRate(block, rate, localScope, tree);
@@ -1159,7 +1158,7 @@ std::vector<ASTNode> CodeResolver::declareUnknownBundle(std::shared_ptr<BundleNo
     std::vector<ASTNode > declarations;
     std::shared_ptr<DeclarationNode> block = CodeValidator::findDeclaration(QString::fromStdString(bundle->getName()), localScope, tree, bundle->getNamespaceList());
     if (!block) { // Not declared, so make declaration
-        std::shared_ptr<DeclarationNode> newSignal = createSignalDeclaration(QString::fromStdString(bundle->getName()), size);
+        std::shared_ptr<DeclarationNode> newSignal = createSignalDeclaration(QString::fromStdString(bundle->getName()), size, localScope);
         double rate = CodeValidator::getNodeRate(newSignal, QVector<ASTNode >(), tree);
         CodeValidator::setNodeRate(bundle, rate, localScope, tree);
         declarations.push_back(newSignal);
@@ -1454,7 +1453,7 @@ std::vector<ASTNode> CodeResolver::getModuleBlocks(std::shared_ptr<DeclarationNo
     return blocks;
 }
 
-void CodeResolver::declareInternalBlocksForNode(ASTNode node)
+void CodeResolver::declareInternalBlocksForNode(ASTNode node, QVector<ASTNode> subScope)
 {
     if (node->getNodeType() == AST::Declaration) {
         std::shared_ptr<DeclarationNode> block = static_pointer_cast<DeclarationNode>(node);
@@ -1467,8 +1466,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node)
                 block->replacePropertyValue("ports", std::make_shared<ListNode>(nullptr, "", -1));
                 ports = static_cast<ListNode *>(block->getPropertyValue("ports").get());
             }
-            ASTNode internalBlocks = block->getPropertyValue("blocks");
-            internalBlocks->addChild(reactionInput);
+            ports->addChild(reactionInput);
         }
         if (block->getObjectType() == "loop") { // We need to define an internal domain for loops
             ListNode *ports = static_cast<ListNode *>(block->getPropertyValue("ports").get());
@@ -1489,7 +1487,11 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node)
             if (!internalBlocks || internalBlocks->getNodeType() != AST::List) { // Turn blocks property into list
                 block->setPropertyValue("blocks", std::make_shared<ListNode>(internalBlocks, "", -1));
             }
+            for (ASTNode node: internalBlocks->getChildren()) {
+                subScope << node;
+            }
             std::shared_ptr<DeclarationNode> outputPortBlock = CodeValidator::getMainOutputPortBlock(block);
+
             if (outputPortBlock) {
                 ASTNode outDomain = outputPortBlock->getPropertyValue("domain");
                 if (!outDomain || outDomain->getNodeType() == AST::None) {
@@ -1506,12 +1508,31 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node)
                             gotDomainFromBlock = true;
                         }
                     } if (!gotDomainFromBlock) {
-                        std::shared_ptr<BlockNode> outBlockName = std::make_shared<BlockNode>("_OutputDomain", "", -1);
+                        int counter = 0;
+                        string newDomainName;
+                        bool domainAvailable;
+                        do {
+                            newDomainName = "_OutputDomain_" + std::to_string(counter);
+                            domainAvailable = true;
+                            for (ASTNode node: internalBlocks->getChildren()) {
+                                if (node->getNodeType() == AST::Declaration) {
+                                    auto decl = static_pointer_cast<DeclarationNode>(node);
+                                    if (decl->getName() == newDomainName) {
+                                        domainAvailable = false;
+                                        counter++;
+                                        break;
+                                    }
+                                }
+                            }
+                        } while (!domainAvailable);
+
+                        std::shared_ptr<BlockNode> outBlockName = std::make_shared<BlockNode>(newDomainName, "", -1);
                         outputPortBlock->replacePropertyValue("domain", outBlockName); // FIXME We should we issue a warning that we are overwriting declared domain
                         outDomain = outBlockName;
-                        ASTNode outDomainDeclaration = CodeValidator::findDeclaration("_OutputDomain", QVector<ASTNode>(), internalBlocks);
+                        ASTNode outDomainDeclaration = CodeValidator::findDeclaration(QString::fromStdString(newDomainName), QVector<ASTNode>(), internalBlocks);
                         if (!outDomainDeclaration) {
-                            std::shared_ptr<DeclarationNode> newDomainBlock = createDomainDeclaration(QString::fromStdString("_OutputDomain"));
+                            std::shared_ptr<DeclarationNode> newDomainBlock = createDomainDeclaration(QString::fromStdString(newDomainName));
+                            subScope << newDomainBlock;
                             internalBlocks->addChild(newDomainBlock);
                         }
                     }
@@ -1533,10 +1554,11 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node)
                 }
             } else {
                 // TODO This assumes that the output block determines the context domain, should we look at the input port too if output port not set?
-                ASTNode outDomainDeclaration = CodeValidator::findDeclaration("_OutputDomain", QVector<ASTNode>(), internalBlocks);
+                ASTNode outDomainDeclaration = CodeValidator::findDeclaration("_OutputDomain_0", QVector<ASTNode>(), internalBlocks);
                 if (!outDomainDeclaration) {
-                    std::shared_ptr<DeclarationNode> newDomainBlock = createDomainDeclaration(QString::fromStdString("_OutputDomain"));
+                    std::shared_ptr<DeclarationNode> newDomainBlock = createDomainDeclaration(QString::fromStdString("_OutputDomain_0"));
                     internalBlocks->addChild(newDomainBlock);
+                    subScope << newDomainBlock;
                 }
             }
 
@@ -1555,10 +1577,6 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node)
 
                     // Declare domain block if undeclared
                     std::string domainName = "_" + portDeclaration->getName() + "Domain";
-                    QVector<ASTNode > subScope;
-                    for (ASTNode node: internalBlocks->getChildren()) {
-                        subScope << node;
-                    }
                     if (domainPortValue) {
                         if (domainPortValue->getNodeType() == AST::None) {
                             std::shared_ptr<DeclarationNode> domainDeclaration = CodeValidator::findDeclaration(QString::fromStdString(domainName), subScope, m_tree);
@@ -1578,6 +1596,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node)
                             if (!domainDeclaration) {
                                 std::shared_ptr<DeclarationNode> domainDeclaration = createDomainDeclaration(QString::fromStdString(domainName));
                                 internalBlocks->addChild(domainDeclaration);
+                                subScope << domainDeclaration;
                                 // Give assigned block this domain if it doesn't have one.
                                 auto assignedBlock = portDeclaration->getPropertyValue("block");
                                 if (assignedBlock) {
@@ -1588,7 +1607,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node)
                                         std::string blockName = std::static_pointer_cast<BlockNode>(assignedBlock)->getName();
                                         auto decl = CodeValidator::findDeclaration(QString::fromStdString(blockName), subScope, m_tree);
                                         if (!decl) {
-                                            decl = createSignalDeclaration(QString::fromStdString(blockName), 1);
+                                            decl = createSignalDeclaration(QString::fromStdString(blockName), 1, subScope);
                                             fillDefaultPropertiesForNode(decl);
                                             internalBlocks->addChild(decl);
                                         }
@@ -1632,7 +1651,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node)
 //                                if (sizePortValue->getNodeType() == AST::Int) {
 //                                    size = static_pointer_cast<ValueNode>(sizePortValue)->getIntValue();
 //                                }
-                                blockDecl = createSignalDeclaration(QString::fromStdString(name), size);
+                                blockDecl = createSignalDeclaration(QString::fromStdString(name), size, subScope);
                                 blockDecl->replacePropertyValue("rate", std::make_shared<ValueNode>("", -1));
                                 blockDecl->setDomainString(domainName);
                                 internalBlocks->addChild(blockDecl);
@@ -1665,7 +1684,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node)
                             portDeclaration->replacePropertyValue("block", name);
                             std::shared_ptr<DeclarationNode> newSignal = CodeValidator::findDeclaration(QString::fromStdString(defaultName), QVector<ASTNode >(), internalBlocks);
                             if (!newSignal) {
-                                newSignal = createSignalDeclaration(QString::fromStdString(defaultName));
+                                newSignal = createSignalDeclaration(QString::fromStdString(defaultName), 1, subScope);
                                 internalBlocks->addChild(newSignal);
                                 fillDefaultPropertiesForNode(newSignal);
                                 newSignal->setDomainString(domainName);
@@ -1684,7 +1703,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node)
             // Go through child blocks and autodeclare for internal modules and reactions
 //            ASTNode internalBlocks = block->getPropertyValue("blocks");
             for(ASTNode node : internalBlocks->getChildren()) {
-                declareInternalBlocksForNode(node);
+                declareInternalBlocksForNode(node, subScope);
             }
         }
     }
@@ -1704,7 +1723,7 @@ void CodeResolver::resolveStreamSymbols()
             expandNamesToBundles(stream, m_tree);
         } else if(node->getNodeType() == AST::Declaration) {
             std::shared_ptr<DeclarationNode> block = static_pointer_cast<DeclarationNode>(node);
-            if (block->getObjectType() == "module" || block->getObjectType() == "reaction") {
+            if (block->getObjectType() == "module" || block->getObjectType() == "reaction" || block->getObjectType() == "loop") {
                 std::vector<ASTNode > streams = getModuleStreams(block);
                 QVector<ASTNode > scopeStack;
                 ASTNode blocks = block->getPropertyValue("blocks");
@@ -1913,19 +1932,22 @@ void CodeResolver::resolveConstantsInNode(ASTNode node, QVector<ASTNode > scope)
             }
         }
     } else if(node->getNodeType() == AST::Declaration) {
-        std::shared_ptr<DeclarationNode> block = static_pointer_cast<DeclarationNode>(node);
-        vector<std::shared_ptr<PropertyNode>> properties = block->getProperties();
-        std::shared_ptr<ListNode> internalBlocks = static_pointer_cast<ListNode>(block->getPropertyValue("blocks"));
-        if ((block->getObjectType() == "module" || block->getObjectType() == "reaction") && internalBlocks) {
+        std::shared_ptr<DeclarationNode> decl = static_pointer_cast<DeclarationNode>(node);
+        vector<std::shared_ptr<PropertyNode>> properties = decl->getProperties();
+        std::shared_ptr<ListNode> internalBlocks = static_pointer_cast<ListNode>(decl->getPropertyValue("blocks"));
+        if ((decl->getObjectType() == "module" || decl->getObjectType() == "reaction" || decl->getObjectType() == "loop") && internalBlocks) {
             if (internalBlocks->getNodeType() == AST::List) {
                 scope = QVector<ASTNode >::fromStdVector(internalBlocks->getChildren()) + scope;
             }
         }
-        for(std::shared_ptr<PropertyNode> property : properties) {
-            resolveConstantsInNode(property->getValue(), scope);
-            std::shared_ptr<ValueNode> newValue = resolveConstant(property->getValue(), scope);
-            if (newValue) {
-                property->replaceValue(newValue);
+        if (decl->getObjectType() != "type") {
+            // FIXME This is a hack to protect constants that are context dependent. Should the language mark this?
+            for(std::shared_ptr<PropertyNode> property : properties) {
+                resolveConstantsInNode(property->getValue(), scope);
+                std::shared_ptr<ValueNode> newValue = resolveConstant(property->getValue(), scope);
+                if (newValue) {
+                    property->replaceValue(newValue);
+                }
             }
         }
     } else if(node->getNodeType() == AST::BundleDeclaration) {
@@ -2126,15 +2148,17 @@ void CodeResolver::processResetForNode(ASTNode thisScope, ASTNode streamScope, A
 void CodeResolver::propagateDomainsForNode(ASTNode node, QVector<ASTNode > scopeStack)
 {
     if (node->getNodeType() == AST::Stream) {
-        resolveDomainsForStream(static_pointer_cast<StreamNode>(node), scopeStack);
+        string contextDomain = getContextDomainName(scopeStack);
+        resolveDomainsForStream(static_pointer_cast<StreamNode>(node), scopeStack, QString::fromStdString(contextDomain));
     } else if (node->getNodeType() == AST::Declaration) {
         std::shared_ptr<DeclarationNode> module = static_pointer_cast<DeclarationNode>(node);
         if (module->getObjectType() == "module" || module->getObjectType() == "reaction" || module->getObjectType() == "loop") {
             vector<ASTNode > streamsNode = getModuleStreams(module);
             vector<ASTNode >::reverse_iterator streamIt = streamsNode.rbegin();
-            std::shared_ptr<ListNode> blocks = static_pointer_cast<ListNode>(module->getPropertyValue("blocks"));
+
+            vector<ASTNode > blocks = getModuleBlocks(module);
             ASTNode ports = module->getPropertyValue("ports");
-            scopeStack = QVector<ASTNode>::fromStdVector(blocks->getChildren()) + scopeStack; // Prepend internal scope
+            scopeStack = QVector<ASTNode>::fromStdVector(blocks) + scopeStack; // Prepend internal scope
             if (ports && ports->getNodeType() == AST::List) { // We need to add ports to stack because users might need to query their properties e.g. Port.domain
                 scopeStack = QVector<ASTNode>::fromStdVector(ports->getChildren()) + scopeStack;
             }
@@ -2145,8 +2169,7 @@ void CodeResolver::propagateDomainsForNode(ASTNode node, QVector<ASTNode > scope
 //            if (ports) {
 //                scopeStack << QVector<ASTNode>::fromStdVector(ports->getChildren());
 //            }
-
-            string contextDomainName = getContextDomainName(module, scopeStack);
+            string contextDomainName = getContextDomainName(scopeStack);
             if (contextDomainName.size() == 0) {
                 std::shared_ptr<DeclarationNode> outputPortDecl = CodeValidator::getMainOutputPortBlock(module);
                 if (outputPortDecl) {
@@ -2176,20 +2199,18 @@ void CodeResolver::propagateDomainsForNode(ASTNode node, QVector<ASTNode > scope
             while(streamIt != streamsNode.rend()) {
                 const ASTNode streamNode = *streamIt;
                 if (streamNode->getNodeType() == AST::Stream) {
-                    Q_ASSERT(blocks->getNodeType() == AST::List);
                     resolveDomainsForStream(static_pointer_cast<StreamNode>(streamNode), scopeStack, QString::fromStdString(contextDomainName));
                 } else {
                     qDebug() << "ERROR: Expecting stream.";
                 }
                 streamIt++;
             }
-            vector<ASTNode > moduleBlocks = getModuleBlocks(module);
-            scopeStack << QVector<ASTNode>::fromStdVector(moduleBlocks);
-            for (auto block: moduleBlocks) {
+//            scopeStack << QVector<ASTNode>::fromStdVector(moduleBlocks);
+            for (auto block: blocks) {
                 propagateDomainsForNode(block, scopeStack);
             }
             if (contextDomainDecl) {
-                setContextDomain(moduleBlocks, contextDomainDecl);
+                setContextDomain(blocks, contextDomainDecl);
             }
         }
     }
@@ -2488,11 +2509,14 @@ QVector<ASTNode > CodeResolver::sliceStreamByDomain(std::shared_ptr<StreamNode> 
                 }
                 break;
             }
+            // Force it to take the domain from the left to avoid domain slicing
             domainName = CodeValidator::getNodeDomainName(left, scopeStack, m_tree);
             if (previousDomainName.size() == 0) {
                 previousDomainName = domainName;
             }
-        } else if (left->getNodeType() == AST::Expression) {
+        }
+
+        if (left->getNodeType() == AST::Expression) {
             // We might need to add bridge signals if expression members belong to different domains
             // Resolve domain from the right member in stream (if domain in expression members is not set
             ASTNode outDomain;
@@ -2577,7 +2601,7 @@ QVector<ASTNode > CodeResolver::sliceStreamByDomain(std::shared_ptr<StreamNode> 
 //            }
             stack << left;
         }
-        if(right) {
+        if(right) { // Is this check needed?
             if (right->getNodeType() == AST::Stream) {
                 //            stream = static_pointer_cast<StreamNode>(right);
                 StreamNode *subStream = static_cast<StreamNode *>(right.get());
@@ -2620,22 +2644,20 @@ QVector<ASTNode > CodeResolver::sliceStreamByDomain(std::shared_ptr<StreamNode> 
 
 void CodeResolver::sliceDomainsInNode(std::shared_ptr<DeclarationNode> module, QVector<ASTNode> scopeStack)
 {
-    if (module->getObjectType() == "module" || module->getObjectType() == "reaction"){ // TODO add handling of reactions
+    if (module->getObjectType() == "module" || module->getObjectType() == "reaction" || module->getObjectType() == "loop") { // TODO how to handle different domains within loops and reactions?
         ASTNode streamsNode = module->getPropertyValue("streams");
         ASTNode blocksNode = module->getPropertyValue("blocks");
 
-        if (!blocksNode) {
-           module->setPropertyValue("blocks", std::make_shared<ListNode>(nullptr, "", -1));
-           blocksNode = module->getPropertyValue("blocks");
-        } else if (blocksNode->getNodeType() == AST::None) {
+        Q_ASSERT(blocksNode);
+        if (blocksNode->getNodeType() == AST::None) {
             module->replacePropertyValue("blocks", std::make_shared<ListNode>(nullptr, "", -1));
             blocksNode = module->getPropertyValue("blocks");
         }
 
-        if (!streamsNode) {
-           module->setPropertyValue("streams", std::make_shared<ListNode>(nullptr, "", -1));
-           streamsNode = module->getPropertyValue("streams");
-        }
+//        if (!streamsNode) {
+//           module->setPropertyValue("streams", std::make_shared<ListNode>(nullptr, "", -1));
+//           streamsNode = module->getPropertyValue("streams");
+//        }
 
         std::shared_ptr<ListNode> newStreamsList = std::make_shared<ListNode>(nullptr, "", -1);
         scopeStack << CodeValidator::getBlocksInScope(module, scopeStack, m_tree);
@@ -2744,26 +2766,16 @@ QVector<ASTNode> CodeResolver::processExpression(std::shared_ptr<ExpressionNode>
     return streams;
 }
 
-string CodeResolver::getContextDomainName(std::shared_ptr<DeclarationNode> decl, QVector<ASTNode> &scopeStack)
+string CodeResolver::getContextDomainName(QVector<ASTNode> &scopeStack)
 {
     string name;
-    if (decl->getObjectType() == "module" || decl->getObjectType() == "reaction" || decl->getObjectType() == "loop") {
-        ASTNode contextDomainNode = decl->getPropertyValue("contextDomain");
-        if (contextDomainNode) {
-            if (contextDomainNode->getNodeType() == AST::String) {
-                name = std::static_pointer_cast<ValueNode>(contextDomainNode)->getStringValue();
-            } else if (contextDomainNode->getNodeType() == AST::PortProperty) {
-                QVector<ASTNode> scope = scopeStack;
-                ASTNode blocks = decl->getPropertyValue("blocks");
-                if (blocks) {
-                    for (auto node: blocks->getChildren()) { // TODO should add reversed
-                        scope.prepend(node->deepCopy());
-                    }
-                }
-                ASTNode node = resolvePortProperty(std::static_pointer_cast<PortPropertyNode>(contextDomainNode), scope);
-                if (node && node->getNodeType() == AST::String) {
-                    name = std::static_pointer_cast<ValueNode>(node)->getStringValue();
-                }
+    auto contextDomainNode = CodeValidator::findDeclaration("_ContextDomain", scopeStack, m_tree);
+
+    if (contextDomainNode) {
+        if (contextDomainNode->getObjectType() == "constant") {
+            ASTNode node = contextDomainNode->getPropertyValue("value");
+            if (node && node->getNodeType() == AST::String) {
+                name = std::static_pointer_cast<ValueNode>(node)->getStringValue();
             }
         }
     }
@@ -2804,28 +2816,57 @@ void CodeResolver::populateContextDomains(vector<ASTNode> nodes)
         if (node->getNodeType() == AST::Declaration) {
             std::shared_ptr<DeclarationNode> decl = std::static_pointer_cast<DeclarationNode>(node);
             if (decl->getObjectType() == "module" || decl->getObjectType() == "reaction" || decl->getObjectType() == "loop") {
-                auto contextDomain = decl->getPropertyValue("contextDomain");
-                if (!contextDomain || contextDomain->getNodeType() == AST::None) {
-                    auto outputBlock = CodeValidator::getMainOutputPortBlock(decl);
-                    if (outputBlock) {
-                        QVector<ASTNode> scopeStack;
-                        if (decl->getPropertyValue("blocks")) {
-                            scopeStack = QVector<ASTNode>::fromStdVector(decl->getPropertyValue("blocks")->getChildren());
+                auto blocks = decl->getPropertyValue("blocks");
+                bool hasContextDomain = false;
+                for (auto block: blocks->getChildren()) {
+                    if (block->getNodeType() == AST::Declaration) {
+                        auto internalDecl = std::static_pointer_cast<DeclarationNode>(block);
+                        if (internalDecl->getName() == "_ContextDomain") {
+                            hasContextDomain = true;
+                            break;
                         }
-                        ASTNode domainNode = CodeValidator::getNodeDomain(node, scopeStack, m_tree);
-                        if (domainNode) {
-                            decl->setPropertyValue("contextDomain", domainNode->deepCopy());
+                    }
+                }
+                if (!hasContextDomain) {
+                    // This is currently hard coded to try output first, then input. This order should somehow be specified within Stride itself
+                    auto outputPortBlock = CodeValidator::getMainOutputPortBlock(decl);
+                    if (outputPortBlock) {
+                        QVector<ASTNode> scopeStack;
+                        if (blocks) {
+                            scopeStack = QVector<ASTNode>::fromStdVector(blocks->getChildren());
+                            string domainName = CodeValidator::getNodeDomainName(outputPortBlock->getPropertyValue("block"), scopeStack, m_tree);
+                            if (domainName.size() > 0) {
+                                ASTNode propertiesList = std::make_shared<ListNode>(
+                                            std::make_shared<PropertyNode>("value",
+                                                                           std::make_shared<ValueNode>(domainName, "", -1),
+                                                                           "", -1), "", -1);
+                                blocks->addChild(std::make_shared<DeclarationNode>("_ContextDomain", "constant", propertiesList, "", -1));
+                                propertiesList = std::make_shared<ListNode>(
+                                            std::make_shared<PropertyNode>("value",
+                                                                           std::make_shared<ValueNode>(0, "", -1),
+                                                                           "", -1), "", -1);
+                                blocks->addChild(std::make_shared<DeclarationNode>("_ContextRate", "constant", propertiesList, "", -1));
+                            }
                         }
                     } else {
-                        auto inputBlock = CodeValidator::getMainInputPortBlock(decl);
-                        if (inputBlock) {
+                        auto inputPortBlock = CodeValidator::getMainInputPortBlock(decl);
+                        if (inputPortBlock) {
                             QVector<ASTNode> scopeStack;
-                            if (decl->getPropertyValue("blocks")) {
-                                scopeStack = QVector<ASTNode>::fromStdVector(decl->getPropertyValue("blocks")->getChildren());
-                            }
-                            ASTNode domainNode = CodeValidator::getNodeDomain(node, scopeStack, m_tree);
-                            if (domainNode) {
-                                decl->setPropertyValue("contextDomain", domainNode->deepCopy());
+                            if (blocks) {
+                                scopeStack = QVector<ASTNode>::fromStdVector(blocks->getChildren());
+                                string domainName = CodeValidator::getNodeDomainName(inputPortBlock->getPropertyValue("block"), scopeStack, m_tree);
+                                if (domainName.size() > 0) {
+                                    ASTNode propertiesList = std::make_shared<ListNode>(
+                                                std::make_shared<PropertyNode>("value",
+                                                                               std::make_shared<ValueNode>(domainName, "", -1),
+                                                                               "", -1), "", -1);
+                                    blocks->addChild(std::make_shared<DeclarationNode>("_ContextDomain", "constant", propertiesList, "", -1));
+                                    propertiesList = std::make_shared<ListNode>(
+                                                std::make_shared<PropertyNode>("value",
+                                                                               std::make_shared<ValueNode>(0, "", -1),
+                                                                               "", -1), "", -1);
+                                    blocks->addChild(std::make_shared<DeclarationNode>("_ContextRate", "constant", propertiesList, "", -1));
+                                }
                             }
                         }
                     }
