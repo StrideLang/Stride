@@ -2597,9 +2597,6 @@ class PlatformFunctions:
                     if domain == current_domain or not current_domain:
                         next_in_tokens += out_tokens
 
-                processing_code[current_domain] += atom.get_postprocessing_code(in_tokens)
-                self.append_eol(processing_code[current_domain])
-
                 # Post processing code
                 processing_code[current_domain] += atom.get_postprocessing_code(in_tokens)
                 self.append_eol(processing_code[current_domain])

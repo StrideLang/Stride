@@ -818,9 +818,18 @@ void CodeValidator::validateStreamSizes(ASTNode tree, QVector<ASTNode > scope)
             DeclarationNode *decl = static_cast<DeclarationNode *>(node.get());
             if (decl) {
                 if (decl->getObjectType() == "module"
-                        || decl->getObjectType() == "reaction") {
+                        || decl->getObjectType() == "reaction"
+                        || decl->getObjectType() == "loop") {
+                    QVector<ASTNode > scope = QVector<ASTNode>::fromStdVector(decl->getPropertyValue("blocks")->getChildren());
+                    auto streams = decl->getPropertyValue("streams")->getChildren();
+                    for (auto node: streams) {
+                        if (node->getNodeType() == AST::Stream) {
+                            auto stream = std::static_pointer_cast<StreamNode>(node);
+                            validateStreamInputSize(stream.get(), scope, m_errors);
+                        }
+                    }
 
-                    // FIXME we need to validate streams within modules and reactions
+                    // FIXME we need to validate streams recursively within modules and reactions
                 }
             }
         }
@@ -1240,7 +1249,7 @@ int CodeValidator::getTypeNumInputs(std::shared_ptr<DeclarationNode> blockDeclar
     if (blockDeclaration->getNodeType() == AST::BundleDeclaration) {
         return getBlockDeclaredSize(blockDeclaration, scope, tree, errors);
     } else if (blockDeclaration->getNodeType() == AST::Declaration) {
-        if (blockDeclaration->getObjectType() == "module") {
+        if (blockDeclaration->getObjectType() == "module" || blockDeclaration->getObjectType() == "loop") {
 
             ASTNode subScope = CodeValidator::getBlockSubScope(static_pointer_cast<DeclarationNode>(blockDeclaration));
             if (subScope) {
@@ -1281,13 +1290,26 @@ int CodeValidator::getTypeNumInputs(std::shared_ptr<DeclarationNode> blockDeclar
                     //                return -1; // Should never get here!
                 }
             }
+        } else {
+            int size = getNodeSize(blockDeclaration, scope, tree);
+            int internalSize = 1;
+            QList<LangError> errors;
+            auto typeDeclaration =  findTypeDeclarationByName(blockDeclaration->getObjectType(),
+                                                   scope, tree, errors);
+            if (typeDeclaration && typeDeclaration->getObjectType() == "platformType") {
+                auto inputs = typeDeclaration->getPropertyValue("inputs");
+                if (inputs && inputs->getNodeType() == AST::List) {
+                    internalSize = inputs->getChildren().size();
+                }
+            }
+            return size * internalSize;
         }
         return 1;
     }
     return 0;
 }
 
-std::shared_ptr<DeclarationNode> CodeValidator::findDeclaration(QString objectName, QVector<ASTNode> scopeStack, ASTNode tree, vector<string> scope, vector<string> defaultNamespaces)
+std::shared_ptr<DeclarationNode> CodeValidator::findDeclaration(QString objectName, const QVector<ASTNode> &scopeStack, ASTNode tree, vector<string> scope, vector<string> defaultNamespaces)
 {
     QVector<ASTNode> globalAndLocal;
     for (ASTNode scope : scopeStack) {
@@ -2036,7 +2058,7 @@ int CodeValidator::numParallelStreams(StreamNode *stream, StrideSystem &platform
     return numParallel;
 }
 
-int CodeValidator::getNodeSize(ASTNode node, QVector<ASTNode> &scopeStack, ASTNode tree)
+int CodeValidator::getNodeSize(ASTNode node, const QVector<ASTNode> &scopeStack, ASTNode tree)
 {
     int size = 1;
     if (node->getNodeType() == AST::Bundle) {

@@ -67,7 +67,7 @@ public:
 
     std::shared_ptr<StrideSystem> getSystem();
 
-    static std::shared_ptr<DeclarationNode> findDeclaration(QString streamMemberName, QVector<ASTNode> scopeStack, ASTNode tree,
+    static std::shared_ptr<DeclarationNode> findDeclaration(QString streamMemberName, const QVector<ASTNode> &scopeStack, ASTNode tree,
                                             vector<string> scope = vector<string>(), vector<string> defaultNamespaces = vector<string>());
     static QString streamMemberName(ASTNode  node, QVector<ASTNode > scopeStack, ASTNode tree);
     static PortType resolveBundleType(BundleNode *bundle, QVector<ASTNode > scope, ASTNode tree);
@@ -104,7 +104,7 @@ public:
 
     /// Get the number of parallel nodes implicit in node. i.e. into how many parallel streams
     /// can the node be broken up.
-    static int getNodeSize(ASTNode node, QVector<ASTNode> &scopeStack, ASTNode tree);
+    static int getNodeSize(ASTNode node, const QVector<ASTNode> &scopeStack, ASTNode tree);
 
     static std::vector<std::string> getModulePropertyNames(std::shared_ptr<DeclarationNode> blockDeclaration);
     static int getFunctionDataSize(std::shared_ptr<FunctionNode> func, QVector<ASTNode > scope, ASTNode  tree, QList<LangError> &errors);

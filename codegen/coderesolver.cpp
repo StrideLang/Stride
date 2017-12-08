@@ -2163,18 +2163,14 @@ void CodeResolver::propagateDomainsForNode(ASTNode node, QVector<ASTNode > scope
                 scopeStack = QVector<ASTNode>::fromStdVector(ports->getChildren()) + scopeStack;
             }
 
+            scopeStack << CodeValidator::getBlockSubScope(module);
 
-//            scopeStack << CodeValidator::getBlockSubScope(declaration);
-//            ASTNode ports = declaration->getPropertyValue("ports");
-//            if (ports) {
-//                scopeStack << QVector<ASTNode>::fromStdVector(ports->getChildren());
-//            }
             string contextDomainName = getContextDomainName(scopeStack);
             if (contextDomainName.size() == 0) {
                 std::shared_ptr<DeclarationNode> outputPortDecl = CodeValidator::getMainOutputPortBlock(module);
                 if (outputPortDecl) {
                     ASTNode domainNode = outputPortDecl->getPropertyValue("domain");
-                    if (domainNode->getNodeType() == AST::Block) {
+                    if (domainNode->getNodeType() == AST::Block || domainNode->getNodeType() == AST::Bundle ) {
                         contextDomainName = static_cast<BlockNode *>(domainNode.get())->getName();
                     } else if (domainNode->getNodeType() == AST::String) {
                         contextDomainName = static_cast<ValueNode *>(domainNode.get())->getStringValue();
@@ -2183,7 +2179,7 @@ void CodeResolver::propagateDomainsForNode(ASTNode node, QVector<ASTNode > scope
                     std::shared_ptr<DeclarationNode> inputPortDecl = CodeValidator::getMainInputPortBlock(module);
                     if (inputPortDecl) {
                         ASTNode domainNode = inputPortDecl->getPropertyValue("domain");
-                        if (domainNode->getNodeType() == AST::Block) {
+                        if (domainNode->getNodeType() == AST::Block || domainNode->getNodeType() == AST::Bundle ) {
                             contextDomainName = static_cast<BlockNode *>(domainNode.get())->getName();
                         } else if (domainNode->getNodeType() == AST::String) {
                             contextDomainName = static_cast<ValueNode *>(domainNode.get())->getStringValue();
