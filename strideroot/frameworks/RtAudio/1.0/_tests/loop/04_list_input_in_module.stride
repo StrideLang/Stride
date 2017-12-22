@@ -1,0 +1,39 @@
+use DesktopAudio version 1.0
+
+signal Accum {}
+switch ResetOuter { }
+signal OuterCounter { reset: ResetOuter}
+
+module Sum {
+	ports: [
+		mainInputPort InputPort { block: Input }
+		mainOutputPort OutputPort { block: Output }
+	]
+	blocks:  [
+		signal Input[3] { domain: Output.domain }
+		loop Accumulate {
+			ports: [	
+				mainInputPort InputPort { block: Input }
+				mainOutputPort OutputPort { block: Output }
+			]
+			blocks: [
+				signal Input[3] { domain: Output.domain }
+				signal Output { default: 0}
+				signal Counter {default: 1}
+				switch CounterReset {}
+			]
+			streams: [
+				Output + Input[Counter] >> Output;
+				Counter + 1 >> Counter;
+				[Counter, 3] >> Greater() >> CounterReset;
+			]
+			terminateWhen: CounterReset
+		}
+	]
+	streams: [
+		Input >> Accumulate() >> Output;
+	]
+}
+
+[AudioIn[1], AudioIn[2], 7] >> Sum() >> AudioOut[1];
+

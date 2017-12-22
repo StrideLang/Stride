@@ -3,7 +3,8 @@ use DesktopAudio version 1.0
 signal Accum {}
 
 loop Loop {
-	ports: [		
+	ports: [
+			mainInputPort InputPort { block: Input }
 	]
 	blocks: [
 		signal Counter {}
@@ -17,7 +18,7 @@ loop Loop {
 	terminateWhen: CounterReset
 }
 
+switch Switch {}
 
-on >> Loop();
+Switch >> Loop();
 Accum >> AudioOut[1];
-

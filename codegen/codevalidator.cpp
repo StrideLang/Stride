@@ -1126,7 +1126,8 @@ int CodeValidator::getNodeNumOutputs(ASTNode node, const QVector<ASTNode> &scope
         return getBundleSize(static_cast<BundleNode *>(node.get()), scope, tree, errors);
     } else if (node->getNodeType() == AST::Int
                || node->getNodeType() == AST::Real
-               || node->getNodeType() == AST::String) {
+               || node->getNodeType() == AST::String
+               || node->getNodeType() == AST::Switch) {
         return 1;
     } else if (node->getNodeType() == AST::Expression) {
         // TODO: evaluate

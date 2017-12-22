@@ -1459,9 +1459,16 @@ class ModuleAtom(Atom):
             self.module["streams"] = [self.module["streams"]]
 
         tree = streams
+
         instanced = []
 #        if self._input_block: # Mark input block as instanced so it doesn't get instantiated as other blocks
 #            instanced = [[self._input_block['name'], self.scope_index]]
+
+        if type(self) == LoopAtom:
+            for b in self._input_blocks:
+                instanced.append(b['name'])
+            for b in self._output_blocks:
+                instanced.append(b['name'])
 
         # Make atoms for ports in instance
         if 'ports' in self.function:
@@ -1476,7 +1483,7 @@ class ModuleAtom(Atom):
                 else:
                     self.port_name_atoms[name] = [new_atom]
         # FIXME This should be handled with scope index not with this boolean flag
-        defer_header = self.module['type'] == 'reaction'
+        defer_header = self.module['type'] == 'reaction' or self.module['type'] == 'loop'
         self.code = self.platform.generate_code(tree, self._blocks,
                                                 instanced = instanced,
                                                 parent = self,
@@ -1660,8 +1667,6 @@ class ReactionAtom(ModuleAtom):
 
     def get_processing_code(self, in_tokens):
         processing_code = {}
-
-        out_tokens = self.out_tokens
 
         domain = self.input_atom.domain # Reaction is triggered/called in the domain of the input signal
 
@@ -1874,7 +1879,7 @@ class ReactionAtom(ModuleAtom):
 
         return instances
 
-class LoopAtom(ModuleAtom):
+class LoopAtom(ReactionAtom):
     def __init__(self, loop, function, platform_code, token_index,
                  platform, scope_index, connected_blocks, line, filename,
                  previous_atom, next_atom):
@@ -1888,49 +1893,115 @@ class LoopAtom(ModuleAtom):
              scope_index, connected_blocks, line, filename, previous_atom, next_atom)
 
 
-    def get_header_code(self):
-#        domain_code = self.code['domain_code']
-        header_code = ''
-
-        # All header code has been consumed already and put inside the reaction, right?
-#        for domain,code in domain_code.items():
-#            header_code += code['header_code']
-        return header_code
+#    def get_header_code(self):
+##        domain_code = self.code['domain_code']
+#        header_code = ''
+#
+#        # All header code has been consumed already and put inside the reaction, right?
+##        for domain,code in domain_code.items():
+##            header_code += code['header_code']
+#        return header_code
 
     def get_inline_processing_code(self, in_tokens):
         code = ''
-        # FIXME update for loop
-        code = templates.reaction_processing_code(self.handle,
-                                                in_tokens,
-                                                self.out_tokens,
-                                                'TriggerDomain'
-                                                )
+        code = templates.loop_processing_code(self.loop['name'],
+                                            in_tokens,
+                                            [] # out tokens should already be included in the parameter tokens.
+                                            )
         return code
 
+    def get_header_code(self):
+        return ''
 
     def get_processing_code(self, in_tokens):
         processing_code = {}
 
-        domain = None # Loop's domain is None
-        parameter_tokens = [ref.get_name() for ref in self.references]
-        for i in range(len(parameter_tokens)):
-            # TODO we need checking of scope and domain here
-            for scope_decl in self.platform.scope_stack[-1]:
-                # Do we need to support blockbundle here or are all signal bridges blocks?
-                if 'block' in scope_decl and 'type' in scope_decl['block'] and scope_decl['block']['type'] == "signalbridge":
-                    if scope_decl['block']['signal'] == parameter_tokens[i]:
-                        print(scope_decl['block']['signal'])
-                        parameter_tokens[i] = scope_decl['block']['name']
+        code = ''
 
+        out_tokens = self.out_tokens
+        domain = None # Loop's domain is None
+
+        # First adjust input tokens to match input block sizes/bundles
+        for input_block in self._input_blocks:
+            if 'size' in input_block:
+                # TODO check type of input ports
+                connector_name = '_bundle_connector_' + str(self.platform.unique_id)
+                self.platform.unique_id += 1
+                code += templates.declaration_bundle_real(connector_name, input_block['size'])
+                for i in range(input_block['size']):
+                    if len(in_tokens) > 0:
+                        code += templates.assignment(templates.bundle_indexing(connector_name, i),
+                                                     in_tokens[0])
+                        in_tokens.pop(0)
+                in_tokens.insert(0, connector_name)
+
+        while (len(in_tokens) > len(self.references)) :
+            in_tokens.pop() # Hack to discard tokens that would not be used
+
+        in_tokens += out_tokens
+#        for i in range(len(parameter_tokens)):
+#            # TODO we need checking of scope and domain here
+#            for scope_decl in self.platform.scope_stack[-1]:
+#                # Do we need to support blockbundle here or are all signal bridges blocks?
+#                if 'block' in scope_decl and 'type' in scope_decl['block'] and scope_decl['block']['type'] == "signalbridge":
+#                    if scope_decl['block']['signal'] == parameter_tokens[i]:
+#                        print(scope_decl['block']['signal'])
+#                        parameter_tokens[i] = scope_decl['block']['name']
+
+ # Process port domains
+        domain_proc_code = {}
+        if self.module['ports']:
+            for module_port in self.module['ports']:
+                if 'block' in module_port:
+                    module_block = module_port['block']
+                elif 'blockbundle' in module_port:
+                    module_block = module_port['blockbundle']
+                module_port_name = module_block['name']
+
+                module_port_domain = ''
+                block_decl = self.find_internal_block(module_block['block']['name']['name'])
+                if block_decl:
+                    module_port_domain = block_decl['domain']
+                module_port_direction = 'input' if 'Input' in module_block['type'] else 'output'
+                for port_atom_name in self.port_name_atoms:
+                    # Check if domain name matches and domain has code
+                    if port_atom_name == module_port_name:
+                        for port_value in self.port_name_atoms[port_atom_name]:
+                            # TODO implement for output ports
+                            if module_port_direction == 'input':
+                                if module_port_domain in self.code['domain_code'].keys():
+                                    #if port_atom.
+                                    if not module_port_domain in domain_proc_code:
+                                        domain_proc_code[module_port_domain] = {'handles': []}
+                                    code += templates.assignment(port_value.get_handles()[0], port_value.get_inline_processing_code(port_value.get_handles()))
+                                    domain_proc_code[module_port_domain]['handles'] += port_value.get_handles()
+                        pass
+
+        for module_port_domain, values  in domain_proc_code.items():
+            if len(self._output_blocks) > 0 and module_port_domain == self._output_blocks[0]['domain']:
+                in_tokens += values['handles']
+            else:
+                loop_call = templates.expression(
+                        templates.loop_processing_code(self.loop['name'],
+                                                    in_tokens + values['handles'],
+                                                    [] # out tokens should already be included in the parameter tokens.
+                                                    ))
+                code += loop_call
+
+        if 'output' in self.module and not self.module['output'] is None: #For Platform types
+            if self.inline:
+                code += self.get_handles()[0]
+            else:
+                code += templates.expression(self.get_inline_processing_code(in_tokens))
+        else:
+            code += templates.expression(self.get_inline_processing_code(in_tokens))
 
         if not domain in processing_code:
             processing_code[domain] = ['', []]
 
-        processing_code[domain][0] += templates.expression(
-                        templates.loop_processing_code(self.loop['name'],
-                                                    parameter_tokens,
-                                                    [] # out tokens should already be included in the parameter tokens.
-                                                    ))
+        processing_code[domain][0] += code
+
+        processing_code[domain][1] = out_tokens
 
         return processing_code
 
@@ -1943,28 +2014,32 @@ class LoopAtom(ModuleAtom):
 
         self.references = []
         referenced = []
-        for domain, writes in self.code['writes'].items():
-            for write in writes:
-                is_internal = False
-                for block in self._blocks:
-                    if block['block']['name'] == write.get_name():
-                        is_internal = True
-                        break
-                if not is_internal:
-                    if not write.get_name() in referenced:
-                        referenced += [write.get_name()]
-                        self.references.append(write)
         for domain, reads in self.code['reads'].items():
             for read in reads:
-                is_internal = False
-                for block in self._blocks:
-                    if block['block']['name'] == read.get_name():
-                        is_internal = True
+                is_internal = True
+                for block in self._input_blocks:
+#                for block in self._output_blocks:
+                    name = block['name']
+                    if name == read.get_name():
+                        is_internal = False
                         break
                 if not is_internal:
                     if not read.get_name() in referenced:
                         referenced += [read.get_name()]
                         self.references.append(read)
+        for domain, writes in self.code['writes'].items():
+            for write in writes:
+                is_internal = True
+                for block in self._output_blocks:
+#                for block in self._output_blocks:
+                    name = block['name']
+                    if name == write.get_name():
+                        is_internal = False
+                        break
+                if not is_internal:
+                    if not write.get_name() in referenced:
+                        referenced += [write.get_name()]
+                        self.references.append(write)
 
         for domain, code in domain_code.items():
             if domain is not None: # To get rid of domains from constants
@@ -2008,7 +2083,22 @@ class LoopAtom(ModuleAtom):
                 header_code += code['header_code']
                 init_code += code['init_code']
 
-        # FIXME Hack to get things to work...
+        remove_inst = []
+        for inst in self.code['other_scope_instances']:
+            print(inst.get_name())
+            if inst.scope > self.scope_index:
+                if inst.get_name() in [block['name'] for block in self._input_blocks ]:
+                    remove_inst.append(inst)
+                elif inst.get_name() in [block['name'] for block in self._output_blocks ]:
+                    header_code += self.platform.initialization_code(inst)
+                    remove_inst.append(inst)
+                else:
+                    header_code += self.platform.instantiation_code(inst)
+                    header_code += self.platform.initialization_code(inst)
+                    remove_inst.append(inst)
+
+        for to_remove in remove_inst:
+            self.code['other_scope_instances'].remove(to_remove)
 
         header_code += templates.assignment(self._on_terminate, False)
 
@@ -2086,21 +2176,21 @@ class LoopAtom(ModuleAtom):
 
 #                instances += atom.get_instances()
 # #               FIXME do we need to support multiple output blocks?
-#        if len(self.out_tokens) > 0:
-#            block_types = self.get_block_types(self._output_blocks[0])
-#            token_name = self.out_tokens[0]
-#            if 'size' in self._output_blocks[0]:
-#                out_token_name = '_' + self.name + '_%03i_out'%self._index
-#                token_name = templates.bundle_indexing(out_token_name, self._output_blocks[0]['size'])
-#
-#            default_value = ''
-#            instances += [Instance(default_value,
-#                                 self.scope_index,
-#                                 self.domain,
-#                                 block_types[0],
-#                                 token_name,
-#                                 self) ]
-#            self.code_declaration.add_dependent(instances[-1])
+        if len(self.out_tokens) > 0:
+            block_types = self.get_block_types(self._output_blocks[0])
+            token_name = self.out_tokens[0]
+            if 'size' in self._output_blocks[0]:
+                out_token_name = '_' + self.name + '_%03i_out'%self._index
+                token_name = templates.bundle_indexing(out_token_name, self._output_blocks[0]['size'])
+
+            default_value = ''
+            instances += [Instance(default_value,
+                                 self.scope_index,
+                                 self.domain,
+                                 block_types[0],
+                                 token_name,
+                                 self) ]
+            self.code_declaration.add_dependent(instances[-1])
 
 #        for name, atoms in self.port_name_atoms.items():
 #            for atom in atoms:
