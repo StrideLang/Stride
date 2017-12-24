@@ -1979,7 +1979,7 @@ class LoopAtom(ReactionAtom):
                         pass
 
         for module_port_domain, values  in domain_proc_code.items():
-            if len(self._output_blocks) > 0 and module_port_domain == self._output_blocks[0]['domain']:
+            if len(self._output_blocks) > 0 and module_port_domain == self._output_blocks[0]['ports']['domain']:
                 in_tokens += values['handles']
             else:
                 loop_call = templates.expression(
@@ -2122,7 +2122,7 @@ class LoopAtom(ReactionAtom):
         secondary_domain = ''
         #FIXME do we need to support more than 1 output block?
         if len(self._output_blocks) > 0:
-            secondary_domain = self._output_blocks[0]['domain']
+            secondary_domain = self._output_blocks[0]['ports']['domain']
 
         if "other_scope_declarations" in self.code:
             for other_declaration in self.code["other_scope_declarations"]:
