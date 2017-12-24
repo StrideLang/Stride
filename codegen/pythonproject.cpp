@@ -272,38 +272,40 @@ void PythonProject::astToJson(ASTNode node, QJsonObject &obj)
         ns.chop(2);
         newObject["namespace"] = ns;
         vector<std::shared_ptr<PropertyNode>> props = block->getProperties();
+        QJsonObject propObject;
         for(auto prop : props) {
             ASTNode propValue = prop->getValue();
             QJsonObject valueObject;
             astToJson(propValue, valueObject);
             if (!valueObject.isEmpty()) {
-                newObject[QString::fromStdString(prop->getName())]
+                propObject[QString::fromStdString(prop->getName())]
                         = valueObject;
             } else {
-                newObject[QString::fromStdString(prop->getName())] = QJsonValue();
+                propObject[QString::fromStdString(prop->getName())] = QJsonValue();
             }
             // TODO use astToJson here instead.
             if (propValue->getNodeType() == AST::Int) {
-                newObject[QString::fromStdString(prop->getName())]
+                propObject[QString::fromStdString(prop->getName())]
                         = static_cast<ValueNode *>(propValue.get())->getIntValue();
             } else if (propValue->getNodeType() == AST::Real) {
-                newObject[QString::fromStdString(prop->getName())]
+                propObject[QString::fromStdString(prop->getName())]
                         = static_cast<ValueNode *>(propValue.get())->getRealValue();
             } else if (propValue->getNodeType() == AST::String) {
-                newObject[QString::fromStdString(prop->getName())]
+                propObject[QString::fromStdString(prop->getName())]
                         = QString::fromStdString(static_cast<ValueNode *>(propValue.get())->getStringValue());
             } else if (propValue->getNodeType() == AST::Expression) {
                     // TODO complete this
             } else if (propValue->getNodeType() == AST::Block) {
                 QJsonObject nameObject;
                 astToJson(propValue, nameObject);
-                newObject[QString::fromStdString(prop->getName())] = nameObject;
+                propObject[QString::fromStdString(prop->getName())] = nameObject;
             } else if (propValue->getNodeType() == AST::List) {
                 QJsonArray list;
                 listToJsonArray(static_pointer_cast<ListNode>(propValue), list);
-                newObject[QString::fromStdString(prop->getName())] = list;
+                propObject[QString::fromStdString(prop->getName())] = list;
             }
         }
+        newObject["ports"] = propObject;
         newObject["filename"] = QString::fromStdString(node->getFilename());
         newObject["line"] = node->getLine();
         obj["block"] = newObject;
@@ -335,38 +337,40 @@ void PythonProject::astToJson(ASTNode node, QJsonObject &obj)
         }
         vector<std::shared_ptr<PropertyNode>> props = block->getProperties();
 //        QJsonObject propertiesObj;
+        QJsonObject propObject;
         for(auto prop : props) {
             ASTNode propValue = prop->getValue();
             QJsonObject valueObject;
             astToJson(propValue, valueObject);
             if (!valueObject.isEmpty()) {
-                newObject[QString::fromStdString(prop->getName())]
+                propObject[QString::fromStdString(prop->getName())]
                         = valueObject;
             } else {
-                newObject[QString::fromStdString(prop->getName())] = QJsonValue();
+                propObject[QString::fromStdString(prop->getName())] = QJsonValue();
             }
             // TODO use astToJson here instead.
             if (propValue->getNodeType() == AST::Int) {
-                newObject[QString::fromStdString(prop->getName())]
+                propObject[QString::fromStdString(prop->getName())]
                         = static_cast<ValueNode *>(propValue.get())->getIntValue();
             } else if (propValue->getNodeType() == AST::Real) {
-                newObject[QString::fromStdString(prop->getName())]
+                propObject[QString::fromStdString(prop->getName())]
                         = static_cast<ValueNode *>(propValue.get())->getRealValue();
             } else if (propValue->getNodeType() == AST::String) {
-                newObject[QString::fromStdString(prop->getName())]
+                propObject[QString::fromStdString(prop->getName())]
                         = QString::fromStdString(static_cast<ValueNode *>(propValue.get())->getStringValue());
             } else if (propValue->getNodeType() == AST::Expression) {
                     // TODO complete this
             } else if (propValue->getNodeType() == AST::Block) {
                 QJsonObject nameObject;
                 astToJson(propValue, nameObject);
-                newObject[QString::fromStdString(prop->getName())] = nameObject;
+                propObject[QString::fromStdString(prop->getName())] = nameObject;
             } else if (propValue->getNodeType() == AST::List) {
                 QJsonArray list;
                 listToJsonArray(static_pointer_cast<ListNode>(propValue), list);
-                newObject[QString::fromStdString(prop->getName())] = list;
+                propObject[QString::fromStdString(prop->getName())] = list;
             }
         }
+        newObject["ports"] = propObject;
         newObject["filename"] = QString::fromStdString(node->getFilename());
         newObject["line"] = node->getLine();
         obj["blockbundle"] = newObject;

@@ -141,20 +141,20 @@ class Generator(GeneratorBase):
         # Configuration from stride code
         decl = self.platform.find_declaration_in_tree("AudioRate")
         if decl:
-            self.templates.properties['sample_rate'] = decl['value']
+            self.templates.properties['sample_rate'] = decl['ports']['value']
         else:
             self.templates.properties['sample_rate'] = 44100
 
         decl = self.platform.find_declaration_in_tree("_NumInputChannels")
         if decl:
-            self.templates.properties['num_in_channels'] = decl['value']
+            self.templates.properties['num_in_channels'] = decl['ports']['value']
         else:
             self.templates.properties['num_in_channels'] = 2
 
         # TODO: The number of input channels should determine if channel stream gets opened at all
         decl = self.platform.find_declaration_in_tree("_NumOutputChannels")
         if decl:
-            self.templates.properties['num_out_channels'] = decl['value']
+            self.templates.properties['num_out_channels'] = decl['ports']['value']
         else:
             self.templates.properties['num_out_channels'] = 2
 
