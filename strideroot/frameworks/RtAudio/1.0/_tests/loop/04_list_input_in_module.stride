@@ -17,7 +17,8 @@ module Sum {
 				mainOutputPort OutputPort { block: Output }
 			]
 			blocks: [
-				signal Input[3] { domain: Output.domain }
+#				signal Input[3] { domain: Output.domain }
+				signal Input[3] { domain: none }
 				signal Output { default: 0}
 				signal Counter {default: 1}
 				switch CounterReset {}
