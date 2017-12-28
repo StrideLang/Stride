@@ -346,6 +346,12 @@ public:
             declaration += ';\n'
         return declaration
 
+    def declaration_buffer(self, buffer_type, handle, close=True):
+        declaration = buffer_type + ' ' + handle
+        if close:
+            declaration += ';\n'
+        return declaration
+
 
     def declaration_const_real(self, name, default, close=True):
         declaration = "const " + self.real_type + " " + name + " = " + str(default)

@@ -213,5 +213,11 @@ type _Buffer {
 			default: none
 			required: off
 		}
+		typeProperty _InternalType {
+			name: "_internalType"
+			types: [""]
+			default: _RingBufferType
+			required: off
+		}
 	]
 }

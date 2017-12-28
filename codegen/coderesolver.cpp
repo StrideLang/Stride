@@ -635,6 +635,9 @@ void CodeResolver::insertDependentTypes(string typeName, map<string, vector<ASTN
                 newTypeDeclaration->setRootScope(it->first);
                 m_tree->addChild(newTypeDeclaration);
                 existingDecl = newTypeDeclaration;
+                for (ASTNode child : existingDecl->getChildren()) {
+                    insertBuiltinObjectsForNode(child, objects);
+                }
             }
         }
         if (existingDecl) {
@@ -863,6 +866,9 @@ void CodeResolver::insertBuiltinObjectsForNode(ASTNode node, map<string, vector<
             }
             insertBuiltinObjectsForNode(newBlock, objects);
         }
+    } else if (node->getNodeType() == AST::Property) {
+        std::shared_ptr<PropertyNode> prop = std::static_pointer_cast<PropertyNode>(node);
+        insertBuiltinObjectsForNode(prop->getValue(), objects);
     }
 }
 

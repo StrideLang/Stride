@@ -38,7 +38,7 @@ from __future__ import division
 
 
 from platformTemplates import templates
-from code_objects import Instance, BundleInstance, ModuleInstance, Declaration
+from code_objects import Instance, BundleInstance, ModuleInstance, BufferInstance, Declaration
 
 try:
     unicode_exists_test = type('a') == unicode
@@ -2218,51 +2218,76 @@ class BufferAtom(Atom):
 
 
         super(BufferAtom, self).__init__(line, filename)
-        pass
+        self.scope_index = scope_index
+        self.name = buffer["name"]
+        self.handle = self.name + '_%03i'%token_index
+        #self._platform_code = platform_code
+        self._input_blocks = []
+        self._output_blocks = []
+        self._index = token_index
+        self.platform = platform
+        self.rate = buffer_decl['ports']['rate']
+        if previous_atom:
+            self.domain = previous_atom.domain
+        elif next_atom:
+            self.domain = next_atom.domain
+        self.instance_consts = {}
+        self.input_atom = previous_atom
+        self.output_atom = next_atom
+        self._input = None
+        self._output = None
+        self.declaration = buffer_decl
+        self.instance = None
+        self.out_tokens = ['_' + self.name + '_%03i_out'%self._index]
+
+        self.handle = self.out_tokens[0]
+        self.rate = 0
+        self.inline = True
+        self.scope_index = scope_index
+        internal_type = self.declaration['ports']['_internalType']['name']['name']
+        self.ringbuffer_decl = self.platform.find_declaration_in_tree(internal_type)
 
 
-#    def get_header_code(self):
-##        domain_code = self.code['domain_code']
-#        header_code = ''
-#
-#        # All header code has been consumed already and put inside the reaction, right?
-##        for domain,code in domain_code.items():
-##            header_code += code['header_code']
-#        return header_code
+    def get_handles(self):
+        if self.is_inline():
+            return [self.get_inline_processing_code([])]
+        else:
+            return [self.handle]
 
-    def get_inline_processing_code(self, in_tokens):
-        code = ''
-        return code
+    def get_out_tokens(self):
+        if self.is_inline():
+            return [self.handle]
+        else:
+            return [self.handle]
 
-    def get_header_code(self):
-        return '// Test'
+    def get_instances(self):
+        size = self.declaration['ports']['size']
+        return [BufferInstance("", self.scope_index , self.domain,
+                               self.ringbuffer_decl['ports']['className'], self.handle,
+                               size, self)]
+
+
+    def get_inline_processing_code(self, in_token):
+#        if type(self.value) == str or type(self.value) == unicode:
+#            return self.value
+#        if type(self.value) == bool:
+#            return templates.value_bool(self.value)
+#        else:
+#            return templates.value_real(self.value)
+        return 'hello'
 
     def get_processing_code(self, in_tokens):
-        processing_code = {}
-
-        code = ''
-
-#        out_tokens = self.out_tokens
-
-        return processing_code
-
-    def _prepare_declaration(self):
-        header_code = ''
-        init_code = ''
-        process_code = {}
-
-#        domain_code = self.code['domain_code']
-        pass
+        return {None: ['', [self.get_inline_processing_code(in_tokens)]]}
 
 
     def get_declarations(self):
         declarations = []
+        if self.ringbuffer_decl:
+            declarations.append(Declaration(0, None, self.ringbuffer_decl['ports']['className'],
+                                        self.ringbuffer_decl['ports']['declaration']))
+
         return declarations
 
-    def get_instances(self):
-        instances = []
-
-        return instances
 
 
 # --------------------- Common platform functions
@@ -2521,11 +2546,11 @@ class PlatformFunctions:
             if 'function' in member or 'expression' in member:
                 index = stream.index(member)
                 if index < len(stream) - 1:
-                    next_atom = self.make_atom(stream[index + 1])
+                    next_atom = self.make_atom(stream[index + 1], previous_atom)
             if 'list' in member:
                 index = stream.index(member)
                 if index < len(stream) - 1:
-                    next_atom = self.make_atom(stream[index + 1])
+                    next_atom = self.make_atom(stream[index + 1], previous_atom)
 
             new_atom = self.make_atom(member, previous_atom, next_atom)
             if hasattr("domain", "new_atom"):
@@ -2561,6 +2586,8 @@ class PlatformFunctions:
             code = templates.declaration_module(instance.get_module_type(), instance.get_name(), instance.get_instance_consts())
         elif instance.get_type() == 'reaction':
             code = templates.declaration_reaction(instance.get_module_type(), instance.get_name())
+        elif instance.get_type() == 'buffer':
+            code = templates.declaration_buffer(instance.get_buffer_type(), instance.get_name())
         else:
             raise ValueError('Unsupported type for instance')
 #        code += templates.source_marker(instance.get_line(), instance.get_filename())

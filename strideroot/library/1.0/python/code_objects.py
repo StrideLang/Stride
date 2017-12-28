@@ -72,6 +72,21 @@ class Instance(Code):
         return self.post
 
 
+class BufferInstance(Instance):
+    def __init__(self, code, scope, domain, vartype, handle, size, atom, post = True,
+                 reads = [], writes = []):
+        super(BufferInstance, self).__init__(code, scope, domain, vartype, handle, atom, post)
+        self.size = size
+
+    def get_type(self):
+        return 'buffer'
+
+    def get_size(self):
+        return self.size
+
+    def get_buffer_type(self):
+        return self.vartype
+
 class BundleInstance(Instance):
     def __init__(self, code, scope, domain, vartype, handle, size, atom, post = True,
                  reads = [], writes = []):
