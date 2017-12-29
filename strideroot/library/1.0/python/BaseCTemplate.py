@@ -346,8 +346,8 @@ public:
             declaration += ';\n'
         return declaration
 
-    def declaration_buffer(self, buffer_type, handle, close=True):
-        declaration = buffer_type + ' ' + handle
+    def declaration_buffer(self, buffer_type, handle, size, close=True):
+        declaration = buffer_type + ' ' + handle + '{%i}'%size
         if close:
             declaration += ';\n'
         return declaration
@@ -678,7 +678,12 @@ public:
             code = code[:-2] # Chop off extra comma
         code += ')'
         return code
-        return code
+
+    def buffer_processing_input_code(self, buffer_name, token):
+        return buffer_name + ".write(%s)"%token
+
+    def buffer_processing_output_code(self, buffer_name, token):
+        return buffer_name + ".read(%s)"%token
 
     # Configuration code -----------------------------------------------------
     def get_config_code(self):

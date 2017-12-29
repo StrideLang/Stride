@@ -21,27 +21,29 @@ _bufferType _RingBufferType {
 	className: "_RingBuffer"
 	declaration: "
 	class _RingBuffer {
-            _RingBuffer(int size) : m_size(size) {
+public:
+            _RingBuffer(int size) : m_size(size), m_data(new float[size]) {
             }
             
             void write(float value) {
                     m_data[write_ptr++] = value;
-                    if (write_ptr == size) {
+                    if (write_ptr == m_size) {
                             write_ptr = 0;
                     }
             }
             
             void read(float &value) {
                     value = m_data[read_ptr++];
-                    if (read_ptr == size) {
+                    if (read_ptr == m_size) {
                             read_ptr = 0;
                     }
             }
             
+private:
             const int m_size;
-            float m_data[m_size];
+            float *m_data;
             int read_ptr {0};
             int write_ptr {0};
-    }
+    };
 "
 }

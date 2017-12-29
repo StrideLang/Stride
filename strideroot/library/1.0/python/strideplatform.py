@@ -462,8 +462,10 @@ class ListAtom(Atom):
     def get_initialization_code(self, in_tokens):
         code = ''
         for i,elem in enumerate(self.list_node):
-            new_code = elem.get_initialization_code(in_tokens)
-            code += new_code
+            if len(in_tokens) > 0:
+                index = i % len(in_tokens)
+                new_code = elem.get_initialization_code([in_tokens[index]])
+                code += new_code
         return code
 
     def get_preproc_once(self):
@@ -546,6 +548,7 @@ class NameAtom(Atom):
         self.domain = None
         self.signalbridge = None # Stores signalbridge name if applicable
         self.token_index = token_index
+        self.bridge_instances = []
 
         if 'domain' in self.declaration['ports']:
             if type(self.declaration['ports']['domain']) == dict:
@@ -555,6 +558,8 @@ class NameAtom(Atom):
                 self.domain = self.declaration['ports']['domain']
 
         if self.declaration['type'] == "signalbridge":
+            self.bridge_instances.append(Instance('// BridgeSig code',
+                                          0, None, 'real', self.handle, self));
             if not previous_atom:
                 domainProp = self.declaration['ports']['outputDomain']
             else:
@@ -2242,17 +2247,14 @@ class BufferAtom(Atom):
 
         self.handle = self.out_tokens[0]
         self.rate = 0
-        self.inline = True
+        self.inline = False
         self.scope_index = scope_index
         internal_type = self.declaration['ports']['_internalType']['name']['name']
         self.ringbuffer_decl = self.platform.find_declaration_in_tree(internal_type)
 
 
     def get_handles(self):
-        if self.is_inline():
-            return [self.get_inline_processing_code([])]
-        else:
-            return [self.handle]
+        return [self.handle]
 
     def get_out_tokens(self):
         if self.is_inline():
@@ -2262,9 +2264,19 @@ class BufferAtom(Atom):
 
     def get_instances(self):
         size = self.declaration['ports']['size']
-        return [BufferInstance("", self.scope_index , self.domain,
-                               self.ringbuffer_decl['ports']['className'], self.handle,
+        instances = [BufferInstance("", self.scope_index , self.domain,
+                               self.ringbuffer_decl['ports']['className'], self.name,
                                size, self)]
+        if self.output_atom:
+          instances.append(Instance(0.0,
+                         self.scope_index,
+                         self.domain,
+                         'real',
+                         self.handle,
+                         self
+                         ))
+
+        return instances
 
 
     def get_inline_processing_code(self, in_token):
@@ -2274,10 +2286,30 @@ class BufferAtom(Atom):
 #            return templates.value_bool(self.value)
 #        else:
 #            return templates.value_real(self.value)
-        return 'hello'
+        return ''
 
     def get_processing_code(self, in_tokens):
-        return {None: ['', [self.get_inline_processing_code(in_tokens)]]}
+        domain_code = {}
+        if self.input_atom and not type(self.input_atom) == ValueAtom:
+            if not self.input_atom.get_domain() in domain_code:
+                domain_code[self.input_atom.get_domain()] = [
+                        templates.expression(templates.buffer_processing_input_code(self.name,in_tokens[0])),
+                           []]
+            else:
+                domain_code[self.input_atom.get_domain()][0] += templates.expression(templates.buffer_processing_input_code(self.name,in_tokens[0]))
+        if self.output_atom:
+            if not self.output_atom.get_domain() in domain_code:
+                domain_code[self.output_atom.get_domain()] = [
+                        templates.expression(templates.buffer_processing_output_code(self.name,self.handle)),
+                           [self.handle]]
+            else:
+                domain_code[self.output_atom.get_domain()][0] += templates.expression(templates.buffer_processing_output_code(self.name,self.handle))
+                domain_code[self.output_atom.get_domain()][1].append(self.handle)
+            domain_code[self.output_atom.get_domain()] = [
+                    templates.expression(templates.buffer_processing_output_code(self.name,self.handle)),
+                       [self.handle]]
+
+        return domain_code
 
 
     def get_declarations(self):
@@ -2288,6 +2320,11 @@ class BufferAtom(Atom):
 
         return declarations
 
+    def get_initialization_code(self, in_tokens):
+        code = ''
+        if self.input_atom and type(self.input_atom) == ValueAtom:
+            code += templates.expression(templates.buffer_processing_input_code(self.name,in_tokens[0]))
+        return code
 
 
 # --------------------- Common platform functions
@@ -2552,6 +2589,9 @@ class PlatformFunctions:
                 if index < len(stream) - 1:
                     next_atom = self.make_atom(stream[index + 1], previous_atom)
 
+            index = stream.index(member)
+            if index < len(stream) - 1:
+                next_atom = self.make_atom(stream[index + 1], previous_atom)
             new_atom = self.make_atom(member, previous_atom, next_atom)
             if hasattr("domain", "new_atom"):
                 if not current_domain == new_atom.domain:
@@ -2587,7 +2627,7 @@ class PlatformFunctions:
         elif instance.get_type() == 'reaction':
             code = templates.declaration_reaction(instance.get_module_type(), instance.get_name())
         elif instance.get_type() == 'buffer':
-            code = templates.declaration_buffer(instance.get_buffer_type(), instance.get_name())
+            code = templates.declaration_buffer(instance.get_buffer_type(), instance.get_name(), instance.get_size())
         else:
             raise ValueError('Unsupported type for instance')
 #        code += templates.source_marker(instance.get_line(), instance.get_filename())
