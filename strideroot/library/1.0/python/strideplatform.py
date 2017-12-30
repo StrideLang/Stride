@@ -548,7 +548,6 @@ class NameAtom(Atom):
         self.domain = None
         self.signalbridge = None # Stores signalbridge name if applicable
         self.token_index = token_index
-        self.bridge_instances = []
 
         if 'domain' in self.declaration['ports']:
             if type(self.declaration['ports']['domain']) == dict:
@@ -558,12 +557,14 @@ class NameAtom(Atom):
                 self.domain = self.declaration['ports']['domain']
 
         if self.declaration['type'] == "signalbridge":
-            self.bridge_instances.append(Instance('// BridgeSig code',
-                                          0, None, 'real', self.handle, self));
+            external_domain = ''
             if not previous_atom:
                 domainProp = self.declaration['ports']['outputDomain']
+                if next_atom:
+                    external_domain = next_atom.get_domain()
             else:
                 domainProp = self.declaration['ports']['inputDomain']
+                external_domain = previous_atom.get_domain()
 
             if type(domainProp) == dict:
                 self.domain = domainProp['name']['name']
@@ -729,6 +730,7 @@ class NameAtom(Atom):
         else:
             print("Don't know how to declare type " + ' '.join(self.declaration.keys()))
             inits = []
+
         return inits
 
     def get_inline_processing_code(self, in_tokens):
@@ -2231,7 +2233,7 @@ class BufferAtom(Atom):
         self._output_blocks = []
         self._index = token_index
         self.platform = platform
-        self.rate = buffer_decl['ports']['rate']
+        self.internal_rate = buffer_decl['ports']['rate']
         if previous_atom:
             self.domain = previous_atom.domain
         elif next_atom:
@@ -2246,7 +2248,7 @@ class BufferAtom(Atom):
         self.out_tokens = ['_' + self.name + '_%03i_out'%self._index]
 
         self.handle = self.out_tokens[0]
-        self.rate = 0
+        self.rate = 0 # Buffer output is async - pulled from output
         self.inline = False
         self.scope_index = scope_index
         internal_type = self.declaration['ports']['_internalType']['name']['name']
@@ -2298,16 +2300,23 @@ class BufferAtom(Atom):
             else:
                 domain_code[self.input_atom.get_domain()][0] += templates.expression(templates.buffer_processing_input_code(self.name,in_tokens[0]))
         if self.output_atom:
-            if not self.output_atom.get_domain() in domain_code:
-                domain_code[self.output_atom.get_domain()] = [
-                        templates.expression(templates.buffer_processing_output_code(self.name,self.handle)),
-                           [self.handle]]
+            if type(self.output_atom) == ListAtom:
+                code = templates.expression(templates.buffer_processing_output_code(self.name,self.handle))
+                for elem in self.output_atom.get_handles()[::-1]:
+                    code += templates.expression(templates.buffer_processing_output_code(self.name,elem[0]))
+                if not self.output_atom.get_domain() in domain_code:
+                    domain_code[self.output_atom.get_domain()] = [ code, []]
+                else:
+                    domain_code[self.output_atom.get_domain()][0] += code
+#                    domain_code[self.output_atom.get_domain()][1].append(self.handle)
             else:
-                domain_code[self.output_atom.get_domain()][0] += templates.expression(templates.buffer_processing_output_code(self.name,self.handle))
-                domain_code[self.output_atom.get_domain()][1].append(self.handle)
-            domain_code[self.output_atom.get_domain()] = [
-                    templates.expression(templates.buffer_processing_output_code(self.name,self.handle)),
-                       [self.handle]]
+                if not self.output_atom.get_domain() in domain_code:
+                    domain_code[self.output_atom.get_domain()] = [
+                            templates.expression(templates.buffer_processing_output_code(self.name,self.handle)),
+                               [self.handle]]
+                else:
+                    domain_code[self.output_atom.get_domain()][0] += templates.expression(templates.buffer_processing_output_code(self.name,self.handle))
+                    domain_code[self.output_atom.get_domain()][1].append(self.handle)
 
         return domain_code
 

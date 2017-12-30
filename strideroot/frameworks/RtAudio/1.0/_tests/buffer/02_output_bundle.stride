@@ -1,0 +1,15 @@
+use DesktopAudio version 1.0
+
+buffer Buf2 {
+	size: 20
+	rate: 0
+	default: 0.0
+}
+signal SignalBundle [20] {}
+
+AudioIn[1] >> Buf2;
+
+Buf2 >> SignalBundle;
+
+SignalBundle[3] >> AudioOut[1];
+SignalBundle[10] >> AudioOut[2];

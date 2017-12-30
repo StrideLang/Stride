@@ -38,6 +38,16 @@ public:
                             read_ptr = 0;
                     }
             }
+		
+			void copy(float *dest) {
+				int ptr = read_ptr;	
+				for (int i = 0 ; i < m_size; i++) {
+                    *dest++ = m_data[ptr++];
+                    if (ptr == m_size) {
+    						ptr = 0;
+                    }
+				}
+            }
             
 private:
             const int m_size;

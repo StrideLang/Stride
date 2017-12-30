@@ -685,6 +685,9 @@ public:
     def buffer_processing_output_code(self, buffer_name, token):
         return buffer_name + ".read(%s)"%token
 
+    def buffer_processing_bundle_output_code(self, buffer_name, token):
+        return buffer_name + ".copy(%s)"%token
+
     # Configuration code -----------------------------------------------------
     def get_config_code(self):
         config_template_code = '''
