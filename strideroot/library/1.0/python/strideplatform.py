@@ -586,12 +586,11 @@ class NameAtom(Atom):
         # TODO we should just add all sections found in platform_type['block'][section]
         # And not worry wat exists already in self.global_sections
         for section in self.global_sections:
-            if section in platform_type['block']:
+            if section in platform_type['block']['ports']:
                 if section in self.globals:
                     self.globals[section].extend([inc['value'] for inc in platform_type['block']['ports'][section]])
                 else:
-                    if section in platform_type['block']:
-                        self.globals[section] = [inc['value'] for inc in platform_type['block']['ports'][section]]
+                    self.globals[section] = [inc['value'] for inc in platform_type['block']['ports'][section]]
         if 'initializations' in platform_type['block']:
             if 'initializations' in self.globals:
                 self.globals['initializations'] += platform_type['block']['ports']['initializations']
@@ -956,8 +955,8 @@ class PortPropertyAtom(Atom):
         if parent._output:
             for name, out_block in parent._output.items():
                 if isinstance(out_block, NameAtom) or isinstance(out_block, BundleAtom):
-                    if portproperty['name'] in out_block.declaration:
-                        resolved_value = out_block.declaration[portproperty['name']]
+                    if portproperty['name'] in out_block.declaration['ports']:
+                        resolved_value = out_block.declaration['ports'][portproperty['name']]
                         if not resolved_value:
                             self.resolve_output_port_property(parent_stack[:-1], atom, handle)
                         else:
@@ -967,8 +966,8 @@ class PortPropertyAtom(Atom):
                 # FIXME There needs to be a way to know what member of the list we are actually connectiong to...
                     for node in out_block.list_node:
                         if isinstance(node, NameAtom) or isinstance(node, BundleAtom):
-                            if portproperty['name'] in node.declaration:
-                                resolved_value = node.declaration[portproperty['name']]
+                            if portproperty['name'] in node.declaration['ports']:
+                                resolved_value = node.declaration['ports'][portproperty['name']]
                                 if not resolved_value:
                                     self.resolve_output_port_property(parent_stack[:-1], atom, handle)
                                 else:
@@ -1378,13 +1377,18 @@ class ModuleAtom(Atom):
                 connector_name = '_bundle_connector_' + str(self.platform.unique_id)
                 self.platform.unique_id += 1
                 code += templates.declaration_bundle_real(connector_name, input_block['size'])
-                for i in range(input_block['size']):
-                    if len(in_tokens) > 0:
+                if type(self.input_atom) == NameAtom:
+                    for i in range(input_block['size']):
                         code += templates.assignment(templates.bundle_indexing(connector_name, i),
-                                                     in_tokens[0])
-                        in_tokens.pop(0)
+                                                     templates.bundle_indexing(input_block['name'], i))
+                    in_tokens.pop(0)
+                else:
+                    for i in range(input_block['size']):
+                        if len(in_tokens) > 0:
+                            code += templates.assignment(templates.bundle_indexing(connector_name, i),
+                                                         in_tokens[0])
+                            in_tokens.pop(0)
                 in_tokens.insert(0, connector_name)
-
 
         # Process port domains
         domain_proc_code = {}
@@ -1936,11 +1940,17 @@ class LoopAtom(ReactionAtom):
                 connector_name = '_bundle_connector_' + str(self.platform.unique_id)
                 self.platform.unique_id += 1
                 code += templates.declaration_bundle_real(connector_name, input_block['size'])
-                for i in range(input_block['size']):
-                    if len(in_tokens) > 0:
+                if type(self.input_atom) == NameAtom:
+                    for i in range(input_block['size']):
                         code += templates.assignment(templates.bundle_indexing(connector_name, i),
-                                                     in_tokens[0])
-                        in_tokens.pop(0)
+                                                     templates.bundle_indexing(input_block['name'], i))
+                    in_tokens.pop(0)
+                else:
+                    for i in range(input_block['size']):
+                        if len(in_tokens) > 0:
+                            code += templates.assignment(templates.bundle_indexing(connector_name, i),
+                                                         in_tokens[0])
+                            in_tokens.pop(0)
                 in_tokens.insert(0, connector_name)
 
         while (len(in_tokens) > len(self.references)) :

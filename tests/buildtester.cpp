@@ -63,7 +63,7 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile)
          for (auto syntaxError:syntaxErrors) {
              errors << syntaxError;
          }
-         foreach(LangError error, syntaxErrors) {
+         for(LangError error:syntaxErrors) {
              std::cerr << error.getErrorText() << std::endl;
          }
          return false;

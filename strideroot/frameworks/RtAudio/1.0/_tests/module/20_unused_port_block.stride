@@ -8,7 +8,7 @@ module TestSwitch {
 		mainOutputPort OutputPort {
 			block: Output
 		}
-		propertyInputPort Unused {
+		propertyInputPort UnusedPort {
 			name: "unused"
 			block: Unused
 		}

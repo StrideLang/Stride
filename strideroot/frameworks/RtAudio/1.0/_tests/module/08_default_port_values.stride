@@ -23,7 +23,5 @@ module Test {
 	]
 }
 
-signal SigIn[2] { domain: AudioDomain }
-
 AudioIn[1] >> Test(test: AudioIn[2]) >> AudioOut[1];
 AudioIn[2] >> Test() >> AudioOut[2];

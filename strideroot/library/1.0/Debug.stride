@@ -4,7 +4,7 @@ module DebugPrint {
 			name: "value"
 			block: Value
 		}
-		propertyInputPort Trigger {
+		propertyInputPort TriggerPort {
 			name: "trigger"
 			block: Trigger
 		}
