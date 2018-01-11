@@ -110,12 +110,6 @@ type _Signal {
 			default: 0.0
 			required: off
 		},
-		typeProperty Rate {
-			name: "rate"
-			types: [""]
-			default: none
-			required: off
-		},
 		typeProperty _Reads {
 			name: "_reads"
 			types: [""]
@@ -197,7 +191,7 @@ type _Buffer {
 		},
 		typeProperty RatePort {
 			name: "rate"
-			types: ["CIP", "CRP"]
+			types: [""]
 			default: none
 			required: off
 		},
@@ -212,7 +206,13 @@ type _Buffer {
 			types: [""]
 			default: none
 			required: off
-		}
+		},
+		typeProperty ResetPort {
+			name: "reset"
+			types: [""]
+			default: none
+			required: off
+		},
 		typeProperty _InternalType {
 			name: "_internalType"
 			types: [""]

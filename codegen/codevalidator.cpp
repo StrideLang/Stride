@@ -572,7 +572,12 @@ void CodeValidator::validateTypes(ASTNode node, QVector<ASTNode > scopeStack, ve
         if (subScope) {
             scopeStack.append(subScope);
         }
-        // For BundleDeclarations in particular, we need to ingnore the bundle when delcaring types. The inner bundle has no scope set, and trying to find it will fail if the declaration is scoped....
+        if (block->getPropertyValue("ports")) {
+            for (ASTNode  block: block->getPropertyValue("ports")->getChildren()) {
+                scopeStack << block;
+            }
+        }
+        // For BundleDeclarations in particular, we need to ignore the bundle when declaring types. The inner bundle has no scope set, and trying to find it will fail if the declaration is scoped....
         foreach(auto property, block->getProperties()) {
             validateTypes(property->getValue(), scopeStack, block->getNamespaceList());
         }
@@ -1427,7 +1432,7 @@ PortType CodeValidator::resolveNameType(BlockNode *name, QVector<ASTNode >scope,
                 return Signal;  // TODO this should be separated into SRP and SIP?R
             }
         } else {
-//            return QString::fromStdString(declaration->getObjectType());
+            return Object;
         }
     }
     return None;
@@ -1453,6 +1458,8 @@ PortType CodeValidator::resolveNodeOutType(ASTNode node, QVector<ASTNode > scope
         return resolveNameType(static_cast<BlockNode *>(node.get()), scope, tree);
     } else if (node->getNodeType() == AST::Range) {
         return resolveRangeType(static_cast<RangeNode *>(node.get()), scope, tree);
+    } else if (node->getNodeType() == AST::PortProperty) {
+        return resolvePortPropertyType(static_cast<PortPropertyNode *>(node.get()), scope, tree);
     }
     return None;
 }
@@ -1506,6 +1513,15 @@ PortType CodeValidator::resolveRangeType(RangeNode *rangenode, QVector<ASTNode >
     PortType rightType = resolveNodeOutType(rangenode->endIndex(), scope, tree);
     if (leftType == rightType) {
         return leftType;
+    }
+    return None;
+}
+
+PortType CodeValidator::resolvePortPropertyType(PortPropertyNode *portproperty, QVector<ASTNode> scope, ASTNode tree)
+{
+    auto decl = CodeValidator::findDeclaration(QString::fromStdString(portproperty->getPortName()), scope, tree);
+    if (decl) {
+        return resolveNodeOutType(decl->getPropertyValue(portproperty->getName()), scope, tree);
     }
     return None;
 }
@@ -2150,6 +2166,8 @@ QString CodeValidator::getPortTypeName(PortType type)
         return "CBP";
     case ConstString:
         return "CSP";
+    case Object:
+        return "Object";
     case None:
         return "none";
     case Invalid:
@@ -2290,6 +2308,14 @@ string CodeValidator::getDomainNodeString(ASTNode domainNode)
         if (domainNode->getNodeType() == AST::String) {
             domainName = static_cast<ValueNode *>(domainNode.get())->getStringValue();
         } else if (domainNode->getNodeType() == AST::Declaration) {
+            DeclarationNode *domainBlock = static_cast<DeclarationNode *>(domainNode.get());
+            if (domainBlock->getObjectType() == "_domainDefinition") {
+                ASTNode domainValue = domainBlock->getPropertyValue("domainName");
+                if (domainValue->getNodeType() == AST::String) {
+                    domainName = static_cast<ValueNode *>(domainValue.get())->getStringValue();
+                }
+            }
+        } else if (domainNode->getNodeType() == AST::PortProperty) {
             DeclarationNode *domainBlock = static_cast<DeclarationNode *>(domainNode.get());
             if (domainBlock->getObjectType() == "_domainDefinition") {
                 ASTNode domainValue = domainBlock->getPropertyValue("domainName");

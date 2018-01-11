@@ -257,6 +257,7 @@ bool CodeEditor::eventFilter(QObject *obj, QEvent *event)
                 activeAction->trigger();
             }
             m_autoCompleteMenu.hide();
+            return true;
         } else {
             m_autoCompleteMenu.hide();
             return QObject::eventFilter(obj, event);

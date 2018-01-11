@@ -32,8 +32,8 @@ type _Rated {
 	properties: [
 		typeProperty Rate {
 			name: "rate"
-			types: ["CIP", "CRP", ""]
-			default: _ContextRate
+			types: [""] #["CIP", "CRP"]
+			default: none
 			required: off
 		},
 		typeProperty Reset {
@@ -51,8 +51,8 @@ type _DomainMember {
 	properties: [
 		typeProperty Domain {
 			name: "domain"
-			types: ["CSP"]
-			default: _ContextDomain
+			types: ["CSP", ""]
+			default: none
 			required: off
 		},
 		typeProperty Realtime {

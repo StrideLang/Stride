@@ -76,6 +76,7 @@ public:
     static PortType resolveListType(ListNode *listnode, QVector<ASTNode > scope, ASTNode tree);
     static PortType resolveExpressionType(ExpressionNode *exprnode, QVector<ASTNode > scope, ASTNode tree);
     static PortType resolveRangeType(RangeNode *rangenode, QVector<ASTNode > scope, ASTNode tree);
+    static PortType resolvePortPropertyType(PortPropertyNode *portproperty, QVector<ASTNode > scope, ASTNode tree);
 
     static int evaluateConstInteger(ASTNode node, QVector<ASTNode> scope, ASTNode tree, QList<LangError> &errors);
     static double evaluateConstReal(ASTNode node, QVector<ASTNode > scope, ASTNode tree, QList<LangError> &errors);

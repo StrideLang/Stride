@@ -71,8 +71,8 @@ private:
     void expandParallel();
     void resolveConstants();
     void processResets();
-    void resolveRates();
     void processDomains();
+    void resolveRates();
     void analyzeConnections();
 
     // Sub functions

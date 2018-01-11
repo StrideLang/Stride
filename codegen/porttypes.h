@@ -44,6 +44,7 @@ typedef enum {
     ConstBoolean,
     ConstString,
     None,
+    Object,
     Invalid
 } PortType;
 

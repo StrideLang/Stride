@@ -630,20 +630,39 @@ class NameAtom(Atom):
         default_value = self._get_default_value()
         if 'type' in self.declaration and self.declaration['type'] == 'signal':
             if signal_type_string(self.declaration):
-                inits = [Instance(default_value,
-                                 self.declaration['stack_index'],
-                                 self.domain,
-                                 'string',
-                                 self.handle,
-                                 self
-                                 )]
+                if 'size' in self.declaration:
+                    inits = [BundleInstance([str(default_value) for i in range(self.declaration['size'])],
+                                     self.declaration['stack_index'],
+                                     self.domain,
+                                     'string',
+                                     self.handle,
+                                     self.declaration['size'],
+                                     self
+                                     )]
+                else:
+                    inits = [Instance(default_value,
+                                     self.declaration['stack_index'],
+                                     self.domain,
+                                     'string',
+                                     self.handle,
+                                     self
+                                     )]
             else:
-                inits = [Instance(str(default_value),
-                                 self.declaration['stack_index'],
-                                 self.domain,
-                                 'real',
-                                 self.handle,
-                                 self)]
+                if 'size' in self.declaration:
+                    inits = [BundleInstance([str(default_value) for i in range(self.declaration['size'])],
+                                     self.declaration['stack_index'],
+                                     self.domain,
+                                     'real',
+                                     self.handle,
+                                     self.declaration['size'],
+                                     self)]
+                else:
+                    inits = [Instance(str(default_value),
+                                     self.declaration['stack_index'],
+                                     self.domain,
+                                     'real',
+                                     self.handle,
+                                     self)]
         elif 'type' in self.declaration and self.declaration['type'] == 'signalbridge':
             if self.declaration['ports']['bridgeType'] == 'switch':
                 inits = [Instance(default_value,
@@ -677,12 +696,21 @@ class NameAtom(Atom):
                                  self.handle,
                                  self)]
         elif 'type' in self.declaration and self.declaration['type'] == 'switch':
-            inits = [Instance(templates.str_true if default_value else templates.str_false,
-                             self.declaration['stack_index'],
-                             self.domain,
-                             'bool',
-                             self.handle,
-                             self)]
+            if 'size' in self.declaration:
+                inits = [BundleInstance([templates.str_true if default_value else templates.str_false for i in range(self.declaration['size'])],
+                                 self.declaration['stack_index'],
+                                 self.domain,
+                                 'bool',
+                                 self.handle,
+                                 self.declaration['size'],
+                                 self)]
+            else:
+                inits = [Instance(templates.str_true if default_value else templates.str_false,
+                                 self.declaration['stack_index'],
+                                 self.domain,
+                                 'bool',
+                                 self.handle,
+                                 self)]
         elif 'type' in self.declaration and self.declaration['type'] == 'trigger':
             inits = [Instance(templates.str_true if default_value else templates.str_false,
                              self.declaration['stack_index'],
@@ -861,7 +889,10 @@ class NameAtom(Atom):
                 default_value = 0.0
             if type(default_value) == dict:
                 # FIXME this is a hoack while we decide how to handle boolean bridge signals
-                default_value = 1 if default_value['value'] else 0
+                if 'value' in default_value:
+                    default_value = 1 if default_value['value'] else 0
+                else:
+                    default_value = 0
 
         elif self.declaration['type'] == "constant":
                 if type(self) == NameAtom:
@@ -1243,8 +1274,7 @@ class ModuleAtom(Atom):
         #FIXME check for scope match
         if "other_scope_declarations" in self.code:
             for other_declaration in self.code["other_scope_declarations"]:
-                if not other_declaration.domain or other_declaration.domain == secondary_domain:
-                    other_declaration.domain = self.domain
+                other_declaration.domain = self.domain
                 other_declaration.add_dependent(self.code_declaration)
                 outer_declarations.append(other_declaration)
 #                self.code_declaration.add_dependent(other_declaration)
@@ -1371,24 +1401,32 @@ class ModuleAtom(Atom):
         domain = self.domain
 
         # First adjust input tokens to match input block sizes/bundles
-        for input_block in self._input_blocks:
-            if 'size' in input_block:
-                # TODO check type of input ports
-                connector_name = '_bundle_connector_' + str(self.platform.unique_id)
-                self.platform.unique_id += 1
-                code += templates.declaration_bundle_real(connector_name, input_block['size'])
-                if type(self.input_atom) == NameAtom:
-                    for i in range(input_block['size']):
-                        code += templates.assignment(templates.bundle_indexing(connector_name, i),
-                                                     templates.bundle_indexing(input_block['name'], i))
-                    in_tokens.pop(0)
-                else:
-                    for i in range(input_block['size']):
-                        if len(in_tokens) > 0:
+
+        io_domains_match = False
+
+        if len(self._input_blocks) > 0 and len(self._output_blocks) > 0:
+            if self._input_blocks[0]['ports']['domain'] == self._output_blocks[0]['ports']['domain']:
+                io_domains_match = True
+
+        if io_domains_match: # If IO domains match we can unify the processing function
+            for input_block in self._input_blocks:
+                if 'size' in input_block:
+                    # TODO check type of input ports
+                    connector_name = '_bundle_connector_' + str(self.platform.unique_id)
+                    self.platform.unique_id += 1
+                    code += templates.declaration_bundle_real(connector_name, input_block['size'])
+                    if type(self.input_atom) == NameAtom:
+                        for i in range(input_block['size']):
                             code += templates.assignment(templates.bundle_indexing(connector_name, i),
-                                                         in_tokens[0])
-                            in_tokens.pop(0)
-                in_tokens.insert(0, connector_name)
+                                                         templates.bundle_indexing(input_block['name'], i))
+                        in_tokens.pop(0)
+                    else:
+                        for i in range(input_block['size']):
+                            if len(in_tokens) > 0:
+                                code += templates.assignment(templates.bundle_indexing(connector_name, i),
+                                                             in_tokens[0])
+                                in_tokens.pop(0)
+                    in_tokens.insert(0, connector_name)
 
         # Process port domains
         domain_proc_code = {}
@@ -1426,15 +1464,36 @@ class ModuleAtom(Atom):
                 module_call = templates.module_processing_code(self.handle, values['handles'], [], module_port_domain)
                 code += templates.expression(module_call)
 
-        if 'output' in self.module and not self.module['output'] is None: #For Platform types
-            if self.inline:
-                code += self.get_handles()[0]
+        if not io_domains_match: # If domains don't match, this function should discard'
+            if len(self._output_blocks) > 0:
+                if 'size' in self._output_blocks[0]:
+                    out_tokens = ['_' + self.name + '_%03i_out'%self._index]
+                else:
+                    out_tokens = self.out_tokens
+
+            # FIXME should we be taking the domain from the ports themselves instead of the IO blocks?
+            if len(self._input_blocks) > 0 :
+                code += templates.expression(templates.module_processing_code(self.handle,
+                                                        in_tokens,
+                                                        [],
+                                                        self._input_blocks[0]['ports']['domain'],
+                                                        ))
+            if len(self._output_blocks) > 0:
+                code += templates.expression(templates.module_processing_code(self.handle,
+                                                        [],
+                                                        out_tokens,
+                                                        self._output_blocks[0]['ports']['domain']
+                                                        ))
+        else:
+            if 'output' in self.module and not self.module['output'] is None: #For Platform types
+                if self.inline:
+                    code += self.get_handles()[0]
+                else:
+                    code += templates.expression(self.get_inline_processing_code(in_tokens))
             else:
                 code += templates.expression(self.get_inline_processing_code(in_tokens))
-        else:
-            code += templates.expression(self.get_inline_processing_code(in_tokens))
-        for port_atom in self.port_name_atoms:
-            pass
+            for port_atom in self.port_name_atoms:
+                pass
 
         return {domain : [code, out_tokens] }
 
@@ -1703,7 +1762,7 @@ class ReactionAtom(ModuleAtom):
                 # Do we need to support blockbundle here or are all signal bridges blocks?
                 if 'block' in scope_decl and 'type' in scope_decl['block'] and scope_decl['block']['type'] == "signalbridge":
                     if scope_decl['block']['ports']['signal'] == parameter_tokens[i] and scope_decl['block']['ports']['outputDomain'] == self.domain:
-                        print(scope_decl['block']['ports']['signal'])
+#                        print(scope_decl['block']['ports']['signal'])
                         parameter_tokens[i] = scope_decl['block']['name']
 
 
@@ -2103,7 +2162,7 @@ class LoopAtom(ReactionAtom):
 
         remove_inst = []
         for inst in self.code['other_scope_instances']:
-            print(inst.get_name())
+#            print(inst.get_name())
             if inst.scope > self.scope_index:
                 if inst.get_name() in [block['name'] for block in self._input_blocks ]:
                     remove_inst.append(inst)

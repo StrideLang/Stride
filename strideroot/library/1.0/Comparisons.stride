@@ -12,7 +12,7 @@ module Greater {
         }
     ]
     blocks: [
-        signal Input[2] {},
+        signal Input[2] {domain: OutputPort.domain},
 		_greaterType GreaterBlock {}
     ]
     streams: [
@@ -33,7 +33,7 @@ module GreaterOrEqual {
 		}
     ]
     blocks: [
-		signal Input[2] {},
+		signal Input[2] {domain: OutputPort.domain},
 		_greaterOrEqualType GreaterOrEqualBlock {}
     ]
     streams: [
@@ -98,7 +98,8 @@ module Equal {
 		}
 	]
     blocks: [
-        signal Input[2] {},
+        signal Input[2] { domain: OutputPort.domain},
+        signal Output { domain: OutputPort.domain},
 		_equalType EqualBlock {}
     ]
     streams: [
