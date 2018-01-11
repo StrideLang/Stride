@@ -528,7 +528,7 @@ void ParserTest::testModuleDomains()
     QVERIFY(portBlock->getNodeType() == AST::Declaration);
     BlockNode *domainName = static_cast<BlockNode *>(portBlock->getPropertyValue("domain").get());
     QVERIFY(domainName->getNodeType() == AST::Block);
-    QVERIFY(domainName->getName() == "_OutputDomain_0");
+    QVERIFY(domainName->getName() == "_InputDomain_0");
 
     portBlock = static_cast<DeclarationNode *>(portList->getChildren().at(1).get());
     QVERIFY(portBlock->getNodeType() == AST::Declaration);
@@ -539,14 +539,16 @@ void ParserTest::testModuleDomains()
     // Both the input and output blocks should be autodeclared to belong to the output domain
     ListNode *blockList = static_cast<ListNode *>(block->getPropertyValue("blocks").get());
     QVERIFY(blockList->getNodeType() == AST::List);
-    DeclarationNode *internalBlock = static_cast<DeclarationNode *>(blockList->getChildren().at(1).get());
+    DeclarationNode *internalBlock = CodeValidator::findDeclaration("Input", QVector<ASTNode>::fromStdVector(blockList->getChildren()),
+                                                                    nullptr).get();
     QVERIFY(internalBlock->getNodeType() == AST::Declaration);
     ValueNode *domainValue = static_cast<ValueNode *>(internalBlock->getPropertyValue("domain").get());
     QVERIFY(domainValue);
     QVERIFY(domainValue->getNodeType() == AST::String);
-    QVERIFY(domainValue->getStringValue() == "_OutputDomain_0");
+    QVERIFY(domainValue->getStringValue() == "_InputDomain_0");
 
-    internalBlock = static_cast<DeclarationNode *>(blockList->getChildren().at(2).get());
+    internalBlock = CodeValidator::findDeclaration("Output", QVector<ASTNode>::fromStdVector(blockList->getChildren()),
+                                    nullptr).get();
     QVERIFY(internalBlock->getNodeType() == AST::Declaration);
     domainValue = static_cast<ValueNode *>(internalBlock->getPropertyValue("domain").get());
     QVERIFY(domainValue);
