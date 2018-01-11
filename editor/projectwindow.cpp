@@ -559,11 +559,25 @@ QTreeWidgetItem *ProjectWindow::createTreeItem(ASTNode inputNode)
 {
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     QTreeWidgetItem *newItem = nullptr;
-    if (inputNode->getNodeType() == AST::Declaration) {
+    if (inputNode->getNodeType() == AST::Declaration || inputNode->getNodeType() == AST::BundleDeclaration) {
         std::shared_ptr<DeclarationNode> declaration = std::static_pointer_cast<DeclarationNode>(inputNode);
         QStringList itemText;
+        QString type = QString::fromStdString(declaration->getObjectType());
+        if (inputNode->getNodeType() == AST::BundleDeclaration) {
+            std::shared_ptr<ListNode> indexList = declaration->getBundle()->index();
+            if (indexList->getChildren().size() > 0) {
+                ASTNode indexValue = indexList->getChildren()[0];
+                if (indexValue->getNodeType() == AST::Int) {
+                    int size = static_pointer_cast<ValueNode>(indexValue)->getIntValue();
+                    type += QString("[%1]").arg(size);
+                }
+            } else {
+                type += "[]";
+            }
+
+        }
         itemText << QString::fromStdString(declaration->getName())
-                 <<  QString::fromStdString(declaration->getObjectType());
+                 << type;
         QVariantList fileInfo;
         fileInfo << QString::fromStdString(inputNode->getFilename());
         fileInfo << inputNode->getLine();
