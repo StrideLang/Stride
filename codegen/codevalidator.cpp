@@ -573,8 +573,8 @@ void CodeValidator::validateTypes(ASTNode node, QVector<ASTNode > scopeStack, ve
             scopeStack.append(subScope);
         }
         if (block->getPropertyValue("ports")) {
-            for (ASTNode  block: block->getPropertyValue("ports")->getChildren()) {
-                scopeStack << block;
+            for (ASTNode port: block->getPropertyValue("ports")->getChildren()) {
+                scopeStack << port;
             }
         }
         // For BundleDeclarations in particular, we need to ignore the bundle when declaring types. The inner bundle has no scope set, and trying to find it will fail if the declaration is scoped....
