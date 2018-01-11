@@ -24,3 +24,16 @@ module DebugPrint {
     ]
     meta: ""
 }
+module Error {
+	ports: [
+		mainInputPort TriggerPort {
+			block: Trigger
+		}
+		propertyInputPort MessagePort {
+			name: "message"
+			block: Message
+		}
+	]
+	streams: [
+	]
+}

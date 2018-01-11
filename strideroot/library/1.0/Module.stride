@@ -44,7 +44,7 @@ type _PortAttributes {
 		typeProperty Rate {
 			name: "rate"
 			types: [""]
-			default: none
+			default: 0
 			required: off
 		},
 		typeProperty Domain {
@@ -105,14 +105,13 @@ type _Module {
 			types: [""]
 			default: none
 			required: on
-		}
-		typeProperty ContextDomain {
-			name: "contextDomain"
-			types: ["CSP", ""]
-			default: Output.domain
+		},
+		typeProperty Contraints {
+			name: "constraints"
+			types: [""]
+			default: none
 			required: off
 		}
-
 	]
 	inherits: ["domainMember"]
 	meta: "Modules encapsulate streams"

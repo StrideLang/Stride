@@ -221,3 +221,17 @@ type _Buffer {
 		}
 	]
 }
+
+type _GroupType {
+	typeName: "group"
+	properties: [
+		typeProperty Members {
+			name: "members"
+			types: [""]
+			default: none
+			required: on
+			meta: "Members of the group"
+		}
+	]
+	meta: "Groups signals for block processing. Guarantees that all signals are processed together."
+}
