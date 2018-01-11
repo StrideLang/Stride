@@ -1472,13 +1472,13 @@ class ModuleAtom(Atom):
                     out_tokens = self.out_tokens
 
             # FIXME should we be taking the domain from the ports themselves instead of the IO blocks?
-            if len(self._input_blocks) > 0 :
+            if len(self._input_blocks) > 0 and self._input_blocks[0]['main']:
                 code += templates.expression(templates.module_processing_code(self.handle,
                                                         in_tokens,
                                                         [],
                                                         self._input_blocks[0]['ports']['domain'],
                                                         ))
-            if len(self._output_blocks) > 0:
+            if len(self._output_blocks) > 0 and self._output_blocks[0]['main']:
                 code += templates.expression(templates.module_processing_code(self.handle,
                                                         [],
                                                         out_tokens,

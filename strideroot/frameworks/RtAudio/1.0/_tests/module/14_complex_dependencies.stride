@@ -9,11 +9,9 @@ module UsedInTest {
 	ports: [
 		mainOutputPort OutputPort {
 			block: Output
-			domain: OutputDomain
 		}
 		mainInputPort InputPort {
 			block: Input
-			domain: OutputDomain
 		}
 	]
 	streams: [
@@ -25,11 +23,9 @@ module Test {
 	ports: [
 		mainOutputPort OutputPort {
 			block: Output
-			domain: OutputDomain
 		}
 		mainInputPort InputPort {
 			block: Input
-			domain: OutputDomain
 		}
 	]
 	streams: [

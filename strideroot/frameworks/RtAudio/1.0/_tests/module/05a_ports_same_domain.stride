@@ -17,7 +17,9 @@ module Test {
 		}
 	]
 	blocks: [
-		signal TestBlock {domain: Output.domain}
+		signal Input {domain: OutputPort.domain}
+		signal Output {domain: OutputPort.domain}
+		signal TestBlock {domain: OutputPort.domain}
 	]
 	streams: [
 		Input * TestBlock >> Output;

@@ -4,12 +4,14 @@ module UsedInTest {
 	ports: [
 		mainOutputPort OutputPort {
 			block: Output
-			domain: OutputDomain
 		}
 		mainInputPort InputPort {
 			block: Input
-			domain: OutputDomain
 		}
+	]
+	blocks: [
+		signal Input {domain: OutputPort.domain}
+		signal Output {domain: OutputPort.domain}
 	]
 	streams: [
 		Input - 1 >> Output;
@@ -20,12 +22,14 @@ module Test {
 	ports: [
 		mainOutputPort OutputPort {
 			block: Output
-			domain: OutputDomain
 		}
 		mainInputPort InputPort {
 			block: Input
-			domain: OutputDomain
 		}
+	]
+	blocks: [
+		signal Input {domain: OutputPort.domain}
+		signal Output {domain: OutputPort.domain}
 	]
 	streams: [
 		Input * 2 >> UsedInTest() >> Output;
@@ -37,12 +41,14 @@ module Test2 {
 	ports: [
 		mainOutputPort OutputPort {
 			block: Output
-			domain: OutputDomain
 		}
 		mainInputPort InputPort {
 			block: Input
-			domain: OutputDomain
 		}
+	]
+	blocks: [
+		signal Input {domain: OutputPort.domain}
+		signal Output {domain: OutputPort.domain}
 	]
 	streams: [
 		Input / 3 >> UsedInTest() >> Output;
