@@ -26,3 +26,15 @@ platformType _CosineType {
     inherits: ['signal']
 }
 
+platformType _TangentType {
+    typeName: '_tangentType'
+    inputs: ["real"]
+	outputs: ["real"]
+    include: ["cmath"]
+#    linkTo: []
+#    declarations: ['']
+#    initializations: ["// %%token%% = 0;"]
+    processing: "std::tan(%%intoken:0%%)"
+    inherits: ['signal']
+}
+

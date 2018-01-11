@@ -51,6 +51,26 @@ module Sin {
 }
 
 
+module Tan {
+	ports: [ # A property could be the type of input, (degrees, radians, etc.)
+		mainOutputPort OutputPort {
+			block: Output
+			meta : "The tangent of the angle." 
+		},
+		mainInputPort InputPort {
+			block: Input
+			meta: "Input angle in radians"
+		}
+	]
+	blocks: [
+		_tangentType TangentBlock {}
+	]
+	streams: [
+		Input >> TangentBlock >> Output;
+	]
+	meta: "Tangent function"
+}
+
 module Divide {
 	ports: [
 		mainOutputPort OutputPort {
