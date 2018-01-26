@@ -56,7 +56,7 @@ void CodeResolver::preProcess()
     declareModuleInternalBlocks();
     resolveConstants();
     expandParallel(); // Find better name this expands bundles, functions and declares undefined bundles
-    processResets();
+//    processResets();
     resolveStreamSymbols();
     processDomains();
     resolveRates();
@@ -799,23 +799,15 @@ void CodeResolver::insertBuiltinObjectsForNode(ASTNode node, map<string, vector<
         BlockNode *name = static_cast<BlockNode *>(node.get());
 
         for (auto it = objects.begin(); it != objects.end(); it++)  {
-            for(ASTNode object : it->second) {
-                if (object->getNodeType() == AST::Declaration
-                        || object->getNodeType() == AST::BundleDeclaration) {
-                    std::shared_ptr<DeclarationNode> block = static_pointer_cast<DeclarationNode>(object);
-                    if (block->getName() == name->getName()
-                            && !blockList.contains(block)) {
-                        if (!CodeValidator::findDeclaration(QString::fromStdString(block->getName()), QVector<ASTNode >(), m_tree, block->getNamespaceList())) {
-                            //                        ASTNode usedObject = object;
-                            //                        fillDefaultPropertiesForNode(usedObject);
-                            //                        m_tree->addChild(usedObject);
-                            block->setRootScope(it->first);
-                            blockList << block;
-                        }
-                        break;
-
-                    }
-                }
+            auto declaration = CodeValidator::findDeclaration(QString::fromStdString(name->getName()),
+                                                              QVector<ASTNode>::fromStdVector(it->second),
+                                                              m_tree, name->getNamespaceList());
+            if (declaration && !CodeValidator::findDeclaration(QString::fromStdString(name->getName()),
+                                                                      QVector<ASTNode>(),
+                                                                      m_tree, name->getNamespaceList())) {
+//                declaration->setRootScope(it->first);
+                blockList << declaration;
+                break;
             }
         }
         for(auto usedBlock : blockList) {
@@ -832,26 +824,17 @@ void CodeResolver::insertBuiltinObjectsForNode(ASTNode node, map<string, vector<
         }
     } else if (node->getNodeType() == AST::Bundle) {
         QList<std::shared_ptr<DeclarationNode>> blockList;
+        auto bundle = static_pointer_cast<BundleNode>(node);
         for (auto it = objects.begin(); it != objects.end(); it++)  {
-            for(ASTNode object : it->second) {
-                if (object->getNodeType() == AST::Declaration
-                        || object->getNodeType() == AST::BundleDeclaration) {
-                    BundleNode *bundle = static_cast<BundleNode *>(node.get());
-                    std::shared_ptr<DeclarationNode> block = static_pointer_cast<DeclarationNode>(object);
-                    if (block->getName() == bundle->getName()
-                            && !blockList.contains(block)) {
-                        if (!CodeValidator::findDeclaration(QString::fromStdString(block->getName()), QVector<ASTNode >(), m_tree, block->getNamespaceList())) {
-                            //                        ASTNode usedObject = object;
-                            //                        fillDefaultPropertiesForNode(usedObject);
-                            //                        m_tree->addChild(usedObject);
-
-                            block->setRootScope(it->first);
-                            blockList << block;
-                        }
-                        break;
-
-                    }
-                }
+            auto declaration = CodeValidator::findDeclaration(QString::fromStdString(bundle->getName()),
+                                                              QVector<ASTNode>::fromStdVector(it->second),
+                                                              m_tree, bundle->getNamespaceList());
+            if (declaration && !CodeValidator::findDeclaration(QString::fromStdString(bundle->getName()),
+                                                               QVector<ASTNode>(),
+                                                               m_tree, bundle->getNamespaceList())) {
+//                declaration->setRootScope(it->first);
+                blockList << declaration;
+                break;
             }
         }
         for(auto usedBlock : blockList) {
@@ -1121,8 +1104,8 @@ void CodeResolver::setDomainForStack(QList<ASTNode > domainStack, string domainN
 std::shared_ptr<DeclarationNode>CodeResolver::createDomainDeclaration(QString name)
 {
     std::shared_ptr<DeclarationNode>newBlock = nullptr;
-    newBlock = std::make_shared<DeclarationNode>(name.toStdString(), "_domainDefinition", nullptr, "", -1);
-    newBlock->addProperty(std::make_shared<PropertyNode>("domainName", std::make_shared<ValueNode>(name.toStdString(), "", -1), "", -1));
+    newBlock = std::make_shared<DeclarationNode>(name.toStdString(), "_domainDefinition", nullptr, __FILE__, __LINE__);
+    newBlock->addProperty(std::make_shared<PropertyNode>("domainName", std::make_shared<ValueNode>(name.toStdString(), __FILE__, __LINE__), __FILE__, __LINE__));
     fillDefaultPropertiesForNode(newBlock);
     return newBlock;
 }
@@ -1132,9 +1115,9 @@ std::shared_ptr<DeclarationNode> CodeResolver::createSignalDeclaration(QString n
     std::shared_ptr<DeclarationNode> newBlock = nullptr;
     Q_ASSERT(size > 0);
     if (size == 1) {
-        newBlock = std::make_shared<DeclarationNode>(name.toStdString(), "signal", nullptr, "", -1);
+        newBlock = std::make_shared<DeclarationNode>(name.toStdString(), "signal", nullptr, __FILE__, __LINE__);
     } else if (size > 1) {
-        std::shared_ptr<ListNode> indexList = std::make_shared<ListNode>(std::make_shared<ValueNode>(size, "",-1), "", -1);
+        std::shared_ptr<ListNode> indexList = std::make_shared<ListNode>(std::make_shared<ValueNode>(size, "",-1), __FILE__, __LINE__);
         std::shared_ptr<BundleNode> bundle = std::make_shared<BundleNode>(name.toStdString(),indexList, "",-1);
         newBlock = std::make_shared<DeclarationNode>(bundle, "signal", nullptr, "",-1);
     }
@@ -1174,8 +1157,8 @@ std::vector<ASTNode> CodeResolver::declareUnknownBundle(std::shared_ptr<BundleNo
 
 std::shared_ptr<DeclarationNode> CodeResolver::createConstantDeclaration(string name, ASTNode value)
 {
-    std::shared_ptr<DeclarationNode> constant = std::make_shared<DeclarationNode>(name, "constant", nullptr, "", -1);
-    std::shared_ptr<PropertyNode> valueProperty = std::make_shared<PropertyNode>("value", value, "", -1);
+    std::shared_ptr<DeclarationNode> constant = std::make_shared<DeclarationNode>(name, "constant", nullptr, __FILE__, __LINE__);
+    std::shared_ptr<PropertyNode> valueProperty = std::make_shared<PropertyNode>("value", value, __FILE__, __LINE__);
     constant->addProperty(valueProperty);
     return constant;
 }
@@ -1215,10 +1198,10 @@ std::shared_ptr<DeclarationNode> CodeResolver::createSignalBridge(string bridgeN
 {
     std::shared_ptr<DeclarationNode> newBridge;
     if (size == 1) {
-        newBridge = std::make_shared<DeclarationNode>(bridgeName, "signalbridge", nullptr, "", -1);
+        newBridge = std::make_shared<DeclarationNode>(bridgeName, "signalbridge", nullptr, __FILE__, __LINE__);
     } else { // A BlockBundle
-        newBridge = std::make_shared<DeclarationNode>(std::make_shared<BundleNode>(bridgeName, std::make_shared<ListNode>(std::make_shared<ValueNode>(size, "", -1), "", -1), "", -1),
-                                                              "signalbridge", nullptr, "", -1);
+        newBridge = std::make_shared<DeclarationNode>(std::make_shared<BundleNode>(bridgeName, std::make_shared<ListNode>(std::make_shared<ValueNode>(size, __FILE__, __LINE__), __FILE__, __LINE__), __FILE__, __LINE__),
+                                                              "signalbridge", nullptr, __FILE__, __LINE__);
     }
     newBridge->addProperty(std::make_shared<PropertyNode>("default", defaultValue, filename.c_str(), line));
     newBridge->addProperty(std::make_shared<PropertyNode>("signal", std::make_shared<ValueNode>(originalName, filename.c_str(), line),
@@ -1227,13 +1210,13 @@ std::shared_ptr<DeclarationNode> CodeResolver::createSignalBridge(string bridgeN
         newBridge->addProperty(std::make_shared<PropertyNode>("inputDomain", inDomain, filename.c_str(), line));
         newBridge->addProperty(std::make_shared<PropertyNode>("domain", inDomain, filename.c_str(), line));
     } else {
-        newBridge->addProperty(std::make_shared<PropertyNode>("inputDomain", std::make_shared<ValueNode>("", -1), filename.c_str(), line));
-        newBridge->addProperty(std::make_shared<PropertyNode>("domain", std::make_shared<ValueNode>("", -1), filename.c_str(), line));
+        newBridge->addProperty(std::make_shared<PropertyNode>("inputDomain", std::make_shared<ValueNode>(__FILE__, __LINE__), filename.c_str(), line));
+        newBridge->addProperty(std::make_shared<PropertyNode>("domain", std::make_shared<ValueNode>(__FILE__, __LINE__), filename.c_str(), line));
     }
     if (outDomain) {
         newBridge->addProperty(std::make_shared<PropertyNode>("outputDomain", outDomain, filename.c_str(), line));
     } else {
-        newBridge->addProperty(std::make_shared<PropertyNode>("outputDomain", std::make_shared<ValueNode>("", -1), filename.c_str(), line));
+        newBridge->addProperty(std::make_shared<PropertyNode>("outputDomain", std::make_shared<ValueNode>(__FILE__, __LINE__), filename.c_str(), line));
     }
     string domainName = CodeValidator::getDomainNodeString(outDomain);
     m_bridgeAliases.push_back({bridgeName, originalName, domainName});
@@ -1464,12 +1447,12 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node, QVector<ASTNode> s
     if (node->getNodeType() == AST::Declaration) {
         std::shared_ptr<DeclarationNode> block = static_pointer_cast<DeclarationNode>(node);
         if (block->getObjectType() == "reaction") {
-            std::shared_ptr<DeclarationNode> reactionInput = std::make_shared<DeclarationNode>("_TriggerInput", "propertyInputPort", nullptr,"", -1);
-            reactionInput->setPropertyValue("block", std::make_shared<BlockNode>("_Trigger", "", -1));
+            std::shared_ptr<DeclarationNode> reactionInput = std::make_shared<DeclarationNode>("_TriggerInput", "propertyInputPort", nullptr,__FILE__, __LINE__);
+            reactionInput->setPropertyValue("block", std::make_shared<BlockNode>("_Trigger", __FILE__, __LINE__));
 
             ListNode *ports = static_cast<ListNode *>(block->getPropertyValue("ports").get());
             if (ports && ports->getNodeType() == AST::None) {
-                block->replacePropertyValue("ports", std::make_shared<ListNode>(nullptr, "", -1));
+                block->replacePropertyValue("ports", std::make_shared<ListNode>(nullptr, __FILE__, __LINE__));
                 ports = static_cast<ListNode *>(block->getPropertyValue("ports").get());
             }
             ports->addChild(reactionInput);
@@ -1477,10 +1460,10 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node, QVector<ASTNode> s
         if (block->getObjectType() == "loop") { // We need to define an internal domain for loops
             ListNode *ports = static_cast<ListNode *>(block->getPropertyValue("ports").get());
             if (!ports) {
-                block->setPropertyValue("ports", std::make_shared<ValueNode>("", -1)); // Make a None node to trigger next branch
+                block->setPropertyValue("ports", std::make_shared<ValueNode>(__FILE__, __LINE__)); // Make a None node to trigger next branch
             }
             if (ports && ports->getNodeType() == AST::None) {
-                block->replacePropertyValue("ports", std::make_shared<ListNode>(nullptr, "", -1));
+                block->replacePropertyValue("ports", std::make_shared<ListNode>(nullptr, __FILE__, __LINE__));
                 ports = static_cast<ListNode *>(block->getPropertyValue("ports").get());
             }
             ASTNode internalBlocks = block->getPropertyValue("blocks");
@@ -1491,7 +1474,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node, QVector<ASTNode> s
 
             ASTNode internalBlocks = block->getPropertyValue("blocks");
             if (!internalBlocks || internalBlocks->getNodeType() != AST::List) { // Turn blocks property into list
-                block->setPropertyValue("blocks", std::make_shared<ListNode>(internalBlocks, "", -1));
+                block->setPropertyValue("blocks", std::make_shared<ListNode>(internalBlocks, __FILE__, __LINE__));
             }
             for (ASTNode node: internalBlocks->getChildren()) {
                 subScope << node;
@@ -1510,7 +1493,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node, QVector<ASTNode> s
                                                                    m_tree);
                         if (domainName.size() > 0) {
                             outputPortBlock->replacePropertyValue("domain",
-                                                                  std::make_shared<ValueNode>(domainName, "", -1));
+                                                                  std::make_shared<ValueNode>(domainName, __FILE__, __LINE__));
                             gotDomainFromBlock = true;
                         }
                     }
@@ -1533,7 +1516,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node, QVector<ASTNode> s
                             }
                         } while (!domainAvailable);
 
-                        std::shared_ptr<BlockNode> outBlockName = std::make_shared<BlockNode>(newDomainName, "", -1);
+                        std::shared_ptr<BlockNode> outBlockName = std::make_shared<BlockNode>(newDomainName, __FILE__, __LINE__);
                         outputPortBlock->replacePropertyValue("domain", outBlockName); // FIXME We should we issue a warning that we are overwriting declared domain
                         outDomain = outBlockName;
                         ASTNode outDomainDeclaration = CodeValidator::findDeclaration(QString::fromStdString(newDomainName), QVector<ASTNode>(), internalBlocks);
@@ -1558,7 +1541,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node, QVector<ASTNode> s
                                                                        m_tree);
                             if (domainName.size() > 0) {
                                 inputPortBlock->replacePropertyValue("domain",
-                                                                      std::make_shared<ValueNode>(domainName, "", -1));
+                                                                      std::make_shared<ValueNode>(domainName, __FILE__, __LINE__));
                                 gotDomainFromBlock = true;
                             }
                         }
@@ -1583,7 +1566,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node, QVector<ASTNode> s
 
 
 
-                            std::shared_ptr<BlockNode> inBlockName = std::make_shared<BlockNode>(newDomainName, "", -1);
+                            std::shared_ptr<BlockNode> inBlockName = std::make_shared<BlockNode>(newDomainName, __FILE__, __LINE__);
                             inputPortBlock->replacePropertyValue("domain", inBlockName); // FIXME We should we issue a warning that we are overwriting declared domain
 //                            outDomain = outBlockName;
                             ASTNode inDomainDeclaration = CodeValidator::findDeclaration(QString::fromStdString(newDomainName), QVector<ASTNode>(), internalBlocks);
@@ -1600,7 +1583,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node, QVector<ASTNode> s
 //                                    QString::fromStdString(domainNameNode->getName()), QVector<ASTNode>::fromStdVector(internalBlocks->getChildren()), m_tree);
 //                        if (domainDeclaration) {
 //                            ASTNode domainValue = domainDeclaration->getPropertyValue("domainName");
-//                            std::shared_ptr<BlockNode> outBlockName = std::make_shared<BlockNode>(static_pointer_cast<ValueNode>(domainValue)->getStringValue() , "", -1);
+//                            std::shared_ptr<BlockNode> outBlockName = std::make_shared<BlockNode>(static_pointer_cast<ValueNode>(domainValue)->getStringValue() , __FILE__, __LINE__);
 //                            inputPortBlock->replacePropertyValue("domain", outBlockName);
 //                        }
                         }
@@ -1638,7 +1621,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node, QVector<ASTNode> s
                                 domainDeclaration = createDomainDeclaration(QString::fromStdString(domainName));
                                 internalBlocks->addChild(domainDeclaration);
                             }
-                            std::shared_ptr<ValueNode> domainNameNode = std::make_shared<ValueNode>(domainName, "", -1);
+                            std::shared_ptr<ValueNode> domainNameNode = std::make_shared<ValueNode>(domainName, __FILE__, __LINE__);
                             portDeclaration->replacePropertyValue("domain", domainNameNode);
                             domainPortValue = portDeclaration->getPropertyValue("domain");
                         } else if (domainPortValue->getNodeType() == AST::Block) { // Auto declare domain if not declared
@@ -1678,7 +1661,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node, QVector<ASTNode> s
                             BlockNode *nameNode = static_cast<BlockNode *>(ratePortValue.get());
                             string name = nameNode->getName();
                             // TODO should this declaraion default to platform rate or something else?
-                            declareIfMissing(name, internalBlocks, std::make_shared<ValueNode>(0, "", -1));
+                            declareIfMissing(name, internalBlocks, std::make_shared<ValueNode>(0, __FILE__, __LINE__));
 
                             //                                    if (declaration->getObjectType() == "constant") {
                             //                                        // If existing declaration is not a constant then an error should be produced later when checking types
@@ -1706,7 +1689,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node, QVector<ASTNode> s
 //                                    size = static_pointer_cast<ValueNode>(sizePortValue)->getIntValue();
 //                                }
                                 blockDecl = createSignalDeclaration(QString::fromStdString(name), size, subScope);
-                                blockDecl->replacePropertyValue("rate", std::make_shared<ValueNode>("", -1));
+                                blockDecl->replacePropertyValue("rate", std::make_shared<ValueNode>(__FILE__, __LINE__));
                                 blockDecl->setDomainString(domainName);
                                 internalBlocks->addChild(blockDecl);
                                 // TODO This default needs to be done per instance
@@ -1734,7 +1717,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node, QVector<ASTNode> s
                            } else if (portDeclaration->getObjectType() == "mainOutputBlock") {
                                 defaultName = "Output";
                             }
-                            std::shared_ptr<BlockNode> name = std::make_shared<BlockNode>(defaultName, "", -1);
+                            std::shared_ptr<BlockNode> name = std::make_shared<BlockNode>(defaultName, __FILE__, __LINE__);
                             portDeclaration->replacePropertyValue("block", name);
                             std::shared_ptr<DeclarationNode> newSignal = CodeValidator::findDeclaration(QString::fromStdString(defaultName), QVector<ASTNode >(), internalBlocks);
                             if (!newSignal) {
@@ -1816,9 +1799,9 @@ void CodeResolver::resolveConstants()
        if (decl) {
            if (decl->getObjectType() == "constant") {
                if (override.value().type() == QVariant::String) {
-                   decl->replacePropertyValue("value", std::make_shared<ValueNode>(override.value().toString().toStdString(), "", -1));
+                   decl->replacePropertyValue("value", std::make_shared<ValueNode>(override.value().toString().toStdString(), __FILE__, __LINE__));
                } else if (override.value().type() == QVariant::Int) {
-                   decl->replacePropertyValue("value", std::make_shared<ValueNode>(override.value().toInt(), "", -1));
+                   decl->replacePropertyValue("value", std::make_shared<ValueNode>(override.value().toInt(), __FILE__, __LINE__));
                }
            } else {
                qDebug() << "WARNING: Ignoring configuration override '" + override.key() + "'. Not constant.";
@@ -1834,7 +1817,7 @@ void CodeResolver::resolveConstants()
 
 void CodeResolver::processResets()
 {
-    processResetForNode(m_tree, m_tree, std::make_shared<ListNode>(nullptr, "", -1));
+    processResetForNode(m_tree, m_tree, std::make_shared<ListNode>(nullptr, __FILE__, __LINE__));
 }
 
 std::shared_ptr<ValueNode> CodeResolver::reduceConstExpression(std::shared_ptr<ExpressionNode> expr, QVector<ASTNode > scope, ASTNode tree)
@@ -2124,17 +2107,17 @@ void CodeResolver::processResetForNode(ASTNode thisScope, ASTNode streamScope, A
                 = std::make_shared<DeclarationNode>(reactionName,
                                                     "reaction",
                                                     nullptr,
-                                                    "", -1);
-        std::shared_ptr<ListNode> streamList = std::make_shared<ListNode>(nullptr, "", -1);
+                                                    __FILE__, __LINE__);
+        std::shared_ptr<ListNode> streamList = std::make_shared<ListNode>(nullptr, __FILE__, __LINE__);
 
         std::shared_ptr<StreamNode> stream
                 = std::make_shared<StreamNode>(pair.first->getPropertyValue("default"),
-                                               std::make_shared<BlockNode>(pair.first->getName(), "", -1), "", -1);
+                                               std::make_shared<BlockNode>(pair.first->getName(), __FILE__, __LINE__), __FILE__, __LINE__);
         fillDefaultPropertiesForNode(stream);
         streamList->addChild(stream);
         newReaction->setPropertyValue("streams", streamList);
-        newReaction->setPropertyValue("blocks", std::make_shared<ListNode>(nullptr, "", -1));
-        newReaction->setPropertyValue("ports", std::make_shared<ListNode>(nullptr, "", -1));
+        newReaction->setPropertyValue("blocks", std::make_shared<ListNode>(nullptr, __FILE__, __LINE__));
+        newReaction->setPropertyValue("ports", std::make_shared<ListNode>(nullptr, __FILE__, __LINE__));
         newReaction->setPropertyValue("domain", pair.first->getDomain());
         thisScope->addChild(newReaction);
 
@@ -2188,10 +2171,10 @@ void CodeResolver::processResetForNode(ASTNode thisScope, ASTNode streamScope, A
         int numInsertions = 0;
         for (int pos : positions) {
             childStreams.insert(childStreams.begin() + pos + numInsertions++,
-                            std::make_shared<StreamNode>(std::make_shared<BlockNode>(pair.second, "", -1),
+                            std::make_shared<StreamNode>(std::make_shared<BlockNode>(pair.second, __FILE__, __LINE__),
                                                          std::make_shared<FunctionNode>(reactionName,
-                                                                                        std::make_shared<ListNode>(nullptr, "", -1),
-                                                                                        "", -1), "", -1)
+                                                                                        std::make_shared<ListNode>(nullptr, __FILE__, __LINE__),
+                                                                                        __FILE__, __LINE__), __FILE__, __LINE__)
                     );
         }
         streamScope->setChildren(childStreams);
@@ -2357,11 +2340,12 @@ std::shared_ptr<ValueNode>  CodeResolver::logicalNot(std::shared_ptr<ValueNode> 
 void CodeResolver::terminateStackWithBridge(ASTNode node, QVector<ASTNode > &streams, QVector<ASTNode > &stack, QVector<ASTNode > &scopeStack)
 {
     int size = CodeValidator::getNodeSize(node, scopeStack, m_tree);
-    std::string connectorName = "_BridgeSig_" + std::to_string(m_connectorCounter++);
+    std::string connectorName = "_B_" + std::to_string(m_connectorCounter++);
     ASTNode closingName = nullptr;
     std::shared_ptr<StreamNode> newStream = nullptr;
     ASTNode newStart = nullptr;
     vector<ASTNode > newDeclarations;
+    ASTNode outDomain = CodeValidator::getNodeDomain(node, scopeStack, m_tree);
     if (stack.size() > 0) {
         ASTNode &stackBack = stack.back();
         if  (stackBack->getNodeType() == AST::List) { // Slice list
@@ -2391,19 +2375,19 @@ void CodeResolver::terminateStackWithBridge(ASTNode node, QVector<ASTNode > &str
                     string type = declaration->getObjectType();
                     ASTNode valueNode = declaration->getPropertyValue("default");
                     if (!valueNode) {
-                        valueNode =  std::make_shared<ValueNode>(0, "", -1);
+                        valueNode =  std::make_shared<ValueNode>(0, __FILE__, __LINE__);
                     }
                     std::string nodeDomainName = CodeValidator::getNodeDomainName(stackBack->getChildren()[i], scopeStack, m_tree);
                     if (nodeDomainName.size() > 0) {
                         newDeclarations.push_back(createSignalBridge(listConnectorName, nodeDomainName,
                                                                      valueNode,
-                                                                     std::make_shared<BlockNode>(nodeDomainName, "", -1), std::make_shared<ValueNode>("", -1),
+                                                                     std::make_shared<BlockNode>(nodeDomainName, __FILE__, __LINE__), outDomain,
                                                                      stackBack->getChildren()[i]->getFilename(), stackBack->getChildren()[i]->getLine(),
                                                                      1, type));
-                        closingName->addChild(std::make_shared<BlockNode>(listConnectorName, "", -1));
-                        newStart->addChild(std::make_shared<BlockNode>(listConnectorName, "", -1));
+                        closingName->addChild(std::make_shared<BlockNode>(listConnectorName, __FILE__, __LINE__));
+                        newStart->addChild(std::make_shared<BlockNode>(listConnectorName, __FILE__, __LINE__));
                         std::shared_ptr<StreamNode> newStream = std::make_shared<StreamNode>(stack.back()->getChildren()[i],
-                                                                                             std::make_shared<BlockNode>(listConnectorName, "", -1),
+                                                                                             std::make_shared<BlockNode>(listConnectorName, __FILE__, __LINE__),
                                                                                              declaration->getFilename().c_str(), declaration->getLine());
                         newDeclarations.push_back(newStream);
 
@@ -2413,12 +2397,12 @@ void CodeResolver::terminateStackWithBridge(ASTNode node, QVector<ASTNode > &str
                                || stackBack->getChildren()[i]->getNodeType() == AST::Switch ){
                         std::shared_ptr<DeclarationNode> constDeclaration = createConstantDeclaration(listConnectorName, stackBack->getChildren()[i]);
                         newDeclarations.push_back(constDeclaration);
-                        closingName->addChild(std::make_shared<BlockNode>(listConnectorName, "", -1));
-                        newStart->addChild(std::make_shared<BlockNode>(listConnectorName, "", -1));
+                        closingName->addChild(std::make_shared<BlockNode>(listConnectorName, __FILE__, __LINE__));
+                        newStart->addChild(std::make_shared<BlockNode>(listConnectorName, __FILE__, __LINE__));
                     }
 //                    ASTNode valueNode = declaration->getPropertyValue("default");
 //                    if (!valueNode) {
-//                        valueNode =  std::make_shared<ValueNode>(0, "", -1);
+//                        valueNode =  std::make_shared<ValueNode>(0, __FILE__, __LINE__);
 //                    }
 //                    QString memberName = CodeValidator::streamMemberName(node, scopeStack, m_tree);
 //                    std::shared_ptr<DeclarationNode> nextDecl = CodeValidator::findDeclaration(memberName, scopeStack, m_tree);
@@ -2427,26 +2411,26 @@ void CodeResolver::terminateStackWithBridge(ASTNode node, QVector<ASTNode > &str
 //                                                                     declaration->getDomain(), nextDecl->getDomain(),
 //                                                                     declaration->getFilename(), declaration->getLine()));
 //                    } else {
-//                        std::shared_ptr<ValueNode> noneValue = std::make_shared<ValueNode>("", -1);
+//                        std::shared_ptr<ValueNode> noneValue = std::make_shared<ValueNode>(__FILE__, __LINE__);
 //                        newDeclarations.push_back(createSignalBridge(listConnectorName, memberName.toStdString(), valueNode,
 //                                                                     declaration->getDomain(), noneValue,
 //                                                                     declaration->getFilename(), declaration->getLine()));
 //                    }
 //                    std::shared_ptr<StreamNode> newStream = std::make_shared<StreamNode>(stack.back()->getChildren()[i],
-//                                                                                         std::make_shared<BlockNode>(listConnectorName, "", -1),
+//                                                                                         std::make_shared<BlockNode>(listConnectorName, __FILE__, __LINE__),
 //                                                                                         declaration->getFilename().c_str(), declaration->getLine());
 //                    newDeclarations.push_back(newStream);
-//                    closingName->addChild(std::make_shared<BlockNode>(listConnectorName, "", -1));
-//                    newStart->addChild(std::make_shared<BlockNode>(listConnectorName, "", -1));
+//                    closingName->addChild(std::make_shared<BlockNode>(listConnectorName, __FILE__, __LINE__));
+//                    newStart->addChild(std::make_shared<BlockNode>(listConnectorName, __FILE__, __LINE__));
                 } else {
                     std::string nodeDomainName = CodeValidator::getNodeDomainName(stackBack->getChildren()[i], scopeStack, m_tree);
                     if (nodeDomainName.size() > 0) {
                         newDeclarations.push_back(createSignalBridge(listConnectorName, nodeDomainName,
-                                                                     std::make_shared<ValueNode>("", -1),
-                                                                     std::make_shared<BlockNode>(nodeDomainName, "", -1), std::make_shared<ValueNode>("", -1),
+                                                                     std::make_shared<ValueNode>(__FILE__, __LINE__),
+                                                                     std::make_shared<BlockNode>(nodeDomainName, __FILE__, __LINE__), outDomain,
                                                                      stackBack->getChildren()[i]->getFilename(), stackBack->getChildren()[i]->getLine(), 1, "signal"));
-                        closingName->addChild(std::make_shared<BlockNode>(listConnectorName, "", -1));
-                        newStart->addChild(std::make_shared<BlockNode>(listConnectorName, "", -1));
+                        closingName->addChild(std::make_shared<BlockNode>(listConnectorName, __FILE__, __LINE__));
+                        newStart->addChild(std::make_shared<BlockNode>(listConnectorName, __FILE__, __LINE__));
 
                     } else if (stackBack->getChildren()[i]->getNodeType() == AST::Int
                                || stackBack->getChildren()[i]->getNodeType() == AST::Real
@@ -2454,24 +2438,25 @@ void CodeResolver::terminateStackWithBridge(ASTNode node, QVector<ASTNode > &str
                                || stackBack->getChildren()[i]->getNodeType() == AST::Switch ){
                         std::shared_ptr<DeclarationNode> constDeclaration = createConstantDeclaration(listConnectorName, stackBack->getChildren()[i]);
                         newDeclarations.push_back(constDeclaration);
-                        closingName->addChild(std::make_shared<BlockNode>(listConnectorName, "", -1));
-                        newStart->addChild(std::make_shared<BlockNode>(listConnectorName, "", -1));
+                        closingName->addChild(std::make_shared<BlockNode>(listConnectorName, __FILE__, __LINE__));
+                        newStart->addChild(std::make_shared<BlockNode>(listConnectorName, __FILE__, __LINE__));
                     }
                 }
             }
         } else { // Slice everything else that is not a list
             QString memberName = CodeValidator::streamMemberName(stackBack, scopeStack, m_tree);
-            std::shared_ptr<DeclarationNode> declaration = CodeValidator::findDeclaration(memberName, scopeStack, m_tree);
-            if (declaration
-                    && (declaration->getObjectType() == "signal"
-                        || declaration->getObjectType() == "switch"
-                        || declaration->getObjectType() == "trigger")
+            connectorName += "_" + memberName.toStdString();
+            std::shared_ptr<DeclarationNode> prevDeclaration = CodeValidator::findDeclaration(memberName, scopeStack, m_tree);
+            if (prevDeclaration
+                    && (prevDeclaration->getObjectType() == "signal"
+                        || prevDeclaration->getObjectType() == "switch"
+                        || prevDeclaration->getObjectType() == "trigger")
                     ) {
-                string type = declaration->getObjectType();
+                string type = prevDeclaration->getObjectType();
                 newDeclarations.push_back(createSignalBridge(connectorName, memberName.toStdString(),
-                                                             declaration->getPropertyValue("default"),
-                                                             declaration->getDomain(), std::make_shared<ValueNode>("", -1),
-                                                             declaration->getFilename(), declaration->getLine(),
+                                                             prevDeclaration->getPropertyValue("default"),
+                                                             prevDeclaration->getDomain(), outDomain,
+                                                             prevDeclaration->getFilename(), prevDeclaration->getLine(),
                                                              size, type));
             } else if (stackBack->getNodeType() == AST::Expression
                        || stackBack->getNodeType() == AST::Function){
@@ -2480,20 +2465,20 @@ void CodeResolver::terminateStackWithBridge(ASTNode node, QVector<ASTNode > &str
                 // FIXME set default value correctly
                 string type = "signal"; // FIXME assumes that expressions and functions output signals...
                 newDeclarations.push_back(createSignalBridge(connectorName, memberName.toStdString(),
-                                                             std::make_shared<ValueNode>(0.0,"", -1),
-                                                             std::make_shared<ValueNode>("", -1), std::make_shared<ValueNode>("", -1),
+                                                             std::make_shared<ValueNode>(0.0,__FILE__, __LINE__),
+                                                             std::make_shared<ValueNode>(__FILE__, __LINE__), outDomain,
                                                              stackBack->getFilename(), stackBack->getLine(),
                                                              size, type));
 
             } else {
                 newDeclarations.push_back(createSignalBridge(connectorName, memberName.toStdString(),
-                                                             std::make_shared<ValueNode>(0.0,"", -1),
-                                                             std::make_shared<ValueNode>("", -1), std::make_shared<ValueNode>("", -1),
+                                                             std::make_shared<ValueNode>(0.0,__FILE__, __LINE__),
+                                                             std::make_shared<ValueNode>(__FILE__, __LINE__), outDomain,
                                                              stackBack->getFilename(), stackBack->getLine(),
                                                              size, "signal"));
             }
-            closingName = std::make_shared<BlockNode>(connectorName, "", -1);
-            newStart = std::make_shared<BlockNode>(connectorName, "", -1);
+            closingName = std::make_shared<BlockNode>(connectorName, __FILE__, __LINE__);
+            newStart = std::make_shared<BlockNode>(connectorName, __FILE__, __LINE__);
             newStream = std::make_shared<StreamNode>(stack.back(), closingName, node->getFilename().c_str(), node->getLine());
         }
 //        stack.pop_back();
@@ -2575,6 +2560,7 @@ QVector<ASTNode > CodeResolver::sliceStreamByDomain(std::shared_ptr<StreamNode> 
                 std::shared_ptr<ExpressionNode> expr = static_pointer_cast<ExpressionNode>(left);
                 QVector<ASTNode > newStreams = processExpression(expr, scopeStack, outDomain);
                 streams << newStreams;
+                domainName = CodeValidator::getDomainNodeString(outDomain);
             }
         } else if (left->getNodeType() == AST::Function) {
             std::shared_ptr<FunctionNode> func = static_pointer_cast<FunctionNode>(left);
@@ -2585,7 +2571,8 @@ QVector<ASTNode > CodeResolver::sliceStreamByDomain(std::shared_ptr<StreamNode> 
                     std::shared_ptr<DeclarationNode> declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(value, scopeStack, m_tree),
                                                                                                   scopeStack, m_tree);
                     if (declaration) {
-                        std::string connectorName = "_BridgeSig_" + std::to_string(m_connectorCounter++);
+                        std::string connectorName = "_B_" + std::to_string(m_connectorCounter++);
+                        connectorName += "_" + declaration->getName();
                         int size = 1;
                         if (declaration->getNodeType() == AST::BundleDeclaration) {
                             Q_ASSERT(declaration->getBundle()->index()->getChildren()[0]->getNodeType() == AST::Int);
@@ -2595,13 +2582,13 @@ QVector<ASTNode > CodeResolver::sliceStreamByDomain(std::shared_ptr<StreamNode> 
                         ASTNode bridgeDomain = declaration->getDomain();
                         if (defaultProperty && bridgeDomain) {
                             std::shared_ptr<BlockNode> block = static_pointer_cast<BlockNode>(value);
-                            std::shared_ptr<ValueNode> noneValue = std::make_shared<ValueNode>("", -1);
+                            std::shared_ptr<ValueNode> noneValue = std::make_shared<ValueNode>(__FILE__, __LINE__);
                             // FIXME this assumes the input to a function is a signal
                             streams.push_back(createSignalBridge(connectorName, block->getName(), defaultProperty,
                                                                  bridgeDomain, noneValue,
                                                                  declaration->getFilename(), declaration->getLine(),
                                                                  size, "signal")); // Add definition to stream
-                            std::shared_ptr<BlockNode> connectorNameNode = std::make_shared<BlockNode>(connectorName, "", -1);
+                            std::shared_ptr<BlockNode> connectorNameNode = std::make_shared<BlockNode>(connectorName, __FILE__, __LINE__);
                             std::shared_ptr<StreamNode> newStream = std::make_shared<StreamNode>(value, connectorNameNode, left->getFilename().c_str(), left->getLine());
                             prop->replaceValue(connectorNameNode);
                             streams.push_back(newStream);
@@ -2609,7 +2596,7 @@ QVector<ASTNode > CodeResolver::sliceStreamByDomain(std::shared_ptr<StreamNode> 
                     }
                 } /*else if (value->getNodeType() == AST::Bundle) {
                     std::string connectorName = "_BridgeSig_" + std::to_string(m_connectorCounter++);
-                    //                    newDeclarations.push_back(createSignalBridge(listMemberName, declaration, new ValueNode("", -1)));
+                    //                    newDeclarations.push_back(createSignalBridge(listMemberName, declaration, new ValueNode(__FILE__, __LINE__)));
 
                 }*/
             }
@@ -2700,16 +2687,16 @@ void CodeResolver::sliceDomainsInNode(std::shared_ptr<DeclarationNode> module, Q
 
         Q_ASSERT(blocksNode);
         if (blocksNode->getNodeType() == AST::None) {
-            module->replacePropertyValue("blocks", std::make_shared<ListNode>(nullptr, "", -1));
+            module->replacePropertyValue("blocks", std::make_shared<ListNode>(nullptr, __FILE__, __LINE__));
             blocksNode = module->getPropertyValue("blocks");
         }
 
 //        if (!streamsNode) {
-//           module->setPropertyValue("streams", std::make_shared<ListNode>(nullptr, "", -1));
+//           module->setPropertyValue("streams", std::make_shared<ListNode>(nullptr, __FILE__, __LINE__));
 //           streamsNode = module->getPropertyValue("streams");
 //        }
 
-        std::shared_ptr<ListNode> newStreamsList = std::make_shared<ListNode>(nullptr, "", -1);
+        std::shared_ptr<ListNode> newStreamsList = std::make_shared<ListNode>(nullptr, __FILE__, __LINE__);
         scopeStack << CodeValidator::getBlocksInScope(module, scopeStack, m_tree);
         if (streamsNode->getNodeType() == AST::List) {
             for (ASTNode  stream: streamsNode->getChildren()) {
@@ -2768,16 +2755,17 @@ QVector<ASTNode> CodeResolver::processExpression(std::shared_ptr<ExpressionNode>
         if (declaration) {
             if ( CodeValidator::getDomainNodeString(declaration->getDomain()) !=
                  CodeValidator::getDomainNodeString(outDomain)) {
-                std::string connectorName = "_BridgeSig_" + std::to_string(m_connectorCounter++);
+                std::string connectorName = "_B_" + std::to_string(m_connectorCounter++);
+                connectorName += "_" + memberName.toStdString();
                 string type = declaration->getObjectType();
                 if (type == "switch" || type == "signal" || type == "trigger") { // This keeps constants away
                     streams.push_back(createSignalBridge(connectorName, memberName.toStdString(),
                                                          declaration->getPropertyValue("default"),
                                                          declaration->getDomain(), outDomain,
                                                          declaration->getFilename(), declaration->getLine(), 1, type)); // Add definition to stream
-                    std::shared_ptr<BlockNode> connectorNameNode = std::make_shared<BlockNode>(connectorName, "", -1);
+                    std::shared_ptr<BlockNode> connectorNameNode = std::make_shared<BlockNode>(connectorName, __FILE__, __LINE__);
                     std::shared_ptr<StreamNode> newStream = std::make_shared<StreamNode>(exprLeft, connectorNameNode, exprLeft->getFilename().c_str(), exprLeft->getLine());
-                    expr->replaceLeft(std::make_shared<BlockNode>(connectorName, "", -1));
+                    expr->replaceLeft(std::make_shared<BlockNode>(connectorName, __FILE__, __LINE__));
                     streams.push_back(newStream);
                 }
                 // FIXME need to implement for bundles
@@ -2796,15 +2784,15 @@ QVector<ASTNode> CodeResolver::processExpression(std::shared_ptr<ExpressionNode>
             if (declaration) {
                 if ( CodeValidator::getDomainNodeString(declaration->getDomain()) !=
                      CodeValidator::getDomainNodeString(outDomain)) {
-                    std::string connectorName = "_BridgeSig_" + std::to_string(m_connectorCounter++);
+                    std::string connectorName = "_B_" + std::to_string(m_connectorCounter++);
                     string type = declaration->getObjectType();
                     streams.push_back(createSignalBridge(connectorName, exprName->getName(),
                                                          declaration->getPropertyValue("default"),
                                                          declaration->getDomain(), outDomain,
                                                          declaration->getFilename(), declaration->getLine(),1 , type)); // Add definition to stream
-                    std::shared_ptr<BlockNode> connectorNameNode = std::make_shared<BlockNode>(connectorName, "", -1);
+                    std::shared_ptr<BlockNode> connectorNameNode = std::make_shared<BlockNode>(connectorName, __FILE__, __LINE__);
                     std::shared_ptr<StreamNode> newStream = std::make_shared<StreamNode>(exprRight, connectorNameNode, exprRight->getFilename().c_str(), exprRight->getLine());
-                    expr->replaceRight(std::make_shared<BlockNode>(connectorName, "", -1));
+                    expr->replaceRight(std::make_shared<BlockNode>(connectorName, __FILE__, __LINE__));
                     streams.push_back(newStream);
                 }
             }
@@ -2889,14 +2877,14 @@ void CodeResolver::populateContextDomains(vector<ASTNode> nodes)
                             if (domainName.size() > 0) {
                                 ASTNode propertiesList = std::make_shared<ListNode>(
                                             std::make_shared<PropertyNode>("value",
-                                                                           std::make_shared<ValueNode>(domainName, "", -1),
-                                                                           "", -1), "", -1);
-                                blocks->addChild(std::make_shared<DeclarationNode>("_ContextDomain", "constant", propertiesList, "", -1));
+                                                                           std::make_shared<ValueNode>(domainName, __FILE__, __LINE__),
+                                                                           __FILE__, __LINE__), __FILE__, __LINE__);
+                                blocks->addChild(std::make_shared<DeclarationNode>("_ContextDomain", "constant", propertiesList, __FILE__, __LINE__));
                                 propertiesList = std::make_shared<ListNode>(
                                             std::make_shared<PropertyNode>("value",
-                                                                           std::make_shared<ValueNode>(0, "", -1),
-                                                                           "", -1), "", -1);
-                                blocks->addChild(std::make_shared<DeclarationNode>("_ContextRate", "constant", propertiesList, "", -1));
+                                                                           std::make_shared<ValueNode>(0, __FILE__, __LINE__),
+                                                                           __FILE__, __LINE__), __FILE__, __LINE__);
+                                blocks->addChild(std::make_shared<DeclarationNode>("_ContextRate", "constant", propertiesList, __FILE__, __LINE__));
                                 contextDomainSet = true;
                             }
                         }
@@ -2910,14 +2898,14 @@ void CodeResolver::populateContextDomains(vector<ASTNode> nodes)
                             if (domainName.size() > 0) {
                                 ASTNode propertiesList = std::make_shared<ListNode>(
                                             std::make_shared<PropertyNode>("value",
-                                                                           std::make_shared<ValueNode>(domainName, "", -1),
-                                                                           "", -1), "", -1);
-                                blocks->addChild(std::make_shared<DeclarationNode>("_ContextDomain", "constant", propertiesList, "", -1));
+                                                                           std::make_shared<ValueNode>(domainName, __FILE__, __LINE__),
+                                                                           __FILE__, __LINE__), __FILE__, __LINE__);
+                                blocks->addChild(std::make_shared<DeclarationNode>("_ContextDomain", "constant", propertiesList, __FILE__, __LINE__));
                                 propertiesList = std::make_shared<ListNode>(
                                             std::make_shared<PropertyNode>("value",
-                                                                           std::make_shared<ValueNode>(0, "", -1),
-                                                                           "", -1), "", -1);
-                                blocks->addChild(std::make_shared<DeclarationNode>("_ContextRate", "constant", propertiesList, "", -1));
+                                                                           std::make_shared<ValueNode>(0, __FILE__, __LINE__),
+                                                                           __FILE__, __LINE__), __FILE__, __LINE__);
+                                blocks->addChild(std::make_shared<DeclarationNode>("_ContextRate", "constant", propertiesList, __FILE__, __LINE__));
                             }
                         }
                     }

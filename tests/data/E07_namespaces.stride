@@ -1,33 +1,6 @@
 use DesktopAudio version 1.0
 
-module TestMod {
-    ports: [
-        mainInputPort InputPort {
-            block: Input
-        },
-        mainOutputPort OutputPort {
-            block: Output
-        }
-    ]
-    blocks: [
-        loop TestLoop {
-            ports: [
-                mainInputPort InputPort {
-                    block: Input
-                },
-                mainOutputPort OutputPort {
-                    block: Output
-                }
-            ]
-            streams: [
-                Input >> Output;
-            ]
-        }
-    ]
-    streams: [
-        Input >> TestLoop() >> Output;
-    ]
-}
+signal Test {}
 
-AudioIn[1] >> TestMod() >> AudioOut[1];
+Test >> AudioOut[1];
 

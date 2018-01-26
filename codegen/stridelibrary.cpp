@@ -55,20 +55,11 @@ StrideLibrary::StrideLibrary(QString libraryPath, QMap<QString, QString> importL
 
 StrideLibrary::~StrideLibrary()
 {
-    foreach(ASTNode node, m_libraryTrees) {
-//        node->deleteChildren();
-//        delete node;
-    }
 }
 
 void StrideLibrary::setLibraryPath(QString strideRootPath, QMap<QString, QString> importList)
 {
-//    foreach(ASTNode node, m_libraryTrees) {
-//        node->deleteChildren();
-////        delete node;
-//    }
     m_libraryTrees.clear();
-
     readLibrary(strideRootPath, importList);
 }
 
@@ -183,24 +174,69 @@ void StrideLibrary::readLibrary(QString rootDir, QMap<QString, QString> importLi
         it.next();
         subPaths << it.key();
     }
-    foreach(QString subPath, subPaths) {
+    for(QString subPath : subPaths) {
         QStringList libraryFiles =  QDir(rootDir + basepath + QDir::separator() + subPath).entryList(nameFilters);
         foreach (QString file, libraryFiles) {
             QString fileName = rootDir + basepath + QDir::separator() + subPath + QDir::separator() + file;
             ASTNode tree = AST::parseFile(fileName.toLocal8Bit().data(), nullptr);
             if(tree) {
-                QString namespaceName = importList[subPath];
-                if (!namespaceName.isEmpty()) {
+                if (subPath.size() == 0) { // file in library root path
+                    for (auto node : tree->getChildren()) {
+                        if (node->getNodeType() == AST::Declaration
+                                || node->getNodeType() == AST::BundleDeclaration) {
+                            node->appendToPropertyValue("validScopes",
+                                                        std::make_shared<ValueNode>(string("::"), __FILE__, __LINE__));
+                            node->appendToPropertyValue("validScopes",
+                                                        std::make_shared<ValueNode>(string(""), __FILE__, __LINE__));
+                            // FIXME: must support more than one level of file depth.
+                            string scopeFromFile = fileName.toStdString().substr(0, fileName.indexOf(".stride"));
+                            node->appendToPropertyValue("validScopes",
+                                                        std::make_shared<ValueNode>(scopeFromFile, __FILE__, __LINE__));
+                        }
+                    }
+                } else { // File has been found through import statement
+                    string namespaceName = importList[subPath].toStdString();
+                    if (namespaceName.size() == 0) { // import with its own name (i.e. not import-as)
+                        // FIXME must support more than one level of file depth.
+                        namespaceName = fileName.toStdString().substr(0, fileName.indexOf(".stride"));
+                        // If not import-as we need to bring all elements to the global namespace
+                        for(ASTNode node : tree->getChildren()) {
+                            node->appendToPropertyValue(
+                                        string("validScopes"),
+                                        std::make_shared<ValueNode>(
+                                            string("::"), __FILE__, __LINE__));
+                            node->appendToPropertyValue(
+                                        string("validScopes"),
+                                        std::make_shared<ValueNode>(
+                                            string(""), __FILE__, __LINE__));
+                        }
+                    }
                     for(ASTNode node : tree->getChildren()) {
                         // Do we need to set namespace recursively or would this do?
 //                        node->setNamespace(namespaceName.toStdString());
+                        node->appendToPropertyValue(
+                                    string("validScopes"),
+                                    std::make_shared<ValueNode>(
+                                        namespaceName, __FILE__, __LINE__));
+                        node->appendToPropertyValue(
+                                    string("validScopes"),
+                                    std::make_shared<ValueNode>(
+                                        namespaceName + "::" + subPath.toStdString(), __FILE__, __LINE__));
+                        node->appendToPropertyValue(
+                                    string("validScopes"),
+                                    std::make_shared<ValueNode>(
+                                        "::" + namespaceName, __FILE__, __LINE__));
+                        node->appendToPropertyValue(
+                                    string("validScopes"),
+                                    std::make_shared<ValueNode>(
+                                        "::" + namespaceName + "::" + subPath.toStdString(), __FILE__, __LINE__));
                     }
                 }
                 m_libraryTrees.append(tree);
             } else {
                 qDebug() << "Not loaded:" << fileName;
                 vector<LangError> errors = AST::getParseErrors();
-                foreach(LangError error, errors) {
+                for(LangError error : errors) {
                     qDebug() << QString::fromStdString(error.getErrorText());
                 }
             }

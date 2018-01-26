@@ -138,9 +138,7 @@ public:
     static double getDefaultForTypeAsDouble(string type, string port, QVector<ASTNode > scope, ASTNode tree);
     static ASTNode getDefaultPortValueForType(string type, string portName, QVector<ASTNode > scope, ASTNode tree);
 
-    static bool scopesMatch(QStringList scopeList, ASTNode node);
-    static bool scopesMatch(ASTNode node1, ASTNode node2);
-    static bool nodeInScope(std::vector<string> scopeList, ASTNode node);
+    static bool namespaceMatch(std::vector<string> scopeList, std::shared_ptr<DeclarationNode> decl);
 
     static vector<StreamNode *> getStreamsAtLine(ASTNode tree, int line);
 

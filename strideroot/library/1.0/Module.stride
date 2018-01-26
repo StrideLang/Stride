@@ -78,6 +78,12 @@ type _Port {
 			types: [""] # This should be made to accept type handles
 			default: none
 			required: on
+		},
+		typeProperty Type {
+			name: "type"
+			types: ["CSP"] # This should be made to accept type handles
+			default: "real"
+			required: off
 		}
 	]
 	inherits: ["base"]

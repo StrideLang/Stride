@@ -110,6 +110,12 @@ type _Signal {
 			default: 0.0
 			required: off
 		},
+		typeProperty Type {
+			name: "type"
+			types: [""]
+			default: Types::Real
+			required: off
+		},
 		typeProperty _Reads {
 			name: "_reads"
 			types: [""]
@@ -235,3 +241,47 @@ type _GroupType {
 	]
 	meta: "Groups signals for block processing. Guarantees that all signals are processed together."
 }
+
+
+type _PlatformTypeClass {
+	typeName: "platformTypeClass"
+	properties: [
+		typeProperty Types {
+			name: "types"
+			types: [""]
+			default: none
+			required: on
+			meta: "Members of the the type class"
+		}
+	]
+	meta: ""
+}
+
+type _PlatformDataType {
+	typeName: "platformDataType"
+	properties: [
+		typeProperty Name {
+			name: "name"
+			types: ["CSP"]
+			default: none
+			required: on
+			meta: "Name of the data type"
+		}
+		typeProperty PlatformName {
+			name: "platformName"
+			types: ["CSP"]
+			default: none
+			required: on
+			meta: "Name of the data type on the target platform"
+		}
+		typeProperty Includes {
+			name: "includes"
+			types: [""]
+			default: []
+			required: off
+			meta: "Additional include files for the type"
+		}
+	]
+	meta: ""
+}
+

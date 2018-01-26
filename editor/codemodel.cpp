@@ -427,7 +427,7 @@ QString CodeModel::getFunctionSyntax(QString symbol)
                 for(ASTNode member : propertiesList->getChildren()) {
                     DeclarationNode *portBlock = static_cast<DeclarationNode *>(member.get());
                     Q_ASSERT(portBlock->getNodeType() == AST::Declaration);
-                    if (portBlock->getNodeType() == AST::Declaration) {
+                    if (portBlock->getNodeType() == AST::Declaration && portBlock->getPropertyValue("name")) {
                         QString portName = QString::fromStdString(
                                     static_cast<ValueNode *>(portBlock->getPropertyValue("name").get())->getStringValue());
                         if (portName != "inherits" && portName != "meta") {

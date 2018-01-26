@@ -42,6 +42,8 @@
 using namespace std;
 
 class AST;
+class ListNode;
+class PropertyNode;
 
 typedef shared_ptr<AST> ASTNode;
 
@@ -112,6 +114,10 @@ public:
     vector<string> getNamespaceList();
     void setNamespaceList(vector<string> list);
 
+    void setCompilerProperty(string propertyName, ASTNode value);
+    ASTNode getCompilerProperty(string propertyName);
+    void appendToPropertyValue(string propertyName, ASTNode value);
+
 protected:
     virtual void resolveScope(ASTNode scope);
 
@@ -120,6 +126,7 @@ protected:
     string m_filename; // file where the node was generated
     int m_line;
     vector<string> m_scope;
+    std::shared_ptr<ListNode> m_CompilerProperties;
 };
 
 #endif // AST_H

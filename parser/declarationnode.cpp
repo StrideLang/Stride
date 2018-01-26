@@ -41,6 +41,7 @@ DeclarationNode::DeclarationNode(string name, string objectType, ASTNode propert
                      const char *filename, int line, vector<string> scope):
     AST(AST::Declaration, filename, line, scope)
 {
+    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
     m_name = name;
     m_objectType = objectType;
     if (propertiesList) {
@@ -58,6 +59,7 @@ DeclarationNode::DeclarationNode(std::shared_ptr<BundleNode> bundle, string obje
                      const char *filename, int line, vector<string> scope) :
     AST(AST::BundleDeclaration, filename, line, scope)
 {
+    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
     addChild(bundle);
     m_objectType = objectType;
     if (propertiesList) {
@@ -151,7 +153,7 @@ void DeclarationNode::setDomainString(string domain)
 {
     for (unsigned int i = 0; i < m_properties.size(); i++) {
         if (m_properties.at(i)->getName() == "domain") {
-            m_properties.at(i)->replaceValue(make_shared<ValueNode>(domain, "", -1));
+            m_properties.at(i)->replaceValue(make_shared<ValueNode>(domain, __FILE__, __LINE__));
             break;
         }
     }

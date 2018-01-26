@@ -99,12 +99,12 @@ void FunctionNode::setDomainString(string domain)
     bool domainSet = false;
     for (unsigned int i = 0; i < m_properties.size(); i++) {
         if (m_properties.at(i)->getName() == "domain") {
-            m_properties.at(i)->replaceValue(std::make_shared<ValueNode>(domain, "", -1));
+            m_properties.at(i)->replaceValue(std::make_shared<ValueNode>(domain, __FILE__, __LINE__));
             domainSet = true;
         }
     }
     if (!domainSet) {
-        addProperty(std::make_shared<PropertyNode>("domain", std::make_shared<ValueNode>(domain, "", -1), "", -1));
+        addProperty(std::make_shared<PropertyNode>("domain", std::make_shared<ValueNode>(domain, __FILE__, __LINE__), __FILE__, __LINE__));
     }
 }
 

@@ -35,6 +35,8 @@
 #include <cassert>
 
 #include "ast.h"
+#include "listnode.h"
+#include "propertynode.h"
 
 extern AST *parse(const char* fileName, const char* sourceFilename);
 extern std::vector<LangError> getErrors();
@@ -153,4 +155,54 @@ vector<string> AST::getNamespaceList()
 void AST::setNamespaceList(vector<string> list)
 {
     m_scope = list;
+}
+
+void AST::setCompilerProperty(string propertyName, ASTNode value)
+{
+    for (auto child: m_CompilerProperties->getChildren()) {
+        if (child->getNodeType() == AST::Property) {
+            std::shared_ptr<PropertyNode> prop = static_pointer_cast<PropertyNode>(child);
+            if (prop->getName() == propertyName) { // if property already exists replace
+                prop->replaceValue(value);
+                return;
+            }
+        }
+    }
+    std::shared_ptr<PropertyNode> newProp = std::make_shared<PropertyNode>(propertyName, value, __FILE__, __LINE__);
+    m_CompilerProperties->addChild(newProp);
+}
+
+ASTNode AST::getCompilerProperty(string propertyName)
+{
+    for (auto child: m_CompilerProperties->getChildren()) {
+        if (child->getNodeType() == AST::Property) {
+            std::shared_ptr<PropertyNode> prop = static_pointer_cast<PropertyNode>(child);
+            if (prop->getName() == propertyName) { // if property already exists replace
+                return prop->getValue();
+            }
+        }
+    }
+    return nullptr;
+}
+
+void AST::appendToPropertyValue(string propertyName, ASTNode value)
+{
+    for (auto child: m_CompilerProperties->getChildren()) {
+        if (child->getNodeType() == AST::Property) {
+            std::shared_ptr<PropertyNode> prop = static_pointer_cast<PropertyNode>(child);
+            if (prop->getName() == propertyName) { // if property already exists replace
+                if (prop->getValue()->getNodeType() == AST::List) {
+                    auto list = std::static_pointer_cast<ListNode>(prop->getValue());
+                    list->addChild(value);
+                    return;
+                } else {
+                    assert(0 == 1);
+                }
+            }
+        }
+    }
+    auto newProperty = std::make_shared<PropertyNode>(propertyName,
+                                                      std::make_shared<ListNode>(value, __FILE__, __LINE__),
+                                                      __FILE__, __LINE__);
+    m_CompilerProperties->addChild(newProperty);
 }

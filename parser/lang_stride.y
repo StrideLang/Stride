@@ -446,7 +446,7 @@ property:
     |   WORD COLON STREAMRATE   {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
-            PropertyNode * node = new PropertyNode(s, std::make_shared<ValueNode>((string) "streamRate", "", -1), currentFile, yyloc.first_line);
+            PropertyNode * node = new PropertyNode(s, std::make_shared<ValueNode>((string) "streamRate", __FILE__, __LINE__), currentFile, yyloc.first_line);
             $$ = node;
             COUT << "Property: " << $1 << ENDL << "New property ... " << ENDL;
             free($1);

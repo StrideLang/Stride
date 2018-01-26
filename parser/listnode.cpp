@@ -34,6 +34,11 @@
 
 #include "listnode.h"
 
+ListNode::ListNode(const char *filename, int line) :
+    AST(AST::List, filename, line)
+{
+}
+
 ListNode::ListNode(ASTNode newMember, const char *filename, int line) :
     AST(AST::List, filename, line)
 {

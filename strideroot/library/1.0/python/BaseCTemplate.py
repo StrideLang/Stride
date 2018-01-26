@@ -72,7 +72,6 @@ class BaseCTemplate(object):
         self.str_assignment = '%s = %s;\n'
         self.str_increment = '%s += %s;\n'
         self.str_module_declaration = '''
-
 class %s {
 public:
     %s
@@ -106,13 +105,15 @@ public:
             marker = "//#line " + str(line) + ' "' + filename + '"\n'
         return marker
 
-    def number_to_string(self, number):
+    def number_to_string(self, number, close=True):
         if type(number) == int:
-            s = '%i;\n'%number
+            s = '%i'%number
         elif type(number) == float:
-            s = '%.8f;'%number
+            s = '%.8f'%number
         else:
             raise ValueError(u"Unsupported type '%s' in assignment."%type(number).__name__)
+        if close:
+            s = s + ';'
         return s;
 
     def get_platform_initialization_code(self, code, token_names, num_inputs, out_tokens, bundle_index = -1):
@@ -213,6 +214,31 @@ public:
             declaration += ';\n'
         return declaration
 
+    def declare_instance(self, instance):
+        if instance.get_type() == 'real':
+            code = self.declaration_real(instance.get_name())
+        elif instance.get_type() == 'bool':
+            code = self.declaration_bool(instance.get_name())
+        elif instance.get_type() == 'string':
+            code = self.declaration_string(instance.get_name())
+        elif instance.get_type() =='bundle':
+            if instance.get_bundle_type() == 'real':
+                code = self.declaration_bundle_real(instance.get_name(), instance.size)
+            elif instance.get_bundle_type() == 'bool':
+                code = self.declaration_bundle_bool(instance.get_name(), instance.size)
+            else:
+                raise ValueError("Unsupported bundle type.")
+        elif instance.get_type() == 'module':
+            code = self.declaration_module(instance.get_module_type(), instance.get_name(), instance.get_instance_consts())
+        elif instance.get_type() == 'reaction':
+            code = self.declaration_reaction(instance.get_module_type(), instance.get_name())
+        elif instance.get_type() == 'buffer':
+            code = self.declaration_buffer(instance.get_buffer_type(), instance.get_name(), instance.get_size())
+        else:
+            raise ValueError('Unsupported type for instance')
+#        code += templates.source_marker(instance.get_line(), instance.get_filename())
+        return code
+
     def declaration(self, block, close=True):
         declaration = ''
         vartype = self.get_block_type(block)
@@ -230,6 +256,8 @@ public:
                 declaration = self.declaration_bundle_bool(name, block['size'],close)
             elif vartype == 'int':
                 declaration = self.declaration_bundle_int(name, block['size'],close)
+            elif vartype == 'signalbridge':
+                declaration = self.declaration_bundle_real(name, block['size'],close)
         else:
             if vartype == 'real':
                 declaration = self.declaration_real(name, close)
@@ -239,6 +267,8 @@ public:
                 declaration = self.declaration_bool(name, close)
             elif vartype == 'int':
                 declaration = self.declaration_int(name, close)
+            elif vartype == 'signalbridge':
+                declaration = self.declaration_real(name, close)
 
         return declaration
 
@@ -255,6 +285,8 @@ public:
                 declaration = self.declaration_bundle_bool(name, block['size'],close)
             elif vartype == 'int':
                 declaration = self.declaration_bundle_int(name, block['size'],close)
+            elif vartype == 'signalbridge':
+                declaration = self.declaration_bundle_real(name, block['size'],close)
         else:
             name = "&" + name
             if vartype == 'real':
@@ -265,6 +297,8 @@ public:
                 declaration = self.declaration_bool(name, close)
             elif vartype == 'int':
                 declaration = self.declaration_int(name, close)
+            elif vartype == 'signalbridge':
+                declaration = self.declaration_real(name, close)
         return declaration
 
     def declaration_reference_from_instance(self, instance, close=True):
@@ -359,6 +393,26 @@ public:
             declaration += ';\n'
         return declaration
 
+    def initialization_instance(self, instance_name, instance_type, init_code, size = 1, bundle_type = ''):
+        code = ''
+        if not init_code == '':
+            if instance_type == 'real':
+                code = self.assignment(instance_name, init_code)
+            elif instance_type == 'bool':
+                code = self.assignment(instance_name, init_code)
+            elif instance_type == 'string':
+                value = '"' + init_code + '"'
+                code = self.assignment(instance_name, value)
+            elif instance_type == 'bundle':
+                for i in range(size):
+                    code += self.initialization_instance(instance_name + '[%i]'%i,
+                                                         bundle_type,
+                                                         init_code[i]
+                                                         )
+            else:
+                ValueError("Unsupported type for initialization: " + instance_type)
+        return code
+
     def conditional_code(self, condition, code):
         final_code =  "if (" + condition + ") {\n"
         final_code += code
@@ -384,13 +438,15 @@ public:
     def expression(self, expression):
         return expression + ';\n'
 
-    def assignment(self, assignee, value):
+    def assignment(self, assignee, value, cast_to = None):
         code = ''
         if type(value) == bool:
             value = self.value_bool(value);
         elif not type(value) == str and not type(value) == unicode:
-            value = self.number_to_string(value)
+            value = self.number_to_string(value, False)
         if not value == assignee:
+            if cast_to:
+                value = cast_to + '(' + value + ')'
             code = self.str_assignment%(assignee, value)
         return code
 
@@ -417,6 +473,8 @@ public:
             return 'bool'
         elif block['type'] == 'Unsupported':
             return 'real'
+        elif block['type'] == 'signalbridge':
+            return 'signalbridge'
 
     def get_globals_code(self, global_groups):
         code = ''
@@ -528,39 +586,83 @@ public:
             return ''
 
     # Module code ------------------------------------------------------------
-    def module_declaration(self, name, header_code, init_code, process_code, instance_consts = {}):
+    def module_declaration(self, name, header_code, init_code, blocks, domain_code, instance_consts = {}):
 
         out_type = 'void'
 
         process_functions = ''
         constructor_args = ''
+        init_functions = ''
+
+        process_code = {}
+
+        # TODO complete support for data types
+        data_types = []
+        for block in blocks:
+            if 'block' in block:
+                block = block['block']
+            elif 'blockbundle' in block:
+                block = block['blockbundle']
+
+            if block['type'] == 'signalbridge':
+                process_code[block['ports']['inputDomain']]['blocks'].append(block)
+                process_code[block['ports']['outputDomain']]['blocks'].append(block)
+            elif block['type'] == 'signal' or block['type'] == 'switch':
+                domain = block['ports']['domain']
+                if not domain in process_code:
+                    process_code[domain] = {"code": '', "blocks" : []}
+                    process_code[domain]['code'] += '\n'.join(domain_code[domain]['processing_code'])
+                process_code[domain]['blocks'].append(block)
+
+            if 'type' in block['ports']:
+                datatype = block['ports']['type']
+                if datatype == 'real':
+                    datatype = 'float' # hack...
+                data_types.append(datatype)
+            else:
+                data_types.append(None)
+
+
         for domain, domain_components in process_code.items():
             domain_proc_code = domain_components['code']
             input_declaration = ''
-            for input_block in domain_components['input_blocks']:
-    #            if 'blockbundle' in input_block:
-    #                for i in range(input_block['blockbundle']['size']):
-    #                    block_type = self.get_block_type(input_block)
-    #                    block_name = input_block['blockbundle']['name']
-    #                    if block_type == 'real':
-    #                        input_declaration += self.declaration_real(block_name + str(i), close = False) + ", "
-    #                input_declaration = input_declaration[:-2]
-    #            else:
-                input_declaration += self.declaration(input_block, close = False) + ", "
-            for output_block in domain_components['output_blocks']:
-                input_declaration +=  self.declaration_reference(output_block, False) + ", "
+            for block in domain_components['blocks']:
+                if block['type'] == 'signal' or block['type'] == 'switch':
+                    if len(block['ports']['_writes']) > 0:
+                        input_declaration +=  self.declaration_reference(block, False) + ", "
+                    else:
+                        input_declaration += self.declaration(block, close = False) + ", "
+
+                    arguments = self.declaration_reference(block, close=False)
+
+                    data_type = None
+                    if block in blocks:
+                        data_type = data_types[blocks.index(block)]
+                    block_init_code = self.assignment(block['name'], block['ports']['default'], data_type)
+
+                    init_functions += self.str_function_declaration%(out_type, 'init_' + block['name'], arguments, block_init_code)
+
+                elif block['type'] == 'signalbridge':
+                    input_declaration +=  self.declaration_reference(block, False) + ", "
 
             if len(input_declaration) > 0:
                 input_declaration = input_declaration[:-2]
 
             process_functions += self.str_function_declaration%(out_type, 'process_' + str(domain), input_declaration, domain_proc_code)
 
+        # Instance consts passed through constructor
         for const_name, props in instance_consts.items():
             constructor_args += "float _" + const_name + ","
         if len(constructor_args) > 0 and constructor_args[-1] == ',':
             constructor_args = constructor_args[:-1]
-        declaration = self.str_module_declaration%(name, header_code, name, constructor_args, init_code, process_functions)
+
+        declaration = self.str_module_declaration%(name, header_code, name, constructor_args, init_code, process_functions + init_functions)
+        template_types = ''
+        if len(template_types) > 0:
+            declaration = "template <%s>\n"%template_types + declaration
         return declaration
+
+
 
     def module_set_property(self, handle, port_name, in_tokens):
         code = handle + '.set_' + port_name + '(' + in_tokens[0] + ');'
@@ -631,11 +733,45 @@ public:
     def loop_declaration(self, name, header_code, condition, init_code,
                              process_code, references = []):
 
+#        out_type = 'void'
+#
+#        process_functions = ''
+#        declared_references = []
+##        constructor_args = ''
+#        input_declaration = ''
+##            for output_block in domain_components['output_blocks']:
+##                input_declaration +=  self.declaration_reference(output_block, False) + ", "
+#
+#        for ref in references:
+#            if not ref.get_name() in declared_references:
+#                input_declaration +=  self.declaration_reference_from_instance(ref, False) + ", "
+#                declared_references.append(ref.get_name())
+#
+#        if len(input_declaration) > 0:
+#            input_declaration = input_declaration[:-2]
+#
+#        domain_proc_code = ''
+#        for domain, domain_components in process_code.items():
+#            domain_proc_code += domain_components['code'] # We will join all domains together here.
+#            # FIXME we probably need to fix this upstream as order of execution might be important. but maybe not....
+#
+#        internal_loop = self.str_while_declaration%(condition, domain_proc_code)
+#
+#        process_functions += self.str_function_declaration%(out_type, name + '_process',
+#                                                            input_declaration, header_code + init_code + internal_loop)
+##
+##        for const_name, props in instance_consts.items():
+##            constructor_args += "float _" + const_name + ","
+##        if len(constructor_args) > 0 and constructor_args[-1] == ',':
+##            constructor_args = constructor_args[:-1]
+#        declaration = process_functions
+#        return declaration
+
         out_type = 'void'
 
         process_functions = ''
         declared_references = []
-#        constructor_args = ''
+        constructor_args = ''
         input_declaration = ''
 #            for output_block in domain_components['output_blocks']:
 #                input_declaration +=  self.declaration_reference(output_block, False) + ", "
@@ -662,13 +798,19 @@ public:
 #            constructor_args += "float _" + const_name + ","
 #        if len(constructor_args) > 0 and constructor_args[-1] == ',':
 #            constructor_args = constructor_args[:-1]
-        declaration = process_functions
+        template_types = ''
+        declaration = self.str_module_declaration%(name, header_code, name, constructor_args, init_code, process_functions)
+        if len(template_types) > 0:
+            declaration = "template <%s>\n"%template_types + declaration
         return declaration
+
+
+
 
 
     def loop_processing_code(self, reaction_name, in_tokens, out_tokens):
 #        code = handle + '.process_' + str(domain_name) + '('
-        code =  reaction_name + '_process' + '('
+        code =  reaction_name + '.process' + '('
         for in_token in in_tokens:
             code += in_token + ", "
 
@@ -678,6 +820,18 @@ public:
             code = code[:-2] # Chop off extra comma
         code += ')'
         return code
+
+        # Module code ------------------------------------------------------------
+    def platform_module_declaration(self, name, process_args, header_code, init_code, process_code):
+
+        out_type = 'void'
+
+        process_functions = self.str_function_declaration%(out_type, 'process' , process_args, process_code)
+
+        constructor_args = ''
+        declaration = self.str_module_declaration%(name, header_code, name, constructor_args, init_code, process_functions)
+
+        return declaration
 
     def buffer_processing_input_code(self, buffer_name, token):
         return buffer_name + ".write(%s)"%token

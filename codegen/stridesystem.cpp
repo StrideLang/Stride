@@ -61,6 +61,8 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
     QString systemFile = m_systemPath + QDir::separator() + "System.stride";
 
     m_library.setLibraryPath(strideRoot, importList);
+
+
     if (QFile::exists(systemFile)) {
         ASTNode systemTree = AST::parseFile(systemFile.toStdString().c_str(), nullptr);
         if (systemTree) {
@@ -95,12 +97,18 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
                             }
                             continue;
                         }
+
+                        for(ASTNode node : tree->getChildren()) {
+                            size_t indexExtension = file.toStdString().find(".stride");
+                            string scopeName = file.toStdString().substr(0, indexExtension);
+                            node->appendToPropertyValue("validScopes",
+                                                        std::make_shared<ValueNode>(scopeName, __FILE__, __LINE__) );
+                        }
+
                         QString namespaceName = importList[QString::fromStdString(subPath)];
                         if (!namespaceName.isEmpty()) {
-                            for(ASTNode node : tree->getChildren()) {
                                 // Do we need to set namespace recursively or would this do?
                                 //                            node->setNamespace(namespaceName.toStdString());
-                            }
                         }
                     }
                 }
@@ -444,6 +452,7 @@ map<string, vector<ASTNode>> StrideSystem::getBuiltinObjectsReference()
     objects[""] = vector<ASTNode>();
     for (auto platform: m_platforms) {
         vector<ASTNode> platformObjects = platform->getPlatformObjectsReference();
+
         if (m_testing) {
             vector<ASTNode> testingObjs = platform->getPlatformTestingObjectsRef();
             for (size_t i = 0; i < platformObjects.size(); i++) {
@@ -465,20 +474,58 @@ map<string, vector<ASTNode>> StrideSystem::getBuiltinObjectsReference()
                 }
             }
         }
+
         // Add all platform objects with their namespace name
         objects[platform->getFramework()] = platformObjects;
         // Then put first platform's objects in default namespace
         if (m_platforms.at(0) == platform) {
-            objects[""] = platformObjects;
+            for (auto node: platformObjects) {
+                objects[""].push_back(node);
+                if (node->getNodeType() == AST::Declaration || node->getNodeType() == AST::BundleDeclaration) {
+                    auto validScopes = node->getCompilerProperty("validScopes");
+                    if (validScopes) {
+                        assert(validScopes->getNodeType() == AST::List);
+                        bool rootFound = false;
+                        bool relativeScopeFound = false;
+                        for (auto child: validScopes->getChildren()) {
+                            std::shared_ptr<ValueNode> stringValue = std::static_pointer_cast<ValueNode>(child);
+                            assert(child->getNodeType() == AST::String);
+                            if (stringValue->getStringValue() == "::") {
+                                rootFound = true;
+                            } else if (stringValue->getStringValue() == "") {
+                                relativeScopeFound = true;
+                            }
+                        }
+                        if (!rootFound) {
+                            validScopes->addChild(std::make_shared<ValueNode>(string("::"), __FILE__, __LINE__));
+                        }
+                        if (!relativeScopeFound) {
+                            validScopes->addChild(std::make_shared<ValueNode>(string(""), __FILE__, __LINE__));
+                        }
+                    } else {
+                        auto newList = std::make_shared<ListNode>(std::make_shared<ValueNode>(string("::"), __FILE__, __LINE__),
+                                                                  __FILE__, __LINE__);
+                        newList->addChild(std::make_shared<ValueNode>(string(""), __FILE__, __LINE__));
+                        node->setCompilerProperty("validScopes", newList);
+                    }
+
+                }
+            }
         }
     }
 
     // finally add library objects.
     for(ASTNode object: m_library.getLibraryMembers()) {
         objects[""].push_back(object);
+//        auto nodeNoNameSpace = object->deepCopy();
+//        nodeNoNameSpace->setNamespaceList(vector<string>());
+//        objects[""].push_back(nodeNoNameSpace);
     }
     for(std::shared_ptr<DeclarationNode> decl: m_platformDefinitions) {
         objects[""].push_back(decl);
+//        auto nodeNoNameSpace = decl->deepCopy();
+//        nodeNoNameSpace->setNamespaceList(vector<string>());
+//        objects[""].push_back(nodeNoNameSpace);
     }
     return objects;
 }

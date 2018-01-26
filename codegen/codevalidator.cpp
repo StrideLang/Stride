@@ -33,6 +33,7 @@
 */
 
 #include <memory>
+#include <sstream>
 
 #include <QVector>
 #include <QDebug>
@@ -82,7 +83,7 @@ void CodeValidator::validateTree(QString platformRootDir, ASTNode tree)
                 m_errors.append(error);
             }
         } else { // Make a default platform that only inlcudes the common library
-            m_system =  std::make_shared<StrideSystem>(platformRootDir, "", -1, -1, importList);
+            m_system =  std::make_shared<StrideSystem>(platformRootDir, __FILE__, __LINE__, -1, importList);
         }
         if (systems.size() > 0) { // Store system details in tree
             systems.at(0)->setHwPlatforms(m_system->getFrameworkNames());
@@ -320,7 +321,7 @@ void CodeValidator::setNodeRate(ASTNode node, double rate, QVector<ASTNode> scop
         BlockNode *name = static_cast<BlockNode *>(node.get());
         std::shared_ptr<DeclarationNode> declaration =  CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scope, tree, name->getNamespaceList());
         if (declaration) {
-            std::shared_ptr<ValueNode> value = std::make_shared<ValueNode>(rate, "", -1);
+            std::shared_ptr<ValueNode> value = std::make_shared<ValueNode>(rate, __FILE__, __LINE__);
             declaration->replacePropertyValue("rate", value);
         }
         return;
@@ -328,7 +329,7 @@ void CodeValidator::setNodeRate(ASTNode node, double rate, QVector<ASTNode> scop
         BundleNode *bundle = static_cast<BundleNode *>(node.get());
         std::shared_ptr<DeclarationNode> declaration =  CodeValidator::findDeclaration(QString::fromStdString(bundle->getName()), scope, tree, bundle->getNamespaceList());
         if (declaration) {
-            std::shared_ptr<ValueNode> value = std::make_shared<ValueNode>(rate, "", -1);
+            std::shared_ptr<ValueNode> value = std::make_shared<ValueNode>(rate, __FILE__, __LINE__);
             if (!declaration->replacePropertyValue("rate", value)) {
                 qDebug() << "Couldn't set rate. Rate property does not exist.";
             }
@@ -381,33 +382,30 @@ ASTNode CodeValidator::getDefaultPortValueForType(string type, string portName, 
     return nullptr;
 }
 
-bool CodeValidator::scopesMatch(QStringList scopeList, ASTNode node)
+bool CodeValidator::namespaceMatch(std::vector<string> scopeList, std::shared_ptr<DeclarationNode> decl)
 {
-    if ((size_t) scopeList.size() != node->getScopeLevels()) {
-        return false;
-    }
-    for(size_t i = 0; i < node->getScopeLevels(); i++) {
-        if (scopeList.at(i) != QString::fromStdString(node->getScopeAt(i))) {
-            return false;
-        }
-    }
-    return true;
-}
+    const char* const delim = "::";
 
-bool CodeValidator::nodeInScope(std::vector<string> scopeList, ASTNode node)
-{
-    if (node->getNamespaceList().size() == 0) {
-        return true;
+    std::ostringstream joined;
+    std::copy(scopeList.begin(), scopeList.end(),
+               std::ostream_iterator<std::string>(joined, delim));
+    string namespaceString = joined.str();
+    if (namespaceString.size() > 2) {
+        namespaceString = namespaceString.substr(0, namespaceString.size() - 2); // remove trailing '::'
     }
-    if (scopeList.size() != node->getScopeLevels()) {
-        return false;
+    auto validScopesList = decl->getCompilerProperty("validScopes");
+    if (!validScopesList) { // This will occur for user declarations
+        validScopesList = std::make_shared<ListNode>(
+                    std::make_shared<ValueNode>(string(""), __FILE__, __LINE__),
+                    __FILE__, __LINE__);
     }
-    for(size_t i = 0; i < node->getScopeLevels(); i++) {
-        if (scopeList.at(i) != node->getScopeAt(i)) {
-            return false;
+    for(auto scopeString: validScopesList->getChildren()) {
+        Q_ASSERT(scopeString->getNodeType() == AST::String);
+        if (static_pointer_cast<ValueNode>(scopeString)->getStringValue() == namespaceString) {
+            return true;
         }
     }
-    return true;
+    return false;
 }
 
 vector<StreamNode *> CodeValidator::getStreamsAtLine(ASTNode tree, int line)
@@ -421,19 +419,6 @@ vector<StreamNode *> CodeValidator::getStreamsAtLine(ASTNode tree, int line)
         }
     }
     return streams;
-}
-
-bool CodeValidator::scopesMatch(ASTNode node1, ASTNode node2)
-{
-    if (node1->getScopeLevels() != node2->getScopeLevels()) {
-        return false;
-    }
-    for(size_t i = 0; i < node1->getScopeLevels(); i++) {
-        if (node1->getScopeAt(i) != node2->getScopeAt(i)) {
-            return false;
-        }
-    }
-    return true;
 }
 
 QList<LangError> CodeValidator::getErrors()
@@ -767,15 +752,26 @@ void CodeValidator::validateSymbolUniqueness(QVector<ASTNode > scope)
                 nodeName = QString::fromStdString(static_cast<DeclarationNode *>(node.get())->getName());
             }
             if (!nodeName.isEmpty() && !siblingName.isEmpty() && nodeName == siblingName) {
-                if (CodeValidator::scopesMatch(node, sibling)) {
-                    LangError error;
-                    error.type = LangError::DuplicateSymbol;
-                    error.lineNumber = sibling->getLine();
-                    error.filename = sibling->getFilename();
-                    error.errorTokens.push_back(nodeName.toStdString());
-                    error.errorTokens.push_back(node->getFilename());
-                    error.errorTokens.push_back(std::to_string(node->getLine()));
-                    m_errors << error;
+                auto nodeScopes = node->getNamespaceList();
+                auto siblingScopes = sibling->getNamespaceList();
+                if (nodeScopes.size() == siblingScopes.size()) {
+                    bool duplicateSymbol = true;
+                    for (int i = 0; i < nodeScopes.size(); i++) {
+                        if (nodeScopes[i] != siblingScopes[i]) {
+                            duplicateSymbol = false;
+                            break;
+                        }
+                    }
+                    if (duplicateSymbol) {
+                        LangError error;
+                        error.type = LangError::DuplicateSymbol;
+                        error.lineNumber = sibling->getLine();
+                        error.filename = sibling->getFilename();
+                        error.errorTokens.push_back(nodeName.toStdString());
+                        error.errorTokens.push_back(node->getFilename());
+                        error.errorTokens.push_back(std::to_string(node->getLine()));
+                        m_errors << error;
+                    }
                 }
             }
         }
@@ -1318,51 +1314,51 @@ int CodeValidator::getTypeNumInputs(std::shared_ptr<DeclarationNode> blockDeclar
 std::shared_ptr<DeclarationNode> CodeValidator::findDeclaration(QString objectName, const QVector<ASTNode> &scopeStack, ASTNode tree, vector<string> scope, vector<string> defaultNamespaces)
 {
     QVector<ASTNode> globalAndLocal;
-    for (ASTNode scope : scopeStack) {
-        if (scope) {
-            if (scope->getNodeType() == AST::List) {
-                ListNode *listNode = static_cast<ListNode *>(scope.get());
+    for (ASTNode scopeNode : scopeStack) {
+        if (scopeNode) {
+            if (scopeNode->getNodeType() == AST::List) {
+                ListNode *listNode = static_cast<ListNode *>(scopeNode.get());
                 globalAndLocal << QVector<ASTNode>::fromStdVector(listNode->getChildren());
-            } else if (scope->getNodeType() == AST::Declaration || scope->getNodeType() == AST::BundleDeclaration) {
-                 globalAndLocal << scope;
+            } else if (scopeNode->getNodeType() == AST::Declaration || scopeNode->getNodeType() == AST::BundleDeclaration) {
+                 globalAndLocal << scopeNode;
             }
         }
     }
     if (tree) {
         globalAndLocal << QVector<ASTNode>::fromStdVector(tree->getChildren());
     }
-    QStringList scopesList = objectName.split(":");
-    objectName = scopesList.back();
+    vector<string> scopesList;
+    for(auto part : objectName.split(":")) {
+        scopesList.push_back(part.toStdString());
+    }
+    objectName = QString::fromStdString(scopesList.back());
     scopesList.pop_back();
     for(string ns:scope) {
-        scopesList.push_back(QString::fromStdString(ns));
+        scopesList.push_back(ns);
     }
     for(ASTNode node : globalAndLocal) {
         if (node->getNodeType() == AST::BundleDeclaration) {
-            shared_ptr<DeclarationNode> block = static_pointer_cast<DeclarationNode>(node);
-            std::shared_ptr<BundleNode> bundle = block->getBundle();
+            shared_ptr<DeclarationNode> decl = static_pointer_cast<DeclarationNode>(node);
+            std::shared_ptr<BundleNode> bundle = decl->getBundle();
             QString name = QString::fromStdString(bundle->getName());
-            if (name == objectName && CodeValidator::scopesMatch(scopesList, block)) {
-                return block;
+            if (name == objectName && CodeValidator::namespaceMatch(scopesList, decl)) {
+                return decl;
             }
             for (auto ns: defaultNamespaces) {
-                QStringList prefixedScopesList = scopesList;
-                prefixedScopesList.prepend(QString::fromStdString(ns));
-                if (name == objectName && CodeValidator::scopesMatch(scopesList, block)) {
-                    return block;
+                scopesList.insert(scopesList.begin(), ns);
+                if (name == objectName && CodeValidator::namespaceMatch(scopesList, decl)) {
+                    return decl;
                 }
             }
         } else if (node->getNodeType() == AST::Declaration) {
-            std::shared_ptr<DeclarationNode> block = static_pointer_cast<DeclarationNode>(node);
-            QString name = QString::fromStdString(block->getName());
-            if (name == objectName && CodeValidator::scopesMatch(scopesList, block)) {
-                return block;
+            std::shared_ptr<DeclarationNode> decl = static_pointer_cast<DeclarationNode>(node);
+            QString name = QString::fromStdString(decl->getName());
+            if (name == objectName && CodeValidator::namespaceMatch(scopesList, decl)) {
+                return decl;
             }
             for (auto ns: defaultNamespaces) {
-                QStringList prefixedScopesList = scopesList;
-                prefixedScopesList.prepend(QString::fromStdString(ns));
-                if (name == objectName && CodeValidator::scopesMatch(scopesList, block)) {
-                    return block;
+                if (name == objectName && CodeValidator::namespaceMatch(scopesList, decl)) {
+                    return decl;
                 }
             }
         }
@@ -1792,7 +1788,7 @@ std::shared_ptr<DeclarationNode> CodeValidator::findTypeDeclarationByName(string
                         if (valueNode->getNodeType() == AST::String) {
                             ValueNode *value = static_cast<ValueNode *>(valueNode.get());
                             if (typeName == value->getStringValue()
-                                    && CodeValidator::nodeInScope(namespaces, node) ) {
+                                    && CodeValidator::namespaceMatch(namespaces, declarationNode) ) {
                                 return declarationNode;
                             }
                         }
@@ -1811,7 +1807,7 @@ std::shared_ptr<DeclarationNode> CodeValidator::findTypeDeclarationByName(string
                     if (valueNode && valueNode->getNodeType() == AST::String) {
                         ValueNode *value = static_cast<ValueNode *>(valueNode.get());
                         if (typeName == value->getStringValue()
-                                && CodeValidator::nodeInScope(namespaces, node) ) {
+                                && CodeValidator::namespaceMatch(namespaces, declarationNode) ) {
                             return declarationNode;
                         }
                     }

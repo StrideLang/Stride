@@ -40,6 +40,7 @@
 class ListNode : public AST
 {
 public:
+    ListNode(const char *filename, int line);
     ListNode(ASTNode newMember, const char *filename, int line);
     ~ListNode();
 
