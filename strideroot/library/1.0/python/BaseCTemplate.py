@@ -105,6 +105,9 @@ public:
             marker = "//#line " + str(line) + ' "' + filename + '"\n'
         return marker
 
+    def comment(self, comment_text):
+        return '// ' + comment_text + ';\n'
+
     def number_to_string(self, number, close=True):
         if type(number) == int:
             s = '%i'%number
@@ -234,6 +237,8 @@ public:
             code = self.declaration_reaction(instance.get_module_type(), instance.get_name())
         elif instance.get_type() == 'buffer':
             code = self.declaration_buffer(instance.get_buffer_type(), instance.get_name(), instance.get_size())
+        elif instance.get_type() == 'platform_module':
+            code = self.declaration_module(instance.get_module_type(), instance.get_name(), instance.get_instance_consts())
         else:
             raise ValueError('Unsupported type for instance')
 #        code += templates.source_marker(instance.get_line(), instance.get_filename())
@@ -668,14 +673,17 @@ public:
         code = handle + '.set_' + port_name + '(' + in_tokens[0] + ');'
         return code
 
-    def module_processing_code(self, handle, in_tokens, out_tokens, domain_name):
+    def module_processing_code(self, handle, tokens, domain_name):
         code = handle + '.process_' + str(domain_name) + '('
-        for in_token in in_tokens:
-            code += in_token + ", "
+        for token in tokens:
+            token_name = token[0]
+            is_output = token[1]
+            if is_output: #is output
+                code += token_name + ", "
+            else:
+                code += token_name + ", "
 
-        for out_token in out_tokens:
-            code += out_token + ", "
-        if (len(in_tokens) > 0 and len(out_tokens) == 0) or (len(out_tokens) > 0):
+        if len(code) > 2:
             code = code[:-2] # Chop off extra comma
         code += ')'
         return code
@@ -822,9 +830,7 @@ public:
         return code
 
         # Module code ------------------------------------------------------------
-    def platform_module_declaration(self, name, process_args, header_code, init_code, process_code):
-
-        out_type = 'void'
+    def platform_module_declaration(self, name, process_args, header_code, init_code, process_code, out_type):
 
         process_functions = self.str_function_declaration%(out_type, 'process' , process_args, process_code)
 
@@ -832,6 +838,21 @@ public:
         declaration = self.str_module_declaration%(name, header_code, name, constructor_args, init_code, process_functions)
 
         return declaration
+
+    def platform_module_processing_code(self, handle, tokens):
+        code = handle + '.process('
+        for token in tokens:
+            token_name = token[0]
+            is_output = token[1]
+            if is_output: #is output
+                code += token_name + ", "
+            else:
+                code += token_name + ", "
+
+        if len(code) > 2:
+            code = code[:-2] # Chop off extra comma
+        code += ')'
+        return code
 
     def buffer_processing_input_code(self, buffer_name, token):
         return buffer_name + ".write(%s)"%token

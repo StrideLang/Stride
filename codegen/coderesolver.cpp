@@ -521,12 +521,15 @@ void CodeResolver::insertBuiltinObjects()
                 }
             } if (block->getObjectType() == "constant") {
                 if (block->getName() == "PlatformDomain" || block->getName() == "PlatformRate"
-                        || block->getName() == "_ContextDomain" || block->getName() == "_ContextRate") {
+                        || block->getName() == "_ContextDomain" || block->getName() == "_ContextRate"
+                        || block->getName() == "_ContextInitDomain") {
                     m_tree->addChild(block);
                 }
-            }
-            else if (block->getObjectType() == "_domainDefinition"
+            } else if (block->getObjectType() == "_domainDefinition"
                      || block->getObjectType() == "_frameworkDescription") // Hack... this should be getting inserted when resolving symbols...)
+            {
+                m_tree->addChild(block);
+            } else if (block->getName() == "_PlatformDomainProcessing") // Hack... this should be getting inserted when resolving symbols...)
             {
                 m_tree->addChild(block);
             }

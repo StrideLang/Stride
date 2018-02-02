@@ -1,0 +1,46 @@
+optionGroup AudioIOGroup {
+	name: "Audio Configuration"
+}
+
+stringListOption RtAudioAPI {
+	name: "RtAudio API"
+	possibleValues: ["alsa", "pulse", "jack"]
+	default: "pulse"
+	buildPlatforms: ["linux"]
+	meta: "RtAudio API"
+}
+
+intOption DeviceIndex {
+	name: "Device Index"
+	minimum: 0
+	maximum: 128
+	default: 0
+	buildPlatforms: ["all"]
+	meta: "Index of audio device to use"
+}
+
+intOverride _NumInputChannels {
+	name: "Input Channels"
+	minimum: 0
+	maximum: 128
+	default: 2
+	override: [["RtAudio", _NumInputChannels]]
+	meta: "Number of input channels"
+}
+
+intOverride _NumOutputChannels {
+	name: "Output Channels"
+	minimum: 0
+	maximum: 128
+	default: 2
+	override: [["RtAudio", _NumOutputChannels]]
+	meta: "Number of output channels"
+}
+
+intListOverride AudioRate {
+	name: "Sampling Rate"
+	possibleValues: [32000, 44100, 48000, 88200, 96000]
+	default: 48000
+	override: [["RtAudio", AudioRate]]
+	meta: "Sampling Rate"
+}

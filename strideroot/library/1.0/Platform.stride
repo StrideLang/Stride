@@ -104,6 +104,18 @@ type _Domain {
 	inherits: ["base"]
 }
 
+type _DomainProcessing {
+	typeName: "_domainProcessing"
+	properties: [
+		typeProperty DomainStreams {
+			name: "domainStreams"
+			types: [""]
+			default: none
+			required: on
+		}
+	]
+}
+
 type _FrameworkDescription {
 	typeName: "_frameworkDescription"
 	properties: [

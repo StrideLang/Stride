@@ -1,4 +1,10 @@
 
+_domainProcessing _PlatformDomainProcessing {
+	domainStreams: [
+		InitializationDomain >> AudioDomain;
+	]
+}
+
 _frameworkDescription _RtAudioFramework {
     frameworkName: "RtAudio"
 }
@@ -9,4 +15,27 @@ constant PlatformDomain {
 
 constant PlatformRate {
     value: AudioRate.value
+}
+
+constant _ContextInitDomain {
+    value: InitializationDomain.domainName
+}
+
+_domainDefinition InitializationDomain {
+	domainName: "InitializationDomain"
+	framework: _RtAudioFramework
+	rate: 0
+	globalsTag: "Includes"
+	declarationsTag: "Declarations"
+	processingTag: "Initialization"
+	initializationTag: "Initialization"
+	cleanupTag: "Initialization"
+    domainIncludes: []
+    domainDeclarations: []
+    domainInitialization: '// init domain init'
+	domainFunction: '// init domain processing
+	%%domainCode%%
+	// end init domain processing
+	'
+    domainCleanup: '// init domain cleanup'
 }

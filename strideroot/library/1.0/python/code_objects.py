@@ -107,9 +107,22 @@ class ModuleInstance(Instance):
         super(ModuleInstance, self).__init__('', scope, domain, vartype, handle, atom, post)
         self.instance_consts = instance_consts
 
-
     def get_type(self):
         return 'module'
+
+    def get_module_type(self):
+        return self.vartype
+
+    def get_instance_consts(self):
+        return self.instance_consts
+
+class PlatformModuleInstance(ModuleInstance):
+    def __init__(self, scope, domain, vartype, handle, atom, instance_consts, post = True):
+        super(PlatformModuleInstance, self).__init__(scope, domain, vartype, handle, atom, instance_consts, post)
+        self.instance_consts = instance_consts
+
+    def get_type(self):
+        return 'platform_module'
 
     def get_module_type(self):
         return self.vartype
@@ -129,3 +142,29 @@ class Declaration(Code):
 
     def get_name(self):
         return self.name
+
+class DomainProcessingCode(object):
+    def __init__(self, domain_name):
+        self.domain_name = domain_name
+        self.code = ''
+        self.tokens = []
+        self.token_is_input = []
+
+    def get_domain_name(self):
+        return self.domain_name
+
+    def set_execution_domain(self, exec_domain):
+        self.execution_domain = exec_domain
+
+    def get_execution_domain(self):
+        return self.execution_domain
+
+    def add_token(self, token_name, is_input):
+        self.tokens.append(token_name)
+        self.token_is_input.append(is_input)
+
+    def append_code(self, code):
+        self.code += code
+
+    def get_code(self):
+        return self.code
