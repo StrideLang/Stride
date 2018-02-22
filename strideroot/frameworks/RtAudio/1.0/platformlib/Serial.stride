@@ -23,7 +23,7 @@ _domainDefinition SerialOutDomain {
 
 # Serial ------------------------
 
-platformType _SerialPrintType {
+platformBlock _SerialPrintType {
     typeName: '_serialPrintType'
 	inputs: ["string", "string"]
 #	outputs: 0
@@ -46,7 +46,7 @@ platformType _SerialPrintType {
 
 
 
-platformType _SerialInType {
+platformBlock _SerialInType {
     typeName: '_serialInType'
 #	inputs: 0
 	outputs: ["string"]

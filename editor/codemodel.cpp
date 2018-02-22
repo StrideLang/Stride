@@ -264,7 +264,7 @@ QString CodeModel::getTooltipText(QString symbol)
 //            }
             if (declaration->getObjectType() == "module"
                     || declaration->getObjectType() == "reaction"
-                    || declaration->getObjectType() == "reaction") {
+                    || declaration->getObjectType() == "loop") {
 
                 ASTNode properties = declaration->getPropertyValue("ports");
                 if (properties && properties->getNodeType() == AST::List) {

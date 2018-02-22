@@ -1298,7 +1298,8 @@ int CodeValidator::getTypeNumInputs(std::shared_ptr<DeclarationNode> blockDeclar
             QList<LangError> errors;
             auto typeDeclaration =  findTypeDeclarationByName(blockDeclaration->getObjectType(),
                                                    scope, tree, errors);
-            if (typeDeclaration && typeDeclaration->getObjectType() == "platformType") {
+            if (typeDeclaration && (typeDeclaration->getObjectType() == "platformModule"
+                                    || typeDeclaration->getObjectType() == "platformBlock")) {
                 auto inputs = typeDeclaration->getPropertyValue("inputs");
                 if (inputs && inputs->getNodeType() == AST::List) {
                     internalSize = inputs->getChildren().size();
@@ -1455,7 +1456,8 @@ PortType CodeValidator::resolveNodeOutType(ASTNode node, QVector<ASTNode > scope
     } else if (node->getNodeType() == AST::Range) {
         return resolveRangeType(static_cast<RangeNode *>(node.get()), scope, tree);
     } else if (node->getNodeType() == AST::PortProperty) {
-        return resolvePortPropertyType(static_cast<PortPropertyNode *>(node.get()), scope, tree);
+        return None;
+//        return resolvePortPropertyType(static_cast<PortPropertyNode *>(node.get()), scope, tree);
     }
     return None;
 }
@@ -1783,7 +1785,8 @@ std::shared_ptr<DeclarationNode> CodeValidator::findTypeDeclarationByName(string
                 if (node->getNodeType() == AST::Declaration) {
                     std::shared_ptr<DeclarationNode> declarationNode = static_pointer_cast<DeclarationNode>(node);
                     if (declarationNode->getObjectType() == "type"
-                            || declarationNode->getObjectType() == "platformType") {
+                            || declarationNode->getObjectType() == "platformModule"
+                            || declarationNode->getObjectType() == "platformBlock") {
                         ASTNode valueNode = declarationNode->getPropertyValue("typeName");
                         if (valueNode->getNodeType() == AST::String) {
                             ValueNode *value = static_cast<ValueNode *>(valueNode.get());
@@ -1802,7 +1805,8 @@ std::shared_ptr<DeclarationNode> CodeValidator::findTypeDeclarationByName(string
             if (node->getNodeType() == AST::Declaration) {
                 std::shared_ptr<DeclarationNode> declarationNode = static_pointer_cast<DeclarationNode>(node);
                 if (declarationNode->getObjectType() == "type"
-                        || declarationNode->getObjectType() == "platformType") {
+                        || declarationNode->getObjectType() == "platformModule"
+                        || declarationNode->getObjectType() == "platformBlock") {
                     ASTNode valueNode = declarationNode->getPropertyValue("typeName");
                     if (valueNode && valueNode->getNodeType() == AST::String) {
                         ValueNode *value = static_cast<ValueNode *>(valueNode.get());
@@ -1850,8 +1854,9 @@ QVector<ASTNode> CodeValidator::getPortsForType(string typeName, QVector<ASTNode
     for(ASTNode node : scope) {
         if (node->getNodeType() == AST::Declaration) {
             std::shared_ptr<DeclarationNode> block = static_pointer_cast<DeclarationNode>(node);
-            if (block->getObjectType() == "platformType"
-                    || block->getObjectType() == "type") {
+            if (block->getObjectType() == "type"
+                    || block->getObjectType() == "platformModule"
+                    || block->getObjectType() == "platformBlock") {
                 ValueNode *name = static_cast<ValueNode*>(block->getPropertyValue("typeName").get());
                 if (name) {
                     Q_ASSERT(name->getNodeType() == AST::String);
@@ -1870,8 +1875,9 @@ QVector<ASTNode> CodeValidator::getPortsForType(string typeName, QVector<ASTNode
         for(ASTNode node : tree->getChildren()) {
             if (node->getNodeType() == AST::Declaration) {
                 std::shared_ptr<DeclarationNode> block = static_pointer_cast<DeclarationNode>(node);
-                if (block->getObjectType() == "platformType"
-                        || block->getObjectType() == "type") {
+                if (block->getObjectType() == "type"
+                        || block->getObjectType() == "platformModule"
+                        || block->getObjectType() == "platformBlock") {
                     ValueNode *name = static_cast<ValueNode*>(block->getPropertyValue("typeName").get());
                     if (name && name->getNodeType() == AST::String) {
                         if (name->getStringValue() == typeName) {

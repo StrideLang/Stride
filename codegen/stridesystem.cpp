@@ -293,28 +293,13 @@ QStringList StrideSystem::getWarnings()
 QStringList StrideSystem::getPlatformTypeNames()
 {
     QStringList typeNames;
-//    foreach(AST* group, m_platform) {
-//        foreach(AST *node, group->getChildren()) {
-//            if (node->getNodeType() == AST::Declaration) {
-//                DeclarationNode *block = static_cast<DeclarationNode *>(node);
-//                if (block->getObjectType() == "platformType") {
-//                    ValueNode *name = static_cast<ValueNode *>(block->getPropertyValue("typeName"));
-//                    if (name) {
-//                        Q_ASSERT(name->getNodeType() == AST::String);
-//                        typeNames << QString::fromStdString(name->getStringValue());
-//                    } else {
-//                        qDebug() << "Error. platform Type missing typeName port.";
-//                    }
-//                }
-//            }
-//        }
-//    }
     vector<ASTNode> libObjects = m_library.getLibraryMembers();
     for(ASTNode node : libObjects) {
         if (node->getNodeType() == AST::Declaration) {
             std::shared_ptr<DeclarationNode> block = static_pointer_cast<DeclarationNode>(node);
-            if (block->getObjectType() == "platformType"
-                    || block->getObjectType() == "type") {
+            if (block->getObjectType() == "type"
+                    || block->getObjectType() == "platformModule"
+                    || block->getObjectType() == "platformBlock") {
                 ValueNode *name = static_cast<ValueNode *>(block->getPropertyValue("typeName").get());
                 if (name && name->getNodeType() == AST::String) {
                     typeNames << QString::fromStdString(name->getStringValue());

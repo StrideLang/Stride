@@ -84,6 +84,8 @@ private:
     ASTNode expandFunctionFromProperties(std::shared_ptr<FunctionNode> func, QVector<ASTNode > scope, ASTNode tree);
     void fillDefaultPropertiesForNode(ASTNode node);
 
+    void analyzeChildConnections(ASTNode node, QVector<ASTNode> scopeStack = QVector<ASTNode>());
+
     void insertDependentTypes(string typeName, map<string, vector<ASTNode>> &objects);
     void insertBuiltinObjectsForNode(ASTNode node, map<string, vector<ASTNode> > &objects);
 

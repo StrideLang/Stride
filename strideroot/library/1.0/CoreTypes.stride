@@ -52,7 +52,7 @@ type _Type {
 		},
 		typeProperty Properties {
 			name: "properties"
-			types: [""] # TODO how to validate object lists?
+			types: [""] 
 			default: none
 			required: on
 		}

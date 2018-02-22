@@ -1,4 +1,4 @@
-platformType _DebugPrintType {
+platformModule _DebugPrintType {
     typeName: '_debugPrintType'
     inputs: ["real"]
     include: ["iostream"]

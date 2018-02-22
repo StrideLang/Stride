@@ -38,7 +38,8 @@ from __future__ import division
 
 
 from platformTemplates import templates
-from code_objects import Instance, BundleInstance, ModuleInstance, PlatformModuleInstance, BufferInstance, Declaration, DomainProcessingCode
+from code_objects import Instance, BundleInstance, ModuleInstance, PlatformModuleInstance, BufferInstance
+from code_objects import Declaration, ModuleDeclaration, DomainProcessingCode
 
 try:
     unicode_exists_test = type('a') == unicode
@@ -55,20 +56,22 @@ def signal_type_string(signal_declaration):
 class Atom(object):
     def __init__(self, line = -1, filename = ''):
         self.rate = -1
-        self.inline = False
-        self.globals = {}
-        self.handle = ''
         self.domain = None
-        self.line = line
+
         self.filename = filename
+        self.line = line
+
+        self.handle = ''
+        self.scopename_stack = [] # Holds the stack of names of parent blocks. This can be used for naming to avoid name clashes and to identify items declared outside their original scope in the final code
+
         self.inline = False
 
+        self.globals = {}
         # FIXME these sections should be driven by the platform definition
         self.global_sections = ['include', 'includeDir', 'linkTo', 'linkDir']
 
     def set_inline(self, inline):
         self.inline = inline
-
 
     def get_handles(self):
         if self.is_inline():
@@ -129,20 +132,20 @@ class Atom(object):
     def get_globals(self):
         return self.globals
 
-    def get_rate(self):
-        return self.rate
-
     def get_scope_index(self):
         return self.scope_index
 
     def get_domain(self):
         return self.domain
 
-    def get_line(self):
-        return self.line
+    def get_rate(self):
+        return self.rate
 
     def get_filename(self):
         return self.filename
+
+    def get_line(self):
+        return self.line
 
 
 class ValueAtom(Atom):
@@ -155,11 +158,13 @@ class ValueAtom(Atom):
         self.inline = True
         self.platform = platform
 
-        contextInitDomain = self.platform.find_declaration_in_tree("_ContextInitDomain")
-        if 'type' in contextInitDomain  and contextInitDomain['type'] == 'constant':
-            contextInitDomain = self.platform.find_declaration_in_tree(contextInitDomain['ports']['value'])
+#        contextInitDomain = self.platform.find_declaration_in_tree("_ContextInitDomain")
+#        if 'type' in contextInitDomain  and contextInitDomain['type'] == 'constant':
+#            contextInitDomain = self.platform.find_declaration_in_tree(contextInitDomain['ports']['value'])
+#
+#        self.domain = contextInitDomain['ports']['domainName']
 
-        self.domain = contextInitDomain['ports']['domainName']
+        self.domain = None
         self.scope_index = scope_index
 
     def get_handles(self):
@@ -518,43 +523,29 @@ class NameAtom(Atom):
         self.handle = declaration['name']  # + '_%03i'%token_index;
         self.platform_type = platform_type
         self.declaration = declaration
-        self.domain = None
-        self.signalbridge = None # Stores signalbridge name if applicable
+        self.in_domains = None
+        self.out_domains = None
         self.token_index = token_index
         self.previous_atom = previous_atom
 
-        if 'domain' in self.declaration['ports']:
-            if type(self.declaration['ports']['domain']) == dict:
-                # FIXME this should be set by the code validator
-                self.domain = self.declaration['ports']['domain']['name']['name']
-            else:
-                self.domain = self.declaration['ports']['domain']
-
+        # We should only get signals and signal bundles here. Platform types are
+        # handled in PlatformTypeAtom
         if self.declaration['type'] == "signalbridge":
-            if not previous_atom:
-                domainProp = self.declaration['ports']['outputDomain']
+            # TODO signalbridge needs to be phased out
+            self.out_domains = [self.declaration['ports']['outputDomain']]
+            self.in_domains = [self.declaration['ports']['inputDomain']]
+            if previous_atom:
+                self.domain = self.declaration['ports']['inputDomain']
             else:
-                domainProp = self.declaration['ports']['inputDomain']
-
-            if type(domainProp) == dict:
-                self.domain = domainProp['name']['name']
-            else:
-                self.domain = domainProp
-
-        if self.declaration['type'] == 'signal':
-            # TODO we need checking of scope and domain here
-            for scope_decl in self.platform.scope_stack[-1]:
-                # Do we need to support blockbundle here or are all signal bridges blocks?
-                if 'block' in scope_decl and 'type' in scope_decl['block'] and scope_decl['block']['type'] == "signalbridge":
-                    if scope_decl['block']['ports']['signal'] == self.handle:
-                        print(scope_decl['block']['ports']['signal'])
-                        # Do we actually need to store this here? It seems that this is not really accesible
-                        # where needed and we still have to go through the scope declarations anyway...
-                        self.signalbridge = scope_decl['block']['name']
+                self.domain = self.declaration['ports']['outputDomain']
+        else:
+            self.in_domains = [domain['value'] for domain in self.declaration['ports']['_reads']]
+            self.out_domains = [domain['value'] for domain in self.declaration['ports']['_writes']]
+            self.domain = self.declaration['ports']['domain']
 
 
         # TODO we should just add all sections found in platform_type['block'][section]
-        # And not worry wat exists already in self.global_sections
+        # And not worry what exists already in self.global_sections
         for section in self.global_sections:
             if section in platform_type['block']['ports']:
                 if section in self.globals:
@@ -573,9 +564,6 @@ class NameAtom(Atom):
             if len(platform_type['block']['ports']['outputs']) > 0:
                 self.set_inline(True)
 
-        if self.platform_type['block']['type'] == 'platformType':
-            self.set_inline(True) #FIXME Should generate a module instead of linline
-
         if 'rate' in declaration['ports']:
             if type(declaration['ports']['rate']) == dict:
                 self.rate = -1
@@ -585,18 +573,14 @@ class NameAtom(Atom):
 
     def get_declarations(self):
         declarations = []
-        if self.platform_type['block']['type'] == 'platformType':
-            declarations.append(Declaration(self.scope_index,
-                                            self.domain,
-                                            "_extern_%03i"%self.token_index, # This gives it a unique "id"... hacky
-                                            '\n'))
-        if 'declarations' in self.platform_type['block']:
-            for i,dec in enumerate(self.platform_type['block']['ports']['declarations']):
-                declarations.append(Declaration(self.scope_index,
-                                                self.domain,
-                                                "_dec_%03i"%self.token_index, # This gives it a unique "id"... hacky
-                                                dec['value'] + '\n'))
-                self.platform_type['block']['ports']['declarations'] = [] # declarations have been consumed
+
+#        if 'declarations' in self.platform_type['block']:
+#            for i,dec in enumerate(self.platform_type['block']['ports']['declarations']):
+#                declarations.append(Declaration(self.scope_index,
+#                                                self.domain,
+#                                                "_dec_%03i"%self.token_index, # This gives it a unique "id"... hacky
+#                                                dec['value'] + '\n'))
+#                self.platform_type['block']['ports']['declarations'] = [] # declarations have been consumed
         return declarations
 
     def get_instances(self):
@@ -608,7 +592,8 @@ class NameAtom(Atom):
                 if 'size' in self.declaration:
                     inits = [BundleInstance([str(default_value) for i in range(self.declaration['size'])],
                                      self.declaration['stack_index'],
-                                     self.domain,
+                                     self.in_domains,
+                                     self.out_domains,
                                      'string',
                                      self.handle,
                                      self.declaration['size'],
@@ -617,7 +602,8 @@ class NameAtom(Atom):
                 else:
                     inits = [Instance(default_value,
                                      self.declaration['stack_index'],
-                                     self.domain,
+                                     self.in_domains,
+                                     self.out_domains,
                                      'string',
                                      self.handle,
                                      self
@@ -626,7 +612,8 @@ class NameAtom(Atom):
                 if 'size' in self.declaration:
                     inits = [BundleInstance([str(default_value) for i in range(self.declaration['size'])],
                                      self.declaration['stack_index'],
-                                     self.domain,
+                                     self.in_domains,
+                                     self.out_domains,
                                      'real',
                                      self.handle,
                                      self.declaration['size'],
@@ -634,7 +621,8 @@ class NameAtom(Atom):
                 else:
                     inits = [Instance(str(default_value),
                                      self.declaration['stack_index'],
-                                     self.domain,
+                                     self.in_domains,
+                                     self.out_domains,
                                      'real',
                                      self.handle,
                                      self)]
@@ -642,7 +630,8 @@ class NameAtom(Atom):
             if self.declaration['ports']['bridgeType'] == 'switch':
                 inits = [Instance(default_value,
                                  self.declaration['stack_index'],
-                                 self.domain,
+                                     self.in_domains,
+                                     self.out_domains,
                                  'bool',
                                  self.handle,
                                  self
@@ -651,7 +640,8 @@ class NameAtom(Atom):
             elif signal_type_string(self.declaration):
                 inits = [Instance(default_value,
                                  self.declaration['stack_index'],
-                                 self.domain,
+                                     self.in_domains,
+                                     self.out_domains,
                                  'string',
                                  self.handle,
                                  self
@@ -659,14 +649,16 @@ class NameAtom(Atom):
             else:
                 inits = [Instance(str(default_value),
                                  self.declaration['stack_index'],
-                                 self.domain,
+                                     self.in_domains,
+                                     self.out_domains,
                                  'real',
                                  self.handle,
                                  self)]
         elif 'type' in self.declaration and self.declaration['type'] == 'constant':
             inits = [Instance(str(default_value),
                                  self.declaration['stack_index'],
-                                 self.domain,
+                                     self.in_domains,
+                                     self.out_domains,
                                  'real',
                                  self.handle,
                                  self)]
@@ -674,7 +666,8 @@ class NameAtom(Atom):
             if 'size' in self.declaration:
                 inits = [BundleInstance([templates.str_true if default_value else templates.str_false for i in range(self.declaration['size'])],
                                  self.declaration['stack_index'],
-                                 self.domain,
+                                     self.in_domains,
+                                     self.out_domains,
                                  'bool',
                                  self.handle,
                                  self.declaration['size'],
@@ -682,14 +675,16 @@ class NameAtom(Atom):
             else:
                 inits = [Instance(templates.str_true if default_value else templates.str_false,
                                  self.declaration['stack_index'],
-                                 self.domain,
+                                     self.in_domains,
+                                     self.out_domains,
                                  'bool',
                                  self.handle,
                                  self)]
         elif 'type' in self.declaration and self.declaration['type'] == 'trigger':
             inits = [Instance(templates.str_true if default_value else templates.str_false,
                              self.declaration['stack_index'],
-                             self.domain,
+                                     self.in_domains,
+                                     self.out_domains,
                              'bool',
                              self.handle,
                              self)]
@@ -726,7 +721,8 @@ class NameAtom(Atom):
         return code
 
     def get_preproc_once(self):
-        if 'block' in self.platform_type and self.platform_type['block']['type'] == "platformType":
+        if 'block' in self.platform_type and (
+                self.platform_type['block']['type'] == "platformBlock" or self.platform_type['block']['type'] == "platformModule"):
             if not self.platform_type['block']['ports']['preProcessingOnce'] == '':
                 return [[self.platform_type['block']['ports']['name'], self.platform_type['block']['ports']['preProcessingOnce']]]
         return None
@@ -791,7 +787,8 @@ class NameAtom(Atom):
         return code
 
     def get_postproc_once(self):
-        if 'block' in self.platform_type and self.platform_type['block']['type'] == "platformType":
+        if 'block' in self.platform_type and (
+                self.platform_type['block']['type'] == "platformBlock" or self.platform_type['block']['type'] == "platformModule"):
             if not self.platform_type['block']['ports']['postProcessingOnce'] == '':
                 return [[self.platform_type['block']['ports']['name'], self.platform_type['block']['ports']['postProcessingOnce']]]
         return None
@@ -1001,7 +998,8 @@ class BundleAtom(NameAtom):
         if 'default' in self.declaration and signal_type_string(self.declaration):
             instances = [BundleInstance(default_values,
                                  self.scope_index,
-                                 self.domain,
+                                     self.in_domains,
+                                     self.out_domains,
                                  'string',
                                  self.handle,
                                  self.declaration['size'],
@@ -1011,7 +1009,8 @@ class BundleAtom(NameAtom):
             if 'size' in self.declaration:
                 instances = [BundleInstance([str(default) for default in default_values],
                                      self.scope_index,
-                                     self.domain,
+                                     self.in_domains,
+                                     self.out_domains,
                                      'real',
                                      self.handle,
                                      self.declaration['size'],
@@ -1108,7 +1107,6 @@ class ModuleAtom(Atom):
         self.scope_index = scope_index
         self.name = module["name"]
         self.handle = self.name + '_%03i'%token_index
-        #self._platform_code = platform_code
         self._input_blocks = []
         self._output_blocks = []
         self._index = token_index
@@ -1163,36 +1161,110 @@ class ModuleAtom(Atom):
             header_code += templates.declaration_real(const_name);
 
         # add generated code
-        # TODO is this still needed?
         for domain, code in domain_code.items():
             header_code += code['header_code']
             init_code += code['init_code']
 
+        for element in self.code['scope_elements']:
+            if (type(element) == Instance or issubclass(type(element), Instance)) and element.get_scope() > self.scope_index:
+                decls = templates.declarations_from_instance(element);
+                for domain, decl_text in decls.items():
+                    header_code += templates.expression(decl_text)
+#                init_code += templates.
+
+#        # Prepare list with referenced members in stream.
+#        # All these references need to come in as reference arguments
+#        self.references = []
+#        referenced = []
+#        for domain, reads in self.code['reads'].items():
+#            for read in reads:
+#                is_internal = True
+#                for block in self._input_blocks:
+##                for block in self._output_blocks:
+#                    name = block['name']
+#                    if name == read.get_name():
+#                        is_internal = False
+#                        break
+#                if is_internal:
+#                    if not read.get_name() in referenced:
+#                        referenced += [read.get_name()]
+#                        self.references.append(read)
+#        for domain, writes in self.code['writes'].items():
+#            for write in writes:
+#                is_internal = True
+#                for block in self._output_blocks:
+##                for block in self._output_blocks:
+#                    name = block['name']
+#                    if name == write.get_name():
+#                        is_internal = False
+#                        break
+#                if is_internal:
+#                    if not write.get_name() in referenced:
+#                        referenced += [write.get_name()]
+#                        self.references.append(write)
+
+#        scope_blocks = []
+#        for block in self._blocks:
+#            if 'block' in block:
+#                block = block['block']
+#            elif 'blockbundle' in block:
+#                block = block['blockbundle']
+#            if block['type'] == 'signal' or block['type'] == 'switch':
+#                if block['stack_index'] == len(self.platform.scope_stack):
+#                    scope_blocks.append(block)
+
+        scope_elements = self.code['scope_elements']
 
         declaration_text = templates.module_declaration(
                 self.name, header_code,
-                init_code, self._blocks, domain_code,
+                init_code, scope_elements, domain_code,
                 self.instance_consts)
 
-        self.code_declaration = Declaration(self.module['stack_index'],
-                                        self.domain,
+        # FIXME what's a good way to decide where a module should be declared?
+        platform_domain = self.platform.get_platform_domain()
+
+        self.code_declaration = ModuleDeclaration(self.module['stack_index'],
+                                        [platform_domain],
+                                        [platform_domain],
                                         self.name,
                                         declaration_text)
+
+        self.instances = []
+        for inst in self.code['scope_elements']:
+            if type(inst) == Instance:
+                if inst.atom.declaration['type'] == 'signalbridge':
+#                    inst.add_dependent(self.code_declaration)
+                    inst.handle = self. _get_signal_bridge_name(inst.atom.declaration)
+                    inst.domain = self.platform.get_platform_domain()
+                    self.instances.append(inst)
+                elif not 'main' in inst.atom.declaration:
+                    inst.add_dependent(self.code_declaration)
+                    self.instances.append(inst)
+#                    inst.handle = self.handle + "_" + inst.get_name() + "_" + inst.get_domain()
+                    inst.add_dependent(self.instance)
+                else:
+                    if not inst.atom.declaration['main']:
+                        inst.add_dependent(self.code_declaration)
+                        self.instances.append(inst)
+                        inst.handle = self.handle + "_" + inst.get_name() + "_" + inst.get_domain()
+                        inst.add_dependent(self.instance)
+            if type(inst) == ModuleInstance:
+                inst.add_dependent(self.code_declaration)
+                self.instances.append(inst)
+            if type(inst) == PlatformModuleInstance:
+                inst.add_dependent(self.code_declaration)
+                self.instances.append(inst)
+                inst.handle = self.handle + "_" + inst.get_name()
+                inst.add_dependent(self.instance)
 
 
     def get_declarations(self):
         declarations = []
 
         for decl in self.code['scope_elements']:
-            if type(decl) == Declaration :
+            if type(decl) == Declaration or  issubclass(type(decl), Declaration):
                 decl.add_dependent(self.code_declaration)
                 declarations.append(decl)
-#                decl.handle = self.handle + "_" + inst.get_name()
-#                decl.add_dependent(self.instance)
-
-
-#        for block in self.connected_atoms:
-#            declarations += block.get_declarations()
 
         for const_name, const_info in self.instance_consts.items():
             dec = Declaration(self.module['stack_index'],
@@ -1214,7 +1286,7 @@ class ModuleAtom(Atom):
             for port in self.module['ports']['ports']:
                 if port['block']['type'] == 'propertyInputPort':
                     if in_domain == port['block']['ports']['domain']:
-                        external_in_domain = self.port_name_atoms[port['block']['ports']['name']][0].get_domain()
+                        external_in_domain = self.port_name_atoms[port['block']['ports']['name']].get_domain()
 
 
         out_domain = declaration['ports']['outputDomain']
@@ -1226,12 +1298,13 @@ class ModuleAtom(Atom):
         return name
 
     def get_instances(self):
-        instances = []
+        instances = self.instances[:]
         instance_consts = []
         for name, info in self.instance_consts.items():
             instance_consts.append(info['value'])
         self.instance = ModuleInstance(self.scope_index,
-                                 self.domain,
+                                 [self.domain],
+                                 [self.domain],
                                  self.name,
                                  self.handle,
                                  self,
@@ -1239,86 +1312,13 @@ class ModuleAtom(Atom):
                                  )
         self.code_declaration.add_dependent(self.instance)
 
-        for inst in self.code['scope_elements']:
-            if type(inst) == Instance:
-                if inst.atom.declaration['type'] == 'signalbridge':
-#                    inst.add_dependent(self.code_declaration)
-                    inst.handle = self. _get_signal_bridge_name(inst.atom.declaration)
-                    inst.domain = self.platform.get_platform_domain()
-                    instances.append(inst)
-                elif not 'main' in inst.atom.declaration or not inst.atom.declaration['main']:
-                    inst.add_dependent(self.code_declaration)
-                    instances.append(inst)
-                    inst.handle = self.handle + "_" + inst.get_name() + "_" + inst.get_domain()
-                    inst.add_dependent(self.instance)
-            if type(inst) == ModuleInstance:
-                inst.add_dependent(self.code_declaration)
-                instances.append(inst)
-#                raise ValueError('ModuleInstance')
-            if type(inst) == PlatformModuleInstance:
-                inst.add_dependent(self.code_declaration)
-                instances.append(inst)
-                inst.handle = self.handle + "_" + inst.get_name()
-                inst.add_dependent(self.instance)
+        # Output token declaration
+        instances.append(self.out_token_instance)
+        self.code_declaration.add_dependent(instances[-1])
 
-        # Declare output token
-        if len(self.out_tokens) > 0:
-            block_types = self.get_block_types(self._output_blocks[0])
-            token_name = self.out_tokens[0]
-            if 'size' in self._output_blocks[0]:
-                out_token_name = '_' + self.name + '_%03i_out'%self._index
-                token_name = templates.bundle_indexing(out_token_name, self._output_blocks[0]['size'])
-
-            default_value = ''
-            instances += [Instance(default_value,
-                                 self.scope_index,
-                                 self.domain,
-                                 block_types[0],
-                                 token_name,
-                                 self) ]
-            self.code_declaration.add_dependent(instances[-1])
-
+        # Main instance
         instances += [self.instance]
         return instances
-
-#    def get_inline_processing_code(self, in_tokens):
-#        code = ''
-#        out_tokens = []
-#
-#        if len(self._output_blocks) > 0:
-#            if 'size' in self._output_blocks[0]:
-#                out_tokens = ['_' + self.name + '_%03i_out'%self._index]
-#            else:
-#                out_tokens = self.out_tokens
-#
-#        bridges_out = []
-#        bridges_in = []
-#        for block in self._blocks:
-#            if 'block' in block:
-#                block = block['block']
-#            elif 'blockbundle' in block:
-#                block = block['blockbundle']
-#
-#            if block['type'] == 'signalbridge':
-#                bridge_name = self.handle + "_" + block['name']
-#                if len(self._output_blocks) > 0 and block['ports']['inputDomain'] == self._output_blocks[0]['ports']['domain']:
-#                    bridges_out.append(bridge_name)
-#                elif len(self._input_blocks) > 0 and block['ports']['outputDomain'] == self._input_blocks[0]['ports']['domain']:
-#                    bridges_in.append(bridge_name)
-#
-#        domain = ''
-#        for in_block in self._input_blocks:
-#            domain = in_block['ports']['domain']
-#
-#        for out_block in self._output_blocks:
-#            domain = out_block['ports']['domain']
-#
-#        code = templates.module_processing_code(self.handle,
-#                                                bridges_in + in_tokens,
-#                                                bridges_out + out_tokens,
-#                                                domain
-#                                                )
-#        return code
 
     def get_initialization_code(self, in_tokens):
         init_code = templates.comment('initialize ' + self.handle)
@@ -1330,139 +1330,173 @@ class ModuleAtom(Atom):
 
         io_domains_match = False # TODO add optimization for matching I/O domains
 
-#        if len(self._input_blocks) > 0 and len(self._output_blocks) > 0:
-#            if self._input_blocks[0]['ports']['domain'] == self._output_blocks[0]['ports']['domain']:
-#                io_domains_match = True
-
         if not io_domains_match:
 
-            domain_proc_code = []
+            process_code = {}
+            for element, external in self.block_map.items():
+                domains = element.get_domain_list()
+                for domain in domains:
+                    if not domain in process_code:
+                        process_code[domain] = []
+                    process_code[domain].append(element)
 
-            for block in self._blocks:
-                if 'block' in block:
-                    block = block['block']
-                elif 'blockbundle' in block:
-                    block = block['blockbundle']
-                if block['type'] == 'signal':
-                    domain_name = block['ports']['domain']
-
-                    signal_name = self.handle + "_" + block['name']  + "_"+ block['ports']['domain']
-                    domain_code = None
-                    for d in domain_proc_code:
-                        if d.get_domain_name() == domain_name:
-                            domain_code = d
-                            break
-                    if not domain_code:
-                        domain_code = DomainProcessingCode(domain_name)
-                        domain_proc_code.append(domain_code)
-
-                    if 'main' in block and block['main']:
-                        if block['direction'] == 'Output':
-#                            if len(self._output_blocks) > 0:
-#                                if 'size' in self._output_blocks[0]:
-#                                    out_tokens = ['_' + self.name + '_%03i_out'%self._index]
+#            domain_proc_code = []
+#            for block in self._blocks:
+#                if 'block' in block:
+#                    block = block['block']
+#                elif 'blockbundle' in block:
+#                    block = block['blockbundle']
+#                if block['type'] == 'signal':
+#                    domain_name = block['ports']['domain']
+#
+#                    signal_name = self.handle + "_" + block['name']  + "_"+ block['ports']['domain']
+#                    domain_code = None
+#                    for d in domain_proc_code:
+#                        if d.get_domain_name() == domain_name:
+#                            domain_code = d
+#                            break
+#                    if not domain_code:
+#                        domain_code = DomainProcessingCode(domain_name)
+#                        domain_proc_code.append(domain_code)
+#
+#                    if 'main' in block and block['main']:
+#                        if block['direction'] == 'Output':
+##                            if len(self._output_blocks) > 0:
+##                                if 'size' in self._output_blocks[0]:
+##                                    out_tokens = ['_' + self.name + '_%03i_out'%self._index]
+##                                else:
+##                                    out_tokens = self.out_tokens
+#                            for token in self.out_tokens:
+#                                 domain_code.add_token(token, True)
+#
+#                            connected_domain = self.platform.get_stream_member_domain(self.next_stream_member)
+#                            domain_code.set_execution_domain(connected_domain)
+#                        else:
+#                            # This hack to bundle inputs should be moved somehwer else...
+#                            for input_block in self._input_blocks:
+#                                if 'size' in input_block:
+#                                    connector_name = '_bundle_connector_' + str(self.platform.unique_id)
+#                                    self.platform.unique_id += 1
+##                                    input_block['domain']
+#                                    domain_code.append_code(templates.declaration_bundle_real(connector_name, input_block['size']))
+#                                    if type(self.input_atom) == NameAtom:
+#                                        for i in range(input_block['size']):
+#                                            domain_code.append_code(templates.assignment(templates.bundle_indexing(connector_name, i),
+#                                                                                         templates.bundle_indexing(input_block['name'], i)))
+#                                        in_tokens.pop(0)
+#                                    else:
+#                                        for i in range(input_block['size']):
+#                                            if len(in_tokens) > 0:
+#                                                domain_code.append_code(templates.assignment(templates.bundle_indexing(connector_name, i),
+#                                                                                             in_tokens[0]))
+#                                                in_tokens.pop(0)
+#                                    in_tokens.insert(0, connector_name)
+#
+#                            for token in in_tokens:
+#                                domain_code.add_token(token, False)
+#
+#                            domain_code.set_execution_domain(self.input_atom.get_domain())
+#                    else:
+#                        if 'port_block' in block: # Port block but not main port block
+#                            connected_atom = self.port_name_atoms[block['port_block']][0]
+#                            if type(connected_atom) == ValueAtom:
+#                                exec_domain = self.port_name_atoms[block['port_block']][0].get_domain()
+#                            else:
+#                                input_decl = self.port_name_atoms[block['port_block']][0].declaration
+#                                if 'value' in input_decl:
+#                                    exec_domain = ''
+#                                elif input_decl['type'] == 'signalbridge' or input_decl['type'] == 'signal':
+#                                    exec_domain = self.port_name_atoms[block['port_block']][0].declaration['ports']['domain']
 #                                else:
-#                                    out_tokens = self.out_tokens
-                            for token in self.out_tokens:
-                                 domain_code.add_token(token, True)
-
-                            connected_domain = self.platform.get_stream_member_domain(self.next_stream_member)
-                            domain_code.set_execution_domain(connected_domain)
-                        else:
-                            # This hack to bundle inputs should be moved somehwer else...
-                            for input_block in self._input_blocks:
-                                if 'size' in input_block:
-                                    connector_name = '_bundle_connector_' + str(self.platform.unique_id)
-                                    self.platform.unique_id += 1
-                                    input_block['domain']
-                                    domain_code.append_code(templates.declaration_bundle_real(connector_name, input_block['size']))
-                                    if type(self.input_atom) == NameAtom:
-                                        for i in range(input_block['size']):
-                                            domain_code.append_code(templates.assignment(templates.bundle_indexing(connector_name, i),
-                                                                                         templates.bundle_indexing(input_block['name'], i)))
-                                        in_tokens.pop(0)
-                                    else:
-                                        for i in range(input_block['size']):
-                                            if len(in_tokens) > 0:
-                                                domain_code.append_code(templates.assignment(templates.bundle_indexing(connector_name, i),
-                                                                                             in_tokens[0]))
-                                                in_tokens.pop(0)
-                                    in_tokens.insert(0, connector_name)
-
-                            for token in in_tokens:
-                                domain_code.add_token(token, False)
-
-                            domain_code.set_execution_domain(self.input_atom.get_domain())
-                    else:
-                        if 'port_block' in block: # Port block but not main port block
-                            connected_atom = self.port_name_atoms[block['port_block']][0]
-                            if type(connected_atom) == ValueAtom:
-                                exec_domain = self.port_name_atoms[block['port_block']][0].get_domain()
-                            else:
-                                input_decl = self.port_name_atoms[block['port_block']][0].declaration
-                                if 'value' in input_decl:
-                                    exec_domain = ''
-                                elif input_decl['type'] == 'signalbridge' or input_decl['type'] == 'signal':
-                                    exec_domain = self.port_name_atoms[block['port_block']][0].declaration['ports']['domain']
-                                else:
-                                    exec_domain = self.port_name_atoms[block['port_block']][0].declaration['ports']['domain']
-                            domain_code.set_execution_domain(exec_domain)
-                            domain_code.add_token(self.port_name_atoms[block['port_block']][0].get_handles()[0], True) # output
-                        else:
-                            domain_code.set_execution_domain(self.port_name_atoms[block['port_block']][0].get_domain())
-                            if len(block['ports']['_writes']) > 0:
-                                domain_code.add_token(signal_name, True) # output
-                            else:
-                                domain_code.add_token(signal_name, False) # input
-
-                elif block['type'] == 'signalbridge':
-                    in_domain = block['ports']['inputDomain']
-
-                    out_domain = block['ports']['outputDomain']
-
-                    bridge_name = self. _get_signal_bridge_name(block)
-
-                    domain_code = None
-                    for d in domain_proc_code:
-                        if d.get_domain_name() == in_domain:
-                            domain_code =  d
-                            break
-                    if not domain_code:
-                        domain_code = DomainProcessingCode(in_domain)
-
-                    domain_code.add_token(bridge_name, True)
-#                    domain_code.set_execution_domain(in_domain)
-
-                    domain_code = None
-                    for d in domain_proc_code:
-                        if d.get_domain_name() == out_domain:
-                            domain_code =  d
-                            break
-                    if not domain_code:
-                        domain_code = DomainProcessingCode(out_domain)
-
-                    domain_code.add_token(bridge_name, False)
-#                    domain_code.set_execution_domain(out_domain)
-
-                else:
-                    if block['type'] == 'platformType':
-                        # Do we need to do anything here?
-                        pass
+#                                    exec_domain = self.port_name_atoms[block['port_block']][0].declaration['ports']['domain']
+#                            domain_code.set_execution_domain(exec_domain)
+#                            domain_code.add_token(self.port_name_atoms[block['port_block']][0].get_handles()[0], True) # output
+#                        else:
+#                            domain = block['ports']['domain']
+#                            domain_code.set_execution_domain(domain)
+#                            if len(block['ports']['_writes']) > 0:
+#                                domain_code.add_token(signal_name, True) # output
+#                            else:
+#                                domain_code.add_token(signal_name, False) # input
+#
+#                elif block['type'] == 'signalbridge':
+#                    in_domain = block['ports']['inputDomain']
+#
+#                    out_domain = block['ports']['outputDomain']
+#
+#                    bridge_name = self. _get_signal_bridge_name(block)
+#
+#                    domain_code = None
+#                    for d in domain_proc_code:
+#                        if d.get_domain_name() == in_domain:
+#                            domain_code =  d
+#                            break
+#                    if not domain_code:
+#                        domain_code = DomainProcessingCode(in_domain)
+#
+#                    domain_code.add_token(bridge_name, True)
+##                    domain_code.set_execution_domain(in_domain)
+#
+#                    domain_code = None
+#                    for d in domain_proc_code:
+#                        if d.get_domain_name() == out_domain:
+#                            domain_code =  d
+#                            break
+#                    if not domain_code:
+#                        domain_code = DomainProcessingCode(out_domain)
+#
+#                    domain_code.add_token(bridge_name, False)
+##                    domain_code.set_execution_domain(out_domain)
+#
+#                else:
+#                    if block['type'] == 'platformBlock' or block['type'] == 'platformModule':
+#                        # Do we need to do anything here?
+#                        pass
+#
+#            for ref in self.references:
+#                domain_code = None
+#                for d in domain_proc_code:
+#                    if d.get_domain_name() in ref.get_domains()['read'] or d.get_domain_name() in ref.get_domains()['read']:
+#                        domain_code = d
+#                if domain_code:
+#                    domain_code.add_token(ref.get_name(), False)
 
             for domain, ids in sorted(self.domain_ids.items(), key=operator.itemgetter(1)):
-                for d in domain_proc_code:
-                    if d.get_domain_name() == domain:
-                        execution_domain = d.execution_domain
-                        proc_code = templates.expression(
-                                templates.module_processing_code(self.handle,
-                                                                 zip(d.tokens, d.token_is_input),
-                                                                 d.get_domain_name(),
-                                                                 ))
-                        if not execution_domain in processing_code:
-                            processing_code[execution_domain] = [d.get_code() + proc_code, d.tokens]
-                        else:
-                            processing_code[execution_domain][0] += d.get_code() + proc_code
-                            processing_code[execution_domain][1] += d.tokens
+                domain_elements = process_code[domain]
+                tokens = []
+                proc_domain = None
+                for element in domain_elements:
+                    external = self.block_map[element]
+                    if not external:
+                        tokens.append(element.get_name()) # no external representation
+                    elif type(external) == Instance:
+                        tokens.append(external.get_name())
+                        if len(external.get_domains()['write']) > 0:
+                            proc_domain = external.get_domains()['write'][0]
+                        elif len(external.get_domains()['read']) > 0:
+                            proc_domain = external.get_domains()['read'][0]
+                    else:
+                        tokens.append(external.get_handles()[0])
+                proc_code = templates.expression(
+                        templates.module_processing_code(self.handle,
+                                                         domain,
+                                                         tokens
+                                                         ))
+
+#                if len(domain_elements[0].get_domains()['write']) > 0:
+#                    proc_domain = domain_elements[0].get_domains()['write'][0]
+#                elif len(domain_elements[0].get_domains()['read']) > 0:
+#                    proc_domain = domain_elements[0].get_domains()['read'][0]
+#                if not domain in processing_code:
+#                    processing_code[domain] = [d.get_code() + proc_code, d.get_out_tokens()]
+#                else:
+#                    processing_code[domain][0] += d.get_code() + proc_code
+#                    processing_code[domain][1] += d.get_out_tokens()
+                if not proc_domain in processing_code:
+                    processing_code[proc_domain] = [proc_code, domain_elements[0].get_name()]
+                else:
+                    processing_code[proc_domain][0] += proc_code
+                    processing_code[proc_domain][1] += domain_elements[0].get_name()
 
         return processing_code
 
@@ -1482,6 +1516,25 @@ class ModuleAtom(Atom):
                 self.out_tokens = ['_' + self.name + '_%03i_out[%i]'%(self._index, i) for i in range(self._output_blocks[0]['size'])]
             else:
                 self.out_tokens = ['_' + self.name + '_%03i_out'%self._index]
+
+        self.out_token_instance = None
+        if len(self.out_tokens) > 0:
+            block_types = self.get_block_types(self._output_blocks[0])
+            token_name = self.out_tokens[0]
+            if 'size' in self._output_blocks[0]:
+                out_token_name = '_' + self.name + '_%03i_out'%self._index
+                token_name = templates.bundle_indexing(out_token_name, self._output_blocks[0]['size'])
+
+            default_value = ''
+
+            self.out_token_instance = Instance(default_value,
+                                               self.scope_index,
+                                               [],
+                                               [self.domain],
+                                               block_types[0],
+                                               token_name,
+                                               self)
+
 
         if not type(self.module['ports']['streams']) == list:
             # TODO Should this be handled by the code validator before getting here?
@@ -1505,13 +1558,41 @@ class ModuleAtom(Atom):
                 else:
                     new_atom.scope_index += 1 # Hack to bring it up to the right scope...
                 if name in self.port_name_atoms:
-                    self.port_name_atoms[name].append(new_atom)
+                    raise ValueError("port already assigned atom")
+#                    self.port_name_atoms[name].append(new_atom)
                 else:
-                    self.port_name_atoms[name] = [new_atom]
+                    self.port_name_atoms[name] = new_atom
+
 
         self.code = self.platform.generate_code(tree, self._blocks,
                                                 instanced = instanced,
                                                 parent = self)
+
+        self.block_map = {}
+
+        # Match element from code declaration (ports) to external connected atom
+        for element in self.code["scope_elements"]:
+            matched_external = None
+
+            for port in self.module['ports']['ports']:
+                port_block = port['block']['ports']['block']
+                port_block_name = port_block['name']['name']
+                port_type = port['block']['type']
+                if not port_block_name == element.get_name():
+                    continue
+
+                if port_type == 'mainInputPort':
+                    matched_external = self.input_atom
+                elif port_type == 'mainOutputPort':
+                    matched_external = self.out_token_instance
+                else:
+                    for port_name, atom in self.port_name_atoms.items():
+                        if atom.get_handles()[0] == port_block_name:
+                            matched_external == atom
+                break
+            self.block_map[element] = matched_external
+
+            # Move all elements one scope up for declaration.
         for element in self.code["scope_elements"]:
             scope = element.get_scope()
             if scope >= self.scope_index:
@@ -1534,10 +1615,12 @@ class ModuleAtom(Atom):
 
                 block_domain = block['ports']['domain']
 
-                if not block_domain in self.domain_ids:
-                    self.domain_ids[block_domain] = block['id']
-                elif self.domain_ids[block_domain] > block['id']:
-                    self.domain_ids[block_domain] = block['id']
+                if 'id' in block: #If declared block is not present in a stream it will not be given an id
+                    if not block_domain in self.domain_ids:
+                        self.domain_ids[block_domain] = block['id']
+                    elif self.domain_ids[block_domain] > block['id']:
+                        self.domain_ids[block_domain] = block['id']
+
 
     def _init_blocks(self, blocks):
         # Finds module blocks for later use
@@ -1567,7 +1650,6 @@ class ModuleAtom(Atom):
                     self._input_blocks.append(internal_block)
                 elif 'Output' in port['block']['type']:
                     self._output_blocks.append(internal_block)
-
 
     def find_internal_block(self, block_name):
         for block in self._blocks:
@@ -1609,256 +1691,333 @@ class ReactionAtom(ModuleAtom):
                  platform, scope_index, line, filename,
                  previous_atom, next_stream_member):
         self.reaction = reaction
-        self.references = []
+#        self.references = []
         super(ReactionAtom, self).__init__(reaction, function, platform_code, token_index,
              platform, scope_index, line, filename, previous_atom, next_stream_member)
         # Pass by reference recursively, e.g. from main domain down tree of reactions
-        parent = self.platform.parent_stack[-1]
-        if (type(parent) == ReactionAtom
-                 or type(parent) == LoopAtom):
-            for ref in self.references:
-                if not ref.get_name() in [parent_ref.get_name() for parent_ref in parent.references]:
-                    parent.references.append(ref)
+#        parent = self.platform.parent_stack[-1]
+#        if (type(parent) == ReactionAtom
+#                 or type(parent) == LoopAtom):
+#            for ref in self.references:
+#                if not ref.get_name() in [parent_ref.get_name() for parent_ref in parent.references]:
+#                    parent.references.append(ref)
 
-        # out_tokens for reaction are different
-        if len(self._output_blocks) > 0:
-            if 'size' in self._output_blocks[0]:
-                self.out_tokens = ['_' + self.name + '_%03i_out[%i]'%(self._index, i) for i in range(self._output_blocks[0]['size'])]
-            else:
-                self.out_tokens = ['_' + self.name + '_%03i_out'%self._index]
+#        # out_tokens for reaction are different
+#        if len(self._output_blocks) > 0:
+#            if 'size' in self._output_blocks[0]:
+#                self.out_tokens = ['_' + self.name + '_%03i_out[%i]'%(self._index, i) for i in range(self._output_blocks[0]['size'])]
+#            else:
+#                self.out_tokens = ['_' + self.name + '_%03i_out'%self._index]
 
-    def get_header_code(self):
-        domain_code = self.code['domain_code']
-        header_code = ''
+#    def get_header_code(self):
+#        domain_code = self.code['domain_code']
+#        header_code = ''
+#
+#        for domain,code in domain_code.items():
+#            header_code += code['header_code']
+#        return header_code
 
-        for domain,code in domain_code.items():
-            header_code += code['header_code']
-        return header_code
-
-    def get_inline_processing_code(self, in_tokens):
-        code = ''
-
-        code = templates.reaction_processing_code(self.handle,
-                                                in_tokens,
-                                                self.out_tokens,
-                                                'TriggerDomain'
-                                                )
-        return code
-
-
-    def get_processing_code(self, in_tokens):
-        processing_code = {}
-
-        domain = self.input_atom.domain # Reaction is triggered/called in the domain of the input signal
-
-        parameter_tokens = []
-        out_names = [block['name'] for block in self._output_blocks]
-
-        out_tokens = self.out_tokens
-        for ref in self.references:
-                if not ref.get_name() in out_names:
-                    if not ref.get_name() in parameter_tokens:
-                        parameter_tokens.append(ref.get_name()) # For inputs use same name
-                else:
-                    # For outputs use the output token
-                    if not out_tokens[0] in parameter_tokens:
-                        parameter_tokens.append(out_tokens[0])
-#                out_tokens.remove(out_tokens[0])
-
-        # For signal bridges,
-        for i in range(len(parameter_tokens)):
-            # TODO we need checking of scope and domain here
-            for scope_decl in self.platform.scope_stack[-1]:
-                # Do we need to support blockbundle here or are all signal bridges blocks?
-                if 'block' in scope_decl and 'type' in scope_decl['block'] and scope_decl['block']['type'] == "signalbridge":
-                    if scope_decl['block']['ports']['signal'] == parameter_tokens[i] and scope_decl['block']['ports']['outputDomain'] == self.domain:
-#                        print(scope_decl['block']['ports']['signal'])
-                        parameter_tokens[i] = scope_decl['block']['name']
+#    def get_inline_processing_code(self, in_tokens):
+#        code = ''
+#
+#        code = templates.reaction_processing_code(self.handle,
+#                                                in_tokens,
+#                                                self.out_tokens,
+#                                                'TriggerDomain'
+#                                                )
+#        return code
 
 
-        if not domain in processing_code:
-            processing_code[domain] = ['', []]
+#    def get_processing_code(self, in_tokens):
+#        processing_code = {}
+#
+#        domain = self.input_atom.domain # Reaction is triggered/called in the domain of the input signal
+#
+#        parameter_tokens = []
+#        out_names = [block['name'] for block in self._output_blocks]
+#
+#        out_tokens = self.out_tokens
+#        for ref in self.references:
+#                if not ref.get_name() in out_names:
+#                    if not ref.get_name() in parameter_tokens:
+#                        parameter_tokens.append(ref.get_name()) # For inputs use same name
+#                else:
+#                    # For outputs use the output token
+#                    if not out_tokens[0] in parameter_tokens:
+#                        parameter_tokens.append(out_tokens[0])
+##                out_tokens.remove(out_tokens[0])
+#
+#        # For signal bridges,
+#        for i in range(len(parameter_tokens)):
+#            # TODO we need checking of scope and domain here
+#            for scope_decl in self.platform.scope_stack[-1]:
+#                # Do we need to support blockbundle here or are all signal bridges blocks?
+#                if 'block' in scope_decl and 'type' in scope_decl['block'] and scope_decl['block']['type'] == "signalbridge":
+#                    if scope_decl['block']['ports']['signal'] == parameter_tokens[i] and scope_decl['block']['ports']['outputDomain'] == self.domain:
+##                        print(scope_decl['block']['ports']['signal'])
+#                        parameter_tokens[i] = scope_decl['block']['name']
+#
+#
+#        if not domain in processing_code:
+#            processing_code[domain] = ['', []]
+#
+#
+#        is_bool = False
+#        if self.input_atom and type(self.input_atom) == ValueAtom and type(self.input_atom.value) == bool:
+#            is_bool = True
+#
+#        if not is_bool:
+#            cond_code = templates.conditional_code(
+#                    in_tokens[0],
+#                    templates.expression(
+#                            templates.reaction_processing_code(
+#                                    self.reaction['name'],
+#                                    parameter_tokens,
+#                                    [], # out tokens should already be included in the parameter tokens.
+#                                    domain
+#                                    )))
+#            processing_code[domain][0] += cond_code
+#        else:
+#            if self.input_atom.value: # True here means always on, false means always off. Perhaps a warning should be issued by the compiler in this case
+#                processing_code[domain][0] += templates.expression(
+#                        templates.reaction_processing_code(
+#                                self.reaction['name'],
+#                                parameter_tokens,
+#                                [], # out tokens should already be included in the parameter tokens.
+#                                domain
+#                                ))
+#        processing_code[domain][1] = out_tokens
+#
+#        return processing_code
+
+#    def _prepare_declaration(self):
+#        process_code = {}
+#
+#        domain_code = self.code['domain_code']
+#        for domain, code in domain_code.items():
+#            if domain is not None: # To get rid of domains from constants
+#                if not domain in process_code:
+#                    # Hack to turn all computation in a reaction within the right domain
+#                    if self.input_atom:
+#                        # self.input_atom can be None when computing "next_stream_member"
+#                        # On next pass it should get the right value
+#                        # This should be optimized. When computing "next_stream_member" not everything needs to
+#                        domain = self.input_atom.get_domain()
+#                    process_code[domain] = {"code": '', "input_blocks" : [], "output_blocks" : []}
+#
+#                process_code[domain]['code'] += '\n'.join(code['processing_code'])
+#                for block in self._input_blocks:
+#                    if block['ports']['domain'] == domain:
+#                        process_code[domain]['input_blocks'].append(block)
+#
+#                for block in self._output_blocks:
+#                    if block['ports']['domain'] == domain:
+#                        process_code[domain]['output_blocks'].append(block)
+#
+#        for const_name, const_info in self.instance_consts.items():
+#            if const_name:
+#                print("IGNORING CONST:" + const_name)
+#
+#        for domain, code in domain_code.items():
+#            if code['header_code']:
+#                print("IGNORING HEADER CODE:" + code['header_code'])
+#            if code['init_code']:
+#                print("IGNORING INIT CODE:" + code['init_code'])
+#
+#        # Prepare list with referenced members in stream.
+#        # All these references need to come in as reference arguments
+#        referenced = []
+#        for domain, writes in self.code['writes'].items():
+#            for write in writes:
+#                if not write.get_name() in self.references:
+#                    referenced += [write.get_name()]
+#                    self.references.append(write)
+#        for domain, reads in self.code['reads'].items():
+#            for read in reads:
+#                if not read.get_name() in referenced:
+#                    referenced += [read.get_name()]
+#                    self.references.append(read)
+#
+#        declaration_text = templates.reaction_declaration(
+#                self.reaction['name'], process_code,
+#                self.references)
+#
+#        self.code_declaration = Declaration(self.module['stack_index'],
+#                                        self.domain,
+#                                        self.name,
+#                                        declaration_text)
+
+#    def get_declarations(self):
+#
+#        declarations = []
+#
+#        for decl in self.code['scope_elements']:
+#            if type(decl) == Declaration or  issubclass(type(decl), Declaration):
+#                decl.add_dependent(self.code_declaration)
+#                declarations.append(decl)
+#
+#        for const_name, const_info in self.instance_consts.items():
+#            dec = Declaration(self.module['stack_index'],
+#                        None,
+#                        const_name,
+#                        '')
+#            declarations.append(dec) #templates.declaration_real(const_name)
+#
+#
+#        declarations.append(self.code_declaration)
+#        return declarations
 
 
-        is_bool = False
-        if self.input_atom and type(self.input_atom) == ValueAtom and type(self.input_atom.value) == bool:
-            is_bool = True
+#        declarations = []
+#        outer_declarations = []
+#        secondary_domain = ''
+#        #FIXME do we need to support more than 1 output block?
+#        if len(self._output_blocks) > 0:
+#            secondary_domain = self._output_blocks[0]['ports']['domain']
+#
+#        if "other_scope_declarations" in self.code:
+#            for other_declaration in self.code["other_scope_declarations"]:
+#                if not other_declaration.domain or other_declaration.domain == secondary_domain:
+#                    other_declaration.domain = self.domain
+#                outer_declarations.append(other_declaration)
+#                other_declaration.add_dependent(self.code_declaration)
+#
+#        declarations += outer_declarations
+#
+#        for block in self.port_name_atoms:
+#            declarations += block.get_declarations()
+#
+#        for const_name, const_info in self.instance_consts.items():
+#            dec = Declaration(self.module['stack_index'],
+#                        None,
+#                        const_name,
+#                        '')
+#            declarations.append(dec) #templates.declaration_real(const_name)
+#
+#        # Insert reaction declaration that has been previously prepared
+#        declarations.append(self.code_declaration)
+#        return declarations
 
-        if not is_bool:
-            cond_code = templates.conditional_code(
-                    in_tokens[0],
-                    templates.expression(
-                            templates.reaction_processing_code(
-                                    self.reaction['name'],
-                                    parameter_tokens,
-                                    [], # out tokens should already be included in the parameter tokens.
-                                    domain
-                                    )))
-            processing_code[domain][0] += cond_code
-        else:
-            if self.input_atom.value: # True here means always on, false means always off. Perhaps a warning should be issued by the compiler in this case
-                processing_code[domain][0] += templates.expression(
-                        templates.reaction_processing_code(
-                                self.reaction['name'],
-                                parameter_tokens,
-                                [], # out tokens should already be included in the parameter tokens.
-                                domain
-                                ))
-        processing_code[domain][1] = out_tokens
-
-        return processing_code
-
-    def _prepare_declaration(self):
-        process_code = {}
-
-        domain_code = self.code['domain_code']
-        for domain, code in domain_code.items():
-            if domain is not None: # To get rid of domains from constants
-                if not domain in process_code:
-                    # Hack to turn all computation in a reaction within the right domain
-                    if self.input_atom:
-                        # self.input_atom can be None when computing "next_stream_member"
-                        # On next pass it should get the right value
-                        # This should be optimized. When computing "next_stream_member" not everything needs to
-                        domain = self.input_atom.get_domain()
-                    process_code[domain] = {"code": '', "input_blocks" : [], "output_blocks" : []}
-
-                process_code[domain]['code'] += '\n'.join(code['processing_code'])
-                for block in self._input_blocks:
-                    if block['ports']['domain'] == domain:
-                        process_code[domain]['input_blocks'].append(block)
-
-                for block in self._output_blocks:
-                    if block['ports']['domain'] == domain:
-                        process_code[domain]['output_blocks'].append(block)
-
-        for const_name, const_info in self.instance_consts.items():
-            if const_name:
-                print("IGNORING CONST:" + const_name)
-
-        for domain, code in domain_code.items():
-            if code['header_code']:
-                print("IGNORING HEADER CODE:" + code['header_code'])
-            if code['init_code']:
-                print("IGNORING INIT CODE:" + code['init_code'])
-
-        # Prepare list with referenced members in stream.
-        # All these references need to come in as reference arguments
-        referenced = []
-        for domain, writes in self.code['writes'].items():
-            for write in writes:
-                if not write.get_name() in self.references:
-                    referenced += [write.get_name()]
-                    self.references.append(write)
-        for domain, reads in self.code['reads'].items():
-            for read in reads:
-                if not read.get_name() in referenced:
-                    referenced += [read.get_name()]
-                    self.references.append(read)
-
-        declaration_text = templates.reaction_declaration(
-                self.reaction['name'], process_code,
-                self.references)
-
-        self.code_declaration = Declaration(self.module['stack_index'],
-                                        self.domain,
-                                        self.name,
-                                        declaration_text)
-
-    def get_declarations(self):
-        declarations = []
-        outer_declarations = []
-        secondary_domain = ''
-        #FIXME do we need to support more than 1 output block?
-        if len(self._output_blocks) > 0:
-            secondary_domain = self._output_blocks[0]['ports']['domain']
-
-        if "other_scope_declarations" in self.code:
-            for other_declaration in self.code["other_scope_declarations"]:
-                if not other_declaration.domain or other_declaration.domain == secondary_domain:
-                    other_declaration.domain = self.domain
-                outer_declarations.append(other_declaration)
-                other_declaration.add_dependent(self.code_declaration)
-
-        declarations += outer_declarations
-
-        for block in self.port_name_atoms:
-            declarations += block.get_declarations()
-
-        for const_name, const_info in self.instance_consts.items():
-            dec = Declaration(self.module['stack_index'],
-                        None,
-                        const_name,
-                        '')
-            declarations.append(dec) #templates.declaration_real(const_name)
-
-        # Insert reaction declaration that has been previously prepared
-        declarations.append(self.code_declaration)
-        return declarations
-
-    def get_instances(self):
-        instances = []
-
-        # A reaction is not instanced. It is a function. We only need to return internally generated instances
-
-        port_atom_names = []
-        for atoms in self.port_name_atoms.values():
-            for atom in atoms:
-                port_atom_names += atom.get_handles();
-
-        if self.next_stream_member:
-            port_atom_names += self.next_stream_member.get_handles()
-
-        # A reaction should trigger no instances from internals. It is stateless.
-        if "other_scope_instances" in self.code:
-            for inst in self.code["other_scope_instances"]:
-                inst.post = False
-                inst.add_dependent(self.code_declaration)
-#                inst.scope -= 1 # Force instances  and declarations to be deferred to upper scope
-                instances.append(inst)
-                if inst.get_scope() > self.scope_index and not type(inst) == ModuleInstance:
-                    if inst.get_name() in port_atom_names:
-                        inst.enabled = False
-
-        for block in self.port_name_atoms:
-            instances += block.get_instances()
+#    def get_instances(self):
+#
+#        instances = []
+#        instance_consts = []
+#        for name, info in self.instance_consts.items():
+#            instance_consts.append(info['value'])
+#        self.instance = ModuleInstance(self.scope_index,
+#                                 self.domain,
+#                                 self.name,
+#                                 self.handle,
+#                                 self,
+#                                 instance_consts
+#                                 )
+#        self.code_declaration.add_dependent(self.instance)
+#
+#        for inst in self.code['scope_elements']:
+#            if type(inst) == Instance:
+#                if inst.atom.declaration['type'] == 'signalbridge':
+##                    inst.add_dependent(self.code_declaration)
+#                    inst.handle = self. _get_signal_bridge_name(inst.atom.declaration)
+#                    inst.domain = self.platform.get_platform_domain()
+#                    instances.append(inst)
+#                elif not 'main' in inst.atom.declaration or not inst.atom.declaration['main']:
+#                    inst.add_dependent(self.code_declaration)
+#                    instances.append(inst)
+#                    inst.handle = self.handle + "_" + inst.get_name() + "_" + inst.get_domain()
+#                    inst.add_dependent(self.instance)
+#            if type(inst) == ModuleInstance:
+#                inst.add_dependent(self.code_declaration)
+#                instances.append(inst)
+#            if type(inst) == PlatformModuleInstance:
+#                inst.add_dependent(self.code_declaration)
+#                instances.append(inst)
+#                inst.handle = self.handle + "_" + inst.get_name()
+#                inst.add_dependent(self.instance)
+#
+#        # Declare output token
+#        if len(self.out_tokens) > 0:
+#            block_types = self.get_block_types(self._output_blocks[0])
+#            token_name = self.out_tokens[0]
+#            if 'size' in self._output_blocks[0]:
+#                out_token_name = '_' + self.name + '_%03i_out'%self._index
+#                token_name = templates.bundle_indexing(out_token_name, self._output_blocks[0]['size'])
+#
+#            default_value = ''
+#            instances += [Instance(default_value,
+#                                 self.scope_index,
+#                                 self.domain,
+#                                 block_types[0],
+#                                 token_name,
+#                                 self) ]
+#            self.code_declaration.add_dependent(instances[-1])
+#
+##        instances += [self.instance]
+#        return instances
 
 
-#                instances += atom.get_instances()
-# #               FIXME do we need to support multiple output blocks?
-        if len(self.out_tokens) > 0:
-            block_types = self.get_block_types(self._output_blocks[0])
-            token_name = self.out_tokens[0]
-            if 'size' in self._output_blocks[0]:
-                out_token_name = '_' + self.name + '_%03i_out'%self._index
-                token_name = templates.bundle_indexing(out_token_name, self._output_blocks[0]['size'])
 
-            default_value = ''
-            instances += [Instance(default_value,
-                                 self.scope_index,
-                                 self.domain,
-                                 block_types[0],
-                                 token_name,
-                                 self) ]
-            self.code_declaration.add_dependent(instances[-1])
-
-        for name, atoms in self.port_name_atoms.items():
-            for atom in atoms:
-                decl = self.platform.find_declaration_in_tree(atom.get_handles(),
-                                                              self.module['ports']['blocks'] + self.platform.tree)
-                if not decl:
-                    if type(atom) is NameAtom:
-                        default_value = 0.0
-                        if not self.platform.find_instance_by_handle(atom.get_handles()[0], instances):
-                            instances += atom.get_instances()
-                            instances[-1].add_dependent(self.code_declaration)
-                    elif type(atom) is ExpressionAtom:
-                        for new_inst in self._get_expression_instances(atom):
-                            if not self.platform.find_instance_by_handle(new_inst.get_name(), instances):
-                                instances += [new_inst]
-                                instances[-1].add_dependent(self.code_declaration)
-
-        return instances
+#        instances = []
+#
+#        # A reaction is not instanced. It is a function. We only need to return internally generated instances
+#
+#        port_atom_names = []
+#        for atoms in self.port_name_atoms.values():
+#            for atom in atoms:
+#                port_atom_names += atom.get_handles();
+#
+#        if self.next_stream_member:
+#            port_atom_names += self.next_stream_member.get_handles()
+#
+#        # A reaction should trigger no instances from internals. It is stateless.
+#        if "other_scope_instances" in self.code:
+#            for inst in self.code["other_scope_instances"]:
+#                inst.post = False
+#                inst.add_dependent(self.code_declaration)
+##                inst.scope -= 1 # Force instances  and declarations to be deferred to upper scope
+#                instances.append(inst)
+#                if inst.get_scope() > self.scope_index and not type(inst) == ModuleInstance:
+#                    if inst.get_name() in port_atom_names:
+#                        inst.enabled = False
+#
+#        for block in self.port_name_atoms:
+#            instances += block.get_instances()
+#
+#
+##                instances += atom.get_instances()
+## #               FIXME do we need to support multiple output blocks?
+#        if len(self.out_tokens) > 0:
+#            block_types = self.get_block_types(self._output_blocks[0])
+#            token_name = self.out_tokens[0]
+#            if 'size' in self._output_blocks[0]:
+#                out_token_name = '_' + self.name + '_%03i_out'%self._index
+#                token_name = templates.bundle_indexing(out_token_name, self._output_blocks[0]['size'])
+#
+#            default_value = ''
+#            instances += [Instance(default_value,
+#                                 self.scope_index,
+#                                 self.domain,
+#                                 block_types[0],
+#                                 token_name,
+#                                 self) ]
+#            self.code_declaration.add_dependent(instances[-1])
+#
+#        for name, atoms in self.port_name_atoms.items():
+#            for atom in atoms:
+#                decl = self.platform.find_declaration_in_tree(atom.get_handles(),
+#                                                              self.module['ports']['blocks'] + self.platform.tree)
+#                if not decl:
+#                    if type(atom) is NameAtom:
+#                        default_value = 0.0
+#                        if not self.platform.find_instance_by_handle(atom.get_handles()[0], instances):
+#                            instances += atom.get_instances()
+#                            instances[-1].add_dependent(self.code_declaration)
+#                    elif type(atom) is ExpressionAtom:
+#                        for new_inst in self._get_expression_instances(atom):
+#                            if not self.platform.find_instance_by_handle(new_inst.get_name(), instances):
+#                                instances += [new_inst]
+#                                instances[-1].add_dependent(self.code_declaration)
+#
+#        return instances
 
 class LoopAtom(ReactionAtom):
     def __init__(self, loop, function, platform_code, token_index,
@@ -1922,8 +2081,8 @@ class LoopAtom(ReactionAtom):
                             in_tokens.pop(0)
                 in_tokens.insert(0, connector_name)
 
-        while (len(in_tokens) > len(self.references)) :
-            in_tokens.pop() # Hack to discard tokens that would not be used
+#        while (len(in_tokens) > len(self.references)) :
+#            in_tokens.pop() # Hack to discard tokens that would not be used
 
         in_tokens += out_tokens
 #        for i in range(len(parameter_tokens)):
@@ -2151,7 +2310,10 @@ class LoopAtom(ReactionAtom):
                     if type(new_element) == BundleInstance:
                         size = new_element.get_size()
                         bundle_type = new_element.get_bundle_type()
-                    domain_code[new_element_domain]["header_code"] += templates.declare_instance(new_element)
+                    new_header_code = ''
+                    for domain, new_code in templates.declarations_from_instance(new_element).items():
+                        new_header_code += templates.expression(new_code)
+                    domain_code[new_element_domain]["header_code"] += new_header_code
                     domain_code[new_element_domain]["init_code"] +=  templates.initialization_instance(new_element.get_name(), new_element.get_type(), new_element.get_code(), size, bundle_type)
                     instanced.append(new_element)
 #                    self.log_debug('////// ' + new_element.get_name() + ' // Dependents : '+ ' '.join([e.get_name() for e in new_element.get_dependents()]))
@@ -2240,8 +2402,8 @@ class LoopAtom(ReactionAtom):
 
         declarations += outer_declarations
 
-        for block in self.port_name_atoms:
-            declarations += block.get_declarations()
+#        for block in self.port_name_atoms.values():
+#            declarations += block.get_declarations()
 
         for const_name, const_info in self.instance_consts.items():
             dec = Declaration(self.module['stack_index'],
@@ -2267,9 +2429,8 @@ class LoopAtom(ReactionAtom):
         # A reaction is not instanced. It is a function. We only need to return internally generated instances
 
         port_atom_names = []
-        for atoms in self.port_name_atoms.values():
-            for atom in atoms:
-                port_atom_names += atom.get_handles();
+        for atom in self.port_name_atoms.values():
+            port_atom_names += atom.get_handles();
 
         if self.next_stream_member:
             port_atom_names += self.next_stream_member.get_handles()
@@ -2340,7 +2501,7 @@ class LoopAtom(ReactionAtom):
 class PlatformTypeAtom(Atom):
     def __init__(self, declaration, function, platform_code, token_index, platform,
                  scope_index, line, filename,
-                 previous_atom, next_stream_member):
+                 previous_atom, next_stream_member, index = None):
         super(PlatformTypeAtom, self).__init__(line, filename)
         self.scope_index = scope_index
         self.name = platform_code['block']["name"]
@@ -2353,10 +2514,14 @@ class PlatformTypeAtom(Atom):
         self.declaration = declaration
         self.rate = None #function['rate']
         self.function = function
+        self.index = index # If index is not None, then this is a bundle
+
+        self.in_domains = []
+        self.out_domains = []
         if previous_atom:
-            self.domain = previous_atom.get_domain()
+            self.in_domains = [previous_atom.get_domain()]
         elif next_stream_member:
-            self.domain = platform.get_stream_member_domain(next_stream_member)
+            self.out_domains = [platform.get_stream_member_domain(next_stream_member)]
 
         self.instance_consts = {}
         self.input_atom = previous_atom
@@ -2403,8 +2568,9 @@ class PlatformTypeAtom(Atom):
                 len(self.platform_type['block']['ports']['outputs']) )
 
         # TODO support more than one output
-        domain_code = 'float ' + templates.assignment(self.out_tokens[0], domain_code)
-        domain_code += 'return ' + self.out_tokens[0] +';\n'
+        if len(self.out_tokens) > 0:
+            domain_code = 'float ' + templates.assignment(self.out_tokens[0], domain_code)
+            domain_code += 'return ' + self.out_tokens[0] +';\n'
 
         out_type = templates.real_type #FIXME get type from declaration
 
@@ -2412,8 +2578,12 @@ class PlatformTypeAtom(Atom):
                 self.name, arguments, header_code,
                 init_code, domain_code, out_type)
 
+        # TODO there needs to be a better way to determine where to declare
+        declaration_domain = self.platform.get_platform_domain()
+
         self.code_declaration = Declaration(self.declaration['stack_index'],
-                                        self.domain,
+                                        [declaration_domain],
+                                        [declaration_domain],
                                         self.name,
                                         declaration_text)
 
@@ -2421,10 +2591,10 @@ class PlatformTypeAtom(Atom):
         declarations = []
         outer_declarations = []
 
-        declarations += outer_declarations
+#        declarations += outer_declarations
 
-        for block in self.port_name_atoms:
-            declarations += block.get_declarations()
+#        for block in self.port_name_atoms:
+#            declarations += block.get_declarations()
 
         for const_name, const_info in self.instance_consts.items():
             dec = Declaration(self.module['stack_index'],
@@ -2440,7 +2610,8 @@ class PlatformTypeAtom(Atom):
     def get_instances(self):
         instances = [PlatformModuleInstance(
                      self.declaration['stack_index'],
-                     self.domain,
+                     self.in_domains,
+                     self.out_domains,
                      self.name,
                      self.handle,
                      self, [])]
@@ -2665,7 +2836,7 @@ class PlatformFunctions:
                 elif element['block']['type'] == 'type':
                     if element['block']['ports']['typeName'] == type_name:
                         return element
-                elif element['block']['type'] == 'platformType':
+                elif element['block']['type'] == 'platformBlock':
                     if element['block']['ports']['typeName'] == type_name:
                         return element
                 elif element['block']['type'] == 'platformModule':
@@ -2680,6 +2851,7 @@ class PlatformFunctions:
             platform_type = self.find_stride_type(block_declaration["type"])
         else:
             platform_type =  self.find_stride_type(block_declaration["platformType"])
+            raise ValueError("platformType")
         return platform_type, block_declaration
 
     def generate_code_for_element(self, new_element, domain_code):
@@ -2705,7 +2877,10 @@ class PlatformFunctions:
             if type(new_element) == BundleInstance:
                 size = new_element.get_size()
                 bundle_type = new_element.get_bundle_type()
-            domain_code[new_element_domain]["header_code"] += templates.declare_instance(new_element)
+            new_header_code = ''
+            for domain, new_code in templates.declarations_from_instance(new_element).items():
+                new_header_code += templates.expression(new_code)
+            domain_code[new_element_domain]["header_code"] += new_header_code
             domain_code[new_element_domain]["init_code"] +=  templates.initialization_instance(new_element.get_name(), new_element.get_type(), new_element.get_code(), size, bundle_type)
 
 #                    self.log_debug('////// ' + new_element.get_name() + ' // Dependents : '+ ' '.join([e.get_name() for e in new_element.get_dependents()]))
@@ -2783,8 +2958,9 @@ class PlatformFunctions:
                 declaration['id'] = self.unique_id
             if declaration['type'] == 'buffer':
                 new_atom = BufferAtom(declaration, member['name'], platform_type, self.unique_id, self, scope_index, member['name']['line'], member['name']['filename'],previous_atom, next_stream_member)
-            elif platform_type['block']['type'] == 'platformType':
-                # FIXME This should be disallowed now
+            elif platform_type['block']['type'] == 'platformBlock':
+                new_atom = PlatformTypeAtom(declaration, member['name'], platform_type, self.unique_id, self, scope_index, member['name']['line'], member['name']['filename'],previous_atom, next_stream_member)
+            elif platform_type['block']['type'] == 'platformModule':
                 new_atom = PlatformTypeAtom(declaration, member['name'], platform_type, self.unique_id, self, scope_index, member['name']['line'], member['name']['filename'],previous_atom, next_stream_member)
             else:
                 new_atom = NameAtom(platform_type, declaration, self.unique_id, self, scope_index, member['name']['line'], member['name']['filename'], previous_atom)
@@ -2793,16 +2969,25 @@ class PlatformFunctions:
             platform_type, declaration = self.find_block(member['bundle']['name'], self.tree)
             if not 'id' in declaration:
                 declaration['id'] = self.unique_id
-            new_atom = BundleAtom(platform_type, declaration, member['bundle']['index'], self.unique_id, self, scope_index, member['bundle']['line'],member['bundle']['filename'], previous_atom)
+#            if declaration['type'] == 'buffer':
+#                new_atom = BufferAtom(declaration, member['name'], platform_type, self.unique_id, self, scope_index, member['name']['line'], member['name']['filename'],previous_atom, next_stream_member)
+#            el
+            if platform_type['block']['type'] == 'platformBlock':
+                new_atom = PlatformTypeAtom(declaration, member['bundle'], platform_type, self.unique_id, self, scope_index, member['bundle']['line'], member['bundle']['filename'],previous_atom, next_stream_member, member['bundle']['index'])
+            if platform_type['block']['type'] == 'platformModule':
+                new_atom = PlatformTypeAtom(declaration, member['bundle'], platform_type, self.unique_id, self, scope_index, member['bundle']['line'], member['bundle']['filename'],previous_atom, next_stream_member, member['bundle']['index'])
+            else:
+                new_atom = BundleAtom(platform_type, declaration, member['bundle']['index'], self.unique_id, self, scope_index, member['bundle']['line'],member['bundle']['filename'], previous_atom)
         elif "function" in member:
             platform_type, declaration = self.find_block(member['function']['name'], self.tree)
 #            connected_atoms = []
 #            for port_name, value in member['function']['ports'].items():
 #                if 'block' or 'bundle' in value:
 #                    connected_atoms.append(self.make_atom(value))
+
+            if not 'id' in member['function']:
+                member['function']['id'] = self.unique_id
             if declaration['type'] == 'module':
-                if not 'id' in member['function']:
-                    member['function']['id'] = self.unique_id
                 if 'type' in platform_type['block']:
                     new_atom = ModuleAtom(declaration, member['function'], platform_type, self.unique_id, self, scope_index, member['function']['line'], member['function']['filename'],previous_atom, next_stream_member)
                 else:
@@ -2813,8 +2998,11 @@ class PlatformFunctions:
                 new_atom = LoopAtom(declaration, member['function'], platform_type, self.unique_id, self, scope_index, member['function']['line'], member['function']['filename'],previous_atom, next_stream_member)
             else:
                 platform_type, declaration = self.find_block(member['function']['name'], self.tree)
-                if platform_type['block']['type'] == 'platformType': # Assume we are using a platform type (allow function notation for platform types)
+                if platform_type['block']['type'] == 'platformBlock':
                     # This should be exactly the same as the if "name" in member branch
+                    platform_type, declaration = self.find_block(member['function']['name'], self.tree)
+                    new_atom = PlatformTypeAtom(declaration, member['function'], platform_type, self.unique_id, self, scope_index, member['function']['line'], member['function']['filename'],previous_atom, next_stream_member)
+                elif platform_type['block']['type'] == 'platformModule':
                     platform_type, declaration = self.find_block(member['function']['name'], self.tree)
                     new_atom = PlatformTypeAtom(declaration, member['function'], platform_type, self.unique_id, self, scope_index, member['function']['line'], member['function']['filename'],previous_atom, next_stream_member)
         elif "expression" in member:
@@ -2906,16 +3094,16 @@ class PlatformFunctions:
             if index < len(stream) - 1:
                 next_stream_member = stream[index + 1]
             new_atom = self.make_atom(member, previous_atom, next_stream_member)
-            if hasattr("domain", "new_atom"):
-                if not current_domain == new_atom.domain:
-                    current_domain = new_atom.domain
-                    # TODO this can be simplified as we can assume that streams belong to the same domain
-                    print("New domain!" + current_domain)
-                    node_groups.append([])
-                    cur_group = node_groups[-1]
-            else:
-                #print("No domain... Bad.")
-                pass
+#            if hasattr("domain", "new_atom"):
+#                if not current_domain == new_atom.domain:
+#                    current_domain = new_atom.domain
+#                    # TODO this can be simplified as we can assume that streams belong to the same domain
+#                    print("New domain!" + current_domain)
+#                    node_groups.append([])
+#                    cur_group = node_groups[-1]
+#            else:
+#                #print("No domain... Bad.")
+#                pass
 #            self.log_debug("New atom: " + str(new_atom.handle) + " domain: :" + str(current_domain) + ' (' + str(type(new_atom)) + ')')
             cur_group.append(new_atom)
 
@@ -2981,14 +3169,14 @@ class PlatformFunctions:
                         type(atom) == ListAtom or type(atom) == ExpressionAtom):
                         for new_inst in new_instances:
                                 # Don't count module instances. You only need its i/o tokens
-                            if not type(new_inst) == ModuleInstance and not type(new_inst) == Declaration:
+                            if not type(new_inst) == ModuleInstance and not (type(new_inst) == Declaration or issubclass(type(new_inst), Declaration)):
                                 writes[current_domain].append(new_inst)
                 # It's a read for any but the last
                 if group.index(atom) < len(group) -1:
                     if (type(atom) == NameAtom or type(atom) == BundleAtom or
                         type(atom) == ListAtom or type(atom) == ExpressionAtom):
                         for new_inst in new_instances:
-                            if not type(new_inst) == ModuleInstance and not type(new_inst) == Declaration:
+                            if not type(new_inst) == ModuleInstance and not (type(new_inst) == Declaration or issubclass(type(new_inst), Declaration)):
                                 # Don't count module instances. You only need its i/o tokens
                                 reads[current_domain].append(new_inst)
 
@@ -3154,7 +3342,7 @@ class PlatformFunctions:
                 "header_code" : header_code,
                 "init_code" : init_code,
                 "processing_code" : new_processing_code,
-                "scope_instances": scope_instances,
+                "scope_instances" : scope_instances,
                 "scope_declarations": scope_declarations,
                 "reads" : reads,
                 "writes" : writes
@@ -3439,8 +3627,6 @@ class PlatformFunctions:
         return {"global_groups" : global_groups_code,
                 "domain_code": domain_code,
                 "scope_elements" : sorted_elements,
-                "other_scope_instances" : [],
-                "other_scope_declarations" : [],
                 "writes" : writes,
                 "reads" : reads}
 
@@ -3507,30 +3693,36 @@ class GeneratorBase(object):
                 tempdict = new_element.__dict__  # For debugging. This shows the contents in the spyder variable explorer
                 #self.log_debug(new_element.get_code())
                 if type(new_element) == Declaration or issubclass(type(new_element), Declaration):
-                    new_element_domain = new_element.get_domain()
-                    if not new_element_domain in domain_code:
-                        domain_code[new_element_domain] =  { "header_code": '',
-                            "init_code" : '',
-                            "processing_code" : [] }
-                    domain_code[new_element_domain]['header_code'] += new_element.get_code()
+                    new_element_domains = new_element.get_domain_list()
+                    for new_domain in new_element_domains:
+                        if not new_domain in domain_code:
+                            domain_code[new_domain] =  { "header_code": '',
+                                "init_code" : '',
+                                "processing_code" : [] }
+                        domain_code[new_domain]['header_code'] += new_element.get_code()
 #                    self.log_debug('////// ' + new_element.get_name() + ' // Dependents : '+ ' '.join([e.get_name() for e in new_element.get_dependents()]))
 
                 elif type(new_element) == Instance or issubclass(type(new_element), Instance):
-                    new_element_domain = new_element.get_domain()
-                    if not new_element.get_domain() in domain_code:
-                        domain_code[new_element_domain] =  { "header_code": '',
-                            "init_code" : '',
-                            "processing_code" : [] }
-                    size = 1
-                    bundle_type = ''
-                    if type(new_element) == BundleInstance:
-                        size = new_element.get_size()
-                        bundle_type = new_element.get_bundle_type()
-                    domain_code[new_element_domain]["header_code"] += templates.declare_instance(new_element)
-#                    if new_element
-                    if (type(new_element.atom) == NameAtom or type(new_element.atom) == BundleAtom) and not new_element.atom.declaration['type'] == 'signalbridge':
-                        domain_code[new_element_domain]["init_code"] +=  templates.initialization_instance(new_element.get_name(), new_element.get_type(), new_element.get_code(), size, bundle_type)
-                    instanced.append(new_element)
+                    new_element_domains = new_element.get_domain_list()
+                    for new_domain in new_element_domains:
+                        if not new_domain in domain_code:
+                            domain_code[new_domain] =  { "header_code": '',
+                                "init_code" : '',
+                                "processing_code" : [] }
+                        size = 1
+                        bundle_type = ''
+                        if type(new_element) == BundleInstance:
+                            size = new_element.get_size()
+                            bundle_type = new_element.get_bundle_type()
+
+                        new_header_code = ''
+                        for domain, new_code in templates.declarations_from_instance(new_element).items():
+                            new_header_code += templates.expression(new_code)
+                        domain_code[new_domain]["header_code"] += new_header_code
+    #                    if new_element
+                        if (type(new_element.atom) == NameAtom or type(new_element.atom) == BundleAtom) and not new_element.atom.declaration['type'] == 'signalbridge':
+                            domain_code[new_domain]["init_code"] +=  templates.initialization_instance(new_element.get_name(), new_element.get_type(), new_element.get_code(), size, bundle_type)
+                        instanced.append(new_element)
 
 
 

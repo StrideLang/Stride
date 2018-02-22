@@ -405,6 +405,19 @@ class Generator(GeneratorBase):
         args = [self.out_dir + "/" + self.target_name]
         outtext = ck_out(args)
         self.log(outtext)
+#        import subprocess
+#        from subprocess import Popen
+#        self.process = Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#
+#        done = False
+#        while not done:
+#            try:
+#                (stdout_data, stderr_data) = self.process.communicate(None, timeout = 0.5)
+#                done = True
+#            except subprocess.TimeoutExpired: # subprocess.TimeoutExpired
+#                self.log(self.process.stdout.read())
+#                self.log(self.process.stderr.read())
+
 #        self.process = ExternalProcess()
 
 #        self.process.start(args)

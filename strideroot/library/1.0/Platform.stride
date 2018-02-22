@@ -129,8 +129,8 @@ type _FrameworkDescription {
 	inherits: ["base"]
 }
 
-type _PlatformType {
-	typeName: "platformType"
+type _PlatformModuleType {
+	typeName: "platformModule"
 	properties: [
 		typeProperty TypeName {
 			name: "typeName"
@@ -266,6 +266,12 @@ type _PlatformType {
 		}
 	]
 	inherits: ["base"]
+}
+
+type _PlatformBlockType {
+	typeName: "platformBlock"
+	properties: [ ]
+	inherits: ["platformModule"]
 }
 
 

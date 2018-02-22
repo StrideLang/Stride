@@ -1,7 +1,7 @@
 
 
 # Sine function test
-platformType _SineType {
+platformModule _SineType {
     typeName: '_sineType'
     inputs: ["real"]
 	outputs: ["real"]
@@ -14,7 +14,7 @@ platformType _SineType {
 }
 
 
-platformType _CosineType {
+platformModule _CosineType {
     typeName: '_cosineType'
     inputs: ["real"]
 	outputs: ["real"]
@@ -26,7 +26,7 @@ platformType _CosineType {
     inherits: ['signal']
 }
 
-platformType _TangentType {
+platformModule _TangentType {
     typeName: '_tangentType'
     inputs: ["real"]
 	outputs: ["real"]

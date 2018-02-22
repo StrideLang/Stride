@@ -151,12 +151,7 @@ ASTNode DeclarationNode::getDomain()
 
 void DeclarationNode::setDomainString(string domain)
 {
-    for (unsigned int i = 0; i < m_properties.size(); i++) {
-        if (m_properties.at(i)->getName() == "domain") {
-            m_properties.at(i)->replaceValue(make_shared<ValueNode>(domain, __FILE__, __LINE__));
-            break;
-        }
-    }
+    replacePropertyValue("domain", make_shared<ValueNode>(domain, __FILE__, __LINE__));
 }
 
 string DeclarationNode::getObjectType() const

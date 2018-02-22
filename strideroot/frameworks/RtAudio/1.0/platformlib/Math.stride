@@ -1,5 +1,5 @@
 
-platformType _FloorType {
+platformModule _FloorType {
     typeName: '_floorType'
     inputs: ["real"]
 	outputs: ["real"] # FIXME shoudl be "int"
@@ -8,7 +8,7 @@ platformType _FloorType {
     inherits: ['signal']
 }
 # Power function
-platformType _PowerType {
+platformModule _PowerType {
     typeName: '_powerType'
     inputs: ["real", "real"]
 	outputs: ["real"]
@@ -18,7 +18,7 @@ platformType _PowerType {
 }
 
 # Power to e
-platformType _ExpType {
+platformModule _ExpType {
     typeName: '_expType'
     inputs: ["real"]
 	outputs: ["real"]

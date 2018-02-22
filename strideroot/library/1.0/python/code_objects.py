@@ -10,7 +10,7 @@ class Code(object):
         self.code = ''
         self.name = ''
         self.scope = 0
-        self.domain = None
+        self.domains = {}
         self.dependents = []
         self.line = -1
         self.filename = ''
@@ -25,8 +25,19 @@ class Code(object):
     def get_scope(self):
         return self.scope
 
-    def get_domain(self):
-        return self.domain
+    def get_domains(self):
+        return self.domains
+
+    def get_domain_list(self):
+        '''Get flat list of domains together without repetitions'''
+        domain_list = []
+        for d in self.domains['read']:
+            if not d in domain_list:
+                domain_list.append(d)
+        for d in self.domains['write']:
+            if not d in domain_list:
+                domain_list.append(d)
+        return domain_list
 
     def get_dependents(self):
         return self.dependents
@@ -49,10 +60,12 @@ class Code(object):
         return self.enabled
 
 class Instance(Code):
-    def __init__(self, code, scope, domain, vartype, handle, atom, post = True):
+    def __init__(self, code, scope, read_domains, write_domains, vartype, handle, atom, post = True):
         self.code = code
         self.scope = scope
-        self.domain = domain
+        self.domains = {}
+        self.domains['read'] = read_domains
+        self.domains['write'] = write_domains
         self.vartype = vartype
         self.handle = handle
         self.line = atom.get_line()
@@ -71,11 +84,10 @@ class Instance(Code):
     def get_post(self):
         return self.post
 
-
 class BufferInstance(Instance):
-    def __init__(self, code, scope, domain, vartype, handle, size, atom, post = True,
+    def __init__(self, code, scope, read_domains, write_domains, vartype, handle, size, atom, post = True,
                  reads = [], writes = []):
-        super(BufferInstance, self).__init__(code, scope, domain, vartype, handle, atom, post)
+        super(BufferInstance, self).__init__(code, scope, read_domains, write_domains, vartype, handle, atom, post)
         self.size = size
 
     def get_type(self):
@@ -88,9 +100,9 @@ class BufferInstance(Instance):
         return self.vartype
 
 class BundleInstance(Instance):
-    def __init__(self, code, scope, domain, vartype, handle, size, atom, post = True,
+    def __init__(self, code, scope, read_domains, write_domains, vartype, handle, size, atom, post = True,
                  reads = [], writes = []):
-        super(BundleInstance, self).__init__(code, scope, domain, vartype, handle, atom, post)
+        super(BundleInstance, self).__init__(code, scope, read_domains, write_domains, vartype, handle, atom, post)
         self.size = size
 
     def get_type(self):
@@ -103,8 +115,8 @@ class BundleInstance(Instance):
         return self.vartype
 
 class ModuleInstance(Instance):
-    def __init__(self, scope, domain, vartype, handle, atom, instance_consts, post = True):
-        super(ModuleInstance, self).__init__('', scope, domain, vartype, handle, atom, post)
+    def __init__(self, scope, read_domains, write_domains, vartype, handle, atom, instance_consts, post = True):
+        super(ModuleInstance, self).__init__('', scope, read_domains, write_domains, vartype, handle, atom, post)
         self.instance_consts = instance_consts
 
     def get_type(self):
@@ -117,8 +129,8 @@ class ModuleInstance(Instance):
         return self.instance_consts
 
 class PlatformModuleInstance(ModuleInstance):
-    def __init__(self, scope, domain, vartype, handle, atom, instance_consts, post = True):
-        super(PlatformModuleInstance, self).__init__(scope, domain, vartype, handle, atom, instance_consts, post)
+    def __init__(self, scope, read_domains, write_domains, vartype, handle, atom, instance_consts, post = True):
+        super(PlatformModuleInstance, self).__init__(scope, read_domains, write_domains, vartype, handle, atom, instance_consts, post)
         self.instance_consts = instance_consts
 
     def get_type(self):
@@ -132,9 +144,11 @@ class PlatformModuleInstance(ModuleInstance):
 
 
 class Declaration(Code):
-    def __init__(self, scope, domain, name, code):
+    def __init__(self, scope, read_domains, write_domains, name, code):
         self.scope = scope
-        self.domain = domain
+        self.domains = {}
+        self.domains['read'] = read_domains
+        self.domains['write'] = write_domains
         self.name = name
         self.code = code
         self.dependents = []
@@ -143,12 +157,16 @@ class Declaration(Code):
     def get_name(self):
         return self.name
 
+class ModuleDeclaration(Declaration):
+    def __init__(self, scope, read_domains, write_domains, name, code):
+        super(ModuleDeclaration, self).__init__(scope, read_domains, write_domains, name, code)
+
 class DomainProcessingCode(object):
     def __init__(self, domain_name):
         self.domain_name = domain_name
         self.code = ''
         self.tokens = []
-        self.token_is_input = []
+        self.token_is_output = []
 
     def get_domain_name(self):
         return self.domain_name
@@ -161,7 +179,14 @@ class DomainProcessingCode(object):
 
     def add_token(self, token_name, is_input):
         self.tokens.append(token_name)
-        self.token_is_input.append(is_input)
+        self.token_is_output.append(is_input)
+
+    def get_out_tokens(self):
+        out_tokens = []
+        for tok, is_output in zip(self.tokens, self.token_is_output):
+            if is_output:
+                out_tokens.append(tok)
+        return out_tokens
 
     def append_code(self, code):
         self.code += code

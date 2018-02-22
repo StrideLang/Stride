@@ -36,6 +36,10 @@
 from __future__ import print_function
 
 
+from code_objects import Instance, BundleInstance, ModuleInstance, PlatformModuleInstance, BufferInstance
+from code_objects import Declaration, ModuleDeclaration, DomainProcessingCode
+
+
 try:
     unicode_exists_test = type('a') == unicode
 except:
@@ -217,32 +221,36 @@ public:
             declaration += ';\n'
         return declaration
 
-    def declare_instance(self, instance):
-        if instance.get_type() == 'real':
-            code = self.declaration_real(instance.get_name())
-        elif instance.get_type() == 'bool':
-            code = self.declaration_bool(instance.get_name())
-        elif instance.get_type() == 'string':
-            code = self.declaration_string(instance.get_name())
-        elif instance.get_type() =='bundle':
-            if instance.get_bundle_type() == 'real':
-                code = self.declaration_bundle_real(instance.get_name(), instance.size)
-            elif instance.get_bundle_type() == 'bool':
-                code = self.declaration_bundle_bool(instance.get_name(), instance.size)
+    def declarations_from_instance(self, instance):
+        declarations = {}
+        for domain in instance.get_domain_list():
+            code = ''
+            if instance.get_type() == 'real':
+                code = self.declaration_real(instance.get_name(), False)
+            elif instance.get_type() == 'bool':
+                code = self.declaration_bool(instance.get_name(), False)
+            elif instance.get_type() == 'string':
+                code = self.declaration_string(instance.get_name(), False)
+            elif instance.get_type() =='bundle':
+                if instance.get_bundle_type() == 'real':
+                    code = self.declaration_bundle_real(instance.get_name(), instance.size, False)
+                elif instance.get_bundle_type() == 'bool':
+                    code = self.declaration_bundle_bool(instance.get_name(), instance.size, False)
+                else:
+                    raise ValueError("Unsupported bundle type.")
+            elif instance.get_type() == 'module':
+                code = self.declaration_module(instance.get_module_type(), instance.get_name(), instance.get_instance_consts(), False)
+            elif instance.get_type() == 'reaction':
+                code = self.declaration_reaction(instance.get_module_type(), instance.get_name(), False)
+            elif instance.get_type() == 'buffer':
+                code = self.declaration_buffer(instance.get_buffer_type(), instance.get_name(), instance.get_size(), False)
+            elif instance.get_type() == 'platform_module':
+                code = self.declaration_module(instance.get_module_type(), instance.get_name(), instance.get_instance_consts(), False)
             else:
-                raise ValueError("Unsupported bundle type.")
-        elif instance.get_type() == 'module':
-            code = self.declaration_module(instance.get_module_type(), instance.get_name(), instance.get_instance_consts())
-        elif instance.get_type() == 'reaction':
-            code = self.declaration_reaction(instance.get_module_type(), instance.get_name())
-        elif instance.get_type() == 'buffer':
-            code = self.declaration_buffer(instance.get_buffer_type(), instance.get_name(), instance.get_size())
-        elif instance.get_type() == 'platform_module':
-            code = self.declaration_module(instance.get_module_type(), instance.get_name(), instance.get_instance_consts())
-        else:
-            raise ValueError('Unsupported type for instance')
-#        code += templates.source_marker(instance.get_line(), instance.get_filename())
-        return code
+                raise ValueError('Unsupported type for instance')
+    #        code += templates.source_marker(instance.get_line(), instance.get_filename())
+            declarations[domain] = code
+        return declarations
 
     def declaration(self, block, close=True):
         declaration = ''
@@ -306,35 +314,40 @@ public:
                 declaration = self.declaration_real(name, close)
         return declaration
 
-    def declaration_reference_from_instance(self, instance, close=True):
-        declaration = ''
+    def declaration_references_from_instance(self, instance):
         vartype = instance.get_type()
-        name = instance.get_name()
+        close = False
+
+        declarations = {}
+        for domain in instance.get_domain_list():
+            declaration = ''
+            name = instance.get_name()
         # FIXME support bundles
-        if vartype == 'bundle':
-            vartype = instance.get_bundle_type()
-            if vartype == 'real':
-                declaration = self.declaration_real(name, close)
-            elif vartype == 'string':
-                declaration = self.declaration_string(name, close)
-            elif vartype == 'bool':
-                declaration = self.declaration_bool(name, close)
-            elif vartype == 'int':
-                declaration = self.declaration_int(name, close)
-            declaration = self.bundle_indexing(declaration, instance.get_size())
-        else:
-            name = "&" + name
-            if vartype == 'real':
-                declaration = self.declaration_real(name, close)
-            elif vartype == 'string':
-                declaration = self.declaration_string(name, close)
-            elif vartype == 'bool':
-                declaration = self.declaration_bool(name, close)
-            elif vartype == 'int':
-                declaration = self.declaration_int(name, close)
+            if vartype == 'bundle':
+                vartype = instance.get_bundle_type()
+                if vartype == 'real':
+                    declaration = self.declaration_real(name, close)
+                elif vartype == 'string':
+                    declaration = self.declaration_string(name, close)
+                elif vartype == 'bool':
+                    declaration = self.declaration_bool(name, close)
+                elif vartype == 'int':
+                    declaration = self.declaration_int(name, close)
+                declaration = self.bundle_indexing(declaration, instance.get_size())
             else:
-                print("Unsupported type for reference:" + vartype)
-        return declaration
+                name = "&" + name
+                if vartype == 'real':
+                    declaration = self.declaration_real(name, close)
+                elif vartype == 'string':
+                    declaration = self.declaration_string(name, close)
+                elif vartype == 'bool':
+                    declaration = self.declaration_bool(name, close)
+                elif vartype == 'int':
+                    declaration = self.declaration_int(name, close)
+                else:
+                    print("Unsupported type for reference:" + vartype)
+            declarations[domain] = declaration
+        return declarations
 
     def declaration_real(self, name, close=True, default = None):
         declaration = self.real_type + " " + name
@@ -591,7 +604,7 @@ public:
             return ''
 
     # Module code ------------------------------------------------------------
-    def module_declaration(self, name, header_code, init_code, blocks, domain_code, instance_consts = {}):
+    def module_declaration(self, name, header_code, init_code, elements, domain_code, instance_consts = {}):
 
         out_type = 'void'
 
@@ -601,54 +614,47 @@ public:
 
         process_code = {}
 
-        # TODO complete support for data types
-        data_types = []
-        for block in blocks:
-            if 'block' in block:
-                block = block['block']
-            elif 'blockbundle' in block:
-                block = block['blockbundle']
-
-            if block['type'] == 'signalbridge':
-                process_code[block['ports']['inputDomain']]['blocks'].append(block)
-                process_code[block['ports']['outputDomain']]['blocks'].append(block)
-            elif block['type'] == 'signal' or block['type'] == 'switch':
-                domain = block['ports']['domain']
+        for element in elements:
+            domains = element.get_domain_list()
+            for domain in domains:
                 if not domain in process_code:
-                    process_code[domain] = {"code": '', "blocks" : []}
-                    process_code[domain]['code'] += '\n'.join(domain_code[domain]['processing_code'])
-                process_code[domain]['blocks'].append(block)
+                    process_code[domain] = []
+                process_code[domain].append(element)
 
-            if 'type' in block['ports']:
-                datatype = block['ports']['type']
-                if datatype == 'real':
-                    datatype = 'float' # hack...
-                data_types.append(datatype)
+        for domain, domain_elements in process_code.items():
+            if domain in domain_code:
+                domain_proc_code = '\n'.join(domain_code[domain]['processing_code'])
             else:
-                data_types.append(None)
-
-
-        for domain, domain_components in process_code.items():
-            domain_proc_code = domain_components['code']
+                domain_proc_code = ''
             input_declaration = ''
-            for block in domain_components['blocks']:
-                if block['type'] == 'signal' or block['type'] == 'switch':
-                    if len(block['ports']['_writes']) > 0:
-                        input_declaration +=  self.declaration_reference(block, False) + ", "
+            for element in domain_elements:
+                if type(element) == Instance or issubclass(type(element), Instance):
+                    if len(element.get_domains()['write']) > 0:
+                        decls = self.declaration_references_from_instance(element)
                     else:
-                        input_declaration += self.declaration(block, close = False) + ", "
+                        decls = self.declarations_from_instance(element)
+                    for elem_domain, decl in decls.items():
+                        if domain == elem_domain:
+                            input_declaration += decl + ", "
 
-                    arguments = self.declaration_reference(block, close=False)
+                    needs_init = False
+                    if needs_init:
+                        arguments = self.declaration_reference(block, close=False)
 
-                    data_type = None
-                    if block in blocks:
-                        data_type = data_types[blocks.index(block)]
-                    block_init_code = self.assignment(block['name'], block['ports']['default'], data_type)
+                        data_type = None
+                        if block in blocks:
+                            data_type = data_types[blocks.index(block)]
+                        block_init_code = self.assignment(block['name'], block['ports']['default'], data_type)
 
-                    init_functions += self.str_function_declaration%(out_type, 'init_' + block['name'], arguments, block_init_code)
+                        init_functions += self.str_function_declaration%(out_type, 'init_' + block['name'], arguments, block_init_code)
 
-                elif block['type'] == 'signalbridge':
-                    input_declaration +=  self.declaration_reference(block, False) + ", "
+#            for ref in references:
+#                if not ref.get_name() in declared_references:
+#                    decls = self.declaration_references_from_instance(ref)
+#                    for decl_domain,decl in decls.items():
+#                        if decl_domain == domain:
+#                            input_declaration +=  decl + ", "
+#                            declared_references.append(ref.get_name())
 
             if len(input_declaration) > 0:
                 input_declaration = input_declaration[:-2]
@@ -673,15 +679,10 @@ public:
         code = handle + '.set_' + port_name + '(' + in_tokens[0] + ');'
         return code
 
-    def module_processing_code(self, handle, tokens, domain_name):
+    def module_processing_code(self, handle, domain_name, tokens):
         code = handle + '.process_' + str(domain_name) + '('
         for token in tokens:
-            token_name = token[0]
-            is_output = token[1]
-            if is_output: #is output
-                code += token_name + ", "
-            else:
-                code += token_name + ", "
+            code += token + ", "
 
         if len(code) > 2:
             code = code[:-2] # Chop off extra comma
@@ -711,8 +712,11 @@ public:
             input_declaration = ''
             for ref in references:
                 if not ref.get_name() in declared_references:
-                    input_declaration +=  self.declaration_reference_from_instance(ref, False) + ", "
-                    declared_references.append(ref.get_name())
+                    decls = self.declaration_references_from_instance(ref)
+                    for decl_domain,decl in decls:
+                        if decl_domain == domain:
+                            input_declaration +=  decl + ", "
+                            declared_references.append(ref.get_name())
 
             if len(input_declaration) > 0:
                 input_declaration = input_declaration[:-2]
@@ -786,8 +790,11 @@ public:
 
         for ref in references:
             if not ref.get_name() in declared_references:
-                input_declaration +=  self.declaration_reference_from_instance(ref, False) + ", "
-                declared_references.append(ref.get_name())
+                decls = self.declaration_references_from_instance(ref)
+                for decl_domain,decl in decls:
+                    if decl_domain == domain:
+                        input_declaration +=  decl + ", "
+                        declared_references.append(ref.get_name())
 
         if len(input_declaration) > 0:
             input_declaration = input_declaration[:-2]

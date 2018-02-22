@@ -11,7 +11,7 @@ _domainDefinition OSCInDomain {
 }
 
 
-platformType _OscOutType {
+platformBlock _OscOutType {
     typeName: '_oscOutType'
     inputs: ["string", "string", "string", "int"]
 #	numOutputs: 0
@@ -28,7 +28,7 @@ platformType _OscOutType {
     inherits: ['signal']
 }
 
-platformType _OscInType {
+platformBlock _OscInType {
     typeName: '_oscInType'
     inputs: ["string", "string", "int"]
 	outputs: ["real"]
