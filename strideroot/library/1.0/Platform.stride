@@ -82,7 +82,7 @@ type _DomainDefinition {
 			required: off
 		}
 	]
-	inherits: ["base"]
+#	inherits: [_Base]
 }
 
 type _Domain {
@@ -101,7 +101,7 @@ type _Domain {
 			required: off
 		}
 	]
-	inherits: ["base"]
+#	inherits: [_Base]
 }
 
 type _DomainProcessing {
@@ -126,7 +126,7 @@ type _FrameworkDescription {
 			required: on
 		}
 	]
-	inherits: ["base"]
+	inherits: [_Base]
 }
 
 type _PlatformModuleType {
@@ -265,13 +265,13 @@ type _PlatformModuleType {
 			required: off
 		}
 	]
-	inherits: ["base"]
+	inherits: [_Base]
 }
 
 type _PlatformBlockType {
 	typeName: "platformBlock"
 	properties: [ ]
-	inherits: ["platformModule"]
+	inherits: [_PlatformModuleType]
 }
 
 

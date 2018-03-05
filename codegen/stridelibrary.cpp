@@ -47,7 +47,7 @@ StrideLibrary::StrideLibrary() :
 {
 }
 
-StrideLibrary::StrideLibrary(QString libraryPath, QMap<QString, QString> importList) :
+StrideLibrary::StrideLibrary(QString libraryPath, QMap<QString, QStringList> importList) :
     m_majorVersion(1), m_minorVersion(0)
 {
     readLibrary(libraryPath, importList);
@@ -57,7 +57,7 @@ StrideLibrary::~StrideLibrary()
 {
 }
 
-void StrideLibrary::setLibraryPath(QString strideRootPath, QMap<QString, QString> importList)
+void StrideLibrary::setLibraryPath(QString strideRootPath, QMap<QString, QStringList> importList)
 {
     m_libraryTrees.clear();
     readLibrary(strideRootPath, importList);
@@ -162,20 +162,19 @@ QList<DeclarationNode *> StrideLibrary::getParentTypes(DeclarationNode *type)
     return QList<DeclarationNode *>();
 }
 
-void StrideLibrary::readLibrary(QString rootDir, QMap<QString, QString> importList)
+void StrideLibrary::readLibrary(QString rootDir, QMap<QString, QStringList> importList)
 {
     QStringList nameFilters;
     nameFilters << "*.stride";
     QString basepath = QString("/library/%1.%2").arg(m_majorVersion).arg(m_minorVersion);
-    QStringList subPaths;
-    subPaths << "";
-    QMapIterator<QString, QString> it(importList);
-    while (it.hasNext()) {
-        it.next();
-        subPaths << it.key();
-    }
-    for(QString subPath : subPaths) {
-        QStringList libraryFiles =  QDir(rootDir + basepath + QDir::separator() + subPath).entryList(nameFilters);
+    //    QMapIterator<QString, QStringList> it(importList);
+    importList[""] = QStringList() << "";
+    for (auto subPath :importList.keys()) {
+        QString path = rootDir + basepath;
+        if (subPath.size() > 0) {
+            path += QDir::separator() + subPath;
+        }
+        QStringList libraryFiles =  QDir(path).entryList(nameFilters);
         foreach (QString file, libraryFiles) {
             QString fileName = rootDir + basepath + QDir::separator() + subPath + QDir::separator() + file;
             ASTNode tree = AST::parseFile(fileName.toLocal8Bit().data(), nullptr);
@@ -195,41 +194,42 @@ void StrideLibrary::readLibrary(QString rootDir, QMap<QString, QString> importLi
                         }
                     }
                 } else { // File has been found through import statement
-                    string namespaceName = importList[subPath].toStdString();
-                    if (namespaceName.size() == 0) { // import with its own name (i.e. not import-as)
-                        // FIXME must support more than one level of file depth.
-                        namespaceName = fileName.toStdString().substr(0, fileName.indexOf(".stride"));
-                        // If not import-as we need to bring all elements to the global namespace
-                        for(ASTNode node : tree->getChildren()) {
-                            node->appendToPropertyValue(
-                                        string("validScopes"),
-                                        std::make_shared<ValueNode>(
-                                            string("::"), __FILE__, __LINE__));
-                            node->appendToPropertyValue(
-                                        string("validScopes"),
-                                        std::make_shared<ValueNode>(
-                                            string(""), __FILE__, __LINE__));
+                    for (QString namespaceName: importList[subPath]) {
+                        if (namespaceName.size() == 0) { // import with its own name (i.e. not import-as)
+                            // FIXME must support more than one level of file depth.
+                            namespaceName = fileName.left(fileName.indexOf(".stride"));
+                            // If not import-as we need to bring all elements to the global namespace
+                            for(ASTNode node : tree->getChildren()) {
+                                node->appendToPropertyValue(
+                                            string("validScopes"),
+                                            std::make_shared<ValueNode>(
+                                                string("::"), __FILE__, __LINE__));
+                                node->appendToPropertyValue(
+                                            string("validScopes"),
+                                            std::make_shared<ValueNode>(
+                                                string(""), __FILE__, __LINE__));
+                            }
                         }
-                    }
-                    for(ASTNode node : tree->getChildren()) {
-                        // Do we need to set namespace recursively or would this do?
-//                        node->setNamespace(namespaceName.toStdString());
-                        node->appendToPropertyValue(
-                                    string("validScopes"),
-                                    std::make_shared<ValueNode>(
-                                        namespaceName, __FILE__, __LINE__));
-                        node->appendToPropertyValue(
-                                    string("validScopes"),
-                                    std::make_shared<ValueNode>(
-                                        namespaceName + "::" + subPath.toStdString(), __FILE__, __LINE__));
-                        node->appendToPropertyValue(
-                                    string("validScopes"),
-                                    std::make_shared<ValueNode>(
-                                        "::" + namespaceName, __FILE__, __LINE__));
-                        node->appendToPropertyValue(
-                                    string("validScopes"),
-                                    std::make_shared<ValueNode>(
-                                        "::" + namespaceName + "::" + subPath.toStdString(), __FILE__, __LINE__));
+                        for(ASTNode node : tree->getChildren()) {
+                            // Do we need to set namespace recursively or would this do?
+                            //                        node->setNamespace(namespaceName.toStdString());
+                            node->appendToPropertyValue(
+                                        string("validScopes"),
+                                        std::make_shared<ValueNode>(
+                                            namespaceName.toStdString(), __FILE__, __LINE__));
+                            node->appendToPropertyValue(
+                                        string("validScopes"),
+                                        std::make_shared<ValueNode>(
+                                            namespaceName.toStdString() + "::" + subPath.toStdString(), __FILE__, __LINE__));
+                            node->appendToPropertyValue(
+                                        string("validScopes"),
+                                        std::make_shared<ValueNode>(
+                                            "::" + namespaceName.toStdString(), __FILE__, __LINE__));
+                            node->appendToPropertyValue(
+                                        string("validScopes"),
+                                        std::make_shared<ValueNode>(
+                                            "::" + namespaceName.toStdString() + "::" + subPath.toStdString(), __FILE__, __LINE__));
+                        }
                     }
                 }
                 m_libraryTrees.append(tree);

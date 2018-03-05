@@ -10,7 +10,7 @@ platformModule _SineType {
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
     processing: "std::sin(%%intoken:0%%)"
-    inherits: ['signal']
+    inherits: [_Signal]
 }
 
 
@@ -23,7 +23,7 @@ platformModule _CosineType {
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
     processing: "std::cos(%%intoken:0%%)"
-    inherits: ['signal']
+    inherits: [_Signal]
 }
 
 platformModule _TangentType {
@@ -35,6 +35,6 @@ platformModule _TangentType {
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
     processing: "std::tan(%%intoken:0%%)"
-    inherits: ['signal']
+    inherits: [_Signal]
 }
 

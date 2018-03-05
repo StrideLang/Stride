@@ -127,6 +127,11 @@ void CodeResolver::resolveStreamRates(std::shared_ptr<StreamNode> stream)
                     || rateValue->getNodeType() == AST::Real) {
                 double rate = static_cast<ValueNode *>(rateValue.get())->toReal();
                 CodeValidator::setNodeRate(left, rate, QVector<ASTNode>(), m_tree);
+            } else  if (rateValue->getNodeType() == AST::PortProperty) {
+                if (left->getNodeType() == AST::Declaration) {
+                    auto decl = static_pointer_cast<DeclarationNode>(left);
+                    decl->replacePropertyValue("rate", rateValue->deepCopy());
+                }
             } else {
                 qDebug() << "Unexpected type for rate in domain declaration: " << m_system->getPlatformDomain();
             }
@@ -150,11 +155,11 @@ void CodeResolver::resolveStreamRates(std::shared_ptr<StreamNode> stream)
 void CodeResolver::fillDefaultPropertiesForNode(ASTNode node)
 {
     if (node->getNodeType() == AST::Declaration || node->getNodeType() == AST::BundleDeclaration) {
-        DeclarationNode *destBlock = static_cast<DeclarationNode *>(node.get());
+        std::shared_ptr<DeclarationNode> destBlock = static_pointer_cast<DeclarationNode>(node);
         vector<std::shared_ptr<PropertyNode>> blockProperties = destBlock->getProperties();
         QVector<ASTNode> typeProperties = CodeValidator::getPortsForType(
                     destBlock->getObjectType(),
-                    QVector<ASTNode>(), m_tree);
+                    QVector<ASTNode>(), m_tree, destBlock->getNamespaceList());
         if (typeProperties.isEmpty()) {
             qDebug() << "ERROR: fillDefaultProperties() No type definition for " << QString::fromStdString(destBlock->getObjectType());
             return;
@@ -185,43 +190,51 @@ void CodeResolver::fillDefaultPropertiesForNode(ASTNode node)
             }
         }
     } else if (node->getNodeType() == AST::Function) {
-        // This should get taken care of by the code generator settting default values
-        // according to the module's deafult values for the port blocks
-//        std::shared_ptr<FunctionNode> destFunc = static_pointer_cast<FunctionNode>(node);
-//        vector<std::shared_ptr<PropertyNode>> blockProperties = destFunc->getProperties();
-//        std::shared_ptr<DeclarationNode> functionModule = CodeValidator::findDeclaration(
-//                    QString::fromStdString(destFunc->getName()),
-//                    QVector<ASTNode >(), m_tree);
-//        if (functionModule) {
-//            vector<std::shared_ptr<PropertyNode>> typeProperties = functionModule->getProperties();
-//            if (typeProperties.size() < 1) {
-//                qDebug() << "ERROR: fillDefaultProperties() No type definition for " << QString::fromStdString(destFunc->getName());
-//                return;
-//            }
-//            for (std::shared_ptr<PropertyNode> property : blockProperties) {
-//                fillDefaultPropertiesForNode(property->getValue());
-//            }
+        std::shared_ptr<FunctionNode> destFunc = static_pointer_cast<FunctionNode>(node);
+        vector<std::shared_ptr<PropertyNode>> blockProperties = destFunc->getProperties();
+        std::shared_ptr<DeclarationNode> functionModule = CodeValidator::findDeclaration(
+                    QString::fromStdString(destFunc->getName()),
+                    QVector<ASTNode >(), m_tree);
+        if (functionModule) {
+            vector<ASTNode> typeProperties = functionModule->getPropertyValue("ports")->getChildren();
+            if (typeProperties.size() < 1) {
+                qDebug() << "ERROR: fillDefaultProperties() No type definition for " << QString::fromStdString(destFunc->getName());
+                return;
+            }
+            for (std::shared_ptr<PropertyNode> property : blockProperties) {
+                fillDefaultPropertiesForNode(property->getValue());
+            }
 
-//            for(ASTNode propertyListMember : typeProperties) {
-//                Q_ASSERT(propertyListMember->getNodeType() == AST::Property);
-//                PropertyNode *property = static_cast<PropertyNode *>(propertyListMember.get());
-//                string propertyName = property->getName();
-//                bool propertySet = false;
-//                for(std::shared_ptr<PropertyNode> blockProperty : blockProperties) {
-//                    if (blockProperty->getName() == propertyName) {
-//                        propertySet = true;
-//                        break;
-//                    }
-//                }
-//                if (!propertySet) {
-//                    //                ASTNode defaultValueNode = property->getPropertyValue("default");
-//                    //                PropertyNode *newProperty = new PropertyNode(propertyName,
-//                    //                            defaultValueNode,
-//                    //                            property->getFilename().data(), property->getLine());
-//                    //                destFunc->addProperty(newProperty);
-//                }
-//            }
-//        }
+            for(ASTNode propertyListMember : typeProperties) {
+                Q_ASSERT(propertyListMember->getNodeType() == AST::Declaration);
+                DeclarationNode *propertyDecl = static_cast<DeclarationNode *>(propertyListMember.get());
+
+                if (propertyDecl->getObjectType().substr(0,8) == "property") {
+                    auto propertyNameValue = propertyDecl->getPropertyValue("name");
+                    if (propertyNameValue->getNodeType() == AST::String) {
+                        bool propertySet = false;
+                        string propertyName = static_pointer_cast<ValueNode>(propertyNameValue)->getStringValue();
+                        for(std::shared_ptr<PropertyNode> blockProperty : blockProperties) {
+                            if (blockProperty->getName() == propertyName) {
+                                propertySet = true;
+                                break;
+                            }
+                        }
+                        if (!propertySet) {
+                            ASTNode defaultValueNode = propertyDecl->getPropertyValue("default");
+                            if (defaultValueNode) {
+                                std::shared_ptr<PropertyNode> newProperty
+                                        = std::make_shared<PropertyNode>(propertyName,
+                                                                         defaultValueNode,
+                                                                         propertyDecl->getFilename().data(), propertyDecl->getLine());
+                                destFunc->addProperty(newProperty);
+                            }
+                        }
+                    }
+                }
+
+                }
+        }
     } else if (node->getNodeType() == AST::List) {
         ListNode *list = static_cast<ListNode *>(node.get());
         for(ASTNode listElement : list->getChildren()) {
@@ -522,7 +535,7 @@ ASTNode CodeResolver::expandFunctionFromProperties(std::shared_ptr<FunctionNode>
 
 void CodeResolver::insertBuiltinObjects()
 {
-    QList<std::shared_ptr<DeclarationNode>> requiredDeclarations;
+    QList<std::shared_ptr<DeclarationNode>> usedDeclarations;
     map<string, vector<ASTNode>> bultinObjects;
     if (m_system) {
         bultinObjects = m_system->getBuiltinObjectsReference();
@@ -537,39 +550,43 @@ void CodeResolver::insertBuiltinObjects()
                 if (nameNode->getNodeType() == AST::String) {
                     ValueNode *typeName = static_cast<ValueNode *>(nameNode.get());
                     if (typeName->getStringValue() == "signal"
-                            || typeName->getStringValue() == "propertyInputPort"
+                            /*|| typeName->getStringValue() == "propertyInputPort"
                             || typeName->getStringValue() == "propertyOutputPort"
-                            || typeName->getStringValue() == "reaction"
+                            || typeName->getStringValue() == "reaction"*/
                             || typeName->getStringValue() == "signalbridge") {
-                        requiredDeclarations << block;
+                        m_tree->addChild(block);
+                        usedDeclarations << block;
                     }
                     if (typeName->getStringValue() == "type"
-                            || typeName->getStringValue() == "platformModule"
-                        || typeName->getStringValue() == "platformBlock") {
-                        m_tree->addChild(block); // We don't want to add dependent declarations for these as this will create an endless loop
+                           /* || typeName->getStringValue() == "platformModule"
+                        || typeName->getStringValue() == "platformBlock"*/) {
+                        m_tree->addChild(block);
+                        usedDeclarations << block;
                     }
                 }
-            } if (block->getObjectType() == "constant") {
+            } else if (block->getObjectType() == "constant") {
                 if (block->getName() == "PlatformDomain" || block->getName() == "PlatformRate"
                         || block->getName() == "_ContextDomain" || block->getName() == "_ContextRate"
                         || block->getName() == "_ContextInitDomain") {
                     m_tree->addChild(block);
+                    usedDeclarations << block;
                 }
             } else if (block->getObjectType() == "_domainDefinition"
                      || block->getObjectType() == "_frameworkDescription") // Hack... this should be getting inserted when resolving symbols...)
             {
                 m_tree->addChild(block);
+                usedDeclarations << block;
             } else if (block->getName() == "_PlatformDomainProcessing") // Hack... this should be getting inserted when resolving symbols...)
             {
                 m_tree->addChild(block);
+                usedDeclarations << block;
             }
-            continue;
+//            continue;
         }
     }
-    for (std::shared_ptr<DeclarationNode> declaration : requiredDeclarations) {
-//        insertBuiltinObjectsForNode(declaration, bultinObjects);
-        insertDependentTypes(declaration->getObjectType(), bultinObjects);
-        m_tree->addChild(declaration->deepCopy());
+    for (ASTNode decl: usedDeclarations) {
+        bultinObjects[""].erase(std::find(bultinObjects[""].begin(), bultinObjects[""].end(),decl));
+        insertBuiltinObjectsForNode(decl, bultinObjects);
     }
 
     // Second pass to add elements that depend on the user's code
@@ -633,79 +650,28 @@ void CodeResolver::analyzeConnections()
     analyzeChildConnections(m_tree);
 }
 
-void CodeResolver::insertDependentTypes(string typeName, map<string, vector<ASTNode>> &objects) {
+void CodeResolver::insertDependentTypes(std::shared_ptr<DeclarationNode> typeDeclaration, map<string, vector<ASTNode>> &objects) {
     QList<std::shared_ptr<DeclarationNode>> blockList;
-    QList<LangError> errors;
-//    auto is_declared = CodeValidator::findTypeDeclaration(decl, QVector<ASTNode >(), m_tree, errors);
-    std::shared_ptr<DeclarationNode> existingDecl = CodeValidator::findTypeDeclarationByName(typeName, QVector<ASTNode >(), m_tree, errors);
+//    std::shared_ptr<DeclarationNode> existingDecl = CodeValidator::findTypeDeclaration(typeDeclaration, QVector<ASTNode >(), m_tree);
     for (auto it = objects.begin(); it != objects.end(); it++)  {
-        // Look for type declaration in object lists
-        if(!existingDecl) {
-            auto newTypeDeclaration = CodeValidator::findTypeDeclarationByName(typeName, QVector<ASTNode >::fromStdVector(it->second), nullptr, errors);
-            if (newTypeDeclaration) { // type declaration found
-                newTypeDeclaration->setRootScope(it->first);
-                m_tree->addChild(newTypeDeclaration);
-                existingDecl = newTypeDeclaration;
-                for (ASTNode child : existingDecl->getChildren()) {
-                    insertBuiltinObjectsForNode(child, objects);
+            // To avoid redundant checking here we should mark nodes that have already been processed
+        auto inheritedTypes = CodeValidator::getInheritedTypes(typeDeclaration, QVector<ASTNode>::fromStdVector(it->second), m_tree);
+
+        for (auto inheritedType: inheritedTypes) {
+            auto children = m_tree->getChildren();
+            if (std::find(children.begin(), children.end(), inheritedType)
+                    != children.end()) {
+                // nothing
+            } else {
+                m_tree->addChild(inheritedType);
+                auto findPos = std::find(it->second.begin(), it->second.end(), inheritedType);
+                if (findPos != it->second.end()) {
+                    it->second.erase(findPos);
                 }
             }
+            insertDependentTypes(inheritedType, objects);
         }
-        if (existingDecl) {
-            vector<string> inheritedTypes = CodeValidator::getInheritedTypeNames(existingDecl, QVector<ASTNode>::fromStdVector(it->second), m_tree);
-            for (auto inheritedType: inheritedTypes) {
-                insertDependentTypes(inheritedType, objects);
-            }
-        }
-
-        //            if (typeDeclaration && !blockList.contains(typeDeclaration)) {
-        //                typeDeclaration->setRootScope(it->first);
-        //                blockList << typeDeclaration;
-
-        //                for(string &typeName : inheritedTypes) {
-        //                    ASTNode existingDeclaration = CodeValidator::findTypeDeclarationByName(typeName, QVector<ASTNode >(), m_tree, errors);
-        //                    if (!existingDeclaration) {
-        //                        auto newTypeDeclaration = CodeValidator::findTypeDeclarationByName(typeName, QVector<ASTNode >::fromStdVector(rootNamespace), nullptr, errors);
-        //                        if (newTypeDeclaration && !blockList.contains(newTypeDeclaration)) {
-        //                            newTypeDeclaration->setRootScope(it->first);
-        //                            blockList << newTypeDeclaration;
-        //                        }
-        //                    }
-        //                }
-        //            }
     }
-
-    // Insert declaration for inherited types
-
-//    // Add types that need to be added
-//    for(auto usedBlock : blockList) {
-////        QVector<ASTNode > subscope;
-////        // Make subscope in case this is a module declaration
-////        ASTNode blocks = usedBlock->getPropertyValue("blocks");
-////        if (blocks) {
-////            for(ASTNode declarationNode : blocks->getChildren()) {
-////                if (declarationNode->getNodeType() == AST::Declaration
-////                        || declarationNode->getNodeType() == AST::BundleDeclaration) {
-////                    subscope << declarationNode;
-////                }
-////            }
-////        }
-//        // Add type. It shouldn't be there as this has been checked above
-//        if (!CodeValidator::findDeclaration(QString::fromStdString(usedBlock->getName()),
-//                                            QVector<ASTNode>(), m_tree)) {
-//            m_tree->addChild(usedBlock);
-//            for (auto it = objects.begin(); it != objects.end(); it++)  {
-//                vector<ASTNode > &namespaceObjects = it->second;
-//                auto position = std::find(namespaceObjects.begin(), namespaceObjects.end(), usedBlock);
-//                if (position != namespaceObjects.end()) {
-//                    namespaceObjects.erase(position);
-//                }
-//            }
-//            insertDependentTypes(usedBlock, objects);
-//            //            insertBuiltinObjectsForNode(newBlock, objects);
-//        }
-
-//    }
 }
 
 void CodeResolver::insertBuiltinObjectsForNode(ASTNode node, map<string, vector<ASTNode>> &objects)
@@ -749,7 +715,10 @@ void CodeResolver::insertBuiltinObjectsForNode(ASTNode node, map<string, vector<
                         child->setNamespaceList(declaration->getNamespaceList());
                     }
                 }
-                blockList << declaration; // TODO this currently inserts the object from all available namespaces. This should be optimized, and only the needed ones should be inserted.
+                if (!blockList.contains(declaration)) {
+                    blockList << declaration;
+                    break;
+                }
             }
         }
         // Look for declarations of blocks present in function properties
@@ -759,13 +728,20 @@ void CodeResolver::insertBuiltinObjectsForNode(ASTNode node, map<string, vector<
         for (std::shared_ptr<DeclarationNode> usedBlock : blockList) {
             // Add declarations to tree if not there
             if (!CodeValidator::findDeclaration(QString::fromStdString(usedBlock->getName()), QVector<ASTNode >(), m_tree, usedBlock->getNamespaceList())) {
-                insertBuiltinObjectsForNode(usedBlock, objects);
-                for (std::shared_ptr<PropertyNode> property : usedBlock->getProperties()) {
-                    insertBuiltinObjectsForNode(property->getValue(), objects);
+                m_tree->addChild(usedBlock);
+                for (auto it = objects.begin(); it != objects.end(); it++)  {
+                    vector<ASTNode > &namespaceObjects = it->second;
+                    auto position = std::find(namespaceObjects.begin(), namespaceObjects.end(), usedBlock);
+                    if (position != namespaceObjects.end()) {
+                        namespaceObjects.erase(position);
+                        break;
+                    }
                 }
-                ASTNode newBlock = usedBlock;
-                m_tree->addChild(newBlock);
             }
+            for (std::shared_ptr<PropertyNode> property : usedBlock->getProperties()) {
+                insertBuiltinObjectsForNode(property->getValue(), objects);
+            }
+            insertBuiltinObjectsForNode(usedBlock, objects);
         }
     } else if (node->getNodeType() == AST::Declaration
                || node->getNodeType() == AST::BundleDeclaration) {
@@ -790,11 +766,24 @@ void CodeResolver::insertBuiltinObjectsForNode(ASTNode node, map<string, vector<
                 child->setNamespaceList(declaration->getNamespaceList());
             }
         }
-        // Find type declaration and insert it if needed
-        QList<LangError> errors;
-        // Check if type is already declared
-
-        insertDependentTypes(declaration->getObjectType(), objects);
+        auto typeDecl = CodeValidator::findTypeDeclarationByName(
+                    declaration->getObjectType(), QVector<ASTNode>(), m_tree);
+        if (!typeDecl) {
+            for (auto &scope: objects) {
+                typeDecl = CodeValidator::findTypeDeclarationByName(
+                                    declaration->getObjectType(), QVector<ASTNode>::fromStdVector(scope.second), nullptr);
+                if (typeDecl) {
+                    m_tree->addChild(typeDecl);
+                    auto position = std::find(scope.second.begin(), scope.second.end(), typeDecl);
+                    if (position != scope.second.end()) {
+                        scope.second.erase(position);
+                        insertBuiltinObjectsForNode(typeDecl, objects);
+                        break;
+                    }
+                    insertDependentTypes(typeDecl, objects);
+                }
+            }
+        }
 
         // Insert needed objects for things in module properties
         for(std::shared_ptr<PropertyNode> property : declaration->getProperties()) {
@@ -817,13 +806,14 @@ void CodeResolver::insertBuiltinObjectsForNode(ASTNode node, map<string, vector<
                                                                       QVector<ASTNode>(),
                                                                       m_tree, name->getNamespaceList())) {
 //                declaration->setRootScope(it->first);
-                blockList << declaration;
+                if (!blockList.contains(declaration)) {
+                    blockList << declaration;
+                }
                 break;
             }
         }
         for(auto usedBlock : blockList) {
-            ASTNode newBlock = usedBlock;
-            m_tree->addChild(newBlock);
+            m_tree->addChild(usedBlock);
             for (auto it = objects.begin(); it != objects.end(); it++)  {
                 vector<ASTNode > &namespaceObjects = it->second;
                 auto position = std::find(namespaceObjects.begin(), namespaceObjects.end(), usedBlock);
@@ -831,7 +821,7 @@ void CodeResolver::insertBuiltinObjectsForNode(ASTNode node, map<string, vector<
                     namespaceObjects.erase(position);
                 }
             }
-            insertBuiltinObjectsForNode(newBlock, objects);
+            insertBuiltinObjectsForNode(usedBlock, objects);
         }
     } else if (node->getNodeType() == AST::Bundle) {
         QList<std::shared_ptr<DeclarationNode>> blockList;
@@ -871,41 +861,46 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream, Q
     ASTNode left = stream->getLeft();
     ASTNode right = stream->getRight();
     QList<ASTNode > domainStack;
-    string previousDomainName = CodeValidator::getDomainNodeString(CodeValidator::getNodeDomain(left, scopeStack, m_tree));
+    ASTNode previousDomainName = CodeValidator::getNodeDomain(left, scopeStack, m_tree);
 
-    if (previousDomainName.size() == 0) {
-        previousDomainName = contextDomain.toStdString();
+    if (previousDomainName && previousDomainName->getNodeType() == AST::None && !contextDomain.isEmpty()) {
+        previousDomainName = std::make_shared<ValueNode>(contextDomain.toStdString(), __FILE__, __LINE__);
     }
-    string domainName;
+    ASTNode domainName;
     while (right) {
         domainName = processDomainsForNode(left, scopeStack, domainStack);
-        if (left == right && domainName.size() == 0) { // If this is is the last pass then set the unknown domains to platform domain
-            if (left->getNodeType() == AST::Function && domainName == "") {
+        if (left == right && (!domainName || domainName->getNodeType() == AST::None)) { // If this is is the last pass then set the unknown domains to context domain
+            if (left->getNodeType() == AST::Function && (!domainName || domainName->getNodeType() == AST::None)) {
                 // Have functions/loops/reactions be assigned to whatever they are connected to
                 // if they are final in a stream.
-                if (previousDomainName.size() != 0) {
+                // FIXME we should look inside the modules themselves to see if we can infer the domain better
+                if (previousDomainName && previousDomainName->getNodeType() != AST::None) {
                     domainName = previousDomainName;
                 } else {
-                    domainName = contextDomain.toStdString();
+                    if (!contextDomain.isEmpty()) {
+                        domainName = std::make_shared<ValueNode>(contextDomain.toStdString(), __FILE__, __LINE__);
+                    }
                 }
             } else {
-                // This is needed in cases where signals with no set domain are connected
+                // FIXME This is needed in cases where signals with no set domain are connected
                 // to input ports on other objects. Domains are not
-                // propagated across secondary ports
-                domainName = contextDomain.toStdString();
+                // propagated across secondary ports, but they should be
+                if (!contextDomain.isEmpty()) {
+                    domainName = std::make_shared<ValueNode>(contextDomain.toStdString(), __FILE__, __LINE__);
+                }
             }
-            domainStack << left;
+            // Unneeded as it gets added in the above call to processDomainsForNode
+//            domainStack << left;
         }
 
-        if (domainName.size() > 0 && previousDomainName != domainName) {
+        if (domainName && domainName->getNodeType() != AST::None && previousDomainName != domainName) {
             setDomainForStack(domainStack, domainName, scopeStack);
             domainStack.clear();
         }
-        previousDomainName = domainName;
 
         if (left == right) {
-            if (domainName.size() > 0) {
-                setDomainForStack(domainStack, domainName, scopeStack);
+            if (previousDomainName && previousDomainName->getNodeType() != AST::None) {
+                setDomainForStack(domainStack, previousDomainName, scopeStack);
                 domainStack.clear();
             }
             right = left = nullptr; // End
@@ -916,12 +911,13 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream, Q
         } else {
             left = right; // Last pass (process right, call it left)
         }
+        previousDomainName = domainName;
     }
 }
 
-std::string CodeResolver::processDomainsForNode(ASTNode node, QVector<ASTNode > scopeStack, QList<ASTNode > &domainStack)
+ASTNode CodeResolver::processDomainsForNode(ASTNode node, QVector<ASTNode > scopeStack, QList<ASTNode > &domainStack)
 {
-    string domainName;
+    ASTNode currentDomain;
     resolveDomainForStreamNode(node, scopeStack);
     if (node->getNodeType() == AST::Block
             || node->getNodeType() == AST::Bundle) {
@@ -932,26 +928,10 @@ std::string CodeResolver::processDomainsForNode(ASTNode node, QVector<ASTNode > 
                 // Put declaration in stack to set domain once domain is resolved
                 domainStack << declaration;
             } else {
-                if (domain->getNodeType() == AST::String) {
-                    domainName = static_cast<ValueNode *>(domain.get())->getStringValue();
-                } else if (domain->getNodeType() == AST::Block) {
-                    QList<LangError> errors;
-                    domainName = CodeValidator::evaluateConstString(domain, scopeStack, m_tree, errors);
-                } else if (domain->getNodeType() == AST::None) {
-                    // TODO does this need to be handled?
-                    domainStack << declaration;
-                } else if (domain->getNodeType() == AST::PortProperty) {
-                    ASTNode resolvedDomain = resolvePortProperty(static_pointer_cast<PortPropertyNode>(domain),
-                                                         scopeStack);
-                    if (resolvedDomain) {
-                        if (resolvedDomain->getNodeType() == AST::String) {
-                            domainName = std::static_pointer_cast<ValueNode>(resolvedDomain)->getStringValue();
-                        } else {
-                            domainName = CodeValidator::getNodeDomainName(resolvedDomain, scopeStack, m_tree);
-                        }
-                        declaration->setDomainString(domainName);
-                    }
-                    //                    domainStack << declaration;
+                if (domain->getNodeType() == AST::String
+                        || domain->getNodeType() == AST::Block
+                        || domain->getNodeType() == AST::PortProperty) {
+                    currentDomain = domain;
                 } else {
                     domainStack << declaration;
                 }
@@ -964,29 +944,37 @@ std::string CodeResolver::processDomainsForNode(ASTNode node, QVector<ASTNode > 
             // Put declaration in stack to set domain once domain is resolved
             domainStack << node;
         } else {
-            if (domain->getNodeType() == AST::String) {
-                domainName = static_cast<ValueNode *>(domain.get())->getStringValue();
-            } else if (domain->getNodeType() == AST::None) { // domain is streamDomain
-                domainStack << node;
+            if (domain->getNodeType() == AST::String
+                    || domain->getNodeType() == AST::Block
+                    || domain->getNodeType() == AST::PortProperty) {
+                currentDomain = domain;
             } else {
-                qDebug() << "WARNING: Unrecognized domain type"; // Should this trigger an error?
                 domainStack << node;
             }
         }
         for(auto member : func->getProperties()) {
-            string propertyDomainName = processDomainsForNode(member->getValue(), scopeStack, domainStack);
-            if (propertyDomainName.size() == 0) {
+            ASTNode propertyDomainName = processDomainsForNode(member->getValue(), scopeStack, domainStack);
+            if (!propertyDomainName || propertyDomainName->getNodeType() == AST::None) { // Include property block in domain stack because domain undefined
                  domainStack << member->getValue();
             }
         }
     } else if (node->getNodeType() == AST::List) {
         QList<ASTNode > listDomainStack;
         for (ASTNode  member : node->getChildren()) {
-            string memberDomainName = processDomainsForNode(member, scopeStack, domainStack);
-            if (domainName.size() == 0 && memberDomainName.size() > 0) {
-                domainName = memberDomainName; // list takes domain from first element that has a domain
+            ASTNode memberDomainName = processDomainsForNode(member, scopeStack, domainStack);
+
+            if ((!currentDomain || currentDomain->getNodeType() == AST::None)
+                    && (!memberDomainName || memberDomainName->getNodeType() == AST::None)) {
+                // list takes domain from first element that has a domain
+                if (memberDomainName && (memberDomainName->getNodeType() == AST::String
+                                      || memberDomainName->getNodeType() == AST::Block
+                                      || memberDomainName->getNodeType() == AST::PortProperty)) {
+                    currentDomain = memberDomainName;
+                } else {
+                    domainStack << node;
+                }
             }
-            if (memberDomainName.size() == 0) {
+            if (!memberDomainName || memberDomainName->getNodeType() == AST::None) {
                 // Put declaration in stack to set domain once domain is resolved
 
                 listDomainStack << member;
@@ -997,90 +985,91 @@ std::string CodeResolver::processDomainsForNode(ASTNode node, QVector<ASTNode > 
                 // the port to which they are connected.
             }
         }
-        if (domainName.size() > 0) {
-            setDomainForStack(listDomainStack, domainName, scopeStack);
+        if (currentDomain && currentDomain->getNodeType() != AST::None) {
+            setDomainForStack(listDomainStack, currentDomain, scopeStack);
         } else {
             domainStack << listDomainStack; // If list has no defined domain, pass all elements to be set later
         }
     } else if (node->getNodeType() == AST::Expression) {
         for(ASTNode  member : node->getChildren()) {
-            string newDomainName = processDomainsForNode(member, scopeStack, domainStack);
+            ASTNode newDomainName = processDomainsForNode(member, scopeStack, domainStack);
             // if member doesn't have a domain, put in the stack to resolve later.
-            if (newDomainName.size() == 0) {
+            if (!newDomainName || newDomainName->getNodeType() == AST::None) {
                 // Put declaration in stack to set domain once domain is resolved
                 domainStack << member;
             }
         }
     }
-    return domainName;
+    return currentDomain;
 }
 
-void CodeResolver::setDomainForStack(QList<ASTNode > domainStack, string domainName,  QVector<ASTNode > scopeStack)
+void CodeResolver::setDomainForStack(QList<ASTNode > domainStack, ASTNode domainName,  QVector<ASTNode > scopeStack)
 {
     // Add domain declaration if not already present (This might happen if
     // the domain is resolved after and it has not been explicitly declared,
     // so the insertBuiltinObjects() function will not insert it)
-    bool domainFound = false;
-    for(ASTNode node: m_tree->getChildren()) {
-        if (node->getNodeType() == AST::Declaration) {
-            std::shared_ptr<DeclarationNode> decl = static_pointer_cast<DeclarationNode>(node);
-            if (decl->getObjectType() == "_domainDefinition") {
-                ASTNode domainNameNode = decl->getPropertyValue("domainName");
-                if (domainNameNode->getNodeType() == AST::String) {
-                    if (static_cast<ValueNode *>(domainNameNode.get())->getStringValue() == domainName) {
-                        // FIXME We need to check the namespace of the domain!
-                        domainFound = true;
-                        break;
-                    }
-                }
-            }
-        }
-    }
-    if (!domainFound) {
-        map<string, vector<ASTNode >> bultinObjects;
-        if (m_system) {
-            bultinObjects = m_system->getBuiltinObjectsReference();
-        }
+//    bool domainFound = false;
 
-        // FIXME shouldnt this have happened in the insert built-in objects function
-        for (auto it = bultinObjects.begin(); it != bultinObjects.end(); it++)  {
-            for (ASTNode object : it->second) {
-                if (object->getNodeType() == AST::Declaration) {
-                    std::shared_ptr<DeclarationNode>block = static_pointer_cast<DeclarationNode>(object);
-                    if (block->getObjectType() == "_domainDefinition") {
-                        ASTNode nameNode = block->getPropertyValue("domainName");
-                        if (nameNode->getNodeType() == AST::String) {
-                            ValueNode *typeName = static_cast<ValueNode *>(nameNode.get());
-                            if (typeName->getStringValue() == domainName) {
-                                // FIXME We need to check the namespace of the domain!
-                                block->setRootScope(it->first);
-                                m_tree->addChild(block);
-                                fillDefaultPropertiesForNode(m_tree->getChildren().back());
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+//    for(ASTNode node: m_tree->getChildren()) {
+//        if (node->getNodeType() == AST::Declaration) {
+//            std::shared_ptr<DeclarationNode> decl = static_pointer_cast<DeclarationNode>(node);
+//            if (decl->getObjectType() == "_domainDefinition") {
+//                ASTNode domainNameNode = decl->getPropertyValue("domainName");
+//                if (domainNameNode->getNodeType() == AST::String) {
+//                    if (static_cast<ValueNode *>(domainNameNode.get())->getStringValue() == domainName) {
+//                        // FIXME We need to check the namespace of the domain!
+//                        domainFound = true;
+//                        break;
+//                    }
+//                }
+//            }
+//        }
+//    }
+//    if (!domainFound) {
+//        map<string, vector<ASTNode >> bultinObjects;
+//        if (m_system) {
+//            bultinObjects = m_system->getBuiltinObjectsReference();
+//        }
+
+//        // FIXME shouldnt this have happened in the insert built-in objects function
+//        for (auto it = bultinObjects.begin(); it != bultinObjects.end(); it++)  {
+//            for (ASTNode object : it->second) {
+//                if (object->getNodeType() == AST::Declaration) {
+//                    std::shared_ptr<DeclarationNode>block = static_pointer_cast<DeclarationNode>(object);
+//                    if (block->getObjectType() == "_domainDefinition") {
+//                        ASTNode nameNode = block->getPropertyValue("domainName");
+//                        if (nameNode->getNodeType() == AST::String) {
+//                            ValueNode *typeName = static_cast<ValueNode *>(nameNode.get());
+//                            if (typeName->getStringValue() == domainName) {
+//                                // FIXME We need to check the namespace of the domain!
+//                                block->setRootScope(it->first);
+//                                m_tree->addChild(block);
+//                                fillDefaultPropertiesForNode(m_tree->getChildren().back());
+//                                break;
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
     for (ASTNode relatedNode : domainStack) {
         if (relatedNode->getNodeType() == AST::Declaration
                 || relatedNode->getNodeType() == AST::BundleDeclaration ) {
             std::shared_ptr<DeclarationNode> block = static_pointer_cast<DeclarationNode>(relatedNode);
             if (block) {
-                block->setDomainString(domainName);
+                block->replacePropertyValue("domain", domainName);
             }
         } else if (relatedNode->getNodeType() == AST::Block
                    || relatedNode->getNodeType() == AST::Bundle) {
             std::shared_ptr<DeclarationNode> declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(relatedNode, scopeStack, m_tree), scopeStack, m_tree);
             if(declaration) {
-                declaration->setDomainString(domainName);
+                declaration->replacePropertyValue("domain", domainName);
             }
         } else if (relatedNode->getNodeType() == AST::Function) {
             std::shared_ptr<FunctionNode> func = static_pointer_cast<FunctionNode>(relatedNode);
             if (func) {
-                func->setDomainString(domainName);
+                func->replacePropertyValue("domain", domainName);
             }
         }  else if (relatedNode->getNodeType() == AST::List
                     || relatedNode->getNodeType() == AST::Expression) {
@@ -1090,8 +1079,8 @@ void CodeResolver::setDomainForStack(QList<ASTNode > domainStack, string domainN
                     std::shared_ptr<DeclarationNode> block =  CodeValidator::findDeclaration(QString::fromStdString(name), scopeStack, m_tree);
                     if (block) {
                         if (!block->getDomain() || block->getDomain()->getNodeType() == AST::None) {
-                            // Don't override expression member domains. Only set if domain is not there.
-                            block->setDomainString(domainName);
+                            // Don't override expression member domains. Only set if domain is not there
+                            block->replacePropertyValue("domain", domainName);
                         }
                     }
                 } else if (member->getNodeType() == AST::Bundle) {
@@ -1100,12 +1089,12 @@ void CodeResolver::setDomainForStack(QList<ASTNode > domainStack, string domainN
                     if (block) {
                         if (!block->getDomain() || block->getDomain()->getNodeType() == AST::None) {
                             // Don't override expression member domains. Only set if domain is not there.
-                            block->setDomainString(domainName);
+                            block->replacePropertyValue("domain", domainName);
                         }
                     }
                 } else if (member->getNodeType() == AST::Function) {
                     std::shared_ptr<FunctionNode> func = static_pointer_cast<FunctionNode>(member);
-                    func->setDomainString(domainName);
+                    func->replacePropertyValue("domain", domainName);
                 }
             }
         }
@@ -1487,6 +1476,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node, QVector<ASTNode> s
             ASTNode internalBlocks = block->getPropertyValue("blocks");
             if (!internalBlocks || internalBlocks->getNodeType() != AST::List) { // Turn blocks property into list
                 block->setPropertyValue("blocks", std::make_shared<ListNode>(internalBlocks, __FILE__, __LINE__));
+                internalBlocks = block->getPropertyValue("blocks");
             }
             for (ASTNode node: internalBlocks->getChildren()) {
                 subScope << node;
@@ -1570,9 +1560,25 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node, QVector<ASTNode> s
                                 }
                             }
                             // set its domain to the port domain if not set
-                            ASTNode blockDomain = blockDecl->getDomain();
-                            if (!blockDomain || blockDomain->getNodeType() == AST::None) {
-                                blockDecl->setPropertyValue("domain",domainPortValue);
+                            auto declType = CodeValidator::findTypeDeclaration(blockDecl, subScope, m_tree);
+                            if (declType) {
+                                auto inheritList = CodeValidator::getInheritedTypes(declType,subScope, m_tree);
+                                bool inheritsDomainType = false;
+                                for (auto inherits: inheritList) {
+                                    auto typeName = inherits->getPropertyValue("typeName");
+                                    if (typeName->getNodeType() == AST::String) {
+                                        if (static_pointer_cast<ValueNode>(typeName)->getStringValue() == "domainMember") {
+                                            inheritsDomainType = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (inheritsDomainType) {
+                                    ASTNode blockDomain = blockDecl->getDomain();
+                                    if (!blockDomain || blockDomain->getNodeType() == AST::None) {
+                                        blockDecl->setPropertyValue("domain",domainPortValue);
+                                    }
+                                }
                             }
                         } else if (blockPortValue->getNodeType() == AST::None) {
                             string defaultName;
@@ -2105,6 +2111,17 @@ void CodeResolver::propagateDomainsForNode(ASTNode node, QVector<ASTNode > scope
                 }
                 streamIt++;
             }
+            // Now go forward to process anything that was missed
+            vector<ASTNode >::iterator streamIt2 = streamsNode.begin();
+            while(streamIt2 != streamsNode.end()) {
+                const ASTNode streamNode = *streamIt2;
+                if (streamNode->getNodeType() == AST::Stream) {
+                    resolveDomainsForStream(static_pointer_cast<StreamNode>(streamNode), scopeStack/*, QString::fromStdString(contextDomainName)*/);
+                } else {
+                    qDebug() << "ERROR: Expecting stream.";
+                }
+                streamIt2++;
+            }
 //            scopeStack << QVector<ASTNode>::fromStdVector(moduleBlocks);
             for (auto block: blocks) {
                 propagateDomainsForNode(block, scopeStack);
@@ -2416,9 +2433,7 @@ QVector<ASTNode > CodeResolver::sliceStreamByDomain(std::shared_ptr<StreamNode> 
             if (previousDomainName.size() == 0) {
                 previousDomainName = domainName;
             }
-        }
-
-        if (left->getNodeType() == AST::Expression) {
+        } else if (left->getNodeType() == AST::Expression) {
             // We might need to add bridge signals if expression members belong to different domains
             // Resolve domain from the right member in stream (if domain in expression members is not set
             ASTNode outDomain;
@@ -2468,43 +2483,7 @@ QVector<ASTNode > CodeResolver::sliceStreamByDomain(std::shared_ptr<StreamNode> 
                 }*/
             }
         }
-        if (previousDomainName != domainName
-                && left != stream->getLeft() // domain change and not the first node in the stream
-                ) {
-            bool skipSlice = false;
-            if (left->getNodeType() == AST::Function) {
-                std::shared_ptr<FunctionNode> func = static_pointer_cast<FunctionNode>(left);
-                std::shared_ptr<DeclarationNode> decl = CodeValidator::findDeclaration(QString::fromStdString(func->getName()), scopeStack, m_tree);
-                if (decl->getObjectType() == "reaction"
-                        || decl->getObjectType() == "loop") {
-                    // TODO hack to avoid slice. The right thing should be to have reactions and loops take the right domain...
-                    skipSlice = true;
-                }
-            }
-            if (!skipSlice) {
-                terminateStackWithBridge(left, streams, stack, scopeStack);
-            }
-        } else {
-//            if (left->getNodeType() == AST::Block) {
-//                std::shared_ptr<BlockNode> block = static_pointer_cast<BlockNode>(left);
-//                for(auto alias: m_bridgeAliases) {
-//                    if (alias[1] == block->getName()) {
-//                        // FIXME check domains match!
-//                        left = std::make_shared<BlockNode>(alias[0], nullptr, block->getFilename().c_str(), block->getLine());
-//                    }
-//                }
-//            } else if (left->getNodeType() == AST::Bundle) {
-//                // FIXME implement for bundles
-//                std::shared_ptr<BlockNode> block = static_pointer_cast<BlockNode>(left);
-//                for(auto alias: m_bridgeAliases) {
-//                    if (alias[1] == block->getName()) {
-//                        // FIXME check domains match!
-//                        left = std::make_shared<BlockNode>(alias[0], nullptr, block->getFilename().c_str(), block->getLine());
-//                    }
-//                }
-//            }
-            stack << left;
-        }
+        stack << left;
         if(right) { // Is this check needed?
             if (right->getNodeType() == AST::Stream) {
                 //            stream = static_pointer_cast<StreamNode>(right);
@@ -2522,12 +2501,29 @@ QVector<ASTNode > CodeResolver::sliceStreamByDomain(std::shared_ptr<StreamNode> 
                     if (right->getNodeType() == AST::Function) {
                         std::shared_ptr<FunctionNode> func = static_pointer_cast<FunctionNode>(right);
                         std::shared_ptr<DeclarationNode> decl = CodeValidator::findDeclaration(QString::fromStdString(func->getName()), scopeStack, m_tree);
-                        if (decl->getObjectType() == "reaction"
-                                || decl->getObjectType() == "loop") {
+//                        if (decl->getObjectType() == "reaction"
+//                                || decl->getObjectType() == "loop") {
                             // TODO hack to avoid slice. The right thing should be to have reactions and loops take the right domain...
                             skipSlice = true;
+//                        }
+                    }
+                    if (stack.size() > 0) {
+                        if (left->getNodeType() == AST::Function) {
+                            skipSlice = true;
+                        } else if (left->getNodeType() == AST::List) {
+                            bool allFuncs = true;
+                            for (auto elem: left->getChildren()) {
+                                if (elem->getNodeType() != AST::Function) {
+                                    allFuncs = false;
+                                    break;
+                                }
+                            }
+                            if (allFuncs) {
+                                skipSlice = true;
+                            }
                         }
                     }
+
                     if (!skipSlice) {
                         lastNode = stack.back();
                         stack.pop_back();
@@ -2705,6 +2701,8 @@ void CodeResolver::setContextDomain(vector<ASTNode> nodes, std::shared_ptr<Decla
                                 || rateValue->getNodeType() == AST::Real) {
                             double rate = static_cast<ValueNode *>(rateValue.get())->toReal();
                             CodeValidator::setNodeRate(decl, rate, QVector<ASTNode >(), m_tree);
+                        } else  if (rateValue->getNodeType() == AST::PortProperty) {
+                            decl->replacePropertyValue("rate", rateValue->deepCopy());
                         } else {
                             qDebug() << "Unexpected type for rate in domain declaration: " << QString::fromStdString(domainDeclaration->getName());
                         }
@@ -2918,8 +2916,7 @@ void CodeResolver::markConnectionForNode(ASTNode node, QVector<ASTNode > scopeSt
         // FIXME this assumes all components of a bundle behave identically (written and read in the same domains)
         QString name = QString::fromStdString(static_cast<BundleNode *>(node.get())->getName());
         std::shared_ptr<DeclarationNode> decl = CodeValidator::findDeclaration(name, scopeStack, m_tree);
-        QList<LangError> errors;
-        auto typeDecl = CodeValidator::findTypeDeclaration(decl.get(), scopeStack, m_tree, errors);
+        auto typeDecl = CodeValidator::findTypeDeclaration(decl, scopeStack, m_tree);
         if (decl && typeDecl && (decl->getObjectType() == "signal"
                                  || decl->getObjectType() == "switch"
                                  || decl->getObjectType() == "trigger"

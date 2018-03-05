@@ -61,7 +61,7 @@ platformBlock _HwInput {
 #    declarations: ['']
 #    initializations: [""]
     processing: "in[%%bundle_index%%]"
-    inherits: ['signal']
+    inherits: [_Signal]
 }
 
 platformBlock _HwOutput {
@@ -73,7 +73,7 @@ platformBlock _HwOutput {
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
     processing: "out[%%bundle_index%%] = %%intoken:0%%;"
-    inherits: ['signal']
+    inherits: [_Signal]
 }
 
 #constant _NumInputChannels {value: 2}

@@ -48,10 +48,10 @@ class StrideLibrary
 {
 public:
     StrideLibrary();
-    StrideLibrary(QString libraryPath, QMap<QString,QString> importList = QMap<QString,QString>());
+    StrideLibrary(QString libraryPath, QMap<QString, QStringList> importList = QMap<QString,QStringList>());
    ~StrideLibrary();
 
-    void setLibraryPath(QString strideRootPath, QMap<QString,QString> importList = QMap<QString,QString>());
+    void setLibraryPath(QString strideRootPath, QMap<QString, QStringList> importList = QMap<QString,QStringList>());
 
     std::shared_ptr<DeclarationNode> findTypeInLibrary(QString typeName);
 
@@ -64,7 +64,7 @@ private:
     bool isValidProperty(std::shared_ptr<PropertyNode> property, DeclarationNode *type);
     QList<DeclarationNode *> getParentTypes(DeclarationNode *type);
 
-    void readLibrary(QString rootDir, QMap<QString, QString> importList);
+    void readLibrary(QString rootDir, QMap<QString, QStringList> importList);
     QList<ASTNode> m_libraryTrees;
     int m_majorVersion;
     int m_minorVersion;

@@ -39,6 +39,7 @@ type _TypeProperty {
 			required: off
 		}
 	]
+	inherits: [_Base]
 }
 
 type _Type {
@@ -56,8 +57,20 @@ type _Type {
 			default: none
 			required: on
 		}
+		typeProperty Inherits {
+			name: "inherits"
+			types: [""]
+			default: [_Base]
+			required: off
+		},
+		typeProperty Meta {
+			name: "meta"
+			types: ["CSP"]
+			default: ""
+			required: off
+		}
 	]
-	inherits: ["base"]
+	meta: "type cannot inherit from 'base' to avoid circular dependencies"
 }
 
 type _Constant {
@@ -85,14 +98,14 @@ type _Switch {
 			required: off
 		}
 	]
-	inherits: ["streamable"]
+	inherits: [_Streamable]
 }
 
 type _Trigger {
 	typeName: "trigger"
 	properties: [
 	]
-	inherits: "streamable"
+	inherits: _Streamable
 }
 
 type _Signal {
@@ -131,7 +144,7 @@ type _Signal {
 			meta: "Used by the parser to keep track of stream connections"
 		}
 	]
-	inherits: ["streamable"]
+	inherits: [_Streamable]
 }
 
 type _SignalBridge {
@@ -177,7 +190,7 @@ type _SignalBridge {
 			meta: "The type of the bridge signal. Can be signal or switch"
 		}
 	]
-	inherits: ["base"]
+	inherits: [_Base]
 }
 
 type _Buffer {

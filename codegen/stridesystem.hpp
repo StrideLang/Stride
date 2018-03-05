@@ -55,7 +55,7 @@ public:
     StrideSystem() {}
     StrideSystem(QString strideRoot, QString systemName,
                  int majorVersion, int minorVersion,
-                 QMap<QString, QString> importList);
+                 QMap<QString, QStringList> importList);
     ~StrideSystem();
 
     QStringList getErrors();

@@ -25,7 +25,7 @@ platformBlock _OscOutType {
 	lo_address addr = lo_address_new(%%intoken:2%%.c_str(), portStr);
     lo_send(addr, %%intoken:1%%.c_str() , "f", %%intoken:0%%);
 	'
-    inherits: ['signal']
+    inherits: [_Signal]
 }
 
 platformBlock _OscInType {
@@ -53,5 +53,5 @@ platformBlock _OscInType {
 	preProcessing: ''
     processing: ''
 	domain: OSCInDomain
-    inherits: ['signal']
+    inherits: [_Signal]
 }

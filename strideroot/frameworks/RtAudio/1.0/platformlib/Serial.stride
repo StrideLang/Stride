@@ -34,7 +34,7 @@ platformBlock _SerialPrintType {
     initializations: ["// Not implemented"]
     processing: "//my_serial.write(test_string);
 "
-    inherits: ['signal']
+    inherits: [_Signal]
 }
 #
 ##ifdef _WIN32
@@ -77,5 +77,5 @@ platformBlock _SerialInType {
 		} while (newChar.size() > 0 && newChar != "\n");
 	'
     processing: "tempVar"
-    inherits: ['signal']
+    inherits: [_Signal]
 }

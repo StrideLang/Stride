@@ -49,7 +49,7 @@
 
 StrideSystem::StrideSystem(QString strideRoot, QString systemName,
                            int majorVersion, int minorVersion,
-                           QMap<QString, QString> importList) :
+                           QMap<QString, QStringList> importList) :
     m_strideRoot(strideRoot), m_systemName(systemName), m_majorVersion(majorVersion), m_minorVersion(minorVersion),
     m_testing(false)
 {
@@ -71,7 +71,7 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
             // Add subpaths for included modules
             vector<string> subPaths;
             subPaths.push_back("");
-            QMapIterator<QString, QString> it(importList);
+            QMapIterator<QString, QStringList> it(importList);
             while (it.hasNext()) {
                 it.next();
                 subPaths.push_back(it.key().toStdString());
@@ -104,11 +104,11 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
                             node->appendToPropertyValue("validScopes",
                                                         std::make_shared<ValueNode>(scopeName, __FILE__, __LINE__) );
                         }
-
-                        QString namespaceName = importList[QString::fromStdString(subPath)];
-                        if (!namespaceName.isEmpty()) {
+                        for (QString namespaceName: importList[QString::fromStdString(subPath)]) {
+                            if (!namespaceName.isEmpty()) {
                                 // Do we need to set namespace recursively or would this do?
                                 //                            node->setNamespace(namespaceName.toStdString());
+                            }
                         }
                     }
                 }

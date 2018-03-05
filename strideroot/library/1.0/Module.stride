@@ -1,12 +1,12 @@
 type _MainInputPort {
 	typeName: "mainInputPort"
-	inherits: ["port", "_portAttributes"]
+	inherits: [_Port, _PortAttributes]
 	meta: ""
 }
 
 type _MainOutputPort {
 	typeName: "mainOutputPort"
-	inherits: ["port", "_portAttributes"]
+	inherits: [_Port, _PortAttributes]
 	meta: ""
 }
 
@@ -20,7 +20,7 @@ type _PropertyInputPort {
 			required: off
 		}
 	]
-	inherits: ["port", "_portAttributes"]
+	inherits: [_Port, _PortAttributes]
 	meta: ""
 }
 
@@ -34,7 +34,7 @@ type _PropertyOutputPort {
 			required: off
 		}
 	]
-	inherits: ["port", "_portAttributes"]
+	inherits: [_Port, _PortAttributes]
 	meta: ""
 }
 
@@ -60,7 +60,7 @@ type _PortAttributes {
 			required: off
 		}
 	]
-	inherits: [""]
+	inherits: []
 	meta: ""
 }
 
@@ -86,7 +86,7 @@ type _Port {
 			required: off
 		}
 	]
-	inherits: ["base"]
+	inherits: [_Base]
 	meta: ""
 }
 
@@ -119,7 +119,7 @@ type _Module {
 			required: off
 		}
 	]
-	inherits: ["domainMember"]
+	inherits: [_DomainMember]
 	meta: "Modules encapsulate streams"
 }
 
@@ -145,7 +145,7 @@ type _Reaction {
 			required: on
 		}
 	]
-	inherits: ["domainMember"]
+	inherits: [_DomainMember]
 }
 
 type _Loop {
@@ -188,5 +188,5 @@ type _Loop {
 			required: off
 		}
 	]
-	inherits: ["domainMember"]
+	inherits: [_DomainMember]
 }

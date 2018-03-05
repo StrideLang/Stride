@@ -24,7 +24,7 @@ type _Streamable {
 			required: off
 		}
 	]
-	inherits: ["rated"]
+	inherits: [_Rated]
 }
 
 type _Rated {
@@ -43,7 +43,7 @@ type _Rated {
 			required: off
 		}
 	]
-	inherits: ["domainMember"] # TODO: Should we be able to say "_DomainMember" here instead?
+	inherits: [_DomainMember]
 }
 
 type _DomainMember {
@@ -62,7 +62,7 @@ type _DomainMember {
 			required: off
 		}
 	]
-	inherits: ["base"]
+	inherits: [_Base]
 }
 
 type _Base {
@@ -70,7 +70,7 @@ type _Base {
 	properties: [
 		typeProperty Inherits {
 			name: "inherits"
-			types: ["CSP", ""]
+			types: [""]
 			default: "base"
 			required: off
 		},

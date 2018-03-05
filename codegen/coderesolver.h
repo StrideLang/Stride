@@ -86,12 +86,12 @@ private:
 
     void analyzeChildConnections(ASTNode node, QVector<ASTNode> scopeStack = QVector<ASTNode>());
 
-    void insertDependentTypes(string typeName, map<string, vector<ASTNode>> &objects);
+    void insertDependentTypes(std::shared_ptr<DeclarationNode> typeDeclaration, map<string, vector<ASTNode>> &objects);
     void insertBuiltinObjectsForNode(ASTNode node, map<string, vector<ASTNode> > &objects);
 
     void resolveDomainsForStream(std::shared_ptr<StreamNode> func, QVector<ASTNode > scopeStack, QString contextDomain = "");
-    string processDomainsForNode(ASTNode node, QVector<ASTNode > scopeStack, QList<ASTNode > &domainStack);
-    void setDomainForStack(QList<ASTNode > domainStack, string domainName,  QVector<ASTNode > scopeStack);
+    ASTNode processDomainsForNode(ASTNode node, QVector<ASTNode > scopeStack, QList<ASTNode > &domainStack);
+    void setDomainForStack(QList<ASTNode > domainStack, ASTNode domainName,  QVector<ASTNode > scopeStack);
     std::shared_ptr<DeclarationNode> createDomainDeclaration(QString name);
     std::shared_ptr<DeclarationNode> createSignalDeclaration(QString name, int size, QVector<ASTNode> &scope);
     std::vector<ASTNode> declareUnknownName(std::shared_ptr<BlockNode> block, int size, QVector<ASTNode> localScope, ASTNode tree);
