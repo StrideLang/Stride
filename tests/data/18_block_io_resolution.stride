@@ -1,0 +1,30 @@
+use DesktopAudio version 1.0
+
+
+module TestModule {
+    ports: [
+        mainOutputPort OutputPort {
+            block: Output
+        }
+        mainInputPort InputPort {
+            block: Input
+            domain: OutputPort.domain
+        }
+    ]
+    blocks: [
+    ]
+    streams: [
+        Input >> Output;
+    ]
+}
+
+signal Output {
+  domain: "OutputDomain"
+}
+
+# Test input and output setting
+OuterInput >> TestModule()  >> OuterOutput;
+
+
+# Test IO blocks across modules. Output block should propagate
+OuterInput >> TestModule() >> TestModule() >> OuterOutput;

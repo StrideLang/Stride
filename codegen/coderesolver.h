@@ -120,8 +120,8 @@ private:
     void resolveDomainForStreamNode(ASTNode node, QVector<ASTNode > scope);
     ASTNode resolvePortProperty(std::shared_ptr<PortPropertyNode> portProperty, QVector<ASTNode > scopeStack);
 
-    void checkStreamConnections(std::shared_ptr<StreamNode> stream, QVector<ASTNode > scopeStack, bool start = true);
-    void markConnectionForNode(ASTNode node, QVector<ASTNode > scopeStack, bool start);
+    void checkStreamConnections(std::shared_ptr<StreamNode> stream, QVector<ASTNode > scopeStack, ASTNode previous = nullptr);
+    void markConnectionForNode(ASTNode node, QVector<ASTNode > scopeStack, ASTNode previous = nullptr);
 
     // Operators
     std::shared_ptr<ValueNode>  multiply(std::shared_ptr<ValueNode>  left, std::shared_ptr<ValueNode>  right);

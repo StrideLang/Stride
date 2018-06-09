@@ -72,6 +72,7 @@ DISTFILES += \
     data/15_connection_errors.stride \
     data/16_buffer.stride \
     data/17_loop.stride \
+    data/18_block_io_resolution.stride \
     data/P01_platform_objects.stride \
     data/P02_check_duplicates.stride \
     data/P03_bundle_resolution.stride \

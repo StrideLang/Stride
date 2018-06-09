@@ -37,6 +37,7 @@
 #include "functionnode.h"
 #include "scopenode.h"
 #include "valuenode.h"
+#include "listnode.h"
 
 FunctionNode::FunctionNode(string name, ASTNode propertiesList,
                            const char *filename, int line) :
@@ -49,6 +50,7 @@ FunctionNode::FunctionNode(string name, ASTNode propertiesList,
         }
     }
     m_rate = -1;
+    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 FunctionNode::FunctionNode(string name, ASTNode scope, ASTNode propertiesList,
@@ -63,6 +65,7 @@ FunctionNode::FunctionNode(string name, ASTNode scope, ASTNode propertiesList,
     }
     resolveScope(scope);
     m_rate = -1;
+    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 FunctionNode::~FunctionNode()

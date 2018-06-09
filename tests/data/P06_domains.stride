@@ -1,20 +1,54 @@
 use DesktopAudio version 1.0
 
-import Generators
-import Osc
-
 signal ValueInOSCDomain {
     domain: OSCInDomain
 }
 
-[ OSCIn(address: "/val") , 1024.0] >> Divide() >> ValueInOSCDomain;
+module TestMod {
+  ports:          [
+    mainOutputPort OutputPort {
+        block:      Output
+    }
+    propertyInputPort ValuePort {
+        name: "value"
+        block:      Value
+    }
+  ]
+  blocks:         []
+  streams: [
+            Value >> Output;
+  ]
+}
 
-Oscillator(frequency: ValueInOSCDomain) >> Level(gain: 0.2) >> AudioOut;
+module TestMod2 {
+  ports:          [
+    mainOutputPort OutputPort {
+        block:      Output
+    }
+    mainInputPort InputPort {
+        block:      Input
+    }
+    propertyInputPort ValuePort {
+        name: "value"
+        block:      Value
+    }
+  ]
+  blocks:         [
+      signal Input[2] {}
+  ]
+  streams: [
+            Input[1] * Input[2] * Value >> Output;
+  ]
+}
+
+[ TestMod(value: 10) , 1024.0] >> TestMod2(value: 1.5) >> ValueInOSCDomain;
+
+TestMod(value: ValueInOSCDomain) >> AudioOut;
 
 # Default domain should be set to platform domain
 
 signal Modulator {}
-Oscillator(frequency: 5) >> Modulator;
-Oscillator(frequency:440) >> Level(gain: Modulator) >> AudioOut;
+TestMod(value: 5) >> Modulator;
+TestMod(value:Modulator) >> AudioOut;
 
-AudioIn[1] >> Level(gain: 0.1) >> Signal;
+AudioIn[1] >> TestMod2(value: 0.1) >> Signal;
