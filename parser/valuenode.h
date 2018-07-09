@@ -64,11 +64,17 @@ public:
 
     virtual ASTNode deepCopy() override;
 
+    void setDomain(ASTNode domainName);
+
+    ASTNode getDomain();
+
 private:
     int m_intValue;
     double m_floatValue;
     string m_stringValue;
     bool m_switch;
+
+    ASTNode m_domain {nullptr};
 };
 
 #endif // VALUENODE_H

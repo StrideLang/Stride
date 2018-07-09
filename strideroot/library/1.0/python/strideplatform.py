@@ -543,6 +543,10 @@ class NameAtom(Atom):
             self.out_domains = [domain['value'] for domain in self.declaration['ports']['_writes']]
             self.domain = self.declaration['ports']['domain']
 
+        if type(self.domain) == dict:
+            if 'portproperty' in self.domain:
+                pp = self.domain['portproperty']
+                self.domain = self.platform.resolve_port_property(pp['name'], pp['portname'])
 
         # TODO we should just add all sections found in platform_type['block'][section]
         # And not worry what exists already in self.global_sections
@@ -1462,41 +1466,42 @@ class ModuleAtom(Atom):
 #                    domain_code.add_token(ref.get_name(), False)
 
             for domain, ids in sorted(self.domain_ids.items(), key=operator.itemgetter(1)):
-                domain_elements = process_code[domain]
-                tokens = []
-                proc_domain = None
-                for element in domain_elements:
-                    external = self.block_map[element]
-                    if not external:
-                        tokens.append(element.get_name()) # no external representation
-                    elif type(external) == Instance:
-                        tokens.append(external.get_name())
-                        if len(external.get_domains()['write']) > 0:
-                            proc_domain = external.get_domains()['write'][0]
-                        elif len(external.get_domains()['read']) > 0:
-                            proc_domain = external.get_domains()['read'][0]
-                    else:
-                        tokens.append(external.get_handles()[0])
-                proc_code = templates.expression(
-                        templates.module_processing_code(self.handle,
-                                                         domain,
-                                                         tokens
-                                                         ))
+                if domain in process_code:
+                    domain_elements = process_code[domain]
+                    tokens = []
+                    proc_domain = None
+                    for element in domain_elements:
+                        external = self.block_map[element]
+                        if not external:
+                            tokens.append(element.get_name()) # no external representation
+                        elif type(external) == Instance:
+                            tokens.append(external.get_name())
+                            if len(external.get_domains()['write']) > 0:
+                                proc_domain = external.get_domains()['write'][0]
+                            elif len(external.get_domains()['read']) > 0:
+                                proc_domain = external.get_domains()['read'][0]
+                        else:
+                            tokens.append(external.get_handles()[0])
+                    proc_code = templates.expression(
+                            templates.module_processing_code(self.handle,
+                                                             domain,
+                                                             tokens
+                                                             ))
 
-#                if len(domain_elements[0].get_domains()['write']) > 0:
-#                    proc_domain = domain_elements[0].get_domains()['write'][0]
-#                elif len(domain_elements[0].get_domains()['read']) > 0:
-#                    proc_domain = domain_elements[0].get_domains()['read'][0]
-#                if not domain in processing_code:
-#                    processing_code[domain] = [d.get_code() + proc_code, d.get_out_tokens()]
-#                else:
-#                    processing_code[domain][0] += d.get_code() + proc_code
-#                    processing_code[domain][1] += d.get_out_tokens()
-                if not proc_domain in processing_code:
-                    processing_code[proc_domain] = [proc_code, domain_elements[0].get_name()]
-                else:
-                    processing_code[proc_domain][0] += proc_code
-                    processing_code[proc_domain][1] += domain_elements[0].get_name()
+    #                if len(domain_elements[0].get_domains()['write']) > 0:
+    #                    proc_domain = domain_elements[0].get_domains()['write'][0]
+    #                elif len(domain_elements[0].get_domains()['read']) > 0:
+    #                    proc_domain = domain_elements[0].get_domains()['read'][0]
+    #                if not domain in processing_code:
+    #                    processing_code[domain] = [d.get_code() + proc_code, d.get_out_tokens()]
+    #                else:
+    #                    processing_code[domain][0] += d.get_code() + proc_code
+    #                    processing_code[domain][1] += d.get_out_tokens()
+                    if not proc_domain in processing_code:
+                        processing_code[proc_domain] = [proc_code, domain_elements[0].get_name()]
+                    else:
+                        processing_code[proc_domain][0] += proc_code
+                        processing_code[proc_domain][1] += domain_elements[0].get_name()
 
         return processing_code
 
@@ -1614,6 +1619,10 @@ class ModuleAtom(Atom):
             if block['type'] == 'signal':
 
                 block_domain = block['ports']['domain']
+
+                if type(block_domain) == dict and 'portproperty' in block_domain:
+                    pp = block_domain['portproperty']
+                    block_domain = self.platform.resolve_port_property(pp['name'], pp['portname'], self)
 
                 if 'id' in block: #If declared block is not present in a stream it will not be given an id
                     if not block_domain in self.domain_ids:
@@ -2917,6 +2926,19 @@ class PlatformFunctions:
                 return instance
         return None
 
+    def resolve_port_property(self, portblock, portproperty, parent = None):
+        if not parent:
+            parent = self.parent_stack[-1]
+        for port in parent.declaration['ports']['ports']:
+            if port['block']['name'] == portblock:
+                if port['block']['type'] == 'mainOutputPort':
+                    decl = self.find_declaration_in_tree(parent.function["outputBlock"])
+                    resolved = decl['ports'][portproperty]
+                if port['block']['type'] == 'mainInputPort':
+                    decl = self.find_declaration_in_tree(parent.function["inputBlock"])
+                    resolved = decl['ports'][portproperty]
+        return resolved
+
     def get_domain_default_rate(self, domain_name, tree=None):
         rate_node = None
         if not tree:
@@ -3142,7 +3164,8 @@ class PlatformFunctions:
                     if type(atom.domain) == dict:
                         # FIMXE this is for the case where domains are internal
                         # Should have been already resolved by the code validator
-                        current_domain = atom.domain['name']['name']
+                        if 'portproperty' in atom.domain:
+                            current_domain = self.resolve_port_property(atom.domain)
                     else:
                         current_domain = atom.domain
 

@@ -253,10 +253,19 @@ void PythonProject::astToJson(ASTNode node, QJsonObject &obj)
     } else if (node->getNodeType() == AST::Int) {
         QJsonObject newObj;
         obj["value"] = static_cast<ValueNode *>(node.get())->getIntValue();
+        QJsonObject domainObj;
+        astToJson(static_cast<ValueNode *>(node.get())->getDomain(), domainObj);
+        obj["domain"] = domainObj;
     } else if (node->getNodeType() == AST::Real) {
         obj["value"] = static_cast<ValueNode *>(node.get())->getRealValue();
+        QJsonObject domainObj;
+        astToJson(static_cast<ValueNode *>(node.get())->getDomain(), domainObj);
+        obj["domain"] = domainObj;
     } else if (node->getNodeType() == AST::String) {
         obj["value"] = QString::fromStdString(static_cast<ValueNode *>(node.get())->getStringValue());
+        QJsonObject domainObj;
+        astToJson(static_cast<ValueNode *>(node.get())->getDomain(), domainObj);
+        obj["domain"] = domainObj;
     } else if (node->getNodeType() == AST::Switch) {
         obj["value"] = static_cast<ValueNode *>(node.get())->getSwitchValue();
     } else if (node->getNodeType() == AST::Declaration) {
@@ -443,6 +452,23 @@ void PythonProject::functionToJson(std::shared_ptr<FunctionNode> node, QJsonObje
     }
     obj["ports"] = propObject;
     obj["rate"] = CodeValidator::getNodeRate(node);
+    auto inputBlock = node->getCompilerProperty("inputBlock");
+    if (inputBlock) {
+        if (inputBlock->getNodeType() == AST::Block) {
+            obj["inputBlock"] = QString::fromStdString(static_pointer_cast<BlockNode>(inputBlock)->getName());
+        } else if (inputBlock->getNodeType() == AST::Bundle) {
+            obj["inputBlock"] = QString::fromStdString(static_pointer_cast<BundleNode>(inputBlock)->getName());
+        }
+    }
+    auto outputBlock = node->getCompilerProperty("outputBlock");
+    if (outputBlock) {
+        if (outputBlock->getNodeType() == AST::Block) {
+            obj["outputBlock"] = QString::fromStdString(static_pointer_cast<BlockNode>(outputBlock)->getName());
+        } else if (outputBlock->getNodeType() == AST::Bundle) {
+            obj["outputBlock"] = QString::fromStdString(static_pointer_cast<BundleNode>(outputBlock)->getName());
+        }
+    }
+
 }
 
 void PythonProject::expressionToJson(std::shared_ptr<ExpressionNode> node, QJsonObject &obj)

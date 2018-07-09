@@ -1068,7 +1068,12 @@ void CodeResolver::setDomainForStack(QList<ASTNode > domainStack, ASTNode domain
             if (func) {
                 func->setPropertyValue("domain", domainName);
             }
-        }  else if (relatedNode->getNodeType() == AST::List
+        } else if (relatedNode->getNodeType() == AST::Real) {
+            std::shared_ptr<ValueNode> val = static_pointer_cast<ValueNode>(relatedNode);
+            if (val) {
+                val->setDomain(domainName);
+            }
+        } else if (relatedNode->getNodeType() == AST::List
                     || relatedNode->getNodeType() == AST::Expression) {
             for(ASTNode  member : relatedNode->getChildren()) {
                 if (member->getNodeType() == AST::Block) {
@@ -2893,7 +2898,7 @@ void CodeResolver::checkStreamConnections(std::shared_ptr<StreamNode> stream, QV
             if (next) {
                 if (next->getNodeType() == AST::Function) {
                     // FIXME simplistic. We are connecting the input of a module to the output. This might
-                    // not be tha case.
+                    // not be the case always.
                     left->setCompilerProperty("outputBlock", next->getCompilerProperty("outputBlock"));
                     next->setCompilerProperty("inputBlock", left->getCompilerProperty("outputBlock"));
                 } else {

@@ -150,5 +150,15 @@ ASTNode ValueNode::deepCopy()
     }
 }
 
+void ValueNode::setDomain(ASTNode domain)
+{
+    m_domain = domain;
+}
+
+ASTNode ValueNode::getDomain()
+{
+    return m_domain;
+}
+
 
 
