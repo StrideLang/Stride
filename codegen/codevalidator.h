@@ -67,6 +67,10 @@ public:
 
     std::shared_ptr<StrideSystem> getSystem();
 
+    ASTNode getTree() const;
+    void setTree(const ASTNode &tree);
+
+    // Static functions -----------------------------
     static std::shared_ptr<DeclarationNode> findDeclaration(QString streamMemberName, const QVector<ASTNode> &scopeStack, ASTNode tree,
                                             vector<string> scope = vector<string>(), vector<string> defaultNamespaces = vector<string>());
     static QString streamMemberName(ASTNode  node, QVector<ASTNode > scopeStack, ASTNode tree);
@@ -140,9 +144,6 @@ public:
     static bool namespaceMatch(std::vector<string> scopeList, std::shared_ptr<DeclarationNode> decl);
 
     static vector<StreamNode *> getStreamsAtLine(ASTNode tree, int line);
-
-    ASTNode getTree() const;
-    void setTree(const ASTNode &tree);
 
 private:
 

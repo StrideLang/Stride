@@ -362,20 +362,25 @@ vector<Builder *> StrideSystem::createBuilders(QString fileName, vector<string> 
                         delete builder;
                     }
                 }
-            }/* else if(m_api == StrideSystem::PluginPlatform) {
-        QString xmosRoot = "/home/andres/Documents/src/XMOS/xTIMEcomposer/Community_13.0.2";
-
-        QLibrary pluginLibrary(m_pluginName);
-        if (!pluginLibrary.load()) {
-            qDebug() << pluginLibrary.errorString();
-            return nullptr;
-        }
-        create_object_t create = (create_object_t) pluginLibrary.resolve("create_object");
-        if (create) {
-            builder = create(m_platformPath, projectDir.toLocal8Bit(), xmosRoot.toLocal8Bit());
-        }
-        pluginLibrary.unload();
-    }*/
+            } else if(platform->getAPI() == StridePlatform::PluginPlatform) {
+                m_pluginName = "pufferfish";
+                QString m_pluginPath = QString::fromStdString(platform->buildPlatformPath(m_strideRoot.toStdString())) + QDir::separator() + "plugins" + QDir::separator();
+                QLibrary pluginLibrary(m_pluginPath + m_pluginName);
+                if (!pluginLibrary.load()) {
+                    qDebug() << pluginLibrary.errorString();
+                    return vector<Builder *>();
+                }
+                create_object_t create = (create_object_t) pluginLibrary.resolve("create_object");
+                if (create) {
+                    Builder * builder = create(QString::fromStdString(platform->buildPlatformPath(m_strideRoot.toStdString())),
+                                               m_strideRoot,
+                                               projectDir);
+                    if (builder) {
+                        builders.push_back(builder);
+                    }
+                }
+//                pluginLibrary.unload();
+            }
         }
     }
     return builders;

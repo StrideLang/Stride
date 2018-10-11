@@ -45,7 +45,7 @@
 
 class Builder;
 
-typedef Builder* (*create_object_t)(QString platformPath, const char *projectDir, const char *xmosToolchainRoot);
+typedef Builder* (*create_object_t)(QString projectDir, QString strideRoot, QString platformPath);
 typedef void (*platform_name_t)(char *name);
 typedef double (*platform_version_t)();
 

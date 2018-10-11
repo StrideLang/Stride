@@ -95,7 +95,7 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile)
              return false;
          }
          buildOK = true;
-         for (auto builder: m_builders) {
+         for (auto &builder: m_builders) {
 //             connect(builder, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
 //             connect(builder, SIGNAL(errorText(QString)), this, SLOT(printConsoleError(QString)));
 //             connect(builder, SIGNAL(programStopped()), this, SLOT(programStopped()));

@@ -97,7 +97,7 @@ private:
     string m_hardwareVersion;
     string m_identifier;
     bool m_required;
-    PlatformAPI m_api {PythonTools}; //TODO Put back support for plugin platforms
+    PlatformAPI m_api {PluginPlatform}; //TODO Put back support for plugin platforms
     map<string, ASTNode> m_platformTrees;
     map<string, ASTNode> m_platformTestTrees;
 };
