@@ -8,6 +8,12 @@ type _DomainDefinition {
 			default: none
 			required: on
 		},
+        typeProperty Substitutions {
+			name: "substitutions"
+			types: [""] # Allow list
+			default: []
+			required: off
+		},
 		typeProperty Framework {
 			name: "framework"
 			types: ["CSP", ""] # Allow _Platform

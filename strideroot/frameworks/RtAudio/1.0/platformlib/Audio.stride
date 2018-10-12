@@ -13,6 +13,10 @@ _domainDefinition AudioDomain {
     initializationTag: "Initialization"
 	processingTag: "Processing"
 	cleanupTag: "Cleanup"
+    substitutions: [
+      "num_in_chnls", _NumInputChannels,
+      "num_out_chnls", _NumOutputChannels
+    ]
     domainIncludes: ["RtAudio.h"]
     domainDeclarations: ['#define NUM_IN_CHANNELS %%num_in_chnls%%',
     '#define NUM_OUT_CHANNELS %%num_out_chnls%%',

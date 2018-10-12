@@ -13,6 +13,10 @@ _domainDefinition AudioDomain {
 	processingTag: "Processing"
 	initializationTag: "Initialization"
 	cleanupTag: "Cleanup"
+    substitutions: [
+      "num_in_chnls", _NumInputChannels,
+      "num_out_chnls", _NumOutputChannels
+    ]
     domainIncludes: ["iostream", "iomanip"]
     domainDeclarations: ['#define NUM_IN_CHANNELS %%num_in_chnls%%',
     '#define NUM_OUT_CHANNELS %%num_out_chnls%%',
