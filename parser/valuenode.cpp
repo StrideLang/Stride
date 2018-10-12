@@ -108,13 +108,9 @@ string ValueNode::getStringValue() const
 string ValueNode::toString() const
 {
     if (getNodeType() == AST::Real) {
-        stringstream ss(stringstream::in);
-        ss << m_floatValue;
-        return ss.str();
+        return std::to_string(m_floatValue);
     } else if (getNodeType() == AST::Int) {
-        stringstream ss(stringstream::in);
-        ss << m_intValue;
-        return ss.str();
+        return std::to_string(m_intValue);
     } else if (getNodeType() == AST::String) {
         return m_stringValue;
     } else if (getNodeType() == AST::Switch) {

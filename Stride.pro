@@ -17,7 +17,7 @@ greaterThan(QT_MINOR_VERSION, 7) {
   editor.depends = parser codegen
 }
 
-
+# Build/Deploy Plugins
 exists( plugins/pufferfishplugin) {
     SUBDIRS += plugins/pufferfishplugin
 }
