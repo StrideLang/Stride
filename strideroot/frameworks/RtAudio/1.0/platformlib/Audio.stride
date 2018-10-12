@@ -10,8 +10,8 @@ _domainDefinition AudioDomain {
 	rate: AudioRate
 	globalsTag: "Includes"
 	declarationsTag: "Declarations"
+    initializationTag: "Initialization"
 	processingTag: "Processing"
-	initializationTag: "Initialization"
 	cleanupTag: "Cleanup"
     domainIncludes: ["RtAudio.h"]
     domainDeclarations: ['#define NUM_IN_CHANNELS %%num_in_chnls%%',
@@ -67,6 +67,7 @@ _domainDefinition AudioDomain {
       if ( adac.isStreamOpen() ) adac.closeStream();
       exit (-1);
     }
+    %%domainCode%%
     char input;
     std::cout << "\nRunning ... press <enter> to quit.\n";
     std::cin.get(input);
@@ -96,6 +97,7 @@ _domainDefinition AudioDomain {
     catch ( RtAudioError& e ) {
       e.printMessage();
     }
+    %%domainCode%%
     '
 }
 
@@ -111,6 +113,7 @@ platformBlock _HwInput {
 #    declarations: ['']
 #    initializations: [""]
     processing: "in[%%bundle_index%%]"
+    domain: AudioDomain
     inherits: [_Signal]
 }
 
@@ -123,6 +126,7 @@ platformBlock _HwOutput {
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
     processing: "out[%%bundle_index%%] = %%intoken:0%%;"
+    domain: AudioDomain
     inherits: [_Signal]
 }
 

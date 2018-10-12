@@ -1854,6 +1854,26 @@ std::shared_ptr<DeclarationNode> CodeValidator::findDomainDeclaration(string dom
     return nullptr;
 }
 
+std::string CodeValidator::getDomainIdentifier(ASTNode domain, std::vector<ASTNode> scopeStack, ASTNode tree)
+{
+    std::string name;
+    // To avoid inconsistencies, we rely on the Stride name rather than the
+    // domainName property. This guarantees uniqueness within a scope.
+    // TODO we should add scope markers to this identifier to avoid clashes
+    if (domain->getNodeType() == AST::Block) {
+        auto domainBlock = static_pointer_cast<BlockNode>(domain);
+        auto domainDeclaration = CodeValidator::findDeclaration(QString::fromStdString(domainBlock->getName()),
+                                                                QVector<ASTNode>::fromStdVector(scopeStack), tree);
+        Q_ASSERT(domainDeclaration->getObjectType() == "_domainDefinition");
+        name = domainDeclaration->getName();
+    } else if (domain->getNodeType() == AST::String) {
+        // Should anything be added to the id? Scope?
+        name = static_pointer_cast<ValueNode>(domain)->getStringValue();
+    }
+    // TODO add support for resolving domain id for PortBlock
+    return name;
+}
+
 QVector<ASTNode> CodeValidator::getPortsForType(string typeName, QVector<ASTNode> scope, ASTNode tree, std::vector<string> namespaces)
 {
     QVector<ASTNode> portList;
@@ -2179,11 +2199,19 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, QVector<ASTNode > scopeStack,
         if (declaration) {
             domainNode = declaration->getDomain();
         }
+        if (!domainNode && declaration->getObjectType() == "platformBlock") {
+            domainNode = declaration->getPropertyValue("domain");
+
+        }
     } else if (node->getNodeType() == AST::Bundle) {
         BundleNode *name = static_cast<BundleNode *>(node.get());
         std::shared_ptr<DeclarationNode> declaration = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scopeStack, tree);
         if (declaration) {
             domainNode = declaration->getDomain();
+        }
+        if (!domainNode && declaration->getObjectType() == "platformBlock") {
+            domainNode = declaration->getPropertyValue("domain");
+
         }
     } else if (node->getNodeType() == AST::List) {
         std::vector<std::string> domainList;

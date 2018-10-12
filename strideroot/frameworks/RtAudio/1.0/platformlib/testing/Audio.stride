@@ -61,6 +61,7 @@ platformBlock _HwInput {
 #    declarations: ['']
 #    initializations: [""]
     processing: "in[%%bundle_index%%]"
+    domain: AudioDomain
     inherits: [_Signal]
 }
 
@@ -73,6 +74,7 @@ platformBlock _HwOutput {
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
     processing: "out[%%bundle_index%%] = %%intoken:0%%;"
+    domain: AudioDomain
     inherits: [_Signal]
 }
 

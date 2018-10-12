@@ -94,6 +94,7 @@ public:
                                                       std::vector<std::string> namespaces = std::vector<std::string>());
     static std::shared_ptr<DeclarationNode> findTypeDeclaration(std::shared_ptr<DeclarationNode> block, QVector<ASTNode> scope, ASTNode tree);
     static std::shared_ptr<DeclarationNode> findDomainDeclaration(string domainName, ASTNode tree);
+    static std::string getDomainIdentifier(ASTNode domain, std::vector<ASTNode> scopeStack, ASTNode tree);
 
     static QVector<ASTNode> getPortsForTypeBlock(std::shared_ptr<DeclarationNode> block, QVector<ASTNode> scope, ASTNode tree);
     static QVector<ASTNode> getPortsForType(std::string typeName, QVector<ASTNode> scope, ASTNode tree, std::vector<string> namespaces);
