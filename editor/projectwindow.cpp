@@ -69,6 +69,14 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
     m_helperMenu(this),
     m_startingUp(true)
 {
+    m_previousRunCrashed = QFile::exists(".crashmarker");
+
+    // TODO move this to the temp directory?
+    QFile crashMarker(".crashmarker");
+    crashMarker.open(QFile::WriteOnly);
+    crashMarker.write("oops");
+    crashMarker.close();
+
     ui->setupUi(this);
 
     connectActions();
@@ -116,6 +124,7 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
     ui->projectDockWidget->setVisible(true);
     connect(ui->treeWidget, SIGNAL(itemClicked(QTreeWidgetItem *, int )),
             this, SLOT(inspectorItemClicked(QTreeWidgetItem *, int )));
+    QFile::remove(".crashmarker");
 
 }
 
@@ -186,6 +195,7 @@ bool ProjectWindow::build()
         }
         buildOK = true;
         for (auto builder: m_builders) {
+            builder->registerYieldCallback([](){ qApp->processEvents();});
             builder->setConfiguration(systemConfig.platformConfigurations["all"]);
             connect(builder, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
             connect(builder, SIGNAL(errorText(QString)), this, SLOT(printConsoleError(QString)));
@@ -270,7 +280,7 @@ void ProjectWindow::uncomment()
     editor->setTextCursor(cursor);
 }
 
-void ProjectWindow::flash()
+void ProjectWindow::deploy()
 {
     ui->consoleText->clear();
 }
@@ -1019,20 +1029,22 @@ void ProjectWindow::readSettings()
         filesToOpen << settings.value("fileName").toString();
     }
     settings.endArray();
-    foreach(QString fileName, filesToOpen) {
-        if (fileName.isEmpty()) {
-            newFile();
-        } else {
-            if (QFile::exists(fileName)) {
-                loadFile(fileName);
+    if (!m_previousRunCrashed) {
+        foreach(QString fileName, filesToOpen) {
+            if (fileName.isEmpty()) {
+                newFile();
             } else {
-                QMessageBox::warning(this, tr("File not found"),
-                                     tr("Previously open file %1 not found.").arg(fileName));
+                if (QFile::exists(fileName)) {
+                    loadFile(fileName);
+                } else {
+                    QMessageBox::warning(this, tr("File not found"),
+                                         tr("Previously open file %1 not found.").arg(fileName));
+                }
             }
         }
+        int lastIndex = settings.value("lastIndex", -1).toInt(); // Used later after files are loaded
+        ui->tabWidget->setCurrentIndex(lastIndex);
     }
-    int lastIndex = settings.value("lastIndex", -1).toInt(); // Used later after files are loaded
-    ui->tabWidget->setCurrentIndex(lastIndex);
 
     m_guiOptions["gui.inspectorShowInternal"] = settings.value("gui.inspectorShowInternal", true).toBool();
     settings.endGroup();

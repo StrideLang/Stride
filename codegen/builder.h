@@ -69,15 +69,16 @@ public:
     QString getStdErr() const {return m_stdErr;}
     QString getStdOut() const {return m_stdOut;}
     void clearBuffers() { m_stdErr = ""; m_stdOut = "";}
+    void registerYieldCallback(std::function<void()> cb) {m_yieldCallback = cb;}
 
 public slots:
     virtual bool build(ASTNode tree) = 0;
-    virtual bool flash() = 0;
+    virtual bool deploy() = 0;
     virtual bool run(bool pressed = true) = 0;
-    // TODO this would need to send encrypted strings or remove the code sections?
-    virtual QString requestTypesJson() {return "";}
-    virtual QString requestFunctionsJson() {return "";}
-    virtual QString requestObjectsJson() {return "";}
+//    // TODO this would need to send encrypted strings or remove the code sections?
+//    virtual QString requestTypesJson() {return "";}
+//    virtual QString requestFunctionsJson() {return "";}
+//    virtual QString requestObjectsJson() {return "";}
     virtual bool isValid() {return false;}
 
 protected:
@@ -87,12 +88,12 @@ protected:
     QString m_stdOut;
     QString m_stdErr;
     QMap<QString, QVariant> m_configuration;
+    std::function<void()> m_yieldCallback = [](){};
 
 private:
     PluginInterface m_interface;
     QLibrary *m_pluginLibrary;
     Builder *m_project;
-
 
 signals:
     void outputText(QString text);

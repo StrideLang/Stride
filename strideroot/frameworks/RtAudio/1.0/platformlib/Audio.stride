@@ -1,8 +1,132 @@
 
 constant AudioRate {
-    value: 44100 # TODO this needs to be set from the hardware configuration file
+    value: 44100 # This will be overwritten by the configuration file
 }
 
+type _CompileOption {
+  typeName: "_compileOption"
+  properties: [
+    typeProperty Name {
+        name: "name"
+        types: [""]
+        default: ""
+        required: on
+    },
+    typeProperty Defines {
+        name: "defines"
+        types: [""]
+        default: ""
+        required: on
+    },
+    typeProperty LinkLibraries {
+        name: "linkLibraries"
+        types: [""]
+        default: ""
+        required: on
+    }
+  ]
+}
+
+type _CompileOptionsGroup {
+  typeName: "_compileOption"
+  properties: [
+    typeProperty Name {
+        name: "name"
+        types: [""]
+        default: ""
+        required: on
+    },
+    typeProperty Options {
+        name: "options"
+        types: [""]
+        default: ""
+        required: on
+    },
+    typeProperty Rules {
+        name: "rules"
+        types: [""]
+        default: ""
+        required: on
+    }
+  ]
+}
+
+_compileOption _RtAudioLinuxPulse {
+  name: "Pulse"
+  defines: ["__LINUX_PULSE__"]
+  linkLibraries: ["pthread", "pulse-simple", "pulse"]
+}
+
+_compileOption _RtAudioLinuxAlsa {
+  name: "Alsa"
+  defines: ["__LINUX_ALSA__"]
+  linkLibraries: ["asound", "pthread"]
+}
+
+_compileOption _RtAudioLinuxJack {
+  name: "Jack"
+  defines: ["__UNIX_JACK__"]
+  linkLibraries: ["jack", "pthread"]
+}
+
+_compileOptionsGroup _RtAudioLinuxOptions {
+  name: "RtAudio API"
+  options: [_RtAudioLinuxPulse, _RtAudioLinuxAlsa, _RtAudioLinuxJack]
+  rules: "multiple"
+}
+
+
+
+# ----------------------------------------
+type _TemplateDirectives {
+  typeName: "_templateDirectives"
+  properties: [
+    typeProperty FileName {
+        name: "filename"
+        types: [""]
+        default: ""
+        required: on
+    },
+    typeProperty GlobalsTag {
+        name: "globalsTag"
+        types: [""]
+        default: ""
+        required: on
+    },
+    typeProperty DeclarationsTag {
+        name: "declarationsTag"
+        types: [""]
+        default: ""
+        required: on
+    },
+    typeProperty InitializationTag {
+        name: "initializationTag"
+        types: [""]
+        default: ""
+        required: on
+    },
+    typeProperty ProcessingTag {
+        name: "processingTag"
+        types: [""]
+        default: ""
+        required: on
+    },
+    typeProperty CleanupTag {
+        name: "cleanupTag"
+        types: [""]
+        default: ""
+        required: on
+    },
+    typeProperty Substitutions {
+        name: "substitutions"
+        types: [""]
+        default: ""
+        required: on
+    }
+  ]
+}
+
+# --------------------------------
 
 _domainDefinition AudioDomain {
 	domainName: "AudioDomain"
@@ -15,7 +139,10 @@ _domainDefinition AudioDomain {
 	cleanupTag: "Cleanup"
     substitutions: [
       "num_in_chnls", _NumInputChannels,
-      "num_out_chnls", _NumOutputChannels
+      "num_out_chnls", _NumOutputChannels,
+      "sample_rate", AudioRate,
+      "device", _AudioDeviceIndex,
+      "block_size", _AudioBlockSize
     ]
     domainIncludes: ["RtAudio.h"]
     domainDeclarations: ['#define NUM_IN_CHANNELS %%num_in_chnls%%',
@@ -105,7 +232,8 @@ _domainDefinition AudioDomain {
     '
 }
 
-
+constant _AudioDeviceIndex {value: 0}
+constant _AudioBlockSize {value: 256}
 
 # Audio ---------------
 platformBlock _HwInput {

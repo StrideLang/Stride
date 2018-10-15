@@ -69,7 +69,7 @@ signals:
 
 public slots:
     virtual bool build(ASTNode tree) override;
-    virtual bool flash() override { return true;}
+    virtual bool deploy() override { return true;}
     virtual bool run(bool pressed = true) override;
     virtual bool isValid() override;
 

@@ -56,7 +56,7 @@ class ProjectWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit ProjectWindow(QWidget *parent = 0);
+    explicit ProjectWindow(QWidget *parent = nullptr);
     ~ProjectWindow();
 
 public slots:
@@ -83,7 +83,7 @@ protected:
 
 private slots:
     bool build();
-    void flash();
+    void deploy();
     void run(bool pressed);
     void stop();
     void programStopped();
@@ -133,6 +133,8 @@ private:
     QFont m_font;
     std::vector<Builder *> m_builders;
     QMenu m_helperMenu;
+
+    bool m_previousRunCrashed;
     bool m_startingUp;
 };
 

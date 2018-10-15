@@ -1068,7 +1068,10 @@ void CodeResolver::setDomainForStack(QList<ASTNode > domainStack, ASTNode domain
             if (func) {
                 func->setPropertyValue("domain", domainName);
             }
-        } else if (relatedNode->getNodeType() == AST::Real) {
+        } else if (relatedNode->getNodeType() == AST::Real
+                   || relatedNode->getNodeType() == AST::Int
+                   || relatedNode->getNodeType() == AST::String
+                   || relatedNode->getNodeType() == AST::Switch) {
             std::shared_ptr<ValueNode> val = static_pointer_cast<ValueNode>(relatedNode);
             if (val) {
                 val->setDomain(domainName);

@@ -11,9 +11,10 @@ class SystemConfiguration
 {
 public:
     SystemConfiguration();
-    QMap<QString, ConfigMap> overrides;
-    QMap<QString, ConfigMap> hardwareConfigurations;
-    QMap<QString, ConfigMap> platformConfigurations;
+    QMap<QString, ConfigMap> overrides; // Override existing values in Stride Code
+    QMap<QString, ConfigMap> substitutions; // Substitute strings in generated code
+    QMap<QString, ConfigMap> hardwareConfigurations; // Configure the hardware
+    QMap<QString, ConfigMap> platformConfigurations; // Configure the platform
 };
 
 #endif // SYSTEMCONFIGURATION_HPP

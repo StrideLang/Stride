@@ -110,9 +110,9 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile)
                  if (!expectedResult.open(QIODevice::ReadOnly | QIODevice::Text)) {
                      return false;
                  }
-                 for(int i = 0; i < 7; i++) {
-                     outputLines.pop_front(); // Hack to remove initial text
-                 }
+//                 for(int i = 0; i < 7; i++) {
+//                     outputLines.pop_front(); // Hack to remove initial text
+//                 }
                  if (outputLines.size() <  10) {
                      return false; // too few lines
                  }

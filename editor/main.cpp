@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
 {
     qSetMessagePattern("[%{time yyyy-MM-dd h:mm:ss.zzz}%{if-debug}D%{endif}%{if-info}I%{endif}%{if-warning}W%{endif}%{if-critical}C%{endif}%{if-fatal}F%{endif}][%{file}:%{line} %{function}] %{message}");
     char *lc;
-    if (!(lc =setlocale (LC_ALL, NULL))) {
+    if (!(lc =setlocale (LC_ALL, nullptr))) {
         qDebug() << "Error setting locale.";
     }
     qDebug() << "Using locale " << lc;

@@ -7,16 +7,17 @@ stringListOption RtAudioAPI {
 	possibleValues: ["alsa", "pulse", "jack"]
 	default: "pulse"
 	buildPlatforms: ["linux"]
+    sustitute: ""
 	meta: "RtAudio API"
 }
 
-intOption DeviceIndex {
-	name: "Device Index"
+intOverride _DeviceIndex {
+	name: "Input Channels"
 	minimum: 0
-	maximum: 128
-	default: 0
-	buildPlatforms: ["all"]
-	meta: "Index of audio device to use"
+	maximum: 64
+	default: 2
+	override: [["RtAudio", _AudioDeviceIndex]]
+	meta: "Index of device"
 }
 
 intOverride _NumInputChannels {
@@ -43,4 +44,12 @@ intListOverride AudioRate {
 	default: 48000
 	override: [["RtAudio", AudioRate]]
 	meta: "Sampling Rate"
+}
+
+intListOverride _BlockSize {
+	name: "Audio Block size"
+	possibleValues: [64, 128, 256, 512, 1024]
+	default: 256
+	override: [["RtAudio", _AudioBlockSize]]
+	meta: "Size of the audio porcessing block. Affects processing latency."
 }
