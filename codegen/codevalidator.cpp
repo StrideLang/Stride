@@ -1878,8 +1878,11 @@ std::string CodeValidator::getDomainIdentifier(ASTNode domain, std::vector<ASTNo
     } else if (domain->getNodeType() == AST::String) {
         // Should anything be added to the id? Scope?
         name = static_pointer_cast<ValueNode>(domain)->getStringValue();
+    } else if (domain->getNodeType() == AST::PortProperty) {
+        // Should anything be added to the id? Scope?
+        auto portProperty = static_pointer_cast<PortPropertyNode>(domain);
+        name = portProperty->getName() + "_" + portProperty->getPortName();
     }
-    // TODO add support for resolving domain id for PortBlock
     return name;
 }
 
@@ -2208,9 +2211,8 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, QVector<ASTNode > scopeStack,
         if (declaration) {
             domainNode = declaration->getDomain();
         }
-        if (!domainNode && declaration->getObjectType() == "platformBlock") {
+        if (!domainNode && declaration && declaration->getObjectType() == "platformBlock") {
             domainNode = declaration->getPropertyValue("domain");
-
         }
     } else if (node->getNodeType() == AST::Bundle) {
         BundleNode *name = static_cast<BundleNode *>(node.get());
@@ -2309,6 +2311,9 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, QVector<ASTNode > scopeStack,
                 == getNodeDomainName(rightDomain,scopeStack, tree))) {
             return leftDomain;
         }
+    } else if (node->getNodeType() == AST::Real || node->getNodeType() == AST::Int
+               || node->getNodeType() == AST::Switch || node->getNodeType() == AST::String) {
+        domainNode = static_pointer_cast<ValueNode>(node)->getDomain();
     }
 
     if (domainNode && domainNode->getNodeType() == AST::Block) {
