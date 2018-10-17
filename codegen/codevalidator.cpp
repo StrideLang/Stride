@@ -425,6 +425,15 @@ vector<StreamNode *> CodeValidator::getStreamsAtLine(ASTNode tree, int line)
     return streams;
 }
 
+double CodeValidator::getDomainDefaultRate(std::shared_ptr<DeclarationNode> domainDecl)
+{
+    Q_ASSERT(domainDecl->getObjectType() == "_domainDefinition");
+    auto ratePort = domainDecl->getPropertyValue("rate");
+    Q_ASSERT(ratePort->getNodeType() == AST::Real || ratePort->getNodeType() == AST::Int);
+    double rate = static_pointer_cast<ValueNode>(ratePort)->toReal();
+    return rate;
+}
+
 QList<LangError> CodeValidator::getErrors()
 {
     return m_errors;

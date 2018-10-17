@@ -146,6 +146,8 @@ public:
 
     static vector<StreamNode *> getStreamsAtLine(ASTNode tree, int line);
 
+    static double getDomainDefaultRate(std::shared_ptr<DeclarationNode> domainDecl);
+
 private:
 
     void validateTree(QString platformRootDir, ASTNode tree);
