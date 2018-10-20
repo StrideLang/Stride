@@ -145,8 +145,8 @@ _domainDefinition AudioDomain {
       "block_size", _AudioBlockSize
     ]
     domainIncludes: ["RtAudio.h"]
-    domainDeclarations: ['#define NUM_IN_CHANNELS %%num_in_chnls%%',
-    '#define NUM_OUT_CHANNELS %%num_out_chnls%%',
+    domainDeclarations: ['constexpr int NUM_IN_CHANNELS = %%num_in_chnls%%;',
+    'constexpr int NUM_OUT_CHANNELS = %%num_out_chnls%%;',
     'typedef float MY_TYPE;',
     '#define FORMAT RTAUDIO_FLOAT32'
 ]

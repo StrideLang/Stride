@@ -4,6 +4,7 @@ constant AudioRate {
 }
 
 
+
 _domainDefinition AudioDomain {
 	domainName: "AudioDomain"
 	framework: _RtAudioFramework
@@ -18,9 +19,9 @@ _domainDefinition AudioDomain {
       "num_out_chnls", _NumOutputChannels
     ]
     domainIncludes: ["iostream", "iomanip"]
-    domainDeclarations: ['#define NUM_IN_CHANNELS %%num_in_chnls%%',
-    '#define NUM_OUT_CHANNELS %%num_out_chnls%%',
-    '#define NUM_SAMPLES 44100',
+    domainDeclarations: ['constexpr int NUM_IN_CHANNELS = %%num_in_chnls%%;',
+    'constexpr int NUM_OUT_CHANNELS = %%num_out_chnls%%;',
+    'constexpr int NUM_SAMPLES = 44100;',
     'float inbuf[NUM_SAMPLES * NUM_IN_CHANNELS];',
     'float outbuf[NUM_SAMPLES * NUM_OUT_CHANNELS];'
 ]
