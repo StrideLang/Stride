@@ -58,15 +58,14 @@ private:
 
 private Q_SLOTS:
 
-    void testBlockIOResolution();
-    void testDomains();
+    void testModuleDomains();
 
     // Connections
     void testConnectionErrors();
     void testConnectionCount();
 
     void testBlockMembers();
-    void testModuleDomains();
+//    void testModuleDomains();
     void testPortTypeValidation();
 
     //PlatformConsistency
@@ -76,7 +75,7 @@ private Q_SLOTS:
     void testValueTypeBundleResolution();
     void testImport();
     void testContextDomain();
-//    void testDomains();
+    void testDomains();
     void testLists();
     void testPortNameValidation();
     // Library
@@ -103,7 +102,7 @@ private Q_SLOTS:
     void testHeader();
     void testLoop();
     void testBuffer();
-//    void testBlockIOResolution();
+    void testBlockIOResolution();
 
     // Test code generation
     void testCodeGeneration();
@@ -295,7 +294,7 @@ void ParserTest::testCodeGeneration()
 
     BuildTester tester(QFINDTESTDATA(STRIDEROOT).toStdString());
 
-    QStringList toIgnore = {"buffer", "loop", "sync"};
+    QStringList toIgnore = {"simple", "buffer", "loop", "sync"};
     while (directories.hasNext()) {
         QString dirName = directories.next();
         if (!toIgnore.contains(dirName.mid(dirName.lastIndexOf("/") + 1))) {
@@ -419,28 +418,28 @@ void ParserTest::testConnectionCount()
 
     DeclarationNode *block = static_cast<DeclarationNode *>(tree->getChildren().at(1).get());
     QVERIFY(block->getNodeType() == AST::Declaration);
-    ListNode *reads = static_cast<ListNode *>(block->getPropertyValue("_reads").get());
+    ListNode *reads = static_cast<ListNode *>(block->getCompilerProperty("reads").get());
     QVERIFY(reads->getNodeType() == AST::List);
     QVERIFY(reads->getChildren().size() == 2);
-    ListNode *writes = static_cast<ListNode *>(block->getPropertyValue("_writes").get());
+    ListNode *writes = static_cast<ListNode *>(block->getCompilerProperty("writes").get());
     QVERIFY(writes->getNodeType() == AST::List);
     QVERIFY(writes->getChildren().size() == 0);
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(2).get());
     QVERIFY(block->getNodeType() == AST::Declaration);
-    reads = static_cast<ListNode *>(block->getPropertyValue("_reads").get());
+    reads = static_cast<ListNode *>(block->getCompilerProperty("reads").get());
     QVERIFY(reads->getNodeType() == AST::List);
     QVERIFY(reads->getChildren().size() == 0);
-    writes = static_cast<ListNode *>(block->getPropertyValue("_writes").get());
+    writes = static_cast<ListNode *>(block->getCompilerProperty("writes").get());
     QVERIFY(writes->getNodeType() == AST::List);
     QVERIFY(writes->getChildren().size() == 1);
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(3).get());
     QVERIFY(block->getNodeType() == AST::Declaration);
-    reads = static_cast<ListNode *>(block->getPropertyValue("_reads").get());
+    reads = static_cast<ListNode *>(block->getCompilerProperty("reads").get());
     QVERIFY(reads->getNodeType() == AST::List);
     QVERIFY(reads->getChildren().size() == 0);
-    writes = static_cast<ListNode *>(block->getPropertyValue("_writes").get());
+    writes = static_cast<ListNode *>(block->getCompilerProperty("writes").get());
     QVERIFY(writes->getNodeType() == AST::List);
     QVERIFY(writes->getChildren().size() == 2);
 
@@ -460,37 +459,37 @@ void ParserTest::testConnectionCount()
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(7).get());
     QVERIFY(block->getNodeType() == AST::Declaration);
-    reads = static_cast<ListNode *>(block->getPropertyValue("_reads").get());
+    reads = static_cast<ListNode *>(block->getCompilerProperty("reads").get());
     QVERIFY(reads->getNodeType() == AST::List);
     QVERIFY(reads->getChildren().size() == 1);
-    writes = static_cast<ListNode *>(block->getPropertyValue("_writes").get());
+    writes = static_cast<ListNode *>(block->getCompilerProperty("writes").get());
     QVERIFY(writes->getNodeType() == AST::List);
     QVERIFY(writes->getChildren().size() == 0);
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(8).get());
     QVERIFY(block->getNodeType() == AST::Declaration);
-    reads = static_cast<ListNode *>(block->getPropertyValue("_reads").get());
+    reads = static_cast<ListNode *>(block->getCompilerProperty("reads").get());
     QVERIFY(reads->getNodeType() == AST::List);
     QVERIFY(reads->getChildren().size() == 1);
-    writes = static_cast<ListNode *>(block->getPropertyValue("_writes").get());
+    writes = static_cast<ListNode *>(block->getCompilerProperty("writes").get());
     QVERIFY(writes->getNodeType() == AST::List);
     QVERIFY(writes->getChildren().size() == 1);
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(9).get());
     QVERIFY(block->getNodeType() == AST::Declaration);
-    reads = static_cast<ListNode *>(block->getPropertyValue("_reads").get());
+    reads = static_cast<ListNode *>(block->getCompilerProperty("reads").get());
     QVERIFY(reads->getNodeType() == AST::List);
     QVERIFY(reads->getChildren().size() == 0);
-    writes = static_cast<ListNode *>(block->getPropertyValue("_writes").get());
+    writes = static_cast<ListNode *>(block->getCompilerProperty("writes").get());
     QVERIFY(writes->getNodeType() == AST::List);
     QVERIFY(writes->getChildren().size() == 2);
 
     block = static_cast<DeclarationNode *>(tree->getChildren().at(10).get());
     QVERIFY(block->getNodeType() == AST::Declaration);
-    reads = static_cast<ListNode *>(block->getPropertyValue("_reads").get());
+    reads = static_cast<ListNode *>(block->getCompilerProperty("reads").get());
     QVERIFY(reads->getNodeType() == AST::List);
     QVERIFY(reads->getChildren().size() == 1);
-    writes = static_cast<ListNode *>(block->getPropertyValue("_writes").get());
+    writes = static_cast<ListNode *>(block->getCompilerProperty("writes").get());
     QVERIFY(writes->getNodeType() == AST::List);
     QVERIFY(writes->getChildren().size() == 0);
 
@@ -517,40 +516,40 @@ void ParserTest::testConnectionCount()
     DeclarationNode *declaration = static_cast<DeclarationNode *>(blocks->getChildren().at(0).get());
     QVERIFY(declaration->getName() == "Sig1");
 
-    reads = static_cast<ListNode *>(declaration->getPropertyValue("_reads").get());
+    reads = static_cast<ListNode *>(declaration->getCompilerProperty("reads").get());
     QVERIFY(reads->getNodeType() == AST::List);
     QVERIFY(reads->getChildren().size() == 1);
-    writes = static_cast<ListNode *>(declaration->getPropertyValue("_writes").get());
+    writes = static_cast<ListNode *>(declaration->getCompilerProperty("writes").get());
     QVERIFY(writes->getNodeType() == AST::List);
     QVERIFY(writes->getChildren().size() == 0);
 
     declaration = static_cast<DeclarationNode *>(blocks->getChildren().at(1).get());
     QVERIFY(declaration->getName() == "Sig2");
 
-    reads = static_cast<ListNode *>(declaration->getPropertyValue("_reads").get());
+    reads = static_cast<ListNode *>(declaration->getCompilerProperty("reads").get());
     QVERIFY(reads->getNodeType() == AST::List);
     QVERIFY(reads->getChildren().size() == 1);
-    writes = static_cast<ListNode *>(declaration->getPropertyValue("_writes").get());
+    writes = static_cast<ListNode *>(declaration->getCompilerProperty("writes").get());
     QVERIFY(writes->getNodeType() == AST::List);
     QVERIFY(writes->getChildren().size() == 1);
 
     declaration = static_cast<DeclarationNode *>(blocks->getChildren().at(2).get());
     QVERIFY(declaration->getName() == "Sig3");
 
-    reads = static_cast<ListNode *>(declaration->getPropertyValue("_reads").get());
+    reads = static_cast<ListNode *>(declaration->getCompilerProperty("reads").get());
     QVERIFY(reads->getNodeType() == AST::List);
     QVERIFY(reads->getChildren().size() == 0);
-    writes = static_cast<ListNode *>(declaration->getPropertyValue("_writes").get());
+    writes = static_cast<ListNode *>(declaration->getCompilerProperty("writes").get());
     QVERIFY(writes->getNodeType() == AST::List);
     QVERIFY(writes->getChildren().size() == 2);
 
     declaration = static_cast<DeclarationNode *>(blocks->getChildren().at(3).get());
     QVERIFY(declaration->getName() == "Sig4");
 
-    reads = static_cast<ListNode *>(declaration->getPropertyValue("_reads").get());
+    reads = static_cast<ListNode *>(declaration->getCompilerProperty("reads").get());
     QVERIFY(reads->getNodeType() == AST::List);
     QVERIFY(reads->getChildren().size() == 1);
-    writes = static_cast<ListNode *>(declaration->getPropertyValue("_writes").get());
+    writes = static_cast<ListNode *>(declaration->getCompilerProperty("writes").get());
     QVERIFY(writes->getNodeType() == AST::List);
     QVERIFY(writes->getChildren().size() == 0);
 
@@ -594,6 +593,17 @@ void ParserTest::testModuleDomains()
     QVERIFY(domainValue->getName() == "InputPort");
     QVERIFY(domainValue->getPortName() == "domain");
 
+    auto reads = internalBlock->getCompilerProperty("reads")->getChildren();
+    auto writes = internalBlock->getCompilerProperty("writes")->getChildren();
+
+    QVERIFY(reads.size() == 1);
+    QVERIFY(writes.size() == 0);
+
+    auto readDomain = static_pointer_cast<PortPropertyNode>(reads.at(0));
+    QVERIFY(readDomain->getNodeType() == AST::PortProperty);
+    QVERIFY(readDomain->getPortName() == "domain");
+    QVERIFY(readDomain->getName() == "OutputPort");
+
     internalBlock = CodeValidator::findDeclaration("Output", QVector<ASTNode>::fromStdVector(blockList->getChildren()),
                                     nullptr).get();
     QVERIFY(internalBlock->getNodeType() == AST::Declaration);
@@ -602,6 +612,26 @@ void ParserTest::testModuleDomains()
     QVERIFY(domainValue->getNodeType() == AST::PortProperty);
     QVERIFY(domainValue->getName() == "OutputPort");
     QVERIFY(domainValue->getPortName() == "domain");
+
+    reads = internalBlock->getCompilerProperty("reads")->getChildren();
+    writes = internalBlock->getCompilerProperty("writes")->getChildren();
+
+    QVERIFY(reads.size() == 0);
+    QVERIFY(writes.size() == 1);
+
+    auto writeDomain = static_pointer_cast<PortPropertyNode>(writes.at(0));
+    QVERIFY(writeDomain->getNodeType() == AST::PortProperty);
+    QVERIFY(writeDomain->getPortName() == "domain");
+    QVERIFY(writeDomain->getName() == "InputPort");
+
+    ListNode *streamList = static_cast<ListNode *>(block->getPropertyValue("streams").get());
+    ValueNode *constant = static_cast<ValueNode *>(streamList->getChildren()[1]->getChildren()[0].get());
+    QVERIFY(constant->getNodeType() == AST::Int);
+    QVERIFY(constant->getDomain());
+    PortPropertyNode *domain = static_cast<PortPropertyNode *>(constant->getDomain().get());
+    QVERIFY(domain->getNodeType() == AST::PortProperty);
+    QVERIFY(domain->getPortName() == "domain");
+    QVERIFY(domain->getName() == "OutputPort");
 }
 
 void ParserTest::testConnectionErrors()
@@ -774,6 +804,24 @@ void ParserTest::testDomains()
     QVERIFY(domain->getNodeType() == AST::String);
     QVERIFY(domain->getStringValue() == "AudioDomain");
 
+    // Check slicing of domains when domain changes
+    stream = static_cast<StreamNode *>(tree->getChildren()[14].get());
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    auto bundle = static_cast<BundleNode *>(stream->getLeft().get());
+    QVERIFY(bundle->getNodeType() == AST::Bundle);
+    QVERIFY(bundle->getName() == "AudioIn");
+    auto blocknode = static_cast<BlockNode *>(stream->getRight().get());
+    QVERIFY(blocknode->getNodeType() == AST::Block);
+    QVERIFY(blocknode->getName() == "ValueInOSCDomain");
+
+    stream = static_cast<StreamNode *>(tree->getChildren()[15].get());
+    QVERIFY(stream->getNodeType() == AST::Stream);
+    blocknode = static_cast<BlockNode *>(stream->getLeft().get());
+    QVERIFY(blocknode->getNodeType() == AST::Block);
+    QVERIFY(blocknode->getName() == "ValueInOSCDomain");
+    bundle = static_cast<BundleNode *>(stream->getRight().get());
+    QVERIFY(bundle->getNodeType() == AST::Bundle);
+    QVERIFY(bundle->getName() == "AudioOut");
 
 }
 

@@ -134,7 +134,7 @@ private:
     std::shared_ptr<ValueNode>  logicalNot(std::shared_ptr<ValueNode>  left);
 
     ASTNode makeConnector(ASTNode node, string connectorName, int size, const QVector<ASTNode > &scopeStack);
-    void terminateStackWithBridge(ASTNode node, QVector<ASTNode > &streams, QVector<ASTNode > &stack, QVector<ASTNode > &scopeStack);
+//    void terminateStackWithBridge(ASTNode node, QVector<ASTNode > &streams, QVector<ASTNode > &stack, QVector<ASTNode > &scopeStack);
     std::shared_ptr<StreamNode> makeStreamFromStack(QVector<ASTNode > &stack);
     QVector<ASTNode > sliceStreamByDomain(std::shared_ptr<StreamNode> stream, QVector<ASTNode > scopeStack);
     void sliceDomainsInNode(std::shared_ptr<DeclarationNode> stream, QVector<ASTNode > scopeStack);

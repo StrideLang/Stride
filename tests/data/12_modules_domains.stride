@@ -15,6 +15,7 @@ module SimpleTest {
     ]
     streams: [
         Input >> Output;
+        10 >> Output;
     ]
 }
 

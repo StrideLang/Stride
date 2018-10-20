@@ -52,3 +52,7 @@ TestMod(value: 5) >> Modulator;
 TestMod(value:Modulator) >> AudioOut;
 
 AudioIn[1] >> TestMod2(value: 0.1) >> Signal;
+
+# This has two domain changes. Currently this is split into two
+# separate streams as it makes code generation easier.
+AudioIn[1] >> ValueInOSCDomain >> AudioOut[2];
