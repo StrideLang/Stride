@@ -69,26 +69,25 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
     m_helperMenu(this),
     m_startingUp(true)
 {
-    m_previousRunCrashed = QFile::exists(".crashmarker");
-
-    // TODO move this to the temp directory?
-    QFile crashMarker(".crashmarker");
-    crashMarker.open(QFile::WriteOnly);
-    crashMarker.write("oops");
-    crashMarker.close();
-
     ui->setupUi(this);
-
-    connectActions();
-    connectShortcuts();
     QIcon icon(":resources/icon.png");
     setWindowIcon(icon);
-
     setWindowTitle("StrideIDE");
+}
+
+ProjectWindow::~ProjectWindow()
+{
+    delete ui;
+}
+
+void ProjectWindow::initialize(bool resetOpenFiles)
+{
+    connectActions();
+    connectShortcuts();
     updateMenus();
     m_highlighter = new LanguageHighlighter(this);
 
-    readSettings();
+    readSettings(resetOpenFiles);
 
     if (ui->tabWidget->count() == 0) {
         newFile(); // No files from previous session
@@ -124,13 +123,6 @@ ProjectWindow::ProjectWindow(QWidget *parent) :
     ui->projectDockWidget->setVisible(true);
     connect(ui->treeWidget, SIGNAL(itemClicked(QTreeWidgetItem *, int )),
             this, SLOT(inspectorItemClicked(QTreeWidgetItem *, int )));
-    QFile::remove(".crashmarker");
-
-}
-
-ProjectWindow::~ProjectWindow()
-{
-    delete ui;
 }
 
 bool ProjectWindow::build()
@@ -977,7 +969,7 @@ void ProjectWindow::connectShortcuts()
     ui->actionQuit->setShortcut(QKeySequence("Ctrl+Q"));
 }
 
-void ProjectWindow::readSettings()
+void ProjectWindow::readSettings(bool resetOpenFiles)
 {
     QSettings settings("Stride", "StrideIDE", this);
     settings.beginGroup("project");
@@ -1029,7 +1021,7 @@ void ProjectWindow::readSettings()
         filesToOpen << settings.value("fileName").toString();
     }
     settings.endArray();
-    if (!m_previousRunCrashed) {
+    if (!resetOpenFiles) {
         foreach(QString fileName, filesToOpen) {
             if (fileName.isEmpty()) {
                 newFile();

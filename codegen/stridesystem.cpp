@@ -82,10 +82,10 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
                 QStringList nameFilters;
                 nameFilters.push_back("*.stride");
                 string platformPath = platform->buildLibPath(m_strideRoot.toStdString());
-                foreach(string subPath, subPaths) {
+                for(string subPath : subPaths) {
                     QString includeSubPath = QString::fromStdString(platformPath + "/" + subPath);
                     QStringList libraryFiles =  QDir(includeSubPath).entryList(nameFilters);
-                    foreach (QString file, libraryFiles) {
+                    for(QString file : libraryFiles) {
                         QString fileName = includeSubPath + QDir::separator() + file;
                         ASTNode tree = AST::parseFile(fileName.toLocal8Bit().data(), nullptr);
                         if(tree) {

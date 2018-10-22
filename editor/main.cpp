@@ -34,6 +34,7 @@
 
 #include <QApplication>
 #include <QDebug>
+#include <QMessageBox>
 #include <clocale>
 
 #include "projectwindow.h"
@@ -47,10 +48,35 @@ int main(int argc, char *argv[])
     }
     qDebug() << "Using locale " << lc;
 
+    // TODO move this crash marker to the temp directory?
+    bool previousRunCrashed = QFile::exists(".crashmarker");
+    QFile crashMarker(".crashmarker");
+    crashMarker.open(QFile::WriteOnly);
+    crashMarker.write("oops");
+    crashMarker.close();
+
+
     QApplication a(argc, argv);
+
+    if (previousRunCrashed) {
+        QMessageBox::StandardButton choice = QMessageBox::question(nullptr,
+                                                                   "Reset?",
+                                                                   "Stride IDE crashed. Would you like to reset it?");
+        if (choice == QMessageBox::No) {
+            previousRunCrashed = false;
+        }
+    }
+
+
     ProjectWindow w;
     a.installEventFilter(&w); // Pass events from a to w
+    w.initialize(previousRunCrashed);
     w.show();
 
-    return a.exec();
+    int ret = a.exec();
+    if (ret == 0) {
+        QFile::remove(".crashmarker");
+    }
+
+    return ret;
 }

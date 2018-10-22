@@ -59,6 +59,8 @@ public:
     explicit ProjectWindow(QWidget *parent = nullptr);
     ~ProjectWindow();
 
+    void initialize(bool resetOpenFiles = false);
+
 public slots:
     void updateMenus();
     void setEditorText(QString code);
@@ -108,7 +110,7 @@ private:
     void connectActions();
     void connectShortcuts();
 
-    void readSettings();
+    void readSettings(bool resetOpenFiles=false);
     void writeSettings();
 
     void updateEditorSettings();
@@ -134,7 +136,6 @@ private:
     std::vector<Builder *> m_builders;
     QMenu m_helperMenu;
 
-    bool m_previousRunCrashed;
     bool m_startingUp;
 };
 
