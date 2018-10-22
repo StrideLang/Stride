@@ -99,8 +99,6 @@ module Divide {
 module Multiply {	
 	ports: [
 		mainOutputPort OutputPort {
-			main: on
-			direction: "output"
 			block: Output
 			meta : "The result of the multiplication" 
 		},

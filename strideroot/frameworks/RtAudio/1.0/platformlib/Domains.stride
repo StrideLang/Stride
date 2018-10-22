@@ -1,7 +1,7 @@
 
 _domainProcessing _PlatformDomainProcessing {
 	domainStreams: [
-		InitializationDomain >> AudioDomain;
+		InitializationDomain >> [AudioDomain, AsyncDomain];
 	]
 }
 
@@ -38,4 +38,27 @@ _domainDefinition InitializationDomain {
 	// end init domain processing
 	'
     domainCleanup: '// init domain cleanup'
+}
+
+_domainDefinition AsyncDomain {
+	domainName: "AsyncDomain"
+	framework: _RtAudioFramework
+	rate: 0
+	globalsTag: "Includes"
+	declarationsTag: "Declarations"
+	processingTag: "Processing"
+	initializationTag: "Initialization"
+	cleanupTag: "Cleanup"
+    substitutions: []
+    domainIncludes: ['thread']
+    domainDeclarations: ["void thread_func();",
+		"std::thread asyncthread(thread_func);"]
+    domainInitialization: "// init domain init"
+	domainFunction: "// async domain processing
+	void thread_func() {
+	%%domainCode%%
+}
+	// end async domain processing
+	"
+    domainCleanup: "// init domain cleanup"
 }

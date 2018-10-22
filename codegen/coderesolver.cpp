@@ -2959,20 +2959,23 @@ void CodeResolver::markConnectionForNode(ASTNode node, QVector<ASTNode > scopeSt
                         previousName = QString::fromStdString(static_pointer_cast<BundleNode>(previous)->getName());
                     }
                     previousDecl = CodeValidator::findDeclaration(previousName, scopeStack, m_tree);
-                    auto previousTypeName = CodeValidator::findTypeDeclarationByName(previousDecl->getObjectType(), scopeStack, m_tree)->getObjectType();
-                    if (previousTypeName != "platformBlock" && previousTypeName != "platformModule"
-                            && previousDecl->getObjectType() != "buffer") {
-                        // platformBlock and platformModule can be ignored as they are tied to a domain.
-                        // However, we do need to figure out how to support buffer access across domains.
-                        previousReads = static_pointer_cast<ListNode>(previousDecl->getCompilerProperty("reads"));
-                        Q_ASSERT(previousReads);
-                        previousReads->addChild(decl->getDomain());
-                    }
+                    if (previousDecl) {
+                        auto previousTypeName = CodeValidator::findTypeDeclarationByName(previousDecl->getObjectType(), scopeStack, m_tree)->getObjectType();
 
-                    Q_ASSERT(previousDecl);
-                    Q_ASSERT(writesProperties->getNodeType() == AST::List);
-                    //                std::string domainName = CodeValidator::getDomainNodeString(decl->getDomain());
-                    writesProperties->addChild(previousDecl->getDomain());
+                        if (previousTypeName != "platformBlock" && previousTypeName != "platformModule"
+                                && previousDecl->getObjectType() != "buffer") {
+                            // platformBlock and platformModule can be ignored as they are tied to a domain.
+                            // However, we do need to figure out how to support buffer access across domains.
+                            previousReads = static_pointer_cast<ListNode>(previousDecl->getCompilerProperty("reads"));
+                            Q_ASSERT(previousReads);
+                            previousReads->addChild(decl->getDomain());
+                        }
+
+    //                    Q_ASSERT(previousDecl);
+                        Q_ASSERT(writesProperties->getNodeType() == AST::List);
+                        //                std::string domainName = CodeValidator::getDomainNodeString(decl->getDomain());
+                        writesProperties->addChild(previousDecl->getDomain());
+                    }
                 }
             }
         }
@@ -2985,32 +2988,47 @@ void CodeResolver::markConnectionForNode(ASTNode node, QVector<ASTNode > scopeSt
                                      || decl->getObjectType() == "switch"
                                      || decl->getObjectType() == "trigger"
                                      || typeDecl->getObjectType() == "platformBlock")) {
-                if (!previous) { // not first element in stream, so it is being written to
-                    std::shared_ptr<PropertyNode> readsProperty;
-                    std::shared_ptr<ListNode> readsProperties;
-                    if (!decl->getPropertyValue("_reads")) {
-                        readsProperties = std::make_shared<ListNode>(nullptr, node->getFilename().c_str(), node->getLine());
-                        readsProperty = std::make_shared<PropertyNode>("_reads", readsProperties, node->getFilename().c_str(), node->getLine());
-                        decl->addProperty(readsProperty);
-                    } else {
-                        readsProperties = static_pointer_cast<ListNode>(decl->getPropertyValue("_reads"));
-                        Q_ASSERT(readsProperties->getNodeType() == AST::List);
+                std::shared_ptr<ListNode> readsProperties = static_pointer_cast<ListNode>(decl->getCompilerProperty("reads"));
+                if (!readsProperties) {
+                    readsProperties = std::make_shared<ListNode>(nullptr, node->getFilename().c_str(), node->getLine());
+                    decl->setCompilerProperty("reads", readsProperties);
+                }
+                std::shared_ptr<PropertyNode> writesProperty;
+                std::shared_ptr<ListNode> writesProperties = static_pointer_cast<ListNode>(decl->getCompilerProperty("writes"));
+                if (!writesProperties) {
+                    writesProperties = std::make_shared<ListNode>(nullptr, node->getFilename().c_str(), node->getLine());
+                    decl->setCompilerProperty("writes", writesProperties);
+                }
+                if (previous) {
+                    QString previousName;
+                    std::shared_ptr<ListNode> previousReads;
+                    std::shared_ptr<DeclarationNode> previousDecl;
+                    if (previous->getNodeType() == AST::Block || previous->getNodeType() == AST::Bundle) {
+                        // TODO we need to support lists here too
+                        if (previous->getNodeType() == AST::Block) {
+                            previousName = QString::fromStdString(static_pointer_cast<BlockNode>(previous)->getName());
+                        } else if (previous->getNodeType() == AST::Bundle) {
+                            previousName = QString::fromStdString(static_pointer_cast<BundleNode>(previous)->getName());
+                        }
+                        previousDecl = CodeValidator::findDeclaration(previousName, scopeStack, m_tree);
+                        if (previousDecl) {
+                            auto previousTypeName = CodeValidator::findTypeDeclarationByName(previousDecl->getObjectType(), scopeStack, m_tree)->getObjectType();
+
+                            if (previousTypeName != "platformBlock" && previousTypeName != "platformModule"
+                                    && previousDecl->getObjectType() != "buffer") {
+                                // platformBlock and platformModule can be ignored as they are tied to a domain.
+                                // However, we do need to figure out how to support buffer access across domains.
+                                previousReads = static_pointer_cast<ListNode>(previousDecl->getCompilerProperty("reads"));
+                                Q_ASSERT(previousReads);
+                                previousReads->addChild(decl->getDomain());
+                            }
+
+        //                    Q_ASSERT(previousDecl);
+                            Q_ASSERT(writesProperties->getNodeType() == AST::List);
+                            //                std::string domainName = CodeValidator::getDomainNodeString(decl->getDomain());
+                            writesProperties->addChild(previousDecl->getDomain());
+                        }
                     }
-                    std::string domainName = CodeValidator::getDomainNodeString(decl->getDomain());
-                    readsProperties->addChild(std::make_shared<ValueNode>(domainName, node->getFilename().c_str(), node->getLine()));
-                } else {
-                    std::shared_ptr<PropertyNode> writesProperty;
-                    std::shared_ptr<ListNode> writesProperties;
-                    if (!decl->getPropertyValue("_writes")) {
-                        writesProperties = std::make_shared<ListNode>(nullptr, node->getFilename().c_str(), node->getLine());
-                        writesProperty = std::make_shared<PropertyNode>("_writes", writesProperties, node->getFilename().c_str(), node->getLine());
-                        decl->addProperty(writesProperty);
-                    } else {
-                        writesProperties = static_pointer_cast<ListNode>(decl->getPropertyValue("_writes"));
-                        Q_ASSERT(writesProperties->getNodeType() == AST::List);
-                    }
-                    std::string domainName = CodeValidator::getDomainNodeString(decl->getDomain());
-                    writesProperties->addChild(std::make_shared<ValueNode>(domainName, node->getFilename().c_str(), node->getLine()));
                 }
             }
         }
