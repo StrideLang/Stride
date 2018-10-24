@@ -648,6 +648,67 @@ void CodeResolver::processDomains()
 void CodeResolver::analyzeConnections()
 {
     analyzeChildConnections(m_tree);
+
+
+    std::vector<std::shared_ptr<DeclarationNode>> knownDomains;
+    for (ASTNode node: m_tree->getChildren()) {
+        if (node->getNodeType() == AST::Declaration) {
+            std::shared_ptr<DeclarationNode> decl = static_pointer_cast<DeclarationNode>(node);
+            if (decl->getObjectType() == "_domainDefinition") {
+                knownDomains.push_back(decl);
+                Q_ASSERT(!decl->getCompilerProperty("domainReads"));
+                Q_ASSERT(!decl->getCompilerProperty("domainWrites"));
+                decl->setCompilerProperty("domainReads", std::make_shared<ListNode>(__FUNCTION__, __LINE__));
+                decl->setCompilerProperty("domainWrites", std::make_shared<ListNode>(__FUNCTION__, __LINE__));
+            }
+        }
+    }
+
+    // Now go through the tree to match domain reads and domain writes
+    for (ASTNode node : m_tree->getChildren()) {
+        if (node->getNodeType() == AST::Declaration) {
+
+            std::shared_ptr<DeclarationNode> decl;
+            if (node->getCompilerProperty("reads")) {
+                for (auto domain: node->getCompilerProperty("reads")->getChildren()) {
+                    Q_ASSERT(domain->getNodeType() == AST::String);
+                    std::string domainName = static_pointer_cast<ValueNode>(domain)->getStringValue();
+                    for (auto knownDomain: knownDomains) {
+                        ASTNode domainNameValue = knownDomain->getPropertyValue("domainName");
+                        if (domainNameValue && domainNameValue->getNodeType() == AST::String) {
+                            if (domainName == static_cast<ValueNode *>(domainNameValue.get())->getStringValue() ) {
+                                decl = knownDomain;
+                                break;
+                            }
+                        }
+                    }
+                    if (decl) {
+                        decl->getCompilerProperty("domainReads")->addChild(node);
+                    }
+                }
+            }
+
+            if (node->getCompilerProperty("writes")) {
+                for (auto domain: node->getCompilerProperty("writes")->getChildren()) {
+                    Q_ASSERT(domain->getNodeType() == AST::String);
+                    std::string domainName = static_pointer_cast<ValueNode>(domain)->getStringValue();
+                    for (auto knownDomain: knownDomains) {
+                        ASTNode domainNameValue = knownDomain->getPropertyValue("domainName");
+                        if (domainNameValue && domainNameValue->getNodeType() == AST::String) {
+                            if (domainName == static_cast<ValueNode *>(domainNameValue.get())->getStringValue() ) {
+                                decl = knownDomain;
+                                break;
+                            }
+                        }
+                    }
+                    if (decl) {
+                        decl->getCompilerProperty("domainWrites")->addChild(node);
+                    }
+                }
+            }
+        }
+
+    }
 }
 
 void CodeResolver::insertDependentTypes(std::shared_ptr<DeclarationNode> typeDeclaration, map<string, vector<ASTNode>> &objects) {
