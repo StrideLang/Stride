@@ -58,9 +58,9 @@ private:
 
 class StridePlatform {
 public:
-    StridePlatform(string framework, string fwVersion,
-                   string hardware = "", string hardwareVersion = "",
-                   string identifier = "") :
+    StridePlatform(std::string framework, std::string fwVersion,
+                   std::string hardware = "", std::string hardwareVersion = "",
+                   std::string identifier = "") :
         m_framework(framework), m_frameworkVersion(fwVersion),
         m_hardware(hardware), m_hardwareVersion(hardwareVersion),
         m_identifier(identifier)
@@ -75,31 +75,31 @@ public:
         NullPlatform
     } PlatformAPI;
 
-    string getFramework() const;
-    string getFrameworkVersion() const;
-    string getHardware() const;
-    string getHardwareVersion() const;
+    std::string getFramework() const;
+    std::string getFrameworkVersion() const;
+    std::string getHardware() const;
+    std::string getHardwareVersion() const;
     bool getRequired() const;
     PlatformAPI getAPI() const;
-    string buildPlatformPath(string strideRoot);
-    string buildLibPath(string strideRoot);
-    string buildTestingLibPath(string strideRoot);
+    std::string buildPlatformPath(std::string strideRoot);
+    std::string buildLibPath(std::string strideRoot);
+    std::string buildTestingLibPath(std::string strideRoot);
 
-    void addTree(string treeName, ASTNode treeRoot);
-    void addTestingTree(string treeName, ASTNode treeRoot);
-    vector<ASTNode> getPlatformObjectsReference();
-    vector<ASTNode> getPlatformTestingObjectsRef();
+    void addTree(std::string treeName, ASTNode treeRoot);
+    void addTestingTree(std::string treeName, ASTNode treeRoot);
+    std::vector<ASTNode> getPlatformObjectsReference();
+    std::vector<ASTNode> getPlatformTestingObjectsRef();
 
 private:
-    string m_framework;
-    string m_frameworkVersion;
-    string m_hardware;
-    string m_hardwareVersion;
-    string m_identifier;
+    std::string m_framework;
+    std::string m_frameworkVersion;
+    std::string m_hardware;
+    std::string m_hardwareVersion;
+    std::string m_identifier;
     bool m_required;
     PlatformAPI m_api {PluginPlatform}; //TODO Put back support for plugin platforms
-    map<string, ASTNode> m_platformTrees;
-    map<string, ASTNode> m_platformTestTrees;
+    std::map<std::string, ASTNode> m_platformTrees;
+    std::map<std::string, ASTNode> m_platformTestTrees;
 };
 
 

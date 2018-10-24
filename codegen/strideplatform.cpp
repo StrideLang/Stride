@@ -34,6 +34,8 @@
 
 #include "strideplatform.hpp"
 
+using namespace std;
+
 //bool StreamPlatform::typeHasPort(QString typeName, QString propertyName)
 //{
 //    QVector<AST *> ports = getPortsForType(typeName);
