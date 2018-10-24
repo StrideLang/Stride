@@ -37,6 +37,8 @@
 #include "importnode.h"
 #include "scopenode.h"
 
+using namespace std;
+
 ImportNode::ImportNode(string name, ASTNode scope, const char *filename, int line, string alias) :
     AST(AST::Import, filename, line)
 {
@@ -83,10 +85,11 @@ void ImportNode::resolveScope(ASTNode scope)
 
 ASTNode ImportNode::deepCopy()
 {
-    ASTNode newImportNode = std::make_shared<ImportNode>(m_importName, m_filename.data(), getLine(), m_importAlias);
+    auto newImportNode = std::make_shared<ImportNode>(m_importName, m_filename.data(), getLine(), m_importAlias);
     for (unsigned int i = 0; i < this->getScopeLevels(); i++) {
         newImportNode->addScope(this->getScopeAt(i));
     }
+    newImportNode->m_CompilerProperties = this->m_CompilerProperties;
     return newImportNode;
 }
 

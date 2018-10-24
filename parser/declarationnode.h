@@ -44,28 +44,32 @@
 class DeclarationNode : public AST
 {
 public:
-    DeclarationNode(string name, string objectType, ASTNode propertiesList, const char *filename, int line, vector<string> scope = vector<string>());
-    DeclarationNode(std::shared_ptr<BundleNode> bundle, string objectType, ASTNode propertiesList, const char *filename, int line, vector<string> scope = vector<string>());
-    ~DeclarationNode();
+    DeclarationNode(std::string name, std::string objectType, ASTNode propertiesList,
+                    const char *filename, int line,
+                    std::vector<std::string> scope = std::vector<std::string>());
+    DeclarationNode(std::shared_ptr<BundleNode> bundle, std::string objectType, ASTNode propertiesList,
+                    const char *filename, int line,
+                    std::vector<std::string> scope = std::vector<std::string>());
+    ~DeclarationNode() override;
 
-    string getName() const;
+    std::string getName() const;
     std::shared_ptr<BundleNode> getBundle() const;
-    vector<std::shared_ptr<PropertyNode>> getProperties() const;
+    std::vector<std::shared_ptr<PropertyNode>> getProperties() const;
     bool addProperty(std::shared_ptr<PropertyNode> newProperty);
-    ASTNode getPropertyValue(string propertyName);
-    void setPropertyValue(string propertyName, ASTNode value);
-    bool replacePropertyValue(string propertyName, ASTNode newValue);
+    ASTNode getPropertyValue(std::string propertyName);
+    void setPropertyValue(std::string propertyName, ASTNode value);
+    bool replacePropertyValue(std::string propertyName, ASTNode newValue);
 
     ASTNode getDomain();
-    void setDomainString(string domain);
+    void setDomainString(std::string domain);
 
-    string getObjectType() const;
+    std::string getObjectType() const;
     virtual ASTNode deepCopy() override;
 
 private:
-    string m_name;
-    string m_objectType;
-    vector<std::shared_ptr<PropertyNode>> m_properties;
+    std::string m_name;
+    std::string m_objectType;
+    std::vector<std::shared_ptr<PropertyNode>> m_properties;
 };
 
 #endif // DECLARATIONNODE_H

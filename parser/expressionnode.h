@@ -70,7 +70,7 @@ public:
     ASTNode getValue() const;
 
     ExpressionType getExpressionType() const;
-    string getExpressionTypeString() const;
+    std::string getExpressionTypeString() const;
     virtual ASTNode deepCopy() override;
 
 private:

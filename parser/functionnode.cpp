@@ -39,6 +39,8 @@
 #include "valuenode.h"
 #include "listnode.h"
 
+using namespace std;
+
 FunctionNode::FunctionNode(string name, ASTNode propertiesList,
                            const char *filename, int line) :
     AST(AST::Function, filename, line)
@@ -184,6 +186,7 @@ ASTNode FunctionNode::deepCopy()
         newFunctionNode->addScope(this->getScopeAt(i));
     }
     newFunctionNode->setRate(getRate());
+    newFunctionNode->m_CompilerProperties = this->m_CompilerProperties;
     return newFunctionNode;
 }
 

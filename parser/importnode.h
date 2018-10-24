@@ -42,22 +42,22 @@
 class ImportNode : public AST
 {
 public:
-    ImportNode(string name, ASTNode scope, const char *filename, int line, string alias = string());
-    ImportNode(string name, const char *filename, int line, string alias = string());
+    ImportNode(std::string name, ASTNode scope, const char *filename, int line, std::string alias = std::string());
+    ImportNode(std::string name, const char *filename, int line, std::string alias = std::string());
 
-    string importName() const;
-    void setImportName(const string &importName);
+    std::string importName() const;
+    void setImportName(const std::string &importName);
 
-    string importAlias() const;
-    void setImportAlias(const string &importAlias);
+    std::string importAlias() const;
+    void setImportAlias(const std::string &importAlias);
 
     virtual void resolveScope(ASTNode scope) override;
 
     virtual ASTNode deepCopy() override;
 
 private:
-    string m_importName;
-    string m_importAlias;
+    std::string m_importName;
+    std::string m_importAlias;
 };
 
 #endif // IMPORTNODE_H

@@ -34,6 +34,8 @@
 
 #include "keywordnode.h"
 
+using namespace std;
+
 KeywordNode::KeywordNode(string keyword, const char *filename, int line)
     :AST(AST::Keyword, filename, line)
 {

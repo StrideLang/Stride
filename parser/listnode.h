@@ -42,7 +42,7 @@ class ListNode : public AST
 public:
     ListNode(const char *filename, int line);
     ListNode(ASTNode newMember, const char *filename, int line);
-    ~ListNode();
+    ~ListNode() override;
 
     void stealMembers(ListNode *list);
     Token getListType();

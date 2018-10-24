@@ -44,24 +44,24 @@ class FunctionNode : public AST
 {
 public:
 
-    FunctionNode(string name, ASTNode propertiesList, const char *filename, int line);
-    FunctionNode(string name, ASTNode scope, ASTNode propertiesList, const char *filename, int line);
+    FunctionNode(std::string name, ASTNode propertiesList, const char *filename, int line);
+    FunctionNode(std::string name, ASTNode scope, ASTNode propertiesList, const char *filename, int line);
     ~FunctionNode();
 
     virtual void addChild(ASTNode t) override;
-    virtual void setChildren(vector<ASTNode > &newChildren) override;
+    virtual void setChildren(std::vector<ASTNode > &newChildren) override;
 //    virtual void deleteChildren() override;
 
-    string getName() const { return m_name; }
-    vector<std::shared_ptr<PropertyNode>> getProperties() const;
+    std::string getName() const { return m_name; }
+    std::vector<std::shared_ptr<PropertyNode>> getProperties() const;
 
     void addProperty(std::shared_ptr<PropertyNode> newProperty);
-    ASTNode getPropertyValue(string propertyName);
-    void setPropertyValue(string propertyName, ASTNode value);
-    bool replacePropertyValue(string propertyName, ASTNode newValue);
+    ASTNode getPropertyValue(std::string propertyName);
+    void setPropertyValue(std::string propertyName, ASTNode value);
+    bool replacePropertyValue(std::string propertyName, ASTNode newValue);
 
     ASTNode getDomain();
-    void setDomainString(string domain);
+    void setDomainString(std::string domain);
 
     virtual void resolveScope(ASTNode scope) override;
 
@@ -73,8 +73,8 @@ public:
 
 private:
     double m_rate;
-    string m_name;
-    vector<std::shared_ptr<PropertyNode>> m_properties;
+    std::string m_name;
+    std::vector<std::shared_ptr<PropertyNode>> m_properties;
 };
 
 #endif // FUNCTIONNODE_H

@@ -37,6 +37,8 @@
 #include "declarationnode.h"
 #include "valuenode.h"
 
+using namespace std;
+
 DeclarationNode::DeclarationNode(string name, string objectType, ASTNode propertiesList,
                      const char *filename, int line, vector<string> scope):
     AST(AST::Declaration, filename, line, scope)
@@ -162,7 +164,7 @@ string DeclarationNode::getObjectType() const
 ASTNode DeclarationNode::deepCopy()
 {
     ASTNode newProps = std::make_shared<AST>();
-    ASTNode node = nullptr;
+    std::shared_ptr<DeclarationNode> node;
     for(unsigned int i = 0; i< m_properties.size(); i++) {
         newProps->addChild(m_properties[i]->deepCopy());
     }
@@ -172,6 +174,7 @@ ASTNode DeclarationNode::deepCopy()
     } else if (getNodeType() == AST::Declaration) {
         node = std::make_shared<DeclarationNode>(m_name, m_objectType, newProps, m_filename.data(), m_line, m_scope);
     }
+    node->m_CompilerProperties = this->m_CompilerProperties;
     assert(node);
 //    newProps.reset();
     return node;

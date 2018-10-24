@@ -46,7 +46,7 @@ public:
     ValueNode(int value, const char * filename, int line);
     ValueNode(float value, const char * filename, int line);
     ValueNode(double value, const char * filename, int line);
-    ValueNode(string value, const char * filename, int line);
+    ValueNode(std::string value, const char * filename, int line);
     ValueNode(bool value, const char * filename, int line);
     ~ValueNode();
 
@@ -56,9 +56,9 @@ public:
 
     double toReal() const;
 
-    string getStringValue() const;
+    std::string getStringValue() const;
 
-    string toString() const;
+    std::string toString() const;
 
     bool getSwitchValue() const;
 
@@ -71,7 +71,7 @@ public:
 private:
     int m_intValue;
     double m_floatValue;
-    string m_stringValue;
+    std::string m_stringValue;
     bool m_switch;
 
     ASTNode m_domain {nullptr};

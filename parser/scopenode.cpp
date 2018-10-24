@@ -34,6 +34,8 @@
 
 #include "scopenode.h"
 
+using namespace std;
+
 ScopeNode::ScopeNode(string name, const char *filename, int line) :
     AST(AST::Scope, filename, line)
 {

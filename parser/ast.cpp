@@ -38,6 +38,8 @@
 #include "listnode.h"
 #include "propertynode.h"
 
+using namespace std;
+
 extern AST *parse(const char* fileName, const char* sourceFilename);
 extern std::vector<LangError> getErrors();
 
@@ -93,6 +95,7 @@ ASTNode AST::deepCopy()
     for(unsigned int i = 0; i < m_children.size(); i++) {
         newNode->addChild(m_children.at(i)->deepCopy());
     }
+    newNode->m_CompilerProperties = this->m_CompilerProperties;
     return newNode;
 }
 

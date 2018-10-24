@@ -34,6 +34,8 @@
 
 #include "listnode.h"
 
+using namespace std;
+
 ListNode::ListNode(const char *filename, int line) :
     AST(AST::List, filename, line)
 {
@@ -111,6 +113,7 @@ ASTNode ListNode::deepCopy()
     } else {
         newList = std::make_shared<ListNode>(nullptr, m_filename.data(), m_line);
     }
+    newList->m_CompilerProperties = this->m_CompilerProperties;
     return newList;
 }
 

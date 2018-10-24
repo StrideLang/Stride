@@ -69,6 +69,8 @@ void StreamNode::setRight(ASTNode newRight)
 ASTNode StreamNode::deepCopy()
 {
     std::shared_ptr<StreamNode> newStream = std::make_shared<StreamNode>(m_children.at(0)->deepCopy(), m_children.at(1)->deepCopy(), m_filename.data(), m_line);
+
+    newStream->m_CompilerProperties = this->m_CompilerProperties;
     return newStream;
 }
 

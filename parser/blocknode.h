@@ -42,18 +42,18 @@
 class BlockNode : public AST
 {
 public:
-    BlockNode(string name, const char *filename, int line, vector<string> scope = vector<string>());
-    BlockNode(string name, ASTNode scope, const char *filename, int line);
+    BlockNode(std::string name, const char *filename, int line, std::vector<std::string> scope = std::vector<std::string>());
+    BlockNode(std::string name, ASTNode scope, const char *filename, int line);
 
-    ~BlockNode();
+    ~BlockNode() override;
 
-    string getName() const {return m_name;}
+    std::string getName() const {return m_name;}
 
     virtual ASTNode deepCopy() override;
 
 private:
-    void resolveScope(ASTNode scope);
-    string m_name;
+    void resolveScope(ASTNode scope) override;
+    std::string m_name;
 };
 
 #endif // BLOCKNODE_H

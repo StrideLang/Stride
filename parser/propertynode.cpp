@@ -36,6 +36,8 @@
 
 #include "propertynode.h"
 
+using namespace std;
+
 PropertyNode::PropertyNode(string name, ASTNode value, const char *filename, int line):
     AST(AST::Property, filename, line)
 {
@@ -60,6 +62,8 @@ void PropertyNode::replaceValue(ASTNode newValue)
 
 ASTNode PropertyNode::deepCopy()
 {
-    return std::make_shared<PropertyNode>(m_name, m_children.at(0)->deepCopy(), m_filename.data(), m_line);
+    auto newNode = std::make_shared<PropertyNode>(m_name, m_children.at(0)->deepCopy(), m_filename.data(), m_line);
+    newNode->m_CompilerProperties = this->m_CompilerProperties;
+    return newNode;
 }
 

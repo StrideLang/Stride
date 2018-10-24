@@ -37,6 +37,8 @@
 #include "blocknode.h"
 #include "scopenode.h"
 
+using namespace std;
+
 BlockNode::BlockNode(string name, const char *filename, int line, vector<string> scope) :
     AST(AST::Block, filename, line, scope)
 {
@@ -68,5 +70,6 @@ void BlockNode::resolveScope(ASTNode scope)
 ASTNode BlockNode::deepCopy()
 {
     std::shared_ptr<BlockNode> newNode = std::make_shared<BlockNode>(m_name, m_filename.data(), m_line, m_scope);
+    newNode->m_CompilerProperties = this->m_CompilerProperties;
     return newNode;
 }

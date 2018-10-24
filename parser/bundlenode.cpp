@@ -37,6 +37,8 @@
 #include "bundlenode.h"
 #include "scopenode.h"
 
+using namespace std;
+
 BundleNode::BundleNode(string name, std::shared_ptr<ListNode> indexList, const char *filename, int line, vector<string> scope) :
     AST(AST::Bundle, filename, line, scope)
 {
@@ -90,6 +92,7 @@ ASTNode BundleNode::deepCopy()
         for (unsigned int i = 0; i < this->getScopeLevels(); i++) {
             newBundle->addScope(this->getScopeAt(i));
         }
+        newBundle->m_CompilerProperties = this->m_CompilerProperties;
         return newBundle;
     }
     assert(0 == 1);

@@ -36,6 +36,8 @@
 
 #include "expressionnode.h"
 
+using namespace std;
+
 ExpressionNode::ExpressionNode(ExpressionType type, ASTNode left, ASTNode right,
                                const char *filename, int line) :
     AST(AST::Expression, filename, line)
@@ -145,9 +147,14 @@ string ExpressionNode::getExpressionTypeString() const
 ASTNode ExpressionNode::deepCopy()
 {
     if (m_type == ExpressionNode::UnaryMinus || m_type == ExpressionNode::LogicalNot) {
-        return std::make_shared<ExpressionNode>(m_type, m_children.at(0)->deepCopy(), m_filename.data(), m_line);
+        auto newNode = std::make_shared<ExpressionNode>(m_type, m_children.at(0)->deepCopy(), m_filename.data(), m_line);
+        newNode->m_CompilerProperties = this->m_CompilerProperties;
+        return newNode;
+
     } else {
-        return std::make_shared<ExpressionNode>(m_type, m_children.at(0)->deepCopy(), m_children.at(1)->deepCopy(), m_filename.data(), m_line);
+        auto newNode = std::make_shared<ExpressionNode>(m_type, m_children.at(0)->deepCopy(), m_children.at(1)->deepCopy(), m_filename.data(), m_line);
+        newNode->m_CompilerProperties = this->m_CompilerProperties;
+        return newNode;
     }
 }
 

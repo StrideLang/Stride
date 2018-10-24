@@ -34,6 +34,8 @@
 
 #include "portpropertynode.h"
 
+using namespace std;
+
 PortPropertyNode::PortPropertyNode(string name, string port, const char *filename, int line) :
     AST(AST::PortProperty, filename, line)
 {
@@ -49,5 +51,6 @@ PortPropertyNode::~PortPropertyNode()
 ASTNode PortPropertyNode::deepCopy()
 {
     std::shared_ptr<PortPropertyNode> newPortPropertyNode = make_shared<PortPropertyNode>(m_name, m_port, m_filename.data(), m_line);
+    newPortPropertyNode->m_CompilerProperties = this->m_CompilerProperties;
     return newPortPropertyNode;
 }

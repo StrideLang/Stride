@@ -37,6 +37,8 @@
 
 #include "valuenode.h"
 
+using namespace std;
+
 ValueNode::ValueNode(const char * filename, int line) :
     AST(AST::None, filename, line)
 {
@@ -131,6 +133,7 @@ bool ValueNode::getSwitchValue() const
 
 ASTNode ValueNode::deepCopy()
 {
+    // TODO newNode->m_CompilerProperties = this->m_CompilerProperties;
     if (getNodeType() == AST::Int) {
         return std::make_shared<ValueNode>(getIntValue(), m_filename.c_str(), getLine());
     } else if (getNodeType() == AST::Real) {

@@ -39,13 +39,11 @@
 
 #include "langerror.h"
 
-using namespace std;
-
 class AST;
 class ListNode;
 class PropertyNode;
 
-typedef shared_ptr<AST> ASTNode;
+typedef std::shared_ptr<AST> ASTNode;
 
 class AST
 {
@@ -82,7 +80,7 @@ public:
         Invalid
     } Token;
 
-    AST(Token token, const char *filename, int line = -1, vector<string> scope = vector<string>());
+    AST(Token token, const char *filename, int line = -1, std::vector<std::string> scope = std::vector<std::string>());
     virtual ~AST();
 
     Token getNodeType() const { return m_token; }
@@ -90,8 +88,8 @@ public:
 //    void giveChildren(ASTNode p); // Move all children nodes to be children of "parent" and make parent a child of this class
     bool isNil() { return m_token == AST::None; }
 
-    vector<ASTNode> getChildren() const {return m_children;}
-    virtual void setChildren(vector<ASTNode> &newChildren);
+    std::vector<ASTNode> getChildren() const {return m_children;}
+    virtual void setChildren(std::vector<ASTNode> &newChildren);
 
     int getLine() const {return m_line;}
 
@@ -101,31 +99,31 @@ public:
 
 
     static ASTNode parseFile(const char *fileName, const char* sourceFilename = nullptr);
-    static vector<LangError> getParseErrors();
+    static std::vector<LangError> getParseErrors();
 
-    string getFilename() const;
-    void setFilename(const string &filename);
+    std::string getFilename() const;
+    void setFilename(const std::string &filename);
 
-    void addScope(string newScope);
-    void setRootScope(string scopeName);
+    void addScope(std::string newScope);
+    void setRootScope(std::string scopeName);
     size_t getScopeLevels();
-    string getScopeAt(unsigned int scopeLevel);
+    std::string getScopeAt(unsigned int scopeLevel);
 
-    vector<string> getNamespaceList();
-    void setNamespaceList(vector<string> list);
+    std::vector<std::string> getNamespaceList();
+    void setNamespaceList(std::vector<std::string> list);
 
-    void setCompilerProperty(string propertyName, ASTNode value);
-    ASTNode getCompilerProperty(string propertyName);
-    void appendToPropertyValue(string propertyName, ASTNode value);
+    void setCompilerProperty(std::string propertyName, ASTNode value);
+    ASTNode getCompilerProperty(std::string propertyName);
+    void appendToPropertyValue(std::string propertyName, ASTNode value);
 
 protected:
     virtual void resolveScope(ASTNode scope);
 
     Token m_token; // From which token did we create node?
-    vector<ASTNode> m_children; // normalized list of children
-    string m_filename; // file where the node was generated
+    std::vector<ASTNode> m_children; // normalized list of children
+    std::string m_filename; // file where the node was generated
     int m_line;
-    vector<string> m_scope;
+    std::vector<std::string> m_scope;
     std::shared_ptr<ListNode> m_CompilerProperties;
 };
 

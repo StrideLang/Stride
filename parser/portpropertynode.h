@@ -42,17 +42,17 @@
 class PortPropertyNode : public AST
 {
 public:
-    PortPropertyNode(string name, string port, const char *filename, int line);
+    PortPropertyNode(std::string name, std::string port, const char *filename, int line);
     ~PortPropertyNode();
 
-    string getName() const {return m_name;}
-    string getPortName() const {return m_port;}
+    std::string getName() const {return m_name;}
+    std::string getPortName() const {return m_port;}
 
     virtual ASTNode deepCopy() override;
 
 private:
-    string m_name;
-    string m_port;
+    std::string m_name;
+    std::string m_port;
 };
 
 

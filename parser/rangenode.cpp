@@ -55,8 +55,10 @@ ASTNode RangeNode::endIndex() const
 
 ASTNode RangeNode::deepCopy()
 {
-    ASTNode newRangeNode = std::make_shared<RangeNode>(startIndex(), endIndex(),
+    auto newRangeNode = std::make_shared<RangeNode>(startIndex(), endIndex(),
                                          m_filename.data(), m_line);
+
+    newRangeNode->m_CompilerProperties = this->m_CompilerProperties;
     return newRangeNode;
 }
 
