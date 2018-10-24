@@ -121,7 +121,7 @@ void ProjectWindow::initialize(bool resetOpenFiles)
     m_searchWidget->hide();
 
     ui->projectDockWidget->setVisible(true);
-    connect(ui->treeWidget, SIGNAL(itemClicked(QTreeWidgetItem *, int )),
+    connect(ui->treeWidget, SIGNAL(itemDoubleClicked(QTreeWidgetItem *, int )),
             this, SLOT(inspectorItemClicked(QTreeWidgetItem *, int )));
 }
 
@@ -923,7 +923,7 @@ void ProjectWindow::connectActions()
     connect(ui->actionConfigure_System, SIGNAL(triggered()), this, SLOT(configureSystem()));
     connect(ui->actionBuild, SIGNAL(triggered()), this, SLOT(build()));
     connect(ui->actionComment, SIGNAL(triggered(bool)), this, SLOT(commentSection()));
-    connect(ui->actionUpload, SIGNAL(triggered()), this, SLOT(flash()));
+    connect(ui->actionUpload, SIGNAL(triggered()), this, SLOT(deploy()));
     connect(ui->actionRun, SIGNAL(toggled(bool)), this, SLOT(run(bool)));
     connect(ui->actionRefresh, SIGNAL(triggered()), this, SLOT(updateMenus()));
     connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(saveFile()));
@@ -1173,6 +1173,7 @@ void ProjectWindow::fillInspectorTree()
 
     ui->treeWidget->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     ui->treeWidget->header()->setSectionResizeMode(1, QHeaderView::Stretch);
+    ui->treeWidget->setSortingEnabled(false);
     if (tree) {
         for (auto node: tree->getChildren()) {
             if (node->getNodeType() == AST::Declaration) {
@@ -1180,12 +1181,32 @@ void ProjectWindow::fillInspectorTree()
                 QTreeWidgetItem *newItem = createTreeItem(decl);
                 if (newItem) {
                     ui->treeWidget->addTopLevelItem(newItem);
+                    QString tooltipText;
+                    auto writes = decl->getCompilerProperty("writes");
+                    if (writes) {
+                        tooltipText += "Writes:\n";
+                        for (auto write: writes->getChildren()) {
+                            tooltipText += QString::fromStdString(static_pointer_cast<ValueNode>(write)->getStringValue());
+                            tooltipText += "\n";
+                        }
+                    }
+                    auto reads = decl->getCompilerProperty("reads");
+                    if (reads) {
+                        tooltipText += "Reads:\n";
+                        for (auto read: reads->getChildren()) {
+                            tooltipText += QString::fromStdString(static_pointer_cast<ValueNode>(read)->getStringValue());
+                            tooltipText += "\n";
+                        }
+                    }
+                    newItem->setToolTip(0, tooltipText);
                 }
             } else if (node->getNodeType() == AST::Stream) {
                 // Should we display streams too?
             }
         }
         delete tree;
+        ui->treeWidget->setSortingEnabled(true);
+        ui->treeWidget->sortByColumn(0);
     }
 }
 
