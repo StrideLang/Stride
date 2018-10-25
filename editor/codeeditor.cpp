@@ -112,18 +112,18 @@ void CodeEditor::setErrors(QList<LangError> errors)
 {
 //    m_errors = errors;
 
+    std::unique_lock<std::mutex> lk(m_markerLock);
     // TODO check if errors have changed to avoid having to do all this below unnecessarily
-    foreach(ErrorMarker *marker, m_errorMarkers) {
-        delete marker;
-    }
+    // This is causing weird memory problems... (try to open a file. the dialog hangs)
     m_errorMarkers.clear();
 
-    foreach(LangError error, errors) {
-        if (error.filename == filename().toStdString()) {
-            m_errorMarkers.push_back(new ErrorMarker(m_lineNumberArea, error.lineNumber,
-                                                     QString::fromStdString(error.getErrorText())));
-        }
-    }
+//    for(LangError error : errors) {
+//        if (error.filename == filename().toStdString()) {
+//            m_errorMarkers.push_back(std::make_shared<ErrorMarker>(m_lineNumberArea, error.lineNumber,
+//                                                     QString::fromStdString(error.getErrorText())));
+//        }
+//    }
+    lk.unlock();
     m_lineNumberArea->repaint();
 }
 
@@ -379,7 +379,8 @@ void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
     int blockNumber = block.blockNumber();
     int top = (int) blockBoundingGeometry(block).translated(contentOffset()).top();
     int bottom = top + (int) blockBoundingRect(block).height();
-    foreach(ErrorMarker *marker, m_errorMarkers) {
+    std::unique_lock<std::mutex> lk(m_markerLock);
+    for(auto marker: m_errorMarkers) {
         marker->hide();
     }
     while (block.isValid() && top <= event->rect().bottom()) {
@@ -389,7 +390,7 @@ void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
             painter.drawText(0, top, m_lineNumberArea->width(), fontMetrics().height(),
                              Qt::AlignRight, number);
 
-            foreach(ErrorMarker *marker, m_errorMarkers) {
+            for(auto marker : m_errorMarkers) {
                 if (marker->getLineNumber() == blockNumber + 1) {
                     marker->setGeometry(0, top, fontMetrics().width("9"), fontMetrics().height());
                     marker->show();

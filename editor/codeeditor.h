@@ -35,6 +35,8 @@
 #ifndef CODEEDITOR_H
 #define CODEEDITOR_H
 
+#include <mutex>
+
 #include <QPlainTextEdit>
 #include <QList>
 #include <QTimer>
@@ -94,7 +96,8 @@ private:
     QWidget *m_lineNumberArea;
     CodeModel *m_codeModel;
     AutoCompleteMenu m_autoCompleteMenu;
-    QVector<ErrorMarker *> m_errorMarkers;
+    std::vector<std::shared_ptr<ErrorMarker>> m_errorMarkers;
+    std::mutex m_markerLock;
     QTimer m_ButtonTimer;
     QTimer m_mouseIdleTimer;
     QAtomicInt m_changedSinceParse {1};
