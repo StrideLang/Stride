@@ -40,25 +40,42 @@ _domainDefinition InitializationDomain {
     domainCleanup: '// init domain cleanup'
 }
 
+constant AsyncRate {
+	value: 1000
+}
+
 _domainDefinition AsyncDomain {
 	domainName: "AsyncDomain"
 	framework: _RtAudioFramework
-	rate: 0
+	rate: AsyncRate
 	globalsTag: "Includes"
 	declarationsTag: "Declarations"
 	processingTag: "Processing"
 	initializationTag: "Initialization"
 	cleanupTag: "Cleanup"
-    substitutions: []
-    domainIncludes: ['thread']
+    substitutions: ["domain_rate", AsyncDomain.rate ]
+    domainIncludes: ['thread', 'chrono', 'iostream']
     domainDeclarations: ["void thread_func();",
-		"std::thread asyncthread(thread_func);"]
+		"std::thread asyncthread(thread_func);",
+		"bool asyncthread_running {true};"]
     domainInitialization: "// init domain init"
 	domainFunction: "// async domain processing
 	void thread_func() {
+		const int duration_ns = 1.0e9/%%domain_rate%%;
+		while (asyncthread_running) {
+			std::chrono::time_point<std::chrono::system_clock> start_time = std::chrono::system_clock::now();
 	%%domainCode%%
+			// TODO add overrun check
+	auto end_time = start_time + std::chrono::nanoseconds(duration_ns);
+    std::this_thread::sleep_until(end_time);
+
+			}
 }
 	// end async domain processing
 	"
-    domainCleanup: "// init domain cleanup"
+    domainCleanup: '// init domain cleanup
+	asyncthread_running = false;
+	asyncthread.join();
+	std::cout << "Thread joined." << std::endl;
+	'
 }
