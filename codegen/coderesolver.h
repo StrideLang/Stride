@@ -74,6 +74,7 @@ private:
     void processDomains();
     void resolveRates();
     void analyzeConnections();
+    void storeDeclarations();
 
     // Sub functions
     void resolveStreamRatesReverse(std::shared_ptr<StreamNode> stream);
@@ -121,7 +122,11 @@ private:
     ASTNode resolvePortProperty(std::shared_ptr<PortPropertyNode> portProperty, QVector<ASTNode > scopeStack);
 
     void checkStreamConnections(std::shared_ptr<StreamNode> stream, QVector<ASTNode > scopeStack, ASTNode previous = nullptr);
+
+    void setReadsWrites(ASTNode node, ASTNode previous, QVector<ASTNode> scopeStack);
     void markConnectionForNode(ASTNode node, QVector<ASTNode > scopeStack, ASTNode previous = nullptr);
+
+    void storeDeclarationsForNode(ASTNode node, vector<ASTNode> scopeStack, ASTNode tree);
 
     // Operators
     std::shared_ptr<ValueNode>  multiply(std::shared_ptr<ValueNode>  left, std::shared_ptr<ValueNode>  right);
@@ -142,6 +147,7 @@ private:
 
     std::string getContextDomainName(QVector<ASTNode > &scopeStack);
     void setContextDomain(vector<ASTNode> nodes, std::shared_ptr<DeclarationNode> domainDeclaration);
+    void setContextDomainForStreamNode(ASTNode node, std::shared_ptr<DeclarationNode> domainDeclaration);
     
     void populateContextDomains(vector<ASTNode> nodes);
 

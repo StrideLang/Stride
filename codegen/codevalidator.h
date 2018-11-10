@@ -71,9 +71,13 @@ public:
     void setTree(const ASTNode &tree);
 
     // Static functions -----------------------------
+    static std::shared_ptr<DeclarationNode> findDeclaration(std::string streamMemberName, const std::vector<ASTNode> &scopeStack, ASTNode tree,
+                                            vector<string> scope = vector<string>(), vector<string> defaultNamespaces = vector<string>());
     static std::shared_ptr<DeclarationNode> findDeclaration(QString streamMemberName, const QVector<ASTNode> &scopeStack, ASTNode tree,
                                             vector<string> scope = vector<string>(), vector<string> defaultNamespaces = vector<string>());
-    static QString streamMemberName(ASTNode  node, QVector<ASTNode > scopeStack, ASTNode tree);
+    static std::shared_ptr<DeclarationNode> getDeclaration(ASTNode node); // Retrieve stored declaration
+
+    static std::string streamMemberName(ASTNode  node);
     static PortType resolveBundleType(BundleNode *bundle, QVector<ASTNode > scope, ASTNode tree);
     static PortType resolveNameType(BlockNode *name, QVector<ASTNode > scope, ASTNode tree);
     static PortType resolveNodeOutType(ASTNode node, QVector<ASTNode > scope, ASTNode tree);

@@ -43,7 +43,6 @@ DeclarationNode::DeclarationNode(string name, string objectType, ASTNode propert
                      const char *filename, int line, vector<string> scope):
     AST(AST::Declaration, filename, line, scope)
 {
-    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
     m_name = name;
     m_objectType = objectType;
     if (propertiesList) {
@@ -55,13 +54,14 @@ DeclarationNode::DeclarationNode(string name, string objectType, ASTNode propert
         assert(m_children.at(i)->getNodeType() == AST::Property);
         m_properties.push_back(static_pointer_cast<PropertyNode>(m_children.at(i)));
     }
+
+    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 DeclarationNode::DeclarationNode(std::shared_ptr<BundleNode> bundle, string objectType, ASTNode propertiesList,
                      const char *filename, int line, vector<string> scope) :
     AST(AST::BundleDeclaration, filename, line, scope)
 {
-    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
     addChild(bundle);
     m_objectType = objectType;
     if (propertiesList) {
@@ -73,6 +73,8 @@ DeclarationNode::DeclarationNode(std::shared_ptr<BundleNode> bundle, string obje
         assert(m_children.at(i)->getNodeType() == AST::Property);
         m_properties.push_back(static_pointer_cast<PropertyNode>(m_children.at(i)));
     }
+
+    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 DeclarationNode::~DeclarationNode()

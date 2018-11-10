@@ -36,42 +36,49 @@
 #include <sstream>
 
 #include "valuenode.h"
+#include "listnode.h"
 
 using namespace std;
 
 ValueNode::ValueNode(const char * filename, int line) :
     AST(AST::None, filename, line)
 {
+    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 ValueNode::ValueNode(int value, const char * filename, int line) :
     AST(AST::Int, filename, line)
 {
     m_intValue = value;
+    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 ValueNode::ValueNode(float value, const char * filename, int line) :
     AST(AST::Real, filename, line)
 {
-    m_floatValue = value;
+    m_floatValue = double(value);
+    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 ValueNode::ValueNode(double value, const char * filename, int line) :
     AST(AST::Real, filename, line)
 {
     m_floatValue = value;
+    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 ValueNode::ValueNode(string value, const char * filename, int line) :
     AST(AST::String, filename, line)
 {
     m_stringValue = value;
+    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 ValueNode::ValueNode(bool value, const char * filename, int line) :
     AST(AST::Switch, filename, line)
 {
     m_switch = value;
+    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 ValueNode::~ValueNode()

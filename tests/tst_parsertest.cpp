@@ -58,36 +58,8 @@ private:
 
 private Q_SLOTS:
 
-    void testModuleDomains();
-
-    // Connections
-    void testConnectionErrors();
-    void testConnectionCount();
-
-    void testBlockMembers();
-//    void testModuleDomains();
-    void testPortTypeValidation();
-
-    //PlatformConsistency
-    void testPlatformCommonObjects();
-    void testValueTypeExpressionResolution();
-    void testDuplicates();
-    void testValueTypeBundleResolution();
-    void testImport();
-    void testContextDomain();
-    void testDomains();
-    void testLists();
-    void testPortNameValidation();
-    // Library
-    void testLibraryBasicTypes();
-    void testLibraryValidation();
-
-    //Expansion
-    void testLibraryObjectInsertion();
-    void testStreamExpansion();
-    void testStreamRates();
-    void testConstantResolution();
-    void testNamespaces();
+    // Test code generation
+    void testCodeGeneration();
 
     // Parser
     void testModules();
@@ -104,8 +76,37 @@ private Q_SLOTS:
     void testBuffer();
     void testBlockIOResolution();
 
-    // Test code generation
-    void testCodeGeneration();
+    //Expansion
+    void testLibraryObjectInsertion();
+    void testStreamExpansion();
+    void testStreamRates();
+    void testConstantResolution();
+    void testNamespaces();
+
+    //PlatformConsistency
+    void testPlatformCommonObjects();
+    void testValueTypeExpressionResolution();
+    void testDuplicates();
+    void testValueTypeBundleResolution();
+    void testImport();
+    void testContextDomain();
+    void testDomains();
+    void testLists();
+    void testPortNameValidation();
+
+    // Connections
+    void testConnectionErrors();
+    void testConnectionCount();
+
+    void testBlockMembers();
+    void testModuleDomains();
+    void testPortTypeValidation();
+
+    // Library
+    void testLibraryBasicTypes();
+    void testLibraryValidation();
+
+
     // Code generation/Compiler
     void testCompilation();
 };
@@ -294,7 +295,7 @@ void ParserTest::testCodeGeneration()
 
     BuildTester tester(QFINDTESTDATA(STRIDEROOT).toStdString());
 
-    QStringList toIgnore = {"simple", "buffer", "loop", "sync"};
+    QStringList toIgnore = {/*"simple", */"buffer", "loop", "sync"};
     while (directories.hasNext()) {
         QString dirName = directories.next();
         if (!toIgnore.contains(dirName.mid(dirName.lastIndexOf("/") + 1))) {
@@ -590,7 +591,7 @@ void ParserTest::testModuleDomains()
     auto domainValue= static_pointer_cast<PortPropertyNode>(internalBlock->getPropertyValue("domain"));
     QVERIFY(domainValue);
     QVERIFY(domainValue->getNodeType() == AST::PortProperty);
-    QVERIFY(domainValue->getName() == "InputPort");
+    QVERIFY(domainValue->getName() == "OutputPort");
     QVERIFY(domainValue->getPortName() == "domain");
 
     auto reads = internalBlock->getCompilerProperty("reads")->getChildren();
@@ -622,7 +623,7 @@ void ParserTest::testModuleDomains()
     auto writeDomain = static_pointer_cast<PortPropertyNode>(writes.at(0));
     QVERIFY(writeDomain->getNodeType() == AST::PortProperty);
     QVERIFY(writeDomain->getPortName() == "domain");
-    QVERIFY(writeDomain->getName() == "InputPort");
+    QVERIFY(writeDomain->getName() == "OutputPort");
 
     ListNode *streamList = static_cast<ListNode *>(block->getPropertyValue("streams").get());
     ValueNode *constant = static_cast<ValueNode *>(streamList->getChildren()[1]->getChildren()[0].get());
@@ -871,7 +872,7 @@ void ParserTest::testModules()
         if (block->getName() == "Input") {
 
             QVERIFY(domain->getPortName() == "domain");
-            QVERIFY(domain->getName() == "InputPort");
+            QVERIFY(domain->getName() == "OutputPort");
         } else {
             QVERIFY(domain->getPortName() == "domain");
             QVERIFY(domain->getName() == "OutputPort");

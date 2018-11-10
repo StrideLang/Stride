@@ -35,6 +35,7 @@
 #include <cassert>
 
 #include "expressionnode.h"
+#include "listnode.h"
 
 using namespace std;
 
@@ -46,6 +47,8 @@ ExpressionNode::ExpressionNode(ExpressionType type, ASTNode left, ASTNode right,
     assert(m_type != ExpressionNode::UnaryMinus && m_type != ExpressionNode::LogicalNot);
     addChild(left);
     addChild(right);
+
+    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 ExpressionNode::ExpressionNode(ExpressionNode::ExpressionType type, ASTNode value,
@@ -55,6 +58,8 @@ ExpressionNode::ExpressionNode(ExpressionNode::ExpressionType type, ASTNode valu
     m_type = type;
     assert(m_type == ExpressionNode::UnaryMinus || m_type == ExpressionNode::LogicalNot);
     addChild(value);
+
+    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 ExpressionNode::~ExpressionNode()

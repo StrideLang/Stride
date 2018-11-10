@@ -36,6 +36,7 @@
 
 #include "blocknode.h"
 #include "scopenode.h"
+#include "listnode.h"
 
 using namespace std;
 
@@ -43,6 +44,8 @@ BlockNode::BlockNode(string name, const char *filename, int line, vector<string>
     AST(AST::Block, filename, line, scope)
 {
     m_name = name;
+
+    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 BlockNode::BlockNode(string name, ASTNode scope, const char *filename, int line) :
@@ -50,6 +53,8 @@ BlockNode::BlockNode(string name, ASTNode scope, const char *filename, int line)
 {
     m_name = name;
     resolveScope(scope);
+
+    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 BlockNode::~BlockNode()

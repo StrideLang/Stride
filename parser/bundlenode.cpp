@@ -36,6 +36,7 @@
 
 #include "bundlenode.h"
 #include "scopenode.h"
+#include "listnode.h"
 
 using namespace std;
 
@@ -44,6 +45,8 @@ BundleNode::BundleNode(string name, std::shared_ptr<ListNode> indexList, const c
 {
     addChild(indexList);
     m_name = name;
+
+    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 BundleNode::BundleNode(string name, ASTNode scope, std::shared_ptr<ListNode> indexList, const char *filename, int line) :
@@ -52,6 +55,8 @@ BundleNode::BundleNode(string name, ASTNode scope, std::shared_ptr<ListNode> ind
     addChild(indexList);
     m_name = name;
     resolveScope(scope);
+
+    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
 }
 
 BundleNode::~BundleNode()
@@ -96,5 +101,5 @@ ASTNode BundleNode::deepCopy()
         return newBundle;
     }
     assert(0 == 1);
-    return 0;
+    return nullptr;
 }
