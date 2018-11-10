@@ -1188,6 +1188,13 @@ void CodeResolver::setDomainForStack(QList<ASTNode > domainStack, ASTNode domain
                 } else if (member->getNodeType() == AST::Function) {
                     std::shared_ptr<FunctionNode> func = static_pointer_cast<FunctionNode>(member);
                     func->setPropertyValue("domain", domainName);
+                } else if (member->getNodeType() == AST::Int
+                           || member->getNodeType() == AST::Real
+                           || member->getNodeType() == AST::String
+                           || member->getNodeType() == AST::Switch  ) {
+
+                    std::shared_ptr<ValueNode> value = static_pointer_cast<ValueNode>(member);
+                    value->setDomain(domainName);
                 }
             }
         }

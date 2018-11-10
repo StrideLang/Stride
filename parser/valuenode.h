@@ -48,7 +48,7 @@ public:
     ValueNode(double value, const char * filename, int line);
     ValueNode(std::string value, const char * filename, int line);
     ValueNode(bool value, const char * filename, int line);
-    ~ValueNode();
+    ~ValueNode() override;
 
     int getIntValue() const;
 
