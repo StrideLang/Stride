@@ -934,7 +934,7 @@ int CodeValidator::getBlockDeclaredSize(std::shared_ptr<DeclarationNode> block, 
         size = 0;
         ListNode *indexList = bundle->index().get();
         vector<ASTNode >indexExps = indexList->getChildren();
-        foreach(ASTNode exp, indexExps) {
+        for(ASTNode exp : indexExps) {
             if (exp->getNodeType() == AST::Range) {
                 RangeNode *range = static_cast<RangeNode *>(exp.get());
                 ASTNode start = range->startIndex();
