@@ -386,31 +386,26 @@ vector<Builder *> StrideSystem::createBuilders(QString fileName, vector<string> 
     return builders;
 }
 
-QString StrideSystem::getPlatformDomain(string namespaceName)
+ASTNode StrideSystem::getPlatformDomain(string namespaceName)
 {
+    ASTNode platformDomain;
     map<string, vector<ASTNode>> libObjects = getBuiltinObjectsReference();
     if (libObjects.find(namespaceName) == libObjects.end()) { // Invalid namespace
         assert(0 == 1);
-        return "";
+        return platformDomain;
     }
     for(ASTNode object:libObjects[namespaceName]) {
         if (object->getNodeType() == AST::Declaration) {
-            std::shared_ptr<DeclarationNode> block = static_pointer_cast<DeclarationNode>(object);
-            if (block->getObjectType() == "constant"
-                    && block->getName() == "PlatformDomain") {
-                QList<LangError> errors;
-                std::string domainName;
-
-                if (block->getPropertyValue("value")->getNodeType() == AST::Block) {
-
-                } else {
-                    domainName = CodeValidator::evaluateConstString(block->getPropertyValue("value"), QVector<ASTNode >::fromStdVector(libObjects[namespaceName]), nullptr, errors);
+            std::shared_ptr<DeclarationNode> decl = static_pointer_cast<DeclarationNode>(object);
+            if (decl->getName() == "PlatformDomain") {
+                if (decl->getObjectType() == "alias") {
+                    platformDomain = decl->getPropertyValue("block");
+                    break;
                 }
-                return QString::fromStdString(domainName);
             }
         }
     }
-    return "";
+    return platformDomain;
 }
 
 vector<string> StrideSystem::getFrameworkNames()

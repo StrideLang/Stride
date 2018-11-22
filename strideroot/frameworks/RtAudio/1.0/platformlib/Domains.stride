@@ -9,16 +9,16 @@ _frameworkDescription _RtAudioFramework {
     frameworkName: "RtAudio"
 }
 
-constant PlatformDomain {
-    value: AudioDomain.domainName
+alias PlatformDomain {
+    block: AudioDomain
 }
 
-constant PlatformRate {
-    value: AudioRate.value
+alias PlatformRate {
+    block: AudioRate
 }
 
-constant _ContextInitDomain {
-    value: InitializationDomain.domainName
+alias _ContextInitDomain {
+    block: InitializationDomain
 }
 
 _domainDefinition InitializationDomain {

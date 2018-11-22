@@ -105,39 +105,41 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile)
              for (auto builder: m_builders) {
                  builder->clearBuffers();
                  buildOK &= builder->run();
-                 QFile expectedResult(QString::fromStdString(expectedResultFile));
-                 QStringList outputLines = builder->getStdOut().split("\n");
-                 if (!expectedResult.open(QIODevice::ReadOnly | QIODevice::Text)) {
-                     return false;
-                 }
-//                 for(int i = 0; i < 7; i++) {
-//                     outputLines.pop_front(); // Hack to remove initial text
-//                 }
-                 if (outputLines.size() <  10) {
-                     return false; // too few lines
-                 }
+                 if (expectedResultFile.size() > 0) {
+                     QFile expectedResult(QString::fromStdString(expectedResultFile));
+                     QStringList outputLines = builder->getStdOut().split("\n");
+                     if (!expectedResult.open(QIODevice::ReadOnly | QIODevice::Text)) {
+                         return false;
+                     }
+    //                 for(int i = 0; i < 7; i++) {
+    //                     outputLines.pop_front(); // Hack to remove initial text
+    //                 }
+                     if (outputLines.size() <  10) {
+                         return false; // too few lines
+                     }
 
-                 int counter = 0;
-                 while (!expectedResult.atEnd() && !(counter >= outputLines.size())) {
-                     QByteArray line = expectedResult.readLine();
-                     if (line.endsWith("\n")) {
-                         line.chop(1);
-                     }
-                     if (line.size() > 0 && outputLines.at(counter).size() > 0) {
-                         double expected = line.toDouble();
-                         double out = outputLines.at(counter).toDouble();
-                         if (!(std::fabs(out - expected) < 0.000002)) {
-                             std::cerr << "Failed comparison at line " << counter + 1 << std::endl;
-                             std::cerr << "Got " << outputLines.at(counter).toStdString() << " Expected " << line.toStdString() << std::endl;
-                             QFile failedOutput("failed.output");
-                             if (failedOutput.open(QIODevice::WriteOnly)) {
-                                 failedOutput.write(builder->getStdOut().toLocal8Bit());
-                                 failedOutput.close();
-                             }
-                             return false;
+                     int counter = 0;
+                     while (!expectedResult.atEnd() && !(counter >= outputLines.size())) {
+                         QByteArray line = expectedResult.readLine();
+                         if (line.endsWith("\n")) {
+                             line.chop(1);
                          }
+                         if (line.size() > 0 && outputLines.at(counter).size() > 0) {
+                             double expected = line.toDouble();
+                             double out = outputLines.at(counter).toDouble();
+                             if (!(std::fabs(out - expected) < 0.000002)) {
+                                 std::cerr << "Failed comparison at line " << counter + 1 << std::endl;
+                                 std::cerr << "Got " << outputLines.at(counter).toStdString() << " Expected " << line.toStdString() << std::endl;
+                                 QFile failedOutput("failed.output");
+                                 if (failedOutput.open(QIODevice::WriteOnly)) {
+                                     failedOutput.write(builder->getStdOut().toLocal8Bit());
+                                     failedOutput.close();
+                                 }
+                                 return false;
+                             }
+                         }
+                         counter++;
                      }
-                     counter++;
                  }
 //                 std::cout << builder->getStdOut().toStdString() << std::endl;
              }

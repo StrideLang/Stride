@@ -8,25 +8,14 @@ InSignal >> OutSignal;
 InSignal >> OutSignal2;
 InSignal2 >> OutSignal2; #InSignal2 should be auto declared
 
-signal Sig1 {};
-signal Sig2 {};
-signal Sig3 {};
-signal Sig4 {};
+
 
 module Test {
-    streams: [
-        Sig1 >> Sig2;
-        Sig2 >> Sig3;
-        Sig4 >> Sig3;
-    ]
-}
-
-module Test2 {
     blocks: [
-        signal Sig1 {},
-        signal Sig2 {},
-        signal Sig3 {},
-        signal Sig4 {}
+    signal Sig1 {}
+    signal Sig2 {}
+    signal Sig3 {}
+    signal Sig4 {}
     ]
     streams: [
         Sig1 >> Sig2;

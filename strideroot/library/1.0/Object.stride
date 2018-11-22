@@ -1,11 +1,14 @@
 
-
-constant _ContextDomain {
-	value: PlatformDomain
-}
-
-constant _ContextRate {
-	value: PlatformRate
+type _Alias {
+	typeName: "alias"
+	properties: [
+		typeProperty InputName {
+			name: "block"
+			types: [""]
+			default: none
+			required: off
+		}
+	]
 }
 
 type _Streamable {

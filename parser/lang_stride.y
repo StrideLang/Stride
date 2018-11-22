@@ -485,10 +485,10 @@ propertyType:
 
 portPropertyDef:
         UVAR DOT WORD   {
-            string p;
-            p.append($1); /* string constructor leaks otherwise! */
             string s;
-            s.append($3); /* string constructor leaks otherwise! */
+            s.append($1); /* string constructor leaks otherwise! */
+            string p;
+            p.append($3); /* string constructor leaks otherwise! */
             $$ = new PortPropertyNode(s, p, currentFile, yyloc.first_line);
             COUT << "Port Name: " << $1 << ENDL << "Port Property: " << $3 << ENDL;
             free($1);

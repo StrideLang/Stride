@@ -90,7 +90,7 @@ private:
     void insertDependentTypes(std::shared_ptr<DeclarationNode> typeDeclaration, map<string, vector<ASTNode>> &objects);
     void insertBuiltinObjectsForNode(ASTNode node, map<string, vector<ASTNode> > &objects);
 
-    void resolveDomainsForStream(std::shared_ptr<StreamNode> func, QVector<ASTNode > scopeStack, QString contextDomain = "");
+    void resolveDomainsForStream(std::shared_ptr<StreamNode> func, QVector<ASTNode > scopeStack, ASTNode contextDomainNode);
     ASTNode processDomainsForNode(ASTNode node, QVector<ASTNode > scopeStack, QList<ASTNode > &domainStack);
     void setDomainForStack(QList<ASTNode > domainStack, ASTNode domainName,  QVector<ASTNode > scopeStack);
     std::shared_ptr<DeclarationNode> createDomainDeclaration(QString name);
@@ -145,11 +145,13 @@ private:
     void sliceDomainsInNode(std::shared_ptr<DeclarationNode> stream, QVector<ASTNode > scopeStack);
     QVector<ASTNode > processExpression(std::shared_ptr<ExpressionNode> expr, QVector<ASTNode > scopeStack, ASTNode outDomain);
 
-    std::string getContextDomainName(QVector<ASTNode > &scopeStack);
+    ASTNode getModuleContextDomain(std::shared_ptr<DeclarationNode> moduleDecl);
     void setContextDomain(vector<ASTNode> nodes, std::shared_ptr<DeclarationNode> domainDeclaration);
-    void setContextDomainForStreamNode(ASTNode node, std::shared_ptr<DeclarationNode> domainDeclaration);
+//    void setContextDomainForStreamNode(ASTNode node, std::shared_ptr<DeclarationNode> domainDeclaration);
     
-    void populateContextDomains(vector<ASTNode> nodes);
+//    void populateContextDomains(vector<ASTNode> nodes);
+
+    std::vector<ASTNode> mContextDomainStack;
 
     std::shared_ptr<StrideSystem> m_system;
     SystemConfiguration m_systemConfig;

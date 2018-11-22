@@ -67,7 +67,7 @@ public:
 
     vector<Builder *> createBuilders(QString fileName, vector<string> usedFrameworks = vector<string>());
 
-    QString getPlatformDomain(string namespaceName = "");  // The platform's default domain
+    ASTNode getPlatformDomain(string namespaceName = "");  // The platform's default domain
 
 //    DeclarationNode *getFunction(QString functionName);
     vector<string> getFrameworkNames();

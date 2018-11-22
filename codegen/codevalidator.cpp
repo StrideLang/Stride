@@ -1881,19 +1881,25 @@ std::string CodeValidator::getDomainIdentifier(ASTNode domain, std::vector<ASTNo
     // To avoid inconsistencies, we rely on the Stride name rather than the
     // domainName property. This guarantees uniqueness within a scope.
     // TODO we should add scope markers to this identifier to avoid clashes
-    if (domain->getNodeType() == AST::Block) {
-        auto domainBlock = static_pointer_cast<BlockNode>(domain);
-        auto domainDeclaration = CodeValidator::findDeclaration(QString::fromStdString(domainBlock->getName()),
-                                                                QVector<ASTNode>::fromStdVector(scopeStack), tree);
-        Q_ASSERT(domainDeclaration->getObjectType() == "_domainDefinition");
-        name = domainDeclaration->getName();
-    } else if (domain->getNodeType() == AST::String) {
-        // Should anything be added to the id? Scope?
-        name = static_pointer_cast<ValueNode>(domain)->getStringValue();
-    } else if (domain->getNodeType() == AST::PortProperty) {
-        // Should anything be added to the id? Scope?
-        auto portProperty = static_pointer_cast<PortPropertyNode>(domain);
-        name = portProperty->getName() + "_" + portProperty->getPortName();
+    if (domain) {
+        if (domain->getNodeType() == AST::Block) {
+            auto domainBlock = static_pointer_cast<BlockNode>(domain);
+            auto domainDeclaration = CodeValidator::findDeclaration(QString::fromStdString(domainBlock->getName()),
+                                                                    QVector<ASTNode>::fromStdVector(scopeStack), tree);
+            if (domainDeclaration->getObjectType() == "_domainDefinition") {
+                name = domainDeclaration->getName();
+            } else if (domainDeclaration->getObjectType() == "PlatformDomain") {
+                auto domainNameNode = domainDeclaration->getPropertyValue("value");
+                name = getDomainIdentifier(domainNameNode, scopeStack, tree);
+            }
+        } else if (domain->getNodeType() == AST::String) {
+            // Should anything be added to the id? Scope?
+            name = static_pointer_cast<ValueNode>(domain)->getStringValue();
+        } else if (domain->getNodeType() == AST::PortProperty) {
+            // Should anything be added to the id? Scope?
+            auto portProperty = static_pointer_cast<PortPropertyNode>(domain);
+            name = portProperty->getName() + "_" + portProperty->getPortName();
+        }
     }
     return name;
 }
