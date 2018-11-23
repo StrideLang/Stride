@@ -58,8 +58,8 @@ private:
 
 private Q_SLOTS:
 
-    // Test code generation
-    void testCodeGeneration();
+//    // Test code generation
+//    void testCodeGeneration();
 
     // Parser
     void testModules();
@@ -108,6 +108,7 @@ private Q_SLOTS:
 
 
     // Code generation/Compiler
+    void testCodeGeneration();
     void testCompilation();
 };
 
@@ -260,7 +261,7 @@ void ParserTest::testCodeGeneration()
 
     BuildTester tester(QFINDTESTDATA(STRIDEROOT).toStdString());
 
-    QStringList toIgnore = {"simple","buffer", "loop", "sync"};
+    QStringList toIgnore = {/*"simple",*/"buffer", "loop", "sync"};
     while (directories.hasNext()) {
         QString dirName = directories.next();
         if (!toIgnore.contains(dirName.mid(dirName.lastIndexOf("/") + 1))) {
@@ -686,9 +687,9 @@ void ParserTest::testDomains()
 
     std::shared_ptr<DeclarationNode> block = CodeValidator::findDeclaration("Modulator", QVector<ASTNode>(), tree);
     QVERIFY(block->getNodeType() == AST::Declaration);
-    ValueNode *domain = static_cast<ValueNode *>(block->getDomain().get());
-    QVERIFY(domain->getNodeType() == AST::String);
-    QVERIFY(domain->getStringValue() == "AudioDomain");
+    BlockNode *domain = static_cast<BlockNode *>(block->getDomain().get());
+    QVERIFY(domain->getNodeType() == AST::Block);
+    QVERIFY(domain->getName() == "AudioDomain");
 
     // AudioIn[1] >> TestMod2(value: 0.1) >> Signal;
 
@@ -697,6 +698,10 @@ void ParserTest::testDomains()
     auto domainBlock = static_cast<BlockNode *>(block->getDomain().get());
     QVERIFY(domainBlock->getNodeType() == AST::Block);
     QVERIFY(domainBlock->getName() == "AudioDomain");
+
+//# This has two domain changes. Currently this is split into two
+//# separate streams as it makes code generation easier.
+//AudioIn[1] >> ValueInOSCDomain >> AudioOut[2];
 
     // Check slicing of domains when domain changes
     stream = static_cast<StreamNode *>(tree->getChildren()[10].get());

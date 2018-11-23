@@ -368,7 +368,7 @@ vector<Builder *> StrideSystem::createBuilders(QString fileName, vector<string> 
                 QLibrary pluginLibrary(m_pluginPath + m_pluginName);
                 if (!pluginLibrary.load()) {
                     qDebug() << pluginLibrary.errorString();
-                    return vector<Builder *>();
+                    continue;
                 }
                 create_object_t create = (create_object_t) pluginLibrary.resolve("create_object");
                 if (create) {

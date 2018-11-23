@@ -4,25 +4,24 @@ module Test {
 	ports: [
 		mainOutputPort OutputPort {
 			block: Output
-			domain: OutputDomain
 		}
 		mainInputPort InputPort {
 			block: Input
-			domain: OutputDomain
+			domain: OutputPort.domain
 		}
 		propertyInputPort TestPort {
 			name: "test"
 			block: TestBlock
-			domain: OutputDomain
+			domain: OutputPort.domain
 		}
 		propertyInputPort TestPort2 {
 			name: "test2"
 			block: TestBlock2
-			domain: OutputDomain
+			domain: OutputPort.domain
 		}
 	]
 	blocks: [
-#		signal Amp { domain: TestDomain }
+#		signal Amp { domain: TestPort.domain }
 	]
 	streams: [
 		TestBlock * TestBlock2 >> Amp;
@@ -35,24 +34,24 @@ module Test2 {
 		propertyInputPort TestPort2 {
 			name: "test2"
 			block: TestBlock2
-			domain: OutputDomain
+			domain: OutputPort.domain
 		}
 		mainInputPort InputPort {
 			block: Input
-			domain: OutputDomain
+			domain: OutputPort.domain
 		}
 		propertyInputPort TestPort {
 			name: "test"
 			block: TestBlock
-			domain: OutputDomain
+			domain: OutputPort.domain
 		}
 		mainOutputPort OutputPort {
 			block: Output
-			domain: OutputDomain
+			domain: OutputPort.domain
 		}
 	]
 	blocks: [
-#		signal Amp { domain: TestDomain }
+#		signal Amp { domain: TestPort.domain }
 	]
 	streams: [
 		TestBlock * TestBlock2 >> Amp;

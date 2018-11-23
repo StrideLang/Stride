@@ -981,6 +981,20 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream, Q
             setDomainForStack(domainStack, domainNode, scopeStack);
             domainStack.clear();
         }
+        if (left->getNodeType() == AST::Expression) {
+
+            auto samplingDomain = CodeValidator::getNodeDomain(stream->getRight(), scopeStack, m_tree);
+            function<void(ASTNode node, ASTNode samplingDomain)> func = [&func](ASTNode node, ASTNode samplingDomain){
+                for (auto child: node->getChildren()) {
+                    if (child->getNodeType() == AST::Expression) {
+                        child->setCompilerProperty("samplingDomain", samplingDomain);
+                        func(child, samplingDomain);
+                    }
+                }
+            };
+            func(left, samplingDomain);
+            left->setCompilerProperty("samplingDomain", samplingDomain);
+        }
 
         if (left == right) {
             if (previousDomain && previousDomain->getNodeType() != AST::None) {
@@ -990,10 +1004,6 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream, Q
             right = left = nullptr; // End
         } else if(right->getNodeType() == AST::Stream) {
             stream = static_pointer_cast<StreamNode>(right);
-            if (left->getNodeType() == AST::Expression) {
-                left->setCompilerProperty("samplingDomain",
-                                          CodeValidator::getNodeDomain(stream->getRight(), scopeStack, m_tree));
-            }
             left = stream->getLeft();
             right = stream->getRight();
         } else {
@@ -2678,8 +2688,8 @@ QVector<ASTNode> CodeResolver::processExpression(std::shared_ptr<ExpressionNode>
         std::string memberName = CodeValidator::streamMemberName(exprLeft);
         std::shared_ptr<DeclarationNode> declaration = CodeValidator::findDeclaration(memberName, scopeStack.toStdVector(), m_tree);
         if (declaration) {
-            if ( CodeValidator::getDomainNodeString(declaration->getDomain()) !=
-                 CodeValidator::getDomainNodeString(outDomain)) {
+            if ( CodeValidator::getDomainIdentifier(declaration->getDomain(), scopeStack.toStdVector(), m_tree) !=
+                 CodeValidator::getDomainIdentifier(outDomain, scopeStack.toStdVector(), m_tree)) {
                 std::string connectorName = "_B_" + std::to_string(m_connectorCounter++);
                 connectorName += "_" + memberName;
                 string type = declaration->getObjectType();
@@ -2707,8 +2717,9 @@ QVector<ASTNode> CodeResolver::processExpression(std::shared_ptr<ExpressionNode>
             std::shared_ptr<DeclarationNode> declaration = CodeValidator::findDeclaration(QString::fromStdString(exprName->getName()),
                                                                     scopeStack, m_tree);
             if (declaration) {
-                if ( CodeValidator::getDomainNodeString(declaration->getDomain()) !=
-                     CodeValidator::getDomainNodeString(outDomain)) {
+
+                if ( CodeValidator::getDomainIdentifier(declaration->getDomain(), scopeStack.toStdVector(), m_tree) !=
+                     CodeValidator::getDomainIdentifier(outDomain, scopeStack.toStdVector(), m_tree)) {
                     std::string connectorName = "_B_" + std::to_string(m_connectorCounter++);
                     string type = declaration->getObjectType();
                     streams.push_back(createSignalBridge(connectorName, exprName->getName(),
@@ -2914,10 +2925,13 @@ void CodeResolver::resolveDomainForStreamNode(ASTNode node, QVector<ASTNode > sc
                 if (node->getNodeType() == AST::Block
                         || node->getNodeType() == AST::Bundle) {
                     std::shared_ptr<DeclarationNode> declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(node), scopeStack.toStdVector(), m_tree);
-                    declaration->setDomainString(domainName);
-                } else if (node->getNodeType() == AST::Function) {
-                     static_cast<FunctionNode *>(node.get())->setDomainString(domainName);
+//                    declaration->setDomainString(domainName);
                 }
+//                else if (node->getNodeType() == AST::Function) {
+//                    // FIXME we need to find the domain declaration that matches this domain name
+//                    // This is currently assuming the domain name and the domain block delcaration name are the same
+//                     static_cast<FunctionNode *>(node.get())->setDomainString(domainName);
+//                }
             }
         } else {
 

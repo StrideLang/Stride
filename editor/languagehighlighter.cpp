@@ -200,7 +200,7 @@ void LanguageHighlighter::setFormatPreset(int index)
 
     if (index == 0) {
         keywordFormat.setFontWeight(QFont::Bold);
-        keywordFormat.setForeground(QColor("#ff9900"));
+        keywordFormat.setForeground(QColor(0xff9900));
         keywordFormat.setBackground(Qt::white);
 
         commentsFormat.setFontWeight(QFont::Normal);
@@ -208,7 +208,7 @@ void LanguageHighlighter::setFormatPreset(int index)
         commentsFormat.setBackground(Qt::green);
 
         typeFormat.setFontWeight(QFont::Bold);
-        typeFormat.setForeground(QColor("#cc0000"));
+        typeFormat.setForeground(QColor(0xcc0000));
         typeFormat.setBackground(Qt::white);
 
         functionFormat.setFontWeight(QFont::Normal);
@@ -221,15 +221,15 @@ void LanguageHighlighter::setFormatPreset(int index)
         propertiesFormat.setBackground(Qt::white);
 
         builtinFormat.setFontWeight(QFont::Bold);
-        builtinFormat.setForeground(QColor("#cc0000"));
+        builtinFormat.setForeground(QColor(0xcc0000));
         builtinFormat.setBackground(Qt::white);
 
         stringFormat.setFontWeight(QFont::Bold);
-        stringFormat.setForeground(QColor("#33CC00"));
+        stringFormat.setForeground(QColor(0x33CC00));
         stringFormat.setBackground(Qt::white);
 
         streamOpFormat.setFontWeight(99);
-        streamOpFormat.setForeground(QColor("#BBCCBB"));
+        streamOpFormat.setForeground(QColor(0xBBCCBB));
         streamOpFormat.setBackground(Qt::white);
     } else {
         return;

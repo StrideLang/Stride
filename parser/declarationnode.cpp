@@ -36,6 +36,7 @@
 
 #include "declarationnode.h"
 #include "valuenode.h"
+#include "blocknode.h"
 
 using namespace std;
 
@@ -155,7 +156,7 @@ ASTNode DeclarationNode::getDomain()
 
 void DeclarationNode::setDomainString(string domain)
 {
-    replacePropertyValue("domain", make_shared<ValueNode>(domain, __FILE__, __LINE__));
+    replacePropertyValue("domain", make_shared<BlockNode>(domain, __FILE__, __LINE__));
 }
 
 string DeclarationNode::getObjectType() const

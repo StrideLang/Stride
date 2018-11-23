@@ -1411,6 +1411,18 @@ std::string CodeValidator::streamMemberName(ASTNode node)
     } else if (node->getNodeType() == AST::Function) {
         FunctionNode *func = static_cast<FunctionNode *>(node.get());
         return func->getName();
+    } else if (node->getNodeType() == AST::List) {
+        std::string listCommonName;
+        for (auto elem: node->getChildren()) {
+            auto elemName = streamMemberName(elem);
+            if (listCommonName.size() == 0) {
+                listCommonName = elemName;
+            } else if (elemName != listCommonName) {
+                qDebug() << "List name mismatch";
+                return std::string();
+            }
+        }
+        return listCommonName;
     } else {
         qDebug() << "streamMemberName() error. Invalid stream member type.";
     }
@@ -2303,8 +2315,9 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, QVector<ASTNode > scopeStack,
                 rightDomain = leftDomain;
             }
             if (leftDomain && rightDomain) {
-                if (CodeValidator::getDomainNodeString(leftDomain)
-                        == CodeValidator::getDomainNodeString(rightDomain)) {
+
+                if ( CodeValidator::getDomainIdentifier(leftDomain, scopeStack.toStdVector(), tree) ==
+                     CodeValidator::getDomainIdentifier(rightDomain, scopeStack.toStdVector(), tree)) {
                     return leftDomain;
                 }
             } else {
@@ -2327,11 +2340,11 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, QVector<ASTNode > scopeStack,
         domainNode = static_pointer_cast<ValueNode>(node)->getDomain();
     }
 
-    if (domainNode && domainNode->getNodeType() == AST::Block) {
-        // Resolve reference if domain is a block
-        string blockName = std::static_pointer_cast<BlockNode>(domainNode)->getName();
-        domainNode = CodeValidator::findDeclaration(QString::fromStdString(blockName), scopeStack, tree);
-    }
+//    if (domainNode && domainNode->getNodeType() == AST::Block) {
+//        // Resolve reference if domain is a block
+//        string blockName = std::static_pointer_cast<BlockNode>(domainNode)->getName();
+//        domainNode = CodeValidator::findDeclaration(QString::fromStdString(blockName), scopeStack, tree);
+//    }
 
     return domainNode;
 }
@@ -2341,7 +2354,7 @@ string CodeValidator::getNodeDomainName(ASTNode node, QVector<ASTNode > scopeSta
     std::string domainName;
     ASTNode domainNode = CodeValidator::getNodeDomain(node, scopeStack, tree);
     if (domainNode) {
-        domainName = CodeValidator::getDomainNodeString(domainNode);
+        domainName = CodeValidator::getDomainIdentifier(domainNode, scopeStack.toStdVector(), tree);
     }
     return domainName;
 }

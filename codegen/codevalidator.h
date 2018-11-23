@@ -133,7 +133,7 @@ public:
 
     static ASTNode getNodeDomain(ASTNode node, QVector<ASTNode > scopeStack, ASTNode tree);
     static std::string getNodeDomainName(ASTNode node, QVector<ASTNode > scopeStack, ASTNode tree);
-    static std::string getDomainNodeString(ASTNode node);
+    static std::string getDomainNodeString(ASTNode node); // Deprecated. Don't use.
     static QVector<ASTNode > getBlocksInScope(ASTNode root, QVector<ASTNode > scopeStack, ASTNode tree);
 
     static std::vector<std::string> getUsedDomains(ASTNode tree);

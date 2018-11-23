@@ -2,14 +2,16 @@ use DesktopAudio version 1.0
 
 import Generators
 
+signal Dummy {}	
+
 module Test {
 	ports: [
 		mainInputPort InputPort {
 			block: Input
+			domain: AudioDomain
 		}
 	]
 	blocks: [
-		signal Dummy { domain: Input.domain }
 	]
 	streams: [
 		Input >> Dummy;
@@ -17,3 +19,4 @@ module Test {
 }
 
 AudioIn[1] >> Test();
+Dummy >> AudioOut[2];

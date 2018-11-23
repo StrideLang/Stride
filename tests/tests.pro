@@ -68,7 +68,6 @@ DISTFILES += \
     data/11_modules.stride \
     data/12_modules_domains.stride \
     data/13_connection_count.stride \
-    data/14_members.stride \
     data/15_connection_errors.stride \
     data/16_buffer.stride \
     data/17_loop.stride \

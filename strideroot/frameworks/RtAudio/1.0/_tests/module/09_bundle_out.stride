@@ -4,11 +4,10 @@ module Test {
 	ports: [
 		mainOutputPort OutputPort {
 			block: Output
-			domain: OutputDomain
 		}
 		mainInputPort InputPort {
 			block: Input
-			domain: OutputDomain
+			domain: OutputPort.domain
 		}
 		propertyInputPort TestPort {
 			name: "test"
