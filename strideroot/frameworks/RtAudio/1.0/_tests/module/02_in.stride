@@ -2,7 +2,6 @@ use DesktopAudio version 1.0
 
 import Generators
 
-signal Dummy {}	
 
 module Test {
 	ports: [
@@ -12,6 +11,7 @@ module Test {
 		}
 	]
 	blocks: [
+        signal Dummy {}	
 	]
 	streams: [
 		Input >> Dummy;

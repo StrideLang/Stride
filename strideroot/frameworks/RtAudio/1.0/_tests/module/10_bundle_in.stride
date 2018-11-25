@@ -4,18 +4,9 @@ module Test {
 	ports: [
 		mainOutputPort OutputPort {
 			block: Output
-			domain: OutputDomain
-#			size: 2
 		}
 		mainInputPort InputPort {
 			block: Input
-			domain: OutputDomain
-#			size: 2
-		}
-		propertyInputPort TestPort {
-			name: "test"
-			block: TestBlock
-			default: 1.0
 		}
 	]
 	blocks: [

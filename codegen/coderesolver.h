@@ -121,6 +121,8 @@ private:
     void resolveDomainForStreamNode(ASTNode node, QVector<ASTNode > scope);
     ASTNode resolvePortProperty(std::shared_ptr<PortPropertyNode> portProperty, QVector<ASTNode > scopeStack);
 
+    void setInputBlockForFunction(std::shared_ptr<FunctionNode> func, QVector<ASTNode> scopeStack, ASTNode previous);
+    void setOutputBlockForFunction(std::shared_ptr<FunctionNode> func, QVector<ASTNode> scopeStack, ASTNode previous);
     void checkStreamConnections(std::shared_ptr<StreamNode> stream, QVector<ASTNode > scopeStack, ASTNode previous = nullptr);
 
     void setReadsWrites(ASTNode node, ASTNode previous, QVector<ASTNode> scopeStack);

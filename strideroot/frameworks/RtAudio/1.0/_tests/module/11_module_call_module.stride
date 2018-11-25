@@ -4,20 +4,16 @@ module UsedInTest {
 	ports: [
 		mainOutputPort OutputPort {
 			block: Output
-			domain: OutputDomain
 		}
 		mainInputPort InputPort {
 			block: Input
-			domain: OutputDomain
 		}
 	]
 	blocks: [
-		signal Output {
-			rate: OutputPort.rate			
+		signal Output {			
 			domain:	OutputPort.domain
 		}
-		signal Input {
-			rate: OutputPort.rate			
+		signal Input {			
 			domain:	OutputPort.domain
 		}
 	]
