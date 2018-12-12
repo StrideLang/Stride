@@ -45,6 +45,7 @@ CodeValidator::CodeValidator(QString striderootDir, ASTNode tree, Options option
                              SystemConfiguration systemConfig):
     m_system(nullptr), m_tree(tree), m_options(options), m_systemConfig(systemConfig)
 {
+
     validateTree(striderootDir, tree);
 }
 
@@ -2257,21 +2258,19 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, QVector<ASTNode > scopeStack,
                 if (declaration) {
                     tempDomainName = CodeValidator::getNodeDomainName(declaration, scopeStack, tree);
                 }
-            } if (member->getNodeType() == AST::Bundle) {
+            } else if (member->getNodeType() == AST::Bundle) {
                 BundleNode *name = static_cast<BundleNode *>(member.get());
                 std::shared_ptr<DeclarationNode> declaration = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scopeStack, tree);
                 if (declaration) {
                     tempDomainName = CodeValidator::getNodeDomainName(declaration, scopeStack, tree);
                 }
-            }
-            if (member->getNodeType() == AST::Int
+            } else if (member->getNodeType() == AST::Int
                     || member->getNodeType() == AST::Real
                     || member->getNodeType() == AST::String
                     || member->getNodeType() == AST::Switch
                     || member->getNodeType() == AST::PortProperty) {
                 continue; // Don't append empty domain to domainList, as a value should take any domain.
-            }
-            else {
+            } else {
                 tempDomainName = CodeValidator::getNodeDomainName(member, scopeStack, tree);
             }
             domainList.push_back(tempDomainName);

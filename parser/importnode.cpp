@@ -36,6 +36,7 @@
 
 #include "importnode.h"
 #include "scopenode.h"
+#include "listnode.h"
 
 using namespace std;
 
@@ -89,7 +90,11 @@ ASTNode ImportNode::deepCopy()
     for (unsigned int i = 0; i < this->getScopeLevels(); i++) {
         newImportNode->addScope(this->getScopeAt(i));
     }
-    newImportNode->m_CompilerProperties = this->m_CompilerProperties;
+    if (this->m_CompilerProperties) {
+        newImportNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
+    } else {
+        newImportNode->m_CompilerProperties = nullptr;
+    }
     return newImportNode;
 }
 

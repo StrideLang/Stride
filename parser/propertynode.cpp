@@ -35,6 +35,7 @@
 #include <cassert>
 
 #include "propertynode.h"
+#include "listnode.h"
 
 using namespace std;
 
@@ -63,7 +64,11 @@ void PropertyNode::replaceValue(ASTNode newValue)
 ASTNode PropertyNode::deepCopy()
 {
     auto newNode = std::make_shared<PropertyNode>(m_name, m_children.at(0)->deepCopy(), m_filename.data(), m_line);
-    newNode->m_CompilerProperties = this->m_CompilerProperties;
+    if (this->m_CompilerProperties) {
+        newNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
+    } else {
+        newNode->m_CompilerProperties = nullptr;
+    }
     return newNode;
 }
 

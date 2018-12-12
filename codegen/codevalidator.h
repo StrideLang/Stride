@@ -126,6 +126,7 @@ public:
 
     static int getLargestPropertySize(vector<std::shared_ptr<PropertyNode >> &properties, QVector<ASTNode > scope, ASTNode tree, QList<LangError> &errors);
 
+    // Remove this function. getModuleBlocks() is better.
     static ASTNode getBlockSubScope(std::shared_ptr<DeclarationNode> block);
     static int getBundleSize(BundleNode *bundle, QVector<ASTNode> scope, ASTNode tree, QList<LangError> &errors);
 

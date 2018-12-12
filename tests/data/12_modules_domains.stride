@@ -15,12 +15,11 @@ module SimpleTest {
     ]
     streams: [
         Input >> Output;
-        10 >> Output;
     ]
 }
 
-signal InSignal { domain: "Domain1" }
-signal OutSignal { domain: "Domain2" }
+signal InSignal { domain: AsyncDomain }
+signal OutSignal { domain: AudioDomain }
 
 InSignal >> SimpleTest() >> OutSignal;
 

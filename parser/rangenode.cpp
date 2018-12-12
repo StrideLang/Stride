@@ -35,6 +35,7 @@
 #include <cassert>
 
 #include "rangenode.h"
+#include "listnode.h"
 
 RangeNode::RangeNode(ASTNode start, ASTNode end, const char *filename, int line):
     AST(AST::Range, filename, line)
@@ -58,7 +59,11 @@ ASTNode RangeNode::deepCopy()
     auto newRangeNode = std::make_shared<RangeNode>(startIndex(), endIndex(),
                                          m_filename.data(), m_line);
 
-    newRangeNode->m_CompilerProperties = this->m_CompilerProperties;
+    if (this->m_CompilerProperties) {
+        newRangeNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
+    } else {
+        newRangeNode->m_CompilerProperties = nullptr;
+    }
     return newRangeNode;
 }
 

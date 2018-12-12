@@ -35,6 +35,7 @@
 #include <cassert>
 
 #include "streamnode.h"
+#include "listnode.h"
 
 StreamNode::StreamNode(ASTNode left, ASTNode right, const char *filename, int line) :
     AST(AST::Stream, filename, line)
@@ -70,7 +71,11 @@ ASTNode StreamNode::deepCopy()
 {
     std::shared_ptr<StreamNode> newStream = std::make_shared<StreamNode>(m_children.at(0)->deepCopy(), m_children.at(1)->deepCopy(), m_filename.data(), m_line);
 
-    newStream->m_CompilerProperties = this->m_CompilerProperties;
+    if (this->m_CompilerProperties) {
+        newStream->m_CompilerProperties = std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
+    } else {
+        newStream->m_CompilerProperties = nullptr;
+    }
     return newStream;
 }
 

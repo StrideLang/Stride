@@ -75,6 +75,10 @@ void BlockNode::resolveScope(ASTNode scope)
 ASTNode BlockNode::deepCopy()
 {
     std::shared_ptr<BlockNode> newNode = std::make_shared<BlockNode>(m_name, m_filename.data(), m_line, m_scope);
-    newNode->m_CompilerProperties = this->m_CompilerProperties;
+    if (this->m_CompilerProperties) {
+        newNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
+    } else {
+        newNode->m_CompilerProperties = nullptr;
+    }
     return newNode;
 }

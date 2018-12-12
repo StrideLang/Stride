@@ -429,7 +429,7 @@ void CodeResolver::expandStreamToSizes(std::shared_ptr<StreamNode> stream, QVect
         if (numCopies > 1) {
             std::shared_ptr<ListNode> newLeft = std::make_shared<ListNode>(left, left->getFilename().data(), left->getLine());
             for (int i = 1; i < numCopies; i++) {
-                newLeft->addChild(left);
+                newLeft->addChild(left->deepCopy());
             }
             stream->setLeft(newLeft); // This will take care of the deallocation internally
         }
@@ -994,6 +994,28 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream, Q
             };
             func(left, samplingDomain);
             left->setCompilerProperty("samplingDomain", samplingDomain);
+        } else if (left->getNodeType() == AST::Function) {
+            auto decl = CodeValidator::findDeclaration(CodeValidator::streamMemberName(left), scopeStack.toStdVector(), m_tree);
+
+            if (decl) {
+                domainNode = processDomainsForNode(decl, scopeStack, domainStack);
+                auto internalStreams = decl->getPropertyValue("streams");
+                auto internalBlocks = decl->getPropertyValue("blocks");
+                auto internalScopeStack = scopeStack;
+
+                if (internalStreams && internalBlocks) {
+                    for (auto internalStream: internalStreams->getChildren()) {
+                        Q_ASSERT(internalStream->getNodeType() == AST::Stream);
+                        internalScopeStack << QVector<ASTNode>::fromStdVector(internalBlocks->getChildren());
+                        if (internalStream->getNodeType() == AST::Stream) {
+                            // No context domain as all domains within modules must be resolvable internally
+                            resolveDomainsForStream(
+                                        std::static_pointer_cast<StreamNode>(internalStream), internalScopeStack, nullptr);
+                        }
+                    }
+                }
+
+            }
         }
 
         if (left == right) {
@@ -2164,7 +2186,7 @@ void CodeResolver::propagateDomainsForNode(ASTNode node, QVector<ASTNode > scope
                 scopeStack = QVector<ASTNode>::fromStdVector(ports->getChildren()) + scopeStack;
             }
 
-            scopeStack << CodeValidator::getBlockSubScope(module);
+//            scopeStack << CodeValidator::getBlockSubScope(module);
 
             auto contextDomainNode = getModuleContextDomain(module);
 
@@ -2181,6 +2203,7 @@ void CodeResolver::propagateDomainsForNode(ASTNode node, QVector<ASTNode > scope
                 }
                 streamIt++;
             }
+
             // Now go forward to process anything that was missed
             vector<ASTNode >::iterator streamIt2 = streamsNode.begin();
             while(streamIt2 != streamsNode.end()) {
@@ -3023,15 +3046,53 @@ void CodeResolver::checkStreamConnections(std::shared_ptr<StreamNode> stream, QV
     if (left->getNodeType() == AST::Function) {
         auto func = static_pointer_cast<FunctionNode>(left);
         setInputBlockForFunction(func, scopeStack, previous);
+    } else if (left->getNodeType() == AST::List) {
+        if (previous) {
+            if (previous->getNodeType() == AST::List && previous->getChildren().size() > 0) {
+                std::vector<ASTNode>::iterator connection = previous->getChildren().begin();
+                for (auto child: left->getChildren()) {
+                    if (connection == previous->getChildren().end()) {
+                        connection = previous->getChildren().begin();
+                    }
+                    if (child->getNodeType() == AST::Function) {
+                        auto func = static_pointer_cast<FunctionNode>(child);
+                        setInputBlockForFunction(func, scopeStack, *connection);
+                    }
+                    connection++;
+                }
+            } else {
+                for (auto child: left->getChildren()) {
+                    if (child->getNodeType() == AST::Function) {
+                        auto func = static_pointer_cast<FunctionNode>(child);
+                        setInputBlockForFunction(func, scopeStack, previous);
+                    }
+                }
+            }
+        }
     }
+
     if (right->getNodeType() == AST::Function) {
+        previous = left;
         auto func = static_pointer_cast<FunctionNode>(right);
-        setInputBlockForFunction(func, scopeStack, previous);
         if (left->getNodeType() == AST::Function) {
             // FIXME this is a hack assuming that the input is always connected to the output inside modules.
             ASTNode newPrevious = left->getCompilerProperty("inputBlock");
             if (newPrevious) {
                 previous = newPrevious; // Otherwise keep old previous
+            }
+        }
+        setInputBlockForFunction(func, scopeStack, previous);
+    } else if (right->getNodeType() == AST::List) {
+        previous = left;
+        for (auto child: right->getChildren()) {
+            if (child->getNodeType() == AST::Function) {
+                auto func = static_pointer_cast<FunctionNode>(child);
+                // FIXME this is a hack assuming that the input is always connected to the output inside modules.
+                ASTNode newPrevious = left->getCompilerProperty("inputBlock");
+                if (newPrevious) {
+                    previous = newPrevious; // Otherwise keep old previous
+                }
+                setInputBlockForFunction(func, scopeStack, previous);
             }
         }
     } else {
@@ -3043,13 +3104,32 @@ void CodeResolver::checkStreamConnections(std::shared_ptr<StreamNode> stream, QV
         if (left->getNodeType() == AST::Function) {
             auto next = static_pointer_cast<StreamNode>(right)->getLeft();
             if (next) {
-                if (next->getNodeType() == AST::Function) {
+                if (left->getNodeType() == AST::List) {
+                    for (auto child: left->getChildren()) {
+                        if (child->getNodeType() == AST::Function) {
+                            // FIXME simplistic. We are connecting the input of a module to the output. This might
+                            // not be the case always.
+                            auto func = static_pointer_cast<FunctionNode>(child);
+                            setOutputBlockForFunction(func, scopeStack, next->getCompilerProperty("outputBlock"));
+                            //                    left->setCompilerProperty("outputBlock", next->getCompilerProperty("outputBlock"));
+                            if (child->getCompilerProperty("outputBlock")) {
+                                next->setCompilerProperty("inputBlock", child->getCompilerProperty("outputBlock"));
+                            }
+                        } /*else {
+                            auto func = static_pointer_cast<FunctionNode>(child);
+                            setOutputBlockForFunction(func, scopeStack, next);
+                        }*/
+                    }
+                } else if (left->getNodeType() == AST::Function) {
                     // FIXME simplistic. We are connecting the input of a module to the output. This might
                     // not be the case always.
                     auto func = static_pointer_cast<FunctionNode>(left);
                     setOutputBlockForFunction(func, scopeStack, next->getCompilerProperty("outputBlock"));
-//                    left->setCompilerProperty("outputBlock", next->getCompilerProperty("outputBlock"));
-                    next->setCompilerProperty("inputBlock", left->getCompilerProperty("outputBlock"));
+                    //                    left->setCompilerProperty("outputBlock", next->getCompilerProperty("outputBlock"));
+                    if (left->getCompilerProperty("outputBlock")) {
+                        // FIXME we should go recursively to get the rightmost outputBlock
+                        next->setCompilerProperty("inputBlock", left->getCompilerProperty("outputBlock"));
+                    }
                 } else {
                     auto func = static_pointer_cast<FunctionNode>(left);
                     setOutputBlockForFunction(func, scopeStack, next);
@@ -3058,11 +3138,25 @@ void CodeResolver::checkStreamConnections(std::shared_ptr<StreamNode> stream, QV
         }
     } else {
         markConnectionForNode(right, scopeStack, previous);
-        if (left->getNodeType() == AST::Function) {
-            ASTNode nextBlock = right;
-            if (right->getNodeType() == AST::Function) {
-                right->getCompilerProperty("inputBlock");
+        if (left->getNodeType() == AST::List) {
+            for (auto child: left->getChildren()) {
+                if (child->getNodeType() == AST::Function) {
+                    ASTNode nextBlock = right;
+//                    if (right->getNodeType() == AST::Function) {
+//                        right->getCompilerProperty("inputBlock");
+//                    }
+                    auto func = static_pointer_cast<FunctionNode>(child);
+                    setOutputBlockForFunction(func, scopeStack, nextBlock);
+                    //            if (nextBlock) {
+                    //                left->setCompilerProperty("outputBlock", nextBlock);
+                    //            }
+                }
             }
+        } else if (left->getNodeType() == AST::Function) {
+            ASTNode nextBlock = right;
+//            if (right->getNodeType() == AST::Function) {
+//                right->getCompilerProperty("inputBlock");
+//            }
             auto func = static_pointer_cast<FunctionNode>(left);
             setOutputBlockForFunction(func, scopeStack, nextBlock);
 //            if (nextBlock) {
@@ -3087,7 +3181,7 @@ void CodeResolver::setReadsWrites(ASTNode node, ASTNode previous, QVector<ASTNod
                 auto nodeTypeName = decl->getObjectType();
 
                 // TODO we need to support lists here too
-                std::shared_ptr<ListNode> previousReads = static_pointer_cast<ListNode>(node->getCompilerProperty("reads"));
+                std::shared_ptr<ListNode> previousReads = static_pointer_cast<ListNode>(previous->getCompilerProperty("reads"));
                 std::shared_ptr<ListNode> previousDeclReads = static_pointer_cast<ListNode>(previousDecl->getCompilerProperty("reads"));
                 if (nodeTypeName == "module" || nodeTypeName == "reaction"|| nodeTypeName == "loop") {
                     // Modules, reactions and loops, the domain that matters is the domain of the output block.
@@ -3103,10 +3197,46 @@ void CodeResolver::setReadsWrites(ASTNode node, ASTNode previous, QVector<ASTNod
                 } else {
                     // platformBlock and platformModule can be ignored as they are tied to a domain.
                     // However, we do need to figure out how to support buffer access across domains.
+                    bool alreadyInReads = false;
+                    auto newReadDomain = decl->getDomain();
+                    for (auto read: previousReads->getChildren()) {
+                        if (read->getNodeType() == AST::PortProperty
+                                && newReadDomain->getNodeType() == AST::PortProperty) {
+                            std::shared_ptr<PortPropertyNode> newReadDomainNode =
+                                    std::static_pointer_cast<PortPropertyNode>(newReadDomain);
+                            std::shared_ptr<PortPropertyNode> existingReadDomain =
+                                    std::static_pointer_cast<PortPropertyNode>(read);
+                            if ( (newReadDomainNode->getName() == existingReadDomain->getName())
+                                 && (newReadDomainNode->getPortName() == existingReadDomain->getPortName()) ) {
+                                alreadyInReads = true;
+                                break;
+                            }
+                        }
+                    }
 
-                    previousReads->addChild(decl->getDomain());
+                    if (!alreadyInReads) {
+                        previousReads->addChild(newReadDomain);
+                    }
+                    alreadyInReads = false;
+
                     if (previousDeclReads) {
-                        previousDeclReads->addChild(decl->getDomain());
+                        for (auto read: previousDeclReads->getChildren()) {
+                            if (read->getNodeType() == AST::PortProperty
+                                    && newReadDomain->getNodeType() == AST::PortProperty) {
+                                std::shared_ptr<PortPropertyNode> newReadDomainNode =
+                                        std::static_pointer_cast<PortPropertyNode>(newReadDomain);
+                                std::shared_ptr<PortPropertyNode> existingReadDomain =
+                                        std::static_pointer_cast<PortPropertyNode>(read);
+                                if ( (newReadDomainNode->getName() == existingReadDomain->getName())
+                                     && (newReadDomainNode->getPortName() == existingReadDomain->getPortName()) ) {
+                                    alreadyInReads = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (!alreadyInReads) {
+                            previousDeclReads->addChild(newReadDomain);
+                        }
                     }
 
                     // FIXME we need to get previousReads for functions from the function itsefl, not the module decl.
@@ -3114,7 +3244,28 @@ void CodeResolver::setReadsWrites(ASTNode node, ASTNode previous, QVector<ASTNod
         //                    Q_ASSERT(previousDecl);
                 Q_ASSERT(writesProperties->getNodeType() == AST::List);
                 //                std::string domainName = CodeValidator::getDomainNodeString(decl->getDomain());
-                writesProperties->addChild(previousDecl->getDomain());
+                bool alreadyInWrites = false;
+                auto newWriteDomain = previousDecl->getDomain();
+                for (auto write: writesProperties->getChildren()) {
+                    if (write->getNodeType() == AST::PortProperty
+                            && newWriteDomain->getNodeType() == AST::PortProperty) {
+                        std::shared_ptr<PortPropertyNode> newReadDomainNode =
+                                std::static_pointer_cast<PortPropertyNode>(newWriteDomain);
+                        std::shared_ptr<PortPropertyNode> existingReadDomain =
+                                std::static_pointer_cast<PortPropertyNode>(write);
+                        if ( (newReadDomainNode->getName() == existingReadDomain->getName())
+                             && (newReadDomainNode->getPortName() == existingReadDomain->getPortName()) ) {
+                            alreadyInWrites = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!alreadyInWrites) {
+                    writesProperties->addChild(newWriteDomain);
+                }
+
+
             }
         } else if (previous->getNodeType() == AST::Expression) {
             for(auto child: previous->getChildren()) {
@@ -3128,21 +3279,22 @@ void CodeResolver::markConnectionForNode(ASTNode node, QVector<ASTNode > scopeSt
 {
     if (node->getNodeType() == AST::Block || node->getNodeType() == AST::Bundle || node->getNodeType() == AST::Function) {
         std::string name = CodeValidator::streamMemberName(node);
+
+        // First create read and write compiler properties for the node if not there
+        std::shared_ptr<ListNode> nodeReadsProperties = static_pointer_cast<ListNode>(node->getCompilerProperty("reads"));
+        if (!nodeReadsProperties) {
+            nodeReadsProperties = std::make_shared<ListNode>(nullptr, node->getFilename().c_str(), node->getLine());
+            node->setCompilerProperty("reads", nodeReadsProperties);
+        }
+        std::shared_ptr<ListNode> nodeWritesProperties = static_pointer_cast<ListNode>(node->getCompilerProperty("writes"));
+        if (!nodeWritesProperties) {
+            nodeWritesProperties = std::make_shared<ListNode>(nullptr, node->getFilename().c_str(), node->getLine());
+            node->setCompilerProperty("writes", nodeWritesProperties);
+        }
         std::shared_ptr<DeclarationNode> decl = CodeValidator::findDeclaration(name, scopeStack.toStdVector(), m_tree);
         if (decl) {
             auto typeDecl = CodeValidator::findTypeDeclaration(decl, scopeStack, m_tree);
             if (typeDecl) {
-                // First create read and write compiler properties for the node if not there
-                std::shared_ptr<ListNode> nodeReadsProperties = static_pointer_cast<ListNode>(node->getCompilerProperty("reads"));
-                if (!nodeReadsProperties) {
-                    nodeReadsProperties = std::make_shared<ListNode>(nullptr, node->getFilename().c_str(), node->getLine());
-                    node->setCompilerProperty("reads", nodeReadsProperties);
-                }
-                std::shared_ptr<ListNode> nodeWritesProperties = static_pointer_cast<ListNode>(node->getCompilerProperty("writes"));
-                if (!nodeWritesProperties) {
-                    nodeWritesProperties = std::make_shared<ListNode>(nullptr, node->getFilename().c_str(), node->getLine());
-                    node->setCompilerProperty("writes", nodeWritesProperties);
-                }
                 // For the declaration too
                 std::shared_ptr<ListNode> readsProperties = static_pointer_cast<ListNode>(decl->getCompilerProperty("reads"));
                 if (!readsProperties) {
@@ -3171,6 +3323,10 @@ void CodeResolver::markConnectionForNode(ASTNode node, QVector<ASTNode > scopeSt
     //                    previousReads->addChild(decl->getDomain());
                     } else if (previous->getNodeType() == AST::List) {
                         // How should lists be handled?
+                        for (auto child: previous->getChildren()) {
+                            markConnectionForNode(child, scopeStack, nullptr);
+                            setReadsWrites(node, child, scopeStack);
+                        }
                     }
                 }
             }
@@ -3267,13 +3423,15 @@ void CodeResolver::storeDeclarationsForNode(ASTNode node, vector<ASTNode> scopeS
             if (internalBlocks) {
                 if (internalBlocks->getNodeType() == AST::List) {
                     for (auto child: internalBlocks->getChildren()) {
-                        if (child->getNodeType() == AST::Declaration) {
+                        if (child->getNodeType() == AST::Declaration
+                                || child->getNodeType() == AST::BundleDeclaration) {
                             blocksList.push_back(static_pointer_cast<DeclarationNode>(child));
                         } else {
                             qDebug() << "Unexpected node type in internal blocks";
                         }
                     }
-                } else if (internalBlocks->getNodeType() == AST::Declaration) {
+                } else if (internalBlocks->getNodeType() == AST::Declaration
+                           || internalBlocks->getNodeType() == AST::BundleDeclaration) {
                     blocksList.push_back(static_pointer_cast<DeclarationNode>(internalBlocks));
                 }
             }
