@@ -1176,7 +1176,8 @@ void ProjectWindow::fillInspectorTree()
     ui->treeWidget->setSortingEnabled(false);
     if (tree) {
         for (auto node: tree->getChildren()) {
-            if (node->getNodeType() == AST::Declaration) {
+            if (node->getNodeType() == AST::Declaration ||
+                    node->getNodeType() == AST::BundleDeclaration) {
                 std::shared_ptr<DeclarationNode> decl = static_pointer_cast<DeclarationNode>(node);
                 QTreeWidgetItem *newItem = createTreeItem(decl);
                 if (newItem) {
@@ -1186,7 +1187,11 @@ void ProjectWindow::fillInspectorTree()
                     if (writes) {
                         tooltipText += "Writes:\n";
                         for (auto write: writes->getChildren()) {
-                            tooltipText += QString::fromStdString(static_pointer_cast<ValueNode>(write)->getStringValue());
+                            if (write->getNodeType() == AST::String) {
+                                tooltipText += QString::fromStdString(static_pointer_cast<ValueNode>(write)->getStringValue());
+                            } else {
+                                tooltipText += QString::fromStdString(CodeValidator::streamMemberName(write));
+                            }
                             tooltipText += "\n";
                         }
                     }
@@ -1194,7 +1199,11 @@ void ProjectWindow::fillInspectorTree()
                     if (reads) {
                         tooltipText += "Reads:\n";
                         for (auto read: reads->getChildren()) {
-                            tooltipText += QString::fromStdString(static_pointer_cast<ValueNode>(read)->getStringValue());
+                            if (read->getNodeType() == AST::String) {
+                                tooltipText += QString::fromStdString(static_pointer_cast<ValueNode>(read)->getStringValue());
+                            } else {
+                                tooltipText += QString::fromStdString(CodeValidator::streamMemberName(read));
+                            }
                             tooltipText += "\n";
                         }
                     }

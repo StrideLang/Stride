@@ -470,7 +470,8 @@ ASTNode CodeResolver::expandFunctionFromProperties(std::shared_ptr<FunctionNode>
 {
     QList<LangError> errors;
     std::shared_ptr<ListNode> newFunctions = nullptr;
-    int dataSize = CodeValidator::getFunctionDataSize(func, scopeStack, tree, errors);
+//    int dataSize = CodeValidator::getFunctionDataSize(func, scopeStack, tree, errors);
+    int dataSize = CodeValidator::getFunctionNumInstances(func, scopeStack, tree);
     if (dataSize > 1) {
         vector<std::shared_ptr<PropertyNode>> props = func->getProperties();
         newFunctions = std::make_shared<ListNode>(nullptr, func->getFilename().c_str(), func->getLine());
@@ -567,7 +568,7 @@ void CodeResolver::insertBuiltinObjects()
                         usedDeclarations << block;
                     }
                 }
-            } else if (block->getObjectType() == "constant") {
+            } else if (block->getObjectType() == "alias") {
                 if (block->getName() == "PlatformDomain" || block->getName() == "PlatformRate") {
                     m_tree->addChild(block);
                     usedDeclarations << block;
@@ -1500,11 +1501,13 @@ std::vector<ASTNode> CodeResolver::getModuleBlocks(std::shared_ptr<DeclarationNo
 
     ASTNode blocksNode = module->getPropertyValue("blocks");
     Q_ASSERT(blocksNode);
-    if (blocksNode->getNodeType() == AST::Declaration) {
+    if (blocksNode->getNodeType() == AST::Declaration
+            || blocksNode->getNodeType() == AST::BundleDeclaration) {
         blocks.push_back(blocksNode);
     } else if (blocksNode->getNodeType() == AST::List) {
         for(ASTNode  node: blocksNode->getChildren()) {
-            if (node->getNodeType() == AST::Declaration) {
+            if (node->getNodeType() == AST::Declaration
+                    || node->getNodeType() == AST::BundleDeclaration) {
                 blocks.push_back(node);
             }
         }
@@ -3049,10 +3052,11 @@ void CodeResolver::checkStreamConnections(std::shared_ptr<StreamNode> stream, QV
     } else if (left->getNodeType() == AST::List) {
         if (previous) {
             if (previous->getNodeType() == AST::List && previous->getChildren().size() > 0) {
-                std::vector<ASTNode>::iterator connection = previous->getChildren().begin();
+                auto previousChildren = previous->getChildren();
+                std::vector<ASTNode>::iterator connection = previousChildren.begin();
                 for (auto child: left->getChildren()) {
-                    if (connection == previous->getChildren().end()) {
-                        connection = previous->getChildren().begin();
+                    if (connection == previousChildren.end()) {
+                        connection = previousChildren.begin();
                     }
                     if (child->getNodeType() == AST::Function) {
                         auto func = static_pointer_cast<FunctionNode>(child);
@@ -3140,8 +3144,9 @@ void CodeResolver::checkStreamConnections(std::shared_ptr<StreamNode> stream, QV
         markConnectionForNode(right, scopeStack, previous);
         if (left->getNodeType() == AST::List) {
             for (auto child: left->getChildren()) {
+                ASTNode nextBlock = right;
+//                CodeValidator::getNodeNumInputs()
                 if (child->getNodeType() == AST::Function) {
-                    ASTNode nextBlock = right;
 //                    if (right->getNodeType() == AST::Function) {
 //                        right->getCompilerProperty("inputBlock");
 //                    }

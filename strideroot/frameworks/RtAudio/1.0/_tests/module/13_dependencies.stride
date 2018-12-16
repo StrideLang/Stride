@@ -4,11 +4,11 @@ module UsedInTest {
 	ports: [
 		mainOutputPort OutputPort {
 			block: Output
-			domain: OutputDomain
+			domain: OutputPort.domain
 		}
 		mainInputPort InputPort {
 			block: Input
-			domain: OutputDomain
+			domain: OutputPort.domain
 		}
 	]
 	streams: [
@@ -20,11 +20,11 @@ module Test {
 	ports: [
 		mainOutputPort OutputPort {
 			block: Output
-			domain: OutputDomain
+			domain: OutputPort.domain
 		}
 		mainInputPort InputPort {
 			block: Input
-			domain: OutputDomain
+			domain: OutputPort.domain
 		}
 	]
 	streams: [
@@ -36,11 +36,11 @@ module UsedInTest2 {
 	ports: [
 		mainOutputPort OutputPort {
 			block: Output
-			domain: OutputDomain
+			domain: OutputPort.domain
 		}
 		mainInputPort InputPort {
 			block: Input
-			domain: OutputDomain
+			domain: OutputPort.domain
 		}
 	]
 	streams: [
@@ -52,11 +52,11 @@ module Test2 {
 	ports: [
 		mainOutputPort OutputPort {
 			block: Output
-			domain: OutputDomain
+			domain: OutputPort.domain
 		}
 		mainInputPort InputPort {
 			block: Input
-			domain: OutputDomain
+			domain: OutputPort.domain
 		}
 	]
 	streams: [
@@ -68,11 +68,11 @@ module UsedInTest3 {
 	ports: [
 		mainOutputPort OutputPort {
 			block: Output
-			domain: OutputDomain
+			domain: OutputPort.domain
 		}
 		mainInputPort InputPort {
 			block: Input
-			domain: OutputDomain
+			domain: OutputPort.domain
 		}
 	]
 	streams: [
@@ -80,4 +80,5 @@ module UsedInTest3 {
 	]
 }
 
-AudioIn >> Test() >> Test2() >>AudioOut;
+AudioIn[1] >> Test() >> Test2() >>AudioOut[1];
+AudioIn[2] >> Test() >> Test2() >>AudioOut[2];

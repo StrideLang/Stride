@@ -1018,6 +1018,67 @@ int CodeValidator::getFunctionDataSize(std::shared_ptr<FunctionNode>func, QVecto
     return size;
 }
 
+int CodeValidator::getFunctionNumInstances(std::shared_ptr<FunctionNode> func, QVector<ASTNode> scope, ASTNode tree)
+{
+    auto portProperties = func->getProperties();
+    int numInstances = 1;
+    for (auto propertyNode: portProperties) {
+        auto portBlock = propertyNode->getValue();
+        QList<LangError> errors;
+        auto portName = propertyNode->getName();
+        auto funcDecl = CodeValidator::findDeclaration(CodeValidator::streamMemberName(func), scope.toStdVector(), tree);
+        if (funcDecl) {
+            if (funcDecl->getPropertyValue("blocks")) {
+                scope << QVector<ASTNode>::fromStdVector(funcDecl->getPropertyValue("blocks")->getChildren());
+            }
+            auto ports = funcDecl->getPropertyValue("ports");
+            if (ports) {
+                // Match port in declaration to current property
+                // This will tell us how many instances we should make
+                for (auto port: ports->getChildren()) {
+                    if (port->getNodeType() == AST::Declaration) {
+                        auto portDecl = static_pointer_cast<DeclarationNode>(port);
+                        auto nameNode = portDecl->getPropertyValue("name");
+                        if (!(nameNode->getNodeType() == AST::String)) {
+                            continue;
+                        }
+                        if (static_pointer_cast<ValueNode>(nameNode)->getStringValue() == portName) {
+                            int propertyBlockSize = 0;
+                            if (portDecl->getObjectType() == "mainInputPort"
+                                    || portDecl->getObjectType() == "propertyInputPort" ) {
+                                propertyBlockSize = CodeValidator::getNodeNumOutputs(portBlock, scope, tree, errors);
+                            } else {
+                                propertyBlockSize = CodeValidator::getNodeNumInputs(portBlock, scope, tree, errors);
+                            }
+                            auto internalPortBlock = portDecl->getPropertyValue("block");
+                            if (internalPortBlock) {
+                                int internalBlockSize;
+
+                                if (portDecl->getObjectType() == "mainInputPort"
+                                        || portDecl->getObjectType() == "propertyInputPort" ) {
+                                    internalBlockSize = CodeValidator::getNodeNumOutputs(internalPortBlock, scope, tree, errors);
+                                } else {
+                                    internalBlockSize = CodeValidator::getNodeNumInputs(internalPortBlock, scope, tree, errors);
+                                }
+                                int portNumInstances = propertyBlockSize/internalBlockSize;
+                                Q_ASSERT(propertyBlockSize/internalBlockSize == float(propertyBlockSize)/internalBlockSize);
+                                if (numInstances == 0) {
+                                    numInstances = portNumInstances;
+                                } else if (numInstances == 1 && portNumInstances > 1) {
+                                    numInstances = portNumInstances;
+                                } else if (numInstances != portNumInstances) {
+                                    qDebug() << "ERROR size mismatch in function ports";
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return numInstances;
+}
+
 int CodeValidator::getBundleSize(BundleNode *bundle, QVector<ASTNode> scope, ASTNode tree, QList<LangError> &errors)
 {
     std::shared_ptr<ListNode> indexList = bundle->index();
@@ -1347,10 +1408,12 @@ std::shared_ptr<DeclarationNode> CodeValidator::findDeclaration(std::string obje
          istream_iterator<string>(),
          back_inserter(scopesList));
 
-    objectName = scopesList.back();
-    scopesList.pop_back();
-    for(string ns:scope) {
-        scopesList.push_back(ns);
+    if (objectName.size() > 0) {
+        objectName = scopesList.back();
+        scopesList.pop_back();
+        for(string ns:scope) {
+            scopesList.push_back(ns);
+        }
     }
     for(ASTNode node : globalAndLocal) {
         if (node->getNodeType() == AST::BundleDeclaration) {

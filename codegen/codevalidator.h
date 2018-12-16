@@ -117,6 +117,7 @@ public:
 
     static std::vector<std::string> getModulePropertyNames(std::shared_ptr<DeclarationNode> blockDeclaration);
     static int getFunctionDataSize(std::shared_ptr<FunctionNode> func, QVector<ASTNode > scope, ASTNode  tree, QList<LangError> &errors);
+    static int getFunctionNumInstances(std::shared_ptr<FunctionNode> func, QVector<ASTNode > scope, ASTNode  tree);
     static int getNodeNumOutputs(ASTNode node, const QVector<ASTNode> &scope, ASTNode tree, QList<LangError> &errors);    bool validFDomainateNodeDeclaration(QString name, QVector<ASTNode > scopeStack, ASTNode tree);
     static int getNodeNumInputs(ASTNode node, const QVector<ASTNode > &scope, ASTNode tree, QList<LangError> &errors);
     static int getTypeNumOutputs(std::shared_ptr<DeclarationNode> blockDeclaration, const QVector<ASTNode > &scope, ASTNode tree, QList<LangError> &errors);

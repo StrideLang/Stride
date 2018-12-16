@@ -18,6 +18,7 @@ module Pan {
 	]
 	blocks: [
 		signal Output[2] {},
+        signal Input {},
 		signal GainLeft {domain: PositionPort.domain},
 		signal GainRight {domain: PositionPort.domain}
 	]
@@ -29,3 +30,4 @@ module Pan {
 	]
 	meta: "Stereo panner."
 }
+
