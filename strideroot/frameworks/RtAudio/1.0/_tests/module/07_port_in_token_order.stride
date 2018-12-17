@@ -65,4 +65,4 @@ AudioIn >> SigIn;
 
 SigIn[1] >> Test(test: AudioIn[1] test2:AudioIn[2]) >> AudioOut[1];
 
-SigIn[2] >> Test2(test: AudioIn[1] test2:AudioIn[2]) >> AudioOut[1];
+SigIn[2] >> Test2(test: AudioIn[1] test2:AudioIn[2]) >> AudioOut[2];

@@ -2358,33 +2358,35 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, QVector<ASTNode > scopeStack,
         if (expr->isUnary()) {
             domainNode = CodeValidator::getNodeDomain(expr->getValue(), scopeStack, tree);
         } else {
-            ASTNode left = expr->getLeft();
-            ASTNode right = expr->getRight();
-            ASTNode leftDomain = CodeValidator::getNodeDomain(left, scopeStack, tree);
-            ASTNode rightDomain = CodeValidator::getNodeDomain(right, scopeStack, tree);
-            if (left->getNodeType() == AST::Int
-                    || left->getNodeType() == AST::Real
-                    || left->getNodeType() == AST::String
-                    || left->getNodeType() == AST::Switch
-                    || left->getNodeType() == AST::PortProperty) {
-                leftDomain = rightDomain;
-            }
-            if (right->getNodeType() == AST::Int
-                    || right->getNodeType() == AST::Real
-                    || right->getNodeType() == AST::String
-                    || right->getNodeType() == AST::Switch
-                    || right->getNodeType() == AST::PortProperty) {
-                rightDomain = leftDomain;
-            }
-            if (leftDomain && rightDomain) {
+//            ASTNode left = expr->getLeft();
+//            ASTNode right = expr->getRight();
+//            ASTNode leftDomain = CodeValidator::getNodeDomain(left, scopeStack, tree);
+//            ASTNode rightDomain = CodeValidator::getNodeDomain(right, scopeStack, tree);
+//            if (left->getNodeType() == AST::Int
+//                    || left->getNodeType() == AST::Real
+//                    || left->getNodeType() == AST::String
+//                    || left->getNodeType() == AST::Switch
+//                    || left->getNodeType() == AST::PortProperty) {
+//                leftDomain = rightDomain;
+//            }
+//            if (right->getNodeType() == AST::Int
+//                    || right->getNodeType() == AST::Real
+//                    || right->getNodeType() == AST::String
+//                    || right->getNodeType() == AST::Switch
+//                    || right->getNodeType() == AST::PortProperty) {
+//                rightDomain = leftDomain;
+//            }
+//            if (leftDomain && rightDomain) {
 
-                if ( CodeValidator::getDomainIdentifier(leftDomain, scopeStack.toStdVector(), tree) ==
-                     CodeValidator::getDomainIdentifier(rightDomain, scopeStack.toStdVector(), tree)) {
-                    return leftDomain;
-                }
-            } else {
-                return nullptr;
-            }
+//                if ( CodeValidator::getDomainIdentifier(leftDomain, scopeStack.toStdVector(), tree) ==
+//                     CodeValidator::getDomainIdentifier(rightDomain, scopeStack.toStdVector(), tree)) {
+//                    return leftDomain;
+//                } else {
+//                    return expr->getCompilerProperty("samplingDomain");
+//                }
+//            } else {
+                return expr->getCompilerProperty("samplingDomain");
+//            }
         }
     } else if (node->getNodeType() == AST::Stream) {
         StreamNode *stream = static_cast<StreamNode *>(node.get());

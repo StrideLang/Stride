@@ -412,20 +412,19 @@ void CodeResolver::expandParallel()
 void CodeResolver::expandStreamToSizes(std::shared_ptr<StreamNode> stream, QVector<int> &neededCopies, int previousOutSize, QVector<ASTNode > scopeStack)
 {
     ASTNode left = stream->getLeft();
-    int leftSize = CodeValidator::getNodeSize(left, scopeStack, m_tree);
+//    int leftSize = CodeValidator::getNodeSize(left, scopeStack, m_tree);
     if (previousOutSize == -1) {
         previousOutSize = 1;
     }
 
-    if (left->getNodeType() == AST::Block
-            || left->getNodeType() == AST::Function) {
+    if (left->getNodeType() == AST::Function) {
         int numCopies = neededCopies.front();
-        if (leftSize < 0 && left->getNodeType() == AST::Block) {
-            std::vector<ASTNode > newDeclaration = declareUnknownName(static_pointer_cast<BlockNode>(left), previousOutSize, scopeStack, m_tree);
-            for(ASTNode decl:newDeclaration) {
-                m_tree->addChild(decl);
-            }
-        }
+//         if (leftSize < 0 && left->getNodeType() == AST::Block) {
+//            std::vector<ASTNode > newDeclaration = declareUnknownName(static_pointer_cast<BlockNode>(left), previousOutSize, scopeStack, m_tree);
+//            for(ASTNode decl:newDeclaration) {
+//                m_tree->addChild(decl);
+//            }
+//        }
         if (numCopies > 1) {
             std::shared_ptr<ListNode> newLeft = std::make_shared<ListNode>(left, left->getFilename().data(), left->getLine());
             for (int i = 1; i < numCopies; i++) {
@@ -434,7 +433,8 @@ void CodeResolver::expandStreamToSizes(std::shared_ptr<StreamNode> stream, QVect
             stream->setLeft(newLeft); // This will take care of the deallocation internally
         }
     }
-    previousOutSize = neededCopies.front() * leftSize;
+    QList<LangError> errors;
+    previousOutSize = CodeValidator::getNodeNumOutputs(stream->getLeft(), scopeStack, m_tree, errors);
     if (previousOutSize < 0) {
         previousOutSize = 1;
     }
@@ -1463,7 +1463,14 @@ std::vector<ASTNode > CodeResolver::declareUnknownStreamSymbols(std::shared_ptr<
     } else if (right->getNodeType() == AST::Block) {
         std::shared_ptr<BlockNode> name = static_pointer_cast<BlockNode>(right);
         QList<LangError> errors;
-        int size = CodeValidator::getNodeNumOutputs(left, localScope, m_tree, errors);
+        int size = 0;
+        if (left->getNodeType() == AST::Function) {
+            auto funcDecl = CodeValidator::findDeclaration(
+                        CodeValidator::streamMemberName(left), localScope.toStdVector(), tree);
+            size = CodeValidator::getTypeNumOutputs(funcDecl, localScope, m_tree, errors);
+        } else {
+           size = CodeValidator::getNodeNumOutputs(left, localScope, m_tree, errors);
+        }
         if (size <= 0) { // None of the elements in the stream have size
             size = 1;
         }

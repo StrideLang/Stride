@@ -19,4 +19,4 @@ module Test {
 }
 
 AudioIn[1] >> Test();
-Dummy >> AudioOut[2];
+DummyOuter >> AudioOut[2];
