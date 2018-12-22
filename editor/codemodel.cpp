@@ -408,9 +408,9 @@ QString CodeModel::getFunctionSyntax(QString symbol)
     QString text;
     QMutexLocker locker(&m_validTreeLock);
     QVector<ASTNode> libraryNodes;
-    for (auto it = m_system->getBuiltinObjectsReference().begin(); it != m_system->getBuiltinObjectsReference().end(); it++ ) {
-        libraryNodes << QVector<ASTNode>::fromStdVector(it->second);
-    }
+//    for (auto it = m_system->getBuiltinObjectsReference().begin(); it != m_system->getBuiltinObjectsReference().end(); it++ ) {
+//        libraryNodes << QVector<ASTNode>::fromStdVector(it->second);
+//    }
     std::shared_ptr<DeclarationNode> declaration = CodeValidator::findDeclaration(symbol, libraryNodes, m_lastValidTree);
     if (declaration) {
         AST *metaValue = declaration->getPropertyValue("meta").get();

@@ -909,18 +909,31 @@ void CodeValidator::validateStreamInputSize(StreamNode *stream, QVector<ASTNode 
     int leftOutSize = getNodeNumOutputs(left, scope, m_tree, errors);
     int rightInSize = getNodeNumInputs(right, scope, m_tree, errors);
 
-    if ((leftOutSize != rightInSize
-            && ((int) (rightInSize/ (double) leftOutSize)) != (rightInSize/ (double) leftOutSize))
-            || rightInSize == 0) {
-        LangError error;
-        error.type = LangError::StreamMemberSizeMismatch;
-        error.lineNumber = right->getLine();
-        error.errorTokens.push_back(QString::number(leftOutSize).toStdString());
-        error.errorTokens.push_back(getNodeText(left).toStdString());
-        error.errorTokens.push_back(QString::number(rightInSize).toStdString());
-        error.filename = left->getFilename();
-        errors << error;
+    auto leftDecl = CodeValidator::findDeclaration(
+                CodeValidator::streamMemberName(left), scope.toStdVector(), m_tree);
+    auto rightDecl = CodeValidator::findDeclaration(
+                CodeValidator::streamMemberName(right), scope.toStdVector(), m_tree);
+    if ((leftDecl && leftDecl->getObjectType() == "buffer")
+            || (rightDecl && rightDecl->getObjectType() == "buffer")) {
+        // FIXME how should buffer size be validated?
+
+
+    } else {
+        if ((leftOutSize != rightInSize
+                && ((int) (rightInSize/ (double) leftOutSize)) != (rightInSize/ (double) leftOutSize))
+                || rightInSize == 0) {
+            LangError error;
+            error.type = LangError::StreamMemberSizeMismatch;
+            error.lineNumber = right->getLine();
+            error.errorTokens.push_back(QString::number(leftOutSize).toStdString());
+            error.errorTokens.push_back(getNodeText(left).toStdString());
+            error.errorTokens.push_back(QString::number(rightInSize).toStdString());
+            error.filename = left->getFilename();
+            errors << error;
+        }
+
     }
+
     if (right->getNodeType() == AST::Stream) {
         validateStreamInputSize(static_cast<StreamNode *>(right.get()), scope, errors);
     }
@@ -1316,6 +1329,12 @@ int CodeValidator::getTypeNumOutputs(std::shared_ptr<DeclarationNode> blockDecla
                 }
             }
         }
+        if (blockDeclaration->getObjectType() == "buffer") {
+            auto sizeNode = blockDeclaration->getPropertyValue("size");
+            if (sizeNode->getNodeType() == AST::Int) {
+                return static_pointer_cast<ValueNode>(sizeNode)->getIntValue();
+            }
+        }
         return 1;
     }
     return 0;
@@ -1488,7 +1507,7 @@ std::string CodeValidator::streamMemberName(ASTNode node)
         }
         return listCommonName;
     } else {
-        qDebug() << "streamMemberName() error. Invalid stream member type.";
+//        qDebug() << "streamMemberName() error. Invalid stream member type.";
     }
     return std::string();
 }

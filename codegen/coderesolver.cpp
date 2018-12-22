@@ -425,12 +425,12 @@ void CodeResolver::expandStreamToSizes(std::shared_ptr<StreamNode> stream, QVect
 //                m_tree->addChild(decl);
 //            }
 //        }
-        if (numCopies > 1) {
+        if (numCopies > 1 && left->getNodeType() == AST::Function) {
             std::shared_ptr<ListNode> newLeft = std::make_shared<ListNode>(left, left->getFilename().data(), left->getLine());
             for (int i = 1; i < numCopies; i++) {
                 newLeft->addChild(left->deepCopy());
             }
-            stream->setLeft(newLeft); // This will take care of the deallocation internally
+            stream->setLeft(newLeft);
         }
     }
     QList<LangError> errors;
@@ -452,12 +452,12 @@ void CodeResolver::expandStreamToSizes(std::shared_ptr<StreamNode> stream, QVect
                 for(ASTNode decl:newDeclaration) {
                     m_tree->addChild(decl);
                 }
-            } else if (numCopies > 1) {
+            } else if (numCopies > 1 && right->getNodeType() == AST::Function) { // Only functions should be expanded this way
                 std::shared_ptr<ListNode> newRight = std::make_shared<ListNode>(right, right->getFilename().data(), right->getLine());
                 for (int i = 1; i < numCopies; i++) {
                     newRight->addChild(right);
                 }
-                stream->setRight(newRight); // This will take care of the deallocation internally
+                stream->setRight(newRight);
             }
 
         }
@@ -1438,7 +1438,8 @@ std::vector<ASTNode > CodeResolver::declareUnknownStreamSymbols(std::shared_ptr<
         if (previousStreamMember) {
             size = CodeValidator::getNodeNumOutputs(previousStreamMember, localScope, m_tree, errors);
         }
-        if (size <= 0) { // Look to the right if can't resolve from the left
+        if (size <= 0 && previousStreamMember) { // Look to the right if can't resolve from the left
+            // Size for first member should always be 1
             size = CodeValidator::getNodeNumInputs(nextStreamMember, localScope, m_tree, errors);
         }
         if (size <= 0) { // None of the elements in the stream have size
