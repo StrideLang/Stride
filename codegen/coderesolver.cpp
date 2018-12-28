@@ -982,19 +982,21 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream, Q
             setDomainForStack(domainStack, domainNode, scopeStack);
             domainStack.clear();
         }
-        if (left->getNodeType() == AST::Expression) {
+        if (left->getNodeType() == AST::Expression || left->getNodeType() == AST::List) {
 
             auto samplingDomain = CodeValidator::getNodeDomain(stream->getRight(), scopeStack, m_tree);
-            function<void(ASTNode node, ASTNode samplingDomain)> func = [&func](ASTNode node, ASTNode samplingDomain){
-                for (auto child: node->getChildren()) {
-                    if (child->getNodeType() == AST::Expression) {
-                        child->setCompilerProperty("samplingDomain", samplingDomain);
-                        func(child, samplingDomain);
+            if (samplingDomain) {
+                function<void(ASTNode node, ASTNode samplingDomain)> func = [&func](ASTNode node, ASTNode samplingDomain){
+                    for (auto child: node->getChildren()) {
+                        if (child->getNodeType() == AST::Expression || child->getNodeType() == AST::List) {
+                            child->setCompilerProperty("samplingDomain", samplingDomain);
+                            func(child, samplingDomain);
+                        }
                     }
-                }
-            };
-            func(left, samplingDomain);
-            left->setCompilerProperty("samplingDomain", samplingDomain);
+                };
+                left->setCompilerProperty("samplingDomain", samplingDomain);
+                func(left, samplingDomain);
+            }
         } else if (left->getNodeType() == AST::Function) {
             auto decl = CodeValidator::findDeclaration(CodeValidator::streamMemberName(left), scopeStack.toStdVector(), m_tree);
 
@@ -1030,7 +1032,8 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream, Q
             left = stream->getLeft();
             right = stream->getRight();
         } else {
-            if (left->getNodeType() == AST::Expression) {
+            if (left->getNodeType() == AST::Expression
+                    || left->getNodeType() == AST::List) {
                 left->setCompilerProperty("samplingDomain",
                                           CodeValidator::getNodeDomain(right, scopeStack, m_tree));
             }
@@ -1049,17 +1052,25 @@ ASTNode CodeResolver::processDomainsForNode(ASTNode node, QVector<ASTNode > scop
             || node->getNodeType() == AST::Bundle) {
         std::shared_ptr<DeclarationNode> declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(node),
                                                                                       scopeStack.toStdVector(), m_tree, node->getNamespaceList());
+        ASTNode domain = CodeValidator::getNodeDomain(node, scopeStack, m_tree);
+
         if(declaration) {
             ASTNode domain = declaration->getDomain();
-            if (!domain || domain->getNodeType() == AST::None) {
-                // Put declaration in stack to set domain once domain is resolved
-                domainStack << declaration;
-            } else if (domain->getNodeType() == AST::String
-                        || domain->getNodeType() == AST::Block
-                        || domain->getNodeType() == AST::PortProperty) {
-                    currentDomain = domain;
+            auto typeDeclaration = CodeValidator::findTypeDeclaration(declaration, scopeStack, m_tree);
+            if (typeDeclaration && typeDeclaration->getObjectType() == "platformModule") {
+                // The instance for a platform module is the block itself, not the declaration
+                domainStack << node;
             } else {
-                qDebug() << "unrecognized domain type";
+                if (!domain || domain->getNodeType() == AST::None) {
+                    // Put declaration in stack to set domain once domain is resolved
+                    domainStack << declaration;
+                } else if (domain->getNodeType() == AST::String
+                            || domain->getNodeType() == AST::Block
+                            || domain->getNodeType() == AST::PortProperty) {
+                        currentDomain = domain;
+                } else {
+                    qDebug() << "unrecognized domain type";
+                }
             }
         }
     } else if (node->getNodeType() == AST::Function) {
@@ -1146,7 +1157,12 @@ void CodeResolver::setDomainForStack(QList<ASTNode > domainStack, ASTNode domain
             std::shared_ptr<DeclarationNode> declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(relatedNode),
                                                                                           scopeStack.toStdVector(), m_tree);
             if(declaration) {
-                declaration->replacePropertyValue("domain", domainName);
+                auto typeDeclaration = CodeValidator::findTypeDeclaration(declaration, scopeStack, m_tree);
+                if (typeDeclaration->getObjectType() == "platformModule") {
+                    relatedNode->setCompilerProperty("domain", domainName);
+                } else {
+                    declaration->replacePropertyValue("domain", domainName);
+                }
             }
         } else if (relatedNode->getNodeType() == AST::Function) {
             std::shared_ptr<FunctionNode> func = static_pointer_cast<FunctionNode>(relatedNode);
@@ -2913,7 +2929,12 @@ void CodeResolver::resolveDomainForStreamNode(ASTNode node, QVector<ASTNode > sc
         std::shared_ptr<DeclarationNode> declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(node),
                                                                                       scopeStack.toStdVector(), m_tree, node->getNamespaceList());
         if (declaration) {
-            domain = static_cast<DeclarationNode *>(declaration.get())->getDomain();
+            auto typeDeclaration = CodeValidator::findTypeDeclaration(declaration, scopeStack, m_tree);
+            if (typeDeclaration && typeDeclaration->getObjectType() == "platformModule") {
+                domain = node->getCompilerProperty("domain");
+            } else {
+                domain = static_cast<DeclarationNode *>(declaration.get())->getDomain();
+            }
         }
     } else if (node->getNodeType() == AST::Function) {
         domain = static_cast<FunctionNode *>(node.get())->getDomain();
@@ -3211,7 +3232,7 @@ void CodeResolver::setReadsWrites(ASTNode node, ASTNode previous, QVector<ASTNod
                     // platformBlock and platformModule can be ignored as they are tied to a domain.
                     // However, we do need to figure out how to support buffer access across domains.
                     bool alreadyInReads = false;
-                    auto newReadDomain = decl->getDomain();
+                    auto newReadDomain = CodeValidator::getNodeDomain(node, scopeStack, m_tree);
                     for (auto read: previousReads->getChildren()) {
                         if (read->getNodeType() == AST::PortProperty
                                 && newReadDomain->getNodeType() == AST::PortProperty) {
@@ -3258,7 +3279,7 @@ void CodeResolver::setReadsWrites(ASTNode node, ASTNode previous, QVector<ASTNod
                 Q_ASSERT(writesProperties->getNodeType() == AST::List);
                 //                std::string domainName = CodeValidator::getDomainNodeString(decl->getDomain());
                 bool alreadyInWrites = false;
-                auto newWriteDomain = previousDecl->getDomain();
+                auto newWriteDomain = CodeValidator::getNodeDomain(previous, scopeStack, m_tree);
                 for (auto write: writesProperties->getChildren()) {
                     if (write->getNodeType() == AST::PortProperty
                             && newWriteDomain->getNodeType() == AST::PortProperty) {

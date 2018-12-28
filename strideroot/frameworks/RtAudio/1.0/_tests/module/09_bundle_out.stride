@@ -26,4 +26,6 @@ module Test {
 
 signal SigIn[2] { domain: AudioDomain }
 
+AudioIn >> SigIn;
+
 SigIn[1] >> Test(test: SigIn[2]) >> AudioOut;

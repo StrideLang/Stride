@@ -1,0 +1,30 @@
+use DesktopAudio version 1.0
+
+module TestSwitch {
+	ports: [
+		mainInputPort InputPort {
+			block: Input
+		}
+		mainOutputPort OutputPort {
+			block: Output
+		}
+		propertyInputPort UnusedPort {
+			name: "unused"
+			block: Unused
+		}
+	]
+	blocks: [
+		signal Counter {}
+		signal Input {domain: Output.domain}
+	]
+	streams: [
+		Input >> Output;
+	]
+	
+}
+
+signal UnusedInside {}
+
+AudioIn[1]
+>> TestSwitch (unused: Reset)
+>> AudioOut[1];

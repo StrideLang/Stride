@@ -166,6 +166,9 @@ void AST::setNamespaceList(vector<string> list)
 
 void AST::setCompilerProperty(string propertyName, ASTNode value)
 {
+    if (!m_CompilerProperties) {
+        m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
+    }
     for (auto child: m_CompilerProperties->getChildren()) {
         if (child->getNodeType() == AST::Property) {
             std::shared_ptr<PropertyNode> prop = static_pointer_cast<PropertyNode>(child);

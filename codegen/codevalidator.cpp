@@ -2321,8 +2321,14 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, QVector<ASTNode > scopeStack,
     if (node->getNodeType() == AST::Block) {
         BlockNode *name = static_cast<BlockNode *>(node.get());
         std::shared_ptr<DeclarationNode> declaration = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scopeStack, tree);
+
         if (declaration) {
-            domainNode = declaration->getDomain();
+            auto typeDeclaration = CodeValidator::findTypeDeclaration(declaration, scopeStack, tree);
+            if (typeDeclaration && typeDeclaration->getObjectType() == "platformModule") {
+                domainNode = name->getCompilerProperty("domain");
+            } else {
+                domainNode = declaration->getDomain();
+            }
         }
     } else if (node->getNodeType() == AST::Bundle) {
         BundleNode *name = static_cast<BundleNode *>(node.get());
@@ -2367,6 +2373,7 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, QVector<ASTNode > scopeStack,
             return  CodeValidator::getNodeDomain(node->getChildren().at(0), scopeStack, tree);
         } else {
             return nullptr;
+//            return static_pointer_cast<ListNode>(node)->getSamplingDomain();
         }
     } else if (node->getNodeType() == AST::Declaration || node->getNodeType() == AST::BundleDeclaration) {
         domainNode = static_cast<DeclarationNode *>(node.get())->getDomain();

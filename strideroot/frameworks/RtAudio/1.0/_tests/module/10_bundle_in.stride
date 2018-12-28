@@ -14,6 +14,7 @@ module Test {
 		signal Output[2] {}
 	]
 	streams: [
+		Input[1] >> Output[1];
 		Input[1] + Input[2] >> Output[2];
 	]
 }
@@ -22,6 +23,9 @@ signal SigIn[2] { rate: AudioRate domain: AudioDomain }
 signal OutA[2] { rate: AudioRate domain: AudioDomain }
 signal OutB[2] { rate: AudioRate domain: AudioDomain }
 
+AudioIn >> SigIn;
+
 SigIn >> Test() >> OutA;
-[SigIn[1], SigIn[2]] >> Test() >> OutB;
+[SigIn[2], SigIn[1]] >> Test() >> OutB;
+OutA[2] + OutB[1] >> AudioOut[1];
 OutA[1] + OutB[2] >> AudioOut[2];

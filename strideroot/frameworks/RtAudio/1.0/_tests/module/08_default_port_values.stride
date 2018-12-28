@@ -13,7 +13,7 @@ module Test {
 		propertyInputPort TestPort {
 			name: "test"
 			block: TestBlock
-			default: 1.0
+			default: 0.8
 		}
 	]
 	blocks: [

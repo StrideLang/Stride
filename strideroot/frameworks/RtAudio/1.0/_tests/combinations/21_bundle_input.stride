@@ -1,0 +1,18 @@
+use DesktopAudio version 1.0
+
+module BundleIn {
+	ports: [	
+		mainInputPort InputPort { block: Input }
+		mainOutputPort OutputPort { block: Output }
+	]
+	blocks: [
+		signal Input[2] { domain: Output.domain }
+		signal Output { default: 0 domain: OutputPort.domain}
+	]
+	streams: [
+		Input[1] + Input[2] >> Output;
+	]
+}
+
+AudioIn >> BundleIn() >> AudioOut[1];
+

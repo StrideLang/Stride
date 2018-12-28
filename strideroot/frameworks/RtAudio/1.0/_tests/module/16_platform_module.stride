@@ -1,0 +1,5 @@
+use DesktopAudio version 1.0
+
+import Generators
+
+AudioIn[1] >> Sin() >> AudioOut[1];

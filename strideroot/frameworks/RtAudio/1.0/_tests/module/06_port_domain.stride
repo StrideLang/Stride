@@ -11,7 +11,7 @@ module Test {
 		propertyInputPort TestPort {
 			name: "test"
 			block: TestBlock
-			domain: Output.domain
+			domain: OutputPort.domain
 		}
 	]
 	blocks: [
