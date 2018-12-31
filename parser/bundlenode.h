@@ -53,6 +53,7 @@ public:
     std::shared_ptr<ListNode> index() const;
 
     void setIndex(std::shared_ptr<ListNode> index);
+    std::vector<size_t> getIndeces();
 
     virtual void resolveScope(ASTNode scope) override;
 

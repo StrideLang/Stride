@@ -37,6 +37,8 @@
 #include "bundlenode.h"
 #include "scopenode.h"
 #include "listnode.h"
+#include "valuenode.h"
+#include "rangenode.h"
 
 using namespace std;
 
@@ -77,6 +79,37 @@ std::shared_ptr<ListNode> BundleNode::index() const
 void BundleNode::setIndex(std::shared_ptr<ListNode> index)
 {
     m_children[0] = index;
+}
+
+std::vector<size_t> BundleNode::getIndeces()
+{
+    auto indexList = index();
+    std::vector<size_t> indeces;
+    for (auto listNode: indexList->getChildren()) {
+        if (listNode->getNodeType() == AST::Int) {
+            indeces.push_back(static_pointer_cast<ValueNode>(listNode)->getIntValue());
+        } else if (listNode->getNodeType() == AST::Range) {
+            auto rangeNode = static_pointer_cast<RangeNode>(listNode);
+            if (rangeNode->startIndex()->getNodeType() == AST::Int
+                    && rangeNode->endIndex()->getNodeType() == AST::Int) {
+                assert(static_pointer_cast<ValueNode>(rangeNode->endIndex())->getIntValue() >=
+                       static_pointer_cast<ValueNode>(rangeNode->startIndex())->getIntValue());
+               for (size_t i = static_pointer_cast<ValueNode>(rangeNode->startIndex())->getIntValue();
+                    i <= static_pointer_cast<ValueNode>(rangeNode->endIndex())->getIntValue(); i++ ) {
+                   indeces.push_back(i);
+               }
+            } else {
+                // FIXME implemente
+                assert(0== 1);
+            }
+        } else {
+            // Unsupported
+            assert(0== 1);
+        }
+
+    }
+
+    return  indeces;
 }
 
 void BundleNode::resolveScope(ASTNode scope)
