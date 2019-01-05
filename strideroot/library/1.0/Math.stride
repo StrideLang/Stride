@@ -20,10 +20,9 @@ module Cos {
 		}
 	]
 	blocks: [
-		_cosineType CosineBlock {}
 	]
 	streams: [
-		Input >> CosineBlock >> Output;
+		Input >> __Cos() >> Output;
 	]
 	meta: "Cosine function"
 }
@@ -42,10 +41,9 @@ module Sin {
 		}
 	]
 	blocks: [
-		_sineType SineBlock {}
 	]
 	streams: [
-		Input >> SineBlock >> Output;
+		Input >> __Sin() >> Output;
 	]
 	meta: "Sine function"
 }
@@ -63,10 +61,9 @@ module Tan {
 		}
 	]
 	blocks: [
-		_tangentType TangentBlock {}
 	]
 	streams: [
-		Input >> TangentBlock >> Output;
+		Input >> __Tan() >> Output;
 	]
 	meta: "Tangent function"
 }
@@ -149,10 +146,9 @@ module Pow {
 		signal Input[2] { 
 			domain: OutputPort.domain
 		}
-		_powerType PowBlock {}
 	]
 	streams: [
-		[Input[1], Input[2]] >> PowBlock() >> Output;
+		[Input[1], Input[2]] >> __Pow() >> Output;
 	]
 	meta: "power(Input[1], Input[2])"
 }
@@ -168,10 +164,9 @@ module Exp {
 		}
 	]
 	blocks: [
-		_expType ExpBlock {}
 	]
 	streams: [
-		Input >> ExpBlock() >> Output;
+		Input >> __Exp() >> Output;
 	]
 	meta: "exp(Input)"
 }
@@ -259,10 +254,9 @@ module Floor {
 		signal Input { 
 			domain: OutputPort.domain
 		}
-		_floorType FloorBlock {}
 	]
 	streams: [
-		Input >> FloorBlock() >> Output;
+		Input >> __Floor() >> Output;
 	]
 	meta: "Returns float input value truncated to lower integer."
 }

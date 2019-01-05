@@ -1,15 +1,14 @@
 
-platformModule _FloorType {
-    typeName: '_floorType'
+platformModule _Floor {
     inputs: ["real"]
 	outputs: ["real"] # FIXME shoudl be "int"
     include: ["cmath"]
     processing: "std::floor(%%intoken:0%%)"
     inherits: ['signal']
 }
+
 # Power function
-platformModule _PowerType {
-    typeName: '_powerType'
+platformModule _Pow {
     inputs: ["real", "real"]
 	outputs: ["real"]
     include: ["cmath"]	
@@ -18,7 +17,7 @@ platformModule _PowerType {
 }
 
 # Power to e
-platformModule _ExpType {
+platformModule _Exp {
     typeName: '_expType'
     inputs: ["real"]
 	outputs: ["real"]

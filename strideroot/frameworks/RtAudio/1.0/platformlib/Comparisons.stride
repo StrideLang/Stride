@@ -1,7 +1,6 @@
 
 
-platformModule _SelectType {
-    typeName: '_selectType'
+platformModule __SelectType {
     inputs: ["bool", "any", "any"]
 	outputs: ["any"]
 #    include: []
@@ -12,8 +11,7 @@ platformModule _SelectType {
     inherits: [_Signal]
 }
 
-platformModule _ChooseType {
-    typeName: '_chooseType'
+platformModule __ChooseType {
     inputs: ["bool", "any", "any"]
 	outputs: ["any"]
 #    include: []
@@ -25,8 +23,7 @@ platformModule _ChooseType {
 }
 
 
-platformModule _GreaterType {
-    typeName: '_greaterType'
+platformModule __Greater {
     inputs: ["real", "real"]
 	outputs: ["real"]
 #    linkTo: []
@@ -36,8 +33,7 @@ platformModule _GreaterType {
     inherits: [_Signal]
 }
 
-platformModule _GreaterOrEqualType {
-    typeName: '_greaterOrEqualType'
+platformModule __GreaterOrEqual {
     inputs: ["real", "real"]
 	outputs: ["real"]
 #    linkTo: []
@@ -47,8 +43,7 @@ platformModule _GreaterOrEqualType {
     inherits: [_Signal]
 }
 
-platformModule _EqualType {
-    typeName: '_equalType'
+platformModule __Equal {
     inputs: ["real", "real"]
 	outputs: ["real"]
 #    linkTo: []
@@ -58,8 +53,7 @@ platformModule _EqualType {
     inherits: [_Signal]
 }
 
-platformModule _LessOrEqualType {
-    typeName: '_lessOrEqualType'
+platformModule __LessOrEqual {
     inputs: ["real", "real"]
 	outputs: ["real"]
 #    linkTo: []
@@ -69,8 +63,7 @@ platformModule _LessOrEqualType {
     inherits: [_Signal]
 }
 
-platformModule _LessType {
-    typeName: '_lessType'
+platformModule __Less {
     inputs: ["real", "real"]
 	outputs: ["real"]
 #    linkTo: []
@@ -80,8 +73,7 @@ platformModule _LessType {
     inherits: [_Signal]
 }
 
-platformModule _NotEqualType {
-    typeName: '_notEqualType'
+platformModule _NotEqual {
     inputs: ["real", "real"]
 	outputs: ["real"]
 #    linkTo: []

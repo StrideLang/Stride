@@ -12,11 +12,10 @@ module Greater {
         }
     ]
     blocks: [
-        signal Input[2] {domain: OutputPort.domain},
-		_greaterType GreaterBlock {}
+        signal Input[2] {domain: OutputPort.domain}
     ]
     streams: [
-       [Input[1], Input[2]] >> GreaterBlock >> Output;
+       [Input[1], Input[2]] >> __Greater() >> Output;
     ]
     meta: "Compare two input values."
 }
@@ -33,11 +32,10 @@ module GreaterOrEqual {
 		}
     ]
     blocks: [
-		signal Input[2] {domain: OutputPort.domain},
-		_greaterOrEqualType GreaterOrEqualBlock {}
+		signal Input[2] {domain: OutputPort.domain}
     ]
     streams: [
-       [Input[1], Input[2]] >> GreaterOrEqualBlock >> Output;
+       [Input[1], Input[2]] >> __GreaterOrEqual() >> Output;
     ]
     meta: ""
 }
@@ -55,10 +53,9 @@ module Less {
 	]
     blocks: [
 		signal Input[2] {}
-		_lessType LessBlock {}
     ]
     streams: [
-       [Input[1], Input[2]] >> LessBlock >> Output;
+       [Input[1], Input[2]] >> __Less() >> Output;
     ]
     meta: ""
 }
@@ -77,10 +74,9 @@ module LessOrEqual {
 	]
     blocks: [
 		signal Input[2] {}
-		_lessOrEqualType LessOrEqualBlock {}
     ]
     streams: [
-       [Input[1], Input[2]] >> LessOrEqualBlock >> Output;
+       [Input[1], Input[2]] >> __LessOrEqual() >> Output;
     ]
     meta: ""
 }
@@ -99,11 +95,10 @@ module Equal {
 	]
     blocks: [
         signal Input[2] { domain: OutputPort.domain},
-        signal Output { domain: OutputPort.domain},
-		_equalType EqualBlock {}
+        signal Output { domain: OutputPort.domain}
     ]
     streams: [
-       [Input[1], Input[2]] >> EqualBlock >> Output;
+       [Input[1], Input[2]] >> __Equal() >> Output;
     ]
     meta: ""
 }
@@ -121,10 +116,9 @@ module NotEqual {
 		}
 	]
     blocks: [
-		_notEqualType NotEqualBlock {}
     ]
     streams: [
-       [Input[1], Input[2]] >> NotEqualBlock >> Output;
+       [Input[1], Input[2]] >> __NotEqual() >> Output;
     ]
     meta: ""
 }
@@ -154,10 +148,9 @@ module Select {
         }
     ]
     blocks: [
-        _selectType SelectBlock {}
     ]
     streams: [
-        [Input, WhenOn, WhenOff]  >> SelectBlock >> Output;
+        [Input, WhenOn, WhenOff]  >> __Select() >> Output;
     ]
     meta: ""
 }
@@ -184,7 +177,7 @@ module Choose {
         _chooseType ChooseBlock {}
     ]
     streams: [
-        [Condition, Input[1], Input[2]]  >> ChooseBlock >> Output;
+        [Condition, Input[1], Input[2]]  >> __Choose() >> Output;
     ]
     meta: ""
 }

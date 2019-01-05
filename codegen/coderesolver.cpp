@@ -164,7 +164,7 @@ void CodeResolver::fillDefaultPropertiesForNode(ASTNode node)
                     destBlock->getObjectType(),
                     QVector<ASTNode>(), m_tree, destBlock->getNamespaceList());
         if (typeProperties.isEmpty()) {
-            qDebug() << "ERROR: fillDefaultProperties() No type definition for " << QString::fromStdString(destBlock->getObjectType());
+            qDebug() << "ERROR: fillDefaultPropertiesForNode() No type definition for " << QString::fromStdString(destBlock->getObjectType());
             return;
         }
         for(std::shared_ptr<PropertyNode> property : blockProperties) {
@@ -199,44 +199,51 @@ void CodeResolver::fillDefaultPropertiesForNode(ASTNode node)
                     QString::fromStdString(destFunc->getName()),
                     QVector<ASTNode >(), m_tree);
         if (functionModule) {
-            vector<ASTNode> typeProperties = functionModule->getPropertyValue("ports")->getChildren();
-            if (typeProperties.size() < 1) {
-                qDebug() << "ERROR: fillDefaultProperties() No type definition for " << QString::fromStdString(destFunc->getName());
-                return;
-            }
-            for (std::shared_ptr<PropertyNode> property : blockProperties) {
-                fillDefaultPropertiesForNode(property->getValue());
-            }
+            if (functionModule->getObjectType() == "module"
+                    || functionModule->getObjectType() == "reaction"
+                    || functionModule->getObjectType() == "loop"
+                    ) {
+                vector<ASTNode> typeProperties = functionModule->getPropertyValue("ports")->getChildren();
+                if (typeProperties.size() < 1) {
+                    qDebug() << "ERROR: fillDefaultProperties() No type definition for " << QString::fromStdString(destFunc->getName());
+                    return;
+                }
+                for (std::shared_ptr<PropertyNode> property : blockProperties) {
+                    fillDefaultPropertiesForNode(property->getValue());
+                }
 
-            for(ASTNode propertyListMember : typeProperties) {
-                Q_ASSERT(propertyListMember->getNodeType() == AST::Declaration);
-                DeclarationNode *propertyDecl = static_cast<DeclarationNode *>(propertyListMember.get());
+                for(ASTNode propertyListMember : typeProperties) {
+                    Q_ASSERT(propertyListMember->getNodeType() == AST::Declaration);
+                    DeclarationNode *propertyDecl = static_cast<DeclarationNode *>(propertyListMember.get());
 
-                if (propertyDecl->getObjectType().substr(0,8) == "property") {
-                    auto propertyNameValue = propertyDecl->getPropertyValue("name");
-                    if (propertyNameValue->getNodeType() == AST::String) {
-                        bool propertySet = false;
-                        string propertyName = static_pointer_cast<ValueNode>(propertyNameValue)->getStringValue();
-                        for(std::shared_ptr<PropertyNode> blockProperty : blockProperties) {
-                            if (blockProperty->getName() == propertyName) {
-                                propertySet = true;
-                                break;
+                    if (propertyDecl->getObjectType().substr(0,8) == "property") {
+                        auto propertyNameValue = propertyDecl->getPropertyValue("name");
+                        if (propertyNameValue->getNodeType() == AST::String) {
+                            bool propertySet = false;
+                            string propertyName = static_pointer_cast<ValueNode>(propertyNameValue)->getStringValue();
+                            for(std::shared_ptr<PropertyNode> blockProperty : blockProperties) {
+                                if (blockProperty->getName() == propertyName) {
+                                    propertySet = true;
+                                    break;
+                                }
                             }
-                        }
-                        if (!propertySet) {
-                            ASTNode defaultValueNode = propertyDecl->getPropertyValue("default");
-                            if (defaultValueNode) {
-                                std::shared_ptr<PropertyNode> newProperty
-                                        = std::make_shared<PropertyNode>(propertyName,
-                                                                         defaultValueNode,
-                                                                         propertyDecl->getFilename().data(), propertyDecl->getLine());
-                                destFunc->addProperty(newProperty);
+                            if (!propertySet) {
+                                ASTNode defaultValueNode = propertyDecl->getPropertyValue("default");
+                                if (defaultValueNode) {
+                                    std::shared_ptr<PropertyNode> newProperty
+                                            = std::make_shared<PropertyNode>(propertyName,
+                                                                             defaultValueNode,
+                                                                             propertyDecl->getFilename().data(), propertyDecl->getLine());
+                                    destFunc->addProperty(newProperty);
+                                }
                             }
                         }
                     }
                 }
 
-                }
+            } else if (functionModule->getObjectType() == "platformModule") {
+                // Is there anything to do here for platform modules?
+            }
         }
     } else if (node->getNodeType() == AST::List) {
         ListNode *list = static_cast<ListNode *>(node.get());
@@ -562,8 +569,8 @@ void CodeResolver::insertBuiltinObjects()
                         usedDeclarations << block;
                     }
                     if (typeName->getStringValue() == "type"
-                           /* || typeName->getStringValue() == "platformModule"
-                        || typeName->getStringValue() == "platformBlock"*/) {
+                            || typeName->getStringValue() == "platformModule"
+                            || typeName->getStringValue() == "platformBlock") {
                         m_tree->addChild(block);
                         usedDeclarations << block;
                     }
@@ -694,28 +701,30 @@ void CodeResolver::analyzeConnections()
 
             if (node->getCompilerProperty("writes")) {
                 for (auto domain: node->getCompilerProperty("writes")->getChildren()) {
-                    if(domain->getNodeType() == AST::String) {
-                        std::string domainName = static_pointer_cast<ValueNode>(domain)->getStringValue();
-                        for (auto knownDomain: knownDomains) {
-                            ASTNode domainNameValue = knownDomain->getPropertyValue("domainName");
-                            if (domainNameValue && domainNameValue->getNodeType() == AST::String) {
-                                if (domainName == static_cast<ValueNode *>(domainNameValue.get())->getStringValue() ) {
-                                    decl = knownDomain;
-                                    break;
+                    if(domain) {
+                        if (domain->getNodeType() == AST::String) {
+                            std::string domainName = static_pointer_cast<ValueNode>(domain)->getStringValue();
+                            for (auto knownDomain: knownDomains) {
+                                ASTNode domainNameValue = knownDomain->getPropertyValue("domainName");
+                                if (domainNameValue && domainNameValue->getNodeType() == AST::String) {
+                                    if (domainName == static_cast<ValueNode *>(domainNameValue.get())->getStringValue() ) {
+                                        decl = knownDomain;
+                                        break;
+                                    }
                                 }
                             }
+                            if (decl) {
+                                decl->getCompilerProperty("domainWrites")->addChild(node);
+                            }
+                        } else if(domain->getNodeType() == AST::Block) {
+                            decl = CodeValidator::findDeclaration(CodeValidator::streamMemberName(domain),
+                                                                  vector<ASTNode>(), m_tree);
+                            if (decl) {
+                                decl->getCompilerProperty("domainReads")->addChild(node);
+                            }
+                        } else {
+                            Q_ASSERT(domain->getNodeType() == AST::PortProperty);
                         }
-                        if (decl) {
-                            decl->getCompilerProperty("domainWrites")->addChild(node);
-                        }
-                    } else if(domain->getNodeType() == AST::Block) {
-                        decl = CodeValidator::findDeclaration(CodeValidator::streamMemberName(domain),
-                                                              vector<ASTNode>(), m_tree);
-                        if (decl) {
-                            decl->getCompilerProperty("domainReads")->addChild(node);
-                        }
-                    } else {
-                        Q_ASSERT(domain->getNodeType() == AST::PortProperty);
                     }
                 }
             }
@@ -780,7 +789,7 @@ void CodeResolver::insertBuiltinObjectsForNode(ASTNode node, map<string, vector<
             std::shared_ptr<DeclarationNode> declaration  = CodeValidator::findDeclaration(QString::fromStdString(func->getName()),
                                                                            QVector<ASTNode >::fromStdVector(it->second), nullptr);
             if (declaration) {
-                declaration->setRootScope(it->first);
+//                declaration->setRootScope(it->first);
                 for(auto child: declaration->getChildren()) { // Check if declaration is in current namespace. If it is, set as the namespace of the child
                     std::shared_ptr<DeclarationNode> childDeclaration = nullptr;
                     if (child->getNodeType() == AST::Block) {
@@ -1001,6 +1010,9 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream, Q
             auto decl = CodeValidator::findDeclaration(CodeValidator::streamMemberName(left), scopeStack.toStdVector(), m_tree);
 
             if (decl) {
+                if (decl->getObjectType() == "module"
+                        || decl->getObjectType() == "reaction"
+                        || decl->getObjectType() == "loop")
                 domainNode = processDomainsForNode(decl, scopeStack, domainStack);
                 auto internalStreams = decl->getPropertyValue("streams");
                 auto internalBlocks = decl->getPropertyValue("blocks");
@@ -1166,9 +1178,9 @@ void CodeResolver::setDomainForStack(QList<ASTNode > domainStack, ASTNode domain
             }
         } else if (relatedNode->getNodeType() == AST::Function) {
             std::shared_ptr<FunctionNode> func = static_pointer_cast<FunctionNode>(relatedNode);
-//            if (func) {
-//                func->setPropertyValue("domain", domainName);
-//            }
+            if (func) {
+                func->setCompilerProperty("domain", domainName);
+            }
         } else if (relatedNode->getNodeType() == AST::Real
                    || relatedNode->getNodeType() == AST::Int
                    || relatedNode->getNodeType() == AST::String
@@ -3234,7 +3246,7 @@ void CodeResolver::setReadsWrites(ASTNode node, ASTNode previous, QVector<ASTNod
                     bool alreadyInReads = false;
                     auto newReadDomain = CodeValidator::getNodeDomain(node, scopeStack, m_tree);
                     for (auto read: previousReads->getChildren()) {
-                        if (read->getNodeType() == AST::PortProperty
+                        if (read && read->getNodeType() == AST::PortProperty
                                 && newReadDomain->getNodeType() == AST::PortProperty) {
                             std::shared_ptr<PortPropertyNode> newReadDomainNode =
                                     std::static_pointer_cast<PortPropertyNode>(newReadDomain);
@@ -3255,7 +3267,7 @@ void CodeResolver::setReadsWrites(ASTNode node, ASTNode previous, QVector<ASTNod
 
                     if (previousDeclReads) {
                         for (auto read: previousDeclReads->getChildren()) {
-                            if (read->getNodeType() == AST::PortProperty
+                            if (read && read->getNodeType() == AST::PortProperty
                                     && newReadDomain->getNodeType() == AST::PortProperty) {
                                 std::shared_ptr<PortPropertyNode> newReadDomainNode =
                                         std::static_pointer_cast<PortPropertyNode>(newReadDomain);
@@ -3281,7 +3293,7 @@ void CodeResolver::setReadsWrites(ASTNode node, ASTNode previous, QVector<ASTNod
                 bool alreadyInWrites = false;
                 auto newWriteDomain = CodeValidator::getNodeDomain(previous, scopeStack, m_tree);
                 for (auto write: writesProperties->getChildren()) {
-                    if (write->getNodeType() == AST::PortProperty
+                    if (write && write->getNodeType() == AST::PortProperty
                             && newWriteDomain->getNodeType() == AST::PortProperty) {
                         std::shared_ptr<PortPropertyNode> newReadDomainNode =
                                 std::static_pointer_cast<PortPropertyNode>(newWriteDomain);

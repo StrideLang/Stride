@@ -138,12 +138,6 @@ type _FrameworkDescription {
 type _PlatformModuleType {
 	typeName: "platformModule"
 	properties: [
-		typeProperty TypeName {
-			name: "typeName"
-			types: ["CSP"]
-			default: none
-			required: on
-		},
 		typeProperty Include {
 			name: "include"
 			types: [""] #TODO accepts list
@@ -246,28 +240,22 @@ type _PlatformModuleType {
 			default: ""
 			required: off
 		},
-		typeProperty Framework {
-			name: "framework"
-			types: [""] #
-			default: none
-			required: on
-		},
+#		typeProperty Framework {
+#			name: "framework"
+#			types: [""] #
+#			default: none
+#			required: on
+#		},
 		typeProperty Domain {
 			name: "domain"
 			types: [""] #
 			default: none
 			required: off
 		},
-		typeProperty Rate {
-			name: "rate"
+		typeProperty AllowedDomains {
+			name: "allowedDomains"
 			types: [""] #
-			default: PlatformRate
-			required: off
-		},
-		typeProperty Inherits { # TODO should this be done differently? e.g. not as a port but through inheritance merging ports?
-			name: "inherits"
-			types: ["CSP", _Type]
-			default: []
+			default: none
 			required: off
 		}
 	]
@@ -276,7 +264,14 @@ type _PlatformModuleType {
 
 type _PlatformBlockType {
 	typeName: "platformBlock"
-	properties: [ ]
+	properties: [ 
+		typeProperty TypeName {
+			name: "typeName"
+			types: ["CSP"]
+			default: none
+			required: on
+		}
+	]
 	inherits: [_PlatformModuleType]
 }
 

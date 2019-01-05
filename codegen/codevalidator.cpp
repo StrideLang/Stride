@@ -1328,8 +1328,12 @@ int CodeValidator::getTypeNumOutputs(std::shared_ptr<DeclarationNode> blockDecla
                     }
                 }
             }
-        }
-        if (blockDeclaration->getObjectType() == "buffer") {
+        } else if (blockDeclaration->getObjectType() == "platformModule") {
+            auto outputList = blockDeclaration->getPropertyValue("outputs");
+            if (outputList && outputList->getNodeType() ==AST::List) {
+                return outputList->getChildren().size();
+            }
+        } else if (blockDeclaration->getObjectType() == "buffer") {
             auto sizeNode = blockDeclaration->getPropertyValue("size");
             if (sizeNode->getNodeType() == AST::Int) {
                 return static_pointer_cast<ValueNode>(sizeNode)->getIntValue();
@@ -1385,6 +1389,11 @@ int CodeValidator::getTypeNumInputs(std::shared_ptr<DeclarationNode> blockDeclar
                     }
                     //                return -1; // Should never get here!
                 }
+            }
+        } else if (blockDeclaration->getObjectType() == "platformModule") {
+            auto outputList = blockDeclaration->getPropertyValue("inputs");
+            if (outputList && outputList->getNodeType() ==AST::List) {
+                return outputList->getChildren().size();
             }
         } else {
             int size = getNodeSize(blockDeclaration, scope, tree);
@@ -1908,7 +1917,6 @@ std::shared_ptr<DeclarationNode> CodeValidator::findTypeDeclarationByName(string
                 if (node->getNodeType() == AST::Declaration) {
                     std::shared_ptr<DeclarationNode> declarationNode = static_pointer_cast<DeclarationNode>(node);
                     if (declarationNode->getObjectType() == "type"
-                            || declarationNode->getObjectType() == "platformModule"
                             || declarationNode->getObjectType() == "platformBlock") {
                         ASTNode valueNode = declarationNode->getPropertyValue("typeName");
                         if (valueNode->getNodeType() == AST::String) {
@@ -1917,6 +1925,11 @@ std::shared_ptr<DeclarationNode> CodeValidator::findTypeDeclarationByName(string
                                     && CodeValidator::namespaceMatch(namespaces, declarationNode) ) {
                                 return declarationNode;
                             }
+                        }
+                    } else if (declarationNode->getObjectType() == "platformModule") {
+                        if (typeName == declarationNode->getName()
+                                && CodeValidator::namespaceMatch(namespaces, declarationNode) ) {
+                            return declarationNode;
                         }
                     }
                 }
@@ -1928,7 +1941,6 @@ std::shared_ptr<DeclarationNode> CodeValidator::findTypeDeclarationByName(string
             if (node->getNodeType() == AST::Declaration) {
                 std::shared_ptr<DeclarationNode> declarationNode = static_pointer_cast<DeclarationNode>(node);
                 if (declarationNode->getObjectType() == "type"
-                        || declarationNode->getObjectType() == "platformModule"
                         || declarationNode->getObjectType() == "platformBlock") {
                     ASTNode valueNode = declarationNode->getPropertyValue("typeName");
                     if (valueNode && valueNode->getNodeType() == AST::String) {
@@ -1937,6 +1949,11 @@ std::shared_ptr<DeclarationNode> CodeValidator::findTypeDeclarationByName(string
                                 && CodeValidator::namespaceMatch(namespaces, declarationNode) ) {
                             return declarationNode;
                         }
+                    }
+                } else if (declarationNode->getObjectType() == "platformModule") {
+                    if (typeName == declarationNode->getName()
+                            && CodeValidator::namespaceMatch(namespaces, declarationNode) ) {
+                        return declarationNode;
                     }
                 }
             }
@@ -2378,7 +2395,7 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, QVector<ASTNode > scopeStack,
     } else if (node->getNodeType() == AST::Declaration || node->getNodeType() == AST::BundleDeclaration) {
         domainNode = static_cast<DeclarationNode *>(node.get())->getDomain();
     } else if (node->getNodeType() == AST::Function) {
-        domainNode = static_cast<FunctionNode *>(node.get())->getDomain();
+        domainNode = node->getCompilerProperty("domain");// static_cast<FunctionNode *>(node.get())->getDomain();
     } else if (node->getNodeType() == AST::Expression) {
         ExpressionNode *expr = static_cast<ExpressionNode *>(node.get());
         if (expr->isUnary()) {
