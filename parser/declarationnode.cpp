@@ -177,11 +177,11 @@ ASTNode DeclarationNode::deepCopy()
     } else if (getNodeType() == AST::Declaration) {
         node = std::make_shared<DeclarationNode>(m_name, m_objectType, newProps, m_filename.data(), m_line, m_scope);
     }
-    if (this->m_CompilerProperties) {
-        node->m_CompilerProperties = std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
-    } else {
-        node->m_CompilerProperties = nullptr;
-    }
+//    if (this->m_CompilerProperties) {
+//        node->m_CompilerProperties = std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
+//    } else {
+//        node->m_CompilerProperties = nullptr;
+//    }
     assert(node);
 //    newProps.reset();
     return node;

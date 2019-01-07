@@ -3169,15 +3169,18 @@ void CodeResolver::checkStreamConnections(std::shared_ptr<StreamNode> stream, QV
                     // FIXME simplistic. We are connecting the input of a module to the output. This might
                     // not be the case always.
                     auto func = static_pointer_cast<FunctionNode>(left);
-                    setOutputBlockForFunction(func, scopeStack, next->getCompilerProperty("outputBlock"));
-                    //                    left->setCompilerProperty("outputBlock", next->getCompilerProperty("outputBlock"));
-                    if (left->getCompilerProperty("outputBlock")) {
-                        // FIXME we should go recursively to get the rightmost outputBlock
-                        next->setCompilerProperty("inputBlock", left->getCompilerProperty("outputBlock"));
-                    }
+                    setOutputBlockForFunction(func, scopeStack, next);
+                    next->setCompilerProperty("inputBlock", func);
+//                    setOutputBlockForFunction(func, scopeStack, next->getCompilerProperty("outputBlock"));
+//                    //                    left->setCompilerProperty("outputBlock", next->getCompilerProperty("outputBlock"));
+//                    if (left->getCompilerProperty("outputBlock")) {
+//                        // FIXME we should go recursively to get the rightmost outputBlock
+//                        next->setCompilerProperty("inputBlock", left->getCompilerProperty("outputBlock"));
+//                    }
                 } else {
                     auto func = static_pointer_cast<FunctionNode>(left);
                     setOutputBlockForFunction(func, scopeStack, next);
+                    next->setCompilerProperty("inputBlock", func);
                 }
             }
         }

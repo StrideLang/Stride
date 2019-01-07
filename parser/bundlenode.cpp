@@ -130,11 +130,11 @@ ASTNode BundleNode::deepCopy()
         for (unsigned int i = 0; i < this->getScopeLevels(); i++) {
             newBundle->addScope(this->getScopeAt(i));
         }
-        if (this->m_CompilerProperties) {
-            newBundle->m_CompilerProperties = std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
-        } else {
-            newBundle->m_CompilerProperties = nullptr;
-        }
+//        if (this->m_CompilerProperties) {
+//            newBundle->m_CompilerProperties = std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
+//        } else {
+//            newBundle->m_CompilerProperties = nullptr;
+//        }
         return newBundle;
     }
     assert(0 == 1);

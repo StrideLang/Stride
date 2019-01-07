@@ -52,10 +52,10 @@ PortPropertyNode::~PortPropertyNode()
 ASTNode PortPropertyNode::deepCopy()
 {
     std::shared_ptr<PortPropertyNode> newPortPropertyNode = make_shared<PortPropertyNode>(m_name, m_port, m_filename.data(), m_line);
-    if (this->m_CompilerProperties) {
-        newPortPropertyNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
-    } else {
-        newPortPropertyNode->m_CompilerProperties = nullptr;
-    }
+//    if (this->m_CompilerProperties) {
+//        newPortPropertyNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
+//    } else {
+//        newPortPropertyNode->m_CompilerProperties = nullptr;
+//    }
     return newPortPropertyNode;
 }

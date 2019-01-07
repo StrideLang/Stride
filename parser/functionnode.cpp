@@ -186,11 +186,11 @@ ASTNode FunctionNode::deepCopy()
         newFunctionNode->addScope(this->getScopeAt(i));
     }
     newFunctionNode->setRate(getRate());
-    if (this->m_CompilerProperties) {
-        newFunctionNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
-    } else {
-        newFunctionNode->m_CompilerProperties = nullptr;
-    }
+//    if (this->m_CompilerProperties) {
+//        newFunctionNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
+//    } else {
+//        newFunctionNode->m_CompilerProperties = nullptr;
+//    }
     return newFunctionNode;
 }
 

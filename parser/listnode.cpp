@@ -113,11 +113,11 @@ ASTNode ListNode::deepCopy()
     } else {
         newList = std::make_shared<ListNode>(nullptr, m_filename.data(), m_line);
     }
-    if (this->m_CompilerProperties) {
-        newList->m_CompilerProperties = std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
-    } else {
-        newList->m_CompilerProperties = nullptr;
-    }
+//    if (this->m_CompilerProperties) {
+//        newList->m_CompilerProperties = std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
+//    } else {
+//        newList->m_CompilerProperties = nullptr;
+//    }
     return newList;
 }
 

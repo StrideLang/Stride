@@ -95,11 +95,11 @@ ASTNode AST::deepCopy()
     for(unsigned int i = 0; i < m_children.size(); i++) {
         newNode->addChild(m_children.at(i)->deepCopy());
     }
-    if (this->m_CompilerProperties) {
-        newNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
-    } else {
-        newNode->m_CompilerProperties = nullptr;
-    }
+//    if (this->m_CompilerProperties) {
+//        newNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
+//    } else {
+//        newNode->m_CompilerProperties = nullptr;
+//    }
     return newNode;
 }
 
@@ -184,6 +184,9 @@ void AST::setCompilerProperty(string propertyName, ASTNode value)
 
 ASTNode AST::getCompilerProperty(string propertyName)
 {
+    if (!m_CompilerProperties) {
+        return nullptr;
+    }
     for (auto child: m_CompilerProperties->getChildren()) {
         if (child->getNodeType() == AST::Property) {
             std::shared_ptr<PropertyNode> prop = static_pointer_cast<PropertyNode>(child);

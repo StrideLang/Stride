@@ -90,11 +90,11 @@ ASTNode ImportNode::deepCopy()
     for (unsigned int i = 0; i < this->getScopeLevels(); i++) {
         newImportNode->addScope(this->getScopeAt(i));
     }
-    if (this->m_CompilerProperties) {
-        newImportNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
-    } else {
-        newImportNode->m_CompilerProperties = nullptr;
-    }
+//    if (this->m_CompilerProperties) {
+//        newImportNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
+//    } else {
+//        newImportNode->m_CompilerProperties = nullptr;
+//    }
     return newImportNode;
 }
 
