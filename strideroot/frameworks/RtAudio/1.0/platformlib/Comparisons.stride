@@ -1,6 +1,6 @@
 
 
-platformModule __SelectType {
+platformModule __Select {
     inputs: ["bool", "any", "any"]
 	outputs: ["any"]
 #    include: []

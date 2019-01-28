@@ -246,6 +246,7 @@ platformBlock _HwInput {
 #    initializations: [""]
     processing: "in[%%bundle_index%%]"
     domain: AudioDomain
+	rate: AudioRate
     inherits: [_Signal]
 }
 
@@ -259,6 +260,7 @@ platformBlock _HwOutput {
 #    initializations: ["// %%token%% = 0;"]
     processing: "out[%%bundle_index%%] = %%intoken:0%%;"
     domain: AudioDomain
+	rate: AudioRate
     inherits: [_Signal]
 }
 

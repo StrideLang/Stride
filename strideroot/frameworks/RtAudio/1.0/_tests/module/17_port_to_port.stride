@@ -1,0 +1,52 @@
+use DesktopAudio version 1.0
+
+import Generators
+
+module UsedInTest {
+    ports: [
+		mainInputPort InputPort {
+			block: Input
+		},
+		mainOutputPort OutputPort {
+			block: Output
+		},
+		propertyInputPort PortInputPort2 {
+			name: "portInput2"
+			block: PortInput2
+			default: 0.5
+			meta: "The frequency of the oscillator."
+		}
+    ]
+    blocks: [
+    ]
+    streams: [
+        PortInput2 * Input >> Output;
+    ]
+
+}
+
+module Test {
+    ports: [
+        mainInputPort InputPort {
+			block: Input
+		},
+		mainOutputPort OutputPort {
+			block: Output
+		},
+		propertyInputPort PortInputPort {
+			name: "portInput"
+			block: PortInput
+			default: 0.4
+			meta: "The frequency of the oscillator."
+		}
+		
+    ]
+    blocks: [
+    ]
+    streams: [
+        Input >> UsedInTest(portInput2: PortInput) >> Output;
+    ]
+}
+
+
+AudioIn[1] >> Test(portInput: AudioIn[2]) >> AudioOut[2];

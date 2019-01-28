@@ -1,0 +1,24 @@
+use DesktopAudio version 1.0
+
+import Generators
+
+
+module Test {
+    ports: [
+        mainInputPort InputPort {
+			block: Input
+		},
+		mainOutputPort OutputPort {
+			block: Output
+		}
+		
+    ]
+    blocks: [
+    ]
+    streams: [
+        OutputPort.rate + (Input / OutputPort.rate) >> Output;
+    ]
+}
+
+
+AudioIn[1] >> Test() >> AudioOut[1];

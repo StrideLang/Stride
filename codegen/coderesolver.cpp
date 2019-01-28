@@ -1196,7 +1196,9 @@ void CodeResolver::setDomainForStack(QList<ASTNode > domainStack, ASTNode domain
                 children.push_back(member);
             }
             setDomainForStack(children, domainName, scopeStack);
-        }
+        } else if (relatedNode->getNodeType() == AST::PortProperty) {
+            relatedNode->setCompilerProperty("domain", domainName);
+       }
     }
 }
 
@@ -1496,7 +1498,9 @@ std::vector<ASTNode > CodeResolver::declareUnknownStreamSymbols(std::shared_ptr<
         if (left->getNodeType() == AST::Function) {
             auto funcDecl = CodeValidator::findDeclaration(
                         CodeValidator::streamMemberName(left), localScope.toStdVector(), tree);
-            size = CodeValidator::getTypeNumOutputs(funcDecl, localScope, m_tree, errors);
+            if (funcDecl) {
+                size = CodeValidator::getTypeNumOutputs(funcDecl, localScope, m_tree, errors);
+            }
         } else {
            size = CodeValidator::getNodeNumOutputs(left, localScope, m_tree, errors);
         }
@@ -2225,13 +2229,7 @@ void CodeResolver::propagateDomainsForNode(ASTNode node, QVector<ASTNode > scope
                 scopeStack = QVector<ASTNode>::fromStdVector(ports->getChildren()) + scopeStack;
             }
 
-//            scopeStack << CodeValidator::getBlockSubScope(module);
-
             auto contextDomainNode = getModuleContextDomain(module);
-
-//            std::shared_ptr<DeclarationNode> contextDomainDecl = CodeValidator::findDeclaration(QString::fromStdString(contextDomainName),
-//                                                                                                scopeStack,
-//                                                                                                m_tree);
 
             while(streamIt != streamsNode.rend()) {
                 const ASTNode streamNode = *streamIt;
@@ -2964,6 +2962,8 @@ void CodeResolver::resolveDomainForStreamNode(ASTNode node, QVector<ASTNode > sc
             resolveDomainForStreamNode(expr->getRight(), scopeStack);
         }
         return;
+    } else if (node->getNodeType() == AST::PortProperty) {
+        domain = node->getCompilerProperty("domain");
     }
     if (domain) {
         std::shared_ptr<DeclarationNode> domainDeclaration;
@@ -3152,31 +3152,17 @@ void CodeResolver::checkStreamConnections(std::shared_ptr<StreamNode> stream, QV
                 if (left->getNodeType() == AST::List) {
                     for (auto child: left->getChildren()) {
                         if (child->getNodeType() == AST::Function) {
-                            // FIXME simplistic. We are connecting the input of a module to the output. This might
-                            // not be the case always.
                             auto func = static_pointer_cast<FunctionNode>(child);
                             setOutputBlockForFunction(func, scopeStack, next->getCompilerProperty("outputBlock"));
-                            //                    left->setCompilerProperty("outputBlock", next->getCompilerProperty("outputBlock"));
                             if (child->getCompilerProperty("outputBlock")) {
                                 next->setCompilerProperty("inputBlock", child->getCompilerProperty("outputBlock"));
                             }
-                        } /*else {
-                            auto func = static_pointer_cast<FunctionNode>(child);
-                            setOutputBlockForFunction(func, scopeStack, next);
-                        }*/
+                        }
                     }
                 } else if (left->getNodeType() == AST::Function) {
-                    // FIXME simplistic. We are connecting the input of a module to the output. This might
-                    // not be the case always.
                     auto func = static_pointer_cast<FunctionNode>(left);
                     setOutputBlockForFunction(func, scopeStack, next);
                     next->setCompilerProperty("inputBlock", func);
-//                    setOutputBlockForFunction(func, scopeStack, next->getCompilerProperty("outputBlock"));
-//                    //                    left->setCompilerProperty("outputBlock", next->getCompilerProperty("outputBlock"));
-//                    if (left->getCompilerProperty("outputBlock")) {
-//                        // FIXME we should go recursively to get the rightmost outputBlock
-//                        next->setCompilerProperty("inputBlock", left->getCompilerProperty("outputBlock"));
-//                    }
                 } else {
                     auto func = static_pointer_cast<FunctionNode>(left);
                     setOutputBlockForFunction(func, scopeStack, next);
@@ -3203,14 +3189,8 @@ void CodeResolver::checkStreamConnections(std::shared_ptr<StreamNode> stream, QV
             }
         } else if (left->getNodeType() == AST::Function) {
             ASTNode nextBlock = right;
-//            if (right->getNodeType() == AST::Function) {
-//                right->getCompilerProperty("inputBlock");
-//            }
             auto func = static_pointer_cast<FunctionNode>(left);
             setOutputBlockForFunction(func, scopeStack, nextBlock);
-//            if (nextBlock) {
-//                left->setCompilerProperty("outputBlock", nextBlock);
-//            }
         }
     }
 }

@@ -270,6 +270,12 @@ type _PlatformBlockType {
 			types: ["CSP"]
 			default: none
 			required: on
+		},
+        typeProperty Rate {
+			name: "rate"
+			types: [""] #
+			default: -1
+			required: off
 		}
 	]
 	inherits: [_PlatformModuleType]

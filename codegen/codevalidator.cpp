@@ -316,6 +316,14 @@ double CodeValidator::getNodeRate(ASTNode node, QVector<ASTNode> scope, ASTNode 
             }
         }
         return rate;
+    } else if (node->getNodeType() == AST::Declaration
+               || node->getNodeType() == AST::BundleDeclaration) {
+        auto decl = static_pointer_cast<DeclarationNode>(node);
+        auto rateNode = decl->getPropertyValue("rate");
+        if (rateNode
+                && (rateNode->getNodeType() == AST::Int || rateNode->getNodeType() == AST::Real)) {
+                return static_pointer_cast<ValueNode>(rateNode)->toReal();
+        }
     }
     return -1;
 }
