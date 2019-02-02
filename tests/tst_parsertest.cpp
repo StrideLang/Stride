@@ -182,22 +182,22 @@ void ParserTest::testBlockIOResolution()
     QVERIFY(stream->getNodeType() == AST::Stream);
     node = stream->getRight()->getChildren()[0];
     QVERIFY(node->getNodeType() == AST::Function);
-    outputBlock = static_pointer_cast<BlockNode>(node->getCompilerProperty("outputBlock"));
+    auto outputFunc = static_pointer_cast<FunctionNode>(node->getCompilerProperty("outputBlock"));
     inputBlock = static_pointer_cast<BlockNode>(node->getCompilerProperty("inputBlock"));
-    QVERIFY(outputBlock->getNodeType() == AST::Block);
+    QVERIFY(outputFunc->getNodeType() == AST::Function);
     QVERIFY(inputBlock->getNodeType() == AST::Block);
-    QVERIFY(outputBlock->getName() == "OuterOutput");
+    QVERIFY(outputFunc->getName() == "TestModule");
     QVERIFY(inputBlock->getName() == "OuterInput");
 
     node = static_cast<StreamNode *>(stream->getRight()->getChildren()[1].get())->getLeft();
 
     outputBlock = static_pointer_cast<BlockNode>(node->getCompilerProperty("outputBlock"));
-    inputBlock = static_pointer_cast<BlockNode>(node->getCompilerProperty("inputBlock"));
+    auto inputFunc = static_pointer_cast<FunctionNode>(node->getCompilerProperty("inputBlock"));
     QVERIFY(outputBlock->getNodeType() == AST::Block);
-    QVERIFY(inputBlock->getNodeType() == AST::Block);
+    QVERIFY(inputFunc->getNodeType() == AST::Function);
 
     QVERIFY(outputBlock->getName() == "OuterOutput");
-    QVERIFY(inputBlock->getName() == "OuterOutput");
+    QVERIFY(inputFunc->getName() == "TestModule");
 
 }
 

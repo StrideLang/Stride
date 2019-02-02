@@ -11,12 +11,11 @@ module Test {
 		mainOutputPort OutputPort {
 			block: Output
 		}
-		
     ]
     blocks: [
     ]
     streams: [
-        Input / InputPort.rate >> Output;
+        Input / OutputPort.rate >> Output;
     ]
 }
 

@@ -33,10 +33,7 @@ module Oscillator {
 		}
     ]
     blocks: [
-#        signal Frequency {
-#			default :       0.0
-#                rate:           AudioRate # FIXME needs to be streamRate
-#		}
+
         signal Amplitude {
 			default :       1.0
 		}
@@ -64,18 +61,17 @@ module Oscillator {
 			default :       0.0
 			domain: FrequencyPort.domain
 		}
-        _sineType SineBlock {}
-		reaction WrapPhase {
-		ports: [
-		]
-		streams: [
-			Phase -( 2 * _Pi) >> Phase;
-			]
-		}
+#		reaction WrapPhase {
+#		ports: [
+#		]
+#		streams: [
+#			Phase -( 2 * _Pi) >> Phase;
+#			]
+#		}
     ]
     streams: [
-        Frequency * 2.0 * _Pi / Output.rate >> PhaseInc;
-        Phase >> SineBlock >> Level(gain: Amplitude) >> Output;
+        Frequency * 2.0 * _Pi / OutputPort.rate >> PhaseInc;
+        Phase >> __Sin() >> Level(gain: Amplitude) >> Output;
         Phase + PhaseInc >> Phase;
 #        [Phase , ( 2 * _Pi) ] >> Greater() >> WrapPhase();
     ]

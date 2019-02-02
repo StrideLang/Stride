@@ -149,7 +149,7 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile)
          }
      }
      if (!buildOK) {
-         std::cerr << "Error in python script build/run" << std::endl;
+         std::cerr << "Error in build/run" << std::endl;
      } else {
          std::cerr << "Passed comparison." << std::endl;
      }
