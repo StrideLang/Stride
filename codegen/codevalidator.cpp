@@ -1665,6 +1665,73 @@ PortType CodeValidator::resolvePortPropertyType(PortPropertyNode *portproperty, 
     return None;
 }
 
+shared_ptr<DeclarationNode> CodeValidator::resolveBlock(ASTNode node, bool downStream) {
+    if (node->getNodeType() == AST::Declaration) { // Signal
+        return static_pointer_cast<DeclarationNode>(node);
+    } else if (node->getNodeType() == AST::Function) {
+        auto funcDecl = static_pointer_cast<DeclarationNode>(node->getCompilerProperty("declaration"));
+        if (funcDecl) {
+            auto ports = funcDecl->getPropertyValue("ports");
+            auto portDeclBlock = CodeValidator::getMainOutputPortBlock(funcDecl);
+            if (portDeclBlock) {
+                auto portBlock = portDeclBlock->getPropertyValue("block");
+                if (portBlock) {
+                    auto portBlockDecl = CodeValidator::findDeclaration(
+                                CodeValidator::streamMemberName(portBlock),
+                                static_pointer_cast<DeclarationNode>(funcDecl)->getPropertyValue("blocks")->getChildren(),
+                                nullptr);
+                    if (portBlockDecl) {
+                        auto blockDomain = CodeValidator::getNodeDomain(portBlockDecl, {},
+                                                                        nullptr);
+                        if (blockDomain && blockDomain->getNodeType() == AST::PortProperty) {
+                            auto portName = static_pointer_cast<PortPropertyNode>(blockDomain)->getName();
+                            Q_ASSERT(static_pointer_cast<PortPropertyNode>(blockDomain)->getPortName() == "domain");
+                            // Now match the port name from the domain to the port declaration
+                            for(auto port: ports->getChildren()) {
+                                if (port->getNodeType() == AST::Declaration) {
+                                    auto portDecl = static_pointer_cast<DeclarationNode>(port);
+                                    if (portDecl->getName() == portName) { // Port match. Now get outer node
+                                        auto portType = static_pointer_cast<DeclarationNode>(port)->getObjectType();
+                                        // TODO connect all port types
+                                        if (portType == "mainOutputPort" && downStream) {
+                                            auto outerBlock = node->getCompilerProperty("outputBlock");
+                                            return resolveBlock(outerBlock, true);
+                                        } else if (portType == "mainInputPort" && !downStream) {
+                                            auto outerBlock = node->getCompilerProperty("inputBlock");
+                                            return resolveBlock(outerBlock, false);
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            qDebug() << "Unexpected port block domain";
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return shared_ptr<DeclarationNode>();
+}
+
+ASTNode CodeValidator::resolveDomain(ASTNode node, std::vector<ASTNode> scopeStack, ASTNode tree, bool downStream) {
+    auto blockDecl = resolveBlock(node, downStream);
+    if (blockDecl) {
+        return CodeValidator::getNodeDomain(blockDecl, QVector<ASTNode>::fromStdVector(scopeStack), tree);
+    } else {
+        return CodeValidator::getNodeDomain(node, QVector<ASTNode>::fromStdVector(scopeStack), tree);
+    }
+}
+
+double CodeValidator::resolveRate(ASTNode node, std::vector<ASTNode> scopeStack, ASTNode tree, bool downStream) {
+    auto blockDecl = resolveBlock(node, downStream);
+    if (blockDecl) {
+        return CodeValidator::getNodeRate(blockDecl, QVector<ASTNode>::fromStdVector(scopeStack), tree);
+    } else {
+        return CodeValidator::getNodeRate(node, QVector<ASTNode>::fromStdVector(scopeStack), tree);
+    }
+}
+
 int CodeValidator::evaluateConstInteger(ASTNode node, QVector<ASTNode > scope, ASTNode tree, QList<LangError> &errors)
 {
     int result = 0;

@@ -85,6 +85,10 @@ public:
     static PortType resolveExpressionType(ExpressionNode *exprnode, QVector<ASTNode > scope, ASTNode tree);
     static PortType resolveRangeType(RangeNode *rangenode, QVector<ASTNode > scope, ASTNode tree);
     static PortType resolvePortPropertyType(PortPropertyNode *portproperty, QVector<ASTNode > scope, ASTNode tree);
+    static shared_ptr<DeclarationNode> resolveBlock(ASTNode node, bool downStream = true);
+
+    static ASTNode resolveDomain(ASTNode node, std::vector<ASTNode> scopeStack, ASTNode tree, bool downStream = true);
+    static double resolveRate(ASTNode node, std::vector<ASTNode> scopeStack, ASTNode tree, bool downStream = true);
 
     static int evaluateConstInteger(ASTNode node, QVector<ASTNode> scope, ASTNode tree, QList<LangError> &errors);
     static double evaluateConstReal(ASTNode node, QVector<ASTNode > scope, ASTNode tree, QList<LangError> &errors);
