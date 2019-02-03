@@ -10,6 +10,6 @@ reaction ConstantSwitch {
 		1.8 >> ReactionOutput;
 	]
 }
-0.0 >> AudioOut[1];
+
 on >> ConstantSwitch() >> AudioOut[1];
 	

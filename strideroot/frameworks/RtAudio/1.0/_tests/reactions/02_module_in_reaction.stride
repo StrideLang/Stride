@@ -10,11 +10,11 @@ module Add10 {
     ports: [
 		mainOutputPort OutputPort {
 			block: Output
-			domain: OutputDomain
+			domain: OutputPort.domain
 		}
 		mainInputPort InputPort {
 			block: Input
-			domain: OutputDomain
+			domain: OutputPort.domain
 		}
     ]
     streams: [
