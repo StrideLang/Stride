@@ -204,7 +204,7 @@ void CodeResolver::fillDefaultPropertiesForNode(ASTNode node)
                     || functionModule->getObjectType() == "loop"
                     ) {
                 vector<ASTNode> typeProperties = functionModule->getPropertyValue("ports")->getChildren();
-                if (typeProperties.size() < 1) {
+                if (!functionModule->getPropertyValue("ports")) {
                     qDebug() << "ERROR: fillDefaultProperties() No type definition for " << QString::fromStdString(destFunc->getName());
                     return;
                 }

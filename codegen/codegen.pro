@@ -21,7 +21,8 @@ SOURCES += \
     stridelibrary.cpp \
     strideplatform.cpp \
     stridesystem.cpp \
-    systemconfiguration.cpp
+    systemconfiguration.cpp \
+    languagesyntax.cpp
 
 HEADERS += \
     pythonproject.h \
@@ -32,7 +33,9 @@ HEADERS += \
     strideplatform.hpp \
     porttypes.h \
     stridesystem.hpp \
-    systemconfiguration.hpp
+    systemconfiguration.hpp \
+    languagesyntax.hpp \
+    codeentities.hpp
 
 win32-msvc2015:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../parser/release/ -lStrideParser
 else:win32-msvc2015:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../parser/debug/ -lStrideParser
