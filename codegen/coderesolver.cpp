@@ -1559,18 +1559,6 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node, QVector<ASTNode> s
 {
     if (node->getNodeType() == AST::Declaration) {
         std::shared_ptr<DeclarationNode> block = static_pointer_cast<DeclarationNode>(node);
-        if (block->getObjectType() == "reaction") {
-            std::shared_ptr<DeclarationNode> reactionInput = std::make_shared<DeclarationNode>("_TriggerInput", "mainInputPort", nullptr,__FILE__, __LINE__);
-            reactionInput->setPropertyValue("block", std::make_shared<BlockNode>("_Trigger", __FILE__, __LINE__));
-            reactionInput->setPropertyValue("name", std::make_shared<ValueNode>(std::string("_trigger"), __FILE__, __LINE__));
-
-            ListNode *ports = static_cast<ListNode *>(block->getPropertyValue("ports").get());
-            if (ports && ports->getNodeType() == AST::None) {
-                block->replacePropertyValue("ports", std::make_shared<ListNode>(nullptr, __FILE__, __LINE__));
-                ports = static_cast<ListNode *>(block->getPropertyValue("ports").get());
-            }
-            ports->addChild(reactionInput);
-        }
         if (block->getObjectType() == "loop") { // We need to define an internal domain for loops
             ListNode *ports = static_cast<ListNode *>(block->getPropertyValue("ports").get());
             if (!ports) {
@@ -3119,24 +3107,24 @@ void CodeResolver::checkStreamConnections(std::shared_ptr<StreamNode> stream, QV
     if (right->getNodeType() == AST::Function) {
         previous = left;
         auto func = static_pointer_cast<FunctionNode>(right);
-        if (left->getNodeType() == AST::Function) {
-            // FIXME this is a hack assuming that the input is always connected to the output inside modules.
-            ASTNode newPrevious = left->getCompilerProperty("inputBlock");
-            if (newPrevious) {
-                previous = newPrevious; // Otherwise keep old previous
-            }
-        }
+//        if (left->getNodeType() == AST::Function) {
+//            // FIXME this is a hack assuming that the input is always connected to the output inside modules.
+//            ASTNode newPrevious = left->getCompilerProperty("inputBlock");
+//            if (newPrevious) {
+//                previous = newPrevious; // Otherwise keep old previous
+//            }
+//        }
         setInputBlockForFunction(func, scopeStack, previous);
     } else if (right->getNodeType() == AST::List) {
         previous = left;
         for (auto child: right->getChildren()) {
             if (child->getNodeType() == AST::Function) {
                 auto func = static_pointer_cast<FunctionNode>(child);
-                // FIXME this is a hack assuming that the input is always connected to the output inside modules.
-                ASTNode newPrevious = left->getCompilerProperty("inputBlock");
-                if (newPrevious) {
-                    previous = newPrevious; // Otherwise keep old previous
-                }
+//                // FIXME this is a hack assuming that the input is always connected to the output inside modules.
+//                ASTNode newPrevious = left->getCompilerProperty("inputBlock");
+//                if (newPrevious) {
+//                    previous = newPrevious; // Otherwise keep old previous
+//                }
                 setInputBlockForFunction(func, scopeStack, previous);
             }
         }

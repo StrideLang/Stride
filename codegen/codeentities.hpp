@@ -81,6 +81,8 @@ public:
     std::vector<std::string> includeFiles;
     std::vector<std::string> includeDirs;
 
+    std::vector<std::shared_ptr<DeclarationNode>> globalReferences;
+
     // Holds the token to pass to the next member
     // FIXME remove currentOutTokens and rely on "tokens" compiler property
     std::vector<std::string> currentOutTokens;
@@ -108,6 +110,21 @@ public:
         linkDirs.insert(linkDirs.end(), newCode.linkDirs.begin(), newCode.linkDirs.end());
         includeFiles.insert(includeFiles.end(), newCode.includeFiles.begin(), newCode.includeFiles.end());
         includeDirs.insert(includeDirs.end(), newCode.includeDirs.begin(), newCode.includeDirs.end());
+
+        for (auto newReference: newCode.globalReferences) {
+
+            bool declarationRegistered = false;
+            for (auto existingRef: globalReferences) {
+                // FIXME check namespaces
+                if (existingRef->getName() == newReference->getName()) {
+                    declarationRegistered = true;
+                    break;
+                }
+            }
+            if (!declarationRegistered) {
+                globalReferences.push_back(newReference);
+            }
+        }
 
         for (auto &newEntry: newCode.portPropertiesMap) {
             bool propertyRegistered = false;
@@ -141,6 +158,7 @@ public:
         portPropertiesMap.insert(newCode.portPropertiesMap.begin(), newCode.portPropertiesMap.end());
 //        m_unprocessedItems.insert(m_unprocessedItems.begin(), newCode.m_unprocessedItems.begin(), newCode.m_unprocessedItems.end());
         currentOutTokens.insert(currentOutTokens.begin(), newCode.currentOutTokens.begin(), newCode.currentOutTokens.end());
+        globalReferences.insert(globalReferences.begin(), newCode.globalReferences.begin(), newCode.globalReferences.end());
     }
 };
 
