@@ -34,6 +34,7 @@
 
 #include <cassert>
 #include <sstream>
+#include <iomanip>
 
 #include "valuenode.h"
 #include "listnode.h"
@@ -117,7 +118,9 @@ string ValueNode::getStringValue() const
 string ValueNode::toString() const
 {
     if (getNodeType() == AST::Real) {
-        return std::to_string(m_floatValue);
+        stringstream s;
+        s << std::setprecision(16) << m_floatValue;
+        return s.str();
     } else if (getNodeType() == AST::Int) {
         return std::to_string(m_intValue);
     } else if (getNodeType() == AST::String) {
