@@ -1,0 +1,42 @@
+use DesktopAudio version 1.0
+
+import Generators
+
+
+module InnerTest {
+    ports: [
+        mainInputPort InputPort {
+			block: Input
+		},
+		mainOutputPort OutputPort {
+			block: Output
+		}
+		
+    ]
+    blocks: [
+        signal Input[2] {}
+    ]
+    streams: [
+        Input[1] + Input[2] >> Output;
+    ]
+}
+
+module Test {
+    ports: [
+        mainInputPort InputPort {
+			block: Input
+		},
+		mainOutputPort OutputPort {
+			block: Output
+		}
+		
+    ]
+    blocks: [
+    ]
+    streams: [
+        [Input, 1] >> InnerTest() >> Output;
+    ]
+}
+
+
+AudioIn[1] >> Test() >> AudioOut[1];

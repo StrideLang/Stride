@@ -26,7 +26,7 @@ module Oscillator {
 			block: StartPhase
 			meta: "The starting phase of the oscillator."
 		},
-		propertyInputPort ResetProperty {
+		propertyInputPort ResetPort {
 			name: "reset"
 			block: Reset
 			meta: "Resets the oscillator to the starting phase."
@@ -45,12 +45,12 @@ module Oscillator {
 #        signal StartPhase {
 #			default :       0.0
 #		}
-#        switch Reset {
+#       switch Reset {
 #			default :       off
-#			domain: ResetDomain
+#			domain: ResetPort.domain
 #		}
 #		signal ResetValue {
-#			domain: ResetDomain
+#			domain: ResetPort.domain
 #		}
         signal Phase {
             default :       0.0
@@ -61,19 +61,22 @@ module Oscillator {
 			default :       0.0
 			domain: FrequencyPort.domain
 		}
-#		reaction WrapPhase {
-#		ports: [
-#		]
-#		streams: [
-#			Phase -( 2 * _Pi) >> Phase;
-#			]
-#		}
+		signal PhaseOverflow {
+			domain: OutputPort.domain
+		}
+		reaction WrapPhase {
+			ports: [
+			]
+			streams: [
+				Phase -( 2 * _Pi) >> Phase;
+			]
+		}
     ]
     streams: [
         Frequency * 2.0 * _Pi / OutputPort.rate >> PhaseInc;
         Phase >> __Sin() >> Level(gain: Amplitude) >> Output;
         Phase + PhaseInc >> Phase;
-#        [Phase , ( 2 * _Pi) ] >> Greater() >> WrapPhase();
+        [Phase , ( 2 * _Pi) ] >> Greater() >> PhaseOverflow >> WrapPhase();
     ]
 	meta: "Bipolar output [ -1. , 1. ] scaled by amplitude"
 }
