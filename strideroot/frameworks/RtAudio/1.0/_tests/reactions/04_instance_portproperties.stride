@@ -7,7 +7,7 @@ module Test {
 		}
 	]
 	blocks: [
-		signal Counter {}
+		signal Counter { domain: OutputPort.domain }
 		reaction HasOuterPortProperty {
 			ports: [
 				mainOutputPort OutputPort {

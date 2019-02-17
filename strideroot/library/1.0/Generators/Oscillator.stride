@@ -61,7 +61,7 @@ module Oscillator {
 			default :       0.0
 			domain: FrequencyPort.domain
 		}
-		signal PhaseOverflow {
+		switch PhaseOverflow {
 			domain: OutputPort.domain
 		}
 		reaction WrapPhase {

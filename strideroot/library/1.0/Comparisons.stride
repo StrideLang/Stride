@@ -13,6 +13,7 @@ module Greater {
     ]
     blocks: [
         signal Input[2] {domain: OutputPort.domain}
+		switch Output {domain: OutputPort.domain}
     ]
     streams: [
        [Input[1], Input[2]] >> __Greater() >> Output;

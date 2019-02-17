@@ -49,8 +49,9 @@ public:
     static std::string reactionConditionEnd() {
         return "}\n";
     }
-};
 
+    static std::string getDataType(std::string strideType);
+};
 
 
 #endif // LANGUAGESYNTAX_HPP

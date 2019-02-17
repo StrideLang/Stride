@@ -3170,7 +3170,7 @@ void ParserTest::testLibraryBasicTypes()
     QStringList typesToCheck;
     typesToCheck << "rated" << "domainMember" << "type" << "base" << "port"
                  << "module" << "reaction";
-    foreach(QString typeName, typesToCheck) {
+    for(const QString &typeName : typesToCheck) {
         type = library.findTypeInLibrary(typeName);
         QVERIFY(type);
         QVERIFY(library.isValidBlock(type.get()));

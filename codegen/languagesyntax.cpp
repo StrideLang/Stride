@@ -131,3 +131,13 @@ std::string LanguageSyntax::generateModuleDeclaration(std::string functionName, 
     return moduleCode;
     //        std::cout<< moduleCode <<std::endl;
 }
+
+std::string LanguageSyntax::getDataType(std::string strideType)
+{
+    if (strideType == "signal") {
+        return "float";
+    } else if (strideType == "switch") {
+        return "bool";
+    }
+    return "";
+}
