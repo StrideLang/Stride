@@ -148,9 +148,9 @@ public:
     void prepend(DomainCode newCode) {
         scopeEntities.insert(scopeEntities.begin(), newCode.scopeEntities.begin(), newCode.scopeEntities.end());
         headerCode = newCode.headerCode + headerCode;
-        initCode = newCode.initCode + initCode;
-        processingCode = newCode.processingCode + processingCode;
-        cleanupCode = newCode.cleanupCode + cleanupCode;
+        initCode = initCode + newCode.initCode;// Init code is not prepended
+        processingCode = processingCode + newCode.processingCode; // Processing code is not prepended
+        cleanupCode = cleanupCode + newCode.cleanupCode;// Cleanup code is not prepended
         linkTargets.insert(linkTargets.begin(), newCode.linkTargets.begin(), newCode.linkTargets.end());
         linkDirs.insert(linkDirs.begin(), newCode.linkDirs.begin(), newCode.linkDirs.end());
         includeFiles.insert(includeFiles.begin(), newCode.includeFiles.begin(), newCode.includeFiles.end());
