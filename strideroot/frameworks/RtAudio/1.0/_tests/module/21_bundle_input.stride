@@ -6,7 +6,7 @@ module BundleIn {
 		mainOutputPort OutputPort { block: Output }
 	]
 	blocks: [
-		signal Input[2] { domain: Output.domain }
+		signal Input[2] { domain: OutputPort.domain }
 		signal Output { default: 0 domain: OutputPort.domain}
 	]
 	streams: [

@@ -1,0 +1,3 @@
+use DesktopAudio version 1.0
+
+AudioIn >> Greater() >> AudioOut[1];

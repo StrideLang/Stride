@@ -1,0 +1,8 @@
+use DesktopAudio version 1.0
+
+import Generators
+
+switch Switch1 {}
+
+AudioIn >> Greater() >> Switch1;
+#Switch1 >> Select() >> AudioOut[1];

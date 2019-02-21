@@ -15,7 +15,7 @@ module TestSwitch {
 	]
 	blocks: [
 		signal Counter {}
-		signal Input {domain: Output.domain}
+		signal Input {domain: OutputPort.domain}
 	]
 	streams: [
 		Input >> Output;

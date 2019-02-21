@@ -6,11 +6,9 @@ module Test {
 	ports: [
 		mainOutputPort OutputPort {
 			block: Output
-			domain: OutputDomain
 		}
 		mainInputPort InputPort {
 			block: Input
-			domain: OutputDomain
 		}
 	]
 	blocks: [
@@ -18,7 +16,6 @@ module Test {
 			ports: [
 				mainOutputPort OutputPort {
 					block: Output
-					domain: OutputDomain
 				}
 			]
 			streams: [
@@ -26,9 +23,12 @@ module Test {
 			]
 		}
 		signal Value { default: 0}
+		switch ReactionSwitch {
+			domain: OutputPort.domain
+		}
 	]
 	streams: [
-		[Input, 0] >> Greater() >> InternalReaction() >> Output;
+		[Input, 0] >> Greater() >> ReactionSwitch >> InternalReaction() >> Output;
 	]
 }
 
