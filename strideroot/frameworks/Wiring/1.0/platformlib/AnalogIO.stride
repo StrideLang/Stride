@@ -1,5 +1,5 @@
 
-platformType _AnalogInput {
+platformBlock _AnalogInput {
     typeName: '_analogInput'
 #	inputs: []
 	outputs: ["real"]
@@ -8,7 +8,7 @@ platformType _AnalogInput {
     declarations: ['int sensorPin[6] = {A0, A1, A2, A3, A4, A5};']
     initializations: ['// init analog input']
     processing: "analogRead(sensorPin[(int) %%bundle_index%%])"
-    inherits: ['signal']
+    inherits: [_Signal]
 }
 
 _analogInput AnalogIn[2] {

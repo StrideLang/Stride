@@ -1,28 +1,25 @@
 
-platformType _GreaterType {
-    typeName: '_greaterType'
+platformModule __Greater {
     inputs: ["real", "real"]
-	outputs: ["real"]
+	outputs: ["bool"]
 #    linkTo: []
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
     processing: "%%intoken:0%% > %%intoken:1%%"
-    inherits: ['signal']
+    inherits: [_Signal]
 }
 
-platformType _EqualType {
-    typeName: '_equalType'
+platformModule __Equal {
     inputs: ["real", "real"]
-	outputs: ["real"]
+	outputs: ["bool"]
 #    linkTo: []
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
     processing: "%%intoken:0%% == %%intoken:1%%"
-    inherits: ['signal']
+    inherits: [_Signal]
 }
 
-platformType _SelectType {
-    typeName: '_selectType'
+platformModule __Select {
     inputs: ["bool", "any", "any"]
 	outputs: ["any"]
 #    include: []
@@ -30,5 +27,5 @@ platformType _SelectType {
 #    declarations: ['']
     initializations: ["// %%token%% = 0;"]
     processing: "%%intoken:0%% ? %%intoken:1%% : %%intoken:2%%"
-    inherits: ['signal']
+    inherits: [_Signal]
 }

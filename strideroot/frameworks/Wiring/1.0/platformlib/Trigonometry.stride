@@ -1,7 +1,7 @@
 
 
 # Sine function test
-platformType _SineType {
+platformBlock __Sin {
     typeName: '_sineType'
     inputs: ["real"]
 	outputs: ["real"]
@@ -10,11 +10,11 @@ platformType _SineType {
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
     processing: "sin(%%intoken:0%%)"
-    inherits: ['signal']
+    inherits: [_Signal]
 }
 
 
-platformType _CosineType {
+platformBlock _CosineType {
     typeName: '_cosineType'
     inputs: ["real"]
 	outputs: ["real"]
@@ -23,6 +23,6 @@ platformType _CosineType {
 #    declarations: ['']
 #    initializations: ["// "]
     processing: "cos(%%intoken:0%%)"
-    inherits: ['signal']
+    inherits: [_Signal]
 }
 

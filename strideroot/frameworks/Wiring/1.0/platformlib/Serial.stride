@@ -29,7 +29,7 @@ platformType _SerialPrintType {
     processing: '
 	Serial.println(%%intoken:0%%);
 	'
-    inherits: ['signal']
+    inherits: [_Signal]
 }
 
 platformType _SerialOutType {
@@ -46,7 +46,7 @@ platformType _SerialOutType {
     Serial1.write((byte *) &%%intoken:0%%, 4);
 	'
 	postProcessing: '// Post'
-    inherits: ['signal']
+    inherits: [_Signal]
 }
 
 _serialOutType SerialOut[3] {
@@ -62,5 +62,5 @@ platformType _SerialInType {
 #    declarations: ['']
     initializations: [""]
     processing: ""
-    inherits: ['signal']
+    inherits: [_Signal]
 }

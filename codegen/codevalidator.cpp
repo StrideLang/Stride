@@ -1994,7 +1994,7 @@ std::shared_ptr<DeclarationNode> CodeValidator::findTypeDeclarationByName(string
                     if (declarationNode->getObjectType() == "type"
                             || declarationNode->getObjectType() == "platformBlock") {
                         ASTNode valueNode = declarationNode->getPropertyValue("typeName");
-                        if (valueNode->getNodeType() == AST::String) {
+                        if (valueNode && valueNode->getNodeType() == AST::String) {
                             ValueNode *value = static_cast<ValueNode *>(valueNode.get());
                             if (typeName == value->getStringValue()
                                     && CodeValidator::namespaceMatch(namespaces, declarationNode) ) {

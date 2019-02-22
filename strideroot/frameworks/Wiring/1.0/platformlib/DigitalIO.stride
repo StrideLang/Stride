@@ -1,5 +1,5 @@
 
-platformType _DigitalOutput {
+platformBlock _DigitalOutput {
     typeName: '_digitalOutput'
 	inputs: ["bool"]
 #    include: []
@@ -7,7 +7,7 @@ platformType _DigitalOutput {
 #    declarations: ['']
     initializations: ['pinMode(13, OUTPUT);']
     processing: "digitalWrite(%%bundle_index%%, %%intoken:0%% ? HIGH : LOW);"
-    inherits: ['signal']
+    inherits: [_Signal]
 }
 
 _digitalOutput DigitalOut[14] {
