@@ -472,19 +472,22 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
-{
-	for (uint8_t i = 0; i < (AUDIO_BUFFER_SIZE / 4); i++)
-	{
-//[[AudioProcessing]]
-//[[/AudioProcessing]]
-	}
-}
 
-void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
-{
-	HAL_I2S_TxHalfCpltCallback(hi2s);
-}
+[[AudioProcessing]]
+[[/AudioProcessing]]
+// void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
+// {
+// 	for (uint8_t i = 0; i < (AUDIO_BUFFER_SIZE / 4); i++)
+// 	{
+// //[[AudioProcessing]]
+// //[[/AudioProcessing]]
+// 	}
+// }
+
+// void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
+// {
+// 	HAL_I2S_TxHalfCpltCallback(hi2s);
+// }
 
 void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart)
 {

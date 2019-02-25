@@ -1,13 +1,13 @@
 
-platformType _DigitalOutput {
-    typeName: '_digitalOutput'
+platformType _DigitalOut {
+    name: "_digitalOutput"
 	inputs: ['bool']
     include: []
     linkTo: []
     declarations: ['']
-    initializations: ['pinMode(13, OUTPUT);']
-    processing: "digitalWrite(%%bundle_index%%, %%intoken:0%% ? HIGH : LOW);"
-    inherits: ['signal']
+    initializations: ['//pinMode(13, OUTPUT);']
+    processing: "//digitalWrite(%%bundle_index%%, %%intoken:0%% ? HIGH : LOW);"
+    inherits: [_Signal]
 }
 
 _digitalOutput DigitalOut[14] {

@@ -1,78 +1,84 @@
 
-platformType _GreaterType {
-    typeName: '_greaterType'
-    inputs: ["real", "real"]
-	outputs: ["real"]
-#    linkTo: []
-#    declarations: ['']
-#    initializations: ["// %%token%% = 0;"]
-    processing: "%%intoken:0%% > %%intoken:1%%"
-    inherits: ['signal']
-}
 
-platformType _GreaterOrEqualType {
-    typeName: '_greaterOrEqualType'
-    inputs: ["real", "real"]
-	outputs: ["real"]
-#    linkTo: []
-#    declarations: ['']
-#    initializations: ["// %%token%% = 0;"]
-    processing: "%%intoken:0%% >= %%intoken:1%%"
-    inherits: ['signal']
-}
-platformType _EqualType {
-    typeName: '_equalType'
-    inputs: ["real", "real"]
-	outputs: ["real"]
-#    linkTo: []
-#    declarations: ['']
-#    initializations: ["// %%token%% = 0;"]
-    processing: "%%intoken:0%% == %%intoken:1%%"
-    inherits: ['signal']
-}
-
-platformType _SelectType {
-    typeName: '_selectType'
+platformModule __Select {
     inputs: ["bool", "any", "any"]
 	outputs: ["any"]
 #    include: []
 #    linkTo: []
 #    declarations: []
     initializations: ["// %%token%% = 0;"]
-    processing: "%%intoken:0%% ? %%intoken:1%% : %%intoken:2%%"
-    inherits: ['signal']
+    processing: "%%intokens:0%% ? %%intokens:1%% : %%intokens:2%%"
+    inherits: [_Signal]
+}
+
+platformModule __ChooseType {
+    inputs: ["bool", "any", "any"]
+	outputs: ["any"]
+#    include: []
+#    linkTo: []
+#    declarations: []
+    initializations: ["// %%token%% = 0;"]
+    processing: "%%intokens:0%% ? %%intokens:1%% : %%intokens:2%%"
+    inherits: [_Signal]
 }
 
 
-platformType _LessOrEqualType {
-    typeName: '_lessOrEqualType'
+platformModule __Greater {
     inputs: ["real", "real"]
-	outputs: ["real"]
+	outputs: ["bool"]
 #    linkTo: []
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
-    processing: "%%intoken:0%% <= %%intoken:1%%"
-    inherits: ['signal']
+    processing: "%%intokens:0%% > %%intokens:1%%"
+    inherits: [_Signal]
 }
 
-platformType _LessType {
-    typeName: '_lessType'
+platformModule __GreaterOrEqual {
     inputs: ["real", "real"]
-	outputs: ["real"]
+	outputs: ["bool"]
 #    linkTo: []
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
-    processing: "%%intoken:0%% < %%intoken:1%%"
-    inherits: ['signal']
+    processing: "%%intokens:0%% >= %%intokens:1%%"
+    inherits: [_Signal]
 }
 
-platformType _NotEqualType {
-    typeName: '_notEqualType'
+platformModule __Equal {
     inputs: ["real", "real"]
-	outputs: ["real"]
+	outputs: ["bool"]
 #    linkTo: []
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
-    processing: "%%intoken:0%% != %%intoken:1%%"
-    inherits: ['signal']
+    processing: "%%intokens:0%% == %%intokens:1%%"
+    inherits: [_Signal]
+}
+
+platformModule __LessOrEqual {
+    inputs: ["real", "real"]
+	outputs: ["bool"]
+#    linkTo: []
+#    declarations: ['']
+#    initializations: ["// %%token%% = 0;"]
+    processing: "%%intokens:0%% <= %%intokens:1%%"
+    inherits: [_Signal]
+}
+
+platformModule __Less {
+    inputs: ["real", "real"]
+	outputs: ["bool"]
+#    linkTo: []
+#    declarations: ['']
+#    initializations: ["// %%token%% = 0;"]
+    processing: "%%intokens:0%% < %%intokens:1%%"
+    inherits: [_Signal]
+}
+
+platformModule _NotEqual {
+    inputs: ["real", "real"]
+	outputs: ["bool"]
+#    linkTo: []
+#    declarations: ['']
+#    initializations: ["// %%token%% = 0;"]
+    processing: "%%intokens:0%% != %%intokens:1%%"
+    inherits: [_Signal]
 }

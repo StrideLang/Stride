@@ -1,8 +1,5 @@
 
-
-# Sine function test
-platformType _SineType {
-    typeName: '_sineType'
+platformModule __Sin {
     inputs: ["real"]
 	outputs: ["real"]
     include: ["arm_math.h"]
@@ -10,12 +7,11 @@ platformType _SineType {
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
     processing: "arm_sin_f32(%%intoken:0%%)"
-    inherits: ['signal']
+    inherits: [_Signal]
 }
 
 
-platformType _CosineType {
-    typeName: '_cosineType'
+platformModule __Cos {
     inputs: ["real"]
 	outputs: ["real"]
     include: ["arm_math.h"]
@@ -23,6 +19,16 @@ platformType _CosineType {
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
     processing: "arm_cos_f32(%%intoken:0%%)"
-    inherits: ['signal']
+    inherits: [_Signal]
 }
 
+platformModule __Tan {
+    inputs: ["real"]
+	outputs: ["real"]
+    include: ["arm_math.h"]
+#    linkTo: []
+#    declarations: ['']
+#    initializations: ["// %%token%% = 0;"]
+    processing: "arm_tan_f32(%%intoken:0%%)"
+    inherits: [_Signal]
+}

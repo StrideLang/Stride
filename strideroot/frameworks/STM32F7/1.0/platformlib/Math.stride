@@ -1,28 +1,24 @@
 
-platformType _FloorType {
-    typeName: '_floorType'
-    inputs: ["real"]
-	outputs: ["real"] # FIXME shoudl be "int"
-    include: ["cmath"]
-    processing: "std::floor(%%intoken:0%%)"
-    inherits: ['signal']
-}
-# Power function
-platformType _PowerType {
-    typeName: '_powerType'
-    inputs: ["real", "real"]
-	outputs: ["real"]
-    include: ["cmath"]	
-    processing: "std::pow(%%intoken:0%%, %%intoken:1%%)"
-    inherits: ['signal']
-}
-
-# Power to e
-platformType _ExpType {
-    typeName: '_expType'
-    inputs: ["real"]
-	outputs: ["real"]
-    include: ["cmath"]
-    processing: "std::exp(%%intoken:0%%)"
-    inherits: ['signal']
-}
+#platformModule _Floor {
+#    inputs: ["real"]
+#	outputs: ["real"] # FIXME shoudl be "int"
+#    include: ["cmath"]
+#    processing: "std::floor(%%intoken:0%%)"
+#    inherits: ['signal']
+#}
+## Power function
+#platformModule _Power {
+#	outputs: ["real"]
+#    include: ["cmath"]	
+#    processing: "std::pow(%%intoken:0%%, %%intoken:1%%)"
+#    inherits: ['signal']
+#}
+#
+## Power to e
+#platformModule _Exp {
+#    inputs: ["real"]
+#	outputs: ["real"]
+#    include: ["cmath"]
+#    processing: "std::exp(%%intoken:0%%)"
+#    inherits: ['signal']
+#}

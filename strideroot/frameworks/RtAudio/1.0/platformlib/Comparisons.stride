@@ -25,7 +25,7 @@ platformModule __ChooseType {
 
 platformModule __Greater {
     inputs: ["real", "real"]
-	outputs: ["real"]
+	outputs: ["bool"]
 #    linkTo: []
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
@@ -35,7 +35,7 @@ platformModule __Greater {
 
 platformModule __GreaterOrEqual {
     inputs: ["real", "real"]
-	outputs: ["real"]
+	outputs: ["bool"]
 #    linkTo: []
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
@@ -45,7 +45,7 @@ platformModule __GreaterOrEqual {
 
 platformModule __Equal {
     inputs: ["real", "real"]
-	outputs: ["real"]
+	outputs: ["bool"]
 #    linkTo: []
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
@@ -55,7 +55,7 @@ platformModule __Equal {
 
 platformModule __LessOrEqual {
     inputs: ["real", "real"]
-	outputs: ["real"]
+	outputs: ["bool"]
 #    linkTo: []
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
@@ -65,7 +65,7 @@ platformModule __LessOrEqual {
 
 platformModule __Less {
     inputs: ["real", "real"]
-	outputs: ["real"]
+	outputs: ["bool"]
 #    linkTo: []
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
@@ -75,7 +75,7 @@ platformModule __Less {
 
 platformModule _NotEqual {
     inputs: ["real", "real"]
-	outputs: ["real"]
+	outputs: ["bool"]
 #    linkTo: []
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]

@@ -1,22 +1,46 @@
 
 
 constant AudioRate {
-    value: 48000
+    value: 48000 # This will be overwritten by the configuration file
 }
+
 
 _domainDefinition AudioDomain {
 	domainName: "AudioDomain"
 	framework: _STM32F7_Framework
+	rate: none
 	globalsTag: "Includes"
 	declarationsTag: "Declarations"
 	processingTag: "AudioProcessing"
 	initializationTag: "Initialization"
 	cleanupTag: "Cleanup"
-	rate: AudioRate
+    #substitutions: ["domain_rate", AsyncDomain.rate ]
+    domainIncludes: []
+    domainDeclarations: []
+    domainInitialization: "// init audio domain"
+	domainFunction: "// Main Domain Function
+
+void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
+{
+	for (uint8_t i = 0; i < (AUDIO_BUFFER_SIZE / 4); i++)
+	{
+		%%domainCode%%
+	}
+}
+void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
+{
+	HAL_I2S_TxHalfCpltCallback(hi2s);
+}
+	"
+    domainCleanup: '// init domain cleanup
+	std::cout << "Done." << std::endl;
+	'
 }
 
+
+
 # Audio ---------------
-platformType _HwInput {
+platformBlock _HwInput {
     typeName: '_hwInput'
 #	numInputs: 0
 	outputs: ["real", "real"]
@@ -29,7 +53,7 @@ platformType _HwInput {
     inherits: ['signal']
 }
 
-platformType _HwOutput {
+platformBlock _HwOutput {
     typeName: '_hwOutput'
 	inputs: ["real", "real"]
     domain: AudioDomain
@@ -48,7 +72,7 @@ platformType _HwOutput {
     if (I2S_TX_Buffer_p == I2S_TX_Buffer + AUDIO_BUFFER_SIZE) 	// REQUIRED FOR BUFFER
     I2S_TX_Buffer_p = (q15_t *) I2S_TX_Buffer;
 	"
-    inherits: ['signal']
+    inherits: [_Signal]
 }
 
 _hwInput AudioIn[2] {
