@@ -121,22 +121,24 @@ void CodeResolver::resolveStreamRates(std::shared_ptr<StreamNode> stream)
     ASTNode right = stream->getRight();
     double rate = CodeValidator::getNodeRate(left, QVector<ASTNode>(), m_tree);
     if (rate < 0) { // Force node rate to platform rate
-        std::shared_ptr<DeclarationNode> domainDeclaration = CodeValidator::findDomainDeclaration(
-                    CodeValidator::streamMemberName(m_system->getPlatformDomain()), m_tree);
-        if (domainDeclaration) {
-            ASTNode rateValue = domainDeclaration->getPropertyValue("rate");
-            if (rateValue->getNodeType() == AST::Int
-                    || rateValue->getNodeType() == AST::Real) {
-                double rate = static_cast<ValueNode *>(rateValue.get())->toReal();
-                CodeValidator::setNodeRate(left, rate, QVector<ASTNode>(), m_tree);
-            } else  if (rateValue->getNodeType() == AST::PortProperty) {
-                if (left->getNodeType() == AST::Declaration) {
-                    auto decl = static_pointer_cast<DeclarationNode>(left);
-                    decl->replacePropertyValue("rate", rateValue->deepCopy());
+        if (m_system && m_system->getPlatformDomain()) {
+            std::shared_ptr<DeclarationNode> domainDeclaration = CodeValidator::findDomainDeclaration(
+                        CodeValidator::streamMemberName(m_system->getPlatformDomain()), m_tree);
+            if (domainDeclaration) {
+                ASTNode rateValue = domainDeclaration->getPropertyValue("rate");
+                if (rateValue->getNodeType() == AST::Int
+                        || rateValue->getNodeType() == AST::Real) {
+                    double rate = static_cast<ValueNode *>(rateValue.get())->toReal();
+                    CodeValidator::setNodeRate(left, rate, QVector<ASTNode>(), m_tree);
+                } else  if (rateValue->getNodeType() == AST::PortProperty) {
+                    if (left->getNodeType() == AST::Declaration) {
+                        auto decl = static_pointer_cast<DeclarationNode>(left);
+                        decl->replacePropertyValue("rate", rateValue->deepCopy());
+                    }
+                } else {
+                    qDebug() << "Unexpected type for rate in domain declaration: "
+                             << QString::fromStdString(CodeValidator::streamMemberName(m_system->getPlatformDomain()));
                 }
-            } else {
-                qDebug() << "Unexpected type for rate in domain declaration: "
-                         << QString::fromStdString(CodeValidator::streamMemberName(m_system->getPlatformDomain()));
             }
         }
     }
@@ -723,7 +725,8 @@ void CodeResolver::analyzeConnections()
                                 decl->getCompilerProperty("domainReads")->addChild(node);
                             }
                         } else {
-                            Q_ASSERT(domain->getNodeType() == AST::PortProperty);
+                            qDebug() << "ERROR: Expecting PortProperty for domain";
+//                            Q_ASSERT(domain->getNodeType() == AST::PortProperty);
                         }
                     }
                 }
@@ -3155,6 +3158,21 @@ void CodeResolver::checkStreamConnections(std::shared_ptr<StreamNode> stream, QV
                     auto func = static_pointer_cast<FunctionNode>(left);
                     setOutputBlockForFunction(func, scopeStack, next);
                     next->setCompilerProperty("inputBlock", func);
+                }
+            }
+        } else if (left->getNodeType() == AST::List) {
+            for (auto child: left->getChildren()) {
+                auto next = static_pointer_cast<StreamNode>(right)->getLeft();
+//                CodeValidator::getNodeNumInputs()
+                if (child->getNodeType() == AST::Function) {
+//                    if (right->getNodeType() == AST::Function) {
+//                        right->getCompilerProperty("inputBlock");
+//                    }
+                    auto func = static_pointer_cast<FunctionNode>(child);
+                    setOutputBlockForFunction(func, scopeStack, next);
+                    //            if (nextBlock) {
+                    //                left->setCompilerProperty("outputBlock", nextBlock);
+                    //            }
                 }
             }
         }
