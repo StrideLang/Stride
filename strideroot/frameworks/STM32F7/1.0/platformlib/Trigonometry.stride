@@ -6,7 +6,7 @@ platformModule __Sin {
 #    linkTo: []
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
-    processing: "arm_sin_f32(%%intoken:0%%)"
+    processing: "arm_sin_f32(%%intokens:0%%)"
     inherits: [_Signal]
 }
 
@@ -18,7 +18,7 @@ platformModule __Cos {
 #    linkTo: []
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
-    processing: "arm_cos_f32(%%intoken:0%%)"
+    processing: "arm_cos_f32(%%intokens:0%%)"
     inherits: [_Signal]
 }
 
@@ -29,6 +29,6 @@ platformModule __Tan {
 #    linkTo: []
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
-    processing: "arm_tan_f32(%%intoken:0%%)"
+    processing: "arm_tan_f32(%%intokens:0%%)"
     inherits: [_Signal]
 }

@@ -71,6 +71,8 @@ public:
     void clearBuffers() { m_stdErr = ""; m_stdOut = "";}
     void registerYieldCallback(std::function<void()> cb) {m_yieldCallback = cb;}
 
+    std::string getPlatformDirective(std::string directive);
+
 public slots:
     virtual bool build(ASTNode tree) = 0;
     virtual bool deploy() = 0;
@@ -90,6 +92,20 @@ protected:
     QMap<QString, QVariant> m_configuration;
     std::function<void()> m_yieldCallback = [](){};
 
+    QString substituteTokens(QString text)
+    {
+        QMap<QString, QString> tokenMap;
+        tokenMap["%projectDir%"] = m_projectDir;
+        tokenMap["%strideRoot%"] = m_strideRoot;
+        tokenMap["%platformRoot%"] = m_platformPath;
+        for (auto mapEntry: tokenMap.keys()) {
+            while (text.indexOf(mapEntry) >= 0) {
+                text.replace(mapEntry, tokenMap[mapEntry]);
+            }
+        }
+        return text;
+    }
+
 private:
     PluginInterface m_interface;
     QLibrary *m_pluginLibrary;
@@ -103,4 +119,6 @@ signals:
 
 
 #endif // BASEPROJECT_H
+
+
 

@@ -473,14 +473,13 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 
-[[AudioProcessing]]
-[[/AudioProcessing]]
+//[[AudioProcessing]]
+//[[/AudioProcessing]]
 // void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
 // {
 // 	for (uint8_t i = 0; i < (AUDIO_BUFFER_SIZE / 4); i++)
 // 	{
-// //[[AudioProcessing]]
-// //[[/AudioProcessing]]
+// Processing code here
 // 	}
 // }
 

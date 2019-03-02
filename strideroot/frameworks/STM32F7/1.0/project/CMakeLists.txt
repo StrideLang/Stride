@@ -7,8 +7,8 @@ set(CXX11_FLAGS -std=gnu++11)
 set(CMAKE_ASM_COMPILER arm-none-eabi-as)
 enable_language(ASM)
 
-CMAKE_FORCE_C_COMPILER(arm-none-eabi-gcc GNU)
-CMAKE_FORCE_CXX_COMPILER(arm-none-eabi-g++ GNU)
+set(CMAKE_C_COMPILER arm-none-eabi-gcc)
+set(CMAKE_CXX_COMPILER arm-none-eabi-g++)
 set(COMMON_FLAGS "-mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-d16")
 
 set(CMAKE_LINKER arm-none-eabi-g++)
@@ -59,6 +59,7 @@ ${STM_COMMON}/Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/gcc/startup_stm
 set_property(SOURCE ${STM_COMMON}/Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/gcc/startup_stm32f769xx.s PROPERTY LANGUAGE C)
 
 file(GLOB SOURCES
+    "template.cpp"
     "Src/*.cpp"
     "Src/*.c"
 )

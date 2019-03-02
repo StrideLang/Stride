@@ -1,0 +1,41 @@
+
+platformTypeClass _RealTypeClass {
+	types: [Real]
+}
+
+platformDataType Real {
+	name: "real"
+	platformName: "float"
+	includes: []
+}
+	
+platformTypeClass _IntegerTypeClass {
+	types: [Int]
+}
+
+platformDataType Int {
+	name: "int"
+	platformName: "int"
+	includes: []
+}
+	
+platformTypeClass _SwitchTypeClass {
+	types: [Switch]
+}
+
+platformDataType Switch {
+	name: "switch"
+	platformName: "bool"
+	includes: []
+}
+	
+platformTypeClass _StringTypeClass {
+	types: [String]
+}
+
+platformDataType String {
+	name: "string"
+	platformName: "std::string"
+	includes: ['string.h']
+}
+	
