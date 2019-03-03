@@ -59,6 +59,5 @@ _domainDefinition STM32F7_Domain {
 	}
 	"
     domainCleanup: '// init domain cleanup
-	std::cout << "Done." << std::endl;
 	'
 }

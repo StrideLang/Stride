@@ -33,7 +33,6 @@ void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
 }
 	"
     domainCleanup: '// init domain cleanup
-	std::cout << "Done." << std::endl;
 	'
 }
 

@@ -72,4 +72,4 @@ add_definitions( "-D__weak=__attribute__((weak))" "-D__packed=__attribute__((__p
 
 link_directories(${STM_COMMON}/Drivers/CMSIS/Lib/GCC)
 
-target_link_libraries(app.elf ${COMMON_FLAGS} -L${STM_COMMON}/Drivers/CMSIS/Lib/GCC -specs=nosys.specs -specs=nano.specs -TSTM32F769BITx_FLASH.ld -Wl,-Map=output.map -Wl,--gc-sections -lm arm_cortexM7lfdp_math ${CXX11})
+target_link_libraries(app.elf ${COMMON_FLAGS} -L${STM_COMMON}/Drivers/CMSIS/Lib/GCC -specs=nosys.specs -specs=nano.specs -T${CMAKE_SOURCE_DIR}/STM32F769BITx_FLASH.ld -Wl,-Map=output.map -Wl,--gc-sections -lm arm_cortexM7lfdp_math ${CXX11})

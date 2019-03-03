@@ -3,6 +3,7 @@
 
 #include <string>
 #include <map>
+#include <algorithm>
 
 #include "../parser/ast.h"
 #include "../parser/declarationnode.h"
@@ -73,7 +74,9 @@ public:
     std::string headerCode;
 
     std::string initCode;
+    std::vector<std::string> scopeDeclarations;
     std::string processingCode;
+    std::vector<std::string> postProcessingCode;
     std::string cleanupCode;
 
     std::vector<std::string> linkTargets;
@@ -104,7 +107,18 @@ public:
         scopeEntities.insert(scopeEntities.end(), newCode.scopeEntities.begin(), newCode.scopeEntities.end());
         headerCode += newCode.headerCode;
         initCode += newCode.initCode;
+        for (auto decl : newCode.scopeDeclarations) {
+            if (std::find(scopeDeclarations.begin(), scopeDeclarations.end(), decl) == scopeDeclarations.end()) {
+                scopeDeclarations.push_back(decl);
+            }
+        }
         processingCode += newCode.processingCode;
+
+        for (auto postCode : newCode.postProcessingCode) {
+            if (std::find(postProcessingCode.begin(), postProcessingCode.end(), postCode) == postProcessingCode.end()) {
+                postProcessingCode.push_back(postCode);
+            }
+        }
         cleanupCode += newCode.cleanupCode;
         linkTargets.insert(linkTargets.end(), newCode.linkTargets.begin(), newCode.linkTargets.end());
         linkDirs.insert(linkDirs.end(), newCode.linkDirs.begin(), newCode.linkDirs.end());
@@ -149,7 +163,18 @@ public:
         scopeEntities.insert(scopeEntities.begin(), newCode.scopeEntities.begin(), newCode.scopeEntities.end());
         headerCode = newCode.headerCode + headerCode;
         initCode = initCode + newCode.initCode;// Init code is not prepended
-        processingCode = processingCode + newCode.processingCode; // Processing code is not prepended
+        for (auto decl : newCode.scopeDeclarations) {
+            if (std::find(scopeDeclarations.begin(), scopeDeclarations.end(), decl) == scopeDeclarations.end()) {
+                scopeDeclarations.push_back(decl);
+            }
+        }
+        processingCode += newCode.processingCode;// Processing code is not prepended
+
+        for (auto postCode : newCode.postProcessingCode) {
+            if (std::find(postProcessingCode.begin(), postProcessingCode.end(), postCode) == postProcessingCode.end()) {
+                postProcessingCode.push_back(postCode);
+            }
+        }
         cleanupCode = cleanupCode + newCode.cleanupCode;// Cleanup code is not prepended
         linkTargets.insert(linkTargets.begin(), newCode.linkTargets.begin(), newCode.linkTargets.end());
         linkDirs.insert(linkDirs.begin(), newCode.linkDirs.begin(), newCode.linkDirs.end());

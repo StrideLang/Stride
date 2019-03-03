@@ -222,7 +222,6 @@ void serialOut()
 //[[SerialOut:Processing]]
 
 }
-//[[/Initialization]]
 
 /* USER CODE END 0 */
 
