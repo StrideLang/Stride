@@ -92,7 +92,6 @@ private:
     QString m_systemName;
     int m_majorVersion;
     int m_minorVersion;
-    QString m_pluginName;
     QString m_systemPath;
     bool m_testing;
 

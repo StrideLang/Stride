@@ -43,16 +43,20 @@
 
 #include "ast.h"
 
+#define STRIDE_PLUGIN_MAX_STR_LEN 32
+
 class Builder;
 
 typedef Builder* (*create_object_t)(QString projectDir, QString strideRoot, QString platformPath);
 typedef void (*platform_name_t)(char *name);
-typedef double (*platform_version_t)();
+typedef int (*platform_version_major_t)();
+typedef int (*platform_version_minor_t)();
 
 typedef struct {
     create_object_t create;
     platform_name_t get_name;
-    platform_version_t get_version;
+    platform_version_major_t get_version_major;
+    platform_version_minor_t get_version_minor;
 } PluginInterface;
 
 class Builder : public QObject

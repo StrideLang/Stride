@@ -7,4 +7,7 @@ generatorDirectives __GeneratorDirectives {
     buildCommand: ["cmake",  "--build",  "."]
     target: "app"
     targetDir: "code/build"
+    codeGenerator: "pufferfish"
+    codeGeneratorMajorVersion: 1
+    codeGeneratorMinroVersion: 0
 }

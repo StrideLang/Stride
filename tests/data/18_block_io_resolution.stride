@@ -18,13 +18,51 @@ module TestModule {
     ]
 }
 
-signal Output {
-  domain: "OutputDomain"
-}
-
 # Test input and output setting
 OuterInput >> TestModule()  >> OuterOutput;
 
 
 # Test IO blocks across modules. Output block should propagate
 OuterInput >> TestModule() >> TestModule() >> OuterOutput;
+
+
+module TestGenerator {
+	ports: [
+		mainOutputPort OutputPort {
+			block: Output
+		}
+	]
+	blocks: [
+		signal Value { domain: OutputPort.domain}
+	]
+	streams: [
+		Value + 1 >> Value;
+		Value >> Output;
+	]
+}
+
+module Test {
+	ports: [
+		mainOutputPort OutputPort {
+			block: Output
+		}
+		mainInputPort InputPort {
+			block: Input
+		}
+	]
+	blocks: [
+		signal Input[2] {}
+		signal Output {}
+	]
+	streams: [
+		Input[1] + Input[2] >> Output;
+	]
+}
+
+
+signal Output {
+  domain: "OutputDomainName"
+}
+
+[TestGenerator(), 0.5] >> Test() >> Output;
+

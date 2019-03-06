@@ -1,4 +1,4 @@
-/*
+﻿/*
     Stride is licensed under the terms of the 3-clause BSD license.
 
     Copyright (C) 2017. The Regents of the University of California.
@@ -33,6 +33,8 @@
 */
 
 #include "strideplatform.hpp"
+#include "../parser/declarationnode.h"
+#include "../parser/valuenode.h"
 
 using namespace std;
 
@@ -156,4 +158,31 @@ vector<ASTNode> StridePlatform::getPlatformTestingObjectsRef()
         blockGroup++;
     }
     return objects;
+}
+
+bool StridePlatform::getPluginDetails(string &pluginName, int &majorVersion, int &minorVersion)
+{
+    if (m_platformTrees.find("Directives.stride") != m_platformTrees.end()) {
+        for(auto declNode: m_platformTrees["Directives.stride"]->getChildren()) {
+            if (declNode->getNodeType() == AST::Declaration) {
+                auto decl = static_pointer_cast<DeclarationNode>(declNode);
+                if (decl->getObjectType() == "generatorDirectives") {
+                    auto nameNode = decl->getPropertyValue("codeGenerator");
+                    if (nameNode && nameNode->getNodeType() == AST::String) {
+                        pluginName = static_pointer_cast<ValueNode>(nameNode)->getStringValue();
+                    }
+                    auto majorVersionNode = decl->getPropertyValue("codeGeneratorMajorVersion");
+                    if (majorVersionNode && majorVersionNode->getNodeType() == AST::Int) {
+                        majorVersion = static_pointer_cast<ValueNode>(majorVersionNode)->getIntValue();
+                    }
+                    auto minorVersionNode = decl->getPropertyValue("codeGeneratorMinorVersion");
+                    if (minorVersionNode && minorVersionNode->getNodeType() == AST::Int) {
+                        minorVersion = static_pointer_cast<ValueNode>(minorVersionNode)->getIntValue();
+                    }
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
 }

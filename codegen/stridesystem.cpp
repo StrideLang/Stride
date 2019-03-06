@@ -92,7 +92,7 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
                             platform->addTree(file.toStdString(),tree);
                         } else {
                             vector<LangError> errors = AST::getParseErrors();
-                            foreach(LangError error, errors) {
+                            for(LangError error:errors) {
                                 qDebug() << QString::fromStdString(error.getErrorText());
                             }
                             continue;
@@ -363,22 +363,54 @@ vector<Builder *> StrideSystem::createBuilders(QString fileName, vector<string> 
                     }
                 }
             } else if(platform->getAPI() == StridePlatform::PluginPlatform) {
-                m_pluginName = "pufferfish";
-                QString m_pluginPath = QString::fromStdString(platform->buildPlatformPath(m_strideRoot.toStdString())) + QDir::separator() + "plugins" + QDir::separator();
-                QLibrary pluginLibrary(m_pluginPath + m_pluginName);
-                if (!pluginLibrary.load()) {
-                    qDebug() << pluginLibrary.errorString();
-                    continue;
+
+                auto pluginList = QDir(m_strideRoot + "/plugins").entryList(QDir::NoDotAndDotDot | QDir::Files);
+
+                std::string pluginName = "pufferfish";
+                int pluginMajorVersion = 1;
+                int pluginMinorVersion = 0;
+
+                if (!platform->getPluginDetails(pluginName, pluginMajorVersion, pluginMinorVersion)) {
+                    qDebug() << "Error getting plugin details";
                 }
-                create_object_t create = (create_object_t) pluginLibrary.resolve("create_object");
-                if (create) {
-                    Builder * builder = create(QString::fromStdString(platform->buildPlatformPath(m_strideRoot.toStdString())),
-                                               m_strideRoot,
-                                               projectDir);
-                    if (builder) {
-                        builders.push_back(builder);
+
+                for (auto plugin: pluginList) {
+//                    qDebug() << plugin;
+
+                    QLibrary pluginLibrary(m_strideRoot + "/plugins/" + plugin);
+                    if (pluginLibrary.load()) {
+                        char name[STRIDE_PLUGIN_MAX_STR_LEN];
+                        int versionMajor = -1;
+                        int versionMinor = -1;
+                        auto nameFunc = (platform_name_t) pluginLibrary.resolve("platform_name");
+                        if (nameFunc) {
+                            nameFunc(name);
+                        }
+                        if (strncmp(name, pluginName.c_str(), STRIDE_PLUGIN_MAX_STR_LEN) == 0) {
+                            auto versionMajorFunc = (platform_version_major_t) pluginLibrary.resolve("platform_version_major");
+                            if (versionMajorFunc) {
+                                versionMajor = versionMajorFunc();
+                            }
+                            auto versionMinorFunc = (platform_version_minor_t) pluginLibrary.resolve("platform_version_minor");
+                            if (versionMinorFunc) {
+                                versionMinor = versionMinorFunc();
+                            }
+                            if (pluginMajorVersion = versionMajor && pluginMinorVersion == versionMinor) {
+//                                qDebug() << "Code generator plugin found! " << QString::fromStdString(pluginName);
+                                create_object_t create = (create_object_t) pluginLibrary.resolve("create_object");
+                                if (create) {
+                                    Builder * builder = create(QString::fromStdString(platform->buildPlatformPath(m_strideRoot.toStdString())),
+                                                               m_strideRoot,
+                                                               projectDir);
+                                    if (builder) {
+                                        builders.push_back(builder);
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
+
 //                pluginLibrary.unload();
             }
         }

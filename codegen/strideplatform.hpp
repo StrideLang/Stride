@@ -90,6 +90,8 @@ public:
     std::vector<ASTNode> getPlatformObjectsReference();
     std::vector<ASTNode> getPlatformTestingObjectsRef();
 
+    bool getPluginDetails(std::string &pluginName, int &majorVersion, int &minorVersion);
+
 private:
     std::string m_framework;
     std::string m_frameworkVersion;
