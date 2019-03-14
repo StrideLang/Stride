@@ -725,8 +725,9 @@ void CodeResolver::analyzeConnections()
                                 decl->getCompilerProperty("domainReads")->addChild(node);
                             }
                         } else {
-                            qDebug() << "ERROR: Expecting PortProperty for domain";
-//                            Q_ASSERT(domain->getNodeType() == AST::PortProperty);
+                            if (domain->getNodeType() != AST::PortProperty) {
+                                qDebug() << "Expected port property domain";
+                            }
                         }
                     }
                 }
@@ -3178,7 +3179,7 @@ void CodeResolver::checkStreamConnections(std::shared_ptr<StreamNode> stream, QV
         }
     } else {
         markConnectionForNode(right, scopeStack, previous);
-        if (left->getNodeType() == AST::List) {
+        if (left->getNodeType() == AST::List || left->getNodeType() == AST::Expression) {
             for (auto child: left->getChildren()) {
                 ASTNode nextBlock = right;
 //                CodeValidator::getNodeNumInputs()

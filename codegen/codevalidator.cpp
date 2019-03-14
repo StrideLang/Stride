@@ -1518,7 +1518,7 @@ std::string CodeValidator::streamMemberName(ASTNode node)
             if (listCommonName.size() == 0) {
                 listCommonName = elemName;
             } else if (elemName != listCommonName) {
-                qDebug() << "List name mismatch";
+//                qDebug() << "List name mismatch";
                 return std::string();
             }
         }

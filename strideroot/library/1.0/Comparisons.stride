@@ -139,13 +139,11 @@ module Select {
 			name: "whenOn"
 			block: WhenOn
 			meta: ""
-#			domain: WhenOnDomain
         },
 		propertyInputPort WhenOffProperty {
 			name: "whenOff"
 			block: WhenOff
 			meta: ""
-#			domain: WhenOffDomain
         }
     ]
     blocks: [

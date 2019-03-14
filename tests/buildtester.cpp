@@ -36,6 +36,7 @@
 #include <cmath>
 
 #include <QList>
+#include <QThread>
 
 #include "ast.h"
 #include "codevalidator.h"
@@ -74,7 +75,7 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile)
          errors << validator.getErrors();
 
          if (errors.size() > 0) {
-             foreach(LangError error, syntaxErrors) {
+             for(LangError error:syntaxErrors) {
                  std::cerr << error.getErrorText() << std::endl;
              }
              return false;
@@ -109,12 +110,14 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile)
                      QFile expectedResult(QString::fromStdString(expectedResultFile));
                      QStringList outputLines = builder->getStdOut().split("\n");
                      if (!expectedResult.open(QIODevice::ReadOnly | QIODevice::Text)) {
+                         std::cerr << "Can't open expected result" << std::endl;
                          return false;
                      }
     //                 for(int i = 0; i < 7; i++) {
     //                     outputLines.pop_front(); // Hack to remove initial text
     //                 }
                      if (outputLines.size() <  10) {
+                         std::cerr << "Too few lines" << std::endl;
                          return false; // too few lines
                      }
 

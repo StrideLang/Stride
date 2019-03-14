@@ -1,0 +1,43 @@
+use DesktopAudio version 1.0
+
+import Generators
+
+module Gen2 {
+	ports: [
+        mainOutputPort OutputPort {
+            block: Output
+        }
+        propertyInputPort PropertyPort2 {
+            name: "prop2"
+            block: Property2
+            default: 1.0
+        }
+    ]
+    blocks: [
+    ]
+    streams: [
+        Property2 >> Output;
+    ]
+}
+
+module Gen {
+	ports: [
+        mainOutputPort OutputPort {
+            block: Output
+        }
+        propertyInputPort PropertyPort {
+            name: "prop"
+            block: Property
+            default: 1.0
+        }
+    ]
+    blocks: [
+    ]
+    streams: [
+        Gen2(prop2: Property)>> Output;
+    ]
+}
+
+
+
+Gen(prop: AudioIn[1]) >> AudioOut[1];

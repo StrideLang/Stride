@@ -19,6 +19,7 @@ class CodeEntity {
 public:
     std::string name;
     CodeEntityType entityType;
+    std::vector<std::shared_ptr<CodeEntity>> dependents;
 };
 
 class Declaration: public CodeEntity {
@@ -43,7 +44,7 @@ public:
         prefix(inst.prefix), size(inst.size), type(inst.type), defaultValue(inst.defaultValue), instanceNode(inst.instanceNode) {
         entityType = CodeEntityType::Instance;
         name = inst.name;
-
+        dependents = inst.dependents;
     }
     std::string prefix;
     int size {0};
@@ -74,7 +75,7 @@ public:
     std::string headerCode;
 
     std::string initCode;
-    std::vector<std::string> scopeDeclarations;
+//    std::vector<std::string> scopeDeclarations;
     std::string processingCode;
     std::vector<std::string> postProcessingCode;
     std::string cleanupCode;
@@ -107,11 +108,11 @@ public:
         scopeEntities.insert(scopeEntities.end(), newCode.scopeEntities.begin(), newCode.scopeEntities.end());
         headerCode += newCode.headerCode;
         initCode += newCode.initCode;
-        for (auto decl : newCode.scopeDeclarations) {
-            if (std::find(scopeDeclarations.begin(), scopeDeclarations.end(), decl) == scopeDeclarations.end()) {
-                scopeDeclarations.push_back(decl);
-            }
-        }
+//        for (auto decl : newCode.scopeDeclarations) {
+//            if (std::find(scopeDeclarations.begin(), scopeDeclarations.end(), decl) == scopeDeclarations.end()) {
+//                scopeDeclarations.push_back(decl);
+//            }
+//        }
         processingCode += newCode.processingCode;
 
         for (auto postCode : newCode.postProcessingCode) {
@@ -163,11 +164,11 @@ public:
         scopeEntities.insert(scopeEntities.begin(), newCode.scopeEntities.begin(), newCode.scopeEntities.end());
         headerCode = newCode.headerCode + headerCode;
         initCode = initCode + newCode.initCode;// Init code is not prepended
-        for (auto decl : newCode.scopeDeclarations) {
-            if (std::find(scopeDeclarations.begin(), scopeDeclarations.end(), decl) == scopeDeclarations.end()) {
-                scopeDeclarations.push_back(decl);
-            }
-        }
+//        for (auto decl : newCode.scopeDeclarations) {
+//            if (std::find(scopeDeclarations.begin(), scopeDeclarations.end(), decl) == scopeDeclarations.end()) {
+//                scopeDeclarations.push_back(decl);
+//            }
+//        }
         processingCode += newCode.processingCode;// Processing code is not prepended
 
         for (auto postCode : newCode.postProcessingCode) {

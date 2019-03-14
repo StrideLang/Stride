@@ -1,0 +1,44 @@
+use DesktopAudio version 1.0
+
+import Generators
+
+
+signal Value {
+	domain: AudioDomain
+}
+
+
+module Gen {
+	ports: [
+        mainOutputPort OutputPort {
+            block: Output
+        }
+    ]
+    blocks: [
+        signal Value {domain: OutputPort.domain}
+    ]
+    streams: [
+        Value + 0.001 >> Value;
+        Value >> Output;
+    ]
+}
+
+module Test {
+	ports: [
+		mainOutputPort OutputPort {
+			block: Output
+		}
+		mainInputPort InputPort {
+			block: Input
+		}
+	]
+	blocks: [
+		signal Input[2] {}
+		signal Output[2] {}
+	]
+	streams: [
+		Input[1] >> Output[1];
+		Input[1] + Input[2] >> Output[2];
+	]
+}
+[Gen(), 0.5] >> Test() >> AudioOut;
