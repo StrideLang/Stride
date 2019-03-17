@@ -1011,25 +1011,43 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream, Q
                 func(left, samplingDomain);
             }
         } else if (left->getNodeType() == AST::Function) {
+            auto func = static_pointer_cast<FunctionNode>(left);
+
             auto decl = CodeValidator::findDeclaration(CodeValidator::streamMemberName(left), scopeStack.toStdVector(), m_tree);
 
             if (decl) {
                 if (decl->getObjectType() == "module"
                         || decl->getObjectType() == "reaction"
-                        || decl->getObjectType() == "loop")
-                domainNode = processDomainsForNode(decl, scopeStack, domainStack);
-                auto internalStreams = decl->getPropertyValue("streams");
-                auto internalBlocks = decl->getPropertyValue("blocks");
-                auto internalScopeStack = scopeStack;
+                        || decl->getObjectType() == "loop") {
+                    //
 
-                if (internalStreams && internalBlocks) {
-                    for (auto internalStream: internalStreams->getChildren()) {
-                        Q_ASSERT(internalStream->getNodeType() == AST::Stream);
-                        internalScopeStack << QVector<ASTNode>::fromStdVector(internalBlocks->getChildren());
-                        if (internalStream->getNodeType() == AST::Stream) {
-                            // No context domain as all domains within modules must be resolvable internally
-                            resolveDomainsForStream(
-                                        std::static_pointer_cast<StreamNode>(internalStream), internalScopeStack, nullptr);
+                    domainNode = processDomainsForNode(decl, scopeStack, domainStack);
+                    auto internalStreams = decl->getPropertyValue("streams");
+                    auto internalBlocks = decl->getPropertyValue("blocks");
+                    auto internalScopeStack = scopeStack;
+
+                    if (internalStreams && internalBlocks) {
+                        for (auto internalStream: internalStreams->getChildren()) {
+                            Q_ASSERT(internalStream->getNodeType() == AST::Stream);
+                            internalScopeStack << QVector<ASTNode>::fromStdVector(internalBlocks->getChildren());
+                            if (internalStream->getNodeType() == AST::Stream) {
+                                // No context domain as all domains within modules must be resolvable internally
+                                resolveDomainsForStream(
+                                            std::static_pointer_cast<StreamNode>(internalStream), internalScopeStack, nullptr);
+                            }
+                        }
+                    }
+
+                    // -- Process domains for connected ports
+
+                    for (auto propNode: func->getProperties()) {
+
+                        if (propNode->getValue()->getNodeType() == AST::Expression) {
+//                            CodeValidator::getPortsForType()
+                            // FIXME whould we call resolve domains for node here for blocks?
+
+                        } else {
+
                         }
                     }
                 }
@@ -2555,55 +2573,6 @@ QVector<ASTNode > CodeResolver::sliceStreamByDomain(std::shared_ptr<StreamNode> 
             if (previousDomainName.size() == 0) {
                 previousDomainName = domainName;
             }
-        } else if (left->getNodeType() == AST::Expression) {
-            // We might need to add bridge signals if expression members belong to different domains
-            // Resolve domain from the right member in stream (if domain in expression members is not set)
-            ASTNode outDomain;
-//            if (right) {
-//                outDomain = CodeValidator::getNodeDomain(right, scopeStack, m_tree);
-//                std::shared_ptr<ExpressionNode> expr = static_pointer_cast<ExpressionNode>(left);
-//                QVector<ASTNode > newStreams = processExpression(expr, scopeStack, outDomain);
-//                streams << newStreams;
-//                domainName = CodeValidator::getDomainNodeString(outDomain);
-//            }
-        } else if (left->getNodeType() == AST::Function) {
-            std::shared_ptr<FunctionNode> func = static_pointer_cast<FunctionNode>(left);
-            vector<std::shared_ptr<PropertyNode>> properties = func->getProperties();
-//            for(auto prop: properties) {
-//                ASTNode value = prop->getValue();
-//                if (value->getNodeType() == AST::Block) {
-//                    std::shared_ptr<DeclarationNode> declaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(value),
-//                                                                                                  scopeStack.toStdVector(), m_tree);
-//                    if (declaration) {
-//                        std::string connectorName = "_B_" + std::to_string(m_connectorCounter++);
-//                        connectorName += "_" + declaration->getName();
-//                        int size = 1;
-//                        if (declaration->getNodeType() == AST::BundleDeclaration) {
-//                            Q_ASSERT(declaration->getBundle()->index()->getChildren()[0]->getNodeType() == AST::Int);
-//                            size = static_cast<ValueNode *>(declaration->getBundle()->index()->getChildren()[0].get())->getIntValue();
-//                        }
-//                        ASTNode defaultProperty = declaration->getPropertyValue("default");
-//                        ASTNode bridgeDomain = declaration->getDomain();
-//                        if (defaultProperty && bridgeDomain) {
-//                            std::shared_ptr<BlockNode> block = static_pointer_cast<BlockNode>(value);
-//                            std::shared_ptr<ValueNode> noneValue = std::make_shared<ValueNode>(__FILE__, __LINE__);
-//                            // FIXME this assumes the input to a function is a signal
-//                            streams.push_back(createSignalBridge(connectorName, block->getName(), defaultProperty,
-//                                                                 bridgeDomain, noneValue,
-//                                                                 declaration->getFilename(), declaration->getLine(),
-//                                                                 size, "signal")); // Add definition to stream
-//                            std::shared_ptr<BlockNode> connectorNameNode = std::make_shared<BlockNode>(connectorName, __FILE__, __LINE__);
-//                            std::shared_ptr<StreamNode> newStream = std::make_shared<StreamNode>(value, connectorNameNode, left->getFilename().c_str(), left->getLine());
-//                            prop->replaceValue(connectorNameNode);
-//                            streams.push_back(newStream);
-//                        }
-//                    }
-//                } /*else if (value->getNodeType() == AST::Bundle) {
-//                    std::string connectorName = "_BridgeSig_" + std::to_string(m_connectorCounter++);
-//                    //                    newDeclarations.push_back(createSignalBridge(listMemberName, declaration, new ValueNode(__FILE__, __LINE__)));
-
-//                }*/
-//            }
         }
         stack << left;
         if (right->getNodeType() == AST::Stream) {

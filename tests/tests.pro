@@ -15,13 +15,21 @@ SOURCES += tst_parsertest.cpp \
 DEFINES += BUILDPATH=\\\"$$OUT_PWD/\\\"
 CONFIG += c++11
 
-include("../config.pri")
-
 unix {
     !macx {
         LIBS += -lfl
+    }
+}
 
+
+# Code coverage
+
+CONFIG += code_coverage
+
+unix {
+    !macx {
         code_coverage {
+            message("** Building with gcov support")
             QMAKE_CXXFLAGS += -g -Wall -fprofile-arcs -ftest-coverage -O0
             QMAKE_LFLAGS += -g -Wall -fprofile-arcs -ftest-coverage  -O0
             LIBS += \
@@ -31,6 +39,7 @@ unix {
     }
 }
 
+include("../config.pri")
 
 folder_01.source = data/
 folder_01.target = data/
