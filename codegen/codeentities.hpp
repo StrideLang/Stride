@@ -20,6 +20,8 @@ public:
     std::string name;
     CodeEntityType entityType;
     std::vector<std::shared_ptr<CodeEntity>> dependents;
+
+    virtual std::string fullName() { return name;}
 };
 
 class Declaration: public CodeEntity {
@@ -54,7 +56,7 @@ public:
     std::vector<std::string> constructorArgs;
     std::vector<std::string> templateArgs;
 
-    std::string fullName() {return prefix + name;}
+    std::string fullName() override {return prefix + name;}
 };
 
 // Key is internal, value is external. If second is null, there is no external connection.

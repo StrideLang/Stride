@@ -86,7 +86,6 @@ module Impulse {
     ports: [
 		mainOutputPort OutputPort {
 			block: Output
-#			domain: OutputDomain
 		},
 		propertyInputPort FrequencyPort {
 			name: "frequency"
@@ -119,11 +118,14 @@ module Impulse {
 #		}
         signal Phase {
                 default :       1.0
-                domain:         Output.domain
+                domain:         OutputPort.domain
 		}
         signal PhaseInc {
 			default :       0.0
-			domain: Frequency.domain
+			domain: FrequencyPort.domain
+		}
+		switch PhaseOverflow {
+			domain: OutputPort.domain
 		}
 		reaction WrapPhase {
 			streams: [
@@ -133,11 +135,11 @@ module Impulse {
 		
     ]
     streams: [
-        Frequency / Output.rate >> PhaseInc;
+        Frequency / OutputPort.rate >> PhaseInc;
         Phase + PhaseInc >> Phase;
 
         [Phase , 1 ] >> Greater() >> Select(whenOn: 1 whenOff: 0) >> Output;
-        [Phase , 1 ] >> Greater() >> WrapPhase();
+        [Phase , 1 ] >> Greater() >> PhaseOverflow >> WrapPhase();
     ]
-	meta: "Bipolar output [ -1. , 1. ] scaled by amplitude"
+	meta: ""
 }
