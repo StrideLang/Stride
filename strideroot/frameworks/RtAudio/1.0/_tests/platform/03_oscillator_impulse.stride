@@ -1,0 +1,7 @@
+use DesktopAudio version 1.0
+
+import Generators
+
+Oscillator() >> AudioOut[1];
+
+Impulse() >> AudioOut[2];

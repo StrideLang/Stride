@@ -31,6 +31,7 @@ public:
     }
     std::string type;
     std::string code;
+    std::string parent;
 } ;
 
 class Instance : public CodeEntity {
@@ -49,6 +50,7 @@ public:
         dependents = inst.dependents;
     }
     std::string prefix;
+    std::string parent;
     int size {0};
     std::string type;
     std::vector<std::string> defaultValue;

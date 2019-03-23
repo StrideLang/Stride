@@ -20,6 +20,10 @@ module Gen {
     ]
 }
 
-
+signal Signal {
+	default: 0.15
+	domain: AudioDomain
+}
 
 Gen(prop: AudioIn[1] + 0.4) >> AudioOut[1];
+Gen(prop: AudioIn[1] + AudioIn[2] + Signal ) >> AudioOut[2];
