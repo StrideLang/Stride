@@ -1,6 +1,7 @@
 
 platformBlock _AnalogInput {
     typeName: '_analogInput'
+	domain: WiringDomain
 #	inputs: []
 	outputs: ["real"]
 #    include: []

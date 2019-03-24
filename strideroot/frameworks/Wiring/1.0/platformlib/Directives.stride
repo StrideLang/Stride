@@ -1,10 +1,14 @@
 generatorDirectives __GeneratorDirectives {
     projectDir: "project"
-    templateFiles: ["template.cpp"]
+    templateFiles: ["template.ino"]
     destinationDir: "code"
     buildDir: "build"
     configCommand: "cmake -DSTRIDE_PLATFORM_ROOT=%platformroot% .."
-    buildCommand: "cmake --build ."
+    configCommand: ["cmake",  "-DSTRIDE_PLATFORM_ROOT=%platformRoot%", ".."]
+    buildCommand: ["cmake", "--build", "."]
     target: "app"
     targetDir: "code/build"
+    codeGenerator: "pufferfish"
+    codeGeneratorMajorVersion: 1
+    codeGeneratorMinroVersion: 0
 }

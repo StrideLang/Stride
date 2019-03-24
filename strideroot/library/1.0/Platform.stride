@@ -80,6 +80,16 @@ type _DomainDefinition {
 			types: ["CSP"]
 			default: ""
 			required: off
+			meta: 'Declaration of the domain processing function. Use %domainCode% to mark where the generated code needs to be placed within 
+			the domain function'
+		},
+		typeProperty DomainProcessing {
+			name: "domainProcessing"
+			types: ["CSP"]
+			default: ""
+			required: off
+			meta: 'Processing code for domain. Code to be called
+			by a parent domain to update or tick the domain.'
 		},
 		typeProperty DomainCleanup {
 			name: "domainCleanup"

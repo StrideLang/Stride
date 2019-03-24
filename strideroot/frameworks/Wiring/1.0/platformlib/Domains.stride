@@ -14,9 +14,25 @@ constant PlatformRate {
 _domainDefinition WiringDomain {
 	domainName: "WiringDomain"
 	framework: _WiringFramework
+	globalsTag: "Includes"
 	declarationsTag: "Declarations"
 	processingTag: "Processing"
 	initializationTag: "Initialization"
 	cleanupTag: "Cleanup"
+    domainIncludes: ["Timer.h"]
+    domainDeclarations: ["Timer t;"]
+    domainInitialization: '// init domain init	
+int tickEvent = t.every(1, process);
+'
+	domainFunction: '// domain processing
+	void process()
+{
+%%domainCode%%
+}
+'
+	domainProcessing: '
+  t.update();
+	'
+    domainCleanup: '// init domain cleanup'
 	rate:1000
 }

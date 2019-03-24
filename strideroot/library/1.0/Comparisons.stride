@@ -147,6 +147,9 @@ module Select {
         }
     ]
     blocks: [
+		switch Input {
+			domain: OutputPort.domain
+		}
     ]
     streams: [
         [Input, WhenOn, WhenOff]  >> __Select() >> Output;

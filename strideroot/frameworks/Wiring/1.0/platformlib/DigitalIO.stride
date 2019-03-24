@@ -2,6 +2,7 @@
 platformBlock _DigitalOutput {
     typeName: '_digitalOutput'
 	inputs: ["bool"]
+	domain: WiringDomain
 #    include: []
 #    linkTo: []
 #    declarations: ['']
