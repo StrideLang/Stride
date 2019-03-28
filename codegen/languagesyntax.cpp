@@ -5,6 +5,8 @@ std::string LanguageSyntax::instance(Instance &inst, bool close) {
     std::string out;
     if (inst.type == "double") {
         out = LanguageSyntax::instanceReal(inst.fullName(), inst.size, true, inst.defaultValue);
+    } else if (inst.type == "bool") {
+        out = LanguageSyntax::instanceBool(inst.fullName(), inst.size, true, inst.defaultValue);
     } else {
         // Do we need to look at size here?
         out = inst.type;
@@ -34,6 +36,29 @@ std::string LanguageSyntax::instance(Instance &inst, bool close) {
 
 std::string LanguageSyntax::instanceReal(std::string name, int size, bool close, std::vector<std::string> defaultValue) {
     std::string decl = "float " + name;
+    if (size > 1) {
+        decl += "[" + std::to_string(size) + "] ";
+        if (defaultValue.size() > 0) {
+            decl += " = {";
+            for (auto v: defaultValue) {
+                decl +=  " " + v + ",";
+            }
+            decl.resize(decl.size() - 1); // Chop off last comma
+            decl += "}";
+        }
+    } else {
+        if (defaultValue.size() == 1) {
+            decl += " = " + defaultValue[0];
+        }
+    }
+    if (close) {
+        decl += endStatement();
+    }
+    return decl;
+}
+
+std::string LanguageSyntax::instanceBool(std::string name, int size, bool close, std::vector<std::string> defaultValue) {
+    std::string decl = "bool " + name;
     if (size > 1) {
         decl += "[" + std::to_string(size) + "] ";
         if (defaultValue.size() > 0) {

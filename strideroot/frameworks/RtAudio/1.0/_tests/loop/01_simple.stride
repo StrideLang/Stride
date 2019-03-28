@@ -4,11 +4,13 @@ signal Accum {}
 
 loop Loop {
 	ports: [
-			mainInputPort InputPort { block: Input }
+		mainInputPort InputPort {
+			block: Input
+		}
 	]
 	blocks: [
-		signal Counter {}
-		switch CounterReset {}
+		signal Counter { domain: InputPort.domain}
+		switch CounterReset { domain: InputPort.domain}
 	]
 	streams: [
 		Accum + 2 >> Accum;
@@ -18,7 +20,7 @@ loop Loop {
 	terminateWhen: CounterReset
 }
 
-switch Switch {}
+switch Switch { default: on }
 
 Switch >> Loop();
 Accum >> AudioOut[1];

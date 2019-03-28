@@ -14,6 +14,7 @@ public:
     static std::string instance(Instance &inst, bool close = true);
 
     static std::string instanceReal(std::string name, int size = 1, bool close = true, std::vector<std::string> defaultValue = std::vector<std::string>());
+    static std::string instanceBool(std::string name, int size = 1, bool close = true, std::vector<std::string> defaultValue = std::vector<std::string>());
 
     static std::string assignment(std::string name, std::string value, bool close = true);
 
@@ -48,6 +49,21 @@ public:
 
     static std::string reactionConditionEnd() {
         return "}\n";
+    }
+    static std::string loopConditionBegin(std::string condition) {
+        return "while (!(" + condition + ")) {\n";
+    }
+
+    static std::string loopConditionEnd() {
+        return "}\n";
+    }
+
+    static std::string trueKeyword() {
+        return "true";
+    }
+
+    static std::string falseKeyword() {
+        return "false";
     }
 
     static std::string getDataType(std::string strideType);

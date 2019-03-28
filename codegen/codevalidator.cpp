@@ -1256,8 +1256,8 @@ int CodeValidator::getNodeNumInputs(ASTNode node, const QVector<ASTNode > &scope
         std::shared_ptr<DeclarationNode> platformFunc = CodeValidator::findDeclaration(QString::fromStdString(func->getName()), scope, tree);
         int dataSize = CodeValidator::getFunctionDataSize(func, scope, tree, errors);
         if (platformFunc) {
-            if (platformFunc->getObjectType() == "reaction") {
-                return 1; // Reactions always have one input as main port
+            if (platformFunc->getObjectType() == "reaction" || platformFunc->getObjectType() == "loop") {
+                return 1; // Reactions and loops always have one input as main port
             } else {
                 QVector<ASTNode > internalScope = scope;
                 ASTNode subScope = CodeValidator::getBlockSubScope(platformFunc);
