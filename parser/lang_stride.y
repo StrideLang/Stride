@@ -940,6 +940,8 @@ indexComp:
             BundleNode *bundle = $1;
             COUT << "Resolving indexed bundle ..." << bundle->getName() << ENDL;
         }
+    |   portPropertyDef       {
+        }
     ;
 
 // ================================= 

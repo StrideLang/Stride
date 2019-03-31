@@ -7,20 +7,26 @@ loop Loop {
 		mainInputPort InputPort {
 			block: Input
 		}
+		mainOutputPort OutputPort {
+			block: Output
+		}
 	]
 	blocks: [
-		signal Counter { domain: InputPort.domain}
-		switch CounterReset { domain: InputPort.domain}
+		signal Input[InputPort.size] {}
+		signal Output {default: 0}
+		signal Index {}
+		switch Done {}
 	]
+#	onExecution: Reset
+	terminateWhen: Done
 	streams: [
-		Accum + 2 >> Accum;
-		Counter + 1 >> Counter;
-		[Counter, 10] >> Equal() >> CounterReset;
+		Input [ Index ] + Output >> Output ;
+		Index + 1 >> Index ;
+		[ Index , InputPort.size ] >> Greater () >> Done ;
+		
 	]
-	terminateWhen: CounterReset
 }
 
-switch Switch { default: on }
+signal List[20] { default: 1 }
 
-Switch >> Loop();
-Accum >> AudioOut[1];
+List >> Loop() >> AudioOut[1];

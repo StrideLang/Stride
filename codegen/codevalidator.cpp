@@ -919,8 +919,15 @@ void CodeValidator::validateStreamInputSize(StreamNode *stream, QVector<ASTNode 
 
     auto leftDecl = CodeValidator::findDeclaration(
                 CodeValidator::streamMemberName(left), scope.toStdVector(), m_tree);
-    auto rightDecl = CodeValidator::findDeclaration(
-                CodeValidator::streamMemberName(right), scope.toStdVector(), m_tree);
+    std::shared_ptr<DeclarationNode> rightDecl;
+    if (right->getNodeType() == AST::Stream) {
+        auto nextStreamMember = static_pointer_cast<StreamNode>(right)->getLeft();
+        rightDecl = CodeValidator::findDeclaration(
+                        CodeValidator::streamMemberName(nextStreamMember), scope.toStdVector(), m_tree);
+    } else {
+        rightDecl = CodeValidator::findDeclaration(
+                        CodeValidator::streamMemberName(right), scope.toStdVector(), m_tree);
+    }
     if ((leftDecl && leftDecl->getObjectType() == "buffer")
             || (rightDecl && rightDecl->getObjectType() == "buffer")) {
         // FIXME how should buffer size be validated?
@@ -1256,8 +1263,8 @@ int CodeValidator::getNodeNumInputs(ASTNode node, const QVector<ASTNode > &scope
         std::shared_ptr<DeclarationNode> platformFunc = CodeValidator::findDeclaration(QString::fromStdString(func->getName()), scope, tree);
         int dataSize = CodeValidator::getFunctionDataSize(func, scope, tree, errors);
         if (platformFunc) {
-            if (platformFunc->getObjectType() == "reaction" || platformFunc->getObjectType() == "loop") {
-                return 1; // Reactions and loops always have one input as main port
+            if (platformFunc->getObjectType() == "reaction") {
+                return 1; // Reactions always have one input as main port
             } else {
                 QVector<ASTNode > internalScope = scope;
                 ASTNode subScope = CodeValidator::getBlockSubScope(platformFunc);
@@ -1658,11 +1665,12 @@ PortType CodeValidator::resolveRangeType(RangeNode *rangenode, QVector<ASTNode >
 
 PortType CodeValidator::resolvePortPropertyType(PortPropertyNode *portproperty, QVector<ASTNode> scope, ASTNode tree)
 {
-    auto decl = CodeValidator::findDeclaration(QString::fromStdString(portproperty->getPortName()), scope, tree);
-    if (decl) {
-        return resolveNodeOutType(decl->getPropertyValue(portproperty->getName()), scope, tree);
+    // FIXME implement correctly
+    if (portproperty->getPortName() == "size") {
+        return ConstInt;
+    } else {
+        return ConstReal;
     }
-    return None;
 }
 
 shared_ptr<DeclarationNode> CodeValidator::resolveBlock(ASTNode node, bool downStream) {

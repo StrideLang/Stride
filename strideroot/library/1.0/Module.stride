@@ -169,7 +169,7 @@ type _Loop {
 			default: none
 			required: on
 		},
-		typeProperty OnExecute {
+		typeProperty OnExecution {
 			name: "onExecute"
 			types: [""]
 			default: none
