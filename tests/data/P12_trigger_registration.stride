@@ -1,0 +1,10 @@
+use DesktopAudio version 1.0
+
+trigger Trig { }
+
+switch Switch1 {}
+switch Switch2 {}
+switch Switch3 {}
+
+
+[Switch1, Switch2, Switch3] >> [Trig, Trig, Trig];

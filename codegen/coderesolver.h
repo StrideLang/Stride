@@ -126,7 +126,7 @@ private:
     void checkStreamConnections(std::shared_ptr<StreamNode> stream, QVector<ASTNode > scopeStack, ASTNode previous = nullptr);
 
     void setReadsWrites(ASTNode node, ASTNode previous, QVector<ASTNode> scopeStack);
-    void markConnectionForNode(ASTNode node, QVector<ASTNode > scopeStack, ASTNode previous = nullptr);
+    void markConnectionForNode(ASTNode node, QVector<ASTNode > scopeStack, ASTNode previous = nullptr, unsigned int listIndex = 0);
 
     void storeDeclarationsForNode(ASTNode node, vector<ASTNode> scopeStack, ASTNode tree);
 

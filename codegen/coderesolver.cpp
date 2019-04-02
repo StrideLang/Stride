@@ -3280,7 +3280,7 @@ void CodeResolver::setReadsWrites(ASTNode node, ASTNode previous, QVector<ASTNod
     }
 }
 
-void CodeResolver::markConnectionForNode(ASTNode node, QVector<ASTNode > scopeStack, ASTNode previous)
+void CodeResolver::markConnectionForNode(ASTNode node, QVector<ASTNode > scopeStack, ASTNode previous, unsigned int listIndex)
 {
     if (node->getNodeType() == AST::Block || node->getNodeType() == AST::Bundle || node->getNodeType() == AST::Function) {
         std::string name = CodeValidator::streamMemberName(node);
@@ -3298,6 +3298,19 @@ void CodeResolver::markConnectionForNode(ASTNode node, QVector<ASTNode > scopeSt
         }
         std::shared_ptr<DeclarationNode> decl = CodeValidator::findDeclaration(name, scopeStack.toStdVector(), m_tree);
         if (decl) {
+            // Mark trigger connections
+            if (decl->getObjectType() == "trigger") {
+                if (!decl->getCompilerProperty("triggerSources")) {
+                    decl->setCompilerProperty("triggerSources", std::make_shared<ListNode>(__FILE__, __LINE__));
+                }
+                auto sourcesList = decl->getCompilerProperty("triggerSources");
+                if (previous->getNodeType() == AST::List) {
+                    sourcesList->addChild(previous->getChildren()[listIndex]);
+                } else {
+                    sourcesList->addChild(previous);
+                }
+            }
+            // Now process type declaration
             auto typeDecl = CodeValidator::findTypeDeclaration(decl, scopeStack, m_tree);
             if (typeDecl) {
                 // For the declaration too
@@ -3378,8 +3391,12 @@ void CodeResolver::markConnectionForNode(ASTNode node, QVector<ASTNode > scopeSt
         }
         previous = node;
     } else if (node->getNodeType() == AST::List) {
+        QList<LangError> errors;
+        int index = 0;
         for (auto child: node->getChildren()) {
-            markConnectionForNode(child, scopeStack, previous);
+            int inputSize = CodeValidator::getNodeNumInputs(child, scopeStack, m_tree, errors);
+            markConnectionForNode(child, scopeStack, previous, index);
+            index += inputSize;
         }
         previous = node;
     }

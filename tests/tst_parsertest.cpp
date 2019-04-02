@@ -83,7 +83,7 @@ private Q_SLOTS:
     void testConstantResolution();
     void testNamespaces();
 
-    //PlatformConsistency
+    //Platform
     void testPlatformCommonObjects();
     void testValueTypeExpressionResolution();
     void testDuplicates();
@@ -93,6 +93,7 @@ private Q_SLOTS:
     void testDomains();
     void testLists();
     void testPortNameValidation();
+    void testTriggers();
 
     // Connections
     void testConnectionErrors();
@@ -3184,6 +3185,30 @@ void ParserTest::testLibraryValidation()
     QVERIFY(tree);
     CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree);
     QVERIFY(generator.isValid());
+}
+
+void ParserTest::testTriggers()
+{
+
+    ASTNode tree;
+    tree = AST::parseFile(QString(QFINDTESTDATA("data/P12_trigger_registration.stride")).toStdString().c_str());
+    QVERIFY(tree != nullptr);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree, CodeValidator::NO_RATE_VALIDATION);
+    QVERIFY(generator.isValid());
+
+    auto triggerDecl = CodeValidator::findDeclaration("Trig", std::vector<ASTNode>(), tree);
+    QVERIFY(triggerDecl);
+    auto triggerSources = triggerDecl->getCompilerProperty("triggerSources");
+    QVERIFY(triggerSources);
+    QVERIFY(triggerSources->getNodeType() == AST::List);
+    QVERIFY(triggerSources->getChildren().size() == 3);
+    auto block = static_pointer_cast<BlockNode>(triggerSources->getChildren()[0]);
+    QVERIFY(block->getName() == "Switch1");
+    block = static_pointer_cast<BlockNode>(triggerSources->getChildren()[1]);
+    QVERIFY(block->getName() == "Switch2");
+    block = static_pointer_cast<BlockNode>(triggerSources->getChildren()[2]);
+    QVERIFY(block->getName() == "Switch3");
+
 }
 
 QTEST_APPLESS_MAIN(ParserTest)
