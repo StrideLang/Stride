@@ -93,7 +93,8 @@ private Q_SLOTS:
     void testDomains();
     void testLists();
     void testPortNameValidation();
-    void testTriggers();
+    void testTriggersRegistration();
+    void testResetRegistration();
 
     // Connections
     void testConnectionErrors();
@@ -3187,9 +3188,8 @@ void ParserTest::testLibraryValidation()
     QVERIFY(generator.isValid());
 }
 
-void ParserTest::testTriggers()
+void ParserTest::testTriggersRegistration()
 {
-
     ASTNode tree;
     tree = AST::parseFile(QString(QFINDTESTDATA("data/P12_trigger_registration.stride")).toStdString().c_str());
     QVERIFY(tree != nullptr);
@@ -3208,6 +3208,37 @@ void ParserTest::testTriggers()
     QVERIFY(block->getName() == "Switch2");
     block = static_pointer_cast<BlockNode>(triggerSources->getChildren()[2]);
     QVERIFY(block->getName() == "Switch3");
+
+}
+void ParserTest::testResetRegistration()
+{
+//    trigger Trig { }
+
+//    switch Switch1 { reset: Trig }
+//    switch SwitchBundle[2] { reset: Trig }
+//    signal Sig { reset: Trig }
+//    signal SigBundle[2] { reset: Trig }
+
+    ASTNode tree;
+    tree = AST::parseFile(QString(QFINDTESTDATA("data/P13_reset_registration.stride")).toStdString().c_str());
+    QVERIFY(tree != nullptr);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree, CodeValidator::NO_RATE_VALIDATION);
+    QVERIFY(generator.isValid());
+
+    auto triggerDecl = CodeValidator::findDeclaration("Trig", std::vector<ASTNode>(), tree);
+    QVERIFY(triggerDecl);
+    auto triggerResets = triggerDecl->getCompilerProperty("triggerResets");
+    QVERIFY(triggerResets);
+    QVERIFY(triggerResets->getNodeType() == AST::List);
+    QVERIFY(triggerResets->getChildren().size() == 4);
+    auto block = static_pointer_cast<DeclarationNode>(triggerResets->getChildren()[0]);
+    QVERIFY(block->getName() == "Switch1");
+    block = static_pointer_cast<DeclarationNode>(triggerResets->getChildren()[1]);
+    QVERIFY(block->getName() == "SwitchBundle");
+    block = static_pointer_cast<DeclarationNode>(triggerResets->getChildren()[2]);
+    QVERIFY(block->getName() == "Sig");
+    block = static_pointer_cast<DeclarationNode>(triggerResets->getChildren()[3]);
+    QVERIFY(block->getName() == "SigBundle");
 
 }
 

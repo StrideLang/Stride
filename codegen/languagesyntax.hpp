@@ -58,6 +58,14 @@ public:
         return "}\n";
     }
 
+    static std::string triggerBegin(std::string condition) {
+        return "if (" + condition + ") {\n";
+    }
+
+    static std::string triggerEnd() {
+        return "}\n";
+    }
+
     static std::string trueKeyword() {
         return "true";
     }

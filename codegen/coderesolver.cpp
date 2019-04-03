@@ -3310,6 +3310,46 @@ void CodeResolver::markConnectionForNode(ASTNode node, QVector<ASTNode > scopeSt
                     sourcesList->addChild(previous);
                 }
             }
+
+            // Check if previous is trigger
+            if (previous) {
+                std::shared_ptr<DeclarationNode> previousDecl = CodeValidator::findDeclaration(
+                            CodeValidator::streamMemberName(previous), scopeStack.toStdVector(), m_tree);
+                if (previousDecl && previousDecl->getObjectType() == "trigger") {
+                    if (!previousDecl->getCompilerProperty("triggerDestinations")) {
+                        previousDecl->setCompilerProperty("triggerDestinations", std::make_shared<ListNode>(__FILE__, __LINE__));
+                    }
+                    auto triggerDests = previousDecl->getCompilerProperty("triggerDestinations");
+                    triggerDests->addChild(node);
+                }
+            }
+
+            // Connect reset property to trigger
+            auto resetProp = decl->getPropertyValue("reset");
+            if (resetProp && resetProp->getNodeType() == AST::Block) {
+                // TODO should trigger bundles be allowed?
+                auto triggerDecl = CodeValidator::findDeclaration(
+                            CodeValidator::streamMemberName(resetProp), scopeStack.toStdVector(), m_tree);
+                if (triggerDecl) {
+                    if (!triggerDecl->getCompilerProperty("triggerResets")) {
+                        triggerDecl->setCompilerProperty("triggerResets", std::make_shared<ListNode>(__FILE__, __LINE__));
+                    }
+                    auto resets = triggerDecl->getCompilerProperty("triggerResets");
+                    bool notRegistered = true;
+                    for (auto registeredDecl: resets->getChildren()) {
+                        //FIXME check namespace too
+                        if (static_pointer_cast<DeclarationNode>(registeredDecl)->getName() ==
+                                decl->getName()) {
+                            notRegistered = false;
+                            break;
+                        }
+                    }
+                    if (notRegistered) {
+                        resets->addChild(decl);
+                    }
+                }
+            }
+
             // Now process type declaration
             auto typeDecl = CodeValidator::findTypeDeclaration(decl, scopeStack, m_tree);
             if (typeDecl) {
@@ -3369,7 +3409,6 @@ void CodeResolver::markConnectionForNode(ASTNode node, QVector<ASTNode > scopeSt
         if (previous) {
             QString previousName;
             std::shared_ptr<ListNode> previousReads;
-            std::shared_ptr<DeclarationNode> previousDecl;
             if (previous->getNodeType() == AST::Block || previous->getNodeType() == AST::Bundle) {
                 setReadsWrites(node, previous, scopeStack);
             } else if (previous->getNodeType() == AST::Expression) {

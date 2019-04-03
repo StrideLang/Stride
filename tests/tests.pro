@@ -99,7 +99,9 @@ DISTFILES += \
     data/E05_library_objects.stride \
     data/E06_context_domain.stride \
     data/L01_library_types_validation.stride \
-    data/E07_namespaces.stride
+    data/E07_namespaces.stride \
+    data/P13_reset_registration.stride \
+    data/P12_trigger_registration.stride
 
 # Link to codegen library
 
