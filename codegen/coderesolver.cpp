@@ -1,4 +1,4 @@
-/*
+﻿/*
     Stride is licensed under the terms of the 3-clause BSD license.
 
     Copyright (C) 2017. The Regents of the University of California.
@@ -3186,17 +3186,18 @@ void CodeResolver::setReadsWrites(ASTNode node, ASTNode previous, QVector<ASTNod
                 auto nodeTypeName = decl->getObjectType();
 
                 // TODO we need to support lists here too
-                std::shared_ptr<ListNode> previousReads = static_pointer_cast<ListNode>(previous->getCompilerProperty("reads"));
+                auto previousInstance = CodeValidator::getInstance(previous, scopeStack.toStdVector(), m_tree);
+                std::shared_ptr<ListNode> previousReads = static_pointer_cast<ListNode>(previousInstance->getCompilerProperty("reads"));
                 std::shared_ptr<ListNode> previousDeclReads = static_pointer_cast<ListNode>(previousDecl->getCompilerProperty("reads"));
                 if (nodeTypeName == "module" || nodeTypeName == "reaction"|| nodeTypeName == "loop") {
                     // Modules, reactions and loops, the domain that matters is the domain of the output block.
                     if (node->getNodeType() ==AST::Function) {
                         auto func = std::static_pointer_cast<FunctionNode>(node);
-                        if (func->getDomain() != nullptr) {
-                            previousReads->addChild(func->getDomain());
-                            if (previousDeclReads) {
-                                previousDeclReads->addChild(func->getDomain());
-                            }
+                        if (func->getCompilerProperty("domain") != nullptr) {
+                            previousReads->addChild(func->getCompilerProperty("domain"));
+//                            if (previousDeclReads) {
+//                                previousDeclReads->addChild(func->getDomain());
+//                            }
                         }
                     }
                 } else {
@@ -3312,8 +3313,9 @@ void CodeResolver::markConnectionForNode(ASTNode node, QVector<ASTNode > scopeSt
             }
 
             // Check if previous is trigger
+            std::shared_ptr<DeclarationNode> previousDecl;
             if (previous) {
-                std::shared_ptr<DeclarationNode> previousDecl = CodeValidator::findDeclaration(
+                previousDecl = CodeValidator::findDeclaration(
                             CodeValidator::streamMemberName(previous), scopeStack.toStdVector(), m_tree);
                 if (previousDecl && previousDecl->getObjectType() == "trigger") {
                     if (!previousDecl->getCompilerProperty("triggerDestinations")) {
@@ -3367,7 +3369,7 @@ void CodeResolver::markConnectionForNode(ASTNode node, QVector<ASTNode > scopeSt
                 if (previous) {
                     QString previousName;
                     std::shared_ptr<ListNode> previousReads;
-                    std::shared_ptr<DeclarationNode> previousDecl;
+//                    std::shared_ptr<DeclarationNode> previousDecl;
                     if (previous->getNodeType() == AST::Block || previous->getNodeType() == AST::Bundle) {
                         setReadsWrites(node, previous, scopeStack);
                     } else if (previous->getNodeType() == AST::Expression) {
@@ -3385,6 +3387,9 @@ void CodeResolver::markConnectionForNode(ASTNode node, QVector<ASTNode > scopeSt
                             markConnectionForNode(child, scopeStack, nullptr);
                             setReadsWrites(node, child, scopeStack);
                         }
+                    } else if (previous->getNodeType() == AST::Function) {
+                        //FIXME assumes the output port of the module takes the output port domain
+                        writesProperties->addChild(decl->getDomain());
                     }
                 }
             }

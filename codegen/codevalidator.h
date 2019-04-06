@@ -152,6 +152,9 @@ public:
     static double getDefaultForTypeAsDouble(string type, string port, QVector<ASTNode > scope, ASTNode tree, std::vector<string> namespaces);
     static ASTNode getDefaultPortValueForType(string type, string portName, QVector<ASTNode > scope, ASTNode tree, std::vector<string> namespaces);
 
+    // Get instance. For blocks the declaration is the instance, for modules it is the function node in the stream
+    // Many properties need to be stored in the instance.
+    static ASTNode getInstance(ASTNode block, std::vector<ASTNode> scopeStack, ASTNode tree);
     static bool namespaceMatch(std::vector<string> scopeList, std::shared_ptr<DeclarationNode> decl);
 
     static vector<StreamNode *> getStreamsAtLine(ASTNode tree, int line);

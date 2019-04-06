@@ -395,6 +395,21 @@ ASTNode CodeValidator::getDefaultPortValueForType(string type, string portName, 
     return nullptr;
 }
 
+ASTNode CodeValidator::getInstance(ASTNode block, std::vector<ASTNode> scopeStack, ASTNode tree)
+{
+    ASTNode inst;
+    if (block->getNodeType() ==AST::List) {
+        inst = block;
+    } else if (block->getNodeType() == AST::Function) {
+        inst = block;
+    } else {
+        auto decl = CodeValidator::findDeclaration(CodeValidator::streamMemberName(block),
+                                                   scopeStack, tree);
+        inst = decl;
+    }
+    return inst;
+}
+
 bool CodeValidator::namespaceMatch(std::vector<string> scopeList, std::shared_ptr<DeclarationNode> decl)
 {
     const char* const delim = "::";

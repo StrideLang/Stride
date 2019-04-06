@@ -1,10 +1,11 @@
 use DesktopAudio version 1.0
 
-trigger Reset {}
+trigger Reset { domain: AsyncDomain}
 	
 signal Value {
 	reset: Reset
 	default: 1
+    domain: AudioDomain
 }
 
 Value >> AudioOut[1];
