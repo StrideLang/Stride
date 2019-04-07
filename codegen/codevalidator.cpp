@@ -730,7 +730,7 @@ void CodeValidator::validateBundleIndeces(ASTNode node, QVector<ASTNode > scope)
     if (node->getNodeType() == AST::Bundle) {
         BundleNode *bundle = static_cast<BundleNode *>(node.get());
         PortType type = resolveNodeOutType(bundle->index(), scope, m_tree);
-        if(type != ConstInt && type != Signal /*&& type != ControlInt && type != AudioInteger*/) {
+        if(type != ConstInt && type != Signal && type != PortProperty) {
             LangError error;
             error.type = LangError::IndexMustBeInteger;
             error.lineNumber = bundle->getLine();
@@ -949,19 +949,22 @@ void CodeValidator::validateStreamInputSize(StreamNode *stream, QVector<ASTNode 
 
 
     } else {
-        if ((leftOutSize != rightInSize
-                && ((int) (rightInSize/ (double) leftOutSize)) != (rightInSize/ (double) leftOutSize))
-                || rightInSize == 0) {
-            LangError error;
-            error.type = LangError::StreamMemberSizeMismatch;
-            error.lineNumber = right->getLine();
-            error.errorTokens.push_back(QString::number(leftOutSize).toStdString());
-            error.errorTokens.push_back(getNodeText(left).toStdString());
-            error.errorTokens.push_back(QString::number(rightInSize).toStdString());
-            error.filename = left->getFilename();
-            errors << error;
+        if (leftOutSize == -2 || rightInSize == -2) {
+            // FIXME Hack while calculation of port portperties size is implemented
+        } else {
+            if ((leftOutSize != rightInSize
+                 && ((int) (rightInSize/ (double) leftOutSize)) != (rightInSize/ (double) leftOutSize))
+                    || rightInSize == 0) {
+                LangError error;
+                error.type = LangError::StreamMemberSizeMismatch;
+                error.lineNumber = right->getLine();
+                error.errorTokens.push_back(QString::number(leftOutSize).toStdString());
+                error.errorTokens.push_back(getNodeText(left).toStdString());
+                error.errorTokens.push_back(QString::number(rightInSize).toStdString());
+                error.filename = left->getFilename();
+                errors << error;
+            }
         }
-
     }
 
     if (right->getNodeType() == AST::Stream) {
@@ -1006,7 +1009,12 @@ int CodeValidator::getBlockDeclaredSize(std::shared_ptr<DeclarationNode> block, 
                 PortType type = CodeValidator::resolveNodeOutType(exp, scope, tree);
                 if (type == ConstInt) {
                     size += CodeValidator::evaluateConstInteger(exp, scope, tree, errors);
+                } else if (type == PortProperty) {
+                    return -2; // FIXME calculate actual size from external connection
+                } else {
+                    return -1;
                 }
+
                 // TODO: Something should be done if index isn't integer
             }
         }
@@ -1128,6 +1136,7 @@ int CodeValidator::getBundleSize(BundleNode *bundle, QVector<ASTNode> scope, AST
     int size = 0;
     vector<ASTNode> listExprs = indexList->getChildren();
     PortType type;
+
     for(ASTNode expr : listExprs) {
         switch (expr->getNodeType()) {
         case AST::Int:
@@ -1145,6 +1154,10 @@ int CodeValidator::getBundleSize(BundleNode *bundle, QVector<ASTNode> scope, AST
                 size += 1;
             }
             break;
+
+        case AST::PortProperty:
+            size = -2;
+            return size;
         default:
             break;
         }
@@ -1279,14 +1292,19 @@ int CodeValidator::getNodeNumInputs(ASTNode node, const QVector<ASTNode > &scope
         int dataSize = CodeValidator::getFunctionDataSize(func, scope, tree, errors);
         if (platformFunc) {
             if (platformFunc->getObjectType() == "reaction") {
-                return 1; // Reactions always have one input as main port
+                return 1; // Reactions always have one input as main port for trigger
             } else {
                 QVector<ASTNode > internalScope = scope;
                 ASTNode subScope = CodeValidator::getBlockSubScope(platformFunc);
                 if (subScope) {
                     internalScope << QVector<ASTNode >::fromStdVector(subScope->getChildren());
                 }
-                return getTypeNumInputs(platformFunc, internalScope, tree, errors) * dataSize;
+                int numInputs = getTypeNumInputs(platformFunc, internalScope, tree, errors);
+                if (numInputs < 0) {
+                    return numInputs;
+                } else {
+                    return numInputs * dataSize;
+                }
             }
         } else {
             return -1;
@@ -1619,7 +1637,7 @@ PortType CodeValidator::resolveNodeOutType(ASTNode node, QVector<ASTNode > scope
     } else if (node->getNodeType() == AST::Range) {
         return resolveRangeType(static_cast<RangeNode *>(node.get()), scope, tree);
     } else if (node->getNodeType() == AST::PortProperty) {
-        return None;
+        return PortProperty;
 //        return resolvePortPropertyType(static_cast<PortPropertyNode *>(node.get()), scope, tree);
     }
     return None;
@@ -2248,6 +2266,31 @@ std::shared_ptr<DeclarationNode> CodeValidator::getMainInputPortBlock(std::share
             std::shared_ptr<DeclarationNode> portBlock = std::static_pointer_cast<DeclarationNode>(port);
             if (portBlock->getObjectType() == "mainInputPort") {
                 return portBlock;
+            }
+        }
+    } else if (ports->getNodeType() == AST::None) {
+        // If port list is None, then ignore
+    }  else {
+        qDebug() << "ERROR! ports property must be a list or None!";
+    }
+    return nullptr;
+}
+
+std::shared_ptr<DeclarationNode> CodeValidator::getPort(std::shared_ptr<DeclarationNode> moduleBlock, string name)
+{
+    ListNode *ports = static_cast<ListNode *>(moduleBlock->getPropertyValue("ports").get());
+    if (ports->getNodeType() == AST::List) {
+        for (ASTNode port : ports->getChildren()) {
+            std::shared_ptr<DeclarationNode> portBlock = std::static_pointer_cast<DeclarationNode>(port);
+            if (portBlock->getName() == name) {
+                if (portBlock->getObjectType() == "mainInputPort"
+                        || portBlock->getObjectType() == "mainOutputPort"
+                        || portBlock->getObjectType() == "propertyInputPort"
+                        || portBlock->getObjectType() == "propertyOutputPort") {
+                    return portBlock;
+                } else {
+                    qDebug() << "WARNING name found in getPort() but unexpected type";
+                }
             }
         }
     } else if (ports->getNodeType() == AST::None) {

@@ -1,0 +1,28 @@
+use DesktopAudio version 1.0
+
+module Last {
+	ports: [
+        mainInputPort InputPort {
+            block: Input
+        }
+        mainOutputPort OutputPort {
+            block: Output
+        }
+    ]
+    blocks: [
+        signal Input[InputPort.size] {}
+    ]
+    streams: [
+        Input[InputPort.size] >> Output;
+    ]
+}
+
+signal Signal {
+	default: 0.15
+	domain: AudioDomain
+}
+
+signal Six[6] { default: 5.0}
+
+AudioIn >> Last() >> AudioOut[1];
+Six >> Last() >> AudioOut[2];

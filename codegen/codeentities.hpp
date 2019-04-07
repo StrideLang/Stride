@@ -215,8 +215,6 @@ public:
         }
         (*this)[domainId].prepend(code);
     }
-
-    std::string currentDomain;
 };
 
 

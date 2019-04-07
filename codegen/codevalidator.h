@@ -111,6 +111,7 @@ public:
 
     static std::shared_ptr<DeclarationNode> getMainOutputPortBlock(std::shared_ptr<DeclarationNode> moduleBlock);
     static std::shared_ptr<DeclarationNode> getMainInputPortBlock(std::shared_ptr<DeclarationNode> moduleBlock);
+    static std::shared_ptr<DeclarationNode> getPort(std::shared_ptr<DeclarationNode> moduleBlock, std::string name);
 
     /// Number of parallel streams that a single stream can be broken up into
     static int numParallelStreams(StreamNode *stream, StrideSystem &platform, QVector<ASTNode > &scope, ASTNode tree, QList<LangError> &errors);
@@ -124,6 +125,9 @@ public:
     static int getFunctionNumInstances(std::shared_ptr<FunctionNode> func, QVector<ASTNode > scope, ASTNode  tree);
     static int getNodeNumOutputs(ASTNode node, const QVector<ASTNode> &scope, ASTNode tree, QList<LangError> &errors);    bool validFDomainateNodeDeclaration(QString name, QVector<ASTNode > scopeStack, ASTNode tree);
     static int getNodeNumInputs(ASTNode node, const QVector<ASTNode > &scope, ASTNode tree, QList<LangError> &errors);
+
+    // A value of -1 means undefined. -2 means set from port property.
+    // FIXME determine the size set by port properties to provide an accurate size.
     static int getTypeNumOutputs(std::shared_ptr<DeclarationNode> blockDeclaration, const QVector<ASTNode > &scope, ASTNode tree, QList<LangError> &errors);
     static int getTypeNumInputs(std::shared_ptr<DeclarationNode> blockDeclaration, const QVector<ASTNode > &scope, ASTNode tree, QList<LangError> &errors);
 
