@@ -1280,6 +1280,15 @@ int CodeValidator::getNodeNumOutputs(ASTNode node, const QVector<ASTNode> &scope
         } else {
             return -1;
         }
+    } else if (node->getNodeType() == AST::PortProperty) {
+        std::shared_ptr<PortPropertyNode> portProp = static_pointer_cast<PortPropertyNode>(node);
+        if (portProp->getPortName() == "size" || portProp->getPortName() == "rate") {
+            return 1;
+        } else {
+            qDebug() << "Unknown port property in getNodeNumOutputs() setting size to 1";
+            return 1;
+        }
+
     }
     return -1;
 }
@@ -1330,6 +1339,8 @@ int CodeValidator::getNodeNumInputs(ASTNode node, const QVector<ASTNode > &scope
             size += CodeValidator::getNodeNumInputs(member, scope, tree, errors);
         }
         return size;
+    } else if (node->getNodeType() == AST::PortProperty) {
+        qDebug() << "Unexpected write to port portperty";
     } else {
         return 0;
     }

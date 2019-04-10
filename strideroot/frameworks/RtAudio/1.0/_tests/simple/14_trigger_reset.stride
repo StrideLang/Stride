@@ -1,6 +1,6 @@
 use DesktopAudio version 1.0
 
-trigger Reset { domain: AsyncDomain}
+trigger Reset { domain: AudioDomain }
 	
 signal Value {
 	reset: Reset

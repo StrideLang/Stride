@@ -14,10 +14,11 @@ loop Loop {
 	blocks: [
 		signal Input[InputPort.size] {}
 		signal Output {default: 0}
-		signal Index {}
+		signal Index { default: 1 reset: Reset }
 		switch Done {}
+		trigger Reset {}
 	]
-#	onExecution: Reset
+	onExecution: Reset
 	terminateWhen: Done
 	streams: [
 		Input [ Index ] + Output >> Output ;
