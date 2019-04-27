@@ -1,4 +1,4 @@
-﻿/*
+/*
     Stride is licensed under the terms of the 3-clause BSD license.
 
     Copyright (C) 2017. The Regents of the University of California.
@@ -3171,113 +3171,119 @@ void CodeResolver::checkStreamConnections(std::shared_ptr<StreamNode> stream, QV
     }
 }
 
-void CodeResolver::setReadsWrites(ASTNode node, ASTNode previous, QVector<ASTNode > scopeStack) {
+void CodeResolver::markPreviousReads(ASTNode node, ASTNode previous, QVector<ASTNode > scopeStack) {
     if (previous) {
-        if (previous->getNodeType() == AST::Block
-                || previous->getNodeType() == AST::Bundle) {
-            QString name = QString::fromStdString(CodeValidator::streamMemberName(node));
-            std::shared_ptr<DeclarationNode> decl = CodeValidator::findDeclaration(name, scopeStack, m_tree);
-    //        std::shared_ptr<ListNode> readsProperties = static_pointer_cast<ListNode>(decl->getCompilerProperty("reads"));
-            std::shared_ptr<ListNode> writesProperties = static_pointer_cast<ListNode>(decl->getCompilerProperty("writes"));
+        std::shared_ptr<ListNode> previousReads;
+        ASTNode newReadDomain;
+        std::string previousName = CodeValidator::streamMemberName(previous);
 
-            std::string previousName = CodeValidator::streamMemberName(previous);
-            auto previousDecl = CodeValidator::findDeclaration(QString::fromStdString(previousName), scopeStack, m_tree);
-            if (previousDecl) {
-                auto nodeTypeName = decl->getObjectType();
-
-                // TODO we need to support lists here too
-                auto previousInstance = CodeValidator::getInstance(previous, scopeStack.toStdVector(), m_tree);
-                std::shared_ptr<ListNode> previousReads = static_pointer_cast<ListNode>(previousInstance->getCompilerProperty("reads"));
-                std::shared_ptr<ListNode> previousDeclReads = static_pointer_cast<ListNode>(previousDecl->getCompilerProperty("reads"));
-                if (nodeTypeName == "module" || nodeTypeName == "reaction"|| nodeTypeName == "loop") {
-                    // Modules, reactions and loops, the domain that matters is the domain of the output block.
-                    if (node->getNodeType() ==AST::Function) {
-                        auto func = std::static_pointer_cast<FunctionNode>(node);
-                        if (func->getCompilerProperty("domain") != nullptr) {
-                            previousReads->addChild(func->getCompilerProperty("domain"));
-//                            if (previousDeclReads) {
-//                                previousDeclReads->addChild(func->getDomain());
-//                            }
-                        }
-                    }
-                } else {
-                    // platformBlock and platformModule can be ignored as they are tied to a domain.
-                    // However, we do need to figure out how to support buffer access across domains.
-                    bool alreadyInReads = false;
-                    auto newReadDomain = CodeValidator::getNodeDomain(node, scopeStack, m_tree);
-                    for (auto read: previousReads->getChildren()) {
-                        if (read && read->getNodeType() == AST::PortProperty
-                                && newReadDomain->getNodeType() == AST::PortProperty) {
-                            std::shared_ptr<PortPropertyNode> newReadDomainNode =
-                                    std::static_pointer_cast<PortPropertyNode>(newReadDomain);
-                            std::shared_ptr<PortPropertyNode> existingReadDomain =
-                                    std::static_pointer_cast<PortPropertyNode>(read);
-                            if ( (newReadDomainNode->getName() == existingReadDomain->getName())
-                                 && (newReadDomainNode->getPortName() == existingReadDomain->getPortName()) ) {
-                                alreadyInReads = true;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (!alreadyInReads) {
-                        previousReads->addChild(newReadDomain);
-                    }
-                    alreadyInReads = false;
-
-                    if (previousDeclReads) {
-                        for (auto read: previousDeclReads->getChildren()) {
-                            if (read && read->getNodeType() == AST::PortProperty
-                                    && newReadDomain->getNodeType() == AST::PortProperty) {
-                                std::shared_ptr<PortPropertyNode> newReadDomainNode =
-                                        std::static_pointer_cast<PortPropertyNode>(newReadDomain);
-                                std::shared_ptr<PortPropertyNode> existingReadDomain =
-                                        std::static_pointer_cast<PortPropertyNode>(read);
-                                if ( (newReadDomainNode->getName() == existingReadDomain->getName())
-                                     && (newReadDomainNode->getPortName() == existingReadDomain->getPortName()) ) {
-                                    alreadyInReads = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (!alreadyInReads) {
-                            previousDeclReads->addChild(newReadDomain);
-                        }
-                    }
-
-                    // FIXME we need to get previousReads for functions from the function itsefl, not the module decl.
-                }
-        //                    Q_ASSERT(previousDecl);
-                Q_ASSERT(writesProperties->getNodeType() == AST::List);
-                //                std::string domainName = CodeValidator::getDomainNodeString(decl->getDomain());
-                bool alreadyInWrites = false;
-                auto newWriteDomain = CodeValidator::getNodeDomain(previous, scopeStack, m_tree);
-                for (auto write: writesProperties->getChildren()) {
-                    if (write && write->getNodeType() == AST::PortProperty
-                            && newWriteDomain->getNodeType() == AST::PortProperty) {
+        auto appendReadDomain = [](std::shared_ptr<ListNode> previousReads,
+                ASTNode newReadDomain) {
+            if (previousReads) {
+                bool alreadyInReads = false;
+                for (auto read: previousReads->getChildren()) {
+                    if (read && read->getNodeType() == AST::PortProperty
+                            && newReadDomain->getNodeType() == AST::PortProperty) {
                         std::shared_ptr<PortPropertyNode> newReadDomainNode =
-                                std::static_pointer_cast<PortPropertyNode>(newWriteDomain);
+                                std::static_pointer_cast<PortPropertyNode>(newReadDomain);
                         std::shared_ptr<PortPropertyNode> existingReadDomain =
-                                std::static_pointer_cast<PortPropertyNode>(write);
+                                std::static_pointer_cast<PortPropertyNode>(read);
                         if ( (newReadDomainNode->getName() == existingReadDomain->getName())
                              && (newReadDomainNode->getPortName() == existingReadDomain->getPortName()) ) {
-                            alreadyInWrites = true;
+                            alreadyInReads = true;
                             break;
                         }
+                    } else {
+                        //FIXME check duplicate string domain names
                     }
                 }
-
-                if (!alreadyInWrites) {
-                    writesProperties->addChild(newWriteDomain);
+                if (!alreadyInReads) {
+                    previousReads->addChild(newReadDomain);
                 }
-
-
             }
-        } else if (previous->getNodeType() == AST::Expression) {
-            for(auto child: previous->getChildren()) {
-                setReadsWrites(node, child, scopeStack);
+        };
+        // TODO we need to support lists here too
+        auto previousInstance = CodeValidator::getInstance(previous, scopeStack.toStdVector(), m_tree);
+        if (previousInstance) {
+            // For nodes that are related to a single instance (Block, Functions, etc.)
+            // Mark the writes for the declaration, not the instance
+            previousReads = static_pointer_cast<ListNode>(previousInstance->getCompilerProperty("reads"));
+            if (!previousReads) {
+                previousInstance->setCompilerProperty("reads", std::make_shared<ListNode>(__FILE__, __LINE__));
+                previousReads = static_pointer_cast<ListNode>(previousInstance->getCompilerProperty("reads"));
             }
         }
+
+        if (previous->getNodeType() == AST::Block
+                || previous->getNodeType() == AST::Bundle) {
+            std::string name = CodeValidator::streamMemberName(node);
+            std::shared_ptr<DeclarationNode> decl = CodeValidator::findDeclaration(name, scopeStack.toStdVector(), m_tree);
+            auto nodeTypeName = decl->getObjectType();
+
+            if (nodeTypeName == "module" || nodeTypeName == "reaction"|| nodeTypeName == "loop") {
+                // Modules, reactions and loops, the domain that matters is the domain of the output block.
+                if (node->getNodeType() ==AST::Function) {
+                    auto func = std::static_pointer_cast<FunctionNode>(node);
+                    // FIXME get this from the functions input port
+                    newReadDomain = func->getCompilerProperty("domain");
+                }
+            } else {
+                // platformBlock and platformModule can be ignored as they are tied to a domain.
+                // However, we do need to figure out how to support buffer access across domains.
+                newReadDomain = CodeValidator::getNodeDomain(node, scopeStack, m_tree);
+                // FIXME we need to get previousReads for functions from the function itsefl, not the module decl.
+
+                //                        if (previousDeclReads) {
+                //                            for (auto read: previousDeclReads->getChildren()) {
+                //                                if (read && read->getNodeType() == AST::PortProperty
+                //                                        && newReadDomain->getNodeType() == AST::PortProperty) {
+                //                                    std::shared_ptr<PortPropertyNode> newReadDomainNode =
+                //                                            std::static_pointer_cast<PortPropertyNode>(newReadDomain);
+                //                                    std::shared_ptr<PortPropertyNode> existingReadDomain =
+                //                                            std::static_pointer_cast<PortPropertyNode>(read);
+                //                                    if ( (newReadDomainNode->getName() == existingReadDomain->getName())
+                //                                         && (newReadDomainNode->getPortName() == existingReadDomain->getPortName()) ) {
+                //                                        alreadyInReads = true;
+                //                                        break;
+                //                                    }
+                //                                }
+                //                            }
+                //                            if (!alreadyInReads) {
+                //                                previousDeclReads->addChild(newReadDomain);
+                //                            }
+                //                        }
+
+            }
+            //                    Q_ASSERT(previousDecl);
+
+            if (newReadDomain) {
+                appendReadDomain(previousReads, newReadDomain);
+            }
+
+        } else if (previous->getNodeType() == AST::Expression
+                   || previous->getNodeType() == AST::List) {
+            newReadDomain = previous->getCompilerProperty("samplingDomain");
+
+            std::function<void(ASTNode, ASTNode)> appendReadDomainForExprList = [&](ASTNode exprList,
+                    ASTNode newReadDomain) {
+                if (exprList->getNodeType() == AST::List ||
+                        exprList->getNodeType() == AST::Expression) {
+                    for (auto child: exprList->getChildren()) {
+                        appendReadDomainForExprList(child, newReadDomain);
+                    }
+                } else {
+                    auto previousInstance = CodeValidator::getInstance(exprList, scopeStack.toStdVector(), m_tree);
+                    if (previousInstance) {
+                        // For nodes that are related to a single instance (Block, Functions, etc.)
+                        // Mark the writes for the declaration, not the instance
+                        previousReads = static_pointer_cast<ListNode>(previousInstance->getCompilerProperty("reads"));
+                        appendReadDomain(previousReads, newReadDomain);
+                    }
+                }
+            };
+            appendReadDomainForExprList(previous, newReadDomain);
+        }
+
     }
 }
 
@@ -3286,17 +3292,35 @@ void CodeResolver::markConnectionForNode(ASTNode node, QVector<ASTNode > scopeSt
     if (node->getNodeType() == AST::Block || node->getNodeType() == AST::Bundle || node->getNodeType() == AST::Function) {
         std::string name = CodeValidator::streamMemberName(node);
 
-        // First create read and write compiler properties for the node if not there
-        std::shared_ptr<ListNode> nodeReadsProperties = static_pointer_cast<ListNode>(node->getCompilerProperty("reads"));
-        if (!nodeReadsProperties) {
-            nodeReadsProperties = std::make_shared<ListNode>(nullptr, node->getFilename().c_str(), node->getLine());
-            node->setCompilerProperty("reads", nodeReadsProperties);
+        auto nodeInstance = CodeValidator::getInstance(node, scopeStack.toStdVector(), m_tree);
+        if (previous && nodeInstance) {
+            std::shared_ptr<ListNode> nodeWritesProperties = static_pointer_cast<ListNode>(nodeInstance->getCompilerProperty("writes"));
+            if (!nodeWritesProperties) {
+                nodeWritesProperties = std::make_shared<ListNode>(nullptr, __FILE__, __LINE__);
+                nodeInstance->setCompilerProperty("writes", nodeWritesProperties);
+            }
+
+            bool alreadyInWrites = false;
+            auto newWriteDomain = CodeValidator::getNodeDomain(previous, scopeStack, m_tree);
+            for (auto write: nodeWritesProperties->getChildren()) {
+                if (write && write->getNodeType() == AST::PortProperty
+                        && newWriteDomain->getNodeType() == AST::PortProperty) {
+                    std::shared_ptr<PortPropertyNode> newReadDomainNode =
+                            std::static_pointer_cast<PortPropertyNode>(newWriteDomain);
+                    std::shared_ptr<PortPropertyNode> existingReadDomain =
+                            std::static_pointer_cast<PortPropertyNode>(write);
+                    if ( (newReadDomainNode->getName() == existingReadDomain->getName())
+                         && (newReadDomainNode->getPortName() == existingReadDomain->getPortName()) ) {
+                        alreadyInWrites = true;
+                        break;
+                    }
+                }
+            }
+            if (!alreadyInWrites) {
+                nodeWritesProperties->addChild(newWriteDomain);
+            }
         }
-        std::shared_ptr<ListNode> nodeWritesProperties = static_pointer_cast<ListNode>(node->getCompilerProperty("writes"));
-        if (!nodeWritesProperties) {
-            nodeWritesProperties = std::make_shared<ListNode>(nullptr, node->getFilename().c_str(), node->getLine());
-            node->setCompilerProperty("writes", nodeWritesProperties);
-        }
+
         std::shared_ptr<DeclarationNode> decl = CodeValidator::findDeclaration(name, scopeStack.toStdVector(), m_tree);
         if (decl) {
             // Mark trigger connections
@@ -3311,6 +3335,7 @@ void CodeResolver::markConnectionForNode(ASTNode node, QVector<ASTNode > scopeSt
                     sourcesList->addChild(previous);
                 }
             }
+
 
             // Check if previous is trigger
             std::shared_ptr<DeclarationNode> previousDecl;
@@ -3352,45 +3377,106 @@ void CodeResolver::markConnectionForNode(ASTNode node, QVector<ASTNode > scopeSt
                 }
             }
 
-            // Now process type declaration
-            auto typeDecl = CodeValidator::findTypeDeclaration(decl, scopeStack, m_tree);
-            if (typeDecl) {
-                // For the declaration too
-                std::shared_ptr<ListNode> readsProperties = static_pointer_cast<ListNode>(decl->getCompilerProperty("reads"));
-                if (!readsProperties) {
-                    readsProperties = std::make_shared<ListNode>(nullptr, node->getFilename().c_str(), node->getLine());
-                    decl->setCompilerProperty("reads", readsProperties);
-                }
-                std::shared_ptr<ListNode> writesProperties = static_pointer_cast<ListNode>(decl->getCompilerProperty("writes"));
-                if (!writesProperties) {
-                    writesProperties = std::make_shared<ListNode>(nullptr, node->getFilename().c_str(), node->getLine());
-                    decl->setCompilerProperty("writes", writesProperties);
-                }
-                if (previous) {
-                    QString previousName;
-                    std::shared_ptr<ListNode> previousReads;
-//                    std::shared_ptr<DeclarationNode> previousDecl;
-                    if (previous->getNodeType() == AST::Block || previous->getNodeType() == AST::Bundle) {
-                        setReadsWrites(node, previous, scopeStack);
-                    } else if (previous->getNodeType() == AST::Expression) {
-                        auto expr = static_pointer_cast<ExpressionNode>(previous);
-                        for (auto child: expr->getChildren()) {
-                            markConnectionForNode(child, scopeStack, nullptr);
-                            setReadsWrites(node, child, scopeStack);
-    //                        previousReads = static_pointer_cast<ListNode>(expr->getCompilerProperty("reads"));
-    //                        Q_ASSERT(previousReads);
+            // Mark connections that occur through ports
+            if (node->getNodeType() == AST::Function) {
+                auto props = static_pointer_cast<FunctionNode>(node)->getProperties();
+                for (auto prop: props) {
+                    auto declPorts = decl->getPropertyValue("ports");
+                    if (declPorts) {
+                        for (auto port: declPorts->getChildren()) {
+                            if (port->getNodeType() == AST::Declaration) {
+                                auto portDecl = static_pointer_cast<DeclarationNode>(port);
+                                auto nameNode = portDecl->getPropertyValue("name");
+                                if (nameNode && nameNode->getNodeType() == AST::String
+                                        && static_pointer_cast<ValueNode>(nameNode)->getStringValue() == prop->getName()) {
+                                    auto blocks = decl->getPropertyValue("blocks");
+                                    if (blocks) {
+                                        QVector<ASTNode> innerScope = QVector<ASTNode>::fromStdVector(blocks->getChildren());
+                                        innerScope.append(scopeStack);
+                                        if (portDecl->getObjectType() == "mainInputPort"
+                                                || portDecl->getObjectType() == "propertyInputPort") {
+
+                                            auto previousInstance = CodeValidator::getInstance(prop->getValue(), scopeStack.toStdVector(), m_tree);
+                                            auto nextInstance = CodeValidator::getInstance(portDecl->getPropertyValue("block"), innerScope.toStdVector(), m_tree);
+                                            if (previousInstance) {
+                                                // For nodes that are related to a single instance (Block, Functions, etc.)
+                                                // Mark the writes for the declaration, not the instance
+                                                auto previousReads = static_pointer_cast<ListNode>(previousInstance->getCompilerProperty("reads"));
+                                                if (!previousReads) {
+                                                    previousInstance->setCompilerProperty("reads", std::make_shared<ListNode>(__FILE__, __LINE__));
+                                                    previousReads = static_pointer_cast<ListNode>(previousInstance->getCompilerProperty("reads"));
+                                                }
+                                                auto domainId = CodeValidator::getDomainIdentifier(
+                                                            CodeValidator::getNodeDomain(previousInstance, scopeStack, m_tree), scopeStack.toStdVector(), m_tree);
+                                                previousReads->addChild(std::make_shared<ValueNode>(domainId, __FILE__, __LINE__));
+                                                if (nextInstance) {
+                                                    auto nextWrites = static_pointer_cast<ListNode>(nextInstance->getCompilerProperty("writes"));
+                                                    if (!nextWrites) {
+                                                        nextInstance->setCompilerProperty("writes", std::make_shared<ListNode>(__FILE__, __LINE__));
+                                                        nextWrites = static_pointer_cast<ListNode>(nextInstance->getCompilerProperty("writes"));
+                                                    }
+                                                    nextWrites->addChild(std::make_shared<ValueNode>(domainId, __FILE__, __LINE__));
+                                                }
+                                            }
+                                            // It seems that something like this should be here, but it messes things up...
+//                                            markConnectionForNode(portDecl->getPropertyValue("block"), innerScope, prop->getValue());
+//                                            markPreviousReads(portDecl->getPropertyValue("block"), prop->getValue(), innerScope);
+                                        } else if (portDecl->getObjectType() == "mainOutputPort"
+                                                   || portDecl->getObjectType() == "propertyOutputPort") {
+//                                            markConnectionForNode(portDecl->getPropertyValue("block"), innerScope, prop->getValue());
+                                        }
+                                    }
+                                }
+
+                            }
+
                         }
-    //                    previousReads->addChild(decl->getDomain());
-                    } else if (previous->getNodeType() == AST::List) {
-                        // How should lists be handled?
-                        for (auto child: previous->getChildren()) {
-                            markConnectionForNode(child, scopeStack, nullptr);
-                            setReadsWrites(node, child, scopeStack);
-                        }
-                    } else if (previous->getNodeType() == AST::Function) {
-                        //FIXME assumes the output port of the module takes the output port domain
-                        writesProperties->addChild(decl->getDomain());
                     }
+                }
+            }
+
+            // For the declaration too
+            std::shared_ptr<ListNode> readsProperties = static_pointer_cast<ListNode>(decl->getCompilerProperty("reads"));
+            if (!readsProperties) {
+                readsProperties = std::make_shared<ListNode>(nullptr, node->getFilename().c_str(), node->getLine());
+                decl->setCompilerProperty("reads", readsProperties);
+            }
+            std::shared_ptr<ListNode> writesProperties = static_pointer_cast<ListNode>(decl->getCompilerProperty("writes"));
+            if (!writesProperties) {
+                writesProperties = std::make_shared<ListNode>(nullptr, node->getFilename().c_str(), node->getLine());
+                decl->setCompilerProperty("writes", writesProperties);
+            }
+            if (previous) {
+                QString previousName;
+                std::shared_ptr<ListNode> previousReads;
+                //                    std::shared_ptr<DeclarationNode> previousDecl;
+                if (previous->getNodeType() == AST::Block || previous->getNodeType() == AST::Bundle) {
+                    markPreviousReads(node, previous, scopeStack);
+                } else if (previous->getNodeType() == AST::Expression) {
+                    auto expr = static_pointer_cast<ExpressionNode>(previous);
+                    for (auto child: expr->getChildren()) {
+                        markConnectionForNode(child, scopeStack, nullptr);
+                        markPreviousReads(node, child, scopeStack);
+                        //                        previousReads = static_pointer_cast<ListNode>(expr->getCompilerProperty("reads"));
+                        //                        Q_ASSERT(previousReads);
+                    }
+                    //                    previousReads->addChild(decl->getDomain());
+                } else if (previous->getNodeType() == AST::List) {
+                    // How should lists be handled?
+                    for (auto child: previous->getChildren()) {
+                        markConnectionForNode(child, scopeStack, nullptr);
+                        markPreviousReads(node, child, scopeStack);
+                    }
+                } else if (previous->getNodeType() == AST::Function) {
+                    //FIXME assumes the output port of the module takes the output port domain
+                    writesProperties->addChild(decl->getDomain());
+                } else if (previous->getNodeType() == AST::Int
+                           || previous->getNodeType() == AST::Real
+                           || previous->getNodeType() == AST::Switch
+                           || previous->getNodeType() == AST::String) {
+                    // FIXME constant writes should be moved to the init domain related to the
+                    // signal's declared domain.
+                    writesProperties->addChild(decl->getDomain());
                 }
             }
         }
@@ -3398,12 +3484,12 @@ void CodeResolver::markConnectionForNode(ASTNode node, QVector<ASTNode > scopeSt
                || node->getNodeType() == AST::Real
                || node->getNodeType() == AST::Switch
                || node->getNodeType() == AST::String) {
-        // First create read and write compiler properties for the node if not there
-        std::shared_ptr<ListNode> nodeReadsProperties = static_pointer_cast<ListNode>(node->getCompilerProperty("reads"));
-        if (!nodeReadsProperties) {
-            nodeReadsProperties = std::make_shared<ListNode>(nullptr, node->getFilename().c_str(), node->getLine());
-            node->setCompilerProperty("reads", nodeReadsProperties);
-        }
+//        // First create read and write compiler properties for the node if not there
+//        std::shared_ptr<ListNode> nodeReadsProperties = static_pointer_cast<ListNode>(node->getCompilerProperty("reads"));
+//        if (!nodeReadsProperties) {
+//            nodeReadsProperties = std::make_shared<ListNode>(nullptr, node->getFilename().c_str(), node->getLine());
+//            node->setCompilerProperty("reads", nodeReadsProperties);
+//        }
         // Writes property is created but should be empty for ValueNode
         std::shared_ptr<ListNode> nodeWritesProperties = static_pointer_cast<ListNode>(node->getCompilerProperty("writes"));
         if (!nodeWritesProperties) {
@@ -3415,12 +3501,12 @@ void CodeResolver::markConnectionForNode(ASTNode node, QVector<ASTNode > scopeSt
             QString previousName;
             std::shared_ptr<ListNode> previousReads;
             if (previous->getNodeType() == AST::Block || previous->getNodeType() == AST::Bundle) {
-                setReadsWrites(node, previous, scopeStack);
+                markPreviousReads(node, previous, scopeStack);
             } else if (previous->getNodeType() == AST::Expression) {
                 auto expr = static_pointer_cast<ExpressionNode>(previous);
                 for (auto child: expr->getChildren()) {
                     markConnectionForNode(child, scopeStack, nullptr);
-                    setReadsWrites(node, child, scopeStack);
+                    markPreviousReads(node, child, scopeStack);
 //                        previousReads = static_pointer_cast<ListNode>(expr->getCompilerProperty("reads"));
 //                        Q_ASSERT(previousReads);
                 }
@@ -3489,6 +3575,7 @@ void CodeResolver::storeDeclarationsForNode(ASTNode node, vector<ASTNode> scopeS
             if (internalBlocks) {
                 if (internalBlocks->getNodeType() == AST::List) {
                     for (auto child: internalBlocks->getChildren()) {
+                        storeDeclarationsForNode(child, internalBlocks->getChildren(), m_tree);
                         if (child->getNodeType() == AST::Declaration
                                 || child->getNodeType() == AST::BundleDeclaration) {
                             blocksList.push_back(static_pointer_cast<DeclarationNode>(child));
