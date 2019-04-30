@@ -22,7 +22,7 @@ signal Signal {
 	domain: AudioDomain
 }
 
-signal Six[6] { default: 5.0}
+signal Six[6] { default: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]}
 
 AudioIn >> Last() >> AudioOut[1];
 Six >> Last() >> AudioOut[2];

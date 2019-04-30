@@ -10,25 +10,26 @@ module Sum {
 		mainOutputPort OutputPort { block: Output }
 	]
 	blocks:  [
-		signal Input[3] { domain: Output.domain }
+		signal Input[InputPort.size] { domain: Output.domain }
 		loop Accumulate {
 			ports: [	
 				mainInputPort InputPort { block: Input }
 				mainOutputPort OutputPort { block: Output }
 			]
 			blocks: [
-#				signal Input[3] { domain: Output.domain }
-				signal Input[3] { domain: none }
-				signal Output { default: 0}
-				signal Counter {default: 1}
-				switch CounterReset {}
+				signal Input[InputPort.size] {}
+				signal Output {default: 0 reset: Reset }
+				signal Index { default: 1 reset: Reset }
+				switch Done {}
+				trigger Reset {}
 			]
 			streams: [
-				Output + Input[Counter] >> Output;
-				Counter + 1 >> Counter;
-				[Counter, 3] >> Greater() >> CounterReset;
+				Output + Input[Index] >> Output;
+				Index + 1 >> Index ;
+				[ Index , InputPort.size ] >> Greater () >> Done ;
 			]
-			terminateWhen: CounterReset
+			onExecution: Reset
+			terminateWhen: Done
 		}
 	]
 	streams: [

@@ -1282,7 +1282,7 @@ int CodeValidator::getNodeNumOutputs(ASTNode node, const QVector<ASTNode> &scope
         }
     } else if (node->getNodeType() == AST::PortProperty) {
         std::shared_ptr<PortPropertyNode> portProp = static_pointer_cast<PortPropertyNode>(node);
-        if (portProp->getPortName() == "size" || portProp->getPortName() == "rate") {
+        if (portProp->getPortName() == "size" || portProp->getPortName() == "rate" || portProp->getPortName() == "domain") {
             return 1;
         } else {
             qDebug() << "Unknown port property in getNodeNumOutputs() setting size to 1";
