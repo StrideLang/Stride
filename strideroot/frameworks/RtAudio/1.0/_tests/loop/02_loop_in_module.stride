@@ -5,28 +5,36 @@ module LoopModule {
 		mainOutputPort OutputPort { block: Output }
 	]
 	blocks:  [
-		signal Accumulator { default: 0}
-		loop Accumulate {
+		signal List[20] { default: 1 }
+
+		loop Loop {
 			ports: [
 				mainInputPort InputPort {
 					block: Input
 				}
+				mainOutputPort OutputPort {
+					block: Output
+				}
 			]
 			blocks: [
-				signal Counter {default: 0}
-				switch CounterReset {}
+				signal Input[InputPort.size] {}
+				signal Output { default: 0 reset: Reset }
+				signal Index { default: 1 reset: Reset }
+				switch Done {}
+				trigger Reset {}
 			]
+			onExecution: Reset
+			terminateWhen: Done
 			streams: [
-				Accumulator + 1.5 >> Accumulator;
-				Counter + 1 >> Counter;
-				[Counter, 10] >> Equal() >> CounterReset;
+				Input [ Index ] + Output >> Output ;
+				Index + 1 >> Index ;
+				[ Index , InputPort.size ] >> Greater () >> Done ;
+				
 			]
-			terminateWhen: CounterReset
 		}
 	]
 	streams: [
-		on >> Accumulate();
-		Accumulator >> Output;
+		List >> Loop() >> Output;
 	]
 }
 

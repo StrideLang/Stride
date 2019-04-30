@@ -102,7 +102,7 @@ std::vector<size_t> BundleNode::getIndeces()
                 // FIXME implemente
                 assert(0== 1);
             }
-        } else {
+        } else if (listNode->getNodeType() == AST::PortProperty)  {
             // Unsupported
             assert(0== 1);
         }
