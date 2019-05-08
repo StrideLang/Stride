@@ -402,10 +402,28 @@ ASTNode CodeValidator::getInstance(ASTNode block, std::vector<ASTNode> scopeStac
         inst = block;
     } else if (block->getNodeType() == AST::Function) {
         inst = block;
+    } else if (block->getNodeType() == AST::Declaration
+               || block->getNodeType() == AST::BundleDeclaration)  {
+        if (static_pointer_cast<DeclarationNode>(block)->getObjectType() == "signal"
+                || static_pointer_cast<DeclarationNode>(block)->getObjectType() == "switch"
+                || static_pointer_cast<DeclarationNode>(block)->getObjectType() == "trigger") {
+            inst = block;
+        } else {
+            qDebug() << "Unexpected declaration in getInstance()";
+        }
     } else {
         auto decl = CodeValidator::findDeclaration(CodeValidator::streamMemberName(block),
                                                    scopeStack, tree);
-        inst = decl;
+        if (decl) {
+            auto typeDecl = CodeValidator::findTypeDeclaration(decl, QVector<ASTNode>::fromStdVector(scopeStack), tree);
+            if (typeDecl->getObjectType() == "platformBlock") {
+                inst = block;
+            } else {
+                inst = decl;
+            }
+        } else {
+            inst = block;
+        }
     }
     return inst;
 }
