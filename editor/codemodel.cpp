@@ -90,7 +90,7 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
            </style></head>)";
     if (symbol[0].toLower() == symbol[0]) {
         QMutexLocker locker(&m_validTreeLock);
-        std::shared_ptr<DeclarationNode> typeBlock = CodeValidator::findTypeDeclarationByName(symbol.toStdString(), QVector<ASTNode>(), m_lastValidTree);
+        std::shared_ptr<DeclarationNode> typeBlock = CodeValidator::findTypeDeclarationByName(symbol.toStdString(), {}, m_lastValidTree);
         if (typeBlock) {
             AST *metaValue = typeBlock->getPropertyValue("meta").get();
             if (metaValue) {
@@ -101,7 +101,7 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
                 vector<std::shared_ptr<PropertyNode> > properties = typeBlock->getProperties();
                 QString propertiesHtml = tr("<h2>Ports</h2>") + "\n";
                 QString propertiesTable = "<table><tr><td><b>Name</b></td><td><b>Types</b></td><td><b>Default</b></td><td><b>Direction</b></td></tr>";
-                QVector<ASTNode> ports = CodeValidator::getPortsForTypeBlock(typeBlock, QVector<ASTNode>(), m_lastValidTree);
+                QVector<ASTNode> ports = CodeValidator::getPortsForTypeBlock(typeBlock, {}, m_lastValidTree);
                 for(ASTNode port : ports) {
                     DeclarationNode *portBlock = static_cast<DeclarationNode *>(port.get());
                     Q_ASSERT(portBlock->getNodeType() == AST::Declaration);
@@ -162,7 +162,7 @@ QString CodeModel::getHtmlDocumentation(QString symbol)
         }
     } else if (symbol[0].toUpper() == symbol[0]) { // Check if it is a declared module
         QMutexLocker locker(&m_validTreeLock);
-        std::shared_ptr<DeclarationNode> declaration = CodeValidator::findDeclaration(symbol, QVector<ASTNode>(), m_lastValidTree);
+        std::shared_ptr<DeclarationNode> declaration = CodeValidator::findDeclaration(symbol, {}, m_lastValidTree);
         if (declaration) {
             AST *metaValue = declaration->getPropertyValue("meta").get();
             if (metaValue) {
@@ -255,7 +255,7 @@ QString CodeModel::getTooltipText(QString symbol)
     QString text;
     if (symbol[0].toUpper() == symbol[0]) { // Check if it is a declared module
         QMutexLocker locker(&m_validTreeLock);
-        std::shared_ptr<DeclarationNode> declaration = CodeValidator::findDeclaration(symbol, QVector<ASTNode>(), m_lastValidTree);
+        std::shared_ptr<DeclarationNode> declaration = CodeValidator::findDeclaration(symbol, {}, m_lastValidTree);
         if (declaration) {
 //            AST *metaValue = declaration->getPropertyValue("meta").get();
 //            if (metaValue) {
@@ -315,7 +315,7 @@ QString CodeModel::getTooltipText(QString symbol)
             }
         }
     } else { // word starts with lower case letter
-        std::shared_ptr<DeclarationNode> typeBlock = CodeValidator::findTypeDeclarationByName(symbol.toStdString(), QVector<ASTNode>(), m_lastValidTree);
+        std::shared_ptr<DeclarationNode> typeBlock = CodeValidator::findTypeDeclarationByName(symbol.toStdString(), {}, m_lastValidTree);
         if (typeBlock) {
             text = "type: " + symbol;
 //            AST *metaValue = typeBlock->getPropertyValue("meta").get();
@@ -411,7 +411,7 @@ QString CodeModel::getFunctionSyntax(QString symbol)
 //    for (auto it = m_system->getBuiltinObjectsReference().begin(); it != m_system->getBuiltinObjectsReference().end(); it++ ) {
 //        libraryNodes << QVector<ASTNode>::fromStdVector(it->second);
 //    }
-    std::shared_ptr<DeclarationNode> declaration = CodeValidator::findDeclaration(symbol, libraryNodes, m_lastValidTree);
+    std::shared_ptr<DeclarationNode> declaration = CodeValidator::findDeclaration(symbol, {}, m_lastValidTree);
     if (declaration) {
         AST *metaValue = declaration->getPropertyValue("meta").get();
         Q_ASSERT(metaValue);
@@ -460,7 +460,7 @@ QString CodeModel::getTypeSyntax(QString symbol)
     }
     QString text;
     QMutexLocker locker(&m_validTreeLock);
-    std::shared_ptr<DeclarationNode> declaration = CodeValidator::findTypeDeclarationByName(symbol.toStdString(), QVector<ASTNode>(), m_lastValidTree);
+    std::shared_ptr<DeclarationNode> declaration = CodeValidator::findTypeDeclarationByName(symbol.toStdString(), {}, m_lastValidTree);
     if (declaration) {
         AST *metaValue = declaration->getPropertyValue("meta").get();
         if (metaValue) {
