@@ -1099,6 +1099,22 @@ ASTNode CodeResolver::processDomainsForNode(ASTNode node, ScopeStack scopeStack,
                     qDebug() << "unrecognized domain type";
                 }
             }
+            // Check if declared in the current scope. If declared here then store parent list
+
+            if (scopeStack.size() > 0) {
+                std::shared_ptr<DeclarationNode> scopeDeclaration = CodeValidator::findDeclaration(CodeValidator::streamMemberName(node),
+                {scopeStack.back()}, nullptr);
+                if (scopeDeclaration) {
+                    std::shared_ptr<ListNode> parentList = std::make_shared<ListNode>(__FILE__,__LINE__);
+                    if (declaration->getCompilerProperty("parents") == nullptr) {
+                        for (auto subScope: scopeStack) {
+                            parentList->addChild(std::make_shared<ValueNode>(subScope.first, __FILE__, __LINE__));
+                        }
+                        declaration->setCompilerProperty("parents", parentList);
+                    }
+                }
+            }
+
         }
     } else if (node->getNodeType() == AST::Function) {
         FunctionNode *func = static_cast<FunctionNode *>(node.get());
@@ -1229,8 +1245,9 @@ std::shared_ptr<DeclarationNode>CodeResolver::createDomainDeclaration(QString na
 std::shared_ptr<DeclarationNode> CodeResolver::createSignalDeclaration(QString name, int size, ScopeStack &scope)
 {
     std::shared_ptr<DeclarationNode> newBlock = nullptr;
-    Q_ASSERT(size > 0);
-    if (size == 1) {
+    if (size == 0) { // Is it OK to generate a signal of size 1 in this case??
+        newBlock = std::make_shared<DeclarationNode>(name.toStdString(), "signal", nullptr, __FILE__, __LINE__);
+    } else if (size == 1) {
         newBlock = std::make_shared<DeclarationNode>(name.toStdString(), "signal", nullptr, __FILE__, __LINE__);
     } else if (size > 1) {
         std::shared_ptr<ListNode> indexList = std::make_shared<ListNode>(std::make_shared<ValueNode>(size, "",-1), __FILE__, __LINE__);

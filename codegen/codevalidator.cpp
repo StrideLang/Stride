@@ -801,7 +801,8 @@ void CodeValidator::validateBundleSizes(ASTNode node, ScopeStack scope)
 
 void CodeValidator::validateSymbolUniqueness(ScopeStack scope)
 {
-    for (auto singleScope: scope) {
+    auto singleScope = scope.back();
+    while (singleScope.second.size() > 0) {
         auto node = singleScope.second.front();
         singleScope.second.erase(singleScope.second.begin());
         for(ASTNode sibling: singleScope.second) {
@@ -847,9 +848,11 @@ void CodeValidator::validateSymbolUniqueness(ScopeStack scope)
                 subScope.insert(subScope.end(), ports.begin(), ports.end());
                 scope.push_back({decl->getName(), subScope});
                 validateSymbolUniqueness(scope);
+                scope.pop_back();
             }
         }
     }
+
 }
 
 void CodeValidator::validateListTypeConsistency(ASTNode node, ScopeStack scope)
@@ -885,12 +888,13 @@ void CodeValidator::validateStreamSizes(ASTNode tree, ScopeStack scope)
                 if (decl->getObjectType() == "module"
                         || decl->getObjectType() == "reaction"
                         || decl->getObjectType() == "loop") {
-                    scope.push_back({decl->getName(), decl->getPropertyValue("blocks")->getChildren()});
+                    auto subScope = scope;
+                    subScope.push_back({decl->getName(), decl->getPropertyValue("blocks")->getChildren()});
                     auto streams = decl->getPropertyValue("streams")->getChildren();
                     for (auto node: streams) {
                         if (node->getNodeType() == AST::Stream) {
                             auto stream = std::static_pointer_cast<StreamNode>(node);
-                            validateStreamInputSize(stream.get(), scope, m_errors);
+                            validateStreamInputSize(stream.get(), subScope, m_errors);
                         }
                     }
 
