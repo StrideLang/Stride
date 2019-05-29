@@ -1507,7 +1507,8 @@ int CodeValidator::getTypeNumInputs(std::shared_ptr<DeclarationNode> blockDeclar
 std::shared_ptr<DeclarationNode> CodeValidator::findDeclaration(std::string objectName, const ScopeStack &scopeStack, ASTNode tree, vector<string> scope, vector<string> defaultNamespaces)
 {
     QVector<ASTNode> globalAndLocal;
-    for (auto subScope: scopeStack) {
+    for (auto subScopeIt = scopeStack.rbegin(); subScopeIt != scopeStack.rend(); subScopeIt++) {
+        auto subScope = *subScopeIt;
         for (ASTNode scopeNode : subScope.second) {
             if (scopeNode) {
                 if (scopeNode->getNodeType() == AST::List) {

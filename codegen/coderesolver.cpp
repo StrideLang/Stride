@@ -63,6 +63,7 @@ void CodeResolver::preProcess()
     analyzeConnections();
     processSystem();
     storeDeclarations();
+    analyzeParents();
 }
 
 void CodeResolver::processSystem()
@@ -737,6 +738,16 @@ void CodeResolver::storeDeclarations()
     }
 }
 
+void CodeResolver::analyzeParents()
+{
+    for(auto node: m_tree->getChildren()) {
+        if (node->getNodeType() == AST::Declaration
+                || node->getNodeType() == AST::BundleDeclaration) {
+            appendParent(static_pointer_cast<DeclarationNode>(node), nullptr);
+        }
+    }
+}
+
 void CodeResolver::insertDependentTypes(std::shared_ptr<DeclarationNode> typeDeclaration, map<string, vector<ASTNode>> &objects) {
     QList<std::shared_ptr<DeclarationNode>> blockList;
 //    std::shared_ptr<DeclarationNode> existingDecl = CodeValidator::findTypeDeclaration(typeDeclaration, ScopeStack(), m_tree);
@@ -1106,11 +1117,11 @@ ASTNode CodeResolver::processDomainsForNode(ASTNode node, ScopeStack scopeStack,
                 {scopeStack.back()}, nullptr);
                 if (scopeDeclaration) {
                     std::shared_ptr<ListNode> parentList = std::make_shared<ListNode>(__FILE__,__LINE__);
-                    if (declaration->getCompilerProperty("parents") == nullptr) {
+                    if (declaration->getCompilerProperty("parentInstances") == nullptr) {
                         for (auto subScope: scopeStack) {
                             parentList->addChild(std::make_shared<ValueNode>(subScope.first, __FILE__, __LINE__));
                         }
-                        declaration->setCompilerProperty("parents", parentList);
+                        declaration->setCompilerProperty("parentInstances", parentList);
                     }
                 }
             }
@@ -1179,6 +1190,16 @@ ASTNode CodeResolver::processDomainsForNode(ASTNode node, ScopeStack scopeStack,
                 currentDomain = newDomainName;
             }
         }
+        if (scopeStack.size() > 0) {
+            if (node->getCompilerProperty("parentInstances") == nullptr) {
+                std::shared_ptr<ListNode> parentList = std::make_shared<ListNode>(__FILE__,__LINE__);
+                for (auto subScope: scopeStack) {
+                    parentList->addChild(std::make_shared<ValueNode>(subScope.first, __FILE__, __LINE__));
+                }
+                node->setCompilerProperty("parentInstances", parentList);
+            }
+        }
+
     } else if (node->getNodeType() == AST::Int || node->getNodeType() == AST::Real
                || node->getNodeType() == AST::String || node->getNodeType() == AST::Switch) {
         domainStack << node;
@@ -3608,6 +3629,40 @@ void CodeResolver::storeDeclarationsForNode(ASTNode node, ScopeStack scopeStack,
                         storeDeclarationsForNode(node, {{decl->getName(), blocksList}}, m_tree);
                     }
                 }
+            }
+        }
+    } else if (node->getNodeType() == AST::List || node->getNodeType() == AST::Expression) {
+        for(auto listNode: node->getChildren()) {
+            storeDeclarationsForNode(listNode, scopeStack, m_tree);
+        }
+    }
+}
+
+void CodeResolver::appendParent(std::shared_ptr<DeclarationNode> decl, std::shared_ptr<DeclarationNode> parent)
+{
+    auto parentList = decl->getCompilerProperty("parentDeclarations");
+    if (!parentList) {
+        decl->setCompilerProperty("parentDeclarations", std::make_shared<ListNode>(__FILE__,__LINE__));
+        parentList = decl->getCompilerProperty("parentDeclarations");
+    }
+    if (parent) {
+        parentList->addChild(parent);
+    }
+    if (decl->getObjectType() == "module"
+            || decl->getObjectType() == "reaction"
+            || decl->getObjectType() == "loop") { //declaration types that can have sub scopes
+        auto internalBlocks = decl->getPropertyValue("blocks");
+        if (internalBlocks) {
+            for (auto node: internalBlocks->getChildren()) {
+                if (node->getNodeType() == AST::Declaration || node->getNodeType() == AST::BundleDeclaration) {
+                    for (auto grandParent: parentList->getChildren()) {
+                        if (grandParent->getNodeType() == AST::Declaration || grandParent->getNodeType() == AST::BundleDeclaration)  {
+                            appendParent(static_pointer_cast<DeclarationNode>(node),static_pointer_cast<DeclarationNode>(grandParent));
+                        }
+                    }
+                    appendParent(static_pointer_cast<DeclarationNode>(node), decl);
+                }
+                Q_ASSERT(node->getNodeType() == AST::Declaration || node->getNodeType() == AST::BundleDeclaration);
             }
         }
     }

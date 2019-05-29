@@ -78,6 +78,7 @@ private:
     void resolveRates();
     void analyzeConnections();
     void storeDeclarations();
+    void analyzeParents();
 
     // Sub functions
     void resolveStreamRatesReverse(std::shared_ptr<StreamNode> stream);
@@ -132,6 +133,8 @@ private:
     void markConnectionForNode(ASTNode node, ScopeStack scopeStack, ASTNode previous = nullptr, unsigned int listIndex = 0);
 
     void storeDeclarationsForNode(ASTNode node, ScopeStack scopeStack, ASTNode tree);
+
+    void appendParent(std::shared_ptr<DeclarationNode> decl, std::shared_ptr<DeclarationNode> parent);
 
     // Operators
     std::shared_ptr<ValueNode>  multiply(std::shared_ptr<ValueNode>  left, std::shared_ptr<ValueNode>  right);
