@@ -1,4 +1,4 @@
-/*
+﻿/*
     Stride is licensed under the terms of the 3-clause BSD license.
 
     Copyright (C) 2017. The Regents of the University of California.
@@ -229,41 +229,37 @@ string CodeValidator::getFrameworkForDomain(string domainName, ASTNode tree)
     return string();
 }
 
-double CodeValidator::findRateInProperties(vector<std::shared_ptr<PropertyNode>> properties, ScopeStack scope, ASTNode tree)
-{
-    for (auto property : properties) {
-        if (property->getName() == "rate") { // FIXME this assumes that a property named rate always applies to stream rate...
-            ASTNode propertyValue = property->getValue();
-            QList<LangError> errors;
-            double rate = -1;
-            if (propertyValue->getNodeType() == AST::Int) {
-                rate = CodeValidator::evaluateConstInteger(propertyValue, {}, tree, errors);
-                return rate;
-            } else if (propertyValue->getNodeType() == AST::Real) {
-                rate = CodeValidator::evaluateConstReal(propertyValue, {}, tree, errors);
-                return rate;
-            } else if (propertyValue->getNodeType() == AST::Block) {
-                BlockNode * block = static_cast<BlockNode *>(propertyValue.get());
-                std::shared_ptr<DeclarationNode> valueDeclaration =  CodeValidator::findDeclaration(
-                            QString::fromStdString(block->getName()), scope, tree, block->getNamespaceList());
-                if (valueDeclaration && valueDeclaration->getObjectType() == "constant") {
-                    std::shared_ptr<PropertyNode> property = CodeValidator::findPropertyByName(valueDeclaration->getProperties(), "value");
-                    if (property) {
-                        std::shared_ptr<ValueNode> propertyValue = static_pointer_cast<ValueNode>(property->getValue());
-                        if (propertyValue->getNodeType() == AST::Int) {
-                            rate = CodeValidator::evaluateConstInteger(propertyValue, {}, tree, errors);
-                        } else if (propertyValue->getNodeType() ==AST::Real) {
-                            rate = CodeValidator::evaluateConstReal(propertyValue, {}, tree, errors);
-                        }
-                    }
-                }
-                if (errors.size() == 0) {
-                    return rate;
+double CodeValidator::resolveRateToFloat(ASTNode rateNode, ScopeStack scope, ASTNode tree) {
+    double rate = -1;
+    QList<LangError> errors;
+    if (rateNode->getNodeType() == AST::Int) {
+        rate = CodeValidator::evaluateConstInteger(rateNode, {}, tree, errors);
+        return rate;
+    } else if (rateNode->getNodeType() == AST::Real) {
+        rate = CodeValidator::evaluateConstReal(rateNode, {}, tree, errors);
+        return rate;
+    } else if (rateNode->getNodeType() == AST::Block) {
+        BlockNode * block = static_cast<BlockNode *>(rateNode.get());
+        std::shared_ptr<DeclarationNode> valueDeclaration =  CodeValidator::findDeclaration(
+                    QString::fromStdString(block->getName()), scope, tree, block->getNamespaceList());
+        if (valueDeclaration && valueDeclaration->getObjectType() == "constant") {
+            std::shared_ptr<PropertyNode> property = CodeValidator::findPropertyByName(valueDeclaration->getProperties(), "value");
+            if (property) {
+                std::shared_ptr<ValueNode> rateNode = static_pointer_cast<ValueNode>(property->getValue());
+                if (rateNode->getNodeType() == AST::Int) {
+                    rate = CodeValidator::evaluateConstInteger(rateNode, {}, tree, errors);
+                } else if (rateNode->getNodeType() ==AST::Real) {
+                    rate = CodeValidator::evaluateConstReal(rateNode, {}, tree, errors);
                 }
             }
         }
+        if (errors.size() == 0) {
+            return rate;
+        }
+    } else if (rateNode->getNodeType() == AST::PortProperty) {
+
     }
-    return -1;
+    return rate;
 }
 
 double CodeValidator::getNodeRate(ASTNode node, ScopeStack scope, ASTNode tree)
@@ -271,31 +267,21 @@ double CodeValidator::getNodeRate(ASTNode node, ScopeStack scope, ASTNode tree)
     if (node->getNodeType() == AST::Block) {
         BlockNode *name = static_cast<BlockNode *>(node.get());
         std::shared_ptr<DeclarationNode> declaration =  CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scope, tree, name->getNamespaceList());
-        if (!declaration) {
-            return -1;
+        if (declaration) {
+            ASTNode rateNode = declaration->getPropertyValue("rate");
+            if (rateNode) {
+                return CodeValidator::resolveRateToFloat(rateNode, scope, tree);
+            }
         }
-        double rate = CodeValidator::findRateInProperties(declaration->getProperties(), scope, tree);
-//        if (rate == -1) {
-//            QString typeName = QString::fromStdString(declaration->getObjectType());
-//            rate = getDefaultForTypeAsDouble(typeName, "rate", scope, tree);
-////            ValueNode *value = new ValueNode(rate, -1);
-////            declaration->addProperty(new PropertyNode("rate", value, -1));
-//        }
-        return rate;
     } else if (node->getNodeType() == AST::Bundle) {
         BundleNode *bundle = static_cast<BundleNode *>(node.get());
         std::shared_ptr<DeclarationNode> declaration =  CodeValidator::findDeclaration(QString::fromStdString(bundle->getName()), scope, tree, bundle->getNamespaceList());
-        if (!declaration) {
-            return -1;
+        if (declaration) {
+            ASTNode rateNode = declaration->getPropertyValue("rate");
+            if (rateNode) {
+                return CodeValidator::resolveRateToFloat(rateNode, scope, tree);
+            }
         }
-        double rate = CodeValidator::findRateInProperties(declaration->getProperties(), scope, tree);
-//        if (rate == -1) {
-//            QString typeName = QString::fromStdString(declaration->getObjectType());
-//            rate = getDefaultForTypeAsDouble(typeName, "rate", scope, tree);
-////            ValueNode *value = new ValueNode(rate, -1);
-////            declaration->addProperty(new PropertyNode("rate", value, -1));
-//        }
-        return rate;
     } else if (node->getNodeType() == AST::Function) {
         FunctionNode *func = static_cast<FunctionNode *>(node.get());
         return func->getRate();
@@ -315,10 +301,11 @@ double CodeValidator::getNodeRate(ASTNode node, ScopeStack scope, ASTNode tree)
     } else if (node->getNodeType() == AST::Declaration
                || node->getNodeType() == AST::BundleDeclaration) {
         auto decl = static_pointer_cast<DeclarationNode>(node);
-        auto rateNode = decl->getPropertyValue("rate");
-        if (rateNode
-                && (rateNode->getNodeType() == AST::Int || rateNode->getNodeType() == AST::Real)) {
-                return static_pointer_cast<ValueNode>(rateNode)->toReal();
+        if (decl) {
+            ASTNode rateNode = decl->getPropertyValue("rate");
+            if (rateNode) {
+                return CodeValidator::resolveRateToFloat(rateNode, scope, tree);
+            }
         }
     }
     return -1;
@@ -760,9 +747,10 @@ void CodeValidator::validateBundleIndeces(ASTNode node, ScopeStack scope)
         }
     }
     for(ASTNode child: node->getChildren()) {
-        QVector<ASTNode > subScope = getBlocksInScope(child, scope, m_tree);
-        scope.push_back({streamMemberName(child), subScope.toStdVector()});
-        validateBundleIndeces(child, scope);
+        QVector<ASTNode > blocksInScope = getBlocksInScope(child, scope, m_tree);
+        auto subScope = scope;
+        subScope.push_back({streamMemberName(child), blocksInScope.toStdVector()});
+        validateBundleIndeces(child, subScope);
     }
 }
 
@@ -2589,7 +2577,9 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack, ASTNod
         if (allEqual && node->getChildren().size() > 0) {
             return  CodeValidator::getNodeDomain(node->getChildren().at(0), scopeStack, tree);
         } else {
-            return nullptr;
+            qDebug() << "Non homogenous list";
+            return  CodeValidator::getNodeDomain(node->getChildren().at(0), scopeStack, tree);
+//            return nullptr;
 //            return static_pointer_cast<ListNode>(node)->getSamplingDomain();
         }
     } else if (node->getNodeType() == AST::Declaration || node->getNodeType() == AST::BundleDeclaration) {

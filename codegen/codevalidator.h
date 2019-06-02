@@ -152,7 +152,7 @@ public:
     static std::vector<std::string> getUsedDomains(ASTNode tree);
     static std::string getFrameworkForDomain(std::string domainName, ASTNode tree);
 
-    static double findRateInProperties(vector<std::shared_ptr<PropertyNode>> properties, ScopeStack scope, ASTNode tree);
+    static double resolveRateToFloat(ASTNode rateNode, ScopeStack scope, ASTNode tree);
     static double getNodeRate(ASTNode node, ScopeStack scope = {}, ASTNode tree = nullptr);
     static void setNodeRate(ASTNode node, double rate,  ScopeStack scope = {}, ASTNode tree = nullptr);
 

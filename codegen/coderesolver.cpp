@@ -1431,7 +1431,7 @@ std::vector<ASTNode > CodeResolver::declareUnknownFunctionSymbols(std::shared_pt
                 tree->addChild(declaration);
             }
         } else  if (value->getNodeType() == AST::Bundle) {
-            // Can't autodeclare bundles...
+            // FIXME should we have some heuristics for bundles, or just not allow auto delcarations?
         }
     }
 
@@ -1640,7 +1640,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node, ScopeStack subScop
             if (outputPortBlock) {
                 ASTNode portBlock = outputPortBlock->getPropertyValue("block");
                 auto outputDomain = std::make_shared<PortPropertyNode>(outputPortBlock->getName(),
-                                                                       "domain", __FUNCTION__, __LINE__);
+                                                                       "domain", __FILE__, __LINE__);
                 mainPortsDefaultDomain = outputDomain;
                 // First give port a block and its declaration if it doesn't have one.
                 if (!portBlock || portBlock->getNodeType() == AST::None) {
@@ -1660,6 +1660,9 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node, ScopeStack subScop
                                                            1, subScope);
                     internalBlocks->addChild(portBlockDecl);
                     fillDefaultPropertiesForNode(portBlockDecl);
+//                    portBlockDecl->setPropertyValue("domain", outputDomain);
+//                    portBlockDecl->setPropertyValue("rate", std::make_shared<PortPropertyNode>(outputPortBlock->getName(),
+//                                                                                               "rate", __FILE__, __LINE__));
                 }
 
                 // Now check if domain set, if not, set to port domain
@@ -1680,7 +1683,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node, ScopeStack subScop
             if (inputPortBlock) {
                 ASTNode portBlock = inputPortBlock->getPropertyValue("block");
                 auto inputDomain = std::make_shared<PortPropertyNode>(inputPortBlock->getName(),
-                                                                       "domain", __FUNCTION__, __LINE__);
+                                                                       "domain", __FILE__, __LINE__);
 
                 if (!mainPortsDefaultDomain) { // If not set from output port, set here
                     mainPortsDefaultDomain = inputDomain;
@@ -1734,7 +1737,10 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node, ScopeStack subScop
                     // Properties that we need to auto-declare for
                     ASTNode blockPortValue = portDeclaration->getPropertyValue("block");
                     auto portDomain = std::make_shared<PortPropertyNode>(portDeclaration->getName(),
-                                                                         "domain", __FUNCTION__, __LINE__);
+                                                                         "domain", __FILE__, __LINE__);
+
+                    auto portRate = std::make_shared<PortPropertyNode>(portDeclaration->getName(),
+                                                                       "rate", __FILE__, __LINE__);
 
                     if (blockPortValue) {
 //                        // Now do auto declaration of IO blocks if not declared.
@@ -1777,6 +1783,9 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node, ScopeStack subScop
                                     if (!blockDomain || blockDomain->getNodeType() == AST::None) {
                                         blockDecl->setPropertyValue("domain",portDomain);
                                     }
+                                    if (blockDecl->getPropertyValue("rate")->getNodeType() == AST::None) {
+                                        blockDecl->setPropertyValue("rate",portRate);
+                                    }
                                 }
                             }
                         } else if (blockPortValue->getNodeType() == AST::None) {
@@ -1792,6 +1801,9 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node, ScopeStack subScop
                                 ASTNode blockDomain = newSignal->getDomain();
                                 if (!blockDomain || blockDomain->getNodeType() == AST::None) {
                                     newSignal->setPropertyValue("domain",portDomain);
+                                    if (newSignal->getPropertyValue("rate")->getNodeType() == AST::None) {
+                                        newSignal->setPropertyValue("rate",portRate);
+                                    }
                                 }
                             }
                         }
