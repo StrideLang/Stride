@@ -69,6 +69,11 @@ typedef struct  {
     ASTNode externalConnection;
 } DeclarationMap;
 
+typedef struct {
+    std::shared_ptr<FunctionNode> functionCall;
+    std::vector<std::string> parentInstanceNames;
+} ModuleCall;
+
 // Code that applies to a single domain
 class DomainCode {
 public:
@@ -103,8 +108,7 @@ public:
     std::vector<DeclarationMap> outMap;
 
     // Maps the inner module signals to outer signal declarations for code generated in this domain
-    // The Key
-    std::vector<std::shared_ptr<FunctionNode>> moduleCalls;
+    std::vector<ModuleCall> moduleCalls;
 
     std::map<std::shared_ptr<PortPropertyNode>, std::string> portPropertiesMap;
 

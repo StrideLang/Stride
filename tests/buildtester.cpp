@@ -143,8 +143,9 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile)
                          }
                          counter++;
                      }
+                 } else {
+                     std::cerr << "No expected results file for: " << filename << std::endl;
                  }
-//                 std::cout << builder->getStdOut().toStdString() << std::endl;
              }
          }
          for (auto builder: m_builders) {
