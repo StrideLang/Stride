@@ -20,7 +20,7 @@ module Test {
 		}
 		reaction ProcessInner {
 			streams: [
-				Input >>Output;
+				Input >> Output;
 			]
 		}
 	]

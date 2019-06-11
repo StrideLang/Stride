@@ -72,6 +72,8 @@ typedef struct  {
 typedef struct {
     std::shared_ptr<FunctionNode> functionCall;
     std::vector<std::string> parentInstanceNames;
+    std::vector<DeclarationMap> blockInMap;
+    std::vector<DeclarationMap> blockOutMap;
 } ModuleCall;
 
 // Code that applies to a single domain

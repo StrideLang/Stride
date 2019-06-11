@@ -16,7 +16,7 @@ module Test {
 			]
 			streams: [
 				Counter + 1 >> Counter;
-				Counter / Output.rate >> ReactionOutput;
+				Counter / OutputPort.rate >> ReactionOutput;
 			]
 		}
 			

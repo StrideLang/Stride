@@ -9,13 +9,12 @@ loop Accumulate {
 		signal Input[InputPort.size] {}
 		signal Output {default: 0 reset: Reset }
 		signal Index { default: 1 reset: Reset }
-		switch Done {}
+		switch Done {default: off reset:Reset }
 		trigger Reset {}
 	]
 	streams: [
-		Output + Input[Index] >> Output;
-		Index + 1 >> Index ;
-		[ Index , InputPort.size ] >> Greater () >> Done ;
+		Input[1] + Input[2] + Input[3] >> Output;
+		on >> Done;
 	]
 	onExecution: Reset
 	terminateWhen: Done

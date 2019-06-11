@@ -5,12 +5,12 @@ module Level {
 		}
 		mainOutputPort OutputPort {
 			block: Output
-		}
-		propertyInputPort GainTypeProperty {
-			name: "gainType"
-			block: GainType
-			meta: "Sets the gain type to linear or decibel scaling. Possible values are 'Linear' and 'Decibel'."
 		},
+#		propertyInputPort GainTypeProperty {
+#			name: "gainType"
+#			block: GainType
+#			meta: "Sets the gain type to linear or decibel scaling. Possible values are 'Linear' and 'Decibel'."
+#		},
 		propertyInputPort GainProperty {
 			name: "gain"
 			block: Gain

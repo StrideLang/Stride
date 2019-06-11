@@ -737,7 +737,7 @@ void CodeValidator::validateBundleIndeces(ASTNode node, ScopeStack scope)
     if (node->getNodeType() == AST::Bundle) {
         BundleNode *bundle = static_cast<BundleNode *>(node.get());
         PortType type = resolveNodeOutType(bundle->index(), scope, m_tree);
-        if(type != ConstInt && type != Signal && type != PortProperty) {
+        if(type != ConstInt && type != Signal && type != PortProperty && type != None) {
             LangError error;
             error.type = LangError::IndexMustBeInteger;
             error.lineNumber = bundle->getLine();
