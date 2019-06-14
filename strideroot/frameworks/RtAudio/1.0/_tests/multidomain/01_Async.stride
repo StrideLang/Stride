@@ -1,0 +1,13 @@
+use DesktopAudio version 1.0
+
+trigger Reset { domain: AsyncDomain }
+	
+signal Value {
+	reset: Reset
+	default: 1
+    domain: AudioDomain
+}
+
+Value >> AudioOut[1];
+Value + 1 >> Value;
+[Value, 10] >> Equal() >> Reset;

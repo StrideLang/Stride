@@ -1,0 +1,27 @@
+use DesktopAudio version 1.0
+
+import Generators
+
+module ResetTest {
+	ports: [
+		mainOutputPort OutputPort {
+			block: Output
+		}
+	]
+	blocks: [
+		trigger Reset {domain: OutputPort.domain}
+	
+		signal Value {
+			reset: Reset
+			default: 1
+			domain: OutputPort.domain
+		}
+	]
+	streams: [
+		Value >> Output;
+		Value + 1 >> Value;
+		[Value, 10] >> Equal() >> Reset;
+	]
+}
+
+ResetTest() >> AudioOut[1];
