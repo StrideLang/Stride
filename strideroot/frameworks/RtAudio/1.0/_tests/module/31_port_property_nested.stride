@@ -16,7 +16,7 @@ module UsedInTest {
     blocks: [
     ]
     streams: [
-        InputPort.rate + (Input / InputPort.rate) >> Output;
+        OutputPort.rate + (Input / OutputPort.rate) >> Output;
     ]
 }
 
