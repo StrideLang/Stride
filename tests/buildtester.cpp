@@ -49,7 +49,7 @@ BuildTester::BuildTester(std::string strideRoot)
 
 }
 
-bool BuildTester::test(std::string filename, std::string expectedResultFile)
+bool BuildTester::test(std::string filename, std::string expectedResultFile, bool tolerant)
 {
     bool buildOK = false;
      QList<LangError> errors;
@@ -130,7 +130,11 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile)
                          if (line.size() > 0 && outputLines.at(counter).size() > 0) {
                              double expected = line.toDouble();
                              double out = outputLines.at(counter).toDouble();
-                             if (!(std::fabs(out - expected) <= fabs(out * 0.01))) {
+                             float tolerance = 0.01f;
+                             if (tolerant) {
+                                 tolerance = 0.05f;
+                             }
+                             if (!(std::fabs(out - expected) <= fabs(out * tolerance))) {
                                  std::cerr << "Failed comparison at line " << counter + 1 << std::endl;
                                  std::cerr << "Got " << outputLines.at(counter).toStdString() << " Expected " << line.toStdString() << std::endl;
                                  QFile failedOutput("failed.output");

@@ -5,6 +5,7 @@
 
 #include "codeentities.hpp"
 #include "../parser/expressionnode.h"
+#include "../parser/valuenode.h"
 
 class LanguageSyntax {
 public:
@@ -72,6 +73,21 @@ public:
 
     static std::string falseKeyword() {
         return "false";
+    }
+
+    static std::string numberValue(std::shared_ptr<ValueNode> valueNode ) {
+        std::string literalString;
+        if (valueNode->getNodeType() == AST::Int) {
+            literalString = valueNode->toString();
+        } else if (valueNode->getNodeType() == AST::Real){
+            literalString = valueNode->toString();
+            if (literalString.find('.') == std::string::npos) {
+                literalString += ".";
+            }
+            literalString += "f";
+        }
+
+        return literalString;
     }
 
     static std::string getDataType(std::string strideType);

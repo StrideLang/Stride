@@ -12,7 +12,7 @@ type _Alias {
 }
 
 type _Streamable {
-	typeName: "streamable"
+	typeName: "_streamable"
 	properties: [
 		typeProperty InputName {
 			name: "inputName"
@@ -28,6 +28,18 @@ type _Streamable {
 		}
 	]
 	inherits: [_Rated]
+}
+
+type _Resetable {
+	typeName: "_resetable"
+	properties: [
+		typeProperty ResetPort {
+			name: "reset"
+			types: ["CSP", "none"]
+			default: none
+			required: off
+		}
+	]
 }
 
 type _Rated {
@@ -46,7 +58,7 @@ type _Rated {
 			required: off
 		}
 	]
-	inherits: [_DomainMember]
+	inherits: [_DomainMember, _Resetable]
 }
 
 type _DomainMember {

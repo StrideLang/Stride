@@ -1,0 +1,23 @@
+use DesktopAudio version 1.0
+
+import Generators
+
+table Sine {
+	size: 1024
+	rate: 1024
+	domain: SetupDomain
+	reset: none
+}
+
+Oscillator(frequency: 1.0) >> Sine; 
+
+table Sine2 {
+	size: 512
+	rate: 512
+	domain: AudioDomain
+	reset: none
+}
+
+Oscillator(frequency: 1.0) >> Sine2;
+
+Sine2 >> AudioOut[1]; #(44100/512 Hz sine tone)

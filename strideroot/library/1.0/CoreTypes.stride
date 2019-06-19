@@ -105,7 +105,7 @@ type _Trigger {
 	typeName: "trigger"
 	properties: [
 	]
-	inherits: _Streamable
+	inherits: [_Streamable]
 }
 
 type _Signal {
@@ -147,52 +147,6 @@ type _Signal {
 	inherits: [_Streamable]
 }
 
-type _SignalBridge {
-	typeName: "signalbridge"
-	properties: [
-		typeProperty InputDomain {
-			name: "inputDomain"
-			types: [""]
-			default: ""
-			required: off
-		}
-		typeProperty OutputDomain {
-			name: "outputDomain"
-			types: [""]
-			default: ""
-			required: off
-			meta: "The Output Domain"
-		}
-		typeProperty Domain {
-			name: "domain"
-			types: [""]
-			default: ""
-			required: off
-			meta: "Domain for quick compatibility with signal. Possibly removed in the future"
-		}
-		typeProperty Default {
-			name: "default"
-			types: [""]
-			default: ""
-			required: off
-		}
-		typeProperty Signal {
-			name: "signal"
-			types: ["CSP"]
-			default: ""
-			required: on
-		}
-		typeProperty Type {
-			name: "bridgeType"
-			types: ["CSP"]
-			default: "signal"
-			required: off
-			meta: "The type of the bridge signal. Can be signal or switch"
-		}
-	]
-	inherits: [_Base]
-}
-
 type _Buffer {
 	typeName: "buffer"
 	properties: [
@@ -214,20 +168,8 @@ type _Buffer {
 			default: none
 			required: off
 		},
-		typeProperty DomainPort {
-			name: "domain"
-			types: [""]
-			default: none
-			required: off
-		},
 		typeProperty DefaultPort {
 			name: "default"
-			types: [""]
-			default: none
-			required: off
-		},
-		typeProperty ResetPort {
-			name: "reset"
 			types: [""]
 			default: none
 			required: off
@@ -239,6 +181,27 @@ type _Buffer {
 			required: off
 		}
 	]
+	inherits: [_DomainMember, _Resetable]
+}
+
+
+type _Table {
+	typeName: "table"
+	properties: [
+		typeProperty SizePort {
+			name: "size"
+			types: ["CSP", ""]
+			default: none
+			required: on
+		},
+		typeProperty RatePort {
+			name: "rate"
+			types: ["CSP", ""]
+			default: none
+			required: off
+		}
+	]
+	inherits: [_DomainMember, _Resetable]
 }
 
 type _GroupType {

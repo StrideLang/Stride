@@ -2158,106 +2158,108 @@ void CodeResolver::resolveConstantsInNode(ASTNode node, ScopeStack scope)
 
 void CodeResolver::processResetForNode(ASTNode thisScope, ASTNode streamScope, ASTNode upperScope)
 {
-    map<std::shared_ptr<DeclarationNode>, string> resetMap; // Key is variable name, value is reset symbol
-    for(ASTNode node : thisScope->getChildren()) {
-        if (node->getNodeType() == AST::Declaration) {
-            shared_ptr<DeclarationNode> decl = static_pointer_cast<DeclarationNode>(node);
-            if (decl->getObjectType() == "signal") {
-                ASTNode resetValue = decl->getPropertyValue("reset");
-                if (resetValue && resetValue->getNodeType() == AST::Block) {
-                    resetMap[decl] = static_pointer_cast<BlockNode>(resetValue)->getName();
-                }
-            } else if (decl->getObjectType() == "module"
-                       || decl->getObjectType() == "reaction") {
-                ASTNode blocks = decl->getPropertyValue("blocks");
-                ASTNode streamScope = decl->getPropertyValue("streams");
-                ASTNode newScope = thisScope->deepCopy();
-                for (ASTNode node : upperScope->getChildren()) { // Append upper scope to this scope
-                    newScope->addChild(node);
-                }
-                processResetForNode(blocks, streamScope, newScope);
-            }
-        }
-    }
-    for(const auto& pair : resetMap ) {
-        std::string reactionName = "_" + pair.first->getName() + "Reset";
-        std::shared_ptr<DeclarationNode> newReaction
-                = std::make_shared<DeclarationNode>(reactionName,
-                                                    "reaction",
-                                                    nullptr,
-                                                    __FILE__, __LINE__);
-        std::shared_ptr<ListNode> streamList = std::make_shared<ListNode>(nullptr, __FILE__, __LINE__);
+    // This code is currently unused
 
-        std::shared_ptr<StreamNode> stream
-                = std::make_shared<StreamNode>(pair.first->getPropertyValue("default"),
-                                               std::make_shared<BlockNode>(pair.first->getName(), __FILE__, __LINE__), __FILE__, __LINE__);
-        fillDefaultPropertiesForNode(stream);
-        streamList->addChild(stream);
-        newReaction->setPropertyValue("streams", streamList);
-        newReaction->setPropertyValue("blocks", std::make_shared<ListNode>(nullptr, __FILE__, __LINE__));
-        newReaction->setPropertyValue("ports", std::make_shared<ListNode>(nullptr, __FILE__, __LINE__));
-        newReaction->setPropertyValue("domain", pair.first->getDomain());
-        thisScope->addChild(newReaction);
+//    map<std::shared_ptr<DeclarationNode>, string> resetMap; // Key is variable name, value is reset symbol
+//    for(ASTNode node : thisScope->getChildren()) {
+//        if (node->getNodeType() == AST::Declaration) {
+//            shared_ptr<DeclarationNode> decl = static_pointer_cast<DeclarationNode>(node);
+//            if (decl->getObjectType() == "signal") {
+//                ASTNode resetValue = decl->getPropertyValue("reset");
+//                if (resetValue && resetValue->getNodeType() == AST::Block) {
+//                    resetMap[decl] = static_pointer_cast<BlockNode>(resetValue)->getName();
+//                }
+//            } else if (decl->getObjectType() == "module"
+//                       || decl->getObjectType() == "reaction") {
+//                ASTNode blocks = decl->getPropertyValue("blocks");
+//                ASTNode streamScope = decl->getPropertyValue("streams");
+//                ASTNode newScope = thisScope->deepCopy();
+//                for (ASTNode node : upperScope->getChildren()) { // Append upper scope to this scope
+//                    newScope->addChild(node);
+//                }
+//                processResetForNode(blocks, streamScope, newScope);
+//            }
+//        }
+//    }
+//    for(const auto& pair : resetMap ) {
+//        std::string reactionName = "_" + pair.first->getName() + "Reset";
+//        std::shared_ptr<DeclarationNode> newReaction
+//                = std::make_shared<DeclarationNode>(reactionName,
+//                                                    "reaction",
+//                                                    nullptr,
+//                                                    __FILE__, __LINE__);
+//        std::shared_ptr<ListNode> streamList = std::make_shared<ListNode>(nullptr, __FILE__, __LINE__);
 
-        // Find where to put the triggering stream
-        vector<int> positions;
-        vector<ASTNode> childStreams = streamScope->getChildren();
-        for(size_t i = 0; i < childStreams.size(); i++) {
-            ASTNode &node = childStreams[i];
-            if (node->getNodeType() == AST::Stream) {
-                bool triggerInStream = false;
-                std::shared_ptr<StreamNode> stream = static_pointer_cast<StreamNode>(node);
-                // We need to skip the first stream member as we need to check when the trigger
-                // is written to.
-                ASTNode left, right;
-                right = stream->getRight();
-                if (right->getNodeType() == AST::Stream) {
-                    left = static_pointer_cast<StreamNode>(right)->getLeft();
-                    right = static_pointer_cast<StreamNode>(right)->getRight();
-                } else {
-                    left = right;
-                    right = nullptr;
-                }
-                while(left) {
-                    if (left->getNodeType() == AST::Block) {
-                        std::shared_ptr<BlockNode> block = static_pointer_cast<BlockNode>(left);
-                        if (block->getName() == pair.second) {
-                            triggerInStream = true;
-                            break;
-                        }
-                    }
-                    if (right) {
-                        if (right->getNodeType() == AST::Stream) {
-                            left = static_pointer_cast<StreamNode>(right)->getLeft();
-                            right = static_pointer_cast<StreamNode>(right)->getRight();
-                        } else {
-                            left = right;
-                            right = nullptr;
-                        }
-                    } else {
-                        left = nullptr; // End of stream
-                    }
-                }
+//        std::shared_ptr<StreamNode> stream
+//                = std::make_shared<StreamNode>(pair.first->getPropertyValue("default"),
+//                                               std::make_shared<BlockNode>(pair.first->getName(), __FILE__, __LINE__), __FILE__, __LINE__);
+//        fillDefaultPropertiesForNode(stream);
+//        streamList->addChild(stream);
+//        newReaction->setPropertyValue("streams", streamList);
+//        newReaction->setPropertyValue("blocks", std::make_shared<ListNode>(nullptr, __FILE__, __LINE__));
+//        newReaction->setPropertyValue("ports", std::make_shared<ListNode>(nullptr, __FILE__, __LINE__));
+//        newReaction->setPropertyValue("domain", pair.first->getDomain());
+//        thisScope->addChild(newReaction);
 
-                if(triggerInStream) {
-                    positions.push_back(i + 1);
-                }
-            }
-        }
+//        // Find where to put the triggering stream
+//        vector<int> positions;
+//        vector<ASTNode> childStreams = streamScope->getChildren();
+//        for(size_t i = 0; i < childStreams.size(); i++) {
+//            ASTNode &node = childStreams[i];
+//            if (node->getNodeType() == AST::Stream) {
+//                bool triggerInStream = false;
+//                std::shared_ptr<StreamNode> stream = static_pointer_cast<StreamNode>(node);
+//                // We need to skip the first stream member as we need to check when the trigger
+//                // is written to.
+//                ASTNode left, right;
+//                right = stream->getRight();
+//                if (right->getNodeType() == AST::Stream) {
+//                    left = static_pointer_cast<StreamNode>(right)->getLeft();
+//                    right = static_pointer_cast<StreamNode>(right)->getRight();
+//                } else {
+//                    left = right;
+//                    right = nullptr;
+//                }
+//                while(left) {
+//                    if (left->getNodeType() == AST::Block) {
+//                        std::shared_ptr<BlockNode> block = static_pointer_cast<BlockNode>(left);
+//                        if (block->getName() == pair.second) {
+//                            triggerInStream = true;
+//                            break;
+//                        }
+//                    }
+//                    if (right) {
+//                        if (right->getNodeType() == AST::Stream) {
+//                            left = static_pointer_cast<StreamNode>(right)->getLeft();
+//                            right = static_pointer_cast<StreamNode>(right)->getRight();
+//                        } else {
+//                            left = right;
+//                            right = nullptr;
+//                        }
+//                    } else {
+//                        left = nullptr; // End of stream
+//                    }
+//                }
 
-        // Insert triggering streams in right place
-        int numInsertions = 0;
-        for (int pos : positions) {
-            childStreams.insert(childStreams.begin() + pos + numInsertions++,
-                            std::make_shared<StreamNode>(std::make_shared<BlockNode>(pair.second, __FILE__, __LINE__),
-                                                         std::make_shared<FunctionNode>(reactionName,
-                                                                                        std::make_shared<ListNode>(nullptr, __FILE__, __LINE__),
-                                                                                        __FILE__, __LINE__), __FILE__, __LINE__)
-                    );
-        }
-        streamScope->setChildren(childStreams);
+//                if(triggerInStream) {
+//                    positions.push_back(i + 1);
+//                }
+//            }
+//        }
 
-    }
+//        // Insert triggering streams in right place
+//        int numInsertions = 0;
+//        for (int pos : positions) {
+//            childStreams.insert(childStreams.begin() + pos + numInsertions++,
+//                            std::make_shared<StreamNode>(std::make_shared<BlockNode>(pair.second, __FILE__, __LINE__),
+//                                                         std::make_shared<FunctionNode>(reactionName,
+//                                                                                        std::make_shared<ListNode>(nullptr, __FILE__, __LINE__),
+//                                                                                        __FILE__, __LINE__), __FILE__, __LINE__)
+//                    );
+//        }
+//        streamScope->setChildren(childStreams);
+
+//    }
 }
 
 void CodeResolver::propagateDomainsForNode(ASTNode node, ScopeStack scopeStack)
