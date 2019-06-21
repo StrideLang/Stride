@@ -4,7 +4,7 @@ type _DomainDefinition {
 	properties: [
 		typeProperty DomainName {
 			name: "domainName"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: none
 			required: on
 		},
@@ -16,44 +16,44 @@ type _DomainDefinition {
 		},
 		typeProperty Framework {
 			name: "framework"
-			types: ["CSP", ""] # Allow _Platform
+			types: [_StringLiteral, ""] # Allow _Platform
 			default: none
 			required: on
 		},
 		typeProperty DomainRate {
 			name: "rate"
-			types: ["CRP", "CIP", ""]
+			types: [_RealLiteral, _IntLiteral, ""]
 			default: none
 			required: on
 			meta: "The domain's rate. A value of none indicates an asynchronous or immediate domain."
 		},
 		typeProperty GlobalsTag {
 			name: "globalsTag"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: "Includes"
 			required: off
 		},
 		typeProperty DeclarationsTag {
 			name: "declarationsTag"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: ""
 			required: off
 		},
 		typeProperty ProcessingTag {
 			name: "processingTag"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: ""
 			required: off
 		},
 		typeProperty InitializationTag {
 			name: "initializationTag"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: ""
 			required: off
 		},
 		typeProperty CleanupTag {
 			name: "cleanupTag"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: ""
 			required: off
 		},
@@ -71,13 +71,13 @@ type _DomainDefinition {
 		},
 		typeProperty DomainInitialization {
 			name: "domainInitialization"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: ""
 			required: off
 		},
 		typeProperty DomainFunction {
 			name: "domainFunction"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: ""
 			required: off
 			meta: 'Declaration of the domain processing function. Use %domainCode% to mark where the generated code needs to be placed within 
@@ -85,7 +85,7 @@ type _DomainDefinition {
 		},
 		typeProperty DomainProcessing {
 			name: "domainProcessing"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: ""
 			required: off
 			meta: 'Processing code for domain. Code to be called
@@ -93,7 +93,7 @@ type _DomainDefinition {
 		},
 		typeProperty DomainCleanup {
 			name: "domainCleanup"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: ""
 			required: off
 		}
@@ -106,13 +106,13 @@ type _Domain {
 	properties: [
 		typeProperty Name {
 			name: "domainName"
-			types: ["CSP", ""]
+			types: [_StringLiteral, ""]
 			default: none
 			required: on
 		},
 		typeProperty Platform {
 			name: "platform"
-			types: ["CSP", ""] # TODO allow _Platform
+			types: [_StringLiteral, ""] # TODO allow _Platform
 			default: none
 			required: off
 		}
@@ -137,7 +137,7 @@ type _FrameworkDescription {
 	properties: [
 		typeProperty FrameworkName {
 			name: "frameworkName"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: none
 			required: on
 		}
@@ -216,37 +216,37 @@ type _PlatformModuleType {
 		},
 		typeProperty PreProcessingOnce {
 			name: "preProcessingOnce"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: ""
 			required: off
 		},
 		typeProperty PreProcessing {
 			name: "preProcessing"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: ""
 			required: off
 		},
 		typeProperty Processing {
 			name: "processing"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: none
 			required: on
 		},
 		typeProperty PostProcessing {
 			name: "postProcessing"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: ""
 			required: on
 		},
 		typeProperty PostProcessingOnce {
 			name: "postProcessingOnce"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: ""
 			required: on
 		},
 		typeProperty Cleanup {
 			name: "cleanup"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: ""
 			required: off
 		},
@@ -277,7 +277,7 @@ type _PlatformBlockType {
 	properties: [ 
 		typeProperty TypeName {
 			name: "typeName"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: none
 			required: on
 		},
@@ -297,31 +297,31 @@ type _PlatformType {
 	properties: [
 		typeProperty Framework {
 			name: "framework"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: none
 			required: on
 		},
 		typeProperty FrameworkVersion {
 			name: "frameworkVersion"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: none
 			required: off
 		},
 		typeProperty Hardware {
 			name: "hardware"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: none
 			required: off
 		},
 		typeProperty HardwareVersion {
 			name: "hardwareVersion"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: none
 			required: off
 		},
 		typeProperty Required {
 			name: "required"
-			types: ["CBP"]
+			types: [_SwitchLiteral]
 			default: none
 			required: on
 		}

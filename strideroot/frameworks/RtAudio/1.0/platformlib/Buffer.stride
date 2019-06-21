@@ -4,13 +4,13 @@ type _BufferType {
 	properties: [
 		typeProperty ClassNamePort {
 			name: "className"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: none
 			required: off
 		}
 		typeProperty DeclarationPort {
 			name: "declaration"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: none
 			required: off
 		}

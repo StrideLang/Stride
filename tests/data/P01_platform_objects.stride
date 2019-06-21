@@ -36,6 +36,7 @@ signal Signal2 {
 constant Const {
     value:  3.1
 }
+
 # Should fail
 constant WrongConst {
     value:  Signal2

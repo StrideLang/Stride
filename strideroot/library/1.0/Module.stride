@@ -69,7 +69,7 @@ type _Port {
 	properties: [
 		typeProperty Name {
 			name: "name"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: ""
 			required: off
 		},
@@ -81,7 +81,7 @@ type _Port {
 		},
 		typeProperty Type {
 			name: "type"
-			types: ["CSP"] # This should be made to accept type handles
+			types: [_StringLiteral] # This should be made to accept type handles
 			default: "real"
 			required: off
 		}
@@ -96,7 +96,7 @@ type _Module {
 	properties: [
 		typeProperty Ports {
 			name: "ports"
-			types: [ "" ]  # TODO: How can we define list types here?
+			types: [ _MainOutputPort, _MainInputPort, _PropertyOutputPort, _PropertyInputPort ] 
 			default: none
 			required: on
 		},
@@ -104,7 +104,7 @@ type _Module {
 			name: "blocks"
 			types: [""] # TODO how to accept lists?
 			default: []
-			required: on
+			required: off
 		},
 		typeProperty Streams {
 			name: "streams"

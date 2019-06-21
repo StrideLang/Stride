@@ -16,13 +16,13 @@ type _Streamable {
 	properties: [
 		typeProperty InputName {
 			name: "inputName"
-			types: ["CSP", "none"]
+			types: [_StringLiteral, ""]
 			default: none
 			required: off
 		},
 		typeProperty OutputName {
 			name: "outputName"
-			types: ["CSP", "none"]
+			types: [_StringLiteral, ""]
 			default: none
 			required: off
 		}
@@ -35,7 +35,7 @@ type _Resetable {
 	properties: [
 		typeProperty ResetPort {
 			name: "reset"
-			types: ["CSP", "none"]
+			types: [_StringLiteral, ""]
 			default: none
 			required: off
 		}
@@ -47,7 +47,7 @@ type _Rated {
 	properties: [
 		typeProperty Rate {
 			name: "rate"
-			types: [""] #["CIP", "CRP"]
+			types: [_IntLiteral, _RealLiteral, _PortProperty, _NoneLiteral]
 			default: none
 			required: off
 		},
@@ -66,7 +66,7 @@ type _DomainMember {
 	properties: [
 		typeProperty Domain {
 			name: "domain"
-			types: ["CSP", ""]
+			types: [_StringLiteral, ""]
 			default: none
 			required: off
 		},
@@ -91,7 +91,7 @@ type _Base {
 		},
 		typeProperty Meta {
 			name: "meta"
-			types: ["CSP"]
+			types: [_StringLiteral, _Constant]
 			default: ""
 			required: off
 		}

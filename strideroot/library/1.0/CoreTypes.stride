@@ -4,19 +4,19 @@ type _TypeProperty {
 	properties: [
 		typeProperty Name {
 			name: "name"
-			types: ["CSP"]
+			types: [_StringLiteral, ""]
 			default: none
 			required: on
 		},
 		typeProperty Direction {
 			name: "direction"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: "output"
 			required: off
 		},
 		typeProperty Types {
 			name: "types"
-			types: ["CSP"]
+			types: [_StringLiteral, ""]
 			default: none
 			required: on
 		},
@@ -28,13 +28,13 @@ type _TypeProperty {
 		},
 		typeProperty Required {
 			name: "required"
-			types: ["CBP"]
+			types: [_SwitchLiteral]
 			default: none
 			required: on
 		},
 		typeProperty Public {
 			name: "public"
-			types: ["CBP"]
+			types: [_SwitchLiteral]
 			default: off
 			required: off
 		}
@@ -47,7 +47,7 @@ type _Type {
 	properties: [
 		typeProperty TypeName {
 			name: "typeName"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: none
 			required: on
 		},
@@ -65,7 +65,7 @@ type _Type {
 		},
 		typeProperty Meta {
 			name: "meta"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: ""
 			required: off
 		}
@@ -78,7 +78,7 @@ type _Constant {
 	properties: [
 		typeProperty Value {
 			name: "value"
-			types: ["CSP", "CIP", "CRP", "CBP", "none"]
+			types: [_StringLiteral, _IntLiteral, _RealLiteral, _SwitchLiteral, _Constant]
 			default: none
 			required: off
 #			meta: "The constant value"
@@ -93,7 +93,7 @@ type _Switch {
 	properties: [
 		typeProperty Default {
 			name: "default"
-			types: ["CBP"]
+			types: [_SwitchLiteral]
 			default: off
 			required: off
 		}
@@ -113,13 +113,13 @@ type _Signal {
 	properties: [
 		typeProperty Value {
 			name: "value"
-			types: ["CIP", "CRP", "CSP"]
+			types: [_IntLiteral, _RealLiteral, _StringLiteral]
 			default: 0.0
 			required: off
 		},
 		typeProperty Default {
 			name: "default"
-			types: ["CIP", "CRP", "CSP"]
+			types: [_IntLiteral, _RealLiteral, _StringLiteral]
 			default: 0.0
 			required: off
 		},
@@ -152,13 +152,13 @@ type _Buffer {
 	properties: [
 		typeProperty TypePort {
 			name: "type"
-			types: ["CSP", ""]
+			types: [_StringLiteral, ""]
 			default: none
 			required: off
 		},
 		typeProperty SizePort {
 			name: "size"
-			types: ["CIP"]
+			types: [_IntLiteral, ""]
 			default: 0
 			required: on
 		},
@@ -190,13 +190,13 @@ type _Table {
 	properties: [
 		typeProperty SizePort {
 			name: "size"
-			types: ["CSP", ""]
+			types: [_StringLiteral, ""]
 			default: none
 			required: on
 		},
 		typeProperty RatePort {
 			name: "rate"
-			types: ["CSP", ""]
+			types: [_StringLiteral, ""]
 			default: none
 			required: off
 		}
@@ -238,14 +238,14 @@ type _PlatformDataType {
 	properties: [
 		typeProperty Name {
 			name: "name"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: none
 			required: on
 			meta: "Name of the data type"
 		}
 		typeProperty PlatformName {
 			name: "platformName"
-			types: ["CSP"]
+			types: [_StringLiteral]
 			default: none
 			required: on
 			meta: "Name of the data type on the target platform"
@@ -261,3 +261,77 @@ type _PlatformDataType {
 	meta: ""
 }
 
+# Builtin types for port type validation
+
+type _StringLiteral {
+	typeName: "_stringLiteral"
+	properties: [
+		typeProperty Value {
+			name: "value"
+			types: [_StringLiteral]
+			default: ""
+			required: off
+		}
+	]
+}
+
+type _IntLiteral {
+	typeName: "_intLiteral"
+	properties: [
+		typeProperty Value {
+			name: "value"
+			types: [_IntLiteral]
+			default: 1
+			required: off
+		}
+	]
+}
+
+type _RealLiteral {
+	typeName: "_realLiteral"
+	properties: [
+		typeProperty Value {
+			name: "value"
+			types: [_RealLiteral]
+			default: 0.0
+			required: off
+		}
+	]
+}
+
+
+type _PortProperty {
+	typeName: "_portProperty"
+	properties: [
+#		typeProperty Value {
+#			name: "value"
+#			types: [""]
+#			default: none
+#			required: off
+#		}
+	]
+}
+
+type _SwitchLiteral {
+	typeName: "_switchLiteral"
+	properties: [
+#		typeProperty Value {
+#			name: "value"
+#			types: [""]
+#			default: none
+#			required: off
+#		}
+	]
+}
+
+type _NoneLiteral {
+	typeName: "_noneLiteral"
+	properties: [
+#		typeProperty Value {
+#			name: "value"
+#			types: [""]
+#			default: none
+#			required: off
+#		}
+	]
+}

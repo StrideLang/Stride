@@ -521,6 +521,12 @@ void CodeValidator::validateTypes(ASTNode node, ScopeStack scopeStack, vector<st
         } else {
             // Validate port names and types
             vector<std::shared_ptr<PropertyNode>> ports = decl->getProperties();
+            ASTNode blocksNode = decl->getPropertyValue("blocks");
+            vector<ASTNode> blocks;
+            if (blocksNode) {
+                blocks = blocksNode->getChildren();
+            }
+            scopeStack.push_back({decl->getName(), blocks});
             for(auto port : ports) {
                 QString portName = QString::fromStdString(port->getName());
                 // Check if portname is valid
@@ -539,45 +545,78 @@ void CodeValidator::validateTypes(ASTNode node, ScopeStack scopeStack, vector<st
                         // Then check type passed to port is valid
                         bool typeIsValid = false;
                         ASTNode portValue = port->getValue();
+
+                        auto getTypeName = [&](ASTNode child) {
+                                if (child->getNodeType() == AST::Declaration
+                                        || child->getNodeType() == AST::BundleDeclaration) {
+                                    auto typeDeclaration = CodeValidator::findTypeDeclaration(static_pointer_cast<DeclarationNode>(child), scopeStack, m_tree);
+                                    return typeDeclaration->getName();
+                                } else if (child->getNodeType() == AST::Block
+                                           || child->getNodeType() == AST::Bundle ){
+                                    auto decl = CodeValidator::findDeclaration(CodeValidator::streamMemberName(child), scopeStack, m_tree);
+                                    auto typeDeclaration = CodeValidator::findTypeDeclaration(decl, scopeStack, m_tree);
+                                    return typeDeclaration->getName();
+                                } else if (child->getNodeType() == AST::String) {
+                                    return std::string("_StringLiteral");
+                                } else if (child->getNodeType() == AST::Int) {
+                                    return std::string("_IntLiteral");
+                                } else if (child->getNodeType() == AST::Real) {
+                                    return std::string("_RealLiteral");
+                                } else if (child->getNodeType() == AST::Switch) {
+                                    return std::string("_SwitchLiteral");
+                                } else if (child->getNodeType() == AST::PortProperty) {
+                                    return std::string("_PortProperty");
+                                } else if (child->getNodeType() == AST::None) {
+                                    return std::string("_NoneLiteral");
+                                }
+                                return std::string();
+                        };
+
                         if (portValue) {
-                            QString typeName = getPortTypeName(resolveNodeOutType(portValue, scopeStack, m_tree));
-                            QStringList validTypeNames;
+                            std::vector<std::string> validTypeNames;
+
                             for (ASTNode validType: portTypesList) {
                                 if (validType->getNodeType() == AST::String) {
                                     std::string typeCode = static_cast<ValueNode *>(validType.get())->getStringValue();
-                                    validTypeNames << QString::fromStdString(typeCode);
-                                    if (!typeName.isEmpty()) {
-                                        if (typeName.toStdString() == typeCode || typeCode == "") {
-                                            typeIsValid = true;
-                                            break;
-                                        }
-                                    } else if (portValue->getNodeType() == AST::Block) {
-                                        QList<LangError> errors;
-                                        std::string validTypeName = CodeValidator::evaluateConstString(portValue, scopeStack, m_tree, errors);
-                                        if (validTypeName == typeCode) {
-                                            typeIsValid = true;
-                                            break;
-                                        }
-                                    } else { // FIXME for now empty string means any type allowed...
-                                        typeIsValid = true;
-                                        break;
-                                    }
+                                    validTypeNames.push_back(typeCode);
                                 } else if (validType->getNodeType() == AST::Block) {
-                                    BlockNode * blockNode = static_cast<BlockNode *>(validType.get());
+                                    auto blockNode = static_pointer_cast<BlockNode>(validType);
                                     std::shared_ptr<DeclarationNode> declaration = findDeclaration(QString::fromStdString(blockNode->getName()), scopeStack, m_tree);
-                                    ASTNode typeNameValue = declaration->getPropertyValue("typeName");
-                                    Q_ASSERT(typeNameValue->getNodeType() == AST::String);
-                                    string validTypeName = static_cast<ValueNode *>(typeNameValue.get())->getStringValue();
-                                    if (portValue->getNodeType() == AST::Block) {
-                                        BlockNode *currentTypeNameNode = static_cast<BlockNode *>(portValue.get());
-                                        std::shared_ptr<DeclarationNode> valueDeclaration = findDeclaration(
-                                                    QString::fromStdString(currentTypeNameNode->getName()), scopeStack, m_tree);
-                                        if (valueDeclaration && validTypeName == valueDeclaration->getObjectType()) {
+//                                    ASTNode typeNameValue = declaration->getPropertyValue("typeName");
+//                                    Q_ASSERT(typeNameValue->getNodeType() == AST::String);
+                                    Q_ASSERT(declaration);
+                                    if (declaration) {
+                                        string validTypeName = declaration->getName();
+                                        validTypeNames.push_back(validTypeName);
+                                    }
+                                }
+                            }
+                            if (std::find(validTypeNames.begin(), validTypeNames.end(), "") == validTypeNames.end()) {
+                                if (portValue->getNodeType() == AST::List) {
+                                    typeIsValid = true;
+                                    for (auto child: portValue->getChildren()) {
+                                        auto typeName = getTypeName(child);
+                                        bool thisTypeIsValid = false;
+                                        for (auto validTypeName: validTypeNames) {
+                                            if (validTypeName == typeName) {
+                                                thisTypeIsValid = true;
+                                                break;
+                                            }
+                                        }
+                                        typeIsValid &= thisTypeIsValid;
+                                    }
+                                } else {
+                                    auto typeName = getTypeName(portValue);
+                                    for (auto validTypeName: validTypeNames) {
+                                        if (validTypeName == typeName || validTypeName == "") {
                                             typeIsValid = true;
                                             break;
                                         }
                                     }
-                                } // TODO Add support for checking of bundle types
+                                }
+
+                            } else { // Catch all for old behavior
+                                typeIsValid = true;
                             }
                             if (!typeIsValid) {
                                 LangError error;
@@ -585,8 +624,15 @@ void CodeValidator::validateTypes(ASTNode node, ScopeStack scopeStack, vector<st
                                 error.lineNumber = port->getLine();
                                 error.errorTokens.push_back(blockType.toStdString());
                                 error.errorTokens.push_back(portName.toStdString());
-                                error.errorTokens.push_back(typeName.toStdString());
-                                error.errorTokens.push_back(validTypeNames.join(",").toStdString());
+//                                error.errorTokens.push_back(typeNames[0]); //FIXME mark which entry fails
+                                std::string validTypesList;
+                                for (auto type: validTypeNames) {
+                                    validTypesList += type + ",";
+                                }
+                                if (validTypesList.size() > 0) {
+                                    validTypesList = validTypesList.substr(0, validTypesList.size() - 1);
+                                }
+                                error.errorTokens.push_back(validTypesList);
                                 error.filename = port->getFilename();
                                 m_errors << error;
                             }

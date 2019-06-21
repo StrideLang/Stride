@@ -11,6 +11,9 @@ InSignal2 >> OutSignal2; #InSignal2 should be auto declared
 
 
 module Test {
+    ports: [
+        mainOutputPort OutputPort {}
+    ]
     blocks: [
     signal Sig1 {}
     signal Sig2 {}

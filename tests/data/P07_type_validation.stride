@@ -5,19 +5,19 @@ type TestType {
     properties: [
             typeProperty StringPort {
                     name:       "stringPort"
-                    types:      ["CSP"]
+                    types:      [_StringLiteral]
                     default:    ""
                     required:   on
             },
             typeProperty FloatPort {
                     name:       "floatPort"
-                    types:      ["CRP"]
+                    types:      [_RealLiteral]
                     default:    0.0
                     required:   on
             },
             typeProperty NonePort {
                     name:       "nonePort"
-                    types:      ["none"]
+                    types:      [_NoneLiteral]
                     required:   on
             },
             typeProperty AnyPort {
@@ -27,12 +27,12 @@ type TestType {
             },
             typeProperty BuiltinTypePort {
                     name:       "builtinTypePort"
-                    types:      ["signal"]
+                    types:      [_Signal]
                     required:   on
             },
             typeProperty BlockTypePort {
                     name:       "blockTypePort"
-                    types:      ["signal", "constant", "none"]
+                    types:      [_Signal, _Constant, _NoneLiteral]
                     default:    none
                     required:   off
             }
