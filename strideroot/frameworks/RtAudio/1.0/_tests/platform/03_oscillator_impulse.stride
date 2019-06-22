@@ -4,4 +4,4 @@ import Generators
 
 Oscillator() >> AudioOut[1];
 
-Impulse() >> AudioOut[2];
+Impulse(frequency: 1) >> AudioOut[2];
