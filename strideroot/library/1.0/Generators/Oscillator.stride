@@ -130,16 +130,16 @@ module Impulse {
 		reaction WrapPhase {
 			streams: [
 				Phase - 1.0 >> Phase;
+				1.0 >> Output;
 			]
 		}
 		
     ]
     streams: [
         Frequency / OutputPort.rate >> PhaseInc;
-
+		Phase + PhaseInc >> Phase;
         [Phase , 1.0 ] >> GreaterOrEqual() >> Select(whenOn: 1 whenOff: 0) >> Output;
-        Phase + PhaseInc >> Phase;
-        [Phase , 1.0 ] >> Greater() >> PhaseOverflow >> WrapPhase();
+        [Phase , 1.0 ] >> GreaterOrEqual() >> PhaseOverflow >> WrapPhase();
     ]
 	meta: ""
 }
