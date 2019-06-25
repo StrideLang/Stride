@@ -1,7 +1,7 @@
 
 _domainProcessing _PlatformDomainProcessing {
 	domainStreams: [
-		InitializationDomain >> [AudioDomain, AsyncDomain];
+		SetupDomain >> [AudioDomain, AsyncDomain];
 	]
 }
 
@@ -18,11 +18,11 @@ alias PlatformRate {
 }
 
 alias _ContextInitDomain {
-    block: InitializationDomain
+    block: SetupDomain
 }
 
-_domainDefinition InitializationDomain {
-	domainName: "InitializationDomain"
+_domainDefinition SetupDomain {
+	domainName: "SetupDomain"
 	framework: _RtAudioFramework
 	rate: 0
 	globalsTag: "Includes"

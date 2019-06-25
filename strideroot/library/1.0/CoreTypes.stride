@@ -190,14 +190,26 @@ type _Table {
 	properties: [
 		typeProperty SizePort {
 			name: "size"
-			types: [_StringLiteral, ""]
-			default: none
+			types: [_IntLiteral]
+			default: 512
 			required: on
 		},
 		typeProperty RatePort {
 			name: "rate"
+			types: [_IntLiteral]
+			default: none
+			required: off
+		},
+		typeProperty TypePort {
+			name: "type"
 			types: [_StringLiteral, ""]
 			default: none
+			required: off
+		},
+		typeProperty _InternalType {
+			name: "_internalType"
+			types: [""]
+			default: _TableType
 			required: off
 		}
 	]

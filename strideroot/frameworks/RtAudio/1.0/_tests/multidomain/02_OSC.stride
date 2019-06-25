@@ -1,0 +1,8 @@
+use DesktopAudio version 1.0
+	
+import Osc
+
+AudioIn[1] >> OSCOut();
+
+
+

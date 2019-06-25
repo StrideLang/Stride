@@ -1072,8 +1072,11 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream, S
         } else {
             if (left->getNodeType() == AST::Expression
                     || left->getNodeType() == AST::List) {
-                left->setCompilerProperty("samplingDomain",
-                                          CodeValidator::getNodeDomain(right, scopeStack, m_tree));
+                auto domainNode = CodeValidator::getNodeDomain(right, scopeStack, m_tree);
+                if (!domainNode) {
+                    domainNode = std::make_shared<ValueNode>(__FILE__, __LINE__);
+                }
+                left->setCompilerProperty("samplingDomain", domainNode);
             }
             left = right; // Last pass (process right, call it left)
         }
@@ -1692,7 +1695,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node, ScopeStack subScop
                 if (!portBlock || portBlock->getNodeType() == AST::None) {
                     // FIXME  check if there is a block called Output already
                     portBlock = std::make_shared<BlockNode>("Input", __FILE__, __LINE__);
-                    outputPortBlock->setPropertyValue("block", portBlock);
+                    inputPortBlock->setPropertyValue("block", portBlock);
                 }
 
                 // Add declaration if not there

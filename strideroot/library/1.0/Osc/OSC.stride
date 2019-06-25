@@ -24,10 +24,10 @@ module OSCOut {
 		signal Address { default: "/Stride" },
 		signal IP { default: "127.0.0.1" },
 		signal Port { default: 9010 },
-		_oscOutType OscOutNode {}
+		signal Input { domain: InputPort.domain }
 	]
 	streams: [
-		[Input, Address, IP, Port] >> OscOutNode;
+		[Input, Address, IP, Port] >> __OscOut();
 	]
 	meta: "Sends OSC messages."
 }

@@ -2197,21 +2197,25 @@ std::string CodeValidator::getDomainIdentifier(ASTNode domain, ScopeStack scopeS
             auto domainBlock = static_pointer_cast<BlockNode>(domain);
             auto domainDeclaration = CodeValidator::findDeclaration(QString::fromStdString(domainBlock->getName()),
                                                                     scopeStack, tree);
-            if (domainDeclaration->getObjectType() == "_domainDefinition") {
-                name = domainDeclaration->getName();
-            } else if (domainDeclaration->getObjectType() == "PlatformDomain") {
-                auto domainNameNode = domainDeclaration->getPropertyValue("value");
-                name = getDomainIdentifier(domainNameNode, scopeStack, tree);
+            if (domainDeclaration) {
+                if (domainDeclaration->getObjectType() == "_domainDefinition") {
+                    name = domainDeclaration->getName();
+                } else if (domainDeclaration->getObjectType() == "PlatformDomain") {
+                    auto domainNameNode = domainDeclaration->getPropertyValue("value");
+                    name = getDomainIdentifier(domainNameNode, scopeStack, tree);
+                }
             }
         } else if (domain->getNodeType() == AST::Bundle) {
             auto domainBlock = static_pointer_cast<BundleNode>(domain);
             auto domainDeclaration = CodeValidator::findDeclaration(QString::fromStdString(domainBlock->getName()),
                                                                     scopeStack, tree);
-            if (domainDeclaration->getObjectType() == "_domainDefinition") {
-                name = domainDeclaration->getName();
-            } else if (domainDeclaration->getObjectType() == "PlatformDomain") {
-                auto domainNameNode = domainDeclaration->getPropertyValue("value");
-                name = getDomainIdentifier(domainNameNode, scopeStack, tree);
+            if (domainDeclaration) {
+                if (domainDeclaration->getObjectType() == "_domainDefinition") {
+                    name = domainDeclaration->getName();
+                } else if (domainDeclaration->getObjectType() == "PlatformDomain") {
+                    auto domainNameNode = domainDeclaration->getPropertyValue("value");
+                    name = getDomainIdentifier(domainNameNode, scopeStack, tree);
+                }
             }
         } else if (domain->getNodeType() == AST::String) {
             // Should anything be added to the id? Scope?
