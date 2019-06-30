@@ -23,5 +23,5 @@ module Test {
 	]
 }
 
-AudioIn[1] >> Test(test: AudioIn[2]) >> AudioOut[1];
-AudioIn[2] >> Test() >> AudioOut[2];
+AudioIn[0] >> Test(test: AudioIn[1]) >> AudioOut[0];
+AudioIn[1] >> Test() >> AudioOut[1];

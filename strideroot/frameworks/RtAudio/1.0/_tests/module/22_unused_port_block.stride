@@ -25,6 +25,6 @@ module TestSwitch {
 
 signal UnusedInside {}
 
-AudioIn[1]
+AudioIn[0]
 >> TestSwitch (unused: Reset)
->> AudioOut[1];
+>> AudioOut[0];

@@ -27,4 +27,4 @@ module InReaction {
 }
 
 
-AudioIn[1] >> InReaction () >> AudioOut;
+AudioIn[0] >> InReaction () >> AudioOut;

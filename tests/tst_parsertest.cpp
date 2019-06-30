@@ -59,7 +59,7 @@ private:
 private Q_SLOTS:
 
 //    // Test code generation
-//    void testCodeGeneration();
+    void testCodeGeneration();
 
     // Parser
     void testModules();
@@ -110,7 +110,7 @@ private Q_SLOTS:
 
 
     // Code generation/Compiler
-    void testCodeGeneration();
+//    void testCodeGeneration();
     void testCompilation();
 };
 
@@ -263,7 +263,7 @@ void ParserTest::testCodeGeneration()
 
     BuildTester tester(QFINDTESTDATA(STRIDEROOT).toStdString());
 
-    QStringList toIgnore = {/*"simple",*/"buffer", "loop", "sync"};
+    QStringList toIgnore = {"simple","buffer", "module", "reactions", "combinations", "table", "loop", "sync"};
     while (directories.hasNext()) {
         QString dirName = directories.next();
         if (!toIgnore.contains(dirName.mid(dirName.lastIndexOf("/") + 1))) {

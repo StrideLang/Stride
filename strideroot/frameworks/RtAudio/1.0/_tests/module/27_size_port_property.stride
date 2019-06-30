@@ -11,9 +11,11 @@ module Last {
     ]
     blocks: [
         signal Input[InputPort.size] {}
+        signal Index {}
     ]
     streams: [
-        Input[InputPort.size] >> Output;
+        InputPort.size - 1 >> Index;
+        Input[Index] >> Output;
     ]
 }
 
@@ -24,5 +26,5 @@ signal Signal {
 
 signal Six[6] { default: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]}
 
-AudioIn >> Last() >> AudioOut[1];
-Six >> Last() >> AudioOut[2];
+AudioIn >> Last() >> AudioOut[0];
+Six >> Last() >> AudioOut[1];

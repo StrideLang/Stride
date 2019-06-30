@@ -19,8 +19,8 @@ module Test {
 		signal Output[2] {}
 	]
 	streams: [
-		Input * TestBlock >> Output[1];
-		Input >> Output[2];
+		Input * TestBlock >> Output[0];
+		Input >> Output[1];
 	]
 }
 
@@ -28,4 +28,4 @@ signal SigIn[2] { domain: AudioDomain }
 
 AudioIn >> SigIn;
 
-SigIn[1] >> Test(test: SigIn[2]) >> AudioOut;
+SigIn[0] >> Test(test: SigIn[1]) >> AudioOut;

@@ -7,4 +7,4 @@ signal Upsampled {
 
 Upsampled + 1 >> Upsampled;
 
-Upsampled >> AudioOut[1];
+Upsampled >> AudioOut[0];

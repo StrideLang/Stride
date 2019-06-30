@@ -11,5 +11,5 @@ reaction ConstantSwitch {
 	]
 }
 
-on >> ConstantSwitch() >> AudioOut[1];
+on >> ConstantSwitch() >> AudioOut[0];
 	

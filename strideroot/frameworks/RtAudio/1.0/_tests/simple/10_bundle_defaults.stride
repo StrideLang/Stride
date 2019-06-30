@@ -2,5 +2,5 @@ use DesktopAudio version 1.0
 
 signal Bundle[2] { default: [0.5, -0.5] }
 
+AudioIn[0] * Bundle[0] >> AudioOut[0];
 AudioIn[1] * Bundle[1] >> AudioOut[1];
-AudioIn[2] * Bundle[2] >> AudioOut[2];

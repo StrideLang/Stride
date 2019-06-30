@@ -16,7 +16,7 @@ module Greater {
 		switch Output {domain: OutputPort.domain}
     ]
     streams: [
-       [Input[1], Input[2]] >> __Greater() >> Output;
+       [Input[0], Input[1]] >> __Greater() >> Output;
     ]
     meta: "Compare two input values."
 }
@@ -37,7 +37,7 @@ module GreaterOrEqual {
 		switch Output {domain: OutputPort.domain}
     ]
     streams: [
-       [Input[1], Input[2]] >> __GreaterOrEqual() >> Output;
+       [Input[0], Input[1]] >> __GreaterOrEqual() >> Output;
     ]
     meta: ""
 }
@@ -58,7 +58,7 @@ module Less {
 		switch Output {domain: OutputPort.domain}
     ]
     streams: [
-       [Input[1], Input[2]] >> __Less() >> Output;
+       [Input[0], Input[1]] >> __Less() >> Output;
     ]
     meta: ""
 }
@@ -80,7 +80,7 @@ module LessOrEqual {
 		switch Output {domain: OutputPort.domain}
     ]
     streams: [
-       [Input[1], Input[2]] >> __LessOrEqual() >> Output;
+       [Input[0], Input[1]] >> __LessOrEqual() >> Output;
     ]
     meta: ""
 }
@@ -102,7 +102,7 @@ module Equal {
         switch Output { domain: OutputPort.domain}
     ]
     streams: [
-       [Input[1], Input[2]] >> __Equal() >> Output;
+       [Input[0], Input[1]] >> __Equal() >> Output;
     ]
     meta: ""
 }
@@ -124,7 +124,7 @@ module NotEqual {
         switch Output { domain: OutputPort.domain}
     ]
     streams: [
-       [Input[1], Input[2]] >> __NotEqual() >> Output;
+       [Input[0], Input[1]] >> __NotEqual() >> Output;
     ]
     meta: ""
 }
@@ -184,7 +184,7 @@ module Choose {
         _chooseType ChooseBlock {}
     ]
     streams: [
-        [Condition, Input[1], Input[2]]  >> __Choose() >> Output;
+        [Condition, Input[0], Input[1]]  >> __Choose() >> Output;
     ]
     meta: ""
 }

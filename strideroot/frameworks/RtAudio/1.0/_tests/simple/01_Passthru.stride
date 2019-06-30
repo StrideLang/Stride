@@ -1,4 +1,4 @@
 use DesktopAudio version 1.0
 
+AudioIn[0] >> AudioOut[0];
 AudioIn[1] >> AudioOut[1];
-AudioIn[2] >> AudioOut[2];

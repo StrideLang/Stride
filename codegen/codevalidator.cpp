@@ -1219,6 +1219,9 @@ int CodeValidator::getBundleSize(BundleNode *bundle, ScopeStack scope, ASTNode t
                 size += 1;
             }
             break;
+        case AST::Block:
+            size += 1;
+            break;
 
         case AST::PortProperty:
             size = -2;

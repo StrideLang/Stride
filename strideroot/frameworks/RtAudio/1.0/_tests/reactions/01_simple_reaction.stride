@@ -14,4 +14,4 @@ reaction Adder {
 
 AudioIn >> Greater() >> Adder();
 
-Value >> AudioOut[1];
+Value >> AudioOut[0];

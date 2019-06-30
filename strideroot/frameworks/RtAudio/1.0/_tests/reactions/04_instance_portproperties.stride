@@ -27,4 +27,4 @@ module Test {
 	
 }
 	
-Test() >> AudioOut[1];
+Test() >> AudioOut[0];

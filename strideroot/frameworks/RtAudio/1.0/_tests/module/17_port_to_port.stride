@@ -49,4 +49,4 @@ module Test {
 }
 
 
-AudioIn[1] >> Test(portInput: AudioIn[2]) >> AudioOut[2];
+AudioIn[0] >> Test(portInput: AudioIn[1]) >> AudioOut[1];

@@ -40,4 +40,4 @@ module Gen {
 
 
 
-Gen(prop: AudioIn[1]) >> AudioOut[1];
+Gen(prop: AudioIn[0]) >> AudioOut[0];

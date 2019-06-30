@@ -32,4 +32,4 @@ module LinearEnvelope {
 
 signal UsedInReaction { default: 0.3 }
 
-AudioIn[1] >> LinearEnvelope (test:UsedInReaction) >> AudioOut;
+AudioIn[0] >> LinearEnvelope (test:UsedInReaction) >> AudioOut;

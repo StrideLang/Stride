@@ -8,5 +8,5 @@ constant Val3 {value: 0.4}
 
 [Val1, Val2, Val3] >> Bundle;
 
-Bundle[1] >> AudioOut[1];
-Bundle[2] + Bundle[3] >> AudioOut[2];
+Bundle[0] >> AudioOut[0];
+Bundle[1] + Bundle[2] >> AudioOut[1];

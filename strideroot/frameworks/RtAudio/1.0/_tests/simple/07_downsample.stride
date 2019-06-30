@@ -7,4 +7,4 @@ signal DownSampled {
 
 DownSampled + 1 >> DownSampled;
 
-DownSampled >> AudioOut[1];
+DownSampled >> AudioOut[0];

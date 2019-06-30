@@ -25,5 +25,5 @@ signal Signal {
 	domain: AudioDomain
 }
 
-Gen(prop: AudioIn[1] + 0.4) >> AudioOut[1];
-Gen(prop: AudioIn[1] + AudioIn[2] + Signal ) >> AudioOut[2];
+Gen(prop: AudioIn[0] + 0.4) >> AudioOut[0];
+Gen(prop: AudioIn[0] + AudioIn[1] + Signal ) >> AudioOut[1];

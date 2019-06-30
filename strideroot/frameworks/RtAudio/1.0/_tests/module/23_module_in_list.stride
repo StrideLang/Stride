@@ -37,8 +37,8 @@ module Test {
 		signal Output[2] {}
 	]
 	streams: [
-		Input[1] >> Output[1];
-		Input[1] + Input[2] >> Output[2];
+		Input[0] >> Output[0];
+		Input[0] + Input[1] >> Output[1];
 	]
 }
 [Gen(), 0.5] >> Test() >> AudioOut;

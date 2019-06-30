@@ -18,5 +18,5 @@ module Test {
 	]
 }
 
-AudioIn[1] >> Test();
-DummyOuter >> AudioOut[2];
+AudioIn[0] >> Test();
+DummyOuter >> AudioOut[1];

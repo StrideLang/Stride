@@ -17,7 +17,7 @@ module InnerTest {
         signal Input[2] {}
     ]
     streams: [
-        Input[1] + Input[2] >> Output;
+        Input[0] + Input[1] >> Output;
     ]
 }
 
@@ -39,4 +39,4 @@ module Test {
 }
 
 
-AudioIn[1] >> Test() >> AudioOut[1];
+AudioIn[0] >> Test() >> AudioOut[0];

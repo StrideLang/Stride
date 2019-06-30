@@ -2,6 +2,6 @@ use DesktopAudio version 1.0
 
 import Generators
 
-Oscillator() >> AudioOut[1];
+Oscillator() >> AudioOut[0];
 
-Impulse(frequency: 1) >> AudioOut[2];
+Impulse(frequency: 1) >> AudioOut[1];

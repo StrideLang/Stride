@@ -18,4 +18,4 @@ module Gen {
     ]
 }
 
-Gen() + 0.5 >> AudioOut[1];
+Gen() + 0.5 >> AudioOut[0];

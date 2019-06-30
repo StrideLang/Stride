@@ -1445,7 +1445,7 @@ std::shared_ptr<ListNode> CodeResolver::expandNameToList(BlockNode *name, int si
 {
     std::shared_ptr<ListNode> list = std::make_shared<ListNode>(nullptr, name->getFilename().data(), name->getLine());
     for (int i = 0; i < size; i++) {
-        std::shared_ptr<ListNode> indexList = std::make_shared<ListNode>(std::make_shared<ValueNode>(i + 1, name->getFilename().data(), name->getLine()),
+        std::shared_ptr<ListNode> indexList = std::make_shared<ListNode>(std::make_shared<ValueNode>(i, name->getFilename().data(), name->getLine()),
                                                                          name->getFilename().data(), name->getLine());
         std::shared_ptr<BundleNode> bundle = std::make_shared<BundleNode>(name->getName(), indexList, name->getFilename().data(), name->getLine());
         list->addChild(bundle);

@@ -8,6 +8,6 @@ signal Value {
     domain: AudioDomain
 }
 
-Value >> AudioOut[1];
+Value >> AudioOut[0];
 Value + 1 >> Value;
 [Value, 10] >> Equal() >> Reset;

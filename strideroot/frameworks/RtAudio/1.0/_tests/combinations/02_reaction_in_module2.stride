@@ -32,4 +32,4 @@ module Test {
 	]
 }
 
-AudioIn[1] >> Test() >> Test() >> AudioOut[1];
+AudioIn[0] >> Test() >> Test() >> AudioOut[0];

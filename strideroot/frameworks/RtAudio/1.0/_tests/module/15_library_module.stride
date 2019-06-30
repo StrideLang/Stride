@@ -2,4 +2,4 @@ use DesktopAudio version 1.0
 
 import Generators
 
-AudioIn[1] >> Level(gain: 0.3) >> AudioOut[1];
+AudioIn[0] >> Level(gain: 0.3) >> AudioOut[0];

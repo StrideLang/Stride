@@ -24,4 +24,4 @@ module ResetTest {
 	]
 }
 
-ResetTest() >> AudioOut[1];
+ResetTest() >> AudioOut[0];

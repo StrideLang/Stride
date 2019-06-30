@@ -28,5 +28,5 @@ module Test {
 
 signal Quarter {default: 0.25}
 
-AudioIn[1] >> Test(test: 0.5) >> AudioOut[1];
-AudioIn[2] >> Test(test: Quarter) >> AudioOut[2];
+AudioIn[0] >> Test(test: 0.5) >> AudioOut[0];
+AudioIn[1] >> Test(test: Quarter) >> AudioOut[1];

@@ -1,6 +1,6 @@
 use DesktopAudio version 1.0
 
-AudioIn >> Sum() >> AudioOut[1];
+AudioIn >> Sum() >> AudioOut[0];
 
-[1.0, AudioIn[2], 0.5, AudioIn[1]] >> Sum() >> AudioOut[2];
+[1.0, AudioIn[1], 0.5, AudioIn[0]] >> Sum() >> AudioOut[1];
 
