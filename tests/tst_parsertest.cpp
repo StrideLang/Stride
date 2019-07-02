@@ -998,9 +998,9 @@ void ParserTest::testConstantResolution()
     QVERIFY(module->getObjectType() == "module");
     ListNode *ports = static_cast<ListNode *>(module->getPropertyValue("ports").get());
     QVERIFY(ports->getNodeType() == AST::List);
-    BlockNode *portBlock = static_cast<BlockNode *>(static_cast<DeclarationNode *>(ports->getChildren().at(0).get())->getPropertyValue("block").get());
-    QVERIFY(portBlock->getNodeType() == AST::Block);
-    QVERIFY(portBlock->getName() == "AutoBlock");
+    ValueNode *portBlock = static_cast<ValueNode *>(static_cast<DeclarationNode *>(ports->getChildren().at(0).get())->getPropertyValue("block").get());
+    QVERIFY(portBlock->getNodeType() == AST::Int);
+    QVERIFY(portBlock->getIntValue() == 440);
 }
 
 void ParserTest::testStreamRates()
@@ -1115,7 +1115,7 @@ void ParserTest::testStreamExpansion()
     QVERIFY(index->getChildren().size() == 1);
     ValueNode *value = static_cast<ValueNode *>(index->getChildren().at(0).get());
     QVERIFY(value->getNodeType() == AST::Int);
-    QVERIFY(value->getIntValue() == 1);
+    QVERIFY(value->getIntValue() == 0);
 
     bundle = static_cast<BundleNode *>(list->getChildren()[1].get());
     QVERIFY(bundle->getNodeType() == AST::Bundle);
@@ -1125,7 +1125,7 @@ void ParserTest::testStreamExpansion()
     QVERIFY(index->getChildren().size() == 1);
     value = static_cast<ValueNode *>(index->getChildren().at(0).get());
     QVERIFY(value->getNodeType() == AST::Int);
-    QVERIFY(value->getIntValue() == 2);
+    QVERIFY(value->getIntValue() == 1);
 
     StreamNode *right = static_cast<StreamNode *>(stream->getRight().get());
     QVERIFY(right->getNodeType() == AST::Stream);
@@ -1151,7 +1151,7 @@ void ParserTest::testStreamExpansion()
     QVERIFY(index->getChildren().size() == 1);
     value = static_cast<ValueNode *>(index->getChildren().at(0).get());
     QVERIFY(value->getNodeType() == AST::Int);
-    QVERIFY(value->getIntValue() == 1);
+    QVERIFY(value->getIntValue() == 0);
 
     bundle = static_cast<BundleNode *>(list->getChildren()[1].get());
     QVERIFY(bundle->getNodeType() == AST::Bundle);
@@ -1161,7 +1161,7 @@ void ParserTest::testStreamExpansion()
     QVERIFY(index->getChildren().size() == 1);
     value = static_cast<ValueNode *>(index->getChildren().at(0).get());
     QVERIFY(value->getNodeType() == AST::Int);
-    QVERIFY(value->getIntValue() == 2);
+    QVERIFY(value->getIntValue() == 1);
 
 
     //signal In[2] {
@@ -1189,7 +1189,7 @@ void ParserTest::testStreamExpansion()
     QVERIFY(index->getChildren().size() == 1);
     value = static_cast<ValueNode *>(index->getChildren().at(0).get());
     QVERIFY(value->getNodeType() == AST::Int);
-    QVERIFY(value->getIntValue() == 1);
+    QVERIFY(value->getIntValue() == 0);
 
     bundle = static_cast<BundleNode *>(list->getChildren()[1].get());
     QVERIFY(bundle->getNodeType() == AST::Bundle);
@@ -1199,7 +1199,7 @@ void ParserTest::testStreamExpansion()
     QVERIFY(index->getChildren().size() == 1);
     value = static_cast<ValueNode *>(index->getChildren().at(0).get());
     QVERIFY(value->getNodeType() == AST::Int);
-    QVERIFY(value->getIntValue() == 2);
+    QVERIFY(value->getIntValue() == 1);
 
 
     list = static_cast<ListNode *>(stream->getRight().get());
@@ -1214,7 +1214,7 @@ void ParserTest::testStreamExpansion()
     QVERIFY(index->getChildren().size() == 1);
     value = static_cast<ValueNode *>(index->getChildren().at(0).get());
     QVERIFY(value->getNodeType() == AST::Int);
-    QVERIFY(value->getIntValue() == 1);
+    QVERIFY(value->getIntValue() == 0);
 
     bundle = static_cast<BundleNode *>(list->getChildren()[1].get());
     QVERIFY(bundle->getNodeType() == AST::Bundle);
@@ -1224,7 +1224,7 @@ void ParserTest::testStreamExpansion()
     QVERIFY(index->getChildren().size() == 1);
     value = static_cast<ValueNode *>(index->getChildren().at(0).get());
     QVERIFY(value->getNodeType() == AST::Int);
-    QVERIFY(value->getIntValue() == 2);
+    QVERIFY(value->getIntValue() == 1);
 
     //# Signals should be delcared as blocks of size 2
     //InSignal2 >> [Level(gain: 1.0), Level(gain: 1.0)] >> OutSignal2;
@@ -1262,7 +1262,7 @@ void ParserTest::testStreamExpansion()
     QVERIFY(index->getChildren().size() == 1);
     value = static_cast<ValueNode *>(index->getChildren().at(0).get());
     QVERIFY(value->getNodeType() == AST::Int);
-    QVERIFY(value->getIntValue() == 1);
+    QVERIFY(value->getIntValue() == 0);
 
     bundle = static_cast<BundleNode *>(list->getChildren()[1].get());
     QVERIFY(bundle->getNodeType() == AST::Bundle);
@@ -1272,7 +1272,7 @@ void ParserTest::testStreamExpansion()
     QVERIFY(index->getChildren().size() == 1);
     value = static_cast<ValueNode *>(index->getChildren().at(0).get());
     QVERIFY(value->getNodeType() == AST::Int);
-    QVERIFY(value->getIntValue() == 2);
+    QVERIFY(value->getIntValue() == 1);
 
     //# Level() should be duplicated and OutSignal3 declared as a bundle size 2
     //    In >> Level(gain: 1.0) >> OutSignal3;
@@ -1310,7 +1310,7 @@ void ParserTest::testStreamExpansion()
     QVERIFY(index->getChildren().size() == 1);
     value = static_cast<ValueNode *>(index->getChildren().at(0).get());
     QVERIFY(value->getNodeType() == AST::Int);
-    QVERIFY(value->getIntValue() == 1);
+    QVERIFY(value->getIntValue() == 0);
 
     bundle = static_cast<BundleNode *>(list->getChildren()[1].get());
     QVERIFY(bundle->getNodeType() == AST::Bundle);
@@ -1320,7 +1320,7 @@ void ParserTest::testStreamExpansion()
     QVERIFY(index->getChildren().size() == 1);
     value = static_cast<ValueNode *>(index->getChildren().at(0).get());
     QVERIFY(value->getNodeType() == AST::Int);
-    QVERIFY(value->getIntValue() == 2);
+    QVERIFY(value->getIntValue() == 1);
 
 //    signal StereoOut[2] { }
 //    MonoSignal >> Level(gain: 1.0) >> StereoOut;
@@ -1375,14 +1375,14 @@ void ParserTest::testStreamExpansion()
     QVERIFY(index->getChildren().size() == 1);
     value = static_cast<ValueNode *>(index->getChildren()[0].get());
     QVERIFY(value->getNodeType() == AST::Int);
-    QVERIFY(value->getIntValue() == 1);
+    QVERIFY(value->getIntValue() == 0);
     bundle = static_cast<BundleNode *>(list->getChildren()[1].get());
     QVERIFY(bundle->getNodeType() == AST::Bundle);
     index = bundle->index().get();
     QVERIFY(index->getChildren().size() == 1);
     value = static_cast<ValueNode *>(index->getChildren()[0].get());
     QVERIFY(value->getNodeType() == AST::Int);
-    QVERIFY(value->getIntValue() == 2);
+    QVERIFY(value->getIntValue() == 1);
 
 //    Out >> Level(gain: 1.0) >> NewSignal;
 //    NewSignal >> Level(gain: 1.0) >> NewSignal2;
@@ -1400,7 +1400,7 @@ void ParserTest::testStreamExpansion()
     QVERIFY(indexList->size() == 1);
     value = static_cast<ValueNode *>(indexList->getChildren().at(0).get());
     QVERIFY(value->getNodeType() == AST::Int);
-    QVERIFY(value->getIntValue() == 1);
+    QVERIFY(value->getIntValue() == 0);
     bundle = static_cast<BundleNode *>(list->getChildren().at(1).get());
     QVERIFY(bundle->getNodeType() == AST::Bundle);
     QVERIFY(bundle->getName() == "Out");
@@ -1408,7 +1408,7 @@ void ParserTest::testStreamExpansion()
     QVERIFY(indexList->size() == 1);
     value = static_cast<ValueNode *>(indexList->getChildren().at(0).get());
     QVERIFY(value->getNodeType() == AST::Int);
-    QVERIFY(value->getIntValue() == 2);
+    QVERIFY(value->getIntValue() == 1);
 
     stream = static_cast<StreamNode *>(stream->getRight().get());
     QVERIFY(stream->getNodeType() == AST::Stream);
@@ -1438,7 +1438,7 @@ void ParserTest::testStreamExpansion()
     QVERIFY(indexList->size() == 1);
     value = static_cast<ValueNode *>(indexList->getChildren().at(0).get());
     QVERIFY(value->getNodeType() == AST::Int);
-    QVERIFY(value->getIntValue() == 1);
+    QVERIFY(value->getIntValue() == 0);
     bundle = static_cast<BundleNode *>(list->getChildren().at(1).get());
     QVERIFY(bundle->getNodeType() == AST::Bundle);
     QVERIFY(bundle->getName() == "NewSignal");
@@ -1446,7 +1446,7 @@ void ParserTest::testStreamExpansion()
     QVERIFY(indexList->size() == 1);
     value = static_cast<ValueNode *>(indexList->getChildren().at(0).get());
     QVERIFY(value->getNodeType() == AST::Int);
-    QVERIFY(value->getIntValue() == 2);
+    QVERIFY(value->getIntValue() == 1);
 
     streams = CodeValidator::getStreamsAtLine(tree, 31);
     QVERIFY(streams.size() == 1);
@@ -1461,7 +1461,7 @@ void ParserTest::testStreamExpansion()
     QVERIFY(indexList->size() == 1);
     value = static_cast<ValueNode *>(indexList->getChildren().at(0).get());
     QVERIFY(value->getNodeType() == AST::Int);
-    QVERIFY(value->getIntValue() == 1);
+    QVERIFY(value->getIntValue() == 0);
     bundle = static_cast<BundleNode *>(list->getChildren().at(1).get());
     QVERIFY(bundle->getNodeType() == AST::Bundle);
     QVERIFY(bundle->getName() == "NewSignal");
@@ -1469,7 +1469,7 @@ void ParserTest::testStreamExpansion()
     QVERIFY(indexList->size() == 1);
     value = static_cast<ValueNode *>(indexList->getChildren().at(0).get());
     QVERIFY(value->getNodeType() == AST::Int);
-    QVERIFY(value->getIntValue() == 2);
+    QVERIFY(value->getIntValue() == 1);
 
     stream = static_cast<StreamNode *>(stream->getRight().get());
     QVERIFY(stream->getNodeType() == AST::Stream);
@@ -1499,7 +1499,7 @@ void ParserTest::testStreamExpansion()
     QVERIFY(indexList->size() == 1);
     value = static_cast<ValueNode *>(indexList->getChildren().at(0).get());
     QVERIFY(value->getNodeType() == AST::Int);
-    QVERIFY(value->getIntValue() == 1);
+    QVERIFY(value->getIntValue() == 0);
     bundle = static_cast<BundleNode *>(list->getChildren().at(1).get());
     QVERIFY(bundle->getNodeType() == AST::Bundle);
     QVERIFY(bundle->getName() == "NewSignal2");
@@ -1507,7 +1507,7 @@ void ParserTest::testStreamExpansion()
     QVERIFY(indexList->size() == 1);
     value = static_cast<ValueNode *>(indexList->getChildren().at(0).get());
     QVERIFY(value->getNodeType() == AST::Int);
-    QVERIFY(value->getIntValue() == 2);
+    QVERIFY(value->getIntValue() == 1);
 
     //    Oscillator(frequency: [440,2] amplitude: 1.0) >> Osc;
 
@@ -1537,14 +1537,14 @@ void ParserTest::testStreamExpansion()
     QVERIFY(indexList->size() == 1);
     value = static_cast<ValueNode *>(indexList->getChildren().at(0).get());
     QVERIFY(value->getNodeType() == AST::Int);
-    QVERIFY(value->getIntValue() == 1);
+    QVERIFY(value->getIntValue() == 0);
     bundle = static_cast<BundleNode *>(list->getChildren().at(1).get());
     QVERIFY(bundle->getName() == "Osc");
     indexList = static_cast<ListNode *>(bundle->index().get());
     QVERIFY(indexList->size() == 1);
     value = static_cast<ValueNode *>(indexList->getChildren().at(0).get());
     QVERIFY(value->getNodeType() == AST::Int);
-    QVERIFY(value->getIntValue() == 2);
+    QVERIFY(value->getIntValue() == 1);
 
     streams = CodeValidator::getStreamsAtLine(tree, 22);
 }
