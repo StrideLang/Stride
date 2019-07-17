@@ -1,0 +1,66 @@
+
+_domainProcessing _PlatformDomainProcessing {
+	domainStreams: [
+		SetupDomain >> [TestDomain];
+	]
+}
+
+_frameworkDescription _TestFramework {
+    frameworkName: "TestFramework"
+}
+
+alias PlatformDomain {
+    block: TestDomain
+}
+
+alias PlatformRate {
+    block: TestRate
+}
+
+alias _ContextInitDomain {
+    block: SetupDomain
+}
+
+_domainDefinition SetupDomain {
+	domainName: "SetupDomain"
+	framework: _TestFramework
+	rate: 0
+	globalsTag: "Includes"
+	declarationsTag: "Declarations"
+	processingTag: "Initialization"
+	initializationTag: "Initialization"
+	cleanupTag: "Initialization"
+    domainIncludes: []
+    domainDeclarations: []
+    domainInitialization: '// init domain init'
+	domainFunction: '// init domain processing
+	%%domainCode%%
+	// end init domain processing
+	'
+    domainCleanup: '// init domain cleanup'
+}
+
+constant TestRate {value: 0}
+
+_domainDefinition TestDomain {
+	domainName: "TestDomain"
+	framework: _TestFramework
+	rate: 0
+	globalsTag: "Includes"
+	declarationsTag: "Declarations"
+	processingTag: "Processing"
+	initializationTag: "Initialization"
+	cleanupTag: "Cleanup"
+    substitutions: []
+    domainIncludes: ['iostream']
+    domainDeclarations: ["void func();"]
+    domainInitialization: "// init domain init"
+	domainFunction: "// test function
+	void func() {
+			}
+	// end test domain processing
+	"
+    domainCleanup: '// init domain cleanup
+	std::cout << "Test cleanup." << std::endl;
+	'
+}

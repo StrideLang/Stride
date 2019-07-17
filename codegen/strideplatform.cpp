@@ -32,6 +32,8 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
+#include <iostream>
+
 #include "strideplatform.hpp"
 #include "../parser/declarationnode.h"
 #include "../parser/valuenode.h"
@@ -85,6 +87,11 @@ string StridePlatform::getHardwareVersion() const
     return m_hardwareVersion;
 }
 
+string StridePlatform::getRootNamespace() const
+{
+    return m_rootNamespace;
+}
+
 bool StridePlatform::getRequired() const
 {
     return m_required;
@@ -102,7 +109,7 @@ string StridePlatform::buildPlatformPath(string strideRoot)
     return path;
 }
 
-string StridePlatform::buildLibPath(string strideRoot)
+string StridePlatform::buildPlatformLibPath(string strideRoot)
 {
     string path = buildPlatformPath(strideRoot) + "/";
     path += "platformlib";
@@ -116,9 +123,22 @@ string StridePlatform::buildTestingLibPath(string strideRoot)
     return path;
 }
 
+std::vector<string> StridePlatform::getDomainIds()
+{
+    for (auto treeEntry: m_platformTrees) {
+        for (auto node: treeEntry.second->getChildren()) {
+
+        }
+    }
+}
+
 void StridePlatform::addTree(string treeName, ASTNode treeRoot)
 {
-    m_platformTrees[treeName] = treeRoot;
+    if (m_platformTrees.find(treeName) != m_platformTrees.end()) {
+        std::cerr << "WARNING: tree: '" << treeName << "' exists. Replacing." << std::endl;
+    } else {
+        m_platformTrees[treeName] = treeRoot;
+    }
 }
 
 void StridePlatform::addTestingTree(string treeName, ASTNode treeRoot)

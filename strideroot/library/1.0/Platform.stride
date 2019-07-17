@@ -132,19 +132,6 @@ type _DomainProcessing {
 	]
 }
 
-type _FrameworkDescription {
-	typeName: "_frameworkDescription"
-	properties: [
-		typeProperty FrameworkName {
-			name: "frameworkName"
-			types: [_StringLiteral]
-			default: none
-			required: on
-		}
-	]
-	inherits: [_Base]
-}
-
 type _PlatformModuleType {
 	typeName: "platformModule"
 	properties: [
@@ -319,6 +306,12 @@ type _PlatformType {
 			default: none
 			required: off
 		},
+		typeProperty RootNamespace {
+			name: "rootNamespace"
+			types: [_StringLiteral]
+			default: ""
+			required: off
+		},
 		typeProperty Required {
 			name: "required"
 			types: [_SwitchLiteral]
@@ -328,17 +321,42 @@ type _PlatformType {
 	]
 }
 
+type _FrameworkDescription {
+	typeName: "_frameworkDescription"
+	properties: [
+		typeProperty FrameworkName {
+			name: "frameworkName"
+			types: [_StringLiteral]
+			default: none
+			required: on
+		}
+	]
+	inherits: [_Base]
+}
+
 type _ConnectionType {
 	typeName: "connection"
 	properties: [
-		typeProperty Source {
-			name: "source"
+		typeProperty SourcePlatform {
+			name: "sourcePlatform"
 			types: [""]
 			default: none
 			required: on
 		},
-		typeProperty Destination {
-			name: "destination"
+		typeProperty SourceDomains {
+			name: "sourceDomains"
+			types: [""]
+			default: none
+			required: on
+		},
+		typeProperty DestinationPlatform {
+			name: "destinationPlatform"
+			types: [""]
+			default: none
+			required: on
+		},
+		typeProperty DestinationDomains {
+			name: "destinationDomains"
 			types: [""]
 			default: none
 			required: on
@@ -370,19 +388,17 @@ type _ConnectionType {
 	]
 }
 
-
 type _SystemType {
 	typeName: "system"
 	properties: [
 		typeProperty Platforms {
 			name: "platforms"
-			types: [""]
-			default: none
+			types: [_PlatformSpec]
 			required: on
 		},
-		typeProperty Connections {
+        typeProperty Connections {
 			name: "connections"
-			types: [""]
+			types: [_ConnectionType]
 			default: none
 			required: off
 		}

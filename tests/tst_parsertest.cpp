@@ -60,6 +60,7 @@ private Q_SLOTS:
 
 //    // Test code generation
     void testCodeGeneration();
+    void testSystem();
 
     // Parser
     void testModules();
@@ -95,6 +96,7 @@ private Q_SLOTS:
     void testPortNameValidation();
     void testTriggersRegistration();
     void testResetRegistration();
+//    void testSystem();
 
     // Connections
     void testConnectionErrors();
@@ -263,7 +265,7 @@ void ParserTest::testCodeGeneration()
 
     BuildTester tester(QFINDTESTDATA(STRIDEROOT).toStdString());
 
-    QStringList toIgnore = {"simple","buffer", "module", "reactions", "combinations", "table", "loop", "sync"};
+    QStringList toIgnore = {"simple","buffer", "module", "reactions", "platform", "combinations", "table", "loop", "sync"};
     while (directories.hasNext()) {
         QString dirName = directories.next();
         if (!toIgnore.contains(dirName.mid(dirName.lastIndexOf("/") + 1))) {
@@ -3245,6 +3247,15 @@ void ParserTest::testResetRegistration()
     block = static_pointer_cast<DeclarationNode>(triggerResets->getChildren()[3]);
     QVERIFY(block->getName() == "SigBundle");
 
+}
+
+void ParserTest::testSystem()
+{
+    ASTNode tree;
+    tree = AST::parseFile(QString(QFINDTESTDATA("data/S01_system.stride")).toStdString().c_str());
+    QVERIFY(tree != nullptr);
+    CodeValidator generator(QFINDTESTDATA(STRIDEROOT), tree, CodeValidator::NO_RATE_VALIDATION);
+    QVERIFY(generator.isValid());
 }
 
 QTEST_APPLESS_MAIN(ParserTest)

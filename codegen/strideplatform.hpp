@@ -60,10 +60,10 @@ class StridePlatform {
 public:
     StridePlatform(std::string framework, std::string fwVersion,
                    std::string hardware = "", std::string hardwareVersion = "",
-                   std::string identifier = "") :
+                   std::string rootNamespace = "", std::string identifier = "") :
         m_framework(framework), m_frameworkVersion(fwVersion),
         m_hardware(hardware), m_hardwareVersion(hardwareVersion),
-        m_identifier(identifier)
+        m_rootNamespace(rootNamespace), m_identifier(identifier)
     {
     }
 
@@ -79,11 +79,14 @@ public:
     std::string getFrameworkVersion() const;
     std::string getHardware() const;
     std::string getHardwareVersion() const;
+    std::string getRootNamespace() const;
     bool getRequired() const;
     PlatformAPI getAPI() const;
     std::string buildPlatformPath(std::string strideRoot);
-    std::string buildLibPath(std::string strideRoot);
+    std::string buildPlatformLibPath(std::string strideRoot);
     std::string buildTestingLibPath(std::string strideRoot);
+
+    std::vector<std::string> getDomainIds();
 
     void addTree(std::string treeName, ASTNode treeRoot);
     void addTestingTree(std::string treeName, ASTNode treeRoot);
@@ -97,6 +100,7 @@ private:
     std::string m_frameworkVersion;
     std::string m_hardware;
     std::string m_hardwareVersion;
+    std::string m_rootNamespace;
     std::string m_identifier;
     bool m_required;
     PlatformAPI m_api {PluginPlatform}; //TODO Put back support for plugin platforms

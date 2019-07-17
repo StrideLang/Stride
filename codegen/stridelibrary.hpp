@@ -59,6 +59,8 @@ public:
 
     std::vector<ASTNode> getLibraryMembers();
 
+    ASTNode getImportTree(QString importName);
+
 private:
 
     bool isValidProperty(std::shared_ptr<PropertyNode> property, DeclarationNode *type);
@@ -66,6 +68,9 @@ private:
 
     void readLibrary(QString rootDir, QMap<QString, QStringList> importList);
     QList<ASTNode> m_libraryTrees;
+
+    QString m_libraryPath;
+
     int m_majorVersion;
     int m_minorVersion;
 };

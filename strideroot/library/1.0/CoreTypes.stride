@@ -126,7 +126,7 @@ type _Signal {
 		typeProperty Type {
 			name: "type"
 			types: [""]
-			default: Types::Real
+			default: none # Types::RealType
 			required: off
 		},
 		typeProperty _Reads {

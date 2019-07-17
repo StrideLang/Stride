@@ -5,6 +5,7 @@ platform _PCPlatform {
 	hardware: "Local"
 	hardwareVersion: "1.0"
 	required: on #TODO validation of "required" is not yet implemented
+    rootNamespace: ""
 }
 
 platform _WiringPlatform {
@@ -13,28 +14,30 @@ platform _WiringPlatform {
 	hardware: none
 	hardwareVersion: none
 	required: off
+    rootNamespace: "Wiring"
 }
 
-
-connection _PCToWiringSerial {
-	source: PC
-	destination: Wiring
-	sourceImports: ["Serial"]
-	sourceStreams: [
-		_Connection_Token >> SerialOut();
-	]
-	destinationImports: ["Serial"]
-	destinationStreams: [
-		SerialIn() >> _Connection_Token;
-	]
-}
+#connection _PCToWiringSerial {
+#	source: PC
+#	destination: Wiring
+#	sourceImports: ["Serial"]
+#	sourceStreams: [
+#		_Connection_Token >> SerialOut();
+#	]
+#	destinationImports: ["Serial"]
+#	destinationStreams: [
+#		SerialIn() >> _Connection_Token;
+#	]
+#}
 
 connection _WiringToPCSerial {
-	source: Wiring
-	destination: PC
+	sourcePlatform: _WiringPlatform
+	sourceDomains: [ "WiringDomain" ]
+	destinationPlatform: _PCPlatform
+	destinationDomains: [ "AudioDomain" ]
 	sourceImports: ["Serial"]
 	sourceStreams: [
-		_Connection_Token >> SerialOut();
+		_Connection_Token >> SerialOut[0];
 	]
 	destinationImports: ["Serial"]
 	destinationStreams: [

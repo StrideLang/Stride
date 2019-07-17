@@ -192,7 +192,10 @@ bool ProjectWindow::build()
             connect(builder, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
             connect(builder, SIGNAL(errorText(QString)), this, SLOT(printConsoleError(QString)));
             connect(builder, SIGNAL(programStopped()), this, SLOT(programStopped()));
-            buildOK &= builder->build(tree);
+
+            auto domainMap = builder->generateCode(tree);
+
+            buildOK &= builder->build(domainMap);
         }
 //        tree->deleteChildren();
 //        delete tree;

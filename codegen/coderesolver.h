@@ -64,6 +64,8 @@ public:
 
     void preProcess();
 
+    std::vector<std::pair<std::string, std::string>> m_domainChanges;
+
 private:
     // Main processing functions
     void processSystem();

@@ -849,27 +849,34 @@ void CodeResolver::insertBuiltinObjectsForNode(ASTNode node, map<string, vector<
             namespaceObjects = objects[declaration->getScopeAt(0)]; // TODO need to implement for namespaces that are more than one level deep...
         }
 
-        for(auto child: declaration->getChildren()) { // Check if declaration is in current namespace. If it is, set as the namespace of the child
-            std::shared_ptr<DeclarationNode> childDeclaration = nullptr;
-            if (child->getNodeType() == AST::Block) {
-                childDeclaration = CodeValidator::findDeclaration(QString::fromStdString(static_cast<BlockNode *>(child.get())->getName()),
-                {{"", namespaceObjects}}, nullptr,
-                                                                  declaration->getNamespaceList());
-            } else if (child->getNodeType() == AST::Bundle) {
-                childDeclaration = CodeValidator::findDeclaration(QString::fromStdString(static_cast<BundleNode *>(child.get())->getName()),
-                                                                  {{"", namespaceObjects}}, nullptr,
-                                                                  declaration->getNamespaceList());
-            } // FIXME need to implement for expressions, lists, etc.
-            if (childDeclaration) {
-                child->setNamespaceList(declaration->getNamespaceList());
-            }
+        auto subScope = CodeValidator::getBlockSubScope(declaration);
+        // TODO should we namespace according to the enclosing declaration?
+        if (subScope) {
+//            for(auto child: declaration->getChildren()) { // Check if declaration is in current namespace. If it is, set as the namespace of the child
+//                std::shared_ptr<DeclarationNode> childDeclaration = nullptr;
+//                if (child->getNodeType() == AST::Block) {
+//                    childDeclaration = CodeValidator::findDeclaration(QString::fromStdString(static_cast<BlockNode *>(child.get())->getName()),
+//                    {{"", namespaceObjects}}, nullptr,
+//                                                                      declaration->getNamespaceList());
+//                } else if (child->getNodeType() == AST::Bundle) {
+//                    childDeclaration = CodeValidator::findDeclaration(QString::fromStdString(static_cast<BundleNode *>(child.get())->getName()),
+//                                                                      {{"", namespaceObjects}}, nullptr,
+//                                                                      declaration->getNamespaceList());
+//                } // FIXME need to implement for expressions, lists, etc.
+//                if (childDeclaration) {
+//                    child->setNamespaceList(declaration->getNamespaceList());
+//                }
+//            }
         }
         auto typeDecl = CodeValidator::findTypeDeclarationByName(
                     declaration->getObjectType(), {}, m_tree);
         if (!typeDecl) {
             for (auto &scope: objects) {
+                // FIXME allow nested namespaces
                 typeDecl = CodeValidator::findTypeDeclarationByName(
-                                    declaration->getObjectType(), {{scope.first, scope.second}}, nullptr);
+                            declaration->getObjectType(), {{scope.first, scope.second}},
+                            nullptr, {scope.first}
+                            );
                 if (typeDecl) {
                     m_tree->addChild(typeDecl);
                     auto position = std::find(scope.second.begin(), scope.second.end(), typeDecl);
@@ -2661,15 +2668,18 @@ std::vector<ASTNode> CodeResolver::sliceStreamByDomain(std::shared_ptr<StreamNod
                     }
                 }
 
-                if (!skipSlice && stack.size() > 2) {
-                    lastNode = stack.back();
-                    stack.pop_back();
-                    auto oneFromLastNode = stack.back();
-                    streams.push_back(makeStreamFromStack(stack));
-                    stack.push_back(oneFromLastNode);
-                    stack.push_back(lastNode);
-                    //                        terminateStackWithBridge(lastNode, streams, stack, scopeStack);
-                }
+                m_domainChanges.push_back({previousDomainName, domainName});
+
+                // Don't slice by domain, this will be taken care of in the code generation.
+//                if (!skipSlice && stack.size() > 2) {
+//                    lastNode = stack.back();
+//                    stack.pop_back();
+//                    auto oneFromLastNode = stack.back();
+//                    streams.push_back(makeStreamFromStack(stack));
+//                    stack.push_back(oneFromLastNode);
+//                    stack.push_back(lastNode);
+//                    //                        terminateStackWithBridge(lastNode, streams, stack, scopeStack);
+//                }
             }
             if (stack.size() != 0) {
                 streams.push_back(makeStreamFromStack(stack));

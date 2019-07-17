@@ -68,6 +68,8 @@ public:
     QList<LangError> getErrors();
     QStringList getPlatformErrors();
 
+    std::vector<std::pair<std::string, std::string>> domainChanges;
+
     std::shared_ptr<StrideSystem> getSystem();
 
     ASTNode getTree() const;
@@ -103,7 +105,7 @@ public:
     static QVector<ASTNode > validTypesForPort(std::shared_ptr<DeclarationNode> typeDeclaration, QString portName, ScopeStack scope, ASTNode tree);
     static std::shared_ptr<DeclarationNode> findTypeDeclarationByName(string typeName, ScopeStack scope, ASTNode tree,
                                                       std::vector<std::string> namespaces = std::vector<std::string>());
-    static std::shared_ptr<DeclarationNode> findTypeDeclaration(std::shared_ptr<DeclarationNode> block, ScopeStack scope, ASTNode tree);
+    static std::shared_ptr<DeclarationNode> findTypeDeclaration(std::shared_ptr<DeclarationNode> decl, ScopeStack scope, ASTNode tree);
     static std::shared_ptr<DeclarationNode> findDomainDeclaration(string domainName, ASTNode tree);
     static std::string getDomainIdentifier(ASTNode domain, ScopeStack scopeStack, ASTNode tree);
 
@@ -167,6 +169,7 @@ public:
     static vector<StreamNode *> getStreamsAtLine(ASTNode tree, int line);
 
     static double getDomainDefaultRate(std::shared_ptr<DeclarationNode> domainDecl);
+
 
 private:
 

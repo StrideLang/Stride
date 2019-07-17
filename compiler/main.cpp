@@ -109,8 +109,13 @@ int main(int argc, char *argv[])
             usedFrameworks.push_back(CodeValidator::getFrameworkForDomain(domain, tree));
         }
         vector<Builder *> builders = platform->createBuilders(dirName, usedFrameworks);
+
+
+
         for (auto builder: builders) {
-            if (builder->build(tree)) {
+            auto domainMap = builder->generateCode(tree);
+
+            if (builder->build(domainMap)) {
                 qDebug() << "Built in directory:" << dirName;
             } else {
                 qDebug() << "Build failed for " << fileName;

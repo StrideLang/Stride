@@ -76,9 +76,20 @@ PythonProject::~PythonProject()
     m_runningProcess.waitForFinished();
 }
 
-bool PythonProject::build(ASTNode tree)
+std::map<string, string> PythonProject::generateCode(ASTNode tree)
 {
-    writeAST(tree);
+    writeAST(tree);    // Write configuration file to json
+    QJsonDocument configJson = QJsonDocument::fromVariant(m_configuration);
+    QFile configFile(m_projectDir + QDir::separator() + "config.json");
+    if (configFile.open(QIODevice::WriteOnly)) {
+        configFile.write(configJson.toJson());
+        configFile.close();
+    }
+    return std::map<string, string>();
+}
+
+bool PythonProject::build(std::map<string, string> domainMap)
+{
     QStringList arguments;
     if (m_buildProcess.state() == QProcess::Running) {
         m_buildProcess.close();
@@ -86,13 +97,6 @@ bool PythonProject::build(ASTNode tree)
             qDebug() << "Could not stop build process. Not starting again.";
             return false;
         }
-    }
-    // Write configuration file to json
-    QJsonDocument configJson = QJsonDocument::fromVariant(m_configuration);
-    QFile configFile(m_projectDir + QDir::separator() + "config.json");
-    if (configFile.open(QIODevice::WriteOnly)) {
-        configFile.write(configJson.toJson());
-        configFile.close();
     }
 
     // Start Build

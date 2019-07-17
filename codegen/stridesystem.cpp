@@ -62,7 +62,6 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
 
     m_library.setLibraryPath(strideRoot, importList);
 
-
     if (QFile::exists(systemFile)) {
         ASTNode systemTree = AST::parseFile(systemFile.toStdString().c_str(), nullptr);
         if (systemTree) {
@@ -78,31 +77,21 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
             }
             // Iterate through platforms reading them.
             // TODO Should optimize this to not reread platform if already done.
-            for(std::shared_ptr<StridePlatform> platform: m_platforms) {
-                QStringList nameFilters;
-                nameFilters.push_back("*.stride");
-                string platformPath = platform->buildLibPath(m_strideRoot.toStdString());
-                for(string subPath : subPaths) {
-                    QString includeSubPath = QString::fromStdString(platformPath + "/" + subPath);
-                    QStringList libraryFiles =  QDir(includeSubPath).entryList(nameFilters);
-                    for(QString file : libraryFiles) {
-                        QString fileName = includeSubPath + QDir::separator() + file;
-                        ASTNode tree = AST::parseFile(fileName.toLocal8Bit().data(), nullptr);
-                        if(tree) {
-                            platform->addTree(file.toStdString(),tree);
-                        } else {
-                            vector<LangError> errors = AST::getParseErrors();
-                            for(LangError error:errors) {
-                                qDebug() << QString::fromStdString(error.getErrorText());
-                            }
-                            continue;
-                        }
 
-                        for(ASTNode node : tree->getChildren()) {
-                            size_t indexExtension = file.toStdString().find(".stride");
-                            string scopeName = file.toStdString().substr(0, indexExtension);
-                            node->appendToPropertyValue("validScopes",
-                                                        std::make_shared<ValueNode>(scopeName, __FILE__, __LINE__) );
+            for (auto platformEntry: m_platforms) {
+                std::shared_ptr<StridePlatform> platform = platformEntry.second;
+                for(string subPath : subPaths) {
+                    ASTNode importTree = getImportTree(subPath, platformEntry.first);
+                    if(importTree) {
+                        platform->addTree(subPath,importTree);
+                        for(ASTNode node : importTree->getChildren()) {
+                            size_t indexExtension = subPath.find(".stride");
+                            string scopeName = subPath.substr(0, indexExtension);
+                            //FIXME allow namespacing by filename
+                            node->appendToPropertyValue("namespaceTree",
+                                                        std::make_shared<ValueNode>(platformEntry.first, __FILE__, __LINE__) );
+                            node->appendToPropertyValue("namespaceTree",
+                                                        std::make_shared<ValueNode>(platform->getFramework(), __FILE__, __LINE__) );
                         }
                         for (QString namespaceName: importList[QString::fromStdString(subPath)]) {
                             if (!namespaceName.isEmpty()) {
@@ -110,15 +99,21 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
                                 //                            node->setNamespace(namespaceName.toStdString());
                             }
                         }
+                    } else {
+                        qDebug() << "Import found in platform but parse failed. Ignoring.";
+                        vector<LangError> errors = AST::getParseErrors();
+                        for(LangError error:errors) {
+                            qDebug() << QString::fromStdString(error.getErrorText());
+                        }
+                        continue;
                     }
                 }
-//                m_platformPath = fullPath;
-//                m_api = PythonTools;
-//                m_types = getPlatformTypeNames();
             }
 
+
             // Load testing trees
-            for(std::shared_ptr<StridePlatform> platform: m_platforms) {
+            for(auto platformEntry: m_platforms) {
+                auto platform = platformEntry.second;
                 QStringList nameFilters;
                 nameFilters.push_back("*.stride");
                 string platformPath = platform->buildTestingLibPath(m_strideRoot.toStdString());
@@ -209,10 +204,11 @@ StrideSystem::~StrideSystem()
 
 void StrideSystem::parseSystemTree(ASTNode systemTree)
 {
-    vector<string> usedPlatformNames;
+    vector<pair<string, string>> usedPlatformNames;
     vector<map<string, string>> platformDefinitions;
-    vector<string> platformDefinitionNames;
+//    vector<string> platformDefinitionNames;
     vector<AST *> connectionDefinitions; // TODO process connection definitions
+
     for(ASTNode systemNode:systemTree->getChildren()) {
         if(systemNode->getNodeType() == AST::Declaration) {
             std::shared_ptr<DeclarationNode> declaration = static_pointer_cast<DeclarationNode>(systemNode);
@@ -226,52 +222,59 @@ void StrideSystem::parseSystemTree(ASTNode systemTree)
                     }
                 }
                 platformDefinitions.push_back(definition);
-                platformDefinitionNames.push_back(declaration->getName());
+//                platformDefinitionNames.push_back(declaration->getName());
                 m_platformDefinitions.push_back(static_pointer_cast<DeclarationNode>(declaration));
             } else if (declaration->getObjectType() == "connection") {
-                // FIXME add connections
-//                connectionDefinitions.push_back(declaration->deepCopy());
+                m_connectionDefinitions.push_back(declaration);
             } else if (declaration->getObjectType() == "system") {
                 ASTNode platforms = declaration->getPropertyValue("platforms");
                 if (platforms->getNodeType() == AST::List) {
                     ListNode *platformsList = static_cast<ListNode *>(platforms.get());
                     for(ASTNode platformName:platformsList->getChildren()) {
-                        if (platformName->getNodeType() == AST::Block) {
-                            usedPlatformNames.push_back(static_cast<BlockNode *>(platformName.get())->getName());
+                        Q_ASSERT(platformName->getNodeType() == AST::Block);
+                        auto platformSpecBlock = static_pointer_cast<BlockNode>(platformName);
+                        auto platformSpec = CodeValidator::findDeclaration(platformSpecBlock->getName(), {}, systemTree);
+                        if (platformSpec) {
+                            auto platformBlock = platformSpec->getPropertyValue("framework");
+                            auto rootNamespaceBlock = platformSpec->getPropertyValue("rootNamespace");
+                            if (platformBlock->getNodeType() == AST::String && rootNamespaceBlock->getNodeType() == AST::String) {
+                                usedPlatformNames.push_back({ static_pointer_cast<ValueNode>(platformBlock)->getStringValue(),
+                                                              static_pointer_cast<ValueNode>(rootNamespaceBlock)->getStringValue()
+                                                            });
+                            } else {
+                                qDebug() << "ERROR: Unexpected types for platform spec " << QString::fromStdString(platformSpecBlock->getName());
+                            }
+
+                        } else {
+                            qDebug() << "ERROR: could not find platform spec " << QString::fromStdString(platformSpecBlock->getName());
                         }
                     }
+                } else {
+                    qDebug() << "ERROR: Expected list for platforms in system definition";
                 }
-            } else {
+            } /*else {
                 qDebug() << "ERROR: Unknown system declaration type";
-            }
+            }*/
         }
     }
 
     // Now connect platforms referenced in system with defined platforms
-    for(string usedPlatformName:usedPlatformNames) {
-        for (size_t i = 0; i < platformDefinitionNames.size(); i++) {
+    for(auto usedPlatformName:usedPlatformNames) {
+        for (size_t i = 0; i < platformDefinitions.size(); i++) {
             map<string, string> &definition = platformDefinitions.at(i);
-            string &name = platformDefinitionNames.at(i);
-            if (name == usedPlatformName) {
-                string framework, framworkVersion, hardware, hardwareVersion;
-                auto defIt = definition.begin();
-                while(defIt != definition.end()) {
-                    if (defIt->first == "framework") {
-                        framework = defIt->second;
-//                        qDebug() << "Found framework:" << QString::fromStdString(framework);
-                    } else if (defIt->first == "frameworkVersion") {
-                        framworkVersion = defIt->second;
-                    } else if (defIt->first == "hardware") {
-                        hardware = defIt->second;
-                    } else if (defIt->first == "hardwareVersion") {
-                        hardwareVersion = defIt->second;
-                    } else {
+//            string &name = platformDefinitionNames.at(i);
+            if (definition["framework"] == usedPlatformName.first) {
+                string framework, framworkVersion, hardware, hardwareVersion, rootNamespace;
+                framework = definition["framework"];
 
-                    }
-                    defIt++;
+                std::shared_ptr<StridePlatform> newPlatform = std::make_shared<StridePlatform>(
+                            definition["framework"], definition["frameworkVersion"],
+                        definition["hardware"], definition["hardwareVersion"],
+                        definition["rootNamespace"]);
+                if (m_platforms.find(usedPlatformName.second) != m_platforms.end()) {
+                    qDebug() << "ERROR: Platform namespace already exists: " << QString::fromStdString(usedPlatformName.second);
                 }
-                std::shared_ptr<StridePlatform> newPlatform = std::make_shared<StridePlatform>(framework, framworkVersion, hardware, hardwareVersion);
-                m_platforms.push_back(newPlatform);
+                m_platforms[usedPlatformName.second] = newPlatform;
             } else {
                 // TODO add error
             }
@@ -347,7 +350,8 @@ vector<Builder *> StrideSystem::createBuilders(QString fileName, vector<string> 
         qDebug() << "Error creating project path";
         return builders;
     }
-    for (auto platform: m_platforms) {
+    for (auto platformEntry: m_platforms) {
+        auto platform = platformEntry.second;
         if ( (usedFrameworks.size() == 0)
                 || (std::find(usedFrameworks.begin(), usedFrameworks.end(), platform->getFramework()) != usedFrameworks.end())) {
             if (platform->getAPI() == StridePlatform::PythonTools) {
@@ -357,15 +361,18 @@ vector<Builder *> StrideSystem::createBuilders(QString fileName, vector<string> 
                                                      m_strideRoot, projectDir, pythonExec);
                 if (builder) {
                     if (builder->isValid()) {
+                        builder->m_connectors = m_connectionDefinitions;
                         builders.push_back(builder);
                     } else {
                         delete builder;
                     }
                 }
             } else if(platform->getAPI() == StridePlatform::PluginPlatform) {
-
                 auto pluginList = QDir(m_strideRoot + "/plugins").entryList(QDir::NoDotAndDotDot | QDir::Files);
+                // FIXME we should copy plugins to framework directories
+//                auto pluginList = QDir(QString::fromStdString(platformEntry.second->buildPlatformPath(m_strideRoot.toStdString()) + "/plugins")).entryList(QDir::NoDotAndDotDot | QDir::Files);
 
+                // TODO get plugin name from configuration or platform files.
                 std::string pluginName = "pufferfish";
                 int pluginMajorVersion = 1;
                 int pluginMinorVersion = 0;
@@ -373,6 +380,7 @@ vector<Builder *> StrideSystem::createBuilders(QString fileName, vector<string> 
                 if (!platform->getPluginDetails(pluginName, pluginMajorVersion, pluginMinorVersion)) {
                     qDebug() << "Error getting plugin details";
                 }
+                vector<string> validDomains;
 
                 for (auto plugin: pluginList) {
 //                    qDebug() << plugin;
@@ -395,7 +403,7 @@ vector<Builder *> StrideSystem::createBuilders(QString fileName, vector<string> 
                             if (versionMinorFunc) {
                                 versionMinor = versionMinorFunc();
                             }
-                            if (pluginMajorVersion = versionMajor && pluginMinorVersion == versionMinor) {
+                            if (pluginMajorVersion == versionMajor && pluginMinorVersion == versionMinor) {
 //                                qDebug() << "Code generator plugin found! " << QString::fromStdString(pluginName);
                                 create_object_t create = (create_object_t) pluginLibrary.resolve("create_object");
                                 if (create) {
@@ -403,6 +411,7 @@ vector<Builder *> StrideSystem::createBuilders(QString fileName, vector<string> 
                                                                m_strideRoot,
                                                                projectDir);
                                     if (builder) {
+                                        builder->m_connectors = m_connectionDefinitions;
                                         builders.push_back(builder);
                                     }
                                 }
@@ -444,7 +453,7 @@ vector<string> StrideSystem::getFrameworkNames()
 {
     vector<string> names;
     for(auto platform: m_platforms) {
-        names.push_back(platform->getFramework());
+        names.push_back(platform.second->getFramework());
     }
     return names;
 }
@@ -467,7 +476,8 @@ map<string, vector<ASTNode>> StrideSystem::getBuiltinObjectsReference()
 {
     map<string, vector<ASTNode>> objects;
     objects[""] = vector<ASTNode>();
-    for (auto platform: m_platforms) {
+    for (auto platformEntry: m_platforms) {
+        auto platform = platformEntry.second;
         vector<ASTNode> platformObjects = platform->getPlatformObjectsReference();
 
         if (m_testing) {
@@ -493,40 +503,44 @@ map<string, vector<ASTNode>> StrideSystem::getBuiltinObjectsReference()
         }
 
         // Add all platform objects with their namespace name
-        objects[platform->getFramework()] = platformObjects;
-        // Then put first platform's objects in default namespace
-        if (m_platforms.at(0) == platform) {
-            for (auto node: platformObjects) {
-                objects[""].push_back(node);
-                if (node->getNodeType() == AST::Declaration || node->getNodeType() == AST::BundleDeclaration) {
-                    auto validScopes = node->getCompilerProperty("validScopes");
-                    if (validScopes) {
-                        assert(validScopes->getNodeType() == AST::List);
-                        bool rootFound = false;
-                        bool relativeScopeFound = false;
-                        for (auto child: validScopes->getChildren()) {
-                            std::shared_ptr<ValueNode> stringValue = std::static_pointer_cast<ValueNode>(child);
-                            assert(child->getNodeType() == AST::String);
-                            if (stringValue->getStringValue() == "::") {
-                                rootFound = true;
-                            } else if (stringValue->getStringValue() == "") {
-                                relativeScopeFound = true;
-                            }
-                        }
-                        if (!rootFound) {
-                            validScopes->addChild(std::make_shared<ValueNode>(string("::"), __FILE__, __LINE__));
-                        }
-                        if (!relativeScopeFound) {
-                            validScopes->addChild(std::make_shared<ValueNode>(string(""), __FILE__, __LINE__));
-                        }
-                    } else {
-                        auto newList = std::make_shared<ListNode>(std::make_shared<ValueNode>(string("::"), __FILE__, __LINE__),
-                                                                  __FILE__, __LINE__);
-                        newList->addChild(std::make_shared<ValueNode>(string(""), __FILE__, __LINE__));
-                        node->setCompilerProperty("validScopes", newList);
-                    }
 
+//        std::string platformName = platform->getFramework();
+//        if (platformEntry.first != "") {
+//            platformName = platformEntry.first;
+//        }
+//        objects[platformName] = platformObjects;
+        // Then put first platform's objects in default namespace
+        std::shared_ptr<StridePlatform> rootPlatform;
+        for (auto node: platformObjects) {
+            objects[platformEntry.first].push_back(node);
+            if (node->getNodeType() == AST::Declaration || node->getNodeType() == AST::BundleDeclaration) {
+                auto validScopes = node->getCompilerProperty("namespaceTree");
+                if (validScopes) {
+                    assert(validScopes->getNodeType() == AST::List);
+                    bool rootFound = false;
+                    bool relativeScopeFound = false;
+                    for (auto child: validScopes->getChildren()) {
+                        std::shared_ptr<ValueNode> stringValue = std::static_pointer_cast<ValueNode>(child);
+                        assert(child->getNodeType() == AST::String);
+                        if (stringValue->getStringValue() == "::") {
+                            rootFound = true;
+                        } else if (stringValue->getStringValue() == "") {
+                            relativeScopeFound = true;
+                        }
+                    }
+//                    if (!rootFound) {
+//                        validScopes->addChild(std::make_shared<ValueNode>(string("::"), __FILE__, __LINE__));
+//                    }
+                    if (!relativeScopeFound) {
+                        validScopes->addChild(std::make_shared<ValueNode>(string(""), __FILE__, __LINE__));
+                    }
+                } else {
+                    auto newList = std::make_shared<ListNode>(std::make_shared<ValueNode>(string("::"), __FILE__, __LINE__),
+                                                              __FILE__, __LINE__);
+                    newList->addChild(std::make_shared<ValueNode>(string(""), __FILE__, __LINE__));
+                    node->setCompilerProperty("namespaceTree", newList);
                 }
+
             }
         }
     }
@@ -563,6 +577,62 @@ vector<ASTNode> StrideSystem::getOptionTrees()
         }
     }
     return optionTrees;
+}
+
+ASTNode StrideSystem::getImportTree(string importName, std::string platformName)
+{
+    ASTNode tree = std::make_shared<AST>();
+    QStringList nameFilters;
+    nameFilters.push_back("*.stride");
+    // Look first in platforms
+    // TODO currently search order is defined by the order in which platforms
+    // are declared. Should there be more explicit ordering or restrictions?
+    for (auto platformEntry: m_platforms) {
+        if (platformName == platformEntry.first
+                || platformName == platformEntry.second->getRootNamespace()) {
+            auto platform = platformEntry.second;
+            string platformPath = platform->buildPlatformLibPath(m_strideRoot.toStdString());
+            QString includeSubPath = QString::fromStdString(platformPath + "/" + importName);
+            QStringList libraryFiles =  QDir(includeSubPath).entryList(nameFilters);
+            for(QString file : libraryFiles) {
+                QString fileName = includeSubPath + QDir::separator() + file;
+                auto newTree = AST::parseFile(fileName.toLocal8Bit().data(), nullptr);
+                if(newTree) {
+                    for(ASTNode node : newTree->getChildren()) {
+                        tree->addChild(node);
+                    }
+                } else {
+                    qDebug() << "ERROR importing tree";
+                    vector<LangError> errors = AST::getParseErrors();
+                    for(LangError error:errors) {
+                        qDebug() << QString::fromStdString(error.getErrorText());
+                    }
+                    continue;
+                }
+
+//                for(ASTNode node : tree->getChildren()) {
+//                    size_t indexExtension = file.toStdString().find(".stride");
+//                    string scopeName = file.toStdString().substr(0, indexExtension);
+//                    //FIXME allow namespacing by filename
+//                    node->appendToPropertyValue("namespaceTree",
+//                                                std::make_shared<ValueNode>(scopeName, __FILE__, __LINE__) );
+//                    node->appendToPropertyValue("namespaceTree",
+//                                                std::make_shared<ValueNode>(platform->getFramework(), __FILE__, __LINE__) );
+//                }
+            }
+        }
+    }
+    if (tree->getChildren().size() > 0) {
+        return tree;
+    }
+    // Then look in the library
+    auto newTree = m_library.getImportTree(QString::fromStdString(importName));
+
+    if (newTree) {
+        return newTree;
+    }
+    // Finally look relative to thec current file.
+    return nullptr;
 }
 
 QString StrideSystem::makeProject(QString fileName)

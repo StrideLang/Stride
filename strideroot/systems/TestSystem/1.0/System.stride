@@ -1,0 +1,14 @@
+
+platform _TestFramework {
+	framework: "TestFramework"
+	frameworkVersion: "1.0"
+	hardware: "Local"
+	hardwareVersion: "1.0"
+	required: on #TODO validation of "required" is not yet implemented
+    rootNamespace: ""
+}
+
+system DesktopAudio {
+    platforms: [_TestFramework]
+    connections: []
+}

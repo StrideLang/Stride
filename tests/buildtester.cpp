@@ -100,7 +100,8 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile, boo
 //             connect(builder, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
 //             connect(builder, SIGNAL(errorText(QString)), this, SLOT(printConsoleError(QString)));
 //             connect(builder, SIGNAL(programStopped()), this, SLOT(programStopped()));
-             buildOK &= builder->build(tree);
+             auto domainMap = builder->generateCode(tree);
+             buildOK &= builder->build(domainMap);
          }
          if (buildOK) {
              for (auto builder: m_builders) {

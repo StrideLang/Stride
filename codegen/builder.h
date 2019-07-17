@@ -42,6 +42,7 @@
 #include <QVariant>
 
 #include "ast.h"
+#include "declarationnode.h"
 
 #define STRIDE_PLUGIN_MAX_STR_LEN 32
 
@@ -69,6 +70,15 @@ public:
     virtual ~Builder() {}
 
     void setConfiguration(QMap<QString, QVariant> config) { m_configuration = config; }
+
+    std::map<std::string, QVariant> getConfiguration() {
+        std::map<std::string, QVariant> configMap;
+        for(auto configEntry: m_configuration.keys()) {
+            configMap[configEntry.toStdString()] = m_configuration[configEntry];
+
+        }
+        return configMap;
+    }
     QString getPlatformPath() {return m_platformPath;}
     QString getStdErr() const {return m_stdErr;}
     QString getStdOut() const {return m_stdOut;}
@@ -77,8 +87,12 @@ public:
 
     std::string getPlatformDirective(std::string directive);
 
+    // Additional information from stride system
+    std::vector<std::shared_ptr<DeclarationNode>> m_connectors; // Connections between domains.
+
 public slots:
-    virtual bool build(ASTNode tree) = 0;
+    virtual std::map<std::string, std::string> generateCode(ASTNode tree) = 0;
+    virtual bool build(std::map<std::string, std::string> domainMap) = 0;
     virtual bool deploy() = 0;
     virtual bool run(bool pressed = true) = 0;
 //    // TODO this would need to send encrypted strings or remove the code sections?
@@ -87,14 +101,18 @@ public slots:
 //    virtual QString requestObjectsJson() {return "";}
     virtual bool isValid() {return false;}
 
+
 protected:
     QString m_projectDir;
     QString m_strideRoot;
     QString m_platformPath;
+    QString m_platformName;
     QString m_stdOut;
     QString m_stdErr;
     QMap<QString, QVariant> m_configuration;
     std::function<void()> m_yieldCallback = [](){};
+
+
 
     QString substituteTokens(QString text)
     {

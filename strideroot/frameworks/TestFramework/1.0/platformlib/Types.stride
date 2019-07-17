@@ -1,0 +1,24 @@
+platformDataType _RealType {
+	type: RealType
+	platformName: "float"
+	includes: []
+}
+
+platformDataType _IntType {
+	type: IntType
+	platformName: "int"
+	includes: []
+}
+
+platformDataType _SwitchType {
+	type: SwitchType
+	platformName: "bool"
+	includes: []
+}
+
+platformDataType _StringType {
+	type: StringType
+	platformName: "std::string"
+	includes: ['string.h']
+}
+	
