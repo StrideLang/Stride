@@ -41,6 +41,7 @@
 
 #include "stridelibrary.hpp"
 #include "codevalidator.h"
+#include "coderesolver.h"
 
 StrideLibrary::StrideLibrary() :
     m_majorVersion(1), m_minorVersion(0)

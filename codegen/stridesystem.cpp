@@ -45,6 +45,7 @@
 #include "declarationnode.h"
 #include "pythonproject.h"
 #include "codevalidator.h"
+#include "coderesolver.h"
 
 
 StrideSystem::StrideSystem(QString strideRoot, QString systemName,
@@ -258,6 +259,37 @@ void StrideSystem::parseSystemTree(ASTNode systemTree)
         }
     }
 
+    // Resolve platforms in connections to avoid having to look them up later
+    for (auto connection: m_connectionDefinitions) {
+        auto sourcePlatform = connection->getPropertyValue("sourcePlatform");
+        auto destPlatform = connection->getPropertyValue("destinationPlatform");
+        // TODO currently only looking in the system tree. Should we allow other locations?
+        for (auto systemNode: systemTree->getChildren()) {
+            if(systemNode->getNodeType() == AST::Declaration) {
+                std::shared_ptr<DeclarationNode> declaration = static_pointer_cast<DeclarationNode>(systemNode);
+                if (declaration->getObjectType() == "platform") {
+                    if (sourcePlatform->getNodeType() == AST::Block) {
+                        if (declaration->getName() == static_pointer_cast<BlockNode>(sourcePlatform)->getName()) {
+                            connection->replacePropertyValue("sourcePlatform", declaration->getPropertyValue("framework"));
+                            Q_ASSERT(declaration->getPropertyValue("framework")->getNodeType() ==AST::String);
+                        }
+                    } else if (sourcePlatform->getNodeType() == AST::String) {
+                        qDebug() << "ERROR: expenting block or string in source platform for connection " << QString::fromStdString(connection->getName());
+                    }
+                    if (destPlatform->getNodeType() == AST::Block) {
+                        if (declaration->getName() == static_pointer_cast<BlockNode>(destPlatform)->getName()) {
+                            connection->replacePropertyValue("destinationPlatform", declaration->getPropertyValue("framework"));
+                            Q_ASSERT(declaration->getPropertyValue("framework")->getNodeType() ==AST::String);
+                        }
+                    } else if (destPlatform->getNodeType() == AST::String) {
+                        qDebug() << "ERROR: expenting block or string in source platform for connection " << QString::fromStdString(connection->getName());
+                    }
+                }
+            }
+        }
+
+    }
+
     // Now connect platforms referenced in system with defined platforms
     for(auto usedPlatformName:usedPlatformNames) {
         for (size_t i = 0; i < platformDefinitions.size(); i++) {
@@ -362,6 +394,7 @@ vector<Builder *> StrideSystem::createBuilders(QString fileName, vector<string> 
                 if (builder) {
                     if (builder->isValid()) {
                         builder->m_connectors = m_connectionDefinitions;
+                        builder->m_system = this;
                         builders.push_back(builder);
                     } else {
                         delete builder;
@@ -412,6 +445,7 @@ vector<Builder *> StrideSystem::createBuilders(QString fileName, vector<string> 
                                                                projectDir);
                                     if (builder) {
                                         builder->m_connectors = m_connectionDefinitions;
+                                        builder->m_system = this;
                                         builders.push_back(builder);
                                     }
                                 }

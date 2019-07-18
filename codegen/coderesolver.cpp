@@ -158,19 +158,19 @@ void CodeResolver::resolveStreamRates(std::shared_ptr<StreamNode> stream)
     }
 }
 
-void CodeResolver::fillDefaultPropertiesForNode(ASTNode node)
-{
+void CodeResolver::fillDefaultPropertiesForNode(ASTNode node, ASTNode tree) {
+
     if (node->getNodeType() == AST::Declaration || node->getNodeType() == AST::BundleDeclaration) {
         std::shared_ptr<DeclarationNode> destBlock = static_pointer_cast<DeclarationNode>(node);
         vector<std::shared_ptr<PropertyNode>> blockProperties = destBlock->getProperties();
         QVector<ASTNode> typeProperties = CodeValidator::getPortsForType(
-                    destBlock->getObjectType(), {}, m_tree, destBlock->getNamespaceList());
+                    destBlock->getObjectType(), {}, tree, destBlock->getNamespaceList());
         if (typeProperties.isEmpty()) {
             qDebug() << "ERROR: fillDefaultPropertiesForNode() No type definition for " << QString::fromStdString(destBlock->getObjectType());
             return;
         }
         for(std::shared_ptr<PropertyNode> property : blockProperties) {
-            fillDefaultPropertiesForNode(property->getValue());
+            fillDefaultPropertiesForNode(property->getValue(), tree);
         }
 
         for(ASTNode propertyListMember : typeProperties) {
@@ -198,7 +198,7 @@ void CodeResolver::fillDefaultPropertiesForNode(ASTNode node)
         std::shared_ptr<FunctionNode> destFunc = static_pointer_cast<FunctionNode>(node);
         vector<std::shared_ptr<PropertyNode>> blockProperties = destFunc->getProperties();
         std::shared_ptr<DeclarationNode> functionModule = CodeValidator::findDeclaration(
-                    QString::fromStdString(destFunc->getName()), {}, m_tree);
+                    QString::fromStdString(destFunc->getName()), {}, tree);
         if (functionModule) {
             if (functionModule->getObjectType() == "module"
                     || functionModule->getObjectType() == "reaction"
@@ -210,7 +210,7 @@ void CodeResolver::fillDefaultPropertiesForNode(ASTNode node)
                     return;
                 }
                 for (std::shared_ptr<PropertyNode> property : blockProperties) {
-                    fillDefaultPropertiesForNode(property->getValue());
+                    fillDefaultPropertiesForNode(property->getValue(), tree);
                 }
 
                 for(ASTNode propertyListMember : typeProperties) {
@@ -249,12 +249,12 @@ void CodeResolver::fillDefaultPropertiesForNode(ASTNode node)
     } else if (node->getNodeType() == AST::List) {
         ListNode *list = static_cast<ListNode *>(node.get());
         for(ASTNode listElement : list->getChildren()) {
-            fillDefaultPropertiesForNode(listElement);
+            fillDefaultPropertiesForNode(listElement, tree);
         }
     } else if (node->getNodeType() == AST::Stream) {
         StreamNode *stream = static_cast<StreamNode *>(node.get());
         for(ASTNode streamElement : stream->getChildren()) {
-            fillDefaultPropertiesForNode(streamElement);
+            fillDefaultPropertiesForNode(streamElement, tree);
         }
     }
 }
@@ -290,7 +290,7 @@ void CodeResolver::fillDefaultProperties()
     vector<ASTNode> nodes = m_tree->getChildren();
     for(unsigned int i = 0; i < nodes.size(); i++) {
         ASTNode node = nodes.at(i);
-        fillDefaultPropertiesForNode(node);
+        fillDefaultPropertiesForNode(node, m_tree);
     }
 }
 
@@ -1269,7 +1269,7 @@ std::shared_ptr<DeclarationNode>CodeResolver::createDomainDeclaration(QString na
     std::shared_ptr<DeclarationNode>newBlock = nullptr;
     newBlock = std::make_shared<DeclarationNode>(name.toStdString(), "_domainDefinition", nullptr, __FILE__, __LINE__);
     newBlock->addProperty(std::make_shared<PropertyNode>("domainName", std::make_shared<ValueNode>(name.toStdString(), __FILE__, __LINE__), __FILE__, __LINE__));
-    fillDefaultPropertiesForNode(newBlock);
+    fillDefaultPropertiesForNode(newBlock, m_tree);
     return newBlock;
 }
 
@@ -1286,7 +1286,7 @@ std::shared_ptr<DeclarationNode> CodeResolver::createSignalDeclaration(QString n
         newBlock = std::make_shared<DeclarationNode>(bundle, "signal", nullptr, "",-1);
     }
     Q_ASSERT(newBlock);
-    fillDefaultPropertiesForNode(newBlock);
+    fillDefaultPropertiesForNode(newBlock, m_tree);
 
     resolveConstantsInNode(newBlock, scope);
     return newBlock;
@@ -1344,7 +1344,7 @@ void CodeResolver::declareIfMissing(string name, ASTNode blocks, ASTNode value)
         }
         if (!declaration) {
             declaration = createConstantDeclaration(name, value);
-            fillDefaultPropertiesForNode(declaration);
+            fillDefaultPropertiesForNode(declaration, m_tree);
             blockList->addChild(declaration);
         } else {
 //            delete value;
@@ -1669,7 +1669,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node, ScopeStack subScop
                     portBlockDecl= createSignalDeclaration(QString::fromStdString(CodeValidator::streamMemberName(portBlock)),
                                                            1, subScope);
                     internalBlocks->addChild(portBlockDecl);
-                    fillDefaultPropertiesForNode(portBlockDecl);
+                    fillDefaultPropertiesForNode(portBlockDecl, m_tree);
 //                    portBlockDecl->setPropertyValue("domain", outputDomain);
 //                    portBlockDecl->setPropertyValue("rate", std::make_shared<PortPropertyNode>(outputPortBlock->getName(),
 //                                                                                               "rate", __FILE__, __LINE__));
@@ -1714,7 +1714,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node, ScopeStack subScop
                     portBlockDecl= createSignalDeclaration(QString::fromStdString(CodeValidator::streamMemberName(portBlock)),
                                                            1, subScope);
                     internalBlocks->addChild(portBlockDecl);
-                    fillDefaultPropertiesForNode(portBlockDecl);
+                    fillDefaultPropertiesForNode(portBlockDecl, m_tree);
                 }
 
                 // Now check if domain set, if not, set to port domain
@@ -1807,7 +1807,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node, ScopeStack subScop
                             if (!newSignal) {
                                 newSignal = createSignalDeclaration(QString::fromStdString(defaultName), 1, subScope);
                                 internalBlocks->addChild(newSignal);
-                                fillDefaultPropertiesForNode(newSignal);
+                                fillDefaultPropertiesForNode(newSignal, m_tree);
                                 ASTNode blockDomain = newSignal->getDomain();
                                 if (!blockDomain || blockDomain->getNodeType() == AST::None) {
                                     newSignal->setPropertyValue("domain",portDomain);

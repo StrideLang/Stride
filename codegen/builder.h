@@ -60,6 +60,8 @@ typedef struct {
     platform_version_minor_t get_version_minor;
 } PluginInterface;
 
+class StrideSystem;
+
 class Builder : public QObject
 {
     Q_OBJECT
@@ -89,6 +91,7 @@ public:
 
     // Additional information from stride system
     std::vector<std::shared_ptr<DeclarationNode>> m_connectors; // Connections between domains.
+    StrideSystem *m_system; // The StrideSystem that created this builder.
 
 public slots:
     virtual std::map<std::string, std::string> generateCode(ASTNode tree) = 0;

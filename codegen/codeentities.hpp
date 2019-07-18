@@ -102,6 +102,8 @@ public:
     // FIXME remove currentOutTokens and rely on "tokens" compiler property
     std::vector<std::string> currentOutTokens;
 
+    ASTNode previous;
+
     // This holds items to process in higher scopes. e.g. in preprocess or post process in the domain or global declarations.
 //    std::vector<ASTNode> m_unprocessedItems;
 

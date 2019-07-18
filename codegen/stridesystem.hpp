@@ -80,6 +80,10 @@ public:
 
     ASTNode getImportTree(std::string importName, std::string platformName);
 
+    std::map<std::string, std::shared_ptr<StridePlatform>> m_platforms;
+    vector<std::shared_ptr<DeclarationNode>> m_platformDefinitions;
+    std::vector<std::shared_ptr<DeclarationNode>> m_connectionDefinitions;
+
 private:
     QVector<ASTNode> getPortsForTypeBlock(DeclarationNode *block);
 //    ListNode *getPortsForFunction(QString typeName);
@@ -103,9 +107,6 @@ private:
 
     QStringList m_types;
 
-    std::map<std::string, std::shared_ptr<StridePlatform>> m_platforms; // First platform is default
-    vector<std::shared_ptr<DeclarationNode>> m_platformDefinitions;
-    std::vector<std::shared_ptr<DeclarationNode>> m_connectionDefinitions;
 
     QMap<QString, QString> m_importList;
     StrideLibrary m_library;

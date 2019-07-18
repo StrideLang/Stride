@@ -66,6 +66,8 @@ public:
 
     std::vector<std::pair<std::string, std::string>> m_domainChanges;
 
+    static void fillDefaultPropertiesForNode(ASTNode node, ASTNode tree);
+
 private:
     // Main processing functions
     void processSystem();
@@ -89,7 +91,6 @@ private:
 
     void expandStreamToSizes(std::shared_ptr<StreamNode> stream, QVector<int> &size, int previousOutSize, ScopeStack scopeStack);
     ASTNode expandFunctionFromProperties(std::shared_ptr<FunctionNode> func, ScopeStack scope, ASTNode tree);
-    void fillDefaultPropertiesForNode(ASTNode node);
 
     void analyzeChildConnections(ASTNode node, ScopeStack scopeStack = ScopeStack());
 
