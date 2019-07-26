@@ -44,30 +44,36 @@
 #include "declarationnode.h"
 #include "langerror.h"
 
+struct LibraryTree {
+    std::vector<std::string> namespaces;
+    QString importName;
+    QString importAs;
+    ASTNode tree;
+};
+
 class StrideLibrary
 {
 public:
     StrideLibrary();
-    StrideLibrary(QString libraryPath, QMap<QString, QStringList> importList = QMap<QString,QStringList>());
    ~StrideLibrary();
 
-    void setLibraryPath(QString strideRootPath, QMap<QString, QStringList> importList = QMap<QString,QStringList>());
+    void initializeLibrary(QString strideRootPath);
 
     std::shared_ptr<DeclarationNode> findTypeInLibrary(QString typeName);
 
     bool isValidBlock(DeclarationNode *block);
 
-    std::vector<ASTNode> getLibraryMembers();
+    std::map<std::string, std::vector<ASTNode> > getLibraryMembers();
 
-    ASTNode getImportTree(QString importName);
+    ASTNode getImportTree(QString importName, QString importAs, QStringList scopeTree);
 
 private:
 
     bool isValidProperty(std::shared_ptr<PropertyNode> property, DeclarationNode *type);
     QList<DeclarationNode *> getParentTypes(DeclarationNode *type);
 
-    void readLibrary(QString rootDir, QMap<QString, QStringList> importList);
-    QList<ASTNode> m_libraryTrees;
+    void readLibrary(QString rootDir);
+    std::vector<LibraryTree> m_libraryTrees; // List of root and imported library trees
 
     QString m_libraryPath;
 

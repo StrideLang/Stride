@@ -64,6 +64,7 @@ void ImportNode::setImportName(const string &importName)
 {
     m_importName = importName;
 }
+
 string ImportNode::importAlias() const
 {
     return m_importAlias;

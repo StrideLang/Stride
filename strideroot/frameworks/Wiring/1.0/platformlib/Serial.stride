@@ -9,17 +9,17 @@
 #	cleanupTag: "SerialIn:Cleanup"
 #}
 
-_domainDefinition SerialOutDomain {
-	domainName: "SerialOutDomain"
-	framework: _WiringFramework
-	declarationsTag: "Declarations"
-	processingTag: "Processing"
-	initializationTag: "Initialization"
-	cleanupTag: "Cleanup"
-	rate: 1000
-}
+#_domainDefinition SerialOutDomain {
+#	domainName: "SerialOutDomain"
+#	framework: _WiringFramework
+#	declarationsTag: "Declarations"
+#	processingTag: "Processing"
+#	initializationTag: "Initialization"
+#	cleanupTag: "Cleanup"
+#	rate: 1000
+#}
 
-platformType _SerialPrintType {
+platformModule _SerialPrintType {
     typeName: '_serialPrintType'
 	inputs: ["real"]
 #    include: []
@@ -32,18 +32,19 @@ platformType _SerialPrintType {
     inherits: [_Signal]
 }
 
-platformType _SerialOutType {
+platformBlock _SerialOutType {
     typeName: '_serialOutType'
 	inputs: ["real"]
+    domain: WiringDomain
 #    include: []
 #    linkTo: []
     declarations: ['byte channel = 0;']
-    initializations: ["Serial1.begin(115200);"
+    initializations: ["Serial.begin(115200);"
     ]
     processing: '
     channel = %%bundle_index%%;
-    Serial1.write((byte *) &channel, 1);
-    Serial1.write((byte *) &%%intoken:0%%, 4);
+    Serial.write((byte *) &channel, 1);
+    Serial.write((byte *) &%%intoken:0%%, 4);
 	'
 	postProcessing: '// Post'
     inherits: [_Signal]
@@ -51,10 +52,9 @@ platformType _SerialOutType {
 
 _serialOutType SerialOut[3] {
     rate:   PlatformRate
-    domain: SerialOutDomain
 }
 
-platformType _SerialInType {
+platformBlock _SerialInType {
     typeName: '_serialInType'
 	outputs: ["string"]
 #    include: []

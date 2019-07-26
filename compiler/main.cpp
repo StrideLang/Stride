@@ -110,8 +110,6 @@ int main(int argc, char *argv[])
         }
         vector<Builder *> builders = platform->createBuilders(dirName, usedFrameworks);
 
-
-
         for (auto builder: builders) {
             auto domainMap = builder->generateCode(tree);
 

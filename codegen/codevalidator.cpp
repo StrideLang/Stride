@@ -57,16 +57,22 @@ void CodeValidator::validateTree(QString platformRootDir, ASTNode tree)
 {
     m_tree = tree;
     if(tree) {
-        QMap<QString, QStringList> importList;
+        std::vector<std::shared_ptr<ImportNode> > importList;
         for(ASTNode node :tree->getChildren()) {
             if (node->getNodeType() == AST::Import) {
                 std::shared_ptr<ImportNode> import = static_pointer_cast<ImportNode>(node);
                 // FIXME add namespace support here (e.g. import Platform::Filters::Filter)
-                if (!importList.keys().contains(QString::fromStdString(import->importName()))) {
-                    importList[QString::fromStdString(import->importName())] = QStringList();
+                bool imported = false;
+                for (auto importNode : importList) {
+                    if ((static_pointer_cast<ImportNode>(importNode)->importName() == import->importName())
+                            && (static_pointer_cast<ImportNode>(importNode)->importAlias() == import->importAlias())) {
+                        imported = true;
+                        break;
+                    }
                 }
-                importList[QString::fromStdString(import->importName())].append(
-                            QString::fromStdString(import->importAlias()));
+                if (!imported) {
+                    importList.push_back(import);
+                }
             }
         }
 
@@ -423,7 +429,7 @@ bool CodeValidator::namespaceMatch(std::vector<string> scopeList, std::shared_pt
     std::copy(scopeList.begin(), scopeList.end(),
                std::ostream_iterator<std::string>(joined, delim));
     string namespaceString = joined.str();
-    if (namespaceString.size() > 2) {
+    if (namespaceString.size() > 2 || (scopeList.size() == 1 && scopeList[0] == "")) {
         namespaceString = namespaceString.substr(0, namespaceString.size() - 2); // remove trailing '::'
     }
     auto validScopesList = decl->getCompilerProperty("namespaceTree");

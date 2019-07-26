@@ -35,7 +35,7 @@ connection _WiringToPCSerial {
 	sourceDomains: [ "WiringDomain" ]
 	destinationPlatform: _PCPlatform
 	destinationDomains: [ "AudioDomain" ]
-	sourceImports: ["Serial"]
+	sourceImports: [""]
 	sourceStreams: [
 		_Connection_Token >> SerialOut[0];
 	]

@@ -55,7 +55,7 @@ public:
     StrideSystem() {}
     StrideSystem(QString strideRoot, QString systemName,
                  int majorVersion, int minorVersion,
-                 QMap<QString, QStringList> importList);
+                 std::vector<std::shared_ptr<ImportNode> > );
     ~StrideSystem();
 
     QStringList getErrors();
@@ -71,14 +71,13 @@ public:
 
 //    DeclarationNode *getFunction(QString functionName);
     vector<string> getFrameworkNames();
-    map<string, vector<ASTNode>> getBuiltinObjectsCopy();
     map<string, vector<ASTNode> > getBuiltinObjectsReference(); // The key to the map is the namespace name
 
 //    bool typeHasPort(QString typeName, QString propertyName);
 
     vector<ASTNode> getOptionTrees();
 
-    ASTNode getImportTree(std::string importName, std::string platformName);
+    ASTNode getImportTree(QString importName, QString importAs, QString platformName);
 
     std::map<std::string, std::shared_ptr<StridePlatform>> m_platforms;
     vector<std::shared_ptr<DeclarationNode>> m_platformDefinitions;

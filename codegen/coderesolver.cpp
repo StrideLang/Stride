@@ -593,12 +593,12 @@ void CodeResolver::insertBuiltinObjects()
     }
     for (ASTNode decl: usedDeclarations) {
         bultinObjects[""].erase(std::find(bultinObjects[""].begin(), bultinObjects[""].end(),decl));
-        insertBuiltinObjectsForNode(decl, bultinObjects);
+        insertBuiltinObjectsForNode(decl, bultinObjects, m_tree);
     }
 
     // Second pass to add elements that depend on the user's code
     for (ASTNode object : m_tree->getChildren()) {
-        insertBuiltinObjectsForNode(object, bultinObjects);
+        insertBuiltinObjectsForNode(object, bultinObjects, m_tree);
     }
 
 }
@@ -748,48 +748,48 @@ void CodeResolver::analyzeParents()
     }
 }
 
-void CodeResolver::insertDependentTypes(std::shared_ptr<DeclarationNode> typeDeclaration, map<string, vector<ASTNode>> &objects) {
+void CodeResolver::insertDependentTypes(std::shared_ptr<DeclarationNode> typeDeclaration, map<string, vector<ASTNode>> &objects, ASTNode tree) {
     QList<std::shared_ptr<DeclarationNode>> blockList;
 //    std::shared_ptr<DeclarationNode> existingDecl = CodeValidator::findTypeDeclaration(typeDeclaration, ScopeStack(), m_tree);
     for (auto it = objects.begin(); it != objects.end(); it++)  {
             // To avoid redundant checking here we should mark nodes that have already been processed
-        auto inheritedTypes = CodeValidator::getInheritedTypes(typeDeclaration, {{it->first, it->second}}, m_tree);
+        auto inheritedTypes = CodeValidator::getInheritedTypes(typeDeclaration, {{it->first, it->second}}, tree);
 
         for (auto inheritedType: inheritedTypes) {
-            auto children = m_tree->getChildren();
+            auto children = tree->getChildren();
             if (std::find(children.begin(), children.end(), inheritedType)
                     != children.end()) {
                 // nothing
             } else {
-                m_tree->addChild(inheritedType);
+                tree->addChild(inheritedType);
                 auto findPos = std::find(it->second.begin(), it->second.end(), inheritedType);
                 if (findPos != it->second.end()) {
                     it->second.erase(findPos);
                 }
             }
-            insertDependentTypes(inheritedType, objects);
+            insertDependentTypes(inheritedType, objects, tree);
         }
     }
 }
 
-void CodeResolver::insertBuiltinObjectsForNode(ASTNode node, map<string, vector<ASTNode>> &objects)
+void CodeResolver::insertBuiltinObjectsForNode(ASTNode node, map<string, vector<ASTNode>> &objects, ASTNode tree)
 {
     QList<std::shared_ptr<DeclarationNode>> blockList;
     if (node->getNodeType() == AST::List) {
         for (ASTNode child : node->getChildren()) {
-            insertBuiltinObjectsForNode(child, objects);
+            insertBuiltinObjectsForNode(child, objects, tree);
         }
     } else if (node->getNodeType() == AST::Stream) {
         StreamNode *stream = static_cast<StreamNode*>(node.get());
-        insertBuiltinObjectsForNode(stream->getLeft(), objects);
-        insertBuiltinObjectsForNode(stream->getRight(), objects);
+        insertBuiltinObjectsForNode(stream->getLeft(), objects, tree);
+        insertBuiltinObjectsForNode(stream->getRight(), objects, tree);
     } else if (node->getNodeType() == AST::Expression) {
         ExpressionNode *expr = static_cast<ExpressionNode*>(node.get());
         if (expr->isUnary()) {
-            insertBuiltinObjectsForNode(expr->getValue(), objects);
+            insertBuiltinObjectsForNode(expr->getValue(), objects, tree);
         } else {
-            insertBuiltinObjectsForNode(expr->getLeft(), objects);
-            insertBuiltinObjectsForNode(expr->getRight(), objects);
+            insertBuiltinObjectsForNode(expr->getLeft(), objects, tree);
+            insertBuiltinObjectsForNode(expr->getRight(), objects, tree);
         }
     } else if (node->getNodeType() == AST::Function) {
         FunctionNode *func = static_cast<FunctionNode *>(node.get());
@@ -821,12 +821,12 @@ void CodeResolver::insertBuiltinObjectsForNode(ASTNode node, map<string, vector<
         }
         // Look for declarations of blocks present in function properties
         for(auto property :func->getProperties()) {
-            insertBuiltinObjectsForNode(property->getValue(), objects);
+            insertBuiltinObjectsForNode(property->getValue(), objects, tree);
         }
         for (std::shared_ptr<DeclarationNode> usedBlock : blockList) {
             // Add declarations to tree if not there
-            if (!CodeValidator::findDeclaration(QString::fromStdString(usedBlock->getName()), ScopeStack(), m_tree, usedBlock->getNamespaceList())) {
-                m_tree->addChild(usedBlock);
+            if (!CodeValidator::findDeclaration(QString::fromStdString(usedBlock->getName()), ScopeStack(), tree, usedBlock->getNamespaceList())) {
+                tree->addChild(usedBlock);
                 for (auto it = objects.begin(); it != objects.end(); it++)  {
                     vector<ASTNode > &namespaceObjects = it->second;
                     auto position = std::find(namespaceObjects.begin(), namespaceObjects.end(), usedBlock);
@@ -837,9 +837,9 @@ void CodeResolver::insertBuiltinObjectsForNode(ASTNode node, map<string, vector<
                 }
             }
             for (std::shared_ptr<PropertyNode> property : usedBlock->getProperties()) {
-                insertBuiltinObjectsForNode(property->getValue(), objects);
+                insertBuiltinObjectsForNode(property->getValue(), objects, tree);
             }
-            insertBuiltinObjectsForNode(usedBlock, objects);
+            insertBuiltinObjectsForNode(usedBlock, objects, tree);
         }
     } else if (node->getNodeType() == AST::Declaration
                || node->getNodeType() == AST::BundleDeclaration) {
@@ -868,8 +868,9 @@ void CodeResolver::insertBuiltinObjectsForNode(ASTNode node, map<string, vector<
 //                }
 //            }
         }
+
         auto typeDecl = CodeValidator::findTypeDeclarationByName(
-                    declaration->getObjectType(), {}, m_tree);
+                    declaration->getObjectType(), {}, tree);
         if (!typeDecl) {
             for (auto &scope: objects) {
                 // FIXME allow nested namespaces
@@ -878,25 +879,25 @@ void CodeResolver::insertBuiltinObjectsForNode(ASTNode node, map<string, vector<
                             nullptr, {scope.first}
                             );
                 if (typeDecl) {
-                    m_tree->addChild(typeDecl);
+                    tree->addChild(typeDecl);
                     auto position = std::find(scope.second.begin(), scope.second.end(), typeDecl);
                     if (position != scope.second.end()) {
                         scope.second.erase(position);
-                        insertBuiltinObjectsForNode(typeDecl, objects);
+                        insertBuiltinObjectsForNode(typeDecl, objects, tree);
                         break;
                     }
-                    insertDependentTypes(typeDecl, objects);
+                    insertDependentTypes(typeDecl, objects, tree);
                 }
             }
         }
 
         // Insert needed objects for things in module properties
         for(std::shared_ptr<PropertyNode> property : declaration->getProperties()) {
-            insertBuiltinObjectsForNode(property->getValue(), objects);
+            insertBuiltinObjectsForNode(property->getValue(), objects, tree);
         }
         // Process index for bundle declarations
         if (node->getNodeType() == AST::BundleDeclaration) {
-            insertBuiltinObjectsForNode(declaration->getBundle()->index(), objects);
+            insertBuiltinObjectsForNode(declaration->getBundle()->index(), objects, tree);
         }
 
     } else if (node->getNodeType() == AST::Block) {
@@ -906,10 +907,10 @@ void CodeResolver::insertBuiltinObjectsForNode(ASTNode node, map<string, vector<
         for (auto it = objects.begin(); it != objects.end(); it++)  {
             auto declaration = CodeValidator::findDeclaration(name->getName(),
             {{it->first, it->second}},
-                                                              m_tree, name->getNamespaceList());
+                                                              tree, name->getNamespaceList());
             if (declaration && !CodeValidator::findDeclaration(QString::fromStdString(name->getName()),
                                                                       {},
-                                                                      m_tree, name->getNamespaceList())) {
+                                                                      tree, name->getNamespaceList())) {
 //                declaration->setRootScope(it->first);
                 if (!blockList.contains(declaration)) {
                     blockList << declaration;
@@ -918,7 +919,7 @@ void CodeResolver::insertBuiltinObjectsForNode(ASTNode node, map<string, vector<
             }
         }
         for(auto usedBlock : blockList) {
-            m_tree->addChild(usedBlock);
+            tree->addChild(usedBlock);
             for (auto it = objects.begin(); it != objects.end(); it++)  {
                 vector<ASTNode > &namespaceObjects = it->second;
                 auto position = std::find(namespaceObjects.begin(), namespaceObjects.end(), usedBlock);
@@ -926,7 +927,7 @@ void CodeResolver::insertBuiltinObjectsForNode(ASTNode node, map<string, vector<
                     namespaceObjects.erase(position);
                 }
             }
-            insertBuiltinObjectsForNode(usedBlock, objects);
+            insertBuiltinObjectsForNode(usedBlock, objects, tree);
         }
     } else if (node->getNodeType() == AST::Bundle) {
         QList<std::shared_ptr<DeclarationNode>> blockList;
@@ -934,10 +935,10 @@ void CodeResolver::insertBuiltinObjectsForNode(ASTNode node, map<string, vector<
         for (auto it = objects.begin(); it != objects.end(); it++)  {
             auto declaration = CodeValidator::findDeclaration(bundle->getName(),
             {{it->first, it->second}},
-                                                              m_tree, bundle->getNamespaceList());
+                                                              tree, bundle->getNamespaceList());
             if (declaration && !CodeValidator::findDeclaration(QString::fromStdString(bundle->getName()),
                                                                {},
-                                                               m_tree, bundle->getNamespaceList())) {
+                                                               tree, bundle->getNamespaceList())) {
 //                declaration->setRootScope(it->first);
                 blockList << declaration;
                 break;
@@ -945,7 +946,7 @@ void CodeResolver::insertBuiltinObjectsForNode(ASTNode node, map<string, vector<
         }
         for(auto usedBlock : blockList) {
             ASTNode newBlock = usedBlock;
-            m_tree->addChild(newBlock);
+            tree->addChild(newBlock);
             for (auto it = objects.begin(); it != objects.end(); it++)  {
                 vector<ASTNode > &namespaceObjects = it->second;
                 auto position = std::find(namespaceObjects.begin(), namespaceObjects.end(), usedBlock);
@@ -953,11 +954,11 @@ void CodeResolver::insertBuiltinObjectsForNode(ASTNode node, map<string, vector<
                     namespaceObjects.erase(position);
                 }
             }
-            insertBuiltinObjectsForNode(newBlock, objects);
+            insertBuiltinObjectsForNode(newBlock, objects, tree);
         }
     } else if (node->getNodeType() == AST::Property) {
         std::shared_ptr<PropertyNode> prop = std::static_pointer_cast<PropertyNode>(node);
-        insertBuiltinObjectsForNode(prop->getValue(), objects);
+        insertBuiltinObjectsForNode(prop->getValue(), objects, tree);
     }
 }
 

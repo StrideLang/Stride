@@ -67,6 +67,7 @@ public:
     std::vector<std::pair<std::string, std::string>> m_domainChanges;
 
     static void fillDefaultPropertiesForNode(ASTNode node, ASTNode tree);
+    static void insertBuiltinObjectsForNode(ASTNode node, map<string, vector<ASTNode> > &objects, ASTNode tree);
 
 private:
     // Main processing functions
@@ -94,8 +95,7 @@ private:
 
     void analyzeChildConnections(ASTNode node, ScopeStack scopeStack = ScopeStack());
 
-    void insertDependentTypes(std::shared_ptr<DeclarationNode> typeDeclaration, map<string, vector<ASTNode>> &objects);
-    void insertBuiltinObjectsForNode(ASTNode node, map<string, vector<ASTNode> > &objects);
+    static void insertDependentTypes(std::shared_ptr<DeclarationNode> typeDeclaration, map<string, vector<ASTNode>> &objects, ASTNode tree);
 
     void resolveDomainsForStream(std::shared_ptr<StreamNode> func, ScopeStack scopeStack, ASTNode contextDomainNode);
     ASTNode processDomainsForNode(ASTNode node, ScopeStack scopeStack, QList<ASTNode > &domainStack);

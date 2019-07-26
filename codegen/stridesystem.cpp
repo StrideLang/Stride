@@ -50,7 +50,7 @@
 
 StrideSystem::StrideSystem(QString strideRoot, QString systemName,
                            int majorVersion, int minorVersion,
-                           QMap<QString, QStringList> importList) :
+                           std::vector<std::shared_ptr<ImportNode> > importList) :
     m_strideRoot(strideRoot), m_systemName(systemName), m_majorVersion(majorVersion), m_minorVersion(minorVersion),
     m_testing(false)
 {
@@ -61,47 +61,33 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
                             + versionString).absolutePath();
     QString systemFile = m_systemPath + QDir::separator() + "System.stride";
 
-    m_library.setLibraryPath(strideRoot, importList);
+    m_library.initializeLibrary(strideRoot);
 
     if (QFile::exists(systemFile)) {
         ASTNode systemTree = AST::parseFile(systemFile.toStdString().c_str(), nullptr);
         if (systemTree) {
             parseSystemTree(systemTree);
 
-            // Add subpaths for included modules
-            vector<string> subPaths;
-            subPaths.push_back("");
-            QMapIterator<QString, QStringList> it(importList);
-            while (it.hasNext()) {
-                it.next();
-                subPaths.push_back(it.key().toStdString());
-            }
             // Iterate through platforms reading them.
             // TODO Should optimize this to not reread platform if already done.
 
             for (auto platformEntry: m_platforms) {
                 std::shared_ptr<StridePlatform> platform = platformEntry.second;
-                for(string subPath : subPaths) {
-                    ASTNode importTree = getImportTree(subPath, platformEntry.first);
+                ASTNode importTree = getImportTree("",
+                                                   "",
+                                                   QString::fromStdString(platformEntry.first));
+                if(importTree) {
+                    platform->addTree("",importTree);
+                }
+                for(auto importNode : importList) {
+                    ASTNode importTree = getImportTree(QString::fromStdString(importNode->importName()),
+                                                       QString::fromStdString(importNode->importAlias()),
+                                                       QString::fromStdString(platformEntry.first));
                     if(importTree) {
-                        platform->addTree(subPath,importTree);
-                        for(ASTNode node : importTree->getChildren()) {
-                            size_t indexExtension = subPath.find(".stride");
-                            string scopeName = subPath.substr(0, indexExtension);
-                            //FIXME allow namespacing by filename
-                            node->appendToPropertyValue("namespaceTree",
-                                                        std::make_shared<ValueNode>(platformEntry.first, __FILE__, __LINE__) );
-                            node->appendToPropertyValue("namespaceTree",
-                                                        std::make_shared<ValueNode>(platform->getFramework(), __FILE__, __LINE__) );
-                        }
-                        for (QString namespaceName: importList[QString::fromStdString(subPath)]) {
-                            if (!namespaceName.isEmpty()) {
-                                // Do we need to set namespace recursively or would this do?
-                                //                            node->setNamespace(namespaceName.toStdString());
-                            }
-                        }
+                        platform->addTree(importNode->importAlias(),importTree);
+                        importNode->appendToPropertyValue("importTrees", importTree);
                     } else {
-                        qDebug() << "Import found in platform but parse failed. Ignoring.";
+                        qDebug() << "Cannot import '" << QString::fromStdString( importNode->importName() ) << "'. Ignoring.";
                         vector<LangError> errors = AST::getParseErrors();
                         for(LangError error:errors) {
                             qDebug() << QString::fromStdString(error.getErrorText());
@@ -150,58 +136,6 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
 StrideSystem::~StrideSystem()
 {
 }
-
-//ListNode *StreamPlatform::getPortsForFunction(QString typeName)
-//{
-//    foreach(AST* group, m_platform) {
-//        foreach(AST *node, group->getChildren()){
-//            if (node->getNodeType() == AST::Declaration) {
-//                DeclarationNode *block = static_cast<DeclarationNode *>(node);
-//                if (block->getObjectType() == "platformModule") {
-//                    if (block->getObjectType() == typeName.toStdString()) {
-//                        vector<PropertyNode *> ports = block->getProperties();
-//                        foreach(PropertyNode *port, ports) {
-//                            if (port->getName() == "ports") {
-//                                ListNode *portList = static_cast<ListNode *>(port->getValue());
-//                                Q_ASSERT(portList->getNodeType() == AST::List);
-//                                return portList;
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
-//    return nullptr;
-//}
-
-//DeclarationNode *StreamPlatform::getFunction(QString functionName)
-//{
-//    QStringList typeNames;
-//    foreach(AST* node, m_platform) {
-//        if (node->getNodeType() == AST::Declaration) {
-//            DeclarationNode *block = static_cast<DeclarationNode *>(block);
-//            if (block->getObjectType() == "platformModule"
-//                    || block->getObjectType() == "module") {
-//                if (block->getName() == functionName.toStdString()) {
-//                    return block;
-//                }
-//            }
-//        }
-//    }
-//    foreach(AST* node, m_library.getNodes()) {
-
-//        if (node->getNodeType() == AST::Declaration) {
-//            DeclarationNode *block = static_cast<DeclarationNode *>(node);
-//            if (block->getObjectType() == "module") {
-//                if (block->getName() == functionName.toStdString()) {
-//                    return block;
-//                }
-//            }
-//        }
-//    }
-//    return nullptr;
-//}
 
 void StrideSystem::parseSystemTree(ASTNode systemTree)
 {
@@ -328,16 +262,18 @@ QStringList StrideSystem::getWarnings()
 QStringList StrideSystem::getPlatformTypeNames()
 {
     QStringList typeNames;
-    vector<ASTNode> libObjects = m_library.getLibraryMembers();
-    for(ASTNode node : libObjects) {
-        if (node->getNodeType() == AST::Declaration) {
-            std::shared_ptr<DeclarationNode> block = static_pointer_cast<DeclarationNode>(node);
-            if (block->getObjectType() == "type"
-                    || block->getObjectType() == "platformModule"
-                    || block->getObjectType() == "platformBlock") {
-                ValueNode *name = static_cast<ValueNode *>(block->getPropertyValue("typeName").get());
-                if (name && name->getNodeType() == AST::String) {
-                    typeNames << QString::fromStdString(name->getStringValue());
+    auto libObjects = getBuiltinObjectsReference();
+    for(auto libNamespace : libObjects) {
+        for (auto node: libNamespace.second) {
+            if (node->getNodeType() == AST::Declaration) {
+                std::shared_ptr<DeclarationNode> block = static_pointer_cast<DeclarationNode>(node);
+                if (block->getObjectType() == "type"
+                        || block->getObjectType() == "platformModule"
+                        || block->getObjectType() == "platformBlock") {
+                    ValueNode *name = static_cast<ValueNode *>(block->getPropertyValue("typeName").get());
+                    if (name && name->getNodeType() == AST::String) {
+                        typeNames << QString::fromStdString(name->getStringValue());
+                    }
                 }
             }
         }
@@ -492,20 +428,6 @@ vector<string> StrideSystem::getFrameworkNames()
     return names;
 }
 
-map<string, vector<ASTNode> > StrideSystem::getBuiltinObjectsCopy()
-{
-    map<string, vector<ASTNode>> objects;
-    map<string, vector<ASTNode>> refObjects = getBuiltinObjectsReference();
-
-    for (auto it = refObjects.begin(); it != refObjects.end(); it++ ) {
-        objects[it->first] = vector<ASTNode>();
-        for(ASTNode object: it->second) {
-            objects[it->first].push_back(object->deepCopy());
-        }
-    }
-    return objects;
-}
-
 map<string, vector<ASTNode>> StrideSystem::getBuiltinObjectsReference()
 {
     map<string, vector<ASTNode>> objects;
@@ -580,8 +502,11 @@ map<string, vector<ASTNode>> StrideSystem::getBuiltinObjectsReference()
     }
 
     // finally add library objects.
-    for(ASTNode object: m_library.getLibraryMembers()) {
-        objects[""].push_back(object);
+    for(auto libNamespace: m_library.getLibraryMembers()) {
+        if (objects.find(libNamespace.first) == objects.end()) {
+            objects[libNamespace.first] = std::vector<ASTNode>();
+        }
+        objects[libNamespace.first].insert(objects[libNamespace.first].end(), libNamespace.second.begin(), libNamespace.second.end());
 //        auto nodeNoNameSpace = object->deepCopy();
 //        nodeNoNameSpace->setNamespaceList(vector<string>());
 //        objects[""].push_back(nodeNoNameSpace);
@@ -613,7 +538,9 @@ vector<ASTNode> StrideSystem::getOptionTrees()
     return optionTrees;
 }
 
-ASTNode StrideSystem::getImportTree(string importName, std::string platformName)
+
+
+ASTNode StrideSystem::getImportTree(QString importName, QString importAs, QString platformName)
 {
     ASTNode tree = std::make_shared<AST>();
     QStringList nameFilters;
@@ -622,14 +549,18 @@ ASTNode StrideSystem::getImportTree(string importName, std::string platformName)
     // TODO currently search order is defined by the order in which platforms
     // are declared. Should there be more explicit ordering or restrictions?
     for (auto platformEntry: m_platforms) {
-        if (platformName == platformEntry.first
-                || platformName == platformEntry.second->getRootNamespace()) {
+        if (platformName.toStdString() == platformEntry.first
+                || platformName.toStdString() == platformEntry.second->getRootNamespace()
+                || platformName.toStdString() == platformEntry.second->getFramework()) {
             auto platform = platformEntry.second;
             string platformPath = platform->buildPlatformLibPath(m_strideRoot.toStdString());
-            QString includeSubPath = QString::fromStdString(platformPath + "/" + importName);
+            QString includeSubPath = QString::fromStdString(platformPath ) + "/" + importName;
             QStringList libraryFiles =  QDir(includeSubPath).entryList(nameFilters);
+            if (QFile::exists(QString::fromStdString(platformPath) + "/" + importName + ".stride")) {
+                libraryFiles << "../" + importName + ".stride";
+            }
             for(QString file : libraryFiles) {
-                QString fileName = includeSubPath + QDir::separator() + file;
+                QString fileName = QDir::cleanPath(includeSubPath + QDir::separator() + file);
                 auto newTree = AST::parseFile(fileName.toLocal8Bit().data(), nullptr);
                 if(newTree) {
                     for(ASTNode node : newTree->getChildren()) {
@@ -659,13 +590,24 @@ ASTNode StrideSystem::getImportTree(string importName, std::string platformName)
     if (tree->getChildren().size() > 0) {
         return tree;
     }
-    // Then look in the library
-    auto newTree = m_library.getImportTree(QString::fromStdString(importName));
+    if (platformName != "") {
+        // FIXME for now import both library and framework objects.
+        // Then look in the library
+        auto newTree = m_library.getImportTree(importName, importAs, QStringList());
 
-    if (newTree) {
-        return newTree;
+        if (newTree) {
+            for (auto node: newTree->getChildren()) {
+                tree->addChild(node);
+            }
+        }
     }
-    // Finally look relative to thec current file.
+
+    // TODO Finally look relative to thec current file.
+
+    if(tree->getChildren().size() > 0) {
+        return tree;
+    }
+
     return nullptr;
 }
 

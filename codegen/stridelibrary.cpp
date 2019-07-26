@@ -48,25 +48,20 @@ StrideLibrary::StrideLibrary() :
 {
 }
 
-StrideLibrary::StrideLibrary(QString libraryPath, QMap<QString, QStringList> importList) :
-    m_majorVersion(1), m_minorVersion(0)
-{
-    readLibrary(libraryPath, importList);
-}
-
 StrideLibrary::~StrideLibrary()
 {
 }
 
-void StrideLibrary::setLibraryPath(QString strideRootPath, QMap<QString, QStringList> importList)
+void StrideLibrary::initializeLibrary(QString strideRootPath)
 {
     m_libraryTrees.clear();
-    readLibrary(strideRootPath, importList);
+    readLibrary(strideRootPath);
 }
 
 std::shared_ptr<DeclarationNode> StrideLibrary::findTypeInLibrary(QString typeName)
 {
-    for (ASTNode rootNode : m_libraryTrees) {
+    for (auto libraryTree : m_libraryTrees) {
+        ASTNode rootNode = libraryTree.tree;
         for (ASTNode node : rootNode->getChildren()) {
             if (node->getNodeType() == AST::Declaration) {
                 std::shared_ptr<DeclarationNode> block = static_pointer_cast<DeclarationNode>(node);
@@ -100,7 +95,7 @@ bool StrideLibrary::isValidBlock(DeclarationNode *block)
             // Now check for inherited properties
             QList<DeclarationNode *> parentTypes = getParentTypes(block);
             bool propertyInParent = false;
-            foreach(DeclarationNode *parent, parentTypes) {
+            for(DeclarationNode *parent : parentTypes) {
                 propertyInParent |= isValidProperty(property, parent);
             }
             if (propertyInParent) return true;
@@ -109,25 +104,28 @@ bool StrideLibrary::isValidBlock(DeclarationNode *block)
     return false;
 }
 
-std::vector<ASTNode> StrideLibrary::getLibraryMembers()
+std::map<std::string, std::vector<ASTNode>> StrideLibrary::getLibraryMembers()
 {
-    std::vector<ASTNode> nodes;
-    for (ASTNode tree :m_libraryTrees) {
-        for(ASTNode node : tree->getChildren()) {
-            nodes.push_back(node);
+    std::map<std::string, std::vector<ASTNode>> libNamespace;
+    for (auto libraryTree :m_libraryTrees) {
+        if (libNamespace.find(libraryTree.importAs.toStdString()) == libNamespace.end()) {
+            libNamespace[libraryTree.importAs.toStdString()] = std::vector<ASTNode>();
+        }
+        for(ASTNode node : libraryTree.tree->getChildren()) {
+            libNamespace[libraryTree.importAs.toStdString()].push_back(node);
         }
     }
-    return nodes;
+    return libNamespace;
 }
 
-ASTNode StrideLibrary::getImportTree(QString importName)
+ASTNode StrideLibrary::getImportTree(QString importName, QString importAs, QStringList scopeTree)
 {
     ASTNode importTree;
     QStringList nameFilters;
     nameFilters << "*.stride";
     QString path = m_libraryPath;
     if (importName.size() > 0) {
-        path += QDir::separator() + importName;
+        path += QDir::separator() + scopeTree.join(QDir::separator());
     }
     // FIXME support namespace as file name
     // TODO add warning if local file/directory shadows system one
@@ -138,16 +136,16 @@ ASTNode StrideLibrary::getImportTree(QString importName)
         QString fileName = m_libraryPath + QDir::separator() + importName + QDir::separator() + file;
         ASTNode tree = AST::parseFile(fileName.toLocal8Bit().data(), nullptr);
         if(tree) {
-            // FIXME: must support more than one level of file depth.
             string scopeFromFile = file.toStdString().substr(0, file.indexOf(".stride"));
             for(auto node: tree->getChildren()) {
                 importTree->addChild(node);
 //                Q_ASSERT(!node->getCompilerProperty("originalScope"));
-                node->appendToPropertyValue("originalScope", std::make_shared<ValueNode>(scopeFromFile, __FILE__, __LINE__));
+//                node->appendToPropertyValue("originalScope", std::make_shared<ValueNode>(scopeFromFile, __FILE__, __LINE__));
             }
         }
     }
     if (importTree->getChildren().size() > 0) {
+        m_libraryTrees.push_back(LibraryTree{{}, importName, importAs, importTree});
         return importTree;
     } else {
         return nullptr;
@@ -197,62 +195,20 @@ QList<DeclarationNode *> StrideLibrary::getParentTypes(DeclarationNode *type)
     return QList<DeclarationNode *>();
 }
 
-void StrideLibrary::readLibrary(QString rootDir, QMap<QString, QStringList> importList)
+void StrideLibrary::readLibrary(QString rootDir)
 {
     QString basepath = QString("/library/%1.%2").arg(m_majorVersion).arg(m_minorVersion);
     //    QMapIterator<QString, QStringList> it(importList);
-    importList[""] = QStringList() << ""; // Add root namespace
+//    importList[""] = QStringList() << ""; // Add root namespace
     m_libraryPath = rootDir + basepath;
 
-    // FIXME support nested namespaces Name::Name2::Name3
-    for (auto subPath :importList.keys()) {
-        ASTNode tree = getImportTree(subPath);
-        if (tree) {
-            m_libraryTrees.append(tree);
+    ASTNode tree = getImportTree("", "", QStringList());
+    if (!tree) {
 
-            if (subPath.size() == 0) { // file in library root path
-                for (auto node : tree->getChildren()) {
-                    if (node->getNodeType() == AST::Declaration
-                            || node->getNodeType() == AST::BundleDeclaration) {
-                        Q_ASSERT(!node->getCompilerProperty("namespaceTree"));
-                        node->appendToPropertyValue("namespaceTree",
-                                                    std::make_shared<ValueNode>(string("::"), __FILE__, __LINE__));
-                        node->appendToPropertyValue("namespaceTree",
-                                                    std::make_shared<ValueNode>(string(""), __FILE__, __LINE__));
-                    }
-                }
-            } else { // File has been found through import statement
-                for (QString namespaceName: importList[subPath]) {
-                    if (namespaceName.size() == 0) { // import with its own name (i.e. not import-as)
-                        // FIXME must support more than one level of file depth.
-                        // If not import-as we need to bring all elements to the global namespace
-                        for(ASTNode node : tree->getChildren()) {
-                            Q_ASSERT(!node->getCompilerProperty("namespaceTree"));
-                            node->appendToPropertyValue(
-                                        string("namespaceTree"),
-                                        std::make_shared<ValueNode>(
-                                            string("::"), __FILE__, __LINE__));
-                            node->appendToPropertyValue(
-                                        string("namespaceTree"),
-                                        std::make_shared<ValueNode>(
-                                            string(""), __FILE__, __LINE__));
-                        }
-                    } else { // import as
-                        for(ASTNode node : tree->getChildren()) {
-                            node->appendToPropertyValue(
-                                        string("namespaceTree"),
-                                        std::make_shared<ValueNode>(
-                                            namespaceName.toStdString(), __FILE__, __LINE__));
-                        }
-                    }
-                }
-            }
-        } else {
-            qDebug() << "ERROR parsing: Cannot import " << subPath;
-            vector<LangError> errors = AST::getParseErrors();
-            for(LangError error : errors) {
-                qDebug() << QString::fromStdString(error.getErrorText());
-            }
+        qDebug() << "ERROR parsing: Cannot import root library";
+        vector<LangError> errors = AST::getParseErrors();
+        for(LangError error : errors) {
+            qDebug() << QString::fromStdString(error.getErrorText());
         }
     }
 }
