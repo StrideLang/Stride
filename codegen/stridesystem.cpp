@@ -63,6 +63,11 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
 
     m_library.initializeLibrary(strideRoot);
 
+    for(auto importNode : importList) {
+        m_library.getImportTree(QString::fromStdString(importNode->importName()),
+                                QString::fromStdString(importNode->importAlias()),{});
+    }
+
     if (QFile::exists(systemFile)) {
         ASTNode systemTree = AST::parseFile(systemFile.toStdString().c_str(), nullptr);
         if (systemTree) {

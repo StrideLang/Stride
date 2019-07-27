@@ -125,7 +125,7 @@ ASTNode StrideLibrary::getImportTree(QString importName, QString importAs, QStri
     nameFilters << "*.stride";
     QString path = m_libraryPath;
     if (importName.size() > 0) {
-        path += QDir::separator() + scopeTree.join(QDir::separator());
+        path += QDir::separator() + scopeTree.join(QDir::separator()) + importName;
     }
     // FIXME support namespace as file name
     // TODO add warning if local file/directory shadows system one
@@ -133,7 +133,7 @@ ASTNode StrideLibrary::getImportTree(QString importName, QString importAs, QStri
     // For library we don't need support for file name namespace at the root, but there needs to be support for nested files.
     importTree = std::make_shared<AST>();
     for (QString file : libraryFiles) {
-        QString fileName = m_libraryPath + QDir::separator() + importName + QDir::separator() + file;
+        QString fileName = path + QDir::separator() + file;
         ASTNode tree = AST::parseFile(fileName.toLocal8Bit().data(), nullptr);
         if(tree) {
             string scopeFromFile = file.toStdString().substr(0, file.indexOf(".stride"));
@@ -142,6 +142,8 @@ ASTNode StrideLibrary::getImportTree(QString importName, QString importAs, QStri
 //                Q_ASSERT(!node->getCompilerProperty("originalScope"));
 //                node->appendToPropertyValue("originalScope", std::make_shared<ValueNode>(scopeFromFile, __FILE__, __LINE__));
             }
+        } else {
+            qDebug() << "Import not found in library: " << importName;
         }
     }
     if (importTree->getChildren().size() > 0) {

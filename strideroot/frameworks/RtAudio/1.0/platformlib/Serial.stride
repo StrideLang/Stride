@@ -1,25 +1,25 @@
 
 # Serial Domains
 
-_domainDefinition SerialInDomain {
-	domainName: "SerialInDomain"
-	framework: _RtAudioFramework
-	globalsTag: "Includes"
-	declarationsTag: "Declarations"
-	processingTag: "SerialIn:Processing"
-	initializationTag: "Initialization"
-	cleanupTag: "Cleanup"
-}
-
-_domainDefinition SerialOutDomain {
-	domainName: "SerialOutDomain"
-	framework: _RtAudioFramework
-	globalsTag: "Includes"
-	declarationsTag: "Declarations"
-	processingTag: "SerialOut:Processing"
-	initializationTag: "Initialization"
-	cleanupTag: "Cleanup"
-}
+#_domainDefinition SerialInDomain {
+#	domainName: "SerialInDomain"
+#	framework: _RtAudioFramework
+#	globalsTag: "Includes"
+#	declarationsTag: "Declarations"
+#	processingTag: "SerialIn:Processing"
+#	initializationTag: "Initialization"
+#	cleanupTag: "Cleanup"
+#}
+#
+#_domainDefinition SerialOutDomain {
+#	domainName: "SerialOutDomain"
+#	framework: _RtAudioFramework
+#	globalsTag: "Includes"
+#	declarationsTag: "Declarations"
+#	processingTag: "SerialOut:Processing"
+#	initializationTag: "Initialization"
+#	cleanupTag: "Cleanup"
+#}
 
 # Serial ------------------------
 
@@ -44,10 +44,9 @@ platformBlock _SerialPrintType {
 ##endif
 
 
-
-
 platformBlock _SerialInType {
     typeName: '_serialInType'
+		domain: AudioDomain
 #	inputs: 0
 	outputs: ["string"]
 	includeDir: ["serial/include"]
