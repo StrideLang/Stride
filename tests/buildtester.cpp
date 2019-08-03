@@ -96,6 +96,10 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile, boo
              return false;
          }
          buildOK = true;
+
+         system->generateDomainConnections(tree);
+
+         std::map<std::string, std::string> domainMap;
          for (auto &builder: m_builders) {
 //             connect(builder, SIGNAL(outputText(QString)), this, SLOT(printConsoleText(QString)));
 //             connect(builder, SIGNAL(errorText(QString)), this, SLOT(printConsoleError(QString)));

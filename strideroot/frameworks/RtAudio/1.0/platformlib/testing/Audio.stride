@@ -26,10 +26,12 @@ _domainDefinition AudioDomain {
     'float outbuf[NUM_SAMPLES * NUM_OUT_CHANNELS];'
 ]
     domainInitialization: '
+
     for(int i = 0; i < NUM_SAMPLES; i++) {
         inbuf[i* NUM_IN_CHANNELS] = (i * 2.0 / (NUM_SAMPLES-1)) - 1; // -1 -> 1
         inbuf[i* NUM_IN_CHANNELS + 1] = 1 - (i * 2.0 / (NUM_SAMPLES-1)); // 1 -> -1
     }
+    %%domainCode%%
     audio_buffer_process();
     '
 	domainFunction: '

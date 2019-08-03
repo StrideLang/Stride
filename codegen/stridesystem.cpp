@@ -580,15 +580,17 @@ ASTNode StrideSystem::getImportTree(QString importName, QString importAs, QStrin
                     continue;
                 }
 
-//                for(ASTNode node : tree->getChildren()) {
-//                    size_t indexExtension = file.toStdString().find(".stride");
-//                    string scopeName = file.toStdString().substr(0, indexExtension);
-//                    //FIXME allow namespacing by filename
-//                    node->appendToPropertyValue("namespaceTree",
-//                                                std::make_shared<ValueNode>(scopeName, __FILE__, __LINE__) );
-//                    node->appendToPropertyValue("namespaceTree",
-//                                                std::make_shared<ValueNode>(platform->getFramework(), __FILE__, __LINE__) );
-//                }
+                for(ASTNode node : tree->getChildren()) {
+                    size_t indexExtension = file.toStdString().find(".stride");
+                    string scopeName = file.toStdString().substr(0, indexExtension);
+                    //FIXME allow namespacing by filename
+                    node->appendToPropertyValue("namespaceTree",
+                                                std::make_shared<ValueNode>(importAs.toStdString(), __FILE__, __LINE__) );
+                    node->appendToPropertyValue("namespaceTree",
+                                                std::make_shared<ValueNode>(scopeName, __FILE__, __LINE__) );
+                    node->appendToPropertyValue("namespaceTree",
+                                                std::make_shared<ValueNode>(platform->getFramework(), __FILE__, __LINE__) );
+                }
             }
         }
     }
@@ -614,6 +616,166 @@ ASTNode StrideSystem::getImportTree(QString importName, QString importAs, QStrin
     }
 
     return nullptr;
+}
+
+void StrideSystem::generateDomainConnections(ASTNode tree)
+{
+    std::vector<ASTNode> newChildren;
+    for (auto node: tree->getChildren()){
+        if (node->getNodeType() == AST::Stream) {
+            auto stream = static_pointer_cast<StreamNode>(node);
+            std::vector<std::shared_ptr<StreamNode>> newStreams;
+            ASTNode previousNode;
+            while (stream) {
+                auto node = stream->getLeft();
+                previousNode = node;
+                auto previousDomainId = CodeValidator::getDomainIdentifier(CodeValidator::getNodeDomain(previousNode, {}, tree), {}, tree);
+
+                ASTNode next;
+                if (stream->getRight()->getNodeType() == AST::Stream) {
+                    next = static_pointer_cast<StreamNode>(stream->getRight())->getLeft();
+                } else {
+                    next = stream->getRight();
+                }
+                auto nextDomainId = CodeValidator::getDomainIdentifier(CodeValidator::getNodeDomain(next, {}, tree), {}, tree);
+                if (nextDomainId != previousDomainId) {
+                    qDebug() << "Domain change: " << QString::fromStdString(previousDomainId) << " -> " << QString::fromStdString(nextDomainId);
+                    auto domainChangeNodes = getDomainChangeStreams(previousDomainId,nextDomainId);
+                    // FIXME currently only simple two member connector streams supported
+                    if (domainChangeNodes.sourceStreams && domainChangeNodes.destStreams) {
+                        stream->setRight(domainChangeNodes.sourceStreams->getChildren()[0]->getChildren()[1]);
+                        newStreams.push_back(stream);
+                        std::shared_ptr<StreamNode> newStream = std::make_shared<StreamNode>(domainChangeNodes.destStreams->getChildren()[0]->getChildren()[0], next, __FILE__, __LINE__);
+                        newStreams.push_back(newStream);
+                        auto srcImportNodes =  domainChangeNodes.sourceImports->getChildren();
+                        newChildren.insert(newChildren.end(),srcImportNodes.begin(), srcImportNodes.end());
+                        auto destImportNodes =  domainChangeNodes.destImports->getChildren();
+                        newChildren.insert(newChildren.end(),destImportNodes.begin(), destImportNodes.end());
+                    } else {
+                    }
+                }
+                if (stream->getRight()->getNodeType() == AST::Stream) {
+                    stream = static_pointer_cast<StreamNode>(stream->getRight());
+                } else {
+                    stream = nullptr;
+                }
+            }
+            if (newStreams.size() == 0) { // no domain changes, keep stream as is
+                newChildren.push_back(node);
+            } else {
+                newChildren.insert(newChildren.end(), newStreams.begin(), newStreams.end());
+            }
+
+        } else {
+            newChildren.push_back(node);
+        }
+    }
+    tree->setChildren(newChildren);
+}
+
+ConnectionNodes StrideSystem::getDomainChangeStreams(string previousDomainId, string nextDomainId)  {
+    ConnectionNodes domainChangeNodes;
+
+    for (auto connector: m_connectionDefinitions) {
+        auto sourceDomainsList = connector->getPropertyValue("sourceDomains");
+        auto destDomainsList = connector->getPropertyValue("destinationDomains");
+        auto sourcePlatform = connector->getPropertyValue("sourcePlatform");
+        auto destPlatform = connector->getPropertyValue("destPlatform");
+        if (sourceDomainsList && destDomainsList) {
+            bool sourceDomainsMatch = false;
+            for (auto sourceDomain: sourceDomainsList->getChildren()) {
+                if (sourceDomain->getNodeType() == AST::String) {
+                    if (static_pointer_cast<ValueNode>(sourceDomain)->getStringValue() == previousDomainId) {
+                        sourceDomainsMatch = true;
+                        break;
+                    }
+                }
+            }
+            bool destDomainsMatch = false;
+            for (auto destDomain: destDomainsList->getChildren()) {
+                if (destDomain->getNodeType() == AST::String) {
+                    if (static_pointer_cast<ValueNode>(destDomain)->getStringValue() == nextDomainId) {
+                        destDomainsMatch = true;
+                        break;
+                    }
+                }
+
+            }
+            if (destDomainsMatch && sourceDomainsMatch) {
+                auto sourceStreams = connector->getPropertyValue("sourceStreams");
+                auto destStreams = connector->getPropertyValue("destinationStreams");
+                auto sourceImports = connector->getPropertyValue("sourceImports");
+                auto destImports = connector->getPropertyValue("destinationImports");
+
+                domainChangeNodes.sourceStreams = sourceStreams;
+
+                domainChangeNodes.destStreams = destStreams;
+
+                // Process source
+                if (sourceImports) {
+                    for (auto import: sourceImports->getChildren()) {
+                        if (import->getNodeType() == AST::String) {
+                            auto importName = static_pointer_cast<ValueNode>(import)->getStringValue();
+                            auto platformName = connector->getPropertyValue("sourcePlatform");
+                            Q_ASSERT(platformName->getNodeType() == AST::String);
+                            auto importTree = getImportTree(
+                                        QString::fromStdString(importName),
+                                        "",
+                                        QString::fromStdString(static_pointer_cast<ValueNode>(platformName)->getStringValue()));
+                            if (importTree) {
+                                //                                    scopeStack.push_back({"", importTree->getChildren()});
+                            } else {
+                                //                                    std::cerr << "ERROR: Cannot import " << importName << " for connection " << connector->getName() << std::endl;
+                            }
+                            for (auto node: importTree->getChildren()) {
+//                                CodeResolver::fillDefaultPropertiesForNode(node, m_tree);
+                                CodeResolver::fillDefaultPropertiesForNode(node, importTree);
+                            }
+
+                            domainChangeNodes.sourceImports = importTree;
+                        }
+                    }
+                }
+
+                //                    processStreamNode(static_pointer_cast<StreamNode>(sourceStreams->getChildren()[0])->getRight(),
+                //                            previousNode, scopeStack, domainCode);
+
+                //                    scopeStack.pop_back();
+
+                // Process destination
+                if (destImports) {
+                    for (auto import: destImports->getChildren()) {
+                        if (import->getNodeType() == AST::String) {
+                            auto importName = static_pointer_cast<ValueNode>(import)->getStringValue();
+                            auto platformName = connector->getPropertyValue("destinationPlatform");
+                            Q_ASSERT(platformName->getNodeType() == AST::String);
+                            auto importTree = getImportTree(
+                                        QString::fromStdString(importName),
+                                        "",
+                                        QString::fromStdString(static_pointer_cast<ValueNode>(platformName)->getStringValue()));
+                            if (importTree) {
+
+                                auto builtinObjects = getBuiltinObjectsReference();
+                                for(auto child: importTree->getChildren()) {
+                                    CodeResolver::insertBuiltinObjectsForNode(child, builtinObjects, importTree);
+                                }
+
+                                domainChangeNodes.destImports = importTree;
+                                //                                    scopeStack.push_back({"", importTree->getChildren()});
+                            } else {
+                                //                                    std::cerr << "ERROR: Cannot import " << importName << " for connection " << connector->getName() << std::endl;
+                            }
+                        }
+                    }
+                }
+
+                //                    processStreamNode(static_pointer_cast<StreamNode>(destStreams->getChildren()[0])->getLeft(),
+                //                            nullptr, scopeStack, domainCode);
+                //                    previousNode = static_pointer_cast<StreamNode>(destStreams->getChildren()[0])->getLeft();
+            }
+        }
+    }
+    return domainChangeNodes;
 }
 
 QString StrideSystem::makeProject(QString fileName)

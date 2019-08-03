@@ -49,6 +49,15 @@
 
 #include "builder.h"
 
+
+typedef struct {
+    ASTNode sourceStreams;
+    ASTNode sourceImports;
+    ASTNode destStreams;
+    ASTNode destImports;
+} ConnectionNodes;
+
+
 class StrideSystem
 {
 public:
@@ -78,6 +87,10 @@ public:
     vector<ASTNode> getOptionTrees();
 
     ASTNode getImportTree(QString importName, QString importAs, QString platformName);
+
+    void generateDomainConnections(ASTNode tree);
+
+    ConnectionNodes getDomainChangeStreams(std::string previousDomainId, std::string nextDomainId);
 
     std::map<std::string, std::shared_ptr<StridePlatform>> m_platforms;
     vector<std::shared_ptr<DeclarationNode>> m_platformDefinitions;

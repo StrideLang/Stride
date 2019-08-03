@@ -22,6 +22,7 @@
 platformModule _SerialPrintType {
     typeName: '_serialPrintType'
 	inputs: ["real"]
+	outputs: []
 #    include: []
 #    linkTo: []
 #    declarations: ['']
@@ -35,6 +36,7 @@ platformModule _SerialPrintType {
 platformBlock _SerialOutType {
     typeName: '_serialOutType'
 	inputs: ["real"]
+	outputs: []
     domain: WiringDomain
 #    include: []
 #    linkTo: []

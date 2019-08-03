@@ -43,22 +43,20 @@ platformBlock _SerialPrintType {
 #//      usleep(milliseconds*1000); // 100 ms
 ##endif
 
-
-platformBlock _SerialInType {
-    typeName: '_serialInType'
+platformModule SerialIn {
 		domain: AudioDomain
-#	inputs: 0
+	inputs: []
 	outputs: ["string"]
 	includeDir: ["serial/include"]
-    include: ["serial/serial.h", "iostream"]
+	include: ["serial/serial.h", "iostream"]
 	linkDir: ["serial/build"]
-    linkTo: ["serial"]
-    declarations: ['
+	linkTo: ["serial"]
+	declarations: ['
   unsigned long baud = 9600;
   std::string port ="";
   serial::Serial my_serial;'
 	]
-	constructors: [ 'my_serial(port, baud, serial::Timeout::simpleTimeout(1000))' ]
+	initializations: [ 'my_serial(port, baud, serial::Timeout::simpleTimeout(1000))' ]
     initializations: ['
   if(my_serial.isOpen())
     std::cout << "Serial opened successfully." << std::endl;
