@@ -92,7 +92,7 @@ public:
 
     ConnectionNodes getDomainChangeStreams(std::string previousDomainId, std::string nextDomainId);
 
-    std::map<std::string, std::shared_ptr<StridePlatform>> m_platforms;
+    std::vector<std::shared_ptr<StridePlatform>> m_platforms;
     vector<std::shared_ptr<DeclarationNode>> m_platformDefinitions;
     std::vector<std::shared_ptr<DeclarationNode>> m_connectionDefinitions;
 

@@ -2149,7 +2149,7 @@ std::shared_ptr<DeclarationNode> CodeValidator::findTypeDeclarationByName(string
     };
     for(auto subScope: scope) {
         for (auto scopeMember: subScope.second) {
-            if (scopeMember->getNodeType() == AST::Declaration) {
+            if (scopeMember->getNodeType() == AST::Declaration || scopeMember->getNodeType() == AST::BundleDeclaration) {
                 auto decl = getDecl(scopeMember, typeName, namespaces);
                 if (decl) {
                     return decl;
@@ -2159,7 +2159,7 @@ std::shared_ptr<DeclarationNode> CodeValidator::findTypeDeclarationByName(string
     }
     if (tree) {
         for(ASTNode node:tree->getChildren()) {
-            if (node->getNodeType() == AST::Declaration) {
+            if (node->getNodeType() == AST::Declaration || node->getNodeType() == AST::BundleDeclaration) {
                 auto decl = getDecl(node, typeName, namespaces);
                 if (decl) {
                     return decl;

@@ -166,7 +166,8 @@ void CodeResolver::fillDefaultPropertiesForNode(ASTNode node, ASTNode tree) {
         QVector<ASTNode> typeProperties = CodeValidator::getPortsForType(
                     destBlock->getObjectType(), {}, tree, destBlock->getNamespaceList());
         if (typeProperties.isEmpty()) {
-            qDebug() << "ERROR: fillDefaultPropertiesForNode() No type definition for " << QString::fromStdString(destBlock->getObjectType());
+            qDebug() << "ERROR: fillDefaultPropertiesForNode() No type definition for "
+                     << QString::fromStdString(destBlock->getObjectType());
             return;
         }
         for(std::shared_ptr<PropertyNode> property : blockProperties) {
@@ -193,8 +194,7 @@ void CodeResolver::fillDefaultPropertiesForNode(ASTNode node, ASTNode tree) {
                             portDescription->getFilename().data(), portDescription->getLine());
                 destBlock->addProperty(newProperty);
             }
-        }
-    } else if (node->getNodeType() == AST::Function) {
+        }    } else if (node->getNodeType() == AST::Function) {
         std::shared_ptr<FunctionNode> destFunc = static_pointer_cast<FunctionNode>(node);
         vector<std::shared_ptr<PropertyNode>> blockProperties = destFunc->getProperties();
         std::shared_ptr<DeclarationNode> functionModule = CodeValidator::findDeclaration(

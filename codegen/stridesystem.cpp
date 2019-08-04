@@ -76,18 +76,17 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
             // Iterate through platforms reading them.
             // TODO Should optimize this to not reread platform if already done.
 
-            for (auto platformEntry: m_platforms) {
-                std::shared_ptr<StridePlatform> platform = platformEntry.second;
+            for (auto platform: m_platforms) {
                 ASTNode importTree = getImportTree("",
                                                    "",
-                                                   QString::fromStdString(platformEntry.first));
+                                                   QString::fromStdString(platform->getFramework()));
                 if(importTree) {
                     platform->addTree("",importTree);
                 }
                 for(auto importNode : importList) {
                     ASTNode importTree = getImportTree(QString::fromStdString(importNode->importName()),
                                                        QString::fromStdString(importNode->importAlias()),
-                                                       QString::fromStdString(platformEntry.first));
+                                                       QString::fromStdString(platform->getFramework()));
                     if(importTree) {
                         platform->addTree(importNode->importAlias(),importTree);
                         importNode->appendToPropertyValue("importTrees", importTree);
@@ -104,8 +103,7 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
 
 
             // Load testing trees
-            for(auto platformEntry: m_platforms) {
-                auto platform = platformEntry.second;
+            for(auto platform: m_platforms) {
                 QStringList nameFilters;
                 nameFilters.push_back("*.stride");
                 string platformPath = platform->buildTestingLibPath(m_strideRoot.toStdString());
@@ -242,10 +240,7 @@ void StrideSystem::parseSystemTree(ASTNode systemTree)
                             definition["framework"], definition["frameworkVersion"],
                         definition["hardware"], definition["hardwareVersion"],
                         definition["rootNamespace"]);
-                if (m_platforms.find(usedPlatformName.second) != m_platforms.end()) {
-                    qDebug() << "ERROR: Platform namespace already exists: " << QString::fromStdString(usedPlatformName.second);
-                }
-                m_platforms[usedPlatformName.second] = newPlatform;
+                m_platforms.push_back(newPlatform);
             } else {
                 // TODO add error
             }
@@ -323,8 +318,7 @@ vector<Builder *> StrideSystem::createBuilders(QString fileName, vector<string> 
         qDebug() << "Error creating project path";
         return builders;
     }
-    for (auto platformEntry: m_platforms) {
-        auto platform = platformEntry.second;
+    for (auto platform: m_platforms) {
         if ( (usedFrameworks.size() == 0)
                 || (std::find(usedFrameworks.begin(), usedFrameworks.end(), platform->getFramework()) != usedFrameworks.end())) {
             if (platform->getAPI() == StridePlatform::PythonTools) {
@@ -387,6 +381,7 @@ vector<Builder *> StrideSystem::createBuilders(QString fileName, vector<string> 
                                     if (builder) {
                                         builder->m_connectors = m_connectionDefinitions;
                                         builder->m_system = this;
+                                        builder->m_platformName = QString::fromStdString(platform->getFramework());
                                         builders.push_back(builder);
                                     }
                                 }
@@ -428,7 +423,7 @@ vector<string> StrideSystem::getFrameworkNames()
 {
     vector<string> names;
     for(auto platform: m_platforms) {
-        names.push_back(platform.second->getFramework());
+        names.push_back(platform->getFramework());
     }
     return names;
 }
@@ -437,8 +432,7 @@ map<string, vector<ASTNode>> StrideSystem::getBuiltinObjectsReference()
 {
     map<string, vector<ASTNode>> objects;
     objects[""] = vector<ASTNode>();
-    for (auto platformEntry: m_platforms) {
-        auto platform = platformEntry.second;
+    for (auto platform: m_platforms) {
         vector<ASTNode> platformObjects = platform->getPlatformObjectsReference();
 
         if (m_testing) {
@@ -471,9 +465,10 @@ map<string, vector<ASTNode>> StrideSystem::getBuiltinObjectsReference()
 //        }
 //        objects[platformName] = platformObjects;
         // Then put first platform's objects in default namespace
+        objects[platform->getFramework()] = vector<ASTNode>();
         std::shared_ptr<StridePlatform> rootPlatform;
         for (auto node: platformObjects) {
-            objects[platformEntry.first].push_back(node);
+            objects[platform->getFramework()].push_back(node);
             if (node->getNodeType() == AST::Declaration || node->getNodeType() == AST::BundleDeclaration) {
                 auto validScopes = node->getCompilerProperty("namespaceTree");
                 if (validScopes) {
@@ -500,6 +495,9 @@ map<string, vector<ASTNode>> StrideSystem::getBuiltinObjectsReference()
                                                               __FILE__, __LINE__);
                     newList->addChild(std::make_shared<ValueNode>(string(""), __FILE__, __LINE__));
                     node->setCompilerProperty("namespaceTree", newList);
+                }
+                if (platform->getRootNamespace() == "") {
+                    objects[""].push_back(node);
                 }
 
             }
@@ -553,11 +551,9 @@ ASTNode StrideSystem::getImportTree(QString importName, QString importAs, QStrin
     // Look first in platforms
     // TODO currently search order is defined by the order in which platforms
     // are declared. Should there be more explicit ordering or restrictions?
-    for (auto platformEntry: m_platforms) {
-        if (platformName.toStdString() == platformEntry.first
-                || platformName.toStdString() == platformEntry.second->getRootNamespace()
-                || platformName.toStdString() == platformEntry.second->getFramework()) {
-            auto platform = platformEntry.second;
+    for (auto platform: m_platforms) {
+        if (platformName.toStdString() == platform->getRootNamespace()
+                || platformName.toStdString() == platform->getFramework()) {
             string platformPath = platform->buildPlatformLibPath(m_strideRoot.toStdString());
             QString includeSubPath = QString::fromStdString(platformPath ) + "/" + importName;
             QStringList libraryFiles =  QDir(includeSubPath).entryList(nameFilters);

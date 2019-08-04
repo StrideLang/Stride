@@ -92,6 +92,7 @@ public:
     // Additional information from stride system
     std::vector<std::shared_ptr<DeclarationNode>> m_connectors; // Connections between domains.
     StrideSystem *m_system; // The StrideSystem that created this builder.
+    QString m_platformName;
 
 public slots:
     virtual std::map<std::string, std::string> generateCode(ASTNode tree) = 0;
@@ -109,7 +110,6 @@ protected:
     QString m_projectDir;
     QString m_strideRoot;
     QString m_platformPath;
-    QString m_platformName;
     QString m_stdOut;
     QString m_stdErr;
     QMap<QString, QVariant> m_configuration;
