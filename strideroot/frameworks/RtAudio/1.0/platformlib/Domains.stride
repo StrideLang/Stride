@@ -30,6 +30,7 @@ _domainDefinition SetupDomain {
 	processingTag: "Initialization"
 	initializationTag: "Initialization"
 	cleanupTag: "Initialization"
+    substitutions: [ ]
     domainIncludes: []
     domainDeclarations: []
     domainInitialization: '// init domain init'

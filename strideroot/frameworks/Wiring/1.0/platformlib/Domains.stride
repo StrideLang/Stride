@@ -19,6 +19,7 @@ _domainDefinition WiringDomain {
 	processingTag: "Processing"
 	initializationTag: "Initialization"
 	cleanupTag: "Cleanup"
+    substitutions: [ ]
     domainIncludes: ["Timer.h"]
     domainDeclarations: ["Timer t;"]
     domainInitialization: '// init domain init	
