@@ -3,11 +3,6 @@ use DesktopAudio version 1.0
 import Generators
 
 
-signal Value {
-	domain: AudioDomain
-}
-
-
 module Gen {
 	ports: [
         mainOutputPort OutputPort {
