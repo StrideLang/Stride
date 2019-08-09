@@ -44,7 +44,7 @@ else:unix: LIBS += -L$$OUT_PWD/../parser/ -lStrideParser
 INCLUDEPATH += $$PWD/../parser
 DEPENDPATH += $$PWD/../parser
 
-message($$PWD/../parser)
+#message($$PWD/../parser)
 
 win32-msvc2015:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../parser/release/StrideParser.lib
 else:win32-msvc2015:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../parser/debug/StrideParser.lib
