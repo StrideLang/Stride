@@ -1,6 +1,6 @@
 generatorDirectives __GeneratorDirectives {
     projectDir: "project"
-    templateFiles: ["template.cpp"]
+    templateFiles: ["template.cpp", "config.cmake"]
     destinationDir: "code"
     buildDir: "build"
     configCommand: ["cmake",  "-DSTRIDE_PLATFORM_ROOT=%platformRoot%", ".."]
@@ -10,12 +10,35 @@ generatorDirectives __GeneratorDirectives {
     codeGenerator: "pufferfish"
     codeGeneratorMajorVersion: 1
     codeGeneratorMinorVersion: 0
-    buildPlatforms: ["Windows", "Linux"]
+    buildPlatforms: ["Linux"]
+    substitutions: [["include_dirs", "rtaudio-4.1.2"],
+                    ["additional_sources", "rtaudio-4.1.2/RtAudio.cpp"],
+                    ["additional_defines", "-D__LINUX_PULSE__"],
+                    ["link_libraries", "pthread pulse-simple pulse"]]
 }
 
 generatorDirectives __GeneratorDirectives {
     projectDir: "project"
-    templateFiles: ["template.cpp"]
+    templateFiles: ["template.cpp", "config.cmake"]
+    destinationDir: "code"
+    buildDir: "build"
+    configCommand: ["cmake",  "-DSTRIDE_PLATFORM_ROOT=%platformRoot%", ".."]
+    buildCommand: ["cmake", "--build", "."]
+    target: "app"
+    targetDir: "code/build"
+    codeGenerator: "pufferfish"
+    codeGeneratorMajorVersion: 1
+    codeGeneratorMinorVersion: 0
+    buildPlatforms: ["Windows"]
+    substitutions: [["include_dirs", "rtaudio-4.1.2"],
+                    ["additional_sources", "rtaudio-4.1.2/RtAudio.cpp"],
+                    ["additional_defines", "-D__WINDOWS_WASAPI__"],
+                    ["link_libraries", "ole32 winmm ksuser mfplat mfuuid wmcodecdspuuid"]]
+}
+
+generatorDirectives __GeneratorDirectives {
+    projectDir: "project"
+    templateFiles: ["template.cpp", "config.cmake"]
     destinationDir: "code"
     buildDir: "build"
     configCommand: ["/usr/local/bin/cmake",  "-DSTRIDE_PLATFORM_ROOT=%platformRoot%", ".."]
@@ -26,4 +49,8 @@ generatorDirectives __GeneratorDirectives {
     codeGeneratorMajorVersion: 1
     codeGeneratorMinorVersion: 0
     buildPlatforms: ["macOS"]
+    substitutions: [["include_dirs", "rtaudio-4.1.2"],
+                    ["additional_sources", "rtaudio-4.1.2/RtAudio.cpp"],
+                    ["additional_defines", "-D__MACOSX_CORE__"],
+                    ["link_libraries", "-framework CoreAudio -framework CoreFoundation -lpthread"]]
 }
