@@ -13,5 +13,3 @@ win32-msvc2015 {
     FLEX_BIN_PATH = C:\Tools\winflexbison\bin\Release
     BISON_BIN_PATH = C:\Tools\winflexbison\bin\Release
 }
-
-

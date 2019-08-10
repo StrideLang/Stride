@@ -10,9 +10,10 @@ unix {
     }
 }
 
-win32-msvc2015 {
-    BISON_BINARY = $$BISON_BIN_PATH\win_bison
-    FLEX_BINARY = $$FLEX_BIN_PATH\win_flex
+win32 {
+# Supports chocolatey install of winflexbison
+    BISON_BINARY = win_bison
+    FLEX_BINARY = win_flex
 }
 
 bison.name = Bison ${QMAKE_FILE_IN}
@@ -33,7 +34,7 @@ QMAKE_EXTRA_COMPILERS += bison
 flex.name = Flex ${QMAKE_FILE_IN}
 flex.input = FLEXSOURCES
 flex.output = ${QMAKE_FILE_PATH}/${QMAKE_FILE_BASE}.lexer.cpp
-win32-msvc2015: flex.commands = $$FLEX_BINARY --wincompat -o${QMAKE_FILE_OUT} ${QMAKE_FILE_IN}
+win32: flex.commands = $$FLEX_BINARY --wincompat -o${QMAKE_FILE_OUT} ${QMAKE_FILE_IN}
 unix: flex.commands = $$FLEX_BINARY -o${QMAKE_FILE_OUT} ${QMAKE_FILE_IN};
 flex.CONFIG += target_predeps
 flex.variable_out = GENERATED_SOURCES

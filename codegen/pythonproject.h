@@ -69,7 +69,7 @@ signals:
 
 public slots:
 
-    virtual std::map<std::string, std::string> generateCode(ASTNode tree);
+    virtual std::map<std::string, std::string> generateCode(ASTNode tree) override;
     virtual bool build(std::map<std::string, std::string> domainMap) override;
     virtual bool deploy() override { return true;}
     virtual bool run(bool pressed = true) override;

@@ -3174,7 +3174,8 @@ void ParserTest::testHeader()
 
 void ParserTest::testLibraryBasicTypes()
 {
-    StrideLibrary library(QFINDTESTDATA(STRIDEROOT));
+    StrideLibrary library;
+    library.initializeLibrary(QFINDTESTDATA(STRIDEROOT));
     std::shared_ptr<DeclarationNode> type;
     QStringList typesToCheck;
     typesToCheck << "rated" << "domainMember" << "type" << "base" << "port"

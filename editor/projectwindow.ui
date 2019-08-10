@@ -223,21 +223,20 @@
     <addaction name="actionSave"/>
     <addaction name="actionSave_as"/>
     <addaction name="actionClose_Tab"/>
-    <addaction name="actionOptions"/>
     <addaction name="actionQuit"/>
    </widget>
    <widget class="QMenu" name="menuBuild">
     <property name="title">
      <string>Build</string>
     </property>
-    <addaction name="actionConfigure_System"/>
     <addaction name="actionBuild"/>
     <addaction name="actionUpload"/>
-    <addaction name="actionRename"/>
     <addaction name="actionRefresh"/>
     <addaction name="actionFollow_Symbol"/>
     <addaction name="actionOpen_Generated_Code"/>
     <addaction name="actionClean_Project"/>
+    <addaction name="separator"/>
+    <addaction name="actionConfigure_System"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
@@ -247,6 +246,8 @@
     <addaction name="actionFind"/>
     <addaction name="actionFind_Next"/>
     <addaction name="actionFind_Previous"/>
+    <addaction name="separator"/>
+    <addaction name="actionOptions"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -317,7 +318,7 @@
   </action>
   <action name="actionOptions">
    <property name="text">
-    <string>Options</string>
+    <string>Editor Options</string>
    </property>
   </action>
   <action name="actionLoad_File">
@@ -414,7 +415,7 @@
   </action>
   <action name="actionConfigure_System">
    <property name="text">
-    <string>Configure System</string>
+    <string>System Configuration</string>
    </property>
   </action>
  </widget>

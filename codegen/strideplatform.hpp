@@ -42,20 +42,6 @@
 
 #include "ast.h"
 
-class StridePlatform;
-
-class StrideConnection {
-public:
-
-private:
-    StridePlatform *m_source;
-    StridePlatform *m_destination;
-    AST *m_sourceImports;
-    AST *m_sourceStreams;
-    AST *m_destinationImports;
-    AST *m_destinationStreams;
-};
-
 class StridePlatform {
 public:
     StridePlatform(std::string framework, std::string fwVersion,
