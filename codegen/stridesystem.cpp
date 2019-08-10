@@ -533,7 +533,38 @@ vector<ASTNode> StrideSystem::getOptionTrees()
     for (auto fileInfo : optionFiles) {
         ASTNode optionTree = AST::parseFile(fileInfo.absoluteFilePath().toStdString().c_str(), nullptr);
         if (optionTree) {
-            optionTrees.push_back(optionTree);
+            ASTNode finalTree = std::make_shared<AST>();
+            for (auto child: optionTree->getChildren()) {
+                bool osMatch = true;
+                if (child->getNodeType() == AST::Declaration) {
+                    auto decl = static_pointer_cast<DeclarationNode>(child);
+                    auto osNode = decl->getPropertyValue("buildPlatforms");
+                    if (osNode && osNode->getNodeType() == AST::List) {
+                        osMatch = false;
+                        for (auto validOSNode: osNode->getChildren()) {
+                            if (validOSNode->getNodeType() == AST::String) {
+
+#ifdef Q_OS_LINUX
+                                if (std::static_pointer_cast<ValueNode>(validOSNode)->getStringValue() == "Linux") {
+#elif defined(Q_OS_MACOS)
+                                if (std::static_pointer_cast<ValueNode>(validOSNode)->getStringValue() == "macOS") {
+#elif defined(Q_OS_WINDOWS)
+                                if (std::static_pointer_cast<ValueNode>(validOSNode)->getStringValue() == "Windows") {
+#else
+                                if (false) {
+#endif
+                                    osMatch = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                if (osMatch) {
+                    finalTree->addChild(child);
+                }
+            }
+            optionTrees.push_back(finalTree);
         } else {
             qDebug() << "Error parsing option file: " << fileInfo.absolutePath();
         }

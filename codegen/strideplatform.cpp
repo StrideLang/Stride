@@ -130,6 +130,7 @@ std::vector<string> StridePlatform::getDomainIds()
 
         }
     }
+    return std::vector<string>();
 }
 
 void StridePlatform::addTree(string treeName, ASTNode treeRoot)

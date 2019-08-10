@@ -9,5 +9,21 @@ generatorDirectives __GeneratorDirectives {
     targetDir: "code/build"
     codeGenerator: "pufferfish"
     codeGeneratorMajorVersion: 1
-    codeGeneratorMinroVersion: 0
+    codeGeneratorMinorVersion: 0
+    buildPlatforms: ["Windows", "Linux"]
+}
+
+generatorDirectives __GeneratorDirectives {
+    projectDir: "project"
+    templateFiles: ["template.cpp"]
+    destinationDir: "code"
+    buildDir: "build"
+    configCommand: ["/usr/local/bin/cmake",  "-DSTRIDE_PLATFORM_ROOT=%platformRoot%", ".."]
+    buildCommand: ["/usr/local/bin/cmake", "--build", "."]
+    target: "app"
+    targetDir: "code/build"
+    codeGenerator: "pufferfish"
+    codeGeneratorMajorVersion: 1
+    codeGeneratorMinorVersion: 0
+    buildPlatforms: ["macOS"]
 }

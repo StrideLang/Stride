@@ -18,8 +18,7 @@ greaterThan(QT_MINOR_VERSION, 7) {
 }
 
 # Build/Deploy Plugins
-exists( plugins/pufferfishplugin) {
+exists(plugins/pufferfishplugin) {
     SUBDIRS += plugins/pufferfishplugin
-
     pufferfishplugin.depends = codegen
 }
