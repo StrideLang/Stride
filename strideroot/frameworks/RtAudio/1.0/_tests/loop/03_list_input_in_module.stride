@@ -23,7 +23,7 @@ module Sum {
 				trigger Reset {}
 			]
 			streams: [
-				Input[1] + Input[2] + Input[3] >> Output;
+				Input[0] + Input[1] + Input[2] >> Output;
 				on >> Done;
 			]
 			onExecution: Reset
@@ -35,5 +35,5 @@ module Sum {
 	]
 }
 
-[AudioIn[1], AudioIn[2], 7] >> Sum() >> AudioOut[1];
+[AudioIn[0], AudioIn[1], 7] >> Sum() >> AudioOut[0];
 

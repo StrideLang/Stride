@@ -8,12 +8,11 @@ loop Accumulate {
 	blocks: [
 		signal Input[InputPort.size] {}
 		signal Output {default: 0 reset: Reset }
-		signal Index { default: 1 reset: Reset }
 		switch Done {default: off reset:Reset }
 		trigger Reset {}
 	]
 	streams: [
-		Input[1] + Input[2] + Input[3] >> Output;
+		Input[0] + Input[1] + Input[2] >> Output;
 		on >> Done;
 	]
 	onExecution: Reset
@@ -21,5 +20,5 @@ loop Accumulate {
 }
 
 
-[AudioIn[1], AudioIn[2], 7] >> Accumulate() >> AudioOut[1];
+[AudioIn[0], AudioIn[1], 7] >> Accumulate() >> AudioOut[0];
 

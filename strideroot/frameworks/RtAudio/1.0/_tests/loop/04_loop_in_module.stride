@@ -19,7 +19,7 @@ module LoopModule {
 			blocks: [
 				signal Input[InputPort.size] {}
 				signal Output { default: 0 reset: Reset }
-				signal Index { default: 1 reset: Reset }
+				signal Index { default: 0 reset: Reset }
 				switch Done {}
 				trigger Reset {}
 			]
@@ -28,7 +28,7 @@ module LoopModule {
 			streams: [
 				Input [ Index ] + Output >> Output ;
 				Index + 1 >> Index ;
-				[ Index , InputPort.size ] >> Greater () >> Done ;
+				[ Index , InputPort.size ] >> Equal () >> Done ;
 				
 			]
 		}
@@ -38,5 +38,5 @@ module LoopModule {
 	]
 }
 
-LoopModule() >> AudioOut[1];
+LoopModule() >> AudioOut[0];
 
