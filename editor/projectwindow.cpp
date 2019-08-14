@@ -181,11 +181,12 @@ bool ProjectWindow::build()
         if (m_builders.size() == 0) {
             printConsoleText(tr("Aborting. No builder available."));
             qDebug() << "Can't create builder";
-//            tree->deleteChildren();
-//            delete tree;
             return false;
         }
         buildOK = true;
+
+        system->generateDomainConnections(tree);
+
         for (auto builder: m_builders) {
             builder->registerYieldCallback([](){ qApp->processEvents();});
             builder->setConfiguration(systemConfig.platformConfigurations["all"]);
@@ -197,10 +198,7 @@ bool ProjectWindow::build()
 
             buildOK &= builder->build(domainMap);
         }
-//        tree->deleteChildren();
-//        delete tree;
     }
-
     return buildOK;
 }
 

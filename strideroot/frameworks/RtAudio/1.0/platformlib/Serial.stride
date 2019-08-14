@@ -44,25 +44,16 @@ platformBlock _SerialPrintType {
 ##endif
 
 platformModule SerialIn {
-		domain: AudioDomain
+	domain: SerialDomain
 	inputs: []
 	outputs: ["string"]
 	includeDir: ["serial/include"]
 	include: ["serial/serial.h", "iostream"]
 	linkDir: ["serial/build"]
 	linkTo: ["serial"]
-	declarations: ['
-  unsigned long baud = 9600;
-  std::string port ="";
-  serial::Serial my_serial;'
+	declarations: [''
 	]
-	initializations: [ 'my_serial(port, baud, serial::Timeout::simpleTimeout(1000))' ]
-    initializations: ['
-  if(my_serial.isOpen())
-    std::cout << "Serial opened successfully." << std::endl;
-  else
-    std::cout << "ERROR: Failed to open serial.		" << std::endl;
-		']
+	initializations: [ '' ]
 	globalDeclarations: []
 	globalInitializations: []
 	preProcessing: '

@@ -46,6 +46,6 @@ connection _WiringToPCSerial {
 }
 
 system DesktopAudio {
-    platforms: [_PCPlatform, _WiringPlatform]
+    platforms: [_WiringPlatform, _PCPlatform]
     connections: [_PCToWiringSerial, _WiringToPCSerial]
 }

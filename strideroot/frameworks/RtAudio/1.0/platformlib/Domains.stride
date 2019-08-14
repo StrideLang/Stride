@@ -1,7 +1,7 @@
 
 _domainProcessing _PlatformDomainProcessing {
 	domainStreams: [
-		SetupDomain >> [AudioDomain, AsyncDomain];
+		SetupDomain >> [AudioDomain, AsyncDomain, SerialDomain];
 	]
 }
 
@@ -78,5 +78,73 @@ _domainDefinition AsyncDomain {
 	asyncthread_running = false;
 	asyncthread.join();
 	std::cout << "Thread joined." << std::endl;
+	'
+}
+
+constant _SerialBaudRate  { # Overriden by configuration
+	value: 56000
+}
+
+constant _SerialPort  { # Overriden by configuration
+	value: '"/dev/tty"'
+}
+
+_domainDefinition SerialDomain {
+	domainName: "SerialDomain"
+	framework: _RtAudioFramework
+#	rate: SerialRate
+	globalsTag: "Includes"
+	declarationsTag: "Declarations"
+	processingTag: "Processing"
+	initializationTag: "Initialization"
+	cleanupTag: "Cleanup"
+    substitutions: ["baud_rate", _SerialBaudRate,
+					"serial_port", _SerialPort ]
+    domainIncludes: ['serial/serial.h', 'thread']
+    domainDeclarations: ["void serial_thread_func();",
+		"bool serialthread_running {true};"]
+    domainInitialization: "// serail domain init
+	 std::thread readThread(serial_thread_func);"
+	domainFunction: "// serial domain processing function
+
+
+void serial_thread_func() {
+  serial::Serial my_serial(%%serial_port%%, %%baud_rate%%, serial::Timeout::simpleTimeout(100));
+  // Wait a bit for serial device to setup
+  al::wait(1);
+
+  // Flush buffers
+  my_serial.flush();
+  std::string lineBuffer; // Stores partial lines between reads
+  const unsigned int bufferSize = 32;
+  uint8_t buffer[bufferSize];
+  while (serialthread_running) {
+    std::string input = lineBuffer + my_serial.read(bufferSize - 1);
+    if (input.size() > 0) {
+      size_t begin = 0;
+      size_t count = 0;
+      while (count < input.size()) {
+        if (input[count] == '\r' || input[count] == '\n') {
+          if (count - begin > 0) {
+           input.substr(begin, count - begin) ;
+          }
+          begin = count + 1;
+        }
+        count++;
+      }
+      lineBuffer.clear();
+      if (begin != count) {
+        lineBuffer = input.substr(begin);
+      }
+
+
+    }
+  }
+}
+	"
+    domainCleanup: '// init domain cleanup
+	serialthread_running = false;
+	serialthread.join();
+	std::cout << "Serial Thread joined." << std::endl;
 	'
 }
