@@ -68,6 +68,7 @@ public:
 
     static void fillDefaultPropertiesForNode(ASTNode node, ASTNode tree);
     static void insertBuiltinObjectsForNode(ASTNode node, map<string, vector<ASTNode> > &objects, ASTNode tree);
+    static std::shared_ptr<DeclarationNode> createSignalDeclaration(QString name, int size, ScopeStack scope, ASTNode tree);
 
 private:
     // Main processing functions
@@ -101,7 +102,6 @@ private:
     ASTNode processDomainsForNode(ASTNode node, ScopeStack scopeStack, QList<ASTNode > &domainStack);
     void setDomainForStack(QList<ASTNode > domainStack, ASTNode domainName,  ScopeStack scopeStack);
     std::shared_ptr<DeclarationNode> createDomainDeclaration(QString name);
-    std::shared_ptr<DeclarationNode> createSignalDeclaration(QString name, int size, ScopeStack &scope);
     std::vector<ASTNode> declareUnknownName(std::shared_ptr<BlockNode> block, int size, ScopeStack localScope, ASTNode tree);
     std::vector<ASTNode> declareUnknownBundle(std::shared_ptr<BundleNode> name, int size, ScopeStack localScope, ASTNode tree);
     std::shared_ptr<DeclarationNode> createConstantDeclaration(string name, ASTNode value);
@@ -120,9 +120,9 @@ private:
 
     void declareInternalBlocksForNode(ASTNode node, ScopeStack scope);
 
-    std::shared_ptr<ValueNode> reduceConstExpression(std::shared_ptr<ExpressionNode> expr, ScopeStack scope, ASTNode tree);
-    std::shared_ptr<ValueNode> resolveConstant(ASTNode value, ScopeStack scope);
-    void resolveConstantsInNode(ASTNode node, ScopeStack scope);
+    static std::shared_ptr<ValueNode> reduceConstExpression(std::shared_ptr<ExpressionNode> expr, ScopeStack scope, ASTNode tree);
+    static std::shared_ptr<ValueNode> resolveConstant(ASTNode value, ScopeStack scope, ASTNode tree);
+    static void resolveConstantsInNode(ASTNode node, ScopeStack scope, ASTNode tree);
     void processResetForNode(ASTNode thisScope, ASTNode streamScope, ASTNode upperScope);
     void propagateDomainsForNode(ASTNode node, ScopeStack scopeStack);
     void resolveDomainForStreamNode(ASTNode node, ScopeStack scope);
@@ -140,14 +140,14 @@ private:
     void appendParent(std::shared_ptr<DeclarationNode> decl, std::shared_ptr<DeclarationNode> parent);
 
     // Operators
-    std::shared_ptr<ValueNode>  multiply(std::shared_ptr<ValueNode>  left, std::shared_ptr<ValueNode>  right);
-    std::shared_ptr<ValueNode>  divide(std::shared_ptr<ValueNode>  left, std::shared_ptr<ValueNode>  right);
-    std::shared_ptr<ValueNode>  add(std::shared_ptr<ValueNode>  left, std::shared_ptr<ValueNode>  right);
-    std::shared_ptr<ValueNode>  subtract(std::shared_ptr<ValueNode>  left, std::shared_ptr<ValueNode>  right);
-    std::shared_ptr<ValueNode>  unaryMinus(std::shared_ptr<ValueNode>  value);
-    std::shared_ptr<ValueNode>  logicalAnd(std::shared_ptr<ValueNode>  left, std::shared_ptr<ValueNode>  right);
-    std::shared_ptr<ValueNode>  logicalOr(std::shared_ptr<ValueNode>  left, std::shared_ptr<ValueNode>  right);
-    std::shared_ptr<ValueNode>  logicalNot(std::shared_ptr<ValueNode>  left);
+    static std::shared_ptr<ValueNode>  multiply(std::shared_ptr<ValueNode>  left, std::shared_ptr<ValueNode>  right);
+    static std::shared_ptr<ValueNode>  divide(std::shared_ptr<ValueNode>  left, std::shared_ptr<ValueNode>  right);
+    static std::shared_ptr<ValueNode>  add(std::shared_ptr<ValueNode>  left, std::shared_ptr<ValueNode>  right);
+    static std::shared_ptr<ValueNode>  subtract(std::shared_ptr<ValueNode>  left, std::shared_ptr<ValueNode>  right);
+    static std::shared_ptr<ValueNode>  unaryMinus(std::shared_ptr<ValueNode>  value);
+    static std::shared_ptr<ValueNode>  logicalAnd(std::shared_ptr<ValueNode>  left, std::shared_ptr<ValueNode>  right);
+    static std::shared_ptr<ValueNode>  logicalOr(std::shared_ptr<ValueNode>  left, std::shared_ptr<ValueNode>  right);
+    static std::shared_ptr<ValueNode>  logicalNot(std::shared_ptr<ValueNode>  left);
 
     ASTNode makeConnector(ASTNode node, string connectorName, int size, const ScopeStack &scopeStack);
 //    void terminateStackWithBridge(ASTNode node, ScopeStack &streams, ScopeStack &stack, ScopeStack &scopeStack);

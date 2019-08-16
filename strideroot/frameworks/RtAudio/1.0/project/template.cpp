@@ -1,4 +1,4 @@
-
+#include <iostream>
 //[[Includes]]
 //[[/Includes]]
 
@@ -25,6 +25,10 @@ int main() {
 // std::cout << "app started" << std::endl;
 //[[Initialization]]
 //[[/Initialization]]
+
+    char input;
+    std::cout << "\nRunning ... press <enter> to quit.\n";
+    std::cin.get(input);
 
 //[[Cleanup]]
 //[[/Cleanup]]

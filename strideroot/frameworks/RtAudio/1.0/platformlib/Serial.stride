@@ -56,14 +56,7 @@ platformModule SerialIn {
 	initializations: [ '' ]
 	globalDeclarations: []
 	globalInitializations: []
-	preProcessing: '
-	std::string tempVar;
-	std::string newChar;
-	do {
-		tempVar += newChar;
-		newChar += my_serial.read(1);
-		} while (newChar.size() > 0 && newChar != "\n");
-	'
-    processing: "tempVar"
+	preProcessing: '	'
+    processing: "serialVar"
     inherits: [_Signal]
 }

@@ -82,39 +82,42 @@ _domainDefinition AsyncDomain {
 }
 
 constant _SerialBaudRate  { # Overriden by configuration
-	value: 56000
+	value: 9600
 }
 
 constant _SerialPort  { # Overriden by configuration
-	value: '"/dev/tty"'
+	value: '"/dev/ttyACM0"'
+}
+
+constant SerialProcessRate {
+	value: 1000
 }
 
 _domainDefinition SerialDomain {
 	domainName: "SerialDomain"
 	framework: _RtAudioFramework
-#	rate: SerialRate
+	rate: SerialProcessRate
 	globalsTag: "Includes"
 	declarationsTag: "Declarations"
 	processingTag: "Processing"
 	initializationTag: "Initialization"
 	cleanupTag: "Cleanup"
     substitutions: ["baud_rate", _SerialBaudRate,
-					"serial_port", _SerialPort ]
+					"serial_port", _SerialPort,
+					"serial_process_rate", SerialProcessRate ]
     domainIncludes: ['serial/serial.h', 'thread']
     domainDeclarations: ["void serial_thread_func();",
-		"bool serialthread_running {true};"]
+		"bool serialthread_running {true};",
+		"float serialVar = 0.0;"]
     domainInitialization: "// serail domain init
-	 std::thread readThread(serial_thread_func);"
+	 std::thread serialReadThread(serial_thread_func);"
 	domainFunction: "// serial domain processing function
 
-
 void serial_thread_func() {
-  serial::Serial my_serial(%%serial_port%%, %%baud_rate%%, serial::Timeout::simpleTimeout(100));
-  // Wait a bit for serial device to setup
-  al::wait(1);
+  serial::Serial my_serial(%%serial_port%%, %%baud_rate%%, serial::Timeout::simpleTimeout(1.0/%%serial_process_rate%%));
 
   // Flush buffers
-  my_serial.flush();
+  //my_serial.flush();
   std::string lineBuffer; // Stores partial lines between reads
   const unsigned int bufferSize = 32;
   uint8_t buffer[bufferSize];
@@ -126,7 +129,9 @@ void serial_thread_func() {
       while (count < input.size()) {
         if (input[count] == '\r' || input[count] == '\n') {
           if (count - begin > 0) {
-           input.substr(begin, count - begin) ;
+           serialVar = std::stof(input.substr(begin, count - begin)) ;
+		   std::cout << serialVar <<std::endl;
+		   %%domainCode%%
           }
           begin = count + 1;
         }
@@ -144,7 +149,7 @@ void serial_thread_func() {
 	"
     domainCleanup: '// init domain cleanup
 	serialthread_running = false;
-	serialthread.join();
+	serialReadThread.join();
 	std::cout << "Serial Thread joined." << std::endl;
 	'
 }

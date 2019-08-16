@@ -1274,7 +1274,7 @@ std::shared_ptr<DeclarationNode>CodeResolver::createDomainDeclaration(QString na
     return newBlock;
 }
 
-std::shared_ptr<DeclarationNode> CodeResolver::createSignalDeclaration(QString name, int size, ScopeStack &scope)
+std::shared_ptr<DeclarationNode> CodeResolver::createSignalDeclaration(QString name, int size, ScopeStack scope, ASTNode tree)
 {
     std::shared_ptr<DeclarationNode> newBlock = nullptr;
     if (size == 0) { // Is it OK to generate a signal of size 1 in this case??
@@ -1287,9 +1287,9 @@ std::shared_ptr<DeclarationNode> CodeResolver::createSignalDeclaration(QString n
         newBlock = std::make_shared<DeclarationNode>(bundle, "signal", nullptr, "",-1);
     }
     Q_ASSERT(newBlock);
-    fillDefaultPropertiesForNode(newBlock, m_tree);
+    fillDefaultPropertiesForNode(newBlock, tree);
 
-    resolveConstantsInNode(newBlock, scope);
+    resolveConstantsInNode(newBlock, scope, tree);
     return newBlock;
 }
 
@@ -1298,7 +1298,7 @@ std::vector<ASTNode> CodeResolver::declareUnknownName(std::shared_ptr<BlockNode>
     std::vector<ASTNode > declarations;
     std::shared_ptr<DeclarationNode> decl = CodeValidator::findDeclaration(QString::fromStdString(block->getName()), localScope, tree, block->getNamespaceList());
     if (!decl) { // Not declared, so make declaration
-        std::shared_ptr<DeclarationNode> newSignal = createSignalDeclaration(QString::fromStdString(block->getName()), size, localScope);
+        std::shared_ptr<DeclarationNode> newSignal = createSignalDeclaration(QString::fromStdString(block->getName()), size, localScope, m_tree);
         double rate = CodeValidator::getNodeRate(newSignal, ScopeStack(), tree);
 
         CodeValidator::setNodeRate(block, rate, localScope, tree);
@@ -1312,7 +1312,7 @@ std::vector<ASTNode> CodeResolver::declareUnknownBundle(std::shared_ptr<BundleNo
     std::vector<ASTNode > declarations;
     std::shared_ptr<DeclarationNode> block = CodeValidator::findDeclaration(QString::fromStdString(bundle->getName()), localScope, tree, bundle->getNamespaceList());
     if (!block) { // Not declared, so make declaration
-        std::shared_ptr<DeclarationNode> newSignal = createSignalDeclaration(QString::fromStdString(bundle->getName()), size, localScope);
+        std::shared_ptr<DeclarationNode> newSignal = createSignalDeclaration(QString::fromStdString(bundle->getName()), size, localScope, m_tree);
         double rate = CodeValidator::getNodeRate(newSignal, ScopeStack(), tree);
         CodeValidator::setNodeRate(bundle, rate, localScope, tree);
         declarations.push_back(newSignal);
@@ -1668,7 +1668,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node, ScopeStack subScop
                 if (!portBlockDecl) {
                     // FIXME this has to check wether block is a bundle and create declaration accordingly
                     portBlockDecl= createSignalDeclaration(QString::fromStdString(CodeValidator::streamMemberName(portBlock)),
-                                                           1, subScope);
+                                                           1, subScope, m_tree);
                     internalBlocks->addChild(portBlockDecl);
                     fillDefaultPropertiesForNode(portBlockDecl, m_tree);
 //                    portBlockDecl->setPropertyValue("domain", outputDomain);
@@ -1713,7 +1713,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node, ScopeStack subScop
                 if (!portBlockDecl) {
                     // FIXME this has to check wether block is a bundle and create declaration accordingly
                     portBlockDecl= createSignalDeclaration(QString::fromStdString(CodeValidator::streamMemberName(portBlock)),
-                                                           1, subScope);
+                                                           1, subScope, m_tree);
                     internalBlocks->addChild(portBlockDecl);
                     fillDefaultPropertiesForNode(portBlockDecl, m_tree);
                 }
@@ -1765,7 +1765,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node, ScopeStack subScop
 //                                if (sizePortValue->getNodeType() == AST::Int) {
 //                                    size = static_pointer_cast<ValueNode>(sizePortValue)->getIntValue();
 //                                }
-                                blockDecl = createSignalDeclaration(QString::fromStdString(name), size, subScope);
+                                blockDecl = createSignalDeclaration(QString::fromStdString(name), size, subScope, m_tree);
                                 blockDecl->replacePropertyValue("rate", std::make_shared<ValueNode>(__FILE__, __LINE__));
                                 internalBlocks->addChild(blockDecl);
                                 // TODO This default needs to be done per instance
@@ -1806,7 +1806,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node, ScopeStack subScop
                             portDeclaration->replacePropertyValue("block", name);
                             std::shared_ptr<DeclarationNode> newSignal = CodeValidator::findDeclaration(QString::fromStdString(defaultName), ScopeStack(), internalBlocks);
                             if (!newSignal) {
-                                newSignal = createSignalDeclaration(QString::fromStdString(defaultName), 1, subScope);
+                                newSignal = createSignalDeclaration(QString::fromStdString(defaultName), 1, subScope, m_tree);
                                 internalBlocks->addChild(newSignal);
                                 fillDefaultPropertiesForNode(newSignal, m_tree);
                                 ASTNode blockDomain = newSignal->getDomain();
@@ -1898,7 +1898,7 @@ void CodeResolver::resolveConstants()
        }
     }
     for(ASTNode node : m_tree->getChildren()) {
-        resolveConstantsInNode(node, {});
+        resolveConstantsInNode(node, {}, m_tree);
     }
 }
 
@@ -1918,7 +1918,7 @@ std::shared_ptr<ValueNode> CodeResolver::reduceConstExpression(std::shared_ptr<E
         left = expr->getValue();
     }
 
-    std::shared_ptr<ValueNode> newValue = resolveConstant(left, scope);
+    std::shared_ptr<ValueNode> newValue = resolveConstant(left, scope, tree);
     if (newValue) {
         if (expr->isUnary()) {
             expr->replaceValue(newValue);
@@ -1929,7 +1929,7 @@ std::shared_ptr<ValueNode> CodeResolver::reduceConstExpression(std::shared_ptr<E
     }
     if (!expr->isUnary()) {
         right = expr->getRight();
-        newValue = resolveConstant(right, scope);
+        newValue = resolveConstant(right, scope, tree);
         if (newValue) {
             expr->replaceRight(newValue);
             right = newValue;
@@ -1977,16 +1977,16 @@ std::shared_ptr<ValueNode> CodeResolver::reduceConstExpression(std::shared_ptr<E
     return nullptr;
 }
 
-std::shared_ptr<ValueNode> CodeResolver::resolveConstant(ASTNode value, ScopeStack scope)
+std::shared_ptr<ValueNode> CodeResolver::resolveConstant(ASTNode value, ScopeStack scope, ASTNode tree)
 {
     std::shared_ptr<ValueNode> newValue = nullptr;
     if(value->getNodeType() == AST::Expression) {
         std::shared_ptr<ExpressionNode> expr = static_pointer_cast<ExpressionNode>(value);
-        newValue = reduceConstExpression(expr, scope, m_tree);
+        newValue = reduceConstExpression(expr, scope, tree);
         return newValue;
     } else if(value->getNodeType() == AST::Block) {
         BlockNode *name = static_cast<BlockNode *>(value.get());
-        std::shared_ptr<DeclarationNode> block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scope, m_tree);
+        std::shared_ptr<DeclarationNode> block = CodeValidator::findDeclaration(QString::fromStdString(name->getName()), scope, tree);
         if (block && block->getNodeType() == AST::Declaration && block->getObjectType() == "constant") { // Size == 1
 //            string namespaceValue = name->getScopeAt(0);
             ASTNode declarationNamespace = block->getPropertyValue("namespace");
@@ -1996,14 +1996,14 @@ std::shared_ptr<ValueNode> CodeResolver::resolveConstant(ASTNode value, ScopeSta
                      || blockValue->getNodeType() == AST::String ) {
                 return static_pointer_cast<ValueNode>(blockValue);
             }
-            newValue = resolveConstant(block->getPropertyValue("value"), scope);
+            newValue = resolveConstant(block->getPropertyValue("value"), scope, tree);
             return newValue;
         }
     } else if (value->getNodeType() == AST::Bundle) {
 
     } else if(value->getNodeType() == AST::PortProperty) {
         PortPropertyNode *propertyNode = static_cast<PortPropertyNode *>(value.get());
-        std::shared_ptr<DeclarationNode> block = CodeValidator::findDeclaration(QString::fromStdString(propertyNode->getPortName()), scope, m_tree);
+        std::shared_ptr<DeclarationNode> block = CodeValidator::findDeclaration(QString::fromStdString(propertyNode->getPortName()), scope, tree);
         if (block) {
             ASTNode propertyValue = block->getPropertyValue(propertyNode->getName());
             if (propertyValue) {
@@ -2018,39 +2018,39 @@ std::shared_ptr<ValueNode> CodeResolver::resolveConstant(ASTNode value, ScopeSta
     return nullptr;
 }
 
-void CodeResolver::resolveConstantsInNode(ASTNode node, ScopeStack scope)
+void CodeResolver::resolveConstantsInNode(ASTNode node, ScopeStack scope, ASTNode tree)
 {
     if (node->getNodeType() == AST::Stream) {
         std::shared_ptr<StreamNode> stream = static_pointer_cast<StreamNode>(node);
-        resolveConstantsInNode(stream->getLeft(), scope);
+        resolveConstantsInNode(stream->getLeft(), scope, tree);
         if (stream->getLeft()->getNodeType() == AST::Expression) {
             std::shared_ptr<ExpressionNode> expr = static_pointer_cast<ExpressionNode>(stream->getLeft());
-            std::shared_ptr<ValueNode> newValue = reduceConstExpression(expr, scope, m_tree);
+            std::shared_ptr<ValueNode> newValue = reduceConstExpression(expr, scope, tree);
             if (newValue) {
                 stream->setLeft(newValue);
             }
         } else if(stream->getLeft()->getNodeType() == AST::PortProperty) {
             std::shared_ptr<PortPropertyNode> propertyNode = static_pointer_cast<PortPropertyNode>(stream->getLeft());
-            std::shared_ptr<DeclarationNode> block = CodeValidator::findDeclaration(QString::fromStdString(propertyNode->getPortName()), scope, m_tree);
+            std::shared_ptr<DeclarationNode> block = CodeValidator::findDeclaration(QString::fromStdString(propertyNode->getPortName()), scope, tree);
             if (block) {
                 ASTNode property = block->getPropertyValue(propertyNode->getName());
                 if (property) { // First replace if pointing to a name
                     if (property->getNodeType() == AST::Block || property->getNodeType() == AST::Bundle) {
                         stream->setLeft(property);
                     }
-                    std::shared_ptr<ValueNode> newValue = resolveConstant(stream->getLeft(), scope);
+                    std::shared_ptr<ValueNode> newValue = resolveConstant(stream->getLeft(), scope, tree);
                     if (newValue) {
                         stream->setLeft(newValue);
                     }
                 }
             }
         }
-        resolveConstantsInNode(stream->getRight(), scope);
+        resolveConstantsInNode(stream->getRight(), scope, tree);
     } else if (node->getNodeType() == AST::Function) {
         std::shared_ptr<FunctionNode> func = static_pointer_cast<FunctionNode>(node);
         vector<std::shared_ptr<PropertyNode> > properties = func->getProperties();
         for(auto property : properties) {
-            std::shared_ptr<ValueNode> newValue = resolveConstant(property->getValue(), scope);
+            std::shared_ptr<ValueNode> newValue = resolveConstant(property->getValue(), scope, tree);
             if (newValue) {
                 property->replaceValue(newValue);
             }
@@ -2068,8 +2068,8 @@ void CodeResolver::resolveConstantsInNode(ASTNode node, ScopeStack scope)
         if (decl->getObjectType() != "type") {
             // FIXME This is a hack to protect constants that are context dependent. Should the language mark this?
             for(std::shared_ptr<PropertyNode> property : properties) {
-                resolveConstantsInNode(property->getValue(), scope);
-                std::shared_ptr<ValueNode> newValue = resolveConstant(property->getValue(), scope);
+                resolveConstantsInNode(property->getValue(), scope, tree);
+                std::shared_ptr<ValueNode> newValue = resolveConstant(property->getValue(), scope, tree);
                 if (newValue) {
                     property->replaceValue(newValue);
                 }
@@ -2086,8 +2086,8 @@ void CodeResolver::resolveConstantsInNode(ASTNode node, ScopeStack scope)
             }
         }
         for (std::shared_ptr<PropertyNode> property : properties) {
-            resolveConstantsInNode(property->getValue(), scope);
-            std::shared_ptr<ValueNode> newValue = resolveConstant(property->getValue(), scope);
+            resolveConstantsInNode(property->getValue(), scope, tree);
+            std::shared_ptr<ValueNode> newValue = resolveConstant(property->getValue(), scope, tree);
             if (newValue) {
                 property->replaceValue(newValue);
             }
@@ -2110,31 +2110,31 @@ void CodeResolver::resolveConstantsInNode(ASTNode node, ScopeStack scope)
 //                }
 //            }
 //        }
-        resolveConstantsInNode(bundle->index(), scope);
+        resolveConstantsInNode(bundle->index(), scope, tree);
     } else if(node->getNodeType() == AST::Expression) {
         std::shared_ptr<ExpressionNode> expr = static_pointer_cast<ExpressionNode>(node);
         if (expr->isUnary()) {
-            resolveConstantsInNode(expr->getValue(), scope);
+            resolveConstantsInNode(expr->getValue(), scope, tree);
             if (expr->getValue()->getNodeType() == AST::Expression) {
                 std::shared_ptr<ExpressionNode> exprValue = static_pointer_cast<ExpressionNode>(expr->getValue());
-                std::shared_ptr<ValueNode>newValue = reduceConstExpression(exprValue, scope, m_tree);
+                std::shared_ptr<ValueNode>newValue = reduceConstExpression(exprValue, scope, tree);
                 if (newValue) {
                     exprValue->replaceValue(newValue);
                 }
             }
         } else {
-            resolveConstantsInNode(expr->getLeft(), scope);
-            resolveConstantsInNode(expr->getRight(), scope);
+            resolveConstantsInNode(expr->getLeft(), scope, tree);
+            resolveConstantsInNode(expr->getRight(), scope, tree);
             if (expr->getLeft()->getNodeType() == AST::Expression) {
                 std::shared_ptr<ExpressionNode> exprValue = static_pointer_cast<ExpressionNode>(expr->getLeft());
-                std::shared_ptr<ValueNode> newValue = reduceConstExpression(exprValue, scope, m_tree);
+                std::shared_ptr<ValueNode> newValue = reduceConstExpression(exprValue, scope, tree);
                 if (newValue) {
                     expr->replaceLeft(newValue);
                 }
             }
             if (expr->getRight()->getNodeType() == AST::Expression) {
                 std::shared_ptr<ExpressionNode> exprValue = static_pointer_cast<ExpressionNode>(expr->getRight());
-                std::shared_ptr<ValueNode> newValue = reduceConstExpression(exprValue, scope, m_tree);
+                std::shared_ptr<ValueNode> newValue = reduceConstExpression(exprValue, scope, tree);
                 if (newValue) {
                     expr->replaceRight(newValue);
                 }
@@ -2143,13 +2143,13 @@ void CodeResolver::resolveConstantsInNode(ASTNode node, ScopeStack scope)
     } else if(node->getNodeType() == AST::List) {
         std::map<ASTNode , ASTNode> replaceMap;
         for (ASTNode element : node->getChildren()) {
-            resolveConstantsInNode(element, scope);
+            resolveConstantsInNode(element, scope, tree);
             std::shared_ptr<ValueNode> newValue;
             if (element->getNodeType() == AST::Expression) {
-                newValue = reduceConstExpression(std::static_pointer_cast<ExpressionNode>(element), scope, m_tree);
+                newValue = reduceConstExpression(std::static_pointer_cast<ExpressionNode>(element), scope, tree);
 
             } else {
-                newValue = resolveConstant(element, scope);
+                newValue = resolveConstant(element, scope, tree);
             }
             if (newValue) {
                 replaceMap[element] = newValue;
@@ -2163,7 +2163,7 @@ void CodeResolver::resolveConstantsInNode(ASTNode node, ScopeStack scope)
     } else if(node->getNodeType() == AST::Bundle) {
         std::shared_ptr<BundleNode> bundle = static_pointer_cast<BundleNode>(node);
         std::shared_ptr<ListNode> index = bundle->index();
-        resolveConstantsInNode(index, scope);
+        resolveConstantsInNode(index, scope, tree);
     }
 }
 

@@ -672,7 +672,24 @@ void StrideSystem::generateDomainConnections(ASTNode tree)
                     if (domainChangeNodes.sourceStreams && domainChangeNodes.destStreams) {
                         stream->setRight(domainChangeNodes.sourceStreams->getChildren()[0]->getChildren()[1]);
                         newStreams.push_back(stream);
-                        std::shared_ptr<StreamNode> newStream = std::make_shared<StreamNode>(domainChangeNodes.destStreams->getChildren()[0]->getChildren()[0], next, __FILE__, __LINE__);
+
+                        auto connectionNode = domainChangeNodes.destStreams->getChildren()[0]->getChildren()[0];
+//                        auto connectionDomainNode = CodeValidator::getNodeDomain(connectionNode,
+//                        {{"", domainChangeNodes.destImports->getChildren()}}, tree);
+//                        auto connectionDomainId = CodeValidator::getDomainIdentifier(connectionDomainNode
+//                                                                                     , {{"", domainChangeNodes.destImports->getChildren()}}, tree);
+
+//                        if (connectionDomainId.size() > 0 && connectionDomainId != nextDomainId) { // If domains don't match, add an extra signal to make the connection
+//                            // Do we only need to do this for platformModules, or should this always be done?
+//                            QString signalName = "BridgeSignal";
+//                            auto signalDecl = CodeResolver::createSignalDeclaration(signalName, 1, {}, tree);
+//                            signalDecl->setPropertyValue("domain", connectionDomainNode->deepCopy());
+//                            newChildren.insert(newChildren.end(), signalDecl);
+//                            next = std::make_shared<StreamNode>(
+//                                        std::make_shared<BlockNode>(signalName.toStdString(),__FILE__, __LINE__), next, __FILE__, __LINE__);
+
+//                        }
+                        std::shared_ptr<StreamNode> newStream = std::make_shared<StreamNode>(connectionNode, next, __FILE__, __LINE__);
                         newStreams.push_back(newStream);
                         auto srcImportNodes =  domainChangeNodes.sourceImports->getChildren();
                         newChildren.insert(newChildren.end(),srcImportNodes.begin(), srcImportNodes.end());

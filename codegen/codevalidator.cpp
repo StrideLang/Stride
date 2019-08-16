@@ -2645,6 +2645,12 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack, ASTNod
         domainNode = static_cast<DeclarationNode *>(node.get())->getDomain();
     } else if (node->getNodeType() == AST::Function) {
         domainNode = node->getCompilerProperty("domain");// static_cast<FunctionNode *>(node.get())->getDomain();
+        if (!domainNode) {
+            auto funcDecl = CodeValidator::findDeclaration(static_pointer_cast<FunctionNode>(node)->getName(), scopeStack, tree);
+            if (funcDecl && funcDecl->getObjectType() == "platformModule") {
+                domainNode = funcDecl->getPropertyValue("domain");
+            }
+        }
     } else if (node->getNodeType() == AST::Expression) {
         ExpressionNode *expr = static_cast<ExpressionNode *>(node.get());
         if (expr->isUnary()) {
