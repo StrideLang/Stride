@@ -1,0 +1,31 @@
+optionGroup WiringOptionsGroup {
+	name: "Wiring Configuration"
+}
+
+fileOption _ArduinoBinary {
+	name: "Arduino Binary"
+	default: '""'
+	override: [["Wiring", _ArduinoBinary]]
+	meta: "Arduino Bonary Location"
+}
+
+fileOption _ArduinoSerialPort {
+	name: "Arduino Device Port"
+	default: '""'
+	override: [["Wiring", _ArduinoBinary]]
+	meta: "Arduino Binary Location"
+}
+
+stringOption _SerialPortOption {
+	name: "Serial Port"
+	default: '"/dev/ttyACM0"'
+	override: [["Wiring", _ArduinoSerialPort]]
+	meta: "Device serial port"
+}
+
+stringOption _ArduinoType {
+	name: "Arduino Board Type"
+	default: 'arduino:avr:leonardo'
+	override: [["Wiring", _ArduinoBoardType]]
+	meta: "Type of Arduino Board"
+}
