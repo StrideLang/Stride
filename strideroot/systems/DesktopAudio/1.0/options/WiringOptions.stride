@@ -1,5 +1,5 @@
 optionGroup WiringOptionsGroup {
-	name: "Wiring Configuration"
+	name: "Wiring"
 }
 
 fileOption _ArduinoBinary {
@@ -7,13 +7,6 @@ fileOption _ArduinoBinary {
 	default: '""'
 	override: [["Wiring", _ArduinoBinary]]
 	meta: "Arduino Bonary Location"
-}
-
-fileOption _ArduinoSerialPort {
-	name: "Arduino Device Port"
-	default: '""'
-	override: [["Wiring", _ArduinoBinary]]
-	meta: "Arduino Binary Location"
 }
 
 stringOption _SerialPortOption {

@@ -1,5 +1,5 @@
 optionGroup SerialOptionsGroup {
-	name: "Serial Configuration"
+	name: "Serial"
 }
 
 stringListOption _SerialPortOption {

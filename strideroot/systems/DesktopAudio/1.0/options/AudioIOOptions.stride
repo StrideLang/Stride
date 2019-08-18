@@ -1,5 +1,5 @@
 optionGroup AudioIOGroup {
-	name: "Audio Configuration"
+	name: "Audio IO"
 }
 
 stringListOption RtAudioAPI {

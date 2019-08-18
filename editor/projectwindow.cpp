@@ -51,6 +51,7 @@
 #include <QSpinBox>
 #include <QComboBox>
 #include <QLineEdit>
+#include <QToolButton>
 
 #include "projectwindow.h"
 #include "ui_projectwindow.h"
@@ -1270,9 +1271,10 @@ void ProjectWindow::configureSystem()
     QMap<QString, QComboBox *> overrideComboBoxes;
     QMap<QString, QComboBox *> overrideIntComboBoxes;
     for(ASTNode optionTree: optionTrees) {
-        QGroupBox *groupBox = new QGroupBox("Options Group", &optionsDialog);
+        QWidget *groupBox = new QWidget(&optionsDialog);
 
         QVBoxLayout *groupLayout = new QVBoxLayout;
+        std::string groupName;
 
         for (ASTNode option : optionTree->getChildren()) {
             QWidget *optionWidget = new QWidget(groupBox);
@@ -1283,7 +1285,7 @@ void ProjectWindow::configureSystem()
                 if (type == "optionGroup") {
                     ASTNode nameNode = optionDecl->getPropertyValue("name");
                     if (nameNode && nameNode->getNodeType() == AST::String) {
-                        groupBox->setTitle(QString::fromStdString(static_pointer_cast<ValueNode>(nameNode)->getStringValue()));
+                        groupName = static_pointer_cast<ValueNode>(nameNode)->getStringValue();
                     }
                 } else if (type == "intOption") {
                     QString optionName = "";
@@ -1360,11 +1362,56 @@ void ProjectWindow::configureSystem()
                         spinBox->setText(systemConfig.platformConfigurations["all"][QString::fromStdString(optionDecl->getName())].toString());
                     } else { // Use default
                         ASTNode defaultNode = optionDecl->getPropertyValue("default");
-                        if (defaultNode && defaultNode->getNodeType() == AST::Int) {
+                        if (defaultNode && defaultNode->getNodeType() == AST::String) {
                             spinBox->setText(QString::fromStdString(static_pointer_cast<ValueNode>(defaultNode)->getStringValue()));
                         }
                     }
                     optionLayout->addWidget(spinBox);
+
+                    ASTNode metaNode = optionDecl->getPropertyValue("meta");
+                    if (metaNode && metaNode->getNodeType() == AST::String) {
+                        optionWidget->setToolTip(QString::fromStdString(static_pointer_cast<ValueNode>(metaNode)->getStringValue()));
+                    }
+                    lineEdits[QString::fromStdString(optionDecl->getName())] = spinBox;
+                } else if (type == "fileOption") {
+                    QString optionName = "";
+                    ASTNode nameNode = optionDecl->getPropertyValue("name");
+                    if (nameNode && nameNode->getNodeType() == AST::String) {
+                        optionName = QString::fromStdString(static_pointer_cast<ValueNode>(nameNode)->getStringValue());
+                    }
+                    QStringList buildPlatforms;
+                    ASTNode buildPlatformsNode = optionDecl->getPropertyValue("buildPlatforms");
+                    if (buildPlatformsNode && buildPlatformsNode->getNodeType() == AST::List) {
+                        for (ASTNode member : buildPlatformsNode->getChildren()) {
+                            if (member->getNodeType() == AST::String) {
+                                buildPlatforms << QString::fromStdString(static_pointer_cast<ValueNode>(member)->getStringValue());
+                            }
+                        }
+                    }
+                    optionLayout->addWidget(new QLabel(optionName));
+
+                    ASTNode maxNode = optionDecl->getPropertyValue("maximum");
+                    ASTNode minNode = optionDecl->getPropertyValue("minimum");
+                    QLineEdit *spinBox = new QLineEdit(optionWidget);
+                    QPushButton *browseButton = new QPushButton("...", optionWidget);
+                    QObject::connect(browseButton, &QPushButton::clicked, this, [&, spinBox]() {
+                        QString fileName = QFileDialog::getOpenFileName(this, tr("Find Files"), QDir::currentPath());
+                        qDebug() << fileName;
+                        if (fileName.size() > 0) {
+                            spinBox->setText(fileName);
+                        }
+                    });
+
+                    if (systemConfig.platformConfigurations["all"].contains(QString::fromStdString(optionDecl->getName()))) {
+                        spinBox->setText(systemConfig.platformConfigurations["all"][QString::fromStdString(optionDecl->getName())].toString());
+                    } else { // Use default
+                        ASTNode defaultNode = optionDecl->getPropertyValue("default");
+                        if (defaultNode && defaultNode->getNodeType() == AST::String) {
+                            spinBox->setText(QString::fromStdString(static_pointer_cast<ValueNode>(defaultNode)->getStringValue()));
+                        }
+                    }
+                    optionLayout->addWidget(spinBox);
+                    optionLayout->addWidget(browseButton);
 
                     ASTNode metaNode = optionDecl->getPropertyValue("meta");
                     if (metaNode && metaNode->getNodeType() == AST::String) {
@@ -1575,7 +1622,7 @@ void ProjectWindow::configureSystem()
             groupLayout->addWidget(optionWidget);
         }
         groupBox->setLayout(groupLayout);
-        mainLayout->addTab(groupBox, groupBox->title());
+        mainLayout->addTab(groupBox, QString::fromStdString(groupName));
     }
 
 
@@ -1586,6 +1633,7 @@ void ProjectWindow::configureSystem()
 
     QVBoxLayout *outerLayout = new QVBoxLayout;
     outerLayout->addWidget(mainLayout);
+    outerLayout->addWidget(buttonBox);
     optionsDialog.setLayout(outerLayout);
     optionsDialog.exec();
 
@@ -1600,9 +1648,9 @@ void ProjectWindow::configureSystem()
             systemConfig.platformConfigurations["all"][spinBoxInfo.key()] = spinBoxInfo.value()->value();
         }
         for(auto lineEditInfo = lineEdits.constBegin(); lineEditInfo != lineEdits.constEnd(); ++lineEditInfo) {
+            qDebug() << lineEditInfo.key() << ".." << lineEditInfo.value()->text();
             systemConfig.platformConfigurations["all"][lineEditInfo.key()] = lineEditInfo.value()->text();
         }
-
         for(auto comboBoxInfo = overrideComboBoxes.constBegin(); comboBoxInfo != overrideComboBoxes.constEnd(); ++comboBoxInfo) {
             systemConfig.overrides["all"][comboBoxInfo.key()] = comboBoxInfo.value()->currentText();
         }
