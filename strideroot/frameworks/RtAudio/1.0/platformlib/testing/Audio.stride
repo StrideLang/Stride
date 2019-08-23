@@ -33,6 +33,9 @@ _domainDefinition AudioDomain {
     }
     %%domainCode%%
     audio_buffer_process();
+    char input;
+    std::cout << "\nRunning ... press <enter> to quit.\n";
+    std::cin.get(input);
     '
 	domainFunction: '
 	int audio_buffer_process()
@@ -50,7 +53,7 @@ int nBufferFrames = NUM_SAMPLES;
 }
 '
     domainCleanup: '
-    for(int i = 0; i < NUM_SAMPLES; i++) {
+    for(int i = 0; i < NUM_SAMPLES * NUM_IN_CHANNELS; i++) {
         std::cout << std::setprecision(10) << outbuf[i] << std::endl;
     }
     '

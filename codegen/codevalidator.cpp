@@ -192,10 +192,25 @@ std::vector<string> CodeValidator::getUsedDomains(ASTNode tree)
     std::vector<string> domains;
     for (ASTNode node: tree->getChildren()) {
         if (node->getNodeType() == AST::Stream) {
-            string domainName = CodeValidator::getNodeDomainName(node, {}, tree);
-            if (domainName.size() > 0) {
-                if (std::find(domains.begin(), domains.end(), domainName) == domains.end()) {
-                    domains.push_back(domainName);
+            auto streamNode = static_pointer_cast<StreamNode>(node);
+            auto childNode = streamNode->getLeft();
+            auto nextNode = streamNode->getRight();
+            while (childNode) {
+                string domainName = CodeValidator::getNodeDomainName(childNode, {}, tree);
+                if (domainName.size() > 0) {
+                    if (std::find(domains.begin(), domains.end(), domainName) == domains.end()) {
+                        domains.push_back(domainName);
+                    }
+                }
+                if (!nextNode) {
+                    childNode = nullptr;
+                } else if (nextNode->getNodeType() == AST::Stream) {
+                    streamNode = static_pointer_cast<StreamNode>(nextNode);
+                    childNode = streamNode->getLeft();
+                    nextNode = streamNode->getRight();
+                } else {
+                    childNode = nextNode;
+                    nextNode = nullptr;
                 }
             }
         }

@@ -1,7 +1,10 @@
 
 _domainProcessing _PlatformDomainProcessing {
 	domainStreams: [
-		SetupDomain >> [AudioDomain, AsyncDomain, SerialDomain];
+		SetupDomain >> AsyncDomain >> SerialDomain >> AudioDomain;
+		# Should perhaps look like:
+		#SetupDomain >> [AudioDomain, AsyncDomain, SerialDomain];
+		# But for now just setting the domain processing order
 	]
 }
 
@@ -24,7 +27,7 @@ alias _ContextInitDomain {
 _domainDefinition SetupDomain {
 	domainName: "SetupDomain"
 	framework: _RtAudioFramework
-	rate: 0
+	rate: -1 # -1 is 'one-shot/final' domain
 	globalsTag: "Includes"
 	declarationsTag: "Declarations"
 	processingTag: "Initialization"
@@ -33,12 +36,15 @@ _domainDefinition SetupDomain {
     substitutions: [ ]
     domainIncludes: []
     domainDeclarations: []
-    domainInitialization: '// init domain init'
-	domainFunction: '// init domain processing
-	%%domainCode%%
-	// end init domain processing
-	'
-    domainCleanup: '// init domain cleanup'
+    domainInitialization: '// setup domain init
+		%%domainCode%%
+		__setup__();
+		'
+	domainFunction: 'void __setup__() {
+		%%domainCode%%
+	}
+		'
+  domainCleanup: '// setup domain cleanup'
 }
 
 constant AsyncRate {
