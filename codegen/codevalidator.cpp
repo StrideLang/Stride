@@ -1425,12 +1425,15 @@ int CodeValidator::getNodeNumInputs(ASTNode node, ScopeStack scope, ASTNode tree
         return getBundleSize(static_cast<BundleNode *>(node.get()), scope, tree, errors);
     } else if (node->getNodeType() == AST::List) {
         int size = 0;
-        foreach(ASTNode member, node->getChildren()) {
+        for(ASTNode member : node->getChildren()) {
             size += CodeValidator::getNodeNumInputs(member, scope, tree, errors);
         }
         return size;
     } else if (node->getNodeType() == AST::PortProperty) {
         qDebug() << "Unexpected write to port portperty";
+    } else if (node->getNodeType() == AST::Declaration
+               || node->getNodeType() == AST::BundleDeclaration) {
+        return getTypeNumInputs(std::static_pointer_cast<DeclarationNode>(node), scope, tree, errors);
     } else {
         return 0;
     }

@@ -1,4 +1,4 @@
-/*
+﻿/*
     Stride is licensed under the terms of the 3-clause BSD license.
 
     Copyright (C) 2017. The Regents of the University of California.
@@ -85,6 +85,8 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile, boo
 
          std::vector<Builder *> m_builders;
 
+         system->generateDomainConnections(tree);
+
          std::vector<std::string> domains = CodeValidator::getUsedDomains(tree);
          std::vector<std::string> usedFrameworks;
          for (string domain: domains) {
@@ -97,13 +99,21 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile, boo
          }
          buildOK = true;
 
-         system->generateDomainConnections(tree);
 
-         std::map<std::string, std::string> domainMap;
+         std::vector<std::map<std::string, std::string>> domainMaps;
          for (auto &builder: m_builders) {
-             auto domainMap = builder->generateCode(tree);
-             buildOK &= builder->build(domainMap);
+             domainMaps.push_back(builder->generateCode(tree));
          }
+
+         size_t counter = 0;
+         for (auto &builder: m_builders) {
+             buildOK &= builder->build(domainMaps[counter++]);
+         }
+
+         for (auto &builder: m_builders) {
+             buildOK &= builder->deploy();
+         }
+
          if (buildOK) {
              for (auto builder: m_builders) {
                  builder->clearBuffers();

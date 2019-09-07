@@ -1,12 +1,68 @@
 #include "languagesyntax.hpp"
 
+std::string LanguageSyntax::getDeclarationForType(std::string type, std::string name, SignalAccess access, int size,
+                                                  std::vector<std::string> defaultValue) {
+    std::string out;
+
+    std::string base;
+    if (size > 1) {
+        base = "Bundle";
+    } else {
+        base = "Signal";
+    }
+    out += "using " + name + "_Helper_Type = stride::" + base + "Helper<double>;\n";
+
+    if (size > 1) {
+        out += name + "_Helper_Type " + name + "_Helper(" + std::to_string(size) + ");\n";
+    } else {
+        out += name + "_Helper_Type " + name + "_Helper(";
+        for (auto value: defaultValue) {
+            out += value + ",";
+        }
+        if (defaultValue.size() > 0) {
+            out = out.substr(0, out.size() -1);
+        }
+        out += ");\n";
+    }
+//        out += "std::mutex ResetMutex;"
+    // FIXME cover all cases
+    if (access & ACCESS_SDR && access & ACCESS_SDW) {
+        out += "using " + name + "_Type = stride::" + base + "_SDRW<" + name + "_Helper_Type, " + type + ">;";
+    } else if (access & ACCESS_SDR && access & ACCESS_MDW) {
+        out += "using " + name + "_Type = stride::" + base + "_SDRW<" + name + "_Helper_Type, " + type + ">;";
+    } else { // Fallback
+        out += "using " + name + "_Type = stride::" + base + "_SDRW<" + name + "_Helper_Type, " + type + ">;";
+    }
+    if (size > 1) {
+        out += name + "_Type " + name + "{&" + name + "_Helper_Type::init_External, &"+ name + "_Helper, " + std::to_string(size) + "};\n";
+    } else {
+        out += name + "_Type " + name + "{&" + name + "_Helper_Type::init_External, &"+ name + "_Helper};\n";
+    }
+    return out;
+}
+
+string LanguageSyntax::getDeclarationForType(Instance instance)
+{
+    return getDeclarationForType(instance.type, instance.fullName(), instance.access, instance.size, instance.defaultValue);
+}
 
 std::string LanguageSyntax::instance(Instance &inst, bool close) {
     std::string out;
     if (inst.type == "double") {
-        out = LanguageSyntax::instanceReal(inst.fullName(), inst.size, true, inst.defaultValue);
+        if (inst.access == ACCESS_NONE) {
+            out += instanceReal(inst.fullName(), inst.size, true, inst.defaultValue);
+        } else {
+            out = "// " + inst.fullName() + "\n";
+            out += getDeclarationForType(inst);
+        }
     } else if (inst.type == "bool") {
-        out = LanguageSyntax::instanceBool(inst.fullName(), inst.size, true, inst.defaultValue);
+
+        if (inst.access == ACCESS_NONE) {
+            out = LanguageSyntax::instanceBool(inst.fullName(), inst.size, true, inst.defaultValue);
+        } else {
+            out = "// " + inst.fullName() + "\n";
+            out += getDeclarationForType(inst);
+        }
     } else {
         // Do we need to look at size here?
         out = inst.type;
@@ -166,3 +222,4 @@ std::string LanguageSyntax::getDataType(std::string strideType)
     }
     return "";
 }
+

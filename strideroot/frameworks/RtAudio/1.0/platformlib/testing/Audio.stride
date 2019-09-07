@@ -33,9 +33,6 @@ _domainDefinition AudioDomain {
     }
     %%domainCode%%
     audio_buffer_process();
-    char input;
-    std::cout << "\nRunning ... press <enter> to quit.\n";
-    std::cin.get(input);
     '
 	domainFunction: '
 	int audio_buffer_process()

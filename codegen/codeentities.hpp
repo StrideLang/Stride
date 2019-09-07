@@ -9,6 +9,19 @@
 #include "../parser/declarationnode.h"
 #include "../parser/functionnode.h"
 #include "../parser/portpropertynode.h"
+#include "../codegen/codevalidator.h"
+
+
+typedef enum {
+    ACCESS_NONE = 0,
+    ACCESS_SDR = 1 << 1,        // Single Domain Read
+    ACCESS_SDW = 1 << 2,        // Single Domain Write
+    ACCESS_MDR = 1 << 3,       // Multi Domain Read
+    ACCESS_MDW = 1 << 4,       // Multi Domain Write
+    ACCESS_SDRst = 1 << 5,       // Single domain Reset
+    ACCESS_MDRst = 1 << 6       // Multi domain Reset
+} SignalAccess;
+
 
 enum class CodeEntityType {
     Declaration,
@@ -24,8 +37,7 @@ public:
     virtual std::string fullName() { return name;}
 };
 
-class Declaration: public CodeEntity {
-public:
+struct Declaration: public CodeEntity {
     Declaration() {
         entityType = CodeEntityType::Declaration;
     }
@@ -34,11 +46,13 @@ public:
     std::string parent;
 } ;
 
-class Instance : public CodeEntity {
-public:
+
+struct Instance : public CodeEntity {
+
     Instance(std::string name_, std::string prefix, int size,std::string type,std::vector<std::string> defaultValue,
-             ASTNode instanceNode) :
-        prefix(prefix), size(size), type(type), defaultValue(defaultValue), instanceNode(instanceNode) {
+             ASTNode instanceNode,
+             SignalAccess access) :
+        prefix(prefix), size(size), type(type), defaultValue(defaultValue), instanceNode(instanceNode), access(access) {
         entityType = CodeEntityType::Instance;
         name = name_;
     }
@@ -49,6 +63,7 @@ public:
         name = inst.name;
         dependents = inst.dependents;
     }
+
     std::string prefix;
     std::string parent;
     int size {0};
@@ -57,6 +72,7 @@ public:
     ASTNode instanceNode;
     std::vector<std::string> constructorArgs;
     std::vector<std::string> templateArgs;
+    SignalAccess access {ACCESS_NONE};
 
     std::string fullName() override {return prefix + name;}
 };

@@ -41,6 +41,7 @@
 #include <QList>
 
 #include "ast.h"
+#include "declarationnode.h"
 
 class StridePlatform {
 public:
