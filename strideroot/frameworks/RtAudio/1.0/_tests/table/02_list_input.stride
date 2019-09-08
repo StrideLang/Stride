@@ -2,7 +2,7 @@ use DesktopAudio version 1.0
 
 import Generators
 
-table SineTable {
+table TestTable {
 	size: 1024
 	rate: 1024
 	domain: SetupDomain
@@ -18,11 +18,12 @@ signal Counter {
 	reset: CounterReset
 }
 
-Oscillator(frequency: 1.0) >> SineTable; 
-
+[0.5, 1.5] >> SineTable; 
 
 [Counter, 1024] >> Equal() >> CounterReset;
 
 SineTable[Counter] >> AudioOut[0];
+Counter + 1 >> Counter;
 
+SineTable[Counter] >> AudioOut[1];
 Counter + 1 >> Counter;
