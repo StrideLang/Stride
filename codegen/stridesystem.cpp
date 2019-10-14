@@ -583,8 +583,9 @@ ASTNode StrideSystem::getImportTree(QString importName, QString importAs, QStrin
     // TODO currently search order is defined by the order in which platforms
     // are declared. Should there be more explicit ordering or restrictions?
     for (auto platform: m_platforms) {
-        if (platformName.toStdString() == platform->getRootNamespace()
-                || platformName.toStdString() == platform->getFramework()) {
+        if (platformName.size() > 0
+                && ((platformName.toStdString() == platform->getRootNamespace())
+                || platformName.toStdString() == platform->getFramework())) {
             string platformPath = platform->buildPlatformLibPath(m_strideRoot.toStdString());
             QString includeSubPath = QString::fromStdString(platformPath ) + "/" + importName;
             QStringList libraryFiles =  QDir(includeSubPath).entryList(nameFilters);
@@ -624,7 +625,7 @@ ASTNode StrideSystem::getImportTree(QString importName, QString importAs, QStrin
     if (tree->getChildren().size() > 0) {
         return tree;
     }
-    if (platformName != "") {
+//    if (platformName != "") {
         // FIXME for now import both library and framework objects.
         // Then look in the library
         auto newTree = m_library.getImportTree(importName, importAs, QStringList());
@@ -634,7 +635,7 @@ ASTNode StrideSystem::getImportTree(QString importName, QString importAs, QStrin
                 tree->addChild(node);
             }
         }
-    }
+//    }
 
     // TODO Finally look relative to thec current file.
 
@@ -671,9 +672,17 @@ void StrideSystem::generateDomainConnections(ASTNode tree)
                     // FIXME currently only simple two member connector streams supported
                     if (domainChangeNodes.sourceStreams && domainChangeNodes.destStreams) {
                         stream->setRight(domainChangeNodes.sourceStreams->getChildren()[0]->getChildren()[1]);
+                        stream->getRight()->setCompilerProperty("inputBlock", stream->getLeft());
+                        auto nodeDecl = CodeValidator::findDeclaration(CodeValidator::streamMemberName(stream->getRight()),
+                        {}, domainChangeNodes.sourceImports);
+                        stream->getRight()->setCompilerProperty("declaration", nodeDecl);
                         newStreams.push_back(stream);
 
                         auto connectionNode = domainChangeNodes.destStreams->getChildren()[0]->getChildren()[0];
+                        connectionNode->setCompilerProperty("outputBlock", next);
+                        nodeDecl = CodeValidator::findDeclaration(CodeValidator::streamMemberName(connectionNode),
+                        {}, domainChangeNodes.destImports);
+                        connectionNode->setCompilerProperty("declaration", nodeDecl);
 //                        auto connectionDomainNode = CodeValidator::getNodeDomain(connectionNode,
 //                        {{"", domainChangeNodes.destImports->getChildren()}}, tree);
 //                        auto connectionDomainId = CodeValidator::getDomainIdentifier(connectionDomainNode
@@ -766,10 +775,11 @@ ConnectionNodes StrideSystem::getDomainChangeStreams(string previousDomainId, st
                                         QString::fromStdString(importName),
                                         "",
                                         QString::fromStdString(static_pointer_cast<ValueNode>(platformName)->getStringValue()));
-                            if (importTree) {
-                                //                                    scopeStack.push_back({"", importTree->getChildren()});
-                            } else {
-                                //                                    std::cerr << "ERROR: Cannot import " << importName << " for connection " << connector->getName() << std::endl;
+
+                            auto importTreeLib = getImportTree(QString::fromStdString(importName),
+                                                               "","");
+                            for (auto child: importTreeLib->getChildren()) {
+                                importTree->addChild(child);
                             }
                             for (auto node: importTree->getChildren()) {
 //                                CodeResolver::fillDefaultPropertiesForNode(node, m_tree);
