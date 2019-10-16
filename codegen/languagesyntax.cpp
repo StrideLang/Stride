@@ -12,11 +12,29 @@ std::string LanguageSyntax::getDeclarationForType(
     }
     out += type + " " + name + bundleSize;
     if (defaultValue.size() == 1) {
-      out += " = " + defaultValue[0];
+      out += " = ";
+      int count = size;
+      if (size > 1) {
+        out += "{";
+      }
+      while (count > 0) {
+        out += defaultValue[0] + ",";
+        count--;
+      }
+      if (defaultValue.size() > 0) {
+        out = out.substr(0, out.size() - 1);
+      }
+      if (size > 1) {
+        out += "}";
+      }
     } else if (defaultValue.size() > 1) {
       out += " = {";
-      for (auto value : defaultValue) {
-        out += value + ",";
+      int count = size;
+      while (count > 0) {
+        for (auto value : defaultValue) {
+          out += value + ",";
+          count--;
+        }
       }
       if (defaultValue.size() > 0) {
         out = out.substr(0, out.size() - 1);
