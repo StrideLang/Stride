@@ -1,11 +1,48 @@
 #include "languagesyntax.hpp"
 
+std::string LanguageSyntax::getDeclarationType(std::string type,
+                                               std::string name,
+                                               SignalAccess access, int size) {
+  std::string declType;
+  std::string base;
+  if (size > 1) {
+    base = "Bundle";
+  } else {
+    base = "Signal";
+  }
+  // FIXME cover all cases
+  std::string helperType = "stride::" + base + "Helper<double>";
+  if ((access & ACCESS_SDRst) || (access & ACCESS_MDRst)) {
+    if (access & ACCESS_SDR && access & ACCESS_SDW) {
+      declType =
+          "stride::" + base + "_SDRWRst<" + helperType + ", " + type + ">";
+    } else if (access & ACCESS_SDR && access & ACCESS_MDW) {
+      declType =
+          "stride::" + base + "_SDRWRst<" + helperType + ", " + type + ">";
+    } else {  // Fallback
+      declType =
+          "stride::" + base + "_SDRWRst<" + helperType + ", " + type + ">";
+    }
+  } else {  // No reset
+    if (access & ACCESS_SDR && access & ACCESS_SDW) {
+      declType = "stride::" + base + "_SDRW<" + helperType + ", " + type + ">";
+    } else if (access & ACCESS_SDR && access & ACCESS_MDW) {
+      declType = "stride::" + base + "_SDRW<" + helperType + ", " + type + ">";
+    } else {  // Fallback
+      declType = "stride::" + base + "_SDRW<" + helperType + ", " + type + ">";
+    }
+  }
+
+  return declType;
+}
+
 std::string LanguageSyntax::getDeclarationForType(
     std::string type, std::string name, SignalAccess access, int size,
     std::vector<std::string> defaultValue) {
   std::string out;
 
-  if (access == ACCESS_NONE) {
+  if (access == ACCESS_NONE && !(access & ACCESS_SDRst) &&
+      !(access & ACCESS_MDRst)) {
     std::string bundleSize;
     if (size > 1) {
       bundleSize = "[" + std::to_string(size) + "]";
@@ -67,17 +104,11 @@ std::string LanguageSyntax::getDeclarationForType(
     out += "};\n";
   }
   //        out += "std::mutex ResetMutex;"
-  // FIXME cover all cases
-  if (access & ACCESS_SDR && access & ACCESS_SDW) {
-    out += "using " + name + "_Type = stride::" + base + "_SDRW<" + name +
-           "_Helper_Type, " + type + ">;";
-  } else if (access & ACCESS_SDR && access & ACCESS_MDW) {
-    out += "using " + name + "_Type = stride::" + base + "_SDRW<" + name +
-           "_Helper_Type, " + type + ">;";
-  } else {  // Fallback
-    out += "using " + name + "_Type = stride::" + base + "_SDRW<" + name +
-           "_Helper_Type, " + type + ">;";
-  }
+
+  std::string structType = getDeclarationType(type, name, access, size);
+
+  out += "using " + name + "_Type = " + structType + ";";
+
   if (size > 1) {
     out += name + "_Type " + name + "{&" + name +
            "_Helper_Type::init_External, &" + name + "_Helper, " +

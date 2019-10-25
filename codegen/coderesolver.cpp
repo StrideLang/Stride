@@ -4053,6 +4053,9 @@ void CodeResolver::markConnectionForNode(ASTNode node, ScopeStack scopeStack,
           }
           if (notRegistered) {
             resets->addChild(decl);
+            auto domain =
+                CodeValidator::getNodeDomain(node, scopeStack, m_tree);
+            decl->appendToPropertyValue("resetDomains", domain);
           }
         }
       }

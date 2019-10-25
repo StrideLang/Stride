@@ -36,7 +36,7 @@ struct Declaration : public CodeEntity {
   Declaration() { entityType = CodeEntityType::Declaration; }
   std::string type;
   std::string code;
-  std::string templateArgs;
+  std::string templateParams;
   std::string parent;
 };
 
