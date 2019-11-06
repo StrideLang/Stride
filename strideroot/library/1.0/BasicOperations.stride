@@ -1,0 +1,74 @@
+loop Sum {
+    ports:      [
+        mainInputPort InputPort {
+            block:  Input
+            meta:   ''
+        }
+        mainOutputPort OutputPort {
+            block:  Output
+            meta:   ''
+        }
+    ]
+    blocks:     [
+        signal Input [InputPort.size] {
+            rate:       OutputPort.rate
+            domain:     OutputPort.domain
+        }
+        signal Output {
+            default:    0.0
+            rate:       OutputPort.rate
+            domain:     OutputPort.domain
+            reset:      Reset
+        }
+        signal Index {
+            default:    0
+            rate:       none
+            domain:     OutputPort.domain
+            reset:      Reset
+        }
+        switch Done {
+            domain:     OutputPort.domain
+        }
+        trigger Reset {
+            #domain:     OutputPort.domain
+        }
+    ]
+    onExecution:    Reset
+    terminateWhen:  Done
+    streams:    [
+        Input[Index] + Output >>  Output;
+        Index + 1 >> Index;
+        [ Index , InputPort.size ] >>  Equal () >> Done;
+    ]
+}
+
+module Average {
+    ports:      [
+        mainInputPort InputPort {
+            block:  Input
+            meta:   ''
+        }
+        mainOutputPort OutputPort {
+            block:  Output
+            meta:   ''
+        }
+    ]
+    blocks:     [
+        signal Input [InputPort.size] {
+            rate:       OutputPort.rate
+            domain:     OutputPort.domain
+        }
+        signal Output {
+            rate:       OutputPort.rate
+            domain:     OutputPort.domain
+        }
+        signal Sum {
+            rate:       OutputPort.rate
+            domain:     OutputPort.domain
+        }
+    ]
+    streams:    [
+        Input >> Sum() >> Sum;
+        Sum / InputPort.size >> Output;
+    ]
+}
