@@ -41,8 +41,7 @@ std::string LanguageSyntax::getDeclarationForType(
     std::vector<std::string> defaultValue) {
   std::string out;
 
-  if (access == ACCESS_NONE && !(access & ACCESS_SDRst) &&
-      !(access & ACCESS_MDRst)) {
+  if (access == ACCESS_NONE || access == ACCESS_SDRst) {
     std::string bundleSize;
     if (size > 1) {
       bundleSize = "[" + std::to_string(size) + "]";

@@ -21,7 +21,7 @@ typedef enum {
   ACCESS_MDRst = 1 << 6   // Multi domain Reset
 } SignalAccess;
 
-enum class CodeEntityType { Declaration, Instance };
+enum class CodeEntityType { Declaration, Instance, Reset };
 
 class CodeEntity {
  public:
@@ -76,6 +76,14 @@ struct Instance : public CodeEntity {
   SignalAccess access{ACCESS_NONE};
 
   std::string fullName() override { return prefix + name; }
+};
+
+struct Reset : public CodeEntity {
+  Reset(std::shared_ptr<DeclarationNode> decl) {
+    entityType = CodeEntityType::Reset;
+    resetBlockDecl = decl;
+  }
+  std::shared_ptr<DeclarationNode> resetBlockDecl;
 };
 
 typedef struct {

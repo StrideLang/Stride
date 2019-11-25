@@ -11,7 +11,7 @@ module Test {
 	]
 	blocks: [
 		signal Dummy {}
-		signal Dummy2 {}
+		signal Dummy2 { domain: OutputPort.domain}
 		reaction Process {
 			streams: [
 				Dummy >> Dummy2;

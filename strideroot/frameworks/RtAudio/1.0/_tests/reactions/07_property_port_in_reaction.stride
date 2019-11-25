@@ -1,6 +1,6 @@
 use DesktopAudio version 1.0
 
-module Test {
+module LinearEnvelope {
     ports: [
         mainOutputPort OutputPort {
             block: Output
@@ -32,4 +32,4 @@ module Test {
 
 signal UsedInReaction { default: 0.3 }
 
-AudioIn[0] >> Test (test:UsedInReaction) >> AudioOut;
+AudioIn[1] >> LinearEnvelope (test:UsedInReaction) >> AudioOut;

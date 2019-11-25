@@ -1745,6 +1745,22 @@ std::shared_ptr<DeclarationNode> CodeValidator::findDeclaration(
       scopesList.push_back(ns);
     }
   }
+  for (auto subScopeIt = scopeStack.rbegin(); subScopeIt != scopeStack.rend();
+       subScopeIt++) {
+    auto subScope = *subScopeIt;
+    for (ASTNode scopeNode : subScope.second) {
+      if (scopeNode->getNodeType() == AST::BundleDeclaration ||
+          scopeNode->getNodeType() == AST::Declaration) {
+        std::shared_ptr<DeclarationNode> decl =
+            static_pointer_cast<DeclarationNode>(scopeNode);
+        std::string name = decl->getName();
+        if (name == objectName &&
+            CodeValidator::namespaceMatch(scopesList, decl)) {
+          return decl;
+        }
+      }
+    }
+  }
   if (tree) {
     for (ASTNode node : tree->getChildren()) {
       if (node->getNodeType() == AST::BundleDeclaration ||
@@ -1766,22 +1782,6 @@ std::shared_ptr<DeclarationNode> CodeValidator::findDeclaration(
         //                    return decl;
         //                }
         //            }
-      }
-    }
-  }
-  for (auto subScopeIt = scopeStack.rbegin(); subScopeIt != scopeStack.rend();
-       subScopeIt++) {
-    auto subScope = *subScopeIt;
-    for (ASTNode scopeNode : subScope.second) {
-      if (scopeNode->getNodeType() == AST::BundleDeclaration ||
-          scopeNode->getNodeType() == AST::Declaration) {
-        std::shared_ptr<DeclarationNode> decl =
-            static_pointer_cast<DeclarationNode>(scopeNode);
-        std::string name = decl->getName();
-        if (name == objectName &&
-            CodeValidator::namespaceMatch(scopesList, decl)) {
-          return decl;
-        }
       }
     }
   }
