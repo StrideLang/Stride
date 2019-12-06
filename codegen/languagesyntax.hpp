@@ -45,6 +45,7 @@ class LanguageSyntax {
   }
 
   static std::string functionCall(std::string name, std::string arguments,
+                                  string templateParams = "",
                                   bool close = true);
 
   static std::string functionDeclaration(std::string returnType,

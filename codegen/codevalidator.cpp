@@ -1487,6 +1487,10 @@ int CodeValidator::getNodeNumOutputs(ASTNode node, const ScopeStack &scope,
           << "Unknown port property in getNodeNumOutputs() setting size to 1";
       return 1;
     }
+  } else if (node->getNodeType() == AST::BundleDeclaration) {
+    QList<LangError> errors;
+    return CodeValidator::getBlockDeclaredSize(
+        static_pointer_cast<DeclarationNode>(node), scope, tree, errors);
   }
   return -1;
 }

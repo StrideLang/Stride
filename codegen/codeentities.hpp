@@ -100,7 +100,7 @@ typedef struct {
   std::vector<std::string> parentInstanceNames;
   std::map<std::string, std::vector<DeclarationMap>> blockInMap;
   std::map<std::string, std::vector<DeclarationMap>> blockOutMap;
-} ModuleCall;
+} FunctionCall;
 
 // Code that applies to a single domain
 class DomainCode {
@@ -138,7 +138,7 @@ class DomainCode {
 
   // Maps the inner module signals to outer signal declarations for code
   // generated in this domain
-  std::vector<ModuleCall> moduleCalls;
+  std::vector<FunctionCall> moduleCalls;
 
   std::map<std::shared_ptr<PortPropertyNode>, std::string> portPropertiesMap;
 

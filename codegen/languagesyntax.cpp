@@ -40,6 +40,10 @@ std::string LanguageSyntax::getDeclarationForType(
     std::string type, std::string name, SignalAccess access, int size,
     std::vector<std::string> defaultValue) {
   std::string out;
+  if (size == -1) {
+    out += "// FIXME Size unresolved\n";
+    size = defaultValue.size();
+  }
 
   if (access == ACCESS_NONE || access == ACCESS_SDRst) {
     std::string bundleSize;
@@ -254,8 +258,15 @@ std::string LanguageSyntax::generateExpression(
 }
 
 std::string LanguageSyntax::functionCall(std::string name,
-                                         std::string arguments, bool close) {
-  std::string text = name + "(" + arguments + ")";
+                                         std::string arguments,
+                                         std::string templateParams,
+                                         bool close) {
+  std::string text = name;
+  if (templateParams.size() > 0) {
+    text += "<" + templateParams + ">";
+  }
+
+  text += "(" + arguments + ")";
   if (close) {
     text += ";\n";
   }
