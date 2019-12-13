@@ -1,8 +1,6 @@
 use DesktopAudio version 1.0
 
-signal Accum {}
-
-loop Loop {
+loop Add {
 	ports: [
 		mainInputPort InputPort {
 			block: Input
@@ -30,4 +28,4 @@ loop Loop {
 
 signal List[20] { default: 1 }
 
-List >> Loop() >> AudioOut[0];
+List >> Add() >> AudioOut[0];

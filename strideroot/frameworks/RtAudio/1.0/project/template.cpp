@@ -28,6 +28,8 @@
 
 int main() {
 // std::cout << "app started" << std::endl;
+//[[GlobalInitialization]]
+//[[/GlobalInitialization]]
 //[[Initialization]]
 //[[/Initialization]]
 

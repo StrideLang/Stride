@@ -4,7 +4,7 @@ signal Accum {}
 switch ResetOuter { }
 signal OuterCounter { reset: ResetOuter}
 
-module Sum {
+module Sum3 {
 	ports: [
 		mainInputPort InputPort { block: Input }
 		mainOutputPort OutputPort { block: Output }
@@ -35,5 +35,5 @@ module Sum {
 	]
 }
 
-[AudioIn[0], AudioIn[1], 7] >> Sum() >> AudioOut[0];
+[AudioIn[0], AudioIn[1], 7] >> Sum3() >> AudioOut[0];
 

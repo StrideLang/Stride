@@ -644,11 +644,8 @@ void CodeResolver::insertBuiltinObjects() {
       {
         m_tree->addChild(block);
         usedDeclarations << block;
-      } else if (block->getName() ==
-                 "_PlatformDomainProcessing")  // Hack... this should be getting
-                                               // inserted when resolving
-                                               // symbols...)
-      {
+      } else if (block->getName() == "_PlatformDomainProcessing" ||
+                 block->getName() == "_GlobalInitTag") {
         m_tree->addChild(block);
         usedDeclarations << block;
       }

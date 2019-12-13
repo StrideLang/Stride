@@ -1,3 +1,11 @@
+_domainProcessing _PlatformDomainProcessing {
+	domainStreams: [
+		WiringDomain >> Dummy;
+		# Should perhaps look like:
+		#SetupDomain >> [AudioDomain, AsyncDomain, SerialDomain];
+		# But for now just setting the domain processing order
+	]
+}
 
 _frameworkDescription _WiringFramework {
     frameworkName: "Wiring"

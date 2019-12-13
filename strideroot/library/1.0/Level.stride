@@ -20,6 +20,7 @@ module Level {
 		propertyInputPort OffsetProperty {
 			name: "offset"
 			block: Offset
+            default:    0.0
 			meta: "Adds an offset to the signal after applying the gain."
 		}
 #		propertyInputPort BypassProperty {
@@ -29,15 +30,23 @@ module Level {
 
 	]
 	blocks: [
-		signal Offset {
-			domain: OutputPort.domain
-		}
+        signal Gain {
+            #default:    GainPort.default
+            type:       GainPort.type
+            rate:       GainPort.rate
+            domain:     GainPort.domain
+        }
+        signal Offset {
+            #default:    OffsetPort.default
+            type:       OffsetPort.type
+            rate:       OffsetPort.rate
+            domain:     OffsetPort.domain
+        }
 	]
 	streams: [
 		(Input * Gain) + Offset >> Output;
 	]
 	meta: "Scales the input signal and applies an offset to it.
-
-output = input * gain + offset
+Formula: output = input * gain + offset
 "
 }

@@ -8,6 +8,10 @@ _domainProcessing _PlatformDomainProcessing {
 	]
 }
 
+constant _GlobalInitTag {
+	value: "GlobalInitialization"
+}
+
 _frameworkDescription _RtAudioFramework {
     frameworkName: "RtAudio"
 }
@@ -65,7 +69,7 @@ _domainDefinition AsyncDomain {
     domainDeclarations: ["void thread_func();",
 		"std::thread asyncthread(thread_func);",
 		"bool asyncthread_running {true};"]
-    domainInitialization: "// init domain init"
+    domainInitialization: "// init domain init\n"
 	domainFunction: "// async domain processing
 	void thread_func() {
 		const int duration_ns = 1.0e9/%%domain_rate%%;
