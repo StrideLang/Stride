@@ -92,6 +92,7 @@ typedef struct {
   ASTNode externalConnection;
   std::string blockForPort;  // If this block is a block port, provide
                              // the port declaration name
+  SignalAccess access;
 } DeclarationMap;
 
 typedef struct {
@@ -100,6 +101,7 @@ typedef struct {
   std::vector<std::string> parentInstanceNames;
   std::map<std::string, std::vector<DeclarationMap>> blockInMap;
   std::map<std::string, std::vector<DeclarationMap>> blockOutMap;
+  std::map<std::string, std::string> domainMap;
 } FunctionCall;
 
 // Code that applies to a single domain
