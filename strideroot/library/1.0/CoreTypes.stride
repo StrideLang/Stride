@@ -251,8 +251,8 @@ type _PlatformDataType {
 		typeProperty Name {
 			name: "name"
 			types: [_StringLiteral]
-			default: none
-			required: on
+			default: ""
+			required: off
 			meta: "Name of the data type"
 		}
 		typeProperty PlatformName {

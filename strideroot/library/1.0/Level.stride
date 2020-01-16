@@ -11,23 +11,18 @@ module Level {
 #			block: GainType
 #			meta: "Sets the gain type to linear or decibel scaling. Possible values are 'Linear' and 'Decibel'."
 #		},
-		propertyInputPort GainProperty {
+		propertyInputPort GainPort {
 			name: "gain"
 			block: Gain
 			meta: "Amplifies or attenuates the signal."
 			default: 1.0
 		},
-		propertyInputPort OffsetProperty {
+		propertyInputPort OffsetPort {
 			name: "offset"
 			block: Offset
             default:    0.0
 			meta: "Adds an offset to the signal after applying the gain."
 		}
-#		propertyInputPort BypassProperty {
-#			name: "bypass"
-#			block: Bypass
-#		}
-
 	]
 	blocks: [
         signal Gain {

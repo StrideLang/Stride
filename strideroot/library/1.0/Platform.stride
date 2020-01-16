@@ -96,6 +96,12 @@ type _DomainDefinition {
 			types: [_StringLiteral]
 			default: ""
 			required: off
+		},
+		typeProperty DefaultType {
+			name: "defaultType"
+			types: [""]
+			default: _RealType
+			required: off
 		}
 	]
 #	inherits: [_Base]
@@ -118,6 +124,19 @@ type _Domain {
 		}
 	]
 #	inherits: [_Base]
+}
+
+type _ResourceType {
+	typeName: "resource"
+	properties: [
+		typeProperty Name {
+			name: "name"
+			types: [""]
+			default: none
+			required: on
+		}
+	]
+
 }
 
 type _DomainProcessing {
@@ -167,6 +186,12 @@ type _PlatformModuleType {
 		},
 		typeProperty Outputs {
 			name: "outputs"
+			types: [""]
+			default: []
+			required: off
+		},
+		typeProperty Resources {
+			name: "resources"
 			types: [""]
 			default: []
 			required: off

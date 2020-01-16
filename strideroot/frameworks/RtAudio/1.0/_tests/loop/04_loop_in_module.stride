@@ -29,7 +29,6 @@ module LoopModule {
 				Input [ Index ] + Output >> Output ;
 				Index + 1 >> Index ;
 				[ Index , InputPort.size ] >> Equal () >> Done ;
-				
 			]
 		}
 	]

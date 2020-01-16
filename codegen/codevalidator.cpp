@@ -2437,6 +2437,25 @@ std::shared_ptr<DeclarationNode> CodeValidator::findDomainDeclaration(
   return nullptr;
 }
 
+std::shared_ptr<DeclarationNode> CodeValidator::findDataTypeDeclaration(
+    string dataTypeName, ASTNode tree) {
+  for (auto node : tree->getChildren()) {
+    if (node->getNodeType() == AST::Declaration) {
+      auto nodeDecl = static_pointer_cast<DeclarationNode>(node);
+      if (nodeDecl->getObjectType() == "platformDataType") {
+        auto typeProp = nodeDecl->getPropertyValue("type");
+        if (typeProp && typeProp->getNodeType() == AST::String) {
+          if (static_pointer_cast<ValueNode>(typeProp)->getStringValue() ==
+              dataTypeName) {
+            return nodeDecl;
+          }
+        }
+      }
+    }
+  }
+  return nullptr;
+}
+
 std::string CodeValidator::getDomainIdentifier(ASTNode domain,
                                                ScopeStack scopeStack,
                                                ASTNode tree) {

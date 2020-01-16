@@ -6,14 +6,16 @@ loop Accumulate {
 		mainOutputPort OutputPort { block: Output }
 	]
 	blocks: [
-		signal Input[InputPort.size] {}
+		signal Input[3] {}
 		signal Output {default: 0 reset: Reset }
+		signal Index { default: 0 reset: Reset }
 		switch Done {default: off reset:Reset }
 		trigger Reset {}
 	]
 	streams: [
 		Input[0] + Input[1] + Input[2] >> Output;
-		on >> Done;
+		Index + 1 >> Index ;
+		[ Index , 3 ] >> Equal() >> Done ;
 	]
 	onExecution: Reset
 	terminateWhen: Done

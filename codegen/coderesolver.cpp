@@ -1966,7 +1966,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node,
         // internal blocks
         auto portBlockDecl = CodeValidator::findDeclaration(
             CodeValidator::streamMemberName(portBlock), subScope, nullptr);
-        if (!portBlockDecl) {
+        if (!portBlockDecl || portBlockDecl->getObjectType() == "constant") {
           // FIXME this has to check wether block is a bundle and create
           // declaration accordingly
           portBlockDecl = createSignalDeclaration(

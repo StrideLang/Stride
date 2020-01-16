@@ -136,6 +136,7 @@ _domainDefinition AudioDomain {
 	declarationsTag: "Declarations"
     initializationTag: "Initialization"
 	processingTag: "Processing"
+  defaultType: _RealType
 	cleanupTag: "Cleanup"
     substitutions: [
       "num_in_chnls", _NumInputChannels,
@@ -272,6 +273,7 @@ _hwInput AudioIn[_NumInputChannels] {
 }
 
 constant _NumOutputChannels {value: 2}
+
 
 _hwOutput AudioOut[_NumOutputChannels] {
     rate: AudioRate
