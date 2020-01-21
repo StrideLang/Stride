@@ -1,11 +1,3 @@
 use DesktopAudio version 1.0
-	
-signal Value {
-    domain: AudioDomain
-}
 
-Wiring::AnalogIn[1] >> Value;
-
-Value >> AudioOut[1];
-
-
+Wiring::AnalogIn[0] >> AudioOut[0];

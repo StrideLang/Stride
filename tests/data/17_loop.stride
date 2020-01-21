@@ -7,11 +7,10 @@ loop LoopIn {
         }
     ]
     blocks: [
-        switch CounterReset {}
+        switch CounterReset {default: on}
     ]
     streams: [
         Input >> Internal;
-        on >> CounterReset;
     ]
     terminateWhen: CounterReset
 }
@@ -23,11 +22,10 @@ loop LoopOut {
         }
     ]
     blocks: [
-        switch CounterReset {}
+        switch CounterReset {default: on}
     ]
     streams: [
         10 >> Output;
-        on >> CounterReset;
     ]
     terminateWhen: CounterReset
 }
@@ -42,11 +40,10 @@ loop LoopInOut {
         }
     ]
     blocks: [
-        switch CounterReset {}
+        switch CounterReset {default: on}
     ]
     streams: [
         Input >> Output;
-        on >> CounterReset;
     ]
     terminateWhen: CounterReset
 }
@@ -63,7 +60,7 @@ module ContainsLoop {
     blocks: [
         loop InModule {
             blocks: [
-                switch CounterReset {}
+                switch CounterReset {default: on}
             ]
             ports: [
                 mainOutputPort OutputPort {
@@ -72,13 +69,12 @@ module ContainsLoop {
             ]
             streams: [
                 25 >> Output;
-                on >> CounterReset;
             ]
             terminateWhen: CounterReset
         }
         loop InModuleInput {
             blocks: [
-                switch CounterReset {}
+                switch CounterReset {default: on}
                 signal Internal {}
             ]
             ports: [
@@ -88,7 +84,6 @@ module ContainsLoop {
             ]
             streams: [
                 Input >> Internal;
-                on >> CounterReset;
             ]
             terminateWhen: CounterReset
         }

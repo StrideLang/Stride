@@ -1,0 +1,24 @@
+use DesktopAudio version 1.0
+
+import Generators
+
+signal Modulation {
+    default:    0.0
+    rate:       AsyncRate
+    domain:     AsyncDomain
+}
+
+signal Output {
+    default:    0.0
+    rate:       AudioRate
+    domain:     AudioDomain
+}
+
+SineOsc ( frequency: 1.0 )
+>> Level ( gain: 40.0 offset: 220.0 )
+>> Modulation;
+
+SineOsc ( frequency: Modulation )
+>> Output;
+
+Output >> AudioOut[0];

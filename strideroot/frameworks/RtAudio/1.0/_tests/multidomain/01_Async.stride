@@ -10,4 +10,4 @@ signal Value {
 
 Value >> AudioOut[1];
 Value + 1 >> Value;
-[Value, 10] >> GreaterEqual() >> Reset;
+[Value, 10] >> GreaterOrEqual() >> Reset;

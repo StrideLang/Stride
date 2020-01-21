@@ -1858,6 +1858,23 @@ std::vector<ASTNode> CodeResolver::getModuleBlocks(
 
 void CodeResolver::declareInternalBlocksForNode(ASTNode node,
                                                 ScopeStack subScope) {
+  //  {{decl->getName(), internalBlocks->getChildren()}}
+  auto findDeclarationWithinFunctionScope = [&](ASTNode portBlock,
+                                                ScopeStack innerScope) {
+    auto portBlockDecl = CodeValidator::findDeclaration(
+        CodeValidator::streamMemberName(portBlock), innerScope, nullptr);
+    if (!portBlockDecl) {
+      // Check for constants in parent nodes
+      auto rootPortBlockDecl = CodeValidator::findDeclaration(
+          CodeValidator::streamMemberName(portBlock), subScope, m_tree);
+      if (rootPortBlockDecl &&
+          rootPortBlockDecl->getObjectType() == "constant") {
+        portBlockDecl = rootPortBlockDecl;
+      }
+    }
+    return portBlockDecl;
+  };
+
   if (node->getNodeType() == AST::Declaration) {
     std::shared_ptr<DeclarationNode> decl =
         static_pointer_cast<DeclarationNode>(node);
@@ -1893,7 +1910,6 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node,
             std::make_shared<ListNode>(internalBlocks, __FILE__, __LINE__));
         internalBlocks = decl->getPropertyValue("blocks");
       }
-      subScope.push_back({decl->getName(), internalBlocks->getChildren()});
 
       // Check Output port and declare block if not declared
       std::shared_ptr<DeclarationNode> outputPortBlock =
@@ -1914,8 +1930,9 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node,
         // Add declaration if not there
         // We need to find declaration only in the internal blocks, as port
         // blocks can only be internal.
-        auto portBlockDecl = CodeValidator::findDeclaration(
-            CodeValidator::streamMemberName(portBlock), subScope, nullptr);
+        auto portBlockDecl = findDeclarationWithinFunctionScope(
+            portBlock, {{decl->getName(), internalBlocks->getChildren()}});
+
         if (!portBlockDecl) {
           // FIXME this has to check wether block is a bundle and create
           // declaration accordingly
@@ -1964,9 +1981,10 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node,
         // Add declaration if not there
         // Port blocks can only be internal, so look for declaration only in
         // internal blocks
-        auto portBlockDecl = CodeValidator::findDeclaration(
-            CodeValidator::streamMemberName(portBlock), subScope, nullptr);
-        if (!portBlockDecl || portBlockDecl->getObjectType() == "constant") {
+
+        auto portBlockDecl = findDeclarationWithinFunctionScope(
+            portBlock, {{decl->getName(), internalBlocks->getChildren()}});
+        if (!portBlockDecl) {
           // FIXME this has to check wether block is a bundle and create
           // declaration accordingly
           portBlockDecl = createSignalDeclaration(
@@ -1982,7 +2000,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node,
             portBlock, {{decl->getName(), internalBlocks->getChildren()}},
             m_tree);
         if (!domainNode || domainNode->getNodeType() == AST::None) {
-          if (portBlockDecl) {
+          if (portBlockDecl && portBlockDecl->getObjectType() != "constant") {
             portBlockDecl->setPropertyValue("domain", mainPortsDefaultDomain);
           }
         }
@@ -1994,11 +2012,10 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node,
       //            Q_ASSERT(moduleDefaultDomain);
 
       // Find OutputPort node or give a default Block and domain
-      ListNode *ports =
-          static_cast<ListNode *>(decl->getPropertyValue("ports").get());
+      auto ports =
+          static_pointer_cast<ListNode>(decl->getPropertyValue("ports"));
 
       internalBlocks = decl->getPropertyValue("blocks");
-
       // Then go through ports autodeclaring blocks
       if (ports->getNodeType() == AST::List) {
         for (ASTNode port : ports->getChildren()) {
@@ -2024,10 +2041,11 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node,
               std::shared_ptr<BlockNode> nameNode =
                   static_pointer_cast<BlockNode>(blockPortValue);
               string name = nameNode->getName();
-              std::shared_ptr<DeclarationNode> blockDecl =
-                  CodeValidator::findDeclaration(QString::fromStdString(name),
-                                                 ScopeStack(), internalBlocks);
-              if (!blockDecl) {  // If block is given but not declared, declare
+
+              auto blockDecl = findDeclarationWithinFunctionScope(
+                  nameNode, {{decl->getName(), internalBlocks->getChildren()}});
+              if (!blockDecl) {  // If block is given but not
+                                 // declared, declare
                                  // and assing port domain
                 int size = 1;
                 //                                if
