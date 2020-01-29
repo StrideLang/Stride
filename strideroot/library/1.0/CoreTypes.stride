@@ -216,6 +216,36 @@ type _Table {
 	inherits: [_DomainMember, _Resetable]
 }
 
+type _StringType {
+	typeName: "string"
+	properties: [
+		typeProperty Default {
+			name: "default"
+			types: [_StringLiteral]
+			default: ""
+			required: off
+			meta: "Initial and default value"
+		}
+		typeProperty MaxSize {
+			name: "maxSize"
+			types: [""]
+			default: none
+			required: off
+			meta: "Maximum size of the string"
+		}
+		typeProperty PreAllocate {
+			name: "preallocate"
+			types: [_IntLiteral]
+			default: 0
+			required: off
+			meta: "Preallocate to size"
+		}
+	]
+	meta: "Strings with variable length."
+
+	inherits: [_DomainMember, _Resetable]
+}
+
 type _GroupType {
 	typeName: "group"
 	properties: [

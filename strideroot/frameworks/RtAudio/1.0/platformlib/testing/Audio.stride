@@ -18,7 +18,7 @@ _domainDefinition AudioDomain {
       "num_in_chnls", _NumInputChannels,
       "num_out_chnls", _NumOutputChannels
     ]
-    domainIncludes: ["iostream", "iomanip"]
+    domainIncludes: ["<iostream>", "<iomanip>"]
     domainDeclarations: ['constexpr int NUM_IN_CHANNELS = %%num_in_chnls%%;',
     'constexpr int NUM_OUT_CHANNELS = %%num_out_chnls%%;',
     'constexpr int NUM_SAMPLES = 44100;',

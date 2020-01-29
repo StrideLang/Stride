@@ -28,6 +28,7 @@ class CodeEntity {
   std::string name;
   CodeEntityType entityType;
   std::vector<std::shared_ptr<CodeEntity>> dependents;
+  std::vector<std::string> includes;
 
   virtual std::string fullName() { return name; }
 };
