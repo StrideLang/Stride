@@ -14,21 +14,19 @@ module Test {
 	blocks: [
 		reaction InternalReaction {
 			ports: [
-				mainOutputPort OutputPort {
-					block: Output
-				}
 			]
 			streams: [
-				Value + 1 >> Output;
+				Value + 1 >> Value;
 			]
 		}
-		signal Value { default: 0}
+		signal Value { default: 0 domain: OutputPort.domain}
 		switch ReactionSwitch {
 			domain: OutputPort.domain
 		}
 	]
 	streams: [
-		[Input, 0] >> Greater() >> ReactionSwitch >> InternalReaction() >> Output;
+		[Input, 0] >> Greater() >> ReactionSwitch >> InternalReaction();
+		Value >> Output;
 	]
 }
 

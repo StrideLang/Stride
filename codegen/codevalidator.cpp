@@ -2604,7 +2604,7 @@ std::shared_ptr<DeclarationNode> CodeValidator::getMainOutputPortBlock(
     std::shared_ptr<DeclarationNode> moduleBlock) {
   ListNode *ports =
       static_cast<ListNode *>(moduleBlock->getPropertyValue("ports").get());
-  if (ports->getNodeType() == AST::List) {
+  if (ports && ports->getNodeType() == AST::List) {
     for (ASTNode port : ports->getChildren()) {
       std::shared_ptr<DeclarationNode> portBlock =
           static_pointer_cast<DeclarationNode>(port);
@@ -2612,7 +2612,7 @@ std::shared_ptr<DeclarationNode> CodeValidator::getMainOutputPortBlock(
         return portBlock;
       }
     }
-  } else if (ports->getNodeType() == AST::None) {
+  } else if (ports && ports->getNodeType() == AST::None) {
     // If port list is None, then ignore
   } else {
     qDebug() << "ERROR! ports property must be a list or None!";
