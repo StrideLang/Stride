@@ -213,8 +213,19 @@ class DomainCode {
             .end());  // Out tokens are appended. The expectation is that they
                       // are consumed as they are used.
 
-    moduleCalls.insert(moduleCalls.end(), newCode.moduleCalls.begin(),
-                       newCode.moduleCalls.end());
+    for (auto call : newCode.moduleCalls) {
+      bool found = false;
+      for (auto existingCall : moduleCalls) {
+        if (existingCall.functionCall->fullName() ==
+            call.functionCall->fullName()) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        moduleCalls.push_back(call);
+      }
+    }
   }
 
   void prepend(DomainCode newCode) {
@@ -284,8 +295,19 @@ class DomainCode {
     currentOutTokens.insert(currentOutTokens.begin(),
                             newCode.currentOutTokens.begin(),
                             newCode.currentOutTokens.end());
-    moduleCalls.insert(moduleCalls.begin(), newCode.moduleCalls.begin(),
-                       newCode.moduleCalls.end());
+    for (auto call : newCode.moduleCalls) {
+      bool found = false;
+      for (auto existingCall : moduleCalls) {
+        if (existingCall.functionCall->fullName() ==
+            call.functionCall->fullName()) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        moduleCalls.insert(moduleCalls.begin(), call);
+      }
+    }
   }
 };
 
