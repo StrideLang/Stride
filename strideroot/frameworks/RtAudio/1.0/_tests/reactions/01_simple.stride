@@ -1,5 +1,11 @@
 use DesktopAudio version 1.0
 
+switch AlwaysOn {
+	default: on
+	domain: AudioDomain
+}
+
+
 reaction ConstantSwitch {
 	ports: [
 		mainOutputPort OutputPort {
@@ -11,5 +17,5 @@ reaction ConstantSwitch {
 	]
 }
 
-on >> ConstantSwitch() >> AudioOut[0];
+AlwaysOn >> ConstantSwitch() >> AudioOut[0];
 	
