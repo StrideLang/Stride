@@ -1107,6 +1107,10 @@ void CodeValidator::validateStreamInputSize(StreamNode *stream,
       (rightDecl && rightDecl->getObjectType() == "buffer")) {
     // FIXME how should buffer size be validated?
 
+  } else if ((leftDecl && leftDecl->getObjectType() == "table") ||
+             (rightDecl && rightDecl->getObjectType() == "table")) {
+    // FIXME how should table size be validated?
+
   } else {
     if (leftOutSize == -2 || rightInSize == -2) {
       // FIXME Hack while calculation of port portperties size is implemented
