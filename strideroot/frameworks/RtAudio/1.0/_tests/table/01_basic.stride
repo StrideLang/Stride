@@ -20,9 +20,7 @@ signal Counter {
 
 Oscillator(frequency: 1.0) >> SineTable; 
 
-
-[Counter, 1024] >> Equal() >> CounterReset;
-
 SineTable[Counter] >> AudioOut[0];
 
 Counter + 1 >> Counter;
+[Counter, 1024] >> GreaterOrEqual() >> CounterReset;
