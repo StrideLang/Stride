@@ -39,6 +39,7 @@ struct Declaration : public CodeEntity {
   std::string code;
   std::string templateParams;
   std::string parent;
+  std::vector<std::shared_ptr<Declaration>> dependsOn;
 };
 
 struct Instance : public CodeEntity {
