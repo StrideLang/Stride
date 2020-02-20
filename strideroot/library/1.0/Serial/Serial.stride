@@ -1,16 +1,27 @@
 
 module SerialPrint {
     ports: [
-        port InputPort {
-            name:       'input'
-            main: on
-            direction:  'input'
+        mainInputPort ValuePort {
+            name:       'value'
+			block: Value
+        }
+        propertyInputPort ChannelPort {
+            name:       'value'
+			block: Channel
         }
 	]
     blocks: [
-        _serialPrintType SerialPrintBlock {}
+		signal Value {
+			default: 0
+			domain: ValuePort.domain
+		}
+		signal Channel {
+			default: 0
+			domain: ValuePort.domain
+		}		
     ]
     streams: [
-        Input >> SerialPrintBlock;
+        [Value, Channel] >> _SerialPrintModule();
     ]
 }
+

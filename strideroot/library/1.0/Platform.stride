@@ -151,6 +151,25 @@ type _DomainProcessing {
 	]
 }
 
+type _PlatformModulePortType {
+	typeName: "_platformModulePort"
+	properties: [
+		typeProperty Name {
+			name: "name"
+			types: [""]
+			default: none
+			required: on
+		}
+		typeProperty Default {
+			name: "default"
+			types: [""]
+			default: none
+			required: on
+		}
+	]
+
+}
+
 type _PlatformModuleType {
 	typeName: "platformModule"
 	properties: [
@@ -189,6 +208,19 @@ type _PlatformModuleType {
 			types: [""]
 			default: []
 			required: off
+		},
+		typeProperty Ports {
+			name: "ports"
+			types: [""]
+			default: []
+			required: off
+		},
+		typeProperty Properties {
+			name: "propertiesConstraints"
+			types: [""]
+			default: []
+			required: off
+			meta: "This will validate constraints for property input"
 		},
 		typeProperty Resources {
 			name: "resources"

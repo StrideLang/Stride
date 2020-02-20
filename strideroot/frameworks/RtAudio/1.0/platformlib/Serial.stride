@@ -43,10 +43,16 @@ platformBlock _SerialPrintType {
 #//      usleep(milliseconds*1000); // 100 ms
 ##endif
 
-platformModule SerialIn {
+platformModule SerialChannelIn {
 	domain: SerialDomain
 	inputs: []
 	outputs: ["string"]
+	ports: [
+		_platformModulePort IdPort {
+			name: "id"
+			default: 0
+		}
+	]
 	includeDir: ["serial/include"]
 	include: ["serial/serial.h", "iostream"]
 	linkDir: ["serial/build"]
@@ -56,7 +62,34 @@ platformModule SerialIn {
 	initializations: [ '' ]
 	globalDeclarations: []
 	globalInitializations: []
-	preProcessing: '	'
+	preProcessing: 'if (_id == %%property:id%%) {'
     processing: "serialVar"
+	postProcessing: '} // id %%property:id%%	'
+    inherits: [_Signal]
+}
+
+
+platformModule SerialChannelOut {
+	#domain: SerialDomain
+	inputs: [""]
+	outputs: []
+	ports: [
+		_platformModulePort IdPort {
+			name: "id"
+			default: 0
+		}
+	]
+	includeDir: ["serial/include"]
+	include: ["serial/serial.h", "iostream", "string"]
+	linkDir: ["serial/build"]
+	linkTo: ["serial"]
+	declarations: [''
+	]
+	initializations: [ '' ]
+	globalDeclarations: []
+	globalInitializations: []
+	preProcessing: ''
+    processing: 'serialPort.write(("%%property:id%%:" + std::to_string(%%intokens:0%%)).c_str());'
+	postProcessing: ''
     inherits: [_Signal]
 }

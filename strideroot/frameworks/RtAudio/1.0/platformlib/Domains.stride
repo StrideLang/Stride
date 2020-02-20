@@ -118,40 +118,61 @@ _domainDefinition SerialDomain {
     domainIncludes: ['serial/serial.h', 'thread']
     domainDeclarations: ["void serial_thread_func();",
 		"bool serialthread_running {true};",
-		"float serialVar = 0.0;"]
+		"serial::Serial serialPort(%%serial_port%%, %%baud_rate%%, serial::Timeout::simpleTimeout(1.0/%%serial_process_rate%%));"]
     domainInitialization: "// serail domain init
 	 std::thread serialReadThread(serial_thread_func);"
 	domainFunction: "// serial domain processing function
 
 void serial_thread_func() {
-  serial::Serial my_serial(%%serial_port%%, %%baud_rate%%, serial::Timeout::simpleTimeout(1.0/%%serial_process_rate%%));
+		std::string mLineBuffer;
+		int mGranularity = 1000000.0/%%serial_process_rate%%; // nanoseconds
 
   // Flush buffers
   //my_serial.flush();
   std::string lineBuffer; // Stores partial lines between reads
-  const unsigned int bufferSize = 32;
+  const unsigned int bufferSize = 4096;
   uint8_t buffer[bufferSize];
   while (serialthread_running) {
-    std::string input = lineBuffer + my_serial.read(bufferSize - 1);
-    if (input.size() > 0) {
-      size_t begin = 0;
-      size_t count = 0;
-      while (count < input.size()) {
-        if (input[count] == '\r' || input[count] == '\n') {
-          if (count - begin > 0) {
-           serialVar = std::stof(input.substr(begin, count - begin)) ;
-		   std::cout << serialVar <<std::endl;
-		   %%domainCode%%
-          }
-          begin = count + 1;
+    //        size_t bytes_wrote = my_serial.write(test_string);
+    auto nextTime = std::chrono::high_resolution_clock::now() + std::chrono::nanoseconds(mGranularity);
+    try {
+      size_t count = serialPort.read(buffer, bufferSize);
+//      mRingBuffer.write((char *) buffer, count);
+//      onInput(buffer, count);
+				
+	if (count > 0) {
+    size_t start = 0;
+    size_t nullPos = 0;
+    while(nullPos <= count) {
+      if (buffer[nullPos] == '\n' || buffer[nullPos] == '\r') {
+        buffer[nullPos] = '\0';
+        char *thisLine = (char *) buffer + start;
+        mLineBuffer += std::string(thisLine);
+        if (mLineBuffer.size() > 0) {
+          // Process line
+			auto separatorIndex = mLineBuffer.find(':');
+      		size_t _id = std::stoi(mLineBuffer.substr(0, separatorIndex));
+      		std::string _value = mLineBuffer.substr(separatorIndex + 1);
+      		float serialVar = std::stof(_value);			
+%%domainCode%%	
+          	mLineBuffer.clear();
         }
-        count++;
+        start = nullPos + 1;
       }
-      lineBuffer.clear();
-      if (begin != count) {
-        lineBuffer = input.substr(begin);
-      }
+      nullPos++;
+    }
+    if (start < count) {
+      char *thisLine = (char *) buffer + start;
+      buffer[count] = '\0';
+      mLineBuffer += std::string(thisLine);
+    }
+  }
+      std::this_thread::sleep_until(nextTime);
+    } catch (const serial::PortNotOpenedException &/*e*/) {
+      serialthread_running = false;
 
+    } catch (const serial::IOException &/*e*/) {
+      serialthread_running = false;
 
     }
   }

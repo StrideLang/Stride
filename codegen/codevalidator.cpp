@@ -828,9 +828,9 @@ void CodeValidator::validateTypes(ASTNode node, ScopeStack scopeStack,
         vector<string> validPorts = getModulePropertyNames(declaration);
         // TODO "domain" port is being allowed forcefully. Should this be
         // specified in a different way?
-        if (propertyName.at(0) != '_' && propertyName != "domain" &&
+        if (/*propertyName.at(0) != '_' && propertyName != "domain" &&*/
             std::find(validPorts.begin(), validPorts.end(), propertyName) ==
-                validPorts.end()) {
+            validPorts.end()) {
           LangError error;
           error.type = LangError::InvalidPort;
           error.lineNumber = func->getLine();
@@ -2820,13 +2820,12 @@ std::vector<string> CodeValidator::getModulePropertyNames(
     std::shared_ptr<DeclarationNode> blockDeclaration) {
   std::vector<string> portNames;
   if (blockDeclaration->getObjectType() == "module") {
-    ListNode *portsList = static_cast<ListNode *>(
-        blockDeclaration->getPropertyValue("ports").get());
+    auto portsList = static_pointer_cast<ListNode>(
+        blockDeclaration->getPropertyValue("ports"));
     if (portsList->getNodeType() == AST::List) {
       for (ASTNode portDeclaration : portsList->getChildren()) {
         if (portDeclaration->getNodeType() == AST::Declaration) {
-          DeclarationNode *port =
-              static_cast<DeclarationNode *>(portDeclaration.get());
+          auto port = static_pointer_cast<DeclarationNode>(portDeclaration);
           ASTNode nameProperty = port->getPropertyValue("name");
           if (nameProperty) {
             Q_ASSERT(nameProperty->getNodeType() == AST::String);
@@ -2838,7 +2837,24 @@ std::vector<string> CodeValidator::getModulePropertyNames(
         }
       }
     }
-  } else {  // TODO implement for platform types
+  } else if (blockDeclaration->getObjectType() == "platformModule") {
+    auto portsList = static_pointer_cast<ListNode>(
+        blockDeclaration->getPropertyValue("ports"));
+    if (portsList->getNodeType() == AST::List) {
+      for (ASTNode portDeclaration : portsList->getChildren()) {
+        if (portDeclaration->getNodeType() == AST::Declaration) {
+          auto port = static_pointer_cast<DeclarationNode>(portDeclaration);
+          ASTNode nameProperty = port->getPropertyValue("name");
+          if (nameProperty) {
+            Q_ASSERT(nameProperty->getNodeType() == AST::String);
+            if (nameProperty->getNodeType() == AST::String) {
+              portNames.push_back(
+                  static_cast<ValueNode *>(nameProperty.get())->toString());
+            }
+          }
+        }
+      }
+    }
   }
   return portNames;
 }
@@ -2923,8 +2939,8 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack,
                  member->getNodeType() == AST::String ||
                  member->getNodeType() == AST::Switch ||
                  member->getNodeType() == AST::PortProperty) {
-        continue;  // Don't append empty domain to domainList, as a value should
-                   // take any domain.
+        continue;  // Don't append empty domain to domainList, as a value
+                   // should take any domain.
       } else {
         tempDomainName =
             CodeValidator::getNodeDomainName(member, scopeStack, tree);
@@ -2971,8 +2987,8 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack,
       //            ASTNode right = expr->getRight();
       //            ASTNode leftDomain = CodeValidator::getNodeDomain(left,
       //            scopeStack, tree); ASTNode rightDomain =
-      //            CodeValidator::getNodeDomain(right, scopeStack, tree); if
-      //            (left->getNodeType() == AST::Int
+      //            CodeValidator::getNodeDomain(right, scopeStack, tree);
+      //            if (left->getNodeType() == AST::Int
       //                    || left->getNodeType() == AST::Real
       //                    || left->getNodeType() == AST::String
       //                    || left->getNodeType() == AST::Switch
@@ -2994,7 +3010,8 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack,
       //                     scopeStack, tree)) {
       //                    return leftDomain;
       //                } else {
-      //                    return expr->getCompilerProperty("samplingDomain");
+      //                    return
+      //                    expr->getCompilerProperty("samplingDomain");
       //                }
       //            } else {
       return expr->getCompilerProperty("samplingDomain");

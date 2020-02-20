@@ -19,16 +19,36 @@
 #	rate: 1000
 #}
 
-platformModule _SerialPrintType {
-    typeName: '_serialPrintType'
-	inputs: ["real"]
+
+intListOverride SerialBaudRate {
+	name: "Baud Rate"
+	possibleValues: [9600, 14400, 19200, 38400, 56000, 57600, 115200, 128000]
+	default: 56000
+	override: [_SerialBaudRate]
+	meta: "Serial Baud Rate"
+}
+
+resource _SerialPort {
+    name: "Serial"
+    initializations: ["Serial.begin(%%_SerialBaudRate%%);"]
+    properties: [
+        SerialBaudRate
+    ]
+}
+
+platformModule _SerialPrintModule {
+	inputs: ["real","real"]
 	outputs: []
+    domain: none
 #    include: []
 #    linkTo: []
 #    declarations: ['']
-    initializations: ["Serial.begin(9600);"]
+    resource: _SerialPort
+    initializations: ["Serial.begin(9600); // init"]
     processing: '
-	Serial.println(%%intoken:0%%);
+	Serial.print(%%intokens:1%%);
+	Serial.print(":");
+	Serial.println(%%intokens:0%%);
 	'
     inherits: [_Signal]
 }
@@ -45,7 +65,7 @@ platformBlock _SerialOutType {
     ]
     processing: '
     channel = %%bundle_index%%;
-    Serial.write((byte *) &channel, 1);
+    Serial.print((byte *) &channel, 1);
     Serial.write((byte *) &%%intoken:0%%, 4);
 	'
 	postProcessing: '// Post'

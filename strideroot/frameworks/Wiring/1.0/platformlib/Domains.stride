@@ -45,3 +45,21 @@ int tickEvent = t.every(1, process);
     domainCleanup: '// init domain cleanup'
 	rate:1000
 }
+
+_domainDefinition DummyDomain {
+	domainName: "DummyDomain"
+	framework: _WiringFramework
+	globalsTag: "Includes"
+	declarationsTag: "Declarations"
+	processingTag: "Processing"
+	initializationTag: "Initialization"
+	cleanupTag: "Cleanup"
+    substitutions: [ ]
+    domainIncludes: []
+    domainDeclarations: []
+    domainInitialization: ''
+	domainFunction: ''
+	domainProcessing: ''
+    domainCleanup: ''
+	rate:1000
+}
