@@ -20,6 +20,20 @@ type _DomainDefinition {
 			default: none
 			required: on
 		},
+		typeProperty ParentDomain {
+			name: "parentDomain"
+			types: [""]
+			default: none
+			required: off
+			meta: "The domain's parent domain."
+		},
+		typeProperty MaxInstances {
+			name: "maxInstances"
+			types: [""]
+			default: none
+			required: off
+			meta: "The maximum number of instances of this domain that can be created. Setting to none means no limit"
+		},
 		typeProperty DomainRate {
 			name: "rate"
 			types: [_RealLiteral, _IntLiteral, ""]

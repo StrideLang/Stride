@@ -1,12 +1,14 @@
 
-_domainProcessing _PlatformDomainProcessing {
-	domainStreams: [
-		SetupDomain >> AsyncDomain >> SerialDomain >> AudioDomain;
-		# Should perhaps look like:
-		#SetupDomain >> [AudioDomain, AsyncDomain, SerialDomain];
-		# But for now just setting the domain processing order
-	]
-}
+#_domainProcessing _PlatformDomainProcessing {
+#	rootDomain: RootDomain
+#	domainStreams: [
+#		RootDomain #>> AsyncDomain >> SerialDomain
+#		 >> AudioDomain;
+#		# Should perhaps look like:
+#		#SetupDomain >> [AudioDomain, AsyncDomain, SerialDomain];
+#		# But for now just setting the domain processing order
+#	]
+#}
 
 constant _GlobalInitTag {
 	value: "GlobalInitialization"
@@ -24,30 +26,51 @@ alias PlatformRate {
     block: AudioRate
 }
 
-alias _ContextInitDomain {
-    block: SetupDomain
-}
+#alias _ContextInitDomain {
+#    block: RootDomain
+#}
 
-_domainDefinition SetupDomain {
-	domainName: "SetupDomain"
+_domainDefinition RootDomain {
+	domainName: "RootDomain"
 	framework: _RtAudioFramework
 	rate: -1 # -1 is 'one-shot/final' domain
 	globalsTag: "Includes"
 	declarationsTag: "Declarations"
-	processingTag: "Initialization"
-	initializationTag: "Initialization"
-	cleanupTag: "Initialization"
+	processingTag: "Includes"
+	initializationTag: "Instances"
+	cleanupTag: "Processing"
     substitutions: [ ]
-    domainIncludes: []
-    domainDeclarations: []
-    domainInitialization: '// setup domain init
-		%%domainCode%%
-		__setup__();
-		'
-	domainFunction: 'void __setup__() {
-		%%domainCode%%
-	}
-		'
+    domainIncludes: ["ReadWriteClasses.hpp",
+	"Synchronization.hpp",
+	"Helper.hpp"]
+	domainFunction: '
+
+//[[Declarations]]
+//[[/Declarations]]
+
+//[[Instances]]
+//[[/Instances]]
+
+//[[Processing]]
+//[[/Processing]]
+
+int main() {
+//[[GlobalInitialization]]
+//[[/GlobalInitialization]]
+//[[Initialization]]
+//[[/Initialization]]
+
+
+    char input;
+    std::cout << "\nRunning ... press <enter> to quit.\n";
+    std::cin.get(input);
+
+
+//[[Cleanup]]
+//[[/Cleanup]]
+    return 0;
+}
+'
   domainCleanup: '// setup domain cleanup'
 }
 
@@ -58,6 +81,7 @@ constant AsyncRate {
 _domainDefinition AsyncDomain {
 	domainName: "AsyncDomain"
 	framework: _RtAudioFramework
+	parentDomain: RootDomain
 	rate: AsyncRate
 	globalsTag: "Includes"
 	declarationsTag: "Declarations"
@@ -75,7 +99,8 @@ _domainDefinition AsyncDomain {
 		const int duration_ns = 1.0e9/%%domain_rate%%;
 		while (asyncthread_running) {
 			std::chrono::time_point<std::chrono::system_clock> start_time = std::chrono::system_clock::now();
-	%%domainCode%%
+//[[Processing]]
+//[[/Processing]]
 			// TODO add overrun check
 	auto end_time = start_time + std::chrono::nanoseconds(duration_ns);
     std::this_thread::sleep_until(end_time);
@@ -106,6 +131,7 @@ constant SerialProcessRate {
 _domainDefinition SerialDomain {
 	domainName: "SerialDomain"
 	framework: _RtAudioFramework
+	parentDomain: RootDomain
 	rate: SerialProcessRate
 	globalsTag: "Includes"
 	declarationsTag: "Declarations"
@@ -118,15 +144,15 @@ _domainDefinition SerialDomain {
     domainIncludes: ['serial/serial.h', 'thread']
     domainDeclarations: ["void serial_thread_func();",
 		"bool serialthread_running {true};",
+		"std::thread serialReadThread(serial_thread_func);",
 		"serial::Serial serialPort(%%serial_port%%, %%baud_rate%%, serial::Timeout::simpleTimeout(1.0/%%serial_process_rate%%));"]
-    domainInitialization: "// serail domain init
-	 std::thread serialReadThread(serial_thread_func);"
-	domainFunction: "// serial domain processing function
-
+    domainInitialization: "// serial domain init"
+	domainFunction: "
 void serial_thread_func() {
 		std::string mLineBuffer;
 		int mGranularity = 1000000.0/%%serial_process_rate%%; // nanoseconds
-
+//[[Initialization]]
+//[[/Initialization]]
   // Flush buffers
   //my_serial.flush();
   std::string lineBuffer; // Stores partial lines between reads
@@ -153,8 +179,9 @@ void serial_thread_func() {
 			auto separatorIndex = mLineBuffer.find(':');
       		size_t _id = std::stoi(mLineBuffer.substr(0, separatorIndex));
       		std::string _value = mLineBuffer.substr(separatorIndex + 1);
-      		float serialVar = std::stof(_value);			
-%%domainCode%%	
+      		float serialVar = std::stof(_value);				
+//[[Processing]]
+//[[/Processing]]
           	mLineBuffer.clear();
         }
         start = nullPos + 1;
@@ -183,4 +210,20 @@ void serial_thread_func() {
 	serialReadThread.join();
 	std::cout << "Serial Thread joined." << std::endl;
 	'
+}
+
+_domainDefinition SerialChannelDomain {
+	domainName: "SerialChannelDomain"
+	framework: _RtAudioFramework
+	parentDomain: SerialDomain
+	maxInstances: none
+	rate: 0
+	globalsTag: "Includes"
+	declarationsTag: "Declarations"
+	processingTag: "Processing"
+	initializationTag: "Initialization"
+	cleanupTag: "Cleanup"
+    domainInitialization: "// serial channel domain init"
+	domainFunction: "// serial channel processing function"
+    domainCleanup: '// serial channel domain cleanup'
 }

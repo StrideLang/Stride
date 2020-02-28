@@ -644,7 +644,7 @@ void CodeResolver::insertBuiltinObjects() {
       {
         m_tree->addChild(block);
         usedDeclarations << block;
-      } else if (block->getName() == "_PlatformDomainProcessing" ||
+      } else if (/*block->getName() == "_PlatformDomainProcessing" ||*/
                  block->getName() == "_GlobalInitTag") {
         m_tree->addChild(block);
         usedDeclarations << block;
@@ -1271,8 +1271,8 @@ ASTNode CodeResolver::processDomainsForNode(ASTNode node, ScopeStack scopeStack,
       }
     }
   } else if (node->getNodeType() == AST::Function) {
-    FunctionNode *func = static_cast<FunctionNode *>(node.get());
-    ASTNode domain = func->getDomain();
+    auto func = static_pointer_cast<FunctionNode>(node);
+    ASTNode domain = CodeValidator::getNodeDomain(node, scopeStack, m_tree);
     if (!domain) {
       // Put declaration in stack to set domain once domain is resolved
       domainStack << node;

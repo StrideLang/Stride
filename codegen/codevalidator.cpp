@@ -2464,7 +2464,7 @@ std::string CodeValidator::getDomainIdentifier(ASTNode domain,
                                                ScopeStack scopeStack,
                                                ASTNode tree) {
   std::string name;
-  // To avoid inconsistencies, we rely on the Stride name rather than the
+  // To avoid inconsistencies, we rely on the block name rather than the
   // domainName property. This guarantees uniqueness within a scope.
   // TODO we should add scope markers to this identifier to avoid clashes
   if (domain) {
@@ -2479,6 +2479,12 @@ std::string CodeValidator::getDomainIdentifier(ASTNode domain,
           auto domainNameNode = domainDeclaration->getPropertyValue("value");
           name = getDomainIdentifier(domainNameNode, scopeStack, tree);
         }
+      }
+      auto domainInstanceIndex = domain->getCompilerProperty("domainInstance");
+      if (domainInstanceIndex) {
+        int index =
+            static_pointer_cast<ValueNode>(domainInstanceIndex)->getIntValue();
+        name += ":" + std::to_string(index);
       }
     } else if (domain->getNodeType() == AST::Bundle) {
       auto domainBlock = static_pointer_cast<BundleNode>(domain);
@@ -2975,6 +2981,29 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack,
           static_pointer_cast<FunctionNode>(node)->getName(), scopeStack, tree);
       if (funcDecl && funcDecl->getObjectType() == "platformModule") {
         domainNode = funcDecl->getPropertyValue("domain");
+        auto domainDecl = CodeValidator::findDomainDeclaration(
+            CodeValidator::streamMemberName(domainNode), tree);
+        if (domainDecl) {
+          auto parentDomain = domainDecl->getPropertyValue("parentDomain");
+          if (parentDomain && parentDomain->getNodeType() == AST::Block) {
+            auto domainInstanceCountNode =
+                parentDomain->getCompilerProperty("instances");
+            if (!domainInstanceCountNode) {
+              domainInstanceCountNode =
+                  std::make_shared<ValueNode>(0, __FILE__, __LINE__);
+              parentDomain->setCompilerProperty("instances",
+                                                domainInstanceCountNode);
+            }
+            int index = static_pointer_cast<ValueNode>(domainInstanceCountNode)
+                            ->getIntValue();
+            domainInstanceCountNode =
+                std::make_shared<ValueNode>(index + 1, __FILE__, __LINE__);
+            parentDomain->setCompilerProperty("instances",
+                                              domainInstanceCountNode);
+            domainNode->setCompilerProperty("domainInstance",
+                                            domainInstanceCountNode);
+          }
+        }
       }
     }
   } else if (node->getNodeType() == AST::Expression) {

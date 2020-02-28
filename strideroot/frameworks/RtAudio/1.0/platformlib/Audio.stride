@@ -131,6 +131,7 @@ type _TemplateDirectives {
 _domainDefinition AudioDomain {
 	domainName: "AudioDomain"
 	framework: _RtAudioFramework
+	parentDomain: RootDomain
 	rate: AudioRate
 	globalsTag: "Includes"
 	declarationsTag: "Declarations"
@@ -191,6 +192,8 @@ _domainDefinition AudioDomain {
     std::cout << "Device = " << %%device%% << std::endl;
     std::cout << "Name = " << info.name << std::endl;
     std::cout << ": maximum output channels = " << info.outputChannels << std::endl;
+//[[Initialization]]
+//[[/Initialization]]
     try {
       adac.startStream();
     }
@@ -199,10 +202,6 @@ _domainDefinition AudioDomain {
       if ( adac.isStreamOpen() ) adac.closeStream();
       exit (-1);
     }
-    %%domainCode%%
-    char input;
-    std::cout << "\nRunning ... press <enter> to quit.\n";
-    std::cin.get(input);
     '
 	domainFunction: '
 	int audio_buffer_process( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
@@ -213,7 +212,8 @@ _domainDefinition AudioDomain {
   MY_TYPE *in = (MY_TYPE *)inputBuffer;
   MY_TYPE *out = (MY_TYPE *)outputBuffer;
   while(nBufferFrames-- > 0) {
-%%domainCode%%
+//[[Processing]]
+//[[/Processing]]
 			in += NUM_IN_CHANNELS;
 			out += NUM_OUT_CHANNELS;
   }
@@ -229,7 +229,8 @@ _domainDefinition AudioDomain {
     catch ( RtAudioError& e ) {
       e.printMessage();
     }
-    %%domainCode%%
+//[[/Cleanup]]
+//[[/Cleanup]]
     '
 }
 

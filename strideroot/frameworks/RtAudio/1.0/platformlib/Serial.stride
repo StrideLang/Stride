@@ -44,7 +44,7 @@ platformBlock _SerialPrintType {
 ##endif
 
 platformModule SerialChannelIn {
-	domain: SerialDomain
+	domain: SerialChannelDomain
 	inputs: []
 	outputs: ["string"]
 	ports: [
@@ -53,10 +53,6 @@ platformModule SerialChannelIn {
 			default: 0
 		}
 	]
-	includeDir: ["serial/include"]
-	include: ["serial/serial.h", "iostream"]
-	linkDir: ["serial/build"]
-	linkTo: ["serial"]
 	declarations: [''
 	]
 	initializations: [ '' ]
@@ -70,7 +66,7 @@ platformModule SerialChannelIn {
 
 
 platformModule SerialChannelOut {
-	#domain: SerialDomain
+	domain: SerialChannelDomain
 	inputs: [""]
 	outputs: []
 	ports: [
@@ -79,12 +75,7 @@ platformModule SerialChannelOut {
 			default: 0
 		}
 	]
-	includeDir: ["serial/include"]
-	include: ["serial/serial.h", "iostream", "string"]
-	linkDir: ["serial/build"]
-	linkTo: ["serial"]
-	declarations: [''
-	]
+	declarations: ['']
 	initializations: [ '' ]
 	globalDeclarations: []
 	globalInitializations: []
