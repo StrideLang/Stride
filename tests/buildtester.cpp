@@ -32,8 +32,8 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-#include <iostream>
 #include <cmath>
+#include <iostream>
 
 #include <QList>
 #include <QThread>
@@ -43,135 +43,141 @@
 
 #include "buildtester.hpp"
 
-BuildTester::BuildTester(std::string strideRoot)
-{
-    m_StrideRoot = strideRoot;
+BuildTester::BuildTester(std::string strideRoot) { m_StrideRoot = strideRoot; }
 
-}
+bool BuildTester::test(std::string filename, std::string expectedResultFile,
+                       bool tolerant) {
+  bool buildOK = false;
+  QList<LangError> errors;
+  vector<LangError> syntaxErrors;
 
-bool BuildTester::test(std::string filename, std::string expectedResultFile, bool tolerant)
-{
-    bool buildOK = false;
-     QList<LangError> errors;
-     vector<LangError> syntaxErrors;
+  ASTNode tree;
+  tree = AST::parseFile(filename.c_str());
 
-     ASTNode tree;
-     tree = AST::parseFile(filename.c_str());
+  syntaxErrors = AST::getParseErrors();
 
-     syntaxErrors = AST::getParseErrors();
+  if (syntaxErrors.size() > 0) {
+    for (auto syntaxError : syntaxErrors) {
+      errors << syntaxError;
+    }
+    for (LangError error : syntaxErrors) {
+      std::cerr << error.getErrorText() << std::endl;
+    }
+    return false;
+  }
 
-     if (syntaxErrors.size() > 0) {
-         for (auto syntaxError:syntaxErrors) {
-             errors << syntaxError;
-         }
-         for(LangError error:syntaxErrors) {
-             std::cerr << error.getErrorText() << std::endl;
-         }
-         return false;
-     }
+  if (tree) {
+    CodeValidator validator(QString::fromStdString(m_StrideRoot), tree,
+                            CodeValidator::USE_TESTING);
+    errors << validator.getErrors();
 
-     if (tree) {
-         CodeValidator validator(QString::fromStdString(m_StrideRoot), tree, CodeValidator::USE_TESTING);
-         errors << validator.getErrors();
+    if (errors.size() > 0) {
+      for (LangError error : errors) {
+        std::cerr << error.getErrorText() << std::endl;
+      }
+      return false;
+    }
+    std::shared_ptr<StrideSystem> system = validator.getSystem();
+    system->enableTesting(tree.get());
 
-         if (errors.size() > 0) {
-             for(LangError error:syntaxErrors) {
-                 std::cerr << error.getErrorText() << std::endl;
-             }
-             return false;
-         }
-         std::shared_ptr<StrideSystem> system = validator.getSystem();
-         system->enableTesting(tree.get());
+    std::vector<Builder *> m_builders;
 
-         std::vector<Builder *> m_builders;
+    system->generateDomainConnections(tree);
 
-         system->generateDomainConnections(tree);
+    std::vector<std::string> domains = CodeValidator::getUsedDomains(tree);
+    std::vector<std::string> usedFrameworks;
+    for (string domain : domains) {
+      usedFrameworks.push_back(
+          CodeValidator::getFrameworkForDomain(domain, tree));
+    }
+    m_builders = system->createBuilders(QString::fromStdString(filename),
+                                        usedFrameworks);
+    if (m_builders.size() == 0) {
+      std::cerr << "Can't create builder" << std::endl;
+      return false;
+    }
+    buildOK = true;
 
-         std::vector<std::string> domains = CodeValidator::getUsedDomains(tree);
-         std::vector<std::string> usedFrameworks;
-         for (string domain: domains) {
-             usedFrameworks.push_back(CodeValidator::getFrameworkForDomain(domain, tree));
-         }
-         m_builders = system->createBuilders(QString::fromStdString(filename), usedFrameworks);
-         if (m_builders.size() == 0) {
-             std::cerr << "Can't create builder" << std::endl;
-             return false;
-         }
-         buildOK = true;
+    std::vector<std::map<std::string, std::string>> domainMaps;
+    for (auto &builder : m_builders) {
+      domainMaps.push_back(builder->generateCode(tree));
+    }
 
+    size_t counter = 0;
+    for (auto &builder : m_builders) {
+      buildOK &= builder->build(domainMaps[counter++]);
+    }
 
-         std::vector<std::map<std::string, std::string>> domainMaps;
-         for (auto &builder: m_builders) {
-             domainMaps.push_back(builder->generateCode(tree));
-         }
+    for (auto &builder : m_builders) {
+      buildOK &= builder->deploy();
+    }
 
-         size_t counter = 0;
-         for (auto &builder: m_builders) {
-             buildOK &= builder->build(domainMaps[counter++]);
-         }
+    if (buildOK) {
+      for (auto builder : m_builders) {
+        builder->clearBuffers();
+        buildOK &= builder->run();
+        if (expectedResultFile.size() > 0) {
+          QFile expectedResult(QString::fromStdString(expectedResultFile));
+          QStringList outputLines = builder->getStdOut().split("\n");
+          if (!expectedResult.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            std::cerr << "Can't open expected result" << std::endl;
+            return false;
+          }
+          //                 for(int i = 0; i < 7; i++) {
+          //                     outputLines.pop_front(); // Hack to remove
+          //                     initial text
+          //                 }
+          if (outputLines.size() < 10) {
+            std::cerr << "Too few lines" << std::endl;
+            return false;  // too few lines
+          }
 
-         for (auto &builder: m_builders) {
-             buildOK &= builder->deploy();
-         }
-
-         if (buildOK) {
-             for (auto builder: m_builders) {
-                 builder->clearBuffers();
-                 buildOK &= builder->run();
-                 if (expectedResultFile.size() > 0) {
-                     QFile expectedResult(QString::fromStdString(expectedResultFile));
-                     QStringList outputLines = builder->getStdOut().split("\n");
-                     if (!expectedResult.open(QIODevice::ReadOnly | QIODevice::Text)) {
-                         std::cerr << "Can't open expected result" << std::endl;
-                         return false;
-                     }
-    //                 for(int i = 0; i < 7; i++) {
-    //                     outputLines.pop_front(); // Hack to remove initial text
-    //                 }
-                     if (outputLines.size() <  10) {
-                         std::cerr << "Too few lines" << std::endl;
-                         return false; // too few lines
-                     }
-
-                     int counter = 0;
-                     while (!expectedResult.atEnd() && !(counter >= outputLines.size())) {
-                         QByteArray line = expectedResult.readLine();
-                         if (line.endsWith("\n")) {
-                             line.chop(1);
-                         }
-                         if (line.size() > 0 && outputLines.at(counter).size() > 0) {
-                             double expected = line.toDouble();
-                             double out = outputLines.at(counter).toDouble();
-                             float tolerance = 0.01f;
-                             if (tolerant) {
-                                 tolerance = 0.05f;
-                             }
-                             if (!(std::fabs(out - expected) <= fabs(out * tolerance))) {
-                                 std::cerr << "Failed comparison at line " << counter + 1 << std::endl;
-                                 std::cerr << "Got " << outputLines.at(counter).toStdString() << " Expected " << line.toStdString() << std::endl;
-                                 QFile failedOutput("failed.output");
-                                 if (failedOutput.open(QIODevice::WriteOnly)) {
-                                     failedOutput.write(builder->getStdOut().toLocal8Bit());
-                                     failedOutput.close();
-                                 }
-                                 return false;
-                             }
-                         }
-                         counter++;
-                     }
-                 } else {
-                     std::cerr << "No expected results file for: " << filename << std::endl;
-                 }
-             }
-         }
-         for (auto builder: m_builders) {
-             delete builder;
-         }
-     }
-     if (!buildOK) {
-         std::cerr << "Error in build/run" << std::endl;
-     } else {
-         std::cerr << "Passed comparison." << std::endl;
-     }
-     return buildOK;
+          int counter = 0;
+          while (!expectedResult.atEnd() && !(counter >= outputLines.size())) {
+            QByteArray line = expectedResult.readLine();
+            if (line.endsWith("\n")) {
+              line.chop(1);
+            }
+            if (line.size() > 0 && outputLines.at(counter).size() > 0) {
+              double expected = line.toDouble();
+              double out = outputLines.at(counter).toDouble();
+              double tolerance = 0.01;
+              if (tolerant) {
+                tolerance = 0.05;
+              }
+              // To allow for possible 0 values
+              double scaledTolerance = fabs(out * tolerance);
+              if (out < 1.0e-13 && expected < 1.0e-13) {
+                // Ignore result
+              } else if (!(std::fabs(out - expected) <= scaledTolerance)) {
+                std::cerr << "Failed comparison at line " << counter + 1
+                          << std::endl;
+                std::cerr << "Got " << outputLines.at(counter).toStdString()
+                          << " Expected " << line.toStdString() << std::endl;
+                QFile failedOutput("failed.output");
+                if (failedOutput.open(QIODevice::WriteOnly)) {
+                  failedOutput.write(builder->getStdOut().toLocal8Bit());
+                  failedOutput.close();
+                }
+                return false;
+              }
+            }
+            counter++;
+          }
+        } else {
+          std::cerr << "No expected results file for: " << filename
+                    << std::endl;
+        }
+      }
+    }
+    for (auto builder : m_builders) {
+      delete builder;
+    }
+  }
+  if (!buildOK) {
+    std::cerr << "Error in build/run" << std::endl;
+  } else {
+    std::cerr << "Passed comparison." << std::endl;
+  }
+  return buildOK;
 }
