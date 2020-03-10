@@ -5,7 +5,7 @@ import Generators
 table SineTable {
 	size: 1024
 	rate: 1024
-	domain: SetupDomain
+	domain: RootDomain
 }
 
 trigger CounterReset {

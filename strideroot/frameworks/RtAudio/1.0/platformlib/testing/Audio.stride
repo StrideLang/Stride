@@ -8,16 +8,13 @@ _domainDefinition RootDomain {
 	domainName: "RootDomain"
 	framework: _RtAudioFramework
 	rate: -1 # -1 is 'one-shot/final' domain
-	globalsTag: "Includes"
-	declarationsTag: "Declarations"
-	processingTag: "Includes"
-	initializationTag: "Instances"
-	cleanupTag: "Processing"
     substitutions: [ ]
     domainIncludes: ["ReadWriteClasses.hpp",
 	"Synchronization.hpp",
 	"Helper.hpp"]
-	domainFunction: '
+	domainFunctionCode: '
+//[[Includes]]
+//[[/Includes]]
 
 //[[Declarations]]
 //[[/Declarations]]
@@ -25,22 +22,20 @@ _domainDefinition RootDomain {
 //[[Instances]]
 //[[/Instances]]
 
-//[[Processing]]
-//[[/Processing]]
-
 int main() {
-//[[GlobalInitialization]]
-//[[/GlobalInitialization]]
+
 //[[Initialization]]
 //[[/Initialization]]
 
+//[[Processing]]
+//[[/Processing]]
 
 //[[Cleanup]]
 //[[/Cleanup]]
     return 0;
 }
 '
-  domainCleanup: '// setup domain cleanup'
+  domainCleanupCode: ''
 }
 
 _domainDefinition AudioDomain {
@@ -48,11 +43,6 @@ _domainDefinition AudioDomain {
 	framework: _RtAudioFramework
     parentDomain: RootDomain # This will be the root domain
 	rate: AudioRate
-	globalsTag: "Includes"
-	declarationsTag: "Declarations"
-	processingTag: "Processing"
-	initializationTag: "Initialization"
-	cleanupTag: "Cleanup"
     substitutions: [
       "num_in_chnls", _NumInputChannels,
       "num_out_chnls", _NumOutputChannels
@@ -64,8 +54,7 @@ _domainDefinition AudioDomain {
     'float inbuf[NUM_SAMPLES * NUM_IN_CHANNELS];',
     'float outbuf[NUM_SAMPLES * NUM_OUT_CHANNELS];'
 ]
-    domainInitialization: '
-
+    domainInitializationCode: '
     for(int i = 0; i < NUM_SAMPLES; i++) {
         inbuf[i* NUM_IN_CHANNELS] = (i * 2.0 / (NUM_SAMPLES-1)) - 1; // -1 -> 1
         inbuf[i* NUM_IN_CHANNELS + 1] = 1 - (i * 2.0 / (NUM_SAMPLES-1)); // 1 -> -1
@@ -74,7 +63,7 @@ _domainDefinition AudioDomain {
 //[[/Initialization]]
     audio_buffer_process();
     '
-	domainFunction: '
+	domainFunctionCode: '
 	int audio_buffer_process()
 {
 int nBufferFrames = NUM_SAMPLES;
@@ -82,14 +71,18 @@ int nBufferFrames = NUM_SAMPLES;
     float *out = outbuf;
   while(nBufferFrames-- > 0) {
 
-%%domainCode%%
+//[[Processing]]
+//[[/Processing]]
+
     in += NUM_IN_CHANNELS;
     out += NUM_OUT_CHANNELS;
   }
   return 0;
 }
 '
-    domainCleanup: '
+    domainCleanupCode: '
+//[[Cleanup]]
+//[[/Cleanup]]
     for(int i = 0; i < NUM_SAMPLES * NUM_IN_CHANNELS; i++) {
         std::cout << std::setprecision(10) << outbuf[i] << std::endl;
     }

@@ -133,12 +133,12 @@ _domainDefinition AudioDomain {
 	framework: _RtAudioFramework
 	parentDomain: RootDomain
 	rate: AudioRate
-	globalsTag: "Includes"
-	declarationsTag: "Declarations"
-    initializationTag: "Initialization"
-	processingTag: "Processing"
+#	globalsTag: "Includes"
+#	declarationsTag: "Declarations"
+#    initializationTag: "Initialization"
+#	processingTag: "Processing"
+#	cleanupTag: "Cleanup"
   defaultType: _RealType
-	cleanupTag: "Cleanup"
     substitutions: [
       "num_in_chnls", _NumInputChannels,
       "num_out_chnls", _NumOutputChannels,
@@ -152,7 +152,7 @@ _domainDefinition AudioDomain {
     'typedef float MY_TYPE;',
     '#define FORMAT RTAUDIO_FLOAT32'
 ]
-    domainInitialization: '
+    domainInitializationCode: '
     RtAudio adac;
     if ( adac.getDeviceCount() < 1 ) {
         std::cout << std::endl << "No audio devices found!" << std::endl;
@@ -203,7 +203,7 @@ _domainDefinition AudioDomain {
       exit (-1);
     }
     '
-	domainFunction: '
+	domainFunctionCode: '
 	int audio_buffer_process( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
            double streamTime, RtAudioStreamStatus status, void *data )
 {
@@ -220,7 +220,7 @@ _domainDefinition AudioDomain {
   return 0;
 }
 '
-    domainCleanup: '
+    domainCleanupCode: '
     // Stop the stream.
     try {
         if ( adac.isStreamRunning() ) adac.stopStream();

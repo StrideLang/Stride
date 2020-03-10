@@ -2996,12 +2996,13 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack,
             }
             int index = static_pointer_cast<ValueNode>(domainInstanceCountNode)
                             ->getIntValue();
-            domainInstanceCountNode =
-                std::make_shared<ValueNode>(index + 1, __FILE__, __LINE__);
-            parentDomain->setCompilerProperty("instances",
-                                              domainInstanceCountNode);
-            domainNode->setCompilerProperty("domainInstance",
-                                            domainInstanceCountNode);
+            //            domainInstanceCountNode =
+            //                std::make_shared<ValueNode>(index + 1, __FILE__,
+            //                __LINE__);
+            //            parentDomain->setCompilerProperty("instances",
+            //                                              domainInstanceCountNode);
+            //            domainNode->setCompilerProperty("domainInstance",
+            //                                            domainInstanceCountNode);
           }
         }
       }

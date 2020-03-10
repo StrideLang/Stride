@@ -4,8 +4,5 @@
 //[[Declarations]]
 //[[/Declarations]]
 
-//[[Instances]]
-//[[/Instances]]
-
 //[[Processing]]
 //[[/Processing]]

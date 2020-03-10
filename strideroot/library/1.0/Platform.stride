@@ -41,36 +41,36 @@ type _DomainDefinition {
 			required: on
 			meta: "The domain's rate. A value of none indicates an asynchronous or immediate domain."
 		},
-		typeProperty GlobalsTag {
-			name: "globalsTag"
-			types: [_StringLiteral]
-			default: "Includes"
-			required: off
-		},
-		typeProperty DeclarationsTag {
-			name: "declarationsTag"
-			types: [_StringLiteral]
-			default: ""
-			required: off
-		},
-		typeProperty ProcessingTag {
-			name: "processingTag"
-			types: [_StringLiteral]
-			default: ""
-			required: off
-		},
-		typeProperty InitializationTag {
-			name: "initializationTag"
-			types: [_StringLiteral]
-			default: ""
-			required: off
-		},
-		typeProperty CleanupTag {
-			name: "cleanupTag"
-			types: [_StringLiteral]
-			default: ""
-			required: off
-		},
+#		typeProperty GlobalsTag {
+#			name: "globalsTag"
+#			types: [_StringLiteral]
+#			default: "Includes"
+#			required: off
+#		},
+#		typeProperty DeclarationsTag {
+#			name: "declarationsTag"
+#			types: [_StringLiteral]
+#			default: ""
+#			required: off
+#		},
+#		typeProperty ProcessingTag {
+#			name: "processingTag"
+#			types: [_StringLiteral]
+#			default: ""
+#			required: off
+#		},
+#		typeProperty InitializationTag {
+#			name: "initializationTag"
+#			types: [_StringLiteral]
+#			default: ""
+#			required: off
+#		},
+#		typeProperty CleanupTag {
+#			name: "cleanupTag"
+#			types: [_StringLiteral]
+#			default: ""
+#			required: off
+#		},
 		typeProperty DomainIncludes {
 			name: "domainIncludes"
 			types: [""] # Should take a list
@@ -83,30 +83,30 @@ type _DomainDefinition {
 			default: ""
 			required: off
 		},
-		typeProperty DomainInitialization {
-			name: "domainInitialization"
+		typeProperty DomainInitializationCode {
+			name: "domainInitializationCode"
 			types: [_StringLiteral]
 			default: ""
 			required: off
 		},
-		typeProperty DomainFunction {
-			name: "domainFunction"
+		typeProperty DomainFunctionCode {
+			name: "domainFunctionCode"
 			types: [_StringLiteral]
 			default: ""
 			required: off
-			meta: 'Declaration of the domain processing function. Use %domainCode% to mark where the generated code needs to be placed within 
+			meta: 'Declaration of the domain processing function. Use //[[Processing]]//[[/Processing]] to mark where the generated code needs to be placed within 
 			the domain function'
 		},
-		typeProperty DomainProcessing {
-			name: "domainProcessing"
+		typeProperty DomainProcessingCode {
+			name: "domainProcessingCode"
 			types: [_StringLiteral]
 			default: ""
 			required: off
 			meta: 'Processing code for domain. Code to be called
 			by a parent domain to update or tick the domain.'
 		},
-		typeProperty DomainCleanup {
-			name: "domainCleanup"
+		typeProperty DomainCleanupCode {
+			name: "domainCleanupCode"
 			types: [_StringLiteral]
 			default: ""
 			required: off

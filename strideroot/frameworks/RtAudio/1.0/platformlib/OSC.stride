@@ -3,12 +3,6 @@
 _domainDefinition OSCDomain {
 	domainName: "OSCDomain"
 	framework: _RtAudioFramework
-	globalsTag: "Includes"
-	declarationsTag: "Declarations"
-	processingTag: "OSC:Processing"
-	initializationTag: "Initialization"
-	cleanupTag: "Cleanup"
-
 	domainIncludes: ["oscpp/client.hpp"]
     domainDeclarations: [ '
 // OSC Domain globals
@@ -64,11 +58,12 @@ Transport *globalTransport;
 
 '
 	]
-    domainInitialization: '
+    domainFunctionCode: ''
+    domainInitializationCode: '
 	OSCDomain::globalTransport = new Transport;
 
 	'
-	domainCleanup: '
+	domainCleanupCode: '
 	delete OSCDomain::globalTransport;
 '
 	
