@@ -81,14 +81,3 @@ _domainDefinition AsyncDomain {
 	'
 }
 
-constant _SerialBaudRate  { # Overriden by configuration
-	value: 9600
-}
-
-constant _SerialPort  { # Overriden by configuration
-	value: '"/dev/ttyACM0"'
-}
-
-constant SerialProcessRate {
-	value: 1000
-}

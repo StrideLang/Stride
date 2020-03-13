@@ -8,7 +8,7 @@
 #include "codeentities.hpp"
 
 class LanguageSyntax {
- public:
+public:
   static std::string endStatement() { return ";\n"; }
 
   static std::string getDeclarationType(std::string type, std::string name,
@@ -19,6 +19,8 @@ class LanguageSyntax {
   static std::string getDeclarationForType(Instance instance);
 
   static std::string instance(Instance &inst, bool close = true);
+
+  static std::string include(std::string includeToken);
 
   static std::string instanceReal(
       std::string name, int size = 1, bool close = true,
@@ -102,4 +104,4 @@ class LanguageSyntax {
   static std::string getDataType(Instance instance);
 };
 
-#endif  // LANGUAGESYNTAX_HPP
+#endif // LANGUAGESYNTAX_HPP

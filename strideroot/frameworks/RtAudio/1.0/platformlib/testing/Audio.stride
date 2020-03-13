@@ -61,6 +61,8 @@ _domainDefinition AudioDomain {
     }
 //[[Initialization]]
 //[[/Initialization]]
+    '
+	domainProcessingCode: '
     audio_buffer_process();
     '
 	domainFunctionCode: '

@@ -19,16 +19,16 @@ std::string LanguageSyntax::getDeclarationType(std::string type,
     } else if (access & ACCESS_SDR && access & ACCESS_MDW) {
       declType =
           "stride::" + base + "_SDRWRst<" + helperType + ", " + type + ">";
-    } else {  // Fallback
+    } else { // Fallback
       declType =
           "stride::" + base + "_SDRWRst<" + helperType + ", " + type + ">";
     }
-  } else {  // No reset
+  } else { // No reset
     if (access & ACCESS_SDR && access & ACCESS_SDW) {
       declType = "stride::" + base + "_SDRW<" + helperType + ", " + type + ">";
     } else if (access & ACCESS_SDR && access & ACCESS_MDW) {
       declType = "stride::" + base + "_SDRW<" + helperType + ", " + type + ">";
-    } else {  // Fallback
+    } else { // Fallback
       declType = "stride::" + base + "_SDRW<" + helperType + ", " + type + ">";
     }
   }
@@ -36,9 +36,10 @@ std::string LanguageSyntax::getDeclarationType(std::string type,
   return declType;
 }
 
-std::string LanguageSyntax::getDeclarationForType(
-    std::string type, std::string name, SignalAccess access, int size,
-    std::vector<std::string> defaultValue) {
+std::string
+LanguageSyntax::getDeclarationForType(std::string type, std::string name,
+                                      SignalAccess access, int size,
+                                      std::vector<std::string> defaultValue) {
   std::string out;
   if (size == -1) {
     out += "// FIXME Size unresolved\n";
@@ -173,9 +174,19 @@ std::string LanguageSyntax::instance(Instance &inst, bool close) {
   return out;
 }
 
-std::string LanguageSyntax::instanceReal(
-    std::string name, int size, bool close,
-    std::vector<std::string> defaultValue) {
+std::string LanguageSyntax::include(string includeName) {
+  std::string includetext;
+  if (includeName.at(0) == '<') {
+    includetext += "#include " + includeName + "\n";
+  } else {
+    includetext += "#include \"" + includeName + "\"\n";
+  }
+  return includetext;
+}
+
+std::string
+LanguageSyntax::instanceReal(std::string name, int size, bool close,
+                             std::vector<std::string> defaultValue) {
   std::string decl = "double " + name;
   if (size > 1) {
     decl += "[" + std::to_string(size) + "] ";
@@ -184,7 +195,7 @@ std::string LanguageSyntax::instanceReal(
       for (auto v : defaultValue) {
         decl += " " + v + ",";
       }
-      decl.resize(decl.size() - 1);  // Chop off last comma
+      decl.resize(decl.size() - 1); // Chop off last comma
       decl += "}";
     }
   } else {
@@ -198,9 +209,9 @@ std::string LanguageSyntax::instanceReal(
   return decl;
 }
 
-std::string LanguageSyntax::instanceBool(
-    std::string name, int size, bool close,
-    std::vector<std::string> defaultValue) {
+std::string
+LanguageSyntax::instanceBool(std::string name, int size, bool close,
+                             std::vector<std::string> defaultValue) {
   std::string decl = "bool " + name;
   if (size > 1) {
     decl += "[" + std::to_string(size) + "] ";
@@ -209,7 +220,7 @@ std::string LanguageSyntax::instanceBool(
       for (auto v : defaultValue) {
         decl += " " + v + ",";
       }
-      decl.resize(decl.size() - 1);  // Chop off last comma
+      decl.resize(decl.size() - 1); // Chop off last comma
       decl += "}";
     }
   } else {
@@ -232,27 +243,28 @@ std::string LanguageSyntax::assignment(std::string name, std::string value,
   return out;
 }
 
-std::string LanguageSyntax::generateExpression(
-    ExpressionNode::ExpressionType type, std::string left, std::string right) {
+std::string
+LanguageSyntax::generateExpression(ExpressionNode::ExpressionType type,
+                                   std::string left, std::string right) {
   switch (type) {
-    case ExpressionNode::Multiply:
-      return left + " * " + right;
-    case ExpressionNode::Divide:
-      return left + " / " + right;
-    case ExpressionNode::Add:
-      return left + " + " + right;
-    case ExpressionNode::Subtract:
-      return left + " - " + right;
-    case ExpressionNode::And:
-      return left + " & " + right;
-    case ExpressionNode::Or:
-      return left + " | " + right;
-    case ExpressionNode::UnaryMinus:
-      return " - " + left;
-    case ExpressionNode::LogicalNot:
-      return " ~ " + left;
-    default:
-      break;
+  case ExpressionNode::Multiply:
+    return left + " * " + right;
+  case ExpressionNode::Divide:
+    return left + " / " + right;
+  case ExpressionNode::Add:
+    return left + " + " + right;
+  case ExpressionNode::Subtract:
+    return left + " - " + right;
+  case ExpressionNode::And:
+    return left + " & " + right;
+  case ExpressionNode::Or:
+    return left + " | " + right;
+  case ExpressionNode::UnaryMinus:
+    return " - " + left;
+  case ExpressionNode::LogicalNot:
+    return " ~ " + left;
+  default:
+    break;
   }
   return "";
 }

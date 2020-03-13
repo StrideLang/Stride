@@ -41,6 +41,13 @@ type _DomainDefinition {
 			required: on
 			meta: "The domain's rate. A value of none indicates an asynchronous or immediate domain."
 		},
+		typeProperty Resource {
+			name: "resource"
+			types: [""]
+			default: none
+			required: off
+			meta: "A resource required by a domain"
+		},
 #		typeProperty GlobalsTag {
 #			name: "globalsTag"
 #			types: [_StringLiteral]
@@ -148,10 +155,29 @@ type _ResourceType {
 			types: [""]
 			default: none
 			required: on
+		},
+		typeProperty Substitutions {
+			name: "substitutions"
+			types: [""]
+			default: []
+			required: off
+		},
+		typeProperty ResourceIncludes {
+			name: "resourceIncludes"
+			types: [""]
+			default: []
+			required: off
+		},
+		typeProperty ResourceDeclarations {
+			name: "resourceDeclarations"
+			types: [""]
+			default: ""
+			required: off
 		}
 	]
-
 }
+
+
 
 type _DomainProcessing {
 	typeName: "_domainProcessing"

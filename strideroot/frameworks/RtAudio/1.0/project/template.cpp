@@ -3,6 +3,3 @@
 
 //[[Declarations]]
 //[[/Declarations]]
-
-//[[Processing]]
-//[[/Processing]]
