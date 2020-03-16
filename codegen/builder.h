@@ -35,10 +35,10 @@
 #ifndef BASEPROJECT_H
 #define BASEPROJECT_H
 
-#include <QObject>
-#include <QString>
 #include <QLibrary>
 #include <QMap>
+#include <QObject>
+#include <QString>
 #include <QVariant>
 
 #include "ast.h"
@@ -48,102 +48,99 @@
 
 class Builder;
 
-typedef Builder* (*create_object_t)(QString projectDir, QString strideRoot, QString platformPath);
+typedef Builder *(*create_object_t)(QString projectDir, QString strideRoot,
+                                    QString platformPath);
 typedef void (*platform_name_t)(char *name);
 typedef int (*platform_version_major_t)();
 typedef int (*platform_version_minor_t)();
 
 typedef struct {
-    create_object_t create;
-    platform_name_t get_name;
-    platform_version_major_t get_version_major;
-    platform_version_minor_t get_version_minor;
+  create_object_t create;
+  platform_name_t get_name;
+  platform_version_major_t get_version_major;
+  platform_version_minor_t get_version_minor;
 } PluginInterface;
 
 class StrideSystem;
 
-class Builder : public QObject
-{
-    Q_OBJECT
+class Builder : public QObject {
+  Q_OBJECT
 public:
-    Builder(QString projectDir, QString strideRoot, QString platformPath)
-        : m_projectDir(projectDir), m_strideRoot(strideRoot),
-          m_platformPath(platformPath) {}
-    virtual ~Builder() {}
+  Builder(QString projectDir, QString strideRoot, QString platformPath)
+      : m_projectDir(projectDir), m_strideRoot(strideRoot),
+        m_platformPath(platformPath) {}
+  virtual ~Builder() {}
 
-    void setConfiguration(QMap<QString, QVariant> config) { m_configuration = config; }
+  void setConfiguration(QMap<QString, QVariant> config) {
+    m_configuration = config;
+  }
 
-    std::map<std::string, QVariant> getConfiguration() {
-        std::map<std::string, QVariant> configMap;
-        for(auto configEntry: m_configuration.keys()) {
-            configMap[configEntry.toStdString()] = m_configuration[configEntry];
-
-        }
-        return configMap;
+  std::map<std::string, QVariant> getConfiguration() {
+    std::map<std::string, QVariant> configMap;
+    for (auto configEntry : m_configuration.keys()) {
+      configMap[configEntry.toStdString()] = m_configuration[configEntry];
     }
-    QString getPlatformPath() {return m_platformPath;}
-    QString getStdErr() const {return m_stdErr;}
-    QString getStdOut() const {return m_stdOut;}
-    void clearBuffers() { m_stdErr = ""; m_stdOut = "";}
-    void registerYieldCallback(std::function<void()> cb) {m_yieldCallback = cb;}
+    return configMap;
+  }
+  QString getPlatformPath() { return m_platformPath; }
+  QString getStdErr() const { return m_stdErr; }
+  QString getStdOut() const { return m_stdOut; }
+  void clearBuffers() {
+    m_stdErr = "";
+    m_stdOut = "";
+  }
+  void registerYieldCallback(std::function<void()> cb) { m_yieldCallback = cb; }
 
-    std::string getPlatformDirective(std::string directive);
+  std::string getPlatformDirective(std::string directive);
 
-    // Additional information from stride system
-    std::vector<std::shared_ptr<DeclarationNode>> m_connectors; // Connections between domains.
-    StrideSystem *m_system; // The StrideSystem that created this builder.
-    QString m_platformName;
+  // Additional information from stride system
+  std::vector<std::shared_ptr<DeclarationNode>>
+      m_connectors;       // Connections between domains.
+  StrideSystem *m_system; // The StrideSystem that created this builder.
+  QString m_frameworkName;
 
 public slots:
-    virtual std::map<std::string, std::string> generateCode(ASTNode tree) = 0;
-    virtual bool build(std::map<std::string, std::string> domainMap) = 0;
-    virtual bool deploy() = 0;
-    virtual bool run(bool pressed = true) = 0;
-//    // TODO this would need to send encrypted strings or remove the code sections?
-//    virtual QString requestTypesJson() {return "";}
-//    virtual QString requestFunctionsJson() {return "";}
-//    virtual QString requestObjectsJson() {return "";}
-    virtual bool isValid() {return false;}
-
+  virtual std::map<std::string, std::string> generateCode(ASTNode tree) = 0;
+  virtual bool build(std::map<std::string, std::string> domainMap) = 0;
+  virtual bool deploy() = 0;
+  virtual bool run(bool pressed = true) = 0;
+  //    // TODO this would need to send encrypted strings or remove the code
+  //    sections? virtual QString requestTypesJson() {return "";} virtual
+  //    QString requestFunctionsJson() {return "";} virtual QString
+  //    requestObjectsJson() {return "";}
+  virtual bool isValid() { return false; }
 
 protected:
-    QString m_projectDir;
-    QString m_strideRoot;
-    QString m_platformPath;
-    QString m_stdOut;
-    QString m_stdErr;
-    QMap<QString, QVariant> m_configuration;
-    std::function<void()> m_yieldCallback = [](){};
+  QString m_projectDir;
+  QString m_strideRoot;
+  QString m_platformPath;
+  QString m_stdOut;
+  QString m_stdErr;
+  QMap<QString, QVariant> m_configuration;
+  std::function<void()> m_yieldCallback = []() {};
 
-
-
-    QString substituteTokens(QString text)
-    {
-        QMap<QString, QString> tokenMap;
-        tokenMap["%projectDir%"] = m_projectDir;
-        tokenMap["%strideRoot%"] = m_strideRoot;
-        tokenMap["%platformRoot%"] = m_platformPath;
-        for (auto mapEntry: tokenMap.keys()) {
-            while (text.indexOf(mapEntry) >= 0) {
-                text.replace(mapEntry, tokenMap[mapEntry]);
-            }
-        }
-        return text;
+  QString substituteTokens(QString text) {
+    QMap<QString, QString> tokenMap;
+    tokenMap["%projectDir%"] = m_projectDir;
+    tokenMap["%strideRoot%"] = m_strideRoot;
+    tokenMap["%platformRoot%"] = m_platformPath;
+    for (auto mapEntry : tokenMap.keys()) {
+      while (text.indexOf(mapEntry) >= 0) {
+        text.replace(mapEntry, tokenMap[mapEntry]);
+      }
     }
+    return text;
+  }
 
 private:
-    PluginInterface m_interface;
-    QLibrary *m_pluginLibrary;
-    Builder *m_project;
+  PluginInterface m_interface;
+  QLibrary *m_pluginLibrary;
+  Builder *m_project;
 
 signals:
-    void outputText(QString text);
-    void errorText(QString text);
-    void programStopped();
+  void outputText(QString text);
+  void errorText(QString text);
+  void programStopped();
 };
 
-
 #endif // BASEPROJECT_H
-
-
-

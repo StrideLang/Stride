@@ -1,24 +1,4 @@
 
-# Serial domains
-#_domainDefinition SerialInDomain {
-#	domainName: "SerialInDomain"
-#	platform: _Discovery_M7_Platform
-#	declarationsTag: "SerialIn:Declarations"
-#	processingTag: "SerialIn:Processing"
-#	initializationTag: "SerialIn:Initialization"
-#	cleanupTag: "SerialIn:Cleanup"
-#}
-
-#_domainDefinition SerialOutDomain {
-#	domainName: "SerialOutDomain"
-#	framework: _WiringFramework
-#	declarationsTag: "Declarations"
-#	processingTag: "Processing"
-#	initializationTag: "Initialization"
-#	cleanupTag: "Cleanup"
-#	rate: 1000
-#}
-
 
 intListOverride SerialBaudRate {
 	name: "Baud Rate"
@@ -86,3 +66,22 @@ platformBlock _SerialInType {
     processing: ""
     inherits: [_Signal]
 }
+
+
+platformModule SerialIn {
+	domain: SerialDomain
+	inputs: [""]
+	outputs: []
+	ports: [
+	]
+	declarations: ['']
+	initializations: [ '' ]
+	globalDeclarations: []
+	globalInitializations: []
+	preProcessing: ''
+    processing: '// Serial In Processing *******'
+	postProcessing: ''
+    inherits: [_Signal] 
+}
+
+

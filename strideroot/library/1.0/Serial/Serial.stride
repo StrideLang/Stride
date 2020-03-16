@@ -5,23 +5,15 @@ module SerialPrint {
             name:       'value'
 			block: Value
         }
-        propertyInputPort ChannelPort {
-            name:       'value'
-			block: Channel
-        }
 	]
     blocks: [
 		signal Value {
 			default: 0
 			domain: ValuePort.domain
 		}
-		signal Channel {
-			default: 0
-			domain: ValuePort.domain
-		}		
     ]
     streams: [
-        [Value, Channel] >> _SerialPrintModule();
+        Value >> _SerialPrintModule();
     ]
 }
 

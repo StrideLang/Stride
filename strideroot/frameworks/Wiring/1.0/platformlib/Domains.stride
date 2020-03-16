@@ -1,11 +1,11 @@
-_domainProcessing _PlatformDomainProcessing {
-	domainStreams: [
-		WiringDomain >> Dummy;
-		# Should perhaps look like:
-		#SetupDomain >> [AudioDomain, AsyncDomain, SerialDomain];
-		# But for now just setting the domain processing order
-	]
-}
+#_domainProcessing _PlatformDomainProcessing {
+#	domainStreams: [
+#		WiringDomain >> Dummy;
+#		# Should perhaps look like:
+#		#SetupDomain >> [AudioDomain, AsyncDomain, SerialDomain];
+#		# But for now just setting the domain processing order
+#	]
+#}
 
 _frameworkDescription _WiringFramework {
     frameworkName: "Wiring"
@@ -22,44 +22,35 @@ constant PlatformRate {
 _domainDefinition WiringDomain {
 	domainName: "WiringDomain"
 	framework: _WiringFramework
-	globalsTag: "Includes"
-	declarationsTag: "Declarations"
-	processingTag: "Processing"
-	initializationTag: "Initialization"
-	cleanupTag: "Cleanup"
     substitutions: [ ]
     domainIncludes: ["Timer.h"]
     domainDeclarations: ["Timer t;"]
-    domainInitialization: '// init domain init	
+    domainInitializationCode: '// init domain init	
 int tickEvent = t.every(1, process);
 '
-	domainFunction: '// domain processing
+	domainFunctionCode: '// domain processing
 	void process()
 {
-%%domainCode%%
+//[[Processing]]
+//[[/Processing]]
 }
 '
-	domainProcessing: '
+	domainProcessingCode: '
   t.update();
 	'
-    domainCleanup: '// init domain cleanup'
-	rate:1000
+    domainCleanupCode: '// init domain cleanup'
+	rate:PlatformRate
 }
 
 _domainDefinition DummyDomain {
 	domainName: "DummyDomain"
 	framework: _WiringFramework
-	globalsTag: "Includes"
-	declarationsTag: "Declarations"
-	processingTag: "Processing"
-	initializationTag: "Initialization"
-	cleanupTag: "Cleanup"
     substitutions: [ ]
     domainIncludes: []
     domainDeclarations: []
-    domainInitialization: ''
-	domainFunction: ''
-	domainProcessing: ''
-    domainCleanup: ''
-	rate:1000
+    domainInitializationCode: ''
+	domainFunctionCode: ''
+	domainProcessingCode: ''
+    domainCleanupCode: ''
+	rate:PlatformRate
 }

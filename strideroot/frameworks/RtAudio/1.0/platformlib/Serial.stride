@@ -31,7 +31,7 @@ _domainDefinition SerialDomain {
 	rate: SerialProcessRate
 	resource: SerialPort
     substitutions: ["serial_process_rate", SerialProcessRate ]
-    #domainIncludes: ['<thread>', '<iostream>']
+    domainIncludes: []
     domainDeclarations: ["void serial_thread_func();",
 		"bool serialthread_running {true};",
 		"std::thread serialReadThread(serial_thread_func);"]
@@ -177,4 +177,23 @@ platformModule SerialChannelOut {
     processing: 'serialPort.write(("%%property:id%%:" + std::to_string(%%intokens:0%%)).c_str());'
 	postProcessing: ''
     inherits: [_Signal]
+}
+
+
+
+
+platformModule SerialIn {
+	domain: SerialDomain
+	inputs: ["real"]
+	outputs: []
+	ports: [
+	]
+	declarations: ['']
+	initializations: [ '' ]
+	globalDeclarations: []
+	globalInitializations: []
+	preProcessing: ''
+    processing: '// Serial In Processing *******'
+	postProcessing: ''
+    inherits: [_Signal] 
 }
