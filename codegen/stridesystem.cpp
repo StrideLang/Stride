@@ -939,6 +939,46 @@ ConnectionNodes StrideSystem::getDomainChangeStreams(string previousDomainId,
   return domainChangeNodes;
 }
 
+void StrideSystem::installFramework(string frameworkName) {
+  for (auto framework : m_platforms) {
+    if (framework->getFramework() == frameworkName) {
+      auto configPath =
+          framework->buildPlatformLibPath(m_strideRoot.toStdString()) + "/" +
+          "Configuration.stride";
+      ASTNode tree = AST::parseFile(configPath.c_str(), nullptr);
+      if (tree) {
+        for (auto node : tree->getChildren()) {
+          if (node->getNodeType() == AST::Declaration) {
+            auto decl = static_pointer_cast<DeclarationNode>(node);
+            if (decl->getObjectType() == "_frameworkConfiguration") {
+              auto installActions = decl->getPropertyValue("installActions");
+              if (installActions) {
+                for (auto action : installActions->getChildren()) {
+                  if (action->getNodeType() == AST::Declaration) {
+                    auto commandNode =
+                        static_pointer_cast<DeclarationNode>(action)
+                            ->getPropertyValue("command");
+                    if (commandNode &&
+                        commandNode->getNodeType() == AST::String) {
+                      auto command = static_pointer_cast<ValueNode>(commandNode)
+                                         ->getStringValue();
+                      auto ret = system(command.c_str());
+                      if (ret != 0) {
+                        qDebug() << "Error executing "
+                                 << QString::fromStdString(command);
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 QString StrideSystem::makeProject(QString fileName) {
   QFileInfo info(fileName);
   QString dirName =

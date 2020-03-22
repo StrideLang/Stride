@@ -18,6 +18,7 @@ SOURCES += main.cpp\
     savechangeddialog.cpp \
     errormarker.cpp \
     searchwidget.cpp \
+    striderootmanagementdialog.cpp \
     tooltip.cpp \
     codemodel.cpp \
     autocompletemenu.cpp
@@ -31,6 +32,7 @@ HEADERS  += \
     savechangeddialog.h \
     errormarker.h \
     searchwidget.h \
+    striderootmanagementdialog.h \
     tooltip.hpp \
     codemodel.hpp \
     autocompletemenu.hpp
@@ -39,7 +41,8 @@ FORMS    += \
     projectwindow.ui \
     configdialog.ui \
     savechangeddialog.ui \
-    searchwidget.ui
+    searchwidget.ui \
+    striderootmanagementdialog.ui
 
 OTHER_FILES += \
     qml/Editor.qml

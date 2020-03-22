@@ -40,31 +40,8 @@
 
 using namespace std;
 
-//bool StreamPlatform::typeHasPort(QString typeName, QString propertyName)
-//{
-//    QVector<AST *> ports = getPortsForType(typeName);
-//    if (!ports.isEmpty()) {
-//        foreach(AST *port, ports) {
-//            DeclarationNode *block = static_cast<DeclarationNode *>(port);
-//            Q_ASSERT(block->getNodeType() == AST::Declaration);
-//            ValueNode *nameValueNode = static_cast<ValueNode *>(block->getPropertyValue("name"));
-//            Q_ASSERT(nameValueNode->getNodeType() == AST::String);
-//            if (nameValueNode->getStringValue() == propertyName.toStdString()) {
-//                return true;
-//            }
-//        }
-//    }
-//    return false;
-//}
-
 StridePlatform::~StridePlatform()
 {
-//    auto it = m_platformTrees.begin();
-//    while(it != m_platformTrees.end()) {
-//        it->second->deleteChildren();
-////        delete it->second;
-//        it++;
-//    }
 }
 
 string StridePlatform::getFramework() const

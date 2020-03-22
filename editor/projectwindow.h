@@ -35,108 +35,108 @@
 #ifndef PROJECTWINDOW_H
 #define PROJECTWINDOW_H
 
-#include <QMainWindow>
 #include <QFile>
-#include <QTimer>
+#include <QMainWindow>
 #include <QMenu>
+#include <QTimer>
 #include <QTreeWidgetItem>
 
-#include "languagehighlighter.h"
 #include "builder.h"
-#include "searchwidget.h"
 #include "codemodel.hpp"
+#include "languagehighlighter.h"
+#include "searchwidget.h"
 #include "systemconfiguration.hpp"
 
 namespace Ui {
 class ProjectWindow;
 }
 
-class ProjectWindow : public QMainWindow
-{
-    Q_OBJECT
+class ProjectWindow : public QMainWindow {
+  Q_OBJECT
 
 public:
-    explicit ProjectWindow(QWidget *parent = nullptr);
-    ~ProjectWindow();
+  explicit ProjectWindow(QWidget *parent = nullptr);
+  ~ProjectWindow();
 
-    void initialize(bool resetOpenFiles = false);
+  void initialize(bool resetOpenFiles = false);
 
 public slots:
-    void updateMenus();
-    void setEditorText(QString code);
-    bool saveFile(int index = -1);
-    bool saveFileAs(int index = -1);
-    void closeTab(int index = -1);
-    void loadFile();
-    void loadFile(QString fileName);
-    void openOptionsDialog();
-    void openGeneratedDir();
-    void cleanProject();
-    void updateCodeAnalysis(bool force = false);
-    void newFile();
-    void markModified();
-    void configureSystem();
-    void resetCodeTimer();
-    void inspectorItemClicked(QTreeWidgetItem *item, int column);
+  void updateMenus();
+  void setEditorText(QString code);
+  bool saveFile(int index = -1);
+  bool saveFileAs(int index = -1);
+  void closeTab(int index = -1);
+  void loadFile();
+  void loadFile(QString fileName);
+  void openOptionsDialog();
+  void openManageStriderootDialog();
+  void openGeneratedDir();
+  void cleanProject();
+  void updateCodeAnalysis(bool force = false);
+  void newFile();
+  void markModified();
+  void configureSystem();
+  void resetCodeTimer();
+  void inspectorItemClicked(QTreeWidgetItem *item, int column);
 
 protected:
-    virtual void closeEvent(QCloseEvent *event);
-    virtual bool eventFilter(QObject *obj, QEvent *event);
+  virtual void closeEvent(QCloseEvent *event);
+  virtual bool eventFilter(QObject *obj, QEvent *event);
 
 private slots:
-    bool build();
-    void deploy();
-    void run(bool pressed);
-    void stop();
-    void programStopped();
-    void tabChanged(int index);
-    bool maybeSave();
-    void showDocumentation();
-    void followSymbol();
+  bool build();
+  void deploy();
+  void run(bool pressed);
+  void stop();
+  void programStopped();
+  void tabChanged(int index);
+  bool maybeSave();
+  void showDocumentation();
+  void followSymbol();
 
-    // Editor
-    void commentSection();
-    void uncomment();
-    void showHelperMenu(QPoint where);
-    void insertText(QString text = "");
-    void find(QString query = "");
-    void findNext();
-    void findPrevious();
+  // Editor
+  void commentSection();
+  void uncomment();
+  void showHelperMenu(QPoint where);
+  void insertText(QString text = "");
+  void find(QString query = "");
+  void findNext();
+  void findPrevious();
 
-    void printConsoleText(QString text);
-    void printConsoleError(QString text);
+  void printConsoleText(QString text);
+  void printConsoleError(QString text);
 
 private:
-    void connectActions();
-    void connectShortcuts();
+  void connectActions();
+  void connectShortcuts();
 
-    void readSettings(bool resetOpenFiles=false);
-    void writeSettings();
+  void readSettings(bool resetOpenFiles = false);
+  void writeSettings();
 
-    void updateEditorSettings();
+  void updateEditorSettings();
 
-    SystemConfiguration readProjectConfiguration();
+  SystemConfiguration readProjectConfiguration();
 
-    void fillInspectorTree();
-    QTreeWidgetItem *createTreeItem(ASTNode inputNode);
+  void fillInspectorTree();
+  QTreeWidgetItem *createTreeItem(ASTNode inputNode);
 
-    Ui::ProjectWindow *ui;
+  Ui::ProjectWindow *ui;
 
-    QScopedPointer<SearchWidget> m_searchWidget;
+  QScopedPointer<SearchWidget> m_searchWidget;
 
-    LanguageHighlighter *m_highlighter;
+  LanguageHighlighter *m_highlighter;
 
-//    QString m_platformsRootDir;
-    QMap<QString, QVariant> m_options;
-    QMap<QString, QVariant> m_environment;
-    QMap<QString, QVariant> m_guiOptions;
-    QTimer m_codeModelTimer;
-    CodeModel m_codeModel;
-    QFont m_font;
-    std::vector<Builder *> m_builders;
-    QMenu m_helperMenu;
+  //    QString m_platformsRootDir;
+  QMap<QString, QVariant> m_options;
+  QMap<QString, QVariant> m_environment;
+  QMap<QString, QVariant> m_guiOptions;
+  QTimer m_codeModelTimer;
+  CodeModel m_codeModel;
+  QFont m_font;
+  std::vector<Builder *> m_builders;
+  QMenu m_helperMenu;
 
-    bool m_startingUp;
+  bool m_startingUp;
 };
 
 #endif // PROJECTWINDOW_H

@@ -248,6 +248,7 @@
     <addaction name="actionFind_Previous"/>
     <addaction name="separator"/>
     <addaction name="actionOptions"/>
+    <addaction name="actionManage_Strideroot"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -416,6 +417,11 @@
   <action name="actionConfigure_System">
    <property name="text">
     <string>System Configuration</string>
+   </property>
+  </action>
+  <action name="actionManage_Strideroot">
+   <property name="text">
+    <string>Manage Strideroot</string>
    </property>
   </action>
  </widget>

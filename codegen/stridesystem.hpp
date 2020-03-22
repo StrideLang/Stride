@@ -35,95 +35,97 @@
 #ifndef STRIDESYSTEM_HPP
 #define STRIDESYSTEM_HPP
 
+#include <QDir>
+#include <QFileInfo>
+#include <QLibrary>
 #include <QList>
+#include <QMap>
 #include <QString>
 #include <QStringList>
-#include <QLibrary>
-#include <QMap>
-#include <QFileInfo>
-#include <QDir>
 
-#include "strideparser.h"
 #include "stridelibrary.hpp"
+#include "strideparser.h"
 #include "strideplatform.hpp"
 
 #include "builder.h"
 
-
 typedef struct {
-    ASTNode sourceStreams;
-    ASTNode sourceImports;
-    ASTNode destStreams;
-    ASTNode destImports;
+  ASTNode sourceStreams;
+  ASTNode sourceImports;
+  ASTNode destStreams;
+  ASTNode destImports;
 } ConnectionNodes;
 
-
-class StrideSystem
-{
+class StrideSystem {
 public:
-    StrideSystem() {}
-    StrideSystem(QString strideRoot, QString systemName,
-                 int majorVersion, int minorVersion,
-                 std::vector<std::shared_ptr<ImportNode> > );
-    ~StrideSystem();
+  StrideSystem() {}
+  StrideSystem(QString strideRoot, QString systemName, int majorVersion,
+               int minorVersion, std::vector<std::shared_ptr<ImportNode>>);
+  ~StrideSystem();
 
-    QStringList getErrors();
-    QStringList getWarnings();
-    QStringList getPlatformTypeNames();
-    QStringList getFunctionNames();
+  QStringList getErrors();
+  QStringList getWarnings();
+  QStringList getPlatformTypeNames();
+  QStringList getFunctionNames();
 
-    void enableTesting(bool enable); // Uses testing objects instead of regular platform objects
+  void enableTesting(
+      bool enable); // Uses testing objects instead of regular platform objects
 
-    vector<Builder *> createBuilders(QString fileName, vector<string> usedFrameworks = vector<string>());
+  vector<Builder *>
+  createBuilders(QString fileName,
+                 vector<string> usedFrameworks = vector<string>());
 
-    ASTNode getPlatformDomain(string namespaceName = "");  // The platform's default domain
+  ASTNode
+  getPlatformDomain(string namespaceName = ""); // The platform's default domain
 
-//    DeclarationNode *getFunction(QString functionName);
-    vector<string> getFrameworkNames();
-    map<string, vector<ASTNode> > getBuiltinObjectsReference(); // The key to the map is the namespace name
+  //    DeclarationNode *getFunction(QString functionName);
+  vector<string> getFrameworkNames();
+  map<string, vector<ASTNode>>
+  getBuiltinObjectsReference(); // The key to the map is the namespace name
 
-//    bool typeHasPort(QString typeName, QString propertyName);
+  //    bool typeHasPort(QString typeName, QString propertyName);
 
-    vector<ASTNode> getOptionTrees();
+  vector<ASTNode> getOptionTrees();
 
-    ASTNode getImportTree(QString importName, QString importAs, QString platformName);
+  ASTNode getImportTree(QString importName, QString importAs,
+                        QString platformName);
 
-    void generateDomainConnections(ASTNode tree);
+  void generateDomainConnections(ASTNode tree);
 
-    ConnectionNodes getDomainChangeStreams(std::string previousDomainId, std::string nextDomainId);
+  ConnectionNodes getDomainChangeStreams(std::string previousDomainId,
+                                         std::string nextDomainId);
 
-    std::vector<std::shared_ptr<StridePlatform>> m_platforms;
-    vector<std::shared_ptr<DeclarationNode>> m_platformDefinitions;
-    std::vector<std::shared_ptr<DeclarationNode>> m_connectionDefinitions;
+  void installFramework(std::string frameworkName);
+
+  std::vector<std::shared_ptr<StridePlatform>> m_platforms;
+  vector<std::shared_ptr<DeclarationNode>> m_platformDefinitions;
+  std::vector<std::shared_ptr<DeclarationNode>> m_connectionDefinitions;
 
 private:
-    QVector<ASTNode> getPortsForTypeBlock(DeclarationNode *block);
-//    ListNode *getPortsForFunction(QString typeName);
+  QVector<ASTNode> getPortsForTypeBlock(DeclarationNode *block);
+  //    ListNode *getPortsForFunction(QString typeName);
 
-    QString makeProject(QString fileName);
+  QString makeProject(QString fileName);
 
-    QString readFile(QString fileName);
+  QString readFile(QString fileName);
 
-    void parseSystemTree(ASTNode systemTree);
+  void parseSystemTree(ASTNode systemTree);
 
-    QString m_strideRoot;
-    QString m_systemName;
-    int m_majorVersion;
-    int m_minorVersion;
-    QString m_systemPath;
-    QString m_rootPath;
-    bool m_testing;
+  QString m_strideRoot;
+  QString m_systemName;
+  int m_majorVersion;
+  int m_minorVersion;
+  QString m_systemPath;
+  QString m_rootPath;
+  bool m_testing;
 
-    QStringList m_errors;
-    QStringList m_warnings;
+  QStringList m_errors;
+  QStringList m_warnings;
 
-    QStringList m_types;
+  QStringList m_types;
 
-
-    QMap<QString, QString> m_importList;
-    StrideLibrary m_library;
+  QMap<QString, QString> m_importList;
+  StrideLibrary m_library;
 };
-
-
 
 #endif // STRIDESYSTEM_HPP
