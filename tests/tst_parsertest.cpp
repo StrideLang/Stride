@@ -40,7 +40,7 @@
 #include "coderesolver.h"
 #include "codevalidator.h"
 #include "strideparser.h"
-#include "strideplatform.hpp"
+#include "strideframework.hpp"
 
 #define STRIDEROOT "../strideroot"
 

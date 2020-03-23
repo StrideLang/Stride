@@ -589,11 +589,11 @@ QTreeWidgetItem *ProjectWindow::createTreeItem(ASTNode inputNode) {
     newItem = new QTreeWidgetItem(itemText);
     newItem->setData(0, Qt::UserRole, fileInfo);
     if (inputNode->getFilename() == "") {
-      newItem->setBackgroundColor(0, Qt::green);
-      newItem->setBackgroundColor(1, Qt::green);
+      newItem->setBackground(0, Qt::green);
+      newItem->setBackground(1, Qt::green);
     } else if (inputNode->getFilename() != editor->filename().toStdString()) {
-      newItem->setBackgroundColor(0, Qt::lightGray);
-      newItem->setBackgroundColor(1, Qt::lightGray);
+      newItem->setBackground(0, Qt::lightGray);
+      newItem->setBackground(1, Qt::lightGray);
     }
     for (auto property : declaration->getProperties()) {
       QStringList propertyItemText;
@@ -606,11 +606,11 @@ QTreeWidgetItem *ProjectWindow::createTreeItem(ASTNode inputNode) {
       fileInfo << property->getLine();
       propertyItem->setData(0, Qt::UserRole, fileInfo);
       if (property->getFilename() == "") {
-        propertyItem->setBackgroundColor(0, Qt::green);
-        propertyItem->setBackgroundColor(1, Qt::green);
+        propertyItem->setBackground(0, Qt::green);
+        propertyItem->setBackground(1, Qt::green);
       } else if (property->getFilename() != editor->filename().toStdString()) {
-        propertyItem->setBackgroundColor(0, Qt::lightGray);
-        propertyItem->setBackgroundColor(1, Qt::lightGray);
+        propertyItem->setBackground(0, Qt::lightGray);
+        propertyItem->setBackground(1, Qt::lightGray);
       }
       if (property->getValue()->getNodeType() == AST::List) {
         for (auto listMember : property->getValue()->getChildren()) {
@@ -621,12 +621,12 @@ QTreeWidgetItem *ProjectWindow::createTreeItem(ASTNode inputNode) {
             fileInfo << listMember->getLine();
             subItem->setData(0, Qt::UserRole, fileInfo);
             if (listMember->getFilename() == "") {
-              subItem->setBackgroundColor(0, Qt::green);
-              subItem->setBackgroundColor(1, Qt::green);
+              subItem->setBackground(0, Qt::green);
+              subItem->setBackground(1, Qt::green);
             } else if (listMember->getFilename() !=
                        editor->filename().toStdString()) {
-              subItem->setBackgroundColor(0, Qt::lightGray);
-              subItem->setBackgroundColor(1, Qt::lightGray);
+              subItem->setBackground(0, Qt::lightGray);
+              subItem->setBackground(1, Qt::lightGray);
             }
             propertyItem->addChild(subItem);
           }
@@ -641,12 +641,12 @@ QTreeWidgetItem *ProjectWindow::createTreeItem(ASTNode inputNode) {
           fileInfo << property->getValue()->getLine();
           subItem->setData(0, Qt::UserRole, fileInfo);
           if (property->getValue()->getFilename() == "") {
-            subItem->setBackgroundColor(0, Qt::green);
-            subItem->setBackgroundColor(1, Qt::green);
+            subItem->setBackground(0, Qt::green);
+            subItem->setBackground(1, Qt::green);
           } else if (property->getValue()->getFilename() !=
                      editor->filename().toStdString()) {
-            subItem->setBackgroundColor(0, Qt::lightGray);
-            subItem->setBackgroundColor(1, Qt::lightGray);
+            subItem->setBackground(0, Qt::lightGray);
+            subItem->setBackground(1, Qt::lightGray);
           }
           propertyItem->addChild(subItem);
         }
@@ -1132,9 +1132,9 @@ void ProjectWindow::updateEditorSettings() {
     CodeEditor *editor = static_cast<CodeEditor *>(ui->tabWidget->widget(i));
     editor->setFont(font);
 
-    const int tabStop = 4; // 4 characters
-    QFontMetrics metrics(font);
-    editor->setTabStopWidth(tabStop * metrics.width(' '));
+    //    const int tabStop = 4; // 4 characters
+    //    QFontMetrics metrics(font);
+    //    editor->setTabStopWidth(tabStop * metrics.width(' '));
 
     editor->setAutoComplete(m_options["editor.autoComplete"].toBool());
   }
@@ -1889,7 +1889,8 @@ void ProjectWindow::resetCodeTimer() {
   m_codeModelTimer.start();
 }
 
-void ProjectWindow::inspectorItemClicked(QTreeWidgetItem *item, int column) {
+void ProjectWindow::inspectorItemClicked(QTreeWidgetItem *item,
+                                         int /*column*/) {
   QVariantList dataList = item->data(0, Qt::UserRole).toList();
   if (dataList.size() == 2) {
     QString fileName = dataList[0].toString();

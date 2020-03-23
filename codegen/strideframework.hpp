@@ -35,66 +35,66 @@
 #ifndef STREAMPLATFORM_H
 #define STREAMPLATFORM_H
 
-#include <string>
 #include <map>
+#include <string>
 
+#include <QDebug>
 #include <QList>
+#include <QProcess>
 
 #include "ast.h"
 #include "declarationnode.h"
+#import "valuenode.h"
 
-class StridePlatform {
+class StrideFramework {
 public:
-    StridePlatform(std::string framework, std::string fwVersion,
-                   std::string hardware = "", std::string hardwareVersion = "",
-                   std::string rootNamespace = "", std::string identifier = "") :
-        m_framework(framework), m_frameworkVersion(fwVersion),
-        m_hardware(hardware), m_hardwareVersion(hardwareVersion),
-        m_rootNamespace(rootNamespace), m_identifier(identifier)
-    {
-    }
+  StrideFramework(std::string strideRoot, std::string framework,
+                  std::string fwVersion, std::string hardware = "",
+                  std::string hardwareVersion = "",
+                  std::string rootNamespace = "", std::string identifier = "");
 
-    ~StridePlatform();
+  ~StrideFramework();
 
-    typedef enum {
-        PythonTools,
-        PluginPlatform,
-        NullPlatform
-    } PlatformAPI;
+  typedef enum { PythonTools, PluginPlatform, NullPlatform } PlatformAPI;
 
-    std::string getFramework() const;
-    std::string getFrameworkVersion() const;
-    std::string getHardware() const;
-    std::string getHardwareVersion() const;
-    std::string getRootNamespace() const;
-    bool getRequired() const;
-    PlatformAPI getAPI() const;
-    std::string buildPlatformPath(std::string strideRoot);
-    std::string buildPlatformLibPath(std::string strideRoot);
-    std::string buildTestingLibPath(std::string strideRoot);
+  std::string getFramework() const;
+  std::string getFrameworkVersion() const;
+  std::string getHardware() const;
+  std::string getHardwareVersion() const;
+  std::string getRootNamespace() const;
+  bool getRequired() const;
+  PlatformAPI getAPI() const;
+  std::string buildPlatformPath(std::string strideRoot);
+  std::string buildPlatformLibPath(std::string strideRoot);
+  std::string buildTestingLibPath(std::string strideRoot);
 
-    std::vector<std::string> getDomainIds();
+  std::string getPlatformDetails();
 
-    void addTree(std::string treeName, ASTNode treeRoot);
-    void addTestingTree(std::string treeName, ASTNode treeRoot);
-    std::vector<ASTNode> getPlatformObjectsReference();
-    std::vector<ASTNode> getPlatformTestingObjectsRef();
+  void installFramework();
 
-    bool getPluginDetails(std::string &pluginName, int &majorVersion, int &minorVersion);
+  std::vector<std::string> getDomainIds();
+
+  void addTree(std::string treeName, ASTNode treeRoot);
+  void addTestingTree(std::string treeName, ASTNode treeRoot);
+  std::vector<ASTNode> getPlatformObjectsReference();
+  std::vector<ASTNode> getPlatformTestingObjectsRef();
+
+  bool getPluginDetails(std::string &pluginName, int &majorVersion,
+                        int &minorVersion);
 
 private:
-    std::string m_framework;
-    std::string m_frameworkVersion;
-    std::string m_hardware;
-    std::string m_hardwareVersion;
-    std::string m_rootNamespace;
-    std::string m_identifier;
-    bool m_required;
-    PlatformAPI m_api {PluginPlatform}; //TODO Put back support for plugin platforms
-    std::map<std::string, ASTNode> m_platformTrees;
-    std::map<std::string, ASTNode> m_platformTestTrees;
+  std::string m_strideRoot;
+  std::string m_framework;
+  std::string m_frameworkVersion;
+  std::string m_hardware;
+  std::string m_hardwareVersion;
+  std::string m_rootNamespace;
+  std::string m_identifier;
+  bool m_required;
+  PlatformAPI m_api{
+      PluginPlatform}; // TODO Put back support for plugin platforms
+  std::map<std::string, ASTNode> m_platformTrees;
+  std::map<std::string, ASTNode> m_platformTestTrees;
 };
-
-
 
 #endif // STREAMPLATFORM_H

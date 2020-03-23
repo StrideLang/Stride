@@ -18,8 +18,8 @@ SOURCES += \
     pythonproject.cpp \
     codevalidator.cpp \
     coderesolver.cpp \
+    strideframework.cpp \
     stridelibrary.cpp \
-    strideplatform.cpp \
     stridesystem.cpp \
     systemconfiguration.cpp \
     languagesyntax.cpp
@@ -29,8 +29,8 @@ HEADERS += \
     codevalidator.h \
     coderesolver.h \
     builder.h \
+    strideframework.hpp \
     stridelibrary.hpp \
-    strideplatform.hpp \
     porttypes.h \
     stridesystem.hpp \
     systemconfiguration.hpp \

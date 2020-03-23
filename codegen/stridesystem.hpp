@@ -43,9 +43,9 @@
 #include <QString>
 #include <QStringList>
 
+#include "strideframework.hpp"
 #include "stridelibrary.hpp"
 #include "strideparser.h"
-#include "strideplatform.hpp"
 
 #include "builder.h"
 
@@ -97,7 +97,7 @@ public:
 
   void installFramework(std::string frameworkName);
 
-  std::vector<std::shared_ptr<StridePlatform>> m_platforms;
+  std::vector<std::shared_ptr<StrideFramework>> m_frameworks;
   vector<std::shared_ptr<DeclarationNode>> m_platformDefinitions;
   std::vector<std::shared_ptr<DeclarationNode>> m_connectionDefinitions;
 

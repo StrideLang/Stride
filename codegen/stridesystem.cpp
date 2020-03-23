@@ -78,7 +78,7 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
       // Iterate through platforms reading them.
       // TODO Should optimize this to not reread platform if already done.
 
-      for (auto platform : m_platforms) {
+      for (auto platform : m_frameworks) {
         ASTNode importTree = getImportTree(
             "", "", QString::fromStdString(platform->getFramework()));
         if (importTree) {
@@ -106,7 +106,7 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
       }
 
       // Load testing trees
-      for (auto platform : m_platforms) {
+      for (auto platform : m_frameworks) {
         QStringList nameFilters;
         nameFilters.push_back("*.stride");
         string platformPath =
@@ -267,12 +267,12 @@ void StrideSystem::parseSystemTree(ASTNode systemTree) {
             rootNamespace;
         framework = definition["framework"];
 
-        std::shared_ptr<StridePlatform> newPlatform =
-            std::make_shared<StridePlatform>(
+        std::shared_ptr<StrideFramework> newPlatform =
+            std::make_shared<StrideFramework>(
                 definition["framework"], definition["frameworkVersion"],
                 definition["hardware"], definition["hardwareVersion"],
                 definition["rootNamespace"]);
-        m_platforms.push_back(newPlatform);
+        m_frameworks.push_back(newPlatform);
       } else {
         // TODO add error
       }
@@ -341,11 +341,11 @@ vector<Builder *> StrideSystem::createBuilders(QString fileName,
     qDebug() << "Error creating project path";
     return builders;
   }
-  for (auto platform : m_platforms) {
+  for (auto platform : m_frameworks) {
     if ((usedFrameworks.size() == 0) ||
         (std::find(usedFrameworks.begin(), usedFrameworks.end(),
                    platform->getFramework()) != usedFrameworks.end())) {
-      if (platform->getAPI() == StridePlatform::PythonTools) {
+      if (platform->getAPI() == StrideFramework::PythonTools) {
         QString pythonExec = "python";
         Builder *builder = new PythonProject(
             QString::fromStdString(platform->getFramework()),
@@ -361,7 +361,7 @@ vector<Builder *> StrideSystem::createBuilders(QString fileName,
             delete builder;
           }
         }
-      } else if (platform->getAPI() == StridePlatform::PluginPlatform) {
+      } else if (platform->getAPI() == StrideFramework::PluginPlatform) {
         auto pluginList = QDir(m_strideRoot + "/plugins")
                               .entryList(QDir::NoDotAndDotDot | QDir::Files);
         // FIXME we should copy plugins to framework directories
@@ -464,7 +464,7 @@ ASTNode StrideSystem::getPlatformDomain(string namespaceName) {
 
 vector<string> StrideSystem::getFrameworkNames() {
   vector<string> names;
-  for (auto platform : m_platforms) {
+  for (auto platform : m_frameworks) {
     names.push_back(platform->getFramework());
   }
   return names;
@@ -473,7 +473,7 @@ vector<string> StrideSystem::getFrameworkNames() {
 map<string, vector<ASTNode>> StrideSystem::getBuiltinObjectsReference() {
   map<string, vector<ASTNode>> objects;
   objects[""] = vector<ASTNode>();
-  for (auto platform : m_platforms) {
+  for (auto platform : m_frameworks) {
     vector<ASTNode> platformObjects = platform->getPlatformObjectsReference();
 
     if (m_testing) {
@@ -511,7 +511,7 @@ map<string, vector<ASTNode>> StrideSystem::getBuiltinObjectsReference() {
     //        objects[platformName] = platformObjects;
     // Then put first platform's objects in default namespace
     objects[platform->getFramework()] = vector<ASTNode>();
-    std::shared_ptr<StridePlatform> rootPlatform;
+    std::shared_ptr<StrideFramework> rootPlatform;
     for (auto node : platformObjects) {
       objects[platform->getFramework()].push_back(node);
       if (node->getNodeType() == AST::Declaration ||
@@ -635,7 +635,7 @@ ASTNode StrideSystem::getImportTree(QString importName, QString importAs,
   // Look first in platforms
   // TODO currently search order is defined by the order in which platforms
   // are declared. Should there be more explicit ordering or restrictions?
-  for (auto platform : m_platforms) {
+  for (auto platform : m_frameworks) {
     if (platformName.size() > 0 &&
         ((platformName.toStdString() == platform->getRootNamespace()) ||
          platformName.toStdString() == platform->getFramework())) {
@@ -940,7 +940,7 @@ ConnectionNodes StrideSystem::getDomainChangeStreams(string previousDomainId,
 }
 
 void StrideSystem::installFramework(string frameworkName) {
-  for (auto framework : m_platforms) {
+  for (auto framework : m_frameworks) {
     if (framework->getFramework() == frameworkName) {
       auto configPath =
           framework->buildPlatformLibPath(m_strideRoot.toStdString()) + "/" +
