@@ -869,8 +869,6 @@ void ProjectWindow::openOptionsDialog() {
   QMap<QString, QTextCharFormat> formats = m_highlighter->formats();
   config.setHighlighterFormats(formats);
 
-  config.setPlatformRootPath(m_environment["platformRootPath"].toString());
-
   // Connect
   connect(&config, SIGNAL(requestHighlighterPreset(int)), m_highlighter,
           SLOT(setFormatPreset(int)));
@@ -891,19 +889,20 @@ void ProjectWindow::openOptionsDialog() {
     m_highlighter->setFormats(config.highlighterFormats());
 
     updateEditorSettings();
-    m_environment["platformRootPath"] = config.platformRootPath();
     writeSettings();
   }
 }
 
 void ProjectWindow::openManageStriderootDialog() {
   StriderootManagementDialog dialog;
-  dialog.m_frameworkNames =
-      QDir(m_environment["platformRootPath"].toString() + "/frameworks")
-          .entryList(QDir::Dirs | QDir::NoDotAndDotDot);
   dialog.m_strideRoot = m_environment["platformRootPath"].toString();
+
   dialog.prepare();
   int result = dialog.exec();
+
+  m_environment["platformRootPath"] = dialog.m_strideRoot;
+
+  writeSettings();
 }
 
 void ProjectWindow::updateCodeAnalysis(bool force) {

@@ -69,14 +69,6 @@ void ConfigDialog::setAutoComplete(bool enabled) {
   ui->autoCompleteCheckBox->setChecked(enabled);
 }
 
-QString ConfigDialog::platformRootPath() {
-  return ui->strideRootLineEdit->text();
-}
-
-void ConfigDialog::setPlatformRootPath(QString path) {
-  ui->strideRootLineEdit->setText(path);
-}
-
 QMap<QString, QTextCharFormat> ConfigDialog::highlighterFormats() const {
   return m_highlighterFormats;
 }

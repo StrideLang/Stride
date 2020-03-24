@@ -16,8 +16,10 @@ public:
   explicit StriderootManagementDialog(QWidget *parent = nullptr);
   ~StriderootManagementDialog();
 
-  QStringList m_frameworkNames;
   QString m_strideRoot;
+
+  QString platformRootPath();
+  void setPlatformRootPath(QString path);
 
   void prepare();
 
@@ -28,6 +30,9 @@ public slots:
 private:
   Ui::StriderootManagementDialog *ui;
   QVector<QString> m_frameworkDetails;
+
+  QStringList m_frameworkNames;
+  QStringList m_systemNames;
 };
 
 #endif // STRIDEROOTMANAGEMENTDIALOG_H
