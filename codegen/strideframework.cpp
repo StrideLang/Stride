@@ -84,8 +84,8 @@ string StrideFramework::buildPlatformLibPath(string strideRoot) {
 }
 
 string StrideFramework::buildTestingLibPath(string strideRoot) {
-  string path = buildPlatformPath(strideRoot) + "/";
-  path += "platformlib/testing";
+  string path = buildPlatformLibPath(strideRoot);
+  path += "/testing";
   return path;
 }
 

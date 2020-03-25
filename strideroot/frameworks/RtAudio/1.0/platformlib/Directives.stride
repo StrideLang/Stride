@@ -38,7 +38,7 @@ generatorDirectives __GeneratorDirectives {
     codeGeneratorMajorVersion: 1
     codeGeneratorMinorVersion: 0
     buildPlatforms: ["Windows"]
-    substitutions: [["include_dirs", "rtaudio-4.1.2"],
+    substitutions: [["include_dirs", "rtaudio-4.1.2 serial/include"],
                     ["additional_sources", "rtaudio-4.1.2/RtAudio.cpp
                     serial/src/serial.cc
                     serial/include/serial/serial.h
@@ -62,13 +62,13 @@ generatorDirectives __GeneratorDirectives {
     codeGeneratorMajorVersion: 1
     codeGeneratorMinorVersion: 0
     buildPlatforms: ["macOS"]
-    substitutions: [["include_dirs", "rtaudio-4.1.2"],
+    substitutions: [["include_dirs", "rtaudio-4.1.2 serial/include"],
                     ["additional_sources", "rtaudio-4.1.2/RtAudio.cpp
                     serial/src/serial.cc
                     serial/include/serial/serial.h
                     serial/include/serial/v8stdint.h
-                    serial/src/impl/win.cc
-                    serial/src/impl/list_ports/list_ports_win.cc"],
+                    serial/src/impl/unix.cc
+                    serial/src/impl/list_ports/list_ports_osx.cc"],
                     ["additional_defines", "-D__MACOSX_CORE__"],
-                    ["link_libraries", "-framework CoreAudio -framework CoreFoundation -lpthread     -framework IOKit"]]
+                    ["link_libraries", '"-framework CoreAudio" "-framework CoreFoundation" -lpthread "-framework IOKit"']]
 }

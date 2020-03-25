@@ -269,9 +269,9 @@ void StrideSystem::parseSystemTree(ASTNode systemTree) {
 
         std::shared_ptr<StrideFramework> newPlatform =
             std::make_shared<StrideFramework>(
-                definition["framework"], definition["frameworkVersion"],
-                definition["hardware"], definition["hardwareVersion"],
-                definition["rootNamespace"]);
+                m_strideRoot.toStdString(), definition["framework"],
+                definition["frameworkVersion"], definition["hardware"],
+                definition["hardwareVersion"], definition["rootNamespace"]);
         m_frameworks.push_back(newPlatform);
       } else {
         // TODO add error
