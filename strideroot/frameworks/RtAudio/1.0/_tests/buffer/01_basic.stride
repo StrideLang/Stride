@@ -4,8 +4,9 @@ buffer Buf {
 	size: 4
 	rate: AudioRate
 	default: 0.0
+	domain: AudioDomain
 }
 
-[1,2,3,4] >> Buf;
+AudioIn[1] >> Buf;
 
-Buf >> AudioOut[1];
+Buf >> AudioOut[0];

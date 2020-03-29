@@ -18,7 +18,7 @@ public:
                                            std::vector<string> defaultValue);
   static std::string getDeclarationForType(Instance instance);
 
-  static std::string instance(Instance &inst, bool close = true);
+  //  static std::string instance(Instance &inst, bool close = true);
 
   static std::string include(std::string includeToken);
 

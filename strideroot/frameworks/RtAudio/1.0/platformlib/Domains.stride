@@ -20,13 +20,17 @@ _domainDefinition RootDomain {
 	"Helper.hpp"]
 	domainFunctionCode: '
 // RtAudio RootDomain template
-int main() {
+//[[Includes]]
+//[[/Includes]]
 
+//[[Declarations]]
+//[[/Declarations]]
+
+//[[Instances]]
+//[[/Instances]]
+int main() {
 //[[Initialization]]
 //[[/Initialization]]
-
-//[[Processing]]
-//[[/Processing]]
 
     char input;
     std::cout << "\nRunning ... press <enter> to quit.\n";

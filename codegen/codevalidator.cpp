@@ -1141,7 +1141,19 @@ int CodeValidator::getBlockDeclaredSize(std::shared_ptr<DeclarationNode> block,
                                         ScopeStack scope, ASTNode tree,
                                         QList<LangError> &errors) {
   if (block->getNodeType() == AST::Declaration) {
-    return 1;
+    if (block->getObjectType() == "buffer") {
+      auto sizeNode =
+          static_pointer_cast<DeclarationNode>(block)->getPropertyValue("size");
+      if (sizeNode) {
+        QList<LangError> errors;
+        auto size =
+            CodeValidator::evaluateConstInteger(sizeNode, scope, tree, errors);
+        return size;
+      }
+      return -1;
+    } else {
+      return 1;
+    }
   }
   int size = -1;
   Q_ASSERT(block->getNodeType() == AST::BundleDeclaration);

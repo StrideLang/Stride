@@ -130,49 +130,50 @@ string LanguageSyntax::getDeclarationForType(Instance instance) {
                                instance.defaultValue);
 }
 
-std::string LanguageSyntax::instance(Instance &inst, bool close) {
-  std::string out;
-  if (inst.type == "double") {
-    if (inst.access == ACCESS_NONE) {
-      out += instanceReal(inst.fullName(), inst.size, true, inst.defaultValue);
-    } else {
-      out = "// " + inst.fullName() + "\n";
-      out += getDeclarationForType(inst);
-    }
-  } else if (inst.type == "bool") {
-    if (inst.access == ACCESS_NONE) {
-      out = LanguageSyntax::instanceBool(inst.fullName(), inst.size, true,
-                                         inst.defaultValue);
-    } else {
-      out = "// " + inst.fullName() + "\n";
-      out += getDeclarationForType(inst);
-    }
-  } else {
-    // Do we need to look at size here?
-    out = inst.type;
-    if (inst.templateArgs.size() > 0) {
-      out += "<";
-      for (auto arg : inst.templateArgs) {
-        out += arg + ",";
-      }
-      out = out.substr(0, out.size() - 1);
-      out += ">";
-    }
-    out += " " + inst.fullName();
-    if (inst.constructorArgs.size() > 0) {
-      out += "{";
-      for (auto arg : inst.constructorArgs) {
-        out += arg + ",";
-      }
-      out = out.substr(0, out.size() - 1);
-      out += "}";
-    }
-    if (close) {
-      out += ";\n";
-    }
-  }
-  return out;
-}
+// std::string LanguageSyntax::instance(Instance &inst, bool close) {
+//  std::string out;
+//  if (inst.type == "double") {
+//    if (inst.access == ACCESS_NONE) {
+//      out += instanceReal(inst.fullName(), inst.size, true,
+//      inst.defaultValue);
+//    } else {
+//      out = "// " + inst.fullName() + "\n";
+//      out += getDeclarationForType(inst);
+//    }
+//  } else if (inst.type == "bool") {
+//    if (inst.access == ACCESS_NONE) {
+//      out = LanguageSyntax::instanceBool(inst.fullName(), inst.size, true,
+//                                         inst.defaultValue);
+//    } else {
+//      out = "// " + inst.fullName() + "\n";
+//      out += getDeclarationForType(inst);
+//    }
+//  } else {
+//    // Do we need to look at size here?
+//    out = inst.type;
+//    if (inst.templateArgs.size() > 0) {
+//      out += "<";
+//      for (auto arg : inst.templateArgs) {
+//        out += arg + ",";
+//      }
+//      out = out.substr(0, out.size() - 1);
+//      out += ">";
+//    }
+//    out += " " + inst.fullName();
+//    if (inst.constructorArgs.size() > 0) {
+//      out += "{";
+//      for (auto arg : inst.constructorArgs) {
+//        out += arg + ",";
+//      }
+//      out = out.substr(0, out.size() - 1);
+//      out += "}";
+//    }
+//    if (close) {
+//      out += ";\n";
+//    }
+//  }
+//  return out;
+//}
 
 std::string LanguageSyntax::include(string includeName) {
   std::string includetext;
