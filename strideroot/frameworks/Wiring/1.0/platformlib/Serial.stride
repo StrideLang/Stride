@@ -1,4 +1,10 @@
+constant _SerialBaudRate  { # Overriden by configuration
+	value: 9600
+}
 
+constant _SerialPort  { # Overriden by configuration
+	value: '"/dev/ttyACM0"'
+}
 
 intListOverride SerialBaudRate {
 	name: "Baud Rate"
@@ -8,9 +14,14 @@ intListOverride SerialBaudRate {
 	meta: "Serial Baud Rate"
 }
 
-resource _SerialPort {
+resource SerialPort {
     name: "Serial"
+    substitutions: ["baud_rate", _SerialBaudRate,
+                "serial_port", _SerialPort,
+                "serial_process_rate", SerialProcessRate ]
     initializations: ["Serial.begin(%%_SerialBaudRate%%);"]
+    resourceIncludes: []
+    resourceDeclarations: []
     properties: [
         SerialBaudRate
     ]

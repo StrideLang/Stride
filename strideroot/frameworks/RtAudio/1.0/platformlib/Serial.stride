@@ -30,8 +30,9 @@ _domainDefinition SerialDomain {
 	parentDomain: RootDomain
 	rate: SerialProcessRate
 	resource: SerialPort
-    substitutions: ["serial_process_rate", SerialProcessRate ]
-    domainIncludes: []
+    substitutions: ["serial_port", _SerialPort,
+					"serial_process_rate", SerialProcessRate]
+    domainIncludes: ["<thread>", 'serial/serial.h']
     domainDeclarations: ["void serial_thread_func();",
 		"bool serialthread_running {true};",
 		"std::thread serialReadThread(serial_thread_func);"]
