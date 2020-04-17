@@ -200,28 +200,30 @@ vector<ASTNode> StrideFramework::getPlatformTestingObjectsRef() {
 
 bool StrideFramework::getPluginDetails(string &pluginName, int &majorVersion,
                                        int &minorVersion) {
-  for (auto declNode : m_platformTrees[""]->getChildren()) {
-    if (declNode->getNodeType() == AST::Declaration) {
-      auto decl = static_pointer_cast<DeclarationNode>(declNode);
-      if (decl->getObjectType() == "generatorDirectives") {
-        auto nameNode = decl->getPropertyValue("codeGenerator");
-        if (nameNode && nameNode->getNodeType() == AST::String) {
-          pluginName =
-              static_pointer_cast<ValueNode>(nameNode)->getStringValue();
+  if (m_platformTrees.find("") != m_platformTrees.end()) {
+    for (auto declNode : m_platformTrees[""]->getChildren()) {
+      if (declNode->getNodeType() == AST::Declaration) {
+        auto decl = static_pointer_cast<DeclarationNode>(declNode);
+        if (decl->getObjectType() == "generatorDirectives") {
+          auto nameNode = decl->getPropertyValue("codeGenerator");
+          if (nameNode && nameNode->getNodeType() == AST::String) {
+            pluginName =
+                static_pointer_cast<ValueNode>(nameNode)->getStringValue();
+          }
+          auto majorVersionNode =
+              decl->getPropertyValue("codeGeneratorMajorVersion");
+          if (majorVersionNode && majorVersionNode->getNodeType() == AST::Int) {
+            majorVersion =
+                static_pointer_cast<ValueNode>(majorVersionNode)->getIntValue();
+          }
+          auto minorVersionNode =
+              decl->getPropertyValue("codeGeneratorMinorVersion");
+          if (minorVersionNode && minorVersionNode->getNodeType() == AST::Int) {
+            minorVersion =
+                static_pointer_cast<ValueNode>(minorVersionNode)->getIntValue();
+          }
+          return true;
         }
-        auto majorVersionNode =
-            decl->getPropertyValue("codeGeneratorMajorVersion");
-        if (majorVersionNode && majorVersionNode->getNodeType() == AST::Int) {
-          majorVersion =
-              static_pointer_cast<ValueNode>(majorVersionNode)->getIntValue();
-        }
-        auto minorVersionNode =
-            decl->getPropertyValue("codeGeneratorMinorVersion");
-        if (minorVersionNode && minorVersionNode->getNodeType() == AST::Int) {
-          minorVersion =
-              static_pointer_cast<ValueNode>(minorVersionNode)->getIntValue();
-        }
-        return true;
       }
     }
   }

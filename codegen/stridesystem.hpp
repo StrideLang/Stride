@@ -69,11 +69,9 @@ public:
   QStringList getFunctionNames();
 
   void enableTesting(
-      bool enable); // Uses testing objects instead of regular platform objects
+      ASTNode tree); // Uses testing objects instead of regular platform objects
 
-  vector<Builder *>
-  createBuilders(QString fileName,
-                 vector<string> usedFrameworks = vector<string>());
+  vector<Builder *> createBuilders(QString fileName, ASTNode tree);
 
   ASTNode
   getPlatformDomain(string namespaceName = ""); // The platform's default domain

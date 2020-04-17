@@ -32,41 +32,35 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-#include <sstream>
-#include <iostream>
-#include <vector>
 #include <cstdlib>
+#include <iostream>
+#include <sstream>
+#include <vector>
 
 #include "platformnode.h"
 
-SystemNode::SystemNode(string platformName, int majorVersion, int minorVersion, const char *filename, int line, vector<string> hwPlatform) :
-    AST(AST::Platform, filename, line)
-{
-    m_systemName = platformName;
-    m_majorVersion = majorVersion;
-    m_minorVersion = minorVersion;
-    m_targetPlatforms = hwPlatform;
+SystemNode::SystemNode(string platformName, int majorVersion, int minorVersion,
+                       const char *filename, int line,
+                       vector<string> hwPlatform)
+    : AST(AST::Platform, filename, line) {
+  m_systemName = platformName;
+  m_majorVersion = majorVersion;
+  m_minorVersion = minorVersion;
+  m_targetPlatforms = hwPlatform;
 }
 
-SystemNode::~SystemNode()
-{
+SystemNode::~SystemNode() {}
 
-}
+int SystemNode::majorVersion() const { return m_majorVersion; }
 
-int SystemNode::majorVersion() const
-{
-    return m_majorVersion;
-}
+int SystemNode::minorVersion() const { return m_minorVersion; }
 
-int SystemNode::minorVersion() const
-{
-    return m_minorVersion;
-}
-
-//AST *SystemNode::deepCopy()
+// AST *SystemNode::deepCopy()
 //{
-//    SystemNode *newnode = new SystemNode(m_systemName, m_majorVersion, m_minorVersion,
-//                                    m_filename.data() , m_line, m_targetPlatforms);
+//    SystemNode *newnode = new SystemNode(m_systemName, m_majorVersion,
+//    m_minorVersion,
+//                                    m_filename.data() , m_line,
+//                                    m_targetPlatforms);
 //    vector<AST *> children = getChildren();
 //    for (unsigned int i = 0; i < children.size(); i++) {
 //        newnode->addChild(children.at(i)->deepCopy());
@@ -74,23 +68,18 @@ int SystemNode::minorVersion() const
 //    return newnode;
 //}
 
-vector<string> SystemNode::hwPlatforms() const
-{
-    return m_targetPlatforms;
-}
+// vector<string> SystemNode::hwPlatforms() const
+//{
+//    return m_targetPlatforms;
+//}
 
-void SystemNode::setHwPlatforms(const vector<string> &hwPlatform)
-{
-    m_targetPlatforms = hwPlatform;
-}
+// void SystemNode::setHwPlatforms(const vector<string> &hwPlatform)
+//{
+//    m_targetPlatforms = hwPlatform;
+//}
 
-string SystemNode::platformName() const
-{
-    return m_systemName;
-}
+string SystemNode::platformName() const { return m_systemName; }
 
-void SystemNode::setPlatformName(const string &platformName)
-{
-    m_systemName = platformName;
+void SystemNode::setPlatformName(const string &platformName) {
+  m_systemName = platformName;
 }
-

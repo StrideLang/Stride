@@ -41,80 +41,27 @@
 #include "coderesolver.h"
 #include "codevalidator.h"
 
-CodeValidator::CodeValidator(QString striderootDir, ASTNode tree,
-                             Options options, SystemConfiguration systemConfig)
-    : m_system(nullptr), m_tree(tree), m_options(options),
-      m_systemConfig(systemConfig) {
-  validateTree(striderootDir, tree);
+CodeValidator::CodeValidator(ASTNode tree, Options options)
+    : m_system(nullptr), m_tree(tree), m_options(options) {
+  validateTree(tree);
 }
 
 CodeValidator::~CodeValidator() {}
 
-void CodeValidator::validateTree(QString platformRootDir, ASTNode tree) {
+void CodeValidator::validateTree(ASTNode tree) {
   m_tree = tree;
   if (tree) {
-    std::vector<std::shared_ptr<ImportNode>> importList;
-    for (ASTNode node : tree->getChildren()) {
-      if (node->getNodeType() == AST::Import) {
-        std::shared_ptr<ImportNode> import =
-            static_pointer_cast<ImportNode>(node);
-        // FIXME add namespace support here (e.g. import
-        // Platform::Filters::Filter)
-        bool imported = false;
-        for (auto importNode : importList) {
-          if ((static_pointer_cast<ImportNode>(importNode)->importName() ==
-               import->importName()) &&
-              (static_pointer_cast<ImportNode>(importNode)->importAlias() ==
-               import->importAlias())) {
-            imported = true;
-            break;
-          }
-        }
-        if (!imported) {
-          importList.push_back(import);
-        }
-      }
-    }
-
-    QVector<std::shared_ptr<SystemNode>> systems = getPlatformNodes();
-
-    if (systems.size() > 0) {
-      std::shared_ptr<SystemNode> platformNode = systems.at(0);
-      m_system = std::make_shared<StrideSystem>(
-          platformRootDir, QString::fromStdString(platformNode->platformName()),
-          platformNode->majorVersion(), platformNode->minorVersion(),
-          importList);
-      for (int i = 1; i < systems.size(); i++) {
-        qDebug() << "Ignoring system: "
-                 << QString::fromStdString(platformNode->platformName());
-        LangError error;
-        error.type = LangError::SystemRedefinition;
-        error.errorTokens.push_back(platformNode->platformName());
-        error.filename = platformNode->getFilename();
-        error.lineNumber = platformNode->getLine();
-        m_errors.append(error);
-      }
-    } else { // Make a default platform that only inlcudes the common library
-      m_system = std::make_shared<StrideSystem>(platformRootDir, __FILE__,
-                                                __LINE__, -1, importList);
-    }
-    if (systems.size() > 0) { // Store system details in tree
-      systems.at(0)->setHwPlatforms(m_system->getFrameworkNames());
-    }
     validate();
   }
 }
 
 bool CodeValidator::isValid() { return m_errors.size() == 0; }
 
-bool CodeValidator::platformIsValid() {
-  return m_system->getErrors().size() == 0;
-}
-
-QVector<std::shared_ptr<SystemNode>> CodeValidator::getPlatformNodes() {
-  Q_ASSERT(m_tree);
+QVector<std::shared_ptr<SystemNode>>
+CodeValidator::getSystemNodes(ASTNode tree) {
+  //  Q_ASSERT(m_tree);
   QVector<std::shared_ptr<SystemNode>> platformNodes;
-  vector<ASTNode> nodes = m_tree->getChildren();
+  vector<ASTNode> nodes = tree->getChildren();
   for (ASTNode node : nodes) {
     if (node->getNodeType() == AST::Platform) {
       platformNodes.push_back(static_pointer_cast<SystemNode>(node));
@@ -263,6 +210,16 @@ string CodeValidator::getFrameworkForDomain(string domainName, ASTNode tree) {
     }
   }
   return string();
+}
+
+std::vector<string> CodeValidator::getUsedFrameworks(ASTNode tree) {
+  std::vector<std::string> domains = CodeValidator::getUsedDomains(tree);
+  std::vector<std::string> usedFrameworks;
+  for (string domain : domains) {
+    usedFrameworks.push_back(
+        CodeValidator::getFrameworkForDomain(domain, tree));
+  }
+  return usedFrameworks;
 }
 
 double CodeValidator::resolveRateToFloat(ASTNode rateNode, ScopeStack scope,
@@ -536,16 +493,9 @@ QList<LangError> CodeValidator::getErrors() { return m_errors; }
 
 QStringList CodeValidator::getPlatformErrors() { return m_system->getErrors(); }
 
-std::shared_ptr<StrideSystem> CodeValidator::getSystem() { return m_system; }
-
 void CodeValidator::validate() {
   m_errors.clear();
   if (m_tree) {
-    if (m_options & USE_TESTING) {
-      m_system->enableTesting(true);
-    }
-    CodeResolver resolver(m_system, m_tree, m_systemConfig);
-    resolver.preProcess();
     validatePlatform(m_tree, {});
     validateTypes(m_tree, {});
     validateBundleIndeces(m_tree, {});
@@ -554,8 +504,6 @@ void CodeValidator::validate() {
     validateListTypeConsistency(m_tree, {});
     validateStreamSizes(m_tree, {});
     validateRates(m_tree);
-
-    domainChanges = resolver.m_domainChanges;
 
     //         TODO: validate expression type consistency
     //         TODO: validate expression list operations
@@ -1729,9 +1677,10 @@ int CodeValidator::getTypeNumInputs(
   return 0;
 }
 
-std::shared_ptr<DeclarationNode> CodeValidator::findDeclaration(
-    std::string objectName, const ScopeStack &scopeStack, ASTNode tree,
-    vector<string> scope, vector<string> defaultNamespaces) {
+std::shared_ptr<DeclarationNode>
+CodeValidator::findDeclaration(std::string objectName,
+                               const ScopeStack &scopeStack, ASTNode tree,
+                               vector<string> scope, std::string platform) {
   //    QVector<ASTNode> globalAndLocal;
   //    for (auto subScopeIt = scopeStack.rbegin(); subScopeIt !=
   //    scopeStack.rend(); subScopeIt++) {
@@ -1810,10 +1759,8 @@ std::shared_ptr<DeclarationNode> CodeValidator::findDeclaration(
 
 std::shared_ptr<DeclarationNode>
 CodeValidator::findDeclaration(QString objectName, const ScopeStack &scopeStack,
-                               ASTNode tree, vector<string> scope,
-                               vector<string> defaultNamespaces) {
-  return findDeclaration(objectName.toStdString(), scopeStack, tree, scope,
-                         defaultNamespaces);
+                               ASTNode tree, vector<string> scope) {
+  return findDeclaration(objectName.toStdString(), scopeStack, tree, scope);
 }
 
 std::shared_ptr<DeclarationNode> CodeValidator::getDeclaration(ASTNode node) {

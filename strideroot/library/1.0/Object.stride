@@ -66,14 +66,8 @@ type _DomainMember {
 	properties: [
 		typeProperty Domain {
 			name: "domain"
-			types: [_StringLiteral, ""]
+			types: ["", _StringLiteral, _DomainDefinition]
 			default: none
-			required: off
-		},
-		typeProperty Realtime {
-			name: "realtime"
-			types: [""]
-			default: on
 			required: off
 		}
 	]

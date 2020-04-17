@@ -57,6 +57,7 @@
 #include "ui_projectwindow.h"
 
 #include "codeeditor.h"
+#include "coderesolver.h"
 #include "codevalidator.h"
 #include "configdialog.h"
 #include "savechangeddialog.h"
@@ -153,8 +154,11 @@ bool ProjectWindow::build() {
 
   if (tree) {
     SystemConfiguration systemConfig = readProjectConfiguration();
-    CodeValidator validator(m_environment["platformRootPath"].toString(), tree,
-                            CodeValidator::NO_OPTIONS, systemConfig);
+
+    CodeResolver resolver(tree, m_environment["platformRootPath"].toString(),
+                          systemConfig);
+    resolver.process();
+    CodeValidator validator(tree);
     errors << validator.getErrors();
 
     if (errors.size() > 0) {
@@ -165,19 +169,13 @@ bool ProjectWindow::build() {
       }
       return false;
     }
-    std::shared_ptr<StrideSystem> system = validator.getSystem();
+    std::shared_ptr<StrideSystem> system = resolver.getSystem();
 
     for (auto builder : m_builders) {
       delete builder;
     }
 
-    std::vector<std::string> domains = CodeValidator::getUsedDomains(tree);
-    std::vector<std::string> usedFrameworks;
-    for (string domain : domains) {
-      usedFrameworks.push_back(
-          CodeValidator::getFrameworkForDomain(domain, tree));
-    }
-    m_builders = system->createBuilders(editor->filename(), usedFrameworks);
+    m_builders = system->createBuilders(editor->filename(), tree);
     if (m_builders.size() == 0) {
       printConsoleText(tr("Aborting. No builder available."));
       qDebug() << "Can't create builder";

@@ -41,31 +41,30 @@
 
 using namespace std;
 
-
-class SystemNode : public AST
-{
+class SystemNode : public AST {
 public:
-    SystemNode(string platformName, int majorVersion, int minorVersion, const char *filename, int line,
-                 vector<string> hwPlatforms = vector<string>());
+  SystemNode(string platformName, int majorVersion, int minorVersion,
+             const char *filename, int line,
+             vector<string> hwPlatforms = vector<string>());
 
-    ~SystemNode();
+  ~SystemNode();
 
-    string platformName() const;
-    void setPlatformName(const string &platformName);
+  string platformName() const;
+  void setPlatformName(const string &platformName);
 
-    int majorVersion() const;
-    int minorVersion() const;
+  int majorVersion() const;
+  int minorVersion() const;
 
-    vector<string> hwPlatforms() const;
-    void setHwPlatforms(const vector<string> &hwPlatforms);
+  //    vector<string> hwPlatforms() const;
+  //    void setHwPlatforms(const vector<string> &hwPlatforms);
 
-//    AST *deepCopy();
+  //    AST *deepCopy();
 
 private:
-    int m_minorVersion;
-    int m_majorVersion;
-    string m_systemName;
-    vector<string> m_targetPlatforms;
+  int m_minorVersion;
+  int m_majorVersion;
+  string m_systemName;
+  vector<string> m_targetPlatforms;
 };
 
 #endif // PLATFORMNODE_H

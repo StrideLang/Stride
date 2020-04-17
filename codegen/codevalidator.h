@@ -43,21 +43,14 @@
 #include "porttypes.h"
 #include "strideparser.h"
 #include "stridesystem.hpp"
-#include "systemconfiguration.hpp"
 
 typedef std::vector<std::pair<string, std::vector<ASTNode>>> ScopeStack;
 
 class CodeValidator {
- public:
-  typedef enum {
-    NO_OPTIONS = 0x00,
-    NO_RATE_VALIDATION = 0x01,
-    USE_TESTING = 0x02,
-  } Options;
+public:
+  typedef enum { NO_OPTIONS = 0x00, NO_RATE_VALIDATION = 0x01 } Options;
 
-  CodeValidator(QString striderootDir, ASTNode tree = nullptr,
-                Options options = NO_OPTIONS,
-                SystemConfiguration systemConfig = SystemConfiguration());
+  CodeValidator(ASTNode tree = nullptr, Options options = NO_OPTIONS);
   ~CodeValidator();
 
   bool isValid();
@@ -66,24 +59,19 @@ class CodeValidator {
   QList<LangError> getErrors();
   QStringList getPlatformErrors();
 
-  std::vector<std::pair<std::string, std::string>> domainChanges;
-
-  std::shared_ptr<StrideSystem> getSystem();
-
   ASTNode getTree() const;
   void setTree(const ASTNode &tree);
 
   // Static functions -----------------------------
-  static std::shared_ptr<DeclarationNode> findDeclaration(
-      std::string streamMemberName, const ScopeStack &scopeStack, ASTNode tree,
-      vector<string> scope = vector<string>(),
-      vector<string> defaultNamespaces = vector<string>());
-  static std::shared_ptr<DeclarationNode> findDeclaration(
-      QString streamMemberName, const ScopeStack &scopeStack, ASTNode tree,
-      vector<string> scope = vector<string>(),
-      vector<string> defaultNamespaces = vector<string>());
-  static std::shared_ptr<DeclarationNode> getDeclaration(
-      ASTNode node);  // Retrieve stored declaration
+  static std::shared_ptr<DeclarationNode>
+  findDeclaration(std::string streamMemberName, const ScopeStack &scopeStack,
+                  ASTNode tree, vector<string> scope = vector<string>(),
+                  string platform = std::string());
+  static std::shared_ptr<DeclarationNode>
+  findDeclaration(QString streamMemberName, const ScopeStack &scopeStack,
+                  ASTNode tree, vector<string> scope = vector<string>());
+  static std::shared_ptr<DeclarationNode>
+  getDeclaration(ASTNode node); // Retrieve stored declaration
 
   static std::string streamMemberName(ASTNode node);
   static PortType resolveBundleType(BundleNode *bundle, ScopeStack scopeStack,
@@ -120,40 +108,44 @@ class CodeValidator {
   static ASTNode getValueFromConstBlock(DeclarationNode *block);
   static ASTNode getMemberFromList(ListNode *node, int index,
                                    QList<LangError> &errors);
-  static std::shared_ptr<PropertyNode> findPropertyByName(
-      vector<std::shared_ptr<PropertyNode>> properties, QString propertyName);
-  static QVector<ASTNode> validTypesForPort(
-      std::shared_ptr<DeclarationNode> typeDeclaration, QString portName,
-      ScopeStack scope, ASTNode tree);
+  static std::shared_ptr<PropertyNode>
+  findPropertyByName(vector<std::shared_ptr<PropertyNode>> properties,
+                     QString propertyName);
+  static QVector<ASTNode>
+  validTypesForPort(std::shared_ptr<DeclarationNode> typeDeclaration,
+                    QString portName, ScopeStack scope, ASTNode tree);
   static std::shared_ptr<DeclarationNode> findTypeDeclarationByName(
       string typeName, ScopeStack scope, ASTNode tree,
       std::vector<std::string> namespaces = std::vector<std::string>());
-  static std::shared_ptr<DeclarationNode> findTypeDeclaration(
-      std::shared_ptr<DeclarationNode> decl, ScopeStack scope, ASTNode tree);
-  static std::shared_ptr<DeclarationNode> findDomainDeclaration(
-      string domainName, ASTNode tree);
-  static std::shared_ptr<DeclarationNode> findDataTypeDeclaration(
-      std::string dataTypeName, ASTNode tree);
+  static std::shared_ptr<DeclarationNode>
+  findTypeDeclaration(std::shared_ptr<DeclarationNode> decl, ScopeStack scope,
+                      ASTNode tree);
+  static std::shared_ptr<DeclarationNode>
+  findDomainDeclaration(string domainName, ASTNode tree);
+  static std::shared_ptr<DeclarationNode>
+  findDataTypeDeclaration(std::string dataTypeName, ASTNode tree);
   static std::string getDomainIdentifier(ASTNode domain, ScopeStack scopeStack,
                                          ASTNode tree);
 
-  static QVector<ASTNode> getPortsForTypeBlock(
-      std::shared_ptr<DeclarationNode> block, ScopeStack scope, ASTNode tree);
+  static QVector<ASTNode>
+  getPortsForTypeBlock(std::shared_ptr<DeclarationNode> block, ScopeStack scope,
+                       ASTNode tree);
   static QVector<ASTNode> getPortsForType(std::string typeName,
                                           ScopeStack scope, ASTNode tree,
                                           std::vector<string> namespaces);
-  static QVector<ASTNode> getInheritedPorts(
-      std::shared_ptr<DeclarationNode> block, ScopeStack scope, ASTNode tree);
-  static vector<std::shared_ptr<DeclarationNode>> getInheritedTypes(
-      std::shared_ptr<DeclarationNode> typeDeclaration, ScopeStack scope,
-      ASTNode tree);
+  static QVector<ASTNode>
+  getInheritedPorts(std::shared_ptr<DeclarationNode> block, ScopeStack scope,
+                    ASTNode tree);
+  static vector<std::shared_ptr<DeclarationNode>>
+  getInheritedTypes(std::shared_ptr<DeclarationNode> typeDeclaration,
+                    ScopeStack scope, ASTNode tree);
 
-  static std::shared_ptr<DeclarationNode> getMainOutputPortBlock(
-      std::shared_ptr<DeclarationNode> moduleBlock);
-  static std::shared_ptr<DeclarationNode> getMainInputPortBlock(
-      std::shared_ptr<DeclarationNode> moduleBlock);
-  static std::shared_ptr<DeclarationNode> getPort(
-      std::shared_ptr<DeclarationNode> moduleBlock, std::string name);
+  static std::shared_ptr<DeclarationNode>
+  getMainOutputPortBlock(std::shared_ptr<DeclarationNode> moduleBlock);
+  static std::shared_ptr<DeclarationNode>
+  getMainInputPortBlock(std::shared_ptr<DeclarationNode> moduleBlock);
+  static std::shared_ptr<DeclarationNode>
+  getPort(std::shared_ptr<DeclarationNode> moduleBlock, std::string name);
 
   /// Number of parallel streams that a single stream can be broken up into
   static int numParallelStreams(StreamNode *stream, StrideSystem &platform,
@@ -165,8 +157,8 @@ class CodeValidator {
   static int getNodeSize(ASTNode node, const ScopeStack &scopeStack,
                          ASTNode tree);
 
-  static std::vector<std::string> getModulePropertyNames(
-      std::shared_ptr<DeclarationNode> blockDeclaration);
+  static std::vector<std::string>
+  getModulePropertyNames(std::shared_ptr<DeclarationNode> blockDeclaration);
   static int getFunctionDataSize(std::shared_ptr<FunctionNode> func,
                                  ScopeStack scope, ASTNode tree,
                                  QList<LangError> &errors);
@@ -180,9 +172,10 @@ class CodeValidator {
   // A value of -1 means undefined. -2 means set from port property.
   // FIXME determine the size set by port properties to provide an accurate
   // size.
-  static int getTypeNumOutputs(
-      std::shared_ptr<DeclarationNode> blockDeclaration,
-      const ScopeStack &scope, ASTNode tree, QList<LangError> &errors);
+  static int
+  getTypeNumOutputs(std::shared_ptr<DeclarationNode> blockDeclaration,
+                    const ScopeStack &scope, ASTNode tree,
+                    QList<LangError> &errors);
   static int getTypeNumInputs(std::shared_ptr<DeclarationNode> blockDeclaration,
                               const ScopeStack &scope, ASTNode tree,
                               QList<LangError> &errors);
@@ -191,9 +184,10 @@ class CodeValidator {
                                   ScopeStack scope, ASTNode tree,
                                   QList<LangError> &errors);
 
-  static int getLargestPropertySize(
-      vector<std::shared_ptr<PropertyNode>> &properties, ScopeStack scope,
-      ASTNode tree, QList<LangError> &errors);
+  static int
+  getLargestPropertySize(vector<std::shared_ptr<PropertyNode>> &properties,
+                         ScopeStack scope, ASTNode tree,
+                         QList<LangError> &errors);
 
   // Remove this function. getModuleBlocks() is better.
   static ASTNode getBlockSubScope(std::shared_ptr<DeclarationNode> block);
@@ -206,14 +200,15 @@ class CodeValidator {
                                ASTNode tree);
   static std::string getNodeDomainName(ASTNode node, ScopeStack scopeStack,
                                        ASTNode tree);
-  static std::string getDomainNodeString(
-      ASTNode node);  // Deprecated. Don't use.
+  static std::string
+  getDomainNodeString(ASTNode node); // Deprecated. Don't use.
   static QVector<ASTNode> getBlocksInScope(ASTNode root, ScopeStack scopeStack,
                                            ASTNode tree);
 
   static std::vector<std::string> getUsedDomains(ASTNode tree);
   static std::string getFrameworkForDomain(std::string domainName,
                                            ASTNode tree);
+  static std::vector<std::string> getUsedFrameworks(ASTNode tree);
 
   static double resolveRateToFloat(ASTNode rateNode, ScopeStack scope,
                                    ASTNode tree);
@@ -239,13 +234,14 @@ class CodeValidator {
 
   static vector<StreamNode *> getStreamsAtLine(ASTNode tree, int line);
 
-  static double getDomainDefaultRate(
-      std::shared_ptr<DeclarationNode> domainDecl);
+  static double
+  getDomainDefaultRate(std::shared_ptr<DeclarationNode> domainDecl);
 
- private:
-  void validateTree(QString platformRootDir, ASTNode tree);
+  static QVector<std::shared_ptr<SystemNode>> getSystemNodes(ASTNode tree);
+
+private:
+  void validateTree(ASTNode tree);
   void validate();
-  QVector<std::shared_ptr<SystemNode>> getPlatformNodes();
 
   void validatePlatform(ASTNode node, ScopeStack scopeStack);
   void validateTypes(ASTNode node, ScopeStack scopeStack,
@@ -273,7 +269,6 @@ class CodeValidator {
   ASTNode m_tree;
   QList<LangError> m_errors;
   Options m_options;
-  SystemConfiguration m_systemConfig;
 };
 
-#endif  // CODEGEN_H
+#endif // CODEGEN_H

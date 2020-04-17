@@ -7,14 +7,15 @@
 
 typedef QMap<QString, QVariant> ConfigMap;
 
-class SystemConfiguration
-{
+class SystemConfiguration {
 public:
-    SystemConfiguration();
-    QMap<QString, ConfigMap> overrides; // Override existing values in Stride Code
-    QMap<QString, ConfigMap> substitutions; // Substitute strings in generated code
-    QMap<QString, ConfigMap> hardwareConfigurations; // Configure the hardware
-    QMap<QString, ConfigMap> platformConfigurations; // Configure the platform
+  SystemConfiguration();
+  QMap<QString, ConfigMap> overrides; // Override existing values in Stride Code
+  QMap<QString, ConfigMap>
+      substitutions; // Substitute strings in generated code
+  QMap<QString, ConfigMap> hardwareConfigurations; // Configure the hardware
+  QMap<QString, ConfigMap> platformConfigurations; // Configure the platform
+  bool testing = false;
 };
 
 #endif // SYSTEMCONFIGURATION_HPP

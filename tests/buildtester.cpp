@@ -39,7 +39,9 @@
 #include <QThread>
 
 #include "ast.h"
+#include "coderesolver.h"
 #include "codevalidator.h"
+#include "systemconfiguration.hpp"
 
 #include "buildtester.hpp"
 
@@ -67,8 +69,13 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile,
   }
 
   if (tree) {
-    CodeValidator validator(QString::fromStdString(m_StrideRoot), tree,
-                            CodeValidator::USE_TESTING);
+
+    SystemConfiguration config;
+    config.testing = true;
+    CodeResolver resolver(tree, QString::fromStdString(m_StrideRoot), config);
+    resolver.process();
+
+    CodeValidator validator(tree);
     errors << validator.getErrors();
 
     if (errors.size() > 0) {
@@ -77,21 +84,14 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile,
       }
       return false;
     }
-    std::shared_ptr<StrideSystem> system = validator.getSystem();
-    system->enableTesting(tree.get());
+    std::shared_ptr<StrideSystem> system = resolver.getSystem();
 
     std::vector<Builder *> m_builders;
 
     system->generateDomainConnections(tree);
+    system->enableTesting(tree);
 
-    std::vector<std::string> domains = CodeValidator::getUsedDomains(tree);
-    std::vector<std::string> usedFrameworks;
-    for (string domain : domains) {
-      usedFrameworks.push_back(
-          CodeValidator::getFrameworkForDomain(domain, tree));
-    }
-    m_builders = system->createBuilders(QString::fromStdString(filename),
-                                        usedFrameworks);
+    m_builders = system->createBuilders(QString::fromStdString(filename), tree);
     if (m_builders.size() == 0) {
       std::cerr << "Can't create builder" << std::endl;
       return false;
@@ -129,7 +129,7 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile,
           //                 }
           if (outputLines.size() < 10) {
             std::cerr << "Too few lines" << std::endl;
-            return false;  // too few lines
+            return false; // too few lines
           }
 
           int counter = 0;

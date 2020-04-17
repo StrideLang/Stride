@@ -128,20 +128,6 @@ type _Signal {
 			types: [""]
 			default: none # Types::RealType
 			required: off
-		},
-		typeProperty _Reads {
-			name: "_reads"
-			types: [""]
-			default: []
-			required: off
-			meta: "Used by the parser to keep track of stream connections"
-		},
-		typeProperty _Writes {
-			name: "_writes"
-			types: [""]
-			default: []
-			required: off
-			meta: "Used by the parser to keep track of stream connections"
 		}
 	]
 	inherits: [_Streamable]
