@@ -1,0 +1,3 @@
+use DesktopAudio version 1.0
+
+[AudioIn[0], 0.0] >> Greater() >> Select(whenOn: AudioIn[0] whenOff: AudioIn[1]) >> AudioOut[1];
