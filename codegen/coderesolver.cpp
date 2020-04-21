@@ -93,9 +93,15 @@ CodeResolver::~CodeResolver() {}
 
 void CodeResolver::process() {
   processSystem();
+  // Insert objects
   insertBuiltinObjects();
+  if (m_systemConfig.testing) {
+    enableTesting();
+  }
   fillDefaultProperties();
   declareModuleInternalBlocks();
+
+  // Resolve and massage tree
   resolveConstants();
   expandParallel(); // Find better name this expands bundles, functions and
                     // declares undefined bundles
@@ -103,6 +109,7 @@ void CodeResolver::process() {
   resolveStreamSymbols();
   processDomains();
   resolveRates();
+  // Prepare additional metadata
   storeDeclarations();
   analyzeConnections();
   analyzeParents();
@@ -422,6 +429,36 @@ void CodeResolver::fillDefaultProperties() {
     ASTNode node = nodes.at(i);
     fillDefaultPropertiesForNode(node, m_tree);
   }
+}
+
+void CodeResolver::enableTesting() {
+  auto treeChildren = m_tree->getChildren();
+  for (auto platform : m_system->getFrameworks()) {
+    vector<ASTNode> testingObjs = platform->getPlatformTestingObjectsRef();
+    for (size_t i = 0; i < treeChildren.size(); i++) {
+      if (treeChildren[i]->getNodeType() == AST::Declaration ||
+          treeChildren[i]->getNodeType() == AST::BundleDeclaration) {
+        std::shared_ptr<DeclarationNode> decl =
+            static_pointer_cast<DeclarationNode>(treeChildren[i]);
+        for (ASTNode testingObj : testingObjs) {
+          if (testingObj->getNodeType() == AST::Declaration ||
+              testingObj->getNodeType() == AST::BundleDeclaration) {
+            std::shared_ptr<DeclarationNode> testDecl =
+                static_pointer_cast<DeclarationNode>(testingObj);
+            if (decl->getName() ==
+                testDecl
+                    ->getName()) { // FIXME we need to check for namespace too
+              treeChildren[i] = testDecl;
+              break;
+            }
+          } else {
+            qDebug() << "Unexpected node in testing file.";
+          }
+        }
+      }
+    }
+  }
+  m_tree->setChildren(treeChildren);
 }
 
 void CodeResolver::declareModuleInternalBlocks() {
@@ -1000,37 +1037,46 @@ void CodeResolver::insertBuiltinObjectsForNode(
   } else if (node->getNodeType() == AST::Function) {
     FunctionNode *func = static_cast<FunctionNode *>(node.get());
     for (auto it = objects.begin(); it != objects.end(); it++) {
-      std::shared_ptr<DeclarationNode> declaration =
-          CodeValidator::findDeclaration(
-              QString::fromStdString(func->getName()),
-              {{it->first, it->second}}, nullptr);
-      if (declaration) {
-        //                declaration->setRootScope(it->first);
-        for (auto child :
-             declaration->getChildren()) { // Check if declaration is in
-                                           // current namespace. If it is, set
-                                           // as the namespace of the child
-          std::shared_ptr<DeclarationNode> childDeclaration = nullptr;
-          if (child->getNodeType() == AST::Block) {
-            childDeclaration = CodeValidator::findDeclaration(
-                QString::fromStdString(
-                    static_cast<BlockNode *>(child.get())->getName()),
-                {{it->first, it->second}}, nullptr,
-                declaration->getNamespaceList());
-          } else if (child->getNodeType() == AST::Bundle) {
-            childDeclaration = CodeValidator::findDeclaration(
-                QString::fromStdString(
-                    static_cast<BundleNode *>(child.get())->getName()),
-                {{it->first, it->second}}, nullptr,
-                declaration->getNamespaceList());
-          } // FIXME need to implement for expressions, lists, etc.
-          if (childDeclaration) {
-            child->setNamespaceList(declaration->getNamespaceList());
+      for (auto &objectTree : it->second) {
+        auto existingDecl = CodeValidator::findDeclaration(
+            QString::fromStdString(func->getName()), {}, tree, {it->first});
+        std::shared_ptr<DeclarationNode> declaration =
+            CodeValidator::findDeclaration(
+                QString::fromStdString(func->getName()),
+                {{it->first, objectTree->getChildren()}}, nullptr);
+        if (declaration && !existingDecl) {
+          //                declaration->setRootScope(it->first);
+          //          for (auto child :
+          //               declaration->getChildren()) { // Check if declaration
+          //               is in
+          //                                             // current namespace.
+          //                                             If it is, set
+          //                                             // as the namespace of
+          //                                             the child
+          //            std::shared_ptr<DeclarationNode> childDeclaration =
+          //            nullptr; if (child->getNodeType() == AST::Block) {
+          //              childDeclaration = CodeValidator::findDeclaration(
+          //                  QString::fromStdString(
+          //                      static_cast<BlockNode
+          //                      *>(child.get())->getName()),
+          //                  {{it->first, objectTree->getChildren()}}, nullptr,
+          //                  declaration->getNamespaceList());
+          //            } else if (child->getNodeType() == AST::Bundle) {
+          //              childDeclaration = CodeValidator::findDeclaration(
+          //                  QString::fromStdString(
+          //                      static_cast<BundleNode
+          //                      *>(child.get())->getName()),
+          //                  {{it->first, objectTree->getChildren()}}, nullptr,
+          //                  declaration->getNamespaceList());
+          //            } // FIXME need to implement for expressions, lists,
+          //            etc. if (childDeclaration) {
+          //              child->setNamespaceList(declaration->getNamespaceList());
+          //            }
+          //          }
+          if (!blockList.contains(declaration)) {
+            blockList << declaration;
+            break;
           }
-        }
-        if (!blockList.contains(declaration)) {
-          blockList << declaration;
-          break;
         }
       }
     }
@@ -1044,15 +1090,16 @@ void CodeResolver::insertBuiltinObjectsForNode(
               QString::fromStdString(usedBlock->getName()), ScopeStack(), tree,
               usedBlock->getNamespaceList())) {
         tree->addChild(usedBlock);
-        for (auto it = objects.begin(); it != objects.end(); it++) {
-          vector<ASTNode> &namespaceObjects = it->second;
-          auto position = std::find(namespaceObjects.begin(),
-                                    namespaceObjects.end(), usedBlock);
-          if (position != namespaceObjects.end()) {
-            namespaceObjects.erase(position);
-            break;
-          }
-        }
+        //        for (auto it = objects.begin(); it != objects.end(); it++) {
+        //          vector<ASTNode> &namespaceObjects = it->second;
+        //          auto position = std::find(namespaceObjects.begin(),
+        //                                    namespaceObjects.end(),
+        //                                    usedBlock);
+        //          if (position != namespaceObjects.end()) {
+        //            namespaceObjects.erase(position);
+        //            break;
+        //          }
+        //        }
       }
       for (std::shared_ptr<PropertyNode> property :
            usedBlock->getProperties()) {
@@ -1115,7 +1162,6 @@ void CodeResolver::insertBuiltinObjectsForNode(
     }
     //  }
     //    }
-
   } else if (node->getNodeType() == AST::Block) {
     QList<std::shared_ptr<DeclarationNode>> blockList;
     BlockNode *name = static_cast<BlockNode *>(node.get());
@@ -1145,7 +1191,8 @@ void CodeResolver::insertBuiltinObjectsForNode(
         //      for (auto it = objects.begin(); it != objects.end(); it++) {
         //        vector<ASTNode> &namespaceObjects = it->second;
         //        auto position = std::find(namespaceObjects.begin(),
-        //                                  namespaceObjects.end(), usedBlock);
+        //                                  namespaceObjects.end(),
+        //                                  usedBlock);
         //        if (position != namespaceObjects.end()) {
         //          namespaceObjects.erase(position);
         //        }
@@ -1179,7 +1226,8 @@ void CodeResolver::insertBuiltinObjectsForNode(
         //      for (auto it = objects.begin(); it != objects.end(); it++) {
         //        vector<ASTNode> &namespaceObjects = it->second;
         //        auto position = std::find(namespaceObjects.begin(),
-        //                                  namespaceObjects.end(), usedBlock);
+        //                                  namespaceObjects.end(),
+        //                                  usedBlock);
         //        if (position != namespaceObjects.end()) {
         //          namespaceObjects.erase(position);
         //        }

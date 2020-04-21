@@ -306,37 +306,6 @@ QStringList StrideSystem::getFunctionNames() {
   return funcNames;
 }
 
-void StrideSystem::enableTesting(ASTNode tree) {
-  auto treeChildren = tree->getChildren();
-  for (auto platform : m_frameworks) {
-    vector<ASTNode> testingObjs = platform->getPlatformTestingObjectsRef();
-    for (size_t i = 0; i < treeChildren.size(); i++) {
-      if (treeChildren[i]->getNodeType() == AST::Declaration ||
-          treeChildren[i]->getNodeType() == AST::BundleDeclaration) {
-        std::shared_ptr<DeclarationNode> decl =
-            static_pointer_cast<DeclarationNode>(treeChildren[i]);
-        for (ASTNode testingObj : testingObjs) {
-          if (testingObj->getNodeType() == AST::Declaration ||
-              testingObj->getNodeType() == AST::BundleDeclaration) {
-            std::shared_ptr<DeclarationNode> testDecl =
-                static_pointer_cast<DeclarationNode>(testingObj);
-            if (decl->getName() ==
-                testDecl
-                    ->getName()) { // FIXME we need to check for namespace too
-              CodeResolver::fillDefaultPropertiesForNode(testDecl, tree);
-              treeChildren[i] = testDecl;
-              break;
-            }
-          } else {
-            qDebug() << "Unexpected node in testing file.";
-          }
-        }
-      }
-    }
-  }
-  tree->setChildren(treeChildren);
-}
-
 vector<Builder *> StrideSystem::createBuilders(QString fileName, ASTNode tree) {
 
   vector<Builder *> builders;

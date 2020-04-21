@@ -89,7 +89,6 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile,
     std::vector<Builder *> m_builders;
 
     system->generateDomainConnections(tree);
-    system->enableTesting(tree);
 
     m_builders = system->createBuilders(QString::fromStdString(filename), tree);
     if (m_builders.size() == 0) {

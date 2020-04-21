@@ -68,9 +68,6 @@ public:
   QStringList getPlatformTypeNames();
   QStringList getFunctionNames();
 
-  void enableTesting(
-      ASTNode tree); // Uses testing objects instead of regular platform objects
-
   vector<Builder *> createBuilders(QString fileName, ASTNode tree);
 
   ASTNode
@@ -94,6 +91,9 @@ public:
                                          std::string nextDomainId);
 
   void installFramework(std::string frameworkName);
+  std::vector<std::shared_ptr<StrideFramework>> getFrameworks() {
+    return m_frameworks;
+  }
 
   std::vector<std::shared_ptr<StrideFramework>> m_frameworks;
   vector<std::shared_ptr<DeclarationNode>> m_platformDefinitions;

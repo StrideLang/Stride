@@ -77,11 +77,23 @@ public:
   createSignalDeclaration(QString name, int size, ScopeStack scope,
                           ASTNode tree);
 
+  static void
+  insertDependentTypes(std::shared_ptr<DeclarationNode> typeDeclaration,
+                       map<string, vector<ASTNode>> &objects, ASTNode tree);
+  static std::shared_ptr<ValueNode>
+  reduceConstExpression(std::shared_ptr<ExpressionNode> expr, ScopeStack scope,
+                        ASTNode tree);
+  static std::shared_ptr<ValueNode>
+  resolveConstant(ASTNode value, ScopeStack scope, ASTNode tree);
+  static void resolveConstantsInNode(ASTNode node, ScopeStack scope,
+                                     ASTNode tree);
+
 private:
   // Main processing functions
   void processSystem();
   void insertBuiltinObjects();
   void fillDefaultProperties();
+  void enableTesting();
   void declareModuleInternalBlocks();
   void resolveStreamSymbols();
   void expandParallel();
@@ -107,10 +119,6 @@ private:
 
   void analyzeChildConnections(ASTNode node,
                                ScopeStack scopeStack = ScopeStack());
-
-  static void
-  insertDependentTypes(std::shared_ptr<DeclarationNode> typeDeclaration,
-                       map<string, vector<ASTNode>> &objects, ASTNode tree);
 
   void resolveDomainsForStream(std::shared_ptr<StreamNode> stream,
                                ScopeStack scopeStack,
@@ -154,13 +162,6 @@ private:
 
   void declareInternalBlocksForNode(ASTNode node, ScopeStack scope);
 
-  static std::shared_ptr<ValueNode>
-  reduceConstExpression(std::shared_ptr<ExpressionNode> expr, ScopeStack scope,
-                        ASTNode tree);
-  static std::shared_ptr<ValueNode>
-  resolveConstant(ASTNode value, ScopeStack scope, ASTNode tree);
-  static void resolveConstantsInNode(ASTNode node, ScopeStack scope,
-                                     ASTNode tree);
   void processResetForNode(ASTNode thisScope, ASTNode streamScope,
                            ASTNode upperScope);
   void propagateDomainsForNode(ASTNode node, ScopeStack scopeStack);
