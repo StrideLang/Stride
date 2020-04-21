@@ -50,5 +50,5 @@ win32-msvc2015:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../pa
 else:win32-msvc2015:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../parser/debug/StrideParser.lib
 else:unix: PRE_TARGETDEPS += $$OUT_PWD/../parser/libStrideParser.a
 
-DISTFILES += \
-    ../platforms/Gamma/1.0/scripts/run.py
+#DISTFILES += \
+#    ../platforms/Gamma/1.0/scripts/run.py

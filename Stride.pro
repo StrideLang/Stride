@@ -1,11 +1,13 @@
 message("Building Stride")
 
 TEMPLATE = subdirs
+CONFIG += ordered
 
 SUBDIRS = parser \
           codegen \
           tests \
           compiler
+
 
 codegen.depends = parser
 tests.depends = parser codegen

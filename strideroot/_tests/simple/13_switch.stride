@@ -2,7 +2,9 @@ use DesktopAudio version 1.0
 
 import Generators
 
-switch Switch1 {}
+switch Switch1 {
+    domain: AudioDomain
+}
 
 AudioIn >> Greater() >> Switch1;
 #Switch1 >> Select() >> AudioOut[1];

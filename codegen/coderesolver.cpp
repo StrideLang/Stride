@@ -1122,7 +1122,7 @@ void CodeResolver::insertBuiltinObjectsForNode(
     //        declaration->getObjectType(), {}, tree);
     //    if (!typeDecl) {
     for (auto it = objects.begin(); it != objects.end(); it++) {
-      for (auto &objectTree : it->second) {
+      for (auto objectTree : it->second) {
         auto existingTypeDecl = CodeValidator::findTypeDeclarationByName(
             declaration->getObjectType(), {}, tree, {it->first});
         auto typeDecl = CodeValidator::findTypeDeclarationByName(
@@ -1130,10 +1130,9 @@ void CodeResolver::insertBuiltinObjectsForNode(
             {{it->first, objectTree->getChildren()}}, nullptr, {it->first});
         if (typeDecl && !existingTypeDecl) {
           tree->addChild(typeDecl);
-          auto position = std::find(objectTree->getChildren().begin(),
-                                    objectTree->getChildren().end(), typeDecl);
-          if (position != objectTree->getChildren().end()) {
-            std::vector<ASTNode> children = objectTree->getChildren();
+          std::vector<ASTNode> children = objectTree->getChildren();
+          auto position = std::find(children.begin(), children.end(), typeDecl);
+          if (position != children.end()) {
             children.erase(position);
             objectTree->setChildren(children);
           }
