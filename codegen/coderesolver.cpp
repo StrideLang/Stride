@@ -150,7 +150,11 @@ void CodeResolver::processSystem() {
 
   //  auto usedFrameworks = CodeValidator::getUsedFrameworks(tree);
 
-  for (auto framework : m_system->getFrameworkNames()) {
+  auto frameworkNames = m_system->getFrameworkNames();
+  frameworkNames.insert(frameworkNames.begin(),
+                        std::string()); // Add library as well
+
+  for (auto framework : frameworkNames) {
     // Import root framework
     auto fwImportTree =
         m_system->getImportTree("", "", QString::fromStdString(framework));
