@@ -32,6 +32,7 @@ std::vector<LangError> parseErrors;
 void yyerror(const char *s);
 
 AST *tree_head;
+uint64_t anonymous_counter = 0;
 
 AST *parse(const char *filename);
 
@@ -117,6 +118,7 @@ NullStream nstream;
 %type <listNode> indexList
 %type <rangeNode> indexRange
 %type <functionNode> functionDef
+%type <declarationNode> anonymousDeclDef
 %type <listNode> listDef
 %type <listNode> streamListDef
 %type <listNode> valueListList
@@ -149,7 +151,7 @@ NullStream nstream;
 %left STREAM
 %left AND OR
 %left BITAND BITOR
-%left '+' '-' 
+%left '+' '-'
 %left '*' '/'
 %right NOT
 %right BITNOT
@@ -160,7 +162,7 @@ NullStream nstream;
 
 %%
 
-entry: 
+entry:
         /*epsilon*/     {}
     |   entry start     { COUT << ENDL << "Grabbing Next ..." << ENDL ; }
     |   entry SEMICOLON { COUT << "Ignoring Semicolon!" << ENDL ; }
@@ -189,7 +191,7 @@ start:
         }
     ;
 
-// ================================= 
+// =================================
 //  PLATFORM DEFINITION
 // =================================
 
@@ -261,7 +263,7 @@ importDef:
         }
     ;
 
-// ================================= 
+// =================================
 //  BLOCK DEFINITION
 // =================================
 
@@ -301,7 +303,7 @@ blockType:
         }
     ;
 
-// ================================= 
+// =================================
 //  STREAM DEFINITION
 // =================================
 
@@ -347,7 +349,7 @@ scope:
         }
     ;
 
-// ================================= 
+// =================================
 //  BUNDLE DEFINITION
 // =================================
 
@@ -369,7 +371,7 @@ bundleDef:
         }
     ;
 
-// ================================= 
+// =================================
 //  FUNCTION DEFINITION
 // =================================
 
@@ -406,7 +408,23 @@ functionDef:
         }
     ;
 
-// ================================= 
+// =================================
+//  ANONYMOUS DECLARATION DEFINITION
+// =================================
+ anonymousDeclDef:
+
+        WORD blockType                    {
+        string word;
+        word.append($1); /* string constructor leaks otherwise! */
+        string uvar = "___Anonymous___" + std::to_string(anonymous_counter);
+        $$ = new DeclarationNode(uvar, word, std::shared_ptr<AST>($2), currentFile, yyloc.first_line);
+        COUT << "Block: " << $1 << ", Labelled: " << uvar << ENDL;
+        free($1);
+    }
+
+
+    ;
+// =================================
 //  PROPERTIES DEFINITION
 // =================================
 
@@ -429,6 +447,11 @@ properties:
             COUT << "Ignoring semicolon!" << ENDL;
         }
     |   property                        {
+            AST *temp = new AST();
+            temp->addChild(std::shared_ptr<AST>($1));
+            $$ = temp;
+        }
+    |   streamDef                        {
             AST *temp = new AST();
             temp->addChild(std::shared_ptr<AST>($1));
             $$ = temp;
@@ -547,7 +570,7 @@ valueListList:
         }
     ;
 
-// ================================= 
+// =================================
 //  LIST DEFINITION
 // =================================
 
@@ -682,7 +705,7 @@ indexRange:
         }
     ;
 
-// ================================= 
+// =================================
 //  INDEX EXPRESSION
 // =================================
 
@@ -724,7 +747,7 @@ indexExp:
         }
     ;
 
-// ================================= 
+// =================================
 //  VALUE LIST EXPRESSION
 // =================================
 
@@ -842,7 +865,7 @@ valueListExp:
         }
     ;
 
-// ================================= 
+// =================================
 //  VALUE EXPRESSION
 // =================================
 
@@ -900,7 +923,7 @@ valueExp:
         }
     ;
 
-// ================================= 
+// =================================
 //  STREAM EXPRESSION
 // =================================
 
@@ -913,7 +936,7 @@ streamExp:
         }
     ;
 
-// ================================= 
+// =================================
 //  INDEX COMPONENTS
 // =================================
 
@@ -944,7 +967,7 @@ indexComp:
         }
     ;
 
-// ================================= 
+// =================================
 //  STREAM COMPONENTS
 // =================================
 
@@ -969,6 +992,10 @@ streamComp:
             COUT << "Resolving indexed bundle ..." << ENDL;
             COUT << "Streaming ... " << ENDL;
         }
+    |   anonymousDeclDef     {
+            COUT << "Resolving anonymous declaration ... " << ENDL;
+            COUT << "Streaming ... " << ENDL;
+        }
     |   functionDef     {
             COUT << "Resolving function definition ... " << ENDL;
             COUT << "Streaming ... " << ENDL;
@@ -983,7 +1010,7 @@ streamComp:
         }
     ;
 
-// ================================= 
+// =================================
 //  VALUE COMPONENTS
 // =================================
 
