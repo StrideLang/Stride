@@ -1,5 +1,5 @@
 use DesktopAudio version 1.0
 
-import Generators
+#import Generators
 
 AudioIn[0] >> Sin() >> AudioOut[0];

@@ -603,6 +603,11 @@ ASTNode StrideSystem::getImportTree(QString importName, QString importAs,
           auto newTree = AST::parseFile(fileName.toLocal8Bit().data(), nullptr);
           if (newTree) {
             for (ASTNode node : newTree->getChildren()) {
+              //              node->setCompilerProperty(
+              //                  "framework",
+              //                  std::make_shared<ValueNode>(platformName.toStdString(),
+              //                                              __FILE__,
+              //                                              __LINE__));
               tree->addChild(node);
             }
           } else {
@@ -629,8 +634,8 @@ ASTNode StrideSystem::getImportTree(QString importName, QString importAs,
                 "namespaceTree",
                 std::make_shared<ValueNode>(platform->getFramework(), __FILE__,
                                             __LINE__));
-            node->appendToPropertyValue(
-                "platform",
+            node->setCompilerProperty(
+                "framework",
                 std::make_shared<ValueNode>(platformName.toStdString(),
                                             __FILE__, __LINE__));
           }
@@ -642,7 +647,7 @@ ASTNode StrideSystem::getImportTree(QString importName, QString importAs,
     tree = m_library.getImportTree(importName, importAs, QStringList());
   }
 
-  if (tree->getChildren().size() > 0) {
+  if (tree && tree->getChildren().size() > 0) {
     return tree;
   }
 

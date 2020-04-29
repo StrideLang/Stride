@@ -72,3 +72,53 @@ module Average {
         Sum / InputPort.size >> Output;
     ]
 }
+
+
+module Clip {
+    ports:      [
+        mainInputPort InputPort {
+            block:  Input
+            meta:   ''
+        }
+        mainOutputPort OutputPort {
+            block:  Output
+            meta:   ''
+        }
+        propertyInputPort MinimumPort {
+            name: 'minimum'
+            block:  Min
+            meta:   ''
+        }
+        propertyInputPort MaximumPort {
+            name: 'maximum'
+            block:  Max
+            meta:   ''
+        }
+    ]
+    blocks:     [
+        signal Input {
+            rate:       OutputPort.rate
+            domain:     OutputPort.domain
+        }
+        signal Output {
+            rate:       OutputPort.rate
+            domain:     OutputPort.domain
+        }
+        signal Min {
+            rate:       OutputPort.rate
+            default: 0.0
+            domain:     OutputPort.domain
+        }
+        signal Max {
+            rate:       OutputPort.rate
+            default: 1.0
+            domain:     OutputPort.domain
+        }
+    ]
+    streams:    [
+        [Input, Min] >> Less() >> Select(whenOn: Min whenOff: Input) >> Input;  
+        [Input, Max] >> Greater() >> Select(whenOn: Max whenOff: Input) >> Output;  
+    ]
+    meta: 'Limit signal within the values of minimum and maximum'
+}
+

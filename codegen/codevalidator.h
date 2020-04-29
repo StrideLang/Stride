@@ -65,7 +65,7 @@ public:
   // Static functions -----------------------------
   static std::shared_ptr<DeclarationNode>
   findDeclaration(std::string streamMemberName, const ScopeStack &scopeStack,
-                  ASTNode tree, vector<string> scope = vector<string>(),
+                  ASTNode tree, vector<string> namespaces = vector<string>(),
                   string platform = std::string());
   static std::shared_ptr<DeclarationNode>
   findDeclaration(QString streamMemberName, const ScopeStack &scopeStack,

@@ -1,7 +1,5 @@
 use DesktopAudio version 1.0
 
-import Generators
-
 constant Val1 {value: 0.1}
 constant Val2 {value: 0.2}
 constant Val3 {value: 0.4}

@@ -1,28 +1,34 @@
 
-
 # Sine function test
-platformBlock __Sin {
-    typeName: '_sineType'
+platformModule __Sin {
     inputs: ["real"]
 	outputs: ["real"]
 #    include: [""]
 #    linkTo: []
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
-    processing: "sin(%%intoken:0%%)"
+    processing: "sin(%%intokens:0%%)"
     inherits: [_Signal]
 }
 
-
-platformBlock _CosineType {
-    typeName: '_cosineType'
+platformModule __Cos {
     inputs: ["real"]
 	outputs: ["real"]
 #    include: [""]
 #    linkTo: []
 #    declarations: ['']
-#    initializations: ["// "]
-    processing: "cos(%%intoken:0%%)"
+#    initializations: ["// %%token%% = 0;"]
+    processing: "cos(%%intokens:0%%)"
     inherits: [_Signal]
 }
 
+platformModule __Tan {
+    inputs: ["real"]
+	outputs: ["real"]
+#    include: [""]
+#    linkTo: []
+#    declarations: ['']
+#    initializations: ["// %%token%% = 0;"]
+    processing: "tan(%%intokens:0%%)"
+    inherits: [_Signal]
+}
