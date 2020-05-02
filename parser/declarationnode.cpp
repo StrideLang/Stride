@@ -34,157 +34,156 @@
 
 #include <cassert>
 
+#include "blocknode.h"
 #include "declarationnode.h"
 #include "valuenode.h"
-#include "blocknode.h"
 
 using namespace std;
 
-DeclarationNode::DeclarationNode(string name, string objectType, ASTNode propertiesList,
-                     const char *filename, int line, vector<string> scope):
-    AST(AST::Declaration, filename, line, scope)
-{
-    m_name = name;
-    m_objectType = objectType;
-    if (propertiesList) {
-        for (ASTNode child: propertiesList->getChildren()) {
-            addChild(child);
-        }
+DeclarationNode::DeclarationNode(string name, string objectType,
+                                 ASTNode propertiesList, const char *filename,
+                                 int line, vector<string> scope)
+    : AST(AST::Declaration, filename, line, scope) {
+  m_name = name;
+  m_objectType = objectType;
+  if (propertiesList) {
+    for (ASTNode child : propertiesList->getChildren()) {
+      addChild(child);
     }
-    for (unsigned int i = 0; i < m_children.size(); i++) {
-        assert(m_children.at(i)->getNodeType() == AST::Property || m_children.at(i)->getNodeType() == AST::Stream);
-        m_properties.push_back(static_pointer_cast<PropertyNode>(m_children.at(i)));
+  }
+  for (unsigned int i = 0; i < m_children.size(); i++) {
+    assert(m_children.at(i)->getNodeType() == AST::Property ||
+           m_children.at(i)->getNodeType() == AST::Stream);
+    m_properties.push_back(static_pointer_cast<PropertyNode>(m_children.at(i)));
+  }
+
+  m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
+}
+
+DeclarationNode::DeclarationNode(std::shared_ptr<BundleNode> bundle,
+                                 string objectType, ASTNode propertiesList,
+                                 const char *filename, int line,
+                                 vector<string> scope)
+    : AST(AST::BundleDeclaration, filename, line, scope) {
+  addChild(bundle);
+  m_objectType = objectType;
+  if (propertiesList) {
+    for (ASTNode child : propertiesList->getChildren()) {
+      addChild(child);
     }
+  }
+  for (unsigned int i = 1; i < m_children.size(); i++) {
+    assert(m_children.at(i)->getNodeType() == AST::Property);
+    m_properties.push_back(static_pointer_cast<PropertyNode>(m_children.at(i)));
+  }
 
-    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
+  m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
 }
 
-DeclarationNode::DeclarationNode(std::shared_ptr<BundleNode> bundle, string objectType, ASTNode propertiesList,
-                     const char *filename, int line, vector<string> scope) :
-    AST(AST::BundleDeclaration, filename, line, scope)
-{
-    addChild(bundle);
-    m_objectType = objectType;
-    if (propertiesList) {
-        for (ASTNode child: propertiesList->getChildren()) {
-            addChild(child);
-        }
+DeclarationNode::~DeclarationNode() {}
+
+string DeclarationNode::getName() const {
+  if (getNodeType() == AST::Declaration) {
+    return m_name;
+  } else if (getNodeType() == AST::BundleDeclaration) {
+    return getBundle()->getName();
+  }
+  assert(0 == 1);
+  return string();
+}
+
+std::shared_ptr<BundleNode> DeclarationNode::getBundle() const {
+  assert(getNodeType() == AST::BundleDeclaration);
+  return static_pointer_cast<BundleNode>(m_children.at(0));
+}
+
+vector<std::shared_ptr<PropertyNode>> DeclarationNode::getProperties() const {
+  return m_properties;
+}
+
+bool DeclarationNode::addProperty(std::shared_ptr<PropertyNode> newProperty) {
+  for (auto prop : m_properties) {
+    if (prop->getName() == newProperty->getName()) {
+      return false; // Property is not replaced
     }
-    for (unsigned int i = 1; i < m_children.size(); i++) {
-        assert(m_children.at(i)->getNodeType() == AST::Property);
-        m_properties.push_back(static_pointer_cast<PropertyNode>(m_children.at(i)));
+  }
+  addChild(newProperty);
+  m_properties.push_back(newProperty);
+  return true;
+}
+
+ASTNode DeclarationNode::getPropertyValue(string propertyName) {
+  for (unsigned int i = 0; i < m_properties.size(); i++) {
+    if (m_properties.at(i)->getName() == propertyName) {
+      return m_properties.at(i)->getValue();
     }
-
-    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
+  }
+  return nullptr;
 }
 
-DeclarationNode::~DeclarationNode()
-{
+void DeclarationNode::setPropertyValue(string propertyName, ASTNode value) {
+  if (getPropertyValue(propertyName)) {
+    replacePropertyValue(propertyName, value);
+  } else {
+    addProperty(std::make_shared<PropertyNode>(
+        propertyName, value, value->getFilename().c_str(), value->getLine()));
+  }
 }
 
-string DeclarationNode::getName() const
-{
-    if(getNodeType() == AST::Declaration) {
-        return m_name;
-    } else if(getNodeType() == AST::BundleDeclaration) {
-        return getBundle()->getName();
+bool DeclarationNode::replacePropertyValue(string propertyName,
+                                           ASTNode newValue) {
+  bool replaced = false;
+  for (unsigned int i = 0; i < m_properties.size(); i++) {
+    if (m_properties.at(i)->getName() == propertyName) {
+      m_properties.at(i)->replaceValue(newValue);
+      replaced = true;
+      break;
     }
-    assert(0 == 1);
-    return string();
+  }
+  return replaced;
 }
 
-std::shared_ptr<BundleNode> DeclarationNode::getBundle() const
-{
-    assert(getNodeType() == AST::BundleDeclaration);
-    return static_pointer_cast<BundleNode>(m_children.at(0));
+void DeclarationNode::removeProperty(ASTNode property) {
+  auto location = std::find(m_properties.begin(), m_properties.end(), property);
+  m_properties.erase(location);
+  auto childlocation =
+      std::find(m_children.begin(), m_children.end(), property);
+  m_children.erase(childlocation);
 }
 
-vector<std::shared_ptr<PropertyNode> > DeclarationNode::getProperties() const
-{
-    return m_properties;
+ASTNode DeclarationNode::getDomain() {
+  ASTNode domainValue = getPropertyValue("domain");
+  return domainValue;
 }
 
-bool DeclarationNode::addProperty(std::shared_ptr<PropertyNode> newProperty)
-{
-    for (auto prop:m_properties) {
-        if (prop->getName() == newProperty->getName()) {
-            return false; // Property is not replaced
-        }
-    }
-    addChild(newProperty);
-    m_properties.push_back(newProperty);
-    return true;
+void DeclarationNode::setDomainString(string domain) {
+  replacePropertyValue("domain",
+                       make_shared<BlockNode>(domain, __FILE__, __LINE__));
 }
 
-ASTNode DeclarationNode::getPropertyValue(string propertyName)
-{
-    for (unsigned int i = 0; i < m_properties.size(); i++) {
-        if (m_properties.at(i)->getName() == propertyName) {
-            return m_properties.at(i)->getValue();
-        }
-    }
-    return nullptr;
+string DeclarationNode::getObjectType() const { return m_objectType; }
+
+ASTNode DeclarationNode::deepCopy() {
+  ASTNode newProps = std::make_shared<AST>();
+  std::shared_ptr<DeclarationNode> node;
+  for (unsigned int i = 0; i < m_properties.size(); i++) {
+    newProps->addChild(m_properties[i]->deepCopy());
+  }
+  if (getNodeType() == AST::BundleDeclaration) {
+    node = std::make_shared<DeclarationNode>(
+        static_pointer_cast<BundleNode>(getBundle()->deepCopy()), m_objectType,
+        newProps, m_filename.data(), m_line, m_scope);
+  } else if (getNodeType() == AST::Declaration) {
+    node = std::make_shared<DeclarationNode>(
+        m_name, m_objectType, newProps, m_filename.data(), m_line, m_scope);
+  }
+  //    if (this->m_CompilerProperties) {
+  //        node->m_CompilerProperties =
+  //        std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
+  //    } else {
+  //        node->m_CompilerProperties = nullptr;
+  //    }
+  assert(node);
+  //    newProps.reset();
+  return node;
 }
-
-void DeclarationNode::setPropertyValue(string propertyName, ASTNode value)
-{
-    if (getPropertyValue(propertyName)) {
-        replacePropertyValue(propertyName, value);
-    } else {
-        addProperty(std::make_shared<PropertyNode>(propertyName, value, value->getFilename().c_str(), value->getLine()));
-    }
-}
-
-bool DeclarationNode::replacePropertyValue(string propertyName, ASTNode newValue)
-{
-    bool replaced = false;
-    for (unsigned int i = 0; i < m_properties.size(); i++) {
-        if (m_properties.at(i)->getName() == propertyName) {
-            m_properties.at(i)->replaceValue(newValue);
-            replaced = true;
-            break;
-        }
-    }
-    return replaced;
-}
-
-ASTNode DeclarationNode::getDomain()
-{
-    ASTNode domainValue = getPropertyValue("domain");
-    return domainValue;
-}
-
-void DeclarationNode::setDomainString(string domain)
-{
-    replacePropertyValue("domain", make_shared<BlockNode>(domain, __FILE__, __LINE__));
-}
-
-string DeclarationNode::getObjectType() const
-{
-    return m_objectType;
-}
-
-ASTNode DeclarationNode::deepCopy()
-{
-    ASTNode newProps = std::make_shared<AST>();
-    std::shared_ptr<DeclarationNode> node;
-    for(unsigned int i = 0; i< m_properties.size(); i++) {
-        newProps->addChild(m_properties[i]->deepCopy());
-    }
-    if (getNodeType() == AST::BundleDeclaration) {
-        node = std::make_shared<DeclarationNode>(static_pointer_cast<BundleNode>(getBundle()->deepCopy()),
-                             m_objectType, newProps, m_filename.data(), m_line, m_scope);
-    } else if (getNodeType() == AST::Declaration) {
-        node = std::make_shared<DeclarationNode>(m_name, m_objectType, newProps, m_filename.data(), m_line, m_scope);
-    }
-//    if (this->m_CompilerProperties) {
-//        node->m_CompilerProperties = std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
-//    } else {
-//        node->m_CompilerProperties = nullptr;
-//    }
-    assert(node);
-//    newProps.reset();
-    return node;
-}
-
-

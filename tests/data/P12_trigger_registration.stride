@@ -1,10 +1,10 @@
 use DesktopAudio version 1.0
 
-trigger Trig { }
+trigger Trig { domain: RootDomain  }
 
-switch Switch1 {}
-switch Switch2 {}
-switch Switch3 {}
+switch Switch1 { domain: RootDomain }
+switch Switch2 { domain: RootDomain }
+switch Switch3 { domain: RootDomain }
 
 
 [Switch1, Switch2, Switch3] >> [Trig, Trig, Trig];

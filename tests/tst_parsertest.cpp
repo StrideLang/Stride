@@ -798,8 +798,8 @@ void ParserTest::testDomains() {
   block = CodeValidator::findDeclaration(std::string("Signal"), {}, tree);
   QVERIFY(block->getNodeType() == AST::Declaration);
   auto domainBlock = static_cast<BlockNode *>(block->getDomain().get());
-  QVERIFY(domainBlock->getNodeType() == AST::Block);
-  QVERIFY(domainBlock->getName() == "AudioDomain");
+  QVERIFY(domainBlock->getNodeType() == AST::None);
+  //  QVERIFY(domainBlock->getName() == "AudioDomain");
 
   // AudioIn[1] >> ValueInOSCDomain >> AudioOut[2];
 
@@ -3370,6 +3370,8 @@ void ParserTest::testLibraryValidation() {
           .toStdString()
           .c_str());
   QVERIFY(tree);
+  CodeResolver resolver(tree, QFINDTESTDATA(STRIDEROOT));
+  resolver.process();
   CodeValidator validator(tree);
   QVERIFY(validator.isValid());
 }
@@ -3381,6 +3383,8 @@ void ParserTest::testTriggersRegistration() {
           .toStdString()
           .c_str());
   QVERIFY(tree != nullptr);
+  CodeResolver resolver(tree, QFINDTESTDATA(STRIDEROOT));
+  resolver.process();
   CodeValidator validator(tree, CodeValidator::NO_RATE_VALIDATION);
   QVERIFY(validator.isValid());
 

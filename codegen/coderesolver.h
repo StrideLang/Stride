@@ -96,6 +96,7 @@ private:
   void enableTesting();
   void declareModuleInternalBlocks();
   void resolveStreamSymbols();
+  void processDeclarations();
   void expandParallel();
   void resolveConstants();
   void processResets();
@@ -236,5 +237,7 @@ private:
   //    std::vector<std::vector<string>> m_bridgeAliases; //< 1: bridge signal
   //    2: original name 3: domain
 };
+
+
 
 #endif // CODERESOLVER_H

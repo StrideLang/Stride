@@ -9,5 +9,8 @@ signal Value {
   domain: AudioDomain
 }
 
-AlwaysOn >> reaction {1.8 >> Value;} >> AudioOut[0];
+AlwaysOn >> reaction {1.8 >> Value;};
+Value >> AudioOut[0];
+2.0 >> Value;
+Value >> AudioOut[1];
 	

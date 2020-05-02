@@ -45,12 +45,13 @@ module TestMod2 {
 
 TestMod(value: ValueInOSCDomain) >> AudioOut;
 
-# Default domain should be set to platform domain
+# Domain propagates from AudioOut to Modulator
 
 signal Modulator {}
 TestMod(value: 5) >> Modulator;
 TestMod(value:Modulator) >> AudioOut;
 
+# Domain of Signal is None, as TestMod2 pulls domain from output
 AudioIn[1] >> TestMod2(value: 0.1) >> Signal;
 
 # This has two domain changes. Currently this is split into two

@@ -412,6 +412,9 @@ ASTNode CodeValidator::getInstance(ASTNode block, ScopeStack scopeStack,
         static_pointer_cast<DeclarationNode>(block)->getObjectType() ==
             "trigger") {
       inst = block;
+    } else if (static_pointer_cast<DeclarationNode>(block)->getObjectType() ==
+               "reaction") {
+      inst = block;
     } else {
       qDebug() << "Unexpected declaration in getInstance()";
     }
@@ -914,7 +917,7 @@ void CodeValidator::validateSymbolUniqueness(ScopeStack scope) {
         auto siblingScopes = sibling->getNamespaceList();
         if (nodeScopes.size() == siblingScopes.size()) {
           bool duplicateSymbol = true;
-          for (int i = 0; i < nodeScopes.size(); i++) {
+          for (size_t i = 0; i < nodeScopes.size(); i++) {
             if (nodeScopes[i] != siblingScopes[i]) {
               duplicateSymbol = false;
               break;

@@ -95,18 +95,23 @@ void CodeResolver::process() {
   processSystem();
   // Insert objects
   insertBuiltinObjects();
-  if (m_systemConfig.testing) {
-    enableTesting();
-  }
   fillDefaultProperties();
   declareModuleInternalBlocks();
 
   // Resolve and massage tree
-  resolveConstants();
   expandParallel(); // Find better name this expands bundles, functions and
                     // declares undefined bundles
                     //    processResets();
   resolveStreamSymbols();
+  insertBuiltinObjects();
+
+  if (m_systemConfig.testing) {
+    enableTesting();
+    fillDefaultProperties();
+  }
+  resolveConstants();
+
+  processDeclarations();
   processDomains();
   resolveRates();
   // Prepare additional metadata
@@ -162,6 +167,7 @@ void CodeResolver::processSystem() {
       m_importTrees[""].push_back(fwImportTree);
     }
 
+    bool imported = false;
     for (auto import : importList) {
       std::string importName = import->importName();
       std::string importAlias = import->importAlias();
@@ -171,20 +177,16 @@ void CodeResolver::processSystem() {
                                   QString::fromStdString(importAlias),
                                   QString::fromStdString(framework));
       if (importTree) {
-        //            framework->addTree(i.value().toStdString(),
-        //            importTree);
-        //        importNode->appendToPropertyValue("importTrees",
-        //        importTree);
-
         m_importTrees[importAlias].push_back(importTree);
       } else {
-        qDebug() << "Cannot import '" << QString::fromStdString(importName)
-                 << "'. Ignoring.";
         vector<LangError> errors = AST::getParseErrors();
-        for (LangError error : errors) {
-          qDebug() << QString::fromStdString(error.getErrorText());
+        if (errors.size() > 0) {
+          qDebug() << "Cannot import '" << QString::fromStdString(importName)
+                   << "'. Ignoring.";
+          for (LangError error : errors) {
+            qDebug() << QString::fromStdString(error.getErrorText());
+          }
         }
-        continue;
       }
     }
   }
@@ -571,6 +573,74 @@ void CodeResolver::expandParallelStream(std::shared_ptr<StreamNode> stream,
                     //                qDebug() << "Will expand";
     expandStreamToSizes(stream, numCopies, -1, scopeStack);
   }
+}
+
+void CodeResolver::processDeclarations() {
+  //    For block and bundle declarations move streams and blocks outside
+  //    properties to the "streams" and "blocks" properties
+
+  std::function<void(std::vector<ASTNode>)> processDeclarationsForTree =
+      [&](std::vector<ASTNode> children) {
+        for (ASTNode node : children) {
+          if (node->getNodeType() == AST::Declaration ||
+              node->getNodeType() == AST::BundleDeclaration) {
+            std::shared_ptr<DeclarationNode> decl =
+                static_pointer_cast<DeclarationNode>(node);
+            std::vector<ASTNode> toDelete;
+            for (auto prop : decl->getProperties()) {
+              if (prop->getNodeType() == AST::Stream) {
+                toDelete.push_back(prop);
+                if (!decl->getPropertyValue("streams") ||
+                    decl->getPropertyValue("streams")->getNodeType() ==
+                        AST::None) {
+                  auto streamList = std::make_shared<ListNode>(
+                      prop, prop->getFilename().c_str(), prop->getLine());
+                  decl->setPropertyValue("streams", streamList);
+                } else if (decl->getPropertyValue("streams")->getNodeType() !=
+                           AST::List) {
+                  auto streamList = std::make_shared<ListNode>(
+                      decl->getPropertyValue("streams"), __FILE__, __LINE__);
+                  streamList->addChild(node);
+                  decl->setPropertyValue("streams", streamList);
+                } else {
+                  decl->getPropertyValue("streams")->addChild(node);
+                }
+              } else if (prop->getNodeType() == AST::Declaration ||
+                         prop->getNodeType() == AST::BundleDeclaration) {
+                toDelete.push_back(prop);
+                if (!decl->getPropertyValue("blocks") ||
+                    decl->getPropertyValue("blocks")->getNodeType() ==
+                        AST::None) {
+                  auto streamList = std::make_shared<ListNode>(
+                      prop, prop->getFilename().c_str(), prop->getLine());
+                  decl->setPropertyValue("blocks", streamList);
+                } else if (decl->getPropertyValue("blocks")->getNodeType() !=
+                           AST::List) {
+                  auto streamList = std::make_shared<ListNode>(
+                      decl->getPropertyValue("blocks"), __FILE__, __LINE__);
+                  streamList->addChild(node);
+                  decl->setPropertyValue("blocks", streamList);
+                } else {
+                  decl->getPropertyValue("blocks")->addChild(node);
+                }
+              } else if (prop->getNodeType() == AST::Property) {
+                if (prop->getValue()->getNodeType() == AST::List) {
+                  processDeclarationsForTree(prop->getValue()->getChildren());
+                } else {
+                  processDeclarationsForTree(
+                      std::vector<ASTNode>{prop->getValue()});
+                }
+              }
+            }
+            for (auto deleteme : toDelete) {
+              decl->removeProperty(deleteme);
+            }
+          } else {
+            processDeclarationsForTree(node->getChildren());
+          }
+        }
+      };
+  processDeclarationsForTree(m_tree->getChildren());
 }
 
 void CodeResolver::expandParallel() {
@@ -962,7 +1032,8 @@ void CodeResolver::analyzeConnections() {
                 decl->getCompilerProperty("domainReads")->addChild(node);
               }
             } else {
-              if (domain->getNodeType() != AST::PortProperty) {
+              if (domain->getNodeType() != AST::PortProperty &&
+                  domain->getNodeType() != AST::None) {
                 qDebug() << "Expected port property domain";
               }
             }
@@ -1051,27 +1122,27 @@ void CodeResolver::insertBuiltinObjectsForNode(
         if (declaration && !existingDecl) {
           //                declaration->setRootScope(it->first);
           //          for (auto child :
-          //               declaration->getChildren()) { // Check if declaration
-          //               is in
+          //               declaration->getChildren()) { // Check if
+          //               declaration is in
           //                                             // current namespace.
           //                                             If it is, set
-          //                                             // as the namespace of
-          //                                             the child
+          //                                             // as the namespace
+          //                                             of the child
           //            std::shared_ptr<DeclarationNode> childDeclaration =
           //            nullptr; if (child->getNodeType() == AST::Block) {
           //              childDeclaration = CodeValidator::findDeclaration(
           //                  QString::fromStdString(
           //                      static_cast<BlockNode
           //                      *>(child.get())->getName()),
-          //                  {{it->first, objectTree->getChildren()}}, nullptr,
-          //                  declaration->getNamespaceList());
+          //                  {{it->first, objectTree->getChildren()}},
+          //                  nullptr, declaration->getNamespaceList());
           //            } else if (child->getNodeType() == AST::Bundle) {
           //              childDeclaration = CodeValidator::findDeclaration(
           //                  QString::fromStdString(
           //                      static_cast<BundleNode
           //                      *>(child.get())->getName()),
-          //                  {{it->first, objectTree->getChildren()}}, nullptr,
-          //                  declaration->getNamespaceList());
+          //                  {{it->first, objectTree->getChildren()}},
+          //                  nullptr, declaration->getNamespaceList());
           //            } // FIXME need to implement for expressions, lists,
           //            etc. if (childDeclaration) {
           //              child->setNamespaceList(declaration->getNamespaceList());

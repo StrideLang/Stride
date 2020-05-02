@@ -41,35 +41,35 @@
 #include "bundlenode.h"
 #include "propertynode.h"
 
-class DeclarationNode : public AST
-{
+class DeclarationNode : public AST {
 public:
-    DeclarationNode(std::string name, std::string objectType, ASTNode propertiesList,
-                    const char *filename, int line,
-                    std::vector<std::string> scope = std::vector<std::string>());
-    DeclarationNode(std::shared_ptr<BundleNode> bundle, std::string objectType, ASTNode propertiesList,
-                    const char *filename, int line,
-                    std::vector<std::string> scope = std::vector<std::string>());
-    ~DeclarationNode() override;
+  DeclarationNode(std::string name, std::string objectType,
+                  ASTNode propertiesList, const char *filename, int line,
+                  std::vector<std::string> scope = std::vector<std::string>());
+  DeclarationNode(std::shared_ptr<BundleNode> bundle, std::string objectType,
+                  ASTNode propertiesList, const char *filename, int line,
+                  std::vector<std::string> scope = std::vector<std::string>());
+  ~DeclarationNode() override;
 
-    std::string getName() const;
-    std::shared_ptr<BundleNode> getBundle() const;
-    std::vector<std::shared_ptr<PropertyNode>> getProperties() const;
-    bool addProperty(std::shared_ptr<PropertyNode> newProperty);
-    ASTNode getPropertyValue(std::string propertyName);
-    void setPropertyValue(std::string propertyName, ASTNode value);
-    bool replacePropertyValue(std::string propertyName, ASTNode newValue);
+  std::string getName() const;
+  std::shared_ptr<BundleNode> getBundle() const;
+  std::vector<std::shared_ptr<PropertyNode>> getProperties() const;
+  bool addProperty(std::shared_ptr<PropertyNode> newProperty);
+  ASTNode getPropertyValue(std::string propertyName);
+  void setPropertyValue(std::string propertyName, ASTNode value);
+  bool replacePropertyValue(std::string propertyName, ASTNode newValue);
+  void removeProperty(ASTNode property);
 
-    ASTNode getDomain();
-    void setDomainString(std::string domain);
+  ASTNode getDomain();
+  void setDomainString(std::string domain);
 
-    std::string getObjectType() const;
-    virtual ASTNode deepCopy() override;
+  std::string getObjectType() const;
+  virtual ASTNode deepCopy() override;
 
 private:
-    std::string m_name;
-    std::string m_objectType;
-    std::vector<std::shared_ptr<PropertyNode>> m_properties;
+  std::string m_name;
+  std::string m_objectType;
+  std::vector<std::shared_ptr<PropertyNode>> m_properties;
 };
 
 #endif // DECLARATIONNODE_H
