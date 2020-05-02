@@ -11,5 +11,5 @@ AudioIn[1] >> Buf2;
 
 Buf2 >> SignalBundle;
 
-SignalBundle[3] >> AudioOut[1];
-SignalBundle[10] >> AudioOut[2];
+SignalBundle[3] >> AudioOut[0];
+SignalBundle[10] >> AudioOut[1];

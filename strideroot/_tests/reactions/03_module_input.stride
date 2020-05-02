@@ -12,6 +12,10 @@ reaction Adder {
     ]
 }
 
-AudioIn >> Greater() >> Adder();
+switch Comparison {
+    domain: AudioDomain
+}
+
+AudioIn >> Greater() >> Comparison >> Adder();
 
 Value >> AudioOut[0];

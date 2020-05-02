@@ -1079,7 +1079,6 @@ void CodeResolver::insertBuiltinObjectsForNode(
           //          }
           if (!blockList.contains(declaration)) {
             blockList << declaration;
-            break;
           }
         }
       }
@@ -1090,9 +1089,17 @@ void CodeResolver::insertBuiltinObjectsForNode(
     }
     for (std::shared_ptr<DeclarationNode> usedBlock : blockList) {
       // Add declarations to tree if not there
-      if (!CodeValidator::findDeclaration(
-              QString::fromStdString(usedBlock->getName()), ScopeStack(), tree,
-              usedBlock->getNamespaceList())) {
+      auto usedBlockFramework = usedBlock->getCompilerProperty("framework");
+      std::string fw;
+
+      if (usedBlockFramework &&
+          usedBlockFramework->getNodeType() == AST::String) {
+        fw = static_pointer_cast<ValueNode>(usedBlockFramework)
+                 ->getStringValue();
+      }
+      if (!CodeValidator::findDeclaration(usedBlock->getName(), ScopeStack(),
+                                          tree, usedBlock->getNamespaceList(),
+                                          fw)) {
         tree->addChild(usedBlock);
         //        for (auto it = objects.begin(); it != objects.end(); it++) {
         //          vector<ASTNode> &namespaceObjects = it->second;
@@ -3741,7 +3748,7 @@ void CodeResolver::resolveDomainForStreamNode(ASTNode node,
       auto typeDeclaration =
           CodeValidator::findTypeDeclaration(declaration, scopeStack, m_tree);
       if (typeDeclaration &&
-          typeDeclaration->getObjectType() == "platformModule") {
+          typeDeclaration->getObjectType() == "platformBlock") {
         domain = node->getCompilerProperty("domain");
       } else {
         domain = static_cast<DeclarationNode *>(declaration.get())->getDomain();
@@ -4494,7 +4501,7 @@ void CodeResolver::storeDeclarationsForNode(ASTNode node, ScopeStack scopeStack,
       node->getNodeType() == AST::Function) {
     auto decl = CodeValidator::findDeclaration(
         CodeValidator::streamMemberName(node), scopeStack, tree);
-    if (decl) {
+    if (decl && decl->getObjectType() != "platformModule") {
       node->setCompilerProperty("declaration", decl);
     }
   } else if (node->getNodeType() == AST::Expression ||

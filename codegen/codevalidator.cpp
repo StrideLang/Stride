@@ -892,6 +892,24 @@ void CodeValidator::validateSymbolUniqueness(ScopeStack scope) {
       }
       if (!nodeName.isEmpty() && !siblingName.isEmpty() &&
           nodeName == siblingName) {
+        // Check if framework matches
+        auto nodeFrameworkNode = node->getCompilerProperty("framework");
+        auto siblingFrameworkNode = sibling->getCompilerProperty("framework");
+        if (nodeFrameworkNode &&
+            nodeFrameworkNode->getNodeType() == AST::String &&
+            siblingFrameworkNode &&
+            siblingFrameworkNode->getNodeType() == AST::String) {
+          auto nodeFramework = static_pointer_cast<ValueNode>(nodeFrameworkNode)
+                                   ->getStringValue();
+          auto siblingFramework =
+              static_pointer_cast<ValueNode>(siblingFrameworkNode)
+                  ->getStringValue();
+          if (nodeFramework != siblingFramework) {
+            continue;
+          }
+        }
+
+        // Check if scope matches
         auto nodeScopes = node->getNamespaceList();
         auto siblingScopes = sibling->getNamespaceList();
         if (nodeScopes.size() == siblingScopes.size()) {
@@ -1677,10 +1695,9 @@ int CodeValidator::getTypeNumInputs(
   return 0;
 }
 
-std::shared_ptr<DeclarationNode>
-CodeValidator::findDeclaration(std::string objectName,
-                               const ScopeStack &scopeStack, ASTNode tree,
-                               vector<string> scope, std::string platform) {
+std::shared_ptr<DeclarationNode> CodeValidator::findDeclaration(
+    std::string objectName, const ScopeStack &scopeStack, ASTNode tree,
+    vector<string> namespaces, std::string platform) {
   //    QVector<ASTNode> globalAndLocal;
   //    for (auto subScopeIt = scopeStack.rbegin(); subScopeIt !=
   //    scopeStack.rend(); subScopeIt++) {
@@ -1710,7 +1727,7 @@ CodeValidator::findDeclaration(std::string objectName,
   if (objectName.size() > 0) {
     objectName = scopesList.back();
     scopesList.pop_back();
-    for (string ns : scope) {
+    for (string ns : namespaces) {
       scopesList.push_back(ns);
     }
   }
@@ -1725,7 +1742,18 @@ CodeValidator::findDeclaration(std::string objectName,
         std::string name = decl->getName();
         if (name == objectName &&
             CodeValidator::namespaceMatch(scopesList, decl)) {
-          return decl;
+          if (platform.size() > 0) {
+            auto platformNode = decl->getCompilerProperty("framework");
+            if (platformNode && platformNode->getNodeType() == AST::String) {
+              auto platformString = static_pointer_cast<ValueNode>(platformNode)
+                                        ->getStringValue();
+              if (platformString == platform) {
+                return decl;
+              }
+            }
+          } else {
+            return decl;
+          }
         }
       }
     }
@@ -1739,7 +1767,18 @@ CodeValidator::findDeclaration(std::string objectName,
         std::string name = decl->getName();
         if (name == objectName &&
             CodeValidator::namespaceMatch(scopesList, decl)) {
-          return decl;
+          if (platform.size() > 0) {
+            auto platformNode = decl->getCompilerProperty("framework");
+            if (platformNode && platformNode->getNodeType() == AST::String) {
+              auto platformString = static_pointer_cast<ValueNode>(platformNode)
+                                        ->getStringValue();
+              if (platformString == platform) {
+                return decl;
+              }
+            }
+          } else {
+            return decl;
+          }
         }
         //            for (auto ns: defaultNamespaces) {
         //                vector<string> longScopesList;
@@ -1961,6 +2000,9 @@ PortType CodeValidator::resolvePortPropertyType(PortPropertyNode *portproperty,
 
 shared_ptr<DeclarationNode> CodeValidator::resolveBlock(ASTNode node,
                                                         bool downStream) {
+  if (!node) {
+    return nullptr;
+  }
   if (node->getNodeType() == AST::Declaration) { // Signal
     return static_pointer_cast<DeclarationNode>(node);
   } else if (node->getNodeType() == AST::Function) {

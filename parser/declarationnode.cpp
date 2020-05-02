@@ -52,7 +52,7 @@ DeclarationNode::DeclarationNode(string name, string objectType, ASTNode propert
         }
     }
     for (unsigned int i = 0; i < m_children.size(); i++) {
-        assert(m_children.at(i)->getNodeType() == AST::Property);
+        assert(m_children.at(i)->getNodeType() == AST::Property || m_children.at(i)->getNodeType() == AST::Stream);
         m_properties.push_back(static_pointer_cast<PropertyNode>(m_children.at(i)));
     }
 
