@@ -232,6 +232,61 @@ type _StringType {
 	inherits: [_DomainMember, _Resetable]
 }
 
+type _IteratorType {
+	typeName: "iterator"
+	properties: [
+		typeProperty Default {
+			name: "default"
+			types: [_IntLiteral]
+			default: 0
+			required: off
+			meta: "Starting value for iterator"
+		},
+		typeProperty Increment {
+			name: "increment"
+			types: [_IntLiteral]
+			default: 1
+			required: off
+		},
+		typeProperty Limit {
+			name: "limit"
+			types: [_IntLiteral, ""]
+			default: none
+			required: on
+			meta: "stop before reaching this value"
+		},
+		typeProperty Rate {
+			name: "rate"
+			types: [_IntLiteral]
+			default: none
+			required: off
+			meta: "Not supported yet, but could be of use in the future"
+		},
+		typeProperty Domain {
+			name: "domain"
+			types: [""]
+			default: none
+			required: off
+			meta: "Not supported yet, but could be of use in the future"
+		},
+		typeProperty Reset {
+			name: "reset"
+			types: [""]
+			default: none
+			required: off
+			meta: "This trigger will reset this iterator when triggered"
+		}
+		typeProperty Done {
+			name: "done"
+			types: [""]
+			default: none
+			required: off
+			meta: "This trigger will be triggered when the iterator finishes a whole run"
+		}
+	]
+	inherits: [_Base]
+}
+
 type _GroupType {
 	typeName: "group"
 	properties: [

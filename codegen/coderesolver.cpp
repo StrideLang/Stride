@@ -4320,10 +4320,12 @@ void CodeResolver::markConnectionForNode(ASTNode node, ScopeStack scopeStack,
               "triggerSources", std::make_shared<ListNode>(__FILE__, __LINE__));
         }
         auto sourcesList = decl->getCompilerProperty("triggerSources");
-        if (previous->getNodeType() == AST::List) {
-          sourcesList->addChild(previous->getChildren()[listIndex]);
-        } else {
-          sourcesList->addChild(previous);
+        if (previous) {
+          if (previous->getNodeType() == AST::List) {
+            sourcesList->addChild(previous->getChildren()[listIndex]);
+          } else {
+            sourcesList->addChild(previous);
+          }
         }
       }
 
