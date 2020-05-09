@@ -845,16 +845,16 @@ void CodeValidator::validateBundleIndeces(ASTNode node, ScopeStack scope) {
 void CodeValidator::validateBundleSizes(ASTNode node, ScopeStack scope) {
   if (node->getNodeType() == AST::BundleDeclaration) {
     QList<LangError> errors;
-    std::shared_ptr<DeclarationNode> block =
+    std::shared_ptr<DeclarationNode> declaration =
         static_pointer_cast<DeclarationNode>(node);
     // FIXME this needs to be rewritten looking at the port block size
-    int size = getBlockDeclaredSize(block, scope, m_tree, errors);
-    int datasize = getBlockDataSize(block, scope, errors);
+    int size = getBlockDeclaredSize(declaration, scope, m_tree, errors);
+    int datasize = getBlockDataSize(declaration, scope, errors);
     if (size != datasize && datasize > 1) {
       LangError error;
       error.type = LangError::BundleSizeMismatch;
       error.lineNumber = node->getLine();
-      error.errorTokens.push_back(block->getBundle()->getName());
+      error.errorTokens.push_back(declaration->getBundle()->getName());
       error.errorTokens.push_back(QString::number(size).toStdString());
       error.errorTokens.push_back(QString::number(datasize).toStdString());
       m_errors << error;
@@ -1437,7 +1437,15 @@ int CodeValidator::getNodeNumOutputs(ASTNode node, const ScopeStack &scope,
              node->getNodeType() == AST::Switch) {
     return 1;
   } else if (node->getNodeType() == AST::Expression) {
-    // TODO: evaluate
+    auto expr = static_pointer_cast<ExpressionNode>(node);
+    if (expr->isUnary()) {
+      return getNodeNumOutputs(expr->getValue(), scope, tree, errors);
+    } else {
+      auto leftSize = getNodeNumOutputs(expr->getLeft(), scope, tree, errors);
+      auto rightSize = getNodeNumOutputs(expr->getRight(), scope, tree, errors);
+      auto size = std::max(leftSize, rightSize);
+      return size;
+    }
   } else if (node->getNodeType() == AST::Block) {
     BlockNode *name = static_cast<BlockNode *>(node.get());
     std::shared_ptr<DeclarationNode> block =
@@ -1476,8 +1484,12 @@ int CodeValidator::getNodeNumOutputs(ASTNode node, const ScopeStack &scope,
     QList<LangError> errors;
     return CodeValidator::getBlockDeclaredSize(
         static_pointer_cast<DeclarationNode>(node), scope, tree, errors);
+  } else if (node->getNodeType() == AST::BundleDeclaration) {
+    QList<LangError> errors;
+    return CodeValidator::getBlockDeclaredSize(
+        static_pointer_cast<DeclarationNode>(node), scope, tree, errors);
   }
-  return -1;
+  return -100;
 }
 
 int CodeValidator::getNodeNumInputs(ASTNode node, ScopeStack scope,
@@ -2984,7 +2996,13 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack,
     }
   } else if (node->getNodeType() == AST::Declaration ||
              node->getNodeType() == AST::BundleDeclaration) {
-    domainNode = static_cast<DeclarationNode *>(node.get())->getDomain();
+    auto decl = static_cast<DeclarationNode *>(node.get());
+    if (decl->getObjectType() == "reaction") {
+      decl->getCompilerProperty("triggerDomain");
+
+    } else {
+      domainNode = decl->getDomain();
+    }
   } else if (node->getNodeType() == AST::Function) {
     domainNode = node->getCompilerProperty(
         "domain"); // static_cast<FunctionNode *>(node.get())->getDomain();

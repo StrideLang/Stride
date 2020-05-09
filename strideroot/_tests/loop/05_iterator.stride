@@ -28,6 +28,7 @@ loop Max {
         trigger Done {}
     ]
     onExecution: Reset
+    terminateWhen: Done
     streams: [
         Reset >> reaction { Input[0] >> Output; };
         [Input[Index], Output] >> Greater() >> IfGreater

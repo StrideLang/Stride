@@ -1614,6 +1614,9 @@ ASTNode CodeResolver::processDomainsForNode(ASTNode node, ScopeStack scopeStack,
              node->getNodeType() == AST::String ||
              node->getNodeType() == AST::Switch) {
     domainStack << node;
+  } else if (node->getNodeType() == AST::Declaration) {
+    // An anonymous reaction declaration.
+    domainStack << node;
   }
   return currentDomain;
 }
@@ -4012,33 +4015,19 @@ void CodeResolver::checkStreamConnections(std::shared_ptr<StreamNode> stream,
         }
       }
     }
+  } else if (left->getNodeType() == AST::Declaration) {
+    left->setCompilerProperty("inputBlock", previous);
   }
 
   if (right->getNodeType() == AST::Function) {
     previous = left;
     auto func = static_pointer_cast<FunctionNode>(right);
-    //        if (left->getNodeType() == AST::Function) {
-    //            // FIXME this is a hack assuming that the input is always
-    //            connected to the output inside modules. ASTNode newPrevious
-    //            = left->getCompilerProperty("inputBlock"); if (newPrevious)
-    //            {
-    //                previous = newPrevious; // Otherwise keep old previous
-    //            }
-    //        }
     setInputBlockForFunction(func, scopeStack, previous);
   } else if (right->getNodeType() == AST::List) {
     previous = left;
     for (auto child : right->getChildren()) {
       if (child->getNodeType() == AST::Function) {
         auto func = static_pointer_cast<FunctionNode>(child);
-        //                // FIXME this is a hack assuming that the input is
-        //                always connected to the output inside modules.
-        //                ASTNode newPrevious =
-        //                left->getCompilerProperty("inputBlock"); if
-        //                (newPrevious) {
-        //                    previous = newPrevious; // Otherwise keep old
-        //                    previous
-        //                }
         setInputBlockForFunction(func, scopeStack, previous);
       }
     }
@@ -4097,17 +4086,9 @@ void CodeResolver::checkStreamConnections(std::shared_ptr<StreamNode> stream,
         left->getNodeType() == AST::Expression) {
       for (auto child : left->getChildren()) {
         ASTNode nextBlock = right;
-        //                CodeValidator::getNodeNumInputs()
         if (child->getNodeType() == AST::Function) {
-          //                    if (right->getNodeType() == AST::Function) {
-          //                        right->getCompilerProperty("inputBlock");
-          //                    }
           auto func = static_pointer_cast<FunctionNode>(child);
           setOutputBlockForFunction(func, scopeStack, nextBlock);
-          //            if (nextBlock) {
-          //                left->setCompilerProperty("outputBlock",
-          //                nextBlock);
-          //            }
         }
       }
     } else if (left->getNodeType() == AST::Function) {
