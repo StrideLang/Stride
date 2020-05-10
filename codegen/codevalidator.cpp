@@ -1174,12 +1174,12 @@ int CodeValidator::getBlockDeclaredSize(std::shared_ptr<DeclarationNode> block,
   return size;
 }
 
-int CodeValidator::getBlockDataSize(std::shared_ptr<DeclarationNode> block,
-                                    ScopeStack scope,
-                                    QList<LangError> &errors) {
+int CodeValidator::getBlockDataSize(
+    std::shared_ptr<DeclarationNode> declaration, ScopeStack scope,
+    QList<LangError> &errors) {
   QVector<std::shared_ptr<PropertyNode>> ports =
       QVector<std::shared_ptr<PropertyNode>>::fromStdVector(
-          block->getProperties());
+          declaration->getProperties());
   if (ports.size() == 0) {
     return 0;
   }
@@ -1188,13 +1188,13 @@ int CodeValidator::getBlockDataSize(std::shared_ptr<DeclarationNode> block,
     ASTNode value = port->getValue();
     int newSize = getNodeNumOutputs(value, scope, m_tree, errors);
     if (size != newSize) {
-      if (size == 1) {
+      if (size == 1 && newSize > 0) {
         size = newSize;
       }
       if (newSize == 1) {
         // just ignore
       } else {
-        size = -1;
+        //        size = -1;
       }
     }
   }
@@ -1216,12 +1216,12 @@ int CodeValidator::getFunctionDataSize(std::shared_ptr<FunctionNode> func,
     // FIXME need to decide the size by also looking at the port block size
     int newSize = CodeValidator::getNodeNumOutputs(value, scope, tree, errors);
     if (size != newSize) {
-      if (size == 1) {
+      if (size == 1 && newSize > 0) {
         size = newSize;
       } else if (newSize == 1) {
         // just ignore
       } else {
-        size = -1; // TODO should this be a reported error?
+        //        size = -1; // TODO should this be a reported error?
       }
     }
   }

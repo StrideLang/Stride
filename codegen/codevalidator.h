@@ -260,8 +260,8 @@ private:
                                QList<LangError> &errors);
   void validateNodeRate(ASTNode node, ASTNode tree);
 
-  int getBlockDataSize(std::shared_ptr<DeclarationNode> block, ScopeStack scope,
-                       QList<LangError> &errors);
+  int getBlockDataSize(std::shared_ptr<DeclarationNode> declaration,
+                       ScopeStack scope, QList<LangError> &errors);
 
   QString getNodeText(ASTNode node);
 
