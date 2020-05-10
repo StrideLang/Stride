@@ -32,6 +32,7 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
+#include <algorithm>
 #include <cassert>
 
 #include "blocknode.h"
