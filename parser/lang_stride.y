@@ -416,7 +416,7 @@ functionDef:
         WORD blockType                    {
         string word;
         word.append($1); /* string constructor leaks otherwise! */
-        string uvar = "___Anonymous___" + std::to_string(anonymous_counter);
+        string uvar = "___Anonymous___" + std::to_string(anonymous_counter++);
         $$ = new DeclarationNode(uvar, word, std::shared_ptr<AST>($2), currentFile, yyloc.first_line);
         COUT << "Block: " << $1 << ", Labelled: " << uvar << ENDL;
         free($1);

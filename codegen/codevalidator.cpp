@@ -1848,6 +1848,9 @@ std::string CodeValidator::streamMemberName(ASTNode node) {
       }
     }
     return listCommonName;
+  } else if (node->getNodeType() == AST::Declaration) {
+    auto decl = static_pointer_cast<DeclarationNode>(node);
+    return decl->getName();
   } else {
     //        qDebug() << "streamMemberName() error. Invalid stream member
     //        type.";

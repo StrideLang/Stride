@@ -98,6 +98,7 @@ private:
   void resolveStreamSymbols();
   void processDeclarations();
   void expandParallel();
+  void processAnoymousDeclarations();
   void resolveConstants();
   void processResets();
   void processDomains();
@@ -237,7 +238,5 @@ private:
   //    std::vector<std::vector<string>> m_bridgeAliases; //< 1: bridge signal
   //    2: original name 3: domain
 };
-
-
 
 #endif // CODERESOLVER_H

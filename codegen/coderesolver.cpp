@@ -96,6 +96,7 @@ void CodeResolver::process() {
   // Insert objects
   insertBuiltinObjects();
   fillDefaultProperties();
+  processAnoymousDeclarations();
   declareModuleInternalBlocks();
 
   // Resolve and massage tree
@@ -412,7 +413,7 @@ void CodeResolver::analyzeChildConnections(ASTNode node,
         ASTNode blocks = decl->getPropertyValue("blocks");
         scopeStack.push_back({decl->getName(), blocks->getChildren()});
         for (ASTNode stream : streams) {
-          Q_ASSERT(stream->getNodeType() == AST::Stream);
+          //          Q_ASSERT(stream->getNodeType() == AST::Stream);
           if (stream->getNodeType() == AST::Stream) {
             checkStreamConnections(static_pointer_cast<StreamNode>(stream),
                                    scopeStack);
@@ -659,6 +660,77 @@ void CodeResolver::expandParallel() {
         m_tree->addChild(decl);
       }
     }
+  }
+}
+
+void CodeResolver::processAnoymousDeclarations() {
+
+  auto processAnonDeclInStream = [&](std::shared_ptr<StreamNode> stream,
+                                     ASTNode scopeTree) {
+    auto node = stream->getLeft();
+    do {
+      if (node->getNodeType() == AST::Declaration) {
+        auto decl = static_pointer_cast<DeclarationNode>(node);
+        auto newBlock =
+            std::make_shared<BlockNode>(decl->getName(), __FILE__, __LINE__);
+        scopeTree->addChild(node);
+        if (node == stream->getLeft()) {
+          stream->setLeft(newBlock);
+        } else {
+          stream->setRight(newBlock);
+          break;
+        }
+      }
+      if (stream->getRight() == node) {
+        node = nullptr;
+      } else if (stream->getRight()->getNodeType() == AST::Stream) {
+        stream = static_pointer_cast<StreamNode>(stream->getRight());
+        node = stream->getLeft();
+      } else {
+        node = stream->getRight();
+      }
+    } while (node);
+  };
+
+  std::function<ASTNode(ASTNode)> processAnonDecls = [&](ASTNode scopeTree) {
+    ASTNode newBlocks = std::make_shared<ListNode>(__FILE__, __LINE__);
+    for (auto node : scopeTree->getChildren()) {
+      if (node->getNodeType() == AST::Stream) {
+        processAnonDeclInStream(static_pointer_cast<StreamNode>(node),
+                                newBlocks);
+      } else if (node->getNodeType() == AST::Declaration ||
+                 node->getNodeType() == AST::BundleDeclaration) {
+        auto decl = static_pointer_cast<DeclarationNode>(node);
+        if (decl->getObjectType() == "reaction" ||
+            decl->getObjectType() == "module" ||
+            decl->getObjectType() == "loop") {
+          auto streams = decl->getPropertyValue("streams");
+          auto blocks = decl->getPropertyValue("blocks");
+          Q_ASSERT(streams && blocks);
+          if (streams && blocks) {
+            for (auto stream : streams->getChildren()) {
+              if (stream->getNodeType() == AST::Stream) {
+                processAnonDeclInStream(static_pointer_cast<StreamNode>(stream),
+                                        blocks);
+              }
+            }
+
+            auto newInternalBlocks = processAnonDecls(blocks);
+            for (auto node : newInternalBlocks->getChildren()) {
+              blocks->addChild(node);
+            }
+          }
+        }
+      }
+    }
+
+    return newBlocks;
+  };
+
+  auto newBlocks = processAnonDecls(m_tree);
+
+  for (auto node : newBlocks->getChildren()) {
+    m_tree->addChild(node);
   }
 }
 
@@ -4017,9 +4089,31 @@ void CodeResolver::checkStreamConnections(std::shared_ptr<StreamNode> stream,
     }
   } else if (left->getNodeType() == AST::Declaration) {
     left->setCompilerProperty("inputBlock", previous);
+    auto decl = static_pointer_cast<DeclarationNode>(left);
+    auto blocks = decl->getPropertyValue("blocks");
+    auto streams = decl->getPropertyValue("streams");
+
+    std::vector<ASTNode> blocksList;
+    if (blocks) {
+      for (auto block : blocks->getChildren()) {
+        blocksList.push_back(block);
+      }
+    }
+    scopeStack.push_back(std::pair<std::string, std::vector<ASTNode>>(
+        std::string(), blocksList));
+    if (streams) {
+      for (auto stream : streams->getChildren()) {
+        if (stream->getNodeType() == AST::Stream) {
+          checkStreamConnections(static_pointer_cast<StreamNode>(stream),
+                                 scopeStack, nullptr);
+        }
+      }
+    }
+    scopeStack.pop_back();
   }
 
   if (right->getNodeType() == AST::Function) {
+    markConnectionForNode(right, scopeStack, left);
     previous = left;
     auto func = static_pointer_cast<FunctionNode>(right);
     setInputBlockForFunction(func, scopeStack, previous);
@@ -4031,6 +4125,29 @@ void CodeResolver::checkStreamConnections(std::shared_ptr<StreamNode> stream,
         setInputBlockForFunction(func, scopeStack, previous);
       }
     }
+  } else if (right->getNodeType() == AST::Declaration) {
+    auto decl = static_pointer_cast<DeclarationNode>(right);
+    auto blocks = decl->getPropertyValue("blocks");
+    auto streams = decl->getPropertyValue("streams");
+    markConnectionForNode(right, scopeStack, left);
+    decl->setCompilerProperty("inputBlock", left);
+    std::vector<ASTNode> blocksList;
+    if (blocks) {
+      for (auto block : blocks->getChildren()) {
+        blocksList.push_back(block);
+      }
+    }
+    scopeStack.push_back(std::pair<std::string, std::vector<ASTNode>>(
+        std::string(), blocksList));
+    if (streams) {
+      for (auto stream : streams->getChildren()) {
+        if (stream->getNodeType() == AST::Stream) {
+          checkStreamConnections(static_pointer_cast<StreamNode>(stream),
+                                 scopeStack, nullptr);
+        }
+      }
+    }
+    scopeStack.pop_back();
   } else {
     previous = left;
   }
@@ -4154,6 +4271,9 @@ void CodeResolver::markPreviousReads(ASTNode node, ASTNode previous,
       std::string name = CodeValidator::streamMemberName(node);
       std::shared_ptr<DeclarationNode> decl =
           CodeValidator::findDeclaration(name, scopeStack, m_tree);
+      if (node->getNodeType() == AST::Declaration) {
+        decl = static_pointer_cast<DeclarationNode>(node);
+      }
       auto nodeTypeName = decl->getObjectType();
 
       if (nodeTypeName == "module" || nodeTypeName == "reaction" ||
@@ -4245,7 +4365,8 @@ void CodeResolver::markConnectionForNode(ASTNode node, ScopeStack scopeStack,
                                          ASTNode previous,
                                          unsigned int listIndex) {
   if (node->getNodeType() == AST::Block || node->getNodeType() == AST::Bundle ||
-      node->getNodeType() == AST::Function) {
+      node->getNodeType() == AST::Function ||
+      node->getNodeType() == AST::Declaration) {
     std::string name = CodeValidator::streamMemberName(node);
 
     auto nodeInstance = CodeValidator::getInstance(node, scopeStack, m_tree);
@@ -4293,6 +4414,9 @@ void CodeResolver::markConnectionForNode(ASTNode node, ScopeStack scopeStack,
 
     std::shared_ptr<DeclarationNode> decl =
         CodeValidator::findDeclaration(name, scopeStack, m_tree);
+    if (node->getNodeType() == AST::Declaration) {
+      decl = static_pointer_cast<DeclarationNode>(node);
+    }
     if (decl) {
       // Mark trigger connections
       if (decl->getObjectType() == "trigger") {
@@ -4358,8 +4482,8 @@ void CodeResolver::markConnectionForNode(ASTNode node, ScopeStack scopeStack,
         }
       }
 
-      // Mark connections that occur through ports
       if (node->getNodeType() == AST::Function) {
+        // Mark connections that occur through ports
         auto props = static_pointer_cast<FunctionNode>(node)->getProperties();
         for (auto prop : props) {
           auto declPorts = decl->getPropertyValue("ports");
