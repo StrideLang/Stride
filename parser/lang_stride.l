@@ -45,6 +45,7 @@ CLETTER     [A-Z]
 "&"     { return BITAND; }
 "|"     { return BITOR; }
 "~"     { return BITNOT; }
+"@"     { return AT; }
 
 "use"           { return USE; }
 "version"       { return VERSION; }

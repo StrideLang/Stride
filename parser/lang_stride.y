@@ -145,7 +145,7 @@ NullStream nstream;
 %token '[' ']' '{' '}'
 %token DOT COMMA COLON COLONCOLON SEMICOLON
 %token USE VERSION WITH IMPORT AS FOR NONE ON OFF
-%token BITAND BITOR BITNOT
+%token BITAND BITOR BITNOT AT
 %token STREAMRATE
 
 %left STREAM
@@ -268,7 +268,21 @@ importDef:
 // =================================
 
 blockDef:
-         WORD UVAR blockType                    {
+
+        WORD UVAR AT INT blockType               {
+            string word;
+            word.append($1); /* string constructor leaks otherwise! */
+            string uvar;
+            uvar.append($2); /* string constructor leaks otherwise! */
+
+            DeclarationNode *decl = new DeclarationNode(uvar, word, std::shared_ptr<AST>($5), currentFile, yyloc.first_line);
+            decl->setCompilerProperty("_at", std::make_shared<ValueNode>($4, currentFile, yyloc.first_line));
+            $$ = decl;
+            COUT << "Block: " << $1 << ", Labelled: " << $2 << ENDL;
+            free($1);
+            free($2);
+        }
+    |   WORD UVAR blockType                    {
             string word;
             word.append($1); /* string constructor leaks otherwise! */
             string uvar;

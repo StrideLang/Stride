@@ -1,0 +1,7 @@
+use DesktopAudio version 1.0
+
+type Test @ 3 {
+  prop: [ "hello", "world"]
+}
+
+

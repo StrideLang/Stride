@@ -56,11 +56,9 @@ private:
   void testMultichannelUgens(); // TODO Need to complete support for this.
 
 private Q_SLOTS:
-
   ////    // Test code generation
   //  void testCompilation();
   void testCodeGeneration();
-  //    void testSystem();
 
   // Parser
   void testModules();
@@ -76,6 +74,7 @@ private Q_SLOTS:
   void testLoop();
   void testBuffer();
   void testBlockIOResolution();
+  void testAt();
 
   // Expansion
   void testLibraryObjectInsertion();
@@ -111,7 +110,7 @@ private Q_SLOTS:
   void testLibraryValidation();
 
   // Code generation/Compiler
-  //    void testCodeGeneration();
+  //  void testCodeGeneration();
   void testCompilation();
 };
 
@@ -222,6 +221,25 @@ void ParserTest::testBlockIOResolution() {
 
   QVERIFY(outputBlock->getName() == "OuterOutput");
   QVERIFY(inputFunc->getName() == "TestModule");
+}
+
+void ParserTest::testAt()
+{
+    ASTNode tree;
+    tree = AST::parseFile(
+        QString(QFINDTESTDATA("data/19_at.stride"))
+            .toStdString()
+            .c_str());
+    QVERIFY(tree != nullptr);
+    auto declNode = tree->getChildren().at(1);
+    QVERIFY(declNode->getNodeType() == AST::Declaration);
+    auto decl = static_pointer_cast<DeclarationNode>(declNode);
+    QVERIFY(decl->getName() == "Test");
+    auto atProp = decl->getCompilerProperty("_at");
+    QVERIFY(atProp);
+    QVERIFY(atProp->getNodeType() == AST::Int);
+
+    QVERIFY(static_pointer_cast<ValueNode>(atProp)->getIntValue() == 3);
 }
 
 void ParserTest::testLoop() {
