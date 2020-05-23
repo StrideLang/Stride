@@ -223,23 +223,20 @@ void ParserTest::testBlockIOResolution() {
   QVERIFY(inputFunc->getName() == "TestModule");
 }
 
-void ParserTest::testAt()
-{
-    ASTNode tree;
-    tree = AST::parseFile(
-        QString(QFINDTESTDATA("data/19_at.stride"))
-            .toStdString()
-            .c_str());
-    QVERIFY(tree != nullptr);
-    auto declNode = tree->getChildren().at(1);
-    QVERIFY(declNode->getNodeType() == AST::Declaration);
-    auto decl = static_pointer_cast<DeclarationNode>(declNode);
-    QVERIFY(decl->getName() == "Test");
-    auto atProp = decl->getCompilerProperty("_at");
-    QVERIFY(atProp);
-    QVERIFY(atProp->getNodeType() == AST::Int);
+void ParserTest::testAt() {
+  ASTNode tree;
+  tree = AST::parseFile(
+      QString(QFINDTESTDATA("data/19_at.stride")).toStdString().c_str());
+  QVERIFY(tree != nullptr);
+  auto declNode = tree->getChildren().at(1);
+  QVERIFY(declNode->getNodeType() == AST::Declaration);
+  auto decl = static_pointer_cast<DeclarationNode>(declNode);
+  QVERIFY(decl->getName() == "Test");
+  auto atProp = decl->getCompilerProperty("_at");
+  QVERIFY(atProp);
+  QVERIFY(atProp->getNodeType() == AST::Int);
 
-    QVERIFY(static_pointer_cast<ValueNode>(atProp)->getIntValue() == 3);
+  QVERIFY(static_pointer_cast<ValueNode>(atProp)->getIntValue() == 3);
 }
 
 void ParserTest::testLoop() {
