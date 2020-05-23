@@ -1,0 +1,29 @@
+use DesktopAudio version 1.0
+
+import Generators
+
+
+module Test {
+    ports: [
+        mainInputPort InputPort {
+			block: Input
+		},
+		mainOutputPort OutputPort {
+			block: Output
+		}
+		
+    ]
+    blocks: [
+        signal Input[2] {}
+        trigger IfGreater {
+            domain: OutputPort.domain
+        }
+    ]
+    streams: [
+        Input[0] >> Output;
+        Input >> Greater() >> reaction {Input[1]>> Output; domain: OutputPort.domain};
+    ]
+}
+
+
+AudioIn[0] >> Test() >> AudioOut[0];

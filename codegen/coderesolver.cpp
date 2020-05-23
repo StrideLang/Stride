@@ -671,8 +671,9 @@ void CodeResolver::processAnoymousDeclarations() {
     do {
       if (node->getNodeType() == AST::Declaration) {
         auto decl = static_pointer_cast<DeclarationNode>(node);
-        auto newBlock =
-            std::make_shared<BlockNode>(decl->getName(), __FILE__, __LINE__);
+        auto newBlock = std::make_shared<FunctionNode>(
+            decl->getName(), std::make_shared<ListNode>(__FILE__, __LINE__),
+            __FILE__, __LINE__);
         scopeTree->addChild(node);
         if (node == stream->getLeft()) {
           stream->setLeft(newBlock);
@@ -4276,6 +4277,16 @@ void CodeResolver::markPreviousReads(ASTNode node, ASTNode previous,
       }
       auto nodeTypeName = decl->getObjectType();
 
+      if (node->getNodeType() == AST::Bundle) {
+        auto bundleNode = static_pointer_cast<BundleNode>(node);
+        //          FIXME process all types of index configurations
+        if (bundleNode->index()) {
+          for (auto indexNode : bundleNode->index()->getChildren()) {
+            markPreviousReads(node, indexNode, scopeStack);
+          }
+        }
+      }
+
       if (nodeTypeName == "module" || nodeTypeName == "reaction" ||
           nodeTypeName == "loop") {
         // Modules, reactions and loops, the domain that matters is the domain
@@ -4369,6 +4380,12 @@ void CodeResolver::markConnectionForNode(ASTNode node, ScopeStack scopeStack,
       node->getNodeType() == AST::Declaration) {
     std::string name = CodeValidator::streamMemberName(node);
 
+    if (node->getNodeType() == AST::Bundle) {
+      auto bundleNode = static_pointer_cast<BundleNode>(node);
+      for (auto indexChild : bundleNode->index()->getChildren()) {
+        markConnectionForNode(indexChild, scopeStack, nullptr);
+      }
+    }
     auto nodeInstance = CodeValidator::getInstance(node, scopeStack, m_tree);
     if (previous && nodeInstance) {
       std::shared_ptr<ListNode> nodeWritesProperties =
@@ -4433,6 +4450,29 @@ void CodeResolver::markConnectionForNode(ASTNode node, ScopeStack scopeStack,
           }
         }
       }
+      if (decl->getObjectType() == "iterator") {
+        auto doneTrigger = decl->getPropertyValue("done");
+        if (doneTrigger) {
+          auto doneTriggerDecl = CodeValidator::findDeclaration(
+              CodeValidator::streamMemberName(doneTrigger), scopeStack, m_tree);
+          if (doneTriggerDecl) {
+            auto triggerDests =
+                doneTriggerDecl->getCompilerProperty("triggerDestinations");
+            if (!triggerDests) {
+              doneTriggerDecl->setCompilerProperty(
+                  "triggerDestinations",
+                  std::make_shared<ListNode>(__FILE__, __LINE__));
+              triggerDests =
+                  doneTriggerDecl->getCompilerProperty("triggerDestinations");
+            }
+            auto children = triggerDests->getChildren();
+            if (std::find(children.begin(), children.end(), decl) ==
+                children.end()) {
+              triggerDests->addChild(decl);
+            }
+          }
+        }
+      }
 
       // Check if previous is trigger
       std::shared_ptr<DeclarationNode> previousDecl;
@@ -4453,7 +4493,8 @@ void CodeResolver::markConnectionForNode(ASTNode node, ScopeStack scopeStack,
 
       // Connect reset property to trigger
       auto resetProp = decl->getPropertyValue("reset");
-      if (resetProp && resetProp->getNodeType() == AST::Block) {
+      if (resetProp && (resetProp->getNodeType() == AST::Block ||
+                        resetProp->getNodeType() == AST::Bundle)) {
         // TODO should trigger bundles be allowed?
         auto triggerDecl = CodeValidator::findDeclaration(
             CodeValidator::streamMemberName(resetProp), scopeStack, m_tree);
