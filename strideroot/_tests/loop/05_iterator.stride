@@ -11,28 +11,24 @@ loop Max {
     ]
     blocks: [
         signal Input[InputPort.size] {}
-        signal Output { default: 0 }
-        switch IfGreater {
-            domain: OutputPort.domain
-        }
+        signal Output { default: Input[0] reset:Reset }
         iterator Index {
             default:    1                       # default
             increment:  1                       # default
-            limit:      Input.size              # default: none, has to be assigned by user
+            limit:      InputPort.size          # default: none, has to be assigned by user
             rate:       0                       # default
             domain:     OutputPort.domain       # default
             reset:      Reset                   # default
             done:       Done                    # default
         }
-        trigger Reset {}
-        trigger Done {}
+        trigger Reset {domain: OutputPort.domain}
+        trigger Done {domain: OutputPort.domain}
     ]
     onExecution: Reset
     terminateWhen: Done
+    constraints:    [InputPort.size , 2] >> Less () >> Error();
     streams: [
-        Reset >> reaction { Input[0] >> Output; };
-        [Input[Index], Output] >> Greater() >> IfGreater
-        >> reaction { Input[Index] >> Output;};
+        [Input[Index], Output] >> Greater() >> reaction { Input[Index] >> Output;  domain: OutputPort.domain };
 
     ]
 }

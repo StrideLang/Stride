@@ -119,7 +119,7 @@ type _Signal {
 		},
 		typeProperty Default {
 			name: "default"
-			types: [_IntLiteral, _RealLiteral, _StringLiteral]
+			types: [_IntLiteral, _RealLiteral, _StringLiteral, ""]
 			default: 0.0
 			required: off
 		},
@@ -207,7 +207,7 @@ type _StringType {
 	properties: [
 		typeProperty Default {
 			name: "default"
-			types: [_StringLiteral]
+			types: [_StringLiteral, ""]
 			default: ""
 			required: off
 			meta: "Initial and default value"
@@ -237,7 +237,7 @@ type _IteratorType {
 	properties: [
 		typeProperty Default {
 			name: "default"
-			types: [_IntLiteral]
+			types: [_IntLiteral, ""]
 			default: 0
 			required: off
 			meta: "Starting value for iterator"

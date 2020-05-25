@@ -143,6 +143,12 @@ type _Reaction {
 			types: [""]
 			default: none
 			required: on
+		},
+		typeProperty Contraints {
+			name: "constraints"
+			types: [""]
+			default: none
+			required: off
 		}
 	]
 	inherits: [_DomainMember]
@@ -183,6 +189,12 @@ type _Loop {
 		},
 		typeProperty TerminateWhen {
 			name: "terminateWhen"
+			types: [""]
+			default: none
+			required: off
+		},
+		typeProperty Contraints {
+			name: "constraints"
 			types: [""]
 			default: none
 			required: off
