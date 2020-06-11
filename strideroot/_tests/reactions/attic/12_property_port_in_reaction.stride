@@ -1,6 +1,6 @@
 use DesktopAudio version 1.0
 
-module InReaction {
+module Reaction {
     ports: [
         mainOutputPort OutputPort {
             block: Output
@@ -8,13 +8,15 @@ module InReaction {
         mainInputPort InputPort {
             block: Input
         }
+        propertyInputPort PropInputPort {
+			name: "test"
+            block: Test
+        }
     ]
 	blocks: [
         reaction PassThruReaction {
-			ports: [
-			]
             streams:    [
-                Input >> Output;
+                AudioIn[0] * Test >> AudioOut[0];
             ]
         }
     ]
@@ -23,5 +25,6 @@ module InReaction {
     ]
 }
 
+signal UsedInReaction { default: 0.3}
 
-AudioIn[0] >> InReaction () >> AudioOut;
+on >> Reaction (test:UsedInReaction) >> AudioOut;

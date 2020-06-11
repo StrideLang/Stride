@@ -3969,6 +3969,133 @@ void CodeResolver::resolveDomainForStreamNode(ASTNode node,
   }
 }
 
+void CodeResolver::remapStreamDomains(std::shared_ptr<StreamNode> stream,
+                                      std::map<string, string> domainMap,
+                                      ScopeStack scopeStack, ASTNode tree) {
+  ASTNode current = stream->getLeft();
+  ASTNode next = stream->getRight();
+
+  while (current) {
+    auto instance = CodeValidator::getInstance(current, scopeStack, tree);
+    if (instance) {
+      if (instance->getNodeType() == AST::Expression ||
+          instance->getNodeType() == AST::List) {
+
+        for (auto element : instance->getChildren()) {
+          auto elementInstance =
+              CodeValidator::getInstance(element, scopeStack, tree);
+          if (elementInstance->getCompilerProperty("reads")) {
+            std::shared_ptr<ListNode> newReads =
+                std::make_shared<ListNode>(__FILE__, __LINE__);
+            for (auto readDomain :
+                 elementInstance->getCompilerProperty("reads")->getChildren()) {
+              if (domainMap.find(CodeValidator::getDomainIdentifier(
+                      readDomain, scopeStack, m_tree)) != domainMap.end()) {
+                std::shared_ptr<PortPropertyNode> mappedDomain =
+                    std::make_shared<PortPropertyNode>("OutputPort", "domain",
+                                                       __FILE__, __LINE__);
+                newReads->addChild(mappedDomain);
+                //                                readDomain
+              } else {
+                newReads->addChild(readDomain);
+              }
+            }
+            elementInstance->setCompilerProperty("reads", newReads);
+          }
+        }
+        if (instance->getCompilerProperty("reads")) {
+          std::shared_ptr<ListNode> newReads =
+              std::make_shared<ListNode>(__FILE__, __LINE__);
+          for (auto readDomain :
+               instance->getCompilerProperty("reads")->getChildren()) {
+            if (domainMap.find(CodeValidator::getDomainIdentifier(
+                    readDomain, scopeStack, m_tree)) != domainMap.end()) {
+              std::shared_ptr<PortPropertyNode> mappedDomain =
+                  std::make_shared<PortPropertyNode>("OutputPort", "domain",
+                                                     __FILE__, __LINE__);
+              newReads->addChild(mappedDomain);
+              //                                readDomain
+            } else {
+              newReads->addChild(readDomain);
+            }
+            instance->setCompilerProperty("reads", newReads);
+          }
+        }
+
+        if (instance->getCompilerProperty("writes")) {
+          std::shared_ptr<ListNode> newWrites =
+              std::make_shared<ListNode>(__FILE__, __LINE__);
+          for (auto writeDomain :
+               instance->getCompilerProperty("writes")->getChildren()) {
+            if (domainMap.find(CodeValidator::getDomainIdentifier(
+                    writeDomain, scopeStack, m_tree)) != domainMap.end()) {
+              std::shared_ptr<PortPropertyNode> mappedDomain =
+                  std::make_shared<PortPropertyNode>("OutputPort", "domain",
+                                                     __FILE__, __LINE__);
+              newWrites->addChild(mappedDomain);
+              //                                readDomain
+            } else {
+              newWrites->addChild(writeDomain);
+            }
+          }
+          instance->setCompilerProperty("writes", newWrites);
+        }
+      }
+
+      if (!next) {
+        current = nullptr;
+      } else if (next->getNodeType() == AST::Stream) {
+        current = stream->getLeft();
+        next = stream->getRight();
+      } else {
+        current = next;
+        next = nullptr;
+      }
+    }
+  }
+  //    // Now move internal domains to outerDomains
+  //    for (auto inMap : blockInMap) {
+  //        if (domainMap.find(inMap.first) != domainMap.end()) {
+  //            for (auto b : inMap.second) {
+  //                std::shared_ptr<ListNode> newReads =
+  //                    std::make_shared<ListNode>(__FILE__, __LINE__);
+  //                for (auto readDomain :
+  //                     b.externalConnection->getCompilerProperty("reads")
+  //                         ->getChildren()) {
+  //                    if
+  //                    (domainMap.find(CodeValidator::getDomainIdentifier(
+  //                            readDomain, scopeStack, m_tree)) !=
+  //                        domainMap.end()) {
+  //                        std::cout << std::endl;
+  //                        std::shared_ptr<PortPropertyNode> mappedDomain =
+  //                            std::make_shared<PortPropertyNode>(
+  //                                "OutputPort", "domain", __FILE__,
+  //                                __LINE__);
+  //                        newReads->addChild(mappedDomain);
+  //                        //                                readDomain
+  //                    } else {
+  //                        newReads->addChild(readDomain);
+  //                    }
+  //                }
+  //                b.externalConnection->setCompilerProperty("reads",
+  //                                                          newReads);
+  //            }
+  //            blockInMap[domainMap[inMap.first]].insert(
+  //                blockInMap[domainMap[inMap.first]].begin(),
+  //                inMap.second.begin(), inMap.second.end());
+  //            inMap.second.clear();
+  //        }
+  //    }
+  //    for (auto outMap : blockOutMap) {
+  //        if (domainMap.find(outMap.first) != domainMap.end()) {
+  //            blockInMap[domainMap[outMap.first]].insert(
+  //                blockInMap[domainMap[outMap.first]].begin(),
+  //                outMap.second.begin(), outMap.second.end());
+  //            outMap.second.clear();
+  //        }
+  //    }
+}
+
 ASTNode CodeResolver::resolvePortProperty(
     std::shared_ptr<PortPropertyNode> portProperty, ScopeStack scopeStack) {
   ASTNode resolved;
@@ -4405,6 +4532,7 @@ void CodeResolver::markConnectionForNode(ASTNode node, ScopeStack scopeStack,
       if (node->getNodeType() == AST::Function) {
         newWriteDomain = CodeValidator::getNodeDomain(
             CodeValidator::resolveBlock(node, false), scopeStack, m_tree);
+
       } else {
         newWriteDomain =
             CodeValidator::getNodeDomain(previous, scopeStack, m_tree);
@@ -4596,6 +4724,36 @@ void CodeResolver::markConnectionForNode(ASTNode node, ScopeStack scopeStack,
                       //                                            prop->getValue());
                     }
                   }
+                }
+              }
+            }
+          }
+        }
+
+        auto blocks = decl->getPropertyValue("blocks");
+        if (blocks) {
+          for (auto blockDecl : blocks->getChildren()) {
+            if (blockDecl->getNodeType() == AST::Declaration) {
+              auto decl = static_pointer_cast<DeclarationNode>(blockDecl);
+              if (decl->getObjectType() == "reaction" ||
+                  decl->getObjectType() == "loop") {
+                auto streamsNode = decl->getPropertyValue("streams");
+                auto blocksNode = decl->getPropertyValue("blocks");
+                std::vector<ASTNode> innerScope;
+                if (blocksNode) {
+                  for (auto internalBlock : blocksNode->getChildren()) {
+                    innerScope.push_back(internalBlock);
+                  }
+                }
+                if (streamsNode) {
+                  scopeStack.push_back({"", innerScope});
+                  for (auto stream : streamsNode->getChildren()) {
+                    if (stream->getNodeType() == AST::Stream) {
+                      checkStreamConnections(
+                          static_pointer_cast<StreamNode>(stream), scopeStack);
+                    }
+                  }
+                  scopeStack.pop_back();
                 }
               }
             }

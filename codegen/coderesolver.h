@@ -168,6 +168,11 @@ private:
                            ASTNode upperScope);
   void propagateDomainsForNode(ASTNode node, ScopeStack scopeStack);
   void resolveDomainForStreamNode(ASTNode node, ScopeStack scope);
+
+  void remapStreamDomains(std::shared_ptr<StreamNode> stream,
+                          std::map<std::string, std::string> domainMap,
+                          ScopeStack scopeStack, ASTNode tree);
+
   ASTNode resolvePortProperty(std::shared_ptr<PortPropertyNode> portProperty,
                               ScopeStack scopeStack);
 
