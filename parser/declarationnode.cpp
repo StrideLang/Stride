@@ -55,7 +55,10 @@ DeclarationNode::DeclarationNode(string name, string objectType,
   for (unsigned int i = 0; i < m_children.size(); i++) {
     assert(m_children.at(i)->getNodeType() == AST::Property ||
            m_children.at(i)->getNodeType() == AST::Stream);
-    m_properties.push_back(static_pointer_cast<PropertyNode>(m_children.at(i)));
+    if (m_children.at(i)->getNodeType() == AST::Property) {
+      m_properties.push_back(
+          static_pointer_cast<PropertyNode>(m_children.at(i)));
+    }
   }
 
   m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
@@ -146,7 +149,9 @@ bool DeclarationNode::replacePropertyValue(string propertyName,
 
 void DeclarationNode::removeProperty(ASTNode property) {
   auto location = std::find(m_properties.begin(), m_properties.end(), property);
-  m_properties.erase(location);
+  if (location != m_properties.end()) {
+    m_properties.erase(location);
+  }
   auto childlocation =
       std::find(m_children.begin(), m_children.end(), property);
   m_children.erase(childlocation);

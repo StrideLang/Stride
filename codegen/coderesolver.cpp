@@ -293,7 +293,7 @@ void CodeResolver::fillDefaultPropertiesForNode(ASTNode node, ASTNode tree) {
           << QString::fromStdString(destBlock->getObjectType());
       return;
     }
-    for (std::shared_ptr<PropertyNode> property : blockProperties) {
+    for (auto property : blockProperties) {
       fillDefaultPropertiesForNode(property->getValue(), tree);
     }
 
@@ -306,7 +306,7 @@ void CodeResolver::fillDefaultPropertiesForNode(ASTNode node, ASTNode tree) {
       string propertyName =
           static_cast<ValueNode *>(propName.get())->getStringValue();
       bool propertySet = false;
-      for (std::shared_ptr<PropertyNode> blockProperty : blockProperties) {
+      for (auto blockProperty : blockProperties) {
         if (blockProperty->getName() == propertyName) {
           propertySet = true;
           break;
@@ -588,7 +588,7 @@ void CodeResolver::processDeclarations() {
             std::shared_ptr<DeclarationNode> decl =
                 static_pointer_cast<DeclarationNode>(node);
             std::vector<ASTNode> toDelete;
-            for (auto prop : decl->getProperties()) {
+            for (auto prop : decl->getChildren()) {
               if (prop->getNodeType() == AST::Stream) {
                 toDelete.push_back(prop);
                 if (!decl->getPropertyValue("streams") ||
@@ -625,11 +625,16 @@ void CodeResolver::processDeclarations() {
                   decl->getPropertyValue("blocks")->addChild(node);
                 }
               } else if (prop->getNodeType() == AST::Property) {
-                if (prop->getValue()->getNodeType() == AST::List) {
-                  processDeclarationsForTree(prop->getValue()->getChildren());
-                } else {
+                if (static_pointer_cast<PropertyNode>(prop)
+                        ->getValue()
+                        ->getNodeType() == AST::List) {
                   processDeclarationsForTree(
-                      std::vector<ASTNode>{prop->getValue()});
+                      static_pointer_cast<PropertyNode>(prop)
+                          ->getValue()
+                          ->getChildren());
+                } else {
+                  processDeclarationsForTree(std::vector<ASTNode>{
+                      static_pointer_cast<PropertyNode>(prop)->getValue()});
                 }
               }
             }
