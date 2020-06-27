@@ -64,9 +64,9 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
   m_library.initializeLibrary(strideRoot);
 
   for (auto importNode : importList) {
-    m_library.getImportTree(QString::fromStdString(importNode->importName()),
-                            QString::fromStdString(importNode->importAlias()),
-                            {});
+    m_library.loadImportTree(QString::fromStdString(importNode->importName()),
+                             QString::fromStdString(importNode->importAlias()),
+                             {});
     m_importList[QString::fromStdString(importNode->importName())] =
         QString::fromStdString(importNode->importAlias());
   }
@@ -464,37 +464,41 @@ map<string, vector<ASTNode>> StrideSystem::getBuiltinObjectsReference() {
       objects[platform->getFramework()].push_back(node);
       if (node->getNodeType() == AST::Declaration ||
           node->getNodeType() == AST::BundleDeclaration) {
-        auto validScopes = node->getCompilerProperty("namespaceTree");
-        if (validScopes) {
-          assert(validScopes->getNodeType() == AST::List);
-          bool rootFound = false;
-          bool relativeScopeFound = false;
-          for (auto child : validScopes->getChildren()) {
-            std::shared_ptr<ValueNode> stringValue =
-                std::static_pointer_cast<ValueNode>(child);
-            assert(child->getNodeType() == AST::String);
-            if (stringValue->getStringValue() == "::") {
-              rootFound = true;
-            } else if (stringValue->getStringValue() == "") {
-              relativeScopeFound = true;
-            }
-          }
-          //                    if (!rootFound) {
-          //                        validScopes->addChild(std::make_shared<ValueNode>(string("::"),
-          //                        __FILE__, __LINE__));
-          //                    }
-          if (!relativeScopeFound) {
-            validScopes->addChild(
-                std::make_shared<ValueNode>(string(""), __FILE__, __LINE__));
-          }
-        } else {
-          auto newList = std::make_shared<ListNode>(
-              std::make_shared<ValueNode>(string("::"), __FILE__, __LINE__),
-              __FILE__, __LINE__);
-          newList->addChild(
-              std::make_shared<ValueNode>(string(""), __FILE__, __LINE__));
-          node->setCompilerProperty("namespaceTree", newList);
-        }
+        //        auto validScopes = node->getCompilerProperty("namespaceTree");
+        //        if (validScopes) {
+        //          assert(validScopes->getNodeType() == AST::List);
+        //          bool rootFound = false;
+        //          bool relativeScopeFound = false;
+        //          for (auto child : validScopes->getChildren()) {
+        //            std::shared_ptr<ValueNode> stringValue =
+        //                std::static_pointer_cast<ValueNode>(child);
+        //            assert(child->getNodeType() == AST::String);
+        //            if (stringValue->getStringValue() == "::") {
+        //              rootFound = true;
+        //            } else if (stringValue->getStringValue() == "") {
+        //              relativeScopeFound = true;
+        //            }
+        //          }
+        //          //                    if (!rootFound) {
+        //          //
+        //          validScopes->addChild(std::make_shared<ValueNode>(string("::"),
+        //          //                        __FILE__, __LINE__));
+        //          //                    }
+        //          if (!relativeScopeFound) {
+        //            validScopes->addChild(
+        //                std::make_shared<ValueNode>(string(""), __FILE__,
+        //                __LINE__));
+        //          }
+        //        } else {
+        //          auto newList = std::make_shared<ListNode>(
+        //              std::make_shared<ValueNode>(string("::"), __FILE__,
+        //              __LINE__),
+        //              __FILE__, __LINE__);
+        //          newList->addChild(
+        //              std::make_shared<ValueNode>(string(""), __FILE__,
+        //              __LINE__));
+        //          node->setCompilerProperty("namespaceTree", newList);
+        //        }
         if (platform->getRootNamespace() == "") {
           objects[""].push_back(node);
         }
@@ -575,76 +579,73 @@ vector<ASTNode> StrideSystem::getOptionTrees() {
   return optionTrees;
 }
 
-ASTNode StrideSystem::getImportTree(QString importName, QString importAs,
-                                    QString platformName) {
+ASTNode StrideSystem::loadImportTree(std::string importName,
+                                     std::string importAs,
+                                     std::string platformName) {
   ASTNode tree = std::make_shared<AST>();
   QStringList nameFilters;
   nameFilters.push_back("*.stride");
-  // Look first in platforms
-  // TODO currently search order is defined by the order in which platforms
-  // are declared. Should there be more explicit ordering or restrictions?
-  if (platformName.size() > 0) {
-    for (auto platform : m_frameworks) {
-      if (platformName.size() > 0 &&
-          ((platformName.toStdString() == platform->getRootNamespace()) ||
-           platformName.toStdString() == platform->getFramework())) {
-        string platformPath =
-            platform->buildPlatformLibPath(m_strideRoot.toStdString());
-        QString includeSubPath =
-            QString::fromStdString(platformPath) + "/" + importName;
-        QStringList libraryFiles = QDir(includeSubPath).entryList(nameFilters);
-        if (QFile::exists(QString::fromStdString(platformPath) + "/" +
-                          importName + ".stride")) {
-          libraryFiles << "../" + importName + ".stride";
-        }
-        for (QString file : libraryFiles) {
-          QString fileName =
-              QDir::cleanPath(includeSubPath + QDir::separator() + file);
-          auto newTree = AST::parseFile(fileName.toLocal8Bit().data(), nullptr);
-          if (newTree) {
-            for (ASTNode node : newTree->getChildren()) {
-              //              node->setCompilerProperty(
-              //                  "framework",
-              //                  std::make_shared<ValueNode>(platformName.toStdString(),
-              //                                              __FILE__,
-              //                                              __LINE__));
-              tree->addChild(node);
-            }
-          } else {
-            qDebug() << "ERROR importing tree";
-            vector<LangError> errors = AST::getParseErrors();
-            for (LangError error : errors) {
-              qDebug() << QString::fromStdString(error.getErrorText());
-            }
-            continue;
-          }
 
-          for (ASTNode node : tree->getChildren()) {
+  if (platformName.size() == 0) {
+    tree = m_library.loadImportTree(QString::fromStdString(importName),
+                                    QString::fromStdString(importAs),
+                                    QStringList());
+  }
+
+  // If platform name is not provided, then import from everywhere (local
+  // directory, then platforms, then library)
+
+  for (auto platform : m_frameworks) {
+    if (platformName.size() == 0 ||
+        ((platformName == platform->getRootNamespace()) ||
+         platformName == platform->getFramework())) {
+      string platformPath =
+          platform->buildPlatformLibPath(m_strideRoot.toStdString());
+      string platformImportName = platformName;
+      platformImportName = platform->getRootNamespace();
+      string includeSubPath = platformPath + "/" + importName;
+      QStringList libraryFiles =
+          QDir(QString::fromStdString(includeSubPath)).entryList(nameFilters);
+      //      if (QFile::exists(QString::fromStdString(platformPath) + "/" +
+      //                        importName + ".stride")) {
+      //        libraryFiles << "../" + importName + ".stride";
+      //      }
+      for (QString file : libraryFiles) {
+        QString fileName = QDir::cleanPath(
+            QString::fromStdString(includeSubPath) + QDir::separator() + file);
+        auto newTree = AST::parseFile(fileName.toLocal8Bit().data(), nullptr);
+        if (newTree) {
+          for (ASTNode node : newTree->getChildren()) {
+            //              node->setCompilerProperty(
+            //                  "framework",
+            //                  std::make_shared<ValueNode>(platformName.toStdString(),
+            //                                              __FILE__,
+            //                                              __LINE__));
+            // FIXME check if we are bashing an existing name in the tree.
+
             size_t indexExtension = file.toStdString().find(".stride");
             string scopeName = file.toStdString().substr(0, indexExtension);
-            // FIXME allow namespacing by filename
-            node->appendToPropertyValue(
-                "namespaceTree",
-                std::make_shared<ValueNode>(importAs.toStdString(), __FILE__,
-                                            __LINE__));
-            node->appendToPropertyValue(
-                "namespaceTree",
-                std::make_shared<ValueNode>(scopeName, __FILE__, __LINE__));
-            node->appendToPropertyValue(
-                "namespaceTree",
-                std::make_shared<ValueNode>(platform->getFramework(), __FILE__,
-                                            __LINE__));
+
+            if (importAs.size() > 0) {
+              node->appendToPropertyValue(
+                  "namespaceTree",
+                  std::make_shared<ValueNode>(importAs, __FILE__, __LINE__));
+            }
             node->setCompilerProperty(
-                "framework",
-                std::make_shared<ValueNode>(platformName.toStdString(),
-                                            __FILE__, __LINE__));
+                "framework", std::make_shared<ValueNode>(platformImportName,
+                                                         __FILE__, __LINE__));
+            tree->addChild(node);
           }
+        } else {
+          qDebug() << "ERROR importing tree";
+          vector<LangError> errors = AST::getParseErrors();
+          for (LangError error : errors) {
+            qDebug() << QString::fromStdString(error.getErrorText());
+          }
+          continue;
         }
       }
     }
-
-  } else {
-    tree = m_library.getImportTree(importName, importAs, QStringList());
   }
 
   if (tree && tree->getChildren().size() > 0) {
@@ -681,7 +682,8 @@ void StrideSystem::generateDomainConnections(ASTNode tree) {
                    << QString::fromStdString(nextDomainId);
           auto domainChangeNodes =
               getDomainChangeStreams(previousDomainId, nextDomainId);
-          // FIXME currently only simple two member connector streams supported
+          // FIXME currently only simple two member connector streams
+          // supported
           if (domainChangeNodes.sourceStreams &&
               domainChangeNodes.destStreams) {
             stream->setRight(domainChangeNodes.sourceStreams->getChildren()[0]
@@ -715,8 +717,8 @@ void StrideSystem::generateDomainConnections(ASTNode tree) {
             //                        If domains don't match, add an extra
             //                        signal to make the connection
             //                            // Do we only need to do this for
-            //                            platformModules, or should this always
-            //                            be done? QString signalName =
+            //                            platformModules, or should this
+            //                            always be done? QString signalName =
             //                            "BridgeSignal"; auto signalDecl =
             //                            CodeResolver::createSignalDeclaration(signalName,
             //                            1, {}, tree);
@@ -726,7 +728,8 @@ void StrideSystem::generateDomainConnections(ASTNode tree) {
             //                            signalDecl); next =
             //                            std::make_shared<StreamNode>(
             //                                        std::make_shared<BlockNode>(signalName.toStdString(),__FILE__,
-            //                                        __LINE__), next, __FILE__,
+            //                                        __LINE__), next,
+            //                                        __FILE__,
             //                                        __LINE__);
 
             //                        }
@@ -813,13 +816,12 @@ ConnectionNodes StrideSystem::getDomainChangeStreams(string previousDomainId,
               auto platformName = connector->getPropertyValue("sourcePlatform");
               Q_ASSERT(platformName->getNodeType() == AST::String);
               auto importTree =
-                  getImportTree(QString::fromStdString(importName), "",
-                                QString::fromStdString(
-                                    static_pointer_cast<ValueNode>(platformName)
-                                        ->getStringValue()));
+                  loadImportTree(importName, "",
 
-              auto importTreeLib =
-                  getImportTree(QString::fromStdString(importName), "", "");
+                                 static_pointer_cast<ValueNode>(platformName)
+                                     ->getStringValue());
+
+              auto importTreeLib = loadImportTree(importName, "", "");
               for (auto child : importTreeLib->getChildren()) {
                 importTree->addChild(child);
               }
@@ -828,7 +830,6 @@ ConnectionNodes StrideSystem::getDomainChangeStreams(string previousDomainId,
                 //                                m_tree);
                 CodeResolver::fillDefaultPropertiesForNode(node, importTree);
               }
-
               domainChangeNodes.sourceImports = importTree;
             }
           }
@@ -849,29 +850,18 @@ ConnectionNodes StrideSystem::getDomainChangeStreams(string previousDomainId,
                   connector->getPropertyValue("destinationPlatform");
               Q_ASSERT(platformName->getNodeType() == AST::String);
               auto importTree =
-                  getImportTree(QString::fromStdString(importName), "",
-                                QString::fromStdString(
-                                    static_pointer_cast<ValueNode>(platformName)
-                                        ->getStringValue()));
-              if (importTree) {
-
-                auto builtinObjects = getBuiltinObjectsReference();
-                for (auto child : importTree->getChildren()) {
-                  CodeResolver::insertBuiltinObjectsForNode(
-                      child, builtinObjects, importTree);
-                }
-
-                domainChangeNodes.destImports = importTree;
-                //                                    scopeStack.push_back({"",
-                //                                    importTree->getChildren()});
-              } else {
-                //                                    std::cerr << "ERROR:
-                //                                    Cannot import " <<
-                //                                    importName << " for
-                //                                    connection " <<
-                //                                    connector->getName() <<
-                //                                    std::endl;
+                  loadImportTree(importName, "",
+                                 static_pointer_cast<ValueNode>(platformName)
+                                     ->getStringValue());
+              auto builtinObjects = getBuiltinObjectsReference();
+              for (auto child : importTree->getChildren()) {
+                CodeResolver::insertBuiltinObjectsForNode(child, builtinObjects,
+                                                          importTree);
               }
+
+              domainChangeNodes.destImports = importTree;
+              //                                    scopeStack.push_back({"",
+              //                                    importTree->getChildren()});
             }
           }
         }

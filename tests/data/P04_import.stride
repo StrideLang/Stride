@@ -4,8 +4,6 @@ import Filters
 
 import Generators as G
 
-import Platform::Filters::Filter
-
 AudioIn[1] >> LowPass() >> AudioOut[1];
 
 G::Oscillator() >> AudioOut[1];

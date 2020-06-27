@@ -10,34 +10,45 @@ _frameworkDescription _TestFramework {
 }
 
 alias PlatformDomain {
-    block: TestDomain
+    block: RootDomain
 }
 
 alias PlatformRate {
     block: TestRate
 }
 
-alias _ContextInitDomain {
-    block: SetupDomain
-}
-
-_domainDefinition SetupDomain {
-	domainName: "SetupDomain"
+_domainDefinition RootDomain {
+	domainName: "RootDomain"
 	framework: _TestFramework
-	rate: 0
-	globalsTag: "Includes"
-	declarationsTag: "Declarations"
-	processingTag: "Initialization"
-	initializationTag: "Initialization"
-	cleanupTag: "Initialization"
-    domainIncludes: []
-    domainDeclarations: []
-    domainInitialization: '// init domain init'
-	domainFunction: '// init domain processing
-	%%domainCode%%
-	// end init domain processing
-	'
-    domainCleanup: '// init domain cleanup'
+	rate: -1 # -1 is 'one-shot/final' domain
+    substitutions: [ ]
+    domainIncludes: ["ReadWriteClasses.hpp",
+	"Synchronization.hpp",
+	"Helper.hpp"]
+	domainFunctionCode: '
+// RtAudio RootDomain template
+//[[Includes]]
+//[[/Includes]]
+
+//[[Declarations]]
+//[[/Declarations]]
+
+//[[Instances]]
+//[[/Instances]]
+int main() {
+//[[Initialization]]
+//[[/Initialization]]
+
+    char input;
+    std::cout << "\nRunning ... press <enter> to quit.\n";
+    std::cin.get(input);
+
+
+//[[Cleanup]]
+//[[/Cleanup]]
+    return 0;
+}
+'
 }
 
 constant TestRate {value: 0}
@@ -45,22 +56,23 @@ constant TestRate {value: 0}
 _domainDefinition TestDomain {
 	domainName: "TestDomain"
 	framework: _TestFramework
+	parentDomain: RootDomain
 	rate: 0
-	globalsTag: "Includes"
-	declarationsTag: "Declarations"
-	processingTag: "Processing"
-	initializationTag: "Initialization"
-	cleanupTag: "Cleanup"
-    substitutions: []
-    domainIncludes: ['iostream']
-    domainDeclarations: ["void func();"]
-    domainInitialization: "// init domain init"
-	domainFunction: "// test function
+	substitutions: [ ]
+    domainIncludes: []
+    domainDeclarations: []
+    domainInitializationCode: "
+	//[[Initialization]]
+//[[/Initialization]]
+	"
+	domainFunctionCode: "// test function
 	void func() {
+		%%domainCode%%
 			}
 	// end test domain processing
 	"
-    domainCleanup: '// init domain cleanup
-	std::cout << "Test cleanup." << std::endl;
+    domainCleanupCode: '
+//[[Cleanup]]
+//[[/Cleanup]]
 	'
 }

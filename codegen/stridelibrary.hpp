@@ -65,7 +65,7 @@ public:
 
     std::map<std::string, std::vector<ASTNode> > getLibraryMembers();
 
-    ASTNode getImportTree(QString importName, QString importAs, QStringList scopeTree);
+    ASTNode loadImportTree(QString importName, QString importAs, QStringList scopeTree);
 
 private:
 

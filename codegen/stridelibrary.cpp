@@ -32,186 +32,199 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-#include <QStringList>
-#include <QDir>
 #include <QDebug>
+#include <QDir>
+#include <QStringList>
 
 #include "ast.h"
 #include "valuenode.h"
 
-#include "stridelibrary.hpp"
-#include "codevalidator.h"
 #include "coderesolver.h"
+#include "codevalidator.h"
+#include "stridelibrary.hpp"
 
-StrideLibrary::StrideLibrary() :
-    m_majorVersion(1), m_minorVersion(0)
-{
+StrideLibrary::StrideLibrary() : m_majorVersion(1), m_minorVersion(0) {}
+
+StrideLibrary::~StrideLibrary() {}
+
+void StrideLibrary::initializeLibrary(QString strideRootPath) {
+  m_libraryTrees.clear();
+  readLibrary(strideRootPath);
 }
 
-StrideLibrary::~StrideLibrary()
-{
-}
-
-void StrideLibrary::initializeLibrary(QString strideRootPath)
-{
-    m_libraryTrees.clear();
-    readLibrary(strideRootPath);
-}
-
-std::shared_ptr<DeclarationNode> StrideLibrary::findTypeInLibrary(QString typeName)
-{
-    for (auto libraryTree : m_libraryTrees) {
-        ASTNode rootNode = libraryTree.tree;
-        for (ASTNode node : rootNode->getChildren()) {
-            if (node->getNodeType() == AST::Declaration) {
-                std::shared_ptr<DeclarationNode> block = static_pointer_cast<DeclarationNode>(node);
-                if (block->getObjectType() != "type") {
-                    continue;
-                }
-                ASTNode value = block->getPropertyValue("typeName");
-                if (value->getNodeType()  == AST::String) {
-                    QString libTypeName = QString::fromStdString(static_pointer_cast<ValueNode>(value)->getStringValue());
-                    if (libTypeName == typeName) {
-                        return block;
-                    }
-                }
-            }
+std::shared_ptr<DeclarationNode>
+StrideLibrary::findTypeInLibrary(QString typeName) {
+  for (auto libraryTree : m_libraryTrees) {
+    ASTNode rootNode = libraryTree.tree;
+    for (ASTNode node : rootNode->getChildren()) {
+      if (node->getNodeType() == AST::Declaration) {
+        std::shared_ptr<DeclarationNode> block =
+            static_pointer_cast<DeclarationNode>(node);
+        if (block->getObjectType() != "type") {
+          continue;
         }
+        ASTNode value = block->getPropertyValue("typeName");
+        if (value->getNodeType() == AST::String) {
+          QString libTypeName = QString::fromStdString(
+              static_pointer_cast<ValueNode>(value)->getStringValue());
+          if (libTypeName == typeName) {
+            return block;
+          }
+        }
+      }
     }
-    return nullptr;
+  }
+  return nullptr;
 }
 
-bool StrideLibrary::isValidBlock(DeclarationNode *block)
-{
-    std::shared_ptr<DeclarationNode> type = findTypeInLibrary(QString::fromStdString(block->getObjectType()));
-    if (type) {
-        if (block->getProperties().size() == 0) {
-            return true; // FIXME we need to check if properties are required
-        }
-        for(std::shared_ptr<PropertyNode> property :block->getProperties()) {
-            if (isValidProperty(property, type.get())) {
-                return true;
-            }
-            // Now check for inherited properties
-            QList<DeclarationNode *> parentTypes = getParentTypes(block);
-            bool propertyInParent = false;
-            for(DeclarationNode *parent : parentTypes) {
-                propertyInParent |= isValidProperty(property, parent);
-            }
-            if (propertyInParent) return true;
-        }
+bool StrideLibrary::isValidBlock(DeclarationNode *block) {
+  std::shared_ptr<DeclarationNode> type =
+      findTypeInLibrary(QString::fromStdString(block->getObjectType()));
+  if (type) {
+    if (block->getProperties().size() == 0) {
+      return true; // FIXME we need to check if properties are required
     }
-    return false;
+    for (std::shared_ptr<PropertyNode> property : block->getProperties()) {
+      if (isValidProperty(property, type.get())) {
+        return true;
+      }
+      // Now check for inherited properties
+      QList<DeclarationNode *> parentTypes = getParentTypes(block);
+      bool propertyInParent = false;
+      for (DeclarationNode *parent : parentTypes) {
+        propertyInParent |= isValidProperty(property, parent);
+      }
+      if (propertyInParent)
+        return true;
+    }
+  }
+  return false;
 }
 
-std::map<std::string, std::vector<ASTNode>> StrideLibrary::getLibraryMembers()
-{
-    std::map<std::string, std::vector<ASTNode>> libNamespace;
-    for (auto libraryTree :m_libraryTrees) {
-        if (libNamespace.find(libraryTree.importAs.toStdString()) == libNamespace.end()) {
-            libNamespace[libraryTree.importAs.toStdString()] = std::vector<ASTNode>();
-        }
-        for(ASTNode node : libraryTree.tree->getChildren()) {
-            libNamespace[libraryTree.importAs.toStdString()].push_back(node);
-        }
+std::map<std::string, std::vector<ASTNode>> StrideLibrary::getLibraryMembers() {
+  std::map<std::string, std::vector<ASTNode>> libNamespace;
+  for (auto libraryTree : m_libraryTrees) {
+    if (libNamespace.find(libraryTree.importAs.toStdString()) ==
+        libNamespace.end()) {
+      libNamespace[libraryTree.importAs.toStdString()] = std::vector<ASTNode>();
     }
-    return libNamespace;
+    for (ASTNode node : libraryTree.tree->getChildren()) {
+      libNamespace[libraryTree.importAs.toStdString()].push_back(node);
+    }
+  }
+  return libNamespace;
 }
 
-ASTNode StrideLibrary::getImportTree(QString importName, QString importAs, QStringList scopeTree)
-{
-    ASTNode importTree;
-    QStringList nameFilters;
-    nameFilters << "*.stride";
-    QString path = m_libraryPath;
-    if (importName.size() > 0) {
-        path += QDir::separator() + scopeTree.join(QDir::separator()) + importName;
-    }
-    // FIXME support namespace as file name
-    // TODO add warning if local file/directory shadows system one
-    QStringList libraryFiles =  QDir(path).entryList(nameFilters);
-    // For library we don't need support for file name namespace at the root, but there needs to be support for nested files.
-    importTree = std::make_shared<AST>();
-    for (QString file : libraryFiles) {
-        QString fileName = path + QDir::separator() + file;
-        ASTNode tree = AST::parseFile(fileName.toLocal8Bit().data(), nullptr);
-        if(tree) {
-            string scopeFromFile = file.toStdString().substr(0, file.indexOf(".stride"));
-            for(auto node: tree->getChildren()) {
-                importTree->addChild(node);
-//                Q_ASSERT(!node->getCompilerProperty("originalScope"));
-//                node->appendToPropertyValue("originalScope", std::make_shared<ValueNode>(scopeFromFile, __FILE__, __LINE__));
-            }
-        } else {
-            qDebug() << "Import not found in library: " << importName;
+ASTNode StrideLibrary::loadImportTree(QString importName, QString importAs,
+                                      QStringList scopeTree) {
+  ASTNode importTree;
+  QStringList nameFilters;
+  nameFilters << "*.stride";
+  QString path = m_libraryPath;
+  if (importName.size() > 0) {
+    path += QDir::separator() + scopeTree.join(QDir::separator()) + importName;
+  }
+  // FIXME support namespace as file name
+  // TODO add warning if local file/directory shadows system one
+  QStringList libraryFiles = QDir(path).entryList(nameFilters);
+  // For library we don't need support for file name namespace at the root, but
+  // there needs to be support for nested files.
+  importTree = std::make_shared<AST>();
+  for (QString file : libraryFiles) {
+    QString fileName = path + QDir::separator() + file;
+    ASTNode tree = AST::parseFile(fileName.toLocal8Bit().data(), nullptr);
+    if (tree) {
+      //      string scopeFromFile =
+      //          file.toStdString().substr(0, file.indexOf(".stride"));
+      for (auto node : tree->getChildren()) {
+        if (importAs.size() > 0) {
+          node->appendToPropertyValue(
+              "namespaceTree", std::make_shared<ValueNode>(
+                                   importAs.toStdString(), __FILE__, __LINE__));
         }
-    }
-    if (importTree->getChildren().size() > 0) {
-        m_libraryTrees.push_back(LibraryTree{{}, importName, importAs, importTree});
-        return importTree;
+        importTree->addChild(node);
+        //                Q_ASSERT(!node->getCompilerProperty("originalScope"));
+        //                node->appendToPropertyValue("originalScope",
+        //                std::make_shared<ValueNode>(scopeFromFile, __FILE__,
+        //                __LINE__));
+      }
     } else {
-        return nullptr;
+      qDebug() << "Import not found in library: " << importName;
     }
+  }
+  if (importTree->getChildren().size() > 0) {
+    m_libraryTrees.push_back(LibraryTree{{}, importName, importAs, importTree});
+    return importTree;
+  } else {
+    return nullptr;
+  }
 }
 
-bool StrideLibrary::isValidProperty(std::shared_ptr<PropertyNode> property, DeclarationNode *type)
-{
-    Q_ASSERT(type->getObjectType() == "type");
-    std::shared_ptr<PropertyNode> portsInType = CodeValidator::findPropertyByName(type->getProperties(), "properties");
-    ListNode *portList = static_cast<ListNode *>(portsInType->getValue().get());
-    Q_ASSERT(portList->getNodeType() == AST::List);
-    for (ASTNode port : portList->getChildren()) {
-        DeclarationNode *portBlock = static_cast<DeclarationNode *>(port.get());
-        Q_ASSERT(portBlock->getNodeType() == AST::Declaration);
-        Q_ASSERT(portBlock->getObjectType() == "typeProperty");
-        std::shared_ptr<PropertyNode> portName = CodeValidator::findPropertyByName(portBlock->getProperties(), "name");
-        string portNameInType = static_cast<ValueNode *>(portName->getValue().get())->getStringValue();
-        if(property->getName() == portNameInType) {
-            return true;
-        }
+bool StrideLibrary::isValidProperty(std::shared_ptr<PropertyNode> property,
+                                    DeclarationNode *type) {
+  Q_ASSERT(type->getObjectType() == "type");
+  std::shared_ptr<PropertyNode> portsInType =
+      CodeValidator::findPropertyByName(type->getProperties(), "properties");
+  ListNode *portList = static_cast<ListNode *>(portsInType->getValue().get());
+  Q_ASSERT(portList->getNodeType() == AST::List);
+  for (ASTNode port : portList->getChildren()) {
+    DeclarationNode *portBlock = static_cast<DeclarationNode *>(port.get());
+    Q_ASSERT(portBlock->getNodeType() == AST::Declaration);
+    Q_ASSERT(portBlock->getObjectType() == "typeProperty");
+    std::shared_ptr<PropertyNode> portName =
+        CodeValidator::findPropertyByName(portBlock->getProperties(), "name");
+    string portNameInType =
+        static_cast<ValueNode *>(portName->getValue().get())->getStringValue();
+    if (property->getName() == portNameInType) {
+      return true;
     }
-    std::shared_ptr<PropertyNode> inherits = CodeValidator::findPropertyByName(type->getProperties(), "inherits");
-    if (inherits) {
-        ValueNode *inheritedTypeName = static_cast<ValueNode *>(inherits->getValue().get());
-        Q_ASSERT(inheritedTypeName->getNodeType() == AST::String);
-        std::shared_ptr<DeclarationNode> inheritedType = findTypeInLibrary(QString::fromStdString(inheritedTypeName->getStringValue()));
-        Q_ASSERT(inheritedType != nullptr);
-        if (isValidProperty(property, inheritedType.get())) {
-            return true;
-        }
+  }
+  std::shared_ptr<PropertyNode> inherits =
+      CodeValidator::findPropertyByName(type->getProperties(), "inherits");
+  if (inherits) {
+    ValueNode *inheritedTypeName =
+        static_cast<ValueNode *>(inherits->getValue().get());
+    Q_ASSERT(inheritedTypeName->getNodeType() == AST::String);
+    std::shared_ptr<DeclarationNode> inheritedType = findTypeInLibrary(
+        QString::fromStdString(inheritedTypeName->getStringValue()));
+    Q_ASSERT(inheritedType != nullptr);
+    if (isValidProperty(property, inheritedType.get())) {
+      return true;
     }
-    return false;
+  }
+  return false;
 }
 
-QList<DeclarationNode *> StrideLibrary::getParentTypes(DeclarationNode *type)
-{
-    std::shared_ptr<PropertyNode> inheritProperty = CodeValidator::findPropertyByName(type->getProperties(), "inherits");
-    if (inheritProperty) {
-        ASTNode parentType = inheritProperty->getValue();
-        if (parentType->getNodeType() == AST::String) {
-            string parentBlockName = static_cast<ValueNode *>(parentType.get())->getStringValue();
-            std::shared_ptr<DeclarationNode> parentBlock = findTypeInLibrary(QString::fromStdString(parentBlockName));
-            return getParentTypes(parentBlock.get());
-        }
+QList<DeclarationNode *> StrideLibrary::getParentTypes(DeclarationNode *type) {
+  std::shared_ptr<PropertyNode> inheritProperty =
+      CodeValidator::findPropertyByName(type->getProperties(), "inherits");
+  if (inheritProperty) {
+    ASTNode parentType = inheritProperty->getValue();
+    if (parentType->getNodeType() == AST::String) {
+      string parentBlockName =
+          static_cast<ValueNode *>(parentType.get())->getStringValue();
+      std::shared_ptr<DeclarationNode> parentBlock =
+          findTypeInLibrary(QString::fromStdString(parentBlockName));
+      return getParentTypes(parentBlock.get());
     }
-    return QList<DeclarationNode *>();
+  }
+  return QList<DeclarationNode *>();
 }
 
-void StrideLibrary::readLibrary(QString rootDir)
-{
-    QString basepath = QString("/library/%1.%2").arg(m_majorVersion).arg(m_minorVersion);
-    //    QMapIterator<QString, QStringList> it(importList);
-//    importList[""] = QStringList() << ""; // Add root namespace
-    m_libraryPath = rootDir + basepath;
+void StrideLibrary::readLibrary(QString rootDir) {
+  QString basepath =
+      QString("/library/%1.%2").arg(m_majorVersion).arg(m_minorVersion);
+  //    QMapIterator<QString, QStringList> it(importList);
+  //    importList[""] = QStringList() << ""; // Add root namespace
+  m_libraryPath = rootDir + basepath;
 
-    ASTNode tree = getImportTree("", "", QStringList());
-    if (!tree) {
+  ASTNode tree = loadImportTree("", "", QStringList());
+  if (!tree) {
 
-        qDebug() << "ERROR parsing: Cannot import root library";
-        vector<LangError> errors = AST::getParseErrors();
-        for(LangError error : errors) {
-            qDebug() << QString::fromStdString(error.getErrorText());
-        }
+    qDebug() << "ERROR parsing: Cannot import root library";
+    vector<LangError> errors = AST::getParseErrors();
+    for (LangError error : errors) {
+      qDebug() << QString::fromStdString(error.getErrorText());
     }
+  }
 }
-

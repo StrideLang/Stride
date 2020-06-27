@@ -443,31 +443,49 @@ ASTNode CodeValidator::getInstance(ASTNode block, ScopeStack scopeStack,
 
 bool CodeValidator::namespaceMatch(std::vector<string> scopeList,
                                    std::shared_ptr<DeclarationNode> decl) {
-  const char *const delim = "::";
+  //  const char *const delim = "::";
 
-  std::ostringstream joined;
-  std::copy(scopeList.begin(), scopeList.end(),
-            std::ostream_iterator<std::string>(joined, delim));
-  string namespaceString = joined.str();
-  if (namespaceString.size() > 2 ||
-      (scopeList.size() == 1 && scopeList[0] == "")) {
-    namespaceString = namespaceString.substr(0, namespaceString.size() -
-                                                    2); // remove trailing '::'
+  //  std::ostringstream joined;
+  //  std::copy(scopeList.begin(), scopeList.end(),
+  //            std::ostream_iterator<std::string>(joined, delim));
+  //  string namespaceString = joined.str();
+  //  if (namespaceString.size() > 2 ||
+  //      (scopeList.size() == 1 && scopeList[0] == "")) {
+  //    namespaceString = namespaceString.substr(0, namespaceString.size() -
+  //                                                    2); // remove trailing
+  //                                                    '::'
+  //  }
+  if (scopeList.size() == 1 && scopeList[0].size() == 0) {
+    scopeList.clear();
   }
-  auto validScopesList = decl->getCompilerProperty("namespaceTree");
-  if (!validScopesList) { // This will occur for user declarations
-    validScopesList = std::make_shared<ListNode>(
-        std::make_shared<ValueNode>(string(""), __FILE__, __LINE__), __FILE__,
-        __LINE__);
-  }
-  for (auto scopeString : validScopesList->getChildren()) {
-    Q_ASSERT(scopeString->getNodeType() == AST::String);
-    if (static_pointer_cast<ValueNode>(scopeString)->getStringValue() ==
-        namespaceString) {
-      return true;
+  auto declScopesNode = decl->getCompilerProperty("namespaceTree");
+  std::vector<std::string> namespaceTree;
+  if (declScopesNode) {
+    for (auto node : declScopesNode->getChildren()) {
+      assert(node->getNodeType() == AST::String);
+      namespaceTree.push_back(
+          static_pointer_cast<ValueNode>(node)->getStringValue());
     }
   }
-  return false;
+  auto frameworkNode = decl->getCompilerProperty("framework");
+  std::string framework;
+  if (frameworkNode && frameworkNode->getNodeType() == AST::String) {
+    framework = static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
+    if (framework.size() > 0) {
+      namespaceTree.insert(namespaceTree.begin(), framework);
+    }
+  }
+  if (namespaceTree.size() != scopeList.size()) {
+    return false;
+  }
+
+  for (size_t i = 0; i < namespaceTree.size(); i++) {
+    if (namespaceTree[i] != scopeList[i]) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 vector<StreamNode *> CodeValidator::getStreamsAtLine(ASTNode tree, int line) {
@@ -1755,19 +1773,21 @@ std::shared_ptr<DeclarationNode> CodeValidator::findDeclaration(
         std::shared_ptr<DeclarationNode> decl =
             static_pointer_cast<DeclarationNode>(scopeNode);
         std::string name = decl->getName();
-        if (name == objectName &&
-            CodeValidator::namespaceMatch(scopesList, decl)) {
-          if (platform.size() > 0) {
-            auto platformNode = decl->getCompilerProperty("framework");
-            if (platformNode && platformNode->getNodeType() == AST::String) {
-              auto platformString = static_pointer_cast<ValueNode>(platformNode)
-                                        ->getStringValue();
-              if (platformString == platform) {
-                return decl;
+        if (name == objectName) {
+          if (CodeValidator::namespaceMatch(scopesList, decl)) {
+            if (platform.size() > 0) {
+              auto platformNode = decl->getCompilerProperty("framework");
+              if (platformNode && platformNode->getNodeType() == AST::String) {
+                auto platformString =
+                    static_pointer_cast<ValueNode>(platformNode)
+                        ->getStringValue();
+                if (platformString == platform) {
+                  return decl;
+                }
               }
+            } else {
+              return decl;
             }
-          } else {
-            return decl;
           }
         }
       }
@@ -1780,19 +1800,22 @@ std::shared_ptr<DeclarationNode> CodeValidator::findDeclaration(
         std::shared_ptr<DeclarationNode> decl =
             static_pointer_cast<DeclarationNode>(node);
         std::string name = decl->getName();
-        if (name == objectName &&
-            CodeValidator::namespaceMatch(scopesList, decl)) {
-          if (platform.size() > 0) {
+        if (name == objectName) {
+
+          if (CodeValidator::namespaceMatch(scopesList, decl)) {
             auto platformNode = decl->getCompilerProperty("framework");
+            std::string nodePlatformString;
             if (platformNode && platformNode->getNodeType() == AST::String) {
-              auto platformString = static_pointer_cast<ValueNode>(platformNode)
-                                        ->getStringValue();
-              if (platformString == platform) {
-                return decl;
-              }
+              nodePlatformString = static_pointer_cast<ValueNode>(platformNode)
+                                       ->getStringValue();
             }
-          } else {
-            return decl;
+            if (nodePlatformString == platform) {
+              return decl;
+            }
+            if (platform.size() > 0) {
+            } /*else {
+              return decl;
+            }*/
           }
         }
         //            for (auto ns: defaultNamespaces) {
@@ -2924,8 +2947,8 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack,
   if (node->getNodeType() == AST::Block) {
     BlockNode *name = static_cast<BlockNode *>(node.get());
     std::shared_ptr<DeclarationNode> declaration =
-        CodeValidator::findDeclaration(QString::fromStdString(name->getName()),
-                                       scopeStack, tree);
+        CodeValidator::findDeclaration(name->getName(), scopeStack, tree,
+                                       name->getNamespaceList());
 
     if (declaration) {
       auto typeDeclaration =
@@ -2940,8 +2963,8 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack,
   } else if (node->getNodeType() == AST::Bundle) {
     BundleNode *name = static_cast<BundleNode *>(node.get());
     std::shared_ptr<DeclarationNode> declaration =
-        CodeValidator::findDeclaration(QString::fromStdString(name->getName()),
-                                       scopeStack, tree);
+        CodeValidator::findDeclaration(name->getName(), scopeStack, tree,
+                                       name->getNamespaceList());
     if (declaration) {
       domainNode = declaration->getDomain();
     }
@@ -2952,8 +2975,8 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack,
       if (member->getNodeType() == AST::Block) {
         BlockNode *name = static_cast<BlockNode *>(member.get());
         std::shared_ptr<DeclarationNode> declaration =
-            CodeValidator::findDeclaration(
-                QString::fromStdString(name->getName()), scopeStack, tree);
+            CodeValidator::findDeclaration(name->getName(), scopeStack, tree,
+                                           name->getNamespaceList());
         if (declaration) {
           tempDomainName =
               CodeValidator::getNodeDomainName(declaration, scopeStack, tree);
@@ -3011,7 +3034,8 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack,
         "domain"); // static_cast<FunctionNode *>(node.get())->getDomain();
     if (!domainNode) {
       auto funcDecl = CodeValidator::findDeclaration(
-          static_pointer_cast<FunctionNode>(node)->getName(), scopeStack, tree);
+          static_pointer_cast<FunctionNode>(node)->getName(), scopeStack, tree,
+          node->getNamespaceList());
       if (funcDecl && funcDecl->getObjectType() == "platformModule") {
         domainNode = funcDecl->getPropertyValue("domain");
         auto domainDecl = CodeValidator::findDomainDeclaration(

@@ -60,9 +60,7 @@ module Test {
 }
 
 
-signal Output {
-  domain: "OutputDomainName"
-}
+signal Output {}
 
 [TestGenerator(), 0.5] >> Test() >> Output;
 

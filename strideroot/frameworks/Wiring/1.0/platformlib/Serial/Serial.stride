@@ -6,13 +6,13 @@ constant _SerialPort  { # Overriden by configuration
 	value: '"/dev/ttyACM0"'
 }
 
-intListOverride SerialBaudRate {
-	name: "Baud Rate"
-	possibleValues: [9600, 14400, 19200, 38400, 56000, 57600, 115200, 128000]
-	default: 56000
-	override: [_SerialBaudRate]
-	meta: "Serial Baud Rate"
-}
+#intListOverride SerialBaudRate {
+#	name: "Baud Rate"
+#	possibleValues: [9600, 14400, 19200, 38400, 56000, 57600, 115200, 128000]
+#	default: 56000
+#	override: [_SerialBaudRate]
+#	meta: "Serial Baud Rate"
+#}
 
 resource SerialPort {
     name: "Serial"
@@ -23,7 +23,7 @@ resource SerialPort {
     resourceIncludes: []
     resourceDeclarations: []
     properties: [
-        SerialBaudRate
+        #SerialBaudRate
     ]
 }
 
@@ -44,8 +44,8 @@ platformModule _SerialPrintModule {
     inherits: [_Signal]
 }
 
-platformBlock _SerialOutType {
-    typeName: '_serialOutType'
+platformBlock _SerialOutput {
+    typeName: '_serialOutput'
 	inputs: ["real"]
 	outputs: []
     domain: WiringDomain
@@ -63,12 +63,8 @@ platformBlock _SerialOutType {
     inherits: [_Signal]
 }
 
-_serialOutType SerialOut[3] {
-    rate:   PlatformRate
-}
-
-platformBlock _SerialInType {
-    typeName: '_serialInType'
+platformBlock _SerialInput {
+    typeName: '_serialInput'
 	outputs: ["string"]
 #    include: []
 #    linkTo: []
@@ -78,21 +74,16 @@ platformBlock _SerialInType {
     inherits: [_Signal]
 }
 
+constant _NumSerialInChannels {value: 2}
 
-platformModule SerialIn {
-	domain: SerialDomain
-	inputs: [""]
-	outputs: []
-	ports: [
-	]
-	declarations: ['']
-	initializations: [ '' ]
-	globalDeclarations: []
-	globalInitializations: []
-	preProcessing: ''
-    processing: '// Serial In Processing *******'
-	postProcessing: ''
-    inherits: [_Signal] 
+_serialInput SerialIn[_NumSerialInChannels] {
+    rate: SerialProcessRate
+    domain: WiringDomain
 }
 
+constant _NumSerialOutChannels {value: 2}
 
+_serialOutput SerialOut[_NumSerialOutChannels] {
+    rate: SerialProcessRate
+    domain: WiringDomain
+}

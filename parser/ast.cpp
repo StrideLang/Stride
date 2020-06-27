@@ -40,33 +40,26 @@
 
 using namespace std;
 
-extern AST *parse(const char* fileName, const char* sourceFilename);
+extern AST *parse(const char *fileName, const char *sourceFilename);
 extern std::vector<LangError> getErrors();
 
-AST::AST()
-{
-    m_token = AST::None;
-    m_line = -1;
+AST::AST() {
+  m_token = AST::None;
+  m_line = -1;
 }
 
-AST::AST(Token token, const char *filename, int line, vector<string> scope)
-{
-    m_token = token;
-    m_filename.append(filename);
-    m_line = line;
-    m_scope = scope;
+AST::AST(Token token, const char *filename, int line, vector<string> scope) {
+  m_token = token;
+  m_filename.append(filename);
+  m_line = line;
+  m_scope = scope;
 }
 
-AST::~AST()
-{
+AST::~AST() {}
 
-}
+void AST::addChild(ASTNode t) { m_children.push_back(t); }
 
-void AST::addChild(ASTNode t) {
-    m_children.push_back(t);
-}
-
-//void AST::giveChildren(ASTNode p)
+// void AST::giveChildren(ASTNode p)
 //{
 //    for(size_t i = 0; i < m_children.size(); i++) {
 //        p->addChild(m_children.at(i));
@@ -74,13 +67,12 @@ void AST::addChild(ASTNode t) {
 //    m_children.clear();
 //}
 
-void AST::setChildren(vector<ASTNode> &newChildren)
-{
-//    deleteChildren();
-    m_children = newChildren;
+void AST::setChildren(vector<ASTNode> &newChildren) {
+  //    deleteChildren();
+  m_children = newChildren;
 }
 
-//void AST::deleteChildren()
+// void AST::deleteChildren()
 //{
 ////    for(size_t i = 0; i < m_children.size(); i++) {
 ////        m_children.at(i)->deleteChildren();
@@ -89,136 +81,113 @@ void AST::setChildren(vector<ASTNode> &newChildren)
 ////    m_children.clear();
 //}
 
-ASTNode AST::deepCopy()
-{
-    ASTNode newNode = std::make_shared<AST>(AST::None, m_filename.data(), m_line, m_scope);
-    for(unsigned int i = 0; i < m_children.size(); i++) {
-        newNode->addChild(m_children.at(i)->deepCopy());
+ASTNode AST::deepCopy() {
+  ASTNode newNode =
+      std::make_shared<AST>(AST::None, m_filename.data(), m_line, m_scope);
+  for (unsigned int i = 0; i < m_children.size(); i++) {
+    newNode->addChild(m_children.at(i)->deepCopy());
+  }
+  //    if (this->m_CompilerProperties) {
+  //        newNode->m_CompilerProperties =
+  //        std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
+  //    } else {
+  //        newNode->m_CompilerProperties = nullptr;
+  //    }
+  return newNode;
+}
+
+ASTNode AST::parseFile(const char *fileName, const char *sourceFilename) {
+  return std::shared_ptr<AST>(parse(fileName, sourceFilename));
+}
+
+vector<LangError> AST::getParseErrors() { return getErrors(); }
+
+string AST::getFilename() const { return m_filename; }
+
+void AST::setFilename(const string &filename) { m_filename = filename; }
+
+void AST::resolveScope(ASTNode scope) {
+  (void)scope;    // To remove warning
+  assert(0 == 1); // Each type should resolve its scope
+}
+
+void AST::addScope(string newScope) { m_scope.push_back(newScope); }
+
+void AST::setRootScope(string scopeName) {
+  if (scopeName != "") {
+    m_scope.insert(m_scope.begin(), scopeName);
+  }
+}
+
+size_t AST::getScopeLevels() { return m_scope.size(); }
+
+string AST::getScopeAt(unsigned int scopeLevel) {
+  return m_scope.at(scopeLevel);
+}
+
+vector<string> AST::getNamespaceList() { return m_scope; }
+
+void AST::setNamespaceList(vector<string> list) { m_scope = list; }
+
+void AST::setCompilerProperty(string propertyName, ASTNode value) {
+  if (!m_CompilerProperties) {
+    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
+  }
+  for (auto child : m_CompilerProperties->getChildren()) {
+    if (child->getNodeType() == AST::Property) {
+      std::shared_ptr<PropertyNode> prop =
+          static_pointer_cast<PropertyNode>(child);
+      if (prop->getName() ==
+          propertyName) { // if property already exists replace
+        prop->replaceValue(value);
+        return;
+      }
     }
-//    if (this->m_CompilerProperties) {
-//        newNode->m_CompilerProperties = std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
-//    } else {
-//        newNode->m_CompilerProperties = nullptr;
-//    }
-    return newNode;
+  }
+  std::shared_ptr<PropertyNode> newProp =
+      std::make_shared<PropertyNode>(propertyName, value, __FILE__, __LINE__);
+  m_CompilerProperties->addChild(newProp);
 }
 
-ASTNode AST::parseFile(const char *fileName, const char* sourceFilename)
-{
-    return std::shared_ptr<AST>(parse(fileName, sourceFilename));
-}
-
-vector<LangError> AST::getParseErrors()
-{
-    return getErrors();
-}
-
-string AST::getFilename() const
-{
-    return m_filename;
-}
-
-void AST::setFilename(const string &filename)
-{
-    m_filename = filename;
-}
-
-void AST::resolveScope(ASTNode scope)
-{
-    (void) scope; // To remove warning
-    assert(0 == 1); // Each type should resolve its scope
-}
-
-void AST::addScope(string newScope)
-{
-    m_scope.push_back(newScope);
-}
-
-void AST::setRootScope(string scopeName)
-{
-    if (scopeName != "") {
-        if (m_scope.size() == 0 || m_scope.at(0) != scopeName) {
-            m_scope.insert(m_scope.begin(), scopeName);
-        }
-    }
-}
-
-
-size_t AST::getScopeLevels()
-{
-    return m_scope.size();
-}
-
-string AST::getScopeAt(unsigned int scopeLevel)
-{
-    return m_scope.at(scopeLevel);
-}
-
-vector<string> AST::getNamespaceList()
-{
-    return m_scope;
-}
-
-void AST::setNamespaceList(vector<string> list)
-{
-    m_scope = list;
-}
-
-void AST::setCompilerProperty(string propertyName, ASTNode value)
-{
-    if (!m_CompilerProperties) {
-        m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
-    }
-    for (auto child: m_CompilerProperties->getChildren()) {
-        if (child->getNodeType() == AST::Property) {
-            std::shared_ptr<PropertyNode> prop = static_pointer_cast<PropertyNode>(child);
-            if (prop->getName() == propertyName) { // if property already exists replace
-                prop->replaceValue(value);
-                return;
-            }
-        }
-    }
-    std::shared_ptr<PropertyNode> newProp = std::make_shared<PropertyNode>(propertyName, value, __FILE__, __LINE__);
-    m_CompilerProperties->addChild(newProp);
-}
-
-ASTNode AST::getCompilerProperty(string propertyName)
-{
-    if (!m_CompilerProperties) {
-        return nullptr;
-    }
-    for (auto child: m_CompilerProperties->getChildren()) {
-        if (child->getNodeType() == AST::Property) {
-            std::shared_ptr<PropertyNode> prop = static_pointer_cast<PropertyNode>(child);
-            if (prop->getName() == propertyName) { // if property already exists replace
-                return prop->getValue();
-            }
-        }
-    }
+ASTNode AST::getCompilerProperty(string propertyName) {
+  if (!m_CompilerProperties) {
     return nullptr;
+  }
+  for (auto child : m_CompilerProperties->getChildren()) {
+    if (child->getNodeType() == AST::Property) {
+      std::shared_ptr<PropertyNode> prop =
+          static_pointer_cast<PropertyNode>(child);
+      if (prop->getName() ==
+          propertyName) { // if property already exists replace
+        return prop->getValue();
+      }
+    }
+  }
+  return nullptr;
 }
 
-void AST::appendToPropertyValue(string propertyName, ASTNode value)
-{
-    if (!m_CompilerProperties) {
-        m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
-    }
-    for (auto child: m_CompilerProperties->getChildren()) {
-        if (child->getNodeType() == AST::Property) {
-            std::shared_ptr<PropertyNode> prop = static_pointer_cast<PropertyNode>(child);
-            if (prop->getName() == propertyName) { // if property already exists replace
-                if (prop->getValue()->getNodeType() == AST::List) {
-                    auto list = std::static_pointer_cast<ListNode>(prop->getValue());
-                    list->addChild(value);
-                    return;
-                } else {
-                    assert(0 == 1);
-                }
-            }
+void AST::appendToPropertyValue(string propertyName, ASTNode value) {
+  if (!m_CompilerProperties) {
+    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
+  }
+  for (auto child : m_CompilerProperties->getChildren()) {
+    if (child->getNodeType() == AST::Property) {
+      std::shared_ptr<PropertyNode> prop =
+          static_pointer_cast<PropertyNode>(child);
+      if (prop->getName() ==
+          propertyName) { // if property already exists replace
+        if (prop->getValue()->getNodeType() == AST::List) {
+          auto list = std::static_pointer_cast<ListNode>(prop->getValue());
+          list->addChild(value);
+          return;
+        } else {
+          assert(0 == 1);
         }
+      }
     }
-    auto newProperty = std::make_shared<PropertyNode>(propertyName,
-                                                      std::make_shared<ListNode>(value, __FILE__, __LINE__),
-                                                      __FILE__, __LINE__);
-    m_CompilerProperties->addChild(newProperty);
+  }
+  auto newProperty = std::make_shared<PropertyNode>(
+      propertyName, std::make_shared<ListNode>(value, __FILE__, __LINE__),
+      __FILE__, __LINE__);
+  m_CompilerProperties->addChild(newProperty);
 }

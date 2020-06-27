@@ -3,54 +3,6 @@ constant AudioRate {
     value: 44100 # This will be overwritten by the configuration file
 }
 
-type _CompileOption {
-  typeName: "_compileOption"
-  properties: [
-    typeProperty Name {
-        name: "name"
-        types: [""]
-        default: ""
-        required: on
-    },
-    typeProperty Defines {
-        name: "defines"
-        types: [""]
-        default: ""
-        required: on
-    },
-    typeProperty LinkLibraries {
-        name: "linkLibraries"
-        types: [""]
-        default: ""
-        required: on
-    }
-  ]
-}
-
-type _CompileOptionsGroup {
-  typeName: "_compileOption"
-  properties: [
-    typeProperty Name {
-        name: "name"
-        types: [""]
-        default: ""
-        required: on
-    },
-    typeProperty Options {
-        name: "options"
-        types: [""]
-        default: ""
-        required: on
-    },
-    typeProperty Rules {
-        name: "rules"
-        types: [""]
-        default: ""
-        required: on
-    }
-  ]
-}
-
 _compileOption _RtAudioLinuxPulse {
   name: "Pulse"
   defines: ["__LINUX_PULSE__"]
@@ -74,7 +26,6 @@ _compileOptionsGroup _RtAudioLinuxOptions {
   options: [_RtAudioLinuxPulse, _RtAudioLinuxAlsa, _RtAudioLinuxJack]
   rules: "multiple"
 }
-
 
 
 # ----------------------------------------
@@ -274,7 +225,6 @@ _hwInput AudioIn[_NumInputChannels] {
 }
 
 constant _NumOutputChannels {value: 2}
-
 
 _hwOutput AudioOut[_NumOutputChannels] {
     rate: AudioRate

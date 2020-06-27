@@ -82,8 +82,8 @@ public:
 
   vector<ASTNode> getOptionTrees();
 
-  ASTNode getImportTree(QString importName, QString importAs,
-                        QString platformName);
+  ASTNode loadImportTree(string importName, string importAs,
+                         string platformName = "");
 
   void generateDomainConnections(ASTNode tree);
 

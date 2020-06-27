@@ -813,8 +813,8 @@ void ParserTest::testDomains() {
   block = CodeValidator::findDeclaration(std::string("Signal"), {}, tree);
   QVERIFY(block->getNodeType() == AST::Declaration);
   auto domainBlock = static_cast<BlockNode *>(block->getDomain().get());
-  QVERIFY(domainBlock->getNodeType() == AST::None);
-  //  QVERIFY(domainBlock->getName() == "AudioDomain");
+  //  QVERIFY(domainBlock->getNodeType() == AST::None);
+  QVERIFY(domainBlock->getName() == "AudioDomain");
 
   // AudioIn[1] >> ValueInOSCDomain >> AudioOut[2];
 

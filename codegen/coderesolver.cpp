@@ -148,47 +148,43 @@ void CodeResolver::processSystem() {
 
   // Process includes for system
   // Import root library
-  ASTNode importTree = m_system->getImportTree("", "", "");
+  ASTNode importTree = m_system->loadImportTree("", "");
   m_importTrees[""] = std::vector<ASTNode>();
   if (importTree) {
     m_importTrees[""].push_back(importTree);
   }
 
-  //  auto usedFrameworks = CodeValidator::getUsedFrameworks(tree);
-
   auto frameworkNames = m_system->getFrameworkNames();
   frameworkNames.insert(frameworkNames.begin(),
                         std::string()); // Add library as well
 
-  for (auto framework : frameworkNames) {
-    // Import root framework
-    auto fwImportTree =
-        m_system->getImportTree("", "", QString::fromStdString(framework));
-    if (fwImportTree) {
-      m_importTrees[""].push_back(fwImportTree);
-    }
-
-    bool imported = false;
-    for (auto import : importList) {
-      std::string importName = import->importName();
-      std::string importAlias = import->importAlias();
-
-      ASTNode importTree =
-          m_system->getImportTree(QString::fromStdString(importName),
-                                  QString::fromStdString(importAlias),
-                                  QString::fromStdString(framework));
-      if (importTree) {
-        m_importTrees[importAlias].push_back(importTree);
-      } else {
-        vector<LangError> errors = AST::getParseErrors();
-        if (errors.size() > 0) {
-          qDebug() << "Cannot import '" << QString::fromStdString(importName)
-                   << "'. Ignoring.";
-          for (LangError error : errors) {
-            qDebug() << QString::fromStdString(error.getErrorText());
-          }
+  for (auto import : importList) {
+    std::string importName = import->importName();
+    std::string importAlias = import->importAlias();
+    ASTNode importTree = m_system->loadImportTree(importName, importAlias);
+    if (importTree) {
+      m_importTrees[importAlias].push_back(importTree);
+    } else {
+      vector<LangError> errors = AST::getParseErrors();
+      if (errors.size() > 0) {
+        qDebug() << "Cannot import '" << QString::fromStdString(importName)
+                 << "'. Ignoring.";
+        for (LangError error : errors) {
+          qDebug() << QString::fromStdString(error.getErrorText());
         }
       }
+    }
+  }
+
+  auto platformDomain = m_system->getPlatformDomain();
+
+  for (auto objects : m_system->getBuiltinObjectsReference()) {
+    auto domainDecl = CodeValidator::findDeclaration(
+        CodeValidator::streamMemberName(platformDomain),
+        {{std::string(), objects.second}}, m_tree);
+    if (domainDecl) {
+      m_tree->addChild(domainDecl);
+      break;
     }
   }
 }
@@ -1196,7 +1192,8 @@ void CodeResolver::insertBuiltinObjectsForNode(
         std::shared_ptr<DeclarationNode> declaration =
             CodeValidator::findDeclaration(
                 QString::fromStdString(func->getName()),
-                {{it->first, objectTree->getChildren()}}, nullptr);
+                {{it->first, objectTree->getChildren()}}, nullptr,
+                func->getNamespaceList());
         if (declaration && !existingDecl) {
           //                declaration->setRootScope(it->first);
           //          for (auto child :
@@ -1331,10 +1328,7 @@ void CodeResolver::insertBuiltinObjectsForNode(
         auto declaration = CodeValidator::findDeclaration(
             name->getName(), {{it->first, objectTree->getChildren()}}, tree,
             name->getNamespaceList());
-        if (declaration /*&& !CodeValidator::findDeclaration(
-                  QString::fromStdString(name->getName()), {},
-                  tree, name->getNamespaceList())*/) {
-          //                declaration->setRootScope(it->first);
+        if (declaration) {
           if (!blockList.contains(declaration)) {
             blockList << declaration;
           }
@@ -1342,20 +1336,17 @@ void CodeResolver::insertBuiltinObjectsForNode(
       }
     }
     for (auto usedBlock : blockList) {
-
-      auto existingDeclaration =
-          CodeValidator::findDeclaration(usedBlock->getName(), {}, tree);
+      auto frameworkNode = usedBlock->getCompilerProperty("framework");
+      std::string framework;
+      if (frameworkNode && frameworkNode->getNodeType() == AST::String) {
+        framework =
+            static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
+      }
+      auto existingDeclaration = CodeValidator::findDeclaration(
+          usedBlock->getName(), {}, tree, usedBlock->getNamespaceList(),
+          framework);
       if (!existingDeclaration) {
         tree->addChild(usedBlock);
-        //      for (auto it = objects.begin(); it != objects.end(); it++) {
-        //        vector<ASTNode> &namespaceObjects = it->second;
-        //        auto position = std::find(namespaceObjects.begin(),
-        //                                  namespaceObjects.end(),
-        //                                  usedBlock);
-        //        if (position != namespaceObjects.end()) {
-        //          namespaceObjects.erase(position);
-        //        }
-        //      }
         insertBuiltinObjectsForNode(usedBlock, objects, tree);
       }
     }
@@ -1364,13 +1355,12 @@ void CodeResolver::insertBuiltinObjectsForNode(
     auto bundle = static_pointer_cast<BundleNode>(node);
     for (auto it = objects.begin(); it != objects.end(); it++) {
       for (auto objectTree : it->second) {
+        // FIXME This will get all declarations from all frameworks and it's
+        // likely they won't all be needed
         auto declaration = CodeValidator::findDeclaration(
             bundle->getName(), {{it->first, objectTree->getChildren()}}, tree,
             bundle->getNamespaceList());
-        if (declaration /*&& !CodeValidator::findDeclaration(
-                               QString::fromStdString(bundle->getName()), {},
-                               tree, bundle->getNamespaceList())*/) {
-          //                declaration->setRootScope(it->first);
+        if (declaration) {
           if (!blockList.contains(declaration)) {
             blockList << declaration;
           }
@@ -1378,8 +1368,15 @@ void CodeResolver::insertBuiltinObjectsForNode(
       }
     }
     for (auto usedBlock : blockList) {
+      auto frameworkNode = usedBlock->getCompilerProperty("framework");
+      std::string framework;
+      if (frameworkNode && frameworkNode->getNodeType() == AST::String) {
+        framework =
+            static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
+      }
       auto existingDeclaration =
-          CodeValidator::findDeclaration(usedBlock->getName(), {}, tree);
+          CodeValidator::findDeclaration(usedBlock->getName(), {}, tree,
+                                         bundle->getNamespaceList(), framework);
       if (!existingDeclaration) {
         tree->addChild(usedBlock);
         //      for (auto it = objects.begin(); it != objects.end(); it++) {

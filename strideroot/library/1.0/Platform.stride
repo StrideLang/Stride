@@ -162,6 +162,12 @@ type _ResourceType {
 			default: []
 			required: off
 		},
+		typeProperty Initializations {
+			name: "initializations"
+			types: [""]
+			default: []
+			required: off
+		},
 		typeProperty ResourceIncludes {
 			name: "resourceIncludes"
 			types: [""]
@@ -170,6 +176,12 @@ type _ResourceType {
 		},
 		typeProperty ResourceDeclarations {
 			name: "resourceDeclarations"
+			types: [""]
+			default: ""
+			required: off
+		},
+		typeProperty Properties {
+			name: "properties"
 			types: [""]
 			default: ""
 			required: off

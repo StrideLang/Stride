@@ -37,6 +37,9 @@ _domainDefinition SerialDomain {
 		"bool serialthread_running {true};",
 		"std::thread serialReadThread(serial_thread_func);"]
     domainInitializationCode: ""
+    	domainProcessingCode: '
+    // Serial domain
+    '
 	domainFunctionCode: "
 void serial_thread_func() {
 		std::string mLineBuffer;
@@ -49,9 +52,45 @@ void serial_thread_func() {
   const unsigned int bufferSize = 4096;
   uint8_t buffer[bufferSize];
   while (serialthread_running) {
-    //        size_t bytes_wrote = my_serial.write(test_string);
     auto nextTime = std::chrono::high_resolution_clock::now() + std::chrono::nanoseconds(mGranularity);
-    try {
+//[[Processing]]
+//[[/Processing]]
+
+
+  }
+}
+	"
+    domainCleanupCode: '
+	serialthread_running = false;
+	serialReadThread.join();
+	std::cout << "Serial Thread joined." << std::endl;
+	'
+}
+
+
+_domainDefinition SerialOutDomain {
+	domainName: "SerialOutDomain"
+	framework: _RtAudioFramework
+	parentDomain: SerialDomain
+	rate: 0
+  domainInitializationCode: ''
+	domainFunctionCode: ''
+	domainProcessingCode: '//[[Processing]]
+//[[/Processing]]
+
+    //        size_t bytes_wrote = my_serial.write(test_string);
+'
+    domainCleanupCode: ''
+}
+
+_domainDefinition SerialInDomain {
+	domainName: "SerialInDomain"
+	framework: _RtAudioFramework
+	parentDomain: SerialDomain
+	rate: 0
+  domainInitializationCode: '// Init SerialInDomain'
+	domainFunctionCode: '//SerialInDomain()'
+	domainProcessingCode: "    try {
       size_t count = serialPort.read(buffer, bufferSize);
 //      mRingBuffer.write((char *) buffer, count);
 //      onInput(buffer, count);
@@ -91,15 +130,8 @@ void serial_thread_func() {
     } catch (const serial::IOException &/*e*/) {
       serialthread_running = false;
 
-    }
-  }
-}
-	"
-    domainCleanupCode: '
-	serialthread_running = false;
-	serialReadThread.join();
-	std::cout << "Serial Thread joined." << std::endl;
-	'
+    }"
+    domainCleanupCode: '// Cleanup SerialInDomain'
 }
 
 _domainDefinition SerialChannelDomain {
@@ -118,6 +150,36 @@ _domainDefinition SerialChannelDomain {
 
 # Serial ------------------------
 
+
+platformBlock _SerialOutput {
+    typeName: '_serialOutput'
+#	numInputs: 0
+	inputs: ["real"]
+#    include: []
+#    linkTo: []
+#    declarations: ['']
+#    initializations: [""]
+    processing: "// Serial in[%%bundle_index%%] =  %%intoken:0%%;"
+    domain: SerialOutDomain
+	rate: SerialProcessRate
+    inherits: [_Signal]
+}
+
+
+platformBlock _SerialInput {
+    typeName: '_serialInput'
+#	numInputs: 0
+	outputs: ["real"]
+#    include: []
+#    linkTo: []
+#    declarations: ['']
+#    initializations: [""]
+    processing: "// Serial in[%%bundle_index%%] =  %%intoken:0%%;"
+    domain: SerialInDomain
+	rate: SerialProcessRate
+    inherits: [_Signal]
+}
+
 platformBlock _SerialPrintType {
     typeName: '_serialPrintType'
 	inputs: ["string", "string"]
@@ -131,12 +193,7 @@ platformBlock _SerialPrintType {
 "
     inherits: [_Signal]
 }
-#
-##ifdef _WIN32
-#//      Sleep(milliseconds); // 100 ms
-##else
-#//      usleep(milliseconds*1000); // 100 ms
-##endif
+
 
 platformModule SerialChannelIn {
 	domain: SerialChannelDomain
@@ -159,42 +216,16 @@ platformModule SerialChannelIn {
     inherits: [_Signal]
 }
 
+constant _NumSerialInChannels {value: 2}
 
-platformModule SerialChannelOut {
-	domain: SerialChannelDomain
-	inputs: [""]
-	outputs: []
-	ports: [
-		_platformModulePort IdPort {
-			name: "id"
-			default: 0
-		}
-	]
-	declarations: ['']
-	initializations: [ '' ]
-	globalDeclarations: []
-	globalInitializations: []
-	preProcessing: ''
-    processing: 'serialPort.write(("%%property:id%%:" + std::to_string(%%intokens:0%%)).c_str());'
-	postProcessing: ''
-    inherits: [_Signal]
+_serialInput SerialIn[_NumSerialInChannels] {
+    rate: SerialProcessRate
+    domain: SerialInDomain
 }
 
+constant _NumSerialOutChannels {value: 2}
 
-
-
-platformModule SerialIn {
-	domain: SerialDomain
-	inputs: ["real"]
-	outputs: []
-	ports: [
-	]
-	declarations: ['']
-	initializations: [ '' ]
-	globalDeclarations: []
-	globalInitializations: []
-	preProcessing: ''
-    processing: '// Serial In Processing *******'
-	postProcessing: ''
-    inherits: [_Signal] 
+_serialOutput SerialOut[_NumSerialOutChannels] {
+    rate: SerialProcessRate
+    domain: SerialOutDomain
 }

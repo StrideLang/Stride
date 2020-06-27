@@ -105,7 +105,8 @@ DISTFILES += \
     data/L01_library_types_validation.stride \
     data/E07_namespaces.stride \
     data/P13_reset_registration.stride \
-    data/P12_trigger_registration.stride
+    data/P12_trigger_registration.stride \
+    data/S01_system.stride
 
 # Link to codegen library
 
