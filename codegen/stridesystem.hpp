@@ -85,6 +85,8 @@ public:
   ASTNode loadImportTree(string importName, string importAs,
                          string platformName = "");
 
+  std::string getFrameworkAlias(std::string frameworkName);
+
   void generateDomainConnections(ASTNode tree);
 
   ConnectionNodes getDomainChangeStreams(std::string previousDomainId,

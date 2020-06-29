@@ -655,6 +655,15 @@ ASTNode StrideSystem::loadImportTree(std::string importName,
   return nullptr;
 }
 
+string StrideSystem::getFrameworkAlias(string frameworkName) {
+  for (auto platform : m_frameworks) {
+    if (frameworkName == platform->getFramework()) {
+      return platform->getRootNamespace();
+    }
+  }
+  return frameworkName;
+}
+
 void StrideSystem::generateDomainConnections(ASTNode tree) {
   std::vector<ASTNode> newChildren;
   for (auto node : tree->getChildren()) {

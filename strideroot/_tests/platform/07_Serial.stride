@@ -1,0 +1,7 @@
+use DesktopAudio version 1.0
+
+import Serial
+
+AudioIn[0] >> SerialOut[0];
+
+SerialIn[1] >> AudioOut[1];
