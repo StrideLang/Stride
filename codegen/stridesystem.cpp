@@ -623,8 +623,9 @@ ASTNode StrideSystem::loadImportTree(std::string importName,
             //                                              __LINE__));
             // FIXME check if we are bashing an existing name in the tree.
 
-            size_t indexExtension = file.toStdString().find(".stride");
-            string scopeName = file.toStdString().substr(0, indexExtension);
+            //            size_t indexExtension =
+            //            file.toStdString().find(".stride"); string scopeName =
+            //            file.toStdString().substr(0, indexExtension);
 
             if (importAs.size() > 0) {
               node->appendToPropertyValue(

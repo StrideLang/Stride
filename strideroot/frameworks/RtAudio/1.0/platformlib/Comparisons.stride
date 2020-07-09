@@ -1,5 +1,3 @@
-
-
 platformModule __Select {
     inputs: ["bool", "any", "any"]
 	outputs: ["any"]
@@ -22,13 +20,12 @@ platformModule __ChooseType {
     inherits: [_Signal]
 }
 
-
 platformModule __Greater {
     inputs: ["real", "real"]
 	outputs: ["bool"]
 #    linkTo: []
 #    declarations: ['']
-#    initializations: ["// %%token%% = 0;"]
+    initializations: ["// CPP Greater Init"]
     processing: "%%intokens:0%% > %%intokens:1%%"
     inherits: [_Signal]
 }

@@ -1,11 +1,43 @@
+platformModule __Select {
+    inputs: ["bool", "any", "any"]
+	outputs: ["any"]
+#    include: []
+#    linkTo: []
+#    declarations: ['']
+    initializations: []
+    processing: "%%intokens:0%% ? %%intokens:1%% : %%intokens:2%%"
+    inherits: [_Signal]
+}
+
+platformModule __ChooseType {
+    inputs: ["bool", "any", "any"]
+	outputs: ["any"]
+#    include: []
+#    linkTo: []
+#    declarations: []
+    initializations: ["// %%token%% = 0;"]
+    processing: "%%intokens:0%% ? %%intokens:1%% : %%intokens:2%%"
+    inherits: [_Signal]
+}
 
 platformModule __Greater {
+    inputs: ["real", "real"]
+	outputs: ["bool"]
+#    include: []
+#    linkTo: []
+    declarations: ['//  Wiring Greater']
+    initializations: ["//  Wiring Greater"]
+    processing: "%%intokens:0%% > %%intokens:1%%"
+    inherits: [_Signal]
+}
+
+platformModule __GreaterOrEqual {
     inputs: ["real", "real"]
 	outputs: ["bool"]
 #    linkTo: []
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
-    processing: "%%intoken:0%% > %%intoken:1%%"
+    processing: "%%intokens:0%% >= %%intokens:1%%"
     inherits: [_Signal]
 }
 
@@ -15,17 +47,36 @@ platformModule __Equal {
 #    linkTo: []
 #    declarations: ['']
 #    initializations: ["// %%token%% = 0;"]
-    processing: "%%intoken:0%% == %%intoken:1%%"
+    processing: "%%intokens:0%% == %%intokens:1%%"
     inherits: [_Signal]
 }
 
-platformModule __Select {
-    inputs: ["bool", "any", "any"]
-	outputs: ["any"]
-#    include: []
+platformModule __LessOrEqual {
+    inputs: ["real", "real"]
+	outputs: ["bool"]
 #    linkTo: []
 #    declarations: ['']
-    initializations: ["// %%token%% = 0;"]
-    processing: "%%intoken:0%% ? %%intoken:1%% : %%intoken:2%%"
+#    initializations: ["// %%token%% = 0;"]
+    processing: "%%intokens:0%% <= %%intokens:1%%"
+    inherits: [_Signal]
+}
+
+platformModule __Less {
+    inputs: ["real", "real"]
+	outputs: ["bool"]
+#    linkTo: []
+#    declarations: ['']
+#    initializations: ["// %%token%% = 0;"]
+    processing: "%%intokens:0%% < %%intokens:1%%"
+    inherits: [_Signal]
+}
+
+platformModule _NotEqual {
+    inputs: ["real", "real"]
+	outputs: ["bool"]
+#    linkTo: []
+#    declarations: ['']
+#    initializations: ["// %%token%% = 0;"]
+    processing: "%%intokens:0%% != %%intokens:1%%"
     inherits: [_Signal]
 }

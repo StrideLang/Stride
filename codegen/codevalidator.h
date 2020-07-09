@@ -69,9 +69,14 @@ public:
                   string platform = std::string());
   static std::shared_ptr<DeclarationNode>
   findDeclaration(QString streamMemberName, const ScopeStack &scopeStack,
-                  ASTNode tree, vector<string> scope = vector<string>());
+                  ASTNode tree, vector<string> namespaceList = vector<string>(),
+                  string platform = std::string());
   static std::shared_ptr<DeclarationNode>
   getDeclaration(ASTNode node); // Retrieve stored declaration
+
+  static std::vector<std::shared_ptr<DeclarationNode>>
+  findAllDeclarations(std::string objectName, const ScopeStack &scopeStack,
+                      ASTNode tree, vector<string> namespaces);
 
   static std::string streamMemberName(ASTNode node);
   static PortType resolveBundleType(BundleNode *bundle, ScopeStack scopeStack,
@@ -116,10 +121,11 @@ public:
                     QString portName, ScopeStack scope, ASTNode tree);
   static std::shared_ptr<DeclarationNode> findTypeDeclarationByName(
       string typeName, ScopeStack scope, ASTNode tree,
-      std::vector<std::string> namespaces = std::vector<std::string>());
+      std::vector<std::string> namespaces = std::vector<std::string>(),
+      string currentFramework = "");
   static std::shared_ptr<DeclarationNode>
   findTypeDeclaration(std::shared_ptr<DeclarationNode> decl, ScopeStack scope,
-                      ASTNode tree);
+                      ASTNode tree, string currentFramework = "");
   static std::shared_ptr<DeclarationNode>
   findDomainDeclaration(string domainName, ASTNode tree);
   static std::shared_ptr<DeclarationNode>
@@ -132,7 +138,8 @@ public:
                        ASTNode tree);
   static QVector<ASTNode> getPortsForType(std::string typeName,
                                           ScopeStack scope, ASTNode tree,
-                                          std::vector<string> namespaces);
+                                          std::vector<string> namespaces,
+                                          string framework = "");
   static QVector<ASTNode>
   getInheritedPorts(std::shared_ptr<DeclarationNode> block, ScopeStack scope,
                     ASTNode tree);
@@ -230,7 +237,8 @@ public:
   static ASTNode getInstance(ASTNode block, ScopeStack scopeStack,
                              ASTNode tree);
   static bool namespaceMatch(std::vector<string> scopeList,
-                             std::shared_ptr<DeclarationNode> decl);
+                             std::shared_ptr<DeclarationNode> decl,
+                             string currentFramework = "");
 
   static vector<StreamNode *> getStreamsAtLine(ASTNode tree, int line);
 
@@ -245,7 +253,8 @@ private:
 
   void validatePlatform(ASTNode node, ScopeStack scopeStack);
   void validateTypes(ASTNode node, ScopeStack scopeStack,
-                     vector<string> parentNamespace = vector<string>());
+                     vector<string> parentNamespace = vector<string>(),
+                     std::string framework = "");
   void validateStreamMembers(StreamNode *node, ScopeStack scopeStack);
   void validateBundleIndeces(ASTNode node, ScopeStack scope);
   void validateBundleSizes(ASTNode node, ScopeStack scope);

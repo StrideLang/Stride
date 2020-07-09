@@ -61,7 +61,7 @@ std::string LangError::getErrorText() {
   case InvalidPortType:
     errorText += "Invalid port type Error. Port '" + errorTokens[1] +
                  "' in Block '" + errorTokens[0] + "' expects '" +
-                 errorTokens[2] + "'" + "' given '" + errorTokens[1] + "'";
+                 errorTokens[3] + "'" + "' given '" + errorTokens[2] + "'";
     break;
   case IndexMustBeInteger:
     errorText += "Index to array must be integer ";

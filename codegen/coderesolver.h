@@ -72,7 +72,8 @@ public:
   static void fillDefaultPropertiesForNode(ASTNode node, ASTNode tree);
   static void insertBuiltinObjectsForNode(ASTNode node,
                                           map<string, vector<ASTNode>> &objects,
-                                          ASTNode tree);
+                                          ASTNode tree,
+                                          string currentFramework = "");
   static std::shared_ptr<DeclarationNode>
   createSignalDeclaration(QString name, int size, ScopeStack scope,
                           ASTNode tree);
@@ -106,6 +107,8 @@ private:
   void analyzeConnections();
   void storeDeclarations();
   void analyzeParents();
+
+  void printTree();
 
   // Sub functions
   void resolveStreamRatesReverse(std::shared_ptr<StreamNode> stream);

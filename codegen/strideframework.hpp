@@ -44,7 +44,7 @@
 
 #include "ast.h"
 #include "declarationnode.h"
-#import "valuenode.h"
+#include "valuenode.h"
 
 class StrideFramework {
 public:
