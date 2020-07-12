@@ -119,7 +119,7 @@ type _Module {
 			required: off
 		}
 	]
-	inherits: [_DomainMember]
+	inherits: [_Base]
 	meta: "Modules encapsulate streams"
 }
 
@@ -151,7 +151,7 @@ type _Reaction {
 			required: off
 		}
 	]
-	inherits: [_DomainMember]
+	inherits: [_Base]
 }
 
 type _Loop {
@@ -200,5 +200,5 @@ type _Loop {
 			required: off
 		}
 	]
-	inherits: [_DomainMember]
+	inherits: [_Base]
 }

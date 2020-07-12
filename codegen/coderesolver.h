@@ -84,10 +84,13 @@ public:
   static std::shared_ptr<ValueNode>
   reduceConstExpression(std::shared_ptr<ExpressionNode> expr, ScopeStack scope,
                         ASTNode tree);
-  static std::shared_ptr<ValueNode>
-  resolveConstant(ASTNode value, ScopeStack scope, ASTNode tree);
+  static std::shared_ptr<ValueNode> resolveConstant(ASTNode value,
+                                                    ScopeStack scope,
+                                                    ASTNode tree,
+                                                    string framework = "");
   static void resolveConstantsInNode(ASTNode node, ScopeStack scope,
-                                     ASTNode tree);
+                                     ASTNode tree,
+                                     string currentFramework = "");
 
 private:
   // Main processing functions

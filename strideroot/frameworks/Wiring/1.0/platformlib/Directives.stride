@@ -3,11 +3,11 @@ generatorDirectives __GeneratorDirectives {
     templateFiles: ["template.ino"]
     destinationDir: "Wiring-code"
     buildDir: "build"
-    configCommand: "cmake -DSTRIDE_PLATFORM_ROOT=%platformroot% .."
     configCommand: ["cmake",  "-DSTRIDE_PLATFORM_ROOT=%platformRoot%", ".."]
     buildCommand: ["cmake", "--build", "."]
-    target: "app"
-    targetDir: "Wiring-code/build"
+    # No target for Wiring platform build.
+#    target: "app"
+#    targetDir: "Wiring-code/build"
     codeGenerator: "pufferfish"
     codeGeneratorMajorVersion: 1
     codeGeneratorMinroVersion: 0

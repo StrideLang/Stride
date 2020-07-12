@@ -168,6 +168,17 @@ std::vector<string> CodeValidator::getUsedDomains(ASTNode tree) {
           nextNode = nullptr;
         }
       }
+    } else if (node->getNodeType() == AST::Declaration ||
+               node->getNodeType() == AST::BundleDeclaration) {
+      auto decl = static_pointer_cast<DeclarationNode>(node);
+      auto domainName =
+          CodeValidator::getNodeDomainName(decl, ScopeStack(), tree);
+      if (domainName.size() > 0) {
+        if (std::find(domains.begin(), domains.end(), domainName) ==
+            domains.end()) {
+          domains.push_back(domainName);
+        }
+      }
     }
   }
   return domains;
@@ -188,11 +199,19 @@ string CodeValidator::getFrameworkForDomain(string domainName, ASTNode tree) {
               return static_cast<ValueNode *>(frameworkNameValue.get())
                   ->getStringValue();
             } else if (frameworkNameValue->getNodeType() == AST::Block) {
-              BlockNode *fwBlock =
-                  static_cast<BlockNode *>(frameworkNameValue.get());
+              auto fwBlock = static_pointer_cast<BlockNode>(frameworkNameValue);
+
+              auto declImportFramework = decl->getCompilerProperty("framework");
+              std::string frameworkName;
+              if (declImportFramework) {
+                frameworkName =
+                    static_pointer_cast<ValueNode>(declImportFramework)
+                        ->getStringValue();
+              }
               std::shared_ptr<DeclarationNode> fwDeclaration =
                   CodeValidator::findDeclaration(
-                      QString::fromStdString(fwBlock->getName()), {}, tree);
+                      QString::fromStdString(fwBlock->getName()), {}, tree,
+                      fwBlock->getNamespaceList(), frameworkName);
               if (fwDeclaration &&
                   (fwDeclaration->getObjectType() == "_frameworkDescription")) {
                 ASTNode frameworkName =
@@ -1919,6 +1938,7 @@ std::shared_ptr<DeclarationNode> CodeValidator::findDeclaration(
         std::string name = decl->getName();
         if (name == objectName) {
           if (CodeValidator::namespaceMatch(scopesList, decl, platform)) {
+            // domain declarations need not
             //            if (platform.size() > 0) {
             //              auto platformNode =
             //              decl->getCompilerProperty("framework"); if

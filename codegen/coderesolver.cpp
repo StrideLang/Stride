@@ -2665,7 +2665,8 @@ CodeResolver::reduceConstExpression(std::shared_ptr<ExpressionNode> expr,
 }
 
 std::shared_ptr<ValueNode>
-CodeResolver::resolveConstant(ASTNode value, ScopeStack scope, ASTNode tree) {
+CodeResolver::resolveConstant(ASTNode value, ScopeStack scope, ASTNode tree,
+                              std::string framework) {
   std::shared_ptr<ValueNode> newValue = nullptr;
   if (value->getNodeType() == AST::Expression) {
     std::shared_ptr<ExpressionNode> expr =
@@ -2675,7 +2676,7 @@ CodeResolver::resolveConstant(ASTNode value, ScopeStack scope, ASTNode tree) {
   } else if (value->getNodeType() == AST::Block) {
     BlockNode *name = static_cast<BlockNode *>(value.get());
     std::shared_ptr<DeclarationNode> block = CodeValidator::findDeclaration(
-        QString::fromStdString(name->getName()), scope, tree);
+        name->getName(), scope, tree, name->getNamespaceList(), framework);
     if (block && block->getNodeType() == AST::Declaration &&
         block->getObjectType() == "constant") { // Size == 1
       //            string namespaceValue = name->getScopeAt(0);
@@ -2691,6 +2692,7 @@ CodeResolver::resolveConstant(ASTNode value, ScopeStack scope, ASTNode tree) {
       return newValue;
     }
   } else if (value->getNodeType() == AST::Bundle) {
+    // What does this mean??
   } else if (value->getNodeType() == AST::PortProperty) {
     PortPropertyNode *propertyNode =
         static_cast<PortPropertyNode *>(value.get());
@@ -2713,7 +2715,8 @@ CodeResolver::resolveConstant(ASTNode value, ScopeStack scope, ASTNode tree) {
 }
 
 void CodeResolver::resolveConstantsInNode(ASTNode node, ScopeStack scope,
-                                          ASTNode tree) {
+                                          ASTNode tree,
+                                          std::string currentFramework) {
   if (node->getNodeType() == AST::Stream) {
     std::shared_ptr<StreamNode> stream = static_pointer_cast<StreamNode>(node);
     resolveConstantsInNode(stream->getLeft(), scope, tree);
@@ -2772,18 +2775,38 @@ void CodeResolver::resolveConstantsInNode(ASTNode node, ScopeStack scope,
         scope.push_back({decl->getName(), blocks});
       }
     }
-    if (decl->getObjectType() != "type") {
-      // FIXME This is a hack to protect constants that are context dependent.
-      // Should the language mark this?
-      for (std::shared_ptr<PropertyNode> property : properties) {
-        resolveConstantsInNode(property->getValue(), scope, tree);
-        std::shared_ptr<ValueNode> newValue =
-            resolveConstant(property->getValue(), scope, tree);
-        if (newValue) {
-          property->replaceValue(newValue);
-        }
+    // FIXME This is a hack to protect constants that are context dependent.
+    // Should the language mark this?
+    //    if (decl->getObjectType() != "type") {
+
+    auto frameworkNode = node->getCompilerProperty("framework");
+    std::string frameworkName;
+    if (frameworkNode) {
+      frameworkName =
+          static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
+    }
+    if (frameworkName == "") {
+      // Now try to see if domain belongs to a framework
+
+      auto domainId =
+          CodeValidator::getNodeDomainName(node, ScopeStack(), tree);
+
+      frameworkName = CodeValidator::getFrameworkForDomain(domainId, tree);
+    }
+
+    for (std::shared_ptr<PropertyNode> property : properties) {
+      resolveConstantsInNode(property->getValue(), scope, tree, frameworkName);
+      std::shared_ptr<ValueNode> newValue =
+          resolveConstant(property->getValue(), scope, tree, frameworkName);
+      if (!newValue) {
+        // try to resolve on global namespace
+        newValue = resolveConstant(property->getValue(), scope, tree);
+      }
+      if (newValue) {
+        property->replaceValue(newValue);
       }
     }
+    //    }
   } else if (node->getNodeType() == AST::BundleDeclaration) {
     std::shared_ptr<DeclarationNode> decl =
         static_pointer_cast<DeclarationNode>(node);
@@ -2796,35 +2819,27 @@ void CodeResolver::resolveConstantsInNode(ASTNode node, ScopeStack scope,
         scope.push_back({decl->getName(), blocks});
       }
     }
+
+    auto frameworkNode = node->getCompilerProperty("framework");
+    std::string frameworkName;
+    if (frameworkNode) {
+      frameworkName =
+          static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
+    }
+
     for (std::shared_ptr<PropertyNode> property : properties) {
-      resolveConstantsInNode(property->getValue(), scope, tree);
+      resolveConstantsInNode(property->getValue(), scope, tree, frameworkName);
       std::shared_ptr<ValueNode> newValue =
-          resolveConstant(property->getValue(), scope, tree);
+          resolveConstant(property->getValue(), scope, tree, frameworkName);
+      if (!newValue) {
+        // try to resolve on global namespace
+        newValue = resolveConstant(property->getValue(), scope, tree);
+      }
       if (newValue) {
         property->replaceValue(newValue);
       }
     }
     std::shared_ptr<BundleNode> bundle = decl->getBundle();
-    //        std::shared_ptr<ListNode> indexList = bundle->index();
-    //        vector<ASTNode > elements = indexList->getChildren();
-    //        for (ASTNode element : elements) {
-    //            if (element->getNodeType() == AST::Expression) {
-    //                std::shared_ptr<ExpressionNode> expr =
-    //                static_pointer_cast<ExpressionNode>(element);
-    //                resolveConstantsInNode(expr, scope);
-    //                std::shared_ptr<ValueNode> newValue =
-    //                reduceConstExpression(expr, scope, m_tree); if
-    //                (newValue)
-    //                {
-    //                    indexList->replaceMember(newValue, element);
-    //                }
-    //            } else if (element->getNodeType() == AST::Block) {
-    //                std::shared_ptr<ValueNode> newValue =
-    //                resolveConstant(element, scope); if (newValue) {
-    //                    indexList->replaceMember(newValue, element);
-    //                }
-    //            }
-    //        }
     resolveConstantsInNode(bundle->index(), scope, tree);
   } else if (node->getNodeType() == AST::Expression) {
     std::shared_ptr<ExpressionNode> expr =

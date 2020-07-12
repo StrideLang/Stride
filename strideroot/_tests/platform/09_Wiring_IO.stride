@@ -4,6 +4,8 @@ import Serial
 
 signal Var { domain: Wiring::WiringDomain }
 
+switch Var2 { domain: Wiring::WiringDomain }
+
 Wiring::AnalogIn[0] >> Var;
 
 [Var, 0.5] >> Greater() >> Wiring::DigitalOut[0];
