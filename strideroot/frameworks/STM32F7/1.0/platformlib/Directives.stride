@@ -5,7 +5,7 @@ generatorDirectives __GeneratorDirectives {
     buildDir: "build"
     configCommand: ["cmake", "-DSTRIDE_PLATFORM_ROOT=%platformRoot%", ".."]
     buildCommand: ["cmake",  "--build",  "."]
-    target: "app"
+#    target: "app"
     targetDir: "code/build"
     codeGenerator: "pufferfish"
     codeGeneratorMajorVersion: 1

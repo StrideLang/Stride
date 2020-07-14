@@ -160,17 +160,24 @@ void StrideSystem::parseSystemTree(ASTNode systemTree) {
               auto platformBlock = platformSpec->getPropertyValue("framework");
               auto rootNamespaceBlock =
                   platformSpec->getPropertyValue("rootNamespace");
-              if (platformBlock->getNodeType() == AST::String &&
-                  rootNamespaceBlock->getNodeType() == AST::String) {
+              if (rootNamespaceBlock) {
+                if (platformBlock->getNodeType() == AST::String &&
+                    rootNamespaceBlock->getNodeType() == AST::String) {
+                  usedPlatformNames.push_back(
+                      {static_pointer_cast<ValueNode>(platformBlock)
+                           ->getStringValue(),
+                       static_pointer_cast<ValueNode>(rootNamespaceBlock)
+                           ->getStringValue()});
+                } else {
+                  qDebug() << "ERROR: Unexpected types for platform spec "
+                           << QString::fromStdString(
+                                  platformSpecBlock->getName());
+                }
+              } else if (platformBlock->getNodeType() == AST::String) {
                 usedPlatformNames.push_back(
                     {static_pointer_cast<ValueNode>(platformBlock)
                          ->getStringValue(),
-                     static_pointer_cast<ValueNode>(rootNamespaceBlock)
-                         ->getStringValue()});
-              } else {
-                qDebug() << "ERROR: Unexpected types for platform spec "
-                         << QString::fromStdString(
-                                platformSpecBlock->getName());
+                     ""});
               }
 
             } else {

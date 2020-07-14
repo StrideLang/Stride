@@ -37,11 +37,11 @@ connection _WiringToPCSerial {
 	destinationDomains: [ "AudioDomain" ]
 	sourceImports: ["Serial"]
 	sourceStreams: [
-		_Connection_Token >> SerialPrint();
+		_Connection_Token >> SerialOut[0];
 	]
 	destinationImports: ["Serial"]
 	destinationStreams: [
-		SerialIn() >> _Connection_Token;
+		SerialIn[0] >> _Connection_Token;
 	]
 }
 

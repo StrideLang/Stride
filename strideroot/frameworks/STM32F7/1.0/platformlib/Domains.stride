@@ -1,10 +1,3 @@
-
-_domainProcessing _PlatformDomainProcessing {
-	domainStreams: [
-		InitializationDomain >> [STM32F7_Domain, AudioDomain];
-	]
-}
-
 _frameworkDescription _STM32F7_Framework {
     frameworkName: "STM32F7"
 }
@@ -17,47 +10,40 @@ alias PlatformRate {
     block: AudioRate
 }
 
-alias _ContextInitDomain {
-    block: InitializationDomain
-}
-
-_domainDefinition InitializationDomain {
-	domainName: "InitializationDomain"
+_domainDefinition RootDomain {
+	domainName: "RootDomain"
 	framework: _STM32F7_Framework
-	rate: 0
-	globalsTag: "Includes"
-	declarationsTag: "Declarations"
-	processingTag: "Initialization"
-	initializationTag: "Initialization"
-	cleanupTag: "Initialization"
-    domainIncludes: []
+	rate: -1 # -1 is one-shot/final domain
+    domainIncludes: ["ReadWriteClasses.hpp",
+	"Synchronization.hpp",
+	"Helper.hpp"]
     domainDeclarations: []
-    domainInitialization: '// init domain init'
-	domainFunction: '// init domain processing
-	%%domainCode%%
-	// end init domain processing
+    domainInitializationCode: '// STM32F7 init domain init
+//[[Initializations]]
+//[[/Initializations]]
 	'
-    domainCleanup: '// init domain cleanup'
-}
+	domainProcessingCode: '// STM32F7 init domain processing
 
-_domainDefinition STM32F7_Domain {
-	domainName: "STM32F7_Domain"
-	framework: _STM32F7_Framework
-	rate: none
-	globalsTag: "Includes"
-	declarationsTag: "Declarations"
-	processingTag: "Processing"
-	initializationTag: "Initialization"
-	cleanupTag: "Cleanup"
-    #substitutions: ["domain_rate", AsyncDomain.rate ]
-    domainIncludes: []
-    domainDeclarations: []
-    domainInitialization: "// init domain init"
-	domainFunction: "// Main Domain Function
-	void thread_func() {
-		%%domainCode%%
-	}
-	"
-    domainCleanup: '// init domain cleanup
+//[[Processing]]
+//[[/Processing]]
+'
+domainFunctionCode: '
+// STM32F7 RootDomain template
+//[[Includes]]
+//[[/Includes]]
+
+//[[Declarations]]
+//[[/Declarations]]
+
+//[[Instances]]
+//[[/Instances]]
+
+// ----
+	'
+    domainCleanupCode: '// STM32F7init domain cleanup
+	
+//[[Cleanup]]
+//[[/Cleanup]]
+	
 	'
 }

@@ -5,9 +5,8 @@ platform _STM32F7Platform {
 	hardware: "SaturnM7"
 	hardwareVersion: "1.0"
 	required: on #TODO validation of "required" is not yet implemented
+    rootNamespace: ""
 }
-
-	
 
 #connection _PCToWiringSerial {
 #	source: PC

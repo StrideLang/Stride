@@ -1,12 +1,3 @@
-#_domainProcessing _PlatformDomainProcessing {
-#	domainStreams: [
-#		WiringDomain >> Dummy;
-#		# Should perhaps look like:
-#		#SetupDomain >> [AudioDomain, AsyncDomain, SerialDomain];
-#		# But for now just setting the domain processing order
-#	]
-#}
-
 _frameworkDescription _WiringFramework {
     frameworkName: "Wiring"
 }
@@ -39,18 +30,5 @@ int tickEvent = t.every(1, process);
   t.update();
 	'
     domainCleanupCode: '// init domain cleanup'
-	rate:PlatformRate
-}
-
-_domainDefinition DummyDomain {
-	domainName: "DummyDomain"
-	framework: _WiringFramework
-    substitutions: [ ]
-    domainIncludes: []
-    domainDeclarations: []
-    domainInitializationCode: ''
-	domainFunctionCode: ''
-	domainProcessingCode: ''
-    domainCleanupCode: ''
 	rate:PlatformRate
 }
