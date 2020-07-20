@@ -151,14 +151,14 @@ std::vector<string> StrideFramework::getDomainIds() {
   return std::vector<string>();
 }
 
-void StrideFramework::addTree(string treeName, ASTNode treeRoot) {
-  if (m_platformTrees.find(treeName) != m_platformTrees.end()) {
-    std::cerr << "WARNING: tree: '" << treeName << "' exists. Replacing."
-              << std::endl;
-  } else {
-    m_platformTrees[treeName] = treeRoot;
-  }
-}
+// void StrideFramework::addTree(string treeName, ASTNode treeRoot) {
+//  if (m_platformTrees.find(treeName) != m_platformTrees.end()) {
+//    std::cerr << "WARNING: tree: '" << treeName << "' exists. Replacing."
+//              << std::endl;
+//  } else {
+//    m_platformTrees[treeName] = treeRoot;
+//  }
+//}
 
 void StrideFramework::addTestingTree(string treeName, ASTNode treeRoot) {
   m_platformTestTrees[treeName] = treeRoot;

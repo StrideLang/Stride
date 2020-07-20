@@ -94,8 +94,6 @@ public:
   std::string getPlatformDirective(std::string directive);
 
   // Additional information from stride system
-  std::vector<std::shared_ptr<DeclarationNode>>
-      m_connectors;       // Connections between domains.
   StrideSystem *m_system; // The StrideSystem that created this builder.
   QString m_frameworkName;
 

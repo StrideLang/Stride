@@ -185,55 +185,55 @@ std::string LanguageSyntax::include(string includeName) {
   return includetext;
 }
 
-std::string
-LanguageSyntax::instanceReal(std::string name, int size, bool close,
-                             std::vector<std::string> defaultValue) {
-  std::string decl = "double " + name;
-  if (size > 1) {
-    decl += "[" + std::to_string(size) + "] ";
-    if (defaultValue.size() > 0) {
-      decl += " = {";
-      for (auto v : defaultValue) {
-        decl += " " + v + ",";
-      }
-      decl.resize(decl.size() - 1); // Chop off last comma
-      decl += "}";
-    }
-  } else {
-    if (defaultValue.size() == 1) {
-      decl += " = " + defaultValue[0];
-    }
-  }
-  if (close) {
-    decl += endStatement();
-  }
-  return decl;
-}
+// std::string
+// LanguageSyntax::instanceReal(std::string name, int size, bool close,
+//                             std::vector<std::string> defaultValue) {
+//  std::string decl = "double " + name;
+//  if (size > 1) {
+//    decl += "[" + std::to_string(size) + "] ";
+//    if (defaultValue.size() > 0) {
+//      decl += " = {";
+//      for (auto v : defaultValue) {
+//        decl += " " + v + ",";
+//      }
+//      decl.resize(decl.size() - 1); // Chop off last comma
+//      decl += "}";
+//    }
+//  } else {
+//    if (defaultValue.size() == 1) {
+//      decl += " = " + defaultValue[0];
+//    }
+//  }
+//  if (close) {
+//    decl += endStatement();
+//  }
+//  return decl;
+//}
 
-std::string
-LanguageSyntax::instanceBool(std::string name, int size, bool close,
-                             std::vector<std::string> defaultValue) {
-  std::string decl = "bool " + name;
-  if (size > 1) {
-    decl += "[" + std::to_string(size) + "] ";
-    if (defaultValue.size() > 0) {
-      decl += " = {";
-      for (auto v : defaultValue) {
-        decl += " " + v + ",";
-      }
-      decl.resize(decl.size() - 1); // Chop off last comma
-      decl += "}";
-    }
-  } else {
-    if (defaultValue.size() == 1) {
-      decl += " = " + defaultValue[0];
-    }
-  }
-  if (close) {
-    decl += endStatement();
-  }
-  return decl;
-}
+// std::string
+// LanguageSyntax::instanceBool(std::string name, int size, bool close,
+//                             std::vector<std::string> defaultValue) {
+//  std::string decl = "bool " + name;
+//  if (size > 1) {
+//    decl += "[" + std::to_string(size) + "] ";
+//    if (defaultValue.size() > 0) {
+//      decl += " = {";
+//      for (auto v : defaultValue) {
+//        decl += " " + v + ",";
+//      }
+//      decl.resize(decl.size() - 1); // Chop off last comma
+//      decl += "}";
+//    }
+//  } else {
+//    if (defaultValue.size() == 1) {
+//      decl += " = " + defaultValue[0];
+//    }
+//  }
+//  if (close) {
+//    decl += endStatement();
+//  }
+//  return decl;
+//}
 
 std::string LanguageSyntax::assignment(std::string name, std::string value,
                                        bool close) {
@@ -330,12 +330,44 @@ std::string LanguageSyntax::generateModuleDeclaration(
   //        std::cout<< moduleCode <<std::endl;
 }
 
-std::string LanguageSyntax::getDataType(std::string strideType) {
-  if (strideType == "signal") {
-    // FIXME we need to
-    return "double";
-  } else if (strideType == "switch") {
-    return "bool";
+// std::string LanguageSyntax::getDataType(std::string strideType) {
+//  if (strideType == "signal") {
+//    // FIXME we need to
+//    return "double";
+//  } else if (strideType == "switch") {
+//    return "bool";
+//  }
+//  return "";
+//}
+
+string LanguageSyntax::getDataType(std::shared_ptr<DeclarationNode> decl,
+                                   StrideSystem *system) {
+  std::string dataType;
+  std::string frameworkName;
+  auto frameworkNode = decl->getCompilerProperty("framework");
+  if (frameworkNode) {
+    frameworkName =
+        static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
   }
-  return "";
+
+  auto defaultDataType =
+      system->getFrameworkDefaultDataType(frameworkName, decl->getObjectType());
+
+  auto dataTypeNode =
+      system->getFrameworkDataType(frameworkName, defaultDataType);
+
+  if (!dataTypeNode || dataTypeNode->getNodeType() == AST::None) {
+    // Fallback, but should never get here...
+    qDebug() << "ERROR, undefined data type for "
+             << QString::fromStdString(decl->getObjectType());
+    defaultDataType = system->getFrameworkDefaultDataType(frameworkName, "");
+    dataTypeNode = system->getFrameworkDataType(frameworkName, defaultDataType);
+  }
+
+  auto dataTypeNameNode = dataTypeNode->getPropertyValue("frameworkName");
+  if (dataTypeNameNode && dataTypeNameNode->getNodeType() == AST::String) {
+    dataType =
+        static_pointer_cast<ValueNode>(dataTypeNameNode)->getStringValue();
+  }
+  return dataType;
 }

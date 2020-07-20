@@ -89,7 +89,6 @@ _domainDefinition AudioDomain {
 #    initializationTag: "Initialization"
 #	processingTag: "Processing"
 #	cleanupTag: "Cleanup"
-  defaultType: _RealType
     substitutions: [
       "num_in_chnls", _NumInputChannels,
       "num_out_chnls", _NumOutputChannels,

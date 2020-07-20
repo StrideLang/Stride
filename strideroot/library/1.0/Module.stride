@@ -151,7 +151,7 @@ type _Reaction {
 			required: off
 		}
 	]
-	inherits: [_Base]
+	inherits: [_Base, _DomainMember]
 }
 
 type _Loop {

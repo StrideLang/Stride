@@ -74,7 +74,7 @@ public:
 
   std::vector<std::string> getDomainIds();
 
-  void addTree(std::string treeName, ASTNode treeRoot);
+  //  void addTree(std::string treeName, ASTNode treeRoot);
   void addTestingTree(std::string treeName, ASTNode treeRoot);
   std::vector<ASTNode> getPlatformObjectsReference();
   std::vector<ASTNode> getPlatformTestingObjectsRef();
@@ -82,6 +82,8 @@ public:
   bool getPluginDetails(std::string &pluginName, int &majorVersion,
                         int &minorVersion);
 
+  std::vector<std::shared_ptr<DeclarationNode>>
+      m_synchronization; // Connections between domains in a framework
 private:
   std::string m_strideRoot;
   std::string m_framework;

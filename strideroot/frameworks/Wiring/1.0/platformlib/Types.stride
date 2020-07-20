@@ -1,37 +1,66 @@
-
-platformTypeClass _RealTypeClass {
-	types: [_RealType]
-}
-
-platformDataType _RealType {
-	platformName: "double"
+frameworkDataType _RealType {
+	frameworkName: "float"
 	includes: []
 }
-	
-platformTypeClass _IntegerTypeClass {
-	types: [_IntType]
-}
 
-platformDataType _IntType {
-	platformName: "int"
+frameworkDataType _IntType {
+	frameworkName: "int"
 	includes: []
 }
-	
-platformTypeClass _SwitchTypeClass {
-	types: [_SwitchType]
+
+frameworkDataType _UnsingedIntType {
+	frameworkName: "uint64_t"
+	includes: ["<cstdint>"]
 }
 
-platformDataType _SwitchType {
-	platformName: "bool"
+frameworkDataType _SizeType {
+	frameworkName: "size_t"
 	includes: []
-}
-	
-platformTypeClass _StringTypeClass {
-	types: [String]
 }
 
-platformDataType _StringType {
-	platformName: "char *"
+frameworkDataType _SwitchType {
+	frameworkName: "bool"
 	includes: []
 }
-	
+
+frameworkDataType _StringType {
+	frameworkName: "std::string"
+	includes: ['string.h']
+}
+
+### ----------------------
+
+strideTypeDefaultDataType _DefaultSignalType {
+	strideType: "signal"
+	frameworkType: _RealType
+}
+
+strideTypeDefaultDataType _DefaultTableType {
+	strideType: "table"
+	frameworkType: _RealType
+}
+
+strideTypeDefaultDataType _DefaultSwitchType {
+	strideType: "switch"
+	frameworkType: _SwitchType
+}
+
+strideTypeDefaultDataType _DefaultTriggerType {
+	strideType: "trigger"
+	frameworkType: _SwitchType
+}
+
+strideTypeDefaultDataType _DefaultBufferType {
+	strideType: "buffer"
+	frameworkType: _RealType
+}
+
+strideTypeDefaultDataType _DefaultStringType {
+	strideType: "string"
+	frameworkType: _StringType
+}
+
+strideTypeDefaultDataType _DefaultSIteratorType {
+	strideType: "iterator"
+	frameworkType: _IntType
+}

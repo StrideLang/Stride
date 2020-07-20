@@ -98,14 +98,14 @@ type _Switch {
 			required: off
 		}
 	]
-	inherits: [_Streamable]
+	inherits: [_Streamable, _DomainMember]
 }
 
 type _Trigger {
 	typeName: "trigger"
 	properties: [
 	]
-	inherits: [_Streamable]
+	inherits: [_Streamable, _DomainMember]
 }
 
 type _Signal {
@@ -130,7 +130,7 @@ type _Signal {
 			required: off
 		}
 	]
-	inherits: [_Streamable]
+	inherits: [_Streamable, _DomainMember]
 }
 
 type _Buffer {
@@ -316,8 +316,8 @@ type _PlatformTypeClass {
 	meta: ""
 }
 
-type _PlatformDataType {
-	typeName: "platformDataType"
+type _FrameworkDataType {
+	typeName: "frameworkDataType"
 	properties: [
 		typeProperty Name {
 			name: "name"
@@ -326,8 +326,8 @@ type _PlatformDataType {
 			required: off
 			meta: "Name of the data type"
 		}
-		typeProperty PlatformName {
-			name: "platformName"
+		typeProperty FrameworkName {
+			name: "frameworkName"
 			types: [_StringLiteral]
 			default: none
 			required: on

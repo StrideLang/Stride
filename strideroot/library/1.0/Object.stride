@@ -33,9 +33,9 @@ type _Streamable {
 type _Resetable {
 	typeName: "_resetable"
 	properties: [
-		typeProperty ResetPort {
+		typeProperty Reset {
 			name: "reset"
-			types: [_StringLiteral, ""]
+			types: [""]
 			default: none
 			required: off
 		}
@@ -50,15 +50,9 @@ type _Rated {
 			types: [_IntLiteral, _RealLiteral, _PortProperty, _NoneLiteral]
 			default: none
 			required: off
-		},
-		typeProperty Reset {
-			name: "reset"
-			types: [""] # Fix
-			default: off
-			required: off
 		}
 	]
-	inherits: [_DomainMember, _Resetable]
+	inherits: [_Resetable]
 }
 
 type _DomainMember {

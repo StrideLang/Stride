@@ -117,12 +117,6 @@ type _DomainDefinition {
 			types: [_StringLiteral]
 			default: ""
 			required: off
-		},
-		typeProperty DefaultType {
-			name: "defaultType"
-			types: [""]
-			default: _RealType
-			required: off
 		}
 	]
 #	inherits: [_Base]
@@ -438,6 +432,12 @@ type _FrameworkDescription {
 			types: [_StringLiteral]
 			default: none
 			required: on
+		},
+		typeProperty DefaultDataType {
+			name: "defaultDataType"
+			types: [""]
+			default: _RealType
+			required: off
 		}
 	]
 	inherits: [_Base]

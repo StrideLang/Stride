@@ -97,9 +97,21 @@ public:
     return m_frameworks;
   }
 
+  std::vector<std::shared_ptr<DeclarationNode>>
+  getFrameworkSynchronization(std::string frameworkName);
+
+  std::shared_ptr<DeclarationNode>
+  getFrameworkDataType(std::string frameworkName, std::string strideDataType);
+
+  std::string getFrameworkDefaultDataType(std::string frameworkName,
+                                          string strideType);
+
   std::vector<std::shared_ptr<StrideFramework>> m_frameworks;
   vector<std::shared_ptr<DeclarationNode>> m_platformDefinitions;
-  std::vector<std::shared_ptr<DeclarationNode>> m_connectionDefinitions;
+  std::vector<std::shared_ptr<DeclarationNode>>
+      m_connectionDefinitions; // Connections between frameworks
+  std::map<std::string, std::shared_ptr<DeclarationNode>>
+      m_synchronization; // Connections between domains
 
 private:
   QVector<ASTNode> getPortsForTypeBlock(DeclarationNode *block);

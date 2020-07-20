@@ -1,5 +1,6 @@
 _frameworkDescription _RtAudioFramework {
     frameworkName: "RtAudio"
+    defaultDataType: _RealType
 }
 
 alias PlatformDomain {

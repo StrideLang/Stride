@@ -22,12 +22,12 @@ public:
 
   static std::string include(std::string includeToken);
 
-  static std::string instanceReal(
-      std::string name, int size = 1, bool close = true,
-      std::vector<std::string> defaultValue = std::vector<std::string>());
-  static std::string instanceBool(
-      std::string name, int size = 1, bool close = true,
-      std::vector<std::string> defaultValue = std::vector<std::string>());
+  //  static std::string instanceReal(
+  //      std::string name, int size = 1, bool close = true,
+  //      std::vector<std::string> defaultValue = std::vector<std::string>());
+  //  static std::string instanceBool(
+  //      std::string name, int size = 1, bool close = true,
+  //      std::vector<std::string> defaultValue = std::vector<std::string>());
 
   static std::string assignment(std::string name, std::string value,
                                 bool close = true);
@@ -99,9 +99,10 @@ public:
     return literalString;
   }
 
-  static std::string getDataType(std::string strideType);
+  //  static std::string getDataType(std::string strideType);
 
-  static std::string getDataType(Instance instance);
+  static std::string getDataType(std::shared_ptr<DeclarationNode> decl,
+                                 StrideSystem *system);
 };
 
 #endif // LANGUAGESYNTAX_HPP
