@@ -180,13 +180,15 @@ void CodeResolver::processSystem() {
 
   auto platformDomain = m_system->getPlatformDomain();
 
-  for (auto objects : m_system->getBuiltinObjectsReference()) {
-    auto domainDecl = CodeValidator::findDeclaration(
-        CodeValidator::streamMemberName(platformDomain),
-        {{std::string(), objects.second}}, m_tree);
-    if (domainDecl) {
-      m_tree->addChild(domainDecl);
-      break;
+  if (platformDomain) {
+    for (auto objects : m_system->getBuiltinObjectsReference()) {
+      auto domainDecl = CodeValidator::findDeclaration(
+          CodeValidator::streamMemberName(platformDomain),
+          {{std::string(), objects.second}}, m_tree);
+      if (domainDecl) {
+        m_tree->addChild(domainDecl);
+        break;
+      }
     }
   }
 }
@@ -1696,6 +1698,7 @@ ASTNode CodeResolver::processDomainsForNode(ASTNode node, ScopeStack scopeStack,
     }
     if (samplingDomain) {
       node->setCompilerProperty("samplingDomain", samplingDomain);
+    } else {
     }
     if (scopeStack.size() > 0) {
       if (node->getCompilerProperty("parentInstances") == nullptr) {
