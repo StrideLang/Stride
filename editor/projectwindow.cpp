@@ -80,7 +80,7 @@ ProjectWindow::~ProjectWindow() { delete ui; }
 void ProjectWindow::initialize(bool resetOpenFiles) {
   connectActions();
   connectShortcuts();
-  updateMenus();
+  prepareMenus();
   m_highlighter = new LanguageHighlighter(this);
 
   readSettings(resetOpenFiles);
@@ -422,6 +422,12 @@ void ProjectWindow::followSymbol() {
   }
 }
 
+void ProjectWindow::openRecent() {
+  QAction *action = qobject_cast<QAction *>(sender());
+  if (action)
+    loadFile(action->data().toString());
+}
+
 void ProjectWindow::showHelperMenu(QPoint where) {
   m_helperMenu.clear();
 
@@ -696,34 +702,17 @@ QTreeWidgetItem *ProjectWindow::createTreeItem(ASTNode inputNode) {
   return newItem;
 }
 
-void ProjectWindow::updateMenus() {
-  //    QStringList deviceList = m_project->listDevices();
-  //    QStringList targetList = m_project->listTargets();
+void ProjectWindow::prepareMenus() {
 
-  //    ui->menuTarget->clear();
-  //    QActionGroup *deviceGroup = new QActionGroup(ui->menuTarget);
-  //    foreach (QString device, deviceList) {
-  //        QAction *act = ui->menuTarget->addAction(device);
-  //        act->setCheckable(true);
-  //        deviceGroup->addAction(act);
-  //        if (act->text().startsWith(m_project->getBoardId())) {
-  //            act->setChecked(true);
-  //        }
-  ////        connect(act, SIGNAL(triggered()),
-  ////                this, SLOT(setTargetFromMenu()));
-  //    }
-  //    ui->menuTarget->addSeparator();
-  //    QActionGroup *targetGroup = new QActionGroup(ui->menuTarget);
-  //    foreach (QString target, targetList) {
-  //        QAction *act = ui->menuTarget->addAction(target);
-  //        act->setCheckable(true);
-  //        targetGroup->addAction(act);
-  //        if (act->text() == m_project->getTarget()) {
-  //            act->setChecked(true);
-  //        }
-  //        connect(act, SIGNAL(triggered()),
-  //                this, SLOT(setTargetFromMenu()));
-  //    }
+  QAction *recentFileAction = nullptr;
+  for (auto i = 0; i < m_maxRecentFiles; ++i) {
+    recentFileAction = new QAction(this);
+    recentFileAction->setVisible(false);
+    QObject::connect(recentFileAction, &QAction::triggered, this,
+                     &ProjectWindow::openRecent);
+    m_recentFilesActions.append(recentFileAction);
+    ui->menuRecent_Files->addAction(recentFileAction);
+  }
 }
 
 void ProjectWindow::setEditorText(QString code) {
@@ -849,6 +838,8 @@ void ProjectWindow::loadFile(QString fileName) {
                                QFileInfo(fileName).absoluteFilePath());
   codeFile.close();
   markModified();
+
+  adjustForCurrentFile(fileName);
 }
 
 void ProjectWindow::openOptionsDialog() {
@@ -939,7 +930,6 @@ void ProjectWindow::connectActions() {
           SLOT(commentSection()));
   connect(ui->actionUpload, SIGNAL(triggered()), this, SLOT(deploy()));
   connect(ui->actionRun, SIGNAL(toggled(bool)), this, SLOT(run(bool)));
-  connect(ui->actionRefresh, SIGNAL(triggered()), this, SLOT(updateMenus()));
   connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(saveFile()));
   connect(ui->actionSave_as, SIGNAL(triggered()), this, SLOT(saveFileAs()));
   connect(ui->actionClose_Tab, SIGNAL(triggered()), this, SLOT(closeTab()));
@@ -981,7 +971,7 @@ void ProjectWindow::connectShortcuts() {
   ui->actionBuild->setShortcut(QKeySequence("Ctrl+B"));
   ui->actionComment->setShortcut(QKeySequence("Ctrl+/"));
   ui->actionUpload->setShortcut(QKeySequence("Ctrl+U"));
-  ;
+
   ui->actionRun->setShortcut(QKeySequence("Ctrl+R"));
   ui->actionRefresh->setShortcut(QKeySequence(""));
   ui->actionSave->setShortcut(QKeySequence("Ctrl+S"));
@@ -1048,7 +1038,9 @@ void ProjectWindow::readSettings(bool resetOpenFiles) {
     filesToOpen << settings.value("fileName").toString();
   }
   settings.endArray();
+
   if (!resetOpenFiles) {
+    QStringList missingFiles;
     foreach (QString fileName, filesToOpen) {
       if (fileName.isEmpty()) {
         newFile();
@@ -1056,19 +1048,23 @@ void ProjectWindow::readSettings(bool resetOpenFiles) {
         if (QFile::exists(fileName)) {
           loadFile(fileName);
         } else {
-          QMessageBox::warning(
-              this, tr("File not found"),
-              tr("Previously open file %1 not found.").arg(fileName));
+          missingFiles << fileName;
         }
       }
+    }
+
+    if (missingFiles.size() > 0) {
+      QMessageBox::warning(this, tr("File not found"),
+                           tr("Previously open file(s) %1 not found.")
+                               .arg(missingFiles.join(",")));
     }
     int lastIndex = settings.value("lastIndex", -1)
                         .toInt(); // Used later after files are loaded
     ui->tabWidget->setCurrentIndex(lastIndex);
   }
 
-  m_guiOptions["gui.inspectorShowInternal"] =
-      settings.value("gui.inspectorShowInternal", true).toBool();
+  //  m_guiOptions["gui.inspectorShowInternal"] =
+  //      settings.value("gui.inspectorShowInternal", true).toBool();
   settings.endGroup();
 }
 
@@ -1106,7 +1102,6 @@ void ProjectWindow::writeSettings() {
     settings.setValue("fileName", editor->filename());
   }
   settings.endArray();
-
   settings.endGroup();
 
   settings.beginGroup("environment");
@@ -1135,6 +1130,43 @@ void ProjectWindow::updateEditorSettings() {
 
     editor->setAutoComplete(m_options["editor.autoComplete"].toBool());
   }
+}
+
+void ProjectWindow::adjustForCurrentFile(const QString &filePath) {
+  //      currentFilePath = filePath;
+  //      setWindowFilePath(currentFilePath);
+
+  QSettings settings;
+  QStringList recentFilePaths = settings.value("recentFiles").toStringList();
+  recentFilePaths.removeAll(filePath);
+  recentFilePaths.prepend(filePath);
+  while (recentFilePaths.size() > m_maxRecentFiles)
+    recentFilePaths.removeLast();
+  settings.setValue("recentFiles", recentFilePaths);
+
+  // see note
+  updateRecentActionList();
+}
+
+void ProjectWindow::updateRecentActionList() {
+  QSettings settings;
+  QStringList recentFilePaths = settings.value("recentFiles").toStringList();
+
+  int itEnd = 0;
+  if (recentFilePaths.size() <= m_maxRecentFiles)
+    itEnd = recentFilePaths.size();
+  else
+    itEnd = m_maxRecentFiles;
+
+  for (auto i = 0; i < itEnd; ++i) {
+    QString strippedName = QFileInfo(recentFilePaths.at(i)).fileName();
+    m_recentFilesActions.at(i)->setText(strippedName);
+    m_recentFilesActions.at(i)->setData(recentFilePaths.at(i));
+    m_recentFilesActions.at(i)->setVisible(true);
+  }
+
+  for (auto i = itEnd; i < m_maxRecentFiles; ++i)
+    m_recentFilesActions.at(i)->setVisible(false);
 }
 
 SystemConfiguration ProjectWindow::readProjectConfiguration() {

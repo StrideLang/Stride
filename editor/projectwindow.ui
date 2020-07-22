@@ -169,7 +169,7 @@
         <number>2</number>
        </property>
        <attribute name="headerVisible">
-        <bool>true</bool>
+        <bool>false</bool>
        </attribute>
        <column>
         <property name="text">
@@ -218,12 +218,19 @@
     <property name="title">
      <string>File</string>
     </property>
+    <widget class="QMenu" name="menuRecent_Files">
+     <property name="title">
+      <string>Recent Files</string>
+     </property>
+    </widget>
     <addaction name="actionNew_Project"/>
     <addaction name="actionLoad_File"/>
     <addaction name="actionSave"/>
     <addaction name="actionSave_as"/>
+    <addaction name="menuRecent_Files"/>
     <addaction name="actionClose_Tab"/>
     <addaction name="actionQuit"/>
+    <addaction name="separator"/>
    </widget>
    <widget class="QMenu" name="menuBuild">
     <property name="title">
@@ -422,6 +429,11 @@
   <action name="actionManage_Strideroot">
    <property name="text">
     <string>Manage Strideroot</string>
+   </property>
+  </action>
+  <action name="actionRecent_Files">
+   <property name="text">
+    <string>Recent Files</string>
    </property>
   </action>
  </widget>

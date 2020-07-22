@@ -61,7 +61,6 @@ public:
   void initialize(bool resetOpenFiles = false);
 
 public slots:
-  void updateMenus();
   void setEditorText(QString code);
   bool saveFile(int index = -1);
   bool saveFileAs(int index = -1);
@@ -93,6 +92,7 @@ private slots:
   bool maybeSave();
   void showDocumentation();
   void followSymbol();
+  void openRecent();
 
   // Editor
   void commentSection();
@@ -109,11 +109,18 @@ private slots:
 private:
   void connectActions();
   void connectShortcuts();
+  void prepareMenus();
 
   void readSettings(bool resetOpenFiles = false);
   void writeSettings();
 
   void updateEditorSettings();
+
+  const uint16_t m_maxRecentFiles = 20;
+  QList<QAction *> m_recentFilesActions;
+  QStringList m_recentFilePaths;
+  void adjustForCurrentFile(const QString &filePath);
+  void updateRecentActionList();
 
   SystemConfiguration readProjectConfiguration();
 
