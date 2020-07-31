@@ -1,0 +1,6 @@
+toolTemplate CppTemplate {
+    displayName: "C++ compiler"
+    output: Cpp
+    meta: "C++ Compiler"
+    platforms: ['macOS', 'Windows', 'Linux'] 
+}

@@ -115,6 +115,7 @@ protected:
   QString m_stdOut;
   QString m_stdErr;
   QMap<QString, QVariant> m_configuration;
+
   std::function<void()> m_yieldCallback = []() {};
 
   QString substituteTokens(QString text) {

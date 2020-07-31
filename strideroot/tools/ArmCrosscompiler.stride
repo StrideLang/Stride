@@ -1,0 +1,6 @@
+toolTemplate ArmCrosscompilerTemplate {
+    displayName: "Arm cross compiler"
+    output: ArmCrosscompiler
+    meta: "Arm cross compiler toolchain"
+    platforms: ['macOS', 'Windows', 'Linux'] 
+}

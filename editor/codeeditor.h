@@ -37,84 +37,80 @@
 
 #include <mutex>
 
-#include <QPlainTextEdit>
-#include <QList>
-#include <QTimer>
-#include <QPushButton>
 #include <QAtomicInt>
+#include <QList>
+#include <QPlainTextEdit>
+#include <QPushButton>
+#include <QTimer>
 
-#include "langerror.h"
-#include "errormarker.h"
-#include "tooltip.hpp"
-#include "codemodel.hpp"
 #include "autocompletemenu.hpp"
+#include "codemodel.hpp"
+#include "errormarker.h"
+#include "langerror.h"
+#include "tooltip.hpp"
 
-class CodeEditor : public QPlainTextEdit
-{
-    Q_OBJECT
+class CodeEditor : public QPlainTextEdit {
+  Q_OBJECT
 public:
-    explicit CodeEditor(QWidget *parent, CodeModel *codeModel);
+  explicit CodeEditor(QWidget *parent, CodeModel *codeModel);
 
-    void lineNumberAreaPaintEvent(QPaintEvent *event);
-    int lineNumberAreaWidth();
-    bool isChanged();
-    bool changedSinceParse();
-    void markParsed();
+  void lineNumberAreaPaintEvent(QPaintEvent *event);
+  int lineNumberAreaWidth();
+  bool isChanged();
+  bool changedSinceParse();
+  void markParsed();
 
-    void setAutoComplete(bool enable);
+  void setAutoComplete(bool enable);
 
-    void setErrors(QList<LangError> errors);
-    void setToolTipText(QString text);
+  void setErrors(QList<LangError> errors);
+  void setToolTipText(QString text);
 
-    QString filename() const;
-    void setFilename(const QString &filename);
+  QString filename() const;
+  void setFilename(const QString &filename);
 
-    void find(QString query = "");
-    void gotoLine(int line);
+  void find(QString query = "");
+  void gotoLine(int line);
 
 public slots:
-    void markChanged(bool changed = true);
+  void markChanged(bool changed = true);
 
 protected:
-    virtual bool eventFilter(QObject *obj, QEvent *event);
-    virtual void resizeEvent(QResizeEvent *event);
-    virtual void keyReleaseEvent(QKeyEvent * event);
-    virtual void mouseMoveEvent(QMouseEvent *event);
+  virtual bool eventFilter(QObject *obj, QEvent *event);
+  virtual void resizeEvent(QResizeEvent *event);
+  virtual void keyReleaseEvent(QKeyEvent *event);
+  virtual void mouseMoveEvent(QMouseEvent *event);
 
 private slots:
-    void updateLineNumberAreaWidth(int newBlockCount);
-    void highlightCurrentLine();
-    void updateLineNumberArea(const QRect &, int);
-    void showButton();
-    void hideButton();
-    void helperButtonClicked();
-    void mouseIdleTimeout();
-    void insertAutoComplete();
-    void updateAutoCompleteMenu(QString currentWord);
+  void updateLineNumberAreaWidth(int newBlockCount);
+  void highlightCurrentLine();
+  void updateLineNumberArea(const QRect &, int);
+  void showButton();
+  void hideButton();
+  void helperButtonClicked();
+  void mouseIdleTimeout();
+  void insertAutoComplete();
+  void updateAutoCompleteMenu(QString currentWord);
 
 private:
-    QWidget *m_lineNumberArea;
-    CodeModel *m_codeModel;
-    AutoCompleteMenu m_autoCompleteMenu;
-    std::vector<std::shared_ptr<ErrorMarker>> m_errorMarkers;
-    std::mutex m_markerLock;
-    QTimer m_ButtonTimer;
-    QTimer m_mouseIdleTimer;
-    QAtomicInt m_changedSinceParse {1};
+  QWidget *m_lineNumberArea;
+  CodeModel *m_codeModel;
+  AutoCompleteMenu m_autoCompleteMenu;
+  std::vector<std::shared_ptr<ErrorMarker>> m_errorMarkers;
+  std::mutex m_markerLock;
+  QTimer m_ButtonTimer;
+  QTimer m_mouseIdleTimer;
+  QAtomicInt m_changedSinceParse{1};
 
-    // Properties
-    QString m_filename;
-    bool m_IndentTabs;
-    bool m_autoComplete;
+  // Properties
+  QString m_filename;
+  bool m_IndentTabs{true};
+  bool m_autoComplete{true};
 
-    QPushButton m_helperButton;
-    ToolTip m_toolTip;
+  QPushButton m_helperButton;
+  ToolTip m_toolTip;
 
 signals:
-    void requestAssistant(QPoint point);
-
+  void requestAssistant(QPoint point);
 };
-
-
 
 #endif // CODEEDITOR_H

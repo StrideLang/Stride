@@ -3,8 +3,7 @@ generatorDirectives __GeneratorDirectives {
     templateFiles: ["template.ino"]
     destinationDir: "Wiring-code"
     buildDir: "build"
-    configCommand: ["cmake",  "-DSTRIDE_PLATFORM_ROOT=%platformRoot%", ".."]
-    buildCommand: ["cmake", "--build", "."]
+    buildCommand: [Arduino, "--upload", "--board", "arduino:avr:leonardo", "--port", "/dev/ttyACM0", "--pref", "sketchbook.path=/sketchbook", "template.ino"]
     # No target for Wiring platform build.
 #    target: "app"
 #    targetDir: "Wiring-code/build"

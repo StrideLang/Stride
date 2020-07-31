@@ -6,7 +6,7 @@ fileOption _ArduinoBinary {
 	name: "Arduino Binary"
 	default: '""'
 	override: [["Wiring", _ArduinoBinary]]
-	meta: "Arduino Bonary Location"
+	meta: "Arduino Binary Location"
 }
 
 stringOption _SerialPortOption {

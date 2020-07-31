@@ -116,23 +116,48 @@ void StrideFramework::installFramework() {
                     installDirective->getPropertyValue("workingDirectory");
                 if (commandNode && commandNode->getNodeType() == AST::String &&
                     dirNode) {
-                  QString workingDirectory =
-                      QString::fromStdString(frameworkRoot);
+                  std::string workingDirectory =
+                      buildPlatformPath(m_strideRoot);
                   if (dirNode->getNodeType() == AST::String) {
                     workingDirectory +=
-                        "/" + QString::fromStdString(
-                                  std::static_pointer_cast<ValueNode>(dirNode)
-                                      ->getStringValue());
+                        "/" + std::static_pointer_cast<ValueNode>(dirNode)
+                                  ->getStringValue();
                   }
                   QProcess installProcess;
-                  installProcess.setWorkingDirectory(workingDirectory);
+                  installProcess.setWorkingDirectory(
+                      QString::fromStdString(workingDirectory));
                   auto command =
                       std::static_pointer_cast<ValueNode>(commandNode)
                           ->getStringValue();
                   qDebug() << "Running command: "
-                           << QString::fromStdString(command);
+                           << QString::fromStdString(command) << " IN "
+                           << QString::fromStdString(workingDirectory);
+                  //                  QObject::connect(
+                  //                      &installProcess,
+                  //                      &QProcess::readyReadStandardOutput,
+                  //                      [&]() {
+                  //                        qDebug() <<
+                  //                        installProcess.readAllStandardOutput();
+                  //                      });
+                  //                  QObject::connect(
+                  //                      &installProcess,
+                  //                      &QProcess::readyReadStandardError,
+                  //                      [&]() {
+                  //                        qDebug() <<
+                  //                        installProcess.readAllStandardError();
+                  //                      });
                   installProcess.start(QString::fromStdString(command));
+                  if (!installProcess.waitForStarted()) {
+                    qDebug() << "Error starting";
+                  }
+
                   installProcess.waitForFinished();
+
+                  if (installProcess.exitStatus() != QProcess::NormalExit ||
+                      installProcess.exitCode() != 0) {
+                    std::cerr << "ERROR executing : " << command << std::endl;
+                    qDebug() << installProcess.readAll();
+                  }
                 }
               }
             }

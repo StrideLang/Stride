@@ -1,58 +1,18 @@
-lessThan(QT_MAJOR_VERSION, 5): error("Qt 5 required!")
-lessThan(QT_MINOR_VERSION, 4): error("Qt 5.4 required!")
+QT += core
+QT -= gui
 
-QT += core gui widgets #qml quick
-TEMPLATE += app
-TARGET = StrideIDE
 CONFIG += c++11
-QT += webenginewidgets
 
-include(../config.pri)
+TARGET = strdmngr
+CONFIG += console
+CONFIG -= app_bundle
 
-SOURCES += main.cpp\
-    localmanagementdialog.cpp \
-    projectwindow.cpp \
-    codeeditor.cpp \
-    languagehighlighter.cpp \
-    linenumberarea.cpp \
-    configdialog.cpp \
-    savechangeddialog.cpp \
-    errormarker.cpp \
-    searchwidget.cpp \
-    striderootmanagementdialog.cpp \
-    tooltip.cpp \
-    codemodel.cpp \
-    autocompletemenu.cpp
+TEMPLATE = app
 
-HEADERS  += \
-    localmanagementdialog.hpp \
-    projectwindow.h \
-    codeeditor.h \
-    languagehighlighter.h \
-    linenumberarea.h \
-    configdialog.h \
-    savechangeddialog.h \
-    errormarker.h \
-    searchwidget.h \
-    striderootmanagementdialog.h \
-    tooltip.hpp \
-    codemodel.hpp \
-    autocompletemenu.hpp
+SOURCES += main.cpp
 
-FORMS    += \
-    localmanagementdialog.ui \
-    projectwindow.ui \
-    configdialog.ui \
-    savechangeddialog.ui \
-    searchwidget.ui \
-    striderootmanagementdialog.ui
-
-OTHER_FILES += \
-    qml/Editor.qml
-
-RESOURCES += \
-    qmlfiles.qrc
-
+INCLUDEPATH += $$PWD/../parser
+DEPENDPATH += $$PWD/../parser
 
 # Link to codegen library
 

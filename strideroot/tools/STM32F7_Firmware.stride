@@ -1,0 +1,12 @@
+pathTemplate STM32F7RootTemplate {
+    displayName: "STM32F7 Firmware root path"
+    output: STM32F7FirmwareRoot
+    meta: ""
+    platforms: ['macOS', 'Windows', 'Linux'] 
+}
+
+pathSearch STM32F7RootSearch {
+    pathTemplate: STM32F7RootTemplate
+    rootPathRegex: "~/STM32Cube/Repository/STM32Cube_FW_F7_V1.16.0"
+    platforms: ['macOS', 'Windows', 'Linux']
+}

@@ -20,43 +20,45 @@ set(CMAKE_CXX_FLAGS "${COMMON_FLAGS} -Os -g3 -Wall -fmessage-length=0 -ffunction
 
 set(CMAKE_ASM_FLAGS ${COMMON_FLAGS})
 
-set(STM_COMMON ${STRIDE_PLATFORM_ROOT}/STM32Cube_FW_F7_V1.7.0)
+message("Using ${STM_FIRMWARE_ROOT}")
+#set(STM_FIRMWARE_ROOT ${STRIDE_PLATFORM_ROOT}/STM32Cube_FW_F7_V1.7.0)
 
 include_directories( Inc
-${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Inc
-${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Inc/Legacy
-${STM_COMMON}/Drivers/CMSIS/Include
-${STM_COMMON}/Drivers/CMSIS/Device/ST/STM32F7xx/Include
+${STM_FIRMWARE_ROOT}/Drivers/STM32F7xx_HAL_Driver/Inc
+${STM_FIRMWARE_ROOT}/Drivers/STM32F7xx_HAL_Driver/Inc/Legacy
+${STM_FIRMWARE_ROOT}/Drivers/CMSIS/Include
+${STM_FIRMWARE_ROOT}/Drivers/CMSIS/Device/ST/STM32F7xx/Include
+${STM_FIRMWARE_ROOT}/Drivers/CMSIS/DSP/Include
 )
 
 set(STM_PLATFORM
-${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_cortex.c
-${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dfsdm.c
-${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dma_ex.c
-${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dma.c
-${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_flash_ex.c
-${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_flash.c
-${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_gpio.c
-${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_i2c_ex.c
-${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_i2c.c
-${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_i2s.c
-${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pwr_ex.c
-${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pwr.c
-${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_qspi.c
-${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc_ex.c
-${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc.c
-${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_sai_ex.c
-${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_sai.c
-${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_sram.c
-${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_tim_ex.c
-${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_tim.c
-${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_uart.c
-${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_ll_fmc.c
-${STM_COMMON}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal.c
-${STM_COMMON}/Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/gcc/startup_stm32f769xx.s
+${STM_FIRMWARE_ROOT}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_cortex.c
+${STM_FIRMWARE_ROOT}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dfsdm.c
+${STM_FIRMWARE_ROOT}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dma_ex.c
+${STM_FIRMWARE_ROOT}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dma.c
+${STM_FIRMWARE_ROOT}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_flash_ex.c
+${STM_FIRMWARE_ROOT}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_flash.c
+${STM_FIRMWARE_ROOT}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_gpio.c
+${STM_FIRMWARE_ROOT}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_i2c_ex.c
+${STM_FIRMWARE_ROOT}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_i2c.c
+${STM_FIRMWARE_ROOT}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_i2s.c
+${STM_FIRMWARE_ROOT}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pwr_ex.c
+${STM_FIRMWARE_ROOT}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pwr.c
+${STM_FIRMWARE_ROOT}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_qspi.c
+${STM_FIRMWARE_ROOT}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc_ex.c
+${STM_FIRMWARE_ROOT}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc.c
+${STM_FIRMWARE_ROOT}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_sai_ex.c
+${STM_FIRMWARE_ROOT}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_sai.c
+${STM_FIRMWARE_ROOT}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_sram.c
+${STM_FIRMWARE_ROOT}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_tim_ex.c
+${STM_FIRMWARE_ROOT}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_tim.c
+${STM_FIRMWARE_ROOT}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_uart.c
+${STM_FIRMWARE_ROOT}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_ll_fmc.c
+${STM_FIRMWARE_ROOT}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal.c
+${STM_FIRMWARE_ROOT}/Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/gcc/startup_stm32f769xx.s
 )
 
-set_property(SOURCE ${STM_COMMON}/Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/gcc/startup_stm32f769xx.s PROPERTY LANGUAGE C)
+set_property(SOURCE ${STM_FIRMWARE_ROOT}/Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/gcc/startup_stm32f769xx.s PROPERTY LANGUAGE C)
 
 file(GLOB SOURCES
     "template.cpp"
@@ -70,6 +72,6 @@ set_target_properties(app.elf PROPERTIES COMPILE_DEFINITIONS "USE_HAL_DRIVER;STM
 
 add_definitions( "-D__weak=__attribute__((weak))" "-D__packed=__attribute__((__packed__))" )
 
-link_directories(${STM_COMMON}/Drivers/CMSIS/Lib/GCC)
+link_directories(${STM_FIRMWARE_ROOT}/Drivers/CMSIS/Lib/GCC)
 
-target_link_libraries(app.elf ${COMMON_FLAGS} -L${STM_COMMON}/Drivers/CMSIS/Lib/GCC -specs=nosys.specs -specs=nano.specs -T${CMAKE_SOURCE_DIR}/STM32F769BITx_FLASH.ld -Wl,-Map=output.map -Wl,--gc-sections -lm arm_cortexM7lfdp_math ${CXX11})
+target_link_libraries(app.elf ${COMMON_FLAGS} -L${STM_FIRMWARE_ROOT}/Drivers/CMSIS/Lib/GCC -specs=nosys.specs -specs=nano.specs -T${CMAKE_SOURCE_DIR}/STM32F769BITx_FLASH.ld -Wl,-Map=output.map -Wl,--gc-sections -lm arm_cortexM7lfdp_math ${CXX11})

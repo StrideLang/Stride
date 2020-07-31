@@ -14,22 +14,7 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout_3">
-    <property name="spacing">
-     <number>2</number>
-    </property>
-    <property name="leftMargin">
-     <number>2</number>
-    </property>
-    <property name="topMargin">
-     <number>2</number>
-    </property>
-    <property name="rightMargin">
-     <number>2</number>
-    </property>
-    <property name="bottomMargin">
-     <number>2</number>
-    </property>
+   <layout class="QVBoxLayout" name="verticalLayout">
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="sizePolicy">
@@ -110,25 +95,7 @@
    <attribute name="dockWidgetArea">
     <number>2</number>
    </attribute>
-   <widget class="QWebEngineView" name="documentationWidget">
-    <layout class="QVBoxLayout" name="verticalLayout">
-     <property name="spacing">
-      <number>2</number>
-     </property>
-     <property name="leftMargin">
-      <number>2</number>
-     </property>
-     <property name="topMargin">
-      <number>2</number>
-     </property>
-     <property name="rightMargin">
-      <number>2</number>
-     </property>
-     <property name="bottomMargin">
-      <number>2</number>
-     </property>
-    </layout>
-   </widget>
+   <widget class="QWebEngineView" name="documentationWidget"/>
   </widget>
   <widget class="QDockWidget" name="projectDockWidget">
    <property name="windowTitle">
@@ -256,6 +223,7 @@
     <addaction name="separator"/>
     <addaction name="actionOptions"/>
     <addaction name="actionManage_Strideroot"/>
+    <addaction name="actionManage_Local"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -434,6 +402,11 @@
   <action name="actionRecent_Files">
    <property name="text">
     <string>Recent Files</string>
+   </property>
+  </action>
+  <action name="actionManage_Local">
+   <property name="text">
+    <string>Manage Local</string>
    </property>
   </action>
  </widget>

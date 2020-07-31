@@ -1,17 +1,5 @@
 _frameworkConfiguration _RtAudioConfiguration {
     frameworkName: "RtAudio"
-    dependencies: [
-        dependency Git {
-            package: "git"
-            minVersion: "1.7.9"
-            maxVersion: none
-        }
-        dependency Cmake {
-            package: "cmake"
-            minVersion: "3.15"
-            maxVersion: none
-        }
-    ]
     installation: [
         installAction RtAudioInstall {
             workingDirectory: "project"
@@ -25,3 +13,29 @@ _frameworkConfiguration _RtAudioConfiguration {
         }
     ]
 }
+
+# RtAudio Compile options
+_compileOption _RtAudioLinuxPulse {
+  name: "Pulse"
+  defines: ["__LINUX_PULSE__"]
+  linkLibraries: ["pthread", "pulse-simple", "pulse"]
+}
+
+_compileOption _RtAudioLinuxAlsa {
+  name: "Alsa"
+  defines: ["__LINUX_ALSA__"]
+  linkLibraries: ["asound", "pthread"]
+}
+
+_compileOption _RtAudioLinuxJack {
+  name: "Jack"
+  defines: ["__UNIX_JACK__"]
+  linkLibraries: ["jack", "pthread"]
+}
+
+_compileOptionsGroup _RtAudioLinuxOptions {
+  name: "RtAudio API"
+  options: [_RtAudioLinuxPulse, _RtAudioLinuxAlsa, _RtAudioLinuxJack]
+  rules: "multiple"
+}
+

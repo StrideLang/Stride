@@ -4,8 +4,8 @@ generatorDirectives __GeneratorDirectives {
     templateFiles: ["template.cpp", "config.cmake"]
     destinationDir: "code"
     buildDir: "build"
-    configCommand: ["cmake",  "-DSTRIDE_PLATFORM_ROOT=%platformRoot%", ".."]
-    buildCommand: ["cmake", "--build", "."]
+    configCommand: [CMake,  "-DSTRIDE_PLATFORM_ROOT=%platformRoot%", ".."]
+    buildCommand: [CMake, "--build", "."]
     target: "app"
 #    targetDir: "build/"
     codeGenerator: "pufferfish"
@@ -30,8 +30,8 @@ generatorDirectives __GeneratorDirectives {
     templateFiles: ["template.cpp", "config.cmake"]
     destinationDir: "code"
     buildDir: "build"
-    configCommand: ["cmake",  "-DSTRIDE_PLATFORM_ROOT=%platformRoot%", ".."]
-    buildCommand: ["cmake", "--build", "."]
+    configCommand: [CMake,  "-DSTRIDE_PLATFORM_ROOT=%platformRoot%",".."]
+    buildCommand: [CMake, "--build", "."]
     target: "app"
     targetDir: "code/build"
     codeGenerator: "pufferfish"

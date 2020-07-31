@@ -3,7 +3,7 @@ generatorDirectives __GeneratorDirectives {
     templateFiles: ["template.cpp"]
     destinationDir: "code"
     buildDir: "build"
-    configCommand: ["cmake", "-DSTRIDE_PLATFORM_ROOT=%platformRoot%", ".."]
+    configCommand: ["cmake", "-DSTRIDE_PLATFORM_ROOT=%platformRoot%", "-DSTM_FIRMWARE_ROOT=%STM32F7FirmwareRoot%", ".."]
     buildCommand: ["cmake",  "--build",  "."]
 #    target: "app"
     targetDir: "code/build"
@@ -11,3 +11,15 @@ generatorDirectives __GeneratorDirectives {
     codeGeneratorMajorVersion: 1
     codeGeneratorMinroVersion: 0
 }
+
+#            openOCD_cfg_file = openOCD_dir + "/board/saturnM7.cfg"
+##            openOCD_cfg_file = self.platform_dir + "/openOCD/stm32f746g_disco.cfg"
+#            openOCD_bin_file = self.out_dir + "/STM32F7/app.bin"
+#
+#            args = [openOCD_bin,
+#                    '-f' + openOCD_cfg_file,
+#                    '-c init',
+#                    '-c reset init',
+#                    '-c halt',
+#                    '-c flash write_image erase ' + openOCD_bin_file + ' 0x08000000',
+#                    '-c reset',

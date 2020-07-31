@@ -6,7 +6,8 @@ CONFIG += ordered
 SUBDIRS = parser \
           codegen \
           tests \
-          compiler
+          compiler\
+          stridemanager
 
 
 codegen.depends = parser

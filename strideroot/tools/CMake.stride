@@ -1,0 +1,22 @@
+toolTemplate CMakeTemplate {
+    displayName: "CMake"
+    output: CMake
+    meta: "CMake build system"
+    platforms: ['macOS', 'Windows', 'Linux'] 
+}
+
+toolSearch CMakeSearch {
+    toolTemplate: CMakeTemplate
+    rootPathRegex: ""
+    nameRegex: "cmake"
+    platforms: ['macOS', 'Windows', 'Linux']
+    # For security we should have hashes for known versions.
+}
+
+#toolRequired CMakeRequired {
+#
+#}
+#
+#toolVersionVerification CMakeVersion {
+#
+#}

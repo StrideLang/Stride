@@ -69,6 +69,7 @@ public slots:
   void loadFile(QString fileName);
   void openOptionsDialog();
   void openManageStriderootDialog();
+  void openManageLocalDialog();
   void openGeneratedDir();
   void cleanProject();
   void updateCodeAnalysis(bool force = false);

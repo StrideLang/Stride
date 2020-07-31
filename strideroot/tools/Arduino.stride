@@ -1,0 +1,26 @@
+pathTemplate ArduinoRootTemplate {
+    displayName: "STM32F7 Firmware root path"
+    output: ArduinoRoot
+    meta: ""
+    platforms: ['macOS', 'Windows', 'Linux'] 
+}
+
+pathSearch ArduinoRootSearch {
+    pathTemplate: ArduinoRootTemplate
+    rootPathRegex: "~/arduino-1.8.13"
+    platforms: ['macOS', 'Windows', 'Linux']
+}
+
+toolTemplate ArduinoTemplate {
+    displayName: "Arduino IDE"
+    output: Arduino
+    meta: ""
+    platforms: ['macOS', 'Windows', 'Linux'] 
+}
+
+toolSearch ArduinoSearch {
+    toolTemplate: ArduinoTemplate
+    rootPathRegex: "~/arduino-1.8.13"
+    nameRegex: "arduino"
+    platforms: ['macOS', 'Windows', 'Linux']
+}

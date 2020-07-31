@@ -46,6 +46,7 @@
 #include "declarationnode.h"
 #include "propertynode.h"
 #include "pythonproject.h"
+#include "toolmanager.hpp".h "
 
 StrideSystem::StrideSystem(QString strideRoot, QString systemName,
                            int majorVersion, int minorVersion,
@@ -439,6 +440,102 @@ ASTNode StrideSystem::getPlatformDomain(string namespaceName) {
     }
   }
   return platformDomain;
+}
+
+QMap<QString, QString>
+StrideSystem::getFrameworkTools(std::string namespaceName) {
+  QMap<QString, QString> tools;
+
+  ToolManager toolManager(m_strideRoot.toStdString());
+
+  map<string, vector<ASTNode>> libObjects = getBuiltinObjectsReference();
+  if (libObjects.find(namespaceName) == libObjects.end()) { // Invalid namespace
+    assert(0 == 1);
+    return QMap<QString, QString>();
+  }
+  for (ASTNode object : libObjects[namespaceName]) {
+    if (object->getNodeType() == AST::Declaration) {
+      std::shared_ptr<DeclarationNode> decl =
+          static_pointer_cast<DeclarationNode>(object);
+      if (decl->getObjectType() == "toolRequirement") {
+        auto toolInstanceNode = decl->getPropertyValue("toolInstance");
+        if (toolInstanceNode && toolInstanceNode->getNodeType() == AST::Block) {
+          auto toolInstance =
+              static_pointer_cast<BlockNode>(toolInstanceNode)->getName();
+          if (toolManager.localTools.find(toolInstance) !=
+              toolManager.localTools.end()) {
+
+            tools[QString::fromStdString(toolInstance)] =
+                QString::fromStdString(toolManager.localTools[toolInstance]);
+          } else {
+            std::cerr << "ERROR tool instance not found in local config"
+                      << std::endl;
+          }
+        } else {
+          std::cerr << "ERROR unexpetec toolInstance port in toolRequirement "
+                    << decl->getName() << std::endl;
+        }
+      }
+    }
+  }
+  return tools;
+}
+
+QMap<QString, QString>
+StrideSystem::getFrameworkPaths(std::string namespaceName) {
+  QMap<QString, QString> paths;
+
+  ToolManager toolManager(m_strideRoot.toStdString());
+
+  map<string, vector<ASTNode>> libObjects = getBuiltinObjectsReference();
+  if (libObjects.find(namespaceName) == libObjects.end()) { // Invalid namespace
+    assert(0 == 1);
+    return QMap<QString, QString>();
+  }
+  for (ASTNode object : libObjects[namespaceName]) {
+    if (object->getNodeType() == AST::Declaration) {
+      std::shared_ptr<DeclarationNode> decl =
+          static_pointer_cast<DeclarationNode>(object);
+      if (decl->getObjectType() == "pathRequirement") {
+        auto toolInstanceNode = decl->getPropertyValue("pathInstance");
+        if (toolInstanceNode && toolInstanceNode->getNodeType() == AST::Block) {
+          auto pathInstance =
+              static_pointer_cast<BlockNode>(toolInstanceNode)->getName();
+          if (toolManager.localPaths.find(pathInstance) !=
+              toolManager.localPaths.end()) {
+
+            paths[QString::fromStdString(pathInstance)] =
+                QString::fromStdString(toolManager.localPaths[pathInstance]);
+          } else {
+            std::cerr << "ERROR tool instance not found in local config"
+                      << std::endl;
+          }
+        } else {
+          std::cerr << "ERROR unexpetec toolInstance port in toolRequirement "
+                    << decl->getName() << std::endl;
+        }
+      }
+    }
+  }
+  return paths;
+}
+
+string StrideSystem::substituteTokens(string namespaceName, string text) {
+  auto paths = getFrameworkPaths(namespaceName);
+
+  for (auto mapEntry : paths.keys()) {
+    size_t index = 0;
+    while (true) {
+      index = text.find("%" + mapEntry.toStdString() + "%", index);
+      if (index == std::string::npos) {
+        break;
+      }
+      text.replace(index, mapEntry.size() + 2, paths[mapEntry].toStdString());
+      index += mapEntry.size() + 2;
+    }
+  }
+
+  return text;
 }
 
 vector<string> StrideSystem::getFrameworkNames() {

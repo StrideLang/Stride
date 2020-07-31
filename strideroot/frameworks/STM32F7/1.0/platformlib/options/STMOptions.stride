@@ -1,0 +1,10 @@
+#optionGroup STMOptionsGroup {
+#	name: "STM Options"
+#}
+#
+#pathCommandlineOption _STMFirmawareDir {
+#	name: "STM Firmware Path"
+#	default: '""'
+#	override: [["STM32F7", "stmFirmawareRoot"]]
+#	meta: "STM Firmware Root Path"
+#}

@@ -58,7 +58,6 @@ typedef struct {
 
 class StrideSystem {
 public:
-  StrideSystem() {}
   StrideSystem(QString strideRoot, QString systemName, int majorVersion,
                int minorVersion, std::vector<std::shared_ptr<ImportNode>>);
   ~StrideSystem();
@@ -73,6 +72,10 @@ public:
   ASTNode
   getPlatformDomain(string namespaceName = ""); // The platform's default domain
 
+  QMap<QString, QString> getFrameworkTools(std::string namespaceName);
+  QMap<QString, QString> getFrameworkPaths(std::string namespaceName);
+
+  std::string substituteTokens(std::string namespaceName, std::string text);
   //    DeclarationNode *getFunction(QString functionName);
   vector<string> getFrameworkNames();
   map<string, vector<ASTNode>>

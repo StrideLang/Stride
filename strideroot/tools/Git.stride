@@ -1,0 +1,14 @@
+toolTemplate GitTemplate {
+    displayName: "Git"
+    output: Git
+    meta: "Git version control system"
+    platforms: ['macOS', 'Windows', 'Linux'] 
+}
+
+toolSearch GitSearch {
+    toolTemplate: GitTemplate
+    rootPathRegex: ""
+    nameRegex: "git"
+    platforms: ['macOS', 'Windows', 'Linux']
+    # For security we should have hashes for known versions.
+}

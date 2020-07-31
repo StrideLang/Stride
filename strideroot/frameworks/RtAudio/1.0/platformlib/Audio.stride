@@ -1,81 +1,55 @@
-
 constant AudioRate {
     value: 44100 # This will be overwritten by the configuration file
 }
 
-_compileOption _RtAudioLinuxPulse {
-  name: "Pulse"
-  defines: ["__LINUX_PULSE__"]
-  linkLibraries: ["pthread", "pulse-simple", "pulse"]
-}
-
-_compileOption _RtAudioLinuxAlsa {
-  name: "Alsa"
-  defines: ["__LINUX_ALSA__"]
-  linkLibraries: ["asound", "pthread"]
-}
-
-_compileOption _RtAudioLinuxJack {
-  name: "Jack"
-  defines: ["__UNIX_JACK__"]
-  linkLibraries: ["jack", "pthread"]
-}
-
-_compileOptionsGroup _RtAudioLinuxOptions {
-  name: "RtAudio API"
-  options: [_RtAudioLinuxPulse, _RtAudioLinuxAlsa, _RtAudioLinuxJack]
-  rules: "multiple"
-}
-
-
 # ----------------------------------------
-type _TemplateDirectives {
-  typeName: "_templateDirectives"
-  properties: [
-    typeProperty FileName {
-        name: "filename"
-        types: [""]
-        default: ""
-        required: on
-    },
-    typeProperty GlobalsTag {
-        name: "globalsTag"
-        types: [""]
-        default: ""
-        required: on
-    },
-    typeProperty DeclarationsTag {
-        name: "declarationsTag"
-        types: [""]
-        default: ""
-        required: on
-    },
-    typeProperty InitializationTag {
-        name: "initializationTag"
-        types: [""]
-        default: ""
-        required: on
-    },
-    typeProperty ProcessingTag {
-        name: "processingTag"
-        types: [""]
-        default: ""
-        required: on
-    },
-    typeProperty CleanupTag {
-        name: "cleanupTag"
-        types: [""]
-        default: ""
-        required: on
-    },
-    typeProperty Substitutions {
-        name: "substitutions"
-        types: [""]
-        default: ""
-        required: on
-    }
-  ]
-}
+#type _TemplateDirectives {
+#  typeName: "_templateDirectives"
+#  properties: [
+#    typeProperty FileName {
+#        name: "filename"
+#        types: [""]
+#        default: ""
+#        required: on
+#    },
+#    typeProperty GlobalsTag {
+#        name: "globalsTag"
+#        types: [""]
+#        default: ""
+#        required: on
+#    },
+#    typeProperty DeclarationsTag {
+#        name: "declarationsTag"
+#        types: [""]
+#        default: ""
+#        required: on
+#    },
+#    typeProperty InitializationTag {
+#        name: "initializationTag"
+#        types: [""]
+#        default: ""
+#        required: on
+#    },
+#    typeProperty ProcessingTag {
+#        name: "processingTag"
+#        types: [""]
+#        default: ""
+#        required: on
+#    },
+#    typeProperty CleanupTag {
+#        name: "cleanupTag"
+#        types: [""]
+#        default: ""
+#        required: on
+#    },
+#    typeProperty Substitutions {
+#        name: "substitutions"
+#        types: [""]
+#        default: ""
+#        required: on
+#    }
+#  ]
+#}
 
 # --------------------------------
 
@@ -84,11 +58,7 @@ _domainDefinition AudioDomain {
 	framework: _RtAudioFramework
 	parentDomain: RootDomain
 	rate: AudioRate
-#	globalsTag: "Includes"
-#	declarationsTag: "Declarations"
-#    initializationTag: "Initialization"
-#	processingTag: "Processing"
-#	cleanupTag: "Cleanup"
+
     substitutions: [
       "num_in_chnls", _NumInputChannels,
       "num_out_chnls", _NumOutputChannels,

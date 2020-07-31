@@ -1,0 +1,33 @@
+toolRequirement CMakeRequirement {
+    toolInstance: CMake
+    minVersion: none
+    maxVersion: none
+    exactVersion: none
+}
+
+toolRequirement GitRequirement {
+    toolInstance: Git
+    minVersion: none
+    maxVersion: none
+    exactVersion: none
+}
+
+pathRequirement ArduinoRequirement {
+    toolInstance: ArduinoRoot
+    minVersion: none
+    maxVersion: none
+    exactVersion: none
+}
+
+#dependencies: [
+#    dependency Git {
+#        package: "git"
+#        minVersion: "1.7.9"
+#        maxVersion: none
+#    }
+#    dependency Cmake {
+#        package: "cmake"
+#        minVersion: "3.15"
+#        maxVersion: none
+#    }
+#]

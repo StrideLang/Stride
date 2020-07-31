@@ -60,6 +60,7 @@
 #include "coderesolver.h"
 #include "codevalidator.h"
 #include "configdialog.h"
+#include "localmanagementdialog.hpp"
 #include "savechangeddialog.h"
 #include "striderootmanagementdialog.h"
 
@@ -155,7 +156,7 @@ bool ProjectWindow::build() {
   if (tree) {
     SystemConfiguration systemConfig = readProjectConfiguration();
 
-    CodeResolver resolver(tree, m_environment["platformRootPath"].toString(),
+    CodeResolver resolver(tree, m_environment["striderootPath"].toString(),
                           systemConfig);
     resolver.process();
     CodeValidator validator(tree);
@@ -884,14 +885,21 @@ void ProjectWindow::openOptionsDialog() {
 
 void ProjectWindow::openManageStriderootDialog() {
   StriderootManagementDialog dialog;
-  dialog.m_strideRoot = m_environment["platformRootPath"].toString();
+  dialog.m_strideRoot = m_environment["striderootPath"].toString();
 
   dialog.prepare();
   int result = dialog.exec();
 
-  m_environment["platformRootPath"] = dialog.m_strideRoot;
+  m_environment["striderootPath"] = dialog.m_strideRoot;
 
   writeSettings();
+}
+
+void ProjectWindow::openManageLocalDialog() {
+  LocalManagementDialog dialog(m_environment["striderootPath"].toString());
+
+  //  dialog.prepare();
+  int result = dialog.exec();
 }
 
 void ProjectWindow::updateCodeAnalysis(bool force) {
@@ -902,7 +910,7 @@ void ProjectWindow::updateCodeAnalysis(bool force) {
       m_startingUp || force) {
     editor->markParsed();
     m_codeModel.updateCodeAnalysis(editor->document()->toPlainText(),
-                                   m_environment["platformRootPath"].toString(),
+                                   m_environment["striderootPath"].toString(),
                                    editor->filename());
     m_highlighter->setBlockTypes(m_codeModel.getTypes());
     m_highlighter->setFunctions(m_codeModel.getFunctions());
@@ -937,6 +945,8 @@ void ProjectWindow::connectActions() {
           SLOT(openOptionsDialog()));
   connect(ui->actionManage_Strideroot, SIGNAL(triggered()), this,
           SLOT(openManageStriderootDialog()));
+  connect(ui->actionManage_Local, SIGNAL(triggered()), this,
+          SLOT(openManageLocalDialog()));
   connect(ui->actionLoad_File, SIGNAL(triggered()), this, SLOT(loadFile()));
   connect(ui->actionStop, SIGNAL(triggered()), this, SLOT(stop()));
   connect(ui->actionQuit, SIGNAL(triggered()), this, SLOT(close()));
@@ -1018,8 +1028,8 @@ void ProjectWindow::readSettings(bool resetOpenFiles) {
   settings.endGroup();
 
   settings.beginGroup("environment");
-  m_environment["platformRootPath"] =
-      settings.value("platformRootPath", "../../Stride/strideroot").toString();
+  m_environment["striderootPath"] =
+      settings.value("striderootPath", "../../Stride/strideroot").toString();
   settings.endGroup();
 
   settings.beginGroup("GUI");
@@ -1105,7 +1115,7 @@ void ProjectWindow::writeSettings() {
   settings.endGroup();
 
   settings.beginGroup("environment");
-  settings.setValue("platformRootPath", m_environment["platformRootPath"]);
+  settings.setValue("striderootPath", m_environment["striderootPath"]);
   QStringList guiKeys = m_guiOptions.keys();
   for (QString key : guiKeys) {
     settings.setValue(key, m_guiOptions[key]);
@@ -1491,8 +1501,6 @@ void ProjectWindow::configureSystem() {
           }
           optionLayout->addWidget(new QLabel(optionName));
 
-          ASTNode maxNode = optionDecl->getPropertyValue("maximum");
-          ASTNode minNode = optionDecl->getPropertyValue("minimum");
           QLineEdit *spinBox = new QLineEdit(optionWidget);
           QPushButton *browseButton = new QPushButton("...", optionWidget);
           QObject::connect(browseButton, &QPushButton::clicked, this,
@@ -1504,6 +1512,63 @@ void ProjectWindow::configureSystem() {
                                spinBox->setText(fileName);
                              }
                            });
+
+          if (systemConfig.platformConfigurations["all"].contains(
+                  QString::fromStdString(optionDecl->getName()))) {
+            spinBox->setText(
+                systemConfig
+                    .platformConfigurations["all"][QString::fromStdString(
+                        optionDecl->getName())]
+                    .toString());
+          } else { // Use default
+            ASTNode defaultNode = optionDecl->getPropertyValue("default");
+            if (defaultNode && defaultNode->getNodeType() == AST::String) {
+              spinBox->setText(QString::fromStdString(
+                  static_pointer_cast<ValueNode>(defaultNode)
+                      ->getStringValue()));
+            }
+          }
+          optionLayout->addWidget(spinBox);
+          optionLayout->addWidget(browseButton);
+
+          ASTNode metaNode = optionDecl->getPropertyValue("meta");
+          if (metaNode && metaNode->getNodeType() == AST::String) {
+            optionWidget->setToolTip(QString::fromStdString(
+                static_pointer_cast<ValueNode>(metaNode)->getStringValue()));
+          }
+          lineEdits[QString::fromStdString(optionDecl->getName())] = spinBox;
+        } else if (type == "pathOption") {
+          QString optionName = "";
+          ASTNode nameNode = optionDecl->getPropertyValue("name");
+          if (nameNode && nameNode->getNodeType() == AST::String) {
+            optionName = QString::fromStdString(
+                static_pointer_cast<ValueNode>(nameNode)->getStringValue());
+          }
+          QStringList buildPlatforms;
+          ASTNode buildPlatformsNode =
+              optionDecl->getPropertyValue("buildPlatforms");
+          if (buildPlatformsNode &&
+              buildPlatformsNode->getNodeType() == AST::List) {
+            for (ASTNode member : buildPlatformsNode->getChildren()) {
+              if (member->getNodeType() == AST::String) {
+                buildPlatforms << QString::fromStdString(
+                    static_pointer_cast<ValueNode>(member)->getStringValue());
+              }
+            }
+          }
+          optionLayout->addWidget(new QLabel(optionName));
+
+          QLineEdit *spinBox = new QLineEdit(optionWidget);
+          QPushButton *browseButton = new QPushButton("...", optionWidget);
+          QObject::connect(
+              browseButton, &QPushButton::clicked, this, [&, spinBox]() {
+                QString fileName = QFileDialog::getExistingDirectory(
+                    this, tr("Find Files"), QDir::currentPath());
+                qDebug() << fileName;
+                if (fileName.size() > 0) {
+                  spinBox->setText(fileName);
+                }
+              });
 
           if (systemConfig.platformConfigurations["all"].contains(
                   QString::fromStdString(optionDecl->getName()))) {
