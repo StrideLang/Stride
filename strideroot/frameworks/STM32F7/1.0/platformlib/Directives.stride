@@ -3,7 +3,7 @@ generatorDirectives __GeneratorDirectives {
     templateFiles: ["template.cpp"]
     destinationDir: "code"
     buildDir: "build"
-    configCommand: ["cmake", "-DSTRIDE_PLATFORM_ROOT=%platformRoot%", "-DSTM_FIRMWARE_ROOT=%STM32F7FirmwareRoot%", ".."]
+    configCommand: ["cmake", "-DSTRIDE_PLATFORM_ROOT=%platformRoot%", '-DSTM_FIRMWARE_ROOT="%STM32F7FirmwareRoot%"', ".."]
     buildCommand: ["cmake",  "--build",  "."]
 #    target: "app"
     targetDir: "code/build"

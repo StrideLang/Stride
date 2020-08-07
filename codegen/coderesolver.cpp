@@ -74,6 +74,7 @@ CodeResolver::CodeResolver(ASTNode tree, QString striderootDir,
     m_system = std::make_shared<StrideSystem>(
         striderootDir, QString::fromStdString(platformNode->platformName()),
         platformNode->majorVersion(), platformNode->minorVersion(), importList);
+    m_system->m_systemConfig = systemConfig;
     for (int i = 1; i < systems.size(); i++) {
       qDebug() << "Ignoring system: "
                << QString::fromStdString(platformNode->platformName());

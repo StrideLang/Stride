@@ -330,16 +330,6 @@ std::string LanguageSyntax::generateModuleDeclaration(
   //        std::cout<< moduleCode <<std::endl;
 }
 
-// std::string LanguageSyntax::getDataType(std::string strideType) {
-//  if (strideType == "signal") {
-//    // FIXME we need to
-//    return "double";
-//  } else if (strideType == "switch") {
-//    return "bool";
-//  }
-//  return "";
-//}
-
 string LanguageSyntax::getDataType(std::shared_ptr<DeclarationNode> decl,
                                    StrideSystem *system) {
   std::string dataType;

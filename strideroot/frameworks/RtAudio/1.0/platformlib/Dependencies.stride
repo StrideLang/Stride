@@ -12,12 +12,12 @@ toolRequirement GitRequirement {
     exactVersion: none
 }
 
-pathRequirement ArduinoRequirement {
-    toolInstance: ArduinoRoot
-    minVersion: none
-    maxVersion: none
-    exactVersion: none
-}
+#toolRequirement ArduinoRequirement {
+#    toolInstance: Arduino
+#    minVersion: none
+#    maxVersion: none
+#    exactVersion: none
+#}
 
 #dependencies: [
 #    dependency Git {

@@ -46,7 +46,7 @@
 #include "declarationnode.h"
 #include "propertynode.h"
 #include "pythonproject.h"
-#include "toolmanager.hpp".h "
+#include "toolmanager.hpp"
 
 StrideSystem::StrideSystem(QString strideRoot, QString systemName,
                            int majorVersion, int minorVersion,
@@ -472,7 +472,7 @@ StrideSystem::getFrameworkTools(std::string namespaceName) {
                       << std::endl;
           }
         } else {
-          std::cerr << "ERROR unexpetec toolInstance port in toolRequirement "
+          std::cerr << "ERROR expected toolInstance port in toolRequirement "
                     << decl->getName() << std::endl;
         }
       }
@@ -511,7 +511,7 @@ StrideSystem::getFrameworkPaths(std::string namespaceName) {
                       << std::endl;
           }
         } else {
-          std::cerr << "ERROR unexpetec toolInstance port in toolRequirement "
+          std::cerr << "ERROR unexpected pathInstance port in pathRequirement "
                     << decl->getName() << std::endl;
         }
       }
@@ -532,6 +532,28 @@ string StrideSystem::substituteTokens(string namespaceName, string text) {
       }
       text.replace(index, mapEntry.size() + 2, paths[mapEntry].toStdString());
       index += mapEntry.size() + 2;
+    }
+  }
+  size_t index = 0;
+  while (index < text.size() && text.find("%", index) != std::string::npos) {
+    index = text.find("%", index);
+    size_t endIndex = text.find("%", index + 1);
+    if (endIndex != std::string::npos) {
+      auto tokenName = text.substr(index + 1, endIndex - index - 1);
+      if (m_systemConfig.platformConfigurations["all"].find(
+              QString::fromStdString(tokenName)) !=
+          m_systemConfig.platformConfigurations["all"].end()) {
+        text.replace(index, endIndex - index + 1,
+                     m_systemConfig
+                         .platformConfigurations["all"][QString::fromStdString(
+                             tokenName)]
+                         .toString()
+                         .toStdString());
+      }
+
+      index = endIndex + 1;
+    } else {
+      index = endIndex;
     }
   }
 

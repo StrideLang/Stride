@@ -46,6 +46,7 @@
 #include "strideframework.hpp"
 #include "stridelibrary.hpp"
 #include "strideparser.h"
+#include "systemconfiguration.hpp"
 
 #include "builder.h"
 
@@ -115,6 +116,7 @@ public:
       m_connectionDefinitions; // Connections between frameworks
   std::map<std::string, std::shared_ptr<DeclarationNode>>
       m_synchronization; // Connections between domains
+  SystemConfiguration m_systemConfig;
 
 private:
   QVector<ASTNode> getPortsForTypeBlock(DeclarationNode *block);

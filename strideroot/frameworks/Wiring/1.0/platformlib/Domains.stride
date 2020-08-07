@@ -11,14 +11,22 @@ constant PlatformRate {
     value: 1000 # TODO allow setting this from the configuration file
 }
 
+synchronization GlobalSync {
+    readDomain: none
+    writeDomain: none
+    scheme: none
+}
+
 _domainDefinition WiringDomain {
 	domainName: "WiringDomain"
 	framework: _WiringFramework
     substitutions: [ ]
     domainIncludes: ["Timer.h"]
     domainDeclarations: ["Timer t;"]
-    domainInitializationCode: '// init domain init	
+    domainInitializationCode: '	
 int tickEvent = t.every(1, process);
+//[[Initialization]]
+//[[/Initialization]]
 '
 	domainFunctionCode: '// domain processing
 	void process()
@@ -30,6 +38,9 @@ int tickEvent = t.every(1, process);
 	domainProcessingCode: '
   t.update();
 	'
-    domainCleanupCode: '// init domain cleanup'
+    domainCleanupCode: '// init domain cleanup
+//[[Cleanup]]
+//[[/Cleanup]]
+    '
 	rate:PlatformRate
 }

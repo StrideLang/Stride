@@ -1,12 +1,14 @@
 generatorDirectives __GeneratorDirectives {
     projectDir: "project"
     templateFiles: ["template.ino"]
-    destinationDir: "Wiring-code"
-    buildDir: "build"
-    buildCommand: [Arduino, "--upload", "--board", "arduino:avr:leonardo", "--port", "/dev/ttyACM0", "--pref", "sketchbook.path=/sketchbook", "template.ino"]
+    destinationDir: "code"
+    buildDir: ""
+    buildCommand: [Arduino, "--upload", "--board", "%_ArduinoType%", "--port", "%_SerialPortOption%" ,
+#     "--pref",     "sketchbook.path=/sketchbook",
+      "template.ino"]
     # No target for Wiring platform build.
 #    target: "app"
-#    targetDir: "Wiring-code/build"
+#    targetDir: "code/build"
     codeGenerator: "pufferfish"
     codeGeneratorMajorVersion: 1
     codeGeneratorMinroVersion: 0

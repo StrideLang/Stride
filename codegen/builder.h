@@ -43,6 +43,7 @@
 
 #include "ast.h"
 #include "declarationnode.h"
+#include "systemconfiguration.hpp"
 
 #define STRIDE_PLUGIN_MAX_STR_LEN 32
 
@@ -95,6 +96,7 @@ public:
 
   // Additional information from stride system
   StrideSystem *m_system; // The StrideSystem that created this builder.
+  SystemConfiguration m_systemConfiguration;
   QString m_frameworkName;
 
 public slots:
