@@ -59,7 +59,10 @@ _domainDefinition SerialDomain {
 					"serial_process_rate", SerialProcessRate]
     domainIncludes: []
     domainDeclarations: []
-    domainInitializationCode: "//[[Initialization]]
+    domainInitializationCode: "
+    
+  Serial.begin(9600);
+    //[[Initialization]]
 //[[/Initialization]]"
     domainProcessingCode: '
     // Serial domain code
@@ -80,7 +83,6 @@ _domainDefinition SerialOutDomain {
 	parentDomain: SerialDomain
 	rate: 0
   domainInitializationCode: '
-  Serial.begin(9600);
   //[[Initialization]]
 //[[/Initialization]]'
 	domainFunctionCode: '
@@ -113,7 +115,7 @@ _domainDefinition SerialInDomain {
   substitutions: ["in_channels", _NumSerialInChannels]
 	domainFunctionCode: ''
 	domainProcessingCode: "
-    while (Serial.available()) {
+    while (Serial.available() > 0) {
         buffer[counter] = Serial.read();
         if (buffer[counter] == '\n') {
             size_t parseCounter = 1;
@@ -123,8 +125,10 @@ _domainDefinition SerialInDomain {
                     buffer[counter] = '\0';
                     String chanStr(buffer);
                     String valueStr(&buffer[parseCounter + 1]);
-                    __serialInVar[chanStr.toInt()] = valueStr.toFloat();
 
+                    Serial.println(valueStr);
+                    __serialInVar[chanStr.toInt()] = valueStr.toFloat();
+                    
                 }
                 parseCounter++;
             }
@@ -132,6 +136,8 @@ _domainDefinition SerialInDomain {
             counter = 0;
 //[[Processing]]
 //[[/Processing]]
+        } else {
+            counter++;
         }
     }
     "
