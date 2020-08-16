@@ -27,37 +27,133 @@ resource SerialPort {
     ]
 }
 
-platformModule _SerialPrintModule {
-	inputs: ["real","real"]
-	outputs: []
-    domain: none
-#    include: []
-#    linkTo: []
-#    declarations: ['']
-    resource: _SerialPort
-    initializations: ["Serial.begin(9600); // init"]
-    processing: '
-	Serial.print(%%intokens:1%%);
-	Serial.print(":");
-	Serial.println(%%intokens:0%%);
-	'
-    inherits: [_Signal]
+#platformModule _SerialPrintModule {
+#	inputs: ["real","real"]
+#	outputs: []
+#    domain: none
+##    include: []
+##    linkTo: []
+##    declarations: ['']
+#    resource: _SerialPort
+#    initializations: ["Serial.begin(9600); // init"]
+#    processing: '
+#	Serial.print(%%intokens:1%%);
+#	Serial.print(":");
+#	Serial.println(%%intokens:0%%);
+#	'
+#    inherits: [_Signal]
+#}
+
+constant SerialProcessRate {
+	value: 1000
 }
+ 
+ 
+_domainDefinition SerialDomain {
+	domainName: "SerialDomain"
+	framework: _WiringFramework
+	parentDomain: WiringDomain
+	rate: SerialProcessRate
+	resource: SerialPort
+    substitutions: ["serial_port", _SerialPort,
+					"serial_process_rate", SerialProcessRate]
+    domainIncludes: []
+    domainDeclarations: []
+    domainInitializationCode: "//[[Initialization]]
+//[[/Initialization]]"
+    domainProcessingCode: '
+    // Serial domain code
+//[[Processing]]
+//[[/Processing]]
+// End Serial Domain
+    '
+	domainFunctionCode: '
+    //[[Declarations]]
+//[[/Declarations]]
+    '
+    domainCleanupCode: ''
+}
+
+_domainDefinition SerialOutDomain {
+	domainName: "SerialOutDomain"
+	framework: _WiringFramework
+	parentDomain: SerialDomain
+	rate: 0
+  domainInitializationCode: '
+  Serial.begin(9600);
+  //[[Initialization]]
+//[[/Initialization]]'
+	domainFunctionCode: '
+    //[[Declarations]]
+//[[/Declarations]]
+    '
+	domainProcessingCode: '//Serial Out code
+    //[[Processing]]
+//[[/Processing]]
+'
+    domainCleanupCode: ''
+}
+
+_domainDefinition SerialInDomain {
+	domainName: "SerialInDomain"
+	framework: _WiringFramework
+	parentDomain: SerialDomain
+	rate: 0
+  domainInitializationCode: '
+  //[[Initialization]]
+//[[/Initialization]]
+  '	
+  domainFunctionCode: '
+    //[[Declarations]]
+//[[/Declarations]]
+    '
+  domainDeclarations: ['float __serialInVar[%%in_channels%%];',
+  'size_t counter = 0;',
+    'char buffer[8];']
+  substitutions: ["in_channels", _NumSerialInChannels]
+	domainFunctionCode: ''
+	domainProcessingCode: "
+    while (Serial.available()) {
+        buffer[counter] = Serial.read();
+        if (buffer[counter] == '\n') {
+            size_t parseCounter = 1;
+            while(parseCounter < counter) {
+                if (buffer[parseCounter] == ':') {
+                    buffer[parseCounter] = '\0';
+                    buffer[counter] = '\0';
+                    String chanStr(buffer);
+                    String valueStr(&buffer[parseCounter + 1]);
+                    __serialInVar[chanStr.toInt()] = valueStr.toFloat();
+
+                }
+                parseCounter++;
+            }
+
+            counter = 0;
+//[[Processing]]
+//[[/Processing]]
+        }
+    }
+    "
+    domainCleanupCode: '// Cleanup SerialInDomain'
+}
+
 
 platformBlock _SerialOutput {
     typeName: '_serialOutput'
 	inputs: ["real"]
 	outputs: []
-    domain: WiringDomain
+    domain: SerialOutDomain
 #    include: []
 #    linkTo: []
     declarations: ['byte channel = 0;']
-    initializations: ["Serial.begin(115200);"
+    initializations: [""
     ]
     processing: '
     channel = %%bundle_index%%;
-    Serial.print((byte *) &channel, 1);
-    Serial.write((byte *) &%%intoken:0%%, 4);
+    Serial.print(channel);
+    Serial.print(":");
+    Serial.println(%%intoken:0%%);
 	'
 	postProcessing: '// Post'
     inherits: [_Signal]
@@ -65,12 +161,13 @@ platformBlock _SerialOutput {
 
 platformBlock _SerialInput {
     typeName: '_serialInput'
-	outputs: ["string"]
+	outputs: ["real"]
+    domain: SerialInDomain
 #    include: []
 #    linkTo: []
 #    declarations: ['']
     initializations: [""]
-    processing: ""
+    processing: "__serialInVar[%%bundle_index%%]"
     inherits: [_Signal]
 }
 
@@ -78,12 +175,12 @@ constant _NumSerialInChannels {value: 2}
 
 _serialInput SerialIn[_NumSerialInChannels] {
     rate: SerialProcessRate
-    domain: WiringDomain
+    domain: SerialInDomain
 }
 
 constant _NumSerialOutChannels {value: 2}
 
 _serialOutput SerialOut[_NumSerialOutChannels] {
     rate: SerialProcessRate
-    domain: WiringDomain
+    domain: SerialOutDomain
 }

@@ -12,6 +12,13 @@ toolRequirement GitRequirement {
     exactVersion: none
 }
 
+toolRequirement OpenOCDRequirement {
+    toolInstance: OpenOCD
+    minVersion: none
+    maxVersion: none
+    exactVersion: none
+}
+
 pathRequirement STM32F7FirmwareRequirement {
     pathInstance: STM32F7FirmwareRoot
     minVersion: none

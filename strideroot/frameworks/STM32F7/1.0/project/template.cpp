@@ -112,20 +112,20 @@ int main(void)
   /* USER CODE BEGIN 3 */
   //[[Processing]]
   //[[/Processing]]
-      switch ( LED ) {
-            case 0:
-                HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
-                break;
-            case 1:
-                // HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
-                break;
-            default:
-                break;
-        }
+  //     switch ( LED ) {
+  //           case 0:
+  //               HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
+  //               break;
+  //           case 1:
+  //               // HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
+  //               break;
+  //           default:
+  //               break;
+  //       }
 
-        LED += 1;
-        LED = LED % 2;
-        HAL_Delay(150);
+  //       LED += 1;
+  //       LED = LED % 2;
+  //       HAL_Delay(500);
   }
   //[[Cleanup]]
   //[[/Cleanup]]

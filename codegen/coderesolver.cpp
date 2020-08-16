@@ -113,7 +113,7 @@ void CodeResolver::process() {
     fillDefaultProperties();
   }
   resolveConstants();
-  printTree();
+  //  printTree();
 
   processDeclarations();
   processDomains();
@@ -1465,6 +1465,14 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream,
         // infer the domain better
         if (previousDomain && previousDomain->getNodeType() != AST::None) {
           domainNode = previousDomain;
+        } else {
+          previousDomain = contextDomainNode;
+        }
+      } else if ((left->getNodeType() == AST::Block ||
+                  left->getNodeType() == AST::Bundle) &&
+                 (!domainNode || domainNode->getNodeType() == AST::None)) {
+        if (previousDomain && previousDomain->getNodeType() != AST::None) {
+          //              domainNode = previousDomain;
         } else {
           previousDomain = contextDomainNode;
         }

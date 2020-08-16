@@ -187,6 +187,7 @@ bool ProjectWindow::build() {
     system->generateDomainConnections(tree);
 
     for (auto builder : m_builders) {
+      builder->m_system = system;
       builder->registerYieldCallback([]() { qApp->processEvents(); });
       builder->setConfiguration(systemConfig.platformConfigurations["all"]);
       connect(builder, SIGNAL(outputText(QString)), this,
@@ -287,6 +288,10 @@ void ProjectWindow::run(bool pressed) {
   if (pressed) {
     if (build()) {
       //        ui->consoleText->clear();
+
+      for (auto builder : m_builders) {
+        builder->deploy();
+      }
       for (auto builder : m_builders) {
         builder->run();
       }

@@ -327,6 +327,10 @@ void ToolManager::readLocalConfigs() {
             if (pathNode && pathNode->getNodeType() == AST::String) {
               std::string path = std::static_pointer_cast<ValueNode>(pathNode)
                                      ->getStringValue();
+
+              if (path.find("~") != std::string::npos) {
+                path.replace(path.find("~"), 1, QDir::homePath().toStdString());
+              }
               localPaths[decl->getName()] = path;
 
             } else {

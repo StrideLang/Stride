@@ -29,6 +29,8 @@ int tickEvent = t.every(1, process);
 //[[/Initialization]]
 '
 	domainFunctionCode: '// domain processing
+//[[Declarations]]
+//[[/Declarations]]
 	void process()
 {
 //[[Processing]]

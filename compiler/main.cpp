@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
       }
       return -1;
     }
-    std::shared_ptr<StrideSystem> platform = resolver.getSystem();
+    std::shared_ptr<StrideSystem> system = resolver.getSystem();
 
     QFileInfo info(fileName);
     QString dirName = info.absolutePath() + QDir::separator() + info.fileName();
@@ -113,10 +113,12 @@ int main(int argc, char *argv[]) {
         return -1;
       }
     }
-    vector<Builder *> builders = platform->createBuilders(dirName, tree);
+    vector<Builder *> builders = system->createBuilders(dirName, tree);
 
     for (auto builder : builders) {
       auto domainMap = builder->generateCode(tree);
+      // TODO find a better way to pass system than here.
+      builder->m_system = system;
 
       if (builder->build(domainMap)) {
         qDebug() << "Built in directory:" << dirName;

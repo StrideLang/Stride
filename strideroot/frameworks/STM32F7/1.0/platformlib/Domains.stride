@@ -11,17 +11,30 @@ alias PlatformRate {
     block: AudioRate
 }
 
+synchronization GlobalSync {
+    readDomain: none
+    writeDomain: none
+    scheme: none
+}
+
+constant RootDomainRate {
+	value: 1000
+}
+
 _domainDefinition RootDomain {
 	domainName: "RootDomain"
 	framework: _STM32F7_Framework
-	rate: -1 # -1 is one-shot/final domain
+	rate: RootDomainRate
+	substitutions: ["root_domain_rate", RootDomainRate]
     domainIncludes: []
     domainDeclarations: []
     domainInitializationCode: '// STM32F7 init domain init
 //[[Initializations]]
 //[[/Initializations]]
 	'
-	domainProcessingCode: '// STM32F7 init domain processing
+	domainProcessingCode: '
+	HAL_Delay(1000/%%root_domain_rate%%);
+	// STM32F7 init domain processing
 
 //[[Processing]]
 //[[/Processing]]

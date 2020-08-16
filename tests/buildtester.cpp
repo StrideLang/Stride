@@ -99,6 +99,7 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile,
 
     std::vector<std::map<std::string, std::string>> domainMaps;
     for (auto &builder : m_builders) {
+      builder->m_system = system;
       domainMaps.push_back(builder->generateCode(tree));
     }
 

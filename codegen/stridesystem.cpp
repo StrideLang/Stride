@@ -336,7 +336,6 @@ vector<Builder *> StrideSystem::createBuilders(QString fileName, ASTNode tree) {
             m_strideRoot, projectDir, pythonExec);
         if (builder) {
           if (builder->isValid()) {
-            builder->m_system = this;
             builders.push_back(builder);
           } else {
             delete builder;
@@ -402,7 +401,6 @@ vector<Builder *> StrideSystem::createBuilders(QString fileName, ASTNode tree) {
                                  m_strideRoot.toStdString())),
                              m_strideRoot, projectDir);
                   if (builder) {
-                    builder->m_system = this;
                     builder->m_frameworkName =
                         QString::fromStdString(platform->getFramework());
                     builders.push_back(builder);
