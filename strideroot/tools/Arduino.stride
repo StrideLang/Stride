@@ -24,3 +24,17 @@ toolSearch ArduinoSearch {
     nameRegex: "arduino"
     platforms: ['macOS', 'Windows', 'Linux']
 }
+
+toolTemplate ArduinoCliTemplate {
+    displayName: "Arduino CLI"
+    output: ArduinoCli
+    meta: "Arduino Command Line Interface https://arduino.github.io/arduino-cli"
+    platforms: ['macOS', 'Windows', 'Linux'] 
+}
+
+toolSearch ArduinoCliSearch {
+    toolTemplate: ArduinoCliTemplate
+    rootPathRegex: "~/arduino-1.8.13"
+    nameRegex: "arduino-cli"
+    platforms: ['macOS', 'Windows', 'Linux']
+}

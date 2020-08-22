@@ -2,10 +2,17 @@ optionGroup SerialOptionsGroup {
 	name: "Serial"
 }
 
-stringListOption _SerialPortOption {
+#stringListOption _SerialPortOption {
+#	name: "Serial Port"
+#	possibleValues: ['/dev/tty0', '/dev/tty2']
+#	default: '/dev/tty0'
+#	override: [["RtAudio", _SerialPort]]
+#	meta: "Serial port selection"
+#}
+
+stringOption _SerialPortOption {
 	name: "Serial Port"
-	possibleValues: ['"/dev/tty0"', '"/dev/tty2"']
-	default: '"/dev/tty0"'
+	default: '/dev/ttyACM0'
 	override: [["RtAudio", _SerialPort]]
 	meta: "Serial port selection"
 }

@@ -95,7 +95,8 @@ public:
   std::string getPlatformDirective(std::string directive);
 
   // Additional information from stride system
-  StrideSystem *m_system; // The StrideSystem that created this builder.
+  std::shared_ptr<StrideSystem>
+      m_system; // The StrideSystem that created this builder.
   SystemConfiguration m_systemConfiguration;
   QString m_frameworkName;
 

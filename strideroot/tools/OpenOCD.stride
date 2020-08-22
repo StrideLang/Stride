@@ -1,0 +1,24 @@
+toolTemplate OpenOCDTemplate {
+    displayName: "OpenOCD"
+    output: OpenOCD
+    meta: "OpenOCD"
+    platforms: ['macOS', 'Windows', 'Linux'] 
+}
+
+toolSearch OpenOCDSearch {
+    toolTemplate: OpenOCDTemplate
+    rootPathRegex: ""
+    nameRegex: "openocd"
+    platforms: ['macOS', 'Windows', 'Linux']
+    # For security we should have hashes for known versions.
+}
+
+toolSearch OpenOCDSearch {
+    toolTemplate: OpenOCDTemplate
+    rootPathRegex: "/opt/st/stm32cubeide_1.3.0/plugins/com.st.stm32cube.ide.mcu.externaltools.openocd.linux64_1.3.0.202002181050/tools"
+    nameRegex: "openocd"
+    platforms: ['macOS', 'Windows', 'Linux']
+    # For security we should have hashes for known versions.
+}
+
+

@@ -96,6 +96,9 @@ public:
   ConnectionNodes getDomainChangeStreams(std::string previousDomainId,
                                          std::string nextDomainId);
 
+  std::string getCommonDomain(std::string frameworkName, std::string domain1,
+                              std::string domain2);
+
   void installFramework(std::string frameworkName);
   std::vector<std::shared_ptr<StrideFramework>> getFrameworks() {
     return m_frameworks;

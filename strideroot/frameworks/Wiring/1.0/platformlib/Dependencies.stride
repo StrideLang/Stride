@@ -1,5 +1,5 @@
-toolRequirement ArduinoRequirement {
-    toolInstance: Arduino
+toolRequirement ArduinoCliRequirement {
+    toolInstance: ArduinoCli
     minVersion: none
     maxVersion: none
     exactVersion: none

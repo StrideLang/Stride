@@ -169,11 +169,52 @@ void StrideFramework::installFramework() {
 }
 
 std::vector<string> StrideFramework::getDomainIds() {
+  std::vector<string> domainIds;
   for (auto treeEntry : m_platformTrees) {
     for (auto node : treeEntry.second->getChildren()) {
+      if (node->getNodeType() == AST::Declaration) {
+        auto decl = static_pointer_cast<DeclarationNode>(node);
+        if (decl->getObjectType() == "_domainDefinition") {
+          auto domainNameNode = decl->getPropertyValue("domainName");
+          if (domainNameNode && domainNameNode->getNodeType() == AST::String) {
+
+            domainIds.push_back(static_pointer_cast<ValueNode>(domainNameNode)
+                                    ->getStringValue());
+          }
+        }
+      }
     }
   }
-  return std::vector<string>();
+  return domainIds;
+}
+
+std::string StrideFramework::getRootDomain() {
+  for (auto treeEntry : m_platformTrees) {
+    for (auto node : treeEntry.second->getChildren()) {
+      if (node->getNodeType() == AST::Declaration) {
+        auto decl = static_pointer_cast<DeclarationNode>(node);
+        if (decl->getObjectType() == "_domainDefinition") {
+          auto parentDomainNode = decl->getPropertyValue("parentDomain");
+          if (!parentDomainNode &&
+              parentDomainNode->getNodeType() == AST::String) {
+
+            auto domainNameNode = decl->getPropertyValue("domainName");
+            if (domainNameNode &&
+                domainNameNode->getNodeType() == AST::String) {
+
+              return static_pointer_cast<ValueNode>(domainNameNode)
+                  ->getStringValue();
+            } else {
+              std::cerr << "ERROR getting root domain name " << __FUNCTION__
+                        << std::endl;
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+  return std::string();
 }
 
 // void StrideFramework::addTree(string treeName, ASTNode treeRoot) {

@@ -82,18 +82,18 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
       // TODO Should optimize this to not reread platform if already done.
 
       // Load testing trees
-      for (auto platform : m_frameworks) {
+      for (auto framework : m_frameworks) {
         QStringList nameFilters;
         nameFilters.push_back("*.stride");
         string platformPath =
-            platform->buildTestingLibPath(m_strideRoot.toStdString());
+            framework->buildTestingLibPath(m_strideRoot.toStdString());
         QFileInfoList libraryFiles = QDir(QString::fromStdString(platformPath))
                                          .entryInfoList(nameFilters);
         for (auto fileInfo : libraryFiles) {
           ASTNode tree = AST::parseFile(
               fileInfo.absoluteFilePath().toLocal8Bit().data(), nullptr);
           if (tree) {
-            platform->addTestingTree(fileInfo.baseName().toStdString(), tree);
+            framework->addTestingTree(fileInfo.baseName().toStdString(), tree);
           } else {
             vector<LangError> errors = AST::getParseErrors();
             foreach (LangError error, errors) {
@@ -451,6 +451,7 @@ StrideSystem::getFrameworkTools(std::string namespaceName) {
     assert(0 == 1);
     return QMap<QString, QString>();
   }
+  namespaceName = ""; // Hack! Everything is currently being put into root...
   for (ASTNode object : libObjects[namespaceName]) {
     if (object->getNodeType() == AST::Declaration) {
       std::shared_ptr<DeclarationNode> decl =
@@ -636,15 +637,9 @@ map<string, vector<ASTNode>> StrideSystem::getBuiltinObjectsReference() {
     objects[libNamespace.first].insert(objects[libNamespace.first].end(),
                                        libNamespace.second.begin(),
                                        libNamespace.second.end());
-    //        auto nodeNoNameSpace = object->deepCopy();
-    //        nodeNoNameSpace->setNamespaceList(vector<string>());
-    //        objects[""].push_back(nodeNoNameSpace);
   }
   for (std::shared_ptr<DeclarationNode> decl : m_platformDefinitions) {
     objects[""].push_back(decl);
-    //        auto nodeNoNameSpace = decl->deepCopy();
-    //        nodeNoNameSpace->setNamespaceList(vector<string>());
-    //        objects[""].push_back(nodeNoNameSpace);
   }
   return objects;
 }
@@ -832,14 +827,14 @@ ASTNode StrideSystem::loadImportTree(std::string importName,
   QStringList nameFilters;
   nameFilters.push_back("*.stride");
 
+  // If platform name is not provided, then import from everywhere (library and
+  // framework)
+  // TODO also try to load from current file directory
   if (platformName.size() == 0) {
     tree = m_library.loadImportTree(QString::fromStdString(importName),
                                     QString::fromStdString(importAs),
                                     QStringList());
   }
-
-  // If platform name is not provided, then import from everywhere (local
-  // directory, then platforms, then library)
 
   for (auto platform : m_frameworks) {
     if (platformName.size() == 0 ||
@@ -1130,6 +1125,17 @@ ConnectionNodes StrideSystem::getDomainChangeStreams(string previousDomainId,
     }
   }
   return domainChangeNodes;
+}
+
+string StrideSystem::getCommonDomain(string frameworkName, string domain1,
+                                     string domain2) {
+  std::string commonDomain = "RootDomain";
+
+  for (auto framework : m_frameworks) {
+    if (framework->getFramework() == frameworkName) {
+    }
+  }
+  return commonDomain;
 }
 
 void StrideSystem::installFramework(string frameworkName) {
