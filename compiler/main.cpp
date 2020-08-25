@@ -113,14 +113,21 @@ int main(int argc, char *argv[]) {
         return -1;
       }
     }
+
+    system->generateDomainConnections(tree);
+
     vector<Builder *> builders = system->createBuilders(dirName, tree);
 
+    std::vector<std::map<std::string, std::string>> domainMaps;
     for (auto builder : builders) {
-      auto domainMap = builder->generateCode(tree);
       // TODO find a better way to pass system than here.
       builder->m_system = system;
+      domainMaps.push_back(builder->generateCode(tree));
+    }
 
-      if (builder->build(domainMap)) {
+    size_t counter = 0;
+    for (auto &builder : builders) {
+      if (builder->build(domainMaps[counter++])) {
         qDebug() << "Built in directory:" << dirName;
       } else {
         qDebug() << "Build failed for " << fileName;
