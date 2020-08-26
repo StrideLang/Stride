@@ -1,0 +1,46 @@
+module AD {
+    ports:      [
+        mainOutputPort OutputPort {
+            name:       'output'
+            block:      Output
+            meta:       "The module's primary output port."
+        }
+        mainInputPort InputPort {
+            name:       'output'
+            block:      TriggerEnv
+            meta:       "Triggers the envelope"
+        }
+        propertyInputPort AttackTimePort {
+            name:       'attack'
+            default: 0.2
+            block:      AttackTime
+            meta:       "Attack time in seconds"
+        }
+        propertyInputPort DecayTimePort {
+            name:       'decay'
+            default: 3.0
+            block:      DecayTime
+            meta:       "Decay time in seconds"
+        }
+    ]
+    blocks:     [
+        signal Output {
+            default:    0.0
+        }
+        signal StageIncrements[2] {
+            default:    0.0
+        }
+        trigger TriggerEnv {domain: OutputPort.domain}
+        signal Stage {default: -1 domain: OutputPort.domain}
+    ]
+    streams: [
+
+        1.0 /(AttackTime *OutputPort.rate) >> StageIncrements[0];
+        1.0 /(-DecayTime*OutputPort.rate) >> StageIncrements[1];
+
+        TriggerEnv >> reaction { 0 >> Stage; };
+        [Stage, 0] >> GreaterOrEqual() >> reaction {Output + StageIncrements[Stage] >> Output;};
+        [Output, 1.0] >> GreaterOrEqual() >> reaction {1 >> Stage;};
+        [Output, 0.0] >> Less() >> reaction { -1 >> Stage; };
+    ]
+}

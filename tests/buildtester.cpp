@@ -108,9 +108,9 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile,
       buildOK &= builder->build(domainMaps[counter++]);
     }
 
-    for (auto &builder : m_builders) {
-      buildOK &= builder->deploy();
-    }
+    //    for (auto &builder : m_builders) {
+    //      buildOK &= builder->deploy();
+    //    }
 
     if (buildOK) {
       for (auto builder : m_builders) {

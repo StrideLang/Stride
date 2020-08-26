@@ -54,7 +54,7 @@ module Less {
 		}
 	]
     blocks: [
-		signal Input[2] {}
+		signal Input[2] {domain: OutputPort.domain}
 		switch Output {domain: OutputPort.domain}
     ]
     streams: [
@@ -76,7 +76,7 @@ module LessOrEqual {
 		}
 	]
     blocks: [
-		signal Input[2] {}
+		signal Input[2] {domain: OutputPort.domain}
 		switch Output {domain: OutputPort.domain}
     ]
     streams: [
@@ -180,7 +180,7 @@ module Choose {
         }
     ]
     blocks: [
-		signal Input[2] {}
+		signal Input[2] {domain: OutputPort.domain}
         _chooseType ChooseBlock {}
     ]
     streams: [

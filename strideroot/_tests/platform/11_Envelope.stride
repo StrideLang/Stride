@@ -1,0 +1,13 @@
+use DesktopAudio version 1.0
+
+import Generators
+
+signal Envelope {
+	domain: AudioDomain
+}
+
+Impulse(frequency: 1) >> AD(attack: 0.01 decay: 0.7) >> Envelope;
+
+#Oscillator(frequency: 880 amplitude: Envelope) >> AudioOut[0];
+
+Oscillator(frequency: 440 amplitude: 1.0) * Envelope >> AudioOut[0];
