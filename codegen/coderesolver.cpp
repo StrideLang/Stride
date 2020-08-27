@@ -393,7 +393,8 @@ void CodeResolver::fillDefaultPropertiesForNode(ASTNode node, ASTNode tree) {
         // Is there anything to do here for platform modules?
       }
     }
-  } else if (node->getNodeType() == AST::List) {
+  } else if (node->getNodeType() == AST::List ||
+             node->getNodeType() == AST::Expression) {
     ListNode *list = static_cast<ListNode *>(node.get());
     for (ASTNode listElement : list->getChildren()) {
       fillDefaultPropertiesForNode(listElement, tree);
