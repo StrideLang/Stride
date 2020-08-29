@@ -130,8 +130,6 @@ public:
   findDomainDeclaration(string domainName, ASTNode tree);
   static std::shared_ptr<DeclarationNode>
   findDataTypeDeclaration(std::string dataTypeName, ASTNode tree);
-  static std::string getDomainIdentifier(ASTNode domain, ScopeStack scopeStack,
-                                         ASTNode tree);
 
   static QVector<ASTNode>
   getPortsForTypeBlock(std::shared_ptr<DeclarationNode> block, ScopeStack scope,
@@ -207,8 +205,9 @@ public:
                                ASTNode tree);
   static std::string getNodeDomainName(ASTNode node, ScopeStack scopeStack,
                                        ASTNode tree);
-  static std::string
-  getDomainNodeString(ASTNode node); // Deprecated. Don't use.
+  static std::string getDomainIdentifier(ASTNode domain, ScopeStack scopeStack,
+                                         ASTNode tree);
+
   static QVector<ASTNode> getBlocksInScope(ASTNode root, ScopeStack scopeStack,
                                            ASTNode tree);
 

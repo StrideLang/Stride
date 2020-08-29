@@ -75,13 +75,6 @@ void CodeValidator::validatePlatform(ASTNode tree, ScopeStack scopeStack) {
     if (node->getNodeType() == AST::Platform) {
       std::shared_ptr<SystemNode> platformNode =
           static_pointer_cast<SystemNode>(node);
-      //            string platformName() const;
-
-      //            double version() const;
-
-      //            string hwPlatform() const;
-
-      //            double hwVersion() const;
     }
   }
 }
@@ -94,22 +87,12 @@ QVector<ASTNode> CodeValidator::getBlocksInScope(ASTNode root,
       root->getNodeType() == AST::BundleDeclaration) {
     std::shared_ptr<DeclarationNode> decl =
         static_pointer_cast<DeclarationNode>(root);
-    //        vector<std::shared_ptr<PropertyNode>> properties =
-    //        decl->getProperties(); blocks << root;
 
     if (decl->getPropertyValue("ports")) {
       for (ASTNode block : decl->getPropertyValue("ports")->getChildren()) {
         blocks << block;
-        //                scopeStack << block;
       }
     }
-    //        auto subScope =
-    //        CodeValidator::getBlockSubScope(decl)->getChildren();
-    //        scopeStack.push_back({decl->getName(), subScope});
-    //        foreach(PropertyNode *property, properties) {
-    //            blocks << getBlocksInScope(property->getValue(), scopeStack,
-    //            tree);
-    //        }
   } else if (root->getNodeType() == AST::List) {
     vector<ASTNode> elements =
         static_pointer_cast<ListNode>(root)->getChildren();
@@ -463,18 +446,6 @@ ASTNode CodeValidator::getInstance(ASTNode block, ScopeStack scopeStack,
 bool CodeValidator::namespaceMatch(std::vector<string> scopeList,
                                    std::shared_ptr<DeclarationNode> decl,
                                    std::string currentFramework) {
-  //  const char *const delim = "::";
-
-  //  std::ostringstream joined;
-  //  std::copy(scopeList.begin(), scopeList.end(),
-  //            std::ostream_iterator<std::string>(joined, delim));
-  //  string namespaceString = joined.str();
-  //  if (namespaceString.size() > 2 ||
-  //      (scopeList.size() == 1 && scopeList[0] == "")) {
-  //    namespaceString = namespaceString.substr(0, namespaceString.size() -
-  //                                                    2); // remove trailing
-  //                                                    '::'
-  //  }
   if (scopeList.size() == 1 && scopeList[0].size() == 0) {
     scopeList.clear();
   }
@@ -1377,7 +1348,6 @@ int CodeValidator::getBundleSize(BundleNode *bundle, ScopeStack scope,
   for (ASTNode expr : listExprs) {
     switch (expr->getNodeType()) {
     case AST::Int:
-      //            size += evaluateConstInteger(expr, scope, tree, errors);
       size += 1;
       break;
     case AST::Range:
@@ -1393,8 +1363,6 @@ int CodeValidator::getBundleSize(BundleNode *bundle, ScopeStack scope,
       type = resolveExpressionType(static_cast<ExpressionNode *>(expr.get()),
                                    scope, tree);
       if (type == ConstInt) {
-        //                size += evaluateConstInteger(expr, scope, tree,
-        //                errors);
         size += 1;
       }
       break;
@@ -1785,27 +1753,6 @@ CodeValidator::findAllDeclarations(std::string objectName,
                                    const ScopeStack &scopeStack, ASTNode tree,
                                    vector<string> namespaces) {
   std::vector<std::shared_ptr<DeclarationNode>> decls;
-  //    QVector<ASTNode> globalAndLocal;
-  //    for (auto subScopeIt = scopeStack.rbegin(); subScopeIt !=
-  //    scopeStack.rend(); subScopeIt++) {
-  //        auto subScope = *subScopeIt;
-  //        for (ASTNode scopeNode : subScope.second) {
-  //            if (scopeNode) {
-  //                if (scopeNode->getNodeType() == AST::List) {
-  //                    ListNode *listNode = static_cast<ListNode
-  //                    *>(scopeNode.get()); globalAndLocal <<
-  //                    QVector<ASTNode>::fromStdVector(listNode->getChildren());
-  //                } else if (scopeNode->getNodeType() == AST::Declaration ||
-  //                scopeNode->getNodeType() == AST::BundleDeclaration) {
-  //                     globalAndLocal << scopeNode;
-  //                }
-  //            }
-  //        }
-  //    }
-  //    if (tree) {
-  //        globalAndLocal <<
-  //        QVector<ASTNode>::fromStdVector(tree->getChildren());
-  //    }
   vector<string> scopesList;
   istringstream iss(objectName);
   copy(istream_iterator<string>(iss), istream_iterator<string>(),
@@ -1836,21 +1783,7 @@ CodeValidator::findAllDeclarations(std::string objectName,
           }
           // Force matching framework.
           if (CodeValidator::namespaceMatch(scopesList, decl, frameworkName)) {
-            //            if (platform.size() > 0) {
-            //              auto platformNode =
-            //              decl->getCompilerProperty("framework"); if
-            //              (platformNode && platformNode->getNodeType() ==
-            //              AST::String) {
-            //                auto platformString =
-            //                    static_pointer_cast<ValueNode>(platformNode)
-            //                        ->getStringValue();
-            //                if (platformString == platform) {
-            //                  return decl;
-            //                }
-            //              }
-            //            } else {
             decls.push_back(decl);
-            //            }
           }
         }
       }
@@ -1875,16 +1808,6 @@ CodeValidator::findAllDeclarations(std::string objectName,
             decls.push_back(decl);
           }
         }
-        //            for (auto ns: defaultNamespaces) {
-        //                vector<string> longScopesList;
-        //                longScopesList.push_back(ns);
-        //                longScopesList.insert(longScopesList.end(),
-        //                scopesList.begin(), scopesList.end()); if (name ==
-        //                objectName &&
-        //                CodeValidator::namespaceMatch(longScopesList, decl)) {
-        //                    return decl;
-        //                }
-        //            }
       }
     }
   }
@@ -1894,27 +1817,6 @@ CodeValidator::findAllDeclarations(std::string objectName,
 std::shared_ptr<DeclarationNode> CodeValidator::findDeclaration(
     std::string objectName, const ScopeStack &scopeStack, ASTNode tree,
     vector<string> namespaces, std::string platform) {
-  //    QVector<ASTNode> globalAndLocal;
-  //    for (auto subScopeIt = scopeStack.rbegin(); subScopeIt !=
-  //    scopeStack.rend(); subScopeIt++) {
-  //        auto subScope = *subScopeIt;
-  //        for (ASTNode scopeNode : subScope.second) {
-  //            if (scopeNode) {
-  //                if (scopeNode->getNodeType() == AST::List) {
-  //                    ListNode *listNode = static_cast<ListNode
-  //                    *>(scopeNode.get()); globalAndLocal <<
-  //                    QVector<ASTNode>::fromStdVector(listNode->getChildren());
-  //                } else if (scopeNode->getNodeType() == AST::Declaration ||
-  //                scopeNode->getNodeType() == AST::BundleDeclaration) {
-  //                     globalAndLocal << scopeNode;
-  //                }
-  //            }
-  //        }
-  //    }
-  //    if (tree) {
-  //        globalAndLocal <<
-  //        QVector<ASTNode>::fromStdVector(tree->getChildren());
-  //    }
   vector<string> scopesList;
   istringstream iss(objectName);
   copy(istream_iterator<string>(iss), istream_iterator<string>(),
@@ -1938,22 +1840,7 @@ std::shared_ptr<DeclarationNode> CodeValidator::findDeclaration(
         std::string name = decl->getName();
         if (name == objectName) {
           if (CodeValidator::namespaceMatch(scopesList, decl, platform)) {
-            // domain declarations need not
-            //            if (platform.size() > 0) {
-            //              auto platformNode =
-            //              decl->getCompilerProperty("framework"); if
-            //              (platformNode && platformNode->getNodeType() ==
-            //              AST::String) {
-            //                auto platformString =
-            //                    static_pointer_cast<ValueNode>(platformNode)
-            //                        ->getStringValue();
-            //                if (platformString == platform) {
-            //                  return decl;
-            //                }
-            //              }
-            //            } else {
             return decl;
-            //            }
           }
         }
       }
@@ -1974,12 +1861,6 @@ std::shared_ptr<DeclarationNode> CodeValidator::findDeclaration(
             frameworkName =
                 static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
           }
-          //          if (frameworkName.size() == 0) {
-          //            auto domainId =
-          //                CodeValidator::getNodeDomainName(node, scopeStack,
-          //                tree);
-          //            frameworkName = getFrameworkForDomain(domainId, tree);
-          //          }
           if (CodeValidator::namespaceMatch(scopesList, decl, platform)) {
             if (platform.size() > 0) {
               auto platformNode = decl->getCompilerProperty("framework");
@@ -1996,16 +1877,6 @@ std::shared_ptr<DeclarationNode> CodeValidator::findDeclaration(
             }
           }
         }
-        //            for (auto ns: defaultNamespaces) {
-        //                vector<string> longScopesList;
-        //                longScopesList.push_back(ns);
-        //                longScopesList.insert(longScopesList.end(),
-        //                scopesList.begin(), scopesList.end()); if (name ==
-        //                objectName &&
-        //                CodeValidator::namespaceMatch(longScopesList, decl)) {
-        //                    return decl;
-        //                }
-        //            }
       }
     }
   }
@@ -2688,56 +2559,6 @@ CodeValidator::findDataTypeDeclaration(string dataTypeName, ASTNode tree) {
   return nullptr;
 }
 
-std::string CodeValidator::getDomainIdentifier(ASTNode domain,
-                                               ScopeStack scopeStack,
-                                               ASTNode tree) {
-  std::string name;
-  // To avoid inconsistencies, we rely on the block name rather than the
-  // domainName property. This guarantees uniqueness within a scope.
-  // TODO we should add scope markers to this identifier to avoid clashes
-  if (domain) {
-    if (domain->getNodeType() == AST::Block) {
-      auto domainBlock = static_pointer_cast<BlockNode>(domain);
-      std::shared_ptr<DeclarationNode> domainDeclaration =
-          CodeValidator::findDomainDeclaration(domainBlock->getName(), tree);
-      if (domainDeclaration) {
-        if (domainDeclaration->getObjectType() == "_domainDefinition") {
-          name = domainDeclaration->getName();
-        } else if (domainDeclaration->getObjectType() == "PlatformDomain") {
-          auto domainNameNode = domainDeclaration->getPropertyValue("value");
-          name = getDomainIdentifier(domainNameNode, scopeStack, tree);
-        }
-      }
-      auto domainInstanceIndex = domain->getCompilerProperty("domainInstance");
-      if (domainInstanceIndex) {
-        int index =
-            static_pointer_cast<ValueNode>(domainInstanceIndex)->getIntValue();
-        name += ":" + std::to_string(index);
-      }
-    } else if (domain->getNodeType() == AST::Bundle) {
-      auto domainBlock = static_pointer_cast<BundleNode>(domain);
-      auto domainDeclaration = CodeValidator::findDeclaration(
-          QString::fromStdString(domainBlock->getName()), scopeStack, tree);
-      if (domainDeclaration) {
-        if (domainDeclaration->getObjectType() == "_domainDefinition") {
-          name = domainDeclaration->getName();
-        } else if (domainDeclaration->getObjectType() == "PlatformDomain") {
-          auto domainNameNode = domainDeclaration->getPropertyValue("value");
-          name = getDomainIdentifier(domainNameNode, scopeStack, tree);
-        }
-      }
-    } else if (domain->getNodeType() == AST::String) {
-      // Should anything be added to the id? Scope?
-      name = static_pointer_cast<ValueNode>(domain)->getStringValue();
-    } else if (domain->getNodeType() == AST::PortProperty) {
-      // Should anything be added to the id? Scope?
-      auto portProperty = static_pointer_cast<PortPropertyNode>(domain);
-      name = portProperty->getName() + "_" + portProperty->getPortName();
-    }
-  }
-  return name;
-}
-
 QVector<ASTNode> CodeValidator::getPortsForType(string typeName,
                                                 ScopeStack scope, ASTNode tree,
                                                 std::vector<string> namespaces,
@@ -3200,9 +3021,6 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack,
       qDebug() << "Non homogenous list";
       return CodeValidator::getNodeDomain(node->getChildren().at(0), scopeStack,
                                           tree);
-      //            return nullptr;
-      //            return
-      //            static_pointer_cast<ListNode>(node)->getSamplingDomain();
     }
   } else if (node->getNodeType() == AST::Declaration ||
              node->getNodeType() == AST::BundleDeclaration) {
@@ -3235,15 +3053,6 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack,
               parentDomain->setCompilerProperty("instances",
                                                 domainInstanceCountNode);
             }
-            int index = static_pointer_cast<ValueNode>(domainInstanceCountNode)
-                            ->getIntValue();
-            //            domainInstanceCountNode =
-            //                std::make_shared<ValueNode>(index + 1, __FILE__,
-            //                __LINE__);
-            //            parentDomain->setCompilerProperty("instances",
-            //                                              domainInstanceCountNode);
-            //            domainNode->setCompilerProperty("domainInstance",
-            //                                            domainInstanceCountNode);
           }
         }
       }
@@ -3254,39 +3063,7 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack,
       domainNode =
           CodeValidator::getNodeDomain(expr->getValue(), scopeStack, tree);
     } else {
-      //            ASTNode left = expr->getLeft();
-      //            ASTNode right = expr->getRight();
-      //            ASTNode leftDomain = CodeValidator::getNodeDomain(left,
-      //            scopeStack, tree); ASTNode rightDomain =
-      //            CodeValidator::getNodeDomain(right, scopeStack, tree);
-      //            if (left->getNodeType() == AST::Int
-      //                    || left->getNodeType() == AST::Real
-      //                    || left->getNodeType() == AST::String
-      //                    || left->getNodeType() == AST::Switch
-      //                    || left->getNodeType() == AST::PortProperty) {
-      //                leftDomain = rightDomain;
-      //            }
-      //            if (right->getNodeType() == AST::Int
-      //                    || right->getNodeType() == AST::Real
-      //                    || right->getNodeType() == AST::String
-      //                    || right->getNodeType() == AST::Switch
-      //                    || right->getNodeType() == AST::PortProperty) {
-      //                rightDomain = leftDomain;
-      //            }
-      //            if (leftDomain && rightDomain) {
-
-      //                if ( CodeValidator::getDomainIdentifier(leftDomain,
-      //                scopeStack, tree) ==
-      //                     CodeValidator::getDomainIdentifier(rightDomain,
-      //                     scopeStack, tree)) {
-      //                    return leftDomain;
-      //                } else {
-      //                    return
-      //                    expr->getCompilerProperty("samplingDomain");
-      //                }
-      //            } else {
       return expr->getCompilerProperty("samplingDomain");
-      //            }
     }
   } else if (node->getNodeType() == AST::Stream) {
     StreamNode *stream = static_cast<StreamNode *>(node.get());
@@ -3309,15 +3086,6 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack,
     domainNode = static_pointer_cast<ValueNode>(node)->getDomain();
   }
 
-  //    if (domainNode && domainNode->getNodeType() == AST::Block) {
-  //        // Resolve reference if domain is a block
-  //        string blockName =
-  //        std::static_pointer_cast<BlockNode>(domainNode)->getName();
-  //        domainNode =
-  //        CodeValidator::findDeclaration(QString::fromStdString(blockName),
-  //        scopeStack, tree);
-  //    }
-
   return domainNode;
 }
 
@@ -3332,32 +3100,52 @@ string CodeValidator::getNodeDomainName(ASTNode node, ScopeStack scopeStack,
   return domainName;
 }
 
-string CodeValidator::getDomainNodeString(ASTNode domainNode) {
-  string domainName;
-  if (domainNode) {
-    if (domainNode->getNodeType() == AST::String) {
-      domainName = static_cast<ValueNode *>(domainNode.get())->getStringValue();
-    } else if (domainNode->getNodeType() == AST::Declaration) {
-      DeclarationNode *domainBlock =
-          static_cast<DeclarationNode *>(domainNode.get());
-      if (domainBlock->getObjectType() == "_domainDefinition") {
-        ASTNode domainValue = domainBlock->getPropertyValue("domainName");
-        if (domainValue->getNodeType() == AST::String) {
-          domainName =
-              static_cast<ValueNode *>(domainValue.get())->getStringValue();
+std::string CodeValidator::getDomainIdentifier(ASTNode domain,
+                                               ScopeStack scopeStack,
+                                               ASTNode tree) {
+  std::string name;
+  // To avoid inconsistencies, we rely on the block name rather than the
+  // domainName property. This guarantees uniqueness within a scope.
+  // TODO we should add scope markers to this identifier to avoid clashes
+  if (domain) {
+    if (domain->getNodeType() == AST::Block) {
+      auto domainBlock = static_pointer_cast<BlockNode>(domain);
+      std::shared_ptr<DeclarationNode> domainDeclaration =
+          CodeValidator::findDomainDeclaration(domainBlock->getName(), tree);
+      if (domainDeclaration) {
+        if (domainDeclaration->getObjectType() == "_domainDefinition") {
+          name = domainDeclaration->getName();
+        } else if (domainDeclaration->getObjectType() == "PlatformDomain") {
+          auto domainNameNode = domainDeclaration->getPropertyValue("value");
+          name = getDomainIdentifier(domainNameNode, scopeStack, tree);
         }
       }
-    } else if (domainNode->getNodeType() == AST::PortProperty) {
-      DeclarationNode *domainBlock =
-          static_cast<DeclarationNode *>(domainNode.get());
-      if (domainBlock->getObjectType() == "_domainDefinition") {
-        ASTNode domainValue = domainBlock->getPropertyValue("domainName");
-        if (domainValue->getNodeType() == AST::String) {
-          domainName =
-              static_cast<ValueNode *>(domainValue.get())->getStringValue();
+      auto domainInstanceIndex = domain->getCompilerProperty("domainInstance");
+      if (domainInstanceIndex) {
+        int index =
+            static_pointer_cast<ValueNode>(domainInstanceIndex)->getIntValue();
+        name += ":" + std::to_string(index);
+      }
+    } else if (domain->getNodeType() == AST::Bundle) {
+      auto domainBlock = static_pointer_cast<BundleNode>(domain);
+      auto domainDeclaration = CodeValidator::findDeclaration(
+          QString::fromStdString(domainBlock->getName()), scopeStack, tree);
+      if (domainDeclaration) {
+        if (domainDeclaration->getObjectType() == "_domainDefinition") {
+          name = domainDeclaration->getName();
+        } else if (domainDeclaration->getObjectType() == "PlatformDomain") {
+          auto domainNameNode = domainDeclaration->getPropertyValue("value");
+          name = getDomainIdentifier(domainNameNode, scopeStack, tree);
         }
       }
+    } else if (domain->getNodeType() == AST::String) {
+      // Should anything be added to the id? Scope?
+      name = static_pointer_cast<ValueNode>(domain)->getStringValue();
+    } else if (domain->getNodeType() == AST::PortProperty) {
+      // Should anything be added to the id? Scope?
+      auto portProperty = static_pointer_cast<PortPropertyNode>(domain);
+      name = portProperty->getName() + "_" + portProperty->getPortName();
     }
   }
-  return domainName;
+  return name;
 }

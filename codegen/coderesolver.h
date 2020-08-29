@@ -104,7 +104,6 @@ private:
   void expandParallel();
   void processAnoymousDeclarations();
   void resolveConstants();
-  void processResets();
   void processDomains();
   void resolveRates();
   void analyzeConnections();
@@ -145,11 +144,11 @@ private:
   std::shared_ptr<DeclarationNode> createConstantDeclaration(string name,
                                                              ASTNode value);
   void declareIfMissing(string name, ASTNode blockList, ASTNode value);
-  std::shared_ptr<DeclarationNode>
-  createSignalBridge(string bridgeName, string originalName,
-                     ASTNode defaultValue, ASTNode inDomain, ASTNode outDomain,
-                     const string filename, int line, int size = 1,
-                     string type = "signal");
+  //  std::shared_ptr<DeclarationNode>
+  //  createSignalBridge(string bridgeName, string originalName,
+  //                     ASTNode defaultValue, ASTNode inDomain, ASTNode
+  //                     outDomain, const string filename, int line, int size =
+  //                     1, string type = "signal");
 
   std::vector<ASTNode>
   declareUnknownExpressionSymbols(std::shared_ptr<ExpressionNode> expr,
@@ -170,8 +169,6 @@ private:
 
   void declareInternalBlocksForNode(ASTNode node, ScopeStack scope);
 
-  void processResetForNode(ASTNode thisScope, ASTNode streamScope,
-                           ASTNode upperScope);
   void propagateDomainsForNode(ASTNode node, ScopeStack scopeStack);
   void resolveDomainForStreamNode(ASTNode node, ScopeStack scope);
 
@@ -226,9 +223,10 @@ private:
                                            ScopeStack scopeStack);
   void sliceDomainsInNode(std::shared_ptr<DeclarationNode> stream,
                           ScopeStack scopeStack);
-  std::vector<ASTNode> processExpression(std::shared_ptr<ExpressionNode> expr,
-                                         ScopeStack scopeStack,
-                                         ASTNode outDomain);
+  //  std::vector<ASTNode> processExpression(std::shared_ptr<ExpressionNode>
+  //  expr,
+  //                                         ScopeStack scopeStack,
+  //                                         ASTNode outDomain);
 
   ASTNode getModuleContextDomain(std::shared_ptr<DeclarationNode> moduleDecl);
   //    void setContextDomain(vector<ASTNode> nodes,
