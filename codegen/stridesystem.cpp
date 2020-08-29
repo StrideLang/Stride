@@ -718,6 +718,7 @@ StrideSystem::getFrameworkSynchronization(std::string frameworkName) {
             if (node->getNodeType() == AST::Declaration) {
               auto decl = static_pointer_cast<DeclarationNode>(node);
               if (decl->getObjectType() == "synchronization") {
+
                 syncNodes.push_back(decl);
               }
             }
@@ -984,9 +985,13 @@ void StrideSystem::generateDomainConnections(ASTNode tree) {
             //                                        __LINE__);
 
             //                        }
+
+            // We need to remove the read domain from the reads metadata in
+            // "next"
+
             std::shared_ptr<StreamNode> newStream =
-                std::make_shared<StreamNode>(connectionNode, next, __FILE__,
-                                             __LINE__);
+                std::make_shared<StreamNode>(connectionNode, stream->getRight(),
+                                             __FILE__, __LINE__);
             newStreams.push_back(newStream);
             auto srcImportNodes =
                 domainChangeNodes.sourceImports->getChildren();
