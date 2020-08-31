@@ -36,8 +36,6 @@ _domainDefinition RootDomain {
 	HAL_Delay(1000/%%root_domain_rate%%);
 	// STM32F7 init domain processing
 
-//[[Processing]]
-//[[/Processing]]
 '
 domainFunctionCode: '
 // STM32F7 RootDomain template

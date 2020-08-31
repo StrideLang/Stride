@@ -127,7 +127,10 @@ public:
   findTypeDeclaration(std::shared_ptr<DeclarationNode> decl, ScopeStack scope,
                       ASTNode tree, string currentFramework = "");
   static std::shared_ptr<DeclarationNode>
-  findDomainDeclaration(string domainName, ASTNode tree);
+  findDomainDeclaration(string domainName, string framework, ASTNode tree);
+  static std::shared_ptr<DeclarationNode> findDomainDeclaration(string domainId,
+                                                                ASTNode tree);
+
   static std::shared_ptr<DeclarationNode>
   findDataTypeDeclaration(std::string dataTypeName, ASTNode tree);
 

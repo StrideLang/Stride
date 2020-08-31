@@ -4,7 +4,7 @@ optionGroup WiringOptionsGroup {
 
 stringOption _SerialPortOption {
 	name: "Serial Port"
-	default: '"/dev/ttyACM0"'
+	default: '/dev/ttyACM0'
 	override: [["Wiring", _ArduinoSerialPort]]
 	meta: "Device serial port"
 }

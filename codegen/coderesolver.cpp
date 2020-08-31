@@ -1609,7 +1609,9 @@ ASTNode CodeResolver::processDomainsForNode(ASTNode node, ScopeStack scopeStack,
         } else if (domain->getNodeType() == AST::String ||
                    domain->getNodeType() == AST::Block ||
                    domain->getNodeType() == AST::PortProperty) {
-          currentDomain = domain;
+          currentDomain = domain->deepCopy();
+          currentDomain->setNamespaceList(node->getNamespaceList());
+          //            currentDomain->addScope()
         } else {
           qDebug() << "unrecognized domain type";
         }

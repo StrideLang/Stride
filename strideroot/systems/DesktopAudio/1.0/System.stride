@@ -37,7 +37,7 @@ connection _WiringToPCSerial {
 	destinationDomains: [ "AudioDomain" ]
 	sourceImports: ["Serial"]
 	sourceStreams: [
-		_Connection_Token >> SerialOut[0];
+		_Connection_Token >> Wiring::SerialOut[0];
 	]
 	destinationImports: ["Serial"]
 	destinationStreams: [

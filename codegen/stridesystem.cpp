@@ -1032,6 +1032,21 @@ ConnectionNodes StrideSystem::getDomainChangeStreams(string previousDomainId,
     auto destDomainsList = connector->getPropertyValue("destinationDomains");
     auto sourcePlatform = connector->getPropertyValue("sourcePlatform");
     auto destPlatform = connector->getPropertyValue("destPlatform");
+    std::string previousDomainFramework;
+    auto separatorIndex = previousDomainId.find("::");
+    if (separatorIndex != std::string::npos) {
+      previousDomainFramework = previousDomainId.substr(0, separatorIndex);
+      previousDomainId = previousDomainId.substr(separatorIndex + 2);
+    }
+    // TODO implement for domain instances (with an additional ":" separator at
+    // the end
+    std::string nextDomainFramework;
+    separatorIndex = nextDomainId.find("::");
+    if (separatorIndex != std::string::npos) {
+      nextDomainFramework = nextDomainId.substr(0, separatorIndex);
+      nextDomainId = nextDomainId.substr(separatorIndex + 2);
+    }
+
     if (sourceDomainsList && destDomainsList) {
       bool sourceDomainsMatch = false;
       for (auto sourceDomain : sourceDomainsList->getChildren()) {
@@ -1132,15 +1147,46 @@ ConnectionNodes StrideSystem::getDomainChangeStreams(string previousDomainId,
   return domainChangeNodes;
 }
 
-string StrideSystem::getCommonDomain(string frameworkName, string domain1,
-                                     string domain2) {
-  std::string commonDomain = "RootDomain";
+string StrideSystem::getCommonAncestorDomain(string domainId1, string domainId2,
+                                             ASTNode tree) {
 
-  for (auto framework : m_frameworks) {
-    if (framework->getFramework() == frameworkName) {
+  std::function<std::vector<std::string>(std::string, std::string)> getParents =
+      [&](std::string domainId,
+          std::string framework) -> std::vector<std::string> {
+    std::vector<std::string> parents;
+    if (framework.size() == 0) {
+      framework = CodeValidator::getFrameworkForDomain(domainId, tree);
+    }
+    auto domainDeclaration =
+        CodeValidator::findDomainDeclaration(domainId, tree);
+    parents.push_back(domainId);
+    auto parentDomain = domainDeclaration->getPropertyValue("parentDomain");
+    if (parentDomain && parentDomain->getNodeType() != AST::None) {
+      //      auto parentDomainName =
+      //      CodeValidator::streamMemberName(parentDomain); auto
+      //      parentDomainDecl = CodeValidator::findDomainDeclaration(
+      //          parentDomainName, framework, tree);
+      auto parentDomainId =
+          CodeValidator::getDomainIdentifier(parentDomain, {}, tree);
+      auto newParentDomains = getParents(parentDomainId, framework);
+      parents.insert(parents.end(), newParentDomains.begin(),
+                     newParentDomains.end());
+    }
+    return parents;
+  };
+
+  auto parents1 = getParents(domainId1, "");
+  auto parents2 = getParents(domainId2, "");
+
+  for (auto d1 : parents1) {
+    for (auto d2 : parents2) {
+      if (d1 == d2) {
+        return d1;
+      }
     }
   }
-  return commonDomain;
+
+  return "";
 }
 
 void StrideSystem::installFramework(string frameworkName) {

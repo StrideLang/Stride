@@ -168,6 +168,12 @@ std::vector<string> CodeValidator::getUsedDomains(ASTNode tree) {
 }
 
 string CodeValidator::getFrameworkForDomain(string domainName, ASTNode tree) {
+  std::string domainFramework;
+  auto separatorIndex = domainName.find("::");
+  if (separatorIndex != std::string::npos) {
+    domainFramework = domainName.substr(0, separatorIndex);
+    domainName = domainName.substr(separatorIndex + 2);
+  }
   for (ASTNode node : tree->getChildren()) {
     if (node->getNodeType() == AST::Declaration) {
       DeclarationNode *decl = static_cast<DeclarationNode *>(node.get());
@@ -201,6 +207,12 @@ string CodeValidator::getFrameworkForDomain(string domainName, ASTNode tree) {
                     fwDeclaration->getPropertyValue("frameworkName");
                 if (frameworkName &&
                     frameworkName->getNodeType() == AST::String) {
+
+                  if (domainFramework !=
+                      static_cast<ValueNode *>(frameworkName.get())
+                          ->getStringValue()) {
+                    qDebug() << "Inconsistent name";
+                  }
                   return static_cast<ValueNode *>(frameworkName.get())
                       ->getStringValue();
                 }
@@ -2521,7 +2533,17 @@ CodeValidator::findTypeDeclaration(std::shared_ptr<DeclarationNode> block,
 }
 
 std::shared_ptr<DeclarationNode>
-CodeValidator::findDomainDeclaration(string domainName, ASTNode tree) {
+CodeValidator::findDomainDeclaration(string domainName, string framework,
+                                     ASTNode tree) {
+  std::string domainFramework;
+  auto separatorIndex = domainName.find("::");
+  if (separatorIndex != std::string::npos) {
+    domainFramework = domainName.substr(0, separatorIndex);
+    domainName = domainName.substr(separatorIndex + 2);
+  }
+  if (domainFramework != framework) {
+    qDebug() << "Unexpected domain mismatch";
+  }
   for (ASTNode node : tree->getChildren()) {
     if (node->getNodeType() == AST::Declaration) {
       std::shared_ptr<DeclarationNode> decl =
@@ -2531,13 +2553,41 @@ CodeValidator::findDomainDeclaration(string domainName, ASTNode tree) {
         if (domainNameValue->getNodeType() == AST::String) {
           if (domainName == static_cast<ValueNode *>(domainNameValue.get())
                                 ->getStringValue()) {
-            return decl;
+            auto domainDeclFramework = decl->getCompilerProperty("framework");
+            if (domainDeclFramework &&
+                domainDeclFramework->getNodeType() == AST::String) {
+              if (framework ==
+                  static_pointer_cast<ValueNode>(domainDeclFramework)
+                      ->getStringValue()) {
+                return decl;
+              }
+            }
+            if (framework.size() == 0 && !domainDeclFramework) {
+              return decl;
+            }
           }
         }
       }
     }
   }
   return nullptr;
+}
+
+std::shared_ptr<DeclarationNode>
+CodeValidator::findDomainDeclaration(string domainId, ASTNode tree) {
+  std::string domainFramework;
+
+  auto separatorIndex = domainId.find("::");
+  if (separatorIndex != std::string::npos) {
+    domainFramework = domainId.substr(0, separatorIndex);
+    if (domainFramework !=
+        CodeValidator::getFrameworkForDomain(domainId, tree)) {
+      qDebug() << "ERROR framework mismatch";
+    }
+    domainId = domainId.substr(separatorIndex + 2);
+  }
+  auto trimmedDomain = domainId.substr(0, domainId.find(':'));
+  return findDomainDeclaration(trimmedDomain, domainFramework, tree);
 }
 
 std::shared_ptr<DeclarationNode>
@@ -2960,18 +3010,25 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack,
           CodeValidator::findTypeDeclaration(declaration, scopeStack, tree);
       if (typeDeclaration &&
           typeDeclaration->getObjectType() == "platformModule") {
-        domainNode = name->getCompilerProperty("domain");
+
+        domainNode = name->getCompilerProperty("domain")->deepCopy();
+        domainNode->setNamespaceList(node->getNamespaceList());
       } else {
-        domainNode = declaration->getDomain();
+        if (declaration->getDomain()) {
+          domainNode = declaration->getDomain()->deepCopy();
+          domainNode->setNamespaceList(node->getNamespaceList());
+        }
       }
     }
   } else if (node->getNodeType() == AST::Bundle) {
     BundleNode *name = static_cast<BundleNode *>(node.get());
+
     std::shared_ptr<DeclarationNode> declaration =
         CodeValidator::findDeclaration(name->getName(), scopeStack, tree,
                                        name->getNamespaceList());
-    if (declaration) {
-      domainNode = declaration->getDomain();
+    if (declaration && declaration->getDomain()) {
+      domainNode = declaration->getDomain()->deepCopy();
+      domainNode->setNamespaceList(node->getNamespaceList());
     }
   } else if (node->getNodeType() == AST::List) {
     std::vector<std::string> domainList;
@@ -3027,9 +3084,17 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack,
     auto decl = static_cast<DeclarationNode *>(node.get());
     if (decl->getObjectType() == "reaction") {
       decl->getCompilerProperty("triggerDomain");
-
+      // FIXME implement domain support for reactions
     } else {
-      domainNode = decl->getDomain();
+      if (decl->getDomain()) {
+        domainNode = decl->getDomain()->deepCopy();
+        auto frameworkNode = node->getCompilerProperty("framework");
+        if (frameworkNode) {
+          domainNode->addScope(
+              static_pointer_cast<ValueNode>(frameworkNode)->getStringValue());
+        }
+        //        domainNode->setNamespaceList(node->getNamespaceList());
+      }
     }
   } else if (node->getNodeType() == AST::Function) {
     domainNode = node->getCompilerProperty(
@@ -3040,8 +3105,18 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack,
           node->getNamespaceList());
       if (funcDecl && funcDecl->getObjectType() == "platformModule") {
         domainNode = funcDecl->getPropertyValue("domain");
+
+        auto domainId =
+            CodeValidator::getDomainIdentifier(domainNode, {}, tree);
+        std::string domainFramework;
+        auto separatorIndex = domainId.find("::");
+        if (separatorIndex != std::string::npos) {
+          domainFramework = domainId.substr(0, separatorIndex);
+          domainId = domainId.substr(separatorIndex + 2);
+        }
+
         auto domainDecl = CodeValidator::findDomainDeclaration(
-            CodeValidator::streamMemberName(domainNode), tree);
+            domainId, domainFramework, tree);
         if (domainDecl) {
           auto parentDomain = domainDecl->getPropertyValue("parentDomain");
           if (parentDomain && parentDomain->getNodeType() == AST::Block) {
@@ -3110,14 +3185,29 @@ std::string CodeValidator::getDomainIdentifier(ASTNode domain,
   if (domain) {
     if (domain->getNodeType() == AST::Block) {
       auto domainBlock = static_pointer_cast<BlockNode>(domain);
+      std::string framework;
+      if (domainBlock->getScopeLevels() > 0) {
+        framework = domainBlock->getNamespaceList()[0];
+      }
       std::shared_ptr<DeclarationNode> domainDeclaration =
-          CodeValidator::findDomainDeclaration(domainBlock->getName(), tree);
+          CodeValidator::findDomainDeclaration(domainBlock->getName(),
+                                               framework, tree);
       if (domainDeclaration) {
         if (domainDeclaration->getObjectType() == "_domainDefinition") {
           name = domainDeclaration->getName();
         } else if (domainDeclaration->getObjectType() == "PlatformDomain") {
           auto domainNameNode = domainDeclaration->getPropertyValue("value");
           name = getDomainIdentifier(domainNameNode, scopeStack, tree);
+        }
+        auto frameworkNode =
+            domainDeclaration->getCompilerProperty("framework");
+        std::string frameworkName;
+        if (frameworkNode && frameworkNode->getNodeType() == AST::String) {
+          frameworkName =
+              static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
+          if (frameworkName.size() > 0) {
+            name = frameworkName + "::" + name;
+          }
         }
       }
       auto domainInstanceIndex = domain->getCompilerProperty("domainInstance");
@@ -3141,6 +3231,7 @@ std::string CodeValidator::getDomainIdentifier(ASTNode domain,
     } else if (domain->getNodeType() == AST::String) {
       // Should anything be added to the id? Scope?
       name = static_pointer_cast<ValueNode>(domain)->getStringValue();
+      assert(0 == 1); // Should not be allowed
     } else if (domain->getNodeType() == AST::PortProperty) {
       // Should anything be added to the id? Scope?
       auto portProperty = static_pointer_cast<PortPropertyNode>(domain);
