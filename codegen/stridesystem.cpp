@@ -934,6 +934,26 @@ void StrideSystem::generateDomainConnections(ASTNode tree) {
                    << QString::fromStdString(nextDomainId);
           auto domainChangeNodes =
               getDomainChangeStreams(previousDomainId, nextDomainId);
+
+          //
+          auto nextInstance = CodeValidator::getInstance(next, {}, tree);
+          if (nextInstance) {
+            auto writes = nextInstance->getCompilerProperty("writes");
+            if (writes) {
+              auto newWrites = std::make_shared<ListNode>(__FILE__, __LINE__);
+              for (auto w : writes->getChildren()) {
+                auto writeDomain = static_pointer_cast<BlockNode>(w)->getName();
+                if (w->getScopeLevels() > 0) {
+                  writeDomain = w->getScopeAt(0) + "::" + writeDomain;
+                }
+                if (writeDomain != previousDomainId) {
+                  newWrites->addChild(w);
+                }
+              }
+              nextInstance->setCompilerProperty("writes", newWrites);
+            }
+          }
+
           // FIXME currently only simple two member connector streams
           // supported
           if (domainChangeNodes.sourceStreams &&
