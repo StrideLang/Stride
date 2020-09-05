@@ -326,7 +326,8 @@ vector<Builder *> StrideSystem::createBuilders(QString fileName, ASTNode tree) {
     auto usedFrameworks = CodeValidator::getUsedFrameworks(tree);
     if ((usedFrameworks.size() == 0) ||
         (std::find(usedFrameworks.begin(), usedFrameworks.end(),
-                   platform->getFramework()) != usedFrameworks.end())) {
+                   getFrameworkAlias(platform->getFramework())) !=
+         usedFrameworks.end())) {
       if (platform->getAPI() == StrideFramework::PythonTools) {
         QString pythonExec = "python";
         Builder *builder = new PythonProject(
@@ -962,9 +963,13 @@ void StrideSystem::generateDomainConnections(ASTNode tree) {
                                  ->getChildren()[1]);
             stream->getRight()->setCompilerProperty("inputBlock",
                                                     stream->getLeft());
+            auto previousFramework =
+                CodeValidator::getFrameworkForDomain(previousDomainId, tree);
+            // We should validate with provided connection framework
             auto nodeDecl = CodeValidator::findDeclaration(
                 CodeValidator::streamMemberName(stream->getRight()), {},
-                domainChangeNodes.sourceImports);
+                domainChangeNodes.sourceImports, {},
+                getFrameworkAlias(previousFramework));
             stream->getRight()->setCompilerProperty("declaration", nodeDecl);
             newStreams.push_back(stream);
 
@@ -972,46 +977,25 @@ void StrideSystem::generateDomainConnections(ASTNode tree) {
                 domainChangeNodes.destStreams->getChildren()[0]
                     ->getChildren()[0];
             connectionNode->setCompilerProperty("outputBlock", next);
+            auto destFramework =
+                CodeValidator::getFrameworkForDomain(nextDomainId, tree);
+            // We should validate with provided connection framework
             nodeDecl = CodeValidator::findDeclaration(
                 CodeValidator::streamMemberName(connectionNode), {},
-                domainChangeNodes.destImports);
+                domainChangeNodes.destImports, {},
+                getFrameworkAlias(destFramework));
             connectionNode->setCompilerProperty("declaration", nodeDecl);
-            //                        auto connectionDomainNode =
-            //                        CodeValidator::getNodeDomain(connectionNode,
-            //                        {{"",
-            //                        domainChangeNodes.destImports->getChildren()}},
-            //                        tree); auto connectionDomainId =
-            //                        CodeValidator::getDomainIdentifier(connectionDomainNode
-            //                                                                                     , {{"", domainChangeNodes.destImports->getChildren()}}, tree);
-
-            //                        if (connectionDomainId.size() > 0 &&
-            //                        connectionDomainId != nextDomainId) { //
-            //                        If domains don't match, add an extra
-            //                        signal to make the connection
-            //                            // Do we only need to do this for
-            //                            platformModules, or should this
-            //                            always be done? QString signalName =
-            //                            "BridgeSignal"; auto signalDecl =
-            //                            CodeResolver::createSignalDeclaration(signalName,
-            //                            1, {}, tree);
-            //                            signalDecl->setPropertyValue("domain",
-            //                            connectionDomainNode->deepCopy());
-            //                            newChildren.insert(newChildren.end(),
-            //                            signalDecl); next =
-            //                            std::make_shared<StreamNode>(
-            //                                        std::make_shared<BlockNode>(signalName.toStdString(),__FILE__,
-            //                                        __LINE__), next,
-            //                                        __FILE__,
-            //                                        __LINE__);
-
-            //                        }
 
             // We need to remove the read domain from the reads metadata in
             // "next"
 
+            auto connectionDomain =
+                CodeValidator::getNodeDomain(connectionNode, {}, tree);
+            nextInstance->appendToPropertyValue("writes", connectionDomain);
+
             std::shared_ptr<StreamNode> newStream =
-                std::make_shared<StreamNode>(connectionNode, stream->getRight(),
-                                             __FILE__, __LINE__);
+                std::make_shared<StreamNode>(connectionNode, next, __FILE__,
+                                             __LINE__);
             newStreams.push_back(newStream);
             auto srcImportNodes =
                 domainChangeNodes.sourceImports->getChildren();
@@ -1180,17 +1164,21 @@ string StrideSystem::getCommonAncestorDomain(string domainId1, string domainId2,
     auto domainDeclaration =
         CodeValidator::findDomainDeclaration(domainId, tree);
     parents.push_back(domainId);
-    auto parentDomain = domainDeclaration->getPropertyValue("parentDomain");
-    if (parentDomain && parentDomain->getNodeType() != AST::None) {
-      //      auto parentDomainName =
-      //      CodeValidator::streamMemberName(parentDomain); auto
-      //      parentDomainDecl = CodeValidator::findDomainDeclaration(
-      //          parentDomainName, framework, tree);
-      auto parentDomainId =
-          CodeValidator::getDomainIdentifier(parentDomain, {}, tree);
-      auto newParentDomains = getParents(parentDomainId, framework);
-      parents.insert(parents.end(), newParentDomains.begin(),
-                     newParentDomains.end());
+    if (domainDeclaration) {
+      auto parentDomain = domainDeclaration->getPropertyValue("parentDomain");
+      if (parentDomain && parentDomain->getNodeType() != AST::None) {
+        auto parentDomainCopy = parentDomain->deepCopy();
+        parentDomainCopy->setRootScope(framework);
+        //      auto parentDomainName =
+        //      CodeValidator::streamMemberName(parentDomain); auto
+        //      parentDomainDecl = CodeValidator::findDomainDeclaration(
+        //          parentDomainName, framework, tree);
+        auto parentDomainId =
+            CodeValidator::getDomainIdentifier(parentDomainCopy, {}, tree);
+        auto newParentDomains = getParents(parentDomainId, framework);
+        parents.insert(parents.end(), newParentDomains.begin(),
+                       newParentDomains.end());
+      }
     }
     return parents;
   };

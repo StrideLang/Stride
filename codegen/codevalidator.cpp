@@ -211,7 +211,8 @@ string CodeValidator::getFrameworkForDomain(string domainName, ASTNode tree) {
                   if (domainFramework !=
                       static_cast<ValueNode *>(frameworkName.get())
                           ->getStringValue()) {
-                    qDebug() << "Inconsistent name";
+                    //                    qDebug() << "Inconsistent name";
+                    continue;
                   }
                   return static_cast<ValueNode *>(frameworkName.get())
                       ->getStringValue();
@@ -3231,7 +3232,8 @@ std::string CodeValidator::getDomainIdentifier(ASTNode domain,
     } else if (domain->getNodeType() == AST::String) {
       // Should anything be added to the id? Scope?
       name = static_pointer_cast<ValueNode>(domain)->getStringValue();
-      assert(0 == 1); // Should not be allowed
+      qDebug() << "DEPRECATED: String domain no longer allowed.";
+      //      assert(0 == 1); // Should not be allowed
     } else if (domain->getNodeType() == AST::PortProperty) {
       // Should anything be added to the id? Scope?
       auto portProperty = static_pointer_cast<PortPropertyNode>(domain);

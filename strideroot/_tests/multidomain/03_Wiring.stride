@@ -7,3 +7,5 @@ signal Sig {
 Wiring::AnalogIn[0] >> Sig;
 
 Sig >> AudioOut[0];
+
+#Wiring::AnalogIn[0] >> AudioOut[0];
