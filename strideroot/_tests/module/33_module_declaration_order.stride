@@ -1,0 +1,14 @@
+use DesktopAudio version 1.0
+
+import Generators
+
+Oscillator(frequency: 440) >> AudioOut[0];
+
+switch Toggle {
+	domain: AsyncDomain
+	rate:20
+	}
+
+[Oscillator(frequency: 1), 0] >> Greater() >> Toggle;
+
+AudioIn[0] >> AudioOut[0];
