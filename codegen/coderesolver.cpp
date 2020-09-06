@@ -45,7 +45,7 @@ CodeResolver::CodeResolver(ASTNode tree, QString striderootDir,
 
   std::vector<std::shared_ptr<ImportNode>> importList =
       CodeValidator::getImportNodes(tree);
-  QVector<std::shared_ptr<SystemNode>> systems =
+  std::vector<std::shared_ptr<SystemNode>> systems =
       CodeValidator::getSystemNodes(tree);
 
   if (systems.size() > 0) {
@@ -54,7 +54,7 @@ CodeResolver::CodeResolver(ASTNode tree, QString striderootDir,
         striderootDir, QString::fromStdString(platformNode->platformName()),
         platformNode->majorVersion(), platformNode->minorVersion(), importList);
     m_system->m_systemConfig = systemConfig;
-    for (int i = 1; i < systems.size(); i++) {
+    for (size_t i = 1; i < systems.size(); i++) {
       qDebug() << "Ignoring system: "
                << QString::fromStdString(platformNode->platformName());
       LangError error;

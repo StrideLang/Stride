@@ -57,11 +57,11 @@ void CodeValidator::validateTree(ASTNode tree) {
 
 bool CodeValidator::isValid() { return m_errors.size() == 0; }
 
-QVector<std::shared_ptr<SystemNode>>
+std::vector<std::shared_ptr<SystemNode>>
 CodeValidator::getSystemNodes(ASTNode tree) {
   //  Q_ASSERT(m_tree);
-  QVector<std::shared_ptr<SystemNode>> platformNodes;
-  vector<ASTNode> nodes = tree->getChildren();
+  std::vector<std::shared_ptr<SystemNode>> platformNodes;
+  std::vector<ASTNode> nodes = tree->getChildren();
   for (ASTNode node : nodes) {
     if (node->getNodeType() == AST::Platform) {
       platformNodes.push_back(static_pointer_cast<SystemNode>(node));

@@ -84,7 +84,7 @@ public:
 
   //    bool typeHasPort(QString typeName, QString propertyName);
 
-  vector<ASTNode> getOptionTrees();
+  static vector<ASTNode> getOptionTrees(string systemPath);
 
   ASTNode loadImportTree(string importName, string importAs,
                          string platformName = "");
