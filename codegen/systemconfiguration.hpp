@@ -1,21 +1,31 @@
 #ifndef SYSTEMCONFIGURATION_HPP
 #define SYSTEMCONFIGURATION_HPP
 
-#include <QMap>
-#include <QString>
-#include <QVariant>
+#include "ast.h"
+#include "declarationnode.h"
+#include "valuenode.h"
 
-typedef QMap<QString, QVariant> ConfigMap;
+// TODO remove QVariant, use std
+#include <QVariant>
+#include <map>
+#include <string>
+
+typedef std::map<std::string, QVariant> ConfigMap;
 
 class SystemConfiguration {
 public:
   SystemConfiguration();
-  QMap<QString, ConfigMap> overrides; // Override existing values in Stride Code
-  QMap<QString, ConfigMap>
+  std::map<std::string, ConfigMap>
+      overrides; // Override existing values in Stride Code
+  std::map<std::string, ConfigMap>
       substitutions; // Substitute strings in generated code
-  QMap<QString, ConfigMap> hardwareConfigurations; // Configure the hardware
-  QMap<QString, ConfigMap> platformConfigurations; // Configure the platform
+  std::map<std::string, ConfigMap>
+      hardwareConfigurations; // Configure the hardware
+  std::map<std::string, ConfigMap>
+      platformConfigurations; // Configure the platform
   bool testing = false;
+
+  void readProjectConfiguration(std::string filename);
 };
 
 #endif // SYSTEMCONFIGURATION_HPP

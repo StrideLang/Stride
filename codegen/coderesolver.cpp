@@ -43,29 +43,8 @@ CodeResolver::CodeResolver(ASTNode tree, QString striderootDir,
                            SystemConfiguration systemConfig)
     : m_systemConfig(systemConfig), m_tree(tree), m_connectorCounter(0) {
 
-  std::vector<std::shared_ptr<ImportNode>> importList;
-  for (ASTNode node : tree->getChildren()) {
-    if (node->getNodeType() == AST::Import) {
-      std::shared_ptr<ImportNode> import =
-          static_pointer_cast<ImportNode>(node);
-      // FIXME add namespace support here (e.g. import
-      // Platform::Filters::Filter)
-      bool imported = false;
-      for (auto importNode : importList) {
-        if ((static_pointer_cast<ImportNode>(importNode)->importName() ==
-             import->importName()) &&
-            (static_pointer_cast<ImportNode>(importNode)->importAlias() ==
-             import->importAlias())) {
-          imported = true;
-          break;
-        }
-      }
-      if (!imported) {
-        importList.push_back(import);
-      }
-    }
-  }
-
+  std::vector<std::shared_ptr<ImportNode>> importList =
+      CodeValidator::getImportNodes(tree);
   QVector<std::shared_ptr<SystemNode>> systems =
       CodeValidator::getSystemNodes(tree);
 
@@ -2494,30 +2473,31 @@ void CodeResolver::resolveStreamSymbols() {
 }
 
 void CodeResolver::resolveConstants() {
-  for (auto override = m_systemConfig.overrides["all"].constBegin();
-       override != m_systemConfig.overrides["all"].constEnd(); ++override) {
+  for (auto override = m_systemConfig.overrides["all"].cbegin();
+       override != m_systemConfig.overrides["all"].cend(); ++override) {
     //        qDebug() << override.key();
     std::shared_ptr<DeclarationNode> decl =
-        CodeValidator::findDeclaration(override.key(), {}, m_tree);
+        CodeValidator::findDeclaration(override->first, {}, m_tree);
     if (decl) {
       if (decl->getObjectType() == "constant") {
-        if (override.value().type() == QVariant::String) {
+        if (override->second.type() == QVariant::String) {
           decl->replacePropertyValue(
               "value", std::make_shared<ValueNode>(
-                           override.value().toString().toStdString(), __FILE__,
+                           override->second.toString().toStdString(), __FILE__,
                            __LINE__));
-        } else if (override.value().type() == QVariant::Int) {
+        } else if (override->second.type() == QVariant::Int) {
           decl->replacePropertyValue(
-              "value", std::make_shared<ValueNode>(override.value().toInt(),
+              "value", std::make_shared<ValueNode>(override->second.toInt(),
                                                    __FILE__, __LINE__));
         }
       } else {
         qDebug() << "WARNING: Ignoring configuration override '" +
-                        override.key() + "'. Not constant.";
+                        QString::fromStdString(override->first) +
+                        "'. Not constant.";
       }
     } else {
       qDebug() << "WARNING: Configuration override not found: " +
-                      override.key();
+                      QString::fromStdString(override->first);
     }
   }
   for (ASTNode node : m_tree->getChildren()) {
@@ -4549,24 +4529,24 @@ void CodeResolver::markConnectionForNode(ASTNode node, ScopeStack scopeStack,
                           previousReads = static_pointer_cast<ListNode>(
                               previousInstance->getCompilerProperty("reads"));
                         }
-                        auto domainId = CodeValidator::getDomainIdentifier(
-                            CodeValidator::getNodeDomain(previousInstance,
-                                                         scopeStack, m_tree),
-                            scopeStack, m_tree);
-                        previousReads->addChild(std::make_shared<ValueNode>(
-                            domainId, __FILE__, __LINE__));
-                        if (nextInstance) {
-                          auto nextWrites = static_pointer_cast<ListNode>(
-                              nextInstance->getCompilerProperty("writes"));
-                          if (!nextWrites) {
-                            nextInstance->setCompilerProperty(
-                                "writes",
-                                std::make_shared<ListNode>(__FILE__, __LINE__));
-                            nextWrites = static_pointer_cast<ListNode>(
+                        auto domain = CodeValidator::getNodeDomain(
+                            previousInstance, scopeStack, m_tree);
+                        if (domain) {
+                          previousReads->addChild(domain);
+                          if (nextInstance) {
+                            auto nextWrites = static_pointer_cast<ListNode>(
                                 nextInstance->getCompilerProperty("writes"));
+                            if (!nextWrites) {
+                              nextInstance->setCompilerProperty(
+                                  "writes", std::make_shared<ListNode>(
+                                                __FILE__, __LINE__));
+                              nextWrites = static_pointer_cast<ListNode>(
+                                  nextInstance->getCompilerProperty("writes"));
+                            }
+                            nextWrites->addChild(domain);
                           }
-                          nextWrites->addChild(std::make_shared<ValueNode>(
-                              domainId, __FILE__, __LINE__));
+                        } else {
+                          qDebug() << " Warning unexpecgted null domain";
                         }
                       }
                       // It seems that something like this should be here, but

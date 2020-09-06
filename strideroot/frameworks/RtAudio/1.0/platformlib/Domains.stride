@@ -63,6 +63,8 @@ _domainDefinition AsyncDomain {
 	//[[Initialization]]
 //[[/Initialization]]
 	"
+	domainProcessingCode: "// Async processing
+	"
 	domainFunctionCode: "
 	void thread_func() {
 		const int duration_ns = 1.0e9/%%domain_rate%%;

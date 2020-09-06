@@ -540,13 +540,10 @@ string StrideSystem::substituteTokens(string namespaceName, string text) {
     size_t endIndex = text.find("%", index + 1);
     if (endIndex != std::string::npos) {
       auto tokenName = text.substr(index + 1, endIndex - index - 1);
-      if (m_systemConfig.platformConfigurations["all"].find(
-              QString::fromStdString(tokenName)) !=
+      if (m_systemConfig.platformConfigurations["all"].find(tokenName) !=
           m_systemConfig.platformConfigurations["all"].end()) {
         text.replace(index, endIndex - index + 1,
-                     m_systemConfig
-                         .platformConfigurations["all"][QString::fromStdString(
-                             tokenName)]
+                     m_systemConfig.platformConfigurations["all"][tokenName]
                          .toString()
                          .toStdString());
       }
@@ -645,11 +642,12 @@ map<string, vector<ASTNode>> StrideSystem::getBuiltinObjectsReference() {
   return objects;
 }
 
-vector<ASTNode> StrideSystem::getOptionTrees() {
+vector<ASTNode> StrideSystem::getOptionTrees(std::string systemPath) {
   vector<ASTNode> optionTrees;
   QStringList nameFilters;
   nameFilters.push_back("*.stride");
-  QString optionPath = m_systemPath + QDir::separator() + "options";
+  QString optionPath =
+      QString::fromStdString(systemPath) + QDir::separator() + "options";
   QFileInfoList optionFiles = QDir(optionPath).entryInfoList(nameFilters);
   for (auto fileInfo : optionFiles) {
     ASTNode optionTree = AST::parseFile(

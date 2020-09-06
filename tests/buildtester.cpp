@@ -69,8 +69,17 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile,
   }
 
   if (tree) {
+    vector<ASTNode> optionTrees;
+
+    for (auto system : CodeValidator::getSystemNodes(tree)) {
+      optionTrees = StrideSystem::getOptionTrees(system->platformName());
+      break; // Just use the first system declaration.
+    }
+    // TODO write default config
 
     SystemConfiguration config;
+    config.readProjectConfiguration(filename);
+
     config.testing = true;
     CodeResolver resolver(tree, QString::fromStdString(m_StrideRoot), config);
     resolver.process();

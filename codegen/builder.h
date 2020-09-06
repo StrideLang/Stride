@@ -72,17 +72,12 @@ public:
         m_platformPath(platformPath) {}
   virtual ~Builder() {}
 
-  void setConfiguration(QMap<QString, QVariant> config) {
+  void setConfiguration(std::map<std::string, QVariant> config) {
     m_configuration = config;
   }
 
-  std::map<std::string, QVariant> getConfiguration() {
-    std::map<std::string, QVariant> configMap;
-    for (auto configEntry : m_configuration.keys()) {
-      configMap[configEntry.toStdString()] = m_configuration[configEntry];
-    }
-    return configMap;
-  }
+  std::map<std::string, QVariant> getConfiguration() { return m_configuration; }
+
   QString getPlatformPath() { return m_platformPath; }
   QString getStdErr() const { return m_stdErr; }
   QString getStdOut() const { return m_stdOut; }
@@ -117,7 +112,7 @@ protected:
   QString m_platformPath;
   QString m_stdOut;
   QString m_stdErr;
-  QMap<QString, QVariant> m_configuration;
+  std::map<std::string, QVariant> m_configuration;
 
   std::function<void()> m_yieldCallback = []() {};
 

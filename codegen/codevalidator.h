@@ -247,7 +247,34 @@ public:
   static double
   getDomainDefaultRate(std::shared_ptr<DeclarationNode> domainDecl);
 
-  static QVector<std::shared_ptr<SystemNode>> getSystemNodes(ASTNode tree);
+  static std::vector<std::shared_ptr<SystemNode>> getSystemNodes(ASTNode tree);
+
+  static std::vector<std::shared_ptr<ImportNode>> getImportNodes(ASTNode tree) {
+    std::vector<std::shared_ptr<ImportNode>> importList;
+
+    for (ASTNode node : tree->getChildren()) {
+      if (node->getNodeType() == AST::Import) {
+        std::shared_ptr<ImportNode> import =
+            static_pointer_cast<ImportNode>(node);
+        // FIXME add namespace support here (e.g. import
+        // Platform::Filters::Filter)
+        bool imported = false;
+        for (auto importNode : importList) {
+          if ((static_pointer_cast<ImportNode>(importNode)->importName() ==
+               import->importName()) &&
+              (static_pointer_cast<ImportNode>(importNode)->importAlias() ==
+               import->importAlias())) {
+            imported = true;
+            break;
+          }
+        }
+        if (!imported) {
+          importList.push_back(import);
+        }
+      }
+    }
+    return importList;
+  }
 
 private:
   void validateTree(ASTNode tree);
