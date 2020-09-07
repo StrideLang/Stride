@@ -1281,13 +1281,20 @@ void ProjectWindow::markModified() {
 }
 
 void ProjectWindow::configureSystem() {
-  std::shared_ptr<StrideSystem> system = m_codeModel.getSystem();
-  vector<ASTNode> optionTrees = system->getOptionTrees();
+  CodeEditor *editor =
+      static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+  vector<ASTNode> optionTrees;
+  ASTNode tree = AST::parseFile(editor->filename().toStdString().c_str());
+  for (auto system : CodeValidator::getSystemNodes(tree)) {
+    optionTrees = StrideSystem::getOptionTrees(
+        m_environment["striderootPath"].toString().toStdString() + "/systems/" +
+        system->platformName() + "/" + std::to_string(system->majorVersion()) +
+        "." + std::to_string(system->minorVersion()));
+    break; // Just use the first system declaration.
+  }
 
   // Read configuration from file
   SystemConfiguration systemConfig;
-  CodeEditor *editor =
-      static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
   systemConfig.readProjectConfiguration(editor->filename().toStdString());
 
   QDialog optionsDialog(this);

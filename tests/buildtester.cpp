@@ -72,7 +72,10 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile,
     vector<ASTNode> optionTrees;
 
     for (auto system : CodeValidator::getSystemNodes(tree)) {
-      optionTrees = StrideSystem::getOptionTrees(system->platformName());
+      optionTrees = StrideSystem::getOptionTrees(
+          m_StrideRoot + "/systems/" + system->platformName() + "/" +
+          std::to_string(system->majorVersion()) + "." +
+          std::to_string(system->minorVersion()));
       break; // Just use the first system declaration.
     }
     // TODO write default config
