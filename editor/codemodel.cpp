@@ -197,10 +197,9 @@ QString CodeModel::getHtmlDocumentation(QString symbol) {
         QString docHtml = "<h1>" + symbol + "</h1>\n";
         docHtml += QString::fromStdString(
             static_cast<ValueNode *>(metaValue)->getStringValue());
-        QString propertiesTable =
-            "<table> "
-            "<tr><td><b>Name</b></td><td><b>Main</b></td><td><b>Default</b></"
-            "td><td><b>Direction</b></td></tr>";
+        QString propertiesTable = "<table> "
+                                  "<tr><td><b>Name</b></td><td><b>Default</b></"
+                                  "td><td><b>Direction</b></td></tr>";
         QString propertiesHtml = tr("<h2>Ports</h2>") + "\n";
         AST *properties = declaration->getPropertyValue("ports").get();
         if (properties && properties->getNodeType() == AST::List) {
@@ -223,12 +222,13 @@ QString CodeModel::getHtmlDocumentation(QString symbol) {
                       static_cast<ValueNode *>(portMetaNode)->getStringValue());
                 }
                 propertiesHtml += "<h3>" + portName + "</h3>" + portMeta;
-                propertiesTable += "<tr><td>" + portName + "</td>";
-                if (portBlock->getObjectType() == "mainInputPort" ||
-                    portBlock->getObjectType() == "mainOutputPort") {
-                  propertiesTable += "<td>on</td>";
+                if (portBlock->getObjectType() == "mainInputPort") {
+
+                  propertiesTable += "<tr><td>Main Input Port >> </td>";
+                } else if (portBlock->getObjectType() == "mainOutputPort") {
+                  propertiesTable += "<tr><td>>> Main Output Port</td>";
                 } else {
-                  propertiesTable += "<td>off</td>";
+                  propertiesTable += "<tr><td>" + portName + "</td>";
                 }
                 //                                AST *portTypesValue =
                 //                                portBlock->getPropertyValue("types");
@@ -297,14 +297,15 @@ QString CodeModel::getHtmlDocumentation(QString symbol) {
                   } else {
                     propertiesTable += "<td>---</td>";
                   }
+                } else {
+                  propertiesTable += "<td>---</td>";
                 }
-                AST *direction = portBlock->getPropertyValue("direction").get();
-                if (direction && direction->getNodeType() == AST::String) {
-                  propertiesTable +=
-                      "<td>" +
-                      QString::fromStdString(static_cast<ValueNode *>(direction)
-                                                 ->getStringValue()) +
-                      "</td>";
+                if (portBlock->getObjectType() == "mainOutputPort" ||
+                    portBlock->getObjectType() == "propertyOutputPort") {
+                  propertiesTable += "<td>out</td>";
+                } else if (portBlock->getObjectType() == "mainInputPort" ||
+                           portBlock->getObjectType() == "propertyInputPort") {
+                  propertiesTable += "<td>in</td>";
                 } else {
                   propertiesTable += "<td>---</td>";
                 }
