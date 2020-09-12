@@ -2104,6 +2104,8 @@ PortType CodeValidator::resolvePortPropertyType(PortPropertyNode *portproperty,
 }
 
 shared_ptr<DeclarationNode> CodeValidator::resolveBlock(ASTNode node,
+                                                        ScopeStack scopeStack,
+                                                        ASTNode tree,
                                                         bool downStream) {
   if (!node) {
     return nullptr;
@@ -2147,10 +2149,22 @@ shared_ptr<DeclarationNode> CodeValidator::resolveBlock(ASTNode node,
                     if (portType == "mainOutputPort" && downStream) {
                       auto outerBlock =
                           node->getCompilerProperty("outputBlock");
-                      return resolveBlock(outerBlock, true);
+                      if (outerBlock->getNodeType() == AST::Block ||
+                          outerBlock->getNodeType() == AST::Bundle) {
+
+                        auto decl = CodeValidator::findDeclaration(
+                            CodeValidator::streamMemberName(outerBlock),
+                            scopeStack, tree);
+                        if (decl) {
+                          return decl;
+                        } else {
+                          return shared_ptr<DeclarationNode>();
+                        }
+                      }
+                      return resolveBlock(outerBlock, scopeStack, tree, true);
                     } else if (portType == "mainInputPort" && !downStream) {
                       auto outerBlock = node->getCompilerProperty("inputBlock");
-                      return resolveBlock(outerBlock, false);
+                      return resolveBlock(outerBlock, scopeStack, tree, false);
                     }
                   }
                 }
@@ -2168,7 +2182,7 @@ shared_ptr<DeclarationNode> CodeValidator::resolveBlock(ASTNode node,
 
 ASTNode CodeValidator::resolveDomain(ASTNode node, ScopeStack scopeStack,
                                      ASTNode tree, bool downStream) {
-  auto blockDecl = resolveBlock(node, downStream);
+  auto blockDecl = resolveBlock(node, scopeStack, tree, downStream);
   if (blockDecl) {
     return CodeValidator::getNodeDomain(blockDecl, scopeStack, tree);
   } else {
@@ -2178,7 +2192,7 @@ ASTNode CodeValidator::resolveDomain(ASTNode node, ScopeStack scopeStack,
 
 double CodeValidator::resolveRate(ASTNode node, ScopeStack scopeStack,
                                   ASTNode tree, bool downStream) {
-  auto blockDecl = resolveBlock(node, downStream);
+  auto blockDecl = resolveBlock(node, scopeStack, tree, downStream);
   if (blockDecl) {
     return CodeValidator::getNodeRate(blockDecl, scopeStack, tree);
   } else {

@@ -89,6 +89,7 @@ void CodeResolver::process() {
 
   if (m_systemConfig.testing) {
     enableTesting();
+    insertBuiltinObjects();
     fillDefaultProperties();
   }
   resolveConstants();
@@ -254,8 +255,17 @@ void CodeResolver::resolveStreamRates(std::shared_ptr<StreamNode> stream) {
     resolveStreamRates(static_pointer_cast<StreamNode>(right));
   } else {
     rightRate = CodeValidator::getNodeRate(right, {}, m_tree);
-    if (rightRate <= 0 && rate >= 0) {
-      CodeValidator::setNodeRate(right, rate, {}, m_tree);
+    if (rightRate <= 0) {
+      auto rightDomain = CodeValidator::getNodeDomain(right, {}, m_tree);
+      if (rightDomain) {
+        auto domainDecl = CodeValidator::findDomainDeclaration(
+            CodeValidator::getDomainIdentifier(rightDomain, {}, m_tree),
+            m_tree);
+        auto defaultRate = CodeValidator::getDomainDefaultRate(domainDecl);
+        CodeValidator::setNodeRate(right, defaultRate, {}, m_tree);
+      } else if (rate >= 0) {
+        CodeValidator::setNodeRate(right, rate, {}, m_tree);
+      }
     }
   }
 }
@@ -4136,7 +4146,8 @@ void CodeResolver::markConnectionForNode(ASTNode node, ScopeStack scopeStack,
 
       if (node->getNodeType() == AST::Function) {
         newWriteDomain = CodeValidator::getNodeDomain(
-            CodeValidator::resolveBlock(node, false), scopeStack, m_tree);
+            CodeValidator::resolveBlock(node, scopeStack, m_tree, false),
+            scopeStack, m_tree);
 
       } else {
         newWriteDomain =
@@ -4310,7 +4321,7 @@ void CodeResolver::markConnectionForNode(ASTNode node, ScopeStack scopeStack,
                             nextWrites->addChild(domain);
                           }
                         } else {
-                          qDebug() << " Warning unexpecgted null domain";
+                          qDebug() << " Warning unexpected null domain";
                         }
                       }
                       // It seems that something like this should be here, but

@@ -4,6 +4,14 @@ constant AudioRate {
 }
 
 
+constant _AudioBlockSize {
+    value: 44100 # TODO this needs to be set from the hardware configuration file
+}
+
+constant _AudioBlockRate {
+    value: AudioRate/_AudioBlockSize
+}
+
 _domainDefinition RootDomain {
 	domainName: "RootDomain"
 	framework: _RtAudioFramework
@@ -39,14 +47,15 @@ int main() {
   domainCleanupCode: ''
 }
 
-_domainDefinition AudioDomain {
-	domainName: "AudioDomain"
+_domainDefinition AudioBlockDomain {
+	domainName: "AudioBlockDomain"
 	framework: _RtAudioFramework
     parentDomain: RootDomain # This will be the root domain
-	rate: AudioRate
+	rate: _AudioBlockRate
     substitutions: [
       "num_in_chnls", _NumInputChannels,
-      "num_out_chnls", _NumOutputChannels
+      "num_out_chnls", _NumOutputChannels,
+      "audio_buffer_size", _AudioBlockSize
     ]
     domainIncludes: ["<iostream>", "<iomanip>"]
     domainDeclarations: ['constexpr int NUM_IN_CHANNELS = %%num_in_chnls%%;',
@@ -67,20 +76,18 @@ _domainDefinition AudioDomain {
     audio_buffer_process();
     '
 	domainFunctionCode: '
-	int audio_buffer_process()
-{
-int nBufferFrames = NUM_SAMPLES;
-    float *in = inbuf;
-    float *out = outbuf;
-  while(nBufferFrames-- > 0) {
+//[[Includes]]
+//[[/Includes]]
 
+//[[Declarations]]
+//[[/Declarations]]
+
+//[[Instances]]
+//[[/Instances]]
+	void audio_buffer_process()
+{
 //[[Processing]]
 //[[/Processing]]
-
-    in += NUM_IN_CHANNELS;
-    out += NUM_OUT_CHANNELS;
-  }
-  return 0;
 }
 '
     domainCleanupCode: '
@@ -90,6 +97,39 @@ int nBufferFrames = NUM_SAMPLES;
         std::cout << std::setprecision(10) << outbuf[i] << std::endl;
     }
     '
+}
+
+_domainDefinition AudioDomain {
+	domainName: "AudioDomain"
+	framework: _RtAudioFramework
+    parentDomain: AudioBlockDomain
+	rate: AudioRate
+    substitutions: [
+      "num_in_chnls", _NumInputChannels,
+      "num_out_chnls", _NumOutputChannels,
+      "audio_buffer_size", _AudioBlockSize
+    ]
+    domainIncludes: []
+    domainDeclarations: [ ]
+    domainInitializationCode: '
+//[[Initialization]]
+//[[/Initialization]]
+    '
+	domainProcessingCode: '
+    float *in = inbuf;
+    float *out = outbuf;
+int nBufferFrames = NUM_SAMPLES;
+  while(nBufferFrames-- > 0) {
+
+//[[Processing]]
+//[[/Processing]]
+
+    in += NUM_IN_CHANNELS;
+    out += NUM_OUT_CHANNELS;
+  }
+    '
+	domainFunctionCode: ''
+    domainCleanupCode: ''
 }
 
 

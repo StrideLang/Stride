@@ -137,7 +137,6 @@ private:
   int m_minorVersion;
   QString m_systemPath;
   QString m_rootPath;
-  bool m_testing;
 
   QStringList m_errors;
   QStringList m_warnings;

@@ -94,6 +94,8 @@ public:
   static PortType resolvePortPropertyType(PortPropertyNode *portproperty,
                                           ScopeStack scopeStack, ASTNode tree);
   static shared_ptr<DeclarationNode> resolveBlock(ASTNode node,
+                                                  ScopeStack scopeStack,
+                                                  ASTNode tree,
                                                   bool downStream = true);
 
   static ASTNode resolveDomain(ASTNode node, ScopeStack scopeStack,

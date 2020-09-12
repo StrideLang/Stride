@@ -52,8 +52,7 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
                            int majorVersion, int minorVersion,
                            std::vector<std::shared_ptr<ImportNode>> importList)
     : m_strideRoot(strideRoot), m_systemName(systemName),
-      m_majorVersion(majorVersion), m_minorVersion(minorVersion),
-      m_testing(false) {
+      m_majorVersion(majorVersion), m_minorVersion(minorVersion) {
   QString versionString =
       QString("%1.%2").arg(m_majorVersion).arg(m_minorVersion);
   m_systemPath =
@@ -93,6 +92,12 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
           ASTNode tree = AST::parseFile(
               fileInfo.absoluteFilePath().toLocal8Bit().data(), nullptr);
           if (tree) {
+            for (auto node : tree->getChildren()) {
+              node->setCompilerProperty(
+                  "framework",
+                  std::make_shared<ValueNode>(framework->getFramework(),
+                                              __FILE__, __LINE__));
+            }
             framework->addTestingTree(fileInfo.baseName().toStdString(), tree);
           } else {
             vector<LangError> errors = AST::getParseErrors();
