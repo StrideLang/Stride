@@ -1,0 +1,56 @@
+
+module Counter {
+    ports: [
+        mainOutputPort OutputPort {
+            block: Output
+        },
+		propertyInputPort StartValuePort {
+			name: "startValue"
+			block: StartValue
+			default: 0
+			domain: OutputPort.domain
+			meta: "The starting value of the counter which is also the first output of the counter."
+		},
+		propertyInputPort StopValuePort {
+			name: "stopValue"
+			block: StopValue
+			default: 100
+			domain: OutputPort.domain
+			meta: "The roll value of the counter. The maximum value before reseting to startValue."
+		},
+		propertyInputPort IncrementPort {
+			name: "increment"
+			block: Increment
+            		default: 1
+			domain: OutputPort.domain
+			meta: "The starting value of the counter which is also the first output of the counter."
+		},
+		propertyInputPort ResetPort {
+			name: "reset"
+			block: Reset
+			domain: OutputPort.domain
+			meta: "The counter could be reset to its initial state through a trigger connected to the reset port."
+		}
+    ]
+    blocks:  [
+        trigger Reset {}
+        signal Output {
+            default: 0 # TODO implement reset
+            domain: OutputPort.domain
+            reset: Reset
+        }
+    ]
+    streams: [
+        Output + Increment >> Output;
+        [Output, StopValue] >> Greater() >> reaction { StartValue >> Output;};
+    ]    
+
+    meta: 'A counter generator. The counter is incremented at the stream rate at discrete steps.
+
+The first output of the counter is startValue.
+
+If a switch is connected to start and it has not been triggered yet, the output of the counter is the startValue.
+
+When the next sample of the counter exceeds the rollValue the counter is reset and the counter output is startValue
+'
+}
