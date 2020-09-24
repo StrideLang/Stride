@@ -1,0 +1,30 @@
+use DesktopAudio version 1.0
+
+module AD {
+    ports:      [
+        mainOutputPort OutputPort {
+            name:       'output'
+            block:      Output
+            meta:       "The module's primary output port."
+        }
+        mainInputPort InputPort {
+            name:       'output'
+            block:      TriggerEnv
+            meta:       "Triggers the envelope"
+        }
+    ]
+    blocks:     [
+        signal Output {
+            default:    0.0
+        }
+
+        trigger TriggerEnv {domain: OutputPort.domain}
+        signal Stage {default: -1 domain: OutputPort.domain}
+    ]
+    streams: [
+	Stage + 0.2 >> Stage >> Output;
+        TriggerEnv >> reaction { 0 >> Stage; };
+    ]
+}
+
+[AudioIn[0], 0] >> Greater() >>  AD() >> AudioOut[0];

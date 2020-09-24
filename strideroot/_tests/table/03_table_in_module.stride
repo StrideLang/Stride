@@ -1,0 +1,29 @@
+use DesktopAudio version 1.0
+
+import Generators
+
+module TableInModule {
+    ports: [
+        mainOutputPort OutputPort {
+            block: Output
+        }
+    ]
+    blocks: [
+        table SineTable {
+            size: 1024
+            rate: 1024
+            domain: OutputPort.domain
+        }
+        signal CounterVal {
+            domain: OutputPort.domain
+        }
+
+    ]
+    streams: [
+        Oscillator(frequency: 1.0) >> SineTable; 
+        Counter(stopValue: 1024 ) >> CounterVal;
+        SineTable[CounterVal] >> Output;
+    ]  
+}
+
+TableInModule() >> AudioOut[0];

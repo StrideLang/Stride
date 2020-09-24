@@ -18,7 +18,7 @@ _domainDefinition RootDomain {
     substitutions: [ ]
     domainIncludes: ["ReadWriteClasses.hpp",
 	"Synchronization.hpp",
-	"Helper.hpp"]
+	"Helper.hpp", "<iostream>"]
 	domainFunctionCode: '
 // RtAudio RootDomain template
 //[[Includes]]

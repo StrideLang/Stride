@@ -94,9 +94,9 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
           if (tree) {
             for (auto node : tree->getChildren()) {
               node->setCompilerProperty(
-                  "framework",
-                  std::make_shared<ValueNode>(framework->getFramework(),
-                                              __FILE__, __LINE__));
+                  "framework", std::make_shared<ValueNode>(
+                                   getFrameworkAlias(framework->getFramework()),
+                                   __FILE__, __LINE__));
             }
             framework->addTestingTree(fileInfo.baseName().toStdString(), tree);
           } else {

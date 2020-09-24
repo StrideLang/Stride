@@ -2,7 +2,7 @@ constant AudioRate {
     value: 44100 # This will be overwritten by the configuration file
 }
 
-constant AudioBufferRate {
+constant AudioBlockRate {
 	value: AudioRate/_AudioBlockSize
 }
 
@@ -14,7 +14,7 @@ _domainDefinition AudioBlockDomain {
 	domainName: "AudioBlockDomain"
 	framework: _RtAudioFramework
 	parentDomain: RootDomain
-	rate: AudioBufferRate
+	rate: AudioBlockRate
 
     substitutions: [
       "num_in_chnls", _NumInputChannels,
@@ -28,7 +28,7 @@ _domainDefinition AudioBlockDomain {
     'constexpr int NUM_OUT_CHANNELS = %%num_out_chnls%%;',
     'typedef float MY_TYPE;',
     '#define FORMAT RTAUDIO_FLOAT32'
-]
+    ]
     domainInitializationCode: '
     RtAudio adac;
     if ( adac.getDeviceCount() < 1 ) {
@@ -81,8 +81,6 @@ _domainDefinition AudioBlockDomain {
     }
     '
 domainFunctionCode: '
-	//[[Includes]]
-	//[[/Includes]]
 	//[[Declarations]]
 	//[[/Declarations]]
 	int audio_buffer_process( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,

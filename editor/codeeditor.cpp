@@ -42,7 +42,7 @@
 
 CodeEditor::CodeEditor(QWidget *parent, CodeModel *codeModel)
     : QPlainTextEdit(parent), m_codeModel(codeModel), m_autoCompleteMenu(this),
-      m_IndentTabs(true), m_helperButton(this), m_toolTip((QWidget *)this) {
+      m_IndentTabs(false), m_helperButton(this), m_toolTip((QWidget *)this) {
   setMouseTracking(true);
   m_lineNumberArea = new LineNumberArea(this);
 

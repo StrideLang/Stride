@@ -1,4 +1,4 @@
-/*
+﻿/*
     Stride is licensed under the terms of the 3-clause BSD license.
 
     Copyright (C) 2017. The Regents of the University of California.
@@ -877,14 +877,15 @@ void CodeValidator::validateStreamMembers(StreamNode *stream,
 void CodeValidator::validateBundleIndeces(ASTNode node, ScopeStack scope) {
   if (node->getNodeType() == AST::Bundle) {
     BundleNode *bundle = static_cast<BundleNode *>(node.get());
-    PortType type = resolveNodeOutType(bundle->index(), scope, m_tree);
-    if (type != ConstInt && type != Signal && type != PortProperty &&
-        type != None) {
+    auto index = bundle->index();
+    if (index->getNodeType() != AST::Int &&
+        index->getNodeType() != AST::PortProperty &&
+        index->getNodeType() != AST::Range &&
+        index->getNodeType() != AST::List) {
       LangError error;
-      error.type = LangError::IndexMustBeInteger;
+      error.type = LangError::InvalidIndexType;
       error.lineNumber = bundle->getLine();
       error.errorTokens.push_back(bundle->getName());
-      error.errorTokens.push_back(getPortTypeName(type).toStdString());
       m_errors << error;
     }
   }
@@ -1190,38 +1191,21 @@ int CodeValidator::getBlockDeclaredSize(std::shared_ptr<DeclarationNode> block,
         RangeNode *range = static_cast<RangeNode *>(exp.get());
         ASTNode start = range->startIndex();
         int startIndex, endIndex;
-        PortType type = CodeValidator::resolveNodeOutType(start, scope, tree);
-        if (type == ConstInt) {
-          startIndex =
-              CodeValidator::evaluateConstInteger(start, scope, tree, errors);
-        } else {
-          // TODO: Do something if not integer
-          continue;
-        }
+        startIndex =
+            CodeValidator::evaluateConstInteger(start, scope, tree, errors);
         ASTNode end = range->startIndex();
-        type = CodeValidator::resolveNodeOutType(end, scope, tree);
-        if (type == ConstInt) {
-          endIndex =
-              CodeValidator::evaluateConstInteger(end, scope, tree, errors);
-        } else {
-          // TODO: Do something if not integer
-          continue;
-        }
+        endIndex =
+            CodeValidator::evaluateConstInteger(end, scope, tree, errors);
         if (end > start) {
           size += endIndex + startIndex + 1;
         }
 
       } else {
-        PortType type = CodeValidator::resolveNodeOutType(exp, scope, tree);
-        if (type == ConstInt) {
-          size += CodeValidator::evaluateConstInteger(exp, scope, tree, errors);
-        } else if (type == PortProperty) {
+        if (exp->getNodeType() == AST::PortProperty) {
           return -2; // FIXME calculate actual size from external connection
         } else {
-          return -1;
+          size += CodeValidator::evaluateConstInteger(exp, scope, tree, errors);
         }
-
-        // TODO: Something should be done if index isn't integer
       }
     }
   }
@@ -1356,7 +1340,7 @@ int CodeValidator::getBundleSize(BundleNode *bundle, ScopeStack scope,
   std::shared_ptr<ListNode> indexList = bundle->index();
   int size = 0;
   vector<ASTNode> listExprs = indexList->getChildren();
-  PortType type;
+  std::string type;
 
   for (ASTNode expr : listExprs) {
     switch (expr->getNodeType()) {
@@ -1375,8 +1359,10 @@ int CodeValidator::getBundleSize(BundleNode *bundle, ScopeStack scope,
     case AST::Expression:
       type = resolveExpressionType(static_cast<ExpressionNode *>(expr.get()),
                                    scope, tree);
-      if (type == ConstInt) {
+      if (type == "_IntLiteral" || type == "_IntType") {
         size += 1;
+      } else {
+        qDebug() << "Error, expression does not resolve to int";
       }
       break;
     case AST::Block:
@@ -1945,8 +1931,9 @@ std::string CodeValidator::streamMemberName(ASTNode node) {
   return std::string();
 }
 
-PortType CodeValidator::resolveBundleType(BundleNode *bundle,
-                                          ScopeStack scopeStack, ASTNode tree) {
+std::string CodeValidator::resolveBundleType(BundleNode *bundle,
+                                             ScopeStack scopeStack,
+                                             ASTNode tree) {
   QString bundleName = QString::fromStdString(bundle->getName());
   std::shared_ptr<DeclarationNode> declaration =
       findDeclaration(bundleName, scopeStack, tree);
@@ -1959,14 +1946,16 @@ PortType CodeValidator::resolveBundleType(BundleNode *bundle,
         return resolveNodeOutType(property->getValue(), scopeStack, tree);
       }
     } else {
-      //            return QString::fromStdString(declaration->getObjectType());
+      //            return
+      QString::fromStdString(declaration->getObjectType());
     }
   }
-  return None;
+  return "";
 }
 
-PortType CodeValidator::resolveNameType(BlockNode *name, ScopeStack scopeStack,
-                                        ASTNode tree) {
+std::string CodeValidator::resolveBlockType(BlockNode *name,
+                                            ScopeStack scopeStack,
+                                            ASTNode tree) {
   QString nodeName = QString::fromStdString(name->getName());
   std::shared_ptr<DeclarationNode> declaration =
       findDeclaration(nodeName, scopeStack, tree);
@@ -1984,32 +1973,27 @@ PortType CodeValidator::resolveNameType(BlockNode *name, ScopeStack scopeStack,
           declaration->getProperties();
       std::shared_ptr<PropertyNode> property =
           CodeValidator::findPropertyByName(properties, "default");
-      PortType defaultType =
+      auto defaultType =
           resolveNodeOutType(property->getValue(), scopeStack, tree);
-      if (defaultType == ConstReal) {
-        return Signal;
-        //            } else if (defaultType == ConstInt) {
-        //                return AudioInteger;
-      } else {
-        return Signal; // TODO this should be separated into SRP and SIP?R
-      }
+      return defaultType;
     } else {
-      return Object;
+      return "";
     }
   }
-  return None;
+  return "";
 }
 
-PortType CodeValidator::resolveNodeOutType(ASTNode node, ScopeStack scopeStack,
-                                           ASTNode tree) {
+std::string CodeValidator::resolveNodeOutType(ASTNode node,
+                                              ScopeStack scopeStack,
+                                              ASTNode tree) {
   if (node->getNodeType() == AST::Int) {
-    return ConstInt;
+    return "_IntLiteral";
   } else if (node->getNodeType() == AST::Real) {
-    return ConstReal;
+    return "_RealLiteral";
   } else if (node->getNodeType() == AST::Switch) {
-    return ConstBoolean;
+    return "_SwitchLiteral";
   } else if (node->getNodeType() == AST::String) {
-    return ConstString;
+    return "_StringhLiteral";
   } else if (node->getNodeType() == AST::List) {
     return resolveListType(static_cast<ListNode *>(node.get()), scopeStack,
                            tree);
@@ -2020,55 +2004,55 @@ PortType CodeValidator::resolveNodeOutType(ASTNode node, ScopeStack scopeStack,
     return resolveExpressionType(static_cast<ExpressionNode *>(node.get()),
                                  scopeStack, tree);
   } else if (node->getNodeType() == AST::Block) {
-    return resolveNameType(static_cast<BlockNode *>(node.get()), scopeStack,
-                           tree);
+    return resolveBlockType(static_cast<BlockNode *>(node.get()), scopeStack,
+                            tree);
   } else if (node->getNodeType() == AST::Range) {
     return resolveRangeType(static_cast<RangeNode *>(node.get()), scopeStack,
                             tree);
   } else if (node->getNodeType() == AST::PortProperty) {
-    return PortProperty;
+    return "_PortProperty";
     //        return resolvePortPropertyType(static_cast<PortPropertyNode
     //        *>(node.get()), scope, tree);
   }
-  return None;
+  return "";
 }
 
-PortType CodeValidator::resolveListType(ListNode *listnode,
-                                        ScopeStack scopeStack, ASTNode tree) {
+std::string CodeValidator::resolveListType(ListNode *listnode,
+                                           ScopeStack scopeStack,
+                                           ASTNode tree) {
   QVector<ASTNode> members =
       QVector<ASTNode>::fromStdVector(listnode->getChildren());
   if (members.isEmpty()) {
-    return None;
+    return "";
   }
   ASTNode firstMember = members.takeFirst();
-  PortType type = resolveNodeOutType(firstMember, scopeStack, tree);
+  auto type = resolveNodeOutType(firstMember, scopeStack, tree);
 
   for (ASTNode member : members) {
-    PortType nextPortType = resolveNodeOutType(member, scopeStack, tree);
+    auto nextPortType = resolveNodeOutType(member, scopeStack, tree);
     if (type != nextPortType) {
-      if (type == ConstInt &&
-          nextPortType == ConstReal) { // List becomes Real if Real found
-        type = ConstReal;
-      } else if (type == ConstReal &&
-                 nextPortType == ConstInt) { // Int in Real list
-                                             // Nothing here for now
-      } else {                               // Invalid combination
-        return Invalid;
+      if (type == "_IntLiteral" &&
+          nextPortType == "_RealLiteral") { // List becomes Real if Real found
+        type = "_RealLiteral";
+      } else if (type == "_RealLiteral" &&
+                 nextPortType == "_IntLiteral") { // Int in Real list
+                                                  // Nothing here for now
+      } else {                                    // Invalid combination
+        return "";
       }
     }
   }
-
   return type;
 }
 
-PortType CodeValidator::resolveExpressionType(ExpressionNode *exprnode,
-                                              ScopeStack scopeStack,
-                                              ASTNode tree) {
+std::string CodeValidator::resolveExpressionType(ExpressionNode *exprnode,
+                                                 ScopeStack scopeStack,
+                                                 ASTNode tree) {
   if (!exprnode->isUnary()) {
     ASTNode left = exprnode->getLeft();
     ASTNode right = exprnode->getRight();
-    PortType leftType = resolveNodeOutType(left, scopeStack, tree);
-    PortType rightType = resolveNodeOutType(right, scopeStack, tree);
+    auto leftType = resolveNodeOutType(left, scopeStack, tree);
+    auto rightType = resolveNodeOutType(right, scopeStack, tree);
     if (leftType == rightType) {
       return leftType;
     }
@@ -2077,29 +2061,28 @@ PortType CodeValidator::resolveExpressionType(ExpressionNode *exprnode,
   } else {
     // TODO implement for unary
   }
-  return None;
+  return "";
 }
 
-PortType CodeValidator::resolveRangeType(RangeNode *rangenode,
-                                         ScopeStack scopeStack, ASTNode tree) {
-  PortType leftType =
-      resolveNodeOutType(rangenode->startIndex(), scopeStack, tree);
-  PortType rightType =
-      resolveNodeOutType(rangenode->endIndex(), scopeStack, tree);
+std::string CodeValidator::resolveRangeType(RangeNode *rangenode,
+                                            ScopeStack scopeStack,
+                                            ASTNode tree) {
+  auto leftType = resolveNodeOutType(rangenode->startIndex(), scopeStack, tree);
+  auto rightType = resolveNodeOutType(rangenode->endIndex(), scopeStack, tree);
   if (leftType == rightType) {
     return leftType;
   }
-  return None;
+  return "";
 }
 
-PortType CodeValidator::resolvePortPropertyType(PortPropertyNode *portproperty,
-                                                ScopeStack scopeStack,
-                                                ASTNode tree) {
+std::string
+CodeValidator::resolvePortPropertyType(PortPropertyNode *portproperty,
+                                       ScopeStack scopeStack, ASTNode tree) {
   // FIXME implement correctly
   if (portproperty->getPortName() == "size") {
-    return ConstInt;
+    return "_IntLiteral";
   } else {
-    return ConstReal;
+    return "_RealLiteral";
   }
 }
 
@@ -2232,18 +2215,18 @@ int CodeValidator::evaluateConstInteger(ASTNode node, ScopeStack scope,
         QString::fromStdString(static_cast<BlockNode *>(node.get())->getName());
     std::shared_ptr<DeclarationNode> declaration =
         findDeclaration(name, scope, tree);
-    if (declaration->getObjectType() == "constant") {
+    if (declaration && declaration->getObjectType() == "constant") {
       return evaluateConstInteger(declaration->getPropertyValue("value"), scope,
                                   tree, errors);
     }
   } else if (node->getNodeType() == AST::Expression) {
-    // TODO: check expression out
+    // FIXME: check expression out
+    return 0;
   } else {
     LangError error;
     error.type = LangError::InvalidType;
     error.lineNumber = node->getLine();
-    error.errorTokens.push_back(
-        getPortTypeName(resolveNodeOutType(node, scope, tree)).toStdString());
+    error.errorTokens.push_back("");
     errors << error;
   }
   return result;
@@ -2303,8 +2286,7 @@ double CodeValidator::evaluateConstReal(ASTNode node, ScopeStack scope,
     LangError error;
     error.type = LangError::InvalidType;
     error.lineNumber = node->getLine();
-    error.errorTokens.push_back(
-        getPortTypeName(resolveNodeOutType(node, scope, tree)).toStdString());
+    error.errorTokens.push_back("");
     errors << error;
   }
   return result;
@@ -2387,8 +2369,7 @@ std::string CodeValidator::evaluateConstString(ASTNode node, ScopeStack scope,
     LangError error;
     error.type = LangError::InvalidType;
     error.lineNumber = node->getLine();
-    error.errorTokens.push_back(
-        getPortTypeName(resolveNodeOutType(node, scope, tree)).toStdString());
+    error.errorTokens.push_back("");
     errors << error;
   }
   return result;
@@ -2985,27 +2966,27 @@ std::vector<string> CodeValidator::getModulePropertyNames(
   return portNames;
 }
 
-QString CodeValidator::getPortTypeName(PortType type) {
-  switch (type) {
-  case Signal:
-    return "signal";
-  case ConstReal:
-    return "CRP";
-  case ConstInt:
-    return "CIP";
-  case ConstBoolean:
-    return "CBP";
-  case ConstString:
-    return "CSP";
-  case Object:
-    return "Object";
-  case None:
-    return "none";
-  case Invalid:
-    return "";
-  }
-  return "";
-}
+// QString CodeValidator::getPortTypeName(PortType type) {
+//  switch (type) {
+//  case Signal:
+//    return "signal";
+//  case ConstReal:
+//    return "CRP";
+//  case ConstInt:
+//    return "CIP";
+//  case ConstBoolean:
+//    return "CBP";
+//  case ConstString:
+//    return "CSP";
+//  case Object:
+//    return "Object";
+//  case None:
+//    return "none";
+//  case Invalid:
+//    return "";
+//  }
+//  return "";
+//}
 
 ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack,
                                      ASTNode tree) {

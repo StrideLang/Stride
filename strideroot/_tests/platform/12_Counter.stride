@@ -1,0 +1,3 @@
+use DesktopAudio version 1.0
+
+Counter(stopValue: 10) >> AudioOut[0];

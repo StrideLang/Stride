@@ -8,7 +8,7 @@ constant _AudioBlockSize {
     value: 44100 # TODO this needs to be set from the hardware configuration file
 }
 
-constant _AudioBlockRate {
+constant AudioBlockRate {
     value: AudioRate/_AudioBlockSize
 }
 
@@ -31,10 +31,14 @@ _domainDefinition RootDomain {
 //[[Instances]]
 //[[/Instances]]
 
-int main() {
-
+void initialization() {
 //[[Initialization]]
 //[[/Initialization]]
+}
+
+int main() {
+
+    initialization();
 
 //[[Processing]]
 //[[/Processing]]
@@ -51,7 +55,7 @@ _domainDefinition AudioBlockDomain {
 	domainName: "AudioBlockDomain"
 	framework: _RtAudioFramework
     parentDomain: RootDomain # This will be the root domain
-	rate: _AudioBlockRate
+	rate: AudioBlockRate
     substitutions: [
       "num_in_chnls", _NumInputChannels,
       "num_out_chnls", _NumOutputChannels,

@@ -35,108 +35,108 @@
 #include <cassert>
 
 #include "bundlenode.h"
-#include "scopenode.h"
 #include "listnode.h"
-#include "valuenode.h"
 #include "rangenode.h"
+#include "scopenode.h"
+#include "valuenode.h"
 
 using namespace std;
 
-BundleNode::BundleNode(string name, std::shared_ptr<ListNode> indexList, const char *filename, int line, vector<string> scope) :
-    AST(AST::Bundle, filename, line, scope)
-{
-    addChild(indexList);
-    m_name = name;
+BundleNode::BundleNode(string name, std::shared_ptr<ListNode> indexList,
+                       const char *filename, int line, vector<string> scope)
+    : AST(AST::Bundle, filename, line, scope) {
+  addChild(indexList);
+  m_name = name;
 
-    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
+  m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
 }
 
-BundleNode::BundleNode(string name, ASTNode scope, std::shared_ptr<ListNode> indexList, const char *filename, int line) :
-    AST(AST::Bundle, filename, line)
-{
-    addChild(indexList);
-    m_name = name;
-    resolveScope(scope);
+BundleNode::BundleNode(string name, ASTNode scope,
+                       std::shared_ptr<ListNode> indexList,
+                       const char *filename, int line)
+    : AST(AST::Bundle, filename, line) {
+  addChild(indexList);
+  m_name = name;
+  resolveScope(scope);
 
-    m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
+  m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
 }
 
-BundleNode::~BundleNode()
-{
+BundleNode::~BundleNode() {}
 
+string BundleNode::getName() const { return m_name; }
+
+std::shared_ptr<ListNode> BundleNode::index() const {
+  return std::static_pointer_cast<ListNode>(m_children.at(0));
 }
 
-string BundleNode::getName() const
-{
-    return m_name;
+void BundleNode::setIndex(std::shared_ptr<ListNode> index) {
+  m_children[0] = index;
 }
 
-std::shared_ptr<ListNode> BundleNode::index() const
-{
-    return std::static_pointer_cast<ListNode>(m_children.at(0));
-}
-
-void BundleNode::setIndex(std::shared_ptr<ListNode> index)
-{
-    m_children[0] = index;
-}
-
-std::vector<size_t> BundleNode::getIndeces()
-{
-    auto indexList = index();
-    std::vector<size_t> indeces;
-    for (auto listNode: indexList->getChildren()) {
-        if (listNode->getNodeType() == AST::Int) {
-            indeces.push_back(static_pointer_cast<ValueNode>(listNode)->getIntValue());
-        } else if (listNode->getNodeType() == AST::Range) {
-            auto rangeNode = static_pointer_cast<RangeNode>(listNode);
-            if (rangeNode->startIndex()->getNodeType() == AST::Int
-                    && rangeNode->endIndex()->getNodeType() == AST::Int) {
-                assert(static_pointer_cast<ValueNode>(rangeNode->endIndex())->getIntValue() >=
-                       static_pointer_cast<ValueNode>(rangeNode->startIndex())->getIntValue());
-               for (size_t i = static_pointer_cast<ValueNode>(rangeNode->startIndex())->getIntValue();
-                    i <= static_pointer_cast<ValueNode>(rangeNode->endIndex())->getIntValue(); i++ ) {
-                   indeces.push_back(i);
-               }
-            } else {
-                // FIXME implemente
-                assert(0== 1);
-            }
-        } else if (listNode->getNodeType() == AST::PortProperty)  {
-            // Unsupported
-            assert(0== 1);
+std::vector<size_t> BundleNode::getIndeces() {
+  auto indexList = index();
+  std::vector<size_t> indeces;
+  for (auto listNode : indexList->getChildren()) {
+    if (listNode->getNodeType() == AST::Int) {
+      indeces.push_back(
+          static_pointer_cast<ValueNode>(listNode)->getIntValue());
+    } else if (listNode->getNodeType() == AST::Range) {
+      auto rangeNode = static_pointer_cast<RangeNode>(listNode);
+      if (rangeNode->startIndex()->getNodeType() == AST::Int &&
+          rangeNode->endIndex()->getNodeType() == AST::Int) {
+        assert(static_pointer_cast<ValueNode>(rangeNode->endIndex())
+                   ->getIntValue() >=
+               static_pointer_cast<ValueNode>(rangeNode->startIndex())
+                   ->getIntValue());
+        for (size_t i = static_pointer_cast<ValueNode>(rangeNode->startIndex())
+                            ->getIntValue();
+             i <= static_pointer_cast<ValueNode>(rangeNode->endIndex())
+                      ->getIntValue();
+             i++) {
+          indeces.push_back(i);
         }
-
+      } else {
+        // FIXME implement
+        assert(0 == 1);
+      }
+    } else if (listNode->getNodeType() == AST::PortProperty) {
+      // Unsupported
+      assert(0 == 1);
     }
+  }
 
-    return  indeces;
+  return indeces;
 }
 
-void BundleNode::resolveScope(ASTNode scope)
-{
-    if (scope) {
-        for (unsigned int i = 0; i < scope->getChildren().size(); i++) {
-            assert(scope->getChildren().at(i)->getNodeType() == AST::Scope);
-            m_scope.push_back((static_cast<ScopeNode *>(scope->getChildren().at(i).get()))->getName());
-        }
+void BundleNode::resolveScope(ASTNode scope) {
+  if (scope) {
+    for (unsigned int i = 0; i < scope->getChildren().size(); i++) {
+      assert(scope->getChildren().at(i)->getNodeType() == AST::Scope);
+      m_scope.push_back(
+          (static_cast<ScopeNode *>(scope->getChildren().at(i).get()))
+              ->getName());
     }
+  }
 }
 
-ASTNode BundleNode::deepCopy()
-{
-    assert(getNodeType() == AST::Bundle);
-    if(getNodeType() == AST::Bundle) {
-        std::shared_ptr<BundleNode> newBundle = std::make_shared<BundleNode>(m_name, static_pointer_cast<ListNode>(index()->deepCopy()), m_filename.data(), m_line);
-        for (unsigned int i = 0; i < this->getScopeLevels(); i++) {
-            newBundle->addScope(this->getScopeAt(i));
-        }
-//        if (this->m_CompilerProperties) {
-//            newBundle->m_CompilerProperties = std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
-//        } else {
-//            newBundle->m_CompilerProperties = nullptr;
-//        }
-        return newBundle;
+ASTNode BundleNode::deepCopy() {
+  assert(getNodeType() == AST::Bundle);
+  if (getNodeType() == AST::Bundle) {
+    std::shared_ptr<BundleNode> newBundle = std::make_shared<BundleNode>(
+        m_name, static_pointer_cast<ListNode>(index()->deepCopy()),
+        m_filename.data(), m_line);
+    for (unsigned int i = 0; i < this->getScopeLevels(); i++) {
+      newBundle->addScope(this->getScopeAt(i));
     }
-    assert(0 == 1);
-    return nullptr;
+    //        if (this->m_CompilerProperties) {
+    //            newBundle->m_CompilerProperties =
+    //            std::static_pointer_cast<ListNode>(this->m_CompilerProperties->deepCopy());
+    //        } else {
+    //            newBundle->m_CompilerProperties = nullptr;
+    //        }
+    return newBundle;
+  }
+  assert(0 == 1);
+  return nullptr;
 }

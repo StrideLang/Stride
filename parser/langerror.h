@@ -48,7 +48,7 @@ public:
         InvalidType,
         InvalidPort,
         InvalidPortType,
-        IndexMustBeInteger,
+        InvalidIndexType,
         BundleSizeMismatch,
         ArrayIndexOutOfRange,
         DuplicateSymbol,

@@ -63,8 +63,8 @@ std::string LangError::getErrorText() {
                  "' in Block '" + errorTokens[0] + "' expects '" +
                  errorTokens[3] + "'" + "' given '" + errorTokens[2] + "'";
     break;
-  case IndexMustBeInteger:
-    errorText += "Index to array must be integer ";
+  case InvalidIndexType:
+    errorText += "Invalid index type.";
     break;
   case BundleSizeMismatch:
     errorText += "Bundle Size Mismatch Error";

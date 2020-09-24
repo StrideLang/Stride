@@ -13,22 +13,22 @@
 
 typedef enum {
   ACCESS_NONE = 0,
-  ACCESS_SDR = 1 << 1,    // Single Domain Read
-  ACCESS_SDW = 1 << 2,    // Single Domain Write
-  ACCESS_MDR = 1 << 3,    // Multi Domain Read
-  ACCESS_MDW = 1 << 4,    // Multi Domain Write
-  ACCESS_SDRst = 1 << 5,  // Single domain Reset
-  ACCESS_MDRst = 1 << 6   // Multi domain Reset
+  ACCESS_SDR = 1 << 1,   // Single Domain Read
+  ACCESS_SDW = 1 << 2,   // Single Domain Write
+  ACCESS_MDR = 1 << 3,   // Multi Domain Read
+  ACCESS_MDW = 1 << 4,   // Multi Domain Write
+  ACCESS_SDRst = 1 << 5, // Single domain Reset
+  ACCESS_MDRst = 1 << 6  // Multi domain Reset
 } SignalAccess;
 
 enum class CodeEntityType { Declaration, Instance, Reset };
 
 class CodeEntity {
- public:
+public:
   std::string name;
   CodeEntityType entityType;
   std::vector<std::shared_ptr<CodeEntity>> dependents;
-  std::vector<std::string> includes;
+  std::vector<std::string> requiredIncludes;
 
   virtual std::string fullName() { return name; }
 };
@@ -46,22 +46,15 @@ struct Instance : public CodeEntity {
   Instance(std::string name_, std::string prefix, int size, std::string type,
            std::vector<std::string> defaultValue, ASTNode instanceNode,
            SignalAccess access)
-      : prefix(prefix),
-        size(size),
-        type(type),
-        defaultValue(defaultValue),
-        instanceNode(instanceNode),
-        access(access) {
+      : prefix(prefix), size(size), type(type), defaultValue(defaultValue),
+        instanceNode(instanceNode), access(access) {
     entityType = CodeEntityType::Instance;
     name = name_;
   }
 
   Instance(const Instance &inst)
-      : prefix(inst.prefix),
-        size(inst.size),
-        type(inst.type),
-        defaultValue(inst.defaultValue),
-        instanceNode(inst.instanceNode) {
+      : prefix(inst.prefix), size(inst.size), type(inst.type),
+        defaultValue(inst.defaultValue), instanceNode(inst.instanceNode) {
     entityType = CodeEntityType::Instance;
     name = inst.name;
     dependents = inst.dependents;
@@ -92,8 +85,8 @@ typedef struct {
   std::shared_ptr<DeclarationNode> internalDecl;
   std::vector<std::string> parentList;
   ASTNode externalConnection;
-  std::string blockForPort;  // If this block is a block port, provide
-                             // the port declaration name
+  std::string blockForPort; // If this block is a block port, provide
+                            // the port declaration name
   SignalAccess access;
 } DeclarationMap;
 
@@ -108,7 +101,7 @@ typedef struct {
 
 // Code that applies to a single domain
 class DomainCode {
- public:
+public:
   std::vector<std::shared_ptr<CodeEntity>> scopeEntities;
   //    std::vector<Instance> scopeInstances;
 
@@ -127,8 +120,7 @@ class DomainCode {
 
   std::vector<std::shared_ptr<DeclarationNode>> globalReferences;
 
-  // Holds the token to pass to the next member
-  // FIXME remove currentOutTokens and rely on "tokens" compiler property
+  // Holds the code generated token to pass between code generation passes
   std::vector<std::string> currentOutTokens;
 
   // This holds items to process in higher scopes. e.g. in preprocess or post
@@ -192,8 +184,7 @@ class DomainCode {
     for (auto &newEntry : newCode.portPropertiesMap) {
       bool propertyRegistered = false;
       std::string domainId;
-      for (auto entry :
-           portPropertiesMap) {  // Check if property already there.
+      for (auto entry : portPropertiesMap) { // Check if property already there.
         std::shared_ptr<PortPropertyNode> portProp = entry.first;
         if (portProp->getName() == newEntry.first->getName() &&
             portProp->getPortName() == newEntry.first->getPortName()) {
@@ -211,8 +202,8 @@ class DomainCode {
     currentOutTokens.insert(
         currentOutTokens.end(), newCode.currentOutTokens.begin(),
         newCode.currentOutTokens
-            .end());  // Out tokens are appended. The expectation is that they
-                      // are consumed as they are used.
+            .end()); // Out tokens are appended. The expectation is that they
+                     // are consumed as they are used.
 
     for (auto call : newCode.moduleCalls) {
       bool found = false;
@@ -233,7 +224,7 @@ class DomainCode {
     scopeEntities.insert(scopeEntities.begin(), newCode.scopeEntities.begin(),
                          newCode.scopeEntities.end());
     headerCode = newCode.headerCode + headerCode;
-    initCode = initCode + newCode.initCode;  // Init code is not prepended
+    initCode = initCode + newCode.initCode; // Init code is not prepended
     //        for (auto decl : newCode.scopeDeclarations) {
     //            if (std::find(scopeDeclarations.begin(),
     //            scopeDeclarations.end(), decl) == scopeDeclarations.end()) {
@@ -241,7 +232,7 @@ class DomainCode {
     //            }
     //        }
     processingCode +=
-        newCode.processingCode;  // Processing code is not prepended
+        newCode.processingCode; // Processing code is not prepended
 
     for (auto postCode : newCode.postProcessingCode) {
       if (std::find(postProcessingCode.begin(), postProcessingCode.end(),
@@ -250,7 +241,7 @@ class DomainCode {
       }
     }
     cleanupCode =
-        cleanupCode + newCode.cleanupCode;  // Cleanup code is not prepended
+        cleanupCode + newCode.cleanupCode; // Cleanup code is not prepended
     linkTargets.insert(linkTargets.begin(), newCode.linkTargets.begin(),
                        newCode.linkTargets.end());
     linkDirs.insert(linkDirs.begin(), newCode.linkDirs.begin(),
@@ -276,8 +267,7 @@ class DomainCode {
     for (auto &newEntry : newCode.portPropertiesMap) {
       bool propertyRegistered = false;
       std::string domainId;
-      for (auto entry :
-           portPropertiesMap) {  // Check if property already there.
+      for (auto entry : portPropertiesMap) { // Check if property already there.
         std::shared_ptr<PortPropertyNode> portProp = entry.first;
         if (portProp->getName() == newEntry.first->getName() &&
             portProp->getPortName() == newEntry.first->getPortName()) {
@@ -313,7 +303,7 @@ class DomainCode {
 };
 
 class DomainCodeMap : public std::map<std::string, DomainCode> {
- public:
+public:
   void append(DomainCodeMap newMap) {
     for (auto domainCode : newMap) {
       append(domainCode.second, domainCode.first);
@@ -335,4 +325,4 @@ class DomainCodeMap : public std::map<std::string, DomainCode> {
   }
 };
 
-#endif  // CODEENTITIES_HPP
+#endif // CODEENTITIES_HPP

@@ -132,8 +132,8 @@ private:
                                ASTNode contextDomainNode);
   ASTNode processDomainsForNode(ASTNode node, ScopeStack scopeStack,
                                 QList<ASTNode> &domainStack);
-  void setDomainForStack(QList<ASTNode> domainStack, ASTNode domainName,
-                         ScopeStack scopeStack);
+  void setDomainForStack(QList<ASTNode> domainStack, ASTNode resolvingInstance,
+                         ASTNode domainName, ScopeStack scopeStack);
   std::shared_ptr<DeclarationNode> createDomainDeclaration(QString name);
   std::vector<ASTNode> declareUnknownName(std::shared_ptr<BlockNode> block,
                                           int size, ScopeStack localScope,

@@ -79,20 +79,25 @@ public:
                       ASTNode tree, vector<string> namespaces);
 
   static std::string streamMemberName(ASTNode node);
-  static PortType resolveBundleType(BundleNode *bundle, ScopeStack scopeStack,
-                                    ASTNode tree);
-  static PortType resolveNameType(BlockNode *name, ScopeStack scopeStack,
-                                  ASTNode tree);
-  static PortType resolveNodeOutType(ASTNode node, ScopeStack scopeStack,
+
+  // Resolve types
+  static std::string resolveBundleType(BundleNode *bundle,
+                                       ScopeStack scopeStack, ASTNode tree);
+  static std::string resolveBlockType(BlockNode *name, ScopeStack scopeStack,
+                                      ASTNode tree);
+  static std::string resolveNodeOutType(ASTNode node, ScopeStack scopeStack,
+                                        ASTNode tree);
+  static std::string resolveListType(ListNode *listnode, ScopeStack scopeStack,
                                      ASTNode tree);
-  static PortType resolveListType(ListNode *listnode, ScopeStack scopeStack,
-                                  ASTNode tree);
-  static PortType resolveExpressionType(ExpressionNode *exprnode,
-                                        ScopeStack scopeStack, ASTNode tree);
-  static PortType resolveRangeType(RangeNode *rangenode, ScopeStack scopeStack,
-                                   ASTNode tree);
-  static PortType resolvePortPropertyType(PortPropertyNode *portproperty,
-                                          ScopeStack scopeStack, ASTNode tree);
+  static std::string resolveExpressionType(ExpressionNode *exprnode,
+                                           ScopeStack scopeStack, ASTNode tree);
+  static std::string resolveRangeType(RangeNode *rangenode,
+                                      ScopeStack scopeStack, ASTNode tree);
+  static std::string resolvePortPropertyType(PortPropertyNode *portproperty,
+                                             ScopeStack scopeStack,
+                                             ASTNode tree);
+
+  //
   static shared_ptr<DeclarationNode> resolveBlock(ASTNode node,
                                                   ScopeStack scopeStack,
                                                   ASTNode tree,
@@ -204,7 +209,7 @@ public:
   static int getBundleSize(BundleNode *bundle, ScopeStack scope, ASTNode tree,
                            QList<LangError> &errors);
 
-  static QString getPortTypeName(PortType type);
+  //  static QString getPortTypeName(PortType type);
 
   static ASTNode getNodeDomain(ASTNode node, ScopeStack scopeStack,
                                ASTNode tree);
