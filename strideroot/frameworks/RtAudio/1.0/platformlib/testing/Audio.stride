@@ -132,7 +132,8 @@ int nBufferFrames = NUM_SAMPLES;
     out += NUM_OUT_CHANNELS;
   }
     '
-	domainFunctionCode: ''
+	domainFunctionCode: '//[[Includes]]
+//[[/Includes]]'
     domainCleanupCode: ''
 }
 

@@ -81,6 +81,8 @@ _domainDefinition AudioBlockDomain {
     }
     '
 domainFunctionCode: '
+	//[[Includes]]
+	//[[/Includes]]
 	//[[Declarations]]
 	//[[/Declarations]]
 	int audio_buffer_process( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
@@ -113,6 +115,12 @@ _domainDefinition AudioDomain {
 	rate: AudioRate
 
     substitutions: []
+    domainFunctionCode: '
+	//[[Includes]]
+	//[[/Includes]]
+	//[[Declarations]]
+	//[[/Declarations]]
+    '
 	domainProcessingCode: '
   if ( status ) std::cout << "Stream over/underflow detected." << std::endl;
   //unsigned long *bytes = (unsigned long *) data;

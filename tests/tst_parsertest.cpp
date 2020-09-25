@@ -1893,7 +1893,7 @@ void ParserTest::testValueTypeBundleResolution() {
   QVERIFY(bundle->getName() == "Array_Float");
   QVERIFY(errors.size() > 0);
   error = errors.takeFirst();
-  QVERIFY(error.type == LangError::IndexMustBeInteger);
+  QVERIFY(error.type == LangError::InvalidIndexType);
   QVERIFY(error.lineNumber == 52);
   QVERIFY(error.errorTokens[0] == "Array_Float");
   //    QVERIFY(error.errorTokens[1] == "CRP");
@@ -1904,7 +1904,7 @@ void ParserTest::testValueTypeBundleResolution() {
   bundle = block->getBundle();
   QVERIFY(bundle->getName() == "Array_String");
   error = errors.takeFirst();
-  QVERIFY(error.type == LangError::IndexMustBeInteger);
+  QVERIFY(error.type == LangError::InvalidIndexType);
   QVERIFY(error.lineNumber == 53);
   QVERIFY(error.errorTokens[0] == "Array_String");
   //    QVERIFY(error.errorTokens[1] == "CSP");
