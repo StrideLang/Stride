@@ -1921,7 +1921,8 @@ std::string CodeValidator::streamMemberName(ASTNode node) {
       }
     }
     return listCommonName;
-  } else if (node->getNodeType() == AST::Declaration) {
+  } else if (node->getNodeType() == AST::Declaration ||
+             node->getNodeType() == AST::BundleDeclaration) {
     auto decl = static_pointer_cast<DeclarationNode>(node);
     return decl->getName();
   } else {
@@ -3012,7 +3013,9 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack,
       } else {
         if (declaration->getDomain()) {
           domainNode = declaration->getDomain()->deepCopy();
-          domainNode->setNamespaceList(node->getNamespaceList());
+          if (node->getNamespaceList().size() > 0) {
+            domainNode->setNamespaceList(node->getNamespaceList());
+          }
         }
       }
     }

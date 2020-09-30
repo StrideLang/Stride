@@ -18,8 +18,18 @@ typedef enum {
   ACCESS_MDR = 1 << 3,   // Multi Domain Read
   ACCESS_MDW = 1 << 4,   // Multi Domain Write
   ACCESS_SDRst = 1 << 5, // Single domain Reset
-  ACCESS_MDRst = 1 << 6  // Multi domain Reset
-} SignalAccess;
+  ACCESS_MDRst = 1 << 6, // Multi domain Reset
+
+  ACCESS_CROSSES_FRAMEWORK = 1 << 16
+} DomainAccess;
+
+struct SignalAccess {
+  DomainAccess access = ACCESS_NONE;
+  std::vector<std::string> readDomains;
+  std::vector<std::string> readFrameworks;
+  std::vector<std::string> writeDomains;
+  std::vector<std::string> writeFrameworks;
+};
 
 enum class CodeEntityType { Declaration, Instance, Reset };
 
@@ -45,7 +55,7 @@ struct Declaration : public CodeEntity {
 struct Instance : public CodeEntity {
   Instance(std::string name_, std::string prefix, int size, std::string type,
            std::vector<std::string> defaultValue, ASTNode instanceNode,
-           SignalAccess access)
+           SignalAccess access = SignalAccess())
       : prefix(prefix), size(size), type(type), defaultValue(defaultValue),
         instanceNode(instanceNode), access(access) {
     entityType = CodeEntityType::Instance;
@@ -68,7 +78,7 @@ struct Instance : public CodeEntity {
   ASTNode instanceNode;
   std::vector<std::string> constructorArgs;
   std::vector<std::string> templateArgs;
-  SignalAccess access{ACCESS_NONE};
+  SignalAccess access;
 
   std::string fullName() override { return prefix + name; }
 };

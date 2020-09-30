@@ -14,8 +14,8 @@ module SizeTest {
         }
     ]
     blocks:         [
-        signal Input [InputPortSize] {},
-        signal Output [OutputPortSize] {}
+        signal Input [InputPort.size] {},
+        signal Output [OutputPort.size] {}
         constant InputPortSize { value: 3}
         constant OutputPortSize {value: 2}
     ]

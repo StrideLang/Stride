@@ -12,11 +12,11 @@ std::string LanguageSyntax::getDeclarationType(std::string type,
   }
   // FIXME cover all cases
   std::string helperType = "stride::" + base + "Helper<double>";
-  if ((access & ACCESS_SDRst) || (access & ACCESS_MDRst)) {
-    if (access & ACCESS_SDR && access & ACCESS_SDW) {
+  if ((access.access & ACCESS_SDRst) || (access.access & ACCESS_MDRst)) {
+    if (access.access & ACCESS_SDR && access.access & ACCESS_SDW) {
       declType =
           "stride::" + base + "_SDRWRst<" + helperType + ", " + type + ">";
-    } else if (access & ACCESS_SDR && access & ACCESS_MDW) {
+    } else if (access.access & ACCESS_SDR && access.access & ACCESS_MDW) {
       declType =
           "stride::" + base + "_SDRWRst<" + helperType + ", " + type + ">";
     } else { // Fallback
@@ -24,9 +24,9 @@ std::string LanguageSyntax::getDeclarationType(std::string type,
           "stride::" + base + "_SDRWRst<" + helperType + ", " + type + ">";
     }
   } else { // No reset
-    if (access & ACCESS_SDR && access & ACCESS_SDW) {
+    if (access.access & ACCESS_SDR && access.access & ACCESS_SDW) {
       declType = "stride::" + base + "_SDRW<" + helperType + ", " + type + ">";
-    } else if (access & ACCESS_SDR && access & ACCESS_MDW) {
+    } else if (access.access & ACCESS_SDR && access.access & ACCESS_MDW) {
       declType = "stride::" + base + "_SDRW<" + helperType + ", " + type + ">";
     } else { // Fallback
       declType = "stride::" + base + "_SDRW<" + helperType + ", " + type + ">";
@@ -46,7 +46,7 @@ LanguageSyntax::getDeclarationForType(std::string type, std::string name,
     size = defaultValue.size();
   }
 
-  if (access == ACCESS_NONE || access == ACCESS_SDRst) {
+  if (access.access == ACCESS_NONE || access.access == ACCESS_SDRst) {
     std::string bundleSize;
     if (size > 1) {
       bundleSize = "[" + std::to_string(size) + "]";

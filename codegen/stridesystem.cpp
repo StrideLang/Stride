@@ -911,6 +911,15 @@ string StrideSystem::getFrameworkAlias(string frameworkName) {
   return frameworkName;
 }
 
+string StrideSystem::getFrameworkFromAlias(string frameworkAlias) {
+  for (auto platform : m_frameworks) {
+    if (frameworkAlias == platform->getRootNamespace()) {
+      return platform->getFramework();
+    }
+  }
+  return frameworkAlias;
+}
+
 void StrideSystem::generateDomainConnections(ASTNode tree) {
   std::vector<ASTNode> newChildren;
   for (auto node : tree->getChildren()) {

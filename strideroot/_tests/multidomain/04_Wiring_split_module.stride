@@ -1,0 +1,14 @@
+use DesktopAudio version 1.0
+
+import Generators
+import Serial
+
+signal Sig {
+    domain: Wiring::WiringDomain
+}
+
+#Wiring::AnalogIn[0] >> Sig;
+
+Oscillator(frequency: Wiring::AnalogIn[0]) >> AudioOut[0];
+
+#Wiring::AnalogIn[0] >> AudioOut[0];

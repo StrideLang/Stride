@@ -90,6 +90,7 @@ public:
                          string platformName = "");
 
   std::string getFrameworkAlias(std::string frameworkName);
+  std::string getFrameworkFromAlias(std::string frameworkAlias);
 
   void generateDomainConnections(ASTNode tree);
 

@@ -4194,82 +4194,101 @@ void CodeResolver::markConnectionForNode(ASTNode node, ScopeStack scopeStack,
 
       if (node->getNodeType() == AST::Function) {
         // Mark connections that occur through ports
-        auto props = static_pointer_cast<FunctionNode>(node)->getProperties();
-        for (auto prop : props) {
-          auto declPorts = decl->getPropertyValue("ports");
-          if (declPorts) {
-            for (auto port : declPorts->getChildren()) {
-              if (port->getNodeType() == AST::Declaration) {
-                auto portDecl = static_pointer_cast<DeclarationNode>(port);
-                auto nameNode = portDecl->getPropertyValue("name");
-                if (nameNode && nameNode->getNodeType() == AST::String &&
-                    static_pointer_cast<ValueNode>(nameNode)
-                            ->getStringValue() == prop->getName()) {
-                  auto blocks = decl->getPropertyValue("blocks");
-                  if (blocks) {
-                    scopeStack.push_back(
-                        {decl->getName(), blocks->getChildren()});
-                    if (portDecl->getObjectType() == "mainInputPort" ||
-                        portDecl->getObjectType() == "propertyInputPort") {
-                      auto previousInstance = CodeValidator::getInstance(
-                          prop->getValue(), scopeStack, m_tree);
-                      auto nextInstance = CodeValidator::getInstance(
-                          portDecl->getPropertyValue("block"), scopeStack,
-                          m_tree);
-                      if (previousInstance) {
-                        // For nodes that are related to a single instance
-                        // (Block, Functions, etc.) Mark the writes for the
-                        // declaration, not the instance
-                        auto previousReads = static_pointer_cast<ListNode>(
-                            previousInstance->getCompilerProperty("reads"));
-                        if (!previousReads) {
-                          previousInstance->setCompilerProperty(
-                              "reads",
-                              std::make_shared<ListNode>(__FILE__, __LINE__));
-                          previousReads = static_pointer_cast<ListNode>(
-                              previousInstance->getCompilerProperty("reads"));
-                        }
-                        auto domain = CodeValidator::getNodeDomain(
-                            previousInstance, scopeStack, m_tree);
-                        if (domain) {
-                          previousReads->addChild(domain);
-                          if (nextInstance) {
-                            auto nextWrites = static_pointer_cast<ListNode>(
-                                nextInstance->getCompilerProperty("writes"));
-                            if (!nextWrites) {
-                              nextInstance->setCompilerProperty(
-                                  "writes", std::make_shared<ListNode>(
-                                                __FILE__, __LINE__));
-                              nextWrites = static_pointer_cast<ListNode>(
-                                  nextInstance->getCompilerProperty("writes"));
-                            }
-                            nextWrites->addChild(domain);
-                          }
-                        } else {
-                          qDebug() << " Warning unexpected null domain";
-                        }
-                      }
-                      // It seems that something like this should be here, but
-                      // it messes things up...
-                      //                                            markConnectionForNode(portDecl->getPropertyValue("block"),
-                      //                                            innerScope,
-                      //                                            prop->getValue());
-                      //                                            markPreviousReads(portDecl->getPropertyValue("block"),
-                      //                                            prop->getValue(),
-                      //                                            innerScope);
-                    } else if (portDecl->getObjectType() == "mainOutputPort" ||
-                               portDecl->getObjectType() ==
-                                   "propertyOutputPort") {
-                      //                                            markConnectionForNode(portDecl->getPropertyValue("block"),
-                      //                                            innerScope,
-                      //                                            prop->getValue());
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
+        //        auto props =
+        //        static_pointer_cast<FunctionNode>(node)->getProperties(); for
+        //        (auto prop : props) {
+        //          auto declPorts = decl->getPropertyValue("ports");
+        //          if (declPorts) {
+        //            for (auto port : declPorts->getChildren()) {
+        //              if (port->getNodeType() == AST::Declaration) {
+        //                auto portDecl =
+        //                static_pointer_cast<DeclarationNode>(port); auto
+        //                nameNode = portDecl->getPropertyValue("name"); if
+        //                (nameNode && nameNode->getNodeType() == AST::String &&
+        //                    static_pointer_cast<ValueNode>(nameNode)
+        //                            ->getStringValue() == prop->getName()) {
+        //                  auto blocks = decl->getPropertyValue("blocks");
+        //                  if (blocks) {
+        //                    scopeStack.push_back(
+        //                        {decl->getName(), blocks->getChildren()});
+        //                    if (portDecl->getObjectType() == "mainInputPort"
+        //                    ||
+        //                        portDecl->getObjectType() ==
+        //                        "propertyInputPort") {
+        //                      auto previousInstance =
+        //                      CodeValidator::getInstance(
+        //                          prop->getValue(), scopeStack, m_tree);
+        //                      auto nextInstance = CodeValidator::getInstance(
+        //                          portDecl->getPropertyValue("block"),
+        //                          scopeStack, m_tree);
+        //                      if (previousInstance) {
+        //                        // For nodes that are related to a single
+        //                        instance
+        //                        // (Block, Functions, etc.) Mark the writes
+        //                        for the
+        //                        // declaration, not the instance
+        //                        auto previousReads =
+        //                        static_pointer_cast<ListNode>(
+        //                            previousInstance->getCompilerProperty("reads"));
+        //                        if (!previousReads) {
+        //                          previousInstance->setCompilerProperty(
+        //                              "reads",
+        //                              std::make_shared<ListNode>(__FILE__,
+        //                              __LINE__));
+        //                          previousReads =
+        //                          static_pointer_cast<ListNode>(
+        //                              previousInstance->getCompilerProperty("reads"));
+        //                        }
+        //                        auto domain = CodeValidator::getNodeDomain(
+        //                            previousInstance, scopeStack, m_tree);
+        //                        if (domain) {
+        //                          previousReads->addChild(domain);
+        //                          if (nextInstance) {
+        //                            auto nextWrites =
+        //                            static_pointer_cast<ListNode>(
+        //                                nextInstance->getCompilerProperty("writes"));
+        //                            if (!nextWrites) {
+        //                              nextInstance->setCompilerProperty(
+        //                                  "writes",
+        //                                  std::make_shared<ListNode>(
+        //                                                __FILE__, __LINE__));
+        //                              nextWrites =
+        //                              static_pointer_cast<ListNode>(
+        //                                  nextInstance->getCompilerProperty("writes"));
+        //                            }
+        //                                                        nextWrites->addChild(domain);
+        //                          }
+        //                        } else {
+        //                          qDebug() << " Warning unexpected null
+        //                          domain";
+        //                        }
+        //                      }
+        //                      // It seems that something like this should be
+        //                      here, but
+        //                      // it messes things up...
+        //                      //
+        //                      markConnectionForNode(portDecl->getPropertyValue("block"),
+        //                      // innerScope,
+        //                      // prop->getValue());
+        //                      //
+        //                      markPreviousReads(portDecl->getPropertyValue("block"),
+        //                      // prop->getValue(),
+        //                      // innerScope);
+        //                    } else if (portDecl->getObjectType() ==
+        //                    "mainOutputPort" ||
+        //                               portDecl->getObjectType() ==
+        //                                   "propertyOutputPort") {
+        //                      //
+        //                      markConnectionForNode(portDecl->getPropertyValue("block"),
+        //                      // innerScope,
+        //                      // prop->getValue());
+        //                    }
+        //                  }
+        //                }
+        //              }
+        //            }
+        //          }
+        //        }
 
         auto blocks = decl->getPropertyValue("blocks");
         if (blocks) {
