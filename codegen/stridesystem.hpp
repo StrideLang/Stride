@@ -100,6 +100,11 @@ public:
   std::string getCommonAncestorDomain(std::string domainId1,
                                       std::string domainId2, ASTNode tree);
 
+  std::shared_ptr<DeclarationNode> getFrameworkOperator(std::string platform,
+                                                        std::string leftType,
+                                                        std::string rightType,
+                                                        std::string type);
+
   void installFramework(std::string frameworkName);
   std::vector<std::shared_ptr<StrideFramework>> getFrameworks() {
     return m_frameworks;
@@ -113,6 +118,11 @@ public:
 
   std::string getFrameworkDefaultDataType(std::string frameworkName,
                                           string strideType);
+
+  std::vector<std::shared_ptr<DeclarationNode>>
+  getFrameworkOperators(std::string frameworkName);
+
+  std::string getDataType(ASTNode node, ASTNode tree);
 
   std::vector<std::shared_ptr<StrideFramework>> m_frameworks;
   vector<std::shared_ptr<DeclarationNode>> m_platformDefinitions;

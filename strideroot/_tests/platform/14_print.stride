@@ -1,0 +1,10 @@
+use DesktopAudio version 1.0
+
+import Generators
+
+signal S {
+    domain: AudioBlockDomain
+    rate: 1
+    }
+
+Counter() >> S >> DebugPrint();

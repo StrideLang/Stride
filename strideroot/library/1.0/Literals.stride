@@ -1,0 +1,74 @@
+# Literals for port type validation
+
+type _StringLiteral {
+	typeName: "_stringLiteral"
+	properties: [
+		typeProperty Value {
+			name: "value"
+			types: [_StringLiteral]
+			default: ""
+			required: off
+		}
+	]
+}
+
+type _IntLiteral {
+	typeName: "_intLiteral"
+	properties: [
+		typeProperty Value {
+			name: "value"
+			types: [_IntLiteral]
+			default: 1
+			required: off
+		}
+	]
+}
+
+type _RealLiteral {
+	typeName: "_realLiteral"
+	properties: [
+		typeProperty Value {
+			name: "value"
+			types: [_RealLiteral]
+			default: 0.0
+			required: off
+		}
+	]
+}
+
+
+type _PortProperty {
+	typeName: "_portProperty"
+	properties: [
+#		typeProperty Value {
+#			name: "value"
+#			types: [""]
+#			default: none
+#			required: off
+#		}
+	]
+}
+
+type _SwitchLiteral {
+	typeName: "_switchLiteral"
+	properties: [
+#		typeProperty Value {
+#			name: "value"
+#			types: [""]
+#			default: none
+#			required: off
+#		}
+	]
+}
+
+type _NoneLiteral {
+	typeName: "_noneLiteral"
+	properties: [
+#		typeProperty Value {
+#			name: "value"
+#			types: [""]
+#			default: none
+#			required: off
+#		}
+	]
+}

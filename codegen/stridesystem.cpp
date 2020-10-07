@@ -825,6 +825,47 @@ string StrideSystem::getFrameworkDefaultDataType(string frameworkName,
   return std::string();
 }
 
+std::vector<std::shared_ptr<DeclarationNode>>
+StrideSystem::getFrameworkOperators(string frameworkName) {
+  std::vector<std::shared_ptr<DeclarationNode>> operators;
+  map<string, vector<ASTNode>> libObjects = getBuiltinObjectsReference();
+  if (libObjects.find(frameworkName) != libObjects.end()) {
+    for (auto node : libObjects[frameworkName]) {
+      if (node->getNodeType() == AST::Declaration) {
+        auto decl = static_pointer_cast<DeclarationNode>(node);
+        if (decl->getObjectType() == "platformOperator") {
+          operators.push_back(decl);
+        }
+      }
+    }
+  }
+  return operators;
+}
+
+string StrideSystem::getDataType(ASTNode node, ASTNode tree) {
+  for (auto child : tree->getChildren()) {
+    if (child->getNodeType() == AST::Block) {
+      std::string domainId = CodeValidator::getDomainIdentifier(node, {}, tree);
+      auto frameworkName = CodeValidator::getFrameworkForDomain(domainId, tree);
+      frameworkName = getFrameworkAlias(frameworkName);
+      auto decl =
+          CodeValidator::findDeclaration(CodeValidator::streamMemberName(child),
+                                         {}, tree, child->getNamespaceList());
+
+      if (decl) {
+        return CodeValidator::getDataTypeForDeclaration(decl, tree);
+      } else {
+        std::cerr << __FILE__ << ":" << __LINE__
+                  << " ERROR, could not find declaration for node" << std::endl;
+      }
+    } else if (child->getNodeType() == AST::Declaration) {
+      auto nodeDecl = static_pointer_cast<DeclarationNode>(child);
+      return CodeValidator::getDataTypeForDeclaration(nodeDecl, tree);
+    }
+  }
+  return std::string();
+}
+
 ASTNode StrideSystem::loadImportTree(std::string importName,
                                      std::string importAs,
                                      std::string platformName) {
@@ -1207,6 +1248,13 @@ string StrideSystem::getCommonAncestorDomain(string domainId1, string domainId2,
   }
 
   return "";
+}
+
+std::shared_ptr<DeclarationNode>
+StrideSystem::getFrameworkOperator(std::string platform, std::string leftType,
+                                   std::string rightType, std::string type) {
+
+  return nullptr;
 }
 
 void StrideSystem::installFramework(string frameworkName) {

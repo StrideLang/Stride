@@ -425,7 +425,9 @@ ASTNode CodeValidator::getInstance(ASTNode block, ScopeStack scopeStack,
         static_pointer_cast<DeclarationNode>(block)->getObjectType() ==
             "switch" ||
         static_pointer_cast<DeclarationNode>(block)->getObjectType() ==
-            "trigger") {
+            "trigger" ||
+        static_pointer_cast<DeclarationNode>(block)->getObjectType() ==
+            "string") {
       inst = block;
     } else if (static_pointer_cast<DeclarationNode>(block)->getObjectType() ==
                "reaction") {
@@ -433,6 +435,10 @@ ASTNode CodeValidator::getInstance(ASTNode block, ScopeStack scopeStack,
     } else {
       qDebug() << "Unexpected declaration in getInstance()";
     }
+  } else if (block->getNodeType() == AST::Int ||
+             block->getNodeType() == AST::Real ||
+             block->getNodeType() == AST::String) {
+    inst = block;
   } else {
     std::shared_ptr<DeclarationNode> decl =
         static_pointer_cast<DeclarationNode>(
@@ -2604,6 +2610,32 @@ CodeValidator::findDataTypeDeclaration(string dataTypeName, ASTNode tree) {
     }
   }
   return nullptr;
+}
+
+std::string
+CodeValidator::getDataTypeForDeclaration(std::shared_ptr<DeclarationNode> decl,
+                                         ASTNode tree) {
+
+  if (decl->getObjectType() == "signal") {
+    auto typeNode = decl->getPropertyValue("type");
+    if (typeNode) {
+      if (typeNode->getNodeType() == AST::Block) {
+        return std::static_pointer_cast<BlockNode>(typeNode)->getName();
+      }
+    }
+    qDebug() << __FILE__ << ":" << __LINE__ << " ERROR unsupported object type";
+    assert(0 == 1);
+
+  } else if (decl->getObjectType() == "constant") {
+    // TODO should constants take value from their given value or an additional
+    // port?
+    //    return getDataType(decl->getPropertyValue("value"), tree);
+  } else if (decl->getObjectType() == "string") {
+    return "_StringType";
+  } else {
+    qDebug() << __FILE__ << ":" << __LINE__ << " ERROR unsupported object type";
+  }
+  return std::string();
 }
 
 QVector<ASTNode> CodeValidator::getPortsForType(string typeName,

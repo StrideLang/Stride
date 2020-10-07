@@ -1,0 +1,13 @@
+use DesktopAudio version 1.0
+
+string String {
+    domain: AsyncDomain
+    default: "world"
+}
+
+string SecondString {
+    domain: AsyncDomain
+}
+
+String + " hello" >> SecondString;
+"hello " + String >> SecondString;

@@ -18,7 +18,6 @@ platformModule _Pow {
 
 # Power to e
 platformModule _Exp {
-    typeName: '_expType'
     inputs: ["real"]
 	outputs: ["real"]
     include: ["cmath"]

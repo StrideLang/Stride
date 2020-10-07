@@ -1,10 +1,9 @@
-platformModule _DebugPrintType {
-    typeName: '_debugPrintType'
+platformModule __DebugPrint {
     inputs: ["real"]
-    include: ["iostream"]
+    include: ["<iostream>"]
 #    linkTo: []
 #    declarations: ['']
 #    initialization: [" "]
-    processing: "std::cout << %%intoken:0%% << std::endl;"
+    processing: "std::cout << %%intokens:0%% << std::endl;"
     inherits: ['signal']
 }

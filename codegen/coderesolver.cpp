@@ -1489,7 +1489,11 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream,
     if (left->getNodeType() == AST::Expression ||
         left->getNodeType() == AST::List) {
       auto samplingDomain =
-          CodeValidator::getNodeDomain(stream->getRight(), scopeStack, m_tree);
+          CodeValidator::getNodeDomain(stream->getLeft(), scopeStack, m_tree);
+      if (!samplingDomain || samplingDomain->getNodeType() == AST::None) {
+        samplingDomain = CodeValidator::getNodeDomain(stream->getRight(),
+                                                      scopeStack, m_tree);
+      }
       if (samplingDomain) {
         function<void(ASTNode node, ASTNode samplingDomain)> func =
             [&func](ASTNode node, ASTNode samplingDomain) {
@@ -1562,12 +1566,13 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream,
     } else {
       if (left->getNodeType() == AST::Expression ||
           left->getNodeType() == AST::List) {
-        auto domainNode =
-            CodeValidator::getNodeDomain(right, scopeStack, m_tree);
-        if (!domainNode) {
-          domainNode = std::make_shared<ValueNode>(__FILE__, __LINE__);
-        }
-        left->setCompilerProperty("samplingDomain", domainNode);
+        //        auto domainNode =
+        //            CodeValidator::getNodeDomain(right, scopeStack, m_tree);
+        //        if (!domainNode) {
+        //          domainNode = std::make_shared<ValueNode>(__FILE__,
+        //          __LINE__);
+        //        }
+        //        left->setCompilerProperty("samplingDomain", domainNode);
       }
       left = right; // Last pass (process right, call it left)
     }

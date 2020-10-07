@@ -216,8 +216,8 @@ type _PlatformModulePortType {
 
 }
 
-type _PlatformModuleType {
-	typeName: "platformModule"
+type _PlatformCodeType {
+	typeName: "_platformCode"
 	properties: [
 		typeProperty Include {
 			name: "include"
@@ -243,38 +243,12 @@ type _PlatformModuleType {
 			default: []
 			required: off
 		},
-		typeProperty Inputs {
-			name: "inputs"
-			types: [""] #TODO accepts list
-			default: []
-			required: off
-		},
-		typeProperty Outputs {
-			name: "outputs"
-			types: [""]
-			default: []
-			required: off
-		},
-		typeProperty Ports {
-			name: "ports"
-			types: [""]
-			default: []
-			required: off
-		},
-		typeProperty Properties {
-			name: "propertiesConstraints"
-			types: [""]
-			default: []
-			required: off
-			meta: "This will validate constraints for property input"
-		},
 		typeProperty Resources {
 			name: "resources"
 			types: [""]
 			default: []
 			required: off
-		},
-		typeProperty GlobalDeclarations {
+		},		typeProperty GlobalDeclarations {
 			name: "globalDeclarations"
 			types: [""] #TODO validate list
 			default: []
@@ -340,12 +314,6 @@ type _PlatformModuleType {
 			default: ""
 			required: off
 		},
-#		typeProperty Framework {
-#			name: "framework"
-#			types: [""] #
-#			default: none
-#			required: on
-#		},
 		typeProperty Domain {
 			name: "domain"
 			types: [""] #
@@ -359,7 +327,38 @@ type _PlatformModuleType {
 			required: off
 		}
 	]
-	inherits: [_Base]
+}
+
+type _PlatformModuleType {
+	typeName: "platformModule"
+	properties: [
+		typeProperty Inputs {
+			name: "inputs"
+			types: [""] #TODO accepts list
+			default: []
+			required: off
+		},
+		typeProperty Outputs {
+			name: "outputs"
+			types: [""]
+			default: []
+			required: off
+		},
+		typeProperty Ports {
+			name: "ports"
+			types: [""]
+			default: []
+			required: off
+		},
+		typeProperty Properties {
+			name: "propertiesConstraints"
+			types: [""]
+			default: []
+			required: off
+			meta: "This will validate constraints for property input"
+		}
+	]
+	inherits: [_PlatformCodeType]
 }
 
 type _PlatformBlockType {
@@ -424,7 +423,7 @@ type _PlatformType {
 	]
 }
 
-type _FrameworkDescription {
+type _FrameworkDescriptionType {
 	typeName: "_frameworkDescription"
 	properties: [
 		typeProperty FrameworkName {
@@ -512,4 +511,81 @@ type _SystemType {
 			required: off
 		}
 	]
+}
+
+
+
+type _PlatformTypeClass {
+	typeName: "platformTypeClass"
+	properties: [
+		typeProperty Types {
+			name: "types"
+			types: [""]
+			default: none
+			required: on
+			meta: "Members of the the type class"
+		}
+	]
+	meta: ""
+}
+
+type _FrameworkDataType {
+	typeName: "frameworkDataType"
+	properties: [
+		typeProperty Name {
+			name: "name"
+			types: [_StringLiteral]
+			default: ""
+			required: off
+			meta: "Name of the data type"
+		}
+		typeProperty FrameworkName {
+			name: "frameworkName"
+			types: [_StringLiteral]
+			default: none
+			required: on
+			meta: "Name of the data type on the target platform"
+		}
+		typeProperty Includes {
+			name: "includes"
+			types: [""]
+			default: []
+			required: off
+			meta: "Additional include files for the type"
+		}
+	]
+	meta: ""
+}
+
+
+
+type _PlatformOperatorType {
+	typeName: "platformOperator"
+
+	properties: [
+		typeProperty LeftDataTypesProperty {
+			name: "leftDataTypes"
+			types: [""]
+			default: []
+			required: on
+			meta: "Allowed data types for left element"
+		}
+		typeProperty LeftDataTypesProperty {
+			name: "rightDataTypes"
+			types: [""]
+			default: none
+			required: off
+			meta: "Allowed data types for right element. Leave as none if unary operator"
+		}
+		typeProperty OutDataTypesProperty {
+			name: "outDataTypes"
+			types: [""]
+			default: []
+			required: on
+			meta: "Resulting data type from operation"
+		}
+
+
+	]
+	inherits: [_PlatformCodeType]
 }

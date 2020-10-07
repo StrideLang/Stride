@@ -83,8 +83,11 @@ public:
   bool getPluginDetails(std::string &pluginName, int &majorVersion,
                         int &minorVersion);
 
-  std::vector<std::shared_ptr<DeclarationNode>>
-      m_synchronization; // Connections between domains in a framework
+  //  std::vector<std::shared_ptr<DeclarationNode>>
+  //      m_synchronization; // Connections between domains in a framework
+
+  //  std::vector<std::shared_ptr<DeclarationNode>>
+  //      m_frameworkOperators; // Operators in framework
 private:
   std::string m_strideRoot;
   std::string m_framework;

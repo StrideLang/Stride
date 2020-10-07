@@ -141,6 +141,10 @@ public:
   static std::shared_ptr<DeclarationNode>
   findDataTypeDeclaration(std::string dataTypeName, ASTNode tree);
 
+  static std::string
+  getDataTypeForDeclaration(std::shared_ptr<DeclarationNode> decl,
+                            ASTNode tree);
+
   static QVector<ASTNode>
   getPortsForTypeBlock(std::shared_ptr<DeclarationNode> block, ScopeStack scope,
                        ASTNode tree);
