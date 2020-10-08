@@ -2621,6 +2621,9 @@ CodeValidator::getDataTypeForDeclaration(std::shared_ptr<DeclarationNode> decl,
     if (typeNode) {
       if (typeNode->getNodeType() == AST::Block) {
         return std::static_pointer_cast<BlockNode>(typeNode)->getName();
+      } else if (typeNode->getNodeType() == AST::None) {
+        // FIXME we should resolve the types in CodeResolver.
+        return "_RealType";
       }
     }
     qDebug() << __FILE__ << ":" << __LINE__ << " ERROR unsupported object type";
@@ -3169,7 +3172,9 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack,
       domainNode =
           CodeValidator::getNodeDomain(expr->getValue(), scopeStack, tree);
     } else {
-      return expr->getCompilerProperty("samplingDomain");
+      if (expr->getCompilerProperty("samplingDomain")) {
+        return expr->getCompilerProperty("samplingDomain");
+      }
     }
   } else if (node->getNodeType() == AST::Stream) {
     StreamNode *stream = static_cast<StreamNode *>(node.get());

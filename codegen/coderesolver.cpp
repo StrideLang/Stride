@@ -1490,18 +1490,35 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream,
         left->getNodeType() == AST::List) {
       auto samplingDomain =
           CodeValidator::getNodeDomain(stream->getLeft(), scopeStack, m_tree);
-      if (!samplingDomain || samplingDomain->getNodeType() == AST::None) {
-        samplingDomain = CodeValidator::getNodeDomain(stream->getRight(),
-                                                      scopeStack, m_tree);
-      }
       if (samplingDomain) {
         function<void(ASTNode node, ASTNode samplingDomain)> func =
-            [&func](ASTNode node, ASTNode samplingDomain) {
+            [&](ASTNode node, ASTNode samplingDomain) {
               for (auto child : node->getChildren()) {
                 if (child->getNodeType() == AST::Expression ||
                     child->getNodeType() == AST::List) {
                   child->setCompilerProperty("samplingDomain", samplingDomain);
                   func(child, samplingDomain);
+                } else {
+                  if (child->getNodeType() == AST::Block ||
+                      child->getNodeType() == AST::Bundle) {
+                    // Check if expression element has no domain set. If it
+                    // doesn't assign to samplingDomain
+                    // TODO this does not cover the case where sampling domain
+                    // is not resolvable at this point.
+                    auto domain =
+                        CodeValidator::getNodeDomain(child, scopeStack, m_tree);
+                    if (!domain || domain->getNodeType() == AST::None) {
+                      auto instance =
+                          CodeValidator::getInstance(child, scopeStack, m_tree);
+                      if (instance &&
+                          (instance->getNodeType() == AST::Declaration ||
+                           instance->getNodeType() == AST::BundleDeclaration)) {
+                        auto decl =
+                            static_pointer_cast<DeclarationNode>(instance);
+                        decl->setPropertyValue("domain", samplingDomain);
+                      }
+                    }
+                  }
                 }
               }
             };
@@ -1710,6 +1727,8 @@ ASTNode CodeResolver::processDomainsForNode(ASTNode node, ScopeStack scopeStack,
       } else {
         samplingDomain = newDomainName;
         currentDomain = newDomainName;
+        // Take first domain available
+        break;
       }
     }
     if (samplingDomain) {
