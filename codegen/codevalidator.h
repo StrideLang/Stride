@@ -221,6 +221,9 @@ public:
                                        ASTNode tree);
   static std::string getDomainIdentifier(ASTNode domain, ScopeStack scopeStack,
                                          ASTNode tree);
+  static void setDomainForNode(ASTNode node, ASTNode domain,
+                               ScopeStack scopeStack, ASTNode tree,
+                               bool force = false);
 
   static QVector<ASTNode> getBlocksInScope(ASTNode root, ScopeStack scopeStack,
                                            ASTNode tree);

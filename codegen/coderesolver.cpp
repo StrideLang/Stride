@@ -1489,7 +1489,7 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream,
     if (left->getNodeType() == AST::Expression ||
         left->getNodeType() == AST::List) {
       auto samplingDomain =
-          CodeValidator::getNodeDomain(stream->getLeft(), scopeStack, m_tree);
+          CodeValidator::getNodeDomain(stream->getRight(), scopeStack, m_tree);
       if (samplingDomain) {
         function<void(ASTNode node, ASTNode samplingDomain)> func =
             [&](ASTNode node, ASTNode samplingDomain) {
@@ -1607,7 +1607,6 @@ ASTNode CodeResolver::processDomainsForNode(ASTNode node, ScopeStack scopeStack,
         CodeValidator::findDeclaration(CodeValidator::streamMemberName(node),
                                        scopeStack, m_tree,
                                        node->getNamespaceList());
-    ASTNode domain = CodeValidator::getNodeDomain(node, scopeStack, m_tree);
 
     if (declaration) {
       ASTNode domain = declaration->getDomain();
@@ -1630,6 +1629,35 @@ ASTNode CodeResolver::processDomainsForNode(ASTNode node, ScopeStack scopeStack,
           //            currentDomain->addScope()
         } else {
           qDebug() << "unrecognized domain type";
+        }
+      }
+      if (node->getNodeType() == AST::Bundle) {
+        auto indexNode = static_pointer_cast<BundleNode>(node)->index();
+        for (auto indexElement : indexNode->getChildren()) {
+          resolveDomainForStreamNode(indexElement, scopeStack);
+          QList<ASTNode> indexDomainStack;
+          processDomainsForNode(indexElement, scopeStack, indexDomainStack);
+          if (indexElement->getNodeType() == AST::String ||
+              indexElement->getNodeType() == AST::Int ||
+              indexElement->getNodeType() == AST::Real) {
+            // No need to do resolve domain.
+          } else if (indexElement->getNodeType() != AST::List &&
+                     indexElement->getNodeType() != AST::Expression &&
+                     indexElement->getNodeType() != AST::Range) {
+            ASTNode domain =
+                CodeValidator::getNodeDomain(indexElement, scopeStack, m_tree);
+            if (domain && domain->getNodeType() != AST::None) {
+              CodeValidator::setDomainForNode(indexElement, domain, scopeStack,
+                                              m_tree);
+            } else {
+              qDebug() << "WARNING: domain has not resolved for bundle when "
+                          "resolving index";
+            }
+
+          } else {
+            // FIXME implement
+            assert(0 == 1);
+          }
         }
       }
       // Check if declared in the current scope. If declared here then store
@@ -1772,53 +1800,8 @@ void CodeResolver::setDomainForStack(QList<ASTNode> domainStack,
                                        resolvingInstance);
     }
 
-    if (relatedNode->getNodeType() == AST::Declaration ||
-        relatedNode->getNodeType() == AST::BundleDeclaration) {
-      std::shared_ptr<DeclarationNode> block =
-          static_pointer_cast<DeclarationNode>(relatedNode);
-      if (block) {
-        block->replacePropertyValue("domain", domainName);
-      }
-    } else if (relatedNode->getNodeType() == AST::Block ||
-               relatedNode->getNodeType() == AST::Bundle) {
-      std::shared_ptr<DeclarationNode> declaration =
-          CodeValidator::findDeclaration(
-              CodeValidator::streamMemberName(relatedNode), scopeStack, m_tree);
-      if (declaration) {
-        auto typeDeclaration =
-            CodeValidator::findTypeDeclaration(declaration, scopeStack, m_tree);
-        if (typeDeclaration->getObjectType() == "platformModule") {
-          relatedNode->setCompilerProperty("domain", domainName);
-        } else {
-          declaration->replacePropertyValue("domain", domainName);
-        }
-      }
-    } else if (relatedNode->getNodeType() == AST::Function) {
-      std::shared_ptr<FunctionNode> func =
-          static_pointer_cast<FunctionNode>(relatedNode);
-      if (func) {
-        func->setCompilerProperty("domain", domainName);
-      }
-    } else if (relatedNode->getNodeType() == AST::Real ||
-               relatedNode->getNodeType() == AST::Int ||
-               relatedNode->getNodeType() == AST::String ||
-               relatedNode->getNodeType() == AST::Switch) {
-      std::shared_ptr<ValueNode> val =
-          static_pointer_cast<ValueNode>(relatedNode);
-      if (val) {
-        val->setDomain(domainName);
-      }
-    } else if (relatedNode->getNodeType() == AST::List ||
-               relatedNode->getNodeType() == AST::Expression) {
-      QList<ASTNode> children;
-      for (ASTNode member : relatedNode->getChildren()) {
-        children.push_back(member);
-      }
-
-      setDomainForStack(children, resolvingInstance, domainName, scopeStack);
-    } else if (relatedNode->getNodeType() == AST::PortProperty) {
-      relatedNode->setCompilerProperty("domain", domainName);
-    }
+    CodeValidator::setDomainForNode(relatedNode, domainName, scopeStack,
+                                    m_tree);
   }
 }
 
@@ -4072,8 +4055,24 @@ void CodeResolver::markConnectionForNode(ASTNode node, ScopeStack scopeStack,
 
     if (node->getNodeType() == AST::Bundle) {
       auto bundleNode = static_pointer_cast<BundleNode>(node);
+      auto domain = CodeValidator::getNodeDomain(node, scopeStack, m_tree);
       for (auto indexChild : bundleNode->index()->getChildren()) {
         markConnectionForNode(indexChild, scopeStack, nullptr);
+        if (indexChild->getNodeType() == AST::Block ||
+            indexChild->getNodeType() == AST::Bundle) {
+          auto frameworkNode = indexChild->getCompilerProperty("framework");
+          std::string frameworkName;
+          if (frameworkNode && frameworkNode->getNodeType() == AST::String) {
+            frameworkName =
+                static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
+          }
+          auto decl = CodeValidator::findDeclaration(
+              CodeValidator::streamMemberName(indexChild), scopeStack, m_tree,
+              indexChild->getNamespaceList(), frameworkName);
+          if (decl) {
+            decl->appendToPropertyValue("reads", domain);
+          }
+        }
       }
     }
     auto nodeInstance = CodeValidator::getInstance(node, scopeStack, m_tree);
@@ -4217,103 +4216,6 @@ void CodeResolver::markConnectionForNode(ASTNode node, ScopeStack scopeStack,
       }
 
       if (node->getNodeType() == AST::Function) {
-        // Mark connections that occur through ports
-        //        auto props =
-        //        static_pointer_cast<FunctionNode>(node)->getProperties(); for
-        //        (auto prop : props) {
-        //          auto declPorts = decl->getPropertyValue("ports");
-        //          if (declPorts) {
-        //            for (auto port : declPorts->getChildren()) {
-        //              if (port->getNodeType() == AST::Declaration) {
-        //                auto portDecl =
-        //                static_pointer_cast<DeclarationNode>(port); auto
-        //                nameNode = portDecl->getPropertyValue("name"); if
-        //                (nameNode && nameNode->getNodeType() == AST::String &&
-        //                    static_pointer_cast<ValueNode>(nameNode)
-        //                            ->getStringValue() == prop->getName()) {
-        //                  auto blocks = decl->getPropertyValue("blocks");
-        //                  if (blocks) {
-        //                    scopeStack.push_back(
-        //                        {decl->getName(), blocks->getChildren()});
-        //                    if (portDecl->getObjectType() == "mainInputPort"
-        //                    ||
-        //                        portDecl->getObjectType() ==
-        //                        "propertyInputPort") {
-        //                      auto previousInstance =
-        //                      CodeValidator::getInstance(
-        //                          prop->getValue(), scopeStack, m_tree);
-        //                      auto nextInstance = CodeValidator::getInstance(
-        //                          portDecl->getPropertyValue("block"),
-        //                          scopeStack, m_tree);
-        //                      if (previousInstance) {
-        //                        // For nodes that are related to a single
-        //                        instance
-        //                        // (Block, Functions, etc.) Mark the writes
-        //                        for the
-        //                        // declaration, not the instance
-        //                        auto previousReads =
-        //                        static_pointer_cast<ListNode>(
-        //                            previousInstance->getCompilerProperty("reads"));
-        //                        if (!previousReads) {
-        //                          previousInstance->setCompilerProperty(
-        //                              "reads",
-        //                              std::make_shared<ListNode>(__FILE__,
-        //                              __LINE__));
-        //                          previousReads =
-        //                          static_pointer_cast<ListNode>(
-        //                              previousInstance->getCompilerProperty("reads"));
-        //                        }
-        //                        auto domain = CodeValidator::getNodeDomain(
-        //                            previousInstance, scopeStack, m_tree);
-        //                        if (domain) {
-        //                          previousReads->addChild(domain);
-        //                          if (nextInstance) {
-        //                            auto nextWrites =
-        //                            static_pointer_cast<ListNode>(
-        //                                nextInstance->getCompilerProperty("writes"));
-        //                            if (!nextWrites) {
-        //                              nextInstance->setCompilerProperty(
-        //                                  "writes",
-        //                                  std::make_shared<ListNode>(
-        //                                                __FILE__, __LINE__));
-        //                              nextWrites =
-        //                              static_pointer_cast<ListNode>(
-        //                                  nextInstance->getCompilerProperty("writes"));
-        //                            }
-        //                                                        nextWrites->addChild(domain);
-        //                          }
-        //                        } else {
-        //                          qDebug() << " Warning unexpected null
-        //                          domain";
-        //                        }
-        //                      }
-        //                      // It seems that something like this should be
-        //                      here, but
-        //                      // it messes things up...
-        //                      //
-        //                      markConnectionForNode(portDecl->getPropertyValue("block"),
-        //                      // innerScope,
-        //                      // prop->getValue());
-        //                      //
-        //                      markPreviousReads(portDecl->getPropertyValue("block"),
-        //                      // prop->getValue(),
-        //                      // innerScope);
-        //                    } else if (portDecl->getObjectType() ==
-        //                    "mainOutputPort" ||
-        //                               portDecl->getObjectType() ==
-        //                                   "propertyOutputPort") {
-        //                      //
-        //                      markConnectionForNode(portDecl->getPropertyValue("block"),
-        //                      // innerScope,
-        //                      // prop->getValue());
-        //                    }
-        //                  }
-        //                }
-        //              }
-        //            }
-        //          }
-        //        }
-
         auto blocks = decl->getPropertyValue("blocks");
         if (blocks) {
           for (auto blockDecl : blocks->getChildren()) {

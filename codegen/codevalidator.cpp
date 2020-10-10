@@ -3277,3 +3277,55 @@ std::string CodeValidator::getDomainIdentifier(ASTNode domain,
   }
   return name;
 }
+
+void CodeValidator::setDomainForNode(ASTNode node, ASTNode domain,
+                                     ScopeStack scopeStack, ASTNode tree,
+                                     bool force) {
+  auto existingDomain = getNodeDomain(node, scopeStack, tree);
+  if (existingDomain && existingDomain->getNodeType() != AST::None && !force) {
+    return;
+  }
+  if (node->getNodeType() == AST::Declaration ||
+      node->getNodeType() == AST::BundleDeclaration) {
+    std::shared_ptr<DeclarationNode> block =
+        static_pointer_cast<DeclarationNode>(node);
+    if (block) {
+      block->replacePropertyValue("domain", domain);
+    }
+  } else if (node->getNodeType() == AST::Block ||
+             node->getNodeType() == AST::Bundle) {
+    std::shared_ptr<DeclarationNode> declaration =
+        CodeValidator::findDeclaration(CodeValidator::streamMemberName(node),
+                                       scopeStack, tree);
+    if (declaration) {
+      auto typeDeclaration =
+          CodeValidator::findTypeDeclaration(declaration, scopeStack, tree);
+      if (typeDeclaration->getObjectType() == "platformModule") {
+        node->setCompilerProperty("domain", domain);
+      } else {
+        declaration->replacePropertyValue("domain", domain);
+      }
+    }
+  } else if (node->getNodeType() == AST::Function) {
+    std::shared_ptr<FunctionNode> func =
+        static_pointer_cast<FunctionNode>(node);
+    if (func) {
+      func->setCompilerProperty("domain", domain);
+    }
+  } else if (node->getNodeType() == AST::Real ||
+             node->getNodeType() == AST::Int ||
+             node->getNodeType() == AST::String ||
+             node->getNodeType() == AST::Switch) {
+    std::shared_ptr<ValueNode> val = static_pointer_cast<ValueNode>(node);
+    if (val) {
+      val->setDomain(domain);
+    }
+  } else if (node->getNodeType() == AST::List ||
+             node->getNodeType() == AST::Expression) {
+    for (ASTNode member : node->getChildren()) {
+      setDomainForNode(member, domain, scopeStack, tree, force);
+    }
+  } else if (node->getNodeType() == AST::PortProperty) {
+    node->setCompilerProperty("domain", domain);
+  }
+}
