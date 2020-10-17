@@ -98,6 +98,7 @@ typedef struct {
   std::string blockForPort; // If this block is a block port, provide
                             // the port declaration name
   SignalAccess access;
+  std::shared_ptr<PortPropertyNode> parentScopeProperty;
 } DeclarationMap;
 
 typedef struct {

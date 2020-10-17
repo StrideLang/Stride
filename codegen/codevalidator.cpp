@@ -1190,7 +1190,7 @@ int CodeValidator::getBlockDeclaredSize(std::shared_ptr<DeclarationNode> block,
   BundleNode *bundle = static_cast<BundleNode *>(block->getBundle().get());
   if (bundle->getNodeType() == AST::Bundle) {
     size = 0;
-    ListNode *indexList = bundle->index().get();
+    auto indexList = bundle->index();
     vector<ASTNode> indexExps = indexList->getChildren();
     for (ASTNode exp : indexExps) {
       if (exp->getNodeType() == AST::Range) {
@@ -1210,7 +1210,16 @@ int CodeValidator::getBlockDeclaredSize(std::shared_ptr<DeclarationNode> block,
         if (exp->getNodeType() == AST::PortProperty) {
           return -2; // FIXME calculate actual size from external connection
         } else {
-          size += CodeValidator::evaluateConstInteger(exp, scope, tree, errors);
+          QList<LangError> internalErrors;
+          size += CodeValidator::evaluateConstInteger(exp, scope, tree,
+                                                      internalErrors);
+          if (internalErrors.size() > 0) {
+            LangError error;
+            error.type = LangError::InvalidIndexType;
+            error.lineNumber = exp->getLine();
+            error.errorTokens.push_back(bundle->getName());
+            errors << error;
+          }
         }
       }
     }
@@ -2085,12 +2094,13 @@ std::string CodeValidator::resolveRangeType(RangeNode *rangenode,
 std::string
 CodeValidator::resolvePortPropertyType(PortPropertyNode *portproperty,
                                        ScopeStack scopeStack, ASTNode tree) {
-  // FIXME implement correctly
+  // FIXME implement correctly. Should be read from framework?
   if (portproperty->getPortName() == "size") {
     return "_IntLiteral";
-  } else {
+  } else if (portproperty->getPortName() == "rate") {
     return "_RealLiteral";
   }
+  { return "_RealLiteral"; }
 }
 
 shared_ptr<DeclarationNode> CodeValidator::resolveBlock(ASTNode node,
@@ -2209,7 +2219,18 @@ int CodeValidator::evaluateConstInteger(ASTNode node, ScopeStack scope,
       if (declaration && declaration->getNodeType() == AST::BundleDeclaration) {
         ASTNode member =
             getMemberfromBlockBundle(declaration.get(), index, errors);
-        return evaluateConstInteger(member, scope, tree, errors);
+        QList<LangError> internalErrors;
+        auto integer =
+            evaluateConstInteger(member, scope, tree, internalErrors);
+        if (internalErrors.size() == 0) {
+          return integer;
+        }
+        LangError error;
+        error.type = LangError::InvalidIndexType;
+        error.lineNumber = bundle->index()->getLine();
+        error.errorTokens.push_back(bundle->getName());
+        errors << error;
+        return 0;
       }
     }
     LangError error;

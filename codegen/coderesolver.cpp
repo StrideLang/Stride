@@ -256,15 +256,17 @@ void CodeResolver::resolveStreamRates(std::shared_ptr<StreamNode> stream) {
   } else {
     rightRate = CodeValidator::getNodeRate(right, {}, m_tree);
     if (rightRate <= 0) {
-      auto rightDomain = CodeValidator::getNodeDomain(right, {}, m_tree);
-      if (rightDomain) {
-        auto domainDecl = CodeValidator::findDomainDeclaration(
-            CodeValidator::getDomainIdentifier(rightDomain, {}, m_tree),
-            m_tree);
-        auto defaultRate = CodeValidator::getDomainDefaultRate(domainDecl);
-        CodeValidator::setNodeRate(right, defaultRate, {}, m_tree);
-      } else if (rate >= 0) {
+      if (rate >= 0) {
         CodeValidator::setNodeRate(right, rate, {}, m_tree);
+      } else {
+        auto rightDomain = CodeValidator::getNodeDomain(right, {}, m_tree);
+        if (rightDomain) {
+          auto domainDecl = CodeValidator::findDomainDeclaration(
+              CodeValidator::getDomainIdentifier(rightDomain, {}, m_tree),
+              m_tree);
+          auto defaultRate = CodeValidator::getDomainDefaultRate(domainDecl);
+          CodeValidator::setNodeRate(right, defaultRate, {}, m_tree);
+        }
       }
     }
   }
@@ -1500,7 +1502,8 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream,
                   func(child, samplingDomain);
                 } else {
                   if (child->getNodeType() == AST::Block ||
-                      child->getNodeType() == AST::Bundle) {
+                      child->getNodeType() == AST::Bundle ||
+                      child->getNodeType() == AST::PortProperty) {
                     // Check if expression element has no domain set. If it
                     // doesn't assign to samplingDomain
                     // TODO this does not cover the case where sampling domain
@@ -1510,12 +1513,14 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream,
                     if (!domain || domain->getNodeType() == AST::None) {
                       auto instance =
                           CodeValidator::getInstance(child, scopeStack, m_tree);
-                      if (instance &&
-                          (instance->getNodeType() == AST::Declaration ||
-                           instance->getNodeType() == AST::BundleDeclaration)) {
-                        auto decl =
-                            static_pointer_cast<DeclarationNode>(instance);
-                        decl->setPropertyValue("domain", samplingDomain);
+                      if (instance) {
+
+                        if (instance->getNodeType() == AST::Declaration ||
+                            instance->getNodeType() == AST::BundleDeclaration) {
+                          auto decl =
+                              static_pointer_cast<DeclarationNode>(instance);
+                          decl->setPropertyValue("domain", samplingDomain);
+                        }
                       }
                     }
                   }
@@ -3897,6 +3902,64 @@ void CodeResolver::markPreviousReads(ASTNode node, ASTNode previous,
     ASTNode newReadDomain;
     std::string previousName = CodeValidator::streamMemberName(previous);
 
+    std::string name = CodeValidator::streamMemberName(node);
+    std::shared_ptr<DeclarationNode> decl =
+        CodeValidator::findDeclaration(name, scopeStack, m_tree);
+    if (node->getNodeType() == AST::Declaration) {
+      decl = static_pointer_cast<DeclarationNode>(node);
+    }
+    auto nodeTypeName = decl->getObjectType();
+    if (nodeTypeName == "module" || nodeTypeName == "reaction" ||
+        nodeTypeName == "loop") {
+      // Modules, reactions and loops, the domain that matters is the domain
+      // of the output block.
+      if (node->getNodeType() == AST::Function) {
+        auto func = std::static_pointer_cast<FunctionNode>(node);
+        // FIXME get this from the functions input port
+        newReadDomain = func->getCompilerProperty("domain");
+      }
+    } else {
+      // platformBlock and platformModule can be ignored as they are tied to
+      // a domain. However, we do need to figure out how to support buffer
+      // access across domains.
+      newReadDomain = CodeValidator::getNodeDomain(node, scopeStack, m_tree);
+      // FIXME we need to get previousReads for functions from the function
+      // itsefl, not the module decl.
+
+      //                        if (previousDeclReads) {
+      //                            for (auto read:
+      //                            previousDeclReads->getChildren()) {
+      //                                if (read && read->getNodeType() ==
+      //                                AST::PortProperty
+      //                                        &&
+      //                                        newReadDomain->getNodeType()
+      //                                        == AST::PortProperty) {
+      //                                    std::shared_ptr<PortPropertyNode>
+      //                                    newReadDomainNode =
+      //                                            std::static_pointer_cast<PortPropertyNode>(newReadDomain);
+      //                                    std::shared_ptr<PortPropertyNode>
+      //                                    existingReadDomain =
+      //                                            std::static_pointer_cast<PortPropertyNode>(read);
+      //                                    if (
+      //                                    (newReadDomainNode->getName()
+      //                                    ==
+      //                                    existingReadDomain->getName())
+      //                                         &&
+      //                                         (newReadDomainNode->getPortName()
+      //                                         ==
+      //                                         existingReadDomain->getPortName())
+      //                                         ) {
+      //                                        alreadyInReads = true;
+      //                                        break;
+      //                                    }
+      //                                }
+      //                            }
+      //                            if (!alreadyInReads) {
+      //                                previousDeclReads->addChild(newReadDomain);
+      //                            }
+      //                        }
+    }
+
     auto appendReadDomain = [](std::shared_ptr<ListNode> previousReads,
                                ASTNode newReadDomain) {
       if (previousReads) {
@@ -3942,13 +4005,6 @@ void CodeResolver::markPreviousReads(ASTNode node, ASTNode previous,
 
     if (previous->getNodeType() == AST::Block ||
         previous->getNodeType() == AST::Bundle) {
-      std::string name = CodeValidator::streamMemberName(node);
-      std::shared_ptr<DeclarationNode> decl =
-          CodeValidator::findDeclaration(name, scopeStack, m_tree);
-      if (node->getNodeType() == AST::Declaration) {
-        decl = static_pointer_cast<DeclarationNode>(node);
-      }
-      auto nodeTypeName = decl->getObjectType();
 
       if (node->getNodeType() == AST::Bundle) {
         auto bundleNode = static_pointer_cast<BundleNode>(node);
@@ -3958,57 +4014,6 @@ void CodeResolver::markPreviousReads(ASTNode node, ASTNode previous,
             markPreviousReads(node, indexNode, scopeStack);
           }
         }
-      }
-
-      if (nodeTypeName == "module" || nodeTypeName == "reaction" ||
-          nodeTypeName == "loop") {
-        // Modules, reactions and loops, the domain that matters is the domain
-        // of the output block.
-        if (node->getNodeType() == AST::Function) {
-          auto func = std::static_pointer_cast<FunctionNode>(node);
-          // FIXME get this from the functions input port
-          newReadDomain = func->getCompilerProperty("domain");
-        }
-      } else {
-        // platformBlock and platformModule can be ignored as they are tied to
-        // a domain. However, we do need to figure out how to support buffer
-        // access across domains.
-        newReadDomain = CodeValidator::getNodeDomain(node, scopeStack, m_tree);
-        // FIXME we need to get previousReads for functions from the function
-        // itsefl, not the module decl.
-
-        //                        if (previousDeclReads) {
-        //                            for (auto read:
-        //                            previousDeclReads->getChildren()) {
-        //                                if (read && read->getNodeType() ==
-        //                                AST::PortProperty
-        //                                        &&
-        //                                        newReadDomain->getNodeType()
-        //                                        == AST::PortProperty) {
-        //                                    std::shared_ptr<PortPropertyNode>
-        //                                    newReadDomainNode =
-        //                                            std::static_pointer_cast<PortPropertyNode>(newReadDomain);
-        //                                    std::shared_ptr<PortPropertyNode>
-        //                                    existingReadDomain =
-        //                                            std::static_pointer_cast<PortPropertyNode>(read);
-        //                                    if (
-        //                                    (newReadDomainNode->getName()
-        //                                    ==
-        //                                    existingReadDomain->getName())
-        //                                         &&
-        //                                         (newReadDomainNode->getPortName()
-        //                                         ==
-        //                                         existingReadDomain->getPortName())
-        //                                         ) {
-        //                                        alreadyInReads = true;
-        //                                        break;
-        //                                    }
-        //                                }
-        //                            }
-        //                            if (!alreadyInReads) {
-        //                                previousDeclReads->addChild(newReadDomain);
-        //                            }
-        //                        }
       }
       //                    Q_ASSERT(previousDecl);
 
@@ -4041,6 +4046,11 @@ void CodeResolver::markPreviousReads(ASTNode node, ASTNode previous,
             }
           };
       appendReadDomainForExprList(previous, newReadDomain);
+    } else if (previous->getNodeType() == AST::PortProperty) {
+
+      if (newReadDomain) {
+        appendReadDomain(previousReads, newReadDomain);
+      }
     }
   }
 }
