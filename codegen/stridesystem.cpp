@@ -64,9 +64,9 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
   m_library.initializeLibrary(strideRoot);
 
   for (auto importNode : importList) {
-    m_library.loadImportTree(QString::fromStdString(importNode->importName()),
-                             QString::fromStdString(importNode->importAlias()),
-                             {});
+    //    m_library.loadImportTree(QString::fromStdString(importNode->importName()),
+    //                             QString::fromStdString(importNode->importAlias()),
+    //                             {});
     m_importList[QString::fromStdString(importNode->importName())] =
         QString::fromStdString(importNode->importAlias());
   }

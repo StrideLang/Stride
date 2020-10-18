@@ -113,13 +113,13 @@ type _Signal {
 	properties: [
 		typeProperty Value {
 			name: "value"
-			types: [_IntLiteral, _RealLiteral, _StringLiteral]
+			types: [_IntLiteral, _RealLiteral]
 			default: 0.0
 			required: off
 		},
 		typeProperty Default {
 			name: "default"
-			types: [_IntLiteral, _RealLiteral, _StringLiteral, ""]
+			types: [_IntLiteral, _RealLiteral, ""]
 			default: 0.0
 			required: off
 		},
