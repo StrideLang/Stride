@@ -1,0 +1,42 @@
+_frameworkConfiguration _DesktopConfiguration {
+    frameworkName: "DesktopTemplate"
+    installation: [
+#        installAction RtAudioInstall {
+#            workingDirectory: "project"
+#            language: none
+#            command: "git clone --branch 4.1.2 https://github.com/thestk/rtaudio.git rtaudio-4.1.2"
+#        }
+#        installAction SerialInstall {
+#            workingDirectory: "project"
+#            language: none
+#            command: "git clone --branch 1.2.1 https://github.com/wjwwood/serial.git"
+#        }
+    ]
+}
+#
+## RtAudio Compile options
+#_compileOption _RtAudioLinuxPulse {
+#  name: "Pulse"
+#  defines: ["__LINUX_PULSE__"]
+#  linkLibraries: ["pthread", "pulse-simple", "pulse"]
+#}
+#
+#_compileOption _RtAudioLinuxAlsa {
+#  name: "Alsa"
+#  defines: ["__LINUX_ALSA__"]
+#  linkLibraries: ["asound", "pthread"]
+#}
+#
+#_compileOption _RtAudioLinuxJack {
+#  name: "Jack"
+#  defines: ["__UNIX_JACK__"]
+#  linkLibraries: ["jack", "pthread"]
+#}
+#
+#_compileOptionsGroup _RtAudioLinuxOptions {
+#  name: "RtAudio API"
+#  options: [_RtAudioLinuxPulse, _RtAudioLinuxAlsa, _RtAudioLinuxJack]
+#  rules: "multiple"
+#}
+#
+#

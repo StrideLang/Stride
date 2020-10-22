@@ -1,0 +1,9 @@
+platformModule __DebugPrint {
+    inputs: ["real"]
+    include: ["<iostream>"]
+#    linkTo: []
+#    declarations: ['']
+#    initialization: [" "]
+    processing: "std::cout << %%intokens:0%% << std::endl;"
+    inherits: ['signal']
+}

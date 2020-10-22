@@ -264,8 +264,14 @@ void CodeResolver::resolveStreamRates(std::shared_ptr<StreamNode> stream) {
           auto domainDecl = CodeValidator::findDomainDeclaration(
               CodeValidator::getDomainIdentifier(rightDomain, {}, m_tree),
               m_tree);
-          auto defaultRate = CodeValidator::getDomainDefaultRate(domainDecl);
-          CodeValidator::setNodeRate(right, defaultRate, {}, m_tree);
+          if (domainDecl) {
+            auto defaultRate = CodeValidator::getDomainDefaultRate(domainDecl);
+            CodeValidator::setNodeRate(right, defaultRate, {}, m_tree);
+
+          } else {
+            std::cout << __FILE__ << ":" << __LINE__
+                      << " ERROR: can't find domain declaration" << std::endl;
+          }
         }
       }
     }

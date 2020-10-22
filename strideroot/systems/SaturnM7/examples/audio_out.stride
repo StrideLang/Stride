@@ -1,0 +1,12 @@
+use SaturnM7 version 1.0
+
+import Generators
+
+Oscillator(frequency: 440) >> AudioOut;
+
+switch Toggle {
+	domain: RootDomain
+	rate:20
+	}
+
+[Oscillator(frequency: 1), 0] >> Greater() >> DigitalOut[3];

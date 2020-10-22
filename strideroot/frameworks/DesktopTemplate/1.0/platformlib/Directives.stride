@@ -1,0 +1,77 @@
+
+generatorDirectives __GeneratorDirectives {
+    projectDir: "project"
+    templateFiles: ["stride_code.cpp", "stride_code.hpp"]
+    destinationDir: "code"
+    buildDir: "build"
+    configCommand: []
+    buildCommand: []
+    target: "app"
+#    targetDir: "build/"
+    codeGenerator: "pufferfish"
+    codeGeneratorMajorVersion: 1
+    codeGeneratorMinorVersion: 0
+    buildPlatforms: ["Linux"]
+    substitutions: [
+#        ["include_dirs", "rtaudio-4.1.2 serial/include"],
+#                    ["additional_sources", "rtaudio-4.1.2/RtAudio.cpp 
+#                    serial/src/serial.cc
+#                    serial/include/serial/serial.h
+#                    serial/include/serial/v8stdint.h
+#                    serial/src/impl/unix.cc
+#                    serial/src/impl/list_ports/list_ports_linux.cc
+#                    "
+#                    ],
+#                    ["additional_defines", "-D__LINUX_PULSE__"],
+#                    ["link_libraries", "pthread pulse-simple pulse     rt pthread"]
+                    ]
+}
+
+
+generatorDirectives __GeneratorDirectives {
+    projectDir: "project"
+    templateFiles: ["stride_code.cpp", "stride_code.hpp"]
+    destinationDir: "code"
+    buildDir: "build"
+    configCommand: []
+    buildCommand: []
+    target: "app"
+#    targetDir: "build/"
+    codeGenerator: "pufferfish"
+    codeGeneratorMajorVersion: 1
+    codeGeneratorMinorVersion: 0
+    buildPlatforms: ["Windows"]
+    substitutions: [["include_dirs", "rtaudio-4.1.2 serial/include"],
+                    ["additional_sources", "rtaudio-4.1.2/RtAudio.cpp
+                    serial/src/serial.cc
+                    serial/include/serial/serial.h
+                    serial/include/serial/v8stdint.h
+                    serial/src/impl/unix.cc
+                    serial/src/impl/list_ports/list_ports_osx.cc" ],
+                    ["additional_defines", "-D__WINDOWS_WASAPI__"],
+                    ["link_libraries", "ole32 winmm ksuser mfplat mfuuid wmcodecdspuuid    setupapi"]]
+}
+
+generatorDirectives __GeneratorDirectives {
+    projectDir: "project"
+    templateFiles: ["stride_code.cpp", "stride_code.hpp"]
+    destinationDir: "code"
+    buildDir: "build"
+    configCommand: []
+    buildCommand: []
+    target: "app"
+#    targetDir: "build/"
+    codeGenerator: "pufferfish"
+    codeGeneratorMajorVersion: 1
+    codeGeneratorMinorVersion: 0
+    buildPlatforms: ["macOS"]
+    substitutions: [["include_dirs", "rtaudio-4.1.2 serial/include"],
+                    ["additional_sources", "rtaudio-4.1.2/RtAudio.cpp
+                    serial/src/serial.cc
+                    serial/include/serial/serial.h
+                    serial/include/serial/v8stdint.h
+                    serial/src/impl/unix.cc
+                    serial/src/impl/list_ports/list_ports_osx.cc"],
+                    ["additional_defines", "-D__MACOSX_CORE__"],
+                    ["link_libraries", '"-framework CoreAudio" "-framework CoreFoundation" -lpthread "-framework IOKit"']]
+}

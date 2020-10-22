@@ -1,0 +1,64 @@
+optionGroup AudioIOGroup {
+	name: "Audio IO"
+}
+
+stringListOption RtAudioAPI {
+	name: "RtAudio API"
+	possibleValues: ["alsa", "pulse", "jack"]
+	default: "pulse"
+	buildPlatforms: ["Linux"]
+    sustitute: ""
+	meta: "RtAudio API"
+}
+
+stringListOption RtAudioAPI {
+	name: "RtAudio API"
+	possibleValues: ["coreaudio", "jack"]
+	default: "coreaudio"
+	buildPlatforms: ["macOS"]
+    sustitute: ""
+	meta: "RtAudio API"
+}
+
+intOverride _DeviceIndex {
+	name: "Input Channels"
+	minimum: 0
+	maximum: 64
+	default: 2
+	override: [["RtAudio", _AudioDeviceIndex]]
+	meta: "Index of device"
+}
+
+intOverride _NumInputChannels {
+	name: "Input Channels"
+	minimum: 0
+	maximum: 128
+	default: 2
+	override: [["RtAudio", _NumInputChannels]]
+	meta: "Number of input channels"
+}
+
+intOverride _NumOutputChannels {
+	name: "Output Channels"
+	minimum: 0
+	maximum: 128
+	default: 2
+	override: [["RtAudio", _NumOutputChannels]]
+	meta: "Number of output channels"
+}
+
+intListOverride AudioRate {
+	name: "Sampling Rate"
+	possibleValues: [32000, 44100, 48000, 88200, 96000]
+	default: 48000
+	override: [["RtAudio", AudioRate]]
+	meta: "Sampling Rate"
+}
+
+intListOverride _BlockSize {
+	name: "Audio Block size"
+	possibleValues: [64, 128, 256, 512, 1024]
+	default: 256
+	override: [["RtAudio", _AudioBlockSize]]
+	meta: "Size of the audio porcessing block. Affects processing latency."
+}
