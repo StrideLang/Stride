@@ -225,7 +225,7 @@ public:
                                ScopeStack scopeStack, ASTNode tree,
                                bool force = false);
 
-  static QVector<ASTNode> getBlocksInScope(ASTNode root, ScopeStack scopeStack,
+  static std::vector<ASTNode> getBlocksInScope(ASTNode root, ScopeStack scopeStack,
                                            ASTNode tree);
 
   static std::vector<std::string> getUsedDomains(ASTNode tree);

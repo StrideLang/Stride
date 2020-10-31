@@ -90,6 +90,19 @@ type _DomainDefinition {
 			default: ""
 			required: off
 		},
+		typeProperty DomainDeclarationsCode {
+			name: "domainDeclarationsCode"
+			types: [_StringLiteral]
+			default: ""
+			required: off
+		},
+
+		typeProperty DomainInstancesCode {
+			name: "domainInstancesCode"
+			types: [_StringLiteral]
+			default: ""
+			required: off
+		},
 		typeProperty DomainInitializationCode {
 			name: "domainInitializationCode"
 			types: [_StringLiteral]

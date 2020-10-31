@@ -29,6 +29,7 @@ _domainDefinition AudioBlockDomain {
     'typedef float MY_TYPE;',
     '#define FORMAT RTAUDIO_FLOAT32'
     ]
+    domainDeclarationsCode: ''
     domainInitializationCode: '
     RtAudio adac;
     if ( adac.getDeviceCount() < 1 ) {
@@ -115,6 +116,7 @@ _domainDefinition AudioDomain {
 	rate: AudioRate
 
     substitutions: []
+    domainDeclarationsCode: ''
     domainFunctionCode: '
 	//[[Includes]]
 	//[[/Includes]]

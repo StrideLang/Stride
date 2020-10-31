@@ -35,7 +35,7 @@ void ToolManager::readTemplates() {
       for (auto child : tree->getChildren()) {
         if (child->getNodeType() == AST::Declaration) {
           auto decl = std::static_pointer_cast<DeclarationNode>(child);
-          if (decl->getObjectType() == "toolTemplate") { // ----------------
+          if (decl->getObjectType() == "toolTemplate") {  // ----------------
             auto platformsNode = decl->getPropertyValue("platforms");
             if (platformsNode && platformsNode->getNodeType() == AST::List) {
               bool validPlatform = false;
@@ -93,7 +93,7 @@ void ToolManager::readTemplates() {
               std::cerr << "ERROR in platforms port in toolTemplate"
                         << std::endl;
             }
-          } else if (decl->getObjectType() == "toolSearch") { // -----------
+          } else if (decl->getObjectType() == "toolSearch") {  // -----------
             auto platformsNode = decl->getPropertyValue("platforms");
             if (platformsNode && platformsNode->getNodeType() == AST::List) {
               bool validPlatform = false;
@@ -142,11 +142,11 @@ void ToolManager::readTemplates() {
                 }
 
                 if (toolTemplate.size() > 0) {
-
                   if (toolSearches.find(toolTemplate) != toolSearches.end()) {
-                    std::cout << "Wanring: tool searces already contain tool "
+                    std::cout << "Warning: tool searches already contain tool "
                                  "template: "
                               << toolTemplate << ". Overwriting." << std::endl;
+                    // FIXME allow multiple tool searches.
                   }
                   toolSearches[toolTemplate] = std::make_shared<ToolSearch>();
                   toolSearches[toolTemplate]->rootPathRegex = rootPathRegex;
@@ -163,7 +163,7 @@ void ToolManager::readTemplates() {
                         << std::endl;
             }
           } else if (decl->getObjectType() ==
-                     "pathTemplate") { // ----------------
+                     "pathTemplate") {  // ----------------
             auto platformsNode = decl->getPropertyValue("platforms");
             if (platformsNode && platformsNode->getNodeType() == AST::List) {
               bool validPlatform = false;
@@ -221,7 +221,7 @@ void ToolManager::readTemplates() {
               std::cerr << "ERROR in platforms port in toolTemplate"
                         << std::endl;
             }
-          } else if (decl->getObjectType() == "pathSearch") { // -----------
+          } else if (decl->getObjectType() == "pathSearch") {  // -----------
             auto platformsNode = decl->getPropertyValue("platforms");
             if (platformsNode && platformsNode->getNodeType() == AST::List) {
               bool validPlatform = false;
@@ -264,7 +264,6 @@ void ToolManager::readTemplates() {
                 }
 
                 if (pathTemplate.size() > 0) {
-
                   if (toolSearches.find(pathTemplate) != toolSearches.end()) {
                     std::cout << "Wanring: tool searces already contain tool "
                                  "template: "
@@ -348,7 +347,6 @@ void ToolManager::readLocalConfigs() {
 }
 
 void ToolManager::updateAllLocalConfigs() {
-
   QDir rootDir(QString::fromStdString(m_strideRoot));
 
   if (!rootDir.exists("local")) {
@@ -363,7 +361,6 @@ void ToolManager::updateAllLocalConfigs() {
   rootDir.mkdir("tools");
   rootDir.cd("tools");
   for (auto toolTemplate : toolTemplates) {
-
     if (toolSearches.find(toolTemplate->strideName) == toolSearches.end()) {
       std::cerr << "No search directive for tool: " << toolTemplate->strideName
                 << std::endl;
@@ -402,7 +399,6 @@ void ToolManager::updateAllLocalConfigs() {
         std::stringstream ss(pathEnv);
         std::string token;
         while (std::getline(ss, token, delim)) {
-
           if (QFile::exists(QString::fromStdString(token) + QDir::separator() +
                             QString::fromStdString(search->nameRegex))) {
             foundExecutable =
@@ -433,7 +429,6 @@ void ToolManager::updateAllLocalConfigs() {
   }
 
   for (auto pathTemplate : pathTemplates) {
-
     std::string foundPath;
     auto search = pathSearches[pathTemplate->strideName];
 

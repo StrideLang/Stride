@@ -140,7 +140,7 @@ private:
 
   QString readFile(QString fileName);
 
-  void parseSystemTree(ASTNode systemTree);
+  void parseSystemTree(ASTNode systemTree, ASTNode configuration = nullptr);
 
   QString m_strideRoot;
   QString m_systemName;

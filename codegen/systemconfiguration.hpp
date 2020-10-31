@@ -23,6 +23,7 @@ public:
       hardwareConfigurations; // Configure the hardware
   std::map<std::string, ConfigMap>
       platformConfigurations; // Configure the platform
+
   bool testing = false;
 
   void readProjectConfiguration(std::string filename);

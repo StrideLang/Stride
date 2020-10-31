@@ -15,3 +15,7 @@ Requirements for all platforms:
 Requirements:
  * XCode (and command line tools)
  * bison, flex (brew install bison flex). (No need to fllow symlink instructions provided by brew)
+
+## Linux
+
+apt install flex bison freeglut3-dev

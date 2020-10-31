@@ -125,7 +125,7 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
 
 StrideSystem::~StrideSystem() {}
 
-void StrideSystem::parseSystemTree(ASTNode systemTree) {
+void StrideSystem::parseSystemTree(ASTNode systemTree, ASTNode configuration) {
   vector<pair<string, string>> usedPlatformNames;
   vector<map<string, string>> platformDefinitions;
   //    vector<string> platformDefinitionNames;
@@ -154,7 +154,9 @@ void StrideSystem::parseSystemTree(ASTNode systemTree) {
         m_connectionDefinitions.push_back(declaration);
       } else if (declaration->getObjectType() == "system") {
         ASTNode platforms = declaration->getPropertyValue("platforms");
-        if (platforms->getNodeType() == AST::List) {
+        if (!platforms) {
+          qDebug() << "ERROR: platforms port not found in system definition";
+        } else if (platforms->getNodeType() == AST::List) {
           ListNode *platformsList = static_cast<ListNode *>(platforms.get());
           for (ASTNode platformName : platformsList->getChildren()) {
             Q_ASSERT(platformName->getNodeType() == AST::Block);

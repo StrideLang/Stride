@@ -21,6 +21,7 @@ _domainDefinition RootDomain {
     domainIncludes: ["ReadWriteClasses.hpp",
 	"Synchronization.hpp",
 	"Helper.hpp"]
+    domainDeclarationsCode: ''
 	domainFunctionCode: '
 //[[Includes]]
 //[[/Includes]]
@@ -68,6 +69,7 @@ _domainDefinition AudioBlockDomain {
     'float inbuf[NUM_SAMPLES * NUM_IN_CHANNELS];',
     'float outbuf[NUM_SAMPLES * NUM_OUT_CHANNELS];'
 ]
+    domainDeclarationsCode: ''
     domainInitializationCode: '
     for(int i = 0; i < NUM_SAMPLES; i++) {
         inbuf[i* NUM_IN_CHANNELS] = (i * 2.0 / (NUM_SAMPLES-1)) - 1; // -1 -> 1
