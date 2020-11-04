@@ -32,11 +32,12 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
+#include "strideframework.hpp"
+
 #include <iostream>
 
 #include "../parser/declarationnode.h"
 #include "../parser/valuenode.h"
-#include "strideframework.hpp"
 
 using namespace std;
 
@@ -45,11 +46,13 @@ StrideFramework::StrideFramework(std::string strideRoot, std::string framework,
                                  std::string hardwareVersion,
                                  std::string rootNamespace,
                                  std::string identifier)
-    : m_strideRoot(strideRoot), m_framework(framework),
-      m_frameworkVersion(fwVersion), m_hardware(hardware),
-      m_hardwareVersion(hardwareVersion), m_rootNamespace(rootNamespace),
+    : m_strideRoot(strideRoot),
+      m_framework(framework),
+      m_frameworkVersion(fwVersion),
+      m_hardware(hardware),
+      m_hardwareVersion(hardwareVersion),
+      m_rootNamespace(rootNamespace),
       m_identifier(identifier) {
-
   auto platformPath = buildPlatformPath(strideRoot);
 }
 
@@ -177,7 +180,6 @@ std::vector<string> StrideFramework::getDomainIds() {
         if (decl->getObjectType() == "_domainDefinition") {
           auto domainNameNode = decl->getPropertyValue("domainName");
           if (domainNameNode && domainNameNode->getNodeType() == AST::String) {
-
             domainIds.push_back(static_pointer_cast<ValueNode>(domainNameNode)
                                     ->getStringValue());
           }
@@ -197,11 +199,9 @@ std::string StrideFramework::getRootDomain() {
           auto parentDomainNode = decl->getPropertyValue("parentDomain");
           if (!parentDomainNode &&
               parentDomainNode->getNodeType() == AST::String) {
-
             auto domainNameNode = decl->getPropertyValue("domainName");
             if (domainNameNode &&
                 domainNameNode->getNodeType() == AST::String) {
-
               return static_pointer_cast<ValueNode>(domainNameNode)
                   ->getStringValue();
             } else {
@@ -235,12 +235,7 @@ vector<ASTNode> StrideFramework::getPlatformObjectsReference() {
   auto blockGroup = m_platformTrees.begin();
   while (blockGroup != m_platformTrees.end()) {
     for (ASTNode element : blockGroup->second->getChildren()) {
-      if (element->getNodeType() == AST::Declaration) {
-        objects.push_back(element);
-      } else {
-        objects.push_back(element); // TODO: This inserts everything. Only
-                                    // insert what is needed
-      }
+      objects.push_back(element);
     }
     blockGroup++;
   }
@@ -252,12 +247,7 @@ vector<ASTNode> StrideFramework::getPlatformTestingObjectsRef() {
   auto blockGroup = m_platformTestTrees.begin();
   while (blockGroup != m_platformTestTrees.end()) {
     for (ASTNode element : blockGroup->second->getChildren()) {
-      if (element->getNodeType() == AST::Declaration) {
-        objects.push_back(element);
-      } else {
-        objects.push_back(element); // TODO: This inserts everything. Only
-                                    // insert what is needed
-      }
+      objects.push_back(element);
     }
     blockGroup++;
   }

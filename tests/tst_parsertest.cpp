@@ -249,7 +249,7 @@ void ParserTest::testLoop() {
   CodeValidator validator(tree);
   QVERIFY(validator.isValid());
 
-  return; // For now while loops are properly implemented
+  return;  // For now while loops are properly implemented
   auto members = tree->getChildren();
   auto loopIn = static_pointer_cast<DeclarationNode>(members[1]);
   QVERIFY(loopIn->getNodeType() == AST::Declaration);
@@ -302,9 +302,9 @@ void ParserTest::testPortNameValidation() {
 
 void ParserTest::testCodeGeneration() {
   QStringList testFiles;
-  QDirIterator directories(QFINDTESTDATA(STRIDEROOT "/_tests/"),
-                           QDir::Dirs | QDir::NoSymLinks |
-                               QDir::NoDotAndDotDot);
+  QDirIterator directories(
+      QFINDTESTDATA(STRIDEROOT "/_tests/"),
+      QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot);
 
   BuildTester tester(QFINDTESTDATA(STRIDEROOT).toStdString());
 
@@ -347,17 +347,17 @@ void ParserTest::testCodeGeneration() {
 
 void ParserTest::testCompilation() {
   QStringList testFiles;
-  QDirIterator directories(QFINDTESTDATA(STRIDEROOT "/_tests/"),
-                           QDir::Dirs | QDir::NoSymLinks |
-                               QDir::NoDotAndDotDot);
+  QDirIterator directories(
+      QFINDTESTDATA(STRIDEROOT "/_tests/"),
+      QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot);
   QStringList toIgnore = {"buffer", "loop", "sync"};
   while (directories.hasNext()) {
     QString dirName = directories.next();
     if (!toIgnore.contains(dirName.mid(dirName.lastIndexOf("/") + 1))) {
       QDir subDir(directories.filePath());
-      for (auto entry : subDir.entryList(QStringList() << "*.stride",
-                                         QDir::Files | QDir::NoDotAndDotDot |
-                                             QDir::NoSymLinks)) {
+      for (auto entry : subDir.entryList(
+               QStringList() << "*.stride",
+               QDir::Files | QDir::NoDotAndDotDot | QDir::NoSymLinks)) {
         testFiles << subDir.absolutePath() + QDir::separator() + entry;
       }
     }
@@ -2077,26 +2077,26 @@ void ParserTest::testLists() {
   //    [ In >> Out; OtherIn >> OtherOut;] >> [Out1, Out2];
   //    [ In >> Out; OtherIn >> OtherOut;] >> Out;
   //    Out >> [ In >> Out; OtherIn >> OtherOut;];
-  // FIXME allow this
-  //    StreamNode *stream = static_cast<StreamNode *>(nodes.at(9));
-  //    QVERIFY(stream->getNodeType() == AST::Stream);
-  //    list = static_cast<ListNode *>(stream->getLeft());
-  //    QVERIFY(list->getNodeType() == AST::List);
-  //    QVERIFY(list->getChildren().size() == 2);
-  //    QVERIFY(list->getChildren()[0]->getNodeType() == AST::Stream);
-  //    QVERIFY(list->getChildren()[1]->getNodeType() == AST::Stream);
-  //    stream = static_cast<StreamNode *>(nodes.at(10));
-  //    list = static_cast<ListNode *>(stream->getLeft());
-  //    QVERIFY(list->getNodeType() == AST::List);
-  //    QVERIFY(list->getChildren().size() == 2);
-  //    QVERIFY(list->getChildren()[0]->getNodeType() == AST::Stream);
-  //    QVERIFY(list->getChildren()[1]->getNodeType() == AST::Stream);
-  //    stream = static_cast<StreamNode *>(nodes.at(11));
-  //    list = static_cast<ListNode *>(stream->getRight());
-  //    QVERIFY(list->getNodeType() == AST::List);
-  //    QVERIFY(list->getChildren().size() == 2);
-  //    QVERIFY(list->getChildren()[0]->getNodeType() == AST::Stream);
-  //    QVERIFY(list->getChildren()[1]->getNodeType() == AST::Stream);
+
+  StreamNode *stream = static_cast<StreamNode *>(nodes.at(9).get());
+  QVERIFY(stream->getNodeType() == AST::Stream);
+  list = static_cast<ListNode *>(stream->getLeft().get());
+  QVERIFY(list->getNodeType() == AST::List);
+  QVERIFY(list->getChildren().size() == 2);
+  QVERIFY(list->getChildren()[0]->getNodeType() == AST::Stream);
+  QVERIFY(list->getChildren()[1]->getNodeType() == AST::Stream);
+  //  stream = static_cast<StreamNode *>(nodes.at(10).get());
+  //  list = static_cast<ListNode *>(stream->getLeft().get());
+  //  QVERIFY(list->getNodeType() == AST::List);
+  //  QVERIFY(list->getChildren().size() == 2);
+  //  QVERIFY(list->getChildren()[0]->getNodeType() == AST::Stream);
+  //  QVERIFY(list->getChildren()[1]->getNodeType() == AST::Stream);
+  stream = static_cast<StreamNode *>(nodes.at(10).get());
+  list = static_cast<ListNode *>(stream->getRight().get());
+  QVERIFY(list->getNodeType() == AST::List);
+  QVERIFY(list->getChildren().size() == 2);
+  QVERIFY(list->getChildren()[0]->getNodeType() == AST::Stream);
+  QVERIFY(list->getChildren()[1]->getNodeType() == AST::Stream);
 }
 
 void ParserTest::testScope() {

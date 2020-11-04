@@ -110,7 +110,7 @@ void CodeResolver::processSystem() {
     if (node->getNodeType() == AST::Import) {
       std::shared_ptr<ImportNode> import =
           static_pointer_cast<ImportNode>(node);
-      // FIXME add namespace support here (e.g. import
+      // TODO add namespace support here (e.g. import
       // Platform::Filters::Filter)
       bool imported = false;
       for (auto importNode : importList) {
@@ -982,13 +982,6 @@ void CodeResolver::processDomains() {
     propagateDomainsForNode(node, scopeStack);
     rit++;
   }
-
-  // Any signals without domain are assigned to the platform domain
-  // TODO: Do we need this? It seems that any signals without domain at this
-  // point are unused
-  //    if (domainDecl) {
-  //        setContextDomain(m_tree->getChildren(),domainDecl);
-  //    }
   // Now split streams when there is a domain change
   vector<ASTNode> new_tree;
   for (ASTNode node : m_tree->getChildren()) {
@@ -1248,9 +1241,20 @@ void CodeResolver::insertBuiltinObjectsForNode(
         fw = static_pointer_cast<ValueNode>(usedBlockFramework)
                  ->getStringValue();
       }
+
+      // Declarations don't have a namespace, but they can be imported into one
+      // This is written into the namespaceTree property
+      auto namespaceTreeNode = usedBlock->getCompilerProperty("namespaceTree");
+      std::vector<std::string> namespaceTree;
+      if (namespaceTreeNode) {
+        for (auto node : namespaceTreeNode->getChildren()) {
+          namespaceTree.push_back(
+              std::static_pointer_cast<ValueNode>(node)->getStringValue());
+        }
+      }
+
       if (!CodeValidator::findDeclaration(usedBlock->getName(), ScopeStack(),
-                                          tree, usedBlock->getNamespaceList(),
-                                          fw)) {
+                                          tree, namespaceTree, fw)) {
         tree->addChild(usedBlock);
         //        for (auto it = objects.begin(); it != objects.end(); it++) {
         //          vector<ASTNode> &namespaceObjects = it->second;
@@ -1263,10 +1267,11 @@ void CodeResolver::insertBuiltinObjectsForNode(
         //          }
         //        }
       }
-      for (std::shared_ptr<PropertyNode> property :
-           usedBlock->getProperties()) {
-        insertBuiltinObjectsForNode(property->getValue(), objects, tree, fw);
-      }
+      //      for (std::shared_ptr<PropertyNode> property :
+      //           usedBlock->getProperties()) {
+      //        insertBuiltinObjectsForNode(property->getValue(), objects, tree,
+      //        fw);
+      //      }
       insertBuiltinObjectsForNode(usedBlock, objects, tree, fw);
     }
   } else if (node->getNodeType() == AST::Declaration ||
@@ -2261,8 +2266,18 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node,
         mainPortsDefaultDomain = outputDomain;
         // First give port a block and its declaration if it doesn't have one.
         if (!portBlock || portBlock->getNodeType() == AST::None) {
-          // FIXME  check if there is a block called Output already
-          portBlock = std::make_shared<BlockNode>("Output", __FILE__, __LINE__);
+          std::string possibleName = "Output";
+          auto outputDecl = CodeValidator::findDeclaration(
+              possibleName, ScopeStack(), internalBlocks);
+          int counter = 0;
+          while (outputDecl) {
+            possibleName = "Output_" + std::to_string(counter);
+            outputDecl = CodeValidator::findDeclaration(
+                possibleName, ScopeStack(), internalBlocks);
+            counter++;
+          }
+          portBlock =
+              std::make_shared<BlockNode>(possibleName, __FILE__, __LINE__);
           outputPortBlock->setPropertyValue("block", portBlock);
         }
 
@@ -2309,8 +2324,18 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node,
         }
         // First give port a block and its declaration if it doesn't have one.
         if (!portBlock || portBlock->getNodeType() == AST::None) {
-          // FIXME  check if there is a block called Output already
-          portBlock = std::make_shared<BlockNode>("Input", __FILE__, __LINE__);
+          std::string possibleName = "Input";
+          auto inputDecl = CodeValidator::findDeclaration(
+              possibleName, ScopeStack(), internalBlocks);
+          int counter = 0;
+          while (inputDecl) {
+            possibleName = "Input_" + std::to_string(counter);
+            inputDecl = CodeValidator::findDeclaration(
+                possibleName, ScopeStack(), internalBlocks);
+            counter++;
+          }
+          portBlock =
+              std::make_shared<BlockNode>(possibleName, __FILE__, __LINE__);
           inputPortBlock->setPropertyValue("block", portBlock);
         }
 
