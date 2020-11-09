@@ -35,13 +35,12 @@
 #ifndef CODEEDITOR_H
 #define CODEEDITOR_H
 
-#include <mutex>
-
 #include <QAtomicInt>
 #include <QList>
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QTimer>
+#include <mutex>
 
 #include "autocompletemenu.hpp"
 #include "codemodel.hpp"
@@ -75,10 +74,11 @@ public slots:
   void markChanged(bool changed = true);
 
 protected:
-  virtual bool eventFilter(QObject *obj, QEvent *event);
-  virtual void resizeEvent(QResizeEvent *event);
-  virtual void keyReleaseEvent(QKeyEvent *event);
-  virtual void mouseMoveEvent(QMouseEvent *event);
+  bool eventFilter(QObject *obj, QEvent *event) override;
+  void resizeEvent(QResizeEvent *event) override;
+  void keyPressEvent(QKeyEvent *event) override;
+  void keyReleaseEvent(QKeyEvent *event) override;
+  void mouseMoveEvent(QMouseEvent *event) override;
 
 private slots:
   void updateLineNumberAreaWidth(int newBlockCount);

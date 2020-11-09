@@ -32,12 +32,13 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
+#include "codeeditor.h"
+
 #include <QDebug>
 #include <QPainter>
 #include <QScrollBar>
 #include <QTextBlock>
 
-#include "codeeditor.h"
 #include "linenumberarea.h"
 
 CodeEditor::CodeEditor(QWidget *parent, CodeModel *codeModel)
@@ -287,22 +288,55 @@ void CodeEditor::resizeEvent(QResizeEvent *e) {
   QPlainTextEdit::resizeEvent(e);
 }
 
-void CodeEditor::keyReleaseEvent(QKeyEvent *event) {
-  if (event->key() == Qt::Key_Return) {
+void CodeEditor::keyPressEvent(QKeyEvent *event) {
+  // tab insertion gets processed between this function and keyReleaseEvent, so
+  // we need to process changing tab to space here
+  if (event->key() == Qt::Key_Tab && !m_IndentTabs) {
+    QTextCursor cursor = textCursor();
+    cursor.insertText("    ");
+    setTextCursor(cursor);
+    return;
+  } else if (event->key() == Qt::Key_Return) {
     QTextCursor cursor = textCursor();
     QString previousText = toPlainText().left(cursor.position());
     int scopeLevel = previousText.count("{") + previousText.count("[");
     scopeLevel -= previousText.count("}") + previousText.count("]");
+    cursor.insertText("\n");
     for (int i = 0; i < scopeLevel; ++i) {
       if (m_IndentTabs) {
-        cursor.insertText("\t");
+        cursor.insertText("t");
       } else {
         cursor.insertText("    ");
       }
     }
+
     setTextCursor(cursor);
-  } else if (m_autoComplete && event->key() >= Qt::Key_A &&
-             event->key() <= Qt::Key_Z) {
+    return;
+  } else if (event->key() == '}' || event->key() == ']') {
+    QTextCursor cursor = textCursor();
+    cursor.movePosition(QTextCursor::StartOfLine);
+    QString previousText = toPlainText().left(cursor.position());
+    int scopeLevel = previousText.count("{") + previousText.count("[");
+    scopeLevel -= previousText.count("}") + previousText.count("]");
+
+    cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
+    if (cursor.selectedText().trimmed().size() == 0) {
+      for (int i = 0; i < scopeLevel - 1; ++i) {
+        if (m_IndentTabs) {
+          cursor.insertText("\t");
+        } else {
+          cursor.insertText("    ");
+        }
+      }
+    }
+    setTextCursor(cursor);
+  }
+  QPlainTextEdit::keyPressEvent(event);
+}
+
+void CodeEditor::keyReleaseEvent(QKeyEvent *event) {
+  if (m_autoComplete && event->key() >= Qt::Key_A &&
+      event->key() <= Qt::Key_Z) {
     QTextCursor cursor = textCursor();
     cursor.select(QTextCursor::WordUnderCursor);
     QString currentWord = cursor.selectedText();
@@ -328,7 +362,7 @@ void CodeEditor::keyReleaseEvent(QKeyEvent *event) {
 }
 
 void CodeEditor::mouseMoveEvent(QMouseEvent *event) {
-  //    m_toolTip.setGeometry(event->x(), event->y(), 10, 10);
+  m_toolTip.setGeometry(event->x(), event->y(), 10, 10);
   m_toolTip.hide();
   m_mouseIdleTimer.start();
   QPlainTextEdit::mouseMoveEvent(event);

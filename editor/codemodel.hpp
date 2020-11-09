@@ -35,53 +35,53 @@
 #ifndef CODEMODEL_HPP
 #define CODEMODEL_HPP
 
-#include <QObject>
 #include <QMutex>
+#include <QObject>
 
 #include "ast.h"
 #include "stridesystem.hpp"
 
-class CodeModel : public QObject
-{
-    Q_OBJECT
+class CodeModel : public QObject {
+  Q_OBJECT
 public:
-    explicit CodeModel(QObject *parent = 0);
+  explicit CodeModel(QObject *parent = 0);
 
-    ~CodeModel();
+  ~CodeModel();
 
-    QString getHtmlDocumentation(QString symbol);
-    QString getTooltipText(QString symbol);
-    QPair<QString, int> getSymbolLocation(QString symbol);
+  QString getHtmlDocumentation(QString symbol);
+  QString getTooltipText(QString symbol);
+  QPair<QString, int> getSymbolLocation(QString symbol);
 
-    std::shared_ptr<StrideSystem> getSystem() { return m_system; }
+  std::shared_ptr<StrideSystem> getSystem() { return m_system; }
 
-    // Copy of current tree, it is safe to use outside CodeModel
-    // But the caller must clean it up.
-    AST *getOptimizedTree();
+  // Copy of current tree, it is safe to use outside CodeModel
+  // But the caller must clean it up.
+  AST *getOptimizedTree();
 
-//    Builder *createBuilder(QString projectDir);
+  //    Builder *createBuilder(QString projectDir);
 
-    QStringList getTypes();
-    QStringList getFunctions();
-    QStringList getObjectNames();
-    QString getFunctionSyntax(QString symbol);
-    QString getTypeSyntax(QString symbol);
-    QList<LangError> getErrors();
-    void updateCodeAnalysis(QString code, QString platformRootPath, QString sourceFile);
+  QStringList getTypes();
+  QStringList getFunctions();
+  QStringList getObjectNames();
+  QString getFunctionSyntax(QString symbol);
+  QString getTypeSyntax(QString symbol);
+  QList<LangError> getErrors();
+  void updateCodeAnalysis(QString code, QString platformRootPath,
+                          QString sourceFile);
 
 signals:
 
 public slots:
 
 private:
-//    QList<AST *> m_platformObjects;
-    std::shared_ptr<StrideSystem> m_system;
-    QStringList m_types;
-    QStringList m_funcs;
-    QStringList m_objectNames;
-    QList<LangError> m_errors;
-    QMutex m_validTreeLock;
-    ASTNode m_lastValidTree;
+  //    QList<AST *> m_platformObjects;
+  std::shared_ptr<StrideSystem> m_system;
+  QStringList m_types;
+  QStringList m_funcs;
+  QStringList m_objectNames;
+  QList<LangError> m_errors;
+  QMutex m_validTreeLock;
+  ASTNode m_lastValidTree;
 };
 
 #endif // CODEMODEL_HPP
