@@ -90,9 +90,11 @@ int CodeEditor::lineNumberAreaWidth() {
 
 bool CodeEditor::isChanged() { return document()->isModified(); }
 
-bool CodeEditor::changedSinceParse() { return m_changedSinceParse.load() != 0; }
+bool CodeEditor::changedSinceParse() {
+  return m_changedSinceParse.loadRelaxed() != 0;
+}
 
-void CodeEditor::markParsed() { m_changedSinceParse.store(0); }
+void CodeEditor::markParsed() { m_changedSinceParse.storeRelaxed(0); }
 
 void CodeEditor::setAutoComplete(bool enable) { m_autoComplete = enable; }
 
@@ -223,7 +225,7 @@ void CodeEditor::updateAutoCompleteMenu(QString currentWord) {
 
 void CodeEditor::markChanged(bool changed) {
   document()->setModified(changed);
-  m_changedSinceParse.store(1);
+  m_changedSinceParse.storeRelaxed(1);
 }
 
 bool CodeEditor::eventFilter(QObject *obj, QEvent *event) {
@@ -309,16 +311,16 @@ void CodeEditor::keyPressEvent(QKeyEvent *event) {
         cursor.insertText("    ");
       }
     }
-
     setTextCursor(cursor);
     return;
   } else if (event->key() == '}' || event->key() == ']') {
     QTextCursor cursor = textCursor();
-    cursor.movePosition(QTextCursor::StartOfLine);
+
     QString previousText = toPlainText().left(cursor.position());
     int scopeLevel = previousText.count("{") + previousText.count("[");
     scopeLevel -= previousText.count("}") + previousText.count("]");
 
+    cursor = textCursor();
     cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
     if (cursor.selectedText().trimmed().size() == 0) {
       for (int i = 0; i < scopeLevel - 1; ++i) {
@@ -328,15 +330,15 @@ void CodeEditor::keyPressEvent(QKeyEvent *event) {
           cursor.insertText("    ");
         }
       }
+      setTextCursor(cursor);
     }
-    setTextCursor(cursor);
   }
   QPlainTextEdit::keyPressEvent(event);
 }
 
 void CodeEditor::keyReleaseEvent(QKeyEvent *event) {
   if (m_autoComplete && event->key() >= Qt::Key_A &&
-      event->key() <= Qt::Key_Z) {
+      event->key() <= Qt::Key_Z && event->modifiers() == Qt::NoModifier) {
     QTextCursor cursor = textCursor();
     cursor.select(QTextCursor::WordUnderCursor);
     QString currentWord = cursor.selectedText();
@@ -350,7 +352,6 @@ void CodeEditor::keyReleaseEvent(QKeyEvent *event) {
       if (m_autoCompleteMenu.actions().size() > 0) {
         m_autoCompleteMenu.show();
       }
-      //            m_autoCompleteMenu.show();
     }
     //        setFocus();
   } else {

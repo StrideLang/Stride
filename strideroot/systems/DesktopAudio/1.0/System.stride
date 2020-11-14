@@ -1,13 +1,4 @@
 
-platform _PCPlatform {
-	framework: "RtAudio"
-	frameworkVersion: "1.0"
-	hardware: "Local"
-	hardwareVersion: "1.0"
-	required: on #TODO validation of "required" is not yet implemented
-    rootNamespace: ""
-}
-
 platform _WiringPlatform {
 	framework: "Wiring"
 	frameworkVersion: "1.0"
@@ -17,23 +8,35 @@ platform _WiringPlatform {
     rootNamespace: "Wiring"
 }
 
-#connection _PCToWiringSerial {
-#	source: PC
-#	destination: Wiring
-#	sourceImports: ["Serial"]
-#	sourceStreams: [
-#		_Connection_Token >> SerialOut();
-#	]
-#	destinationImports: ["Serial"]
-#	destinationStreams: [
-#		SerialIn() >> _Connection_Token;
-#	]
-#}
+# ---- PC Desktop full app
+platform _PCPlatform {
+	framework: "RtAudio"
+	frameworkVersion: "1.0"
+	hardware: "Local"
+	hardwareVersion: "1.0"
+	required: on #TODO validation of "required" is not yet implemented
+    rootNamespace: ""
+}
+
+connection _PCToWiringSerial {
+	sourceFramework: _PCPlatform
+	sourceDomains: [ ]
+	destinationFramework: _WiringPlatform
+	destinationDomains: [ "WiringDomain" ]
+	sourceImports: ["Serial"]
+	sourceStreams: [
+		_Connection_Token >> SerialOut[0];
+	]
+	destinationImports: ["Serial"]
+	destinationStreams: [
+		Wiring::SerialIn[0] >> _Connection_Token;
+	]
+}
 
 connection _WiringToPCSerial {
-	sourcePlatform: _WiringPlatform
+	sourceFramework: _WiringPlatform
 	sourceDomains: [ "WiringDomain" ]
-	destinationPlatform: _PCPlatform
+	destinationFramework: _PCPlatform
 	destinationDomains: [ "AudioDomain" ]
 	sourceImports: ["Serial"]
 	sourceStreams: [
@@ -45,7 +48,8 @@ connection _WiringToPCSerial {
 	]
 }
 
-system DesktopAudio {
+system DesktopAudioApp {
     platforms: [_WiringPlatform, _PCPlatform]
     connections: [_PCToWiringSerial, _WiringToPCSerial]
+	meta: "Self contained desktop application"
 }

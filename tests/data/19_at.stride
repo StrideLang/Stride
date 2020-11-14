@@ -4,4 +4,46 @@ type Test @ 3 {
   prop: [ "hello", "world"]
 }
 
+module TestModule {
+    streams: [
+        A >> B;
 
+        @New
+        C >> D;
+        
+        E >> F;
+        
+        @None
+        
+        G >> H;
+        
+        @none
+        
+        I >> J;
+        
+        @ More
+        
+        K + L >> M;
+    ]
+}
+
+# This first one should have no "_at" compiler property
+# i.e. the @ set in the module above should have been cleared.
+A >> B;
+
+@New
+C >> D;
+
+E >> F;
+
+@None
+
+G >> H;
+
+@none
+
+I >> J;
+
+@ More
+
+K + L >> M;

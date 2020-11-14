@@ -18,9 +18,9 @@ platform _PCTemplatePlatform {
 }
 
 connection _PCTemplateToWiringSerial {
-	sourcePlatform: _PCTemplatePlatform
+	sourceFramework: _PCTemplatePlatform
 	sourceDomains: [ ]
-	destinationPlatform: _WiringPlatform
+	destinationFramework: _WiringPlatform
 	destinationDomains: [ "WiringDomain" ]
 	sourceImports: ["Serial"]
 	sourceStreams: [
@@ -33,9 +33,9 @@ connection _PCTemplateToWiringSerial {
 }
 
 connection _WiringToPCTemplateSerial {
-	sourcePlatform: _WiringPlatform
+	sourceFramework _WiringPlatform
 	sourceDomains: [ "WiringDomain" ]
-	destinationPlatform: _PCTemplatePlatform
+	destinationFramework: _PCTemplatePlatform
 	destinationDomains: [ "AudioDomain" ]
 	sourceImports: ["Serial"]
 	sourceStreams: [

@@ -100,6 +100,8 @@ public:
   std::string getCommonAncestorDomain(std::string domainId1,
                                       std::string domainId2, ASTNode tree);
 
+  std::string getParentDomain(std::string domainId, ASTNode tree);
+
   std::shared_ptr<DeclarationNode> getFrameworkOperator(std::string platform,
                                                         std::string leftType,
                                                         std::string rightType,

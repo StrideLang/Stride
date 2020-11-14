@@ -34,6 +34,8 @@ void yyerror(const char *s);
 AST *tree_head;
 uint64_t anonymous_counter = 0;
 
+std::string currentAt;
+
 AST *parse(const char *filename);
 
 const char * currentFile;
@@ -118,6 +120,7 @@ NullStream nstream;
 %type <listNode> indexList
 %type <rangeNode> indexRange
 %type <functionNode> functionDef
+%type <ast> atDef
 %type <declarationNode> anonymousDeclDef
 %type <listNode> listDef
 %type <listNode> streamListDef
@@ -282,6 +285,20 @@ blockDef:
             free($1);
             free($2);
         }
+    |
+        WORD UVAR AT WORD blockType               {
+            string word;
+            word.append($1); /* string constructor leaks otherwise! */
+            string uvar;
+            uvar.append($2); /* string constructor leaks otherwise! */
+
+            DeclarationNode *decl = new DeclarationNode(uvar, word, std::shared_ptr<AST>($5), currentFile, yyloc.first_line);
+            decl->setCompilerProperty("_at", std::make_shared<ValueNode>($4, currentFile, yyloc.first_line));
+            $$ = decl;
+            COUT << "Block: " << $1 << ", Labelled: " << $2 << ENDL;
+            free($1);
+            free($2);
+        }
     |   WORD UVAR blockType                    {
             string word;
             word.append($1); /* string constructor leaks otherwise! */
@@ -322,16 +339,64 @@ blockType:
 // =================================
 
 streamDef:
-        valueExp STREAM streamExp SEMICOLON         {
+        AT NONE valueExp STREAM streamExp SEMICOLON         {
+            currentAt.clear();
+            $$ = new StreamNode(std::shared_ptr<AST>($3), std::shared_ptr<AST>($5), currentFile, yyloc.first_line);
+            COUT << "Stream Resolved!" << ENDL;
+        }
+    |   AT NONE valueListExp STREAM streamExp SEMICOLON     {
+            currentAt.clear();
+            $$ = new StreamNode(std::shared_ptr<AST>($3), std::shared_ptr<AST>($5), currentFile, yyloc.first_line);
+            COUT << "Stream Resolved!" << ENDL;
+        }
+    |   AT NONE streamListDef STREAM streamExp SEMICOLON    {
+            currentAt.clear();
+            $$ = new StreamNode(std::shared_ptr<AST>($3), std::shared_ptr<AST>($5), currentFile, yyloc.first_line);
+            COUT << "Stream Resolved!" << ENDL;
+        }
+    |   AT UVAR valueExp STREAM streamExp SEMICOLON         {
+            currentAt = $2;
+            $$ = new StreamNode(std::shared_ptr<AST>($3), std::shared_ptr<AST>($5), currentFile, yyloc.first_line);
+            if (currentAt.size() > 0) {
+              $$->setCompilerProperty("_at", std::make_shared<ValueNode>(currentAt, currentFile, yyloc.first_line));
+            }
+            COUT << "Stream Resolved!" << ENDL;
+        }
+    |   AT UVAR valueListExp STREAM streamExp SEMICOLON     {
+            currentAt = $2;
+            $$ = new StreamNode(std::shared_ptr<AST>($3), std::shared_ptr<AST>($5), currentFile, yyloc.first_line);
+            if (currentAt.size() > 0) {
+              $$->setCompilerProperty("_at", std::make_shared<ValueNode>(currentAt, currentFile, yyloc.first_line));
+            }
+            COUT << "Stream Resolved!" << ENDL;
+        }
+    |   AT UVAR streamListDef STREAM streamExp SEMICOLON    {
+            currentAt = $2;
+            $$ = new StreamNode(std::shared_ptr<AST>($3), std::shared_ptr<AST>($5), currentFile, yyloc.first_line);
+            if (currentAt.size() > 0) {
+              $$->setCompilerProperty("_at", std::make_shared<ValueNode>(currentAt, currentFile, yyloc.first_line));
+            }
+            COUT << "Stream Resolved!" << ENDL;
+        }
+    |   valueExp STREAM streamExp SEMICOLON         {
             $$ = new StreamNode(std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
+            if (currentAt.size() > 0) {
+              $$->setCompilerProperty("_at", std::make_shared<ValueNode>(currentAt, currentFile, yyloc.first_line));
+            }
             COUT << "Stream Resolved!" << ENDL;
         }
     |   valueListExp STREAM streamExp SEMICOLON     {
             $$ = new StreamNode(std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
+            if (currentAt.size() > 0) {
+              $$->setCompilerProperty("_at", std::make_shared<ValueNode>(currentAt, currentFile, yyloc.first_line));
+            }
             COUT << "Stream Resolved!" << ENDL;
         }
     |   streamListDef STREAM streamExp SEMICOLON    {
             $$ = new StreamNode(std::shared_ptr<AST>($1), std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
+            if (currentAt.size() > 0) {
+              $$->setCompilerProperty("_at", std::make_shared<ValueNode>(currentAt, currentFile, yyloc.first_line));
+            }
             COUT << "Stream Resolved!" << ENDL;
         }
     ;
@@ -389,6 +454,20 @@ bundleDef:
 //  FUNCTION DEFINITION
 // =================================
 
+atDef:
+       AT WORD                              {
+            string s;
+            s.append($2); /* string constructor leaks otherwise! */
+            $$ = new ValueNode(s, currentFile, yyloc.first_line);
+            COUT << "At Def: " << $2<< ENDL;
+            free($2);
+       }
+   |   AT INT                               {
+            $$ = new ValueNode($2, currentFile, yyloc.first_line);
+            COUT << "At Def: " << $2<< ENDL;
+       }
+       ;
+
 functionDef:
         UVAR '(' ')'                        {
             string s;
@@ -397,10 +476,26 @@ functionDef:
             COUT << "User function: " << $1 << ENDL;
             free($1);
         }
+    |   UVAR atDef '(' ')'                  {
+            string s;
+            s.append($1); /* string constructor leaks otherwise! */
+            $$ = new FunctionNode(s, NULL, currentFile, yyloc.first_line);
+            $$->setCompilerProperty("_at", std::shared_ptr<AST>($2));
+            COUT << "User function: " << $1 << ENDL;
+            free($1);
+        }
     |   scopeDef UVAR '(' ')'               {
             string s;
             s.append($2);
             $$ = new FunctionNode(s, std::shared_ptr<AST>($1), NULL, currentFile, yyloc.first_line);
+            COUT << "User function: " << $2 << " in scope!" << ENDL;
+            free($2);
+        }
+    |   scopeDef UVAR atDef '(' ')'         {
+            string s;
+            s.append($2);
+            $$ = new FunctionNode(s, std::shared_ptr<AST>($1), NULL, currentFile, yyloc.first_line);
+            $$->setCompilerProperty("_at", std::shared_ptr<AST>($3));
             COUT << "User function: " << $2 << " in scope!" << ENDL;
             free($2);
         }
@@ -412,10 +507,28 @@ functionDef:
             COUT << "User function: " << $1 << ENDL;
             free($1);
         }
+    |   UVAR atDef  '(' properties ')'      {
+            string s;
+            s.append($1); /* string constructor leaks otherwise! */
+            $$ = new FunctionNode(s, std::shared_ptr<AST>($4), currentFile, yyloc.first_line);
+            $$->setCompilerProperty("_at", std::shared_ptr<AST>($2));
+            COUT << "Properties () ..." << ENDL;
+            COUT << "User function: " << $1 << ENDL;
+            free($1);
+        }
     |   scopeDef UVAR '(' properties ')'               {
             string s;
             s.append($2);
             $$ = new FunctionNode(s, std::shared_ptr<AST>($1), std::shared_ptr<AST>($4), currentFile, yyloc.first_line);
+            COUT << "Properties () ..." << ENDL;
+            COUT << "User function: " << $2 << " in scope!" << ENDL;
+            free($2);
+        }
+    |   scopeDef UVAR atDef  '(' properties ')'        {
+            string s;
+            s.append($2);
+            $$ = new FunctionNode(s, std::shared_ptr<AST>($1), std::shared_ptr<AST>($5), currentFile, yyloc.first_line);
+            $$->setCompilerProperty("_at", std::shared_ptr<AST>($3));
             COUT << "Properties () ..." << ENDL;
             COUT << "User function: " << $2 << " in scope!" << ENDL;
             free($2);
@@ -469,6 +582,7 @@ properties:
             AST *temp = new AST();
             temp->addChild(std::shared_ptr<AST>($1));
             $$ = temp;
+            currentAt.clear();
         }
     ;
 
@@ -479,6 +593,7 @@ property:
             $$ = new PropertyNode(s, std::shared_ptr<AST>($3), currentFile, yyloc.first_line);
             COUT << "Property: " << $1 << ENDL << "New property ... " << ENDL;
             free($1);
+            currentAt.clear();
         }
     |   WORD COLON STREAMRATE   {
             string s;
@@ -596,7 +711,7 @@ listDef:
 
 
 streamListDef:
-        '[' streamList ']'  { $$ = $2; }
+        '[' streamList ']'  { $$ = $2; currentAt = "";}
     ;
 
 blockList:

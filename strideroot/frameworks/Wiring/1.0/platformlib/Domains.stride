@@ -20,11 +20,12 @@ synchronization GlobalSync {
 _domainDefinition WiringDomain {
 	domainName: "WiringDomain"
 	framework: _WiringFramework
-    substitutions: [ ]
-    domainIncludes: ["Timer.h"]
-    domainDeclarations: ["Timer t;"]
+    rate: PlatformRate
+    substitutions: ["domain_rate", WiringDomain.rate ]
+    domainIncludes: ["<arduino-timer.h>"]
+    domainDeclarations: ["auto timer = timer_create_default();"]
     domainInitializationCode: '	
-int tickEvent = t.every(1, process);
+    timer.every(1000.0/%%domain_rate%%, process);
 //[[Initialization]]
 //[[/Initialization]]
 '
@@ -38,7 +39,7 @@ int tickEvent = t.every(1, process);
 }
 '
 	domainProcessingCode: '
-  t.update();
+  timer.tick();
 	'
     domainCleanupCode: '// init domain cleanup
 //[[Cleanup]]

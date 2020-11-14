@@ -204,8 +204,8 @@ void StrideSystem::parseSystemTree(ASTNode systemTree, ASTNode configuration) {
 
   // Resolve platforms in connections to avoid having to look them up later
   for (auto connection : m_connectionDefinitions) {
-    auto sourcePlatform = connection->getPropertyValue("sourcePlatform");
-    auto destPlatform = connection->getPropertyValue("destinationPlatform");
+    auto sourcePlatform = connection->getPropertyValue("sourceFramework");
+    auto destPlatform = connection->getPropertyValue("destinationFramework");
     // TODO currently only looking in the system tree. Should we allow other
     // locations?
     for (auto systemNode : systemTree->getChildren()) {
@@ -217,7 +217,8 @@ void StrideSystem::parseSystemTree(ASTNode systemTree, ASTNode configuration) {
             if (declaration->getName() ==
                 static_pointer_cast<BlockNode>(sourcePlatform)->getName()) {
               connection->replacePropertyValue(
-                  "sourcePlatform", declaration->getPropertyValue("framework"));
+                  "sourceFramework",
+                  declaration->getPropertyValue("framework"));
               Q_ASSERT(
                   declaration->getPropertyValue("framework")->getNodeType() ==
                   AST::String);
@@ -231,7 +232,7 @@ void StrideSystem::parseSystemTree(ASTNode systemTree, ASTNode configuration) {
             if (declaration->getName() ==
                 static_pointer_cast<BlockNode>(destPlatform)->getName()) {
               connection->replacePropertyValue(
-                  "destinationPlatform",
+                  "destinationFramework",
                   declaration->getPropertyValue("framework"));
               Q_ASSERT(
                   declaration->getPropertyValue("framework")->getNodeType() ==
@@ -1089,8 +1090,8 @@ ConnectionNodes StrideSystem::getDomainChangeStreams(string previousDomainId,
   for (auto connector : m_connectionDefinitions) {
     auto sourceDomainsList = connector->getPropertyValue("sourceDomains");
     auto destDomainsList = connector->getPropertyValue("destinationDomains");
-    auto sourcePlatform = connector->getPropertyValue("sourcePlatform");
-    auto destPlatform = connector->getPropertyValue("destPlatform");
+    auto sourceFramework = connector->getPropertyValue("sourceFramework");
+    auto destFramework = connector->getPropertyValue("destinationFramework");
     std::string previousDomainFramework;
     auto separatorIndex = previousDomainId.find("::");
     if (separatorIndex != std::string::npos) {
@@ -1177,7 +1178,7 @@ ConnectionNodes StrideSystem::getDomainChangeStreams(string previousDomainId,
               auto importName =
                   static_pointer_cast<ValueNode>(import)->getStringValue();
               auto platformName =
-                  connector->getPropertyValue("destinationPlatform");
+                  connector->getPropertyValue("destinationFramework");
               Q_ASSERT(platformName->getNodeType() == AST::String);
               auto importTree =
                   loadImportTree(importName, "",
@@ -1250,6 +1251,23 @@ string StrideSystem::getCommonAncestorDomain(string domainId1, string domainId2,
   }
 
   return "";
+}
+
+std::string StrideSystem::getParentDomain(string domainId, ASTNode tree) {
+  std::string parentDomainId;
+  std::string framework = CodeValidator::getFrameworkForDomain(domainId, tree);
+
+  auto domainDeclaration = CodeValidator::findDomainDeclaration(domainId, tree);
+  if (domainDeclaration) {
+    auto parentDomain = domainDeclaration->getPropertyValue("parentDomain");
+    if (parentDomain && parentDomain->getNodeType() != AST::None) {
+      auto parentDomainCopy = parentDomain->deepCopy();
+      parentDomainCopy->setRootScope(framework);
+      parentDomainId =
+          CodeValidator::getDomainIdentifier(parentDomainCopy, {}, tree);
+    }
+  }
+  return parentDomainId;
 }
 
 std::shared_ptr<DeclarationNode>

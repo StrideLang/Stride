@@ -81,8 +81,8 @@ type _Port {
 		},
 		typeProperty Type {
 			name: "type"
-			types: [_StringLiteral] # This should be made to accept type handles
-			default: "real"
+			types: [""] # This should be made to accept type handles
+			default: _RealType # TODO This refers to a framework type. Should we have something in the library for basic data types?
 			required: off
 		}
 	]
