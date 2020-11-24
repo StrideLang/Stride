@@ -1332,6 +1332,10 @@ void CodeResolver::insertBuiltinObjectsForNode(
         // Insert needed objects for things in module properties
         for (std::shared_ptr<PropertyNode> property :
              declaration->getProperties()) {
+          if (property->getName() == "constraints") {
+            continue;
+            // Constraints play by their own rules.
+          }
           insertBuiltinObjectsForNode(property->getValue(), objects, tree,
                                       framework);
         }

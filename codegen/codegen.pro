@@ -32,7 +32,6 @@ HEADERS += \
     builder.h \
     strideframework.hpp \
     stridelibrary.hpp \
-    porttypes.h \
     stridesystem.hpp \
     systemconfiguration.hpp \
     languagesyntax.hpp \

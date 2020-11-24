@@ -49,15 +49,15 @@ extern AST *parse(const char *fileName);
 class ParserTest : public QObject {
   Q_OBJECT
 
-public:
+ public:
   ParserTest();
 
-private:
-  void testMultichannelUgens(); // TODO Need to complete support for this.
+ private:
+  void testMultichannelUgens();  // TODO Need to complete support for this.
 
-private Q_SLOTS:
-  ////    // Test code generation
-  //  void testCompilation();
+ private Q_SLOTS:
+
+  void testConstraints();
   void testCodeGeneration();
 
   // Parser
@@ -75,6 +75,7 @@ private Q_SLOTS:
   void testBuffer();
   void testBlockIOResolution();
   void testAt();
+  //  void testConstraints();
 
   // Expansion
   void testLibraryObjectInsertion();
@@ -229,10 +230,10 @@ void ParserTest::testAt() {
       QString(QFINDTESTDATA("data/19_at.stride")).toStdString().c_str());
   QVERIFY(tree != nullptr);
 
-//type Test @ 3 {
-//  prop: [ "hello", "world"]
-//}
-  
+  // type Test @ 3 {
+  //  prop: [ "hello", "world"]
+  //}
+
   auto declNode = tree->getChildren().at(1);
   QVERIFY(declNode->getNodeType() == AST::Declaration);
   auto decl = static_pointer_cast<DeclarationNode>(declNode);
@@ -242,24 +243,24 @@ void ParserTest::testAt() {
   QVERIFY(atProp->getNodeType() == AST::Int);
   QVERIFY(static_pointer_cast<ValueNode>(atProp)->getIntValue() == 3);
 
-//module TestModule {
-//    streams: [
-//        A >> B;
+  // module TestModule {
+  //    streams: [
+  //        A >> B;
 
-//        @New
-//        C >> D;
-        
-//        E >> F;
-        
-//        @None
-        
-//        G >> H;
+  //        @New
+  //        C >> D;
 
-//        @none
-        
-//        G >> H;
-//    ]
-//}
+  //        E >> F;
+
+  //        @None
+
+  //        G >> H;
+
+  //        @none
+
+  //        G >> H;
+  //    ]
+  //}
 
   declNode = tree->getChildren().at(2);
   QVERIFY(declNode->getNodeType() == AST::Declaration);
@@ -267,12 +268,12 @@ void ParserTest::testAt() {
   QVERIFY(decl->getName() == "TestModule");
   auto streams = decl->getPropertyValue("streams");
   QVERIFY(streams && streams->getNodeType() == AST::List);
-  
+
   auto elem = streams->getChildren().at(0);
   QVERIFY(elem && elem->getNodeType() == AST::Stream);
   atProp = elem->getCompilerProperty("_at");
   QVERIFY(!atProp);
-  
+
   elem = streams->getChildren().at(1);
   QVERIFY(elem && elem->getNodeType() == AST::Stream);
   atProp = elem->getCompilerProperty("_at");
@@ -280,7 +281,7 @@ void ParserTest::testAt() {
   QVERIFY(atProp->getNodeType() == AST::String);
   auto atString = static_pointer_cast<ValueNode>(atProp)->getStringValue();
   QVERIFY(atString == "New");
-  
+
   elem = streams->getChildren().at(2);
   QVERIFY(elem && elem->getNodeType() == AST::Stream);
   atProp = elem->getCompilerProperty("_at");
@@ -288,7 +289,7 @@ void ParserTest::testAt() {
   QVERIFY(atProp->getNodeType() == AST::String);
   atString = static_pointer_cast<ValueNode>(atProp)->getStringValue();
   QVERIFY(atString == "New");
-  
+
   elem = streams->getChildren().at(3);
   QVERIFY(elem && elem->getNodeType() == AST::Stream);
   atProp = elem->getCompilerProperty("_at");
@@ -296,12 +297,12 @@ void ParserTest::testAt() {
   QVERIFY(atProp->getNodeType() == AST::String);
   atString = static_pointer_cast<ValueNode>(atProp)->getStringValue();
   QVERIFY(atString == "None");
-  
+
   elem = streams->getChildren().at(4);
   QVERIFY(elem && elem->getNodeType() == AST::Stream);
   atProp = elem->getCompilerProperty("_at");
   QVERIFY(!atProp);
-  
+
   elem = streams->getChildren().at(5);
   QVERIFY(elem && elem->getNodeType() == AST::Stream);
   atProp = elem->getCompilerProperty("_at");
@@ -310,22 +311,22 @@ void ParserTest::testAt() {
   atString = static_pointer_cast<ValueNode>(atProp)->getStringValue();
   QVERIFY(atString == "More");
 
-//A >> B;
+  // A >> B;
 
-//@New
-//C >> D;
+  //@New
+  // C >> D;
 
-//E >> F;
+  // E >> F;
 
-//@None
+  //@None
 
-//G >> H;
+  // G >> H;
 
   elem = tree->getChildren().at(3);
   QVERIFY(elem && elem->getNodeType() == AST::Stream);
   atProp = elem->getCompilerProperty("_at");
   QVERIFY(!atProp);
-  
+
   elem = tree->getChildren().at(4);
   QVERIFY(elem && elem->getNodeType() == AST::Stream);
   atProp = elem->getCompilerProperty("_at");
@@ -333,7 +334,7 @@ void ParserTest::testAt() {
   QVERIFY(atProp->getNodeType() == AST::String);
   atString = static_pointer_cast<ValueNode>(atProp)->getStringValue();
   QVERIFY(atString == "New");
-  
+
   elem = tree->getChildren().at(5);
   QVERIFY(elem && elem->getNodeType() == AST::Stream);
   atProp = elem->getCompilerProperty("_at");
@@ -341,7 +342,7 @@ void ParserTest::testAt() {
   QVERIFY(atProp->getNodeType() == AST::String);
   atString = static_pointer_cast<ValueNode>(atProp)->getStringValue();
   QVERIFY(atString == "New");
-  
+
   elem = tree->getChildren().at(6);
   QVERIFY(elem && elem->getNodeType() == AST::Stream);
   atProp = elem->getCompilerProperty("_at");
@@ -349,12 +350,12 @@ void ParserTest::testAt() {
   QVERIFY(atProp->getNodeType() == AST::String);
   atString = static_pointer_cast<ValueNode>(atProp)->getStringValue();
   QVERIFY(atString == "None");
-  
+
   elem = tree->getChildren().at(7);
   QVERIFY(elem && elem->getNodeType() == AST::Stream);
   atProp = elem->getCompilerProperty("_at");
   QVERIFY(!atProp);
-  
+
   elem = tree->getChildren().at(8);
   QVERIFY(elem && elem->getNodeType() == AST::Stream);
   atProp = elem->getCompilerProperty("_at");
@@ -362,7 +363,21 @@ void ParserTest::testAt() {
   QVERIFY(atProp->getNodeType() == AST::String);
   atString = static_pointer_cast<ValueNode>(atProp)->getStringValue();
   QVERIFY(atString == "More");
+}
 
+void ParserTest::testConstraints() {
+  ASTNode tree;
+  tree =
+      AST::parseFile(QString(QFINDTESTDATA("data/20_module_constraints.stride"))
+                         .toStdString()
+                         .c_str());
+  QVERIFY(tree != nullptr);
+  CodeResolver resolver(tree, QFINDTESTDATA(STRIDEROOT));
+  resolver.process();
+  CodeValidator validator(tree);
+  QVERIFY(!validator.isValid());
+  auto errors = validator.getErrors();
+  QVERIFY(errors.size() == 1);
 }
 
 void ParserTest::testLoop() {
@@ -434,15 +449,11 @@ void ParserTest::testCodeGeneration() {
 
   BuildTester tester(QFINDTESTDATA(STRIDEROOT).toStdString());
 
-  QStringList toIgnore = {/*"simple", */ "module",
-                          "reactions",
-                          "loop",
-                          "table",
-                          "buffer",
-                          "platform",
-                          "multidomain",
-                          "combinations",
-                          "sync"};
+  QStringList toIgnore = {"simple",
+                          //                          "module",
+                          "reactions", "loop", "table", "buffer",
+
+                          "platform", "multidomain", "combinations", "sync"};
   while (directories.hasNext()) {
     QString dirName = directories.next();
     if (!toIgnore.contains(dirName.mid(dirName.lastIndexOf("/") + 1))) {

@@ -70,6 +70,34 @@ CodeValidator::getSystemNodes(ASTNode tree) {
   return platformNodes;
 }
 
+std::vector<std::shared_ptr<ImportNode>>
+CodeValidator::getImportNodes(ASTNode tree) {
+  std::vector<std::shared_ptr<ImportNode>> importList;
+
+  for (ASTNode node : tree->getChildren()) {
+    if (node->getNodeType() == AST::Import) {
+      std::shared_ptr<ImportNode> import =
+          static_pointer_cast<ImportNode>(node);
+      // FIXME add namespace support here (e.g. import
+      // Platform::Filters::Filter)
+      bool imported = false;
+      for (auto importNode : importList) {
+        if ((static_pointer_cast<ImportNode>(importNode)->importName() ==
+             import->importName()) &&
+            (static_pointer_cast<ImportNode>(importNode)->importAlias() ==
+             import->importAlias())) {
+          imported = true;
+          break;
+        }
+      }
+      if (!imported) {
+        importList.push_back(import);
+      }
+    }
+  }
+  return importList;
+}
+
 void CodeValidator::validatePlatform(ASTNode tree, ScopeStack scopeStack) {
   for (ASTNode node : tree->getChildren()) {
     if (node->getNodeType() == AST::Platform) {
@@ -537,6 +565,7 @@ void CodeValidator::validate() {
     validateSymbolUniqueness({{"", m_tree->getChildren()}});
     validateStreamSizes(m_tree, {});
     validateRates(m_tree);
+    validateConstraints(m_tree);
   }
   sortErrors();
 }
@@ -730,6 +759,10 @@ void CodeValidator::validateTypes(ASTNode node, ScopeStack scopeStack,
     // declaring types. The inner bundle has no scope set, and trying to find it
     // will fail if the declaration is scoped....
     foreach (auto property, decl->getProperties()) {
+      if (property->getName() == "constraints") {
+        continue;
+        // Ignore constraints streams as they play by different rules
+      }
       validateTypes(property->getValue(), scopeStack, decl->getNamespaceList(),
                     frameworkName);
     }
@@ -990,7 +1023,6 @@ void CodeValidator::validateSymbolUniqueness(ScopeStack scope) {
               }
             } else if (nodeAt->getNodeType() == AST::String &&
                        siblingAt->getNodeType() == AST::String) {
-
               auto nodeAtString =
                   static_pointer_cast<ValueNode>(nodeAt)->getStringValue();
               auto siblingAtString =
@@ -1068,6 +1100,15 @@ void CodeValidator::validateRates(ASTNode tree) {
   }
 }
 
+void CodeValidator::validateConstraints(ASTNode tree) {
+  for (ASTNode node : tree->getChildren()) {
+    if (node->getNodeType() == AST::Stream) {
+      validateConstraints(std::static_pointer_cast<StreamNode>(node),
+                          ScopeStack(), tree);
+    }
+  }
+}
+
 void CodeValidator::validateNodeRate(ASTNode node, ASTNode tree) {
   if (node->getNodeType() == AST::Declaration ||
       node->getNodeType() == AST::BundleDeclaration) {
@@ -1100,12 +1141,234 @@ void CodeValidator::validateNodeRate(ASTNode node, ASTNode tree) {
   // TODO also need to validate rates within module and reaction streams
 }
 
-bool errorLineIsLower(const LangError &err1, const LangError &err2) {
-  return err1.lineNumber < err2.lineNumber;
+void CodeValidator::validateConstraints(std::shared_ptr<StreamNode> stream,
+                                        ScopeStack scopeStack, ASTNode tree) {
+  auto node = stream->getLeft();
+  while (node) {
+    if (node->getNodeType() == AST::Function) {
+      validateFunctionConstraints(std::static_pointer_cast<FunctionNode>(node),
+                                  scopeStack, tree);
+    }
+
+    if (stream == nullptr) {
+      node = nullptr;
+    } else if (stream->getRight()->getNodeType() == AST::Stream) {
+      stream = static_pointer_cast<StreamNode>(stream->getRight());
+      node = stream->getLeft();
+    } else {
+      node = stream->getRight();
+      stream = nullptr;
+    }
+  }
+}
+
+void CodeValidator::validateFunctionConstraints(
+    std::shared_ptr<FunctionNode> function, ScopeStack scopeStack,
+    ASTNode tree) {
+  // FIXME use framework when searching for function.
+  auto declaration = CodeValidator::findDeclaration(
+      function->getName(), scopeStack, tree, function->getNamespaceList());
+  if (!declaration) {
+    return;
+  }
+  auto constraintsNode = declaration->getPropertyValue("constraints");
+  auto blocks = declaration->getPropertyValue("blocks");
+
+  if (blocks) {
+    scopeStack.push_back({std::string(), blocks->getChildren()});
+  } else {
+    scopeStack.push_back({std::string(), {}});
+  }
+  if (constraintsNode) {
+    for (auto constraint : constraintsNode->getChildren()) {
+      if (constraint->getNodeType() == AST::Stream) {
+        validateConstraintStream(static_pointer_cast<StreamNode>(constraint),
+                                 function, declaration, scopeStack, tree);
+      } else {
+        qDebug() << "WARNING: Unexpected type in constraint, expecting stream";
+      }
+    }
+  }
+}
+
+void CodeValidator::validateConstraintStream(
+    std::shared_ptr<StreamNode> stream, std::shared_ptr<FunctionNode> function,
+    std::shared_ptr<DeclarationNode> declaration, ScopeStack scopeStack,
+    ASTNode tree) {
+  auto node = stream->getLeft();
+  std::vector<ASTNode> previous;
+  while (node) {
+    previous = resolveConstraintNode(node, previous, function, declaration,
+                                     scopeStack, tree);
+    if (!stream) {
+      node = nullptr;
+    } else {
+      node = stream->getRight();
+      if (node->getNodeType() == AST::Stream) {
+        stream = static_pointer_cast<StreamNode>(stream->getRight());
+        node = stream->getLeft();
+      } else {
+        stream = nullptr;
+      }
+    }
+  }
+  if (previous.size() > 0) {
+    qDebug() << "ERROR analyzing contraint";
+  }
+}
+
+std::vector<ASTNode>
+CodeValidator::processConstraintFunction(std::shared_ptr<FunctionNode> function,
+                                         std::vector<ASTNode> input,
+                                         QList<LangError> &errors) {
+  if (function->getName() == "NotEqual") {
+    if (input.size() == 2) {
+      ASTNode outNode;
+      auto ok = nodesAreNotEqual(input[0], input[1], &outNode);
+      if (ok) {
+        return {outNode};
+      }
+    }
+    qDebug() << "ERROR: constraint function NotEqual fail.";
+  } else if (function->getName() == "Equal") {
+    if (input.size() == 2) {
+      ASTNode outNode;
+      auto ok = nodesAreEqual(input[0], input[1], &outNode);
+      if (ok) {
+        return {outNode};
+      }
+    }
+    qDebug() << "ERROR: constraint function Equal fail.";
+  } else if (function->getName() == "Greater") {
+    if (input.size() == 2) {
+      ASTNode outNode;
+      auto ok = nodesAreNotEqual(input[0], input[1], &outNode);
+      if (ok) {
+        return {outNode};
+      }
+    }
+    qDebug() << "ERROR: constraint function Greater fail.";
+  } else if (function->getName() == "GreaterOrEqual") {
+    if (input.size() == 2) {
+      ASTNode outNode, outNode2;
+      auto ok = nodesIsGreater(input[0], input[1], &outNode);
+      auto ok2 = nodesAreEqual(input[0], input[1], &outNode2);
+      if (ok && ok2) {
+        ASTNode finalOut;
+        auto finalOk = nodesAnd(outNode, outNode2, &finalOut);
+        if (finalOk) {
+          return {finalOut};
+        }
+      }
+    }
+    qDebug() << "ERROR: constraint function GreaterOrEqual fail.";
+  } else if (function->getName() == "Less") {
+    if (input.size() == 2) {
+      ASTNode outNode;
+      auto ok = nodesIsLesser(input[0], input[1], &outNode);
+      if (ok) {
+        return {outNode};
+      }
+    }
+    qDebug() << "ERROR: constraint function Less fail.";
+  } else if (function->getName() == "LessOrEqual") {
+    if (input.size() == 2) {
+      ASTNode outNode, outNode2;
+      auto ok = nodesIsLesser(input[0], input[1], &outNode);
+      auto ok2 = nodesAreEqual(input[0], input[1], &outNode2);
+      if (ok && ok2) {
+        ASTNode finalOut;
+        auto finalOk = nodesAnd(outNode, outNode2, &finalOut);
+        if (finalOk) {
+          return {finalOut};
+        }
+      }
+    }
+    qDebug() << "ERROR: constraint function LessOrEqual fail.";
+  } else if (function->getName() == "IsNone") {
+    if (input.size() == 1) {
+      return {std::make_shared<ValueNode>(input[0]->getNodeType() == AST::None,
+                                          __FILE__, __LINE__)};
+      qDebug() << "ERROR: constraint function LessOrEqual fail.";
+    }
+  } else if (function->getName() == "IsNotNone") {
+    if (input.size() == 1) {
+      return {std::make_shared<ValueNode>(!input[0]->getNodeType() == AST::None,
+                                          __FILE__, __LINE__)};
+      qDebug() << "ERROR: constraint function LessOrEqual fail.";
+    }
+  } else if (function->getName() == "Error") {
+    if (input.size() == 1 && input[0]->getNodeType() == AST::Switch &&
+        static_pointer_cast<ValueNode>(input[0])->getSwitchValue()) {
+      qDebug() << "Constraint: ERROR";
+      LangError err;
+      err.type = LangError::ConstraintFail;
+      errors.push_back(err);
+    }
+  } else if (function->getName() == "Or") {
+  } else if (function->getName() == "And") {
+  } else if (function->getName() == "Xor") {
+  } else if (function->getName() == "Not") {
+  } else if (function->getName() == "Warning") {
+    qDebug() << "Constraint: WARNING";
+    LangError err;
+    err.type = LangError::ConstraintFail;
+    errors.push_back(err);
+  } else {
+  }
+  return {};
+}
+
+std::vector<ASTNode> CodeValidator::resolveConstraintNode(
+    ASTNode node, std::vector<ASTNode> previous,
+    std::shared_ptr<FunctionNode> function,
+    std::shared_ptr<DeclarationNode> declaration, ScopeStack scopeStack,
+    ASTNode tree) {
+  if (node->getNodeType() == AST::PortProperty) {
+    auto pp = static_pointer_cast<PortPropertyNode>(node);
+    if (pp->getPortName() == "size") {
+      return {std::make_shared<ValueNode>(
+          resolveSizePortProperty(pp->getName(), scopeStack, declaration,
+                                  function, tree),
+          __FILE__, __LINE__)};
+    }
+    if (pp->getPortName() == "rate") {
+      return {std::make_shared<ValueNode>(
+          resolveRatePortProperty(pp->getName(), scopeStack, declaration,
+                                  function, tree),
+          __FILE__, __LINE__)};
+    } else {
+      return {std::make_shared<AST>()};
+    }
+
+  } else if (node->getNodeType() == AST::Function) {
+    return processConstraintFunction(
+        std::static_pointer_cast<FunctionNode>(node), previous, m_errors);
+  } else if (node->getNodeType() == AST::List) {
+    std::vector<ASTNode> resolvedList;
+    size_t i = 0;
+    for (auto elem : node->getChildren()) {
+      ASTNode previousNode;
+      if (previous.size() > i) {
+        previousNode = previous[i];
+      }
+      auto resolved = resolveConstraintNode(elem, {previousNode}, function,
+                                            declaration, scopeStack, tree);
+      resolvedList.insert(resolvedList.end(), resolved.begin(), resolved.end());
+      i++;
+    }
+    return resolvedList;
+  } else {
+    return {node};
+  }
+  return std::vector<ASTNode>();
 }
 
 void CodeValidator::sortErrors() {
-  std::sort(m_errors.begin(), m_errors.end(), errorLineIsLower);
+  std::sort(m_errors.begin(), m_errors.end(),
+            [](const LangError &err1, const LangError &err2) {
+              return err1.lineNumber < err2.lineNumber;
+            });
 }
 
 void CodeValidator::validateStreamInputSize(StreamNode *stream,
@@ -2128,7 +2391,8 @@ shared_ptr<DeclarationNode> CodeValidator::resolveBlock(ASTNode node,
                   static_pointer_cast<PortPropertyNode>(blockDomain)->getName();
               Q_ASSERT(static_pointer_cast<PortPropertyNode>(blockDomain)
                            ->getPortName() == "domain");
-              // Now match the port name from the domain to the port declaration
+              // Now match the port name from the domain to the port
+              // declaration
               for (auto port : ports->getChildren()) {
                 if (port->getNodeType() == AST::Declaration) {
                   auto portDecl = static_pointer_cast<DeclarationNode>(port);
@@ -2168,6 +2432,285 @@ shared_ptr<DeclarationNode> CodeValidator::resolveBlock(ASTNode node,
     }
   }
   return shared_ptr<DeclarationNode>();
+}
+
+int CodeValidator::resolveSizePortProperty(
+    string targetPortName, ScopeStack scopeStack,
+    std::shared_ptr<DeclarationNode> decl, std::shared_ptr<FunctionNode> func,
+    ASTNode tree) {
+  auto portsNode = decl->getPropertyValue("ports");
+  auto blocksNode = decl->getPropertyValue("blocks");
+  int portSize = 0;
+  if (portsNode && blocksNode) {
+    std::vector<ASTNode> ports = portsNode->getChildren();
+    std::vector<ASTNode> blocks = blocksNode->getChildren();
+    for (auto port : ports) {
+      if (port->getNodeType() == AST::Declaration) {
+        auto portDecl = static_pointer_cast<DeclarationNode>(port);
+        auto portName = portDecl->getName();
+        //                std::string portDomainName = portName + "_domain";
+        scopeStack.push_back({decl->getName(), blocks});
+        if (portName == targetPortName) {
+          auto portBlock = portDecl->getPropertyValue("block");
+          auto portNameNode = portDecl->getPropertyValue("name");
+          std::string portName;
+
+          if (portNameNode && portNameNode->getNodeType() == AST::String) {
+            portName =
+                static_pointer_cast<ValueNode>(portNameNode)->getStringValue();
+          }
+          std::string portBlockName;
+          if (portBlock && (portBlock->getNodeType() == AST::Block ||
+                            portBlock->getNodeType() == AST::Bundle)) {
+            if (portDecl->getObjectType() == "mainInputPort") {
+              QList<LangError> errors;
+              portSize = CodeValidator::getNodeNumInputs(portBlock, scopeStack,
+                                                         tree, errors);
+              if (portSize == -2) {
+                portSize = CodeValidator::getNodeNumOutputs(
+                    func->getCompilerProperty("inputBlock"), scopeStack, tree,
+                    errors);
+              }
+
+            } else if (portDecl->getObjectType() == "mainOutputPort") {
+              QList<LangError> errors;
+              portSize = CodeValidator::getNodeNumOutputs(portBlock, scopeStack,
+                                                          tree, errors);
+              if (portSize == -2) {
+                portSize = CodeValidator::getNodeNumInputs(
+                    func->getCompilerProperty("outputBlock"), scopeStack, tree,
+                    errors);
+              }
+            } else if (portDecl->getObjectType() == "propertyInputPort") {
+              QList<LangError> errors;
+              portSize = CodeValidator::getNodeNumInputs(portBlock, scopeStack,
+                                                         tree, errors);
+              if (portSize == -2) {
+                portSize = CodeValidator::getNodeNumOutputs(
+                    func->getPropertyValue(portName), scopeStack, tree, errors);
+              }
+
+            } else if (portDecl->getObjectType() == "propertyOutputPort") {
+              QList<LangError> errors;
+              portSize = CodeValidator::getNodeNumOutputs(portBlock, scopeStack,
+                                                          tree, errors);
+              if (portSize == -2) {
+                portSize = CodeValidator::getNodeNumInputs(
+                    func->getPropertyValue(portName), scopeStack, tree, errors);
+              }
+            }
+          } else {
+            qDebug() << "Unexpected port block entry";
+          }
+        }
+      }
+    }
+  }
+  return portSize;
+}
+
+double CodeValidator::resolveRatePortProperty(
+    std::string targetPortName, ScopeStack scopeStack,
+    std::shared_ptr<DeclarationNode> decl, std::shared_ptr<FunctionNode> func,
+    ASTNode tree) {
+  auto portsNode = decl->getPropertyValue("ports");
+  auto blocksNode = decl->getPropertyValue("blocks");
+
+  std::vector<ASTNode> ports = portsNode->getChildren();
+  std::vector<ASTNode> blocks = blocksNode->getChildren();
+  for (auto port : ports) {
+    if (port->getNodeType() == AST::Declaration) {
+      auto portDecl = static_pointer_cast<DeclarationNode>(port);
+      auto portName = portDecl->getName();
+      //                std::string portDomainName = portName + "_domain";
+      scopeStack.push_back({decl->getName(), blocks});
+      if (portName == targetPortName) {
+        auto portBlock = portDecl->getPropertyValue("block");
+        auto portNameNode = portDecl->getPropertyValue("name");
+        std::string portName;
+
+        if (portNameNode && portNameNode->getNodeType() == AST::String) {
+          portName =
+              static_pointer_cast<ValueNode>(portNameNode)->getStringValue();
+        }
+        std::string portBlockName;
+        if (portBlock && (portBlock->getNodeType() == AST::Block ||
+                          portBlock->getNodeType() == AST::Bundle)) {
+          if (portDecl->getObjectType() == "mainInputPort") {
+            double rate =
+                CodeValidator::resolveRate(portBlock, scopeStack, tree, true);
+            if (rate == -1) {
+              rate = CodeValidator::resolveRate(
+                  func->getCompilerProperty("inputBlock"), scopeStack, tree,
+                  false);
+            }
+            return rate;
+
+          } else if (portDecl->getObjectType() == "mainOutputPort") {
+            double rate =
+                CodeValidator::resolveRate(portBlock, scopeStack, tree, false);
+            if (rate == -1) {
+              rate = CodeValidator::resolveRate(
+                  func->getCompilerProperty("outputBlock"), scopeStack, tree,
+                  true);
+            }
+            return rate;
+
+          } else if (portDecl->getObjectType() == "propertyInputPort") {
+            double rate =
+                CodeValidator::resolveRate(portBlock, scopeStack, tree, true);
+            if (rate == -1) {
+              rate = CodeValidator::resolveRate(
+                  func->getPropertyValue(portName), scopeStack, tree, false);
+            }
+            return rate;
+
+          } else if (portDecl->getObjectType() == "propertyOutputPort") {
+            double rate =
+                CodeValidator::resolveRate(portBlock, scopeStack, tree, false);
+            if (rate == -1) {
+              rate = CodeValidator::resolveRate(
+                  func->getPropertyValue(portName), scopeStack, tree, true);
+            }
+            return rate;
+          }
+        } else {
+          qDebug() << "Unexpected port block entry";
+        }
+      }
+    }
+  }
+
+  //  for (auto port : portsNode->getChildren()) {
+  //    if (port->getNodeType() == AST::Declaration) {
+  //      auto portDecl = static_pointer_cast<DeclarationNode>(port);
+  //      auto portName = portDecl->getName();
+  //      std::string portDomainName = portName + "_domain";
+  //      if (portName == targetPortName) {
+  //        auto portBlock = portDecl->getPropertyValue("block");
+  //        std::string portBlockName;
+  //        if (portBlock && (portBlock->getNodeType() == AST::Block ||
+  //                          portBlock->getNodeType() == AST::Bundle)) {
+  //          portBlockName = CodeValidator::streamMemberName(portBlock);
+  //        }
+  //        if (portDecl->getObjectType() == "mainInputPort" ||
+  //            portDecl->getObjectType() == "propertyInputPort") {
+  //          if (blockInMap.find(portDomainName) != blockInMap.end()) {
+  //            for (auto mapping : blockInMap[portDomainName]) {
+  //              if (mapping.externalConnection &&
+  //                  mapping.internalDecl->getName() == portBlockName) {
+  //                if (std::find(usedPortPropertyName.begin(),
+  //                              usedPortPropertyName.end(),
+  //                              std::pair<std::string, std::string>{
+  //                                  portProperty->getName(),
+  //                                  portProperty->getPortName()}) ==
+  //                    usedPortPropertyName.end()) {
+  //                  auto rate = CodeValidator::resolveRate(
+  //                      mapping.externalConnection, scopeStack, tree,
+  //                      false);
+
+  //                  auto contextStack = scopeStack;
+  //                  contextStack.pop_back();
+  //                  auto inMapStackIt = m_inMapStack.rbegin();
+  //                  auto outMapStackIt = m_outMapStack.rbegin();
+  //                  assert(m_inMapStack.size() == m_outMapStack.size());
+  //                  while (outMapStackIt != m_outMapStack.rend()) {
+  //                    auto &outMap = *outMapStackIt;
+  //                    auto &inMap = *inMapStackIt;
+  //                    for (auto entry : outMap) {
+  //                      for (auto outerMapping : entry.second) {
+  //                        if (outerMapping.internalDecl ==
+  //                            mapping.externalConnection) {
+  //                          // Pointers should match. Do we need to
+  //                          // make a further check?
+  //                          rate = CodeValidator::resolveRate(
+  //                              outerMapping.externalConnection, scopeStack,
+  //                              tree, true);
+  //                          break;
+  //                        }
+  //                      }
+  //                    }
+  //                    for (auto entry : inMap) {
+  //                      for (auto outerMapping : entry.second) {
+  //                        if (outerMapping.internalDecl ==
+  //                            mapping.externalConnection) {
+  //                          // Pointers should match. Do we need to
+  //                          // make a further check?
+  //                          rate = CodeValidator::resolveRate(
+  //                              outerMapping.externalConnection, scopeStack,
+  //                              tree, true);
+  //                          break;
+  //                        }
+  //                      }
+  //                    }
+  //                    contextStack.pop_back();
+  //                    inMapStackIt++;
+  //                    outMapStackIt++;
+  //                  }
+  //                  return rate;
+  //                }
+  //              }
+  //            }
+  //          }
+
+  //        } else if (portDecl->getObjectType() == "mainOutputPort" ||
+  //                   portDecl->getObjectType() ==
+  //                       "propertyOutputPort") {  // Output port so
+  //          // look in blockOutMap
+  //          if (blockOutMap.find(portDomainName) != blockOutMap.end()) {
+  //            for (auto mapping : blockOutMap[portDomainName]) {
+  //              if (mapping.externalConnection &&
+  //                  mapping.internalDecl->getName() == portBlockName) {
+  //                auto rate = CodeValidator::resolveRate(
+  //                    mapping.externalConnection, scopeStack, m_tree, true);
+  //                auto inMapStackIt = m_inMapStack.rbegin();
+  //                auto outMapStackIt = m_outMapStack.rbegin();
+  //                assert(m_inMapStack.size() == m_outMapStack.size());
+  //                while (outMapStackIt != m_outMapStack.rend()) {
+  //                  auto &outMap = *outMapStackIt;
+  //                  auto &inMap = *inMapStackIt;
+  //                  for (auto entry : outMap) {
+  //                    for (auto outerMapping : entry.second) {
+  //                      if (outerMapping.internalDecl ==
+  //                          mapping.externalConnection) {
+  //                        // Pointers should match. Do we need to
+  //                        // make a further check?
+  //                        if (outerMapping.externalConnection) {
+  //                          rate = CodeValidator::resolveRate(
+  //                              outerMapping.externalConnection, scopeStack,
+  //                              tree, true);
+  //                        }
+  //                        break;
+  //                      }
+  //                    }
+  //                  }
+  //                  for (auto entry : inMap) {
+  //                    for (auto outerMapping : entry.second) {
+  //                      if (outerMapping.internalDecl ==
+  //                          mapping.externalConnection) {
+  //                        // Pointers should match. Do we need to
+  //                        // make a further check?
+  //                        if (outerMapping.externalConnection) {
+  //                          rate = CodeValidator::resolveRate(
+  //                              outerMapping.externalConnection, scopeStack,
+  //                              tree, true);
+  //                        }
+  //                        break;
+  //                      }
+  //                    }
+  //                  }
+  //                  inMapStackIt++;
+  //                  outMapStackIt++;
+  //                }
+  //                return rate;
+  //              }
+  //            }
+  //          }
+  //        }
+  //      }
+  //    }
+  //  }
+  return -1.0;
 }
 
 ASTNode CodeValidator::resolveDomain(ASTNode node, ScopeStack scopeStack,
@@ -2645,8 +3188,8 @@ CodeValidator::getDataTypeForDeclaration(std::shared_ptr<DeclarationNode> decl,
     assert(0 == 1);
 
   } else if (decl->getObjectType() == "constant") {
-    // TODO should constants take value from their given value or an additional
-    // port?
+    // TODO should constants take value from their given value or an
+    // additional port?
     //    return getDataType(decl->getPropertyValue("value"), tree);
   } else if (decl->getObjectType() == "string") {
     return "_StringType";
@@ -3017,28 +3560,6 @@ std::vector<string> CodeValidator::getModulePropertyNames(
   return portNames;
 }
 
-// QString CodeValidator::getPortTypeName(PortType type) {
-//  switch (type) {
-//  case Signal:
-//    return "signal";
-//  case ConstReal:
-//    return "CRP";
-//  case ConstInt:
-//    return "CIP";
-//  case ConstBoolean:
-//    return "CBP";
-//  case ConstString:
-//    return "CSP";
-//  case Object:
-//    return "Object";
-//  case None:
-//    return "none";
-//  case Invalid:
-//    return "";
-//  }
-//  return "";
-//}
-
 ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack,
                                      ASTNode tree) {
   ASTNode domainNode = nullptr;
@@ -3333,4 +3854,191 @@ void CodeValidator::setDomainForNode(ASTNode node, ASTNode domain,
   } else if (node->getNodeType() == AST::PortProperty) {
     node->setCompilerProperty("domain", domain);
   }
+}
+
+bool CodeValidator::nodesAreEqual(ASTNode node1, ASTNode node2,
+                                  ASTNode *output) {
+  if (node1->getNodeType() == AST::Int && node2->getNodeType() == AST::Int) {
+    *output = std::make_shared<ValueNode>(
+        std::static_pointer_cast<ValueNode>(node1)->getIntValue() ==
+            std::static_pointer_cast<ValueNode>(node2)->getIntValue(),
+        __FILE__, __LINE__);
+    return true;
+  } else if (node1->getNodeType() == AST::Real &&
+             node2->getNodeType() == AST::Real) {
+    *output = std::make_shared<ValueNode>(
+        std::static_pointer_cast<ValueNode>(node1)->getRealValue() ==
+            std::static_pointer_cast<ValueNode>(node2)->getRealValue(),
+        __FILE__, __LINE__);
+    return true;
+  } else if (node1->getNodeType() == AST::Real &&
+             node2->getNodeType() == AST::Int) {
+    *output = std::make_shared<ValueNode>(
+        std::static_pointer_cast<ValueNode>(node1)->getRealValue() ==
+            std::static_pointer_cast<ValueNode>(node2)->getIntValue(),
+        __FILE__, __LINE__);
+    return true;
+  } else if (node1->getNodeType() == AST::Int &&
+             node2->getNodeType() == AST::Real) {
+    *output = std::make_shared<ValueNode>(
+        std::static_pointer_cast<ValueNode>(node1)->getIntValue() ==
+            std::static_pointer_cast<ValueNode>(node2)->getRealValue(),
+        __FILE__, __LINE__);
+    return true;
+  } else if (node1->getNodeType() == AST::Switch &&
+             node2->getNodeType() == AST::Switch) {
+    *output = std::make_shared<ValueNode>(
+        std::static_pointer_cast<ValueNode>(node1)->getSwitchValue() ==
+            std::static_pointer_cast<ValueNode>(node2)->getSwitchValue(),
+        __FILE__, __LINE__);
+    return true;
+  }
+  return false;
+}
+
+bool CodeValidator::nodesAreNotEqual(ASTNode node1, ASTNode node2,
+                                     ASTNode *output) {
+  bool ok = nodesAreEqual(node1, node2, output);
+  if (ok) {
+    *output = std::make_shared<ValueNode>(
+        !std::static_pointer_cast<ValueNode>(*output)->getSwitchValue(),
+        __FILE__, __LINE__);
+  }
+  return ok;
+}
+
+bool CodeValidator::nodesIsGreater(ASTNode node1, ASTNode node2,
+                                   ASTNode *output) {
+  if (node1->getNodeType() == AST::Int && node2->getNodeType() == AST::Int) {
+    *output = std::make_shared<ValueNode>(
+        std::static_pointer_cast<ValueNode>(node1)->getIntValue() >
+            std::static_pointer_cast<ValueNode>(node2)->getIntValue(),
+        __FILE__, __LINE__);
+    return true;
+  } else if (node1->getNodeType() == AST::Real &&
+             node2->getNodeType() == AST::Real) {
+    *output = std::make_shared<ValueNode>(
+        std::static_pointer_cast<ValueNode>(node1)->getRealValue() >
+            std::static_pointer_cast<ValueNode>(node2)->getRealValue(),
+        __FILE__, __LINE__);
+    return true;
+  } else if (node1->getNodeType() == AST::Real &&
+             node2->getNodeType() == AST::Int) {
+    *output = std::make_shared<ValueNode>(
+        std::static_pointer_cast<ValueNode>(node1)->getRealValue() >
+            std::static_pointer_cast<ValueNode>(node2)->getIntValue(),
+        __FILE__, __LINE__);
+    return true;
+  } else if (node1->getNodeType() == AST::Int &&
+             node2->getNodeType() == AST::Real) {
+    *output = std::make_shared<ValueNode>(
+        std::static_pointer_cast<ValueNode>(node1)->getIntValue() >
+            std::static_pointer_cast<ValueNode>(node2)->getRealValue(),
+        __FILE__, __LINE__);
+    return true;
+  }
+  return false;
+}
+
+bool CodeValidator::nodesIsNotGreater(ASTNode node1, ASTNode node2,
+                                      ASTNode *output) {
+  bool ok = nodesIsGreater(node1, node2, output);
+  if (ok) {
+    *output = std::make_shared<ValueNode>(
+        !std::static_pointer_cast<ValueNode>(*output)->getSwitchValue(),
+        __FILE__, __LINE__);
+  }
+  return ok;
+}
+
+bool CodeValidator::nodesIsLesser(ASTNode node1, ASTNode node2,
+                                  ASTNode *output) {
+  if (node1->getNodeType() == AST::Int && node2->getNodeType() == AST::Int) {
+    *output = std::make_shared<ValueNode>(
+        std::static_pointer_cast<ValueNode>(node1)->getIntValue() <
+            std::static_pointer_cast<ValueNode>(node2)->getIntValue(),
+        __FILE__, __LINE__);
+    return true;
+  } else if (node1->getNodeType() == AST::Real &&
+             node2->getNodeType() == AST::Real) {
+    *output = std::make_shared<ValueNode>(
+        std::static_pointer_cast<ValueNode>(node1)->getRealValue() <
+            std::static_pointer_cast<ValueNode>(node2)->getRealValue(),
+        __FILE__, __LINE__);
+    return true;
+  } else if (node1->getNodeType() == AST::Real &&
+             node2->getNodeType() == AST::Int) {
+    *output = std::make_shared<ValueNode>(
+        std::static_pointer_cast<ValueNode>(node1)->getRealValue() <
+            std::static_pointer_cast<ValueNode>(node2)->getIntValue(),
+        __FILE__, __LINE__);
+    return true;
+  } else if (node1->getNodeType() == AST::Int &&
+             node2->getNodeType() == AST::Real) {
+    *output = std::make_shared<ValueNode>(
+        std::static_pointer_cast<ValueNode>(node1)->getIntValue() <
+            std::static_pointer_cast<ValueNode>(node2)->getRealValue(),
+        __FILE__, __LINE__);
+    return true;
+  }
+  return false;
+}
+
+bool CodeValidator::nodesIsNotLesser(ASTNode node1, ASTNode node2,
+                                     ASTNode *output) {
+  bool ok = nodesIsLesser(node1, node2, output);
+  if (ok) {
+    *output = std::make_shared<ValueNode>(
+        !std::static_pointer_cast<ValueNode>(*output)->getSwitchValue(),
+        __FILE__, __LINE__);
+  }
+  return ok;
+}
+
+bool CodeValidator::nodesOr(ASTNode node1, ASTNode node2, ASTNode *output) {
+  if (node1->getNodeType() == AST::Switch &&
+      node2->getNodeType() == AST::Switch) {
+    *output = std::make_shared<ValueNode>(
+        std::static_pointer_cast<ValueNode>(node1)->getSwitchValue() ||
+            std::static_pointer_cast<ValueNode>(node2)->getSwitchValue(),
+        __FILE__, __LINE__);
+    return true;
+  }
+  return false;
+}
+
+bool CodeValidator::nodesAnd(ASTNode node1, ASTNode node2, ASTNode *output) {
+  if (node1->getNodeType() == AST::Switch &&
+      node2->getNodeType() == AST::Switch) {
+    *output = std::make_shared<ValueNode>(
+        std::static_pointer_cast<ValueNode>(node1)->getSwitchValue() &&
+            std::static_pointer_cast<ValueNode>(node2)->getSwitchValue(),
+        __FILE__, __LINE__);
+    return true;
+  }
+  return false;
+}
+
+bool CodeValidator::nodesXor(ASTNode node1, ASTNode node2, ASTNode *output) {
+  if (node1->getNodeType() == AST::Switch &&
+      node2->getNodeType() == AST::Switch) {
+    return nodesAreNotEqual(node1, node2, output);
+  }
+  return false;
+}
+
+bool CodeValidator::nodeNot(ASTNode node1, ASTNode *output) {
+  if (node1->getNodeType() == AST::Switch) {
+    *output = std::make_shared<ValueNode>(
+        !std::static_pointer_cast<ValueNode>(node1)->getSwitchValue(), __FILE__,
+        __LINE__);
+    return true;
+  }
+  return false;
+}
+
+bool CodeValidator::nodeIsNone(ASTNode node1, ASTNode *output) {
+  *output = std::make_shared<ValueNode>(node1->getNodeType() == AST::None,
+                                        __FILE__, __LINE__);
+  return true;
 }

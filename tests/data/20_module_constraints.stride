@@ -1,0 +1,35 @@
+use DesktopAudio version 1.0
+
+module SimpleTest {
+    ports: [
+        mainInputPort InputPort {
+            name: 'input'
+            block: Input
+        },
+        mainOutputPort OutputPort {
+            name: 'output'
+            block: Output
+        }
+    ]
+    blocks: [
+    ]
+    streams: [
+        Input >> Output;
+    ]
+    constraints: [
+        [InputPort.rate, 2] >> NotEqual() >> Error(message: "Rate must be 2");
+    ]
+}
+
+signal InSignal { domain: AsyncDomain rate: 2}
+signal OutSignal { domain: AudioDomain }
+
+InSignal >> SimpleTest() >> OutSignal;
+
+
+signal InSignal2 { domain: AsyncDomain rate: 3}
+signal OutSignal2 { domain: AudioDomain }
+InSignal2 >> SimpleTest() >> OutSignal2;
+
+AudioIn[0] >> AudioIn[1];
+

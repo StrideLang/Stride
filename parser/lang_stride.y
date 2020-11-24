@@ -286,14 +286,16 @@ blockDef:
             free($2);
         }
     |
-        WORD UVAR AT WORD blockType               {
+        WORD UVAR AT UVAR blockType               {
             string word;
             word.append($1); /* string constructor leaks otherwise! */
             string uvar;
             uvar.append($2); /* string constructor leaks otherwise! */
+            string uvar2;
+            uvar2.append($4); /* string constructor leaks otherwise! */
 
             DeclarationNode *decl = new DeclarationNode(uvar, word, std::shared_ptr<AST>($5), currentFile, yyloc.first_line);
-            decl->setCompilerProperty("_at", std::make_shared<ValueNode>($4, currentFile, yyloc.first_line));
+            decl->setCompilerProperty("_at", std::make_shared<ValueNode>(uvar2, currentFile, yyloc.first_line));
             $$ = decl;
             COUT << "Block: " << $1 << ", Labelled: " << $2 << ENDL;
             free($1);
@@ -356,6 +358,9 @@ streamDef:
         }
     |   AT UVAR valueExp STREAM streamExp SEMICOLON         {
             currentAt = $2;
+            
+            string uvar;
+            uvar.append($2); /* string constructor leaks otherwise! */
             $$ = new StreamNode(std::shared_ptr<AST>($3), std::shared_ptr<AST>($5), currentFile, yyloc.first_line);
             if (currentAt.size() > 0) {
               $$->setCompilerProperty("_at", std::make_shared<ValueNode>(currentAt, currentFile, yyloc.first_line));

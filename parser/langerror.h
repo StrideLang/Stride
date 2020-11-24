@@ -40,33 +40,34 @@
 
 class LangError {
 public:
-    LangError();
+  LangError();
 
-    typedef enum {
-        Syntax,
-        UnknownType,
-        InvalidType,
-        InvalidPort,
-        InvalidPortType,
-        InvalidIndexType,
-        BundleSizeMismatch,
-        ArrayIndexOutOfRange,
-        DuplicateSymbol,
-        InconsistentList,
-        StreamMemberSizeMismatch,
-        UndeclaredSymbol,
-        SystemError,
-        UnknownPlatform,
-        SystemRedefinition,
-        UnresolvedRate,
-        None
-    } ErrorType;
+  typedef enum {
+    Syntax,
+    UnknownType,
+    InvalidType,
+    InvalidPort,
+    InvalidPortType,
+    InvalidIndexType,
+    BundleSizeMismatch,
+    ArrayIndexOutOfRange,
+    DuplicateSymbol,
+    InconsistentList,
+    StreamMemberSizeMismatch,
+    UndeclaredSymbol,
+    SystemError,
+    UnknownPlatform,
+    SystemRedefinition,
+    UnresolvedRate,
+    ConstraintFail,
+    None
+  } ErrorType;
 
-    ErrorType type;
-    std::vector<std::string> errorTokens;
-    std::string filename;
-    int lineNumber;
-    std::string getErrorText();
+  ErrorType type;
+  std::vector<std::string> errorTokens;
+  std::string filename;
+  int lineNumber;
+  std::string getErrorText();
 };
 
 #endif // LANGERROR_H

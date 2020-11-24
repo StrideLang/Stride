@@ -40,7 +40,6 @@
 #include <QVariant>
 #include <QVector>
 
-#include "porttypes.h"
 #include "strideparser.h"
 #include "stridesystem.hpp"
 
@@ -102,6 +101,18 @@ public:
                                                   ScopeStack scopeStack,
                                                   ASTNode tree,
                                                   bool downStream = true);
+
+  static int resolveSizePortProperty(std::string targetPortName,
+                                     ScopeStack scopeStack,
+                                     std::shared_ptr<DeclarationNode> decl,
+                                     std::shared_ptr<FunctionNode> func,
+                                     ASTNode tree);
+
+  static double resolveRatePortProperty(std::string targetPortName,
+                                        ScopeStack scopeStack,
+                                        std::shared_ptr<DeclarationNode> decl,
+                                        std::shared_ptr<FunctionNode> func,
+                                        ASTNode tree);
 
   static ASTNode resolveDomain(ASTNode node, ScopeStack scopeStack,
                                ASTNode tree, bool downStream = true);
@@ -265,32 +276,7 @@ public:
 
   static std::vector<std::shared_ptr<SystemNode>> getSystemNodes(ASTNode tree);
 
-  static std::vector<std::shared_ptr<ImportNode>> getImportNodes(ASTNode tree) {
-    std::vector<std::shared_ptr<ImportNode>> importList;
-
-    for (ASTNode node : tree->getChildren()) {
-      if (node->getNodeType() == AST::Import) {
-        std::shared_ptr<ImportNode> import =
-            static_pointer_cast<ImportNode>(node);
-        // FIXME add namespace support here (e.g. import
-        // Platform::Filters::Filter)
-        bool imported = false;
-        for (auto importNode : importList) {
-          if ((static_pointer_cast<ImportNode>(importNode)->importName() ==
-               import->importName()) &&
-              (static_pointer_cast<ImportNode>(importNode)->importAlias() ==
-               import->importAlias())) {
-            imported = true;
-            break;
-          }
-        }
-        if (!imported) {
-          importList.push_back(import);
-        }
-      }
-    }
-    return importList;
-  }
+  static std::vector<std::shared_ptr<ImportNode>> getImportNodes(ASTNode tree);
 
 private:
   void validateTree(ASTNode tree);
@@ -306,12 +292,46 @@ private:
   void validateSymbolUniqueness(ScopeStack scope);
   void validateStreamSizes(ASTNode tree, ScopeStack scope);
   void validateRates(ASTNode tree);
+  void validateConstraints(ASTNode tree);
 
   void sortErrors();
 
   void validateStreamInputSize(StreamNode *stream, ScopeStack scope,
                                QList<LangError> &errors);
   void validateNodeRate(ASTNode node, ASTNode tree);
+
+  void validateConstraints(std::shared_ptr<StreamNode> stream,
+                           ScopeStack scopeStack, ASTNode tree);
+  void validateFunctionConstraints(std::shared_ptr<FunctionNode> function,
+                                   ScopeStack scopeStack, ASTNode tree);
+
+  void validateConstraintStream(std::shared_ptr<StreamNode> stream,
+                                std::shared_ptr<FunctionNode> function,
+                                std::shared_ptr<DeclarationNode> declaration,
+                                ScopeStack scopeStack, ASTNode tree);
+
+  std::vector<ASTNode>
+  processConstraintFunction(std::shared_ptr<FunctionNode> function,
+                            std::vector<ASTNode> input,
+                            QList<LangError> &errors);
+
+  std::vector<ASTNode>
+  resolveConstraintNode(ASTNode node, std::vector<ASTNode> previous,
+                        std::shared_ptr<FunctionNode> function,
+                        std::shared_ptr<DeclarationNode> declaration,
+                        ScopeStack scopeStack, ASTNode tree);
+
+  bool nodesAreEqual(ASTNode node1, ASTNode node2, ASTNode *output);
+  bool nodesAreNotEqual(ASTNode node1, ASTNode node2, ASTNode *output);
+  bool nodesIsGreater(ASTNode node1, ASTNode node2, ASTNode *output);
+  bool nodesIsNotGreater(ASTNode node1, ASTNode node2, ASTNode *output);
+  bool nodesIsLesser(ASTNode node1, ASTNode node2, ASTNode *output);
+  bool nodesIsNotLesser(ASTNode node1, ASTNode node2, ASTNode *output);
+  bool nodesOr(ASTNode node1, ASTNode node2, ASTNode *output);
+  bool nodesAnd(ASTNode node1, ASTNode node2, ASTNode *output);
+  bool nodesXor(ASTNode node1, ASTNode node2, ASTNode *output);
+  bool nodeNot(ASTNode node1, ASTNode *output);
+  bool nodeIsNone(ASTNode node1, ASTNode *output);
 
   int getBlockDataSize(std::shared_ptr<DeclarationNode> declaration,
                        ScopeStack scope, QList<LangError> &errors);
