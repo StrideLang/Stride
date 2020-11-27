@@ -1217,11 +1217,11 @@ void CodeValidator::validateConstraintStream(
   }
 }
 
-std::vector<ASTNode>
-CodeValidator::processConstraintFunction(std::shared_ptr<FunctionNode> function,
-                                         std::vector<ASTNode> input,
-                                         QList<LangError> &errors) {
-  if (function->getName() == "NotEqual") {
+std::vector<ASTNode> CodeValidator::processConstraintFunction(
+    std::shared_ptr<FunctionNode> constraintFunction,
+    std::shared_ptr<FunctionNode> functionInstance, std::vector<ASTNode> input,
+    QList<LangError> &errors) {
+  if (constraintFunction->getName() == "NotEqual") {
     if (input.size() == 2) {
       ASTNode outNode;
       auto ok = nodesAreNotEqual(input[0], input[1], &outNode);
@@ -1230,7 +1230,7 @@ CodeValidator::processConstraintFunction(std::shared_ptr<FunctionNode> function,
       }
     }
     qDebug() << "ERROR: constraint function NotEqual fail.";
-  } else if (function->getName() == "Equal") {
+  } else if (constraintFunction->getName() == "Equal") {
     if (input.size() == 2) {
       ASTNode outNode;
       auto ok = nodesAreEqual(input[0], input[1], &outNode);
@@ -1239,7 +1239,7 @@ CodeValidator::processConstraintFunction(std::shared_ptr<FunctionNode> function,
       }
     }
     qDebug() << "ERROR: constraint function Equal fail.";
-  } else if (function->getName() == "Greater") {
+  } else if (constraintFunction->getName() == "Greater") {
     if (input.size() == 2) {
       ASTNode outNode;
       auto ok = nodesAreNotEqual(input[0], input[1], &outNode);
@@ -1248,7 +1248,7 @@ CodeValidator::processConstraintFunction(std::shared_ptr<FunctionNode> function,
       }
     }
     qDebug() << "ERROR: constraint function Greater fail.";
-  } else if (function->getName() == "GreaterOrEqual") {
+  } else if (constraintFunction->getName() == "GreaterOrEqual") {
     if (input.size() == 2) {
       ASTNode outNode, outNode2;
       auto ok = nodesIsGreater(input[0], input[1], &outNode);
@@ -1262,7 +1262,7 @@ CodeValidator::processConstraintFunction(std::shared_ptr<FunctionNode> function,
       }
     }
     qDebug() << "ERROR: constraint function GreaterOrEqual fail.";
-  } else if (function->getName() == "Less") {
+  } else if (constraintFunction->getName() == "Less") {
     if (input.size() == 2) {
       ASTNode outNode;
       auto ok = nodesIsLesser(input[0], input[1], &outNode);
@@ -1271,49 +1271,62 @@ CodeValidator::processConstraintFunction(std::shared_ptr<FunctionNode> function,
       }
     }
     qDebug() << "ERROR: constraint function Less fail.";
-  } else if (function->getName() == "LessOrEqual") {
+  } else if (constraintFunction->getName() == "LessOrEqual") {
     if (input.size() == 2) {
       ASTNode outNode, outNode2;
       auto ok = nodesIsLesser(input[0], input[1], &outNode);
       auto ok2 = nodesAreEqual(input[0], input[1], &outNode2);
       if (ok && ok2) {
         ASTNode finalOut;
-        auto finalOk = nodesAnd(outNode, outNode2, &finalOut);
+        auto finalOk = nodesOr(outNode, outNode2, &finalOut);
         if (finalOk) {
           return {finalOut};
         }
       }
     }
     qDebug() << "ERROR: constraint function LessOrEqual fail.";
-  } else if (function->getName() == "IsNone") {
+  } else if (constraintFunction->getName() == "IsNone") {
     if (input.size() == 1) {
       return {std::make_shared<ValueNode>(input[0]->getNodeType() == AST::None,
                                           __FILE__, __LINE__)};
       qDebug() << "ERROR: constraint function LessOrEqual fail.";
     }
-  } else if (function->getName() == "IsNotNone") {
+  } else if (constraintFunction->getName() == "IsNotNone") {
     if (input.size() == 1) {
-      return {std::make_shared<ValueNode>(!input[0]->getNodeType() == AST::None,
+      return {std::make_shared<ValueNode>(input[0]->getNodeType() != AST::None,
                                           __FILE__, __LINE__)};
       qDebug() << "ERROR: constraint function LessOrEqual fail.";
     }
-  } else if (function->getName() == "Error") {
+  } else if (constraintFunction->getName() == "Error") {
     if (input.size() == 1 && input[0]->getNodeType() == AST::Switch &&
         static_pointer_cast<ValueNode>(input[0])->getSwitchValue()) {
-      qDebug() << "Constraint: ERROR";
+      //      qDebug() << "Constraint: ERROR";
       LangError err;
       err.type = LangError::ConstraintFail;
+      err.filename = functionInstance->getFilename();
+      err.lineNumber = functionInstance->getLine();
+      err.errorTokens.push_back(functionInstance->getName());
+      err.errorTokens.push_back(constraintFunction->getFilename());
+      err.errorTokens.push_back(std::to_string(constraintFunction->getLine()));
+
+      auto errorMsg = constraintFunction->getPropertyValue("message");
+      if (errorMsg && errorMsg->getNodeType() == AST::String) {
+        err.errorTokens.push_back(
+            std::static_pointer_cast<ValueNode>(errorMsg)->getStringValue());
+      } else {
+        err.errorTokens.push_back("Unspecified error");
+      }
       errors.push_back(err);
     }
-  } else if (function->getName() == "Or") {
-  } else if (function->getName() == "And") {
-  } else if (function->getName() == "Xor") {
-  } else if (function->getName() == "Not") {
-  } else if (function->getName() == "Warning") {
-    qDebug() << "Constraint: WARNING";
-    LangError err;
-    err.type = LangError::ConstraintFail;
-    errors.push_back(err);
+  } else if (constraintFunction->getName() == "Or") {
+    assert(0 == 1);
+    // TODO implement bitwise operators in constraints
+  } else if (constraintFunction->getName() == "And") {
+    assert(0 == 1);
+  } else if (constraintFunction->getName() == "Xor") {
+    assert(0 == 1);
+  } else if (constraintFunction->getName() == "Not") {
+    assert(0 == 1);
   } else {
   }
   return {};
@@ -1343,7 +1356,14 @@ std::vector<ASTNode> CodeValidator::resolveConstraintNode(
 
   } else if (node->getNodeType() == AST::Function) {
     return processConstraintFunction(
-        std::static_pointer_cast<FunctionNode>(node), previous, m_errors);
+        std::static_pointer_cast<FunctionNode>(node), function, previous,
+        m_errors);
+  } else if (node->getNodeType() == AST::Block) {
+
+  } else if (node->getNodeType() == AST::Function) {
+    return processConstraintFunction(
+        std::static_pointer_cast<FunctionNode>(node), function, previous,
+        m_errors);
   } else if (node->getNodeType() == AST::List) {
     std::vector<ASTNode> resolvedList;
     size_t i = 0;

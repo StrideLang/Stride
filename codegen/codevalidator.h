@@ -311,7 +311,8 @@ private:
                                 ScopeStack scopeStack, ASTNode tree);
 
   std::vector<ASTNode>
-  processConstraintFunction(std::shared_ptr<FunctionNode> function,
+  processConstraintFunction(std::shared_ptr<FunctionNode> constraintFunction,
+                            std::shared_ptr<FunctionNode> functionInstance,
                             std::vector<ASTNode> input,
                             QList<LangError> &errors);
 
