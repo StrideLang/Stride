@@ -1,0 +1,45 @@
+
+
+
+type _FrameworkTypeClass {
+	typeName: "frameworkTypeClass"
+	properties: [
+		typeProperty Types {
+			name: "types"
+			types: [""]
+			default: none
+			required: on
+			meta: "Members of the the type class"
+		}
+	]
+	meta: ""
+}
+
+type _FrameworkDataType {
+	typeName: "frameworkDataType"
+	properties: [
+		typeProperty Name {
+			name: "name"
+			types: [_StringLiteral]
+			default: ""
+			required: off
+			meta: "Name of the data type"
+		}
+		typeProperty FrameworkName {
+			name: "frameworkName"
+			types: [_StringLiteral]
+			default: none
+			required: on
+			meta: "Name of the data type on the target platform"
+		}
+		typeProperty Includes {
+			name: "includes"
+			types: [""]
+			default: []
+			required: off
+			meta: "Additional include files for the type"
+		}
+	]
+	meta: ""
+}
+

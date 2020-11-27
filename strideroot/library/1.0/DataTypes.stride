@@ -1,0 +1,27 @@
+type _TypeClass {
+    typeName: "typeClass"
+    properties: [
+        typeProperty Types {
+            name: "types"
+            types: [""]
+            default: none
+            required: on
+            meta: "Members of the the type class"
+        }
+    ]
+    meta: ""
+}
+
+type _TypeClassConversion {
+    typeName: "typeClassConversion"
+    properties: [
+#        typeProperty Types {
+#            name: "types"
+#            types: [""]
+#            default: none
+#            required: on
+#            meta: "Members of the the type class"
+#        }
+    ]
+    meta: ""
+}

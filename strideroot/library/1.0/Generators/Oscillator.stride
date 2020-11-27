@@ -1,42 +1,41 @@
 
 module Oscillator {
     ports: [
-		mainOutputPort OutputPort {
-			block: Output
-		}
-		propertyInputPort FrequencyPort {
-			name: "frequency"
-			block: Frequency
-			default: 440.0
-			meta: "The frequency of the oscillator."
-		},
-		propertyInputPort AmplitudeProperty {
-			name: "amplitude"
-			block: Amplitude
-			default: 1.0
-			meta: "The amplitude of the oscillator."
-		},
+        mainOutputPort OutputPort {
+            block: Output
+        }
+        propertyInputPort FrequencyPort {
+            name: "frequency"
+            block: Frequency
+            default: 440.0
+            meta: "The frequency of the oscillator."
+        },
+        propertyInputPort AmplitudeProperty {
+            name: "amplitude"
+            block: Amplitude
+            default: 1.0
+            meta: "The amplitude of the oscillator."
+        },
 #		property TypeProperty {
 #				name: "type"
 #				block: Type
 #				meta: "Possible options are 'Sine', 'Triangle', 'Saw', 'ReverseSaw', 'Square'."
 #			},
-		propertyInputPort StartPhaseProperty {
-			name: "phase"
-			block: StartPhase
-			meta: "The starting phase of the oscillator."
-		},
-		propertyInputPort ResetPort {
-			name: "reset"
-			block: Reset
-			meta: "Resets the oscillator to the starting phase."
-		}
+        propertyInputPort StartPhaseProperty {
+            name: "phase"
+            block: StartPhase
+            meta: "The starting phase of the oscillator."
+        },
+        propertyInputPort ResetPort {
+            name: "reset"
+            block: Reset
+            meta: "Resets the oscillator to the starting phase."
+        }
     ]
     blocks: [
-
         signal Amplitude {
-			default :       1.0
-		}
+            default :       1.0
+        }
 #        signal Type {
 #                default :       0.0
 #                rate:           AudioRate # FIXME needs to be streamRate
@@ -54,23 +53,23 @@ module Oscillator {
 #		}
         signal Phase {
             default :       0.0
-			reset: Reset
-			domain: OutputPort.domain
-		}
+            reset: Reset
+            domain: OutputPort.domain
+        }
         signal PhaseInc {
-			default :       0.0
-			domain: FrequencyPort.domain
-		}
-		switch PhaseOverflow {
-			domain: OutputPort.domain
-		}
-		reaction WrapPhase {
-			ports: [
-			]
-			streams: [
-				Phase -( 2 * _Pi) >> Phase;
-			]
-		}
+            default :       0.0
+            domain: FrequencyPort.domain
+        }
+        switch PhaseOverflow {
+            domain: OutputPort.domain
+        }
+        reaction WrapPhase {
+            ports: [
+            ]
+            streams: [
+                Phase -( 2 * _Pi) >> Phase;
+            ]
+        }
     ]
     streams: [
         Frequency * 2.0 * _Pi / OutputPort.rate >> PhaseInc;
@@ -78,29 +77,32 @@ module Oscillator {
         Phase + PhaseInc >> Phase;
         [Phase , ( 2 * _Pi) ] >> Greater() >> PhaseOverflow >> WrapPhase();
     ]
-	meta: "Bipolar output [ -1. , 1. ] scaled by amplitude"
+    constraints: [
+        [ OutputPort.rate , 0 ] >> LessOrEqual () >> Error ( message: "The rate of the signal block connected to the main output port of the Oscillator module cannot be less than or equal to zero .") ;
+    ]
+    meta: "Bipolar output [ -1. , 1. ] scaled by amplitude"
 }
 
 
 module Impulse {
     ports: [
-		mainOutputPort OutputPort {
-			block: Output
-		},
-		propertyInputPort FrequencyPort {
-			name: "frequency"
-			block: Frequency
-			default: 440.0
-			meta: "The frequency of the oscillator."
-		},
-		propertyInputPort AmplitudePort {
-			name: "amplitude"
-			block: Amplitude
-			default: 1.0
-			meta: "The amplitude of the oscillator."
-		}
+        mainOutputPort OutputPort {
+            block: Output
+        },
+        propertyInputPort FrequencyPort {
+            name: "frequency"
+            block: Frequency
+            default: 440.0
+            meta: "The frequency of the oscillator."
+        },
+        propertyInputPort AmplitudePort {
+            name: "amplitude"
+            block: Amplitude
+            default: 1.0
+            meta: "The amplitude of the oscillator."
+        }
     ]
-    blocks: [
+	blocks: [
 #        signal Type {
 #                default :       0.0
 #                rate:           AudioRate # FIXME needs to be streamRate
@@ -117,29 +119,28 @@ module Impulse {
 #                domain:         streamDomain
 #		}
         signal Phase {
-                default :       1.0
-                domain:         OutputPort.domain
-		}
+            default :       1.0
+            domain:         OutputPort.domain
+        }
         signal PhaseInc {
-			default :       0.0
-			domain: FrequencyPort.domain
-		}
-		switch PhaseOverflow {
-			domain: OutputPort.domain
-		}
-		reaction WrapPhase {
-			streams: [
-				Phase - 1.0 >> Phase;
-				1.0 >> Output;
-			]
-		}
-		
+            default :       0.0
+            domain: FrequencyPort.domain
+        }
+        switch PhaseOverflow {
+            domain: OutputPort.domain
+        }
+        reaction WrapPhase {
+            streams: [
+                Phase - 1.0 >> Phase;
+                1.0 >> Output;
+            ]
+        }	
     ]
     streams: [
         Frequency / OutputPort.rate >> PhaseInc;
-		Phase + PhaseInc >> Phase;
+        Phase + PhaseInc >> Phase;
         [Phase , 1.0 ] >> GreaterOrEqual() >> Select(whenOn: 1 whenOff: 0) >> Output;
         [Phase , 1.0 ] >> GreaterOrEqual() >> PhaseOverflow >> WrapPhase();
     ]
-	meta: ""
+    meta: ""
 }
