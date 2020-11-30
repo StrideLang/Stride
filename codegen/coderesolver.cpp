@@ -164,7 +164,7 @@ void CodeResolver::processSystem() {
     for (auto objects : m_system->getBuiltinObjectsReference()) {
       auto domainDecl = CodeValidator::findDeclaration(
           CodeValidator::streamMemberName(platformDomain),
-          {{std::string(), objects.second}}, m_tree);
+          {{nullptr, objects.second}}, m_tree);
       if (domainDecl) {
         m_tree->addChild(domainDecl);
         break;
@@ -418,7 +418,7 @@ void CodeResolver::analyzeChildConnections(ASTNode node,
           decl->getObjectType() == "loop") {
         std::vector<ASTNode> streams = getModuleStreams(decl);
         ASTNode blocks = decl->getPropertyValue("blocks");
-        scopeStack.push_back({decl->getName(), blocks->getChildren()});
+        scopeStack.push_back({decl, blocks->getChildren()});
         for (ASTNode stream : streams) {
           //          Q_ASSERT(stream->getNodeType() == AST::Stream);
           if (stream->getNodeType() == AST::Stream) {
@@ -1166,7 +1166,7 @@ void CodeResolver::insertDependentTypes(
     // To avoid redundant checking here we should mark nodes that have already
     // been processed
     auto inheritedTypes = CodeValidator::getInheritedTypes(
-        typeDeclaration, {{it->first, it->second}}, tree);
+        typeDeclaration, {{nullptr, it->second}}, tree);
 
     for (auto inheritedType : inheritedTypes) {
       auto children = tree->getChildren();
@@ -1218,7 +1218,7 @@ void CodeResolver::insertBuiltinObjectsForNode(
 
         std::vector<std::shared_ptr<DeclarationNode>> alldecls =
             CodeValidator::findAllDeclarations(
-                func->getName(), {{it->first, objectTree->getChildren()}},
+                func->getName(), {{nullptr, objectTree->getChildren()}},
                 nullptr, func->getNamespaceList());
         for (auto decl : alldecls) {
           if (!blockList.contains(decl)) {
@@ -1302,11 +1302,11 @@ void CodeResolver::insertBuiltinObjectsForNode(
         // FIXME get namespaces for declaration, not objects to insert
         auto typeDecl = CodeValidator::findTypeDeclarationByName(
             declaration->getObjectType(),
-            {{it->first, objectTree->getChildren()}}, nullptr, {}, framework);
+            {{nullptr, objectTree->getChildren()}}, nullptr, {}, framework);
         if (!typeDecl) { // try root namespace
           typeDecl = CodeValidator::findTypeDeclarationByName(
               declaration->getObjectType(),
-              {{it->first, objectTree->getChildren()}}, nullptr, {});
+              {{nullptr, objectTree->getChildren()}}, nullptr, {});
         }
         if (typeDecl && !existingTypeDecl) {
           tree->addChild(typeDecl);
@@ -1355,11 +1355,11 @@ void CodeResolver::insertBuiltinObjectsForNode(
     for (auto it = objects.begin(); it != objects.end(); it++) {
       for (auto objectTree : it->second) {
         auto declaration = CodeValidator::findDeclaration(
-            name->getName(), {{it->first, objectTree->getChildren()}}, tree,
+            name->getName(), {{nullptr, objectTree->getChildren()}}, tree,
             name->getNamespaceList(), currentFramework);
         if (!declaration) {
           declaration = CodeValidator::findDeclaration(
-              name->getName(), {{it->first, objectTree->getChildren()}}, tree,
+              name->getName(), {{nullptr, objectTree->getChildren()}}, tree,
               name->getNamespaceList());
         }
         if (declaration) {
@@ -1395,11 +1395,11 @@ void CodeResolver::insertBuiltinObjectsForNode(
         // FIXME This will get all declarations from all frameworks and it's
         // likely they won't all be needed
         auto declaration = CodeValidator::findDeclaration(
-            bundle->getName(), {{it->first, objectTree->getChildren()}}, tree,
+            bundle->getName(), {{nullptr, objectTree->getChildren()}}, tree,
             bundle->getNamespaceList(), currentFramework);
         if (!declaration) {
           declaration = CodeValidator::findDeclaration(
-              bundle->getName(), {{it->first, objectTree->getChildren()}}, tree,
+              bundle->getName(), {{nullptr, objectTree->getChildren()}}, tree,
               bundle->getNamespaceList());
         }
         if (declaration) {
@@ -1560,8 +1560,7 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream,
           auto internalScopeStack = scopeStack;
 
           if (internalStreams && internalBlocks) {
-            internalScopeStack.push_back(
-                {decl->getName(), internalBlocks->getChildren()});
+            internalScopeStack.push_back({func, internalBlocks->getChildren()});
             for (auto internalStream : internalStreams->getChildren()) {
               Q_ASSERT(internalStream->getNodeType() == AST::Stream);
               if (internalStream->getNodeType() == AST::Stream) {
@@ -1690,8 +1689,12 @@ ASTNode CodeResolver::processDomainsForNode(ASTNode node, ScopeStack scopeStack,
               std::make_shared<ListNode>(__FILE__, __LINE__);
           if (declaration->getCompilerProperty("parentInstances") == nullptr) {
             for (auto subScope : scopeStack) {
-              parentList->addChild(std::make_shared<ValueNode>(
-                  subScope.first, __FILE__, __LINE__));
+              std::string name;
+              if (subScope.first) {
+                name = CodeValidator::streamMemberName(subScope.first);
+              }
+              parentList->addChild(
+                  std::make_shared<ValueNode>(name, __FILE__, __LINE__));
             }
             declaration->setCompilerProperty("parentInstances", parentList);
           }
@@ -1785,8 +1788,12 @@ ASTNode CodeResolver::processDomainsForNode(ASTNode node, ScopeStack scopeStack,
         std::shared_ptr<ListNode> parentList =
             std::make_shared<ListNode>(__FILE__, __LINE__);
         for (auto subScope : scopeStack) {
+          std::string name;
+          if (subScope.first) {
+            name = CodeValidator::streamMemberName(subScope.first);
+          }
           parentList->addChild(
-              std::make_shared<ValueNode>(subScope.first, __FILE__, __LINE__));
+              std::make_shared<ValueNode>(name, __FILE__, __LINE__));
         }
         node->setCompilerProperty("parentInstances", parentList);
       }
@@ -2291,7 +2298,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node,
         // We need to find declaration only in the internal blocks, as port
         // blocks can only be internal.
         auto portBlockDecl = findDeclarationWithinFunctionScope(
-            portBlock, {{decl->getName(), internalBlocks->getChildren()}});
+            portBlock, {{node, internalBlocks->getChildren()}});
 
         if (!portBlockDecl) {
           // FIXME this has to check wether block is a bundle and create
@@ -2306,8 +2313,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node,
 
         // Now check if domain set, if not, set to port domain
         ASTNode domainNode = CodeValidator::getNodeDomain(
-            portBlock, {{decl->getName(), internalBlocks->getChildren()}},
-            m_tree);
+            portBlock, {{node, internalBlocks->getChildren()}}, m_tree);
         if (!domainNode || domainNode->getNodeType() == AST::None) {
           if (portBlockDecl) {
             portBlockDecl->setPropertyValue("domain", mainPortsDefaultDomain);
@@ -2350,7 +2356,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node,
         // internal blocks
 
         auto portBlockDecl = findDeclarationWithinFunctionScope(
-            portBlock, {{decl->getName(), internalBlocks->getChildren()}});
+            portBlock, {{node, internalBlocks->getChildren()}});
         if (!portBlockDecl) {
           // FIXME this has to check wether block is a bundle and create
           // declaration accordingly
@@ -2364,8 +2370,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node,
 
         // Now check if domain set, if not, set to port domain
         ASTNode domainNode = CodeValidator::getNodeDomain(
-            portBlock, {{decl->getName(), internalBlocks->getChildren()}},
-            m_tree);
+            portBlock, {{node, internalBlocks->getChildren()}}, m_tree);
         if (!domainNode || domainNode->getNodeType() == AST::None) {
           if (portBlockDecl && portBlockDecl->getObjectType() != "constant") {
             portBlockDecl->setPropertyValue("domain", mainPortsDefaultDomain);
@@ -2407,7 +2412,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node,
               string name = nameNode->getName();
 
               auto blockDecl = findDeclarationWithinFunctionScope(
-                  nameNode, {{decl->getName(), internalBlocks->getChildren()}});
+                  nameNode, {{node, internalBlocks->getChildren()}});
               if (!blockDecl) { // If block is given but not
                                 // declared, declare
                                 // and assing port domain
@@ -2521,7 +2526,7 @@ void CodeResolver::resolveStreamSymbols() {
         ScopeStack scopeStack;
         ASTNode blocks = decl->getPropertyValue("blocks");
         if (blocks && blocks->getNodeType() == AST::List) {
-          scopeStack.push_back({decl->getName(), blocks->getChildren()});
+          scopeStack.push_back({node, blocks->getChildren()});
         }
         auto rit = streams.rbegin();
         while (rit != streams.rend()) {
@@ -2536,8 +2541,9 @@ void CodeResolver::resolveStreamSymbols() {
             Q_ASSERT(blockList && blockList->getNodeType() == AST::List);
             for (ASTNode newDecl : declarations) {
               blockList->addChild(newDecl);
-              scopeStack.push_back({decl->getName(), {newDecl}});
             }
+            // FIXME is this needed ?
+            scopeStack.push_back({node, blockList->getChildren()});
           }
           rit++;
         }
@@ -2767,7 +2773,7 @@ void CodeResolver::resolveConstantsInNode(ASTNode node, ScopeStack scope,
         internalBlocks) {
       if (internalBlocks->getNodeType() == AST::List) {
         auto blocks = internalBlocks->getChildren();
-        scope.push_back({decl->getName(), blocks});
+        scope.push_back({node, blocks});
       }
     }
     // FIXME This is a hack to protect constants that are context dependent.
@@ -2811,7 +2817,7 @@ void CodeResolver::resolveConstantsInNode(ASTNode node, ScopeStack scope,
     if (internalBlocks) {
       if (internalBlocks->getNodeType() == AST::List) {
         auto blocks = internalBlocks->getChildren();
-        scope.push_back({decl->getName(), blocks});
+        scope.push_back({node, blocks});
       }
     }
 
@@ -2926,7 +2932,7 @@ void CodeResolver::propagateDomainsForNode(ASTNode node,
         blocks.insert(blocks.begin(), portList.begin(), portList.end());
       }
 
-      scopeStack.push_back({module->getName(), blocks});
+      scopeStack.push_back({node, blocks});
 
       auto contextDomainNode = getModuleContextDomain(module);
 
@@ -3253,8 +3259,8 @@ void CodeResolver::sliceDomainsInNode(std::shared_ptr<DeclarationNode> module,
 
     std::shared_ptr<ListNode> newStreamsList =
         std::make_shared<ListNode>(nullptr, __FILE__, __LINE__);
-    scopeStack.push_back({module->getName(), CodeValidator::getBlocksInScope(
-                                                 module, scopeStack, m_tree)});
+    scopeStack.push_back(
+        {module, CodeValidator::getBlocksInScope(module, scopeStack, m_tree)});
     if (streamsNode->getNodeType() == AST::List) {
       for (ASTNode stream : streamsNode->getChildren()) {
         if (stream->getNodeType() == AST::Stream) {
@@ -3292,8 +3298,12 @@ void CodeResolver::sliceDomainsInNode(std::shared_ptr<DeclarationNode> module,
         // TODO this is untested and likely not completely working...
         std::shared_ptr<DeclarationNode> decl =
             static_pointer_cast<DeclarationNode>(block);
-        scopeStack.push_back({module->getName(), blocksNode->getChildren()});
-        sliceDomainsInNode(decl, scopeStack);
+        auto internalBlocksNode = decl->getPropertyValue("blocks");
+        if (internalBlocksNode) {
+          auto subScope = scopeStack;
+          subScope.push_back({module, blocksNode->getChildren()});
+          sliceDomainsInNode(decl, subScope);
+        }
       }
     }
   }
@@ -3309,7 +3319,7 @@ ASTNode CodeResolver::getModuleContextDomain(
     if (blocks) {
       contextDomainBlock = CodeValidator::getNodeDomain(
           outputPortBlock->getPropertyValue("block"),
-          {{moduleDecl->getName(), blocks->getChildren()}}, m_tree);
+          {{moduleDecl, blocks->getChildren()}}, m_tree);
     }
   }
   auto inputPortBlock = CodeValidator::getMainInputPortBlock(moduleDecl);
@@ -3317,7 +3327,7 @@ ASTNode CodeResolver::getModuleContextDomain(
     if (blocks) {
       contextDomainBlock = CodeValidator::getNodeDomain(
           inputPortBlock->getPropertyValue("block"),
-          {{moduleDecl->getName(), blocks->getChildren()}}, m_tree);
+          {{moduleDecl, blocks->getChildren()}}, m_tree);
     }
   }
   return contextDomainBlock;
@@ -3718,7 +3728,7 @@ void CodeResolver::setInputBlockForFunction(std::shared_ptr<FunctionNode> func,
   if (streamsNode) {
     for (auto stream : streamsNode->getChildren()) {
       if (stream->getNodeType() == AST::Stream) {
-        scopeStack.push_back({funcDecl->getName(), blocks});
+        scopeStack.push_back({func, blocks});
         checkStreamConnections(static_pointer_cast<StreamNode>(stream),
                                scopeStack, nullptr);
       }
@@ -3750,7 +3760,7 @@ void CodeResolver::setOutputBlockForFunction(std::shared_ptr<FunctionNode> func,
   if (streamsNode) {
     for (auto stream : streamsNode->getChildren()) {
       if (stream->getNodeType() == AST::Stream) {
-        scopeStack.push_back({funcDecl->getName(), blocks});
+        scopeStack.push_back({func, blocks});
         checkStreamConnections(static_pointer_cast<StreamNode>(stream),
                                scopeStack, nullptr);
       }
@@ -3800,14 +3810,9 @@ void CodeResolver::checkStreamConnections(std::shared_ptr<StreamNode> stream,
     auto blocks = decl->getPropertyValue("blocks");
     auto streams = decl->getPropertyValue("streams");
 
-    std::vector<ASTNode> blocksList;
     if (blocks) {
-      for (auto block : blocks->getChildren()) {
-        blocksList.push_back(block);
-      }
+      scopeStack.push_back({decl, blocks->getChildren()});
     }
-    scopeStack.push_back(std::pair<std::string, std::vector<ASTNode>>(
-        std::string(), blocksList));
     if (streams) {
       for (auto stream : streams->getChildren()) {
         if (stream->getNodeType() == AST::Stream) {
@@ -3838,14 +3843,10 @@ void CodeResolver::checkStreamConnections(std::shared_ptr<StreamNode> stream,
     auto streams = decl->getPropertyValue("streams");
     markConnectionForNode(right, scopeStack, left);
     decl->setCompilerProperty("inputBlock", left);
-    std::vector<ASTNode> blocksList;
+
     if (blocks) {
-      for (auto block : blocks->getChildren()) {
-        blocksList.push_back(block);
-      }
+      scopeStack.push_back({nullptr, blocks->getChildren()});
     }
-    scopeStack.push_back(std::pair<std::string, std::vector<ASTNode>>(
-        std::string(), blocksList));
     if (streams) {
       for (auto stream : streams->getChildren()) {
         if (stream->getNodeType() == AST::Stream) {
@@ -4128,9 +4129,10 @@ void CodeResolver::markConnectionForNode(ASTNode node, ScopeStack scopeStack,
       ASTNode newWriteDomain;
 
       if (node->getNodeType() == AST::Function) {
-        newWriteDomain = CodeValidator::getNodeDomain(
-            CodeValidator::resolveBlock(node, scopeStack, m_tree, false),
-            scopeStack, m_tree);
+        newWriteDomain =
+            CodeValidator::getNodeDomain(CodeValidator::resolveConnectionBlock(
+                                             node, scopeStack, m_tree, false),
+                                         scopeStack, m_tree);
 
       } else {
         newWriteDomain =
@@ -4261,14 +4263,11 @@ void CodeResolver::markConnectionForNode(ASTNode node, ScopeStack scopeStack,
                   decl->getObjectType() == "loop") {
                 auto streamsNode = decl->getPropertyValue("streams");
                 auto blocksNode = decl->getPropertyValue("blocks");
-                std::vector<ASTNode> innerScope;
-                if (blocksNode) {
-                  for (auto internalBlock : blocksNode->getChildren()) {
-                    innerScope.push_back(internalBlock);
-                  }
-                }
+
                 if (streamsNode) {
-                  scopeStack.push_back({"", innerScope});
+                  if (blocksNode) {
+                    scopeStack.push_back({node, blocksNode->getChildren()});
+                  }
                   for (auto stream : streamsNode->getChildren()) {
                     if (stream->getNodeType() == AST::Stream) {
                       checkStreamConnections(
@@ -4409,7 +4408,7 @@ void CodeResolver::storeDeclarationsForNode(ASTNode node, ScopeStack scopeStack,
         }
       }
     }
-    scopeStack.push_back({name, scopeBlocks});
+    scopeStack.push_back({node, scopeBlocks});
   }
 
   if (node->getNodeType() == AST::Block || node->getNodeType() == AST::Bundle ||
@@ -4454,8 +4453,7 @@ void CodeResolver::storeDeclarationsForNode(ASTNode node, ScopeStack scopeStack,
         if (internalBlocks->getNodeType() == AST::List) {
           for (auto child : internalBlocks->getChildren()) {
             storeDeclarationsForNode(
-                child, {{decl->getName(), internalBlocks->getChildren()}},
-                m_tree);
+                child, {{node, internalBlocks->getChildren()}}, m_tree);
             if (child->getNodeType() == AST::Declaration ||
                 child->getNodeType() == AST::BundleDeclaration) {
               blocksList.push_back(static_pointer_cast<DeclarationNode>(child));
@@ -4477,7 +4475,7 @@ void CodeResolver::storeDeclarationsForNode(ASTNode node, ScopeStack scopeStack,
           stack.push_back(scopeStack.back());
         }
       }
-      stack.push_back({decl->getName(), blocksList});
+      stack.push_back({decl, blocksList});
       if (internalStreams) {
         if (internalStreams->getNodeType() == AST::List) {
           for (auto node : internalStreams->getChildren()) {

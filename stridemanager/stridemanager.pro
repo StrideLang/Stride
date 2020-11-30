@@ -3,7 +3,7 @@ QT -= gui
 
 CONFIG += c++11
 
-TARGET = strdmngr
+TARGET = stridemngr
 CONFIG += console
 CONFIG -= app_bundle
 

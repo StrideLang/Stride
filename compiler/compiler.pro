@@ -3,7 +3,7 @@ QT -= gui
 
 CONFIG += c++11
 
-TARGET = compiler
+TARGET = stridec
 CONFIG += console
 CONFIG -= app_bundle
 

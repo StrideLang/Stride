@@ -51,7 +51,7 @@
 #include "systemconfiguration.hpp"
 #include "valuenode.h"
 
-typedef std::vector<std::pair<string, std::vector<ASTNode>>> ScopeStack;
+typedef std::vector<std::pair<ASTNode, std::vector<ASTNode>>> ScopeStack;
 
 class CodeResolver {
 public:

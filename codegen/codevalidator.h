@@ -43,7 +43,7 @@
 #include "strideparser.h"
 #include "stridesystem.hpp"
 
-typedef std::vector<std::pair<string, std::vector<ASTNode>>> ScopeStack;
+typedef std::vector<std::pair<ASTNode, std::vector<ASTNode>>> ScopeStack;
 
 class CodeValidator {
 public:
@@ -96,11 +96,15 @@ public:
                                              ScopeStack scopeStack,
                                              ASTNode tree);
 
-  //
-  static shared_ptr<DeclarationNode> resolveBlock(ASTNode node,
-                                                  ScopeStack scopeStack,
-                                                  ASTNode tree,
-                                                  bool downStream = true);
+  static shared_ptr<DeclarationNode>
+  resolveConnectionBlock(ASTNode node, ScopeStack scopeStack, ASTNode tree,
+                         bool downStream = true);
+
+  static ASTNode
+  getMatchedOuterInstance(std::shared_ptr<FunctionNode> functionNode,
+                          std::shared_ptr<DeclarationNode> blockDecl,
+                          std::shared_ptr<DeclarationNode> funcDecl,
+                          ScopeStack scopeStack, ASTNode tree);
 
   static int resolveSizePortProperty(std::string targetPortName,
                                      ScopeStack scopeStack,
