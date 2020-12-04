@@ -42,23 +42,16 @@
 #include "strideframework.hpp"
 #include "strideparser.h"
 
-#define STRIDEROOT "../strideroot"
-
 extern AST *parse(const char *fileName);
 
 class ParserTest : public QObject {
   Q_OBJECT
 
- public:
+public:
   ParserTest();
 
- private:
-  void testMultichannelUgens();  // TODO Need to complete support for this.
-
- private Q_SLOTS:
-
-  void testConstraints();
-  void testCodeGeneration();
+private:
+private Q_SLOTS:
 
   // Parser
   void testModules();
@@ -75,7 +68,7 @@ class ParserTest : public QObject {
   void testBuffer();
   void testBlockIOResolution();
   void testAt();
-  //  void testConstraints();
+  void testConstraints();
 
   // Expansion
   void testLibraryObjectInsertion();
@@ -83,6 +76,7 @@ class ParserTest : public QObject {
   void testStreamRates();
   void testConstantResolution();
   void testNamespaces();
+  void testMultichannelUgens();
 
   // Platform
   void testPlatformCommonObjects();
@@ -111,7 +105,7 @@ class ParserTest : public QObject {
   void testLibraryValidation();
 
   // Code generation/Compiler
-  //  void testCodeGeneration();
+  void testCodeGeneration();
   void testCompilation();
 };
 
@@ -125,12 +119,9 @@ ParserTest::ParserTest() {
 
 void ParserTest::testMultichannelUgens() {
   ASTNode tree;
-  tree =
-      AST::parseFile(QString(QFINDTESTDATA("data/E03_multichn_streams.stride"))
-                         .toStdString()
-                         .c_str());
+  tree = AST::parseFile(BUILDPATH "tests/data/E03_multichn_streams.stride");
   QVERIFY(tree != nullptr);
-  CodeResolver resolver(tree, QFINDTESTDATA(STRIDEROOT));
+  CodeResolver resolver(tree, STRIDEROOT);
   resolver.process();
   CodeValidator validator(tree);
   QVERIFY(!validator.isValid());
@@ -153,10 +144,9 @@ void ParserTest::testMultichannelUgens() {
 
 void ParserTest::testBuffer() {
   ASTNode tree;
-  tree = AST::parseFile(
-      QString(QFINDTESTDATA("data/16_buffer.stride")).toStdString().c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/16_buffer.stride");
   QVERIFY(tree != nullptr);
-  CodeResolver resolver(tree, QFINDTESTDATA(STRIDEROOT));
+  CodeResolver resolver(tree, STRIDEROOT);
   resolver.process();
   CodeValidator validator(tree);
   QVERIFY(validator.isValid());
@@ -164,12 +154,9 @@ void ParserTest::testBuffer() {
 
 void ParserTest::testBlockIOResolution() {
   ASTNode tree;
-  tree = AST::parseFile(
-      QString(QFINDTESTDATA("data/18_block_io_resolution.stride"))
-          .toStdString()
-          .c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/18_block_io_resolution.stride");
   QVERIFY(tree != nullptr);
-  CodeResolver resolver(tree, QFINDTESTDATA(STRIDEROOT));
+  CodeResolver resolver(tree, STRIDEROOT);
   resolver.process();
   CodeValidator validator(tree);
   QVERIFY(validator.isValid());
@@ -226,8 +213,7 @@ void ParserTest::testBlockIOResolution() {
 
 void ParserTest::testAt() {
   ASTNode tree;
-  tree = AST::parseFile(
-      QString(QFINDTESTDATA("data/19_at.stride")).toStdString().c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/19_at.stride");
   QVERIFY(tree != nullptr);
 
   // type Test @ 3 {
@@ -367,30 +353,34 @@ void ParserTest::testAt() {
 
 void ParserTest::testConstraints() {
   ASTNode tree;
-  tree =
-      AST::parseFile(QString(QFINDTESTDATA("data/20_module_constraints.stride"))
-                         .toStdString()
-                         .c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/20_module_constraints.stride");
   QVERIFY(tree != nullptr);
-  CodeResolver resolver(tree, QFINDTESTDATA(STRIDEROOT));
+  CodeResolver resolver(tree, STRIDEROOT);
   resolver.process();
   CodeValidator validator(tree);
   QVERIFY(!validator.isValid());
   auto errors = validator.getErrors();
-  QVERIFY(errors.size() == 1);
+  QVERIFY(errors.size() == 3);
+  auto err = errors.at(0);
+  QVERIFY(err.type == LangError::ConstraintFail);
+
+  err = errors.at(1);
+  QVERIFY(err.type == LangError::ConstraintFail);
+
+  err = errors.at(2);
+  QVERIFY(err.type == LangError::ConstraintFail);
 }
 
 void ParserTest::testLoop() {
   ASTNode tree;
-  tree = AST::parseFile(
-      QString(QFINDTESTDATA("data/17_loop.stride")).toStdString().c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/17_loop.stride");
   QVERIFY(tree != nullptr);
-  CodeResolver resolver(tree, QFINDTESTDATA(STRIDEROOT));
+  CodeResolver resolver(tree, STRIDEROOT);
   resolver.process();
   CodeValidator validator(tree);
   QVERIFY(validator.isValid());
 
-  return;  // For now while loops are properly implemented
+  return; // For now while loops are properly implemented
   auto members = tree->getChildren();
   auto loopIn = static_pointer_cast<DeclarationNode>(members[1]);
   QVERIFY(loopIn->getNodeType() == AST::Declaration);
@@ -422,12 +412,10 @@ void ParserTest::testLoop() {
 
 void ParserTest::testPortNameValidation() {
   ASTNode tree;
-  tree = AST::parseFile(
-      QString(QFINDTESTDATA("data/P11_port_name_validation.stride"))
-          .toStdString()
-          .c_str());
+  tree =
+      AST::parseFile(BUILDPATH "/tests/data/P11_port_name_validation.stride");
   QVERIFY(tree != nullptr);
-  CodeResolver resolver(tree, QFINDTESTDATA(STRIDEROOT));
+  CodeResolver resolver(tree, STRIDEROOT);
   resolver.process();
   CodeValidator validator(tree);
   QVERIFY(!validator.isValid());
@@ -443,17 +431,15 @@ void ParserTest::testPortNameValidation() {
 
 void ParserTest::testCodeGeneration() {
   QStringList testFiles;
-  QDirIterator directories(
-      QFINDTESTDATA(STRIDEROOT "/_tests/"),
-      QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot);
+  QDirIterator directories(STRIDEROOT "/_tests/", QDir::Dirs |
+                                                      QDir::NoSymLinks |
+                                                      QDir::NoDotAndDotDot);
 
-  BuildTester tester(QFINDTESTDATA(STRIDEROOT).toStdString());
+  BuildTester tester(STRIDEROOT);
 
-  QStringList toIgnore = {"simple",
-                          //                          "module",
-                          "reactions", "loop", "table", "buffer",
-
-                          "platform", "multidomain", "combinations", "sync"};
+  QStringList toIgnore = {
+      /*"simple", "module", "reactions", "loop", "table", "buffer", */
+      "platform", "multidomain", "combinations", "sync"};
   while (directories.hasNext()) {
     QString dirName = directories.next();
     if (!toIgnore.contains(dirName.mid(dirName.lastIndexOf("/") + 1))) {
@@ -484,100 +470,38 @@ void ParserTest::testCodeGeneration() {
 
 void ParserTest::testCompilation() {
   QStringList testFiles;
-  QDirIterator directories(
-      QFINDTESTDATA(STRIDEROOT "/_tests/"),
-      QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot);
-  QStringList toIgnore = {"buffer", "loop", "sync"};
+  QDirIterator directories(STRIDEROOT "/_tests/", QDir::Dirs |
+                                                      QDir::NoSymLinks |
+                                                      QDir::NoDotAndDotDot);
+  QStringList toIgnore = {"sync"};
   while (directories.hasNext()) {
     QString dirName = directories.next();
     if (!toIgnore.contains(dirName.mid(dirName.lastIndexOf("/") + 1))) {
       QDir subDir(directories.filePath());
-      for (auto entry : subDir.entryList(
-               QStringList() << "*.stride",
-               QDir::Files | QDir::NoDotAndDotDot | QDir::NoSymLinks)) {
+      for (auto entry : subDir.entryList(QStringList() << "*.stride",
+                                         QDir::Files | QDir::NoDotAndDotDot |
+                                             QDir::NoSymLinks)) {
         testFiles << subDir.absolutePath() + QDir::separator() + entry;
       }
     }
   }
-  //    qDebug() << testFiles;
-  // BUILDPATH should be set by tests.pro from the current build directory
-  QString compilerBin = BUILDPATH "../compiler/compiler";
+  qDebug() << "Using: " STRIDEBIN "/stridec";
+  QString compilerBin = STRIDEBIN "/../compiler/stridec";
   QScopedPointer<QProcess> compilerProcess(new QProcess(this));
   for (auto testFile : testFiles) {
     QStringList arguments;
-    arguments << "-s" + QFINDTESTDATA(STRIDEROOT) << testFile;
+    arguments << "-s" STRIDEROOT << testFile;
     qDebug() << arguments.join(" ");
     int ret = compilerProcess->execute(compilerBin, arguments);
     QVERIFY(ret == 0);
   }
-  //    qDebug() << compilerBin;
 }
-
-// void ParserTest::testBlockMembers()
-//{
-//    ASTNode tree;
-//    tree =
-//    AST::parseFile(QString(QFINDTESTDATA("data/14_members.stride")).toStdString().c_str());
-//    QVERIFY(tree != nullptr);
-//    CodeValidator validator(tree,
-//    CodeValidator::NO_RATE_VALIDATION); QVERIFY(validator.isValid());
-
-////    signal Sig {
-////        rate: 10
-////    }
-
-////    Sig.rate >> Out1;
-
-//    StreamNode *stream = static_cast<StreamNode
-//    *>(tree->getChildren().at(2).get()); QVERIFY(stream->getNodeType() ==
-//    AST::Stream); ValueNode *value = static_cast<ValueNode
-//    *>(stream->getLeft().get()); QVERIFY(value->getNodeType() == AST::Int);
-//    QVERIFY(value->getIntValue() == 10);
-
-//    //    Sig.rate + 1 >> Out2
-
-//    stream = static_cast<StreamNode *>(tree->getChildren().at(3).get());
-//    QVERIFY(stream->getNodeType() == AST::Stream);
-//    value = static_cast<ValueNode *>(stream->getLeft().get());
-//    QVERIFY(value->getNodeType() == AST::Int);
-//    QVERIFY(value->getIntValue() == 11);
-
-////    2 + Sig.rate >> Out3;
-
-//    stream = static_cast<StreamNode *>(tree->getChildren().at(4).get());
-//    QVERIFY(stream->getNodeType() == AST::Stream);
-//    value = static_cast<ValueNode *>(stream->getLeft().get());
-//    QVERIFY(value->getNodeType() == AST::Int);
-//    QVERIFY(value->getIntValue() == 12);
-
-////    2 + Sig.rate + 1 >> Out4;
-//    stream = static_cast<StreamNode *>(tree->getChildren().at(5).get());
-//    QVERIFY(stream->getNodeType() == AST::Stream);
-//    value = static_cast<ValueNode *>(stream->getLeft().get());
-//    QVERIFY(value->getNodeType() == AST::Int);
-//    QVERIFY(value->getIntValue() == 13);
-
-//    //    A + Sig.rate >> Out5;
-
-//    stream = static_cast<StreamNode *>(tree->getChildren().at(6).get());
-//    QVERIFY(stream->getNodeType() == AST::Stream);
-//    ExpressionNode *expr = static_cast<ExpressionNode
-//    *>(stream->getLeft().get()); QVERIFY(expr->getNodeType() ==
-//    AST::Expression); value = static_cast<ValueNode
-//    *>(expr->getRight().get()); QVERIFY(value->getNodeType() == AST::Int);
-//    QVERIFY(value->getIntValue() == 10);
-
-//    //    #[Sig.rate, 4] >> Out4;
-//}
 
 void ParserTest::testConnectionCount() {
   ASTNode tree;
-  tree =
-      AST::parseFile(QString(QFINDTESTDATA("data/13_connection_count.stride"))
-                         .toStdString()
-                         .c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/13_connection_count.stride");
   QVERIFY(tree != nullptr);
-  CodeResolver resolver(tree, QFINDTESTDATA(STRIDEROOT));
+  CodeResolver resolver(tree, STRIDEROOT);
   resolver.process();
   CodeValidator validator(tree, CodeValidator::NO_RATE_VALIDATION);
   QVERIFY(validator.isValid());
@@ -710,17 +634,14 @@ void ParserTest::testConnectionCount() {
 
 void ParserTest::testModuleDomains() {
   ASTNode tree;
-  tree = AST::parseFile(QString(QFINDTESTDATA("data/12_modules_domains.stride"))
-                            .toStdString()
-                            .c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/12_modules_domains.stride");
   QVERIFY(tree != nullptr);
-  CodeResolver resolver(tree, QFINDTESTDATA(STRIDEROOT));
+  CodeResolver resolver(tree, STRIDEROOT);
   resolver.process();
   CodeValidator validator(tree, CodeValidator::NO_RATE_VALIDATION);
   QVERIFY(validator.isValid());
 
-  DeclarationNode *block =
-      static_cast<DeclarationNode *>(tree->getChildren()[1].get());
+  auto block = static_pointer_cast<DeclarationNode>(tree->getChildren()[1]);
   QVERIFY(block->getNodeType() == AST::Declaration);
 
   // Both the input and output blocks should be autodeclared to belong to the
@@ -730,8 +651,7 @@ void ParserTest::testModuleDomains() {
   QVERIFY(blockList->getNodeType() == AST::List);
   DeclarationNode *internalBlock =
       CodeValidator::findDeclaration(
-          std::string("Input"), {{block->getName(), blockList->getChildren()}},
-          nullptr)
+          std::string("Input"), {{block, blockList->getChildren()}}, nullptr)
           .get();
   QVERIFY(internalBlock->getNodeType() == AST::Declaration);
   auto domainValue = static_pointer_cast<PortPropertyNode>(
@@ -752,10 +672,10 @@ void ParserTest::testModuleDomains() {
   QVERIFY(readDomain->getPortName() == "domain");
   QVERIFY(readDomain->getName() == "OutputPort");
 
-  internalBlock = CodeValidator::findDeclaration(
-                      std::string("Output"),
-                      {{block->getName(), blockList->getChildren()}}, nullptr)
-                      .get();
+  internalBlock =
+      CodeValidator::findDeclaration(
+          std::string("Output"), {{block, blockList->getChildren()}}, nullptr)
+          .get();
   QVERIFY(internalBlock->getNodeType() == AST::Declaration);
   domainValue = static_pointer_cast<PortPropertyNode>(
       internalBlock->getPropertyValue("domain"));
@@ -789,12 +709,9 @@ void ParserTest::testModuleDomains() {
 
 void ParserTest::testConnectionErrors() {
   ASTNode tree;
-  tree =
-      AST::parseFile(QString(QFINDTESTDATA("data/15_connection_errors.stride"))
-                         .toStdString()
-                         .c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/15_connection_errors.stride");
   QVERIFY(tree != nullptr);
-  CodeResolver resolver(tree, QFINDTESTDATA(STRIDEROOT));
+  CodeResolver resolver(tree, STRIDEROOT);
   resolver.process();
   CodeValidator validator(tree, CodeValidator::NO_RATE_VALIDATION);
 
@@ -807,12 +724,9 @@ void ParserTest::testConnectionErrors() {
 void ParserTest::testPortTypeValidation() {
   // TODO: Check validation of bundles
   ASTNode tree;
-  tree =
-      AST::parseFile(QString(QFINDTESTDATA("data/P07_type_validation.stride"))
-                         .toStdString()
-                         .c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/P07_type_validation.stride");
   QVERIFY(tree != nullptr);
-  CodeResolver resolver(tree, QFINDTESTDATA(STRIDEROOT));
+  CodeResolver resolver(tree, STRIDEROOT);
   resolver.process();
   CodeValidator validator(tree, CodeValidator::NO_RATE_VALIDATION);
 
@@ -821,36 +735,25 @@ void ParserTest::testPortTypeValidation() {
   //    QVERIFY(error.lineNumber == 55);
   QVERIFY(error.errorTokens[0] == "testType");
   QVERIFY(error.errorTokens[1] == "stringPort");
-  //    QVERIFY(error.errorTokens[2] == "CRP");
-  //    QVERIFY(error.errorTokens[3] == "CSP");
   error = errors.at(1);
   //    QVERIFY(error.lineNumber == 56);
   QVERIFY(error.errorTokens[0] == "testType");
   QVERIFY(error.errorTokens[1] == "floatPort");
-  //    QVERIFY(error.errorTokens[2] == "CSP");
-  //    QVERIFY(error.errorTokens[3] == "CRP");
   error = errors.at(2);
   //    QVERIFY(error.lineNumber == 57);
   QVERIFY(error.errorTokens[0] == "testType");
   QVERIFY(error.errorTokens[1] == "nonePort");
-  //    QVERIFY(error.errorTokens[2] == "CIP");
-  //    QVERIFY(error.errorTokens[3] == "none");
   error = errors.at(3);
   //    QVERIFY(error.lineNumber == 58);
   QVERIFY(error.errorTokens[0] == "testType");
   QVERIFY(error.errorTokens[1] == "builtinTypePort");
-  //    QVERIFY(error.errorTokens[2] == "CRP");
-  //    QVERIFY(error.errorTokens[3] == "signal");
 }
 
 void ParserTest::testLibraryObjectInsertion() {
   ASTNode tree;
-  tree =
-      AST::parseFile(QString(QFINDTESTDATA("data/E05_library_objects.stride"))
-                         .toStdString()
-                         .c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/E05_library_objects.stride");
   QVERIFY(tree != nullptr);
-  CodeResolver resolver(tree, QFINDTESTDATA(STRIDEROOT));
+  CodeResolver resolver(tree, STRIDEROOT);
   resolver.process();
   CodeValidator validator(tree, CodeValidator::NO_RATE_VALIDATION);
   QVERIFY(validator.isValid());
@@ -877,11 +780,9 @@ void ParserTest::testLibraryObjectInsertion() {
 
 void ParserTest::testContextDomain() {
   ASTNode tree;
-  tree = AST::parseFile(QString(QFINDTESTDATA("data/E06_context_domain.stride"))
-                            .toStdString()
-                            .c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/E06_context_domain.stride");
   QVERIFY(tree != nullptr);
-  CodeResolver resolver(tree, QFINDTESTDATA(STRIDEROOT));
+  CodeResolver resolver(tree, STRIDEROOT);
   resolver.process();
   CodeValidator validator(tree, CodeValidator::NO_RATE_VALIDATION);
   //    QVERIFY(validator.isValid());
@@ -890,16 +791,15 @@ void ParserTest::testContextDomain() {
 
   auto loop = CodeValidator::findDeclaration(
       std::string("TestLoop"),
-      {{mod->getName(), mod->getPropertyValue("blocks")->getChildren()}}, tree);
+      {{mod, mod->getPropertyValue("blocks")->getChildren()}}, tree);
   QVERIFY(loop);
 }
 
 void ParserTest::testDomains() {
   ASTNode tree;
-  tree = AST::parseFile(
-      QString(QFINDTESTDATA("data/P06_domains.stride")).toStdString().c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/P06_domains.stride");
   QVERIFY(tree != nullptr);
-  CodeResolver resolver(tree, QFINDTESTDATA(STRIDEROOT));
+  CodeResolver resolver(tree, STRIDEROOT);
   resolver.process();
   CodeValidator validator(tree, CodeValidator::NO_RATE_VALIDATION);
   QVERIFY(validator.isValid());
@@ -977,16 +877,15 @@ void ParserTest::testDomains() {
 
 void ParserTest::testModules() {
   ASTNode tree;
-  tree = AST::parseFile(
-      QString(QFINDTESTDATA("data/11_modules.stride")).toStdString().c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/11_modules.stride");
   QVERIFY(tree != nullptr);
-  CodeResolver resolver(tree, QFINDTESTDATA(STRIDEROOT));
+  CodeResolver resolver(tree, STRIDEROOT);
   resolver.process();
   CodeValidator validator(tree, CodeValidator::NO_RATE_VALIDATION);
   QVERIFY(validator.isValid());
 
-  DeclarationNode *moduleNode =
-      static_cast<DeclarationNode *>(tree->getChildren().at(1).get());
+  auto moduleNode =
+      static_pointer_cast<DeclarationNode>(tree->getChildren().at(1));
   QVERIFY(moduleNode->getName() == "SizeTest");
   ListNode *blockList =
       static_cast<ListNode *>(moduleNode->getPropertyValue("blocks").get());
@@ -1000,7 +899,7 @@ void ParserTest::testModules() {
     }
   }
 
-  moduleNode = static_cast<DeclarationNode *>(tree->getChildren().at(2).get());
+  moduleNode = static_pointer_cast<DeclarationNode>(tree->getChildren().at(2));
   QVERIFY(moduleNode->getName() == "BlocksTest");
   blockList =
       static_cast<ListNode *>(moduleNode->getPropertyValue("blocks").get());
@@ -1012,7 +911,7 @@ void ParserTest::testModules() {
   blockNames << "AutoDeclared";
   for (auto name : blockNames) {
     auto decl = CodeValidator::findDeclaration(
-        name, {{moduleNode->getName(), blockList->getChildren()}}, nullptr);
+        name, {{moduleNode, blockList->getChildren()}}, nullptr);
     QVERIFY(decl);
   }
   // Check to make sure input and output domains have propagated correctly
@@ -1033,10 +932,9 @@ void ParserTest::testModules() {
 
 void ParserTest::testImport() {
   ASTNode tree;
-  tree = AST::parseFile(
-      QString(QFINDTESTDATA("data/P04_import.stride")).toStdString().c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/P04_import.stride");
   QVERIFY(tree != nullptr);
-  CodeResolver resolver(tree, QFINDTESTDATA(STRIDEROOT));
+  CodeResolver resolver(tree, STRIDEROOT);
   resolver.process();
   CodeValidator validator(tree, CodeValidator::NO_RATE_VALIDATION);
   QVERIFY(validator.isValid());
@@ -1048,11 +946,9 @@ void ParserTest::testImport() {
   //    QVERIFY(import->getScopeAt(0) == "Platform");
   //    QVERIFY(import->getScopeAt(1) == "Filters");
 
-  tree = AST::parseFile(QString(QFINDTESTDATA("data/P05_import_fail.stride"))
-                            .toStdString()
-                            .c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/P05_import_fail.stride");
   QVERIFY(tree != nullptr);
-  CodeResolver resolver2(tree, QFINDTESTDATA(STRIDEROOT));
+  CodeResolver resolver2(tree, STRIDEROOT);
   resolver2.process();
   CodeValidator validator2(tree, CodeValidator::NO_RATE_VALIDATION);
   QVERIFY(!validator2.isValid());
@@ -1071,11 +967,9 @@ void ParserTest::testImport() {
 
 void ParserTest::testConstantResolution() {
   ASTNode tree;
-  tree = AST::parseFile(QString(QFINDTESTDATA("data/E01_constant_res.stride"))
-                            .toStdString()
-                            .c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/E01_constant_res.stride");
   QVERIFY(tree != nullptr);
-  CodeResolver resolver(tree, QFINDTESTDATA(STRIDEROOT));
+  CodeResolver resolver(tree, STRIDEROOT);
   resolver.process();
   CodeValidator validator(tree, CodeValidator::NO_RATE_VALIDATION);
   QVERIFY(validator.isValid());
@@ -1267,10 +1161,9 @@ void ParserTest::testConstantResolution() {
 
 void ParserTest::testStreamRates() {
   ASTNode tree;
-  tree = AST::parseFile(
-      QString(QFINDTESTDATA("data/E04_rates.stride")).toStdString().c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/E04_rates.stride");
   QVERIFY(tree != nullptr);
-  CodeResolver resolver(tree, QFINDTESTDATA(STRIDEROOT));
+  CodeResolver resolver(tree, STRIDEROOT);
   resolver.process();
   CodeValidator validator(tree, CodeValidator::NO_RATE_VALIDATION);
   QVERIFY(validator.isValid());
@@ -1355,12 +1248,9 @@ void ParserTest::testStreamRates() {
 
 void ParserTest::testStreamExpansion() {
   ASTNode tree;
-  tree =
-      AST::parseFile(QString(QFINDTESTDATA("data/E02_stream_expansions.stride"))
-                         .toStdString()
-                         .c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/E02_stream_expansions.stride");
   QVERIFY(tree != nullptr);
-  CodeResolver resolver(tree, QFINDTESTDATA(STRIDEROOT));
+  CodeResolver resolver(tree, STRIDEROOT);
   resolver.process();
   CodeValidator validator(tree, CodeValidator::NO_RATE_VALIDATION);
   QVERIFY(validator.isValid());
@@ -1826,11 +1716,9 @@ void ParserTest::testStreamExpansion() {
 
 void ParserTest::testNamespaces() {
   ASTNode tree;
-  tree = AST::parseFile(QString(QFINDTESTDATA("data/E07_namespaces.stride"))
-                            .toStdString()
-                            .c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/E07_namespaces.stride");
   QVERIFY(tree != nullptr);
-  CodeResolver resolver(tree, QFINDTESTDATA(STRIDEROOT));
+  CodeResolver resolver(tree, STRIDEROOT);
   resolver.process();
   CodeValidator validator(tree, CodeValidator::NO_RATE_VALIDATION);
   QVERIFY(validator.isValid());
@@ -1839,12 +1727,9 @@ void ParserTest::testNamespaces() {
 
 void ParserTest::testPlatformCommonObjects() {
   ASTNode tree;
-  tree =
-      AST::parseFile(QString(QFINDTESTDATA("data/P01_platform_objects.stride"))
-                         .toStdString()
-                         .c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/P01_platform_objects.stride");
   QVERIFY(tree != nullptr);
-  CodeResolver resolver(tree, QFINDTESTDATA(STRIDEROOT));
+  CodeResolver resolver(tree, STRIDEROOT);
   resolver.process();
   CodeValidator validator(tree, CodeValidator::NO_RATE_VALIDATION);
   QVERIFY(!validator.isValid());
@@ -1886,12 +1771,9 @@ void ParserTest::testPlatformCommonObjects() {
 
 void ParserTest::testValueTypeBundleResolution() {
   ASTNode tree;
-  tree =
-      AST::parseFile(QString(QFINDTESTDATA("data/P03_bundle_resolution.stride"))
-                         .toStdString()
-                         .c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/P03_bundle_resolution.stride");
   QVERIFY(tree != nullptr);
-  CodeResolver resolver(tree, QFINDTESTDATA(STRIDEROOT));
+  CodeResolver resolver(tree, STRIDEROOT);
   resolver.process();
   CodeValidator validator(tree, CodeValidator::NO_RATE_VALIDATION);
   //    validator.validate();
@@ -2051,12 +1933,9 @@ void ParserTest::testValueTypeExpressionResolution() {}
 
 void ParserTest::testDuplicates() {
   ASTNode tree;
-  tree =
-      AST::parseFile(QString(QFINDTESTDATA("data/P02_check_duplicates.stride"))
-                         .toStdString()
-                         .c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/P02_check_duplicates.stride");
   QVERIFY(tree != nullptr);
-  CodeResolver resolver(tree, QFINDTESTDATA(STRIDEROOT));
+  CodeResolver resolver(tree, STRIDEROOT);
   resolver.process();
   CodeValidator validator(tree, CodeValidator::NO_RATE_VALIDATION);
   QVERIFY(!validator.isValid());
@@ -2078,8 +1957,7 @@ void ParserTest::testDuplicates() {
 
 void ParserTest::testLists() {
   ASTNode tree;
-  tree = AST::parseFile(
-      QString(QFINDTESTDATA("data/09_lists.stride")).toStdString().c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/09_lists.stride");
   QVERIFY(tree != nullptr);
   vector<ASTNode> nodes = tree->getChildren();
 
@@ -2238,8 +2116,7 @@ void ParserTest::testLists() {
 
 void ParserTest::testScope() {
   ASTNode tree;
-  tree = AST::parseFile(
-      QString(QFINDTESTDATA("data/P08_scope.stride")).toStdString().c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/P08_scope.stride");
   QVERIFY(tree != nullptr);
   vector<ASTNode> nodes = tree->getChildren();
 
@@ -2531,9 +2408,7 @@ void ParserTest::testScope() {
 
 void ParserTest::testPortProperty() {
   ASTNode tree;
-  tree = AST::parseFile(QString(QFINDTESTDATA("data/P09_port_property.stride"))
-                            .toStdString()
-                            .c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/P09_port_property.stride");
   QVERIFY(tree != nullptr);
   vector<ASTNode> nodes = tree->getChildren();
 
@@ -2550,9 +2425,7 @@ void ParserTest::testPortProperty() {
 
 void ParserTest::testBundleIndeces() {
   ASTNode tree;
-  tree = AST::parseFile(QString(QFINDTESTDATA("data/07_bundle_indeces.stride"))
-                            .toStdString()
-                            .c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/07_bundle_indeces.stride");
   QVERIFY(tree != nullptr);
   vector<ASTNode> nodes = tree->getChildren();
   QVERIFY(nodes.size() == 23);
@@ -2707,10 +2580,7 @@ void ParserTest::testBundleIndeces() {
 
 void ParserTest::testBasicNoneSwitch() {
   ASTNode tree;
-  tree =
-      AST::parseFile(QString(QFINDTESTDATA("data/06_basic_noneswitch.stride"))
-                         .toStdString()
-                         .c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/06_basic_noneswitch.stride");
   QVERIFY(tree != nullptr);
   vector<ASTNode> nodes = tree->getChildren();
   QVERIFY(nodes.size() == 2);
@@ -2754,9 +2624,7 @@ void ParserTest::testBasicNoneSwitch() {
 
 void ParserTest::testBasicFunctions() {
   ASTNode tree;
-  tree = AST::parseFile(QString(QFINDTESTDATA("data/05_basic_functions.stride"))
-                            .toStdString()
-                            .c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/05_basic_functions.stride");
   QVERIFY(tree != nullptr);
   vector<ASTNode> nodes = tree->getChildren();
 
@@ -2828,9 +2696,7 @@ void ParserTest::testBasicFunctions() {
 
 void ParserTest::testBasicStream() {
   ASTNode tree;
-  tree = AST::parseFile(QString(QFINDTESTDATA("data/04_basic_stream.stride"))
-                            .toStdString()
-                            .c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/04_basic_stream.stride");
   QVERIFY(tree != nullptr);
   vector<ASTNode> nodes = tree->getChildren();
 
@@ -3089,9 +2955,7 @@ void ParserTest::testBasicStream() {
 
 void ParserTest::testBasicBundle() {
   ASTNode tree;
-  tree = AST::parseFile(QString(QFINDTESTDATA("data/03_basic_bundle.stride"))
-                            .toStdString()
-                            .c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/03_basic_bundle.stride");
   QVERIFY(tree != nullptr);
   vector<ASTNode> nodes = tree->getChildren();
   QVERIFY(nodes.size() == 8);
@@ -3349,9 +3213,7 @@ void ParserTest::testBasicBundle() {
 
 void ParserTest::testBasicBlocks() {
   ASTNode tree;
-  tree = AST::parseFile(QString(QFINDTESTDATA("data/02_basic_blocks.stride"))
-                            .toStdString()
-                            .c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/02_basic_blocks.stride");
   QVERIFY(tree != nullptr);
   vector<ASTNode> nodes = tree->getChildren();
   QVERIFY(nodes.size() == 5);
@@ -3462,8 +3324,7 @@ void ParserTest::testBasicBlocks() {
 
 void ParserTest::testHeader() {
   ASTNode tree;
-  tree = AST::parseFile(
-      QString(QFINDTESTDATA("data/01_header.stride")).toStdString().c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/01_header.stride");
 
   QVERIFY(tree != nullptr);
   vector<ASTNode> nodes = tree->getChildren();
@@ -3498,7 +3359,7 @@ void ParserTest::testHeader() {
 
 void ParserTest::testLibraryBasicTypes() {
   StrideLibrary library;
-  library.initializeLibrary(QFINDTESTDATA(STRIDEROOT));
+  library.initializeLibrary(STRIDEROOT);
   std::shared_ptr<DeclarationNode> type;
   QStringList typesToCheck;
   typesToCheck << "rated"
@@ -3517,12 +3378,10 @@ void ParserTest::testLibraryBasicTypes() {
 
 void ParserTest::testLibraryValidation() {
   ASTNode tree;
-  tree = AST::parseFile(
-      QString(QFINDTESTDATA("data/L01_library_types_validation.stride"))
-          .toStdString()
-          .c_str());
+  tree = AST::parseFile(BUILDPATH
+                        "/tests/data/L01_library_types_validation.stride");
   QVERIFY(tree);
-  CodeResolver resolver(tree, QFINDTESTDATA(STRIDEROOT));
+  CodeResolver resolver(tree, STRIDEROOT);
   resolver.process();
   CodeValidator validator(tree);
   QVERIFY(validator.isValid());
@@ -3530,12 +3389,10 @@ void ParserTest::testLibraryValidation() {
 
 void ParserTest::testTriggersRegistration() {
   ASTNode tree;
-  tree = AST::parseFile(
-      QString(QFINDTESTDATA("data/P12_trigger_registration.stride"))
-          .toStdString()
-          .c_str());
+  tree =
+      AST::parseFile(BUILDPATH "/tests/data/P12_trigger_registration.stride");
   QVERIFY(tree != nullptr);
-  CodeResolver resolver(tree, QFINDTESTDATA(STRIDEROOT));
+  CodeResolver resolver(tree, STRIDEROOT);
   resolver.process();
   CodeValidator validator(tree, CodeValidator::NO_RATE_VALIDATION);
   QVERIFY(validator.isValid());
@@ -3563,12 +3420,9 @@ void ParserTest::testResetRegistration() {
   //    signal SigBundle[2] { reset: Trig }
 
   ASTNode tree;
-  tree = AST::parseFile(
-      QString(QFINDTESTDATA("data/P13_reset_registration.stride"))
-          .toStdString()
-          .c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/P13_reset_registration.stride");
   QVERIFY(tree != nullptr);
-  CodeResolver resolver(tree, QFINDTESTDATA(STRIDEROOT));
+  CodeResolver resolver(tree, STRIDEROOT);
   resolver.process();
   CodeValidator validator(tree, CodeValidator::NO_RATE_VALIDATION);
   QVERIFY(validator.isValid());
@@ -3593,10 +3447,9 @@ void ParserTest::testResetRegistration() {
 
 void ParserTest::testSystem() {
   ASTNode tree;
-  tree = AST::parseFile(
-      QString(QFINDTESTDATA("data/S01_system.stride")).toStdString().c_str());
+  tree = AST::parseFile(BUILDPATH "/tests/data/S01_system.stride");
   QVERIFY(tree != nullptr);
-  CodeResolver resolver(tree, QFINDTESTDATA(STRIDEROOT));
+  CodeResolver resolver(tree, STRIDEROOT);
   resolver.process();
   CodeValidator validator(tree, CodeValidator::NO_RATE_VALIDATION);
   QVERIFY(validator.isValid());

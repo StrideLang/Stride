@@ -149,7 +149,7 @@ platformBlock _SerialOutput {
     typeName: '_serialOutput'
 	inputs: ["real"]
 	outputs: []
-    domain: SerialOutDomain
+    domain: WiringDomain
 #    include: []
 #    linkTo: []
     declarations: ['byte channel = 0;']
