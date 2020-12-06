@@ -36,22 +36,29 @@
 #define LINENUMBERAREA_H
 
 #include <QWidget>
+#include <memory>
 
 #include "codeeditor.h"
 
-class LineNumberArea : public QWidget
-{
+class LineNumberArea : public QWidget {
 public:
-    LineNumberArea(CodeEditor *editor);
-    ~LineNumberArea();
+  LineNumberArea(CodeEditor *editor);
+  ~LineNumberArea();
 
-    QSize sizeHint() const;
+  QSize sizeHint() const;
+
+  void setErrors(QList<LangError> errors);
+
+  std::mutex m_markerLock;
+  std::vector<shared_ptr<ErrorMarker>> m_errorMarkers;
 
 protected:
-    void paintEvent(QPaintEvent *event);
+  void paintEvent(QPaintEvent *event);
+
+  const size_t numMarkers = 50;
 
 private:
-    CodeEditor *m_codeEditor;
+  CodeEditor *m_codeEditor;
 };
 
 #endif // LINENUMBERAREA_H

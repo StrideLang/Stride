@@ -57,3 +57,5 @@ add_library(StrideParser
   ${BISON_MyParser_OUTPUTS}
   ${FLEX_MyScanner_OUTPUTS}
 )
+
+target_compile_options(StrideParser PRIVATE -fPIC)

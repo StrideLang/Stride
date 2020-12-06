@@ -99,23 +99,13 @@ void CodeEditor::markParsed() { m_changedSinceParse.storeRelaxed(0); }
 void CodeEditor::setAutoComplete(bool enable) { m_autoComplete = enable; }
 
 void CodeEditor::setErrors(QList<LangError> errors) {
-  //    m_errors = errors;
-
-  std::unique_lock<std::mutex> lk(m_markerLock);
-  // TODO check if errors have changed to avoid having to do all this below
-  // unnecessarily This is causing weird memory problems... (try to open a file.
-  // the dialog hangs)
-  m_errorMarkers.clear();
-
-  //    for(LangError error : errors) {
-  //        if (error.filename == filename().toStdString()) {
-  //            m_errorMarkers.push_back(std::make_shared<ErrorMarker>(m_lineNumberArea,
-  //            error.lineNumber,
-  //                                                     QString::fromStdString(error.getErrorText())));
-  //        }
-  //    }
-  lk.unlock();
-  m_lineNumberArea->repaint();
+  QList<LangError> filteredErrors;
+  for (auto error : errors) {
+    if (QString::fromStdString(error.filename).endsWith(m_filename)) {
+      filteredErrors.push_back(error);
+    }
+  }
+  m_lineNumberArea->setErrors(filteredErrors);
 }
 
 void CodeEditor::updateLineNumberAreaWidth(int /* newBlockCount */) {
@@ -394,9 +384,14 @@ void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event) {
   int blockNumber = block.blockNumber();
   int top = (int)blockBoundingGeometry(block).translated(contentOffset()).top();
   int bottom = top + (int)blockBoundingRect(block).height();
-  std::unique_lock<std::mutex> lk(m_markerLock);
-  for (auto marker : m_errorMarkers) {
-    marker->hide();
+
+  {
+    std::unique_lock<std::mutex> lk(m_lineNumberArea->m_markerLock);
+    for (auto marker : m_lineNumberArea->m_errorMarkers) {
+      if (marker->getLineNumber() < blockNumber) {
+        marker->hide();
+      }
+    }
   }
   while (block.isValid() && top <= event->rect().bottom()) {
     if (block.isVisible() && bottom >= event->rect().top()) {
@@ -404,12 +399,14 @@ void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event) {
       painter.setPen(Qt::black);
       painter.drawText(0, top, m_lineNumberArea->width(),
                        fontMetrics().height(), Qt::AlignRight, number);
-
-      for (auto marker : m_errorMarkers) {
-        if (marker->getLineNumber() == blockNumber + 1) {
-          marker->setGeometry(0, top, fontMetrics().width("9"),
-                              fontMetrics().height());
-          marker->show();
+      {
+        std::unique_lock<std::mutex> lk(m_lineNumberArea->m_markerLock);
+        for (auto marker : m_lineNumberArea->m_errorMarkers) {
+          if (marker->getLineNumber() == blockNumber + 1) {
+            marker->setGeometry(0, top, fontMetrics().horizontalAdvance("9"),
+                                fontMetrics().height());
+            marker->show();
+          }
         }
       }
     }
@@ -418,6 +415,14 @@ void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event) {
     top = bottom;
     bottom = top + (int)blockBoundingRect(block).height();
     ++blockNumber;
+  }
+  {
+    std::unique_lock<std::mutex> lk(m_lineNumberArea->m_markerLock);
+    for (auto marker : m_lineNumberArea->m_errorMarkers) {
+      if (marker->getLineNumber() > blockNumber + 1) {
+        marker->hide();
+      }
+    }
   }
 }
 

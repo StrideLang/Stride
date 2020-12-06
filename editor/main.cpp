@@ -39,44 +39,80 @@
 
 #include "projectwindow.h"
 
-int main(int argc, char *argv[])
-{
-    qSetMessagePattern("[%{time yyyy-MM-dd h:mm:ss.zzz}%{if-debug}D%{endif}%{if-info}I%{endif}%{if-warning}W%{endif}%{if-critical}C%{endif}%{if-fatal}F%{endif}][%{file}:%{line} %{function}] %{message}");
-    char *lc;
-    if (!(lc =setlocale (LC_ALL, nullptr))) {
-        qDebug() << "Error setting locale.";
+void myMessageOutput(QtMsgType type, const QMessageLogContext &context,
+                     const QString &msg) {
+  QByteArray localMsg = msg.toLocal8Bit();
+  const char *file = context.file ? context.file : "";
+  const char *function = context.function ? context.function : "";
+  if (msg.contains("sing QCharRef with an index pointing outside the valid "
+                   "range of a QString")) {
+    int a = 1;
+    a = a + 1;
+  }
+
+  switch (type) {
+    case QtDebugMsg:
+      fprintf(stderr, "Debug: %s (%s:%u, %s)\n", localMsg.constData(), file,
+              context.line, function);
+      break;
+    case QtInfoMsg:
+      fprintf(stderr, "Info: %s (%s:%u, %s)\n", localMsg.constData(), file,
+              context.line, function);
+      break;
+    case QtWarningMsg:
+      fprintf(stderr, "Warning: %s (%s:%u, %s)\n", localMsg.constData(), file,
+              context.line, function);
+      break;
+    case QtCriticalMsg:
+      fprintf(stderr, "Critical: %s (%s:%u, %s)\n", localMsg.constData(), file,
+              context.line, function);
+      break;
+    case QtFatalMsg:
+      fprintf(stderr, "Fatal: %s (%s:%u, %s)\n", localMsg.constData(), file,
+              context.line, function);
+      break;
+  }
+}
+
+int main(int argc, char *argv[]) {
+  qInstallMessageHandler(myMessageOutput);
+  qSetMessagePattern(
+      "[%{time yyyy-MM-dd "
+      "h:mm:ss.zzz}%{if-debug}D%{endif}%{if-info}I%{endif}%{if-warning}W%{"
+      "endif}%{if-critical}C%{endif}%{if-fatal}F%{endif}][%{file}:%{line} "
+      "%{function}] %{message}");
+  char *lc;
+  if (!(lc = setlocale(LC_ALL, nullptr))) {
+    qDebug() << "Error setting locale.";
+  }
+  qDebug() << "Using locale " << lc;
+
+  // TODO move this crash marker to the temp directory?
+  bool previousRunCrashed = QFile::exists(".crashmarker");
+  QFile crashMarker(".crashmarker");
+  crashMarker.open(QFile::WriteOnly);
+  crashMarker.write("oops");
+  crashMarker.close();
+
+  QApplication a(argc, argv);
+
+  if (previousRunCrashed) {
+    QMessageBox::StandardButton choice = QMessageBox::question(
+        nullptr, "Reset?", "Stride IDE crashed. Would you like to reset it?");
+    if (choice == QMessageBox::No) {
+      previousRunCrashed = false;
     }
-    qDebug() << "Using locale " << lc;
+  }
 
-    // TODO move this crash marker to the temp directory?
-    bool previousRunCrashed = QFile::exists(".crashmarker");
-    QFile crashMarker(".crashmarker");
-    crashMarker.open(QFile::WriteOnly);
-    crashMarker.write("oops");
-    crashMarker.close();
+  ProjectWindow w;
+  a.installEventFilter(&w);  // Pass events from a to w
+  w.initialize(previousRunCrashed);
+  w.show();
 
+  int ret = a.exec();
+  if (ret == 0) {
+    QFile::remove(".crashmarker");
+  }
 
-    QApplication a(argc, argv);
-
-    if (previousRunCrashed) {
-        QMessageBox::StandardButton choice = QMessageBox::question(nullptr,
-                                                                   "Reset?",
-                                                                   "Stride IDE crashed. Would you like to reset it?");
-        if (choice == QMessageBox::No) {
-            previousRunCrashed = false;
-        }
-    }
-
-
-    ProjectWindow w;
-    a.installEventFilter(&w); // Pass events from a to w
-    w.initialize(previousRunCrashed);
-    w.show();
-
-    int ret = a.exec();
-    if (ret == 0) {
-        QFile::remove(".crashmarker");
-    }
-
-    return ret;
+  return ret;
 }

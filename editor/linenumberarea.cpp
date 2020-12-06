@@ -33,19 +33,37 @@
 */
 
 #include "linenumberarea.h"
+#include "errormarker.h"
 
 LineNumberArea::LineNumberArea(CodeEditor *editor) : QWidget(editor) {
-    m_codeEditor = editor;
+  m_codeEditor = editor;
+  for (size_t i = 0; i < numMarkers; i++) {
+    m_errorMarkers.emplace_back(std::make_shared<ErrorMarker>(editor));
+    m_errorMarkers.back()->hide();
+    m_errorMarkers.back()->setLineNumber(-1);
+  }
 }
 
-LineNumberArea::~LineNumberArea() {
-
-}
+LineNumberArea::~LineNumberArea() {}
 
 QSize LineNumberArea::sizeHint() const {
-    return {m_codeEditor->lineNumberAreaWidth(), 0};
+  return {m_codeEditor->lineNumberAreaWidth(), 0};
+}
+
+void LineNumberArea::setErrors(QList<LangError> errors) {
+  std::unique_lock<std::mutex> lk(m_markerLock);
+  for (auto marker : m_errorMarkers) {
+    marker->hide();
+    marker->setLineNumber(-1);
+  }
+  for (size_t i = 0; i < errors.size(); i++) {
+    m_errorMarkers[i]->setLineNumber(errors[i].lineNumber);
+    m_errorMarkers[i]->setErrorText(
+        QString::fromStdString(errors[i].getErrorText()));
+    m_errorMarkers[i]->show();
+  }
 }
 
 void LineNumberArea::paintEvent(QPaintEvent *event) {
-    m_codeEditor->lineNumberAreaPaintEvent(event);
+  m_codeEditor->lineNumberAreaPaintEvent(event);
 }

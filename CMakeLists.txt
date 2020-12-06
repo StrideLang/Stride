@@ -9,5 +9,5 @@ add_subdirectory(stridemanager)
 add_subdirectory(editor)
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/plugins/pufferfishplugin")
-#  add_subdirectory(plugins/pufferfishplugin)
+  add_subdirectory(plugins/pufferfishplugin)
 endif()

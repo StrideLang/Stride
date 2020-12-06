@@ -32,54 +32,36 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-#include <QPainter>
+#include <QEvent>
+#include <QHelpEvent>
 #include <QLabel>
+#include <QPainter>
+#include <QToolTip>
 
 #include "errormarker.h"
 
-ErrorMarker::ErrorMarker(QWidget *parent, int lineNumber, QString text) :
-    QWidget(parent) , m_lineNumber(lineNumber), m_expand(false), m_errorText(text)
-{
-    m_text = new QLabel(m_errorText, this);
-    m_text->move(this->x(), this->y());
-    m_text->hide();
-    m_text->adjustSize();
-//    this->setWindowFlags(Qt::Tool|Qt::FramelessWindowHint);
-//    m_text->resize(100, 100);
+ErrorMarker::ErrorMarker(QWidget *parent) : QWidget(parent) {}
 
-//    m_text->setWindowFlags(Qt::ToolTip);
+ErrorMarker::~ErrorMarker() {}
+
+void ErrorMarker::paintEvent(QPaintEvent *) {
+  QPainter painter(this);
+  //    painter.setPen(Qt::black);
+  painter.setBrush(Qt::red);
+  painter.drawRect(0, 0, 20, this->height());
 }
 
-ErrorMarker::~ErrorMarker()
-{
-
+void ErrorMarker::setErrorText(const QString &errorText) {
+  setToolTip(errorText);
 }
 
-void ErrorMarker::paintEvent(QPaintEvent *)
-{
-    QPainter painter(this);
-//    painter.setPen(Qt::black);
-    painter.setBrush(Qt::red);
-    painter.drawRect(0, 0, 20, this->height());
-    if (m_expand) {
-        painter.drawRect(0, 0, 20, this->height());
-    } else {
-        painter.drawRect(0, 0, 100, this->height());
-    }
+bool ErrorMarker::event(QEvent *event) {
+  if (event->type() == QEvent::ToolTip) {
+    QHelpEvent *helpEvent = static_cast<QHelpEvent *>(event);
+    QToolTip::showText(helpEvent->globalPos(), this->toolTip());
+    return true;
+  }
+  return QWidget::event(event);
 }
 
-void ErrorMarker::enterEvent(QEvent *event)
-{
-    Q_UNUSED(event);
-    m_text->show();
-    m_expand = true;
-}
-
-
-void ErrorMarker::leaveEvent(QEvent *event)
-{
-    Q_UNUSED(event);
-    m_text->hide();
-    m_expand = false;
-}
-
+void ErrorMarker::setLineNumber(int lineNumber) { m_lineNumber = lineNumber; }

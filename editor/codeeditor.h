@@ -48,6 +48,8 @@
 #include "langerror.h"
 #include "tooltip.hpp"
 
+class LineNumberArea;
+
 class CodeEditor : public QPlainTextEdit {
   Q_OBJECT
 public:
@@ -92,11 +94,10 @@ private slots:
   void updateAutoCompleteMenu(QString currentWord);
 
 private:
-  QWidget *m_lineNumberArea;
+  LineNumberArea *m_lineNumberArea;
   CodeModel *m_codeModel;
   AutoCompleteMenu m_autoCompleteMenu;
-  std::vector<std::shared_ptr<ErrorMarker>> m_errorMarkers;
-  std::mutex m_markerLock;
+  //  QList<LangError> m_errors;
   QTimer m_ButtonTimer;
   QTimer m_mouseIdleTimer;
   QAtomicInt m_changedSinceParse{1};

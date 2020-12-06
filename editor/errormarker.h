@@ -35,31 +35,32 @@
 #ifndef ERRORMARKER_H
 #define ERRORMARKER_H
 
+#include <QLabel>
 #include <QWidget>
 
-class ErrorMarker : public QWidget
-{
-    Q_OBJECT
+class ErrorMarker : public QWidget {
+  Q_OBJECT
 public:
-    explicit ErrorMarker(QWidget *parent = 0, int lineNumber = -1, QString text = QString());
-    ~ErrorMarker();
+  explicit ErrorMarker(QWidget *parent = 0);
+  ~ErrorMarker();
 
-    int getLineNumber() {return m_lineNumber;}
+  int getLineNumber() { return m_lineNumber; }
+
+  void setLineNumber(int lineNumber);
+
+  void setErrorText(const QString &errorText);
 
 signals:
 
 public slots:
 
 protected:
-    virtual void paintEvent(QPaintEvent * event);
-    virtual void enterEvent(QEvent *event);
-    virtual void leaveEvent(QEvent *event);
+  bool event(QEvent *event) override;
+  virtual void paintEvent(QPaintEvent *event) override;
 
 private:
-    int m_lineNumber;
-    bool m_expand;
-    QString m_errorText;
-    QWidget *m_text;
+  int m_lineNumber{-1};
+  bool m_expand{false};
 };
 
 #endif // ERRORMARKER_H
