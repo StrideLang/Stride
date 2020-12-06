@@ -55,6 +55,8 @@ public:
 
   bool autoComplete();
   void setAutoComplete(bool enabled);
+  bool inspectorShowAll();
+  void setInspectorShowAll(bool enabled);
 
   QMap<QString, QTextCharFormat> highlighterFormats() const;
 

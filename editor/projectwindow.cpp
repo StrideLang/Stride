@@ -593,7 +593,7 @@ QTreeWidgetItem *ProjectWindow::createTreeItem(ASTNode inputNode) {
     QVariantList fileInfo;
     fileInfo << QString::fromStdString(inputNode->getFilename());
     fileInfo << inputNode->getLine();
-    if (!m_guiOptions["gui.inspectorShowInternal"].toBool() &&
+    if (!m_options["inspector.inspectorShowInternal"].toBool() &&
         (declaration->getName()[0] == '_' ||
          declaration->getObjectType()[0] == '_')) {
       return nullptr;
@@ -862,6 +862,8 @@ void ProjectWindow::openOptionsDialog() {
   config.setFont(font);
 
   config.setAutoComplete(m_options["editor.autoComplete"].toBool());
+  config.setInspectorShowAll(
+      m_options["inspector.inspectorShowInternal"].toBool());
 
   QMap<QString, QTextCharFormat> formats = m_highlighter->formats();
   config.setHighlighterFormats(formats);
@@ -877,16 +879,18 @@ void ProjectWindow::openOptionsDialog() {
   int result = config.exec();
   // Get values back
   if (result == QDialog::Accepted) {
+    writeSettings();
     QFont font = config.font();
     m_options["editor.fontFamily"] = font.family();
     m_options["editor.fontSize"] = font.pointSizeF();
     m_options["editor.fontWeight"] = font.weight();
     m_options["editor.fontItalic"] = font.italic();
     m_options["editor.autoComplete"] = config.autoComplete();
+    m_options["inspector.inspectorShowInternal"] = config.inspectorShowAll();
     m_highlighter->setFormats(config.highlighterFormats());
 
     updateEditorSettings();
-    writeSettings();
+    fillInspectorTree();
   }
 }
 
@@ -1080,8 +1084,8 @@ void ProjectWindow::readSettings(bool resetOpenFiles) {
     ui->tabWidget->setCurrentIndex(lastIndex);
   }
 
-  //  m_guiOptions["gui.inspectorShowInternal"] =
-  //      settings.value("gui.inspectorShowInternal", true).toBool();
+  m_options["inspector.inspectorShowInternal"] =
+      settings.value("inspectorShowInternal", true).toBool();
   settings.endGroup();
 }
 
@@ -1108,6 +1112,10 @@ void ProjectWindow::writeSettings() {
   }
   settings.endGroup();
 
+  settings.beginGroup("environment");
+  settings.setValue("striderootPath", m_environment["striderootPath"]);
+  settings.endGroup();
+
   settings.beginGroup("GUI");
   settings.setValue("geometry", saveGeometry());
   settings.setValue("windowState", saveState());
@@ -1119,14 +1127,8 @@ void ProjectWindow::writeSettings() {
     settings.setValue("fileName", editor->filename());
   }
   settings.endArray();
-  settings.endGroup();
-
-  settings.beginGroup("environment");
-  settings.setValue("striderootPath", m_environment["striderootPath"]);
-  QStringList guiKeys = m_guiOptions.keys();
-  for (QString key : guiKeys) {
-    settings.setValue(key, m_guiOptions[key]);
-  }
+  settings.setValue("inspectorShowInternal",
+                    m_options["inspector.inspectorShowInternal"].toBool());
   settings.endGroup();
 }
 
@@ -1189,7 +1191,8 @@ void ProjectWindow::updateRecentActionList() {
 void ProjectWindow::fillInspectorTree() {
   // Fill inspector tree
   AST *tree = m_codeModel.getOptimizedTree();
-  ui->treeWidget->clear(); // TODO keep open leafs open
+  // TODO keep open leafs open
+  ui->treeWidget->clear();
   ui->treeWidget->setColumnCount(2);
   ui->treeWidget->setHeaderLabels(QStringList() << "Name"
                                                 << "Type");
@@ -1198,6 +1201,7 @@ void ProjectWindow::fillInspectorTree() {
                                                  QHeaderView::ResizeToContents);
   ui->treeWidget->header()->setSectionResizeMode(1, QHeaderView::Stretch);
   ui->treeWidget->setSortingEnabled(false);
+
   if (tree) {
     for (auto node : tree->getChildren()) {
       if (node->getNodeType() == AST::Declaration ||

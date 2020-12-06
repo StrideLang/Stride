@@ -69,6 +69,14 @@ void ConfigDialog::setAutoComplete(bool enabled) {
   ui->autoCompleteCheckBox->setChecked(enabled);
 }
 
+bool ConfigDialog::inspectorShowAll() {
+  return ui->inspectorInternalCheckBox->isChecked();
+}
+
+void ConfigDialog::setInspectorShowAll(bool enabled) {
+  ui->inspectorInternalCheckBox->setChecked(enabled);
+}
+
 QMap<QString, QTextCharFormat> ConfigDialog::highlighterFormats() const {
   return m_highlighterFormats;
 }

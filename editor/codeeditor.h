@@ -97,7 +97,6 @@ private:
   LineNumberArea *m_lineNumberArea;
   CodeModel *m_codeModel;
   AutoCompleteMenu m_autoCompleteMenu;
-  //  QList<LangError> m_errors;
   QTimer m_ButtonTimer;
   QTimer m_mouseIdleTimer;
   QAtomicInt m_changedSinceParse{1};

@@ -17,14 +17,21 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
        <string>Editor</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout">
-       <item row="4" column="1">
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_2">
+         <property name="text">
+          <string>Editor Colors</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="1">
         <spacer name="verticalSpacer">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -37,25 +44,18 @@
          </property>
         </spacer>
        </item>
-       <item row="0" column="1">
-        <widget class="QPushButton" name="fontPushButton">
-         <property name="text">
-          <string>PushButton</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_2">
-         <property name="text">
-          <string>Editor Colors</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="0">
-        <widget class="QLabel" name="label">
-         <property name="text">
-          <string>Editor Font</string>
-         </property>
+       <item row="1" column="1">
+        <widget class="QComboBox" name="editorPresetComboBox">
+         <item>
+          <property name="text">
+           <string>Default</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>None</string>
+          </property>
+         </item>
         </widget>
        </item>
        <item row="0" column="2">
@@ -70,6 +70,13 @@
           </size>
          </property>
         </spacer>
+       </item>
+       <item row="0" column="1">
+        <widget class="QPushButton" name="fontPushButton">
+         <property name="text">
+          <string>PushButton</string>
+         </property>
+        </widget>
        </item>
        <item row="2" column="0" colspan="3">
         <widget class="QTableWidget" name="colorsTableWidget">
@@ -112,24 +119,24 @@
          </column>
         </widget>
        </item>
-       <item row="1" column="1">
-        <widget class="QComboBox" name="editorPresetComboBox">
-         <item>
-          <property name="text">
-           <string>Default</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>None</string>
-          </property>
-         </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>Editor Font</string>
+         </property>
         </widget>
        </item>
        <item row="3" column="0" colspan="2">
         <widget class="QCheckBox" name="autoCompleteCheckBox">
          <property name="text">
           <string>Autocomplete syntax</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QCheckBox" name="inspectorInternalCheckBox">
+         <property name="text">
+          <string>Show All in Inspector</string>
          </property>
         </widget>
        </item>
