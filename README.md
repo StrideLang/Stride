@@ -19,3 +19,16 @@ Requirements:
 ## Linux
 
 apt install flex bison freeglut3-dev
+
+## Windows
+
+Download and install:
+
+ * flex: http://gnuwin32.sourceforge.net/packages/flex.htm
+ * bison: http://gnuwin32.sourceforge.net/packages/bison.htm
+ 
+ When calling cmake add the following to the cmake call: 
+ 
+     -DBISON_EXECUTABLE='C:\Program Files (x86)\GnuWin32\bin\bison.exe' -DFLEX_EXECUTABLE='C:\Program Files (x86)\GnuWin32\bin\flex.exe'
+ 
+ Tested with Visual Studio 2019.
