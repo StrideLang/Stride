@@ -1,0 +1,56 @@
+use DesktopAudio version 1.0
+
+typeClass CanAddType {
+    types: [ _IntType, _RealType ]
+}
+
+module TestTemplate {
+    ports: [
+        mainInputPort InputPort {
+            block: Input
+            size: 2
+        }        
+        mainOutputPort OutputPort {
+            block: Output
+            size: 1
+            type: InputPort.type
+        }
+    ]     
+    streams: [
+        @Code
+        Input[0] + Input[1] >> Output;
+    ]
+}
+
+
+module Test@Int {
+    template: TestTemplate
+    portTypes: [
+        portType InputPortType {
+            port: InputPort
+            type: _IntType
+        }
+    ]
+    streams: [
+        @Code
+        Input[1] + Input[0] >> Output;
+        
+    ]      
+}
+
+
+signal IntSigA {
+    default: 5
+    type: _IntType
+}
+
+signal IntSigB {
+    default: 5
+    type: _IntType
+}
+
+[AudioIn[0], AudioIn[0]] >> Add() >> AudioOut[0];
+[IntSigA, IntSigB] >> Add() >> AudioOut[1];
+#AudioIn[1] >> Test@Int() >> AudioOut[1]; 
+
+

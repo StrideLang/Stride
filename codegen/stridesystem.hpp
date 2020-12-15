@@ -119,7 +119,7 @@ public:
   getFrameworkDataType(std::string frameworkName, std::string strideDataType);
 
   std::string getFrameworkDefaultDataType(std::string frameworkName,
-                                          string strideType);
+                                          std::string strideType);
 
   std::vector<std::shared_ptr<DeclarationNode>>
   getFrameworkOperators(std::string frameworkName);
@@ -137,6 +137,14 @@ public:
 private:
   QVector<ASTNode> getPortsForTypeBlock(DeclarationNode *block);
   //    ListNode *getPortsForFunction(QString typeName);
+
+  static std::vector<ASTNode> getTreesInDirectory(std::string path);
+
+  std::vector<ASTNode> processNewTrees(std::string subPath);
+
+  std::shared_ptr<DeclarationNode>
+  findDataTypeInPath(std::string path, std::string strideDataType);
+  string findDefaultDataTypeInPath(std::string path, string strideType);
 
   QString makeProject(QString fileName);
 

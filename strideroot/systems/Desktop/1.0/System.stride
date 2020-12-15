@@ -1,0 +1,55 @@
+
+platform _WiringPlatform {
+	framework: "Wiring"
+	frameworkVersion: "1.0"
+	hardware: none
+	hardwareVersion: none
+	required: off
+    rootNamespace: "Wiring"
+}
+
+# ---- PC Desktop full app
+platform _PCPlatform {
+	framework: "Cpp"
+	frameworkVersion: "1.0"
+	hardware: "Local"
+	hardwareVersion: "1.0"
+	required: on #TODO validation of "required" is not yet implemented
+    rootNamespace: ""
+}
+
+connection _PCToWiringSerial {
+	sourceFramework: _PCPlatform
+	sourceDomains: [ ]
+	destinationFramework: _WiringPlatform
+	destinationDomains: [ "WiringDomain" ]
+	sourceImports: ["Serial"]
+	sourceStreams: [
+		_Connection_Token >> SerialOut[0];
+	]
+	destinationImports: ["Serial"]
+	destinationStreams: [
+		Wiring::SerialIn[0] >> _Connection_Token;
+	]
+}
+
+connection _WiringToPCSerial {
+	sourceFramework: _WiringPlatform
+	sourceDomains: [ "WiringDomain" ]
+	destinationFramework: _PCPlatform
+	destinationDomains: [ "AudioDomain" ]
+	sourceImports: ["Serial"]
+	sourceStreams: [
+		_Connection_Token >> Wiring::SerialOut[0];
+	]
+	destinationImports: ["Serial"]
+	destinationStreams: [
+		SerialIn[0] >> _Connection_Token;
+	]
+}
+
+system DesktopApp {
+    platforms: [_WiringPlatform, _PCPlatform]
+    connections: [_PCToWiringSerial, _WiringToPCSerial]
+	meta: "Self contained desktop application"
+}

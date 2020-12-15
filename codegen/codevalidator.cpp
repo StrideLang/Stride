@@ -2684,7 +2684,8 @@ double CodeValidator::resolveRatePortProperty(
                 if (rate != -1) {
                   return rate;
                 }
-                if (subScope.first->getNodeType() != AST::Function) {
+                if (!subScope.first ||
+                    subScope.first->getNodeType() != AST::Function) {
                   // If no longer a module instance (i.e. AST::Function), the
                   // rate cannot be resolved
                   break;

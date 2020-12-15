@@ -450,6 +450,18 @@ type _FrameworkDescriptionType {
 			types: [""]
 			default: _RealType
 			required: off
+		},
+		typeProperty Inherits {
+			name: "inherits"
+			types: [_StringLiteral, ""]
+			default: none
+			required: off
+		},
+		typeProperty InheritsVersion {
+			name: "inheritsVersion"
+			types: [_StringLiteral, ""]
+			default: none
+			required: off
 		}
 	]
 	inherits: [_Base]

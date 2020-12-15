@@ -35,7 +35,7 @@ void ToolManager::readTemplates() {
       for (auto child : tree->getChildren()) {
         if (child->getNodeType() == AST::Declaration) {
           auto decl = std::static_pointer_cast<DeclarationNode>(child);
-          if (decl->getObjectType() == "toolTemplate") {  // ----------------
+          if (decl->getObjectType() == "toolTemplate") { // ----------------
             auto platformsNode = decl->getPropertyValue("platforms");
             if (platformsNode && platformsNode->getNodeType() == AST::List) {
               bool validPlatform = false;
@@ -93,7 +93,7 @@ void ToolManager::readTemplates() {
               std::cerr << "ERROR in platforms port in toolTemplate"
                         << std::endl;
             }
-          } else if (decl->getObjectType() == "toolSearch") {  // -----------
+          } else if (decl->getObjectType() == "toolSearch") { // -----------
             auto platformsNode = decl->getPropertyValue("platforms");
             if (platformsNode && platformsNode->getNodeType() == AST::List) {
               bool validPlatform = false;
@@ -143,9 +143,11 @@ void ToolManager::readTemplates() {
 
                 if (toolTemplate.size() > 0) {
                   if (toolSearches.find(toolTemplate) != toolSearches.end()) {
-                    std::cout << "Warning: tool searches already contain tool "
-                                 "template: "
-                              << toolTemplate << ". Overwriting." << std::endl;
+                    //                    std::cout << "Warning: tool searches
+                    //                    already contain tool "
+                    //                                 "template: "
+                    //                              << toolTemplate << ".
+                    //                              Overwriting." << std::endl;
                     // FIXME allow multiple tool searches.
                   }
                   toolSearches[toolTemplate] = std::make_shared<ToolSearch>();
@@ -163,7 +165,7 @@ void ToolManager::readTemplates() {
                         << std::endl;
             }
           } else if (decl->getObjectType() ==
-                     "pathTemplate") {  // ----------------
+                     "pathTemplate") { // ----------------
             auto platformsNode = decl->getPropertyValue("platforms");
             if (platformsNode && platformsNode->getNodeType() == AST::List) {
               bool validPlatform = false;
@@ -221,7 +223,7 @@ void ToolManager::readTemplates() {
               std::cerr << "ERROR in platforms port in toolTemplate"
                         << std::endl;
             }
-          } else if (decl->getObjectType() == "pathSearch") {  // -----------
+          } else if (decl->getObjectType() == "pathSearch") { // -----------
             auto platformsNode = decl->getPropertyValue("platforms");
             if (platformsNode && platformsNode->getNodeType() == AST::List) {
               bool validPlatform = false;

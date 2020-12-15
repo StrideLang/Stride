@@ -55,8 +55,25 @@ set(CMAKE_AUTOUIC ON)
 
 qt5_add_resources(QT_RESOURCES qmlfiles.qrc)
 
-add_executable(StrideIDE ${EDITOR_SRC} ${EDITOR_HEADERS})
+# TODO add Windows icon
+#if(WIN32)
+#  set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/qt5app.rc")
+#endif()
+
+add_executable(StrideIDE ${EDITOR_SRC} ${EDITOR_HEADERS} ${APP_ICON_RESOURCE_WINDOWS})
 
 target_include_directories(StrideIDE PUBLIC ../parser .)
 target_link_libraries(StrideIDE StrideParser StrideCodegen 
   Qt5::Core Qt5::Widgets Qt5::WebEngine Qt5::WebEngineWidgets Qt5::Qml)
+
+# TODO add Icon
+if(APPLE)
+#  set(MACOSX_BUNDLE_ICON_FILE qt5app.icns)
+  
+#  set(APP_ICON_MACOSX ${CMAKE_CURRENT_SOURCE_DIR}/qt5app.icns)
+#  set_source_files_properties(${APP_ICON_MACOSX} PROPERTIES
+#         MACOSX_PACKAGE_LOCATION "Resources")
+  
+elseif(UNIX)
+endif()
+

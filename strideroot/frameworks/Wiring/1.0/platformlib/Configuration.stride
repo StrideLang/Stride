@@ -1,0 +1,11 @@
+#_frameworkConfiguration _WiringConfiguration {
+#    frameworkName: "Wiring"
+#    installation: [
+#        installAction TimerInstall {
+#            workingDirectory: "project"
+#            language: none
+#            # TODO how can we query the arduino-cli path from here?
+#            command: "./arduino-cli lib install arduino-timer"
+#        }
+#    ]
+#}

@@ -354,10 +354,14 @@ string LanguageSyntax::getDataType(std::shared_ptr<DeclarationNode> decl,
     dataTypeNode = system->getFrameworkDataType(frameworkName, defaultDataType);
   }
 
-  auto dataTypeNameNode = dataTypeNode->getPropertyValue("frameworkName");
-  if (dataTypeNameNode && dataTypeNameNode->getNodeType() == AST::String) {
-    dataType =
-        static_pointer_cast<ValueNode>(dataTypeNameNode)->getStringValue();
+  if (dataTypeNode) {
+    auto dataTypeNameNode = dataTypeNode->getPropertyValue("frameworkName");
+    if (dataTypeNameNode && dataTypeNameNode->getNodeType() == AST::String) {
+      dataType =
+          static_pointer_cast<ValueNode>(dataTypeNameNode)->getStringValue();
+    }
+  } else {
+    qDebug() << "ERROR: no datatype provided";
   }
   return dataType;
 }

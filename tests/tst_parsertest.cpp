@@ -119,7 +119,7 @@ ParserTest::ParserTest() {
 
 void ParserTest::testMultichannelUgens() {
   ASTNode tree;
-  tree = AST::parseFile(BUILDPATH "tests/data/E03_multichn_streams.stride");
+  tree = AST::parseFile(BUILDPATH "/tests/data/E03_multichn_streams.stride");
   QVERIFY(tree != nullptr);
   CodeResolver resolver(tree, STRIDEROOT);
   resolver.process();
@@ -138,7 +138,6 @@ void ParserTest::testMultichannelUgens() {
   QVERIFY(error.type == LangError::StreamMemberSizeMismatch);
   QVERIFY(error.lineNumber == 25);
   QVERIFY(error.errorTokens[0] == "4");
-  //    QVERIFY(error.errorTokens[1] == "DummyStereo");
   QVERIFY(error.errorTokens[2] == "2");
 }
 

@@ -1,0 +1,15 @@
+_frameworkDescription _RtAudioFramework {
+    frameworkName: "RtAudio"
+    defaultDataType: _RealType
+    inherits: "Cpp"
+    inheritsVersion: "1.0"
+}
+
+alias PlatformDomain {
+    block: AudioDomain
+}
+
+alias PlatformRate {
+    block: AudioRate
+}
+

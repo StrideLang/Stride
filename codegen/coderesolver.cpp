@@ -903,64 +903,6 @@ ASTNode CodeResolver::expandFunctionFromProperties(
 
 void CodeResolver::insertBuiltinObjects() {
   QList<std::shared_ptr<DeclarationNode>> usedDeclarations;
-
-  // First pass to add the fundamental types
-  //  for (ASTNode object : m_importTrees[""]) {
-  //    if (object->getNodeType() == AST::Declaration) {
-  //      std::shared_ptr<DeclarationNode> block =
-  //          static_pointer_cast<DeclarationNode>(object);
-  //      if (block->getObjectType() == "type") {
-  //        ASTNode nameNode = block->getPropertyValue("typeName");
-  //        if (nameNode->getNodeType() == AST::String) {
-  //          ValueNode *typeName = static_cast<ValueNode *>(nameNode.get());
-  //          if (typeName->getStringValue() == "signal"
-  //                            /*|| typeName->getStringValue() ==
-  //                            "propertyInputPort"
-  //                            || typeName->getStringValue() ==
-  //                            "propertyOutputPort"
-  //                            || typeName->getStringValue() == "reaction"
-  //                            || typeName->getStringValue() ==
-  //                            "signalbridge"*/) {
-  //            m_tree->addChild(block);
-  //            usedDeclarations << block;
-  //          }
-  //          if (typeName->getStringValue() == "type" ||
-  //              typeName->getStringValue() == "platformModule" ||
-  //              typeName->getStringValue() == "platformBlock") {
-  //            m_tree->addChild(block);
-  //            usedDeclarations << block;
-  //          }
-  //        }
-  //      } else if (block->getObjectType() == "alias") {
-  //        if (block->getName() == "PlatformDomain" ||
-  //            block->getName() == "PlatformRate") {
-  //          m_tree->addChild(block);
-  //          usedDeclarations << block;
-  //        }
-  //      } else if (block->getObjectType() == "_domainDefinition" ||
-  //                 block->getObjectType() ==
-  //                     "_frameworkDescription") // Hack... this should be
-  //                                              // getting inserted when
-  //                                              // resolving symbols...)
-  //      {
-  //        m_tree->addChild(block);
-  //        usedDeclarations << block;
-  //      } else if (/*block->getName() == "_PlatformDomainProcessing" ||*/
-  //                 block->getName() == "_GlobalInitTag") {
-  //        m_tree->addChild(block);
-  //        usedDeclarations << block;
-  //      }
-  //      //            continue;
-  //    }
-  //  }
-  //  for (ASTNode decl : usedDeclarations) {
-  //    m_importTrees[""].erase(
-  //        std::find(m_importTrees[""].begin(), m_importTrees[""].end(),
-  //        decl));
-  //    insertBuiltinObjectsForNode(decl, m_importTrees, m_tree);
-  //  }
-
-  // Second pass to add elements that depend on the user's code
   auto children = m_tree->getChildren();
   for (ASTNode object : children) {
     insertBuiltinObjectsForNode(object, m_importTrees, m_tree);

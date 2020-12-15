@@ -29,10 +29,12 @@ module SimpleTest {
     ]
 }
 
+
 # Correct, passes constraints
 signal InSignal[2] { domain: AsyncDomain rate: 2}
 signal OutSignal[2] { domain: AudioDomain }
 InSignal >> SimpleTest() >> OutSignal;
+
 
 # Fails constraint rate must be 2
 signal InSignal2[2] { domain: AsyncDomain rate: 3}

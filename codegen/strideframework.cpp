@@ -46,12 +46,9 @@ StrideFramework::StrideFramework(std::string strideRoot, std::string framework,
                                  std::string hardwareVersion,
                                  std::string rootNamespace,
                                  std::string identifier)
-    : m_strideRoot(strideRoot),
-      m_framework(framework),
-      m_frameworkVersion(fwVersion),
-      m_hardware(hardware),
-      m_hardwareVersion(hardwareVersion),
-      m_rootNamespace(rootNamespace),
+    : m_strideRoot(strideRoot), m_framework(framework),
+      m_frameworkVersion(fwVersion), m_hardware(hardware),
+      m_hardwareVersion(hardwareVersion), m_rootNamespace(rootNamespace),
       m_identifier(identifier) {
   auto platformPath = buildPlatformPath(strideRoot);
 }
@@ -149,7 +146,8 @@ void StrideFramework::installFramework() {
                   //                        qDebug() <<
                   //                        installProcess.readAllStandardError();
                   //                      });
-                  installProcess.start(QString::fromStdString(command));
+                  installProcess.start(QString::fromStdString(command),
+                                       QStringList());
                   if (!installProcess.waitForStarted()) {
                     qDebug() << "Error starting";
                   }

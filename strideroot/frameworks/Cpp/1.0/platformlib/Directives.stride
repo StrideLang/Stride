@@ -1,0 +1,48 @@
+
+generatorDirectives __GeneratorDirectives {
+    projectDir: "project"
+    templateFiles: ["template.cpp", "config.cmake"]
+    destinationDir: "code"
+    buildDir: "build"
+    configCommand: [CMake, ".."]
+    buildCommand: [CMake, "--build", "."]
+    target: "app"
+#    targetDir: "build/"
+    codeGenerator: "pufferfish"
+    codeGeneratorMajorVersion: 1
+    codeGeneratorMinorVersion: 0
+    buildPlatforms: ["Linux"]
+    substitutions: [["link_libraries", '-lpthread']]
+}
+
+generatorDirectives __GeneratorDirectives {
+    projectDir: "project"
+    templateFiles: ["template.cpp", "config.cmake"]
+    destinationDir: "code"
+    buildDir: "build"
+    configCommand: [CMake,".."]
+    buildCommand: [CMake, "--build", "."]
+    target: "app"
+    targetDir: "build"
+    codeGenerator: "pufferfish"
+    codeGeneratorMajorVersion: 1
+    codeGeneratorMinorVersion: 0
+    buildPlatforms: ["Windows"]
+    substitutions: [["link_libraries", '']]
+}
+
+generatorDirectives __GeneratorDirectives {
+    projectDir: "project"
+    templateFiles: ["template.cpp", "config.cmake"]
+    destinationDir: "code"
+    buildDir: "build"
+    configCommand: [CMake,  "-DSTRIDE_PLATFORM_ROOT=%platformRoot%", ".."]
+    buildCommand: [CMake, "--build", "."]
+    target: "app"
+    targetDir: "build"
+    codeGenerator: "pufferfish"
+    codeGeneratorMajorVersion: 1
+    codeGeneratorMinorVersion: 0
+    buildPlatforms: ["macOS"]
+    substitutions: [["link_libraries", '-lpthread'] ]
+}

@@ -1,0 +1,13 @@
+toolRequirement CMakeRequirement {
+    toolInstance: CMake
+    minVersion: none
+    maxVersion: none
+    exactVersion: none
+}
+
+toolRequirement GitRequirement {
+    toolInstance: Git
+    minVersion: none
+    maxVersion: none
+    exactVersion: none
+}

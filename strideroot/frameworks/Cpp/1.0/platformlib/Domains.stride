@@ -1,0 +1,77 @@
+_domainDefinition RootDomain {
+	domainName: "RootDomain"
+	framework: _CppFramework
+	rate: -1 # -1 is 'one-shot/final' domain
+    substitutions: [ ]
+    domainIncludes: ["ReadWriteClasses.hpp",
+	"Synchronization.hpp",
+	"Helper.hpp", "<iostream>"]
+	domainFunctionCode: '
+// RtAudio RootDomain template
+//[[Includes]]
+//[[/Includes]]
+
+//[[Declarations]]
+//[[/Declarations]]
+
+//[[Instances]]
+//[[/Instances]]
+int main() {
+//[[Initialization]]
+//[[/Initialization]]
+
+    char input;
+    std::cout << "\nRunning ... press <enter> to quit.\n";
+    std::cin.get(input);
+
+
+//[[Cleanup]]
+//[[/Cleanup]]
+    return 0;
+}
+'
+}
+
+constant AsyncRate {
+	value: 1000
+}
+
+_domainDefinition AsyncDomain {
+	domainName: "AsyncDomain"
+	framework: _CppFramework
+	parentDomain: RootDomain
+	rate: AsyncRate
+    substitutions: ["domain_rate", AsyncDomain.rate ]
+    domainIncludes: ['<thread>', '<chrono>', '<iostream>']
+    domainDeclarations: ["void thread_func();",
+		"std::thread asyncthread(thread_func);",
+		"bool asyncthread_running {true};"]
+    domainInitializationCode: "
+	//[[Initialization]]
+//[[/Initialization]]
+	"
+	domainProcessingCode: "// Async processing
+	"
+	domainFunctionCode: "
+	void thread_func() {
+		const int duration_ns = 1.0e9/%%domain_rate%%;
+		while (asyncthread_running) {
+			std::chrono::time_point<std::chrono::system_clock> start_time = std::chrono::system_clock::now();
+//[[Processing]]
+//[[/Processing]]
+			// TODO add overrun check
+	auto end_time = start_time + std::chrono::nanoseconds(duration_ns);
+    std::this_thread::sleep_until(end_time);
+
+			}
+}
+	"
+    domainCleanupCode: '
+//[[Cleanup]]
+//[[/Cleanup]]
+	asyncthread_running = false;
+	asyncthread.join();
+	std::cout << "Thread joined." << std::endl;
+	'
+}
+

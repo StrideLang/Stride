@@ -1,0 +1,13 @@
+_frameworkDescription _CppFramework {
+    frameworkName: "Cpp"
+    defaultDataType: _RealType
+}
+
+alias PlatformDomain {
+    block: AsyncDomain
+}
+
+alias PlatformRate {
+    block: AsyncRate
+}
+

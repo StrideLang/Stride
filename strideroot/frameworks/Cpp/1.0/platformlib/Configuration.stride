@@ -1,0 +1,10 @@
+_frameworkConfiguration _CppConfiguration {
+    frameworkName: "Cpp"
+    installation: [
+        installAction SerialInstall {
+            workingDirectory: "project"
+            language: none
+            command: "git clone --branch 1.2.1 https://github.com/wjwwood/serial.git"
+        }
+    ]
+}

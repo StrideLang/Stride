@@ -67,11 +67,11 @@ PythonProject::PythonProject(QString platformName, QString platformPath,
 }
 
 PythonProject::~PythonProject() {
-  m_building.store(0);
+  m_building.storeRelaxed(0);
   m_buildProcess.kill();
   m_buildProcess.waitForFinished();
 
-  m_running.store(0);
+  m_running.storeRelaxed(0);
   m_runningProcess.kill();
   m_runningProcess.waitForFinished();
 }
@@ -108,10 +108,10 @@ bool PythonProject::build(std::map<string, string> domainMap) {
 
   m_buildProcess.waitForStarted(15000);
   //    qDebug() << "pid:" << m_buildProcess.pid();
-  m_building.store(1);
-  while (m_building.load() == 1) {
+  m_building.storeRelaxed(1);
+  while (m_building.loadRelaxed() == 1) {
     if (m_buildProcess.waitForFinished(50)) {
-      m_building.store(0);
+      m_building.storeRelaxed(0);
     }
     qApp->processEvents();
   }
@@ -150,11 +150,11 @@ bool PythonProject::run(bool pressed) {
   qDebug() << arguments;
 
   m_runningProcess.waitForStarted(15000);
-  qDebug() << "run pid:" << m_runningProcess.pid();
-  m_running.store(1);
-  while (m_running.load() == 1) {
+  //  qDebug() << "run pid:" << m_runningProcess.pid();
+  m_running.storeRelaxed(1);
+  while (m_running.loadRelaxed() == 1) {
     if (m_runningProcess.waitForFinished(50)) {
-      m_running.store(0);
+      m_running.storeRelaxed(0);
     }
     qApp->processEvents();
   }
@@ -171,8 +171,8 @@ bool PythonProject::run(bool pressed) {
 }
 
 void PythonProject::stopRunning() {
-  m_building.store(0);
-  m_running.store(0);
+  m_building.storeRelaxed(0);
+  m_running.storeRelaxed(0);
   if (m_buildProcess.state() == QProcess::Running) {
     m_buildProcess.kill(); // Taking too long...
   }
@@ -521,10 +521,10 @@ bool PythonProject::isValid() { return true; }
 void PythonProject::consoleMessage() {
   QByteArray stdOut;
   QByteArray stdErr;
-  if (m_running.load() == 1) {
+  if (m_running.loadRelaxed() == 1) {
     stdOut = m_runningProcess.readAllStandardOutput();
     stdErr = m_runningProcess.readAllStandardError();
-  } else if (m_building.load() == 1) {
+  } else if (m_building.loadRelaxed() == 1) {
     stdOut = m_buildProcess.readAllStandardOutput();
     stdErr = m_buildProcess.readAllStandardError();
   } else {
