@@ -37,48 +37,49 @@
 
 #include <vector>
 
-#include <QString>
 #include <QList>
 #include <QMap>
+#include <QString>
 
 #include "declarationnode.h"
 #include "langerror.h"
 
 struct LibraryTree {
-    std::vector<std::string> namespaces;
-    QString importName;
-    QString importAs;
-    ASTNode tree;
+  std::string importName;
+  std::string importAs;
+  std::vector<ASTNode> nodes;
+  std::vector<std::string> namespaces;
 };
 
-class StrideLibrary
-{
+class StrideLibrary {
 public:
-    StrideLibrary();
-   ~StrideLibrary();
+  StrideLibrary();
+  ~StrideLibrary();
 
-    void initializeLibrary(QString strideRootPath);
+  void initializeLibrary(QString strideRootPath);
 
-    std::shared_ptr<DeclarationNode> findTypeInLibrary(QString typeName);
+  std::shared_ptr<DeclarationNode> findTypeInLibrary(QString typeName);
 
-    bool isValidBlock(DeclarationNode *block);
+  bool isValidBlock(DeclarationNode *block);
 
-    std::map<std::string, std::vector<ASTNode> > getLibraryMembers();
+  std::map<std::string, std::vector<ASTNode>> getLibraryMembers();
 
-    ASTNode loadImportTree(QString importName, QString importAs, QStringList scopeTree);
+  std::vector<ASTNode> loadImport(std::string importName, std::string importAs);
 
 private:
+  bool isValidProperty(std::shared_ptr<PropertyNode> property,
+                       DeclarationNode *type);
+  QList<DeclarationNode *> getParentTypes(DeclarationNode *type);
 
-    bool isValidProperty(std::shared_ptr<PropertyNode> property, DeclarationNode *type);
-    QList<DeclarationNode *> getParentTypes(DeclarationNode *type);
+  void readLibrary(QString rootDir);
 
-    void readLibrary(QString rootDir);
-    std::vector<LibraryTree> m_libraryTrees; // List of root and imported library trees
+  std::vector<LibraryTree>
+      m_libraryTrees; // List of root and imported library trees
 
-    QString m_libraryPath;
+  QString m_libraryPath;
 
-    int m_majorVersion;
-    int m_minorVersion;
+  int m_majorVersion;
+  int m_minorVersion;
 };
 
 #endif // STRIDELIBRARY_HPP

@@ -79,15 +79,19 @@ public:
   std::string substituteTokens(std::string namespaceName, std::string text);
   //    DeclarationNode *getFunction(QString functionName);
   vector<string> getFrameworkNames();
+
+  // FIXME remove this function, use getImportTrees
   map<string, vector<ASTNode>>
-  getBuiltinObjectsReference(); // The key to the map is the namespace name
+  getBuiltinObjects(); // The key to the map is the namespace name
 
   //    bool typeHasPort(QString typeName, QString propertyName);
 
   static vector<ASTNode> getOptionTrees(string systemPath);
 
-  ASTNode loadImportTree(string importName, string importAs,
-                         string platformName = "");
+  // if framework != "" then import is limited to the specified framework
+  std::vector<ASTNode> loadImportTree(string importName, string importAs,
+                                      string frameworkName = "");
+  std::map<string, std::vector<ASTNode>> getImportTrees();
 
   std::string getFrameworkAlias(std::string frameworkName);
   std::string getFrameworkFromAlias(std::string frameworkAlias);
@@ -108,6 +112,7 @@ public:
                                                         std::string type);
 
   void installFramework(std::string frameworkName);
+
   std::vector<std::shared_ptr<StrideFramework>> getFrameworks() {
     return m_frameworks;
   }
@@ -138,9 +143,8 @@ private:
   QVector<ASTNode> getPortsForTypeBlock(DeclarationNode *block);
   //    ListNode *getPortsForFunction(QString typeName);
 
-  static std::vector<ASTNode> getTreesInDirectory(std::string path);
-
-  std::vector<ASTNode> processNewTrees(std::string subPath);
+  //  std::vector<ASTNode> processNewTrees(std::string platformPath,
+  //                                       string importName);
 
   std::shared_ptr<DeclarationNode>
   findDataTypeInPath(std::string path, std::string strideDataType);
@@ -165,6 +169,9 @@ private:
   QStringList m_types;
 
   QMap<QString, QString> m_importList;
+
+  std::map<string, std::vector<ASTNode>> m_systemNodes;
+
   StrideLibrary m_library;
 };
 

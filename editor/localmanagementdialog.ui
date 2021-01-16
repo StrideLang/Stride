@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>Local Management</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QVBoxLayout" name="_2">
    <item>
     <widget class="QToolBox" name="toolBox">
      <property name="currentIndex">
@@ -101,7 +101,7 @@
          <x>10</x>
          <y>60</y>
          <width>181</width>
-         <height>192</height>
+         <height>231</height>
         </rect>
        </property>
       </widget>
@@ -160,7 +160,7 @@
          <x>210</x>
          <y>110</y>
          <width>311</width>
-         <height>151</height>
+         <height>181</height>
         </rect>
        </property>
       </widget>
@@ -186,7 +186,7 @@
       <enum>Qt::Horizontal</enum>
      </property>
      <property name="standardButtons">
-      <set>QDialogButtonBox::Ok</set>
+      <set>QDialogButtonBox::Close</set>
      </property>
     </widget>
    </item>

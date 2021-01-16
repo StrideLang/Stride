@@ -1,4 +1,5 @@
 #include "languagesyntax.hpp"
+#include "stridesystem.hpp"
 
 std::string LanguageSyntax::getDeclarationType(std::string type,
                                                std::string name,

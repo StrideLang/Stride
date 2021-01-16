@@ -650,7 +650,7 @@ void CodeModel::updateCodeAnalysis(QString code, QString platformRootPath,
       if (m_system) {
         m_types = m_system->getPlatformTypeNames();
         m_funcs = m_system->getFunctionNames();
-        objects = m_system->getBuiltinObjectsReference()[""];
+        objects = m_system->getBuiltinObjects()[""];
       }
       m_objectNames.clear();
       for (ASTNode platObject : objects) {

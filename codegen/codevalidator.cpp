@@ -41,6 +41,8 @@
 
 #include "coderesolver.h"
 
+#include "stridesystem.hpp"
+
 CodeValidator::CodeValidator(ASTNode tree, Options options)
     : m_system(nullptr), m_tree(tree), m_options(options) {
   validateTree(tree);
@@ -96,6 +98,32 @@ CodeValidator::getImportNodes(ASTNode tree) {
     }
   }
   return importList;
+}
+
+std::vector<ASTNode> CodeValidator::loadAllInDirectory(string path) {
+  std::vector<ASTNode> nodes;
+  QStringList libraryFiles =
+      QDir(QString::fromStdString(path)).entryList(QStringList() << "*.stride");
+  //      if (QFile::exists(QString::fromStdString(platformPath) + "/" +
+  //                        importName + ".stride")) {
+  //        libraryFiles << "../" + importName + ".stride";
+  //      }
+  for (QString file : libraryFiles) {
+    QString fileName = QDir::cleanPath(QString::fromStdString(path) +
+                                       QDir::separator() + file);
+    auto newTree = AST::parseFile(fileName.toLocal8Bit().data(), nullptr);
+    if (newTree) {
+      auto children = newTree->getChildren();
+      nodes.insert(nodes.end(), children.begin(), children.end());
+    } else {
+      qDebug() << "ERROR importing tree:" << file;
+      vector<LangError> errors = AST::getParseErrors();
+      for (LangError error : errors) {
+        qDebug() << QString::fromStdString(error.getErrorText());
+      }
+    }
+  }
+  return nodes;
 }
 
 void CodeValidator::validatePlatform(ASTNode tree, ScopeStack scopeStack) {
@@ -496,25 +524,37 @@ bool CodeValidator::namespaceMatch(std::vector<string> scopeList,
     scopeList.clear();
   }
   auto declScopesNode = decl->getCompilerProperty("namespaceTree");
-  std::vector<std::string> namespaceTree;
-  if (declScopesNode) {
-    for (auto node : declScopesNode->getChildren()) {
-      assert(node->getNodeType() == AST::String);
-      namespaceTree.push_back(
-          static_pointer_cast<ValueNode>(node)->getStringValue());
-    }
-  }
+
   auto frameworkNode = decl->getCompilerProperty("framework");
   std::string framework;
   if (frameworkNode && frameworkNode->getNodeType() == AST::String) {
     framework = static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
-    if (framework.size() > 0 && framework != currentFramework) {
-      namespaceTree.insert(namespaceTree.begin(), framework);
-    } else {
-      if (scopeList.size() > 0 && scopeList[0] == framework) {
-        scopeList.erase(scopeList.begin());
-      }
+  }
+  std::vector<std::string> namespaceTree;
+  // Add import namespaces
+  if (declScopesNode) {
+    for (auto node : declScopesNode->getChildren()) {
+      assert(node->getNodeType() == AST::String);
+
+      namespaceTree.push_back(
+          static_pointer_cast<ValueNode>(node)->getStringValue());
     }
+  }
+  // Remove namespace if calling from within the same framework
+  if (framework == currentFramework && namespaceTree.size() > 0 &&
+      namespaceTree.at(0) == currentFramework) {
+    //    if (scopeList.size() > 0 && scopeList.at(0) != currentFramework) {
+    namespaceTree.erase(namespaceTree.begin());
+    //    }
+  }
+  if (framework.size() > 0 && framework != currentFramework) {
+    if (namespaceTree.size() == 0 || framework != namespaceTree.at(0)) {
+      namespaceTree.insert(namespaceTree.begin(), framework);
+    }
+  } else {
+    //      if (scopeList.size() > 0 && scopeList[0] == framework) {
+    //        scopeList.erase(scopeList.begin());
+    //      }
   }
   if (namespaceTree.size() != scopeList.size()) {
     return false;
@@ -758,13 +798,12 @@ void CodeValidator::validateTypes(ASTNode node, ScopeStack scopeStack,
     // For BundleDeclarations in particular, we need to ignore the bundle when
     // declaring types. The inner bundle has no scope set, and trying to find it
     // will fail if the declaration is scoped....
-    foreach (auto property, decl->getProperties()) {
-      if (property->getName() == "constraints") {
-        continue;
+    for (auto property : decl->getProperties()) {
+      if (property->getName() != "constraints") {
         // Ignore constraints streams as they play by different rules
+        validateTypes(property->getValue(), scopeStack,
+                      decl->getNamespaceList(), frameworkName);
       }
-      validateTypes(property->getValue(), scopeStack, decl->getNamespaceList(),
-                    frameworkName);
     }
     return;
   } else if (node->getNodeType() == AST::Stream) {
@@ -2042,7 +2081,8 @@ int CodeValidator::getTypeNumInputs(
 std::vector<std::shared_ptr<DeclarationNode>>
 CodeValidator::findAllDeclarations(std::string objectName,
                                    const ScopeStack &scopeStack, ASTNode tree,
-                                   vector<string> namespaces) {
+                                   vector<string> namespaces,
+                                   std::string currentFramework) {
   std::vector<std::shared_ptr<DeclarationNode>> decls;
   vector<string> scopesList;
   istringstream iss(objectName);
@@ -2066,15 +2106,18 @@ CodeValidator::findAllDeclarations(std::string objectName,
             static_pointer_cast<DeclarationNode>(scopeNode);
         std::string name = decl->getName();
         if (name == objectName) {
-          auto frameworkNode = decl->getCompilerProperty("framework");
-          std::string frameworkName;
-          if (frameworkNode && frameworkNode->getNodeType() == AST::String) {
-            frameworkName =
-                static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
-          }
-          // Force matching framework.
-          if (CodeValidator::namespaceMatch(scopesList, decl, frameworkName)) {
-            decls.push_back(decl);
+          //          auto frameworkNode =
+          //          decl->getCompilerProperty("framework"); std::string
+          //          frameworkName; if (frameworkNode &&
+          //          frameworkNode->getNodeType() == AST::String) {
+          //            frameworkName =
+          //                static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
+          //          }
+          if (CodeValidator::namespaceMatch(scopesList, decl,
+                                            currentFramework)) {
+            if (std::find(decls.begin(), decls.end(), decl) == decls.end()) {
+              decls.push_back(decl);
+            }
           }
         }
       }
@@ -2088,14 +2131,19 @@ CodeValidator::findAllDeclarations(std::string objectName,
             static_pointer_cast<DeclarationNode>(node);
         std::string name = decl->getName();
         if (name == objectName) {
-          auto frameworkNode = decl->getCompilerProperty("framework");
-          std::string frameworkName;
-          if (frameworkNode && frameworkNode->getNodeType() == AST::String) {
-            frameworkName =
-                static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
-          }
-          if (CodeValidator::namespaceMatch(scopesList, decl, frameworkName)) {
-            decls.push_back(decl);
+          //          auto frameworkNode =
+          //          decl->getCompilerProperty("framework"); std::string
+          //          frameworkName; if (frameworkNode &&
+          //          frameworkNode->getNodeType() == AST::String) {
+          //            frameworkName =
+          //                static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
+          //          }
+          if (CodeValidator::namespaceMatch(scopesList, decl,
+                                            currentFramework)) {
+
+            if (std::find(decls.begin(), decls.end(), decl) == decls.end()) {
+              decls.push_back(decl);
+            }
           }
         }
       }
@@ -2115,7 +2163,7 @@ std::shared_ptr<DeclarationNode> CodeValidator::findDeclaration(
   if (objectName.size() > 0) {
     objectName = scopesList.back();
     scopesList.pop_back();
-    for (string ns : namespaces) {
+    for (string &ns : namespaces) {
       scopesList.push_back(ns);
     }
   }
@@ -3030,6 +3078,7 @@ double CodeValidator::evaluateConstReal(ASTNode node, ScopeStack scope,
 
 std::string CodeValidator::evaluateConstString(ASTNode node, ScopeStack scope,
                                                ASTNode tree,
+                                               std::string currentFramework,
                                                QList<LangError> &errors) {
   std::string result;
   if (node->getNodeType() == AST::String) {
@@ -3043,7 +3092,7 @@ std::string CodeValidator::evaluateConstString(ASTNode node, ScopeStack scope,
     if (declaration && declaration->getNodeType() == AST::BundleDeclaration) {
       ASTNode member = getMemberfromBlockBundleConst(declaration, index, tree,
                                                      scope, errors);
-      return evaluateConstString(member, scope, tree, errors);
+      return evaluateConstString(member, scope, tree, currentFramework, errors);
     }
   } else if (node->getNodeType() == AST::Block) {
     auto blockNode = static_pointer_cast<BlockNode>(node);
@@ -3083,7 +3132,8 @@ std::string CodeValidator::evaluateConstString(ASTNode node, ScopeStack scope,
     PortPropertyNode *propertyNode =
         static_cast<PortPropertyNode *>(node.get());
     std::shared_ptr<DeclarationNode> block = CodeValidator::findDeclaration(
-        QString::fromStdString(propertyNode->getName()), scope, tree);
+        QString::fromStdString(propertyNode->getName()), scope, tree, {},
+        currentFramework);
     if (block) {
       ASTNode propertyValue =
           block->getPropertyValue(propertyNode->getPortName());
@@ -3369,7 +3419,8 @@ CodeValidator::getDataTypeForDeclaration(std::shared_ptr<DeclarationNode> decl,
   } else if (decl->getObjectType() == "string") {
     return "_StringType";
   } else {
-    qDebug() << __FILE__ << ":" << __LINE__ << " ERROR unsupported object type";
+    //    qDebug() << __FILE__ << ":" << __LINE__ << " ERROR unsupported object
+    //    type";
   }
   return std::string();
 }
@@ -3500,18 +3551,20 @@ std::shared_ptr<DeclarationNode> CodeValidator::getMainInputPortBlock(
     std::shared_ptr<DeclarationNode> moduleBlock) {
   ListNode *ports =
       static_cast<ListNode *>(moduleBlock->getPropertyValue("ports").get());
-  if (ports->getNodeType() == AST::List) {
-    for (ASTNode port : ports->getChildren()) {
-      std::shared_ptr<DeclarationNode> portBlock =
-          std::static_pointer_cast<DeclarationNode>(port);
-      if (portBlock->getObjectType() == "mainInputPort") {
-        return portBlock;
+  if (ports) {
+    if (ports->getNodeType() == AST::List) {
+      for (ASTNode port : ports->getChildren()) {
+        std::shared_ptr<DeclarationNode> portBlock =
+            std::static_pointer_cast<DeclarationNode>(port);
+        if (portBlock->getObjectType() == "mainInputPort") {
+          return portBlock;
+        }
       }
+    } else if (ports->getNodeType() == AST::None) {
+      // If port list is None, then ignore
+    } else {
+      qDebug() << "ERROR! ports property must be a list or None!";
     }
-  } else if (ports->getNodeType() == AST::None) {
-    // If port list is None, then ignore
-  } else {
-    qDebug() << "ERROR! ports property must be a list or None!";
   }
   return nullptr;
 }

@@ -83,7 +83,7 @@ int CodeEditor::lineNumberAreaWidth() {
   //    }
 
   int digits = 4;
-  int space = 3 + fontMetrics().width(QLatin1Char('9')) * digits;
+  int space = 3 + fontMetrics().horizontalAdvance(QLatin1Char('9')) * digits;
 
   return space;
 }
@@ -154,7 +154,7 @@ void CodeEditor::mouseIdleTimeout() {
     if (!word.isEmpty()) {
       QString text = m_codeModel->getTooltipText(word);
       if (!text.isEmpty()) {
-        int width = m_toolTip.fontMetrics().width(m_toolTip.text());
+        int width = m_toolTip.fontMetrics().horizontalAdvance(m_toolTip.text());
         QRect boundingRect =
             m_toolTip.fontMetrics().boundingRect(m_toolTip.text());
         m_toolTip.setText(text);
@@ -175,6 +175,7 @@ void CodeEditor::insertAutoComplete() {
   cursor.select(QTextCursor::WordUnderCursor);
   setTextCursor(cursor);
   insertPlainText(text);
+  qDebug() << "Insert " << text;
 }
 
 void CodeEditor::updateAutoCompleteMenu(QString currentWord) {
@@ -260,7 +261,7 @@ void CodeEditor::find(QString query) {
     cursor.select(QTextCursor::WordUnderCursor);
     query = cursor.selectedText();
   }
-  find(query);
+  QPlainTextEdit::find(query);
 }
 
 void CodeEditor::gotoLine(int line) {

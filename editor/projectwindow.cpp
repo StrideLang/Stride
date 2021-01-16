@@ -456,7 +456,7 @@ void ProjectWindow::showHelperMenu(QPoint where) {
   //    }
   QMenu *functionMenu = m_helperMenu.addMenu(tr("New function"));
   map<string, vector<ASTNode>> objs =
-      m_codeModel.getSystem()->getBuiltinObjectsReference();
+      m_codeModel.getSystem()->getBuiltinObjects();
   for (auto namespaceGroup : objs) {
     for (auto obj : namespaceGroup.second) {
       if (obj->getNodeType() == AST::Declaration) {
@@ -901,16 +901,16 @@ void ProjectWindow::openManageStriderootDialog() {
   dialog.prepare();
   int result = dialog.exec();
 
-  m_environment["striderootPath"] = dialog.m_strideRoot;
-
-  writeSettings();
+  if (result == QDialog::Accepted) {
+    m_environment["striderootPath"] = dialog.m_strideRoot;
+    writeSettings();
+  }
 }
 
 void ProjectWindow::openManageLocalDialog() {
   LocalManagementDialog dialog(m_environment["striderootPath"].toString());
 
-  //  dialog.prepare();
-  int result = dialog.exec();
+  /*int result = */ dialog.exec();
 }
 
 void ProjectWindow::updateCodeAnalysis(bool force) {
@@ -1248,7 +1248,7 @@ void ProjectWindow::fillInspectorTree() {
     }
     delete tree;
     ui->treeWidget->setSortingEnabled(true);
-    ui->treeWidget->sortByColumn(0);
+    ui->treeWidget->sortByColumn(0, Qt::AscendingOrder);
   }
 }
 

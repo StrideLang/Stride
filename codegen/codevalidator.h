@@ -41,7 +41,8 @@
 #include <QVector>
 
 #include "strideparser.h"
-#include "stridesystem.hpp"
+
+class StrideSystem;
 
 typedef std::vector<std::pair<ASTNode, std::vector<ASTNode>>> ScopeStack;
 
@@ -75,7 +76,8 @@ public:
 
   static std::vector<std::shared_ptr<DeclarationNode>>
   findAllDeclarations(std::string objectName, const ScopeStack &scopeStack,
-                      ASTNode tree, vector<string> namespaces);
+                      ASTNode tree, vector<string> namespaces,
+                      string currentFramework = "");
 
   static std::string streamMemberName(ASTNode node);
 
@@ -128,7 +130,7 @@ public:
   static double evaluateConstReal(ASTNode node, ScopeStack scope, ASTNode tree,
                                   QList<LangError> &errors);
   static std::string evaluateConstString(ASTNode node, ScopeStack scope,
-                                         ASTNode tree,
+                                         ASTNode tree, string currentFramework,
                                          QList<LangError> &errors);
   static ASTNode
   getMemberfromBlockBundleConst(std::shared_ptr<DeclarationNode> blockDecl,
@@ -281,6 +283,8 @@ public:
   static std::vector<std::shared_ptr<SystemNode>> getSystemNodes(ASTNode tree);
 
   static std::vector<std::shared_ptr<ImportNode>> getImportNodes(ASTNode tree);
+
+  static std::vector<ASTNode> loadAllInDirectory(std::string path);
 
 private:
   void validateTree(ASTNode tree);

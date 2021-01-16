@@ -42,6 +42,7 @@
 #include "coderesolver.h"
 #include "codevalidator.h"
 #include "stridelibrary.hpp"
+#include "stridesystem.hpp"
 
 StrideLibrary::StrideLibrary() : m_majorVersion(1), m_minorVersion(0) {}
 
@@ -55,8 +56,8 @@ void StrideLibrary::initializeLibrary(QString strideRootPath) {
 std::shared_ptr<DeclarationNode>
 StrideLibrary::findTypeInLibrary(QString typeName) {
   for (auto libraryTree : m_libraryTrees) {
-    ASTNode rootNode = libraryTree.tree;
-    for (ASTNode node : rootNode->getChildren()) {
+    auto nodes = libraryTree.nodes;
+    for (ASTNode node : nodes) {
       if (node->getNodeType() == AST::Declaration) {
         std::shared_ptr<DeclarationNode> block =
             static_pointer_cast<DeclarationNode>(node);
@@ -104,60 +105,40 @@ bool StrideLibrary::isValidBlock(DeclarationNode *block) {
 std::map<std::string, std::vector<ASTNode>> StrideLibrary::getLibraryMembers() {
   std::map<std::string, std::vector<ASTNode>> libNamespace;
   for (auto libraryTree : m_libraryTrees) {
-    if (libNamespace.find(libraryTree.importAs.toStdString()) ==
-        libNamespace.end()) {
-      libNamespace[libraryTree.importAs.toStdString()] = std::vector<ASTNode>();
+    if (libNamespace.find(libraryTree.importAs) == libNamespace.end()) {
+      libNamespace[libraryTree.importAs] = std::vector<ASTNode>();
     }
-    for (ASTNode node : libraryTree.tree->getChildren()) {
-      libNamespace[libraryTree.importAs.toStdString()].push_back(node);
+    for (ASTNode node : libraryTree.nodes) {
+      libNamespace[libraryTree.importAs].push_back(node);
     }
   }
   return libNamespace;
 }
 
-ASTNode StrideLibrary::loadImportTree(QString importName, QString importAs,
-                                      QStringList scopeTree) {
-  ASTNode importTree;
-  QStringList nameFilters;
-  nameFilters << "*.stride";
-  QString path = m_libraryPath;
+std::vector<ASTNode> StrideLibrary::loadImport(std::string importName,
+                                               std::string importAs) {
+
+  std::string path = m_libraryPath.toStdString();
   if (importName.size() > 0) {
-    path += QDir::separator() + scopeTree.join(QDir::separator()) + importName;
+    path += "/" + importName;
   }
   // FIXME support namespace as file name
   // TODO add warning if local file/directory shadows system one
-  QStringList libraryFiles = QDir(path).entryList(nameFilters);
   // For library we don't need support for file name namespace at the root, but
   // there needs to be support for nested files.
-  importTree = std::make_shared<AST>();
-  for (QString file : libraryFiles) {
-    QString fileName = path + QDir::separator() + file;
-    ASTNode tree = AST::parseFile(fileName.toLocal8Bit().data(), nullptr);
-    if (tree) {
-      //      string scopeFromFile =
-      //          file.toStdString().substr(0, file.indexOf(".stride"));
-      for (auto node : tree->getChildren()) {
-        if (importAs.size() > 0) {
-          node->appendToPropertyValue(
-              "namespaceTree", std::make_shared<ValueNode>(
-                                   importAs.toStdString(), __FILE__, __LINE__));
-        }
-        importTree->addChild(node);
-        //                Q_ASSERT(!node->getCompilerProperty("originalScope"));
-        //                node->appendToPropertyValue("originalScope",
-        //                std::make_shared<ValueNode>(scopeFromFile, __FILE__,
-        //                __LINE__));
-      }
-    } else {
-      qDebug() << "Import not found in library: " << importName;
+
+  auto newNodes = CodeValidator::loadAllInDirectory(path);
+  // FIXME support importing library files with multiple different importAs.
+  // Currently broken if library imported multiple times with different alias.
+  for (auto node : newNodes) {
+    if (importAs.size() > 0) {
+      node->appendToPropertyValue(
+          "namespaceTree",
+          std::make_shared<ValueNode>(importAs, __FILE__, __LINE__));
     }
   }
-  if (importTree->getChildren().size() > 0) {
-    m_libraryTrees.push_back(LibraryTree{{}, importName, importAs, importTree});
-    return importTree;
-  } else {
-    return nullptr;
-  }
+  m_libraryTrees.push_back(LibraryTree{importName, importAs, newNodes, {}});
+  return newNodes;
 }
 
 bool StrideLibrary::isValidProperty(std::shared_ptr<PropertyNode> property,
@@ -218,13 +199,5 @@ void StrideLibrary::readLibrary(QString rootDir) {
   //    importList[""] = QStringList() << ""; // Add root namespace
   m_libraryPath = rootDir + basepath;
 
-  ASTNode tree = loadImportTree("", "", QStringList());
-  if (!tree) {
-
-    qDebug() << "ERROR parsing: Cannot import root library";
-    vector<LangError> errors = AST::getParseErrors();
-    for (LangError error : errors) {
-      qDebug() << QString::fromStdString(error.getErrorText());
-    }
-  }
+  loadImport("", "");
 }

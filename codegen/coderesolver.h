@@ -69,7 +69,8 @@ public:
 
   std::vector<std::pair<std::string, std::string>> m_domainChanges;
 
-  static void fillDefaultPropertiesForNode(ASTNode node, ASTNode tree);
+  static void fillDefaultPropertiesForNode(ASTNode node,
+                                           std::vector<ASTNode> tree);
   static void insertBuiltinObjectsForNode(ASTNode node,
                                           map<string, vector<ASTNode>> &objects,
                                           ASTNode tree,
@@ -241,7 +242,6 @@ private:
   std::shared_ptr<StrideSystem> m_system;
   SystemConfiguration m_systemConfig;
 
-  std::map<std::string, std::vector<ASTNode>> m_importTrees;
   ASTNode m_tree;
   int m_connectorCounter;
   //    std::vector<std::vector<string>> m_bridgeAliases; //< 1: bridge signal
