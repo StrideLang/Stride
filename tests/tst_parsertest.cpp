@@ -449,7 +449,7 @@ void ParserTest::testCodeGeneration() {
       nameFilters << "*.stride";
 
       QFileInfoList list = dir.entryInfoList(nameFilters);
-      for (auto fileInfo : list) {
+      for (auto &fileInfo : list) {
         qDebug() << "Testing: " << fileInfo.absoluteFilePath();
         QString expectedName = fileInfo.absolutePath() + QDir::separator() +
                                fileInfo.baseName() + ".expected";
