@@ -56,29 +56,24 @@ if (WIN32)
 
   set(BISON_EXECUTABLE "C:/Program Files (x86)/GnuWin32/bin/bison.exe")
   set(FLEX_EXECUTABLE "C:/Program Files (x86)/GnuWin32/bin/flex.exe")
-  set(FLEX_MyScanner_OUTPUTS ${CMAKE_CURRENT_BINARY_DIR}/lang_stride.lexer.cpp)
-  set(BISON_MyParser_OUTPUTS ${CMAKE_CURRENT_BINARY_DIR}/lang_stride.parser.cpp)
+  set(FLEX_MyScanner_OUTPUTS "${CMAKE_CURRENT_BINARY_DIR}/lang_stride.lexer.cpp")
+  set(BISON_MyParser_OUTPUTS "${CMAKE_CURRENT_BINARY_DIR}/lang_stride.parser.cpp")
+  add_custom_command(
+    COMMENT "Generating BISON: -o${BISON_MyParser_OUTPUTS} ${CMAKE_CURRENT_SOURCE_DIR}/lang_stride.y"
+          OUTPUT ${BISON_MyParser_OUTPUTS}
+          COMMAND "${BISON_EXECUTABLE}"
+          -d
+          -o"${BISON_MyParser_OUTPUTS}"
+          "${CMAKE_CURRENT_SOURCE_DIR}/lang_stride.y"
+  )
 
-  if (BISON_FOUND)
-      add_custom_command(
-        COMMENT "Generating BISON: -o${BISON_MyParser_OUTPUTS} ${CMAKE_CURRENT_SOURCE_DIR}/lang_stride.y"
-              OUTPUT ${BISON_MyParser_OUTPUTS}
-              COMMAND "${BISON_EXECUTABLE}"
-              -d
-              -o"${BISON_MyParser_OUTPUTS}"
-              "${CMAKE_CURRENT_SOURCE_DIR}/lang_stride.y"
-      )
-  endif ()
-
-  if (FLEX_FOUND)
-      add_custom_command(
-              OUTPUT ${FLEX_MyScanner_OUTPUTS}
-              COMMAND ${FLEX_EXECUTABLE}
-              -o"${FLEX_MyScanner_OUTPUTS}"
-              "${CMAKE_CURRENT_SOURCE_DIR}/lang_stride.l"
-              COMMENT "Generating lang_stride.lexer.cpp"
-      )
-  endif ()
+  add_custom_command(
+          OUTPUT ${FLEX_MyScanner_OUTPUTS}
+          COMMAND ${FLEX_EXECUTABLE}
+          -o"${FLEX_MyScanner_OUTPUTS}"
+          "${CMAKE_CURRENT_SOURCE_DIR}/lang_stride.l"
+          COMMENT "Generating lang_stride.lexer.cpp"
+  )
 
   include_directories("C:/Program Files (x86)/GnuWin32/include")
 else()
