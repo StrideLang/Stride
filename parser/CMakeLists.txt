@@ -50,9 +50,9 @@ if (WIN32)
 
   # On Windows you need a lot of magic to get flex and bison working.
   # Download and install flex and bisno from:
-  #  http://gnuwin32.sourceforge.net/packages/flex.htm
+  # http://gnuwin32.sourceforge.net/packages/flex.htm
   # http://gnuwin32.sourceforge.net/packages/bison.htm
-  # Bison is broken, must replace with: http://marin.jb.free.fr/bison/bison-2.4.1-modified.zip
+  # Bison is broken, must replace binary with: http://marin.jb.free.fr/bison/bison-2.4.1-modified.zip
 
   set(BISON_EXECUTABLE "C:/Program Files (x86)/GnuWin32/bin/bison.exe")
   set(FLEX_EXECUTABLE "C:/Program Files (x86)/GnuWin32/bin/flex.exe")
