@@ -29,11 +29,11 @@ generatorDirectives __GeneratorDirectives {
     projectDir: "project"
     templateFiles: ["template.cpp", "config.cmake"]
     destinationDir: "code"
-    buildDir: "build"
+    buildDir: "build/"
     configCommand: [CMake,  "-DSTRIDE_PLATFORM_ROOT=%platformRoot%",".."]
     buildCommand: [CMake, "--build", "."]
-    target: "app"
-    targetDir: "build"
+    target: "app.exe"
+    targetDir: "Debug/"
     codeGenerator: "pufferfish"
     codeGeneratorMajorVersion: 1
     codeGeneratorMinorVersion: 0
