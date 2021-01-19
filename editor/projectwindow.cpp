@@ -1288,6 +1288,13 @@ void ProjectWindow::configureSystem() {
       static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
   vector<ASTNode> optionTrees;
   ASTNode tree = AST::parseFile(editor->filename().toStdString().c_str());
+  if (!tree) {
+    QMessageBox::StandardButton reply;
+    QMessageBox::critical(this, tr("Error"),
+                          "No System set for current file. Cannot confugre.",
+                          QMessageBox::Ok);
+    return;
+  }
   for (auto system : CodeValidator::getSystemNodes(tree)) {
     optionTrees = StrideSystem::getOptionTrees(
         m_environment["striderootPath"].toString().toStdString() + "/systems/" +

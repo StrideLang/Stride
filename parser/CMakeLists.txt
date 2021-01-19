@@ -43,14 +43,47 @@ set(PARSER_HEADERS
   portpropertynode.h
 )
 
-find_package(BISON)
-find_package(FLEX)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-BISON_TARGET(MyParser lang_stride.y ${CMAKE_CURRENT_BINARY_DIR}/lang_stride.parser.cpp)
-FLEX_TARGET(MyScanner lang_stride.l ${CMAKE_CURRENT_BINARY_DIR}/lang_stride.lexer.cpp)
-ADD_FLEX_BISON_DEPENDENCY(MyScanner MyParser)
+if (WIN32)
+
+  # On Windows you need a lot of magic to get flex and bison working.
+  # Download and install flex and bisno from:
+  # http://gnuwin32.sourceforge.net/packages/flex.htm
+  # http://gnuwin32.sourceforge.net/packages/bison.htm
+  # Bison is broken, must replace binary with: http://marin.jb.free.fr/bison/bison-2.4.1-modified.zip
+
+  set(BISON_EXECUTABLE "C:/Program Files (x86)/GnuWin32/bin/bison.exe")
+  set(FLEX_EXECUTABLE "C:/Program Files (x86)/GnuWin32/bin/flex.exe")
+  set(FLEX_MyScanner_OUTPUTS "${CMAKE_CURRENT_BINARY_DIR}/lang_stride.lexer.cpp")
+  set(BISON_MyParser_OUTPUTS "${CMAKE_CURRENT_BINARY_DIR}/lang_stride.parser.cpp")
+  add_custom_command(
+    COMMENT "Generating BISON: -o${BISON_MyParser_OUTPUTS} ${CMAKE_CURRENT_SOURCE_DIR}/lang_stride.y"
+          OUTPUT ${BISON_MyParser_OUTPUTS}
+          COMMAND "${BISON_EXECUTABLE}"
+          -d
+          -o"${BISON_MyParser_OUTPUTS}"
+          "${CMAKE_CURRENT_SOURCE_DIR}/lang_stride.y"
+  )
+
+  add_custom_command(
+          OUTPUT ${FLEX_MyScanner_OUTPUTS}
+          COMMAND ${FLEX_EXECUTABLE}
+          -o"${FLEX_MyScanner_OUTPUTS}"
+          "${CMAKE_CURRENT_SOURCE_DIR}/lang_stride.l"
+          COMMENT "Generating lang_stride.lexer.cpp"
+  )
+
+  include_directories("C:/Program Files (x86)/GnuWin32/include")
+else()
+  # On Linux you can use the standard cmake scripts
+  find_package(BISON)
+  find_package(FLEX)
+  BISON_TARGET(MyParser ${CMAKE_CURRENT_SOURCE_DIR}/lang_stride.y ${CMAKE_CURRENT_BINARY_DIR}/lang_stride.parser.cpp)
+  FLEX_TARGET(MyScanner ${CMAKE_CURRENT_SOURCE_DIR}/lang_stride.l ${CMAKE_CURRENT_BINARY_DIR}/lang_stride.lexer.cpp)
+  ADD_FLEX_BISON_DEPENDENCY(MyScanner MyParser)
+endif()
 
 add_library(StrideParser 
   ${PARSER_SRC} ${PARSER_HEADERS}
