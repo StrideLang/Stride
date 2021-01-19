@@ -43,10 +43,10 @@ generatorDirectives __GeneratorDirectives {
                     serial/src/serial.cc
                     serial/include/serial/serial.h
                     serial/include/serial/v8stdint.h
-                    serial/src/impl/unix.cc
-                    serial/src/impl/list_ports/list_ports_osx.cc" ],
+                    serial/src/impl/win.cc
+                    serial/src/impl/list_ports/list_ports_win.cc" ],
                     ["additional_defines", "-D__WINDOWS_WASAPI__"],
-                    ["link_libraries", "ole32 winmm ksuser mfplat mfuuid wmcodecdspuuid    setupapi"]]
+                    ["link_libraries", "ole32 winmm ksuser mfplat mfuuid wmcodecdspuuid setupapi"]]
 }
 
 generatorDirectives __GeneratorDirectives {
