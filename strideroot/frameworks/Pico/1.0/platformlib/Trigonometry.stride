@@ -1,0 +1,37 @@
+
+
+# Sine function test
+platformModule __Sin {
+    inputs: ["real"]
+	outputs: ["real"]
+    include: ["cmath"]
+#    linkTo: []
+#    declarations: ['']
+#    initializations: ["// %%token%% = 0;"]
+    processing: "std::sin(%%intokens:0%%)"
+    inherits: [_Signal]
+}
+
+
+platformModule __Cos {
+    inputs: ["real"]
+	outputs: ["real"]
+    include: ["cmath"]
+#    linkTo: []
+#    declarations: ['']
+#    initializations: ["// %%token%% = 0;"]
+    processing: "std::cos(%%intokens:0%%)"
+    inherits: [_Signal]
+}
+
+platformModule __Tan {
+    inputs: ["real"]
+	outputs: ["real"]
+    include: ["cmath"]
+#    linkTo: []
+#    declarations: ['']
+#    initializations: ["// %%token%% = 0;"]
+    processing: "std::tan(%%intokens:0%%)"
+    inherits: [_Signal]
+}
+

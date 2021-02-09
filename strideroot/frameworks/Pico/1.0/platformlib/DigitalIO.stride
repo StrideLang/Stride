@@ -1,0 +1,107 @@
+
+constant _GPIO_IS_INPUT {
+    value: 0
+}
+constant _GPIO_IS_OUTPUT {
+    value: 1
+}
+### PICO Pins ################
+
+resource _Pico_Pin_0 {
+
+    name: "Pin 0"
+	dependsOn: []
+	exclusive: on
+    configuration: []
+	meta: 'Pin 0'
+}
+
+resource _Pico_Pin_1 {
+
+    name: "Pin 1"
+	dependsOn: []
+	exclusive: on
+    configuration: []
+	meta: 'Pin 1'
+}
+
+## GPIO_0 ####################
+resourceConfiguration _GPIO_0_Pin {
+    name: "GPIO_0 Pin"
+	default: 0
+    type: _IntLiteral
+	meta: "Hardware Pin for GPIO_0"
+}
+
+resourceConfiguration _GPIO_0_Direction {
+    name: "GPIO_0 Direction"
+	default: _GPIO_IS_OUTPUT
+	possibleValues: [_GPIO_IS_OUTPUT, _GPIO_IS_INPUT]
+    type: _IntLiteral
+	meta: "GPIO_0 direction: _GPIO_IS_INPUT = 0 or _GPIO_IS_OUTPUT = 1"
+}
+
+resource _GPIO_0 {
+    name: "GPIO_0"
+	dependsOn: [_RootContext]
+	exclusive: on
+    configuration: [_GPIO_0_Pin, _GPIO_0_Direction]
+	meta: 'GPIO Pin 0'
+}
+
+## GPIO_1 ####################
+resourceConfiguration _GPIO_1_Pin {
+    name: "GPIO_1 Pin"
+	default: 1
+    type: _IntLiteral
+	meta: "Hardware Pin for GPIO_1"
+}
+
+resourceConfiguration _GPIO_1_Direction {
+    name: "GPIO_1 Direction"
+	default: _GPIO_IS_OUTPUT
+	possibleValues: [_GPIO_IS_OUTPUT, _GPIO_IS_INPUT]
+    type: _IntLiteral
+	meta: "GPIO_1 direction: _GPIO_IS_INPUT = 0 or _GPIO_IS_OUTPUT = 1"
+}
+
+resource _GPIO_1 {
+    name: "GPIO_1"
+	dependsOn: [_RootContext]
+	exclusive: on
+    configuration: [_GPIO_1_Pin, _GPIO_1_Direction]
+	meta: 'GPIO Pin 1'
+}
+
+constant _DigitalOut_Count {
+    value: 2
+}
+
+constant _DigitalOutput_Resources[2] {
+    value: [_GPIO_0, _GPIO_1]
+}
+
+platformBlock _DigitalOutput {
+    typeName: '_digitalOutput'
+	inputs: ["bool"]
+	domain: PicoTimerDomain
+    resources: _DigitalOutput_Resources
+    include: ["pico/stdlib.h"]
+#    linkTo: []
+    declarations: ['']
+    initializations: ['
+    gpio_init(%%bundle_index%%);
+    gpio_set_dir(%%bundle_index%%, GPIO_OUT);'
+    ]
+    processing: '
+	gpio_put(%%bundle_index%%, %%intoken:0%% ? 1 : 0);
+	'
+    processing: ""
+    inherits: [_Signal]
+}
+
+_digitalOutput DigitalOut[_DigitalOut_Count] {
+    rate: PicoTimerDomainRate
+    domain: PicoTimerDomain
+}
+

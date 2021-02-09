@@ -1,0 +1,14 @@
+
+platform _PicoPlatform {
+	framework: "Pico"
+	frameworkVersion: "1.0"
+	hardware: "Pico"
+	hardwareVersion: "1.0"
+	required: on #TODO validation of "required" is not yet implemented
+}
+
+
+system Pico {
+    platforms: [_PicoPlatform]
+    connections: []
+}

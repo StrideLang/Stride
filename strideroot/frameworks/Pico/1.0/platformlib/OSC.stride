@@ -1,0 +1,101 @@
+# OSC Domains
+_domainDefinition OSCDomain {
+	framework: _DesktopTemplateFramework
+	domainIncludes: ["oscpp/client.hpp"]
+    domainDeclarations: [ '
+// OSC Domain globals
+#include <cstring>
+
+namespace OSCDomain
+{
+class Transport
+{
+public:
+    size_t send(const void* buffer, size_t size)
+    {
+        size_t n = std::min(m_buffer.size(), size);
+        std::memcpy(m_buffer.data(), buffer, n);
+        m_message = n;
+        return n;
+    }
+
+    size_t recv(void* buffer, size_t size)
+    {
+        if (m_message > 0) {
+            size_t n = std::min(m_message, size);
+            std::memcpy(buffer, m_buffer.data(), n);
+            m_message = 0;
+            return n;
+        }
+        return 0;
+    }
+
+private:
+    std::array<char,kMaxPacketSize> m_buffer;
+    size_t m_message;
+};
+
+Transport* newTransport()
+{
+    return new Transport;
+}
+
+size_t send(Transport* t, const void* buffer, size_t size)
+{
+    return t->send(buffer, size);
+}
+
+size_t recv(Transport* t, void* buffer, size_t size)
+{
+    return t->recv(buffer, size);
+}
+
+Transport *globalTransport;
+} // OSCDomain
+
+
+'
+	]
+    domainFunctionCode: ''
+    domainInitializationCode: '
+	OSCDomain::globalTransport = new Transport;
+
+	'
+	domainCleanupCode: '
+	delete OSCDomain::globalTransport;
+'
+	
+}
+
+platformModule __OscOut {
+    inputs: ["string", "string", "string", "int"]
+	domain: OSCDomain
+#    linkTo: []
+    declarations: ['std::array<char,kMaxPacketSize> sendBuffer;']
+#    initializations: ["// %%token%% = 0;"]
+    processing: "
+
+OSCPP::Client::Packet packet(sendBuffer.data(), sendBuffer.size());
+
+OSCDomain::send(OSCDomain::globalTransport, buffer, packetSize);
+	
+	%%intokens:0%%"
+    inherits: [_Signal]
+}
+
+platformBlock __OscIn {
+    typeName: '_oscInType'
+    inputs: ["string", "string", "int"]
+	outputs: ["real"]
+    include: [""]
+    linkTo: [""]
+    declarations: ['
+
+		']
+    initializations: ['
+	']
+	preProcessing: ''
+    processing: ''
+	domain: OSCDomain
+    inherits: [_Signal]
+}

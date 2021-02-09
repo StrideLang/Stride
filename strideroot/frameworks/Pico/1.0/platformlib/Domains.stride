@@ -1,0 +1,80 @@
+alias PlatformDomain {
+    block: PicoTimerDomain
+}
+
+constant PicoTimerDomainRate {
+    value: 1000
+}
+
+synchronization GlobalSync {
+	# disable all connection code (stride:: access classes)
+    readDomain: none
+    writeDomain: none
+    scheme: none
+}
+
+# This RootDomain overrides the root domain in Cpp framework
+_domainDefinition RootDomain {
+	framework: _PicoFramework
+	requiresResources: [_RootContext]
+	providesResources: [_MainFunction]
+	rate: -1 # -1 is 'one-shot/final' domain
+    substitutions: [ ]
+    domainIncludes: ["<iostream>"]
+	domainFunctionCode: '
+// Hello Pico!
+//[[Includes]]
+//[[/Includes]]
+
+//[[Declarations]]
+//[[/Declarations]]
+
+//[[Instances]]
+//[[/Instances]]
+int main() {
+	stdio_init_all();
+//[[Initialization]]
+//[[/Initialization]]
+
+while(true) {
+    tight_loop_contents();
+}
+
+//[[Cleanup]]
+//[[/Cleanup]]
+    return 0;
+}
+'
+}
+
+_domainDefinition PicoTimerDomain {
+	framework: _PicoFramework
+    rate: PicoTimerDomainRate
+	parentDomain: RootDomain
+    substitutions: ["domain_rate", PicoTimerDomain.rate ]
+    domainIncludes: ["pico/stdlib.h"]
+    domainDeclarations: []
+    domainInitializationCode: '	
+//[[Initialization]]
+//[[/Initialization]]
+    printf("init timer");
+	struct repeating_timer timer;
+	add_repeating_timer_ms(-(1000/%%domain_rate%%), repeating_timer_callback, NULL, &timer);
+'
+	domainFunctionCode: '// domain processing
+//[[Declarations]]
+//[[/Declarations]]
+bool repeating_timer_callback(struct repeating_timer *t)
+{
+//[[Processing]]
+//[[/Processing]]
+    return true;
+}
+'
+	domainProcessingCode: '
+	'
+    domainCleanupCode: '// init domain cleanup
+//[[Cleanup]]
+//[[/Cleanup]]
+    '
+}

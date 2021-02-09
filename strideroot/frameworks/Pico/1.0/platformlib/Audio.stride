@@ -1,0 +1,135 @@
+constant AudioRate {
+    value: 44100 # This will be overwritten by the configuration file
+}
+
+constant AudioBlockRate {
+	value: AudioRate/_AudioBlockSize
+}
+
+constant _AudioDeviceIndex {value: 0}
+
+constant _AudioBlockSize {value: 256}
+
+_domainDefinition AudioBlockDomain {
+	framework: _DesktopTemplateFramework
+	parentDomain: RootDomain
+	rate: AudioBlockRate
+
+    substitutions: [
+      "num_in_chnls", _NumInputChannels,
+      "num_out_chnls", _NumOutputChannels,
+      "sample_rate", AudioRate,
+      "device", _AudioDeviceIndex,
+      "block_size", _AudioBlockSize
+    ]
+    domainIncludes: []
+    domainDeclarations: ['constexpr int NUM_IN_CHANNELS = %%num_in_chnls%%;',
+    'constexpr int NUM_OUT_CHANNELS = %%num_out_chnls%%;',
+    'typedef float MY_TYPE;',
+    '#define FORMAT RTAUDIO_FLOAT32'
+    ]
+    domainInitializationCode: '
+    unsigned int bufferBytes;
+    unsigned int bufferFrames = %%block_size%%;
+    unsigned int fs = %%sample_rate%%;
+
+    bufferBytes = bufferFrames * NUM_OUT_CHANNELS * sizeof( MY_TYPE );
+
+//[[Initialization]]
+//[[/Initialization]]
+    '
+domainFunctionCode: '
+	//[[Includes]]
+	//[[/Includes]]
+	//[[Declarations]]
+	//[[/Declarations]]
+	int audio_buffer_process( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames, void *data)
+{
+//[[Processing]]
+//[[/Processing]]
+  return 0;
+}
+'
+    domainCleanupCode: '
+//[[/Cleanup]]
+//[[/Cleanup]]
+    '
+}
+
+
+_domainDefinition AudioDomain {
+	framework: _DesktopTemplateFramework
+	parentDomain: AudioBlockDomain
+	rate: AudioRate
+
+    substitutions: []
+    domainFunctionCode: '
+	//[[Includes]]
+	//[[/Includes]]
+	//[[Declarations]]
+	//[[/Declarations]]
+    '
+	domainProcessingCode: '
+  //unsigned long *bytes = (unsigned long *) data;
+  MY_TYPE *in = (MY_TYPE *)inputBuffer;
+  MY_TYPE *out = (MY_TYPE *)outputBuffer;
+  while(nBufferFrames-- > 0) {
+//[[Processing]]
+//[[/Processing]]
+			in += NUM_IN_CHANNELS;
+			out += NUM_OUT_CHANNELS;
+  }
+'
+#    domainIncludes: []
+#    domainDeclarations: []
+    domainInitializationCode: '
+//[[Initialization]]
+//[[/Initialization]]
+	'
+    domainCleanupCode: '//[[Cleanup]]
+//[[/Cleanup]]'
+}
+
+
+# Audio ---------------
+platformBlock _HwInput {
+    typeName: '_hwInput'
+#	numInputs: 0
+	outputs: ["real"]
+#    include: []
+#    linkTo: []
+#    declarations: ['']
+#    initializations: [""]
+    processing: "in[%%bundle_index%%]"
+    domain: AudioDomain
+	rate: AudioRate
+    inherits: [_Signal]
+}
+
+platformBlock _HwOutput {
+    typeName: '_hwOutput'
+	inputs: ["real"]
+#	numOutputs: 0
+#    include: []
+#    linkTo: []
+#    declarations: ['']
+#    initializations: [""]
+    processing: "out[%%bundle_index%%] = %%intoken:0%%;"
+    domain: AudioDomain
+	rate: AudioRate
+    inherits: [_Signal]
+}
+
+constant _NumInputChannels {value: 2}
+
+_hwInput AudioIn[_NumInputChannels] {
+    rate: AudioRate
+    domain: AudioDomain
+}
+
+constant _NumOutputChannels {value: 2}
+
+_hwOutput AudioOut[_NumOutputChannels] {
+    rate: AudioRate
+    domain: AudioDomain
+}

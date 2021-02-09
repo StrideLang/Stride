@@ -1,0 +1,15 @@
+use Pico version 1.0
+
+import Generators
+
+switch Value {
+    domain: PicoTimerDomain
+}
+
+[Oscillator(frequency: 2), 0] >> Greater() >> Value;
+
+Value >> DigitalOut[0];
+
+[Oscillator(frequency: 2.1), 0] >> Greater() >> Value;
+
+Value >> DigitalOut[1];

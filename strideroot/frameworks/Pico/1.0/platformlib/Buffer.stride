@@ -1,0 +1,75 @@
+
+type _TableType {
+        typeName: "_tableType"
+	properties: [
+		typeProperty DataTypePort {
+			name: "dataType"
+			types: [_StringLiteral]
+			default: none
+			required: off
+		}
+	]
+}
+
+_tableType _FloatTableType {
+        dataType: "float"
+}
+
+type _BufferType {
+	typeName: "_bufferType"
+	properties: [
+		typeProperty ClassNamePort {
+			name: "className"
+			types: [_StringLiteral]
+			default: none
+			required: off
+		}
+		typeProperty DeclarationPort {
+			name: "declaration"
+			types: [_StringLiteral]
+			default: none
+			required: off
+		}
+	]
+}
+
+_bufferType _RingBufferType {
+	className: "_RingBuffer"
+	declaration: "
+	class _RingBuffer {
+public:
+            _RingBuffer(int size) : m_size(size), m_data(new float[size]) {
+            }
+            
+            void write(float value) {
+                    m_data[write_ptr++] = value;
+                    if (write_ptr == m_size) {
+                            write_ptr = 0;
+                    }
+            }
+            
+            void read(float &value) {
+                    value = m_data[read_ptr++];
+                    if (read_ptr == m_size) {
+                            read_ptr = 0;
+                    }
+            }
+		
+			void copy(float *dest) {
+				int ptr = read_ptr;	
+				for (int i = 0 ; i < m_size; i++) {
+                    *dest++ = m_data[ptr++];
+                    if (ptr == m_size) {
+    						ptr = 0;
+                    }
+				}
+            }
+            
+private:
+            const int m_size;
+            float *m_data;
+            int read_ptr {0};
+            int write_ptr {0};
+    };
+"
+}
