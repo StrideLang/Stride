@@ -56,7 +56,7 @@ public:
 
   // Copy of current tree, it is safe to use outside CodeModel
   // But the caller must clean it up.
-  AST *getOptimizedTree();
+  ASTNode getOptimizedTree();
 
   //    Builder *createBuilder(QString projectDir);
 

@@ -13,7 +13,7 @@ optionGroup SerialOptionsGroup {
 stringOption _SerialPortOption {
 	name: "Serial Port"
 	default: '/dev/ttyACM0'
-	override: [["RtAudio", _SerialPort]]
+	override: [["Cpp", _SerialPort]]
 	meta: "Serial port selection"
 }
 
@@ -21,7 +21,7 @@ intListOverride SerialBaudRate {
 	name: "Baud Rate"
 	possibleValues: [9600, 14400, 19200, 38400, 56000, 57600, 115200, 128000]
 	default: 56000
-	override: [["RtAudio", _SerialBaudRate]]
+	override: [["Cpp", _SerialBaudRate]]
 	meta: "Serial Baud Rate"
 }
 

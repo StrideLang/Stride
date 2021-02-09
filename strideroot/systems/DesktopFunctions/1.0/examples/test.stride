@@ -1,7 +1,7 @@
-use DesktopFunctions version 1.0
+use DesktopAudio version 1.0
 
-#import Generators
+import Generators
 
-#Oscillator() >> AudioOut[0];
+Oscillator() >> AudioOut[0];
 
 AudioIn[0] >> AudioOut[1];

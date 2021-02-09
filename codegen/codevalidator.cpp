@@ -235,44 +235,40 @@ string CodeValidator::getFrameworkForDomain(string domainName, ASTNode tree) {
     if (node->getNodeType() == AST::Declaration) {
       DeclarationNode *decl = static_cast<DeclarationNode *>(node.get());
       if (decl->getObjectType() == "_domainDefinition") {
-        ASTNode domainNameValue = decl->getPropertyValue("domainName");
-        if (domainNameValue->getNodeType() == AST::String) {
-          string declDomainName =
-              static_cast<ValueNode *>(domainNameValue.get())->getStringValue();
-          if (declDomainName == domainName) {
-            ASTNode frameworkNameValue = decl->getPropertyValue("framework");
-            if (frameworkNameValue->getNodeType() == AST::String) {
-              return static_cast<ValueNode *>(frameworkNameValue.get())
-                  ->getStringValue();
-            } else if (frameworkNameValue->getNodeType() == AST::Block) {
-              auto fwBlock = static_pointer_cast<BlockNode>(frameworkNameValue);
+        string declDomainName = decl->getName();
+        if (declDomainName == domainName) {
+          ASTNode frameworkNameValue = decl->getPropertyValue("framework");
+          if (frameworkNameValue->getNodeType() == AST::String) {
+            return static_cast<ValueNode *>(frameworkNameValue.get())
+                ->getStringValue();
+          } else if (frameworkNameValue->getNodeType() == AST::Block) {
+            auto fwBlock = static_pointer_cast<BlockNode>(frameworkNameValue);
 
-              auto declImportFramework = decl->getCompilerProperty("framework");
-              std::string frameworkName;
-              if (declImportFramework) {
-                frameworkName =
-                    static_pointer_cast<ValueNode>(declImportFramework)
-                        ->getStringValue();
-              }
-              std::shared_ptr<DeclarationNode> fwDeclaration =
-                  CodeValidator::findDeclaration(
-                      QString::fromStdString(fwBlock->getName()), {}, tree,
-                      fwBlock->getNamespaceList(), frameworkName);
-              if (fwDeclaration &&
-                  (fwDeclaration->getObjectType() == "_frameworkDescription")) {
-                ASTNode frameworkName =
-                    fwDeclaration->getPropertyValue("frameworkName");
-                if (frameworkName &&
-                    frameworkName->getNodeType() == AST::String) {
-                  if (domainFramework !=
-                      static_cast<ValueNode *>(frameworkName.get())
-                          ->getStringValue()) {
-                    //                    qDebug() << "Inconsistent name";
-                    continue;
-                  }
-                  return static_cast<ValueNode *>(frameworkName.get())
+            auto declImportFramework = decl->getCompilerProperty("framework");
+            std::string frameworkName;
+            if (declImportFramework) {
+              frameworkName =
+                  static_pointer_cast<ValueNode>(declImportFramework)
                       ->getStringValue();
+            }
+            std::shared_ptr<DeclarationNode> fwDeclaration =
+                CodeValidator::findDeclaration(
+                    QString::fromStdString(fwBlock->getName()), {}, tree,
+                    fwBlock->getNamespaceList(), frameworkName);
+            if (fwDeclaration &&
+                (fwDeclaration->getObjectType() == "_frameworkDescription")) {
+              ASTNode frameworkName =
+                  fwDeclaration->getPropertyValue("frameworkName");
+              if (frameworkName &&
+                  frameworkName->getNodeType() == AST::String) {
+                if (domainFramework !=
+                    static_cast<ValueNode *>(frameworkName.get())
+                        ->getStringValue()) {
+                  //                    qDebug() << "Inconsistent name";
+                  continue;
                 }
+                return static_cast<ValueNode *>(frameworkName.get())
+                    ->getStringValue();
               }
             }
           }
@@ -585,10 +581,12 @@ double CodeValidator::getDomainDefaultRate(
     std::shared_ptr<DeclarationNode> domainDecl) {
   Q_ASSERT(domainDecl->getObjectType() == "_domainDefinition");
   auto ratePort = domainDecl->getPropertyValue("rate");
-  Q_ASSERT(ratePort->getNodeType() == AST::Real ||
-           ratePort->getNodeType() == AST::Int);
-  double rate = static_pointer_cast<ValueNode>(ratePort)->toReal();
-  return rate;
+  if (ratePort->getNodeType() == AST::Real ||
+      ratePort->getNodeType() == AST::Int) {
+    double rate = static_pointer_cast<ValueNode>(ratePort)->toReal();
+    return rate;
+  }
+  return -1;
 }
 
 QList<LangError> CodeValidator::getErrors() { return m_errors; }
@@ -1523,20 +1521,18 @@ int CodeValidator::getBlockDeclaredSize(std::shared_ptr<DeclarationNode> block,
           size += endIndex + startIndex + 1;
         }
 
+      } else if (exp->getNodeType() == AST::PortProperty) {
+        return -2; // FIXME calculate actual size from external connection
       } else {
-        if (exp->getNodeType() == AST::PortProperty) {
-          return -2; // FIXME calculate actual size from external connection
-        } else {
-          QList<LangError> internalErrors;
-          size += CodeValidator::evaluateConstInteger(exp, scope, tree,
-                                                      internalErrors);
-          if (internalErrors.size() > 0) {
-            LangError error;
-            error.type = LangError::InvalidIndexType;
-            error.lineNumber = exp->getLine();
-            error.errorTokens.push_back(bundle->getName());
-            errors << error;
-          }
+        QList<LangError> internalErrors;
+        size += CodeValidator::evaluateConstInteger(exp, scope, tree,
+                                                    internalErrors);
+        if (internalErrors.size() > 0) {
+          LangError error;
+          error.type = LangError::InvalidIndexType;
+          error.lineNumber = exp->getLine();
+          error.errorTokens.push_back(bundle->getName());
+          errors << error;
         }
       }
     }
@@ -3336,22 +3332,17 @@ CodeValidator::findDomainDeclaration(string domainName, string framework,
       std::shared_ptr<DeclarationNode> decl =
           static_pointer_cast<DeclarationNode>(node);
       if (decl->getObjectType() == "_domainDefinition") {
-        ASTNode domainNameValue = decl->getPropertyValue("domainName");
-        if (domainNameValue->getNodeType() == AST::String) {
-          if (domainName == static_cast<ValueNode *>(domainNameValue.get())
-                                ->getStringValue()) {
-            auto domainDeclFramework = decl->getCompilerProperty("framework");
-            if (domainDeclFramework &&
-                domainDeclFramework->getNodeType() == AST::String) {
-              if (framework ==
-                  static_pointer_cast<ValueNode>(domainDeclFramework)
-                      ->getStringValue()) {
-                return decl;
-              }
-            }
-            if (framework.size() == 0 && !domainDeclFramework) {
+        if (domainName == decl->getName()) {
+          auto domainDeclFramework = decl->getCompilerProperty("framework");
+          if (domainDeclFramework &&
+              domainDeclFramework->getNodeType() == AST::String) {
+            if (framework == static_pointer_cast<ValueNode>(domainDeclFramework)
+                                 ->getStringValue()) {
               return decl;
             }
+          }
+          if (framework.size() == 0 && !domainDeclFramework) {
+            return decl;
           }
         }
       }
@@ -3419,8 +3410,8 @@ CodeValidator::getDataTypeForDeclaration(std::shared_ptr<DeclarationNode> decl,
   } else if (decl->getObjectType() == "string") {
     return "_StringType";
   } else {
-    //    qDebug() << __FILE__ << ":" << __LINE__ << " ERROR unsupported object
-    //    type";
+    //    qDebug() << __FILE__ << ":" << __LINE__ << " ERROR unsupported
+    //    object type";
   }
   return std::string();
 }

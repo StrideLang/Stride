@@ -157,7 +157,7 @@ bool ProjectWindow::build() {
     CodeEditor *editor =
         static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
     SystemConfiguration systemConfig;
-    systemConfig.readProjectConfiguration(editor->filename().toStdString());
+    systemConfig.readConfiguration(editor->filename().toStdString());
 
     CodeResolver resolver(tree, m_environment["striderootPath"].toString(),
                           systemConfig);
@@ -192,7 +192,6 @@ bool ProjectWindow::build() {
     for (auto builder : m_builders) {
       builder->m_system = system;
       builder->registerYieldCallback([]() { qApp->processEvents(); });
-      builder->setConfiguration(systemConfig.platformConfigurations["all"]);
       connect(builder, SIGNAL(outputText(QString)), this,
               SLOT(printConsoleText(QString)));
       connect(builder, SIGNAL(errorText(QString)), this,
@@ -567,6 +566,44 @@ void ProjectWindow::printConsoleError(QString text) {
   }
 }
 
+void ProjectWindow::createResourceTreeItem(ASTNode inputNode,
+                                           QTreeWidget *treeWidget) {
+
+  //  CodeEditor *editor =
+  //      static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
+  if (inputNode->getNodeType() == AST::Declaration ||
+      inputNode->getNodeType() == AST::BundleDeclaration) {
+    std::shared_ptr<DeclarationNode> declaration =
+        std::static_pointer_cast<DeclarationNode>(inputNode);
+    QStringList text;
+    std::string frameworkName;
+    auto frameworkNode = declaration->getCompilerProperty("framework");
+    if (frameworkNode && frameworkNode->getNodeType() == AST::String) {
+      frameworkName =
+          std::static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
+    }
+    text << QString::fromStdString(declaration->getName() + " [" +
+                                   frameworkName + "]");
+    qDebug() << text << treeWidget;
+    QTreeWidgetItem *newItem = new QTreeWidgetItem(treeWidget, text);
+    newItem->setData(0, Qt::UserRole, text);
+    treeWidget->addTopLevelItem(newItem);
+
+    auto configsNode = declaration->getPropertyValue("configuration");
+    if (configsNode) {
+      for (auto config : configsNode->getChildren()) {
+        text.clear();
+        text << QString::fromStdString(CodeValidator::streamMemberName(config));
+
+        QTreeWidgetItem *newConfigItem = new QTreeWidgetItem(newItem, text);
+        newItem->addChild(newConfigItem);
+      }
+    }
+  } else {
+    Q_ASSERT(0 == 1);
+  }
+}
+
 QTreeWidgetItem *ProjectWindow::createTreeItem(ASTNode inputNode) {
   CodeEditor *editor =
       static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
@@ -665,7 +702,7 @@ QTreeWidgetItem *ProjectWindow::createTreeItem(ASTNode inputNode) {
       }
       newItem->addChild(propertyItem);
     }
-  } else if (inputNode->getNodeType() == AST::String) {
+  } /*else if (inputNode->getNodeType() == AST::String) {
     std::shared_ptr<ValueNode> stringValue =
         std::static_pointer_cast<ValueNode>(inputNode);
     QStringList itemText;
@@ -706,7 +743,7 @@ QTreeWidgetItem *ProjectWindow::createTreeItem(ASTNode inputNode) {
     fileInfo << QString::fromStdString(blockNode->getFilename());
     fileInfo << blockNode->getLine();
     newItem->setData(0, Qt::UserRole, fileInfo);
-  }
+  }*/
   return newItem;
 }
 
@@ -1190,7 +1227,7 @@ void ProjectWindow::updateRecentActionList() {
 
 void ProjectWindow::fillInspectorTree() {
   // Fill inspector tree
-  AST *tree = m_codeModel.getOptimizedTree();
+  auto tree = m_codeModel.getOptimizedTree();
   // TODO keep open leafs open
   ui->treeWidget->clear();
   ui->treeWidget->setColumnCount(2);
@@ -1202,53 +1239,74 @@ void ProjectWindow::fillInspectorTree() {
   ui->treeWidget->header()->setSectionResizeMode(1, QHeaderView::Stretch);
   ui->treeWidget->setSortingEnabled(false);
 
+  ui->resourcesTreeWidget->clear();
+  ui->resourcesTreeWidget->setColumnCount(1);
+
+  //  ui->treeWidget->setHeaderLabels(QStringList() << "Name");
+
+  //  ui->resourcesTreeWidget->header()->setSectionResizeMode(
+  //      0, QHeaderView::ResizeToContents);
+  //  ui->resourcesTreeWidget->header()->setSectionResizeMode(1,
+  //                                                          QHeaderView::Stretch);
+  //  ui->resourcesTreeWidget->setSortingEnabled(false);
+
   if (tree) {
     for (auto node : tree->getChildren()) {
       if (node->getNodeType() == AST::Declaration ||
           node->getNodeType() == AST::BundleDeclaration) {
         std::shared_ptr<DeclarationNode> decl =
             static_pointer_cast<DeclarationNode>(node);
-        QTreeWidgetItem *newItem = createTreeItem(decl);
-        if (newItem) {
-          ui->treeWidget->addTopLevelItem(newItem);
-          QString tooltipText;
-          auto writes = decl->getCompilerProperty("writes");
-          if (writes) {
-            tooltipText += "Writes:\n";
-            for (auto write : writes->getChildren()) {
-              if (write->getNodeType() == AST::String) {
-                tooltipText += QString::fromStdString(
-                    static_pointer_cast<ValueNode>(write)->getStringValue());
-              } else {
-                tooltipText += QString::fromStdString(
-                    CodeValidator::streamMemberName(write));
+
+        if (decl->getObjectType() == "resource" ||
+            decl->getObjectType() == "domainResource") {
+          createResourceTreeItem(decl, ui->resourcesTreeWidget);
+        } else {
+          QTreeWidgetItem *newItem = createTreeItem(decl);
+          if (newItem) {
+
+            QString tooltipText;
+            auto writes = decl->getCompilerProperty("writes");
+            if (writes) {
+              tooltipText += "Writes:\n";
+              for (auto write : writes->getChildren()) {
+                if (write->getNodeType() == AST::String) {
+                  tooltipText += QString::fromStdString(
+                      static_pointer_cast<ValueNode>(write)->getStringValue());
+                } else {
+                  tooltipText += QString::fromStdString(
+                      CodeValidator::streamMemberName(write));
+                }
+                tooltipText += "\n";
               }
-              tooltipText += "\n";
             }
-          }
-          auto reads = decl->getCompilerProperty("reads");
-          if (reads) {
-            tooltipText += "Reads:\n";
-            for (auto read : reads->getChildren()) {
-              if (read->getNodeType() == AST::String) {
-                tooltipText += QString::fromStdString(
-                    static_pointer_cast<ValueNode>(read)->getStringValue());
-              } else {
-                tooltipText += QString::fromStdString(
-                    CodeValidator::streamMemberName(read));
+            auto reads = decl->getCompilerProperty("reads");
+            if (reads) {
+              tooltipText += "Reads:\n";
+              for (auto read : reads->getChildren()) {
+                if (read->getNodeType() == AST::String) {
+                  tooltipText += QString::fromStdString(
+                      static_pointer_cast<ValueNode>(read)->getStringValue());
+                } else {
+                  tooltipText += QString::fromStdString(
+                      CodeValidator::streamMemberName(read));
+                }
+                tooltipText += "\n";
               }
-              tooltipText += "\n";
             }
+            newItem->setToolTip(0, tooltipText);
+
+            ui->treeWidget->addTopLevelItem(newItem);
           }
-          newItem->setToolTip(0, tooltipText);
         }
       } else if (node->getNodeType() == AST::Stream) {
         // Should we display streams too?
       }
     }
-    delete tree;
     ui->treeWidget->setSortingEnabled(true);
     ui->treeWidget->sortByColumn(0, Qt::AscendingOrder);
+
+    ui->resourcesTreeWidget->setSortingEnabled(true);
+    ui->resourcesTreeWidget->sortByColumn(0, Qt::AscendingOrder);
   }
 }
 
@@ -1288,13 +1346,21 @@ void ProjectWindow::configureSystem() {
       static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
   vector<ASTNode> optionTrees;
   ASTNode tree = AST::parseFile(editor->filename().toStdString().c_str());
-  if (!tree) {
-    QMessageBox::StandardButton reply;
-    QMessageBox::critical(this, tr("Error"),
-                          "No System set for current file. Cannot confugre.",
-                          QMessageBox::Ok);
+  if (tree) {
+    m_codeModel.updateCodeAnalysis(editor->document()->toPlainText(),
+                                   m_environment["striderootPath"].toString(),
+                                   editor->filename());
+  }
+
+  if (!m_codeModel.getOptimizedTree() || !m_codeModel.getSystem()) {
+    QMessageBox::critical(
+        this, tr("Error"),
+        "Error parsing or processing system. Can't configure.",
+        QMessageBox::Ok);
     return;
   }
+  auto children = m_codeModel.getOptimizedTree()->getChildren();
+  tree->setChildren(children);
   for (auto system : CodeValidator::getSystemNodes(tree)) {
     optionTrees = StrideSystem::getOptionTrees(
         m_environment["striderootPath"].toString().toStdString() + "/systems/" +
@@ -1305,7 +1371,7 @@ void ProjectWindow::configureSystem() {
 
   // Read configuration from file
   SystemConfiguration systemConfig;
-  systemConfig.readProjectConfiguration(editor->filename().toStdString());
+  systemConfig.readConfiguration(editor->filename().toStdString());
 
   QDialog optionsDialog(this);
   QTabWidget *mainLayout = new QTabWidget;
@@ -1316,6 +1382,312 @@ void ProjectWindow::configureSystem() {
   QMap<QString, QSpinBox *> overrideSpinBoxes;
   QMap<QString, QComboBox *> overrideComboBoxes;
   QMap<QString, QComboBox *> overrideIntComboBoxes;
+
+  QMap<QString, QSpinBox *> resourceSpinBoxes;
+  QMap<QString, QComboBox *> resourceComboBoxes;
+  QMap<QString, QLineEdit *> resourceLineEdits;
+  QMap<QString, QComboBox *> resourceIntComboBoxes;
+
+  for (auto node : children) {
+    if (node->getNodeType() == AST::Declaration) {
+      auto decl = static_pointer_cast<DeclarationNode>(node);
+      if (decl->getObjectType() == "resource" ||
+          decl->getObjectType() == "domainResource") {
+        continue;
+        auto configuration = decl->getPropertyValue("configuration");
+        if (configuration->getChildren().size() == 0) {
+          continue;
+        }
+        QWidget *resourceGroupBox = new QWidget(&optionsDialog);
+        QVBoxLayout *resourceGroupLayout = new QVBoxLayout;
+        resourceGroupBox->setLayout(resourceGroupLayout);
+        std::string groupName;
+        auto resourceName = decl->getPropertyValue("name");
+        if (resourceName && resourceName->getNodeType() == AST::String) {
+          groupName =
+              static_pointer_cast<ValueNode>(resourceName)->getStringValue();
+        } else {
+          groupName = decl->getName();
+        }
+        if (configuration && configuration->getNodeType() == AST::List) {
+
+          QWidget *optionWidget = new QWidget(resourceGroupBox);
+          QHBoxLayout *optionLayout = new QHBoxLayout(optionWidget);
+
+          optionWidget->setLayout(optionLayout);
+          resourceGroupLayout->addWidget(optionWidget);
+          mainLayout->addTab(resourceGroupBox,
+                             QString::fromStdString(groupName));
+
+          for (auto config : configuration->getChildren()) {
+            if (config->getNodeType() == AST::Block) {
+              auto configDecl = CodeValidator::findDeclaration(
+                  static_pointer_cast<BlockNode>(config)->getName(), {}, tree);
+              if (configDecl) {
+                QString optionName;
+                auto configName = configDecl->getPropertyValue("name");
+                if (configName && configName->getNodeType() == AST::String) {
+                  optionName = QString::fromStdString(
+                      static_pointer_cast<ValueNode>(configName)
+                          ->getStringValue());
+                } else {
+                  optionName = QString::fromStdString(configDecl->getName());
+                }
+                bool showValues = false;
+                auto possibleValues =
+                    configDecl->getPropertyValue("possibleValues");
+                if (possibleValues &&
+                    possibleValues->getNodeType() == AST::List &&
+                    possibleValues->getChildren().size() > 0) {
+                  showValues = true;
+                }
+                auto type = configDecl->getPropertyValue("type");
+                if (!type || !type->getNodeType() == AST::Block) {
+                  qDebug()
+                      << "ERROR: no type provided by resourceConfiguration";
+                  continue;
+                }
+                auto typeBlock = static_pointer_cast<BlockNode>(type);
+                if (typeBlock->getName() == "_IntLiteral") {
+
+                  if (!showValues) {
+
+                    optionLayout->addWidget(new QLabel(optionName));
+                    QSpinBox *spinBox = new QSpinBox(optionWidget);
+
+                    bool configFound = false;
+                    for (auto frameworkConfig :
+                         systemConfig.resourceConfigurations) {
+                      for (auto resourceConfig : frameworkConfig.second) {
+                        if (resourceConfig->getName() ==
+                            configDecl->getName()) {
+                          auto valueProp =
+                              resourceConfig->getPropertyValue("value");
+                          if (valueProp &&
+                              valueProp->getNodeType() == AST::Int) {
+                            spinBox->setValue(
+                                static_pointer_cast<ValueNode>(valueProp)
+                                    ->getIntValue());
+                            configFound = true;
+                          } else {
+                            std::cerr
+                                << "Found configuration for "
+                                << resourceConfig->getName()
+                                << " but value type mismatch. Using default."
+                                << std::endl;
+                          }
+
+                          ASTNode maxNode =
+                              configDecl->getPropertyValue("maximum");
+                          ASTNode minNode =
+                              configDecl->getPropertyValue("minimum");
+
+                          if (minNode && minNode->getNodeType() == AST::Int) {
+                            spinBox->setMinimum(
+                                static_pointer_cast<ValueNode>(minNode)
+                                    ->getIntValue());
+                          }
+                          if (maxNode && maxNode->getNodeType() == AST::Int) {
+                            spinBox->setMaximum(
+                                static_pointer_cast<ValueNode>(maxNode)
+                                    ->getIntValue());
+                          }
+
+                          break;
+                        }
+                      }
+                    }
+                    if (!configFound) { // Use default
+                      ASTNode defaultNode =
+                          configDecl->getPropertyValue("default");
+                      if (defaultNode &&
+                          defaultNode->getNodeType() == AST::Int) {
+                        spinBox->setValue(
+                            static_pointer_cast<ValueNode>(defaultNode)
+                                ->getIntValue());
+                      }
+                    }
+
+                    optionLayout->addWidget(spinBox);
+                    resourceSpinBoxes[QString::fromStdString(
+                        configDecl->getName())] = spinBox;
+                  } else { // Show options
+
+                    optionLayout->addWidget(new QLabel(optionName));
+                    QComboBox *widget = new QComboBox(optionWidget);
+                    std::shared_ptr<ListNode> list =
+                        static_pointer_cast<ListNode>(possibleValues);
+                    for (ASTNode member : list->getChildren()) {
+                      if (member && member->getNodeType() == AST::Int) {
+                        widget->addItem(QString::number(
+                            static_pointer_cast<ValueNode>(member)
+                                ->getIntValue()));
+                      }
+                    }
+                    bool configFound = false;
+                    for (auto frameworkConfig :
+                         systemConfig.resourceConfigurations) {
+                      for (auto resourceConfig : frameworkConfig.second) {
+                        if (resourceConfig->getName() ==
+                            configDecl->getName()) {
+                          auto valueProp =
+                              resourceConfig->getPropertyValue("value");
+                          if (valueProp &&
+                              valueProp->getNodeType() == AST::Int) {
+                            widget->setCurrentText(QString::number(
+                                static_pointer_cast<ValueNode>(valueProp)
+                                    ->getIntValue()));
+                            configFound = true;
+                          } else {
+                            std::cerr
+                                << "Found configuration for "
+                                << resourceConfig->getName()
+                                << " but value type mismatch. Using default."
+                                << std::endl;
+                          }
+
+                          break;
+                        }
+                      }
+                    }
+                    if (!configFound) { // Use default
+                      ASTNode defaultNode =
+                          configDecl->getPropertyValue("default");
+
+                      if (defaultNode &&
+                          defaultNode->getNodeType() == AST::Int) {
+
+                        widget->setCurrentText(QString::number(
+                            static_pointer_cast<ValueNode>(defaultNode)
+                                ->getIntValue()));
+                      }
+                    }
+
+                    optionLayout->addWidget(widget);
+                    resourceIntComboBoxes[QString::fromStdString(
+                        configDecl->getName())] = widget;
+                  }
+
+                } else if (typeBlock->getName() == "_StringLiteral") {
+
+                  if (!showValues) {
+
+                    optionLayout->addWidget(new QLabel(optionName));
+
+                    QLineEdit *widget = new QLineEdit(optionWidget);
+
+                    bool configFound = false;
+                    for (auto frameworkConfig :
+                         systemConfig.resourceConfigurations) {
+                      for (auto resourceConfig : frameworkConfig.second) {
+                        if (resourceConfig->getName() ==
+                            configDecl->getName()) {
+                          auto valueProp =
+                              resourceConfig->getPropertyValue("value");
+                          if (valueProp &&
+                              valueProp->getNodeType() == AST::String) {
+                            widget->setText(QString::fromStdString(
+                                static_pointer_cast<ValueNode>(valueProp)
+                                    ->getStringValue()));
+                            configFound = true;
+                          } else {
+                            std::cerr
+                                << "Found configuration for "
+                                << resourceConfig->getName()
+                                << " but value type mismatch. Using default."
+                                << std::endl;
+                          }
+                          break;
+                        }
+                      }
+                    }
+                    if (!configFound) { // Use default
+                      ASTNode defaultNode =
+                          configDecl->getPropertyValue("default");
+                      if (defaultNode &&
+                          defaultNode->getNodeType() == AST::String) {
+                        widget->setText(QString::fromStdString(
+                            static_pointer_cast<ValueNode>(defaultNode)
+                                ->getStringValue()));
+                      }
+                    }
+
+                    optionLayout->addWidget(widget);
+                    resourceLineEdits[QString::fromStdString(
+                        configDecl->getName())] = widget;
+                  } else { // Show options
+
+                    optionLayout->addWidget(new QLabel(optionName));
+                    QComboBox *widget = new QComboBox(optionWidget);
+                    std::shared_ptr<ListNode> list =
+                        static_pointer_cast<ListNode>(possibleValues);
+                    for (ASTNode member : list->getChildren()) {
+                      if (member && member->getNodeType() == AST::String) {
+                        widget->addItem(QString::fromStdString(
+                            static_pointer_cast<ValueNode>(member)
+                                ->getStringValue()));
+                      }
+                    }
+                    bool configFound = false;
+                    for (auto frameworkConfig :
+                         systemConfig.resourceConfigurations) {
+                      for (auto resourceConfig : frameworkConfig.second) {
+                        if (resourceConfig->getName() ==
+                            configDecl->getName()) {
+                          auto valueProp =
+                              resourceConfig->getPropertyValue("value");
+                          if (valueProp &&
+                              valueProp->getNodeType() == AST::String) {
+                            widget->setCurrentText(QString::fromStdString(
+                                static_pointer_cast<ValueNode>(valueProp)
+                                    ->getStringValue()));
+                            configFound = true;
+                          } else {
+                            std::cerr
+                                << "Found configuration for "
+                                << resourceConfig->getName()
+                                << " but value type mismatch. Using default."
+                                << std::endl;
+                          }
+
+                          break;
+                        }
+                      }
+                    }
+                    if (!configFound) { // Use default
+                      ASTNode defaultNode =
+                          configDecl->getPropertyValue("default");
+
+                      if (defaultNode &&
+                          defaultNode->getNodeType() == AST::Int) {
+
+                        widget->setCurrentText(QString::number(
+                            static_pointer_cast<ValueNode>(defaultNode)
+                                ->getIntValue()));
+                      }
+                    }
+
+                    optionLayout->addWidget(widget);
+                    resourceComboBoxes[QString::fromStdString(
+                        configDecl->getName())] = widget;
+                  }
+                } else {
+                  qDebug() << "ERROR: unsupported config type";
+                }
+              }
+            } else {
+
+              qDebug() << "Unexpected type in resource configuration "
+                       << QString::fromStdString(config->getFilename())
+                       << QString::fromStdString(
+                              std::to_string(config->getLine()));
+            }
+          }
+        }
+      }
+    }
+  }
+
   for (ASTNode optionTree : optionTrees) {
     QWidget *groupBox = new QWidget(&optionsDialog);
 
@@ -1369,12 +1741,12 @@ void ProjectWindow::configureSystem() {
                 static_pointer_cast<ValueNode>(maxNode)->getIntValue());
           }
 
-          if (systemConfig.platformConfigurations["all"].find(
+          if (systemConfig.frameworkConfigurations["all"].find(
                   optionDecl->getName()) !=
-              systemConfig.platformConfigurations["all"].end()) {
+              systemConfig.frameworkConfigurations["all"].end()) {
             spinBox->setValue(
                 systemConfig
-                    .platformConfigurations["all"][optionDecl->getName()]
+                    .frameworkConfigurations["all"][optionDecl->getName()]
                     .toInt());
           } else { // Use default
             ASTNode defaultNode = optionDecl->getPropertyValue("default");
@@ -1425,12 +1797,12 @@ void ProjectWindow::configureSystem() {
           //                        spinBox->setMaximum(static_pointer_cast<ValueNode>(maxNode)->getIntValue());
           //                    }
 
-          if (systemConfig.platformConfigurations["all"].find(
+          if (systemConfig.frameworkConfigurations["all"].find(
                   optionDecl->getName()) !=
-              systemConfig.platformConfigurations["all"].end()) {
+              systemConfig.frameworkConfigurations["all"].end()) {
             spinBox->setText(
                 systemConfig
-                    .platformConfigurations["all"][optionDecl->getName()]
+                    .frameworkConfigurations["all"][optionDecl->getName()]
                     .toString());
           } else { // Use default
             ASTNode defaultNode = optionDecl->getPropertyValue("default");
@@ -1481,12 +1853,12 @@ void ProjectWindow::configureSystem() {
                              }
                            });
 
-          if (systemConfig.platformConfigurations["all"].find(
+          if (systemConfig.frameworkConfigurations["all"].find(
                   optionDecl->getName()) !=
-              systemConfig.platformConfigurations["all"].end()) {
+              systemConfig.frameworkConfigurations["all"].end()) {
             spinBox->setText(
                 systemConfig
-                    .platformConfigurations["all"][optionDecl->getName()]
+                    .frameworkConfigurations["all"][optionDecl->getName()]
                     .toString());
           } else { // Use default
             ASTNode defaultNode = optionDecl->getPropertyValue("default");
@@ -1538,12 +1910,12 @@ void ProjectWindow::configureSystem() {
                 }
               });
 
-          if (systemConfig.platformConfigurations["all"].find(
+          if (systemConfig.frameworkConfigurations["all"].find(
                   optionDecl->getName()) !=
-              systemConfig.platformConfigurations["all"].end()) {
+              systemConfig.frameworkConfigurations["all"].end()) {
             spinBox->setText(
                 systemConfig
-                    .platformConfigurations["all"][optionDecl->getName()]
+                    .frameworkConfigurations["all"][optionDecl->getName()]
                     .toString());
           } else { // Use default
             ASTNode defaultNode = optionDecl->getPropertyValue("default");
@@ -1578,12 +1950,12 @@ void ProjectWindow::configureSystem() {
 
           QString defaultValue;
           ASTNode defaultNode = optionDecl->getPropertyValue("default");
-          if (systemConfig.platformConfigurations["all"].find(
+          if (systemConfig.frameworkConfigurations["all"].find(
                   optionDecl->getName()) !=
-              systemConfig.platformConfigurations["all"].end()) {
+              systemConfig.frameworkConfigurations["all"].end()) {
             defaultValue =
                 systemConfig
-                    .platformConfigurations["all"][optionDecl->getName()]
+                    .frameworkConfigurations["all"][optionDecl->getName()]
                     .toString();
           } else { // Use default
             ASTNode defaultNode = optionDecl->getPropertyValue("default");
@@ -1610,9 +1982,9 @@ void ProjectWindow::configureSystem() {
             }
           }
           if (defaultNode ||
-              systemConfig.platformConfigurations["all"].find(
+              systemConfig.frameworkConfigurations["all"].find(
                   optionDecl->getName()) !=
-                  systemConfig.platformConfigurations["all"].end()) {
+                  systemConfig.frameworkConfigurations["all"].end()) {
             combo->setCurrentIndex(defaultIndex);
           }
           optionLayout->addWidget(combo);
@@ -1632,12 +2004,12 @@ void ProjectWindow::configureSystem() {
               optionDecl->getPropertyValue("possibleValues");
           ASTNode defaultNode = optionDecl->getPropertyValue("default");
           int defaultValue = 0;
-          if (systemConfig.platformConfigurations["all"].find(
+          if (systemConfig.frameworkConfigurations["all"].find(
                   optionDecl->getName()) !=
-              systemConfig.platformConfigurations["all"].end()) {
+              systemConfig.frameworkConfigurations["all"].end()) {
             defaultValue =
                 systemConfig
-                    .platformConfigurations["all"][optionDecl->getName()]
+                    .frameworkConfigurations["all"][optionDecl->getName()]
                     .toInt();
           } else { // Use default
             if (defaultNode && defaultNode->getNodeType() == AST::Int) {
@@ -1661,9 +2033,9 @@ void ProjectWindow::configureSystem() {
             }
           }
           if (defaultNode ||
-              systemConfig.platformConfigurations["all"].find(
+              systemConfig.frameworkConfigurations["all"].find(
                   optionDecl->getName()) !=
-                  systemConfig.platformConfigurations["all"].end()) {
+                  systemConfig.frameworkConfigurations["all"].end()) {
             combo->setCurrentIndex(defaultIndex);
           }
           optionLayout->addWidget(combo);
@@ -1846,28 +2218,29 @@ void ProjectWindow::configureSystem() {
     for (auto comboBoxInfo = comboBoxes.constBegin();
          comboBoxInfo != comboBoxes.constEnd(); ++comboBoxInfo) {
       systemConfig
-          .platformConfigurations["all"][comboBoxInfo.key().toStdString()] =
+          .frameworkConfigurations["all"][comboBoxInfo.key().toStdString()] =
           comboBoxInfo.value()->currentText();
     }
     for (auto comboBoxInfo = intComboBoxes.constBegin();
          comboBoxInfo != intComboBoxes.constEnd(); ++comboBoxInfo) {
       systemConfig
-          .platformConfigurations["all"][comboBoxInfo.key().toStdString()] =
+          .frameworkConfigurations["all"][comboBoxInfo.key().toStdString()] =
           comboBoxInfo.value()->currentText().toInt();
     }
     for (auto spinBoxInfo = spinBoxes.constBegin();
          spinBoxInfo != spinBoxes.constEnd(); ++spinBoxInfo) {
       systemConfig
-          .platformConfigurations["all"][spinBoxInfo.key().toStdString()] =
+          .frameworkConfigurations["all"][spinBoxInfo.key().toStdString()] =
           spinBoxInfo.value()->value();
     }
     for (auto lineEditInfo = lineEdits.constBegin();
          lineEditInfo != lineEdits.constEnd(); ++lineEditInfo) {
       qDebug() << lineEditInfo.key() << ".." << lineEditInfo.value()->text();
       systemConfig
-          .platformConfigurations["all"][lineEditInfo.key().toStdString()] =
+          .frameworkConfigurations["all"][lineEditInfo.key().toStdString()] =
           lineEditInfo.value()->text();
     }
+
     for (auto comboBoxInfo = overrideComboBoxes.constBegin();
          comboBoxInfo != overrideComboBoxes.constEnd(); ++comboBoxInfo) {
       systemConfig.overrides["all"][comboBoxInfo.key().toStdString()] =
@@ -1883,72 +2256,94 @@ void ProjectWindow::configureSystem() {
       systemConfig.overrides["all"][spinBoxInfo.key().toStdString()] =
           spinBoxInfo.value()->value();
     }
+
+    auto updateResourceConfig = [&](QString key, QVariant value) {
+      bool found = false;
+      for (auto frameworkConfig : systemConfig.resourceConfigurations) {
+        for (auto resourceConfig : frameworkConfig.second) {
+          if (resourceConfig->getName() == key.toStdString()) {
+            auto valueNode = resourceConfig->getPropertyValue("value");
+            if (valueNode) {
+              if (valueNode->getNodeType() == AST::Int) {
+                resourceConfig->replacePropertyValue(
+                    "value", std::make_shared<ValueNode>(value.toInt(),
+                                                         __FILE__, __LINE__));
+                found = true;
+                break;
+              } else if (valueNode->getNodeType() == AST::Real) {
+                resourceConfig->replacePropertyValue(
+                    "value", std::make_shared<ValueNode>(value.toDouble(),
+                                                         __FILE__, __LINE__));
+                found = true;
+                break;
+              } else if (valueNode->getNodeType() == AST::String) {
+                resourceConfig->replacePropertyValue(
+                    "value",
+                    std::make_shared<ValueNode>(value.toString().toStdString(),
+                                                __FILE__, __LINE__));
+                found = true;
+                break;
+              } else {
+                qDebug() << "ERROR unsupported data type in config";
+              }
+            } else {
+              qDebug() << "ERROR resource config entry has no value property";
+            }
+          }
+        }
+      }
+      if (!found) {
+        auto properties = std::make_shared<ListNode>(__FILE__, __LINE__);
+        if (value.type() == QVariant::Int) {
+          properties->addChild(std::make_shared<PropertyNode>(
+              "value",
+              std::make_shared<ValueNode>(value.toInt(), __FILE__, __LINE__),
+              __FILE__, __LINE__));
+        } else if (value.type() == QVariant::Double) {
+          properties->addChild(std::make_shared<PropertyNode>(
+              "value",
+              std::make_shared<ValueNode>(value.toDouble(), __FILE__, __LINE__),
+              __FILE__, __LINE__));
+        } else if (value.type() == QVariant::String) {
+          properties->addChild(std::make_shared<PropertyNode>(
+              "value",
+              std::make_shared<ValueNode>(value.toString().toStdString(),
+                                          __FILE__, __LINE__),
+              __FILE__, __LINE__));
+        }
+        auto newDecl = std::make_shared<DeclarationNode>(
+            key.toStdString(), "constant", properties, __FILE__, __LINE__);
+        systemConfig.resourceConfigurations["all"].push_back(newDecl);
+      }
+    };
+
+    for (auto comboBoxInfo = resourceComboBoxes.constBegin();
+         comboBoxInfo != resourceComboBoxes.constEnd(); ++comboBoxInfo) {
+      updateResourceConfig(comboBoxInfo.key(),
+                           comboBoxInfo.value()->currentText());
+    }
+
+    for (auto comboBoxInfo = resourceIntComboBoxes.constBegin();
+         comboBoxInfo != resourceIntComboBoxes.constEnd(); ++comboBoxInfo) {
+      updateResourceConfig(comboBoxInfo.key(),
+                           comboBoxInfo.value()->currentText().toInt());
+    }
+    for (auto spinBoxInfo = resourceSpinBoxes.constBegin();
+         spinBoxInfo != resourceSpinBoxes.constEnd(); ++spinBoxInfo) {
+
+      updateResourceConfig(spinBoxInfo.key(), spinBoxInfo.value()->value());
+    }
+    for (auto lineEditInfo = resourceLineEdits.constBegin();
+         lineEditInfo != resourceLineEdits.constEnd(); ++lineEditInfo) {
+      updateResourceConfig(lineEditInfo.key(), lineEditInfo.value()->text());
+    }
+
     // Write configuration to file
     CodeEditor *editor =
         static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
-    QFile configFile(editor->filename() + ".config");
 
-    if (!configFile.open(QIODevice::WriteOnly)) {
-      qDebug() << "Error opening code file for writing!";
-      //        throw;
-      return;
-    }
-    configFile.write("config Test {\n");
-    for (auto option = systemConfig.platformConfigurations["all"].cbegin();
-         option != systemConfig.platformConfigurations["all"].cend();
-         ++option) {
-      std::string optionName = option->first;
-      // TODO more robust capitalization
-      if (optionName[0] == '_') {
-        if (optionName[1] >= 'A' && optionName[1 <= 'Z']) {
-          optionName[1] -= 'A' - 'a';
-        }
-        //                            optionName[1] =
-        //                            optionName[1].toLower();
-      } else {
-        optionName[0] -= 'A' - 'a';
-      }
-      configFile.write("    ");
-      configFile.write(optionName.c_str());
-      configFile.write(": ");
-      if (option->second.type() == QVariant::String) {
-        configFile.write("\"");
-        configFile.write(option->second.toByteArray());
-        configFile.write("\"");
-      } else {
-        configFile.write(option->second.toString().toLocal8Bit());
-      }
-      configFile.write("\n");
-    }
-    configFile.write("}\n");
-    configFile.write("override Test {\n");
-    for (auto option = systemConfig.overrides["all"].cbegin();
-         option != systemConfig.overrides["all"].cend(); ++option) {
-      std::string optionName = option->first;
-      // TODO more robust capitalization
-      if (optionName[0] == '_') {
-        if (optionName[1] >= 'A' && optionName[1 <= 'Z']) {
-          optionName[1] -= 'A' - 'a';
-        }
-        //                            optionName[1] =
-        //                            optionName[1].toLower();
-      } else {
-        optionName[0] -= 'A' - 'a';
-      }
-      configFile.write("    ");
-      configFile.write(optionName.c_str());
-      configFile.write(": ");
-      if (option->second.type() == QVariant::String) {
-        configFile.write("\"");
-        configFile.write(option->second.toByteArray());
-        configFile.write("\"");
-      } else {
-        configFile.write(option->second.toString().toLocal8Bit());
-      }
-      configFile.write("\n");
-    }
-    configFile.write("}\n");
-    configFile.close();
+    systemConfig.writeConfiguration(editor->filename().toStdString() +
+                                    ".config");
   }
 }
 

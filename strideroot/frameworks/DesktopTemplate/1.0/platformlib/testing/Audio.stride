@@ -13,7 +13,6 @@ constant AudioBlockRate {
 }
 
 _domainDefinition RootDomain {
-	domainName: "RootDomain"
 	framework: _DesktopTemplateFramework
 	rate: -1 # -1 is 'one-shot/final' domain
     substitutions: [ ]
@@ -52,7 +51,6 @@ int main() {
 }
 
 _domainDefinition AudioBlockDomain {
-	domainName: "AudioBlockDomain"
 	framework: _DesktopTemplateFramework
     parentDomain: RootDomain # This will be the root domain
 	rate: AudioBlockRate
@@ -104,7 +102,6 @@ _domainDefinition AudioBlockDomain {
 }
 
 _domainDefinition AudioDomain {
-	domainName: "AudioDomain"
 	framework: _DesktopTemplateFramework
     parentDomain: AudioBlockDomain
 	rate: AudioRate

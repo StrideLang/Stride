@@ -1,7 +1,5 @@
-
 # OSC Domains
 _domainDefinition OSCDomain {
-	domainName: "OSCDomain"
 	framework: _DesktopTemplateFramework
 	domainIncludes: ["oscpp/client.hpp"]
     domainDeclarations: [ '

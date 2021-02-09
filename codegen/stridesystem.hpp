@@ -97,6 +97,7 @@ public:
   std::string getFrameworkFromAlias(std::string frameworkAlias);
 
   void generateDomainConnections(ASTNode tree);
+  void injectResourceConfiguration(ASTNode tree);
 
   ConnectionNodes getDomainChangeStreams(std::string previousDomainId,
                                          std::string nextDomainId);

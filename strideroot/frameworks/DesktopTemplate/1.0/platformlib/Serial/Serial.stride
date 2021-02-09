@@ -25,11 +25,10 @@ constant SerialProcessRate {
 }
  
 _domainDefinition SerialDomain {
-	domainName: "SerialDomain"
 	framework: _RtAudioFramework
 	parentDomain: RootDomain
 	rate: SerialProcessRate
-	resource: SerialPort
+	requiresResources: [SerialPort]
     substitutions: ["serial_port", _SerialPort,
 					"serial_process_rate", SerialProcessRate]
     domainIncludes: ["<thread>", 'serial/serial.h']
@@ -79,7 +78,6 @@ void serial_thread_func() {
 
 
 _domainDefinition SerialOutDomain {
-	domainName: "SerialOutDomain"
 	framework: _RtAudioFramework
 	parentDomain: SerialDomain
 	rate: 0
@@ -93,7 +91,6 @@ _domainDefinition SerialOutDomain {
 }
 
 _domainDefinition SerialInDomain {
-	domainName: "SerialInDomain"
 	framework: _RtAudioFramework
 	parentDomain: SerialDomain
 	rate: 0
@@ -149,7 +146,6 @@ _domainDefinition SerialInDomain {
 }
 
 _domainDefinition SerialChannelDomain {
-	domainName: "SerialChannelDomain"
 	framework: _RtAudioFramework
 	parentDomain: SerialDomain
 	maxInstances: none

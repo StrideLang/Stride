@@ -6,7 +6,6 @@ constant AudioRate {
 
 
 _domainDefinition AudioDomain {
-	domainName: "AudioDomain"
 	framework: _STM32F7_Framework
     parentDomain: RootDomain
 	rate: AudioRate

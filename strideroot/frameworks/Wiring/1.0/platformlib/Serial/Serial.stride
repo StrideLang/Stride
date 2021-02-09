@@ -50,11 +50,10 @@ constant SerialProcessRate {
  
  
 _domainDefinition SerialDomain {
-	domainName: "SerialDomain"
 	framework: _WiringFramework
 	parentDomain: WiringDomain
 	rate: SerialProcessRate
-	resource: SerialPort
+	requiresResources: [SerialPort]
     substitutions: ["serial_port", _SerialPort,
 					"serial_process_rate", SerialProcessRate]
     domainIncludes: []
@@ -78,7 +77,6 @@ _domainDefinition SerialDomain {
 }
 
 _domainDefinition SerialOutDomain {
-	domainName: "SerialOutDomain"
 	framework: _WiringFramework
 	parentDomain: SerialDomain
 	rate: 0
@@ -97,7 +95,6 @@ _domainDefinition SerialOutDomain {
 }
 
 _domainDefinition SerialInDomain {
-	domainName: "SerialInDomain"
 	framework: _WiringFramework
 	parentDomain: SerialDomain
 	rate: 0

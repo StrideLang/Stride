@@ -1,5 +1,4 @@
 _domainDefinition RootDomain {
-	domainName: "RootDomain"
 	framework: _RtAudioFramework
 	rate: -1 # -1 is 'one-shot/final' domain
     substitutions: [ ]

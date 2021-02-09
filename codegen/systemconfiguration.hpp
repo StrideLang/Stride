@@ -19,14 +19,15 @@ public:
       overrides; // Override existing values in Stride Code
   std::map<std::string, ConfigMap>
       substitutions; // Substitute strings in generated code
+  std::map<std::string, std::vector<std::shared_ptr<DeclarationNode>>>
+      resourceConfigurations; // Configure resources
   std::map<std::string, ConfigMap>
-      hardwareConfigurations; // Configure the hardware
-  std::map<std::string, ConfigMap>
-      platformConfigurations; // Configure the platform
+      frameworkConfigurations; // Configure frameworks
 
   bool testing = false;
 
-  void readProjectConfiguration(std::string filename);
+  void readConfiguration(std::string filename);
+  void writeConfiguration(std::string filename);
 };
 
 #endif // SYSTEMCONFIGURATION_HPP

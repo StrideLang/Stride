@@ -8,6 +8,25 @@ constant _Pi {
     value: 3.14159265358979323846264338327950288419716939937510
 }
 
+module Abs {
+	ports: [
+		mainOutputPort OutputPort {
+			block: Output
+			meta : "Absolute value" 
+		},
+		mainInputPort InputPort {
+			block: Input
+			meta: "Input value"
+		}
+	]
+	blocks: [
+	]
+	streams: [
+		Input >> __Abs() >> Output;
+	]
+	meta: "Absolute function"
+}
+
 module Cos {
 	ports: [ # A property could be the type of input, (degrees, radians, etc.)
 		mainOutputPort OutputPort {

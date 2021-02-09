@@ -11,7 +11,6 @@ constant _AudioDeviceIndex {value: 0}
 constant _AudioBlockSize {value: 256}
 
 _domainDefinition AudioBlockDomain {
-	domainName: "AudioBlockDomain"
 	framework: _DesktopTemplateFramework
 	parentDomain: RootDomain
 	rate: AudioBlockRate
@@ -59,7 +58,6 @@ domainFunctionCode: '
 
 
 _domainDefinition AudioDomain {
-	domainName: "AudioDomain"
 	framework: _DesktopTemplateFramework
 	parentDomain: AudioBlockDomain
 	rate: AudioRate

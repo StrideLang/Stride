@@ -127,6 +127,7 @@ private:
 
   void fillInspectorTree();
   QTreeWidgetItem *createTreeItem(ASTNode inputNode);
+  void createResourceTreeItem(ASTNode inputNode, QTreeWidget *treeWidget);
 
   Ui::ProjectWindow *ui;
 

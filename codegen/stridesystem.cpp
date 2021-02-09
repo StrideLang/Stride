@@ -571,12 +571,14 @@ string StrideSystem::substituteTokens(string namespaceName, string text) {
     size_t endIndex = text.find("%", index + 1);
     if (endIndex != std::string::npos) {
       auto tokenName = text.substr(index + 1, endIndex - index - 1);
-      if (m_systemConfig.platformConfigurations["all"].find(tokenName) !=
-          m_systemConfig.platformConfigurations["all"].end()) {
-        text.replace(index, endIndex - index + 1,
-                     m_systemConfig.platformConfigurations["all"][tokenName]
-                         .toString()
-                         .toStdString());
+      for (auto frameworkConfig : m_systemConfig.resourceConfigurations) {
+        for (auto resourceConfig : frameworkConfig.second) {
+          if (resourceConfig->getName() == tokenName) {
+            text.replace(
+                index, endIndex - index + 1,
+                AST::toText(resourceConfig->getPropertyValue("value")));
+          }
+        }
       }
 
       index = endIndex + 1;
@@ -967,6 +969,54 @@ void StrideSystem::generateDomainConnections(ASTNode tree) {
 
     } else {
       newChildren.push_back(node);
+    }
+  }
+  tree->setChildren(newChildren);
+}
+
+void StrideSystem::injectResourceConfiguration(ASTNode tree) {
+  std::vector<ASTNode> newChildren = tree->getChildren();
+
+  std::vector<std::shared_ptr<DeclarationNode>> resourceConfigs;
+
+  // Insert default configuration if not provided.
+  for (auto node : tree->getChildren()) {
+    if (node->getNodeType() == AST::Declaration) {
+      auto decl = static_pointer_cast<DeclarationNode>(node);
+      if (decl->getObjectType() == "resourceConfiguration") {
+        std::string framework;
+        auto frameworkNode = decl->getCompilerProperty("framework");
+        if (frameworkNode && frameworkNode->getNodeType() == AST::String) {
+          framework =
+              static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
+        }
+        bool configFound = false;
+        for (auto config : m_systemConfig.resourceConfigurations[framework]) {
+        }
+        if (!configFound) {
+          ASTNode propertiesList =
+              std::make_shared<ListNode>(__FILE__, __LINE__);
+          propertiesList->addChild(std::make_shared<PropertyNode>(
+              "value", decl->getPropertyValue("default"), __FILE__, __LINE__));
+          auto constDecl = std::make_shared<DeclarationNode>(
+              decl->getName(), "constant", propertiesList, __FILE__, __LINE__);
+
+          m_systemConfig.resourceConfigurations[framework].push_back(constDecl);
+        }
+      }
+    }
+  }
+
+  for (auto frameworkConfig : m_systemConfig.resourceConfigurations) {
+    for (auto configEntry : frameworkConfig.second) {
+      // FIXME verify framework
+      for (size_t i = 0; i < newChildren.size(); i++) {
+        if (CodeValidator::streamMemberName(newChildren[i]) ==
+            configEntry->getName()) {
+          newChildren[i] = configEntry;
+          break;
+        }
+      }
     }
   }
   tree->setChildren(newChildren);

@@ -72,12 +72,6 @@ public:
         m_platformPath(platformPath) {}
   virtual ~Builder() {}
 
-  void setConfiguration(std::map<std::string, QVariant> config) {
-    m_configuration = config;
-  }
-
-  std::map<std::string, QVariant> getConfiguration() { return m_configuration; }
-
   QString getPlatformPath() { return m_platformPath; }
   QString getStdErr() const { return m_stdErr; }
   QString getStdOut() const { return m_stdOut; }
@@ -112,7 +106,6 @@ protected:
   QString m_platformPath;
   QString m_stdOut;
   QString m_stdErr;
-  std::map<std::string, QVariant> m_configuration;
 
   std::function<void()> m_yieldCallback = []() {};
 
@@ -121,6 +114,7 @@ protected:
     tokenMap["%projectDir%"] = m_projectDir;
     tokenMap["%strideRoot%"] = m_strideRoot;
     tokenMap["%platformRoot%"] = m_platformPath;
+    tokenMap["%projectName%"] = m_platformPath;
     for (auto mapEntry : tokenMap.keys()) {
       while (text.indexOf(mapEntry) >= 0) {
         text.replace(mapEntry, tokenMap[mapEntry]);

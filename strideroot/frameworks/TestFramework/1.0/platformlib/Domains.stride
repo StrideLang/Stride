@@ -1,10 +1,4 @@
 
-_domainProcessing _PlatformDomainProcessing {
-	domainStreams: [
-		SetupDomain >> [TestDomain];
-	]
-}
-
 _frameworkDescription _TestFramework {
     frameworkName: "TestFramework"
 }
@@ -18,7 +12,6 @@ alias PlatformRate {
 }
 
 _domainDefinition RootDomain {
-	domainName: "RootDomain"
 	framework: _TestFramework
 	rate: -1 # -1 is 'one-shot/final' domain
     substitutions: [ ]
@@ -54,7 +47,6 @@ int main() {
 constant TestRate {value: 0}
 
 _domainDefinition TestDomain {
-	domainName: "TestDomain"
 	framework: _TestFramework
 	parentDomain: RootDomain
 	rate: 0

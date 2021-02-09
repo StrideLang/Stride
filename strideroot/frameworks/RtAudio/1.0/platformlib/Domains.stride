@@ -1,31 +1,97 @@
+# RtAudio Library
+
+resource _RtAudioLibrary {
+  resourceIncludes: ["RtAudio.h"]
+  meta: "RtAudio Library"
+}
+
+_compileOption _RtAudioLinuxAlsa {
+  name: "Alsa"
+  defines: ["__LINUX_ALSA__"]
+  linkLibraries: ["asound", "pthread"]
+}
+
+_compileOption _RtAudioLinuxJack {
+  name: "Jack"
+  defines: ["__UNIX_JACK__"]
+  linkLibraries: ["jack", "pthread"]
+}
+
+_compileOptionsGroup _RtAudioLinuxOptions {
+  name: "RtAudio API"
+  options: [_RtAudioLinuxPulse, _RtAudioLinuxAlsa, _RtAudioLinuxJack]
+  rules: "multiple"
+}
+
+# Audio Device
+resourceConfiguration _AudioDeviceIndex {
+	name: "Audio Device"
+	default: 0
+    type: _IntLiteral
+	meta: "Audio Device Index"
+}
+
+resourceConfiguration _AudioDeviceRate {
+    name: "Audio Device Rate"
+	possibleValues: [44100, 48000, 96000]
+	default: 44100
+    type: _IntLiteral
+	meta: "Sound card sampling rate"
+}
+
+resourceConfiguration _AudioBufferSize {
+    name: "Audio buffer size"
+	possibleValues: [32, 64, 128, 256, 512, 1024, 2048, 4096]
+	default: 256
+    type: _IntLiteral
+	meta: "Audio buffer size"
+}
+
+resourceConfiguration _AudioNumInputChannels {
+    name: "Audio Input Channels"
+	default: 2
+    minimum: 0
+    maximum: 64
+    type: _IntLiteral
+	meta: "Number of input audio channels"
+}
+
+resourceConfiguration _AudioNumOutputChannels {
+    name: "Audio Output Channels"
+	default: 2
+    minimum: 0
+    maximum: 64
+    type: _IntLiteral
+	meta: "Number of output audio channels"
+}
+
+resource _AudioDevice {
+    name: "Audio Device"
+	dependsOn: [_MainFunction, _RtAudioLibrary]
+	exclusive: off
+    configuration: [_AudioDeviceIndex, _AudioDeviceRate, _AudioBufferSize, 
+                    _AudioNumInputChannels, _AudioNumOutputChannels]
+	meta: 'AudioDevice'
+}
+
 constant AudioRate {
-    value: 44100 # This will be overwritten by the configuration file
+    value: _AudioDeviceRate
 }
 
 constant AudioBlockRate {
-	value: AudioRate/_AudioBlockSize
+	value: _AudioDeviceRate/_AudioBufferSize
 }
 
-constant _AudioDeviceIndex {value: 0}
-
-constant _AudioBlockSize {value: 256}
-
 _domainDefinition AudioBlockDomain {
-	domainName: "AudioBlockDomain"
 	framework: _RtAudioFramework
 	parentDomain: RootDomain
 	rate: AudioBlockRate
-
+    requiresResources: [_AudioDevice]
     substitutions: [
-      "num_in_chnls", _NumInputChannels,
-      "num_out_chnls", _NumOutputChannels,
-      "sample_rate", AudioRate,
-      "device", _AudioDeviceIndex,
-      "block_size", _AudioBlockSize
     ]
     domainIncludes: ["RtAudio.h"]
-    domainDeclarations: ['constexpr int NUM_IN_CHANNELS = %%num_in_chnls%%;',
-    'constexpr int NUM_OUT_CHANNELS = %%num_out_chnls%%;',
+    domainDeclarations: ['constexpr int NUM_IN_CHANNELS = %%_AudioNumInputChannels%%;',
+    'constexpr int NUM_OUT_CHANNELS = %%_AudioNumOutputChannels%%;',
     'typedef float MY_TYPE;',
     '#define FORMAT RTAUDIO_FLOAT32'
     ]
@@ -38,20 +104,20 @@ _domainDefinition AudioBlockDomain {
     }
     // Set the same number of channels for both input and output.
     unsigned int bufferBytes;
-    unsigned int bufferFrames = %%block_size%%;
+    unsigned int bufferFrames = %%_AudioBufferSize%%;
     int iDevice = 0;
     int oDevice = 0;
-    unsigned int fs = %%sample_rate%%;
+    unsigned int fs = %%_AudioDeviceRate%%;
 
 
     RtAudio::StreamOptions options;
     //options.flags |= RTAUDIO_NONINTERLEAVED;
 
     RtAudio::StreamParameters iParams, oParams;
-    iParams.deviceId = %%device%%; // first available device
-    iParams.nChannels = %%num_in_chnls%%;
-    oParams.deviceId = %%device%%; // first available device
-    oParams.nChannels = %%num_out_chnls%%;
+    iParams.deviceId = %%_AudioDeviceIndex%%;
+    iParams.nChannels = %%_AudioNumInputChannels%%;
+    oParams.deviceId = %%_AudioDeviceIndex%%;
+    oParams.nChannels = %%_AudioNumOutputChannels%%;
 
     bufferBytes = bufferFrames * NUM_OUT_CHANNELS * sizeof( MY_TYPE );
 
@@ -66,8 +132,8 @@ _domainDefinition AudioBlockDomain {
         e.printMessage();
         exit( -1 );
     }
-    RtAudio::DeviceInfo info = adac.getDeviceInfo(%%device%%);
-    std::cout << "Device = " << %%device%% << std::endl;
+    RtAudio::DeviceInfo info = adac.getDeviceInfo(%%_AudioDeviceIndex%%);
+    std::cout << "Device = " << %%_AudioDeviceIndex%% << std::endl;
     std::cout << "Name = " << info.name << std::endl;
     std::cout << ": maximum output channels = " << info.outputChannels << std::endl;
 //[[Initialization]]
@@ -110,11 +176,9 @@ domainFunctionCode: '
 
 
 _domainDefinition AudioDomain {
-	domainName: "AudioDomain"
 	framework: _RtAudioFramework
 	parentDomain: AudioBlockDomain
 	rate: AudioRate
-
     substitutions: []
     domainDeclarationsCode: ''
     domainFunctionCode: '
@@ -149,7 +213,6 @@ _domainDefinition AudioDomain {
 # Audio ---------------
 platformBlock _HwInput {
     typeName: '_hwInput'
-#	numInputs: 0
 	outputs: ["real"]
 #    include: []
 #    linkTo: []
@@ -175,16 +238,16 @@ platformBlock _HwOutput {
     inherits: [_Signal]
 }
 
-constant _NumInputChannels {value: 2}
+#constant _NumInputChannels {value: 2}
 
-_hwInput AudioIn[_NumInputChannels] {
-    rate: AudioRate
+_hwInput AudioIn[_AudioNumInputChannels] {
+    rate: _AudioDeviceRate
     domain: AudioDomain
 }
 
-constant _NumOutputChannels {value: 2}
+#constant _NumOutputChannels {value: 2}
 
-_hwOutput AudioOut[_NumOutputChannels] {
-    rate: AudioRate
+_hwOutput AudioOut[_AudioNumOutputChannels] {
+    rate: _AudioDeviceRate
     domain: AudioDomain
 }

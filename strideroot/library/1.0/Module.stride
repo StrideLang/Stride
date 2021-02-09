@@ -123,6 +123,34 @@ type _Module {
 	meta: "Modules encapsulate streams"
 }
 
+
+type _ModuleTemplate {
+	typeName: "moduleTemplate"
+	properties: [
+		typeProperty Ports {
+			name: "ports"
+			types: [ _MainOutputPort, _MainInputPort, _PropertyOutputPort, _PropertyInputPort ] 
+			default: none
+			required: on
+		},
+		typeProperty Streams {
+			name: "streams"
+			types: [""]
+			default: none
+			required: on
+		},
+		typeProperty Contraints {
+			name: "constraints"
+			types: [""]
+			default: none
+			required: off
+		}
+	]
+	inherits: [_Base]
+	meta: "Template for a moduleInstance"
+}
+
+
 type _Reaction {
 	typeName: "reaction"
 	properties: [

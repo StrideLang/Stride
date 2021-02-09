@@ -18,7 +18,6 @@ synchronization GlobalSync {
 }
 
 _domainDefinition WiringDomain {
-	domainName: "WiringDomain"
 	framework: _WiringFramework
     rate: PlatformRate
     substitutions: ["domain_rate", WiringDomain.rate ]

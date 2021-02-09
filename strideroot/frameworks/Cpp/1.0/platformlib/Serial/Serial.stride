@@ -1,38 +1,64 @@
+# Serial Resources
 
-# Serial Domains
-
-constant _SerialBaudRate  { # Overriden by configuration
-	value: 9600
+resourceConfiguration _SerialPortDevice {
+	name: "Serial Port"
+	default: '/dev/ttyACM0'
+  type: _StringLiteral
+	override: [["RtAudio", _SerialPort]]
+	meta: "Serial port selection"
 }
 
-constant _SerialPort  { # Overriden by configuration
-	value: '"/dev/ttyACM0"'
+resourceConfiguration _SerialPortBaudRateConfig {
+  name: "Baud Rate"
+	possibleValues: [9600, 14400, 19200, 38400, 56000, 57600, 115200, 128000]
+	default: 57600
+  type: _IntLiteral
+	override: [["RtAudio", _SerialBaudRate]]
+	meta: "Serial Baud Rate"
+}
+
+resource SerialLibrary {
+  resourceIncludes: ['serial/serial.h']
+  meta: "Serial library"
 }
 
 resource SerialPort {
-	substitutions: ["baud_rate", _SerialBaudRate,
-					"serial_port", _SerialPort,
-					"serial_process_rate", SerialProcessRate ]
-    resourceIncludes: ['serial/serial.h']
-    resourceDeclarations: [
-		'serial::Serial serialPort("", %%baud_rate%%, serial::Timeout::simpleTimeout(1.0/%%serial_process_rate%%));'
-		]
+  configuration: [_SerialPortDevice, _SerialPortBaudRateConfig]
+#  maxInstances: 1
+  resourceDeclarations: [
+  'serial::Serial serialPort;'
+  ]
+	meta: 'Hardware Serial Port'
 }
 
+# Serial configuration constants
 
-constant SerialProcessRate {
-	value: 1000
+#constant _SerialBaudRate  { # Overriden by configuration
+#	value: 9600
+#}
+
+#constant _SerialPort  { # Overriden by configuration
+#	value: '"/dev/ttyACM0"'
+#}
+
+
+resourceConfiguration SerialProcessRate {
+  name: "Serial Process Rate"
+	default: 1000
+  type: _IntLiteral
+	override: [["RtAudio", _SerialBaudRate]]
+	meta: "Serial Process Rate"
 }
  
+# Serial domains
+
 _domainDefinition SerialDomain {
-	domainName: "SerialDomain"
 	framework: _RtAudioFramework
 	parentDomain: RootDomain
 	rate: SerialProcessRate
-	resource: SerialPort
-    substitutions: ["serial_port", _SerialPort,
-					"serial_process_rate", SerialProcessRate]
-    domainIncludes: ["<thread>", 'serial/serial.h']
+	requiresResources: [SerialPort, SerialLibrary]
+  substitutions: ["serial_process_rate", SerialProcessRate]
+    domainIncludes: ["<thread>"]
     domainDeclarations: ["void serial_thread_func();",
 		"bool serialthread_running {true};",
 		"std::thread serialReadThread(serial_thread_func);"]
@@ -41,12 +67,17 @@ _domainDefinition SerialDomain {
 	domainFunctionCode: '
 void serial_thread_func() {
 
-      serialPort.setPort(%%serial_port%%);
 	  try {
+      serialPort.setPort("%%_SerialPortDevice%%");
+      serialPort.setBaudrate(%%_SerialPortBaudRateConfig%%);
+      auto timeout = serial::Timeout::simpleTimeout(1.0/%%SerialProcessRate%%);
+      serialPort.setTimeout(timeout);
+ 
+    std::cerr << "after set " << std::endl;
 		  serialPort.open();
 		  } catch (const serial::IOException &/*e*/) {
       serialthread_running = false;
-		  std::cerr << "Error opening serial port: " %%serial_port%%  << std::endl;
+		  std::cerr << "Error opening serial port: %%_SerialPortDevice%%"  << std::endl;
 
     }
 	  
@@ -64,6 +95,7 @@ void serial_thread_func() {
   const unsigned int bufferSize = 4096;
   uint8_t buffer[bufferSize];
   while (serialthread_running) {
+    std::cerr << "loop" << std::endl;
     auto nextTime = std::chrono::high_resolution_clock::now() + std::chrono::nanoseconds(mGranularity);
 //[[Processing]]
 //[[/Processing]]
@@ -79,7 +111,6 @@ void serial_thread_func() {
 
 
 _domainDefinition SerialOutDomain {
-	domainName: "SerialOutDomain"
 	framework: _RtAudioFramework
 	parentDomain: SerialDomain
 	rate: 0
@@ -93,7 +124,6 @@ _domainDefinition SerialOutDomain {
 }
 
 _domainDefinition SerialInDomain {
-	domainName: "SerialInDomain"
 	framework: _RtAudioFramework
 	parentDomain: SerialDomain
 	rate: 0
@@ -149,7 +179,6 @@ _domainDefinition SerialInDomain {
 }
 
 _domainDefinition SerialChannelDomain {
-	domainName: "SerialChannelDomain"
 	framework: _RtAudioFramework
 	parentDomain: SerialDomain
 	maxInstances: none
@@ -162,7 +191,7 @@ _domainDefinition SerialChannelDomain {
 }
 
 
-# Serial ------------------------
+# Serial platform blocks ------------------------
 
 
 platformBlock _SerialOutput {

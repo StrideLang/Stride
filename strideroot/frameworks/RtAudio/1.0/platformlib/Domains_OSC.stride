@@ -1,7 +1,6 @@
 
 # OSC Domains
 _domainDefinition OSCDomain {
-	domainName: "OSCDomain"
 	framework: _RtAudioFramework
 	domainIncludes: ["oscpp/client.hpp"]
     domainDeclarations: [ '

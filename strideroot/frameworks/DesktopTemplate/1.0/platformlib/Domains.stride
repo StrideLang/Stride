@@ -12,7 +12,6 @@ alias PlatformRate {
 }
 
 _domainDefinition RootDomain {
-	domainName: "RootDomain"
 	framework: _DesktopTemplateFramework
 	rate: -1 # -1 is 'one-shot/final' domain
     substitutions: [ ]
@@ -51,7 +50,6 @@ constant AsyncRate {
 }
 
 _domainDefinition AsyncDomain {
-	domainName: "AsyncDomain"
 	framework: _DesktopTemplateFramework
 	parentDomain: RootDomain
 	rate: AsyncRate

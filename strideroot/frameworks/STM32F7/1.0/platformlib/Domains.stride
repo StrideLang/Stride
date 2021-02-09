@@ -22,7 +22,6 @@ constant RootDomainRate {
 }
 
 _domainDefinition RootDomain {
-	domainName: "RootDomain"
 	framework: _STM32F7_Framework
 	rate: RootDomainRate
 	substitutions: ["root_domain_rate", RootDomainRate]

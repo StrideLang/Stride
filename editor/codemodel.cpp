@@ -186,7 +186,7 @@ QString CodeModel::getHtmlDocumentation(QString symbol) {
       }
     }
   } else if (symbol[0].toUpper() ==
-             symbol[0]) {  // Check if it is a declared module
+             symbol[0]) { // Check if it is a declared module
     QMutexLocker locker(&m_validTreeLock);
     std::shared_ptr<DeclarationNode> declaration =
         CodeValidator::findDeclaration(symbol, {}, m_lastValidTree);
@@ -197,10 +197,9 @@ QString CodeModel::getHtmlDocumentation(QString symbol) {
         QString docHtml = "<h1>" + symbol + "</h1>\n";
         docHtml += QString::fromStdString(
             static_cast<ValueNode *>(metaValue)->getStringValue());
-        QString propertiesTable =
-            "<table> "
-            "<tr><td><b>Name</b></td><td><b>Default</b></"
-            "td><td><b>Direction</b></td></tr>";
+        QString propertiesTable = "<table> "
+                                  "<tr><td><b>Name</b></td><td><b>Default</b></"
+                                  "td><td><b>Direction</b></td></tr>";
         QString propertiesHtml = tr("<h2>Ports</h2>") + "\n";
         AST *properties = declaration->getPropertyValue("ports").get();
         if (properties && properties->getNodeType() == AST::List) {
@@ -333,7 +332,7 @@ QString CodeModel::getTooltipText(QString symbol) {
   if (symbol.size() == 0) {
     return text;
   }
-  if (symbol[0].toUpper() == symbol[0]) {  // Check if it is a declared module
+  if (symbol[0].toUpper() == symbol[0]) { // Check if it is a declared module
     QMutexLocker locker(&m_validTreeLock);
     std::shared_ptr<DeclarationNode> declaration =
         CodeValidator::findDeclaration(symbol, {}, m_lastValidTree);
@@ -423,7 +422,7 @@ QString CodeModel::getTooltipText(QString symbol) {
         }
       }
     }
-  } else {  // word starts with lower case letter
+  } else { // word starts with lower case letter
     std::shared_ptr<DeclarationNode> typeBlock =
         CodeValidator::findTypeDeclarationByName(symbol.toStdString(), {},
                                                  m_lastValidTree);
@@ -475,11 +474,11 @@ QPair<QString, int> CodeModel::getSymbolLocation(QString symbol) {
   return location;
 }
 
-AST *CodeModel::getOptimizedTree() {
+ASTNode CodeModel::getOptimizedTree() {
   QMutexLocker locker(&m_validTreeLock);
-  AST *optimizedTree = nullptr;
+  ASTNode optimizedTree = nullptr;
   if (m_lastValidTree) {
-    optimizedTree = new AST;
+    optimizedTree = std::make_shared<AST>();
     for (ASTNode node : m_lastValidTree->getChildren()) {
       optimizedTree->addChild(node->deepCopy());
     }
@@ -640,7 +639,7 @@ void CodeModel::updateCodeAnalysis(QString code, QString platformRootPath,
 
     if (tree) {
       SystemConfiguration config;
-      config.testing = true;
+      //      config.testing = true;
       CodeResolver resolver(tree, platformRootPath, config);
       resolver.process();
       m_system = resolver.getSystem();
@@ -664,7 +663,7 @@ void CodeModel::updateCodeAnalysis(QString code, QString platformRootPath,
       if (m_lastValidTree) {
       }
       m_lastValidTree = tree;
-    } else {  // !tree
+    } else { // !tree
       vector<LangError> syntaxErrors = AST::getParseErrors();
       m_errors.clear();
       for (unsigned int i = 0; i < syntaxErrors.size(); i++) {

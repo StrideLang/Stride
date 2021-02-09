@@ -1,6 +1,24 @@
+resource _RootContext {
+	dependsOn: none
+	exclusive: none
+	meta: 'Root computation and memory context'
+}
+
+domainResource _MainFunction {
+	exclusive: on # Takes over _RootContext resource
+	meta: 'Main function in _RootContext'
+}
+
+resource _Thread {
+	dependsOn: [_MainFunction]
+	maxInstances: 10
+	exclusive: off #  depends on main function, but does not require exclusive use of it.
+}
+
 _domainDefinition RootDomain {
-	domainName: "RootDomain"
 	framework: _CppFramework
+	requiresResources: [_RootContext]
+	providesResources: [_MainFunction]
 	rate: -1 # -1 is 'one-shot/final' domain
     substitutions: [ ]
     domainIncludes: ["ReadWriteClasses.hpp",
@@ -37,7 +55,6 @@ constant AsyncRate {
 }
 
 _domainDefinition AsyncDomain {
-	domainName: "AsyncDomain"
 	framework: _CppFramework
 	parentDomain: RootDomain
 	rate: AsyncRate

@@ -2,12 +2,6 @@
 type _DomainDefinition {
 	typeName: "_domainDefinition"
 	properties: [
-		typeProperty DomainName {
-			name: "domainName"
-			types: [_StringLiteral]
-			default: none
-			required: on
-		},
         typeProperty Substitutions {
 			name: "substitutions"
 			types: [""] # Allow list
@@ -16,7 +10,7 @@ type _DomainDefinition {
 		},
 		typeProperty Framework {
 			name: "framework"
-			types: [_StringLiteral, ""] # Allow _Platform
+			types: [_StringLiteral, ""]
 			default: none
 			required: on
 		},
@@ -41,12 +35,19 @@ type _DomainDefinition {
 			required: on
 			meta: "The domain's rate. A value of none indicates an asynchronous or immediate domain."
 		},
-		typeProperty Resource {
-			name: "resource"
+		typeProperty RequiresResources {
+			name: "requiresResources"
 			types: [""]
-			default: none
+			default: []
 			required: off
-			meta: "A resource required by a domain"
+			meta: "A list of resources required by the domain"
+		},
+		typeProperty ProvidesResources {
+			name: "providesResources"
+			types: [_DomainResourceType]
+			default: []
+			required: off
+			meta: "A list of resources provided by the domain"
 		},
 #		typeProperty GlobalsTag {
 #			name: "globalsTag"
@@ -135,81 +136,6 @@ type _DomainDefinition {
 #	inherits: [_Base]
 }
 
-type _Domain {
-	typeName: "_domain"
-	properties: [
-		typeProperty Name {
-			name: "domainName"
-			types: [_StringLiteral, ""]
-			default: none
-			required: on
-		},
-		typeProperty Platform {
-			name: "platform"
-			types: [_StringLiteral, ""] # TODO allow _Platform
-			default: none
-			required: off
-		}
-	]
-#	inherits: [_Base]
-}
-
-type _ResourceType {
-	typeName: "resource"
-	properties: [
-		typeProperty Name {
-			name: "name"
-			types: [""]
-			default: none
-			required: on
-		},
-		typeProperty Substitutions {
-			name: "substitutions"
-			types: [""]
-			default: []
-			required: off
-		},
-		typeProperty Initializations {
-			name: "initializations"
-			types: [""]
-			default: []
-			required: off
-		},
-		typeProperty ResourceIncludes {
-			name: "resourceIncludes"
-			types: [""]
-			default: []
-			required: off
-		},
-		typeProperty ResourceDeclarations {
-			name: "resourceDeclarations"
-			types: [""]
-			default: ""
-			required: off
-		},
-		typeProperty Properties {
-			name: "properties"
-			types: [""]
-			default: ""
-			required: off
-		}
-	]
-}
-
-
-
-type _DomainProcessing {
-	typeName: "_domainProcessing"
-	properties: [
-		typeProperty DomainStreams {
-			name: "domainStreams"
-			types: [""]
-			default: none
-			required: on
-		}
-	]
-}
-
 type _PlatformModulePortType {
 	typeName: "_platformModulePort"
 	properties: [
@@ -261,7 +187,9 @@ type _PlatformCodeType {
 			types: [""]
 			default: []
 			required: off
-		},		typeProperty GlobalDeclarations {
+			meta: "List of resources required by this object"
+		},
+		typeProperty GlobalDeclarations {
 			name: "globalDeclarations"
 			types: [""] #TODO validate list
 			default: []

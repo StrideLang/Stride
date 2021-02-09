@@ -81,9 +81,9 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile,
     // TODO write default config
 
     SystemConfiguration config;
-    config.readProjectConfiguration(filename);
-
     config.testing = true;
+    config.readConfiguration(filename);
+
     CodeResolver resolver(tree, QString::fromStdString(m_StrideRoot), config);
     resolver.process();
 

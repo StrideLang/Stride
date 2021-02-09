@@ -82,7 +82,6 @@ public:
   void installFramework();
 
   std::vector<std::string> getDomainIds();
-  std::string getRootDomain();
 
   std::vector<ASTNode> loadImport(std::string importName, std::string importAs);
   //  void addTree(std::string treeName, ASTNode treeRoot);

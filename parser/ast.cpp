@@ -32,11 +32,14 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
+#include <algorithm>
 #include <cassert>
 
 #include "ast.h"
+#include "declarationnode.h"
 #include "listnode.h"
 #include "propertynode.h"
+#include "valuenode.h"
 
 using namespace std;
 
@@ -190,4 +193,63 @@ void AST::appendToPropertyValue(string propertyName, ASTNode value) {
       propertyName, std::make_shared<ListNode>(value, __FILE__, __LINE__),
       __FILE__, __LINE__);
   m_CompilerProperties->addChild(newProperty);
+}
+
+string AST::toText(ASTNode node, int indentOffset) {
+  int indentSize = 4;
+  std::string outText;
+  std::string indentBase = "";
+
+  for (auto i = 0; i < indentOffset; i++) {
+    indentBase += " ";
+  }
+  if (node->getNodeType() == AST::Declaration) {
+    auto decl = std::static_pointer_cast<DeclarationNode>(node);
+    outText += indentBase + " ";
+    if (decl->getNamespaceList().size() > 0) {
+      // FIXME namespace
+    }
+    outText += decl->getObjectType() + " " + decl->getName() + "{\n";
+    for (auto prop : decl->getProperties()) {
+      outText += AST::toText(prop, indentOffset + indentSize);
+    }
+    outText += indentBase + "}\n";
+  } else if (node->getNodeType() == AST::Property) {
+    auto pp = std::static_pointer_cast<PropertyNode>(node);
+    outText += indentBase + pp->getName() + ": ";
+    outText += AST::toText(pp->getValue(), indentOffset + indentSize);
+    outText += "\n";
+  } else if (node->getNodeType() == AST::List) {
+    auto list = std::static_pointer_cast<ListNode>(node);
+    outText += "[ ";
+    int currentColumn = indentOffset + indentSize;
+    for (auto elem : list->getChildren()) {
+      auto newText = AST::toText(elem, currentColumn);
+      outText += newText + ", ";
+      currentColumn += newText.size();
+      if (currentColumn > 80 ||
+          (std::find(newText.begin(), newText.end(), '\n') != newText.end())) {
+        outText += "\n";
+        currentColumn = indentOffset + indentSize;
+      }
+    }
+    if (list->getChildren().size() > 0) {
+      if (outText.back() == '\n') {
+        outText.resize(outText.size() - 3);
+      } else {
+        outText.resize(outText.size() - 2);
+      }
+    }
+    outText += " ]";
+
+  } else if (node->getNodeType() == AST::Int) {
+    outText +=
+        std::to_string(static_pointer_cast<ValueNode>(node)->getIntValue());
+  } else if (node->getNodeType() == AST::Real) {
+    outText +=
+        std::to_string(static_pointer_cast<ValueNode>(node)->getRealValue());
+  } else if (node->getNodeType() == AST::String) {
+    outText += static_pointer_cast<ValueNode>(node)->getStringValue();
+  }
+  return outText;
 }

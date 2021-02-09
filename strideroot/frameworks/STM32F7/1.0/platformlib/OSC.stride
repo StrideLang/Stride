@@ -2,7 +2,6 @@
 
 # OSC Domains
 _domainDefinition OSCInDomain {
-	domainName: "OSCInDomain"
 	framework: _STM32F7_Framework
 	globalsTag: "Includes"
 	declarationsTag: "Declarations"

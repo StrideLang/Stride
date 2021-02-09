@@ -78,7 +78,7 @@ type _Constant {
 	properties: [
 		typeProperty Value {
 			name: "value"
-			types: [_StringLiteral, _IntLiteral, _RealLiteral, _SwitchLiteral, _Constant]
+			types: [_StringLiteral, _IntLiteral, _RealLiteral, _SwitchLiteral, _Constant, _ResourceType]
 			default: none
 			required: off
 #			meta: "The constant value"

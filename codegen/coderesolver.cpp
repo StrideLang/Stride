@@ -79,6 +79,7 @@ void CodeResolver::process() {
   fillDefaultProperties();
   processAnoymousDeclarations();
   declareModuleInternalBlocks();
+  m_system->injectResourceConfiguration(m_tree);
 
   // Resolve and massage tree
   expandParallel(); // Find better name this expands bundles, functions and
@@ -92,12 +93,16 @@ void CodeResolver::process() {
     insertBuiltinObjects();
     fillDefaultProperties();
   }
+
+  m_system->injectResourceConfiguration(m_tree);
+
   resolveConstants();
   //  printTree();
 
   processDeclarations();
   processDomains();
   resolveRates();
+
   // Prepare additional metadata
   storeDeclarations();
   analyzeConnections();
@@ -960,16 +965,9 @@ void CodeResolver::analyzeConnections() {
               std::string domainName =
                   static_pointer_cast<ValueNode>(domain)->getStringValue();
               for (auto knownDomain : knownDomains) {
-                ASTNode domainNameValue =
-                    knownDomain->getPropertyValue("domainName");
-                if (domainNameValue &&
-                    domainNameValue->getNodeType() == AST::String) {
-                  if (domainName ==
-                      static_cast<ValueNode *>(domainNameValue.get())
-                          ->getStringValue()) {
-                    decl = knownDomain;
-                    break;
-                  }
+                if (domainName == knownDomain->getName()) {
+                  decl = knownDomain;
+                  break;
                 }
               }
               if (decl) {
@@ -1012,16 +1010,9 @@ void CodeResolver::analyzeConnections() {
               std::string domainName =
                   static_pointer_cast<ValueNode>(domain)->getStringValue();
               for (auto knownDomain : knownDomains) {
-                ASTNode domainNameValue =
-                    knownDomain->getPropertyValue("domainName");
-                if (domainNameValue &&
-                    domainNameValue->getNodeType() == AST::String) {
-                  if (domainName ==
-                      static_cast<ValueNode *>(domainNameValue.get())
-                          ->getStringValue()) {
-                    decl = knownDomain;
-                    break;
-                  }
+                if (domainName == knownDomain->getName()) {
+                  decl = knownDomain;
+                  break;
                 }
               }
               if (decl) {
@@ -1030,8 +1021,12 @@ void CodeResolver::analyzeConnections() {
             } else if (domain->getNodeType() == AST::Block) {
               decl = CodeValidator::findDeclaration(
                   CodeValidator::streamMemberName(domain), {}, m_tree);
-              if (decl) {
+              if (decl && decl->getCompilerProperty("domainReads")) {
                 decl->getCompilerProperty("domainReads")->addChild(node);
+              } else {
+                std::cerr << "ERROR: no domainReads property for domain: "
+                          << CodeValidator::streamMemberName(domain)
+                          << std::endl;
               }
             } else {
               if (domain->getNodeType() != AST::PortProperty &&
@@ -1743,19 +1738,6 @@ void CodeResolver::setDomainForStack(QList<ASTNode> domainStack,
     CodeValidator::setDomainForNode(relatedNode, domainName, scopeStack,
                                     m_tree);
   }
-}
-
-std::shared_ptr<DeclarationNode>
-CodeResolver::createDomainDeclaration(QString name) {
-  std::shared_ptr<DeclarationNode> newBlock = nullptr;
-  newBlock = std::make_shared<DeclarationNode>(
-      name.toStdString(), "_domainDefinition", nullptr, __FILE__, __LINE__);
-  newBlock->addProperty(std::make_shared<PropertyNode>(
-      "domainName",
-      std::make_shared<ValueNode>(name.toStdString(), __FILE__, __LINE__),
-      __FILE__, __LINE__));
-  fillDefaultPropertiesForNode(newBlock, m_tree->getChildren());
-  return newBlock;
 }
 
 std::shared_ptr<DeclarationNode>
@@ -3426,53 +3408,32 @@ void CodeResolver::resolveDomainForStreamNode(ASTNode node,
   } else if (node->getNodeType() == AST::PortProperty) {
     domain = node->getCompilerProperty("domain");
   }
-  if (domain) {
-    std::shared_ptr<DeclarationNode> domainDeclaration;
-    if (domain->getNodeType() == AST::PortProperty) {
-      auto domainNameNode = static_pointer_cast<PortPropertyNode>(domain);
-      domain = resolvePortProperty(domainNameNode, scopeStack);
-      if (!domain) {
-        domain = domainNameNode;
-      }
-    }
-    if (domain->getNodeType() == AST::Block) { // Resolve domain name
-      auto domainNameNode = static_pointer_cast<BlockNode>(domain);
-      domainDeclaration = CodeValidator::findDeclaration(
-          QString::fromStdString(domainNameNode->getName()), scopeStack,
-          m_tree);
-    }
-    if (domainDeclaration) {
-      ASTNode domainValue = domainDeclaration->getPropertyValue("domainName");
-      while (domainValue && domainValue->getNodeType() == AST::Block) {
-        auto recurseDomain = static_pointer_cast<BlockNode>(domainValue);
-        domainDeclaration = CodeValidator::findDeclaration(
-            QString::fromStdString(recurseDomain->getName()), scopeStack,
-            m_tree);
-        domainValue = domainDeclaration->getPropertyValue("name");
-      }
-      if (domainValue && domainValue->getNodeType() == AST::String) {
-        string domainName =
-            static_cast<ValueNode *>(domainValue.get())->getStringValue();
-        if (node->getNodeType() == AST::Block ||
-            node->getNodeType() == AST::Bundle) {
-          std::shared_ptr<DeclarationNode> declaration =
-              CodeValidator::findDeclaration(
-                  CodeValidator::streamMemberName(node), scopeStack, m_tree);
-          //                    declaration->setDomainString(domainName);
-        }
-        //                else if (node->getNodeType() == AST::Function) {
-        //                    // FIXME we need to find the domain declaration
-        //                    that matches this domain name
-        //                    // This is currently assuming the domain name
-        //                    and the domain block delcaration name are the
-        //                    same
-        //                     static_cast<FunctionNode
-        //                     *>(node.get())->setDomainString(domainName);
-        //                }
-      }
-    } else {
-    }
-  }
+  //  if (domain) {
+  //    std::shared_ptr<DeclarationNode> domainDeclaration;
+  //    if (domain->getNodeType() == AST::PortProperty) {
+  //      auto domainNameNode = static_pointer_cast<PortPropertyNode>(domain);
+  //      domain = resolvePortProperty(domainNameNode, scopeStack);
+  //      if (!domain) {
+  //        domain = domainNameNode;
+  //      }
+  //    }
+  //    if (domain->getNodeType() == AST::Block) { // Resolve domain name
+  //      auto domainNameNode = static_pointer_cast<BlockNode>(domain);
+  //      domainDeclaration = CodeValidator::findDeclaration(
+  //          QString::fromStdString(domainNameNode->getName()), scopeStack,
+  //          m_tree);
+  //    }
+  //    if (domainDeclaration) {
+  //      string domainName = domainDeclaration->getName();
+  //      if (node->getNodeType() == AST::Block ||
+  //          node->getNodeType() == AST::Bundle) {
+  //        std::shared_ptr<DeclarationNode> declaration =
+  //            CodeValidator::findDeclaration(
+  //                CodeValidator::streamMemberName(node), scopeStack, m_tree);
+  //      }
+  //    } else {
+  //    }
+  //  }
 }
 
 void CodeResolver::remapStreamDomains(std::shared_ptr<StreamNode> stream,
