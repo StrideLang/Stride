@@ -1,7 +1,5 @@
 use DesktopAudio version 1.0
 
-import Serial
-
 signal Var { domain: Wiring::WiringDomain rate:Wiring::PlatformRate }
 
 Var >> Sin() >> Var;

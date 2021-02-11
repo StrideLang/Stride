@@ -483,7 +483,8 @@ StrideSystem::getFrameworkTools(std::string namespaceName) {
     assert(0 == 1);
     return QMap<QString, QString>();
   }
-  namespaceName = ""; // Hack! Everything is currently being put into root...
+  //  namespaceName = ""; // Hack! Everything is currently being put into
+  //  root...
   for (ASTNode object : libObjects[namespaceName]) {
     if (object->getNodeType() == AST::Declaration) {
       std::shared_ptr<DeclarationNode> decl =

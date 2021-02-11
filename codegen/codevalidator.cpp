@@ -907,13 +907,13 @@ void CodeValidator::validateTypes(ASTNode node, ScopeStack scopeStack,
   }
 
   for (ASTNode childNode : node->getChildren()) {
-    auto frameworkNode = childNode->getCompilerProperty("framework");
-    std::string frameworkName;
-    if (frameworkNode) {
-      frameworkName =
-          static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
-    }
-    validateTypes(childNode, scopeStack, {}, frameworkName);
+    //    auto frameworkNode = childNode->getCompilerProperty("framework");
+    //    std::string frameworkName;
+    //    if (frameworkNode) {
+    //      frameworkName =
+    //          static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
+    //    }
+    validateTypes(childNode, scopeStack, {}, currentFramework);
   }
 }
 
@@ -2213,7 +2213,12 @@ std::shared_ptr<DeclarationNode> CodeValidator::findDeclaration(
       }
     }
   }
-  return nullptr;
+  if (platform.size() > 0) {
+    // If not found try to find in root namespace
+    return findDeclaration(objectName, scopeStack, tree, namespaces);
+  } else {
+    return nullptr;
+  }
 }
 
 std::shared_ptr<DeclarationNode>

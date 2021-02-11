@@ -1112,7 +1112,7 @@ void CodeResolver::insertBuiltinObjectsForNode(
   QList<std::shared_ptr<DeclarationNode>> blockList;
   if (node->getNodeType() == AST::List) {
     for (ASTNode child : node->getChildren()) {
-      insertBuiltinObjectsForNode(child, objects, tree);
+      insertBuiltinObjectsForNode(child, objects, tree, currentFramework);
     }
   } else if (node->getNodeType() == AST::Stream) {
     StreamNode *stream = static_cast<StreamNode *>(node.get());
