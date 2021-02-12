@@ -140,6 +140,11 @@ public:
       m_synchronization; // Connections between domains
   SystemConfiguration m_systemConfig;
 
+  string getStrideRoot() const;
+  void setStrideRoot(const string &strideRoot);
+
+  std::vector<std::string> listAvailableImports();
+
 private:
   QVector<ASTNode> getPortsForTypeBlock(DeclarationNode *block);
   //    ListNode *getPortsForFunction(QString typeName);

@@ -126,6 +126,18 @@ std::vector<ASTNode> CodeValidator::loadAllInDirectory(string path) {
   return nodes;
 }
 
+std::vector<std::string>
+CodeValidator::listAvailableSystems(std::string strideroot) {
+  QDir dir(QString::fromStdString(strideroot));
+  dir.cd("systems");
+  auto entries = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+  std::vector<std::string> outEntries;
+  for (auto entry : entries) {
+    outEntries.push_back(entry.toStdString());
+  }
+  return outEntries;
+}
+
 void CodeValidator::validatePlatform(ASTNode tree, ScopeStack scopeStack) {
   for (ASTNode node : tree->getChildren()) {
     if (node->getNodeType() == AST::Platform) {

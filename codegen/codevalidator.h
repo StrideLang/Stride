@@ -286,6 +286,8 @@ public:
 
   static std::vector<ASTNode> loadAllInDirectory(std::string path);
 
+  static std::vector<string> listAvailableSystems(std::string strideroot);
+
 private:
   void validateTree(ASTNode tree);
   void validate();

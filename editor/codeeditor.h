@@ -72,6 +72,19 @@ public:
   void find(QString query = "");
   void gotoLine(int line);
 
+  typedef enum {
+    RootScope,
+    ImportStatement,
+    UseStatementSystem,
+    UseStatementVersion,
+    DeclarationPorts,
+    DeclarationScope,
+    FunctionProperties,
+    FunctionScope,
+    Stream,
+    StreamAnonDeclaration
+  } CurrentContext;
+
 public slots:
   void markChanged(bool changed = true);
 
@@ -100,6 +113,7 @@ private:
   QTimer m_ButtonTimer;
   QTimer m_mouseIdleTimer;
   QAtomicInt m_changedSinceParse{1};
+  CurrentContext m_currentContext{RootScope};
 
   // Properties
   QString m_filename;

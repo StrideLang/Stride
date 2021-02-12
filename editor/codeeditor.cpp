@@ -64,7 +64,8 @@ CodeEditor::CodeEditor(QWidget *parent, CodeModel *codeModel)
   m_helperButton.hide();
   m_helperButton.setText("+");
 
-  connect(&m_ButtonTimer, SIGNAL(timeout()), this, SLOT(showButton()));
+  // TODO rethink helper button or remove
+  //  connect(&m_ButtonTimer, SIGNAL(timeout()), this, SLOT(showButton()));
   connect(&m_mouseIdleTimer, SIGNAL(timeout()), this, SLOT(mouseIdleTimeout()));
   connect(&m_helperButton, SIGNAL(pressed()), this,
           SLOT(helperButtonClicked()));
@@ -179,37 +180,65 @@ void CodeEditor::insertAutoComplete() {
 }
 
 void CodeEditor::updateAutoCompleteMenu(QString currentWord) {
+  auto currentActiveAction = m_autoCompleteMenu.activeAction();
+  QString currentActive;
+  if (currentActiveAction) {
+    currentActive = currentActiveAction->text();
+  }
   m_autoCompleteMenu.clear();
   QAction *activeAction = nullptr;
-  if (currentWord[0].toUpper() == currentWord[0]) {
-    QStringList functions = m_codeModel->getFunctions();
-    foreach (QString functionName, functions) {
-      if (functionName.left(currentWord.size()) == currentWord) {
-        QString syntaxText = m_codeModel->getFunctionSyntax(functionName);
-        QAction *syntaxAction = m_autoCompleteMenu.addAction(
-            functionName, this, SLOT(insertAutoComplete()));
-        syntaxAction->setData(syntaxText);
-        if (!activeAction) {
-          activeAction = syntaxAction;
+  if (m_currentContext == UseStatementSystem) {
+    auto availableSystems = CodeValidator::listAvailableSystems(
+        m_codeModel->getSystem()->getStrideRoot());
+    for (auto systemName : availableSystems) {
+      QAction *syntaxAction = m_autoCompleteMenu.addAction(
+          QString::fromStdString(systemName), this, SLOT(insertAutoComplete()));
+      syntaxAction->setData(QString::fromStdString(systemName) +
+                            " version 1.0");
+    }
+  } else if (m_currentContext == UseStatementVersion) {
+
+  } else if (m_currentContext == ImportStatement) {
+
+    auto availableImports = m_codeModel->getSystem()->listAvailableImports();
+    for (auto systemName : availableImports) {
+      QAction *syntaxAction = m_autoCompleteMenu.addAction(
+          QString::fromStdString(systemName), this, SLOT(insertAutoComplete()));
+      syntaxAction->setData(QString::fromStdString(systemName));
+    }
+  } else {
+
+    if (currentWord[0].toUpper() == currentWord[0]) {
+      QStringList functions = m_codeModel->getFunctions();
+      foreach (QString functionName, functions) {
+        if (functionName.left(currentWord.size()) == currentWord) {
+          QString syntaxText = m_codeModel->getFunctionSyntax(functionName);
+          QAction *syntaxAction = m_autoCompleteMenu.addAction(
+              functionName, this, SLOT(insertAutoComplete()));
+          syntaxAction->setData(syntaxText);
+          if (currentActive == functionName) {
+            activeAction = syntaxAction;
+          }
         }
       }
-    }
-  } else if (currentWord[0].toLower() == currentWord[0]) {
-    QStringList types = m_codeModel->getTypes();
-    foreach (QString typeName, types) {
-      if (typeName.left(currentWord.size()) == currentWord) {
-        QString syntaxText = m_codeModel->getTypeSyntax(typeName);
-        QAction *syntaxAction = m_autoCompleteMenu.addAction(
-            typeName, this, SLOT(insertAutoComplete()));
-        syntaxAction->setData(syntaxText);
-        if (!activeAction) {
-          activeAction = syntaxAction;
+    } else if (currentWord[0].toLower() == currentWord[0]) {
+      QStringList types = m_codeModel->getTypes();
+      foreach (QString typeName, types) {
+        if (typeName.left(currentWord.size()) == currentWord) {
+          QString syntaxText = m_codeModel->getTypeSyntax(typeName);
+          QAction *syntaxAction = m_autoCompleteMenu.addAction(
+              typeName, this, SLOT(insertAutoComplete()));
+          syntaxAction->setData(syntaxText);
+          if (currentActive == typeName) {
+            activeAction = syntaxAction;
+          }
         }
       }
     }
   }
   if (activeAction) {
     m_autoCompleteMenu.setActiveAction(activeAction);
+  } else {
   }
   //            m_autoCompleteMenu.setGeometry(20, 20, 50, 100);
 }
@@ -227,7 +256,17 @@ bool CodeEditor::eventFilter(QObject *obj, QEvent *event) {
     //        qDebug("Ate key press %d", keyEvent->key());
     QRegExp regex("\\w+");
     if (regex.indexIn(keyEvent->text()) >= 0) {
-      this->insertPlainText(keyEvent->text());
+      this->event(event);
+      QTextCursor cursor = textCursor();
+      cursor.select(QTextCursor::WordUnderCursor);
+      QString currentWord = cursor.selectedText();
+      updateAutoCompleteMenu(currentWord);
+      return true;
+    } else if (keyEvent->key() == Qt::Key_Backspace ||
+               keyEvent->key() == Qt::Key_Delete ||
+               keyEvent->key() == Qt::Key_Left ||
+               keyEvent->key() == Qt::Key_Right) {
+      this->event(event);
       QTextCursor cursor = textCursor();
       cursor.select(QTextCursor::WordUnderCursor);
       QString currentWord = cursor.selectedText();
@@ -241,6 +280,9 @@ bool CodeEditor::eventFilter(QObject *obj, QEvent *event) {
       }
       m_autoCompleteMenu.hide();
       return true;
+    } else if (keyEvent->key() == Qt::Key_Up ||
+               keyEvent->key() == Qt::Key_Down) {
+      return QObject::eventFilter(obj, event);
     } else {
       m_autoCompleteMenu.hide();
       return QObject::eventFilter(obj, event);
@@ -282,8 +324,52 @@ void CodeEditor::resizeEvent(QResizeEvent *e) {
 }
 
 void CodeEditor::keyPressEvent(QKeyEvent *event) {
-  // tab insertion gets processed between this function and keyReleaseEvent, so
-  // we need to process changing tab to space here
+  auto currentPosition = textCursor().position();
+  auto lastStartOfScope =
+      document()
+          ->find("{", currentPosition, QTextDocument::FindBackward)
+          .position();
+  auto lastEndOfScope =
+      document()
+          ->find("}", currentPosition, QTextDocument::FindBackward)
+          .position();
+
+  auto lastStartOfArgs =
+      document()
+          ->find("(", currentPosition, QTextDocument::FindBackward)
+          .position();
+  auto lastEndOfArgs =
+      document()
+          ->find(")", currentPosition, QTextDocument::FindBackward)
+          .position();
+
+  // TODO determine if we are in streams.
+
+  if (lastStartOfArgs > lastEndOfArgs) {
+
+    m_currentContext = FunctionProperties;
+    // In function call
+    // TODO mark FunctionScope
+  } else {
+    if (lastStartOfScope <= lastEndOfScope) {
+      // We are in the root scope
+      auto cursor = textCursor();
+      cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
+
+      auto lineStartText = cursor.selectedText().trimmed();
+      if (lineStartText.startsWith("import")) {
+        m_currentContext = ImportStatement;
+      } else if (lineStartText.startsWith("use")) {
+        m_currentContext = UseStatementSystem;
+        // TODO determine if we are in the version part
+      } else {
+        m_currentContext = RootScope;
+      }
+    }
+  }
+
+  // tab insertion gets processed between this function and keyReleaseEvent,
+  // so we need to process changing tab to space here
   if (event->key() == Qt::Key_Tab && !m_IndentTabs) {
     QTextCursor cursor = textCursor();
     cursor.insertText("    ");
@@ -333,7 +419,9 @@ void CodeEditor::keyReleaseEvent(QKeyEvent *event) {
     QTextCursor cursor = textCursor();
     cursor.select(QTextCursor::WordUnderCursor);
     QString currentWord = cursor.selectedText();
-    if (currentWord.size() > 2) {
+    if (currentWord.size() > 2 || (m_currentContext == ImportStatement ||
+                                   m_currentContext == UseStatementSystem ||
+                                   m_currentContext == UseStatementVersion)) {
       QRect cursorRectValue = cursorRect(cursor);
       updateAutoCompleteMenu(currentWord);
       QPoint p = QPoint(cursorRectValue.x() + cursorRectValue.width(),
@@ -341,6 +429,10 @@ void CodeEditor::keyReleaseEvent(QKeyEvent *event) {
       QPoint globalPoint = this->mapToGlobal(p);
       m_autoCompleteMenu.move(globalPoint);
       if (m_autoCompleteMenu.actions().size() > 0) {
+        if (m_autoCompleteMenu.activeAction() == nullptr) {
+          m_autoCompleteMenu.setActiveAction(
+              m_autoCompleteMenu.actions().at(0));
+        }
         m_autoCompleteMenu.show();
       }
     }

@@ -294,6 +294,38 @@ void StrideSystem::parseSystemTree(ASTNode systemTree, ASTNode configuration) {
   }
 }
 
+std::string StrideSystem::getStrideRoot() const {
+  return m_strideRoot.toStdString();
+}
+
+void StrideSystem::setStrideRoot(const std::string &strideRoot) {
+  m_strideRoot.fromStdString(strideRoot);
+}
+
+std::vector<string> StrideSystem::listAvailableImports() {
+  QDir dir(m_strideRoot);
+  dir.cd("library/1.0");
+  std::vector<std::string> outEntries;
+  for (auto entry : dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+    if (entry.size() > 0 && (entry[0].toUpper() == entry[0])) {
+      outEntries.push_back(entry.toStdString());
+    }
+  }
+  for (auto fw : m_frameworks) {
+    dir.setPath(QString::fromStdString(fw->buildPlatformLibPath()));
+
+    for (auto entry : dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+      if (entry.size() > 0 && (entry[0].toUpper() == entry[0])) {
+        if (std::find(outEntries.begin(), outEntries.end(),
+                      entry.toStdString()) == outEntries.end()) {
+          outEntries.push_back(entry.toStdString());
+        }
+      }
+    }
+  }
+  return outEntries;
+}
+
 QStringList StrideSystem::getErrors() { return m_errors; }
 
 QStringList StrideSystem::getWarnings() { return m_warnings; }
