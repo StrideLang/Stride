@@ -1099,13 +1099,16 @@ void CodeValidator::validateSymbolUniqueness(ScopeStack scope) {
       if (decl->getObjectType() == "module" ||
           decl->getObjectType() == "reaction" ||
           decl->getObjectType() == "loop") {
-        auto blocks = decl->getPropertyValue("blocks")->getChildren();
-        auto ports = decl->getPropertyValue("ports")->getChildren();
-        std::vector<ASTNode> subScope = blocks;
-        subScope.insert(subScope.end(), ports.begin(), ports.end());
-        scope.push_back({node, subScope});
-        validateSymbolUniqueness(scope);
-        scope.pop_back();
+        if (decl->getPropertyValue("blocks") &&
+            decl->getPropertyValue("ports")) {
+          auto blocks = decl->getPropertyValue("blocks")->getChildren();
+          auto ports = decl->getPropertyValue("ports")->getChildren();
+          std::vector<ASTNode> subScope = blocks;
+          subScope.insert(subScope.end(), ports.begin(), ports.end());
+          scope.push_back({node, subScope});
+          validateSymbolUniqueness(scope);
+          scope.pop_back();
+        }
       }
     }
   }
@@ -4062,7 +4065,8 @@ void CodeValidator::setDomainForNode(ASTNode node, ASTNode domain,
     if (declaration) {
       auto typeDeclaration =
           CodeValidator::findTypeDeclaration(declaration, scopeStack, tree);
-      if (typeDeclaration->getObjectType() == "platformModule") {
+      if (typeDeclaration &&
+          typeDeclaration->getObjectType() == "platformModule") {
         node->setCompilerProperty("domain", domain);
       } else {
         declaration->replacePropertyValue("domain", domain);

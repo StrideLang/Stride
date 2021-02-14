@@ -836,7 +836,9 @@ ASTNode CodeResolver::expandFunctionFromProperties(
       }
       if (numOuts == 1) { // Single value given, duplicate for all copies.
         for (ASTNode newFunction : newFunctions->getChildren()) {
-          newFunction->addChild(prop->deepCopy());
+          static_pointer_cast<FunctionNode>(newFunction)
+              ->replacePropertyValue(prop->getName(),
+                                     prop->getValue()->deepCopy());
         }
       } else {
         if (value->getNodeType() == AST::Bundle) {
@@ -852,21 +854,17 @@ ASTNode CodeResolver::expandFunctionFromProperties(
                                                          tree, errors);
           Q_ASSERT(size == dataSize);
           for (int i = 0; i < size; ++i) {
-            std::shared_ptr<PropertyNode> newProp =
-                static_pointer_cast<PropertyNode>(prop->deepCopy());
             std::shared_ptr<ListNode> indexList = std::make_shared<ListNode>(
-                std::make_shared<ValueNode>(i + 1, prop->getFilename().c_str(),
+                std::make_shared<ValueNode>(i, prop->getFilename().c_str(),
                                             prop->getLine()),
                 prop->getFilename().c_str(), prop->getLine());
             std::shared_ptr<BundleNode> newBundle =
                 std::make_shared<BundleNode>(name->getName(), indexList,
                                              prop->getFilename().c_str(),
                                              prop->getLine());
-            newProp->replaceValue(newBundle);
             static_pointer_cast<FunctionNode>(newFunctions->getChildren()[i])
-                ->addChild(newProp);
+                ->replacePropertyValue(prop->getName(), newBundle);
           }
-
         } else if (value->getNodeType() == AST::List) {
           // FIXME we need to split the list according to the expected size.
           // This currently assumes size == 1
@@ -2282,7 +2280,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node,
 
       internalBlocks = decl->getPropertyValue("blocks");
       // Then go through ports autodeclaring blocks
-      if (ports->getNodeType() == AST::List) {
+      if (ports && ports->getNodeType() == AST::List) {
         for (ASTNode port : ports->getChildren()) {
           Q_ASSERT(port->getNodeType() == AST::Declaration);
           auto portDeclaration = static_pointer_cast<DeclarationNode>(port);
@@ -2383,7 +2381,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node,
             }
           }
         }
-      } else if (ports->getNodeType() == AST::None) {
+      } else if (ports && ports->getNodeType() == AST::None) {
         // If port list is None, then ignore
       } else {
         qDebug() << "ERROR! ports property must be a list or None!";

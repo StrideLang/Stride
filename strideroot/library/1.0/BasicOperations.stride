@@ -2,11 +2,11 @@ loop Sum {
     ports:      [
         mainInputPort InputPort {
             block:  Input
-            meta:   ''
+            meta:   'Bundle of signals to be added'
         }
         mainOutputPort OutputPort {
             block:  Output
-            meta:   ''
+            meta:   'The sum of all signals at the input'
         }
     ]
     blocks:     [
@@ -40,6 +40,7 @@ loop Sum {
         Index + 1 >> Index;
         [ Index , InputPort.size ] >>  Equal () >> Done;
     ]
+    meta: 'Add all the signals at the input port'
 }
 
 module Average {

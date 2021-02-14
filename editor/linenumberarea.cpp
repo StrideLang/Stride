@@ -56,11 +56,16 @@ void LineNumberArea::setErrors(QList<LangError> errors) {
     marker->hide();
     marker->setLineNumber(-1);
   }
-  for (size_t i = 0; i < errors.size(); i++) {
+  for (size_t i = 0;
+       i < std::min((unsigned long)errors.size(), m_errorMarkers.size()); i++) {
     m_errorMarkers[i]->setLineNumber(errors[i].lineNumber);
     m_errorMarkers[i]->setErrorText(
         QString::fromStdString(errors[i].getErrorText()));
     m_errorMarkers[i]->show();
+  }
+  if (errors.size() > m_errorMarkers.size()) {
+    qDebug() << "More than " << m_errorMarkers.size()
+             << " errors. Not showing all";
   }
 }
 

@@ -1,5 +1,3 @@
-
-
 module TableOscillator {
     ports: [
 		mainOutputPort OutputPort {
@@ -34,17 +32,17 @@ module TableOscillator {
 		}
     ]
     blocks: [
-	signal Amplitude {
+        signal Amplitude {
             default :       1.0
-	}
+        }
         constant TableSize {
             value: 1024
         }
 
-	table SineTable {
+        table SineTable {
             size: TableSize
             rate: TableSize
-            domain: RootDomain
+            domain: OutputPort.domain
         }
         
         signal Phase {
@@ -61,19 +59,18 @@ module TableOscillator {
             domain: OutputPort.domain
         }
         reaction WrapPhase {
-            ports: []
             streams: [
                 Phase - 1.0 >> Phase;
             ]
         }
     ]
     streams: [
-	Oscillator(frequency: 1.0) >> SineTable; 
+        Oscillator(frequency: 1.0) >> SineTable; 
         Frequency * TableSize  / OutputPort.rate >> PhaseInc;
         
         SineTable[Phase] >> Level(gain: Amplitude) >> Output;
         Phase + PhaseInc >> Phase;
         [Phase , 1.0 ] >> Greater() >> PhaseOverflow >> WrapPhase();
     ]
-	meta: "Table read oscillator"
+    meta: "Table read oscillator"
 }
