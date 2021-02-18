@@ -3,6 +3,29 @@ _frameworkDescription _WiringFramework {
     defaultDataType: _RealType
 }
 
+# Resources --------------------------------
+resourceConfiguration _SerialPortOption {
+	name: "Serial Port"
+	default: '/dev/ttyACM0'
+    type: _StringLiteral
+	meta: "Device serial port"
+}
+
+resourceConfiguration _ArduinoType {
+	name: "Arduino Board Type"
+	default: 'arduino:avr:uno'
+    type: _StringLiteral
+	meta: "Type of Arduino Board"
+}
+
+resource WiringBoard {
+    name: "Wiring/Arduino Board"
+	exclusive: off
+    configuration: [_ArduinoType, _SerialPortOption]
+	meta: 'Wiring/Arduino Board'
+}
+
+# Domains -----------------------------
 constant PlatformDomain {
     value: "WiringDomain"
 }
@@ -20,6 +43,7 @@ synchronization GlobalSync {
 _domainDefinition WiringDomain {
 	framework: _WiringFramework
     rate: PlatformRate
+    requiresResources: [WiringBoard]
     substitutions: ["domain_rate", WiringDomain.rate ]
     domainIncludes: ["<arduino-timer.h>"]
     domainDeclarations: ["auto timer = timer_create_default();"]

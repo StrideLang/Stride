@@ -52,6 +52,7 @@ StrideFramework::StrideFramework(std::string strideRoot, std::string framework,
       m_hardwareVersion(hardwareVersion), m_rootNamespace(rootNamespace),
       m_inherits(inherits), m_inheritsVersion(inheritsVersion) {
   m_inheritedPaths = getInheritedFrameworkPaths(buildPlatformLibPath());
+  m_inheritedList = loadInheritedList(buildPlatformLibPath());
   auto nodes = loadFrameworkRoot(buildPlatformLibPath());
   m_trees.push_back(FrameworkTree{"", "", nodes, {}});
 }
@@ -265,6 +266,10 @@ std::string StrideFramework::getInheritsVersion() const {
   return m_inheritsVersion;
 }
 
+std::vector<string> StrideFramework::getInheritedList() const {
+  return m_inheritedList;
+}
+
 std::vector<ASTNode>
 StrideFramework::loadFrameworkRoot(std::string frameworkRoot) {
   // determine inherited framework paths
@@ -334,6 +339,29 @@ StrideFramework::getInheritedFrameworkPaths(std::string frameworkRoot) {
     }
   }
   return inhPaths;
+}
+
+std::vector<string> StrideFramework::loadInheritedList(string frameworkRoot) {
+  std::vector<std::string> inh;
+  auto nodes = CodeValidator::loadAllInDirectory(frameworkRoot);
+  for (auto newNode : nodes) {
+    if (newNode->getNodeType() == AST::Declaration) {
+      auto decl = static_pointer_cast<DeclarationNode>(newNode);
+      if (decl->getObjectType() == "_frameworkDescription") {
+        auto inheritsNode = decl->getPropertyValue("inherits");
+        auto inheritsVersionNode = decl->getPropertyValue("inheritsVersion");
+        if (inheritsNode && inheritsVersionNode &&
+            inheritsNode->getNodeType() == AST::String &&
+            inheritsVersionNode->getNodeType() == AST::String) {
+          // FIXME look for inheritance recursively
+          auto inheritsName =
+              static_pointer_cast<ValueNode>(inheritsNode)->getStringValue();
+          inh.push_back(inheritsName);
+        }
+      }
+    }
+  }
+  return inh;
 }
 
 std::vector<ASTNode> StrideFramework::loadImport(string importName,

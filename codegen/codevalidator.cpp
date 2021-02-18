@@ -3113,8 +3113,8 @@ std::string CodeValidator::evaluateConstString(ASTNode node, ScopeStack scope,
   } else if (node->getNodeType() == AST::Block) {
     auto blockNode = static_pointer_cast<BlockNode>(node);
     QString name = QString::fromStdString(blockNode->getName());
-    std::shared_ptr<DeclarationNode> declaration =
-        findDeclaration(name, scope, tree, blockNode->getNamespaceList());
+    std::shared_ptr<DeclarationNode> declaration = findDeclaration(
+        name, scope, tree, blockNode->getNamespaceList(), currentFramework);
     if (!declaration) {
       LangError error;
       error.type = LangError::UndeclaredSymbol;
@@ -3344,7 +3344,8 @@ CodeValidator::findDomainDeclaration(string domainName, string framework,
     domainFramework = domainName.substr(0, separatorIndex);
     domainName = domainName.substr(separatorIndex + 2);
   }
-  if (domainFramework != framework) {
+
+  if (domainFramework != framework && domainFramework != "") {
     qDebug() << "Unexpected domain mismatch";
   }
   for (ASTNode node : tree->getChildren()) {

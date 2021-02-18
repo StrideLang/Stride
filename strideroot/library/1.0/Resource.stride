@@ -96,14 +96,14 @@ type _ResourceType {
 			default: []
 			required: off
 		},
-		typeProperty ResourceIncludes {
-			name: "resourceIncludes"
+		typeProperty Includes {
+			name: "includes"
 			types: [""]
 			default: []
 			required: off
 		},
-		typeProperty ResourceDeclarations {
-			name: "resourceDeclarations"
+		typeProperty Declarations {
+			name: "declarations"
 			types: [""]
 			default: ""
 			required: off

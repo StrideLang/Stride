@@ -1,7 +1,7 @@
 # RtAudio Library
 
 resource _RtAudioLibrary {
-  resourceIncludes: ["RtAudio.h"]
+  includes: ["RtAudio.h"]
   meta: "RtAudio Library"
 }
 

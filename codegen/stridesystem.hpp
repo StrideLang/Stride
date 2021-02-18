@@ -130,6 +130,9 @@ public:
   std::vector<std::shared_ptr<DeclarationNode>>
   getFrameworkOperators(std::string frameworkName);
 
+  std::vector<std::string>
+  getFrameworkAliasInherits(std::string frameworkAlias);
+
   std::string getDataType(ASTNode node, ASTNode tree);
 
   std::vector<std::shared_ptr<StrideFramework>> m_frameworks;

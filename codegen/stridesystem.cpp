@@ -610,6 +610,7 @@ string StrideSystem::substituteTokens(string namespaceName, string text) {
             text.replace(
                 index, endIndex - index + 1,
                 AST::toText(resourceConfig->getPropertyValue("value")));
+            break;
           }
         }
       }
@@ -741,7 +742,7 @@ std::vector<ASTNode> StrideSystem::loadImportTree(string importName,
                                                   string frameworkName) {
   auto importedNodes = m_library.loadImport(importName, importAs);
   for (auto fw : m_frameworks) {
-    if (frameworkName.size() == 0 || frameworkName == fw->getFramework()) {
+    if ((frameworkName.size() == 0) || (frameworkName == fw->getFramework())) {
       auto fwnodes = fw->loadImport(importName, importAs);
       importedNodes.insert(importedNodes.begin(), fwnodes.begin(),
                            fwnodes.end());
@@ -844,6 +845,16 @@ StrideSystem::getFrameworkOperators(string frameworkName) {
     }
   }
   return operators;
+}
+
+std::vector<string>
+StrideSystem::getFrameworkAliasInherits(string frameworkAlias) {
+  for (auto fw : m_frameworks) {
+    if (fw->getRootNamespace() == frameworkAlias) {
+      return fw->getInheritedList();
+    }
+  }
+  return std::vector<std::string>{};
 }
 
 string StrideSystem::getDataType(ASTNode node, ASTNode tree) {
@@ -981,6 +992,8 @@ void StrideSystem::generateDomainConnections(ASTNode tree) {
                 domainChangeNodes.sourceImports->getChildren();
             newChildren.insert(newChildren.end(), srcImportNodes.begin(),
                                srcImportNodes.end());
+            // FIXME a lot of redundant nodes are inserted here. Only insert if
+            // not present
             auto destImportNodes = domainChangeNodes.destImports->getChildren();
             newChildren.insert(newChildren.end(), destImportNodes.begin(),
                                destImportNodes.end());
@@ -1033,7 +1046,10 @@ void StrideSystem::injectResourceConfiguration(ASTNode tree) {
               "value", decl->getPropertyValue("default"), __FILE__, __LINE__));
           auto constDecl = std::make_shared<DeclarationNode>(
               decl->getName(), "constant", propertiesList, __FILE__, __LINE__);
-
+          if (decl->getCompilerProperty("framework")) {
+            constDecl->setCompilerProperty(
+                "framework", decl->getCompilerProperty("framework"));
+          }
           m_systemConfig.resourceConfigurations[framework].push_back(constDecl);
         }
       }
@@ -1116,7 +1132,8 @@ ConnectionNodes StrideSystem::getDomainChangeStreams(string previousDomainId,
             if (import->getNodeType() == AST::String) {
               auto importName =
                   static_pointer_cast<ValueNode>(import)->getStringValue();
-              auto platformName = connector->getPropertyValue("sourcePlatform");
+              auto platformName =
+                  connector->getPropertyValue("sourceFramework");
               Q_ASSERT(platformName->getNodeType() == AST::String);
               auto importTree =
                   loadImportTree(importName, "",
@@ -1134,6 +1151,8 @@ ConnectionNodes StrideSystem::getDomainChangeStreams(string previousDomainId,
                 CodeResolver::insertBuiltinObjectsForNode(node, builtinObjects,
                                                           newTree);
               }
+
+              injectResourceConfiguration(newTree);
               domainChangeNodes.sourceImports = newTree;
             }
           }
@@ -1168,6 +1187,7 @@ ConnectionNodes StrideSystem::getDomainChangeStreams(string previousDomainId,
                 CodeResolver::insertBuiltinObjectsForNode(child, builtinObjects,
                                                           newTree);
               }
+              injectResourceConfiguration(newTree);
               domainChangeNodes.destImports = newTree;
               //                                    scopeStack.push_back({"",
               //                                    importTree->getChildren()});

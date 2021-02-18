@@ -13,8 +13,8 @@ resource SerialPort {
 	substitutions: ["baud_rate", _SerialBaudRate,
 					"serial_port", _SerialPort,
 					"serial_process_rate", SerialProcessRate ]
-    resourceIncludes: ['serial/serial.h']
-    resourceDeclarations: [
+    includes: ['serial/serial.h']
+    declarations: [
 		'serial::Serial serialPort("", %%baud_rate%%, serial::Timeout::simpleTimeout(1.0/%%serial_process_rate%%));'
 		]
 }

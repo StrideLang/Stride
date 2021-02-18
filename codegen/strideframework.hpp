@@ -95,20 +95,18 @@ public:
   bool getPluginDetails(std::string &pluginName, int &majorVersion,
                         int &minorVersion);
 
-  //  std::vector<std::shared_ptr<DeclarationNode>>
-  //      m_synchronization; // Connections between domains in a framework
-
-  //  std::vector<std::shared_ptr<DeclarationNode>>
-  //      m_frameworkOperators; // Operators in framework
   std::string getInherits() const;
-
   std::string getInheritsVersion() const;
+
+  std::vector<std::string> getInheritedList() const;
 
 protected:
   std::vector<ASTNode> loadFrameworkRoot(std::string frameworkRoot);
 
   std::vector<std::string>
   getInheritedFrameworkPaths(std::string frameworkRoot);
+
+  std::vector<std::string> loadInheritedList(std::string frameworkRoot);
 
 private:
   std::string m_strideRoot;
@@ -121,6 +119,7 @@ private:
   std::string m_inheritsVersion;
 
   std::vector<std::string> m_inheritedPaths;
+  std::vector<std::string> m_inheritedList;
 
   bool m_required;
   PlatformAPI m_api{

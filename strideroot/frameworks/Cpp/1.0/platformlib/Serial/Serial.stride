@@ -8,24 +8,23 @@ resourceConfiguration _SerialPortDevice {
 	meta: "Serial port selection"
 }
 
-resourceConfiguration _SerialPortBaudRateConfig {
+resourceConfiguration _SerialPortBaudRate {
   name: "Baud Rate"
 	possibleValues: [9600, 14400, 19200, 38400, 56000, 57600, 115200, 128000]
 	default: 57600
   type: _IntLiteral
-	override: [["RtAudio", _SerialBaudRate]]
 	meta: "Serial Baud Rate"
 }
 
 resource SerialLibrary {
-  resourceIncludes: ['serial/serial.h']
+  includes: ['serial/serial.h']
   meta: "Serial library"
 }
 
 resource SerialPort {
-  configuration: [_SerialPortDevice, _SerialPortBaudRateConfig]
+  configuration: [_SerialPortDevice, _SerialPortBaudRate]
 #  maxInstances: 1
-  resourceDeclarations: [
+  declarations: [
   'serial::Serial serialPort;'
   ]
 	meta: 'Hardware Serial Port'
@@ -41,12 +40,18 @@ resource SerialPort {
 #	value: '"/dev/ttyACM0"'
 #}
 
+resource SerialThread {
+  configuration: [SerialProcessRate]
+#  maxInstances: 1
+  declarations: [
+  ]
+	meta: 'Serial message thread'
+}
 
 resourceConfiguration SerialProcessRate {
   name: "Serial Process Rate"
 	default: 1000
   type: _IntLiteral
-	override: [["RtAudio", _SerialBaudRate]]
 	meta: "Serial Process Rate"
 }
  
@@ -56,8 +61,12 @@ _domainDefinition SerialDomain {
 	framework: _RtAudioFramework
 	parentDomain: RootDomain
 	rate: SerialProcessRate
-	requiresResources: [SerialPort, SerialLibrary]
-  substitutions: ["serial_process_rate", SerialProcessRate]
+	requiresResources: [SerialPort, SerialLibrary, SerialThread]
+  substitutions: [
+      "SerialProcessRate", SerialProcessRate,
+      "_SerialPortDevice", _SerialPortDevice,
+      "_SerialPortBaudRate", _SerialPortBaudRate
+    ]
     domainIncludes: ["<thread>"]
     domainDeclarations: ["void serial_thread_func();",
 		"bool serialthread_running {true};",
@@ -69,7 +78,7 @@ void serial_thread_func() {
 
 	  try {
       serialPort.setPort("%%_SerialPortDevice%%");
-      serialPort.setBaudrate(%%_SerialPortBaudRateConfig%%);
+      serialPort.setBaudrate(%%_SerialPortBaudRate%%);
       auto timeout = serial::Timeout::simpleTimeout(1.0/%%SerialProcessRate%%);
       serialPort.setTimeout(timeout);
  
@@ -85,7 +94,7 @@ void serial_thread_func() {
 		  serialthread_running = false; 
 	  }
 		std::string lineBuffer;
-		int mGranularity = 1000000.0/%%serial_process_rate%%; // nanoseconds
+		int mGranularity = 1000000.0/%%SerialProcessRate%%; // nanoseconds
 //[[Declarations]]
 //[[/Declarations]]
 //[[Initialization]]
@@ -95,7 +104,7 @@ void serial_thread_func() {
   const unsigned int bufferSize = 4096;
   uint8_t buffer[bufferSize];
   while (serialthread_running) {
-    std::cerr << "loop" << std::endl;
+    //std::cerr << "loop" << std::endl;
     auto nextTime = std::chrono::high_resolution_clock::now() + std::chrono::nanoseconds(mGranularity);
 //[[Processing]]
 //[[/Processing]]

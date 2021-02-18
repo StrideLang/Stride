@@ -1,5 +1,5 @@
 constant _SerialBaudRate  { # Overriden by configuration
-	value: 9600
+	value: 57600
 }
 
 constant _SerialPort  { # Overriden by configuration
@@ -16,14 +16,17 @@ constant _SerialPort  { # Overriden by configuration
 
 resource SerialPort {
     name: "Serial"
-    substitutions: ["baud_rate", _SerialBaudRate,
-                "serial_port", _SerialPort,
-                "serial_process_rate", SerialProcessRate ]
-    initializations: ["Serial.begin(%%_SerialBaudRate%%);"]
-    resourceIncludes: []
-    resourceDeclarations: []
+    substitutions: [
+        "baud_rate", _SerialBaudRate #,
+        #"serial_port", _SerialPort,
+        #"serial_process_rate", SerialProcessRate
+    ]
+    initializations: ["
+    Serial.begin(%%baud_rate%%);"]
+    includes: []
+    declarations: []
     properties: [
-        #SerialBaudRate
+        _SerialBaudRate
     ]
 }
 
@@ -54,13 +57,13 @@ _domainDefinition SerialDomain {
 	parentDomain: WiringDomain
 	rate: SerialProcessRate
 	requiresResources: [SerialPort]
-    substitutions: ["serial_port", _SerialPort,
-					"serial_process_rate", SerialProcessRate]
+    substitutions: [
+        #"serial_port", _SerialPort,
+		#"serial_process_rate", SerialProcessRate
+    ]
     domainIncludes: []
     domainDeclarations: []
     domainInitializationCode: "
-    
-  Serial.begin(9600);
     //[[Initialization]]
 //[[/Initialization]]"
     domainProcessingCode: '
@@ -146,11 +149,12 @@ platformBlock _SerialOutput {
     typeName: '_serialOutput'
 	inputs: ["real"]
 	outputs: []
-    domain: WiringDomain
+    domain: SerialOutDomain
 #    include: []
 #    linkTo: []
     declarations: ['byte channel = 0;']
-    initializations: [""
+    initializations: ["
+    "
     ]
     processing: '
     channel = %%bundle_index%%;
