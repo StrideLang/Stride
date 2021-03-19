@@ -62,27 +62,10 @@ AST::~AST() {}
 
 void AST::addChild(ASTNode t) { m_children.push_back(t); }
 
-// void AST::giveChildren(ASTNode p)
-//{
-//    for(size_t i = 0; i < m_children.size(); i++) {
-//        p->addChild(m_children.at(i));
-//    }
-//    m_children.clear();
-//}
-
 void AST::setChildren(vector<ASTNode> &newChildren) {
   //    deleteChildren();
   m_children = newChildren;
 }
-
-// void AST::deleteChildren()
-//{
-////    for(size_t i = 0; i < m_children.size(); i++) {
-////        m_children.at(i)->deleteChildren();
-////        m_children.at(i).reset();
-////    }
-////    m_children.clear();
-//}
 
 ASTNode AST::deepCopy() {
   ASTNode newNode =

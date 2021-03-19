@@ -1438,7 +1438,26 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream,
                             instance->getNodeType() == AST::BundleDeclaration) {
                           auto decl =
                               static_pointer_cast<DeclarationNode>(instance);
-                          decl->setPropertyValue("domain", samplingDomain);
+                          auto declType = CodeValidator::findTypeDeclaration(
+                              decl, scopeStack, m_tree);
+                          auto inheritList = CodeValidator::getInheritedTypes(
+                              declType, scopeStack, m_tree);
+                          bool inheritsDomainType = false;
+                          for (auto inherits : inheritList) {
+                            auto typeName =
+                                inherits->getPropertyValue("typeName");
+                            if (typeName->getNodeType() == AST::String) {
+                              if (static_pointer_cast<ValueNode>(typeName)
+                                      ->getStringValue() == "domainMember") {
+                                inheritsDomainType = true;
+                                break;
+                              }
+                            }
+                          }
+                          if (inheritsDomainType) {
+
+                            decl->setPropertyValue("domain", samplingDomain);
+                          }
                         }
                       }
                     }
@@ -2569,6 +2588,9 @@ CodeResolver::resolveConstant(ASTNode value, ScopeStack scope, ASTNode tree,
     std::shared_ptr<ExpressionNode> expr =
         static_pointer_cast<ExpressionNode>(value);
     newValue = reduceConstExpression(expr, scope, tree);
+    if (newValue) {
+      newValue->setCompilerProperty("resolvedFrom", expr);
+    }
     return newValue;
   } else if (value->getNodeType() == AST::Block) {
     BlockNode *name = static_cast<BlockNode *>(value.get());
@@ -2583,6 +2605,8 @@ CodeResolver::resolveConstant(ASTNode value, ScopeStack scope, ASTNode tree,
       if (blockValue->getNodeType() == AST::Int ||
           blockValue->getNodeType() == AST::Real ||
           blockValue->getNodeType() == AST::String) {
+        blockValue = blockValue->deepCopy();
+        blockValue->setCompilerProperty("resolvedFrom", block);
         return static_pointer_cast<ValueNode>(blockValue);
       }
       newValue = resolveConstant(block->getPropertyValue("value"), scope, tree);
@@ -2603,6 +2627,8 @@ CodeResolver::resolveConstant(ASTNode value, ScopeStack scope, ASTNode tree,
         if (propertyValue->getNodeType() == AST::Int ||
             propertyValue->getNodeType() == AST::Real ||
             propertyValue->getNodeType() == AST::String) {
+          propertyValue = propertyValue->deepCopy();
+          propertyValue->setCompilerProperty("resolvedFrom", block);
           return static_pointer_cast<ValueNode>(propertyValue);
         }
       }
@@ -3654,6 +3680,33 @@ void CodeResolver::checkStreamConnections(std::shared_ptr<StreamNode> stream,
   if (left->getNodeType() == AST::Function) {
     auto func = static_pointer_cast<FunctionNode>(left);
     setInputBlockForFunction(func, scopeStack, previous);
+  } else if (left->getNodeType() == AST::Bundle) {
+    auto decl = CodeValidator::getDeclaration(left);
+    if (decl) {
+      if (decl->getObjectType() == "constant") {
+        // If constant, then the next stream node is sampling this one.
+        auto indexList = static_pointer_cast<BundleNode>(left)->index();
+
+        auto nextDomain =
+            CodeValidator::getNodeDomain(right, scopeStack, m_tree);
+        for (auto node : indexList->getChildren()) {
+          markConnectionForNode(right, scopeStack, node);
+        }
+      } else {
+        // Otherwise indexed bundle is sampling indeces
+        auto indexList = static_pointer_cast<BundleNode>(left)->index();
+        for (auto node : indexList->getChildren()) {
+          markConnectionForNode(left, scopeStack, node);
+        }
+      }
+
+    } else {
+      // Default behavior, will need to be cleaned up later.
+      auto indexList = static_pointer_cast<BundleNode>(left)->index();
+      for (auto node : indexList->getChildren()) {
+        markConnectionForNode(right, scopeStack, node);
+      }
+    }
   } else if (left->getNodeType() == AST::List) {
     if (previous) {
       if (previous->getNodeType() == AST::List &&
@@ -3914,11 +3967,10 @@ void CodeResolver::markPreviousReads(ASTNode node, ASTNode previous,
         //          FIXME process all types of index configurations
         if (bundleNode->index()) {
           for (auto indexNode : bundleNode->index()->getChildren()) {
-            markPreviousReads(node, indexNode, scopeStack);
+            markPreviousReads(indexNode, nullptr, scopeStack);
           }
         }
       }
-      //                    Q_ASSERT(previousDecl);
 
       if (newReadDomain) {
         appendReadDomain(previousReads, newReadDomain);
@@ -3982,7 +4034,10 @@ void CodeResolver::markConnectionForNode(ASTNode node, ScopeStack scopeStack,
               CodeValidator::streamMemberName(indexChild), scopeStack, m_tree,
               indexChild->getNamespaceList(), frameworkName);
           if (decl) {
-            decl->appendToPropertyValue("reads", domain);
+            if (domain) {
+              decl->appendToPropertyValue("reads", domain);
+            } else {
+            }
           }
         }
       }
@@ -4008,10 +4063,8 @@ void CodeResolver::markConnectionForNode(ASTNode node, ScopeStack scopeStack,
             CodeValidator::getNodeDomain(CodeValidator::resolveConnectionBlock(
                                              node, scopeStack, m_tree, false),
                                          scopeStack, m_tree);
-
       } else {
-        newWriteDomain =
-            CodeValidator::getNodeDomain(previous, scopeStack, m_tree);
+        newWriteDomain = CodeValidator::getNodeDomain(node, scopeStack, m_tree);
       }
       for (auto write : nodeWritesProperties->getChildren()) {
         if (write && write->getNodeType() == AST::PortProperty &&

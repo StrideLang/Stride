@@ -340,6 +340,26 @@ string LanguageSyntax::getDataType(std::shared_ptr<DeclarationNode> decl,
     frameworkName =
         static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
   }
+  if (decl->getObjectType() == "switch") {
+    // TODO get this from platform defintions
+    return "bool /* IOPOI */";
+  }
+
+  auto declaredType = decl->getPropertyValue("type");
+  if (declaredType && declaredType->getNodeType() == AST::Block) {
+    // FIXME we need to determine framework
+    auto dataTypeDecl = system->getFrameworkDataType(
+        "", static_pointer_cast<BlockNode>(declaredType)->getName());
+    if (dataTypeDecl) {
+      auto frameworkTypeNode = dataTypeDecl->getPropertyValue("frameworkName");
+
+      if (frameworkTypeNode &&
+          frameworkTypeNode->getNodeType() == AST::String) {
+        return std::static_pointer_cast<ValueNode>(frameworkTypeNode)
+            ->getStringValue();
+      }
+    }
+  }
 
   auto defaultDataType =
       system->getFrameworkDefaultDataType(frameworkName, decl->getObjectType());

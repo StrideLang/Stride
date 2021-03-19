@@ -5,7 +5,10 @@ module LoopModule {
 		mainOutputPort OutputPort { block: Output }
 	]
 	blocks:  [
-		signal List[20] { default: 1 }
+		signal List[20] {
+			default: 1
+			type: _RealType
+		}
 
 		loop Loop {
 			ports: [
@@ -17,7 +20,9 @@ module LoopModule {
 				}
 			]
 			blocks: [
-				signal Input[InputPort.size] {}
+				signal Input[InputPort.size] {
+					type: _RealType
+				}
 				signal Output { default: 0 reset: Reset }
 				signal Index { default: 0 reset: Reset }
 				switch Done {}

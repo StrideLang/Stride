@@ -1,8 +1,5 @@
 use DesktopAudio version 1.0
 
-import Generators
-
-
 module Test {
 	ports: [
 		mainInputPort InputPort {

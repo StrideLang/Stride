@@ -490,7 +490,9 @@ ASTNode CodeValidator::getInstance(ASTNode block, ScopeStack scopeStack,
         static_pointer_cast<DeclarationNode>(block)->getObjectType() ==
             "trigger" ||
         static_pointer_cast<DeclarationNode>(block)->getObjectType() ==
-            "string") {
+            "string" ||
+        static_pointer_cast<DeclarationNode>(block)->getObjectType() ==
+            "constant") {
       inst = block;
     } else if (static_pointer_cast<DeclarationNode>(block)->getObjectType() ==
                "reaction") {
@@ -1593,6 +1595,54 @@ int CodeValidator::getFunctionDataSize(std::shared_ptr<FunctionNode> func,
     ASTNode value = port->getValue();
     // FIXME need to decide the size by also looking at the port block size
     int newSize = CodeValidator::getNodeNumOutputs(value, scope, tree, errors);
+    auto decl = CodeValidator::findDeclaration(func->getName(), scope, tree,
+                                               func->getNamespaceList());
+    if (decl && decl->getPropertyValue("ports")) {
+      std::shared_ptr<DeclarationNode> declaredPort;
+      for (auto portDecl : decl->getPropertyValue("ports")->getChildren()) {
+        if (portDecl->getNodeType() == AST::Declaration) {
+          auto nameNode =
+              static_pointer_cast<DeclarationNode>(portDecl)->getPropertyValue(
+                  "name");
+          if (nameNode && nameNode->getNodeType() == AST::String) {
+            if (port->getName() ==
+                static_pointer_cast<ValueNode>(nameNode)->getStringValue()) {
+              declaredPort = static_pointer_cast<DeclarationNode>(portDecl);
+              break;
+            }
+          }
+        }
+      }
+      if (declaredPort) {
+        auto portBlockNode = declaredPort->getPropertyValue("block");
+        auto blocks = decl->getPropertyValue("blocks");
+        if (portBlockNode && blocks) {
+          std::string portBlockName;
+          if (portBlockNode->getNodeType() == AST::Block) {
+            portBlockName =
+                static_pointer_cast<BlockNode>(portBlockNode)->getName();
+          } else if (portBlockNode->getNodeType() == AST::Bundle) {
+            portBlockName =
+                static_pointer_cast<BundleNode>(portBlockNode)->getName();
+          }
+          auto portBlockDecl = CodeValidator::findDeclaration(
+              portBlockName, {{nullptr, blocks->getChildren()}}, nullptr);
+          if (declaredPort->getObjectType() == "mainInputPort" ||
+              declaredPort->getObjectType() == "propertyInputPort") {
+            QList<LangError> errors;
+            size = CodeValidator::getNodeNumInputs(
+                portBlockNode, {{nullptr, blocks->getChildren()}}, tree,
+                errors);
+          } else if (declaredPort->getObjectType() == "mainOutputPort" ||
+                     declaredPort->getObjectType() == "propertyOutputPort") {
+            QList<LangError> errors;
+            size = CodeValidator::getNodeNumOutputs(
+                portBlockNode, {{nullptr, blocks->getChildren()}}, tree,
+                errors);
+          }
+        }
+      }
+    }
     if (size != newSize) {
       if (size == 1 && newSize > 0) {
         size = newSize;
@@ -1656,6 +1706,13 @@ int CodeValidator::getFunctionNumInstances(std::shared_ptr<FunctionNode> func,
                       internalPortBlock, scope, tree, errors);
                 }
                 //                numInstances = 1;
+                if (internalBlockSize == -2) {
+                  // FIXME this assumes that the block is given the size of its
+                  // own port, but it is possible it could be give the size of
+                  // another port, causing an error or a different number of
+                  // instances
+                  return 1;
+                }
                 int portNumInstances = propertyBlockSize / internalBlockSize;
                 Q_ASSERT(propertyBlockSize / internalBlockSize ==
                          float(propertyBlockSize) / internalBlockSize);
@@ -2576,7 +2633,8 @@ ASTNode CodeValidator::getMatchedOuterInstance(
                     tree);
                 break;
               } else if (outerBlock->getNodeType() == AST::Function ||
-                         outerBlock->getNodeType() == AST::Expression) {
+                         outerBlock->getNodeType() == AST::Expression ||
+                         outerBlock->getNodeType() == AST::List) {
                 matchedInst = outerBlock;
                 break;
               } else if (outerBlock->getNodeType() == AST::Int ||
@@ -2609,7 +2667,7 @@ int CodeValidator::resolveSizePortProperty(
         auto portDecl = static_pointer_cast<DeclarationNode>(port);
         auto portName = portDecl->getName();
         //                std::string portDomainName = portName + "_domain";
-        scopeStack.push_back({func, blocks});
+        //        scopeStack.push_back({func, blocks});
         if (portName == targetPortName) {
           auto portBlock = portDecl->getPropertyValue("block");
           auto portNameNode = portDecl->getPropertyValue("name");
@@ -2627,9 +2685,14 @@ int CodeValidator::resolveSizePortProperty(
               portSize = CodeValidator::getNodeNumInputs(portBlock, scopeStack,
                                                          tree, errors);
               if (portSize == -2) {
+                std::pair<ASTNode, std::vector<ASTNode>> innerScope =
+                    scopeStack.back();
+                scopeStack.pop_back();
+                // We need to look one scope up.
                 portSize = CodeValidator::getNodeNumOutputs(
                     func->getCompilerProperty("inputBlock"), scopeStack, tree,
                     errors);
+                scopeStack.push_back(innerScope);
               }
 
             } else if (portDecl->getObjectType() == "mainOutputPort") {
@@ -2637,26 +2700,41 @@ int CodeValidator::resolveSizePortProperty(
               portSize = CodeValidator::getNodeNumOutputs(portBlock, scopeStack,
                                                           tree, errors);
               if (portSize == -2) {
-                portSize = CodeValidator::getNodeNumInputs(
-                    func->getCompilerProperty("outputBlock"), scopeStack, tree,
-                    errors);
+                std::pair<ASTNode, std::vector<ASTNode>> innerScope =
+                    scopeStack.back();
+                scopeStack.pop_back();
+                // We need to look one scope up.
+                portSize = CodeValidator::getNodeNumOutputs(
+                    func->getPropertyValue(portName), scopeStack, tree, errors);
+                scopeStack.push_back(innerScope);
               }
             } else if (portDecl->getObjectType() == "propertyInputPort") {
               QList<LangError> errors;
               portSize = CodeValidator::getNodeNumInputs(portBlock, scopeStack,
                                                          tree, errors);
               if (portSize == -2) {
+                std::pair<ASTNode, std::vector<ASTNode>> innerScope =
+                    scopeStack.back();
+                scopeStack.pop_back();
+                // We need to look one scope up.
                 portSize = CodeValidator::getNodeNumOutputs(
                     func->getPropertyValue(portName), scopeStack, tree, errors);
+                scopeStack.push_back(innerScope);
               }
 
             } else if (portDecl->getObjectType() == "propertyOutputPort") {
               QList<LangError> errors;
               portSize = CodeValidator::getNodeNumOutputs(portBlock, scopeStack,
                                                           tree, errors);
+
               if (portSize == -2) {
-                portSize = CodeValidator::getNodeNumInputs(
+                std::pair<ASTNode, std::vector<ASTNode>> innerScope =
+                    scopeStack.back();
+                scopeStack.pop_back();
+                // We need to look one scope up.
+                portSize = CodeValidator::getNodeNumOutputs(
                     func->getPropertyValue(portName), scopeStack, tree, errors);
+                scopeStack.push_back(innerScope);
               }
             }
           } else {
