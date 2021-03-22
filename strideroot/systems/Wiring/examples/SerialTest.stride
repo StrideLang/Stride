@@ -1,0 +1,14 @@
+use Wiring version 1.0
+
+import Serial
+import Generators
+
+Oscillator(frequency: 0.5) >> SerialOut[0];
+
+#signal Value {
+#	domain: SerialInDomain
+#}
+
+
+
+[SerialIn[0], 3] >> Greater() >> DigitalOut[13];

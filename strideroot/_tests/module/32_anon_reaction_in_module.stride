@@ -15,9 +15,6 @@ module Test {
     ]
     blocks: [
         signal Input[2] {}
-        trigger IfGreater {
-            domain: OutputPort.domain
-        }
     ]
     streams: [
         Input[0] >> Output;

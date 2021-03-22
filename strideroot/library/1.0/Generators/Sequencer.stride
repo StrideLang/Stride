@@ -1,0 +1,53 @@
+
+module Sequencer {
+    ports: [
+        mainInputPort InputPort {
+            block: Input
+        }
+        mainOutputPort OutputPort {
+            block: Output
+        }
+        propertyInputPort ValuesPort {
+            name: "values"
+            block: Values
+            default: []
+            meta: "Values in the sequencer"
+        }
+    ]
+    blocks: [
+        trigger Input { domain: InputPort.domain}
+        signal Output {
+            domain: OutputPort.domain
+        }
+        signal Counter {
+            default: 0
+            domain: InputPort.domain
+            type: _SizeType
+            reset: CounterReset
+        }
+        constant Values[ValuesPort.size] {
+            value: 0
+        }
+        trigger CounterReset {
+            domain: InputPort.domain
+        }
+        reaction NextStep {
+            streams: [
+                Counter + 1 >> Counter;
+                #[Counter , ValuesPort.size ] >> Equal() >> CounterReset;
+            ]
+            domain: InputPort.domain
+            }
+    ]
+    streams: [
+        Values[Counter] >> Output;
+        Input >> NextStep();
+        [Counter , ValuesPort.size ] >> Equal() >> CounterReset;
+        
+    ]
+    constraints: [
+        
+    ]
+    meta: "Sequencer"
+}
+

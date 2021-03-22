@@ -63,11 +63,15 @@ struct Instance : public CodeEntity {
   }
 
   Instance(const Instance &inst)
-      : prefix(inst.prefix), size(inst.size), type(inst.type),
-        defaultValue(inst.defaultValue), instanceNode(inst.instanceNode) {
+      : prefix(inst.prefix), parent(inst.parent), size(inst.size),
+        type(inst.type), defaultValue(inst.defaultValue),
+        instanceNode(inst.instanceNode) {
     entityType = CodeEntityType::Instance;
     name = inst.name;
     dependents = inst.dependents;
+    constructorArgs = inst.constructorArgs;
+    templateArgs = inst.templateArgs;
+    access = inst.access;
   }
 
   std::string prefix;
@@ -93,10 +97,8 @@ struct Reset : public CodeEntity {
 
 typedef struct {
   std::shared_ptr<DeclarationNode> internalDecl;
-  std::vector<std::string> parentList;
   ASTNode externalConnection;
-  std::string blockForPort; // If this block is a block port, provide
-                            // the port declaration name
+  std::vector<std::string> parentList;
   SignalAccess access;
   std::shared_ptr<PortPropertyNode> parentScopeProperty;
 } DeclarationMap;
@@ -114,32 +116,23 @@ typedef struct {
 class DomainCode {
 public:
   std::vector<std::shared_ptr<CodeEntity>> scopeEntities;
-  //    std::vector<Instance> scopeInstances;
-
-  std::string headerCode;
-
-  std::string initCode;
-  //    std::vector<std::string> scopeDeclarations;
-  std::string processingCode;
-  std::vector<std::string> postProcessingCode;
-  std::string cleanupCode;
-
-  std::vector<std::string> linkTargets;
-  std::vector<std::string> linkDirs;
-  std::vector<std::string> includeFiles;
-  std::vector<std::string> includeDirs;
-
   std::vector<std::shared_ptr<DeclarationNode>> globalReferences;
 
   // Holds the code generated token to pass between code generation passes
   std::vector<std::string> currentOutTokens;
 
-  // This holds items to process in higher scopes. e.g. in preprocess or post
-  // process in the domain or global declarations.
-  //    std::vector<ASTNode> m_unprocessedItems;
+  // Code
+  std::string initCode;
+  std::vector<std::string> includeFiles;
+  std::string processingCode;
+  std::vector<std::string> postProcessingCode;
+  std::string cleanupCode;
 
-  // Key is internal, value is external. If second is null, there is no external
-  // connection.
+  // Compilation directives
+  std::vector<std::string> linkTargets;
+  std::vector<std::string> linkDirs;
+  std::vector<std::string> includeDirs;
+
   std::vector<DeclarationMap> inMap;
   std::vector<DeclarationMap> outMap;
 
@@ -152,14 +145,7 @@ public:
   void append(DomainCode newCode) {
     scopeEntities.insert(scopeEntities.end(), newCode.scopeEntities.begin(),
                          newCode.scopeEntities.end());
-    headerCode += newCode.headerCode;
     initCode += newCode.initCode;
-    //        for (auto decl : newCode.scopeDeclarations) {
-    //            if (std::find(scopeDeclarations.begin(),
-    //            scopeDeclarations.end(), decl) == scopeDeclarations.end()) {
-    //                scopeDeclarations.push_back(decl);
-    //            }
-    //        }
     processingCode += newCode.processingCode;
 
     for (auto postCode : newCode.postProcessingCode) {
@@ -207,9 +193,6 @@ public:
         portPropertiesMap[newEntry.first] = newEntry.second;
       }
     }
-    //        m_unprocessedItems.insert(m_unprocessedItems.end(),
-    //        newCode.m_unprocessedItems.begin(),
-    //        newCode.m_unprocessedItems.end());
     currentOutTokens.insert(
         currentOutTokens.end(), newCode.currentOutTokens.begin(),
         newCode.currentOutTokens
@@ -234,14 +217,7 @@ public:
   void prepend(DomainCode newCode) {
     scopeEntities.insert(scopeEntities.begin(), newCode.scopeEntities.begin(),
                          newCode.scopeEntities.end());
-    headerCode = newCode.headerCode + headerCode;
     initCode = initCode + newCode.initCode; // Init code is not prepended
-    //        for (auto decl : newCode.scopeDeclarations) {
-    //            if (std::find(scopeDeclarations.begin(),
-    //            scopeDeclarations.end(), decl) == scopeDeclarations.end()) {
-    //                scopeDeclarations.push_back(decl);
-    //            }
-    //        }
     processingCode +=
         newCode.processingCode; // Processing code is not prepended
 
@@ -291,9 +267,6 @@ public:
       }
     }
 
-    //        m_unprocessedItems.insert(m_unprocessedItems.begin(),
-    //        newCode.m_unprocessedItems.begin(),
-    //        newCode.m_unprocessedItems.end());
     currentOutTokens.insert(currentOutTokens.begin(),
                             newCode.currentOutTokens.begin(),
                             newCode.currentOutTokens.end());

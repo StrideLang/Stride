@@ -13,10 +13,11 @@ public:
 
   static std::string getDeclarationType(std::string type, std::string name,
                                         SignalAccess access, int size);
-  static std::string getDeclarationForType(std::string type, string name,
-                                           SignalAccess access, int size,
-                                           std::vector<string> defaultValue);
-  static std::string getDeclarationForType(Instance instance);
+  static std::string
+  getDeclarationForType(std::string type, string name, SignalAccess access,
+                        int size, std::vector<string> defaultValue,
+                        std::vector<std::string> constructorArgs = {});
+  static std::string getDeclarationForType(Instance &instance);
 
   //  static std::string instance(Instance &inst, bool close = true);
 

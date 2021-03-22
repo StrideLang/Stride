@@ -37,10 +37,10 @@ std::string LanguageSyntax::getDeclarationType(std::string type,
   return declType;
 }
 
-std::string
-LanguageSyntax::getDeclarationForType(std::string type, std::string name,
-                                      SignalAccess access, int size,
-                                      std::vector<std::string> defaultValue) {
+std::string LanguageSyntax::getDeclarationForType(
+    std::string type, std::string name, SignalAccess access, int size,
+    std::vector<std::string> defaultValue,
+    std::vector<std::string> constructorArgs) {
   std::string out;
   if (size == -1) {
     out += "// FIXME Size unresolved\n";
@@ -52,7 +52,15 @@ LanguageSyntax::getDeclarationForType(std::string type, std::string name,
     if (size > 1) {
       bundleSize = "[" + std::to_string(size) + "]";
     }
-    out += type + " " + name + bundleSize;
+    std::string constructorInitList;
+    if (constructorArgs.size() > 0) {
+      constructorInitList = "{";
+      for (auto &arg : constructorArgs) {
+        constructorInitList += arg + ",";
+      }
+      constructorInitList.back() = '}';
+    }
+    out += type + " " + name + bundleSize + constructorInitList;
     if (defaultValue.size() == 1) {
       out += " = ";
       int count = size;
@@ -125,10 +133,10 @@ LanguageSyntax::getDeclarationForType(std::string type, std::string name,
   return out;
 }
 
-string LanguageSyntax::getDeclarationForType(Instance instance) {
+string LanguageSyntax::getDeclarationForType(Instance &instance) {
   return getDeclarationForType(instance.type, instance.fullName(),
                                instance.access, instance.size,
-                               instance.defaultValue);
+                               instance.defaultValue, instance.constructorArgs);
 }
 
 // std::string LanguageSyntax::instance(Instance &inst, bool close) {
@@ -340,10 +348,12 @@ string LanguageSyntax::getDataType(std::shared_ptr<DeclarationNode> decl,
     frameworkName =
         static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
   }
-  if (decl->getObjectType() == "switch") {
+  if (decl->getObjectType() == "switch" ||
+      decl->getObjectType() == "reaction") {
     // TODO get this from platform defintions
-    return "bool /* IOPOI */";
+    return "bool /*FIXME languagesyntax.cpp*/";
   }
+  // FIXME need to get type from input block if module or loop
 
   auto declaredType = decl->getPropertyValue("type");
   if (declaredType && declaredType->getNodeType() == AST::Block) {

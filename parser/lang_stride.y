@@ -549,7 +549,11 @@ functionDef:
         string word;
         word.append($1); /* string constructor leaks otherwise! */
         string uvar = "___Anonymous___" + std::to_string(anonymous_counter++);
-        $$ = new DeclarationNode(uvar, word, std::shared_ptr<AST>($2), currentFile, yyloc.first_line);
+        
+        auto decl = new DeclarationNode(uvar, word, std::shared_ptr<AST>($2),
+                                        currentFile, yyloc.first_line);
+        decl->setCompilerProperty("anonymous", std::make_shared<ValueNode>(true, __FILE__, __LINE__));
+        $$ = decl;
         COUT << "Block: " << $1 << ", Labelled: " << uvar << ENDL;
         free($1);
     }

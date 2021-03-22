@@ -1,0 +1,6 @@
+# TODO generate with better precision
+
+constant C4 { value: 261.6256}
+constant E4 { value: 329.6276}
+constant G4 { value: 391.9954}
+constant C5 { value: 523.2511}

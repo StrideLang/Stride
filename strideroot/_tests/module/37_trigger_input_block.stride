@@ -1,0 +1,27 @@
+use DesktopAudio version 1.0
+
+module TriggerInput {
+    ports: [
+        mainInputPort InputPort {
+            block: Input
+        }
+        mainOutputPort OutputPort {
+            block: Output
+        }
+    ]
+    blocks: [
+        trigger Input {domain: InputPort.domain}
+        signal Output { domain: OutputPort.domain }
+        signal Counter { 
+            domain: InputPort.domain
+            type:_SizeType
+        }
+    ]
+    streams: [
+        Input >> reaction {Counter + 1 >> Counter;};
+        Counter >> Output;
+    ]
+    meta: "Sequencer"
+}
+
+[AudioIn[0], 0] >> Greater() >> TriggerInput() >> AudioOut[0];

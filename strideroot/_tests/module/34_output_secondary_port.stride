@@ -1,0 +1,30 @@
+use DesktopAudio version 1.0
+
+module PropOut {
+    ports: [
+        mainOutputPort OutputPort {
+            block: Output
+            domain: OutputPort.domain
+        }
+        mainInputPort InputPort {
+            block: Input
+            domain: OutputPort.domain
+        }
+        propertyOutputPort OutPort {
+            name: "out"
+            block: Out
+            domain: OutputPort.domain
+        }
+    ]
+    streams: [
+        Input >> Out;
+        Input + 2 >> Output;
+    ]
+}
+
+signal OutVal {
+    domain: AudioDomain   
+}
+
+AudioIn[0] >> PropOut(out: OutVal) >> AudioOut[0];
+OutVal >> AudioOut[1];

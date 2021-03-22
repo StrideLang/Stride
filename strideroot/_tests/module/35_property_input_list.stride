@@ -1,0 +1,27 @@
+use DesktopAudio version 1.0
+
+module PropBundle {
+    ports: [
+        mainInputPort InputPort {
+            block: Input
+        }
+        mainOutputPort OutputPort {
+            block: Output
+        }
+        propertyInputPort ValuesPort {
+            name: "values"
+            block: Values
+        }
+    ]
+    blocks: [
+        signal Input {}
+        signal Output {}
+        signal Values[ValuesPort.size] {}
+    ]
+    streams: [
+        (Input + Values[0]) * Values[1] >> Output;
+    ]
+    meta: "Sequencer"
+}
+
+AudioIn[0] >> PropBundle( values: [0.1, 0.5] ) >> AudioOut[0]; 
