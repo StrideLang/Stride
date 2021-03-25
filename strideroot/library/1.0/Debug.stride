@@ -7,6 +7,7 @@ module DebugPrint {
 		propertyInputPort TriggerPort {
 			name: "trigger"
 			block: Trigger
+			default: on #TODO breaks if you remove this
 		}
 	]
     blocks: [

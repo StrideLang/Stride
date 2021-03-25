@@ -60,7 +60,7 @@ module TableOscillator {
         }
         reaction WrapPhase {
             streams: [
-                Phase - 1.0 >> Phase;
+                Phase - TableSize >> Phase;
             ]
         }
     ]
@@ -70,7 +70,7 @@ module TableOscillator {
         
         SineTable[Phase] >> Level(gain: Amplitude) >> Output;
         Phase + PhaseInc >> Phase;
-        [Phase , 1.0 ] >> Greater() >> PhaseOverflow >> WrapPhase();
+        [Phase , TableSize ] >> Greater() >> PhaseOverflow >> WrapPhase();
     ]
     meta: "Table read oscillator"
 }

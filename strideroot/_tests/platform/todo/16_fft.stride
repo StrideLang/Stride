@@ -1,0 +1,30 @@
+use DesktopAudio version 1.0
+
+constant Size {
+    value: 1024
+}
+
+buffer InputBundle[Size] {
+    rate:none
+}
+
+signal PeakFrequency {
+    rate:AudioRate/ Size
+}
+
+signal SmoothFrequency { rate:AudioRate/ 20. }
+#InputBundle
+#>>RealFFT()
+#>>ComplexMagnitude()
+#>>FindPort( at: 'Maximum' mode: 'First' )
+#>> Level( gain: AudioRate/ 2 )
+#>> PeakFrequency
+#>>Smooth( factor: 0.01 )
+#>> SmoothFrequency;
+
+#AudioIn[1]
+#>>FillBundle( size: Size )
+#>> InputBundle;
+
+Oscillator( frequency: SmoothFrequency )
+>>AudioOut[0];

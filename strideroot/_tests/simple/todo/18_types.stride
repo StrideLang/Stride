@@ -1,0 +1,5 @@
+use DesktopAudio version 1.0
+
+typeClass CanAddType {
+    types: [ Integer, Float ]
+}

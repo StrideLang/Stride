@@ -1,0 +1,5 @@
+use DesktopAudio version 1.0
+
+import Generators
+
+TableOscillator(frequency:440 amplitude:1)>> AudioOut[0];

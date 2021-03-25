@@ -2174,17 +2174,25 @@ CodeValidator::findAllDeclarations(std::string objectName,
             static_pointer_cast<DeclarationNode>(scopeNode);
         std::string name = decl->getName();
         if (name == objectName) {
-          //          auto frameworkNode =
-          //          decl->getCompilerProperty("framework"); std::string
-          //          frameworkName; if (frameworkNode &&
-          //          frameworkNode->getNodeType() == AST::String) {
-          //            frameworkName =
-          //                static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
-          //          }
           if (CodeValidator::namespaceMatch(scopesList, decl,
                                             currentFramework)) {
+
             if (std::find(decls.begin(), decls.end(), decl) == decls.end()) {
               decls.push_back(decl);
+            }
+          } else {
+            auto frameworkNode = decl->getCompilerProperty("framework");
+            if (frameworkNode && frameworkNode->getNodeType() == AST::String) {
+              std::string frameworkName =
+                  static_pointer_cast<ValueNode>(frameworkNode)
+                      ->getStringValue();
+              if (CodeValidator::namespaceMatch(scopesList, decl,
+                                                frameworkName)) {
+                if (std::find(decls.begin(), decls.end(), decl) ==
+                    decls.end()) {
+                  decls.push_back(decl);
+                }
+              }
             }
           }
         }
@@ -3576,6 +3584,9 @@ vector<std::shared_ptr<DeclarationNode>>
 CodeValidator::getInheritedTypes(std::shared_ptr<DeclarationNode> block,
                                  ScopeStack scope, ASTNode tree) {
   vector<std::shared_ptr<DeclarationNode>> inheritedTypes;
+  if (!block) {
+    return {};
+  }
   ASTNode inherits = block->getPropertyValue("inherits");
   if (inherits) {
     if (inherits->getNodeType() == AST::List) {
