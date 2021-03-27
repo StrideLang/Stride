@@ -1,0 +1,19 @@
+use DesktopAudio version 1.0
+
+module PortProperty {
+    ports:      [
+        mainOutputPort OutputPort {
+            block:      Output
+        }
+        mainInputPort InputPort {
+            block:      Input
+        }
+    ]
+    blocks:     [
+    ]
+    streams: [
+	[Input, 0] >> Greater() >> reaction { Input * InputPort.rate >> Output; };
+    ]
+}
+
+AudioIn[0]>> PortProperty() >>  AudioOut[0];

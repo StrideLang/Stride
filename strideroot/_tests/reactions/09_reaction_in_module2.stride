@@ -15,11 +15,11 @@ module Test {
 		reaction InternalReaction {
 			ports: [
 				mainOutputPort OutputPort {
-					block: Output
+					block: ReactOutput
 				}
 			]
 			streams: [
-				Value + 1 >> Output;
+				Value + 0.001 >> Value >> ReactOutput;
 			]
 		}
 		signal Value { default: 0}
@@ -28,7 +28,7 @@ module Test {
 		}
 	]
 	streams: [
-		[Input, 0] >> Greater() >> ReactionSwitch >> InternalReaction() >> Output;
+		[Input, 0.2] >> Greater() >> ReactionSwitch >> InternalReaction() >> Output;
 	]
 }
 
