@@ -1395,8 +1395,8 @@ std::vector<ASTNode> CodeValidator::resolveConstraintNode(
     auto pp = static_pointer_cast<PortPropertyNode>(node);
     if (pp->getPortName() == "size") {
       return {std::make_shared<ValueNode>(
-          resolveSizePortProperty(pp->getName(), scopeStack, declaration,
-                                  function, tree),
+          (int64_t)resolveSizePortProperty(pp->getName(), scopeStack,
+                                           declaration, function, tree),
           __FILE__, __LINE__)};
     }
     if (pp->getPortName() == "rate") {
@@ -4013,7 +4013,7 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack,
                 parentDomain->getCompilerProperty("instances");
             if (!domainInstanceCountNode) {
               domainInstanceCountNode =
-                  std::make_shared<ValueNode>(0, __FILE__, __LINE__);
+                  std::make_shared<ValueNode>((int64_t)0, __FILE__, __LINE__);
               parentDomain->setCompilerProperty("instances",
                                                 domainInstanceCountNode);
             }
@@ -4050,6 +4050,9 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack,
              node->getNodeType() == AST::Switch ||
              node->getNodeType() == AST::String) {
     domainNode = static_pointer_cast<ValueNode>(node)->getDomain();
+  } else if (node->getNodeType() == AST::PortProperty) {
+
+    domainNode = node->getCompilerProperty("domain");
   }
 
   return domainNode;

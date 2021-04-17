@@ -47,7 +47,7 @@ ValueNode::ValueNode(const char * filename, int line) :
     m_CompilerProperties = make_shared<ListNode>(__FILE__, __LINE__);
 }
 
-ValueNode::ValueNode(int value, const char * filename, int line) :
+ValueNode::ValueNode(int64_t value, const char * filename, int line) :
     AST(AST::Int, filename, line)
 {
     m_intValue = value;
@@ -87,7 +87,7 @@ ValueNode::~ValueNode()
 
 }
 
-int ValueNode::getIntValue() const
+int64_t ValueNode::getIntValue() const
 {
     assert(getNodeType() == AST::Int);
     return m_intValue;

@@ -43,14 +43,14 @@ class ValueNode : public AST
 {
 public:
     ValueNode(const char *filename, int line);
-    ValueNode(int value, const char * filename, int line);
+    ValueNode(int64_t value, const char * filename, int line);
     ValueNode(float value, const char * filename, int line);
     ValueNode(double value, const char * filename, int line);
     ValueNode(std::string value, const char * filename, int line);
     ValueNode(bool value, const char * filename, int line);
     ~ValueNode() override;
 
-    int getIntValue() const;
+    int64_t getIntValue() const;
 
     double getRealValue() const;
 
@@ -69,7 +69,7 @@ public:
     ASTNode getDomain();
 
 private:
-    int m_intValue;
+    int64_t m_intValue;
     double m_floatValue;
     std::string m_stringValue;
     bool m_switch;

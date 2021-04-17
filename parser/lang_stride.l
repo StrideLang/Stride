@@ -18,6 +18,7 @@ char * buffer;
 DIGIT       [0-9]
 LETTER      [a-z]
 CLETTER     [A-Z]
+HEXLETTER   [A-F]
 
 %%
 "("     |
@@ -66,6 +67,8 @@ CLETTER     [A-Z]
 {DIGIT}+\.{DIGIT}*  { yylval.fval = strtod(yytext, NULL); return REAL; }
 {DIGIT}*\.{DIGIT}+  { yylval.fval = strtod(yytext, NULL); return REAL; }
 {DIGIT}+            { yylval.ival = atoi(yytext); return INT; }
+
+0x({DIGIT}|{HEXLETTER})+  { yylval.sval = strdup(yytext); return HEX; }
 
 (_)*{CLETTER}({LETTER}|{CLETTER}|{DIGIT}|_)*    { yylval.sval = strdup(yytext); return UVAR; }
 (_)*{LETTER}({LETTER}|{CLETTER}|{DIGIT})*       { yylval.sval = strdup(yytext); return WORD; }

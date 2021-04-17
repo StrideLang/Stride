@@ -55,9 +55,9 @@ void SystemConfiguration::readConfiguration(std::string filename) {
                   std::static_pointer_cast<ValueNode>(configValue)
                       ->getStringValue());
             } else if (configValue->getNodeType() == AST::Int) {
-              overrides["all"][optionName] =
+              overrides["all"][optionName] = QVariant::fromValue(
                   std::static_pointer_cast<ValueNode>(configValue)
-                      ->getIntValue();
+                      ->getIntValue());
             }
           }
         }

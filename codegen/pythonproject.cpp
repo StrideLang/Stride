@@ -218,7 +218,8 @@ void PythonProject::astToJson(ASTNode node, QJsonObject &obj) {
     Q_ASSERT(indexList->size() == 1);
     AST *indexNode = indexList->getChildren().at(0).get();
     if (indexNode->getNodeType() == AST::Int) {
-      newObj["index"] = static_cast<ValueNode *>(indexNode)->getIntValue();
+      newObj["index"] = static_cast<long long>(
+          static_cast<ValueNode *>(indexNode)->getIntValue());
     } else if (indexNode->getNodeType() == AST::Block) {
       newObj["index"] = QString::fromStdString(
           static_cast<BlockNode *>(indexNode)->getName());
@@ -255,7 +256,8 @@ void PythonProject::astToJson(ASTNode node, QJsonObject &obj) {
     obj["stream"] = array;
   } else if (node->getNodeType() == AST::Int) {
     QJsonObject newObj;
-    obj["value"] = static_cast<ValueNode *>(node.get())->getIntValue();
+    obj["value"] = static_cast<long long>(
+        static_cast<ValueNode *>(node.get())->getIntValue());
     QJsonObject domainObj;
     astToJson(static_cast<ValueNode *>(node.get())->getDomain(), domainObj);
     obj["domain"] = domainObj;
@@ -298,7 +300,8 @@ void PythonProject::astToJson(ASTNode node, QJsonObject &obj) {
       // TODO use astToJson here instead.
       if (propValue->getNodeType() == AST::Int) {
         propObject[QString::fromStdString(prop->getName())] =
-            static_cast<ValueNode *>(propValue.get())->getIntValue();
+            static_cast<long long>(
+                static_cast<ValueNode *>(propValue.get())->getIntValue());
       } else if (propValue->getNodeType() == AST::Real) {
         propObject[QString::fromStdString(prop->getName())] =
             static_cast<ValueNode *>(propValue.get())->getRealValue();
@@ -340,7 +343,8 @@ void PythonProject::astToJson(ASTNode node, QJsonObject &obj) {
     AST *bundleIndex = indexList->getChildren().at(0).get();
     if (bundleIndex->getNodeType() == AST::Int ||
         bundleIndex->getNodeType() == AST::Real) {
-      newObject["size"] = static_cast<ValueNode *>(bundleIndex)->getIntValue();
+      newObject["size"] = static_cast<long long>(
+          static_cast<ValueNode *>(bundleIndex)->getIntValue());
     } else if (bundleIndex->getNodeType() == AST::Block) {
       // FIXME we need to set the value from the name (it must be a constant)
       //            newObject["size"] =
@@ -366,7 +370,8 @@ void PythonProject::astToJson(ASTNode node, QJsonObject &obj) {
       // TODO use astToJson here instead.
       if (propValue->getNodeType() == AST::Int) {
         propObject[QString::fromStdString(prop->getName())] =
-            static_cast<ValueNode *>(propValue.get())->getIntValue();
+            static_cast<long long>(
+                static_cast<ValueNode *>(propValue.get())->getIntValue());
       } else if (propValue->getNodeType() == AST::Real) {
         propObject[QString::fromStdString(prop->getName())] =
             static_cast<ValueNode *>(propValue.get())->getRealValue();

@@ -82,7 +82,7 @@ NullStream nstream;
 %code requires { #include "valuenode.h" }
 
 %union {
-    int     ival;
+    int64_t     ival;
     double  fval;
     char    *sval;
     AST     *ast;
@@ -140,6 +140,7 @@ NullStream nstream;
 /* declare tokens */
 %token  <ival>  INT
 %token  <fval>  REAL
+%token  <sval>  HEX
 %token  <sval>  UVAR
 %token  <sval>  WORD
 %token  <sval>  STRING
@@ -1152,14 +1153,19 @@ streamComp:
 //  VALUE COMPONENTS
 // =================================
 
-valueComp:
-        INT             {
+    valueComp : INT     {
             $$ = new ValueNode($1, currentFile, yyloc.first_line);
             COUT << "Integer: " << $1 << ENDL;
         }
-    |   REAL           {
+    |   REAL            {
             $$ = new ValueNode($1, currentFile, yyloc.first_line);
             COUT << "Real: " << $1 << ENDL;
+        }
+    |   HEX             {
+            char * p;
+            int64_t value = strtol($1, &p, 16);
+            $$ = new ValueNode(value, currentFile, yyloc.first_line);
+            COUT << "Hex: " << $1 << ENDL;
         }
     |   ON              {
             $$ = new ValueNode(true, currentFile, yyloc.first_line);

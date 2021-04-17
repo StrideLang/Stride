@@ -855,8 +855,8 @@ ASTNode CodeResolver::expandFunctionFromProperties(
           Q_ASSERT(size == dataSize);
           for (int i = 0; i < size; ++i) {
             std::shared_ptr<ListNode> indexList = std::make_shared<ListNode>(
-                std::make_shared<ValueNode>(i, prop->getFilename().c_str(),
-                                            prop->getLine()),
+                std::make_shared<ValueNode>(
+                    (int64_t)i, prop->getFilename().c_str(), prop->getLine()),
                 prop->getFilename().c_str(), prop->getLine());
             std::shared_ptr<BundleNode> newBundle =
                 std::make_shared<BundleNode>(name->getName(), indexList,
@@ -1458,6 +1458,10 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream,
 
                             decl->setPropertyValue("domain", samplingDomain);
                           }
+                        } else if (instance->getNodeType() ==
+                                   AST::PortProperty) {
+                          instance->setCompilerProperty("domain",
+                                                        samplingDomain);
                         }
                       }
                     }
@@ -1769,7 +1773,7 @@ CodeResolver::createSignalDeclaration(QString name, int size, ScopeStack scope,
                                                  nullptr, __FILE__, __LINE__);
   } else if (size > 1) {
     std::shared_ptr<ListNode> indexList = std::make_shared<ListNode>(
-        std::make_shared<ValueNode>(size, "", -1), __FILE__, __LINE__);
+        std::make_shared<ValueNode>((int64_t)size, "", -1), __FILE__, __LINE__);
     std::shared_ptr<BundleNode> bundle =
         std::make_shared<BundleNode>(name.toStdString(), indexList, "", -1);
     newBlock =
@@ -1935,7 +1939,7 @@ std::shared_ptr<ListNode> CodeResolver::expandNameToList(BlockNode *name,
       nullptr, name->getFilename().data(), name->getLine());
   for (int i = 0; i < size; i++) {
     std::shared_ptr<ListNode> indexList = std::make_shared<ListNode>(
-        std::make_shared<ValueNode>(i, name->getFilename().data(),
+        std::make_shared<ValueNode>((int64_t)i, name->getFilename().data(),
                                     name->getLine()),
         name->getFilename().data(), name->getLine());
     std::shared_ptr<BundleNode> bundle = std::make_shared<BundleNode>(
@@ -2482,8 +2486,9 @@ void CodeResolver::resolveConstants() {
                            __LINE__));
         } else if (override->second.type() == QVariant::Int) {
           decl->replacePropertyValue(
-              "value", std::make_shared<ValueNode>(override->second.toInt(),
-                                                   __FILE__, __LINE__));
+              "value",
+              std::make_shared<ValueNode>((int64_t) override->second.toInt(),
+                                          __FILE__, __LINE__));
         }
       } else {
         qDebug() << "WARNING: Ignoring configuration override '" +
@@ -3172,6 +3177,24 @@ void CodeResolver::sliceDomainsInNode(std::shared_ptr<DeclarationNode> module,
           "blocks", std::make_shared<ListNode>(nullptr, __FILE__, __LINE__));
       blocksNode = module->getPropertyValue("blocks");
     }
+
+    vector<ASTNode> new_tree;
+    scopeStack.push_back({module, blocksNode->getChildren()});
+    for (auto stream : streamsNode->getChildren()) {
+      std::vector<ASTNode> streams = sliceStreamByDomain(
+          static_pointer_cast<StreamNode>(stream), ScopeStack());
+      for (ASTNode stream : streams) {
+        new_tree.push_back(stream);
+      }
+    }
+    streamsNode->setChildren(new_tree);
+    for (auto block : blocksNode->getChildren()) {
+      if (block->getNodeType() == AST::Declaration) {
+        sliceDomainsInNode(static_pointer_cast<DeclarationNode>(block),
+                           scopeStack);
+      }
+    }
+    scopeStack.pop_back();
 
     //        if (!streamsNode) {
     //           module->setPropertyValue("streams",

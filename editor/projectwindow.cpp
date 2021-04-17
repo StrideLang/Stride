@@ -1442,7 +1442,7 @@ void ProjectWindow::configureSystem() {
                   showValues = true;
                 }
                 auto type = configDecl->getPropertyValue("type");
-                if (!type || !type->getNodeType() == AST::Block) {
+                if ((!type) || (!type->getNodeType()) == AST::Block) {
                   qDebug()
                       << "ERROR: no type provided by resourceConfiguration";
                   continue;
@@ -2266,7 +2266,7 @@ void ProjectWindow::configureSystem() {
             if (valueNode) {
               if (valueNode->getNodeType() == AST::Int) {
                 resourceConfig->replacePropertyValue(
-                    "value", std::make_shared<ValueNode>(value.toInt(),
+                    "value", std::make_shared<ValueNode>((int64_t)value.toInt(),
                                                          __FILE__, __LINE__));
                 found = true;
                 break;
@@ -2297,7 +2297,8 @@ void ProjectWindow::configureSystem() {
         if (value.type() == QVariant::Int) {
           properties->addChild(std::make_shared<PropertyNode>(
               "value",
-              std::make_shared<ValueNode>(value.toInt(), __FILE__, __LINE__),
+              std::make_shared<ValueNode>((int64_t)value.toInt(), __FILE__,
+                                          __LINE__),
               __FILE__, __LINE__));
         } else if (value.type() == QVariant::Double) {
           properties->addChild(std::make_shared<PropertyNode>(
