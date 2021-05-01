@@ -1165,6 +1165,7 @@ streamComp:
             char * p;
             int64_t value = strtol($1, &p, 16);
             $$ = new ValueNode(value, currentFile, yyloc.first_line);
+            free($1);
             COUT << "Hex: " << $1 << ENDL;
         }
     |   ON              {

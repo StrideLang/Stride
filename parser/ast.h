@@ -117,6 +117,7 @@ public:
   ASTNode getCompilerProperty(std::string propertyName);
   void appendToPropertyValue(std::string propertyName, ASTNode value);
 
+  // Code processing
   static std::string toText(ASTNode node, int indentOffset = 0);
 
 protected:

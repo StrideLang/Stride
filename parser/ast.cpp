@@ -233,6 +233,11 @@ string AST::toText(ASTNode node, int indentOffset) {
         std::to_string(static_pointer_cast<ValueNode>(node)->getRealValue());
   } else if (node->getNodeType() == AST::String) {
     outText += static_pointer_cast<ValueNode>(node)->getStringValue();
+  } else if (node->getNodeType() == AST::None) {
+    // Root tree
+    for (auto child : node->getChildren()) {
+      outText += AST::toText(child);
+    }
   }
   return outText;
 }
