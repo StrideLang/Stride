@@ -56,8 +56,8 @@ void LineNumberArea::setErrors(QList<LangError> errors) {
     marker->hide();
     marker->setLineNumber(-1);
   }
-  for (size_t i = 0;
-       i < std::min((unsigned long)errors.size(), m_errorMarkers.size()); i++) {
+  for (size_t i = 0; i < std::min((size_t)errors.size(), m_errorMarkers.size());
+       i++) {
     m_errorMarkers[i]->setLineNumber(errors[i].lineNumber);
     m_errorMarkers[i]->setErrorText(
         QString::fromStdString(errors[i].getErrorText()));
