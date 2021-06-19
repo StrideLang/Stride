@@ -18,7 +18,7 @@ char * buffer;
 DIGIT       [0-9]
 LETTER      [a-z]
 CLETTER     [A-Z]
-HEXLETTER   [A-F]
+HEXLETTER   [A-Fa-f]
 
 %%
 "("     |

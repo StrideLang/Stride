@@ -639,6 +639,10 @@ propertyType:
             $$ = $1;
             COUT << "Stream as property value!" << ENDL;
         }
+    |   blockDef           {
+          $$ = $1;
+          COUT << "Declaration as property value!" << ENDL;
+        }
     ;
 
 // =================================
