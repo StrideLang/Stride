@@ -1,0 +1,374 @@
+# MCU details -----------------------------------
+
+
+# ----- PA --------------
+pin STM32F4_PA0 {
+    name: "PA0"
+ # TODO this is incomplete.
+    functions: [PA0]
+}
+pin STM32F4_PA1 {
+    name: "PA1"
+ # TODO this is incomplete.
+    functions: [PA1]
+}
+pin STM32F4_PA2 {
+    name: "PA2"
+ # TODO this is incomplete.
+    functions: [PA2]
+}
+pin STM32F4_PA3 {
+    name: "PA3"
+ # TODO this is incomplete.
+    functions: [PA3]
+}
+pin STM32F4_PA4 {
+    name: "PA4"
+ # TODO this is incomplete.
+    functions: [PA4]
+}
+pin STM32F4_PA5 {
+    name: "PA5"
+ # TODO this is incomplete.
+    functions: [PA5]
+}
+pin STM32F4_PA6 {
+    name: "PA6"
+ # TODO this is incomplete.
+    functions: [PA6]
+}
+pin STM32F4_PA7 {
+    name: "PA7"
+ # TODO this is incomplete.
+    functions: [PA7]
+}
+pin STM32F4_PA8 {
+    name: "PA8"
+ # TODO this is incomplete.
+    functions: [PA8]
+}
+pin STM32F4_PA9 {
+    name: "PA9"
+ # TODO this is incomplete.
+    functions: [PA9, MCO, USART1_TX, TIM_CH2]
+}
+pin STM32F4_PA10 {
+    name: "PA10"
+ # TODO this is incomplete.
+    functions: [PA10, SPI1_MOSI, USART1_RX]
+}
+pin STM32F4_PA11 {
+    name: "PA11"
+ # TODO this is incomplete.
+    functions: [PA11, SPI1_MISO, USART1_CTS]
+}
+pin STM32F4_PA12 {
+    name: "PA12"
+ # TODO this is incomplete.
+    functions: [PA12, SPI1_MOSI, USART1_RTS_DE_CK]
+}
+pin STM32F4_PA13 {
+    name: "PA13"
+ # TODO this is incomplete.
+    functions: [PA13]
+}
+pin STM32F4_PA14 {
+    name: "PA14"
+ # TODO this is incomplete.
+    functions: [PA14]
+}
+pin STM32F4_PA15 {
+    name: "PA15"
+ # TODO this is incomplete.
+    functions: [PA15]
+}
+
+# ----- PB --------------
+pin STM32F4_PB0 {
+    name: "PB0"
+ # TODO this is incomplete.
+    functions: [PB0]
+}
+
+pin STM32F4_PB1 {
+    name: "PB1"
+ # TODO this is incomplete.
+    functions: [PB1]
+}
+pin STM32F4_PB2 {
+    name: "PB2"
+ # TODO this is incomplete.
+    functions: [PB2]
+}
+
+pin STM32F4_PB3 {
+    name: "PB3"
+ # TODO this is incomplete.
+    functions: [PB3, SPI1_SCK, TIM1_CH2, off, USART5_TX, USART1_RTS_DE_CK]
+}
+
+
+pin STM32F4_PB4 {
+    name: "PB4"
+ # TODO this is incomplete.
+    functions: [PB4, SPI1_MISO, TIM3_CH1, off, USART5_RX, USART1_CTS]
+}
+pin STM32F4_PB5 {
+    name: "PB5"
+ # TODO this is incomplete.
+    functions: [PB5]
+}
+pin STM32F4_PB6 {
+    name: "PB6"
+ # TODO this is incomplete.
+    functions: [PB6, USART1_TX]
+}
+pin STM32F4_PB7 {
+    name: "PB7"
+ # TODO this is incomplete.
+    functions: [PB7,USART1_RX]
+}
+pin STM32F4_PB8 {
+    name: "PB8"
+ # TODO this is incomplete.
+    functions: [PB8]
+}
+pin STM32F4_PB9 {
+    name: "PB9"
+ # TODO this is incomplete.
+    functions: [PB9, IR_OUT, TIM17_CH1, USART3_RX]
+}
+
+
+# ------- PC ------------
+pin STM32F4_PC6 {
+    name: "PC6"
+ # TODO this is incomplete.
+    functions: [PC6]
+}
+
+# ------- PC ------------
+
+pin STM32F4_PD14 {
+    name: "PE4"
+ # TODO this is incomplete.
+    functions: [PE4]
+}
+
+pin STM32F4_PD15 {
+    name: "PE5"
+ # TODO this is incomplete.
+    functions: [PE5]
+}
+# ------- PD ------------
+pin STM32F4_PD12 {
+    name: "PD12"
+ # TODO this is incomplete.
+    functions: [PD12]
+}
+
+pin STM32F4_PD13 {
+    name: "PD13"
+ # TODO this is incomplete.
+    functions: [PD13]
+}
+
+pin STM32F4_PD14 {
+    name: "PD14"
+ # TODO this is incomplete.
+    functions: [PD14]
+}
+
+pin STM32F4_PD15 {
+    name: "PD15"
+ # TODO this is incomplete.
+    functions: [PD15]
+}
+
+
+pin STM32F4_PE2 {
+    name: "PE2"
+ # TODO this is incomplete.
+    functions: [PE2]
+}
+
+pin STM32F4_PE3 {
+    name: "PE3"
+ # TODO this is incomplete.
+    functions: [PE3]
+}
+
+pin STM32F4_PE4 {
+    name: "PE4"
+ # TODO this is incomplete.
+    functions: [PE4]
+}
+
+pin STM32F4_PE5 {
+    name: "PE5"
+ # TODO this is incomplete.
+    functions: [PE5]
+}
+
+
+mcu STM32F407xx {
+    name: "STM32F407xx"
+    availablePins: [STM32F4_PE2, STM32F4_PE3, STM32F4_PE4, STM32F4_PE5, STM32F4_PE6, 
+        STM32F4_PA0, STM32F4_PD12,
+        STM32F4_PD12,STM32F4_PD13,STM32F4_PD14,STM32F4_PD15, 
+        STM32F4_PC6
+    
+    ]
+    inherits: STM32F4
+    source: STM32F4B0KE_REF_MANUAL
+    meta: "Arm® Cortex®-M4 32b MCU+FPU, 210DMIPS, up to 1MB Flash/192+4KB RAM,USB OTG HS/FS, Ethernet, 17 TIMs, 3 ADCs, 15 comm. interfaces & camera"
+}
+
+
+document STM32F4_REF_MANUAL {
+    source: ""
+    url: "http://www.st.com"
+    versionId: ""
+    revision: ""
+    date: ""
+}
+
+mcu STM32F4 {
+    name: "STM32F4 family"
+    memoryRegisterSize: 32
+    offset: 0x00
+    availableBuses: [
+        AHB1, APB1
+    ]
+    availableClocks: [
+        CLOCK
+    ]
+    availableGPIO: [
+        ST_F4_GPIOA, ST_F4_GPIOB, ST_F4_GPIOC, ST_F4_GPIOD, ST_F4_GPIOE
+    ]
+    nvic: ST_F4_NVIC
+    pinPeripheral: ST_PIN
+    source: STM32F4_REF_MANUAL
+}
+
+busType AHB {
+}
+
+bus AHB1 {
+    name: "AHB1"
+    offset: 0x0
+    type: AHB
+    peripherals: [ #All possible peripherals on the bus
+        
+    ]
+}
+
+busType APB {
+}
+
+bus APB1 {
+    name: "APB1"
+    offset: 0x0
+    type: APB
+    peripherals: [ #All possible peripherals on the bus
+        USART1, USART2
+    ]
+}
+
+clock CLOCK {
+    name: "DUMMY_CLOCK"
+}
+
+## NVIC 
+interrupt ST_F4_EXTI0 {
+    name: "EXTI0"
+    offset: 0
+    generic: GENERIC_INTERRUPT
+    meta: ""
+}
+
+nvic ST_F4_NVIC {
+    interrupts: [ST_F4_EXTI0]
+    callbacks:[ "EXTI0_IRQHandler" ]
+    type: ST_NVIC_TYPE
+    meta: ""
+}
+
+## Configured interrupt
+configuredNvic ST_F4_NVIC_CONFIG {
+    # interrupts: [ST_F4_EXTI0]
+    # callbacks:[ "EXTI0_IRQHandler"]
+    interrupts: [ST_F4_EXTI0]
+    nvic: ST_F4_NVIC
+}
+
+configuredOption ST_F4_EXTI0_GENERIC_INTERRUPT_MODE {
+    option: GENERIC_INTERRUPT_MODE
+    value: 0
+    # _configuredInterrupt: ST_F4_EXTI0
+}
+
+configuredInterrupt ST_F4_EXTI0 {
+    interrupt: ST_F4_EXTI0
+    priority: 0
+    source: [PIN_A]
+    configuration: [ST_F4_EXTI0_GENERIC_INTERRUPT_MODE]
+    # _configuredNvic: ST_F4_NVIC_CONFIG
+}
+
+configuredNvic ST_F4_NVIC {
+    nvic: ST_F4_NVIC
+}
+## ------ GPIO
+gpio ST_F4_GPIOA {
+    name : "GPIOA"
+    offset: 0x40020000
+    type: ST_GPIO_A
+    pins: [
+        STM32F4_PA0 #, STM32F4_PA1, STM32F4_PA2, STM32F4_PA3,  STM32F4_PA4,  STM32F4_PA5, STM32F4_PA6, STM32F4_PA7,
+        #STM32F4_PA8, STM32F4_PA9, STM32F4_PA10, STM32F4_PA11, STM32F4_PA12, STM32F4_PA13, STM32F4_PA14, STM32F4_PA15
+    ]
+#    sourcePages:
+}
+
+gpio ST_F4_GPIOB {
+    name : "GPIOB"
+    offset: 0x40020400
+    type: ST_GPIO_X
+    pins: [
+        #STM32F4_PB0, STM32F4_PB1, STM32F4_PB2, STM32F4_PB3,  STM32F4_PB4,  STM32F4_PB5, STM32F4_PB6, STM32F4_PB7,
+        #STM32F4_PB8, STM32F4_PB9
+    ]
+}
+
+gpio ST_F4_GPIOC {
+    name : "GPIOC"
+    offset: 0x40020800
+    type: ST_GPIO_X
+    pins: [
+        STM32F4_PC6
+    ]
+}
+gpio ST_F4_GPIOD {
+    name : "GPIOD"
+    offset: 0x40020C00
+    type: ST_GPIO_X
+    pins: [
+        off, off, off, off, off, off, off, off,
+        off, off, off, off, STM32F4_PD12,STM32F4_PD13,STM32F4_PD14,STM32F4_PD15
+    ]
+}
+
+gpio ST_F4_GPIOE {
+    name : "GPIOE"
+    offset: 0x40021000
+    type: ST_GPIO_X
+    pins: [
+        STM32F4_PE2, STM32F4_PE3, STM32F4_PE4, STM32F4_PE5
+    ]
+}
+
+
+
+
+

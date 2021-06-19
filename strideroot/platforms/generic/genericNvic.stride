@@ -1,0 +1,13 @@
+
+# Generic peripherals
+# genericOption GENERIC_NVIC_ENABLED {
+#     name: "Enabled"
+#     values: ["Enabled", "Disabled"]
+#     meta: ""
+# }
+
+genericPeripheral GENERIC_NVIC {
+    name: "NVIC"
+    parameters: []
+    meta: "NVIC (Nested Vector Interrupt Controller)"
+}

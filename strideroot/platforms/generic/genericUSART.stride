@@ -1,0 +1,7 @@
+
+
+genericPeripheral GENERIC_USART {
+    name: "USART"
+    parameters: []
+    meta: "USART"
+}

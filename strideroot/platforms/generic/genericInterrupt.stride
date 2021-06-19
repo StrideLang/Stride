@@ -1,0 +1,13 @@
+
+# Generic peripherals
+genericOption GENERIC_INTERRUPT_MODE {
+    name: "Mode"
+    values: ["Rising Edge", "Falling Edge", "Rising/Falling Edge"]
+    meta: ""
+}
+
+genericPeripheral GENERIC_INTERRUPT {
+    name: "Interrupt"
+    parameters: [GENERIC_INTERRUPT_MODE]
+    meta: "Interrupt"
+}

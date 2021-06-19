@@ -1,0 +1,39 @@
+
+# Generic peripherals
+genericOption GENERIC_GPIO_PIN_MODE {
+    name: "Type"
+    values: ["Input", "Output", "Alternate", "Analog"]
+    meta: ""
+}
+
+genericOption GENERIC_GPIO_PIN_OUTPUT_TYPE {
+    name: "Output type"
+    values: ["Output push-pull", "Output open-drain"]
+    enableWhen: optionValueEquals PIN_MODE_IS_OUTPUT { optionName: GENERIC_GPIO_PIN_MODE optionIndex: 1}
+    meta: ""
+}
+
+genericOption GENERIC_GPIO_PIN_PULL_UP_DOWN {
+    name: "I/O Pull-up/Pull-down "
+    values: ["No pull-up, pull-down", "Pull up", "Pull down"]
+    meta: ""
+}
+
+genericOption GENERIC_GPIO_PIN_INTERRUPT {
+    name: "Pin Interrupt"
+    values: ["No interrupt" , "Interrupt"]
+    meta: ""
+}
+
+genericPeripheral GENERIC_GPIO_PIN {
+    name: "GPIO Pin"
+    parameters: [GENERIC_GPIO_PIN_MODE, GENERIC_GPIO_PIN_OUTPUT_TYPE,
+                 GENERIC_GPIO_PIN_PULL_UP_DOWN]
+    meta: "General Purpose I/O Pin"
+}
+
+genericPeripheral GENERIC_GPIO {
+    name: "GPIO Controller"
+    parameters: []
+    meta: "General Purpose I/O Interface"
+}
