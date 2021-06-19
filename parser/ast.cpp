@@ -36,6 +36,7 @@
 #include <cassert>
 
 #include "ast.h"
+#include "blocknode.h"
 #include "declarationnode.h"
 #include "listnode.h"
 #include "propertynode.h"
@@ -197,6 +198,14 @@ string AST::toText(ASTNode node, int indentOffset) {
       outText += AST::toText(prop, indentOffset + indentSize);
     }
     outText += indentBase + "}\n";
+  } else if (node->getNodeType() == AST::Block) {
+    auto block = std::static_pointer_cast<BlockNode>(node);
+    outText += indentBase + " ";
+    if (block->getNamespaceList().size() > 0) {
+      //      outText +=
+      // FIXME namespace
+    }
+    outText += block->getName() + "\n";
   } else if (node->getNodeType() == AST::Property) {
     auto pp = std::static_pointer_cast<PropertyNode>(node);
     outText += indentBase + pp->getName() + ": ";
@@ -232,7 +241,8 @@ string AST::toText(ASTNode node, int indentOffset) {
     outText +=
         std::to_string(static_pointer_cast<ValueNode>(node)->getRealValue());
   } else if (node->getNodeType() == AST::String) {
-    outText += static_pointer_cast<ValueNode>(node)->getStringValue();
+    outText +=
+        "\"" + static_pointer_cast<ValueNode>(node)->getStringValue() + "\"";
   } else if (node->getNodeType() == AST::None) {
     // Root tree
     for (auto child : node->getChildren()) {
