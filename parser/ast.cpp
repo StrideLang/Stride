@@ -200,12 +200,11 @@ string AST::toText(ASTNode node, int indentOffset) {
     outText += indentBase + "}\n";
   } else if (node->getNodeType() == AST::Block) {
     auto block = std::static_pointer_cast<BlockNode>(node);
-    outText += indentBase + " ";
     if (block->getNamespaceList().size() > 0) {
       //      outText +=
       // FIXME namespace
     }
-    outText += block->getName() + "\n";
+    outText += block->getName(); //+"\n";
   } else if (node->getNodeType() == AST::Property) {
     auto pp = std::static_pointer_cast<PropertyNode>(node);
     outText += indentBase + pp->getName() + ": ";
@@ -243,6 +242,10 @@ string AST::toText(ASTNode node, int indentOffset) {
   } else if (node->getNodeType() == AST::String) {
     outText +=
         "\"" + static_pointer_cast<ValueNode>(node)->getStringValue() + "\"";
+  } else if (node->getNodeType() == AST::Switch) {
+    outText +=
+        (std::static_pointer_cast<ValueNode>(node)->getSwitchValue() ? "on "
+                                                                     : "off ");
   } else if (node->getNodeType() == AST::None) {
     // Root tree
     for (auto child : node->getChildren()) {
