@@ -6,8 +6,14 @@ genericOption GENERIC_INTERRUPT_MODE {
     meta: ""
 }
 
+genericOption GENERIC_INTERRUPT_MASK {
+    name: "Interrupt Masked"
+    values: ["Masked (Disabled)", "Unmasked (Enabled)"]
+    meta: ""
+}
+
 genericPeripheral GENERIC_INTERRUPT {
     name: "Interrupt"
-    parameters: [GENERIC_INTERRUPT_MODE]
+    parameters: [GENERIC_INTERRUPT_MODE, GENERIC_INTERRUPT_MASK]
     meta: "Interrupt"
 }

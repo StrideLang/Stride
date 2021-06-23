@@ -1,7 +1,95 @@
+# Buses ------------------
+
+busType ST_AHB {
+}
+
+busType ST_APB {
+}
+# ---- NIVC
 
 nvicType ST_NVIC_TYPE {
-    generic: GENERIC_NVIC
-    meta: ""
+    pendingRegister: ST_EXTI_PR
+    risingTriggerRegister: ST_EXTI_RTSR
+    fallingTriggerRegister: ST_EXTI_FTSR
+    registers: [ST_EXTI_IMR]
+    meta: "ST nvic"
+    inherits: ARM_M4_NVIC
+}
+
+hwGenericMapping ST_EXTI_IMRX_MAP {
+    generic: GENERIC_INTERRUPT_MASK
+    size: 1
+    values: [0, 1]
+}
+
+registerValue ST_EXTI_IMRX {
+    name: "MODER"
+    offset: 0x00
+    length: 22
+    mapsTo: ST_EXTI_IMRX_MAP
+}
+
+register ST_EXTI_IMR {
+    name: "EXTI_IMR"
+    offset: 0x00
+    length: 32
+    resetValue: 0x00000000
+    values: [
+        ST_EXTI_IMRX
+    ]
+    meta: "MRx: Interrupt mask on line x
+    0: Interrupt request from line x is masked
+    1: Interrupt request from line x is not masked"
+    sourcePages: []
+}
+
+register ST_EXTI_PR {
+    name: "EXTI_PR"
+    offset: 0x14
+    length: 22
+    resetValue: 0x00000000
+    values: [
+    ]
+    meta: "PRx: Pending bit
+    0: No trigger request occurred
+    1: selected trigger request occurred
+    This bit is set when the selected edge event arrives on the external interrupt line.
+    This bit is cleared by programming it to '1'."
+    sourcePages: []
+}
+
+register ST_EXTI_RTSR {
+    name: "EXTI_RTSR"
+    offset: 0x08
+    length: 22
+    resetValue: 0x00000000
+    values: [
+    ]
+    meta: "TRx: Rising trigger event configuration bit of line x
+    0: Rising trigger disabled (for Event and Interrupt) for input line
+    1: Rising trigger enabled (for Event and Interrupt) for input line
+    
+    Note:
+    The external wakeup lines are edge triggered, no glitch must be generated on these lines.If a rising edge occurs on the external interrupt line while writing to the EXTI_RTSR register, the pending bit is be set.Rising and falling edge triggers can be set for the same interrupt line. In this configuration, both generate a trigger condition
+    "
+    sourcePages: [385]
+}
+
+register ST_EXTI_FTSR {
+    name: "EXTI_FTSR"
+    offset: 0x0C
+    length: 22
+    resetValue: 0x00000000
+    values: [
+    ]
+    meta: "TRx: Falling trigger event configuration bit of line x
+    0: Falling trigger disabled (for Event and Interrupt) for input line
+    1: Falling trigger enabled (for Event and Interrupt) for input line.
+    
+    Note:
+    The external wakeup lines are edge triggered, no glitch must be generated on these lines.If a falling edge occurs on the external interrupt line while writing to the EXTI_RTSR register, the pending bit is be set.Rising and falling edge triggers can be set for the same interrupt line. In this configuration, both generate a trigger condition
+    "
+    sourcePages: [385]
 }
 
 # ---- GPIO
@@ -194,6 +282,46 @@ registerValue ST_GPIO_IDR {
     mapsTo: none # Do we need to connect to specify this mapping, or leave hardcoded as is in C++?
 }
 
+# SYSCFG #####################################################
+
+peripheralType ST_SYSCFG_TYPE {
+    group: "SYSCFG"
+    registers: [ST_SYSCFG_EXTICR1]
+    genericPeripheral: GENERIC_SYCFG
+}
+
+register ST_SYSCFG_EXTICR1 {
+    name: "EXTCR1"
+    offset: 0x08
+    length: 32
+    resetValue: 0x00000000
+    values: [
+        ST_SYSCFG_EXTICR1_EXTI0
+    ]
+    meta: "SYSCFG external interrupt configuration register 1"
+
+    sourcePages: [827]
+}
+
+registerValue ST_SYSCFG_EXTICR1_EXTI0 {
+    name: "EXTI0"
+    offset: 0
+    length: 4
+    mapsTo: none
+    valueNames: ["PA[x] pin", "PB[x] pin", "PC[x] pin", "PD[x] pin", "PE[x] pin", "PF[x] pin", "PG[x] pin", "PH[x] pin", "PI[x] pin"]
+    meta: "Bits 15:0 EXTIx[3:0]: EXTI x configuration (x = 0 to 3)
+    These bits are written by software to select the source input for the EXTIx external interrupt.
+    0000: PA[x] pin
+    0001: PB[x] pin
+    0010: PC[x] pin
+    0011: PD[x] pin
+    0100: PE[x] pin
+    0101: PF[x] pin
+    0110: PG[x] pin
+    0111: PH[x] pin
+    1000: PI[x] pin
+"
+}
 
 # USART #####################################################
 

@@ -1,0 +1,269 @@
+# MCU details -----------------------------------
+
+
+# ----- PA --------------
+pin STM32G0_PA0 {
+    name: "PA0"
+ # TODO this is incomplete.
+    functions: [PA0]
+}
+pin STM32G0_PA1 {
+    name: "PA1"
+ # TODO this is incomplete.
+    functions: [PA1]
+}
+pin STM32G0_PA2 {
+    name: "PA2"
+ # TODO this is incomplete.
+    functions: [PA2]
+}
+pin STM32G0_PA3 {
+    name: "PA3"
+ # TODO this is incomplete.
+    functions: [PA3]
+}
+pin STM32G0_PA4 {
+    name: "PA4"
+ # TODO this is incomplete.
+    functions: [PA4]
+}
+pin STM32G0_PA5 {
+    name: "PA5"
+ # TODO this is incomplete.
+    functions: [PA5]
+}
+pin STM32G0_PA6 {
+    name: "PA6"
+ # TODO this is incomplete.
+    functions: [PA6]
+}
+pin STM32G0_PA7 {
+    name: "PA7"
+ # TODO this is incomplete.
+    functions: [PA7]
+}
+pin STM32G0_PA8 {
+    name: "PA8"
+ # TODO this is incomplete.
+    functions: [PA8]
+}
+pin STM32G0_PA9 {
+    name: "PA9"
+ # TODO this is incomplete.
+    functions: [PA9, MCO, USART1_TX, TIM_CH2]
+}
+pin STM32G0_PA10 {
+    name: "PA10"
+ # TODO this is incomplete.
+    functions: [PA10, SPI1_MOSI, USART1_RX]
+}
+pin STM32G0_PA11 {
+    name: "PA11"
+ # TODO this is incomplete.
+    functions: [PA11, SPI1_MISO, USART1_CTS]
+}
+pin STM32G0_PA12 {
+    name: "PA12"
+ # TODO this is incomplete.
+    functions: [PA12, SPI1_MOSI, USART1_RTS_DE_CK]
+}
+pin STM32G0_PA13 {
+    name: "PA13"
+ # TODO this is incomplete.
+    functions: [PA13]
+}
+pin STM32G0_PA14 {
+    name: "PA14"
+ # TODO this is incomplete.
+    functions: [PA14]
+}
+pin STM32G0_PA15 {
+    name: "PA15"
+ # TODO this is incomplete.
+    functions: [PA15]
+}
+
+# ----- PB --------------
+pin STM32G0_PB0 {
+    name: "PB0"
+ # TODO this is incomplete.
+    functions: [PB0]
+}
+
+pin STM32G0_PB1 {
+    name: "PB1"
+ # TODO this is incomplete.
+    functions: [PB1]
+}
+pin STM32G0_PB2 {
+    name: "PB2"
+ # TODO this is incomplete.
+    functions: [PB2]
+}
+
+pin STM32G0_PB3 {
+    name: "PB3"
+ # TODO this is incomplete.
+    functions: [PB3, SPI1_SCK, TIM1_CH2, off, USART5_TX, USART1_RTS_DE_CK]
+}
+
+
+pin STM32G0_PB4 {
+    name: "PB4"
+ # TODO this is incomplete.
+    functions: [PB4, SPI1_MISO, TIM3_CH1, off, USART5_RX, USART1_CTS]
+}
+pin STM32G0_PB5 {
+    name: "PB5"
+ # TODO this is incomplete.
+    functions: [PB5]
+}
+pin STM32G0_PB6 {
+    name: "PB6"
+ # TODO this is incomplete.
+    functions: [PB6, USART1_TX]
+}
+pin STM32G0_PB7 {
+    name: "PB7"
+ # TODO this is incomplete.
+    functions: [PB7,USART1_RX]
+}
+pin STM32G0_PB8 {
+    name: "PB8"
+ # TODO this is incomplete.
+    functions: [PB8]
+}
+pin STM32G0_PB9 {
+    name: "PB9"
+ # TODO this is incomplete.
+    functions: [PB9, IR_OUT, TIM17_CH1, USART3_RX]
+}
+
+
+# ------- PC ------------
+pin STM32G0_PC6 {
+    name: "PC6"
+ # TODO this is incomplete.
+    functions: [PC6]
+}
+
+
+
+mcu STM32G0B0KE_LQFP32 {
+    name: "STM32G0B0KE"
+    availablePins: [STM32G0_PB9, off, off, off, off, off, STM32G0_PA0, STM32G0_PA1,
+           STM32G0_PA2, STM32G0_PA3, STM32G0_PA4, STM32G0_PA5, STM32G0_PA6, STM32G0_PA7, STM32G0_PB0, STM32G0_PB1,
+           STM32G0_PB2, STM32G0_PA8, STM32G0_PA9, STM32G0_PC6, STM32G0_PA10, STM32G0_PA11, STM32G0_PA12, STM32G0_PA13,
+           STM32G0_PA14, STM32G0_PA15, STM32G0_PB3, STM32G0_PB4, STM32G0_PB5, STM32G0_PB6, STM32G0_PB7, STM32G0_PB8]
+    inherits: STM32G0x0
+    metaSource: STM32G0B0KE_REF_MANUAL
+    meta: "Arm® Cortex®-M0+ 32-bit MCU, 512KB Flash, 144KB RAM, 6x USART, timers, ADC, comm. I/Fs, 2.0-3.6V"
+}
+
+interrupt ST_GO_EXTI0 {
+    name: "EXTI0"
+    offset: 0
+    generic: GENERIC_INTERRUPT
+    sources: [STM32G0_PA0] # FIXME probably wrong
+    meta: ""
+}
+
+nvic ST_G0_NVIC {
+    interrupts: [ST_GO_EXTI0]
+    callbacks:[ "EXTI0_IRQHandler" ]    # offset: 0xE000E000
+    pendingRegister: ST_EXTI_PR
+    risingTriggerRegister: ST_EXTI_RTSR
+    fallingTriggerRegister: ST_EXTI_FTSR
+    preInitializationCode: " 
+    "
+    postInitializationCode: "
+    NVIC_SetPriority(EXTI0_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
+	NVIC_EnableIRQ(EXTI0_IRQn);
+"
+    type: ST_NVIC_TYPE
+    meta: ""
+}
+
+document STM32G0x0_REF_MANUAL {
+    source: "STM32G0x0_REF_MANUAL"
+    url: "http://www.st.com"
+    versionId: "DS13565"
+    revision: "2"
+    date: "February 2021"
+}
+
+mcu STM32G0x0 {
+    name: "STM32G0x0 family"
+    memoryRegisterSize: 32
+    offset: 0x00
+    availableBuses: [
+        ST_G0_AHB1, ST_G0_APB1
+    ]
+    availableClocks: [
+        ST_G0_CLOCK
+    ]
+    availableGPIO: [
+        ST_G0_GPIOA, ST_G0_GPIOB, ST_G0_GPIOC
+    ]
+    nvic: ST_G0_NVIC
+    pinPeripheral: ST_PIN
+    metaSource: STM32G0x0_REF_MANUAL
+}
+ 
+
+bus ST_G0_AHB1 {
+    name: "AHB1"
+    offset: 0x40020000
+    type: AHB
+    peripherals: [ #All possible peripherals on the bus
+        
+    ]
+}
+
+bus ST_G0_APB1 {
+    name: "APB1"
+    offset: 0x40000000
+    type: APB
+    peripherals: [ #All possible peripherals on the bus
+        USART1, USART2
+    ]
+}
+
+clock ST_G0_CLOCK {
+    name: "DUMMY_CLOCK"
+}
+
+gpio ST_G0_GPIOA {
+    name : "GPIOA"
+    offset: 0x50000000
+    type: ST_GPIO_A
+    pins: [
+        STM32G0_PA0, STM32G0_PA1, STM32G0_PA2, STM32G0_PA3,  STM32G0_PA4,  STM32G0_PA5, STM32G0_PA6, STM32G0_PA7,
+        STM32G0_PA8, STM32G0_PA9, STM32G0_PA10, STM32G0_PA11, STM32G0_PA12, STM32G0_PA13, STM32G0_PA14, STM32G0_PA15
+    ]
+#    sourcePages:
+}
+
+gpio ST_G0_GPIOB {
+    name : "GPIOB"
+    offset: 0x50000400
+    type: ST_GPIO_X
+    pins: [
+        STM32G0_PB0, STM32G0_PB1, STM32G0_PB2, STM32G0_PB3,  STM32G0_PB4,  STM32G0_PB5, STM32G0_PB6, STM32G0_PB7,
+        STM32G0_PB8, STM32G0_PB9
+    ]
+}
+
+gpio ST_G0_GPIOC {
+    name : "GPIOC"
+    offset: 0x50000800
+    type: ST_GPIO_X
+    pins: [
+        STM32G0_PC6
+    ]
+}
+
+
+
+
+

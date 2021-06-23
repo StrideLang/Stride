@@ -238,10 +238,10 @@ mcu STM32F4 {
     memoryRegisterSize: 32
     offset: 0x00
     availableBuses: [
-        AHB1, APB1
+        ST_F4_AHB1, ST_F4_APB1, ST_F4_APB2
     ]
     availableClocks: [
-        CLOCK
+        ST_F4_CLOCK
     ]
     availableGPIO: [
         ST_F4_GPIOA, ST_F4_GPIOB, ST_F4_GPIOC, ST_F4_GPIOD, ST_F4_GPIOE
@@ -251,74 +251,73 @@ mcu STM32F4 {
     source: STM32F4_REF_MANUAL
 }
 
-busType AHB {
-}
-
-bus AHB1 {
+# Buses ---------------
+bus ST_F4_AHB1 {
     name: "AHB1"
     offset: 0x0
-    type: AHB
+    type: ST_AHB
     peripherals: [ #All possible peripherals on the bus
         
     ]
 }
 
-busType APB {
-}
-
-bus APB1 {
+bus ST_F4_APB1 {
     name: "APB1"
     offset: 0x0
-    type: APB
+    type: ST_APB
     peripherals: [ #All possible peripherals on the bus
         USART1, USART2
     ]
 }
 
-clock CLOCK {
+bus ST_F4_APB2 {
+    name: "APB2"
+    offset: 0x0
+    type: ST_APB
+    peripherals: [ #All possible peripherals on the bus
+        ST_F4_SYSCFG
+    ]
+}
+
+ # Clocks -----------------
+clock ST_F4_CLOCK {
     name: "DUMMY_CLOCK"
 }
 
 ## NVIC 
 interrupt ST_F4_EXTI0 {
     name: "EXTI0"
-    offset: 0
+    offset: 0x40013C00
     generic: GENERIC_INTERRUPT
+    sources: [STM32F4_PA0]
     meta: ""
+    # requires: ST_SYSCFG_EXTICR1_EXTI0 to route pib
 }
+
 
 nvic ST_F4_NVIC {
     interrupts: [ST_F4_EXTI0]
     callbacks:[ "EXTI0_IRQHandler" ]
+    # offset: 0xE000E000
     type: ST_NVIC_TYPE
+    preInitializationCode: " 
+    "
+    postInitializationCode: "
+    NVIC_SetPriority(EXTI0_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
+	NVIC_EnableIRQ(EXTI0_IRQn);
+"
     meta: ""
 }
 
-## Configured interrupt
-configuredNvic ST_F4_NVIC_CONFIG {
-    # interrupts: [ST_F4_EXTI0]
-    # callbacks:[ "EXTI0_IRQHandler"]
-    interrupts: [ST_F4_EXTI0]
-    nvic: ST_F4_NVIC
+## SYSCFG -----------------
+
+peripheral ST_F4_SYSCFG {
+    name: "SYSCFG"
+    offset: 0x40013800
+    type: ST_SYSCFG_TYPE
+    pinsRequired: []
 }
 
-configuredOption ST_F4_EXTI0_GENERIC_INTERRUPT_MODE {
-    option: GENERIC_INTERRUPT_MODE
-    value: 0
-    # _configuredInterrupt: ST_F4_EXTI0
-}
-
-configuredInterrupt ST_F4_EXTI0 {
-    interrupt: ST_F4_EXTI0
-    priority: 0
-    source: [PIN_A]
-    configuration: [ST_F4_EXTI0_GENERIC_INTERRUPT_MODE]
-    # _configuredNvic: ST_F4_NVIC_CONFIG
-}
-
-configuredNvic ST_F4_NVIC {
-    nvic: ST_F4_NVIC
-}
 ## ------ GPIO
 gpio ST_F4_GPIOA {
     name : "GPIOA"

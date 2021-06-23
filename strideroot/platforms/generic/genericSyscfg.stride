@@ -1,0 +1,12 @@
+# Generic peripherals
+# genericOption GENERIC_EXTICR1 {
+#     name: "Mode"
+#     values: ["Rising Edge", "Falling Edge", "Rising/Falling Edge"]
+#     meta: ""
+# }
+
+genericPeripheral GENERIC_SYSCFG {
+    name: "SYSCFG"
+    parameters: []
+    meta: "System configuration"
+}

@@ -1,0 +1,19 @@
+register ARM_M4_NVIC_ISER {
+    name: "NVIC_ISER"
+    offset: 0x100
+    length: 0x1C
+    resetValue: 0x00000000
+    values: [
+    ]
+    meta: "PRx: Pending bit
+    0: No trigger request occurred
+    1: selected trigger request occurred
+    This bit is set when the selected edge event arrives on the external interrupt line.
+     This bit is cleared by programming it to '1'."
+    sourcePages: []
+}
+
+nvicType ARM_M4_NVIC {
+    # offset: 0xE000E000
+    generic: GENERIC_NVIC
+}
