@@ -31,9 +31,3 @@ genericPeripheral GENERIC_GPIO_PIN {
                  GENERIC_GPIO_PIN_PULL_UP_DOWN]
     meta: "General Purpose I/O Pin"
 }
-
-genericPeripheral GENERIC_GPIO {
-    name: "GPIO Controller"
-    parameters: []
-    meta: "General Purpose I/O Interface"
-}

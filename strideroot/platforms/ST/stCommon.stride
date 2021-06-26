@@ -113,7 +113,6 @@ gpioType ST_GPIO_A {
     ]
     readRegisters: [ ST_GPIO_IDR ]
     writeRegisters: [ ST_GPIO_ODR ]
-    genericPeripheral: GENERIC_GPIO
 }
 
 gpioType ST_GPIO_X {
@@ -123,7 +122,6 @@ gpioType ST_GPIO_X {
     ]
     readRegisters: [ ST_GPIO_IDR ]
     writeRegisters: [ ST_GPIO_ODR ]
-    genericPeripheral: GENERIC_GPIO
 }
 
 # ----- OTYPER

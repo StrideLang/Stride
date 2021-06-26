@@ -1,7 +1,12 @@
 
+genericOption GENERIC_USART_MODE {
+    name: "Mode"
+    values: ["TX only", "RX Only", "TX/RX"]
+    meta: "Transmit/Receive Mode"
+}
 
 genericPeripheral GENERIC_USART {
     name: "USART"
-    parameters: []
+    parameters: [GENERIC_USART_MODE]
     meta: "USART"
 }
