@@ -108,6 +108,7 @@ peripheralPin ST_PIN {
 
 gpioType ST_GPIO_A {
     group: "GPIO"
+    generic: GENERIC_GPIO
     registers: [
         ST_GPIO_MODER_A, ST_GPIO_OTYPER, ST_GPIO_PUPDR, ST_GPIO_ODR, ST_GPIO_IDR
     ]
@@ -117,6 +118,7 @@ gpioType ST_GPIO_A {
 
 gpioType ST_GPIO_X {
     group: "GPIO"
+    generic: GENERIC_GPIO
     registers: [
         ST_GPIO_MODER_X, ST_GPIO_OTYPER, ST_GPIO_PUPDR, ST_GPIO_ODR, ST_GPIO_IDR
     ]
@@ -285,7 +287,7 @@ registerValue ST_GPIO_IDR {
 peripheralType ST_SYSCFG_TYPE {
     group: "SYSCFG"
     registers: [ST_SYSCFG_EXTICR1]
-    genericPeripheral: GENERIC_SYCFG
+    genericPeripheral: GENERIC_SYSCFG
 }
 
 register ST_SYSCFG_EXTICR1 {
@@ -333,7 +335,7 @@ peripheral USART1 {
     name: "USART1"
     offset: 0x40013800
     type: ST_USART
-    pinsRequired: [USART1_TX, USART1_RX, USART1_CTS, USART1_RTS_DE_CK]
+    pinsRequired: [USART1_TX, USART1_RX, USART1_CTS, USART1_RTS]
 }
 
 peripheral USART2 {

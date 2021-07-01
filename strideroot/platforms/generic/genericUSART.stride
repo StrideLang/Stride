@@ -1,12 +1,32 @@
 
+
 genericOption GENERIC_USART_MODE {
     name: "Mode"
+    values: ["Asynchronous", "Synchronous", "Single Wire (Half-duplex)"]
+    meta: "USART Mode"
+}
+
+genericOption GENERIC_USART_HW_FLOW_CONTROL {
+    name: "Hardware flow control (RS232)"
+    values: ["Disable", "CTS Only", "RTS Only", "CTS/RTS"]
+    heuristics: [enableIfEquals GENERIC_USART_MODE_ASYNC { siblingId: GENERIC_USART_MODE optionIndex: 0}]
+    meta: "Hardware flow control (RS232)"
+}
+
+genericOption GENERIC_USART_STOP_BIT {
+    name: "Stop bits"
+    values: ["1 Stop but", "0.5 stop bit", "2 stop bits", "21.5 stop bits"]
+    meta: "These bits are used for programming the stop bits"
+}
+genericOption GENERIC_USART_DATA_DIRECTION {
+    name: "Data direction"
     values: ["TX only", "RX Only", "TX/RX"]
     meta: "Transmit/Receive Mode"
 }
 
 genericPeripheral GENERIC_USART {
     name: "USART"
-    parameters: [GENERIC_USART_MODE]
+    parameters: [GENERIC_USART_MODE, GENERIC_USART_HW_FLOW_CONTROL,
+                GENERIC_USART_STOP_BIT, GENERIC_USART_DATA_DIRECTION]
     meta: "USART"
 }
