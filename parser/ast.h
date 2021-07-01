@@ -118,7 +118,8 @@ public:
   void appendToPropertyValue(std::string propertyName, ASTNode value);
 
   // Code processing
-  static std::string toText(ASTNode node, int indentOffset = 0);
+  static std::string toText(ASTNode node, int indentOffset = 0,
+                            int indentSize = 2);
 
 protected:
   virtual void resolveScope(ASTNode scope);

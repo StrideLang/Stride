@@ -179,8 +179,7 @@ void AST::appendToPropertyValue(string propertyName, ASTNode value) {
   m_CompilerProperties->addChild(newProperty);
 }
 
-string AST::toText(ASTNode node, int indentOffset) {
-  int indentSize = 4;
+string AST::toText(ASTNode node, int indentOffset, int indentSize) {
   std::string outText;
   std::string indentBase = "";
 
@@ -189,7 +188,7 @@ string AST::toText(ASTNode node, int indentOffset) {
   }
   if (node->getNodeType() == AST::Declaration) {
     auto decl = std::static_pointer_cast<DeclarationNode>(node);
-    outText += indentBase + " ";
+    outText += indentBase;
     if (decl->getNamespaceList().size() > 0) {
       // FIXME namespace
     }
