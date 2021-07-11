@@ -1194,6 +1194,10 @@ streamComp:
             COUT << "Word: " << $1 <<  ENDL;
             free($1);
         }
+    |   NONE            {
+            $$ = new ValueNode(currentFile, yyloc.first_line);
+            COUT << "none" <<  ENDL;
+        }
     |   UVAR            {
             string s;
             s.append($1); /* string constructor leaks otherwise! */
@@ -1219,6 +1223,10 @@ streamComp:
     |   portPropertyDef     {
             COUT << "Resolving port property definition ... " << ENDL;
         }
+    |   valueListDef     {
+            $$ = $1;
+            COUT << "List ... " << ENDL;
+    }
     ;
 
 %%
