@@ -5,138 +5,138 @@
 pin STM32G0_PA0 {
     name: "PA0"
  # TODO this is incomplete.
-    functions: [PA0]
+    functions: ["PA0"]
 }
 pin STM32G0_PA1 {
     name: "PA1"
  # TODO this is incomplete.
-    functions: [PA1]
+    functions: ["PA1"]
 }
 pin STM32G0_PA2 {
     name: "PA2"
  # TODO this is incomplete.
-    functions: [PA2]
+    functions: ["PA2"]
 }
 pin STM32G0_PA3 {
     name: "PA3"
  # TODO this is incomplete.
-    functions: [PA3]
+    functions: ["PA3"]
 }
 pin STM32G0_PA4 {
     name: "PA4"
  # TODO this is incomplete.
-    functions: [PA4]
+    functions: ["PA4"]
 }
 pin STM32G0_PA5 {
     name: "PA5"
  # TODO this is incomplete.
-    functions: [PA5]
+    functions: ["PA5"]
 }
 pin STM32G0_PA6 {
     name: "PA6"
  # TODO this is incomplete.
-    functions: [PA6]
+    functions: ["PA6"]
 }
 pin STM32G0_PA7 {
     name: "PA7"
  # TODO this is incomplete.
-    functions: [PA7]
+    functions: ["PA7"]
 }
 pin STM32G0_PA8 {
     name: "PA8"
  # TODO this is incomplete.
-    functions: [PA8]
+    functions: ["PA8"]
 }
 pin STM32G0_PA9 {
     name: "PA9"
  # TODO this is incomplete.
-    functions: [PA9, MCO, USART1_TX, TIM_CH2]
+    functions: ["PA9", "MCO", "USART1_TX", "TIM_CH2"]
 }
 pin STM32G0_PA10 {
     name: "PA10"
  # TODO this is incomplete.
-    functions: [PA10, SPI1_MOSI, USART1_RX]
+    functions: ["PA10", "SPI1_MOSI", "USART1_RX"]
 }
 pin STM32G0_PA11 {
     name: "PA11"
  # TODO this is incomplete.
-    functions: [PA11, SPI1_MISO, USART1_CTS]
+    functions: ["PA11", "SPI1_MISO", "USART1_CTS"]
 }
 pin STM32G0_PA12 {
     name: "PA12"
  # TODO this is incomplete.
-    functions: [PA12, SPI1_MOSI, USART1_RTS_DE_CK]
+    functions: ["PA12", "SPI1_MOSI", "USART1_RTS_DE_CK"]
 }
 pin STM32G0_PA13 {
     name: "PA13"
  # TODO this is incomplete.
-    functions: [PA13]
+    functions: ["PA13"]
 }
 pin STM32G0_PA14 {
     name: "PA14"
  # TODO this is incomplete.
-    functions: [PA14]
+    functions: ["PA14"]
 }
 pin STM32G0_PA15 {
     name: "PA15"
  # TODO this is incomplete.
-    functions: [PA15]
+    functions: ["PA15"]
 }
 
 # ----- PB --------------
 pin STM32G0_PB0 {
     name: "PB0"
  # TODO this is incomplete.
-    functions: [PB0]
+    functions: ["PB0"]
 }
 
 pin STM32G0_PB1 {
     name: "PB1"
  # TODO this is incomplete.
-    functions: [PB1]
+    functions: ["PB1"]
 }
 pin STM32G0_PB2 {
     name: "PB2"
  # TODO this is incomplete.
-    functions: [PB2]
+    functions: ["PB2"]
 }
 
 pin STM32G0_PB3 {
     name: "PB3"
  # TODO this is incomplete.
-    functions: [PB3, SPI1_SCK, TIM1_CH2, off, USART5_TX, USART1_RTS_DE_CK]
+    functions: ["PB3", "SPI1_SCK", "TIM1_CH2", none, "USART5_TX", "USART1_RTS_DE_CK"]
 }
 
 
 pin STM32G0_PB4 {
     name: "PB4"
  # TODO this is incomplete.
-    functions: [PB4, SPI1_MISO, TIM3_CH1, off, USART5_RX, USART1_CTS]
+    functions: ["PB4", "SPI1_MISO", "TIM3_CH1", none, "USART5_RX", "USART1_CTS"]
 }
 pin STM32G0_PB5 {
     name: "PB5"
  # TODO this is incomplete.
-    functions: [PB5]
+    functions: ["PB5"]
 }
 pin STM32G0_PB6 {
     name: "PB6"
  # TODO this is incomplete.
-    functions: [PB6, USART1_TX]
+    functions: ["PB6", "USART1_TX"]
 }
 pin STM32G0_PB7 {
     name: "PB7"
  # TODO this is incomplete.
-    functions: [PB7,USART1_RX]
+    functions: ["PB7","USART1_RX"]
 }
 pin STM32G0_PB8 {
     name: "PB8"
  # TODO this is incomplete.
-    functions: [PB8]
+    functions: ["PB8"]
 }
 pin STM32G0_PB9 {
     name: "PB9"
  # TODO this is incomplete.
-    functions: [PB9, IR_OUT, TIM17_CH1, USART3_RX]
+    functions: ["PB9", "IR_OUT", "TIM17_CH1", "USART3_RX"]
 }
 
 
@@ -144,7 +144,7 @@ pin STM32G0_PB9 {
 pin STM32G0_PC6 {
     name: "PC6"
  # TODO this is incomplete.
-    functions: [PC6]
+    functions: ["PC6"]
 }
 
 
@@ -225,7 +225,7 @@ bus ST_G0_APB1 {
     offset: 0x40000000
     type: APB
     peripherals: [ #All possible peripherals on the bus
-        USART1, USART2
+        USART1 #, USART2
     ]
 }
 
