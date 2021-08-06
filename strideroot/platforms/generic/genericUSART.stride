@@ -18,6 +18,7 @@ genericOption GENERIC_USART_STOP_BIT {
     values: ["1 Stop but", "0.5 stop bit", "2 stop bits", "21.5 stop bits"]
     meta: "These bits are used for programming the stop bits"
 }
+
 genericOption GENERIC_USART_DATA_DIRECTION {
     name: "Data direction"
     values: ["TX only", "RX Only", "TX/RX"]

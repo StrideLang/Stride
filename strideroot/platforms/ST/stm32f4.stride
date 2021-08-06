@@ -595,7 +595,7 @@ bus ST_F4_AHB1 {
     offset: 0x0
     type: ST_AHB
     peripherals: [ #All possible peripherals on the bus
-        
+        ST_F4_DMA
     ]
 }
 

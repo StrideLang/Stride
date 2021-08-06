@@ -65,7 +65,7 @@ pin STM32G0_PA11 {
 pin STM32G0_PA12 {
     name: "PA12"
  # TODO this is incomplete.
-    functions: ["PA12", "SPI1_MOSI", "USART1_RTS_DE_CK"]
+    functions: ["PA12", "SPI1_MOSI", "USART1_RTS"] #, "USART1_RTS_DE_CK"]
 }
 pin STM32G0_PA13 {
     name: "PA13"

@@ -473,3 +473,1234 @@ registerValue USART_BRR_VALUE {
     meta: "USART_BRR value"
 }
 
+
+############################## ------------
+# DMA
+
+# Source RM0090 Rev 19
+peripheralType ST_F4_DMA_TYPE {
+    group: "DMA"
+    registers: [ST_F4_DMA_LISR, ST_F4_DMA_HISR, ST_F4_DMA_LIFCR, ST_F4_DMA_HIFCR, 
+        ST_F4_DMA_S0CR, ST_F4_DMA_S1CR, ST_F4_DMA_S2CR, ST_F4_DMA_S3CR,
+        ST_F4_DMA_S4CR, ST_F4_DMA_S5CR, ST_F4_DMA_S6CR, ST_F4_DMA_S7CR,
+        ST_F4_DMA_S0NDTR, ST_F4_DMA_S1NDTR, ST_F4_DMA_S2NDTR, ST_F4_DMA_S3NDTR,
+        ST_F4_DMA_S4NDTR, ST_F4_DMA_S5NDTR, ST_F4_DMA_S6NDTR, ST_F4_DMA_S7NDTR, 
+        ST_F4_DMA_S0_PAR, ST_F4_DMA_S1_PAR, ST_F4_DMA_S2_PAR, ST_F4_DMA_S3_PAR,
+        ST_F4_DMA_S4_PAR, ST_F4_DMA_S5_PAR, ST_F4_DMA_S6_PAR, ST_F4_DMA_S7_PAR,
+        ST_F4_DMA_S0M0AR, ST_F4_DMA_S1M0AR, ST_F4_DMA_S2M0AR, ST_F4_DMA_S3M0AR, 
+        ST_F4_DMA_S4M0AR, ST_F4_DMA_S5M0AR, ST_F4_DMA_S6M0AR, ST_F4_DMA_S7M0AR,
+        ST_F4_DMA_S0M1AR, ST_F4_DMA_S1M1AR, ST_F4_DMA_S2M1AR, ST_F4_DMA_S3M1AR, 
+        ST_F4_DMA_S4M1AR, ST_F4_DMA_S5M1AR, ST_F4_DMA_S6M1AR, ST_F4_DMA_S7M1AR,
+        ST_F4_DMA_S0FCR, ST_F4_DMA_S1FCR, ST_F4_DMA_S2FCR, ST_F4_DMA_S3FCR,
+        ST_F4_DMA_S4FCR, ST_F4_DMA_S5FCR, ST_F4_DMA_S6FCR, ST_F4_DMA_S7FCR 
+             ]
+    genericPeripheral: GENERIC_DMA
+    #channels: 7
+}
+
+peripheral ST_F4_DMA {
+    name: "DMA"
+    offset: 0x0
+    type: ST_F4_DMA_TYPE
+    pinsRequired: []
+}
+
+register ST_F4_DMA_LISR {
+    name: "LISR"
+    offset: 0x00
+    length: 32
+    resetValue: 0x00000000
+    values: [
+        ST_F4_DMA_LISR_FEIF0_VALUE, ST_F4_DMA_LISR_FEIF1_VALUE, ST_F4_DMA_LISR_FEIF2_VALUE, ST_F4_DMA_LISR_FEIF13_VALUE,
+        ST_F4_DMA_LISR_DMEIF0_VALUE, ST_F4_DMA_LISR_DMEIF1_VALUE, ST_F4_DMA_LISR_DMEIF2_VALUE, ST_F4_DMA_LISR_DMEIF3_VALUE,
+        ST_F4_DMA_LISR_TEIF0_VALUE, ST_F4_DMA_LISR_TEIF1_VALUE, ST_F4_DMA_LISR_TEIF2_VALUE, ST_F4_DMA_LISR_TEIF3_VALUE,
+        ST_F4_DMA_LISR_HTIF0_VALUE, ST_F4_DMA_LISR_HTIF1_VALUE,ST_F4_DMA_LISR_HTIF2_VALUE,ST_F4_DMA_LISR_HTIF3_VALUE,
+        ST_F4_DMA_LISR_TCIF0_VALUE, ST_F4_DMA_LISR_TCIF1_VALUE, ST_F4_DMA_LISR_TCIF2_VALUE, ST_F4_DMA_LISR_TCIF3_VALUE
+    ]
+    meta: "DMA low interrupt status register"
+    sourcePages: [325]
+}
+
+registerValue ST_F4_DMA_LISR_FEIFx_VALUE {
+    name: "FEIFx"
+    offset: 0
+    length: 1
+    mapsTo: none
+    mode: "r"
+    valueNames: ["No FIFO Error event", "A FIFO Error event occurred" ]
+    meta: "Stream x FIFO error interrupt flag (x=3..0)
+This bit is set by hardware. It is cleared by software writing 1 to the corresponding bit in the
+DMA_LIFCR register.
+0: No FIFO Error event on stream x
+1: A FIFO Error event occurred on stream x"
+}
+
+registerValue ST_F4_DMA_LISR_FEIF0_VALUE {
+    name: "FEIF0"
+    offset: 0
+    inherits: ST_F4_DMA_LISR_FEIFx_VALUE
+}
+registerValue ST_F4_DMA_LISR_FEIF1_VALUE {
+    name: "FEIF1"
+    offset: 6
+    inherits: ST_F4_DMA_LISR_FEIFx_VALUE
+}
+
+registerValue ST_F4_DMA_LISR_FEIF2_VALUE {
+    name: "FEIF2"
+    offset: 16
+    inherits: ST_F4_DMA_LISR_FEIFx_VALUE
+}
+registerValue ST_F4_DMA_LISR_FEIF13_VALUE {
+    name: "FEIF3"
+    offset: 22
+    inherits: ST_F4_DMA_LISR_FEIFx_VALUE
+}
+
+registerValue ST_F4_DMA_LISR_DMEIFx_VALUE {
+    name: "DMEIFx"
+    offset: 2
+    length: 1
+    mapsTo: none
+    mode: "r"
+    valueNames: ["No Direct Mode Error", "Direct Mode Error" ]
+    meta: "Stream x direct mode error interrupt flag (x=3..0)
+This bit is set by hardware. It is cleared by software writing 1 to the corresponding bit in the
+DMA_LIFCR register.
+0: No Direct Mode Error on stream x
+1: A Direct Mode Error occurred on stream x"
+}
+
+registerValue ST_F4_DMA_LISR_DMEIF0_VALUE {
+    name: "DMEIF0"
+    offset: 2
+    inherits: ST_F4_DMA_LISR_DMEIFx_VALUE
+}
+
+registerValue ST_F4_DMA_LISR_DMEIF1_VALUE {
+    name: "DMEIF1"
+    offset: 8
+    inherits: ST_F4_DMA_LISR_DMEIFx_VALUE
+}
+
+registerValue ST_F4_DMA_LISR_DMEIF2_VALUE {
+    name: "DMEIF2"
+    offset: 18
+    inherits: ST_F4_DMA_LISR_DMEIFx_VALUE
+}
+
+registerValue ST_F4_DMA_LISR_DMEIF3_VALUE {
+    name: "DMEIF3"
+    offset: 24
+    inherits: ST_F4_DMA_LISR_DMEIFx_VALUE
+}
+
+registerValue ST_F4_DMA_LISR_TEIFx_VALUE {
+    name: "TEIFx"
+    offset: 3
+    length: 1
+    mapsTo: none
+    mode: "r"
+    valueNames: ["No transfer Error", "Transfer Error" ]
+    meta: "Stream x transfer error interrupt flag (x=3..0)
+This bit is set by hardware. It is cleared by software writing 1 to the corresponding bit in the
+DMA_LIFCR register.
+0: No transfer error on stream x
+1: A transfer error occurred on stream x"
+}
+
+registerValue ST_F4_DMA_LISR_TEIF0_VALUE {
+    name: "TEIF0"
+    offset: 3
+    inherits: ST_F4_DMA_LISR_TEIFx_VALUE
+}
+registerValue ST_F4_DMA_LISR_TEIF1_VALUE {
+    name: "TEIF1"
+    offset: 9
+    inherits: ST_F4_DMA_LISR_TEIFx_VALUE
+}
+registerValue ST_F4_DMA_LISR_TEIF2_VALUE {
+    name: "TEIF2"
+    offset: 19
+    inherits: ST_F4_DMA_LISR_TEIFx_VALUE
+}
+registerValue ST_F4_DMA_LISR_TEIF3_VALUE {
+    name: "TEIF3"
+    offset: 25
+    inherits: ST_F4_DMA_LISR_TEIFx_VALUE
+}
+
+registerValue ST_F4_DMA_LISR_HTIFx_VALUE {
+    name: "HTIFx"
+    offset: 34
+    length: 1
+    mapsTo: none
+    mode: "r"
+    valueNames: ["No half transfer event", "Half Transfer Event" ]
+    meta: "Stream x half transfer interrupt flag (x=3..0)
+This bit is set by hardware. It is cleared by software writing 1 to the corresponding bit in the
+DMA_LIFCR register.
+0: No half transfer event on stream x
+1: A half transfer event occurred on stream x"
+}
+
+registerValue ST_F4_DMA_LISR_HTIF0_VALUE {
+    name: "HTIF0"
+    offset: 4
+    inherits: ST_F4_DMA_LISR_HTIFx_VALUE
+}
+
+registerValue ST_F4_DMA_LISR_HTIF1_VALUE {
+    name: "HTIF1"
+    offset: 10
+    inherits: ST_F4_DMA_LISR_HTIFx_VALUE
+}
+
+registerValue ST_F4_DMA_LISR_HTIF2_VALUE {
+    name: "HTIF2"
+    offset: 20
+    inherits: ST_F4_DMA_LISR_HTIFx_VALUE
+}
+
+registerValue ST_F4_DMA_LISR_HTIF3_VALUE {
+    name: "HTIF3"
+    offset: 26
+    inherits: ST_F4_DMA_LISR_HTIFx_VALUE
+}
+
+registerValue ST_F4_DMA_LISR_TCIFx_VALUE {
+    name: "TCIFx"
+    offset: 34
+    length: 1
+    mapsTo: none
+    mode: "r"
+    valueNames: ["No transfer complete event", "Transfer Complete Event" ]
+    meta: "Stream x transfer complete interrupt flag (x = 3..0)
+This bit is set by hardware. It is cleared by software writing 1 to the corresponding bit in the
+DMA_LIFCR register.
+0: No transfer complete event on stream x
+1: A transfer complete event occurred on stream x"
+}
+
+registerValue ST_F4_DMA_LISR_TCIF0_VALUE {
+    name: "TCIF0"
+    offset: 5
+    inherits: ST_F4_DMA_LISR_TCIFx_VALUE
+}
+registerValue ST_F4_DMA_LISR_TCIF1_VALUE {
+    name: "TCIF1"
+    offset: 11
+    inherits: ST_F4_DMA_LISR_TCIFx_VALUE
+}
+registerValue ST_F4_DMA_LISR_TCIF2_VALUE {
+    name: "TCIF2"
+    offset: 21
+    inherits: ST_F4_DMA_LISR_TCIFx_VALUE
+}
+registerValue ST_F4_DMA_LISR_TCIF3_VALUE {
+    name: "TCIF3"
+    offset: 27
+    inherits: ST_F4_DMA_LISR_TCIFx_VALUE
+}
+
+# FIXME complete
+register ST_F4_DMA_HISR {
+    name: "HISR"
+    offset: 0x04
+    length: 32
+    resetValue: 0x00000000
+    values: [
+        # USART_BRR_VALUE
+    ]
+    meta: "DMA high interrupt status register"
+    sourcePages: [326]
+}
+
+# registerValue USART_BRR_VALUE {
+#     name: "BRR"
+#     offset: 0
+#     length: 16
+#     mapsTo: none
+#     #valueNames: ["Output push-pull", "Output Open drain" ]
+#     meta: "USART_BRR value"
+# }
+
+# FIXME complete
+register ST_F4_DMA_LIFCR {
+    name: "LIFCR"
+    offset: 0x08
+    length: 32
+    resetValue: 0x00000000
+    values: [
+        # USART_BRR_VALUE
+    ]
+    meta: "DMA low interrupt flag clear register"
+    sourcePages: [327]
+}
+
+# registerValue USART_BRR_VALUE {
+#     name: "BRR"
+#     offset: 0
+#     length: 16
+#     mapsTo: none
+#     #valueNames: ["Output push-pull", "Output Open drain" ]
+#     meta: "USART_BRR value"
+# }
+
+# FIXME complete
+register ST_F4_DMA_HIFCR {
+    name: "HIFCR"
+    offset: 0x0C
+    length: 32
+    resetValue: 0x00000000
+    values: [
+        # USART_BRR_VALUE
+    ]
+    meta: "DMA high interrupt flag clear register"
+    sourcePages: [327]
+}
+
+# registerValue USART_BRR_VALUE {
+#     name: "BRR"
+#     offset: 0
+#     length: 16
+#     mapsTo: none
+#     #valueNames: ["Output push-pull", "Output Open drain" ]
+#     meta: "USART_BRR value"
+# }
+
+register ST_F4_DMA_SxCR {
+    name: "SxCR"
+    offset: 0x10 # + 0x18 * stream number
+    length: 32
+    resetValue: 0x00000000
+    values: [
+        ST_F4_DMA_SxCR_EN_VALUE, ST_F4_DMA_SxCR_DMEIE_VALUE,ST_F4_DMA_SxCR_TEIE_VALUE,
+        ST_F4_DMA_SxCR_HTIE_VALUE, ST_F4_DMA_SxCR_TCIE_VALUE, ST_F4_DMA_SxCR_PFCTRL_VALUE,
+        ST_F4_DMA_SxCR_DIR_VALUE, ST_F4_DMA_SxCR_CIRC_VALUE, ST_F4_DMA_SxCR_PINC_VALUE,
+        ST_F4_DMA_SxCR_MINC_VALUE, ST_F4_DMA_SxCR_MSIZE_VALUE, ST_F4_DMA_SxCR_PSIZE_VALUE, ST_F4_DMA_SxCR_MSIZE_VALUE,
+        ST_F4_DMA_SxCR_PINCOS_VALUE, ST_F4_DMA_SxCR_PL_VALUE, ST_F4_DMA_SxCR_DBM_VALUE,
+        ST_F4_DMA_SxCR_CT_VALUE, ST_F4_DMA_SxCR_PBURST_VALUE, ST_F4_DMA_SxCR_MBURST_VALUE,
+        ST_F4_DMA_SxCR_CHSEL_VALUE
+    ]
+    meta: "DMA stream x configuration register (DMA_SxCR) (x = 0..7)"
+    sourcePages: [328]
+}
+
+register ST_F4_DMA_S0CR {
+    name: "S0CR"
+    offset: 0x10  #0x10  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxCR
+}
+
+register ST_F4_DMA_S1CR {
+    name: "S1CR"
+    offset: 0x28 #0x10  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxCR
+}
+
+register ST_F4_DMA_S2CR {
+    name: "S2CR"
+    offset: 0x40 #0x10  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxCR
+}
+
+register ST_F4_DMA_S3CR {
+    name: "S3CR"
+    offset: 0x58 #0x10  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxCR
+}
+
+register ST_F4_DMA_S4CR {
+    name: "S4CR"
+    offset: 0x70 #0x10  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxCR
+}
+
+register ST_F4_DMA_S5CR {
+    name: "S5CR"
+    offset: 0x88 #0x10  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxCR
+}
+
+register ST_F4_DMA_S6CR {
+    name: "S6CR"
+    offset: 0xA0 #0x10  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxCR
+}
+
+register ST_F4_DMA_S7CR {
+    name: "S7CR"
+    offset: 0xB8 #0x10  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxCR
+}
+
+registerValue ST_F4_DMA_SxCR_CHSEL_VALUE {
+    name: "CHSEL"
+    offset: 25
+    length: 3
+    mapsTo: none
+    valueNames: ["channel 0", "channel 1","channel 2", "channel 3",
+            "channel 4", "channel 5", "channel 6", "channel 7"]
+    meta: "Channel selection
+These bits are set and cleared by software.
+000: channel 0 selected
+001: channel 1 selected
+010: channel 2 selected
+011: channel 3 selected
+100: channel 4 selected
+101: channel 5 selected
+110: channel 6 selected
+111: channel 7 selected
+These bits are protected and can be written only if EN is ‘0’"
+}
+
+registerValue ST_F4_DMA_SxCR_MBURST_VALUE {
+    name: "MBURST"
+    offset: 23
+    length: 2
+    mapsTo: none
+    valueNames: ["single transfer", "INCR4", "INCR8", "INCR16"]
+    meta: "Memory burst transfer configuration
+These bits are set and cleared by software.
+00: single transfer
+01: INCR4 (incremental burst of 4 beats)
+10: INCR8 (incremental burst of 8 beats)
+11: INCR16 (incremental burst of 16 beats)
+These bits are protected and can be written only if EN is ‘0’
+In direct mode, these bits are forced to 0x0 by hardware as soon as bit EN= '1'."
+}
+
+registerValue ST_F4_DMA_SxCR_PBURST_VALUE {
+    name: "PBURST"
+    offset: 21
+    length: 2
+    mapsTo: none
+    valueNames: ["single transfer", "INCR4", "INCR8", "INCR16"]
+    meta: "Peripheral burst transfer configuration
+These bits are set and cleared by software.
+00: single transfer
+01: INCR4 (incremental burst of 4 beats)
+10: INCR8 (incremental burst of 8 beats)
+11: INCR16 (incremental burst of 16 beats)
+These bits are protected and can be written only if EN is ‘0’
+In direct mode, these bits are forced to 0x0 by hardware."
+}
+
+registerValue ST_F4_DMA_SxCR_CT_VALUE {
+    name: "CT"
+    offset: 19
+    length: 1
+    mapsTo: none
+    valueNames: ["Memory 0", "Memory1"]
+    meta: "Current target (only in double buffer mode)
+This bits is set and cleared by hardware. It can also be written by software.
+0: The current target memory is Memory 0 (addressed by the DMA_SxM0AR pointer)
+1: The current target memory is Memory 1 (addressed by the DMA_SxM1AR pointer)
+This bit can be written only if EN is ‘0’ to indicate the target memory area of the first transfer.
+Once the stream is enabled, this bit operates as a status flag indicating which memory area
+is the current target."
+}
+
+registerValue ST_F4_DMA_SxCR_DBM_VALUE {
+    name: "DBM"
+    offset: 18
+    length: 1
+    mapsTo: none
+    valueNames: ["No buffer switching", "Memory target switched"]
+    meta: "Double buffer mode
+This bits is set and cleared by software.
+0: No buffer switching at the end of transfer
+1: Memory target switched at the end of the DMA transfer
+This bit is protected and can be written only if EN is ‘0’."
+}
+
+registerValue ST_F4_DMA_SxCR_PL_VALUE {
+    name: "PL"
+    offset: 16
+    length: 2
+    mapsTo: none
+    valueNames: ["Low", "Medium", "High", "Very high" ]
+    meta: "Priority level
+These bits are set and cleared by software.
+00: Low
+01: Medium
+10: High
+11: Very high
+These bits are protected and can be written only if EN is ‘0’."
+}
+
+registerValue ST_F4_DMA_SxCR_PINCOS_VALUE {
+    name: "PINCOS"
+    offset: 15
+    length: 1
+    mapsTo: none
+    valueNames: ["linked to the PSIZE", "fixed to 4 (32-bit alignment)" ]
+    meta: "Peripheral increment offset size
+This bit is set and cleared by software
+0: The offset size for the peripheral address calculation is linked to the PSIZE
+1: The offset size for the peripheral address calculation is fixed to 4 (32-bit alignment).
+This bit has no meaning if bit PINC = '0'.
+This bit is protected and can be written only if EN = '0'.
+This bit is forced low by hardware when the stream is enabled (bit EN = '1') if the direct
+mode is selected or if PBURST are different from “00”."
+}
+
+registerValue ST_F4_DMA_SxCR_MSIZE_VALUE {
+    name: "MSIZE"
+    offset: 13
+    length: 2
+    mapsTo: none
+    valueNames: ["Byte (8-bit)", "Half-word (16-bit)", "Word (32-bit)", "Reserved" ]
+    meta: "Memory data size
+These bits are set and cleared by software.
+00: byte (8-bit)
+01: half-word (16-bit)
+10: word (32-bit)
+11: reserved
+These bits are protected and can be written only if EN is ‘0’.
+In direct mode, MSIZE is forced by hardware to the same value as PSIZE as soon as bit EN
+= '1'."
+}
+
+registerValue ST_F4_DMA_SxCR_PSIZE_VALUE {
+    name: "PSIZE"
+    offset: 11
+    length: 2
+    mapsTo: none
+    valueNames: ["Byte (8-bit)", "Half-word (16-bit)", "Word (32-bit)", "Reserved" ]
+    meta: "Peripheral data size
+These bits are set and cleared by software.
+00: Byte (8-bit)
+01: Half-word (16-bit)
+10: Word (32-bit)
+11: reserved
+These bits are protected and can be written only if EN is ‘0’"
+}
+
+registerValue ST_F4_DMA_SxCR_MINC_VALUE {
+    name: "MINC"
+    offset: 10
+    length: 1
+    mapsTo: none
+    valueNames: ["Fixed", "Incremented after data transfer" ]
+    meta: "Memory increment mode
+This bit is set and cleared by software.
+0: Memory address pointer is fixed
+1: Memory address pointer is incremented after each data transfer (increment is done
+according to MSIZE)
+This bit is protected and can be written only if EN is ‘0’."
+}
+
+registerValue ST_F4_DMA_SxCR_PINC_VALUE {
+    name: "PINC"
+    offset: 9
+    length: 1
+    mapsTo: none
+    valueNames: ["Fixed", "Incremented after data transfer" ]
+    meta: "Peripheral increment mode
+This bit is set and cleared by software.
+0: Peripheral address pointer is fixed
+1: Peripheral address pointer is incremented after each data transfer (increment is done
+according to PSIZE)
+This bit is protected and can be written only if EN is ‘0’."
+}
+
+registerValue ST_F4_DMA_SxCR_CIRC_VALUE {
+    name: "CIRC"
+    offset: 8
+    length: 1
+    mapsTo: none
+    valueNames: ["disabled", "enabled" ]
+    meta: "Circular mode
+This bit is set and cleared by software and can be cleared by hardware.
+0: Circular mode disabled
+1: Circular mode enabled
+When the peripheral is the flow controller (bit PFCTRL=1) and the stream is enabled (bit
+EN=1), then this bit is automatically forced by hardware to 0.
+It is automatically forced by hardware to 1 if the DBM bit is set, as soon as the stream is
+enabled (bit EN ='1')."
+}
+
+registerValue ST_F4_DMA_SxCR_DIR_VALUE {
+    name: "DIR"
+    offset: 6
+    length: 2
+    mapsTo: none
+    valueNames: ["Peripheral-to-memory", "Memory-to-peripheral", "Memory-to-memory", "Reserved" ]
+    meta: "Data transfer direction
+These bits are set and cleared by software.
+00: Peripheral-to-memory
+01: Memory-to-peripheral
+10: Memory-to-memory
+11: reserved
+These bits are protected and can be written only if EN is ‘0’."
+}
+
+registerValue ST_F4_DMA_SxCR_PFCTRL_VALUE {
+    name: "PFCTRL"
+    offset: 5
+    length: 1
+    mapsTo: none
+    valueNames: ["The DMA is the flow controller", "The peripheral is the flow controller" ]
+    meta: "Peripheral flow controller
+This bit is set and cleared by software.
+0: The DMA is the flow controller
+1: The peripheral is the flow controller
+This bit is protected and can be written only if EN is ‘0’.
+When the memory-to-memory mode is selected (bits DIR[1:0]=10), then this bit is
+automatically forced to 0 by hardware."
+}
+
+registerValue ST_F4_DMA_SxCR_TCIE_VALUE {
+    name: "TCIE"
+    offset: 4
+    length: 1
+    mapsTo: none
+    valueNames: ["disabled", "enabled" ]
+    meta: "Transfer complete interrupt enable
+This bit is set and cleared by software.
+0: TC interrupt disabled
+1: TC interrupt enabled"
+}
+
+registerValue ST_F4_DMA_SxCR_HTIE_VALUE {
+    name: "HTIE"
+    offset: 3
+    length: 1
+    mapsTo: none
+    valueNames: ["disabled", "enabled" ]
+    meta: "Half transfer interrupt enable
+This bit is set and cleared by software.
+0: HT interrupt disabled
+1: HT interrupt enabled"
+}
+
+registerValue ST_F4_DMA_SxCR_TEIE_VALUE {
+    name: "TEIE"
+    offset: 2
+    length: 1
+    mapsTo: none
+    valueNames: ["disabled", "enabled" ]
+    meta: "Transfer error interrupt enable
+This bit is set and cleared by software.
+0: TE interrupt disabled
+1: TE interrupt enabled"
+}
+
+registerValue ST_F4_DMA_SxCR_DMEIE_VALUE {
+    name: "DMEIE"
+    offset: 1
+    length: 1
+    mapsTo: none
+    valueNames: ["disabled", "enabled" ]
+    meta: "Direct mode error interrupt enable
+This bit is set and cleared by software.
+0: DME interrupt disabled
+1: DME interrupt enabled"
+}
+
+registerValue ST_F4_DMA_SxCR_EN_VALUE {
+    name: "EN"
+    offset: 0
+    length: 1
+    mapsTo: none
+    valueNames: ["disabled", "enabled" ]
+    meta: "Stream enable / flag stream ready when read low
+This bit is set and cleared by software.
+0: Stream disabled
+1: Stream enabled
+This bit may be cleared by hardware:
+– on a DMA end of transfer (stream ready to be configured)
+– if a transfer error occurs on the AHB master buses
+– when the FIFO threshold on memory AHB port is not compatible with the size of the
+burst
+When this bit is read as 0, the software is allowed to program the Configuration and FIFO
+bits registers. It is forbidden to write these registers when the EN bit is read as 1.
+Note: Before setting EN bit to '1' to start a new transfer, the event flags corresponding to the
+stream in DMA_LISR or DMA_HISR register must be cleared."
+}
+
+register ST_F4_DMA_SxNDTR {
+    name: "SxNDTR"
+    offset: 0x14 # + 0x18 * stream number
+    length: 32
+    resetValue: 0x00000000
+    values: [
+        ST_F4_DMA_SxNDTR_NDT_VALUE
+    ]
+    meta: "DMA stream x number of data register (DMA_SxNDTR) (x = 0..7)"
+    sourcePages: [331]
+}
+
+register ST_F4_DMA_S0NDTR {
+    name: "S0NDTR"
+    offset: 0x14  #0x14  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxNDTR
+}
+register ST_F4_DMA_S1NDTR {
+    name: "S1NDTR"
+    offset: 0x2C  #0x14  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxNDTR
+}
+register ST_F4_DMA_S2NDTR {
+    name: "S2NDTR"
+    offset: 0x44  #0x14  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxNDTR
+}
+register ST_F4_DMA_S3NDTR {
+    name: "S3NDTR"
+    offset: 0x5C  #0x14  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxNDTR
+}
+register ST_F4_DMA_S4NDTR {
+    name: "S4NDTR"
+    offset: 0x74  #0x14  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxNDTR
+}
+register ST_F4_DMA_S5NDTR {
+    name: "S5NDTR"
+    offset: 0x8C  #0x14  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxNDTR
+}
+register ST_F4_DMA_S6NDTR {
+    name: "S6NDTR"
+    offset: 0xA4  #0x14  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxNDTR
+}
+register ST_F4_DMA_S7NDTR {
+    name: "S7NDTR"
+    offset: 0xBC  #0x14  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxNDTR
+}
+
+registerValue ST_F4_DMA_SxNDTR_NDT_VALUE {
+    name: "NDT"
+    offset: 0
+    length: 16
+    mapsTo: none
+    #valueNames: ["Output push-pull", "Output Open drain" ]
+    meta: "Number of data items to transfer
+Number of data items to be transferred (0 up to 65535). This register can be written only
+when the stream is disabled. When the stream is enabled, this register is read-only,
+indicating the remaining data items to be transmitted. This register decrements after each
+DMA transfer.
+Once the transfer has completed, this register can either stay at zero (when the stream is in
+normal mode) or be reloaded automatically with the previously programmed value in the
+following cases:
+–
+when the stream is configured in Circular mode.
+–
+when the stream is enabled again by setting EN bit to '1'
+If the value of this register is zero, no transaction can be served even if the stream is
+enabled."
+}
+
+
+register ST_F4_DMA_SxPAR {
+    name: "SxPAR"
+    offset: 0x18 # + 0x18 * stream number
+    length: 32
+    resetValue: 0x00000000
+    values: [
+        ST_F4_DMA_SxPAR_VALUE
+    ]
+    meta: "DMA stream x peripheral address register (DMA_SxPAR) (x = 0..7)
+    Bits 31:0 PAR[31:0]: Peripheral address
+Base address of the peripheral data register from/to which the data will be read/written.
+These bits are write-protected and can be written only when bit EN = '0' in the DMA_SxCR register."
+    sourcePages: [332]
+}
+
+register ST_F4_DMA_S0PAR {
+    name: "S0PAR"
+    offset: 0x18  #0x18  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxPAR
+}
+register ST_F4_DMA_S1PAR {
+    name: "S1PAR"
+    offset: 0x30  #0x18  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxPAR
+}
+register ST_F4_DMA_S2PAR {
+    name: "S2PAR"
+    offset: 0x48  #0x18  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxPAR
+}
+register ST_F4_DMA_S3PAR {
+    name: "S3PAR"
+    offset: 0x60  #0x18  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxPAR
+}
+register ST_F4_DMA_S4PAR {
+    name: "S4PAR"
+    offset: 0x78  #0x18  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxPAR
+}
+register ST_F4_DMA_S5PAR {
+    name: "S5PAR"
+    offset: 0x90  #0x18  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxPAR
+}
+register ST_F4_DMA_S6PAR {
+    name: "S6PAR"
+    offset: 0xA8  #0x18  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxPAR
+}
+register ST_F4_DMA_S7PAR {
+    name: "S7PAR"
+    offset: 0xC0  #0x18  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxPAR
+}
+
+registerValue ST_F4_DMA_SxPAR_VALUE {
+    name: "SxPAR"
+    offset: 0
+    length: 32
+    mapsTo: none
+    #valueNames: ["Output push-pull", "Output Open drain" ]
+    meta: "Base address of the peripheral data register from/to which the data will be read/written.
+These bits are write-protected and can be written only when bit EN = '0' in the DMA_SxCR register."
+}
+
+register ST_F4_DMA_SxM0AR {
+    name: "SxM0AR"
+    offset: 0x1C # + 0x18 * stream number
+    length: 32
+    resetValue: 0x00000000
+    values: [
+        ST_F4_DMA_SxM0AR_VALUE
+    ]
+    meta: "Bits 31:0 M0A[31:0]: Memory 0 address
+    Base address of Memory area 0 from/to which the data will be read/written.
+These bits are write-protected. They can be written only if:
+– the stream is disabled (bit EN= '0' in the DMA_SxCR register) or
+– the stream is enabled (EN=’1’ in DMA_SxCR register) and bit CT = '1' in the
+DMA_SxCR register (in Double buffer mode)."
+    sourcePages: [332]
+}
+register ST_F4_DMA_S0M0AR {
+    name: "S0M0AR"
+    offset: 0x1C  #0x1C  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxM0AR
+}
+register ST_F4_DMA_S1M0AR {
+    name: "S1M0AR"
+    offset: 0x34  #0x1C  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxM0AR
+}
+register ST_F4_DMA_S2M0AR {
+    name: "S2M0AR"
+    offset: 0x4C  #0x1C  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxM0AR
+}
+register ST_F4_DMA_S3M0AR {
+    name: "S3M0AR"
+    offset: 0x64  #0x1C  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxM0AR
+}
+register ST_F4_DMA_S4M0AR {
+    name: "S4M0AR"
+    offset: 0x7C  #0x1C  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxM0AR
+}
+register ST_F4_DMA_S5M0AR {
+    name: "S5M0AR"
+    offset: 0x94  #0x1C  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxM0AR
+}
+register ST_F4_DMA_S6M0AR {
+    name: "S6M0AR"
+    offset: 0xAC  #0x1C  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxM0AR
+}
+register ST_F4_DMA_S7M0AR {
+    name: "S7M0AR"
+    offset: 0xC4  #0x1C  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxM0AR
+}
+
+registerValue ST_F4_DMA_SxM0AR_VALUE {
+    name: "SxM0AR"
+    offset: 0
+    length: 32
+    mapsTo: none
+    #valueNames: ["Output push-pull", "Output Open drain" ]
+    meta: "Memory 0 address
+    Base address of Memory area 0 from/to which the data will be read/written.
+These bits are write-protected. They can be written only if:
+– the stream is disabled (bit EN= '0' in the DMA_SxCR register) or
+– the stream is enabled (EN=’1’ in DMA_SxCR register) and bit CT = '1' in the
+DMA_SxCR register (in Double buffer mode)."
+}
+
+register ST_F4_DMA_SxM1AR {
+    name: "SxM1AR"
+    offset: 0x1C # + 0x1C * stream number
+    length: 32
+    resetValue: 0x00000000
+    values: [
+        ST_F4_DMA_SxM1AR_VALUE
+    ]
+    meta: "Bits 31:0 M0A[31:0]: Memory 1 address
+    Base address of Memory area 0 from/to which the data will be read/written.
+These bits are write-protected. They can be written only if:
+– the stream is disabled (bit EN= '0' in the DMA_SxCR register) or
+– the stream is enabled (EN=’1’ in DMA_SxCR register) and bit CT = '1' in the
+DMA_SxCR register (in Double buffer mode)."
+    sourcePages: [333]
+}
+register ST_F4_DMA_S0M1AR {
+    name: "S0M1AR"
+    offset: 0x20  #0x20  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxM1AR
+}
+register ST_F4_DMA_S1M1AR {
+    name: "S1M1AR"
+    offset: 0x38  #0x20  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxM1AR
+}
+register ST_F4_DMA_S2M1AR {
+    name: "S2M1AR"
+    offset: 0x50  #0x20  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxM1AR
+}
+register ST_F4_DMA_S3M1AR {
+    name: "S3M1AR"
+    offset: 0x68  #0x20  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxM1AR
+}
+register ST_F4_DMA_S4M1AR {
+    name: "S4M1AR"
+    offset: 0x80  #0x20  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxM1AR
+}
+register ST_F4_DMA_S5M1AR {
+    name: "S5M1AR"
+    offset: 0x98  #0x20  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxM1AR
+}
+register ST_F4_DMA_S6M1AR {
+    name: "S6M1AR"
+    offset: 0xB0  #0x20  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxM1AR
+}
+register ST_F4_DMA_S7M1AR {
+    name: "S7M1AR"
+    offset: 0xC8  #0x20  + 0x18 * stream number
+    inherits: ST_F4_DMA_SxM1AR
+}
+
+registerValue ST_F4_DMA_SxM1AR_VALUE {
+    name: "SxM1AR"
+    offset: 0
+    length: 32
+    mapsTo: none
+    #valueNames: ["Output push-pull", "Output Open drain" ]
+    meta: "Memory 1 address
+    Base address of Memory area 0 from/to which the data will be read/written.
+These bits are write-protected. They can be written only if:
+– the stream is disabled (bit EN= '0' in the DMA_SxCR register) or
+– the stream is enabled (EN=’1’ in DMA_SxCR register) and bit CT = '1' in the
+DMA_SxCR register (in Double buffer mode)."
+}
+
+register ST_F4_DMA_SxFCR {
+    name: "SxFCR"
+    offset: 0x24 # + 0x24 * stream number
+    length: 32
+    resetValue: 0x00000021
+    values: [
+       ST_F4_DMA_SxFCR_FTH_VALUE, ST_F4_DMA_SxFCR_DMDIS_VALUE, ST_F4_DMA_SxFCR_FS_VALUE
+    ]
+    meta: "Bits 31:0 M0A[31:0]: Memory 1 address
+    Base address of Memory area 0 from/to which the data will be read/written.
+These bits are write-protected. They can be written only if:
+– the stream is disabled (bit EN= '0' in the DMA_SxCR register) or
+– the stream is enabled (EN=’1’ in DMA_SxCR register) and bit CT = '1' in the
+DMA_SxCR register (in Double buffer mode)."
+    sourcePages: [333]
+}
+register ST_F4_DMA_S0FCR {
+    name: "S0FCR"
+    offset: 0x24  #0x24  + 0x24 * stream number
+    inherits: ST_F4_DMA_SxFCR
+}
+register ST_F4_DMA_S1FCR {
+    name: "S1FCR"
+    offset: 0x3C  #0x24  + 0x24 * stream number
+    inherits: ST_F4_DMA_SxFCR
+}
+register ST_F4_DMA_S2FCR {
+    name: "S2FCR"
+    offset: 0x54  #0x24  + 0x24 * stream number
+    inherits: ST_F4_DMA_SxFCR
+}
+register ST_F4_DMA_S3FCR {
+    name: "S3FCR"
+    offset: 0x6C  #0x24  + 0x24 * stream number
+    inherits: ST_F4_DMA_SxFCR
+}
+register ST_F4_DMA_S4FCR {
+    name: "S4FCR"
+    offset: 0x84  #0x24  + 0x24 * stream number
+    inherits: ST_F4_DMA_SxFCR
+}
+register ST_F4_DMA_S5FCR {
+    name: "S5FCR"
+    offset: 0x9C  #0x24  + 0x24 * stream number
+    inherits: ST_F4_DMA_SxFCR
+}
+register ST_F4_DMA_S6FCR {
+    name: "S6FCR"
+    offset: 0xB4  #0x24  + 0x24 * stream number
+    inherits: ST_F4_DMA_SxFCR
+}
+register ST_F4_DMA_S7FCR {
+    name: "S7FCR"
+    offset: 0xCC  #0x24  + 0x24 * stream number
+    inherits: ST_F4_DMA_SxFCR
+}
+
+
+registerValue ST_F4_DMA_SxFCR_FTH_VALUE {
+    name: "FTH"
+    offset: 0
+    length: 2
+    mapsTo: none
+    #valueNames: ["Output push-pull", "Output Open drain" ]
+    meta: "FIFO threshold selection
+These bits are set and cleared by software.
+00: 1/4 full FIFO
+01: 1/2 full FIFO
+10: 3/4 full FIFO
+11: full FIFO
+These bits are not used in the direct mode when the DMIS value is zero.
+These bits are protected and can be written only if EN is ‘0’."
+}
+
+registerValue ST_F4_DMA_SxFCR_DMDIS_VALUE {
+    name: "DMDIS"
+    offset: 2
+    length: 1
+    mapsTo: none
+    #valueNames: ["Output push-pull", "Output Open drain" ]
+    meta: "Direct mode disable
+This bit is set and cleared by software. It can be set by hardware.
+0: Direct mode enabled
+1: Direct mode disabled
+This bit is protected and can be written only if EN is ‘0’.
+This bit is set by hardware if the memory-to-memory mode is selected (DIR bit in
+DMA_SxCR are “10”) and the EN bit in the DMA_SxCR register is ‘1’ because the direct
+mode is not allowed in the memory-to-memory configuration."
+}
+
+registerValue ST_F4_DMA_SxFCR_FS_VALUE {
+    name: "FS"
+    offset: 3
+    length: 3
+    mapsTo: none
+    mode: 'r'
+    #valueNames: ["Output push-pull", "Output Open drain" ]
+    meta: "FIFO status
+These bits are read-only.
+000: 0 < fifo_level < 1/4
+001: 1/4 ≤ fifo_level < 1/2
+010: 1/2 ≤ fifo_level < 3/4
+011: 3/4 ≤ fifo_level < full
+100: FIFO is empty
+101: FIFO is full
+others: no meaning
+These bits are not relevant in the direct mode (DMDIS bit is zero)."
+}
+
+registerValue ST_F4_DMA_SxFCR_FEIE_VALUE {
+    name: "FEIE"
+    offset: 7
+    length: 1
+    mapsTo: none
+    #valueNames: ["Output push-pull", "Output Open drain" ]
+    meta: "FIFO error interrupt enable
+This bit is set and cleared by software.
+0: FE interrupt disabled
+1: FE interrupt enabled"
+}
+
+# From RM0090 Rev. 19
+
+#The following sequence should be followed to configure a DMA stream x (where x is the
+# stream number):
+# 322/1751
+# 1. If the stream is enabled, disable it by resetting the EN bit in the DMA_SxCR register,
+# then read this bit in order to confirm that there is no ongoing stream operation. Writing
+# this bit to 0 is not immediately effective since it is actually written to 0 once all the
+# current transfers have finished. When the EN bit is read as 0, this means that the
+# stream is ready to be configured. It is therefore necessary to wait for the EN bit to be
+# cleared before starting any stream configuration. All the stream dedicated bits set in the
+# status register (DMA_LISR and DMA_HISR) from the previous data block DMA
+# transfer should be cleared before the stream can be re-enabled.
+# 2. Set the peripheral port register address in the DMA_SxPAR register. The data will be
+# moved from/ to this address to/ from the peripheral port after the peripheral event.
+# 3. Set the memory address in the DMA_SxMA0R register (and in the DMA_SxMA1R
+# register in the case of a double buffer mode). The data will be written to or read from
+# this memory after the peripheral event.
+# 4. Configure the total number of data items to be transferred in the DMA_SxNDTR
+# register. After each peripheral event or each beat of the burst, this value is
+# decremented.
+# 5. Select the DMA channel (request) using CHSEL[2:0] in the DMA_SxCR register.
+# 6. If the peripheral is intended to be the flow controller and if it supports this feature, set
+# the PFCTRL bit in the DMA_SxCR register.
+# 7. Configure the stream priority using the PL[1:0] bits in the DMA_SxCR register.
+# 8. Configure the FIFO usage (enable or disable, threshold in transmission and reception)
+# 9. Configure the data transfer direction, peripheral and memory incremented/fixed mode,
+# single or burst transactions, peripheral and memory data widths, Circular mode,
+# RM0090 Rev 19RM0090
+# DMA controller (DMA)
+# Double buffer mode and interrupts after half and/or full transfer, and/or errors in the
+# DMA_SxCR register.
+# 10. Activate the stream by setting the EN bit in the DMA_SxCR register.
+
+procedure ST_F4_InitDMAChannel {
+    peripheralType: ST_F4_DMA_TYPE
+    actions: [ 
+        action DisableStream {
+            sequence: [
+                resetRegisterValue RESET_EN_BIT {
+                    registerValue: [ST_F4_DMA_SxCR_EN_VALUE] 
+                    optional: off
+                    requires: none
+                }
+                ensureRegisterValue ENSURE_EN_BIT_0 {
+                    registerValue: [ST_F4_DMA_SxCR_EN_VALUE] 
+                    value: 0
+                    optional: off
+                    timeout: none
+                    waitMethod: none
+                    requires: RESET_EN_BIT
+                }
+                resetRegisterValue RESET_LISR_BITS {
+                    registerValue: [ST_F4_DMA_LISR_FEIFx_VALUE, ST_F4_DMA_HISR_FEIFx_VALUE,
+                                ST_F4_DMA_LISR_DMEIFx_VALUE, ST_F4_DMA_HISR_DMEIFx_VALUE,
+                                ST_F4_DMA_LISR_TEIFx_VALUE, ST_F4_DMA_HISR_TEIFx_VALUE,
+                                ST_F4_DMA_LISR_HTIFx_VALUE, ST_F4_DMA_HISR_HTIFx_VALUE,
+                                ST_F4_DMA_LISR_TCIFx_VALUE, ST_F4_DMA_HISR_TCIFx_VALUE
+                    ] 
+                    value: 0
+                    optional: off
+                    timeout: none
+                    waitMethod: none
+                    requires: ENSURE_EN_BIT_0
+                }
+                ]
+            meta: "If the stream is enabled, disable it by resetting the EN bit in the DMA_SxCR register,
+then read this bit in order to confirm that there is no ongoing stream operation. Writing
+this bit to 0 is not immediately effective since it is actually written to 0 once all the
+current transfers have finished. When the EN bit is read as 0, this means that the
+stream is ready to be configured. It is therefore necessary to wait for the EN bit to be
+cleared before starting any stream configuration. All the stream dedicated bits set in the
+status register (DMA_LISR and DMA_HISR) from the previous data block DMA
+transfer should be cleared before the stream can be re-enabled."
+        }, 
+        action SetPeripheralPortRegisterAddress {
+            sequence: [
+                setRegisterValue SET_SxPAR {
+                    registerValue: [ST_F4_DMA_SxPAR_VALUE] 
+                    optional: off
+                    requires: none
+                }
+                ]
+            meta: "Set the peripheral port register address in the DMA_SxPAR register. The data will be
+# moved from/ to this address to/ from the peripheral port after the peripheral event."
+        }, 
+        action SetMemoryAddress0 {
+            # DMA_CMARx register
+            sequence: [
+                setRegisterValue SET_SxMA0R {
+                    registerValue: [ST_F4_DMA_SxM0AR_VALUE] 
+                    optional: off
+                    requires: none
+                }
+            ]
+            meta: "Set the memory address in the DMA_SxMA0R register (and in the DMA_SxMA1R
+# register in the case of a double buffer mode). The data will be written to or read from
+# this memory after the peripheral event."
+        }, 
+        action SetTransferSize {
+            sequence: [
+                setRegisterValue SET_SxNDTR {
+                    registerValue: [ST_F4_DMA_SxNDTR_NDT_VALUE] 
+                    optional: off
+                    requires: none
+                }
+            ]
+            meta: "Configure the total number of data items to be transferred in the DMA_SxNDTR
+# register. After each peripheral event or each beat of the burst, this value is
+# decremented"
+        }, 
+        action SelectDMAChannel {
+            sequence: [
+                setRegisterValue SET_CHSEL {
+                    registerValue: [ST_F4_DMA_SxCR_CHSEL_VALUE] 
+                    optional: off
+                    requires: none
+                }
+            ]
+            meta: "Select the DMA channel (request) using CHSEL[2:0] in the DMA_SxCR register."
+        }, 
+        action SetPeripheralFlowControl {
+            sequence: [
+                setRegisterValue SET_PFCTRL {
+                    registerValue: [ST_F4_DMA_SxCR_PFCTRL_VALUE] 
+                    optional: off
+                    requires: none
+                }
+            ]
+            meta: "If the peripheral is intended to be the flow controller and if it supports this feature, set
+# the PFCTRL bit in the DMA_SxCR register."
+        }, 
+        action SetPriority {
+            sequence: [
+                setRegisterValue SET_PL {
+                    registerValue: [ST_F4_DMA_SxCR_PL_VALUE] 
+                    optional: off
+                    requires: none
+                }
+            ]
+            meta: "Configure the stream priority using the PL[1:0] bits in the DMA_SxCR register."
+        }, 
+        action ConfigureFIFO {
+            sequence: [
+                setRegisterValue CONFIG_FIFO {
+                    registerValue: [ST_F4_DMA_SxFCR_DMDIS_VALUE, ST_F4_DMA_SxFCR_FTH_VALUE, ] 
+                    optional: off
+                    requires: none
+                }
+            ]
+            # TODO Is there a register to enable the FIFO? I can find it....
+            meta: "Configure the FIFO usage (enable or disable, threshold in transmission and reception)"
+        }, 
+        action SetTransferDirection {
+            sequence: [
+                setRegisterValue SET_ {
+                    registerValue: [ST_F4_DMA_SxNDTR_NDT_VALUE] 
+                    optional: off
+                    requires: none
+                }
+            ]
+            meta: "Configure the data transfer direction, peripheral and memory incremented/fixed mode,
+single or burst transactions, peripheral and memory data widths, Circular mode, Double buffer mode and interrupts after half and/or full transfer, and/or errors in the
+DMA_SxCR register."
+        }, 
+        action ActivateStream {
+            sequence: [
+                putRegisterValue ENABLE_DMA {
+                    registerValue: [ST_F4_DMA_SxCR_EN_VALUE] 
+                    optional: off
+                    value: 1
+                    requires: none
+                }
+            ]
+            meta: "Activate the stream by setting the EN bit in the DMA_SxCR register."
+        }, 
+    ]
+}
