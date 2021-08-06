@@ -1671,7 +1671,7 @@ transfer should be cleared before the stream can be re-enabled."
         action ConfigureFIFO {
             sequence: [
                 setRegisterValue CONFIG_FIFO {
-                    registerValue: [ST_F4_DMA_SxFCR_DMDIS_VALUE, ST_F4_DMA_SxFCR_FTH_VALUE, ] 
+                    registerValue: [ST_F4_DMA_SxFCR_DMDIS_VALUE, ST_F4_DMA_SxFCR_FTH_VALUE ] 
                     optional: off
                     requires: none
                 }
@@ -1701,6 +1701,6 @@ DMA_SxCR register."
                 }
             ]
             meta: "Activate the stream by setting the EN bit in the DMA_SxCR register."
-        }, 
+        }
     ]
 }
