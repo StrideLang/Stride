@@ -485,16 +485,17 @@ peripheralType ST_F4_DMA_TYPE {
         ST_F4_DMA_S4CR, ST_F4_DMA_S5CR, ST_F4_DMA_S6CR, ST_F4_DMA_S7CR,
         ST_F4_DMA_S0NDTR, ST_F4_DMA_S1NDTR, ST_F4_DMA_S2NDTR, ST_F4_DMA_S3NDTR,
         ST_F4_DMA_S4NDTR, ST_F4_DMA_S5NDTR, ST_F4_DMA_S6NDTR, ST_F4_DMA_S7NDTR, 
-        ST_F4_DMA_S0_PAR, ST_F4_DMA_S1_PAR, ST_F4_DMA_S2_PAR, ST_F4_DMA_S3_PAR,
-        ST_F4_DMA_S4_PAR, ST_F4_DMA_S5_PAR, ST_F4_DMA_S6_PAR, ST_F4_DMA_S7_PAR,
+        ST_F4_DMA_S0PAR, ST_F4_DMA_S1PAR, ST_F4_DMA_S2PAR, ST_F4_DMA_S3PAR,
+        ST_F4_DMA_S4PAR, ST_F4_DMA_S5PAR, ST_F4_DMA_S6PAR, ST_F4_DMA_S7PAR,
         ST_F4_DMA_S0M0AR, ST_F4_DMA_S1M0AR, ST_F4_DMA_S2M0AR, ST_F4_DMA_S3M0AR, 
         ST_F4_DMA_S4M0AR, ST_F4_DMA_S5M0AR, ST_F4_DMA_S6M0AR, ST_F4_DMA_S7M0AR,
         ST_F4_DMA_S0M1AR, ST_F4_DMA_S1M1AR, ST_F4_DMA_S2M1AR, ST_F4_DMA_S3M1AR, 
         ST_F4_DMA_S4M1AR, ST_F4_DMA_S5M1AR, ST_F4_DMA_S6M1AR, ST_F4_DMA_S7M1AR,
         ST_F4_DMA_S0FCR, ST_F4_DMA_S1FCR, ST_F4_DMA_S2FCR, ST_F4_DMA_S3FCR,
         ST_F4_DMA_S4FCR, ST_F4_DMA_S5FCR, ST_F4_DMA_S6FCR, ST_F4_DMA_S7FCR 
-             ]
+    ]
     genericPeripheral: GENERIC_DMA
+    procedures: [ST_F4_EnableDMAChannel]
     #channels: 7
 }
 
@@ -1560,38 +1561,36 @@ This bit is set and cleared by software.
 # DMA_SxCR register.
 # 10. Activate the stream by setting the EN bit in the DMA_SxCR register.
 
-procedure ST_F4_InitDMAChannel {
-    peripheralType: ST_F4_DMA_TYPE
+procedure ST_F4_EnableDMAChannel {
+    name: "Enable DMA Channel"
+    meta: " --- "
     actions: [ 
         action DisableStream {
+            name: "Disable Stream"
             sequence: [
-                resetRegisterValue RESET_EN_BIT {
-                    registerValue: [ST_F4_DMA_SxCR_EN_VALUE] 
+                resetRegisterValues RESET_EN_BIT {
+                    registerValues: [ST_F4_DMA_SxCR_EN_VALUE] 
                     optional: off
-                    requires: none
                 }
-                ensureRegisterValue ENSURE_EN_BIT_0 {
-                    registerValue: [ST_F4_DMA_SxCR_EN_VALUE] 
+                ensureRegisterValues ENSURE_EN_BIT_0 {
+                    registerValues: [ST_F4_DMA_SxCR_EN_VALUE] 
                     value: 0
                     optional: off
                     timeout: none
                     waitMethod: none
-                    requires: RESET_EN_BIT
                 }
-                resetRegisterValue RESET_LISR_BITS {
-                    registerValue: [ST_F4_DMA_LISR_FEIFx_VALUE, ST_F4_DMA_HISR_FEIFx_VALUE,
+                resetRegisterValues RESET_xISR_BITS {
+                    registerValues: [ST_F4_DMA_LISR_FEIFx_VALUE, ST_F4_DMA_HISR_FEIFx_VALUE,
                                 ST_F4_DMA_LISR_DMEIFx_VALUE, ST_F4_DMA_HISR_DMEIFx_VALUE,
                                 ST_F4_DMA_LISR_TEIFx_VALUE, ST_F4_DMA_HISR_TEIFx_VALUE,
                                 ST_F4_DMA_LISR_HTIFx_VALUE, ST_F4_DMA_HISR_HTIFx_VALUE,
                                 ST_F4_DMA_LISR_TCIFx_VALUE, ST_F4_DMA_HISR_TCIFx_VALUE
                     ] 
-                    value: 0
                     optional: off
-                    timeout: none
-                    waitMethod: none
-                    requires: ENSURE_EN_BIT_0
                 }
                 ]
+            requiredState: ["Enabled", "1"]
+            setsState: ["Enabled", "0"]
             meta: "If the stream is enabled, disable it by resetting the EN bit in the DMA_SxCR register,
 then read this bit in order to confirm that there is no ongoing stream operation. Writing
 this bit to 0 is not immediately effective since it is actually written to 0 once all the
@@ -1602,105 +1601,124 @@ status register (DMA_LISR and DMA_HISR) from the previous data block DMA
 transfer should be cleared before the stream can be re-enabled."
         }, 
         action SetPeripheralPortRegisterAddress {
+            name: "Set Peripheral Address"
             sequence: [
-                setRegisterValue SET_SxPAR {
-                    registerValue: [ST_F4_DMA_SxPAR_VALUE] 
+                setRegisterValues SET_SxPAR {
+                    registerValues: [ST_F4_DMA_SxPAR_VALUE] 
                     optional: off
-                    requires: none
                 }
-                ]
+            ]
+            requiredState: ["Enabled", "0"]
+            setsState: []
             meta: "Set the peripheral port register address in the DMA_SxPAR register. The data will be
 # moved from/ to this address to/ from the peripheral port after the peripheral event."
         }, 
         action SetMemoryAddress0 {
             # DMA_CMARx register
+            name: "Set Memory 0 Address"
             sequence: [
-                setRegisterValue SET_SxMA0R {
-                    registerValue: [ST_F4_DMA_SxM0AR_VALUE] 
+                setRegisterValues SET_SxMA0R {
+                    registerValues: [ST_F4_DMA_SxM0AR_VALUE] 
                     optional: off
-                    requires: none
                 }
             ]
+            requiredState: ["Enabled", "0"]
+            setsState: []
             meta: "Set the memory address in the DMA_SxMA0R register (and in the DMA_SxMA1R
 # register in the case of a double buffer mode). The data will be written to or read from
 # this memory after the peripheral event."
         }, 
         action SetTransferSize {
+            name: "Set Trasnfer Size"
             sequence: [
-                setRegisterValue SET_SxNDTR {
-                    registerValue: [ST_F4_DMA_SxNDTR_NDT_VALUE] 
+                setRegisterValues SET_SxNDTR {
+                    registerValues: [ST_F4_DMA_SxNDTR_NDT_VALUE] 
                     optional: off
-                    requires: none
                 }
             ]
+            requiredState: ["Enabled", "0"]
+            setsState: []
             meta: "Configure the total number of data items to be transferred in the DMA_SxNDTR
 # register. After each peripheral event or each beat of the burst, this value is
 # decremented"
         }, 
         action SelectDMAChannel {
+            name: "Select DMA Channel"
             sequence: [
-                setRegisterValue SET_CHSEL {
-                    registerValue: [ST_F4_DMA_SxCR_CHSEL_VALUE] 
+                setRegisterValues SET_CHSEL {
+                    registerValues: [ST_F4_DMA_SxCR_CHSEL_VALUE] 
                     optional: off
-                    requires: none
                 }
             ]
+            requiredState: ["Enabled", "0"]
+            setsState: []
             meta: "Select the DMA channel (request) using CHSEL[2:0] in the DMA_SxCR register."
         }, 
         action SetPeripheralFlowControl {
+            name: "Set Peripheral Flow Control"
             sequence: [
-                setRegisterValue SET_PFCTRL {
-                    registerValue: [ST_F4_DMA_SxCR_PFCTRL_VALUE] 
+                setRegisterValues SET_PFCTRL {
+                    registerValues: [ST_F4_DMA_SxCR_PFCTRL_VALUE] 
                     optional: off
-                    requires: none
                 }
             ]
+            requiredState: ["Enabled", "0"]
+            setsState: []
             meta: "If the peripheral is intended to be the flow controller and if it supports this feature, set
 # the PFCTRL bit in the DMA_SxCR register."
         }, 
         action SetPriority {
+            name: "Set Priority"
             sequence: [
-                setRegisterValue SET_PL {
-                    registerValue: [ST_F4_DMA_SxCR_PL_VALUE] 
+                setRegisterValues SET_PL {
+                    registerValues: [ST_F4_DMA_SxCR_PL_VALUE] 
                     optional: off
-                    requires: none
                 }
             ]
+            requiredState: ["Enabled", "0"]
+            setsState: []
             meta: "Configure the stream priority using the PL[1:0] bits in the DMA_SxCR register."
         }, 
         action ConfigureFIFO {
+            name: "Configure FIFO"
             sequence: [
-                setRegisterValue CONFIG_FIFO {
-                    registerValue: [ST_F4_DMA_SxFCR_DMDIS_VALUE, ST_F4_DMA_SxFCR_FTH_VALUE ] 
+                setRegisterValues CONFIG_FIFO {
+                    registerValues: [ST_F4_DMA_SxFCR_DMDIS_VALUE, ST_F4_DMA_SxFCR_FTH_VALUE ] 
                     optional: off
-                    requires: none
                 }
             ]
+            requiredState: ["Enabled", "0"]
+            setsState: []
             # TODO Is there a register to enable the FIFO? I can find it....
             meta: "Configure the FIFO usage (enable or disable, threshold in transmission and reception)"
         }, 
         action SetTransferDirection {
+            name: "Set Transfer Direction"
             sequence: [
-                setRegisterValue SET_ {
-                    registerValue: [ST_F4_DMA_SxNDTR_NDT_VALUE] 
+                setRegisterValues SET_ {
+                    registerValues: [ST_F4_DMA_SxNDTR_NDT_VALUE] 
                     optional: off
-                    requires: none
                 }
             ]
+            requiredState: ["Enabled", "0"]
+            setsState: []
             meta: "Configure the data transfer direction, peripheral and memory incremented/fixed mode,
 single or burst transactions, peripheral and memory data widths, Circular mode, Double buffer mode and interrupts after half and/or full transfer, and/or errors in the
 DMA_SxCR register."
         }, 
         action ActivateStream {
+            name: "Activate Stream"
             sequence: [
-                putRegisterValue ENABLE_DMA {
-                    registerValue: [ST_F4_DMA_SxCR_EN_VALUE] 
+                putRegisterValues ENABLE_DMA {
+                    registerValues: [ST_F4_DMA_SxCR_EN_VALUE] 
                     optional: off
                     value: 1
-                    requires: none
                 }
             ]
+            requiredState: ["Enabled", "0"]
+            setsState: ["Enabled", "1"]
             meta: "Activate the stream by setting the EN bit in the DMA_SxCR register."
         }
     ]
+    meta: ''
 }

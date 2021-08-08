@@ -44,44 +44,44 @@ genericPeripheral GENERIC_DMA {
     meta: "DMA"
 }
 
-procedure InitDMAChannel {
-    peripheralType:  ST_DMA_TYPE
-    actions: [ 
-        action SetPeripheralRegisterAddress {
-            # DMA_CPARx register
-            sequence: []
-            meta: "The data is moved from/to this address to/from the memory after the peripheral event,
-or after the channel is enabled in memory-to-memory mode."
-        }, 
-        action SetMemoryAddress {
-            # DMA_CMARx register
-            sequence: []
-            meta: "The data is written to/read from the memory after the peripheral event or after the
-channel is enabled in memory-to-memory mode."
-        }, 
-        action SetTransferSize {
-            # DMA_CMARx register
-            sequence: []
-            meta: "Configure the total number of data to transfer in the DMA_CNDTRx register.
-After each data transfer, this value is decremented."
-        }, 
-        action SetTransferSize {
-            # DMA_CMARx register
-            sequence: []
-            meta: "Configure the total number of data to transfer in the DMA_CNDTRx register.
-After each data transfer, this value is decremented."
-        }, 
+# procedure InitDMAChannel {
+#     peripheralType:  ST_DMA_TYPE
+#     actions: [ 
+#         action SetPeripheralRegisterAddress {
+#             # DMA_CPARx register
+#             sequence: []
+#             meta: "The data is moved from/to this address to/from the memory after the peripheral event,
+# or after the channel is enabled in memory-to-memory mode."
+#         }, 
+#         action SetMemoryAddress {
+#             # DMA_CMARx register
+#             sequence: []
+#             meta: "The data is written to/read from the memory after the peripheral event or after the
+# channel is enabled in memory-to-memory mode."
+#         }, 
+#         action SetTransferSize {
+#             # DMA_CMARx register
+#             sequence: []
+#             meta: "Configure the total number of data to transfer in the DMA_CNDTRx register.
+# After each data transfer, this value is decremented."
+#         }, 
+#         action SetTransferSize {
+#             # DMA_CMARx register
+#             sequence: []
+#             meta: "Configure the total number of data to transfer in the DMA_CNDTRx register.
+# After each data transfer, this value is decremented."
+#         }, 
         
-        action InitializeGPIOPins {
-            sequence: [
-                setRegister SET_GPIO_PINS {
-                    # TODO a few registers for example. Not yet accurate
-                    registers: [ST_GPIO_MODER_A, ST_GPIO_OTYPER, ST_GPIO_PUPDR, ST_GPIO_ODR, ST_GPIO_IDR]
-                    optional: off
-                    requires: EnableClock
-                }
-            ]
-        }
-    ]
-}
+#         action InitializeGPIOPins {
+#             sequence: [
+#                 setRegister SET_GPIO_PINS {
+#                     # TODO a few registers for example. Not yet accurate
+#                     registers: [ST_GPIO_MODER_A, ST_GPIO_OTYPER, ST_GPIO_PUPDR, ST_GPIO_ODR, ST_GPIO_IDR]
+#                     optional: off
+#                     requires: EnableClock
+#                 }
+#             ]
+#         }
+#     ]
+# }
 
