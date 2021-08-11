@@ -38,9 +38,15 @@ reloaded with the base address values from the DMA_CPARx and DMA_CMARx registers
 }
 
 
+genericPeripheral GENERIC_DMA_STREAM {
+    name: "DMA Stream"
+    parameters: [GENERIC_DMA_INCREMENT_MODE, GENERIC_DMA_INCREMENT_SIZE, GENERIC_DMA_NON_CIRCULAR_MODE]
+    meta: "DMA Stream"
+}
+
 genericPeripheral GENERIC_DMA {
     name: "DMA"
-    parameters: [GENERIC_DMA_INCREMENT_MODE, GENERIC_DMA_INCREMENT_SIZE, GENERIC_DMA_NON_CIRCULAR_MODE]
+    parameters: []
     meta: "DMA"
 }
 

@@ -205,6 +205,7 @@ mcu STM32G0x0 {
     availableGPIO: [
         ST_G0_GPIOA, ST_G0_GPIOB, ST_G0_GPIOC
     ]
+    availableDMA: []
     nvic: ST_G0_NVIC
     pinPeripheral: ST_PIN
     metaSource: STM32G0x0_REF_MANUAL

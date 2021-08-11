@@ -576,13 +576,16 @@ mcu STM32F4 {
     memoryRegisterSize: 32
     offset: 0x00
     availableBuses: [
-        ST_F4_AHB1, ST_F4_APB1, ST_F4_APB2
+      ST_F4_AHB1, ST_F4_APB1, ST_F4_APB2
     ]
     availableClocks: [
-        ST_F4_CLOCK
+      ST_F4_CLOCK
     ]
     availableGPIO: [
-        ST_F4_GPIOA, ST_F4_GPIOB, ST_F4_GPIOC, ST_F4_GPIOD, ST_F4_GPIOE
+      ST_F4_GPIOA, ST_F4_GPIOB, ST_F4_GPIOC, ST_F4_GPIOD, ST_F4_GPIOE
+    ]
+    availableDMA: [
+      ST_F4_DMA1, ST_F4_DMA2
     ]
     nvic: ST_F4_NVIC
     pinPeripheral: ST_PIN
@@ -595,7 +598,6 @@ bus ST_F4_AHB1 {
     offset: 0x0
     type: ST_AHB
     peripherals: [ #All possible peripherals on the bus
-        ST_F4_DMA
     ]
 }
 

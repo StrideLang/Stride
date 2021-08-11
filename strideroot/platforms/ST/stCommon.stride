@@ -478,7 +478,7 @@ registerValue USART_BRR_VALUE {
 # DMA
 
 # Source RM0090 Rev 19
-peripheralType ST_F4_DMA_TYPE {
+dmaType ST_F4_DMA_TYPE {
     group: "DMA"
     registers: [ST_F4_DMA_LISR, ST_F4_DMA_HISR, ST_F4_DMA_LIFCR, ST_F4_DMA_HIFCR, 
         ST_F4_DMA_S0CR, ST_F4_DMA_S1CR, ST_F4_DMA_S2CR, ST_F4_DMA_S3CR,
@@ -495,17 +495,101 @@ peripheralType ST_F4_DMA_TYPE {
         ST_F4_DMA_S4FCR, ST_F4_DMA_S5FCR, ST_F4_DMA_S6FCR, ST_F4_DMA_S7FCR 
     ]
     genericPeripheral: GENERIC_DMA
-    procedures: [ST_F4_EnableDMAChannel]
-    #channels: 7
+    procedures: []
+    streams: [ST_F4_DMA_STREAM_0, ST_F4_DMA_STREAM_1, ST_F4_DMA_STREAM_2, ST_F4_DMA_STREAM_3,
+            ST_F4_DMA_STREAM_4, ST_F4_DMA_STREAM_5, ST_F4_DMA_STREAM_6, ST_F4_DMA_STREAM_7 
+    ]
+    meta: ''
+    sourcePages: []
 }
 
-peripheral ST_F4_DMA {
-    name: "DMA"
+dmaStream ST_F4_DMA_STREAM_0 {
+    name: "Stream 0"
+    registers: [
+        ST_F4_DMA_S0CR,ST_F4_DMA_S0NDTR,ST_F4_DMA_S0PAR, ST_F4_DMA_S0M0AR, 
+        ST_F4_DMA_S0M1AR, ST_F4_DMA_S0FCR 
+    ]
+    genericPeripheral: GENERIC_DMA_STREAM
+    procedures: [ST_F4_EnableDMAStream]
+}
+
+dmaStream ST_F4_DMA_STREAM_1 {
+    name: "Stream 1"
+    registers: [
+        ST_F4_DMA_S1CR,ST_F4_DMA_S1NDTR,ST_F4_DMA_S1PAR, ST_F4_DMA_S1M0AR, 
+        ST_F4_DMA_S1M1AR, ST_F4_DMA_S1FCR 
+    ]
+    genericPeripheral: GENERIC_DMA_STREAM
+    procedures: [ST_F4_EnableDMAStream]
+}
+dmaStream ST_F4_DMA_STREAM_2 {
+    name: "Stream 2"
+    registers: [
+        ST_F4_DMA_S2CR,ST_F4_DMA_S2NDTR,ST_F4_DMA_S2PAR, ST_F4_DMA_S2M0AR, 
+        ST_F4_DMA_S2M1AR, ST_F4_DMA_S2FCR 
+    ]
+    genericPeripheral: GENERIC_DMA_STREAM
+    procedures: [ST_F4_EnableDMAStream]
+}
+dmaStream ST_F4_DMA_STREAM_3 {
+    name: "Stream 3"
+    registers: [
+        ST_F4_DMA_S3CR,ST_F4_DMA_S3NDTR,ST_F4_DMA_S3PAR, ST_F4_DMA_S3M0AR, 
+        ST_F4_DMA_S3M1AR, ST_F4_DMA_S3FCR 
+    ]
+    genericPeripheral: GENERIC_DMA_STREAM
+    procedures: [ST_F4_EnableDMAStream]
+}
+dmaStream ST_F4_DMA_STREAM_4 {
+    name: "Stream 4"
+    registers: [
+        ST_F4_DMA_S4CR,ST_F4_DMA_S4NDTR,ST_F4_DMA_S4PAR, ST_F4_DMA_S4M0AR, 
+        ST_F4_DMA_S4M1AR, ST_F4_DMA_S4FCR 
+    ]
+}
+dmaStream ST_F4_DMA_STREAM_5 {
+    name: "Stream 5"
+    registers: [
+        ST_F4_DMA_S5CR,ST_F4_DMA_S5NDTR,ST_F4_DMA_S5PAR, ST_F4_DMA_S5M0AR, 
+        ST_F4_DMA_S5M1AR, ST_F4_DMA_S5FCR 
+    ]
+    genericPeripheral: GENERIC_DMA_STREAM
+    procedures: [ST_F4_EnableDMAStream]
+}
+dmaStream ST_F4_DMA_STREAM_6 {
+    name: "Stream 6"
+    registers: [
+        ST_F4_DMA_S6CR,ST_F4_DMA_S6NDTR,ST_F4_DMA_S6PAR, ST_F4_DMA_S6M0AR, 
+        ST_F4_DMA_S6M1AR, ST_F4_DMA_S6FCR 
+    ]
+    genericPeripheral: GENERIC_DMA_STREAM
+    procedures: [ST_F4_EnableDMAStream]
+}
+dmaStream ST_F4_DMA_STREAM_7 {
+    name: "Stream 7"
+    registers: [
+        ST_F4_DMA_S7CR,ST_F4_DMA_S7NDTR,ST_F4_DMA_S7PAR, ST_F4_DMA_S7M0AR, 
+        ST_F4_DMA_S7M1AR, ST_F4_DMA_S7FCR 
+    ]
+    genericPeripheral: GENERIC_DMA_STREAM
+    procedures: [ST_F4_EnableDMAStream]
+}
+
+dma ST_F4_DMA1 {
+    name: "DMA1"
     offset: 0x0
     type: ST_F4_DMA_TYPE
-    pinsRequired: []
+    meta: ''
 }
 
+dma ST_F4_DMA2 {
+    name: "DMA2"
+    offset: 0x0
+    type: ST_F4_DMA_TYPE
+    meta: ''
+}
+
+# DMA Registers
 register ST_F4_DMA_LISR {
     name: "LISR"
     offset: 0x00
@@ -1561,9 +1645,9 @@ This bit is set and cleared by software.
 # DMA_SxCR register.
 # 10. Activate the stream by setting the EN bit in the DMA_SxCR register.
 
-procedure ST_F4_EnableDMAChannel {
+procedure ST_F4_EnableDMAStream {
     name: "Enable DMA Channel"
-    meta: " --- "
+    meta: "Procedure to enable DMA Channel"
     actions: [ 
         action DisableStream {
             name: "Disable Stream"
