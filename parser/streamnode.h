@@ -37,19 +37,21 @@
 
 #include "ast.h"
 
-class StreamNode : public AST
-{
+class StreamNode : public AST {
 public:
-    StreamNode(ASTNode left, ASTNode right, const char *filename, int line);
-    ~StreamNode();
+  StreamNode(ASTNode left, ASTNode right, const char *filename, int line);
+  ~StreamNode();
 
-    ASTNode getLeft() const {return m_children.at(0); }
-    ASTNode getRight() const { return m_children.at(1); }
+  // TODO streams should be stored as a linked list (not nested pairs). It would
+  // make so much code later clearer.
+  ASTNode getLeft() const { return m_children.at(0); }
+  ASTNode getRight() const { return m_children.at(1); }
 
-    void setLeft(ASTNode newLeft);
-    void setRight(ASTNode newRight);
+  void setLeft(ASTNode newLeft);
+  void setRight(ASTNode newRight);
 
-    virtual ASTNode deepCopy() override;
+  virtual ASTNode deepCopy() override;
+
 private:
 };
 

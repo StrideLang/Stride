@@ -119,7 +119,7 @@ public:
 
   // Code processing
   static std::string toText(ASTNode node, int indentOffset = 0,
-                            int indentSize = 2);
+                            int indentSize = 2, bool newLine = true);
 
 protected:
   virtual void resolveScope(ASTNode scope);
