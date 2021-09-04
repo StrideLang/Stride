@@ -356,7 +356,7 @@ streamDef:
             currentAt.clear();
             $$ = new StreamNode(std::shared_ptr<AST>($3), std::shared_ptr<AST>($5), currentFile, yyloc.first_line);
             COUT << "Stream Resolved!" << ENDL;
-        }
+        } 
     |   AT UVAR valueExp STREAM streamExp SEMICOLON         {
             currentAt = $2;
             
@@ -1172,6 +1172,10 @@ streamComp:
             free($1);
             COUT << "Hex: " << $1 << ENDL;
         }
+//    |   NONE            {
+//            $$ = new ValueNode(currentFile, yyloc.first_line);
+//            COUT << "none" <<  ENDL;
+//        }
     |   ON              {
             $$ = new ValueNode(true, currentFile, yyloc.first_line);
             COUT << "Keyword: on" << ENDL;
@@ -1193,10 +1197,6 @@ streamComp:
             $$ = new KeywordNode(s, currentFile, yyloc.first_line);
             COUT << "Word: " << $1 <<  ENDL;
             free($1);
-        }
-    |   NONE            {
-            $$ = new ValueNode(currentFile, yyloc.first_line);
-            COUT << "none" <<  ENDL;
         }
     |   UVAR            {
             string s;
@@ -1223,8 +1223,8 @@ streamComp:
     |   portPropertyDef     {
             COUT << "Resolving port property definition ... " << ENDL;
         }
-    |   valueListDef     {
-            $$ = $1;
+    |   '{' valueList '}'     {
+            $$ = $2;
             COUT << "List ... " << ENDL;
     }
     ;
