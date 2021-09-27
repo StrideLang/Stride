@@ -39,7 +39,7 @@
 #include <QFile>
 #include <QFileInfo>
 
-//#include "ast.h"
+#include "astfunctions.h"
 #include "coderesolver.h"
 #include "codevalidator.h"
 #include "pythonproject.h"
@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
   //    qDebug() << platformRootPath;
 
   ASTNode tree;
-  tree = AST::parseFile(fileName.toLocal8Bit().constData());
+  tree = ASTFunctions::parseFile(fileName.toLocal8Bit().constData());
 
   bool buildOK = true;
   if (tree) {
@@ -139,7 +139,7 @@ int main(int argc, char *argv[]) {
       }
     }
   } else {
-    vector<LangError> errors = AST::getParseErrors();
+    vector<LangError> errors = ASTFunctions::getParseErrors();
     for (LangError err : errors) {
       qDebug() << QString::fromStdString(err.getErrorText());
     }

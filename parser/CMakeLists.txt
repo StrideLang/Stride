@@ -3,7 +3,12 @@ project(StrideParser)
 
 set(CMAKE_CXX_STANDARD 11)
 
-set(PARSER_SRC ast.cpp 
+set(PARSER_SRC
+  ast.cpp 
+  astfunctions.cpp 
+  astquery.cpp
+  astvalidation.cpp
+  astruntime.cpp
   streamnode.cpp 
   valuenode.cpp
   bundlenode.cpp
@@ -24,6 +29,10 @@ set(PARSER_SRC ast.cpp
 
 set(PARSER_HEADERS
   ast.h
+  astfunctions.h
+  astquery.h
+  astruntime.h
+  astvalidation.h
   streamnode.h
   valuenode.h
   bundlenode.h
@@ -98,3 +107,4 @@ add_library(StrideParser
 )
 
 target_compile_options(StrideParser PRIVATE -fPIC)
+

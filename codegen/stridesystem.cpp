@@ -41,6 +41,8 @@
 
 #include "stridesystem.hpp"
 
+#include "astfunctions.h"
+#include "astquery.h"
 #include "coderesolver.h"
 #include "codevalidator.h"
 #include "declarationnode.h"
@@ -68,7 +70,7 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
 
   if (QFile::exists(systemFile)) {
     ASTNode systemTree =
-        AST::parseFile(systemFile.toStdString().c_str(), nullptr);
+        ASTFunctions::parseFile(systemFile.toStdString().c_str(), nullptr);
     if (systemTree) {
       parseSystemTree(systemTree);
 
@@ -83,7 +85,7 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
         QFileInfoList libraryFiles = QDir(QString::fromStdString(platformPath))
                                          .entryInfoList(nameFilters);
         for (auto fileInfo : libraryFiles) {
-          ASTNode tree = AST::parseFile(
+          ASTNode tree = ASTFunctions::parseFile(
               fileInfo.absoluteFilePath().toLocal8Bit().data(), nullptr);
           if (tree) {
             for (auto node : tree->getChildren()) {
@@ -94,7 +96,7 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
             }
             framework->addTestingTree(fileInfo.baseName().toStdString(), tree);
           } else {
-            vector<LangError> errors = AST::getParseErrors();
+            vector<LangError> errors = ASTFunctions::getParseErrors();
             foreach (LangError error, errors) {
               qDebug() << QString::fromStdString(error.getErrorText());
             }
@@ -156,7 +158,7 @@ void StrideSystem::parseSystemTree(ASTNode systemTree, ASTNode configuration) {
             Q_ASSERT(platformName->getNodeType() == AST::Block);
             auto platformSpecBlock =
                 static_pointer_cast<BlockNode>(platformName);
-            auto platformSpec = CodeValidator::findDeclaration(
+            auto platformSpec = ASTQuery::findDeclaration(
                 platformSpecBlock->getName(), {}, systemTree);
             if (platformSpec) {
               auto platformBlock = platformSpec->getPropertyValue("framework");
@@ -692,7 +694,7 @@ vector<ASTNode> StrideSystem::getOptionTrees(std::string systemPath) {
       QString::fromStdString(systemPath) + QDir::separator() + "options";
   QFileInfoList optionFiles = QDir(optionPath).entryInfoList(nameFilters);
   for (auto fileInfo : optionFiles) {
-    ASTNode optionTree = AST::parseFile(
+    ASTNode optionTree = ASTFunctions::parseFile(
         fileInfo.absoluteFilePath().toStdString().c_str(), nullptr);
     if (optionTree) {
       ASTNode finalTree = std::make_shared<AST>();
@@ -777,7 +779,8 @@ StrideSystem::getFrameworkSynchronization(std::string frameworkName) {
       for (QString file : libraryFiles) {
         QString fileName = QDir::cleanPath(
             QString::fromStdString(platformPath) + QDir::separator() + file);
-        auto newTree = AST::parseFile(fileName.toLocal8Bit().data(), nullptr);
+        auto newTree =
+            ASTFunctions::parseFile(fileName.toLocal8Bit().data(), nullptr);
         if (newTree) {
           for (ASTNode node : newTree->getChildren()) {
             if (node->getNodeType() == AST::Declaration) {
@@ -864,8 +867,8 @@ string StrideSystem::getDataType(ASTNode node, ASTNode tree) {
       auto frameworkName = CodeValidator::getFrameworkForDomain(domainId, tree);
       frameworkName = getFrameworkAlias(frameworkName);
       auto decl =
-          CodeValidator::findDeclaration(CodeValidator::streamMemberName(child),
-                                         {}, tree, child->getNamespaceList());
+          ASTQuery::findDeclaration(CodeValidator::streamMemberName(child), {},
+                                    tree, child->getNamespaceList());
 
       if (decl) {
         return CodeValidator::getDataTypeForDeclaration(decl, tree);
@@ -957,7 +960,7 @@ void StrideSystem::generateDomainConnections(ASTNode tree) {
             auto previousFramework =
                 CodeValidator::getFrameworkForDomain(previousDomainId, tree);
             // We should validate with provided connection framework
-            auto nodeDecl = CodeValidator::findDeclaration(
+            auto nodeDecl = ASTQuery::findDeclaration(
                 CodeValidator::streamMemberName(stream->getRight()), {},
                 domainChangeNodes.sourceImports, {},
                 getFrameworkAlias(previousFramework));
@@ -971,7 +974,7 @@ void StrideSystem::generateDomainConnections(ASTNode tree) {
             auto destFramework =
                 CodeValidator::getFrameworkForDomain(nextDomainId, tree);
             // We should validate with provided connection framework
-            nodeDecl = CodeValidator::findDeclaration(
+            nodeDecl = ASTQuery::findDeclaration(
                 CodeValidator::streamMemberName(connectionNode), {},
                 domainChangeNodes.destImports, {},
                 getFrameworkAlias(destFramework));
@@ -1148,7 +1151,7 @@ ConnectionNodes StrideSystem::getDomainChangeStreams(string previousDomainId,
               }
               for (auto node : importTree) {
                 CodeResolver::fillDefaultPropertiesForNode(node, importTree);
-                CodeResolver::insertBuiltinObjectsForNode(node, builtinObjects,
+                ASTFunctions::insertBuiltinObjectsForNode(node, builtinObjects,
                                                           newTree);
               }
 
@@ -1184,7 +1187,7 @@ ConnectionNodes StrideSystem::getDomainChangeStreams(string previousDomainId,
               }
               for (auto child : importTree) {
                 CodeResolver::fillDefaultPropertiesForNode(child, importTree);
-                CodeResolver::insertBuiltinObjectsForNode(child, builtinObjects,
+                ASTFunctions::insertBuiltinObjectsForNode(child, builtinObjects,
                                                           newTree);
               }
               injectResourceConfiguration(newTree);
@@ -1280,7 +1283,7 @@ void StrideSystem::installFramework(string frameworkName) {
     if (framework->getFramework() == frameworkName) {
       auto configPath =
           framework->buildPlatformLibPath() + "/" + "Configuration.stride";
-      ASTNode tree = AST::parseFile(configPath.c_str(), nullptr);
+      ASTNode tree = ASTFunctions::parseFile(configPath.c_str(), nullptr);
       if (tree) {
         for (auto node : tree->getChildren()) {
           if (node->getNodeType() == AST::Declaration) {

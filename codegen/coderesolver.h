@@ -71,17 +71,10 @@ public:
 
   static void fillDefaultPropertiesForNode(ASTNode node,
                                            std::vector<ASTNode> tree);
-  static void insertBuiltinObjectsForNode(ASTNode node,
-                                          map<string, vector<ASTNode>> &objects,
-                                          ASTNode tree,
-                                          string currentFramework = "");
   static std::shared_ptr<DeclarationNode>
   createSignalDeclaration(QString name, int size, ScopeStack scope,
                           ASTNode tree);
 
-  static void
-  insertDependentTypes(std::shared_ptr<DeclarationNode> typeDeclaration,
-                       map<string, vector<ASTNode>> &objects, ASTNode tree);
   static std::shared_ptr<ValueNode>
   reduceConstExpression(std::shared_ptr<ExpressionNode> expr, ScopeStack scope,
                         ASTNode tree);
@@ -96,7 +89,6 @@ public:
 private:
   // Main processing functions
   void processSystem();
-  void insertBuiltinObjects();
   void fillDefaultProperties();
   void enableTesting();
   void declareModuleInternalBlocks();
@@ -198,23 +190,6 @@ private:
 
   void appendParent(std::shared_ptr<DeclarationNode> decl,
                     std::shared_ptr<DeclarationNode> parent);
-
-  // Operators
-  static std::shared_ptr<ValueNode> multiply(std::shared_ptr<ValueNode> left,
-                                             std::shared_ptr<ValueNode> right);
-  static std::shared_ptr<ValueNode> divide(std::shared_ptr<ValueNode> left,
-                                           std::shared_ptr<ValueNode> right);
-  static std::shared_ptr<ValueNode> add(std::shared_ptr<ValueNode> left,
-                                        std::shared_ptr<ValueNode> right);
-  static std::shared_ptr<ValueNode> subtract(std::shared_ptr<ValueNode> left,
-                                             std::shared_ptr<ValueNode> right);
-  static std::shared_ptr<ValueNode>
-  unaryMinus(std::shared_ptr<ValueNode> value);
-  static std::shared_ptr<ValueNode>
-  logicalAnd(std::shared_ptr<ValueNode> left, std::shared_ptr<ValueNode> right);
-  static std::shared_ptr<ValueNode> logicalOr(std::shared_ptr<ValueNode> left,
-                                              std::shared_ptr<ValueNode> right);
-  static std::shared_ptr<ValueNode> logicalNot(std::shared_ptr<ValueNode> left);
 
   //    ASTNode makeConnector(ASTNode node, string connectorName, int size,
   //    const ScopeStack &scopeStack); void terminateStackWithBridge(ASTNode

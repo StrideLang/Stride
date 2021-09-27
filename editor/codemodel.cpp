@@ -39,6 +39,8 @@
 #include <QTemporaryFile>
 #include <QVector>
 
+#include "astfunctions.h"
+#include "astquery.h"
 #include "blocknode.h"
 #include "coderesolver.h"
 #include "codevalidator.h"
@@ -85,8 +87,8 @@ QString CodeModel::getHtmlDocumentation(QString symbol) {
   if (symbol[0].toLower() == symbol[0]) {
     QMutexLocker locker(&m_validTreeLock);
     std::shared_ptr<DeclarationNode> typeBlock =
-        CodeValidator::findTypeDeclarationByName(symbol.toStdString(), {},
-                                                 m_lastValidTree);
+        ASTQuery::findTypeDeclarationByName(symbol.toStdString(), {},
+                                            m_lastValidTree);
     if (typeBlock) {
       AST *metaValue = typeBlock->getPropertyValue("meta").get();
       if (metaValue) {
@@ -189,7 +191,7 @@ QString CodeModel::getHtmlDocumentation(QString symbol) {
              symbol[0]) { // Check if it is a declared module
     QMutexLocker locker(&m_validTreeLock);
     std::shared_ptr<DeclarationNode> declaration =
-        CodeValidator::findDeclaration(symbol, {}, m_lastValidTree);
+        ASTQuery::findDeclaration(symbol.toStdString(), {}, m_lastValidTree);
     if (declaration) {
       AST *metaValue = declaration->getPropertyValue("meta").get();
       if (metaValue) {
@@ -335,7 +337,7 @@ QString CodeModel::getTooltipText(QString symbol) {
   if (symbol[0].toUpper() == symbol[0]) { // Check if it is a declared module
     QMutexLocker locker(&m_validTreeLock);
     std::shared_ptr<DeclarationNode> declaration =
-        CodeValidator::findDeclaration(symbol, {}, m_lastValidTree);
+        ASTQuery::findDeclaration(symbol.toStdString(), {}, m_lastValidTree);
     if (declaration) {
       //            AST *metaValue =
       //            declaration->getPropertyValue("meta").get(); if (metaValue)
@@ -424,8 +426,8 @@ QString CodeModel::getTooltipText(QString symbol) {
     }
   } else { // word starts with lower case letter
     std::shared_ptr<DeclarationNode> typeBlock =
-        CodeValidator::findTypeDeclarationByName(symbol.toStdString(), {},
-                                                 m_lastValidTree);
+        ASTQuery::findTypeDeclarationByName(symbol.toStdString(), {},
+                                            m_lastValidTree);
     if (typeBlock) {
       text = "type: " + symbol;
       //            AST *metaValue = typeBlock->getPropertyValue("meta").get();
@@ -555,7 +557,7 @@ QString CodeModel::getFunctionSyntax(QString symbol) {
   QMutexLocker locker(&m_validTreeLock);
   QVector<ASTNode> libraryNodes;
   std::shared_ptr<DeclarationNode> declaration =
-      CodeValidator::findDeclaration(symbol, {}, m_lastValidTree);
+      ASTQuery::findDeclaration(symbol.toStdString(), {}, m_lastValidTree);
   if (declaration) {
     return getTextForPorts(declaration);
   }
@@ -582,8 +584,8 @@ QString CodeModel::getTypeSyntax(QString symbol) {
   QString text;
   QMutexLocker locker(&m_validTreeLock);
   std::shared_ptr<DeclarationNode> declaration =
-      CodeValidator::findTypeDeclarationByName(symbol.toStdString(), {},
-                                               m_lastValidTree);
+      ASTQuery::findTypeDeclarationByName(symbol.toStdString(), {},
+                                          m_lastValidTree);
   if (declaration) {
     AST *metaValue = declaration->getPropertyValue("meta").get();
     if (metaValue) {
@@ -639,8 +641,8 @@ void CodeModel::updateCodeAnalysis(QString code, QString platformRootPath,
     tmpFile.write(code.toLocal8Bit());
     tmpFile.close();
     ASTNode tree;
-    tree = AST::parseFile(tmpFile.fileName().toLocal8Bit().constData(),
-                          sourceFile.toLocal8Bit().constData());
+    tree = ASTFunctions::parseFile(tmpFile.fileName().toLocal8Bit().constData(),
+                                   sourceFile.toLocal8Bit().constData());
 
     if (tree) {
       SystemConfiguration config;
@@ -669,7 +671,7 @@ void CodeModel::updateCodeAnalysis(QString code, QString platformRootPath,
       }
       m_lastValidTree = tree;
     } else { // !tree
-      vector<LangError> syntaxErrors = AST::getParseErrors();
+      vector<LangError> syntaxErrors = ASTFunctions::getParseErrors();
       m_errors.clear();
       for (unsigned int i = 0; i < syntaxErrors.size(); i++) {
         m_errors << syntaxErrors[i];

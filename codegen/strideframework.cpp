@@ -36,6 +36,7 @@
 
 #include <iostream>
 
+#include "../parser/astfunctions.h"
 #include "../parser/declarationnode.h"
 #include "../parser/valuenode.h"
 
@@ -101,7 +102,7 @@ string StrideFramework::getPlatformDetails() {
 void StrideFramework::installFramework() {
   auto frameworkRoot = buildPlatformLibPath();
   auto fileName = frameworkRoot + "/Configuration.stride";
-  auto configuration = AST::parseFile(fileName.c_str());
+  auto configuration = ASTFunctions::parseFile(fileName.c_str());
   if (configuration) {
     for (auto node : configuration->getChildren()) {
       if (node->getNodeType() == AST::Declaration) {

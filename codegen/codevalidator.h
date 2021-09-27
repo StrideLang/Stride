@@ -63,21 +63,9 @@ public:
   void setTree(const ASTNode &tree);
 
   // Static functions -----------------------------
-  static std::shared_ptr<DeclarationNode>
-  findDeclaration(std::string streamMemberName, const ScopeStack &scopeStack,
-                  ASTNode tree, vector<string> namespaces = vector<string>(),
-                  string platform = std::string());
-  static std::shared_ptr<DeclarationNode>
-  findDeclaration(QString streamMemberName, const ScopeStack &scopeStack,
-                  ASTNode tree, vector<string> namespaceList = vector<string>(),
-                  string platform = std::string());
+
   static std::shared_ptr<DeclarationNode>
   getDeclaration(ASTNode node); // Retrieve stored declaration
-
-  static std::vector<std::shared_ptr<DeclarationNode>>
-  findAllDeclarations(std::string objectName, const ScopeStack &scopeStack,
-                      ASTNode tree, vector<string> namespaces,
-                      string currentFramework = "");
 
   static std::string streamMemberName(ASTNode node);
 
@@ -145,10 +133,7 @@ public:
   static QVector<ASTNode>
   validTypesForPort(std::shared_ptr<DeclarationNode> typeDeclaration,
                     QString portName, ScopeStack scope, ASTNode tree);
-  static std::shared_ptr<DeclarationNode> findTypeDeclarationByName(
-      string typeName, ScopeStack scope, ASTNode tree,
-      std::vector<std::string> namespaces = std::vector<std::string>(),
-      string currentFramework = "");
+
   static std::shared_ptr<DeclarationNode>
   findTypeDeclaration(std::shared_ptr<DeclarationNode> decl, ScopeStack scope,
                       ASTNode tree, string currentFramework = "");
@@ -174,9 +159,6 @@ public:
   static std::vector<ASTNode>
   getInheritedPorts(std::shared_ptr<DeclarationNode> block, ScopeStack scope,
                     ASTNode tree);
-  static vector<std::shared_ptr<DeclarationNode>>
-  getInheritedTypes(std::shared_ptr<DeclarationNode> typeDeclaration,
-                    ScopeStack scope, ASTNode tree);
 
   static std::shared_ptr<DeclarationNode>
   getMainOutputPortBlock(std::shared_ptr<DeclarationNode> moduleBlock);

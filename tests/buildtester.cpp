@@ -39,6 +39,7 @@
 #include <QThread>
 
 #include "ast.h"
+#include "astfunctions.h"
 #include "coderesolver.h"
 #include "codevalidator.h"
 #include "systemconfiguration.hpp"
@@ -54,9 +55,9 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile,
   vector<LangError> syntaxErrors;
 
   ASTNode tree;
-  tree = AST::parseFile(filename.c_str());
+  tree = ASTFunctions::parseFile(filename.c_str());
 
-  syntaxErrors = AST::getParseErrors();
+  syntaxErrors = ASTFunctions::getParseErrors();
 
   if (syntaxErrors.size() > 0) {
     for (auto syntaxError : syntaxErrors) {

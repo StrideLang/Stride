@@ -39,6 +39,8 @@
 #include <memory>
 #include <sstream>
 
+#include "astfunctions.h"
+#include "astquery.h"
 #include "coderesolver.h"
 
 #include "stridesystem.hpp"
@@ -111,13 +113,14 @@ std::vector<ASTNode> CodeValidator::loadAllInDirectory(string path) {
   for (QString file : libraryFiles) {
     QString fileName = QDir::cleanPath(QString::fromStdString(path) +
                                        QDir::separator() + file);
-    auto newTree = AST::parseFile(fileName.toLocal8Bit().data(), nullptr);
+    auto newTree =
+        ASTFunctions::parseFile(fileName.toLocal8Bit().data(), nullptr);
     if (newTree) {
       auto children = newTree->getChildren();
       nodes.insert(nodes.end(), children.begin(), children.end());
     } else {
       qDebug() << "ERROR importing tree:" << file;
-      vector<LangError> errors = AST::getParseErrors();
+      vector<LangError> errors = ASTFunctions::getParseErrors();
       for (LangError error : errors) {
         qDebug() << QString::fromStdString(error.getErrorText());
       }
@@ -171,16 +174,14 @@ std::vector<ASTNode> CodeValidator::getBlocksInScope(ASTNode root,
   } else if (root->getNodeType() == AST::Block) {
     std::shared_ptr<BlockNode> name = static_pointer_cast<BlockNode>(root);
     std::shared_ptr<DeclarationNode> declaration =
-        CodeValidator::findDeclaration(QString::fromStdString(name->getName()),
-                                       scopeStack, tree);
+        ASTQuery::findDeclaration(name->getName(), scopeStack, tree);
     if (declaration) {
       blocks = getBlocksInScope(declaration, scopeStack, tree);
     }
   } else if (root->getNodeType() == AST::Bundle) {
     std::shared_ptr<BundleNode> name = static_pointer_cast<BundleNode>(root);
     std::shared_ptr<DeclarationNode> declaration =
-        CodeValidator::findDeclaration(QString::fromStdString(name->getName()),
-                                       scopeStack, tree);
+        ASTQuery::findDeclaration(name->getName(), scopeStack, tree);
     if (declaration) {
       blocks = getBlocksInScope(declaration, scopeStack, tree);
     }
@@ -264,9 +265,9 @@ string CodeValidator::getFrameworkForDomain(string domainName, ASTNode tree) {
                       ->getStringValue();
             }
             std::shared_ptr<DeclarationNode> fwDeclaration =
-                CodeValidator::findDeclaration(
-                    QString::fromStdString(fwBlock->getName()), {}, tree,
-                    fwBlock->getNamespaceList(), frameworkName);
+                ASTQuery::findDeclaration(fwBlock->getName(), {}, tree,
+                                          fwBlock->getNamespaceList(),
+                                          frameworkName);
             if (fwDeclaration &&
                 (fwDeclaration->getObjectType() == "_frameworkDescription")) {
               ASTNode frameworkName =
@@ -314,8 +315,8 @@ double CodeValidator::resolveRateToFloat(ASTNode rateNode, ScopeStack scope,
   } else if (rateNode->getNodeType() == AST::Block) {
     BlockNode *block = static_cast<BlockNode *>(rateNode.get());
     std::shared_ptr<DeclarationNode> valueDeclaration =
-        CodeValidator::findDeclaration(QString::fromStdString(block->getName()),
-                                       scope, tree, block->getNamespaceList());
+        ASTQuery::findDeclaration(block->getName(), scope, tree,
+                                  block->getNamespaceList());
     if (valueDeclaration && valueDeclaration->getObjectType() == "constant") {
       std::shared_ptr<PropertyNode> property =
           CodeValidator::findPropertyByName(valueDeclaration->getProperties(),
@@ -343,9 +344,8 @@ double CodeValidator::getNodeRate(ASTNode node, ScopeStack scope,
                                   ASTNode tree) {
   if (node->getNodeType() == AST::Block) {
     BlockNode *name = static_cast<BlockNode *>(node.get());
-    std::shared_ptr<DeclarationNode> declaration =
-        CodeValidator::findDeclaration(QString::fromStdString(name->getName()),
-                                       scope, tree, name->getNamespaceList());
+    std::shared_ptr<DeclarationNode> declaration = ASTQuery::findDeclaration(
+        name->getName(), scope, tree, name->getNamespaceList());
     if (declaration) {
       ASTNode rateNode = declaration->getPropertyValue("rate");
       if (rateNode) {
@@ -354,10 +354,8 @@ double CodeValidator::getNodeRate(ASTNode node, ScopeStack scope,
     }
   } else if (node->getNodeType() == AST::Bundle) {
     BundleNode *bundle = static_cast<BundleNode *>(node.get());
-    std::shared_ptr<DeclarationNode> declaration =
-        CodeValidator::findDeclaration(
-            QString::fromStdString(bundle->getName()), scope, tree,
-            bundle->getNamespaceList());
+    std::shared_ptr<DeclarationNode> declaration = ASTQuery::findDeclaration(
+        bundle->getName(), scope, tree, bundle->getNamespaceList());
     if (declaration) {
       ASTNode rateNode = declaration->getPropertyValue("rate");
       if (rateNode) {
@@ -398,9 +396,8 @@ void CodeValidator::setNodeRate(ASTNode node, double rate, ScopeStack scope,
                                 ASTNode tree) {
   if (node->getNodeType() == AST::Block) {
     BlockNode *name = static_cast<BlockNode *>(node.get());
-    std::shared_ptr<DeclarationNode> declaration =
-        CodeValidator::findDeclaration(QString::fromStdString(name->getName()),
-                                       scope, tree, name->getNamespaceList());
+    std::shared_ptr<DeclarationNode> declaration = ASTQuery::findDeclaration(
+        name->getName(), scope, tree, name->getNamespaceList());
     if (declaration) {
       std::shared_ptr<ValueNode> value =
           std::make_shared<ValueNode>(rate, __FILE__, __LINE__);
@@ -409,10 +406,8 @@ void CodeValidator::setNodeRate(ASTNode node, double rate, ScopeStack scope,
     return;
   } else if (node->getNodeType() == AST::Bundle) {
     BundleNode *bundle = static_cast<BundleNode *>(node.get());
-    std::shared_ptr<DeclarationNode> declaration =
-        CodeValidator::findDeclaration(
-            QString::fromStdString(bundle->getName()), scope, tree,
-            bundle->getNamespaceList());
+    std::shared_ptr<DeclarationNode> declaration = ASTQuery::findDeclaration(
+        bundle->getName(), scope, tree, bundle->getNamespaceList());
     if (declaration) {
       std::shared_ptr<ValueNode> value =
           std::make_shared<ValueNode>(rate, __FILE__, __LINE__);
@@ -509,8 +504,8 @@ ASTNode CodeValidator::getInstance(ASTNode block, ScopeStack scopeStack,
         static_pointer_cast<DeclarationNode>(
             block->getCompilerProperty("declaration"));
     if (!decl) {
-      decl = CodeValidator::findDeclaration(
-          CodeValidator::streamMemberName(block), scopeStack, tree);
+      decl = ASTQuery::findDeclaration(CodeValidator::streamMemberName(block),
+                                       scopeStack, tree);
     }
     if (decl) {
       auto typeDecl =
@@ -525,58 +520,6 @@ ASTNode CodeValidator::getInstance(ASTNode block, ScopeStack scopeStack,
     }
   }
   return inst;
-}
-
-bool CodeValidator::namespaceMatch(std::vector<string> scopeList,
-                                   std::shared_ptr<DeclarationNode> decl,
-                                   std::string currentFramework) {
-  if (scopeList.size() == 1 && scopeList[0].size() == 0) {
-    scopeList.clear();
-  }
-  auto declScopesNode = decl->getCompilerProperty("namespaceTree");
-
-  auto frameworkNode = decl->getCompilerProperty("framework");
-  std::string framework;
-  if (frameworkNode && frameworkNode->getNodeType() == AST::String) {
-    framework = static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
-  }
-  std::vector<std::string> namespaceTree;
-  // Add import namespaces
-  if (declScopesNode) {
-    for (auto node : declScopesNode->getChildren()) {
-      assert(node->getNodeType() == AST::String);
-
-      namespaceTree.push_back(
-          static_pointer_cast<ValueNode>(node)->getStringValue());
-    }
-  }
-  // Remove namespace if calling from within the same framework
-  if (framework == currentFramework && namespaceTree.size() > 0 &&
-      namespaceTree.at(0) == currentFramework) {
-    //    if (scopeList.size() > 0 && scopeList.at(0) != currentFramework) {
-    namespaceTree.erase(namespaceTree.begin());
-    //    }
-  }
-  if (framework.size() > 0 && framework != currentFramework) {
-    if (namespaceTree.size() == 0 || framework != namespaceTree.at(0)) {
-      namespaceTree.insert(namespaceTree.begin(), framework);
-    }
-  } else {
-    //      if (scopeList.size() > 0 && scopeList[0] == framework) {
-    //        scopeList.erase(scopeList.begin());
-    //      }
-  }
-  if (namespaceTree.size() != scopeList.size()) {
-    return false;
-  }
-
-  for (size_t i = 0; i < namespaceTree.size(); i++) {
-    if (namespaceTree[i] != scopeList[i]) {
-      return false;
-    }
-  }
-
-  return true;
 }
 
 vector<StreamNode *> CodeValidator::getStreamsAtLine(ASTNode tree, int line) {
@@ -683,7 +626,7 @@ void CodeValidator::validateTypes(ASTNode node, ScopeStack scopeStack,
               return typeDeclaration->getName();
             } else if (child->getNodeType() == AST::Block ||
                        child->getNodeType() == AST::Bundle) {
-              auto decl = CodeValidator::findDeclaration(
+              auto decl = ASTQuery::findDeclaration(
                   CodeValidator::streamMemberName(child), scopeStack, m_tree,
                   child->getNamespaceList(), currentFramework);
               if (decl) {
@@ -718,9 +661,9 @@ void CodeValidator::validateTypes(ASTNode node, ScopeStack scopeStack,
                 validTypeNames.push_back(typeCode);
               } else if (validType->getNodeType() == AST::Block) {
                 auto blockNode = static_pointer_cast<BlockNode>(validType);
-                std::shared_ptr<DeclarationNode> declaration = findDeclaration(
-                    QString::fromStdString(blockNode->getName()), scopeStack,
-                    m_tree);
+                std::shared_ptr<DeclarationNode> declaration =
+                    ASTQuery::findDeclaration(blockNode->getName(), scopeStack,
+                                              m_tree);
                 //                                    ASTNode typeNameValue =
                 //                                    declaration->getPropertyValue("typeName");
                 //                                    Q_ASSERT(typeNameValue->getNodeType()
@@ -828,9 +771,8 @@ void CodeValidator::validateTypes(ASTNode node, ScopeStack scopeStack,
     vector<string> namespaces = block->getNamespaceList();
     namespaces.insert(namespaces.begin(), parentNamespace.begin(),
                       parentNamespace.end());
-    std::shared_ptr<DeclarationNode> declaration =
-        CodeValidator::findDeclaration(block->getName(), scopeStack, m_tree,
-                                       namespaces, currentFramework);
+    std::shared_ptr<DeclarationNode> declaration = ASTQuery::findDeclaration(
+        block->getName(), scopeStack, m_tree, namespaces, currentFramework);
     if (!declaration) {
       LangError error;
       error.type = LangError::UndeclaredSymbol;
@@ -855,9 +797,8 @@ void CodeValidator::validateTypes(ASTNode node, ScopeStack scopeStack,
     vector<string> namespaces = bundle->getNamespaceList();
     namespaces.insert(namespaces.begin(), parentNamespace.begin(),
                       parentNamespace.end());
-    std::shared_ptr<DeclarationNode> declaration =
-        CodeValidator::findDeclaration(bundle->getName(), scopeStack, m_tree,
-                                       namespaces);
+    std::shared_ptr<DeclarationNode> declaration = ASTQuery::findDeclaration(
+        bundle->getName(), scopeStack, m_tree, namespaces);
     if (!declaration) {
       LangError error;
       error.type = LangError::UndeclaredSymbol;
@@ -878,10 +819,8 @@ void CodeValidator::validateTypes(ASTNode node, ScopeStack scopeStack,
     }
   } else if (node->getNodeType() == AST::Function) {
     FunctionNode *func = static_cast<FunctionNode *>(node.get());
-    std::shared_ptr<DeclarationNode> declaration =
-        CodeValidator::findDeclaration(QString::fromStdString(func->getName()),
-                                       scopeStack, m_tree,
-                                       func->getNamespaceList());
+    std::shared_ptr<DeclarationNode> declaration = ASTQuery::findDeclaration(
+        func->getName(), scopeStack, m_tree, func->getNamespaceList());
     if (!declaration) {
       LangError error;
       error.type = LangError::UndeclaredSymbol;
@@ -1220,7 +1159,7 @@ void CodeValidator::validateFunctionConstraints(
     std::shared_ptr<FunctionNode> function, ScopeStack scopeStack,
     ASTNode tree) {
   // FIXME use framework when searching for function.
-  auto declaration = CodeValidator::findDeclaration(
+  auto declaration = ASTQuery::findDeclaration(
       function->getName(), scopeStack, tree, function->getNamespaceList());
   if (!declaration) {
     return;
@@ -1454,15 +1393,15 @@ void CodeValidator::validateStreamInputSize(StreamNode *stream,
   int leftOutSize = getNodeNumOutputs(left, scope, m_tree, errors);
   int rightInSize = getNodeNumInputs(right, scope, m_tree, errors);
 
-  auto leftDecl = CodeValidator::findDeclaration(
+  auto leftDecl = ASTQuery::findDeclaration(
       CodeValidator::streamMemberName(left), scope, m_tree);
   std::shared_ptr<DeclarationNode> rightDecl;
   if (right->getNodeType() == AST::Stream) {
     auto nextStreamMember = static_pointer_cast<StreamNode>(right)->getLeft();
-    rightDecl = CodeValidator::findDeclaration(
+    rightDecl = ASTQuery::findDeclaration(
         CodeValidator::streamMemberName(nextStreamMember), scope, m_tree);
   } else {
-    rightDecl = CodeValidator::findDeclaration(
+    rightDecl = ASTQuery::findDeclaration(
         CodeValidator::streamMemberName(right), scope, m_tree);
   }
   if ((leftDecl && leftDecl->getObjectType() == "buffer") ||
@@ -1595,8 +1534,8 @@ int CodeValidator::getFunctionDataSize(std::shared_ptr<FunctionNode> func,
     ASTNode value = port->getValue();
     // FIXME need to decide the size by also looking at the port block size
     int newSize = CodeValidator::getNodeNumOutputs(value, scope, tree, errors);
-    auto decl = CodeValidator::findDeclaration(func->getName(), scope, tree,
-                                               func->getNamespaceList());
+    auto decl = ASTQuery::findDeclaration(func->getName(), scope, tree,
+                                          func->getNamespaceList());
     if (decl && decl->getPropertyValue("ports")) {
       std::shared_ptr<DeclarationNode> declaredPort;
       for (auto portDecl : decl->getPropertyValue("ports")->getChildren()) {
@@ -1625,7 +1564,7 @@ int CodeValidator::getFunctionDataSize(std::shared_ptr<FunctionNode> func,
             portBlockName =
                 static_pointer_cast<BundleNode>(portBlockNode)->getName();
           }
-          auto portBlockDecl = CodeValidator::findDeclaration(
+          auto portBlockDecl = ASTQuery::findDeclaration(
               portBlockName, {{nullptr, blocks->getChildren()}}, nullptr);
           if (declaredPort->getObjectType() == "mainInputPort" ||
               declaredPort->getObjectType() == "propertyInputPort") {
@@ -1664,7 +1603,7 @@ int CodeValidator::getFunctionNumInstances(std::shared_ptr<FunctionNode> func,
     auto portBlock = propertyNode->getValue();
     QList<LangError> errors;
     auto portName = propertyNode->getName();
-    auto funcDecl = CodeValidator::findDeclaration(
+    auto funcDecl = ASTQuery::findDeclaration(
         CodeValidator::streamMemberName(func), scope, tree);
     if (funcDecl) {
       if (funcDecl->getPropertyValue("blocks")) {
@@ -1811,7 +1750,7 @@ int CodeValidator::getLargestPropertySize(
     if (value->getNodeType() == AST::Block) {
       BlockNode *name = static_cast<BlockNode *>(value.get());
       std::shared_ptr<DeclarationNode> block =
-          findDeclaration(QString::fromStdString(name->getName()), scope, tree);
+          ASTQuery::findDeclaration(name->getName(), scope, tree);
       if (block) {
         if (block->getNodeType() == AST::Declaration) {
           if (maxSize < 1) {
@@ -1885,7 +1824,7 @@ int CodeValidator::getNodeNumOutputs(ASTNode node, const ScopeStack &scope,
   } else if (node->getNodeType() == AST::Block) {
     BlockNode *name = static_cast<BlockNode *>(node.get());
     std::shared_ptr<DeclarationNode> block =
-        findDeclaration(QString::fromStdString(name->getName()), scope, tree);
+        ASTQuery::findDeclaration(name->getName(), scope, tree);
     if (block) {
       return getTypeNumOutputs(block, scope, tree, errors);
     } else {
@@ -1895,8 +1834,7 @@ int CodeValidator::getNodeNumOutputs(ASTNode node, const ScopeStack &scope,
     std::shared_ptr<FunctionNode> func =
         static_pointer_cast<FunctionNode>(node);
     std::shared_ptr<DeclarationNode> platformFunc =
-        CodeValidator::findDeclaration(QString::fromStdString(func->getName()),
-                                       scope, tree);
+        ASTQuery::findDeclaration(func->getName(), scope, tree);
     int dataSize =
         CodeValidator::getFunctionDataSize(func, scope, tree, errors);
     if (platformFunc) {
@@ -1934,8 +1872,7 @@ int CodeValidator::getNodeNumInputs(ASTNode node, ScopeStack scope,
     std::shared_ptr<FunctionNode> func =
         static_pointer_cast<FunctionNode>(node);
     std::shared_ptr<DeclarationNode> platformFunc =
-        CodeValidator::findDeclaration(QString::fromStdString(func->getName()),
-                                       scope, tree);
+        ASTQuery::findDeclaration(func->getName(), scope, tree);
     int dataSize =
         CodeValidator::getFunctionDataSize(func, scope, tree, errors);
     if (platformFunc) {
@@ -1964,7 +1901,7 @@ int CodeValidator::getNodeNumInputs(ASTNode node, ScopeStack scope,
   } else if (node->getNodeType() == AST::Block) {
     BlockNode *name = static_cast<BlockNode *>(node.get());
     std::shared_ptr<DeclarationNode> block =
-        findDeclaration(QString::fromStdString(name->getName()), scope, tree);
+        ASTQuery::findDeclaration(name->getName(), scope, tree);
     if (block) {
       return getTypeNumInputs(block, scope, tree, errors);
     } else {
@@ -2129,7 +2066,7 @@ int CodeValidator::getTypeNumInputs(
     } else {
       int size = getNodeSize(blockDeclaration, scope, tree);
       int internalSize = 1;
-      auto typeDeclaration = findTypeDeclarationByName(
+      auto typeDeclaration = ASTQuery::findTypeDeclarationByName(
           blockDeclaration->getObjectType(), scope, tree);
       if (typeDeclaration &&
           (typeDeclaration->getObjectType() == "platformModule" ||
@@ -2144,169 +2081,6 @@ int CodeValidator::getTypeNumInputs(
     return 1;
   }
   return 0;
-}
-
-std::vector<std::shared_ptr<DeclarationNode>>
-CodeValidator::findAllDeclarations(std::string objectName,
-                                   const ScopeStack &scopeStack, ASTNode tree,
-                                   vector<string> namespaces,
-                                   std::string currentFramework) {
-  std::vector<std::shared_ptr<DeclarationNode>> decls;
-  vector<string> scopesList;
-  istringstream iss(objectName);
-  copy(istream_iterator<string>(iss), istream_iterator<string>(),
-       back_inserter(scopesList));
-
-  if (objectName.size() > 0) {
-    objectName = scopesList.back();
-    scopesList.pop_back();
-    for (string ns : namespaces) {
-      scopesList.push_back(ns);
-    }
-  }
-  for (auto subScopeIt = scopeStack.rbegin(); subScopeIt != scopeStack.rend();
-       subScopeIt++) {
-    auto subScope = *subScopeIt;
-    for (ASTNode scopeNode : subScope.second) {
-      if (scopeNode->getNodeType() == AST::BundleDeclaration ||
-          scopeNode->getNodeType() == AST::Declaration) {
-        std::shared_ptr<DeclarationNode> decl =
-            static_pointer_cast<DeclarationNode>(scopeNode);
-        std::string name = decl->getName();
-        if (name == objectName) {
-          if (CodeValidator::namespaceMatch(scopesList, decl,
-                                            currentFramework)) {
-
-            if (std::find(decls.begin(), decls.end(), decl) == decls.end()) {
-              decls.push_back(decl);
-            }
-          } else {
-            auto frameworkNode = decl->getCompilerProperty("framework");
-            if (frameworkNode && frameworkNode->getNodeType() == AST::String) {
-              std::string frameworkName =
-                  static_pointer_cast<ValueNode>(frameworkNode)
-                      ->getStringValue();
-              if (CodeValidator::namespaceMatch(scopesList, decl,
-                                                frameworkName)) {
-                if (std::find(decls.begin(), decls.end(), decl) ==
-                    decls.end()) {
-                  decls.push_back(decl);
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  if (tree) {
-    for (ASTNode node : tree->getChildren()) {
-      if (node->getNodeType() == AST::BundleDeclaration ||
-          node->getNodeType() == AST::Declaration) {
-        std::shared_ptr<DeclarationNode> decl =
-            static_pointer_cast<DeclarationNode>(node);
-        std::string name = decl->getName();
-        if (name == objectName) {
-          //          auto frameworkNode =
-          //          decl->getCompilerProperty("framework"); std::string
-          //          frameworkName; if (frameworkNode &&
-          //          frameworkNode->getNodeType() == AST::String) {
-          //            frameworkName =
-          //                static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
-          //          }
-          if (CodeValidator::namespaceMatch(scopesList, decl,
-                                            currentFramework)) {
-
-            if (std::find(decls.begin(), decls.end(), decl) == decls.end()) {
-              decls.push_back(decl);
-            }
-          }
-        }
-      }
-    }
-  }
-  return decls;
-}
-
-std::shared_ptr<DeclarationNode> CodeValidator::findDeclaration(
-    std::string objectName, const ScopeStack &scopeStack, ASTNode tree,
-    vector<string> namespaces, std::string platform) {
-  vector<string> scopesList;
-  istringstream iss(objectName);
-  copy(istream_iterator<string>(iss), istream_iterator<string>(),
-       back_inserter(scopesList));
-
-  if (objectName.size() > 0) {
-    objectName = scopesList.back();
-    scopesList.pop_back();
-    for (string &ns : namespaces) {
-      scopesList.push_back(ns);
-    }
-  }
-  for (auto subScopeIt = scopeStack.rbegin(); subScopeIt != scopeStack.rend();
-       subScopeIt++) {
-    auto subScope = *subScopeIt;
-    for (ASTNode scopeNode : subScope.second) {
-      if (scopeNode->getNodeType() == AST::BundleDeclaration ||
-          scopeNode->getNodeType() == AST::Declaration) {
-        std::shared_ptr<DeclarationNode> decl =
-            static_pointer_cast<DeclarationNode>(scopeNode);
-        std::string name = decl->getName();
-        if (name == objectName) {
-          if (CodeValidator::namespaceMatch(scopesList, decl, platform)) {
-            return decl;
-          }
-        }
-      }
-    }
-  }
-  if (tree) {
-    for (ASTNode node : tree->getChildren()) {
-      if (node->getNodeType() == AST::BundleDeclaration ||
-          node->getNodeType() == AST::Declaration) {
-        std::shared_ptr<DeclarationNode> decl =
-            static_pointer_cast<DeclarationNode>(node);
-        std::string name = decl->getName();
-        if (name == objectName) {
-          auto frameworkNode = decl->getCompilerProperty("framework");
-          std::string frameworkName;
-          if (frameworkNode && frameworkNode->getNodeType() == AST::String) {
-            frameworkName =
-                static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
-          }
-          if (CodeValidator::namespaceMatch(scopesList, decl, platform)) {
-            if (platform.size() > 0) {
-              auto platformNode = decl->getCompilerProperty("framework");
-              if (platformNode && platformNode->getNodeType() == AST::String) {
-                auto platformString =
-                    static_pointer_cast<ValueNode>(platformNode)
-                        ->getStringValue();
-                if (platformString == platform) {
-                  return decl;
-                }
-              }
-            } else {
-              return decl;
-            }
-          }
-        }
-      }
-    }
-  }
-  if (platform.size() > 0) {
-    // If not found try to find in root namespace
-    return findDeclaration(objectName, scopeStack, tree, namespaces);
-  } else {
-    return nullptr;
-  }
-}
-
-std::shared_ptr<DeclarationNode>
-CodeValidator::findDeclaration(QString objectName, const ScopeStack &scopeStack,
-                               ASTNode tree, vector<string> namespaceList,
-                               string framework) {
-  return findDeclaration(objectName.toStdString(), scopeStack, tree,
-                         namespaceList, framework);
 }
 
 std::shared_ptr<DeclarationNode> CodeValidator::getDeclaration(ASTNode node) {
@@ -2354,9 +2128,8 @@ std::string CodeValidator::streamMemberName(ASTNode node) {
 std::string CodeValidator::resolveBundleType(BundleNode *bundle,
                                              ScopeStack scopeStack,
                                              ASTNode tree) {
-  QString bundleName = QString::fromStdString(bundle->getName());
   std::shared_ptr<DeclarationNode> declaration =
-      findDeclaration(bundleName, scopeStack, tree);
+      ASTQuery::findDeclaration(bundle->getName(), scopeStack, tree);
   if (declaration) {
     if (declaration->getObjectType() == "constant") {
       std::shared_ptr<PropertyNode> property =
@@ -2376,9 +2149,8 @@ std::string CodeValidator::resolveBundleType(BundleNode *bundle,
 std::string CodeValidator::resolveBlockType(BlockNode *name,
                                             ScopeStack scopeStack,
                                             ASTNode tree) {
-  QString nodeName = QString::fromStdString(name->getName());
   std::shared_ptr<DeclarationNode> declaration =
-      findDeclaration(nodeName, scopeStack, tree);
+      ASTQuery::findDeclaration(name->getName(), scopeStack, tree);
   if (declaration) {
     if (declaration->getObjectType() == "constant") {
       vector<std::shared_ptr<PropertyNode>> properties =
@@ -2524,7 +2296,7 @@ CodeValidator::resolveConnectionBlock(ASTNode node, ScopeStack scopeStack,
         auto portBlock = portDeclBlock->getPropertyValue("block");
         if (portBlock) {
           auto funcName = funcDecl->getName();
-          auto portBlockDecl = CodeValidator::findDeclaration(
+          auto portBlockDecl = ASTQuery::findDeclaration(
               CodeValidator::streamMemberName(portBlock),
               {{node, static_pointer_cast<DeclarationNode>(funcDecl)
                           ->getPropertyValue("blocks")
@@ -2554,7 +2326,7 @@ CodeValidator::resolveConnectionBlock(ASTNode node, ScopeStack scopeStack,
                           node->getCompilerProperty("outputBlock");
                       if (outerBlock->getNodeType() == AST::Block ||
                           outerBlock->getNodeType() == AST::Bundle) {
-                        auto decl = CodeValidator::findDeclaration(
+                        auto decl = ASTQuery::findDeclaration(
                             CodeValidator::streamMemberName(outerBlock),
                             scopeStack, tree);
                         if (decl) {
@@ -2600,9 +2372,9 @@ ASTNode CodeValidator::getMatchedOuterInstance(
           static_pointer_cast<BlockNode>(portDecl->getPropertyValue("block"));
 
       // Search only within internal scope for port block
-      auto portBlockDecl = CodeValidator::findDeclaration(
-          CodeValidator::streamMemberName(portBlock),
-          {{functionNode, internalBlocks}}, nullptr);
+      auto portBlockDecl =
+          ASTQuery::findDeclaration(CodeValidator::streamMemberName(portBlock),
+                                    {{functionNode, internalBlocks}}, nullptr);
 
       if (portBlockDecl && portBlockDecl->getName() == blockDecl->getName()) {
         // If it's a main port, we can get the external block from the
@@ -2636,7 +2408,7 @@ ASTNode CodeValidator::getMatchedOuterInstance(
             if (outerBlock) {
               if (outerBlock->getNodeType() == AST::Block ||
                   outerBlock->getNodeType() == AST::Bundle) {
-                matchedInst = CodeValidator::findDeclaration(
+                matchedInst = ASTQuery::findDeclaration(
                     CodeValidator::streamMemberName(outerBlock), scopeStack,
                     tree);
                 break;
@@ -2806,7 +2578,7 @@ double CodeValidator::resolveRatePortProperty(
                     static_pointer_cast<FunctionNode>(subScope.first);
                 // TODO check framework too
                 std::string framework;
-                auto funcDecl = CodeValidator::findDeclaration(
+                auto funcDecl = ASTQuery::findDeclaration(
                     functionNode->getName(), scopeStackOuter, tree,
                     functionNode->getNamespaceList(), framework);
                 if (resolvedBlock->getNodeType() == AST::Declaration ||
@@ -2844,7 +2616,7 @@ double CodeValidator::resolveRatePortProperty(
                     static_pointer_cast<FunctionNode>(subScope.first);
                 // TODO check framework too
                 std::string framework;
-                auto funcDecl = CodeValidator::findDeclaration(
+                auto funcDecl = ASTQuery::findDeclaration(
                     functionNode->getName(), scopeStackOuter, tree,
                     functionNode->getNamespaceList(), framework);
                 if (resolvedBlock->getNodeType() == AST::Declaration ||
@@ -2882,7 +2654,7 @@ double CodeValidator::resolveRatePortProperty(
                     static_pointer_cast<FunctionNode>(subScope.first);
                 // TODO check framework too
                 std::string framework;
-                auto funcDecl = CodeValidator::findDeclaration(
+                auto funcDecl = ASTQuery::findDeclaration(
                     functionNode->getName(), scopeStackOuter, tree,
                     functionNode->getNamespaceList(), framework);
                 if (resolvedBlock->getNodeType() == AST::Declaration ||
@@ -3070,10 +2842,8 @@ int CodeValidator::evaluateConstInteger(ASTNode node, ScopeStack scope,
     if (indexList->size() == 1) {
       int index = evaluateConstInteger(indexList->getChildren().at(0), scope,
                                        tree, errors);
-
-      QString bundleName = QString::fromStdString(bundle->getName());
       std::shared_ptr<DeclarationNode> declaration =
-          findDeclaration(bundleName, scope, tree);
+          ASTQuery::findDeclaration(bundle->getName(), scope, tree);
       if (declaration && declaration->getNodeType() == AST::BundleDeclaration) {
         ASTNode member = getMemberfromBlockBundleConst(declaration, index, tree,
                                                        scope, errors);
@@ -3097,10 +2867,10 @@ int CodeValidator::evaluateConstInteger(ASTNode node, ScopeStack scope,
     error.errorTokens.push_back(bundle->getName());
     errors << error;
   } else if (node->getNodeType() == AST::Block) {
-    QString name =
-        QString::fromStdString(static_cast<BlockNode *>(node.get())->getName());
+    std::shared_ptr<BlockNode> nameNode =
+        std::static_pointer_cast<BlockNode>(node);
     std::shared_ptr<DeclarationNode> declaration =
-        findDeclaration(name, scope, tree);
+        ASTQuery::findDeclaration(nameNode->getName(), scope, tree);
     if (declaration && declaration->getObjectType() == "constant") {
       return evaluateConstInteger(declaration->getPropertyValue("value"), scope,
                                   tree, errors);
@@ -3128,9 +2898,8 @@ double CodeValidator::evaluateConstReal(ASTNode node, ScopeStack scope,
     return static_cast<ValueNode *>(node.get())->getIntValue();
   } else if (node->getNodeType() == AST::Bundle) {
     BundleNode *bundle = static_cast<BundleNode *>(node.get());
-    QString bundleName = QString::fromStdString(bundle->getName());
     std::shared_ptr<DeclarationNode> declaration =
-        findDeclaration(bundleName, scope, tree);
+        ASTQuery::findDeclaration(bundle->getName(), scope, tree);
     int index = evaluateConstInteger(bundle->index(), scope, tree, errors);
     if (declaration && declaration->getNodeType() == AST::BundleDeclaration) {
       ASTNode member = getMemberfromBlockBundleConst(declaration, index, tree,
@@ -3139,9 +2908,8 @@ double CodeValidator::evaluateConstReal(ASTNode node, ScopeStack scope,
     }
   } else if (node->getNodeType() == AST::Block) {
     BlockNode *blockNode = static_cast<BlockNode *>(node.get());
-    QString name = QString::fromStdString(blockNode->getName());
-    std::shared_ptr<DeclarationNode> declaration =
-        findDeclaration(name, scope, tree, blockNode->getNamespaceList());
+    std::shared_ptr<DeclarationNode> declaration = ASTQuery::findDeclaration(
+        blockNode->getName(), scope, tree, blockNode->getNamespaceList());
     if (!declaration) {
       LangError error;
       error.type = LangError::UndeclaredSymbol;
@@ -3187,9 +2955,8 @@ std::string CodeValidator::evaluateConstString(ASTNode node, ScopeStack scope,
     return static_pointer_cast<ValueNode>(node)->getStringValue();
   } else if (node->getNodeType() == AST::Bundle) {
     auto bundle = static_pointer_cast<BundleNode>(node);
-    QString bundleName = QString::fromStdString(bundle->getName());
     std::shared_ptr<DeclarationNode> declaration =
-        findDeclaration(bundleName, scope, tree);
+        ASTQuery::findDeclaration(bundle->getName(), scope, tree);
     int index = evaluateConstInteger(bundle->index(), scope, tree, errors);
     if (declaration && declaration->getNodeType() == AST::BundleDeclaration) {
       ASTNode member = getMemberfromBlockBundleConst(declaration, index, tree,
@@ -3198,9 +2965,9 @@ std::string CodeValidator::evaluateConstString(ASTNode node, ScopeStack scope,
     }
   } else if (node->getNodeType() == AST::Block) {
     auto blockNode = static_pointer_cast<BlockNode>(node);
-    QString name = QString::fromStdString(blockNode->getName());
-    std::shared_ptr<DeclarationNode> declaration = findDeclaration(
-        name, scope, tree, blockNode->getNamespaceList(), currentFramework);
+    std::shared_ptr<DeclarationNode> declaration = ASTQuery::findDeclaration(
+        blockNode->getName(), scope, tree, blockNode->getNamespaceList(),
+        currentFramework);
     if (!declaration) {
       LangError error;
       error.type = LangError::UndeclaredSymbol;
@@ -3233,9 +3000,8 @@ std::string CodeValidator::evaluateConstString(ASTNode node, ScopeStack scope,
   } else if (node->getNodeType() == AST::PortProperty) {
     PortPropertyNode *propertyNode =
         static_cast<PortPropertyNode *>(node.get());
-    std::shared_ptr<DeclarationNode> block = CodeValidator::findDeclaration(
-        QString::fromStdString(propertyNode->getName()), scope, tree, {},
-        currentFramework);
+    std::shared_ptr<DeclarationNode> block = ASTQuery::findDeclaration(
+        propertyNode->getName(), scope, tree, {}, currentFramework);
     if (block) {
       ASTNode propertyValue =
           block->getPropertyValue(propertyNode->getPortName());
@@ -3276,9 +3042,9 @@ ASTNode CodeValidator::getMemberfromBlockBundleConst(
           return getMemberFromList(static_cast<ListNode *>(value.get()), index,
                                    errors);
         } else if (value->getNodeType() == AST::Bundle) {
-          auto decl =
-              findDeclaration(CodeValidator::streamMemberName(blockDecl),
-                              scopeStack, tree, blockDecl->getNamespaceList());
+          auto decl = ASTQuery::findDeclaration(
+              CodeValidator::streamMemberName(blockDecl), scopeStack, tree,
+              blockDecl->getNamespaceList());
           auto indexList = static_pointer_cast<BundleNode>(value);
           if (indexList->getChildren().size() == 1) {
             auto previousErrors = errors.size();
@@ -3356,68 +3122,12 @@ QVector<ASTNode> CodeValidator::validTypesForPort(
   return validTypes;
 }
 
-std::shared_ptr<DeclarationNode> CodeValidator::findTypeDeclarationByName(
-    string typeName, ScopeStack scope, ASTNode tree,
-    std::vector<string> namespaces, std::string currentFramework) {
-  auto getDecl =
-      [&](ASTNode scopeMember, string typeName, std::vector<string> namespaces,
-          std::string framework) -> std::shared_ptr<DeclarationNode> {
-    std::shared_ptr<DeclarationNode> declarationNode =
-        static_pointer_cast<DeclarationNode>(scopeMember);
-    if (declarationNode->getObjectType() == "type" ||
-        declarationNode->getObjectType() == "platformBlock") {
-      ASTNode valueNode = declarationNode->getPropertyValue("typeName");
-      if (valueNode && valueNode->getNodeType() == AST::String) {
-        auto value = static_pointer_cast<ValueNode>(valueNode);
-        if (typeName == value->getStringValue()) {
-          if (CodeValidator::namespaceMatch(namespaces, declarationNode,
-                                            currentFramework)) {
-            return declarationNode;
-          }
-        }
-      }
-    } else if (declarationNode->getObjectType() == "platformModule") {
-      if (typeName == declarationNode->getName()) {
-        if (CodeValidator::namespaceMatch(namespaces, declarationNode,
-                                          currentFramework)) {
-          return declarationNode;
-        }
-      }
-    }
-    return nullptr;
-  };
-  if (tree) {
-    for (ASTNode node : tree->getChildren()) {
-      if (node->getNodeType() == AST::Declaration ||
-          node->getNodeType() == AST::BundleDeclaration) {
-        auto decl = getDecl(node, typeName, namespaces, "");
-        if (decl) {
-          return decl;
-        }
-      }
-    }
-  }
-  for (auto subScope : scope) {
-    for (auto scopeMember : subScope.second) {
-      if (scopeMember->getNodeType() == AST::Declaration ||
-          scopeMember->getNodeType() == AST::BundleDeclaration) {
-        auto decl =
-            getDecl(scopeMember, typeName, namespaces, currentFramework);
-        if (decl) {
-          return decl;
-        }
-      }
-    }
-  }
-  return nullptr;
-}
-
 std::shared_ptr<DeclarationNode>
 CodeValidator::findTypeDeclaration(std::shared_ptr<DeclarationNode> block,
                                    ScopeStack scope, ASTNode tree,
                                    std::string currentFramework) {
   string typeName = block->getObjectType();
-  return CodeValidator::findTypeDeclarationByName(
+  return ASTQuery::findTypeDeclarationByName(
       typeName, scope, tree, block->getNamespaceList(), currentFramework);
 }
 
@@ -3530,8 +3240,8 @@ CodeValidator::getPortsForType(string typeName, ScopeStack scope, ASTNode tree,
   std::vector<ASTNode> portList;
 
   std::shared_ptr<DeclarationNode> typeBlock =
-      CodeValidator::findTypeDeclarationByName(typeName, scope, tree,
-                                               namespaces, framework);
+      ASTQuery::findTypeDeclarationByName(typeName, scope, tree, namespaces,
+                                          framework);
 
   if (typeBlock) {
     if (typeBlock->getObjectType() == "type" ||
@@ -3562,7 +3272,7 @@ std::vector<ASTNode>
 CodeValidator::getInheritedPorts(std::shared_ptr<DeclarationNode> block,
                                  ScopeStack scope, ASTNode tree) {
   std::vector<ASTNode> inheritedProperties;
-  auto inheritedTypes = CodeValidator::getInheritedTypes(block, scope, tree);
+  auto inheritedTypes = ASTQuery::getInheritedTypes(block, scope, tree);
   QStringList inheritedName;
   for (auto typeDeclaration : inheritedTypes) {
     auto inheritedFromType = getPortsForTypeBlock(typeDeclaration, scope, tree);
@@ -3578,54 +3288,6 @@ CodeValidator::getInheritedPorts(std::shared_ptr<DeclarationNode> block,
     }
   }
   return inheritedProperties;
-}
-
-vector<std::shared_ptr<DeclarationNode>>
-CodeValidator::getInheritedTypes(std::shared_ptr<DeclarationNode> block,
-                                 ScopeStack scope, ASTNode tree) {
-  vector<std::shared_ptr<DeclarationNode>> inheritedTypes;
-  if (!block) {
-    return {};
-  }
-  ASTNode inherits = block->getPropertyValue("inherits");
-  if (inherits) {
-    if (inherits->getNodeType() == AST::List) {
-      for (ASTNode inheritsFromName : inherits->getChildren()) {
-        if (inheritsFromName->getNodeType() == AST::String) {
-          Q_ASSERT(0 == 1); // Disallowed
-        } else if (inheritsFromName->getNodeType() == AST::Block) {
-          auto inheritsBlock = static_pointer_cast<BlockNode>(inheritsFromName);
-          std::shared_ptr<DeclarationNode> inheritedDeclaration =
-              CodeValidator::findDeclaration(
-                  QString::fromStdString(inheritsBlock->getName()), scope,
-                  tree);
-          if (inheritedDeclaration) {
-            inheritedTypes.push_back(inheritedDeclaration);
-            auto parentTypes = CodeValidator::getInheritedTypes(
-                inheritedDeclaration, scope, tree);
-            inheritedTypes.insert(inheritedTypes.end(), parentTypes.begin(),
-                                  parentTypes.end());
-          }
-        }
-      }
-    } else if (inherits->getNodeType() == AST::String) {
-      Q_ASSERT(0 == 1); // Disallowed
-    } else if (inherits->getNodeType() == AST::Block) {
-      auto inheritsBlock = static_pointer_cast<BlockNode>(inherits);
-      std::shared_ptr<DeclarationNode> inheritedDeclaration =
-          CodeValidator::findDeclaration(
-              QString::fromStdString(inheritsBlock->getName()), scope, tree);
-      if (inheritedDeclaration) {
-        auto parentTypes =
-            CodeValidator::getInheritedTypes(inheritedDeclaration, scope, tree);
-        inheritedTypes.insert(inheritedTypes.end(), parentTypes.begin(),
-                              parentTypes.end());
-      }
-    } else {
-      qDebug() << "Unexpected type for inherits property";
-    }
-  }
-  return inheritedTypes;
 }
 
 std::shared_ptr<DeclarationNode> CodeValidator::getMainOutputPortBlock(
@@ -3819,8 +3481,8 @@ int CodeValidator::getNodeSize(ASTNode node, const ScopeStack &scopeStack,
     }
   } else if (node->getNodeType() == AST::Block) {
     BlockNode *blockNode = static_cast<BlockNode *>(node.get());
-    std::shared_ptr<DeclarationNode> block = findDeclaration(
-        QString::fromStdString(blockNode->getName()), scopeStack, tree);
+    std::shared_ptr<DeclarationNode> block =
+        ASTQuery::findDeclaration(blockNode->getName(), scopeStack, tree);
     if (!block) {
       size = -1; // Block not declared
     } else if (block->getNodeType() == AST::BundleDeclaration) {
@@ -3898,9 +3560,8 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack,
 
   if (node->getNodeType() == AST::Block) {
     BlockNode *name = static_cast<BlockNode *>(node.get());
-    std::shared_ptr<DeclarationNode> declaration =
-        CodeValidator::findDeclaration(name->getName(), scopeStack, tree,
-                                       name->getNamespaceList());
+    std::shared_ptr<DeclarationNode> declaration = ASTQuery::findDeclaration(
+        name->getName(), scopeStack, tree, name->getNamespaceList());
 
     if (declaration) {
       auto typeDeclaration =
@@ -3921,9 +3582,8 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack,
   } else if (node->getNodeType() == AST::Bundle) {
     BundleNode *name = static_cast<BundleNode *>(node.get());
 
-    std::shared_ptr<DeclarationNode> declaration =
-        CodeValidator::findDeclaration(name->getName(), scopeStack, tree,
-                                       name->getNamespaceList());
+    std::shared_ptr<DeclarationNode> declaration = ASTQuery::findDeclaration(
+        name->getName(), scopeStack, tree, name->getNamespaceList());
     if (declaration && declaration->getDomain()) {
       domainNode = declaration->getDomain()->deepCopy();
       domainNode->setNamespaceList(node->getNamespaceList());
@@ -3935,8 +3595,8 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack,
       if (member->getNodeType() == AST::Block) {
         BlockNode *name = static_cast<BlockNode *>(member.get());
         std::shared_ptr<DeclarationNode> declaration =
-            CodeValidator::findDeclaration(name->getName(), scopeStack, tree,
-                                           name->getNamespaceList());
+            ASTQuery::findDeclaration(name->getName(), scopeStack, tree,
+                                      name->getNamespaceList());
         if (declaration) {
           tempDomainName =
               CodeValidator::getNodeDomainName(declaration, scopeStack, tree);
@@ -3944,8 +3604,7 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack,
       } else if (member->getNodeType() == AST::Bundle) {
         BundleNode *name = static_cast<BundleNode *>(member.get());
         std::shared_ptr<DeclarationNode> declaration =
-            CodeValidator::findDeclaration(
-                QString::fromStdString(name->getName()), scopeStack, tree);
+            ASTQuery::findDeclaration(name->getName(), scopeStack, tree);
         if (declaration) {
           tempDomainName =
               CodeValidator::getNodeDomainName(declaration, scopeStack, tree);
@@ -3989,7 +3648,7 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack,
     domainNode = node->getCompilerProperty(
         "domain"); // static_cast<FunctionNode *>(node.get())->getDomain();
     if (!domainNode) {
-      auto funcDecl = CodeValidator::findDeclaration(
+      auto funcDecl = ASTQuery::findDeclaration(
           static_pointer_cast<FunctionNode>(node)->getName(), scopeStack, tree,
           node->getNamespaceList());
       if (funcDecl && funcDecl->getObjectType() == "platformModule") {
@@ -4112,8 +3771,8 @@ std::string CodeValidator::getDomainIdentifier(ASTNode domain,
       }
     } else if (domain->getNodeType() == AST::Bundle) {
       auto domainBlock = static_pointer_cast<BundleNode>(domain);
-      auto domainDeclaration = CodeValidator::findDeclaration(
-          QString::fromStdString(domainBlock->getName()), scopeStack, tree);
+      auto domainDeclaration =
+          ASTQuery::findDeclaration(domainBlock->getName(), scopeStack, tree);
       if (domainDeclaration) {
         if (domainDeclaration->getObjectType() == "_domainDefinition") {
           name = domainDeclaration->getName();
@@ -4152,9 +3811,8 @@ void CodeValidator::setDomainForNode(ASTNode node, ASTNode domain,
     }
   } else if (node->getNodeType() == AST::Block ||
              node->getNodeType() == AST::Bundle) {
-    std::shared_ptr<DeclarationNode> declaration =
-        CodeValidator::findDeclaration(CodeValidator::streamMemberName(node),
-                                       scopeStack, tree);
+    std::shared_ptr<DeclarationNode> declaration = ASTQuery::findDeclaration(
+        CodeValidator::streamMemberName(node), scopeStack, tree);
     if (declaration) {
       auto typeDeclaration =
           CodeValidator::findTypeDeclaration(declaration, scopeStack, tree);

@@ -4,6 +4,7 @@
 #include <fstream>
 #include <sstream>
 
+#include "astfunctions.h"
 #include "blocknode.h"
 #include "declarationnode.h"
 #include "valuenode.h"
@@ -29,7 +30,7 @@ void ToolManager::readTemplates() {
 
   auto files = rootDir.entryList(QStringList() << "*.stride");
   for (auto file : files) {
-    auto tree = AST::parseFile(
+    auto tree = ASTFunctions::parseFile(
         (rootDir.path() + QDir::separator() + file).toLocal8Bit().constData());
     if (tree) {
       for (auto child : tree->getChildren()) {
@@ -304,7 +305,7 @@ void ToolManager::readLocalConfigs() {
   localPaths.clear();
   auto files = rootDir.entryList(QStringList() << "*.stride");
   for (auto file : files) {
-    auto tree = AST::parseFile(
+    auto tree = ASTFunctions::parseFile(
         (rootDir.path() + QDir::separator() + file).toLocal8Bit().constData());
     if (tree) {
       for (auto child : tree->getChildren()) {

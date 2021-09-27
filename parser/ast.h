@@ -98,10 +98,6 @@ public:
 
   virtual ASTNode deepCopy();
 
-  static ASTNode parseFile(const char *fileName,
-                           const char *sourceFilename = nullptr);
-  static std::vector<LangError> getParseErrors();
-
   std::string getFilename() const;
   void setFilename(const std::string &filename);
 

@@ -46,9 +46,6 @@
 
 using namespace std;
 
-extern AST *parse(const char *fileName, const char *sourceFilename);
-extern std::vector<LangError> getErrors();
-
 AST::AST() {
   m_token = AST::None;
   m_line = -1;
@@ -84,12 +81,6 @@ ASTNode AST::deepCopy() {
   //    }
   return newNode;
 }
-
-ASTNode AST::parseFile(const char *fileName, const char *sourceFilename) {
-  return std::shared_ptr<AST>(parse(fileName, sourceFilename));
-}
-
-vector<LangError> AST::getParseErrors() { return getErrors(); }
 
 string AST::getFilename() const { return m_filename; }
 

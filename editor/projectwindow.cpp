@@ -56,6 +56,8 @@
 #include "projectwindow.h"
 #include "ui_projectwindow.h"
 
+#include "astfunctions.h"
+#include "astquery.h"
 #include "codeeditor.h"
 #include "coderesolver.h"
 #include "codevalidator.h"
@@ -137,9 +139,9 @@ bool ProjectWindow::build() {
   vector<LangError> syntaxErrors;
 
   ASTNode tree;
-  tree = AST::parseFile(editor->filename().toLocal8Bit().constData());
+  tree = ASTFunctions::parseFile(editor->filename().toLocal8Bit().constData());
 
-  syntaxErrors = AST::getParseErrors();
+  syntaxErrors = ASTFunctions::getParseErrors();
 
   if (syntaxErrors.size() > 0) {
     for (auto syntaxError : syntaxErrors) {
@@ -1345,7 +1347,8 @@ void ProjectWindow::configureSystem() {
   CodeEditor *editor =
       static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
   vector<ASTNode> optionTrees;
-  ASTNode tree = AST::parseFile(editor->filename().toStdString().c_str());
+  ASTNode tree =
+      ASTFunctions::parseFile(editor->filename().toStdString().c_str());
   if (tree) {
     m_codeModel.updateCodeAnalysis(editor->document()->toPlainText(),
                                    m_environment["striderootPath"].toString(),
@@ -1421,7 +1424,7 @@ void ProjectWindow::configureSystem() {
 
           for (auto config : configuration->getChildren()) {
             if (config->getNodeType() == AST::Block) {
-              auto configDecl = CodeValidator::findDeclaration(
+              auto configDecl = ASTQuery::findDeclaration(
                   static_pointer_cast<BlockNode>(config)->getName(), {}, tree);
               if (configDecl) {
                 QString optionName;
