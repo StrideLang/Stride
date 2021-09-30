@@ -10,9 +10,12 @@ module PortProperty {
         }
     ]
     blocks:     [
+        reaction React { 
+            streams: [Input * InputPort.rate >> Output;]
+        }
     ]
     streams: [
-	[Input, 0] >> Greater() >> reaction { Input * InputPort.rate >> Output; };
+	[Input, 0] >> Greater() >> React();
     ]
 }
 

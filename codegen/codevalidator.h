@@ -149,17 +149,6 @@ public:
   getDataTypeForDeclaration(std::shared_ptr<DeclarationNode> decl,
                             ASTNode tree);
 
-  static std::vector<ASTNode>
-  getPortsForTypeBlock(std::shared_ptr<DeclarationNode> block, ScopeStack scope,
-                       ASTNode tree);
-  static std::vector<ASTNode> getPortsForType(std::string typeName,
-                                              ScopeStack scope, ASTNode tree,
-                                              std::vector<string> namespaces,
-                                              string framework = "");
-  static std::vector<ASTNode>
-  getInheritedPorts(std::shared_ptr<DeclarationNode> block, ScopeStack scope,
-                    ASTNode tree);
-
   static std::shared_ptr<DeclarationNode>
   getMainOutputPortBlock(std::shared_ptr<DeclarationNode> moduleBlock);
   static std::shared_ptr<DeclarationNode>
@@ -303,28 +292,10 @@ private:
                                 ScopeStack scopeStack, ASTNode tree);
 
   std::vector<ASTNode>
-  processConstraintFunction(std::shared_ptr<FunctionNode> constraintFunction,
-                            std::shared_ptr<FunctionNode> functionInstance,
-                            std::vector<ASTNode> input,
-                            QList<LangError> &errors);
-
-  std::vector<ASTNode>
   resolveConstraintNode(ASTNode node, std::vector<ASTNode> previous,
                         std::shared_ptr<FunctionNode> function,
                         std::shared_ptr<DeclarationNode> declaration,
                         ScopeStack scopeStack, ASTNode tree);
-
-  bool nodesAreEqual(ASTNode node1, ASTNode node2, ASTNode *output);
-  bool nodesAreNotEqual(ASTNode node1, ASTNode node2, ASTNode *output);
-  bool nodesIsGreater(ASTNode node1, ASTNode node2, ASTNode *output);
-  bool nodesIsNotGreater(ASTNode node1, ASTNode node2, ASTNode *output);
-  bool nodesIsLesser(ASTNode node1, ASTNode node2, ASTNode *output);
-  bool nodesIsNotLesser(ASTNode node1, ASTNode node2, ASTNode *output);
-  bool nodesOr(ASTNode node1, ASTNode node2, ASTNode *output);
-  bool nodesAnd(ASTNode node1, ASTNode node2, ASTNode *output);
-  bool nodesXor(ASTNode node1, ASTNode node2, ASTNode *output);
-  bool nodeNot(ASTNode node1, ASTNode *output);
-  bool nodeIsNone(ASTNode node1, ASTNode *output);
 
   int getBlockDataSize(std::shared_ptr<DeclarationNode> declaration,
                        ScopeStack scope, QList<LangError> &errors);

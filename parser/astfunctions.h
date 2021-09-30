@@ -3,6 +3,9 @@
 
 #include "ast.h"
 #include "declarationnode.h"
+#include "expressionnode.h"
+#include "streamnode.h"
+#include "valuenode.h"
 
 #include <map>
 #include <vector>
@@ -13,20 +16,62 @@ public:
                            const char *sourceFilename = nullptr);
   static std::vector<LangError> getParseErrors();
 
-  static void
-  insertBuiltinObjects(ASTNode tree,
-                       std::map<std::string, std::vector<ASTNode>> importTrees);
-  static void
-  insertDependentTypes(std::shared_ptr<DeclarationNode> typeDeclaration,
-                       std::map<std::string, std::vector<ASTNode>> &objects,
-                       ASTNode tree);
-
+  //
   static bool resolveInherits(std::shared_ptr<DeclarationNode> decl,
                               ASTNode tree);
 
-  static void insertBuiltinObjectsForNode(
+  // Insert system and library objects used in tree from import trees.
+  // externalNodes provides library and import nodes. The key is the namespace
+  // they are imported into
+  static void insertRequiredObjects(
+      ASTNode tree, std::map<std::string, std::vector<ASTNode>> externalNodes);
+  static void insertRequiredObjectsForNode(
       ASTNode node, std::map<std::string, std::vector<ASTNode>> &objects,
       ASTNode tree, std::string currentFramework = "");
+
+  // Insert system and library types required in declaration
+  // externalNodes provides library and import nodes. The key is the namespace
+  // they are imported into
+  static void insertDependentTypes(
+      std::shared_ptr<DeclarationNode> typeDeclaration,
+      std::map<std::string, std::vector<ASTNode>> &externalNodes, ASTNode tree);
+
+  // Fill default properties for all declarations from type declarations
+  // The tree must contain all required declarations (type, module, reaction,
+  // etc.) that define the default properties
+  static void fillDefaultProperties(ASTNode tree);
+
+  // The scopeNodes vector must contain any additional declarations needed to
+  // fill the node's default properties
+  static void fillDefaultPropertiesForNode(ASTNode node,
+                                           std::vector<ASTNode> scopeNodes);
+
+  // Process Anonymous declarations inside streams
+  // extracting definitions and a replacing with name
+  static void processAnoymousDeclarations(ASTNode tree);
+
+  // Recursively resolve constants
+  static void resolveConstantsInNode(ASTNode node, ScopeStack scope,
+                                     ASTNode tree);
+
+  // Reduce 'value' to a single constant ValueNode if possible
+  static std::shared_ptr<ValueNode> resolveConstant(ASTNode value,
+                                                    ScopeStack scope,
+                                                    ASTNode tree,
+                                                    std::string framework = "");
+
+  static std::shared_ptr<ValueNode>
+  reduceConstExpression(std::shared_ptr<ExpressionNode> expr, ScopeStack scope,
+                        ASTNode tree);
+
+protected:
+  // Anonymous declaration helpre functions
+  static std::vector<ASTNode>
+  processAnonDeclsForScope(const std::vector<ASTNode> scopeTree);
+  // Look for declarations in a stream, extract them and replace them with a
+  // block
+  static std::vector<std::shared_ptr<DeclarationNode>>
+  extractStreamDeclarations(std::shared_ptr<StreamNode> stream);
 };
 
 #endif // ASTFUNCTIONS_H

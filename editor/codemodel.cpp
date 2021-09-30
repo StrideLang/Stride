@@ -104,7 +104,7 @@ QString CodeModel::getHtmlDocumentation(QString symbol) {
             "<table><tr><td><b>Name</b></td><td><b>Types</b></"
             "td><td><b>Default</b></td><td><b>Direction</b></td></tr>";
         auto ports =
-            CodeValidator::getPortsForTypeBlock(typeBlock, {}, m_lastValidTree);
+            ASTQuery::getPortsForTypeBlock(typeBlock, {}, m_lastValidTree);
         for (ASTNode port : ports) {
           DeclarationNode *portBlock =
               static_cast<DeclarationNode *>(port.get());
@@ -590,8 +590,8 @@ QString CodeModel::getTypeSyntax(QString symbol) {
     AST *metaValue = declaration->getPropertyValue("meta").get();
     if (metaValue) {
       Q_ASSERT(metaValue->getNodeType() == AST::String);
-      auto allPorts = CodeValidator::getPortsForTypeBlock(
-          declaration, ScopeStack(), m_lastValidTree);
+      auto allPorts = ASTQuery::getPortsForTypeBlock(declaration, ScopeStack(),
+                                                     m_lastValidTree);
 
       text += symbol + " Name {\n";
 

@@ -51,8 +51,6 @@
 #include "systemconfiguration.hpp"
 #include "valuenode.h"
 
-typedef std::vector<std::pair<ASTNode, std::vector<ASTNode>>> ScopeStack;
-
 class CodeResolver {
 public:
   CodeResolver(ASTNode tree, QString striderootDir,
@@ -63,39 +61,20 @@ public:
 
   std::shared_ptr<StrideSystem> getSystem() { return m_system; }
 
-  //  bool platformIsValid() {
-  //      return m_system->getErrors().size() == 0;
-  //  }
-
   std::vector<std::pair<std::string, std::string>> m_domainChanges;
 
-  static void fillDefaultPropertiesForNode(ASTNode node,
-                                           std::vector<ASTNode> tree);
   static std::shared_ptr<DeclarationNode>
   createSignalDeclaration(QString name, int size, ScopeStack scope,
                           ASTNode tree);
 
-  static std::shared_ptr<ValueNode>
-  reduceConstExpression(std::shared_ptr<ExpressionNode> expr, ScopeStack scope,
-                        ASTNode tree);
-  static std::shared_ptr<ValueNode> resolveConstant(ASTNode value,
-                                                    ScopeStack scope,
-                                                    ASTNode tree,
-                                                    string framework = "");
-  static void resolveConstantsInNode(ASTNode node, ScopeStack scope,
-                                     ASTNode tree,
-                                     string currentFramework = "");
-
 private:
   // Main processing functions
   void processSystem();
-  void fillDefaultProperties();
   void enableTesting();
   void declareModuleInternalBlocks();
   void resolveStreamSymbols();
   void processDeclarations();
   void expandParallel();
-  void processAnoymousDeclarations();
   void resolveConstants();
   void processDomains();
   void resolveRates();
@@ -137,11 +116,6 @@ private:
   std::shared_ptr<DeclarationNode> createConstantDeclaration(string name,
                                                              ASTNode value);
   void declareIfMissing(string name, ASTNode blockList, ASTNode value);
-  //  std::shared_ptr<DeclarationNode>
-  //  createSignalBridge(string bridgeName, string originalName,
-  //                     ASTNode defaultValue, ASTNode inDomain, ASTNode
-  //                     outDomain, const string filename, int line, int size =
-  //                     1, string type = "signal");
 
   std::vector<ASTNode>
   declareUnknownExpressionSymbols(std::shared_ptr<ExpressionNode> expr,

@@ -39,42 +39,42 @@
 
 #include "ast.h"
 
-class ValueNode : public AST
-{
+class ValueNode : public AST {
+  friend class ASTRuntime; // runtime can set the internal value
 public:
-    ValueNode(const char *filename, int line);
-    ValueNode(int64_t value, const char * filename, int line);
-    ValueNode(float value, const char * filename, int line);
-    ValueNode(double value, const char * filename, int line);
-    ValueNode(std::string value, const char * filename, int line);
-    ValueNode(bool value, const char * filename, int line);
-    ~ValueNode() override;
+  ValueNode(const char *filename, int line);
+  ValueNode(int64_t value, const char *filename, int line);
+  ValueNode(float value, const char *filename, int line);
+  ValueNode(double value, const char *filename, int line);
+  ValueNode(std::string value, const char *filename, int line);
+  ValueNode(bool value, const char *filename, int line);
+  ~ValueNode() override;
 
-    int64_t getIntValue() const;
+  int64_t getIntValue() const;
 
-    double getRealValue() const;
+  double getRealValue() const;
 
-    double toReal() const;
+  double toReal() const;
 
-    std::string getStringValue() const;
+  std::string getStringValue() const;
 
-    std::string toString() const;
+  std::string toString() const;
 
-    bool getSwitchValue() const;
+  bool getSwitchValue() const;
 
-    virtual ASTNode deepCopy() override;
+  virtual ASTNode deepCopy() override;
 
-    void setDomain(ASTNode domainName);
+  void setDomain(ASTNode domainName);
 
-    ASTNode getDomain();
+  ASTNode getDomain();
 
 private:
-    int64_t m_intValue;
-    double m_floatValue;
-    std::string m_stringValue;
-    bool m_switch;
+  int64_t m_intValue;
+  double m_floatValue;
+  std::string m_stringValue;
+  bool m_switch;
 
-    ASTNode m_domain {nullptr};
+  ASTNode m_domain{nullptr};
 };
 
 #endif // VALUENODE_H

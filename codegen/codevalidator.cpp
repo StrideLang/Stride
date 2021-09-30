@@ -41,6 +41,7 @@
 
 #include "astfunctions.h"
 #include "astquery.h"
+#include "astruntime.h"
 #include "coderesolver.h"
 
 #include "stridesystem.hpp"
@@ -448,7 +449,7 @@ ASTNode
 CodeValidator::getDefaultPortValueForType(string type, string portName,
                                           ScopeStack scope, ASTNode tree,
                                           std::vector<string> namespaces) {
-  auto ports = CodeValidator::getPortsForType(type, scope, tree, namespaces);
+  auto ports = ASTQuery::getPortsForType(type, scope, tree, namespaces);
   if (ports.size() > 0) {
     for (ASTNode port : ports) {
       DeclarationNode *block = static_cast<DeclarationNode *>(port.get());
@@ -1205,124 +1206,6 @@ void CodeValidator::validateConstraintStream(
       }
     }
   }
-  if (previous.size() > 0) {
-    qDebug() << "ERROR analyzing contraint";
-  }
-}
-
-std::vector<ASTNode> CodeValidator::processConstraintFunction(
-    std::shared_ptr<FunctionNode> constraintFunction,
-    std::shared_ptr<FunctionNode> functionInstance, std::vector<ASTNode> input,
-    QList<LangError> &errors) {
-  if (constraintFunction->getName() == "NotEqual") {
-    if (input.size() == 2) {
-      ASTNode outNode;
-      auto ok = nodesAreNotEqual(input[0], input[1], &outNode);
-      if (ok) {
-        return {outNode};
-      }
-    }
-    qDebug() << "ERROR: constraint function NotEqual fail.";
-  } else if (constraintFunction->getName() == "Equal") {
-    if (input.size() == 2) {
-      ASTNode outNode;
-      auto ok = nodesAreEqual(input[0], input[1], &outNode);
-      if (ok) {
-        return {outNode};
-      }
-    }
-    qDebug() << "ERROR: constraint function Equal fail.";
-  } else if (constraintFunction->getName() == "Greater") {
-    if (input.size() == 2) {
-      ASTNode outNode;
-      auto ok = nodesAreNotEqual(input[0], input[1], &outNode);
-      if (ok) {
-        return {outNode};
-      }
-    }
-    qDebug() << "ERROR: constraint function Greater fail.";
-  } else if (constraintFunction->getName() == "GreaterOrEqual") {
-    if (input.size() == 2) {
-      ASTNode outNode, outNode2;
-      auto ok = nodesIsGreater(input[0], input[1], &outNode);
-      auto ok2 = nodesAreEqual(input[0], input[1], &outNode2);
-      if (ok && ok2) {
-        ASTNode finalOut;
-        auto finalOk = nodesAnd(outNode, outNode2, &finalOut);
-        if (finalOk) {
-          return {finalOut};
-        }
-      }
-    }
-    qDebug() << "ERROR: constraint function GreaterOrEqual fail.";
-  } else if (constraintFunction->getName() == "Less") {
-    if (input.size() == 2) {
-      ASTNode outNode;
-      auto ok = nodesIsLesser(input[0], input[1], &outNode);
-      if (ok) {
-        return {outNode};
-      }
-    }
-    qDebug() << "ERROR: constraint function Less fail.";
-  } else if (constraintFunction->getName() == "LessOrEqual") {
-    if (input.size() == 2) {
-      ASTNode outNode, outNode2;
-      auto ok = nodesIsLesser(input[0], input[1], &outNode);
-      auto ok2 = nodesAreEqual(input[0], input[1], &outNode2);
-      if (ok && ok2) {
-        ASTNode finalOut;
-        auto finalOk = nodesOr(outNode, outNode2, &finalOut);
-        if (finalOk) {
-          return {finalOut};
-        }
-      }
-    }
-    qDebug() << "ERROR: constraint function LessOrEqual fail.";
-  } else if (constraintFunction->getName() == "IsNone") {
-    if (input.size() == 1) {
-      return {std::make_shared<ValueNode>(input[0]->getNodeType() == AST::None,
-                                          __FILE__, __LINE__)};
-      qDebug() << "ERROR: constraint function LessOrEqual fail.";
-    }
-  } else if (constraintFunction->getName() == "IsNotNone") {
-    if (input.size() == 1) {
-      return {std::make_shared<ValueNode>(input[0]->getNodeType() != AST::None,
-                                          __FILE__, __LINE__)};
-      qDebug() << "ERROR: constraint function LessOrEqual fail.";
-    }
-  } else if (constraintFunction->getName() == "Error") {
-    if (input.size() == 1 && input[0]->getNodeType() == AST::Switch &&
-        static_pointer_cast<ValueNode>(input[0])->getSwitchValue()) {
-      //      qDebug() << "Constraint: ERROR";
-      LangError err;
-      err.type = LangError::ConstraintFail;
-      err.filename = functionInstance->getFilename();
-      err.lineNumber = functionInstance->getLine();
-      err.errorTokens.push_back(functionInstance->getName());
-      err.errorTokens.push_back(constraintFunction->getFilename());
-      err.errorTokens.push_back(std::to_string(constraintFunction->getLine()));
-
-      auto errorMsg = constraintFunction->getPropertyValue("message");
-      if (errorMsg && errorMsg->getNodeType() == AST::String) {
-        err.errorTokens.push_back(
-            std::static_pointer_cast<ValueNode>(errorMsg)->getStringValue());
-      } else {
-        err.errorTokens.push_back("Unspecified error");
-      }
-      errors.push_back(err);
-    }
-  } else if (constraintFunction->getName() == "Or") {
-    assert(0 == 1);
-    // TODO implement bitwise operators in constraints
-  } else if (constraintFunction->getName() == "And") {
-    assert(0 == 1);
-  } else if (constraintFunction->getName() == "Xor") {
-    assert(0 == 1);
-  } else if (constraintFunction->getName() == "Not") {
-    assert(0 == 1);
-  } else {
-  }
-  return {};
 }
 
 std::vector<ASTNode> CodeValidator::resolveConstraintNode(
@@ -1348,19 +1231,28 @@ std::vector<ASTNode> CodeValidator::resolveConstraintNode(
     }
 
   } else if (node->getNodeType() == AST::Function) {
-    return processConstraintFunction(
-        std::static_pointer_cast<FunctionNode>(node), function, previous,
-        m_errors);
+    // FIXME the output blocks must be determined from the function.
+    // Currently providing only a switch block for output as the only
+    // implemented functions are
+    StrideRuntimeStatus status;
+    std::vector<ASTNode> output;
+    output.emplace_back(std::make_shared<ValueNode>(true, __FILE__, __LINE__));
+    auto functionInstance = std::static_pointer_cast<FunctionNode>(node);
+    ASTRuntime::resolveFunction(functionInstance, previous, output, status);
+    if (!status.ok) {
+      auto &err = status.err;
+      err.filename = functionInstance->getFilename();
+      err.lineNumber = functionInstance->getLine();
+      err.errorTokens[0] = functionInstance->getName();
+      m_errors.push_back(err);
+    }
+    return output;
   } else if (node->getNodeType() == AST::Block) {
 
-  } else if (node->getNodeType() == AST::Function) {
-    return processConstraintFunction(
-        std::static_pointer_cast<FunctionNode>(node), function, previous,
-        m_errors);
   } else if (node->getNodeType() == AST::List) {
     std::vector<ASTNode> resolvedList;
     size_t i = 0;
-    for (auto elem : node->getChildren()) {
+    for (const auto &elem : node->getChildren()) {
       ASTNode previousNode;
       if (previous.size() > i) {
         previousNode = previous[i];
@@ -3104,7 +2996,7 @@ QVector<ASTNode> CodeValidator::validTypesForPort(
     std::shared_ptr<DeclarationNode> typeDeclaration, QString portName,
     ScopeStack scope, ASTNode tree) {
   QVector<ASTNode> validTypes;
-  auto portList = getPortsForTypeBlock(typeDeclaration, scope, tree);
+  auto portList = ASTQuery::getPortsForTypeBlock(typeDeclaration, scope, tree);
   for (ASTNode node : portList) {
     DeclarationNode *portNode = static_cast<DeclarationNode *>(node.get());
     ValueNode *name =
@@ -3233,63 +3125,6 @@ CodeValidator::getDataTypeForDeclaration(std::shared_ptr<DeclarationNode> decl,
   return std::string();
 }
 
-std::vector<ASTNode>
-CodeValidator::getPortsForType(string typeName, ScopeStack scope, ASTNode tree,
-                               std::vector<string> namespaces,
-                               std::string framework) {
-  std::vector<ASTNode> portList;
-
-  std::shared_ptr<DeclarationNode> typeBlock =
-      ASTQuery::findTypeDeclarationByName(typeName, scope, tree, namespaces,
-                                          framework);
-
-  if (typeBlock) {
-    if (typeBlock->getObjectType() == "type" ||
-        typeBlock->getObjectType() == "platformModule" ||
-        typeBlock->getObjectType() == "platformBlock") {
-      ValueNode *name = static_cast<ValueNode *>(
-          typeBlock->getPropertyValue("typeName").get());
-      if (name) {
-        Q_ASSERT(name->getNodeType() == AST::String);
-        Q_ASSERT(name->getStringValue() == typeName);
-        auto newPortList = getPortsForTypeBlock(typeBlock, scope, tree);
-        portList.insert(portList.end(), newPortList.begin(), newPortList.end());
-      } else {
-        qDebug()
-            << "CodeValidator::getPortsForType type missing typeName port.";
-      }
-    }
-
-    //        QVector<ASTNode > inheritedProperties =
-    //        getInheritedPorts(typeBlock, scope, tree); portList <<
-    //        inheritedProperties;
-  }
-
-  return portList;
-}
-
-std::vector<ASTNode>
-CodeValidator::getInheritedPorts(std::shared_ptr<DeclarationNode> block,
-                                 ScopeStack scope, ASTNode tree) {
-  std::vector<ASTNode> inheritedProperties;
-  auto inheritedTypes = ASTQuery::getInheritedTypes(block, scope, tree);
-  QStringList inheritedName;
-  for (auto typeDeclaration : inheritedTypes) {
-    auto inheritedFromType = getPortsForTypeBlock(typeDeclaration, scope, tree);
-    for (ASTNode property : inheritedFromType) {
-      if (std::find(inheritedProperties.begin(), inheritedProperties.end(),
-                    property) == inheritedProperties.end()) {
-        inheritedProperties.push_back(property);
-      }
-      if (property->getNodeType() == AST::Declaration) {
-        inheritedName << QString::fromStdString(
-            std::static_pointer_cast<DeclarationNode>(property)->getName());
-      }
-    }
-  }
-  return inheritedProperties;
-}
-
 std::shared_ptr<DeclarationNode> CodeValidator::getMainOutputPortBlock(
     std::shared_ptr<DeclarationNode> moduleBlock) {
   ListNode *ports =
@@ -3358,24 +3193,6 @@ CodeValidator::getPort(std::shared_ptr<DeclarationNode> moduleBlock,
     qDebug() << "ERROR! ports property must be a list or None!";
   }
   return nullptr;
-}
-
-std::vector<ASTNode>
-CodeValidator::getPortsForTypeBlock(std::shared_ptr<DeclarationNode> block,
-                                    ScopeStack scope, ASTNode tree) {
-  ASTNode portsValue = block->getPropertyValue("properties");
-  std::vector<ASTNode> outList;
-  if (portsValue && portsValue->getNodeType() != AST::None) {
-    Q_ASSERT(portsValue->getNodeType() == AST::List);
-    ListNode *portList = static_cast<ListNode *>(portsValue.get());
-    for (ASTNode port : portList->getChildren()) {
-      outList.push_back(port);
-    }
-  }
-
-  auto inherited = getInheritedPorts(block, scope, tree);
-  outList.insert(outList.end(), inherited.begin(), inherited.end());
-  return outList;
 }
 
 int CodeValidator::numParallelStreams(StreamNode *stream,
@@ -3591,7 +3408,7 @@ ASTNode CodeValidator::getNodeDomain(ASTNode node, ScopeStack scopeStack,
   } else if (node->getNodeType() == AST::List) {
     std::vector<std::string> domainList;
     std::string tempDomainName;
-    for (ASTNode member : node->getChildren()) {
+    for (const ASTNode &member : node->getChildren()) {
       if (member->getNodeType() == AST::Block) {
         BlockNode *name = static_cast<BlockNode *>(member.get());
         std::shared_ptr<DeclarationNode> declaration =
@@ -3845,191 +3662,4 @@ void CodeValidator::setDomainForNode(ASTNode node, ASTNode domain,
   } else if (node->getNodeType() == AST::PortProperty) {
     node->setCompilerProperty("domain", domain);
   }
-}
-
-bool CodeValidator::nodesAreEqual(ASTNode node1, ASTNode node2,
-                                  ASTNode *output) {
-  if (node1->getNodeType() == AST::Int && node2->getNodeType() == AST::Int) {
-    *output = std::make_shared<ValueNode>(
-        std::static_pointer_cast<ValueNode>(node1)->getIntValue() ==
-            std::static_pointer_cast<ValueNode>(node2)->getIntValue(),
-        __FILE__, __LINE__);
-    return true;
-  } else if (node1->getNodeType() == AST::Real &&
-             node2->getNodeType() == AST::Real) {
-    *output = std::make_shared<ValueNode>(
-        std::static_pointer_cast<ValueNode>(node1)->getRealValue() ==
-            std::static_pointer_cast<ValueNode>(node2)->getRealValue(),
-        __FILE__, __LINE__);
-    return true;
-  } else if (node1->getNodeType() == AST::Real &&
-             node2->getNodeType() == AST::Int) {
-    *output = std::make_shared<ValueNode>(
-        std::static_pointer_cast<ValueNode>(node1)->getRealValue() ==
-            std::static_pointer_cast<ValueNode>(node2)->getIntValue(),
-        __FILE__, __LINE__);
-    return true;
-  } else if (node1->getNodeType() == AST::Int &&
-             node2->getNodeType() == AST::Real) {
-    *output = std::make_shared<ValueNode>(
-        std::static_pointer_cast<ValueNode>(node1)->getIntValue() ==
-            std::static_pointer_cast<ValueNode>(node2)->getRealValue(),
-        __FILE__, __LINE__);
-    return true;
-  } else if (node1->getNodeType() == AST::Switch &&
-             node2->getNodeType() == AST::Switch) {
-    *output = std::make_shared<ValueNode>(
-        std::static_pointer_cast<ValueNode>(node1)->getSwitchValue() ==
-            std::static_pointer_cast<ValueNode>(node2)->getSwitchValue(),
-        __FILE__, __LINE__);
-    return true;
-  }
-  return false;
-}
-
-bool CodeValidator::nodesAreNotEqual(ASTNode node1, ASTNode node2,
-                                     ASTNode *output) {
-  bool ok = nodesAreEqual(node1, node2, output);
-  if (ok) {
-    *output = std::make_shared<ValueNode>(
-        !std::static_pointer_cast<ValueNode>(*output)->getSwitchValue(),
-        __FILE__, __LINE__);
-  }
-  return ok;
-}
-
-bool CodeValidator::nodesIsGreater(ASTNode node1, ASTNode node2,
-                                   ASTNode *output) {
-  if (node1->getNodeType() == AST::Int && node2->getNodeType() == AST::Int) {
-    *output = std::make_shared<ValueNode>(
-        std::static_pointer_cast<ValueNode>(node1)->getIntValue() >
-            std::static_pointer_cast<ValueNode>(node2)->getIntValue(),
-        __FILE__, __LINE__);
-    return true;
-  } else if (node1->getNodeType() == AST::Real &&
-             node2->getNodeType() == AST::Real) {
-    *output = std::make_shared<ValueNode>(
-        std::static_pointer_cast<ValueNode>(node1)->getRealValue() >
-            std::static_pointer_cast<ValueNode>(node2)->getRealValue(),
-        __FILE__, __LINE__);
-    return true;
-  } else if (node1->getNodeType() == AST::Real &&
-             node2->getNodeType() == AST::Int) {
-    *output = std::make_shared<ValueNode>(
-        std::static_pointer_cast<ValueNode>(node1)->getRealValue() >
-            std::static_pointer_cast<ValueNode>(node2)->getIntValue(),
-        __FILE__, __LINE__);
-    return true;
-  } else if (node1->getNodeType() == AST::Int &&
-             node2->getNodeType() == AST::Real) {
-    *output = std::make_shared<ValueNode>(
-        std::static_pointer_cast<ValueNode>(node1)->getIntValue() >
-            std::static_pointer_cast<ValueNode>(node2)->getRealValue(),
-        __FILE__, __LINE__);
-    return true;
-  }
-  return false;
-}
-
-bool CodeValidator::nodesIsNotGreater(ASTNode node1, ASTNode node2,
-                                      ASTNode *output) {
-  bool ok = nodesIsGreater(node1, node2, output);
-  if (ok) {
-    *output = std::make_shared<ValueNode>(
-        !std::static_pointer_cast<ValueNode>(*output)->getSwitchValue(),
-        __FILE__, __LINE__);
-  }
-  return ok;
-}
-
-bool CodeValidator::nodesIsLesser(ASTNode node1, ASTNode node2,
-                                  ASTNode *output) {
-  if (node1->getNodeType() == AST::Int && node2->getNodeType() == AST::Int) {
-    *output = std::make_shared<ValueNode>(
-        std::static_pointer_cast<ValueNode>(node1)->getIntValue() <
-            std::static_pointer_cast<ValueNode>(node2)->getIntValue(),
-        __FILE__, __LINE__);
-    return true;
-  } else if (node1->getNodeType() == AST::Real &&
-             node2->getNodeType() == AST::Real) {
-    *output = std::make_shared<ValueNode>(
-        std::static_pointer_cast<ValueNode>(node1)->getRealValue() <
-            std::static_pointer_cast<ValueNode>(node2)->getRealValue(),
-        __FILE__, __LINE__);
-    return true;
-  } else if (node1->getNodeType() == AST::Real &&
-             node2->getNodeType() == AST::Int) {
-    *output = std::make_shared<ValueNode>(
-        std::static_pointer_cast<ValueNode>(node1)->getRealValue() <
-            std::static_pointer_cast<ValueNode>(node2)->getIntValue(),
-        __FILE__, __LINE__);
-    return true;
-  } else if (node1->getNodeType() == AST::Int &&
-             node2->getNodeType() == AST::Real) {
-    *output = std::make_shared<ValueNode>(
-        std::static_pointer_cast<ValueNode>(node1)->getIntValue() <
-            std::static_pointer_cast<ValueNode>(node2)->getRealValue(),
-        __FILE__, __LINE__);
-    return true;
-  }
-  return false;
-}
-
-bool CodeValidator::nodesIsNotLesser(ASTNode node1, ASTNode node2,
-                                     ASTNode *output) {
-  bool ok = nodesIsLesser(node1, node2, output);
-  if (ok) {
-    *output = std::make_shared<ValueNode>(
-        !std::static_pointer_cast<ValueNode>(*output)->getSwitchValue(),
-        __FILE__, __LINE__);
-  }
-  return ok;
-}
-
-bool CodeValidator::nodesOr(ASTNode node1, ASTNode node2, ASTNode *output) {
-  if (node1->getNodeType() == AST::Switch &&
-      node2->getNodeType() == AST::Switch) {
-    *output = std::make_shared<ValueNode>(
-        std::static_pointer_cast<ValueNode>(node1)->getSwitchValue() ||
-            std::static_pointer_cast<ValueNode>(node2)->getSwitchValue(),
-        __FILE__, __LINE__);
-    return true;
-  }
-  return false;
-}
-
-bool CodeValidator::nodesAnd(ASTNode node1, ASTNode node2, ASTNode *output) {
-  if (node1->getNodeType() == AST::Switch &&
-      node2->getNodeType() == AST::Switch) {
-    *output = std::make_shared<ValueNode>(
-        std::static_pointer_cast<ValueNode>(node1)->getSwitchValue() &&
-            std::static_pointer_cast<ValueNode>(node2)->getSwitchValue(),
-        __FILE__, __LINE__);
-    return true;
-  }
-  return false;
-}
-
-bool CodeValidator::nodesXor(ASTNode node1, ASTNode node2, ASTNode *output) {
-  if (node1->getNodeType() == AST::Switch &&
-      node2->getNodeType() == AST::Switch) {
-    return nodesAreNotEqual(node1, node2, output);
-  }
-  return false;
-}
-
-bool CodeValidator::nodeNot(ASTNode node1, ASTNode *output) {
-  if (node1->getNodeType() == AST::Switch) {
-    *output = std::make_shared<ValueNode>(
-        !std::static_pointer_cast<ValueNode>(node1)->getSwitchValue(), __FILE__,
-        __LINE__);
-    return true;
-  }
-  return false;
-}
-
-bool CodeValidator::nodeIsNone(ASTNode node1, ASTNode *output) {
-  *output = std::make_shared<ValueNode>(node1->getNodeType() == AST::None,
-                                        __FILE__, __LINE__);
-  return true;
 }

@@ -43,7 +43,9 @@ class AST;
 class ListNode;
 class PropertyNode;
 
-typedef std::shared_ptr<AST> ASTNode;
+using ASTNode = std::shared_ptr<AST>;
+
+using ScopeStack = std::vector<std::pair<ASTNode, std::vector<ASTNode>>>;
 
 class AST {
 public:

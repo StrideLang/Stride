@@ -78,9 +78,10 @@ CodeResolver::~CodeResolver() {}
 void CodeResolver::process() {
   processSystem();
   // Insert objects
-  ASTFunctions::insertBuiltinObjects(m_tree, m_system->getImportTrees());
-  fillDefaultProperties();
-  processAnoymousDeclarations();
+  ASTFunctions::insertRequiredObjects(m_tree, m_system->getImportTrees());
+  ASTFunctions::fillDefaultProperties(m_tree);
+  ASTFunctions::processAnoymousDeclarations(m_tree);
+
   declareModuleInternalBlocks();
   m_system->injectResourceConfiguration(m_tree);
 
@@ -89,12 +90,18 @@ void CodeResolver::process() {
                     // declares undefined bundles
                     //    processResets();
   resolveStreamSymbols();
-  ASTFunctions::insertBuiltinObjects(m_tree, m_system->getImportTrees());
+
+  // Do another pass to resolve new node dependencies and structure
+  ASTFunctions::insertRequiredObjects(m_tree, m_system->getImportTrees());
+  ASTFunctions::fillDefaultProperties(m_tree);
+  ASTFunctions::processAnoymousDeclarations(m_tree);
 
   if (m_systemConfig.testing) {
     enableTesting();
-    ASTFunctions::insertBuiltinObjects(m_tree, m_system->getImportTrees());
-    fillDefaultProperties();
+    // Do another pass to resolve new node dependencies and structure
+    ASTFunctions::insertRequiredObjects(m_tree, m_system->getImportTrees());
+    ASTFunctions::fillDefaultProperties(m_tree);
+    ASTFunctions::processAnoymousDeclarations(m_tree);
   }
 
   m_system->injectResourceConfiguration(m_tree);
@@ -115,14 +122,14 @@ void CodeResolver::process() {
 void CodeResolver::processSystem() {
   // Gather import statements
   std::vector<std::shared_ptr<ImportNode>> importList;
-  for (ASTNode node : m_tree->getChildren()) {
+  for (const ASTNode &node : m_tree->getChildren()) {
     if (node->getNodeType() == AST::Import) {
       std::shared_ptr<ImportNode> import =
           static_pointer_cast<ImportNode>(node);
       // TODO add namespace support here (e.g. import
       // Platform::Filters::Filter)
       bool imported = false;
-      for (auto importNode : importList) {
+      for (const auto &importNode : importList) {
         if ((static_pointer_cast<ImportNode>(importNode)->importName() ==
              import->importName()) &&
             (static_pointer_cast<ImportNode>(importNode)->importAlias() ==
@@ -142,7 +149,7 @@ void CodeResolver::processSystem() {
   //  m_system->loadImportTree("", "");
 
   // Load nodes for imports
-  for (auto import : importList) {
+  for (const auto &import : importList) {
     std::string importName = import->importName();
     std::string importAlias = import->importAlias();
     m_system->loadImportTree(importName, importAlias);
@@ -267,134 +274,6 @@ void CodeResolver::resolveStreamRates(std::shared_ptr<StreamNode> stream) {
   }
 }
 
-void CodeResolver::fillDefaultPropertiesForNode(ASTNode node,
-                                                std::vector<ASTNode> tree) {
-  if (node->getNodeType() == AST::Declaration ||
-      node->getNodeType() == AST::BundleDeclaration) {
-    std::shared_ptr<DeclarationNode> destBlock =
-        static_pointer_cast<DeclarationNode>(node);
-    vector<std::shared_ptr<PropertyNode>> blockProperties =
-        destBlock->getProperties();
-    auto frameworkNode = node->getCompilerProperty("framework");
-    std::string frameworkName;
-    if (frameworkNode && frameworkNode->getNodeType() == AST::String) {
-      frameworkName =
-          static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
-    }
-    auto typeProperties = CodeValidator::getPortsForType(
-        destBlock->getObjectType(), {{nullptr, tree}}, nullptr,
-        destBlock->getNamespaceList(), frameworkName);
-    if (typeProperties.size() == 0) {
-      qDebug()
-          << "ERROR: fillDefaultPropertiesForNode() No type definition for "
-          << QString::fromStdString(destBlock->getObjectType());
-      return;
-    }
-    for (auto property : blockProperties) {
-      fillDefaultPropertiesForNode(property->getValue(), tree);
-    }
-
-    for (ASTNode propertyListMember : typeProperties) {
-      Q_ASSERT(propertyListMember->getNodeType() == AST::Declaration);
-      DeclarationNode *portDescription =
-          static_cast<DeclarationNode *>(propertyListMember.get());
-      ASTNode propName = portDescription->getPropertyValue("name");
-      Q_ASSERT(propName->getNodeType() == AST::String);
-      string propertyName =
-          static_cast<ValueNode *>(propName.get())->getStringValue();
-      bool propertySet = false;
-      for (auto blockProperty : blockProperties) {
-        if (blockProperty->getName() == propertyName) {
-          propertySet = true;
-          break;
-        }
-      }
-      if (!propertySet) {
-        ASTNode defaultValueNode = portDescription->getPropertyValue("default");
-        std::shared_ptr<PropertyNode> newProperty =
-            std::make_shared<PropertyNode>(
-                propertyName, defaultValueNode->deepCopy(),
-                portDescription->getFilename().data(),
-                portDescription->getLine());
-        destBlock->addProperty(newProperty);
-      }
-    }
-  } else if (node->getNodeType() == AST::Function) {
-    std::shared_ptr<FunctionNode> destFunc =
-        static_pointer_cast<FunctionNode>(node);
-    vector<std::shared_ptr<PropertyNode>> blockProperties =
-        destFunc->getProperties();
-    std::shared_ptr<DeclarationNode> functionModule = ASTQuery::findDeclaration(
-        destFunc->getName(), {{nullptr, tree}}, nullptr);
-    if (functionModule) {
-      if (functionModule->getObjectType() == "module" ||
-          functionModule->getObjectType() == "reaction" ||
-          functionModule->getObjectType() == "loop") {
-        vector<ASTNode> typeProperties =
-            functionModule->getPropertyValue("ports")->getChildren();
-        if (!functionModule->getPropertyValue("ports")) {
-          qDebug() << "ERROR: fillDefaultProperties() No type definition for "
-                   << QString::fromStdString(destFunc->getName());
-          return;
-        }
-        for (std::shared_ptr<PropertyNode> property : blockProperties) {
-          fillDefaultPropertiesForNode(property->getValue(), tree);
-        }
-
-        for (ASTNode propertyListMember : typeProperties) {
-          Q_ASSERT(propertyListMember->getNodeType() == AST::Declaration);
-          DeclarationNode *propertyDecl =
-              static_cast<DeclarationNode *>(propertyListMember.get());
-
-          if (propertyDecl->getObjectType().substr(0, 8) == "property") {
-            auto propertyNameValue = propertyDecl->getPropertyValue("name");
-            if (propertyNameValue &&
-                propertyNameValue->getNodeType() == AST::String) {
-              bool propertySet = false;
-              string propertyName =
-                  static_pointer_cast<ValueNode>(propertyNameValue)
-                      ->getStringValue();
-              for (std::shared_ptr<PropertyNode> blockProperty :
-                   blockProperties) {
-                if (blockProperty->getName() == propertyName) {
-                  propertySet = true;
-                  break;
-                }
-              }
-              if (!propertySet) {
-                ASTNode defaultValueNode =
-                    propertyDecl->getPropertyValue("default");
-                if (defaultValueNode) {
-                  std::shared_ptr<PropertyNode> newProperty =
-                      std::make_shared<PropertyNode>(
-                          propertyName, defaultValueNode,
-                          propertyDecl->getFilename().data(),
-                          propertyDecl->getLine());
-                  destFunc->addProperty(newProperty);
-                }
-              }
-            }
-          }
-        }
-
-      } else if (functionModule->getObjectType() == "platformModule") {
-        // Is there anything to do here for platform modules?
-      }
-    }
-  } else if (node->getNodeType() == AST::List ||
-             node->getNodeType() == AST::Expression) {
-    ListNode *list = static_cast<ListNode *>(node.get());
-    for (ASTNode listElement : list->getChildren()) {
-      fillDefaultPropertiesForNode(listElement, tree);
-    }
-  } else if (node->getNodeType() == AST::Stream) {
-    StreamNode *stream = static_cast<StreamNode *>(node.get());
-    for (ASTNode streamElement : stream->getChildren()) {
-      fillDefaultPropertiesForNode(streamElement, tree);
-    }
-  }
-}
-
 void CodeResolver::analyzeChildConnections(ASTNode node,
                                            ScopeStack scopeStack) {
   for (ASTNode object : node->getChildren()) {
@@ -409,7 +288,7 @@ void CodeResolver::analyzeChildConnections(ASTNode node,
         std::vector<ASTNode> streams = getModuleStreams(decl);
         ASTNode blocks = decl->getPropertyValue("blocks");
         scopeStack.push_back({decl, blocks->getChildren()});
-        for (ASTNode stream : streams) {
+        for (const ASTNode &stream : streams) {
           //          Q_ASSERT(stream->getNodeType() == AST::Stream);
           if (stream->getNodeType() == AST::Stream) {
             checkStreamConnections(static_pointer_cast<StreamNode>(stream),
@@ -424,14 +303,6 @@ void CodeResolver::analyzeChildConnections(ASTNode node,
       checkStreamConnections(static_pointer_cast<StreamNode>(object),
                              ScopeStack());
     }
-  }
-}
-
-void CodeResolver::fillDefaultProperties() {
-  vector<ASTNode> nodes = m_tree->getChildren();
-  for (unsigned int i = 0; i < nodes.size(); i++) {
-    ASTNode node = nodes.at(i);
-    fillDefaultPropertiesForNode(node, m_tree->getChildren());
   }
 }
 
@@ -662,77 +533,6 @@ void CodeResolver::expandParallel() {
         m_tree->addChild(decl);
       }
     }
-  }
-}
-
-void CodeResolver::processAnoymousDeclarations() {
-  auto processAnonDeclInStream = [&](std::shared_ptr<StreamNode> stream,
-                                     ASTNode scopeTree) {
-    auto node = stream->getLeft();
-    do {
-      if (node->getNodeType() == AST::Declaration) {
-        auto decl = static_pointer_cast<DeclarationNode>(node);
-        auto newBlock = std::make_shared<FunctionNode>(
-            decl->getName(), std::make_shared<ListNode>(__FILE__, __LINE__),
-            __FILE__, __LINE__);
-        scopeTree->addChild(node);
-        if (node == stream->getLeft()) {
-          stream->setLeft(newBlock);
-        } else {
-          stream->setRight(newBlock);
-          break;
-        }
-      }
-      if (stream->getRight() == node) {
-        node = nullptr;
-      } else if (stream->getRight()->getNodeType() == AST::Stream) {
-        stream = static_pointer_cast<StreamNode>(stream->getRight());
-        node = stream->getLeft();
-      } else {
-        node = stream->getRight();
-      }
-    } while (node);
-  };
-
-  std::function<ASTNode(ASTNode)> processAnonDecls = [&](ASTNode scopeTree) {
-    ASTNode newBlocks = std::make_shared<ListNode>(__FILE__, __LINE__);
-    for (auto node : scopeTree->getChildren()) {
-      if (node->getNodeType() == AST::Stream) {
-        processAnonDeclInStream(static_pointer_cast<StreamNode>(node),
-                                newBlocks);
-      } else if (node->getNodeType() == AST::Declaration ||
-                 node->getNodeType() == AST::BundleDeclaration) {
-        auto decl = static_pointer_cast<DeclarationNode>(node);
-        if (decl->getObjectType() == "reaction" ||
-            decl->getObjectType() == "module" ||
-            decl->getObjectType() == "loop") {
-          auto streams = decl->getPropertyValue("streams");
-          auto blocks = decl->getPropertyValue("blocks");
-          //          Q_ASSERT(streams && blocks);
-          if (streams && blocks) {
-            for (auto stream : streams->getChildren()) {
-              if (stream->getNodeType() == AST::Stream) {
-                processAnonDeclInStream(static_pointer_cast<StreamNode>(stream),
-                                        blocks);
-              }
-            }
-
-            auto newInternalBlocks = processAnonDecls(blocks);
-            for (auto node : newInternalBlocks->getChildren()) {
-              blocks->addChild(node);
-            }
-          }
-        }
-      }
-    }
-
-    return newBlocks;
-  };
-
-  auto newBlocks = processAnonDecls(m_tree);
-
-  for (auto node : newBlocks->getChildren()) {
-    m_tree->addChild(node);
   }
 }
 
@@ -1503,9 +1303,9 @@ CodeResolver::createSignalDeclaration(QString name, int size, ScopeStack scope,
         std::make_shared<DeclarationNode>(bundle, "signal", nullptr, "", -1);
   }
   Q_ASSERT(newBlock);
-  fillDefaultPropertiesForNode(newBlock, tree->getChildren());
+  ASTFunctions::fillDefaultPropertiesForNode(newBlock, tree->getChildren());
 
-  resolveConstantsInNode(newBlock, scope, tree);
+  ASTFunctions::resolveConstantsInNode(newBlock, scope, tree);
   return newBlock;
 }
 
@@ -1571,7 +1371,8 @@ void CodeResolver::declareIfMissing(string name, ASTNode blocks,
     }
     if (!declaration) {
       declaration = createConstantDeclaration(name, value);
-      fillDefaultPropertiesForNode(declaration, m_tree->getChildren());
+      ASTFunctions::fillDefaultPropertiesForNode(declaration,
+                                                 m_tree->getChildren());
       blockList->addChild(declaration);
     } else {
       //            delete value;
@@ -1947,7 +1748,8 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node,
                   CodeValidator::streamMemberName(portBlock)),
               1, subScope, m_tree);
           internalBlocks->addChild(portBlockDecl);
-          fillDefaultPropertiesForNode(portBlockDecl, m_tree->getChildren());
+          ASTFunctions::fillDefaultPropertiesForNode(portBlockDecl,
+                                                     m_tree->getChildren());
         }
 
         // Now check if domain set, if not, set to port domain
@@ -2004,7 +1806,8 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node,
                   CodeValidator::streamMemberName(portBlock)),
               1, subScope, m_tree);
           internalBlocks->addChild(portBlockDecl);
-          fillDefaultPropertiesForNode(portBlockDecl, m_tree->getChildren());
+          ASTFunctions::fillDefaultPropertiesForNode(portBlockDecl,
+                                                     m_tree->getChildren());
         }
 
         // Now check if domain set, if not, set to port domain
@@ -2110,7 +1913,8 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node,
                 newSignal = createSignalDeclaration(
                     QString::fromStdString(defaultName), 1, subScope, m_tree);
                 internalBlocks->addChild(newSignal);
-                fillDefaultPropertiesForNode(newSignal, m_tree->getChildren());
+                ASTFunctions::fillDefaultPropertiesForNode(
+                    newSignal, m_tree->getChildren());
                 ASTNode blockDomain = newSignal->getDomain();
                 if (!blockDomain || blockDomain->getNodeType() == AST::None) {
                   newSignal->setPropertyValue("domain", portDomain);
@@ -2219,336 +2023,8 @@ void CodeResolver::resolveConstants() {
                       QString::fromStdString(override->first);
     }
   }
-  for (ASTNode node : m_tree->getChildren()) {
-    resolveConstantsInNode(node, {}, m_tree);
-  }
-}
-
-std::shared_ptr<ValueNode>
-CodeResolver::reduceConstExpression(std::shared_ptr<ExpressionNode> expr,
-                                    ScopeStack scope, ASTNode tree) {
-  ASTNode left = nullptr, right = nullptr;
-  bool isConstant;
-
-  if (!expr->isUnary()) {
-    left = expr->getLeft();
-  } else {
-    left = expr->getValue();
-  }
-
-  std::shared_ptr<ValueNode> newValue = resolveConstant(left, scope, tree);
-  if (newValue) {
-    if (expr->isUnary()) {
-      expr->replaceValue(newValue);
-    } else {
-      expr->replaceLeft(newValue);
-    }
-    left = newValue;
-  }
-  if (!expr->isUnary()) {
-    right = expr->getRight();
-    newValue = resolveConstant(right, scope, tree);
-    if (newValue) {
-      expr->replaceRight(newValue);
-      right = newValue;
-    }
-    isConstant =
-        (left->getNodeType() == AST::Int || left->getNodeType() == AST::Real) &&
-        (right->getNodeType() == AST::Int || right->getNodeType() == AST::Real);
-  } else {
-    isConstant =
-        (left->getNodeType() == AST::Int || left->getNodeType() == AST::Real);
-  }
-
-  if (isConstant) {
-    std::shared_ptr<ValueNode> result = nullptr;
-    switch (expr->getExpressionType()) {
-    case ExpressionNode::Multiply:
-      result = ASTRuntime::multiply(static_pointer_cast<ValueNode>(left),
-                                    static_pointer_cast<ValueNode>(right));
-      break;
-    case ExpressionNode::Divide:
-      result = ASTRuntime::divide(static_pointer_cast<ValueNode>(left),
-                                  static_pointer_cast<ValueNode>(right));
-      break;
-    case ExpressionNode::Add:
-      result = ASTRuntime::add(static_pointer_cast<ValueNode>(left),
-                               static_pointer_cast<ValueNode>(right));
-      break;
-    case ExpressionNode::Subtract:
-      result = ASTRuntime::subtract(static_pointer_cast<ValueNode>(left),
-                                    static_pointer_cast<ValueNode>(right));
-      break;
-    case ExpressionNode::And:
-      result = ASTRuntime::logicalAnd(static_pointer_cast<ValueNode>(left),
-                                      static_pointer_cast<ValueNode>(right));
-      break;
-    case ExpressionNode::Or:
-      result = ASTRuntime::logicalOr(static_pointer_cast<ValueNode>(left),
-                                     static_pointer_cast<ValueNode>(right));
-      break;
-    case ExpressionNode::UnaryMinus:
-      result = ASTRuntime::unaryMinus(static_pointer_cast<ValueNode>(left));
-      break;
-    case ExpressionNode::LogicalNot:
-      result = ASTRuntime::logicalNot(static_pointer_cast<ValueNode>(left));
-      break;
-    default:
-      Q_ASSERT(0 == 1); // Should never get here
-      break;
-    }
-    if (result) {
-      return result;
-    }
-  }
-  return nullptr;
-}
-
-std::shared_ptr<ValueNode>
-CodeResolver::resolveConstant(ASTNode value, ScopeStack scope, ASTNode tree,
-                              std::string framework) {
-  std::shared_ptr<ValueNode> newValue = nullptr;
-  if (value->getNodeType() == AST::Expression) {
-    std::shared_ptr<ExpressionNode> expr =
-        static_pointer_cast<ExpressionNode>(value);
-    newValue = reduceConstExpression(expr, scope, tree);
-    if (newValue) {
-      newValue->setCompilerProperty("resolvedFrom", expr);
-    }
-    return newValue;
-  } else if (value->getNodeType() == AST::Block) {
-    BlockNode *name = static_cast<BlockNode *>(value.get());
-    std::shared_ptr<DeclarationNode> block = ASTQuery::findDeclaration(
-        name->getName(), scope, tree, name->getNamespaceList(), framework);
-    if (block && block->getNodeType() == AST::Declaration &&
-        block->getObjectType() == "constant") { // Size == 1
-      //            string namespaceValue = name->getScopeAt(0);
-      ASTNode declarationNamespace = block->getPropertyValue("namespace");
-      //            if (namespaceValue.size() == 0 || namespaceValue)
-      ASTNode blockValue = block->getPropertyValue("value");
-      if (blockValue->getNodeType() == AST::Int ||
-          blockValue->getNodeType() == AST::Real ||
-          blockValue->getNodeType() == AST::String) {
-        blockValue = blockValue->deepCopy();
-        blockValue->setCompilerProperty("resolvedFrom", block);
-        return static_pointer_cast<ValueNode>(blockValue);
-      }
-      newValue = resolveConstant(block->getPropertyValue("value"), scope, tree);
-      return newValue;
-    }
-  } else if (value->getNodeType() == AST::Bundle) {
-    // What does this mean??
-  } else if (value->getNodeType() == AST::PortProperty) {
-    PortPropertyNode *propertyNode =
-        static_cast<PortPropertyNode *>(value.get());
-    std::shared_ptr<DeclarationNode> block =
-        ASTQuery::findDeclaration(propertyNode->getPortName(), scope, tree);
-    if (block) {
-      ASTNode propertyValue = block->getPropertyValue(propertyNode->getName());
-      if (propertyValue) {
-        //                || propertyValue->getNodeType() == AST::Block ||
-        //                propertyValue->getNodeType() == AST::Bundle
-        if (propertyValue->getNodeType() == AST::Int ||
-            propertyValue->getNodeType() == AST::Real ||
-            propertyValue->getNodeType() == AST::String) {
-          propertyValue = propertyValue->deepCopy();
-          propertyValue->setCompilerProperty("resolvedFrom", block);
-          return static_pointer_cast<ValueNode>(propertyValue);
-        }
-      }
-    }
-  }
-  return nullptr;
-}
-
-void CodeResolver::resolveConstantsInNode(ASTNode node, ScopeStack scope,
-                                          ASTNode tree,
-                                          std::string currentFramework) {
-  if (node->getNodeType() == AST::Stream) {
-    std::shared_ptr<StreamNode> stream = static_pointer_cast<StreamNode>(node);
-    resolveConstantsInNode(stream->getLeft(), scope, tree);
-    if (stream->getLeft()->getNodeType() == AST::Expression) {
-      std::shared_ptr<ExpressionNode> expr =
-          static_pointer_cast<ExpressionNode>(stream->getLeft());
-      std::shared_ptr<ValueNode> newValue =
-          reduceConstExpression(expr, scope, tree);
-      if (newValue) {
-        stream->setLeft(newValue);
-      }
-    } else if (stream->getLeft()->getNodeType() == AST::PortProperty) {
-      std::shared_ptr<PortPropertyNode> propertyNode =
-          static_pointer_cast<PortPropertyNode>(stream->getLeft());
-      std::shared_ptr<DeclarationNode> block =
-          ASTQuery::findDeclaration(propertyNode->getPortName(), scope, tree);
-      if (block) {
-        ASTNode property = block->getPropertyValue(propertyNode->getName());
-        if (property) { // First replace if pointing to a name
-          if (property->getNodeType() == AST::Block ||
-              property->getNodeType() == AST::Bundle) {
-            stream->setLeft(property);
-          }
-          std::shared_ptr<ValueNode> newValue =
-              resolveConstant(stream->getLeft(), scope, tree);
-          if (newValue) {
-            stream->setLeft(newValue);
-          }
-        }
-      }
-    }
-    resolveConstantsInNode(stream->getRight(), scope, tree);
-  } else if (node->getNodeType() == AST::Function) {
-    std::shared_ptr<FunctionNode> func =
-        static_pointer_cast<FunctionNode>(node);
-    vector<std::shared_ptr<PropertyNode>> properties = func->getProperties();
-    for (auto property : properties) {
-      std::shared_ptr<ValueNode> newValue =
-          resolveConstant(property->getValue(), scope, tree);
-      if (newValue) {
-        property->replaceValue(newValue);
-      }
-    }
-  } else if (node->getNodeType() == AST::Declaration) {
-    std::shared_ptr<DeclarationNode> decl =
-        static_pointer_cast<DeclarationNode>(node);
-    vector<std::shared_ptr<PropertyNode>> properties = decl->getProperties();
-    std::shared_ptr<ListNode> internalBlocks =
-        static_pointer_cast<ListNode>(decl->getPropertyValue("blocks"));
-    if ((decl->getObjectType() == "module" ||
-         decl->getObjectType() == "reaction" ||
-         decl->getObjectType() == "loop") &&
-        internalBlocks) {
-      if (internalBlocks->getNodeType() == AST::List) {
-        auto blocks = internalBlocks->getChildren();
-        scope.push_back({node, blocks});
-      }
-    }
-    // FIXME This is a hack to protect constants that are context dependent.
-    // Should the language mark this?
-    //    if (decl->getObjectType() != "type") {
-
-    auto frameworkNode = node->getCompilerProperty("framework");
-    std::string frameworkName;
-    if (frameworkNode) {
-      frameworkName =
-          static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
-    }
-    if (frameworkName == "") {
-      // Now try to see if domain belongs to a framework
-
-      auto domainId =
-          CodeValidator::getNodeDomainName(node, ScopeStack(), tree);
-
-      frameworkName = CodeValidator::getFrameworkForDomain(domainId, tree);
-    }
-
-    for (std::shared_ptr<PropertyNode> property : properties) {
-      resolveConstantsInNode(property->getValue(), scope, tree, frameworkName);
-      std::shared_ptr<ValueNode> newValue =
-          resolveConstant(property->getValue(), scope, tree, frameworkName);
-      if (!newValue) {
-        // try to resolve on global namespace
-        newValue = resolveConstant(property->getValue(), scope, tree);
-      }
-      if (newValue) {
-        property->replaceValue(newValue);
-      }
-    }
-    //    }
-  } else if (node->getNodeType() == AST::BundleDeclaration) {
-    std::shared_ptr<DeclarationNode> decl =
-        static_pointer_cast<DeclarationNode>(node);
-    vector<std::shared_ptr<PropertyNode>> properties = decl->getProperties();
-    std::shared_ptr<ListNode> internalBlocks =
-        static_pointer_cast<ListNode>(decl->getPropertyValue("blocks"));
-    if (internalBlocks) {
-      if (internalBlocks->getNodeType() == AST::List) {
-        auto blocks = internalBlocks->getChildren();
-        scope.push_back({node, blocks});
-      }
-    }
-
-    auto frameworkNode = node->getCompilerProperty("framework");
-    std::string frameworkName;
-    if (frameworkNode) {
-      frameworkName =
-          static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
-    }
-
-    for (std::shared_ptr<PropertyNode> property : properties) {
-      resolveConstantsInNode(property->getValue(), scope, tree, frameworkName);
-      std::shared_ptr<ValueNode> newValue =
-          resolveConstant(property->getValue(), scope, tree, frameworkName);
-      if (!newValue) {
-        // try to resolve on global namespace
-        newValue = resolveConstant(property->getValue(), scope, tree);
-      }
-      if (newValue) {
-        property->replaceValue(newValue);
-      }
-    }
-    std::shared_ptr<BundleNode> bundle = decl->getBundle();
-    resolveConstantsInNode(bundle->index(), scope, tree);
-  } else if (node->getNodeType() == AST::Expression) {
-    std::shared_ptr<ExpressionNode> expr =
-        static_pointer_cast<ExpressionNode>(node);
-    if (expr->isUnary()) {
-      resolveConstantsInNode(expr->getValue(), scope, tree);
-      if (expr->getValue()->getNodeType() == AST::Expression) {
-        std::shared_ptr<ExpressionNode> exprValue =
-            static_pointer_cast<ExpressionNode>(expr->getValue());
-        std::shared_ptr<ValueNode> newValue =
-            reduceConstExpression(exprValue, scope, tree);
-        if (newValue) {
-          exprValue->replaceValue(newValue);
-        }
-      }
-    } else {
-      resolveConstantsInNode(expr->getLeft(), scope, tree);
-      resolveConstantsInNode(expr->getRight(), scope, tree);
-      if (expr->getLeft()->getNodeType() == AST::Expression) {
-        std::shared_ptr<ExpressionNode> exprValue =
-            static_pointer_cast<ExpressionNode>(expr->getLeft());
-        std::shared_ptr<ValueNode> newValue =
-            reduceConstExpression(exprValue, scope, tree);
-        if (newValue) {
-          expr->replaceLeft(newValue);
-        }
-      }
-      if (expr->getRight()->getNodeType() == AST::Expression) {
-        std::shared_ptr<ExpressionNode> exprValue =
-            static_pointer_cast<ExpressionNode>(expr->getRight());
-        std::shared_ptr<ValueNode> newValue =
-            reduceConstExpression(exprValue, scope, tree);
-        if (newValue) {
-          expr->replaceRight(newValue);
-        }
-      }
-    }
-  } else if (node->getNodeType() == AST::List) {
-    std::map<ASTNode, ASTNode> replaceMap;
-    for (ASTNode element : node->getChildren()) {
-      resolveConstantsInNode(element, scope, tree);
-      std::shared_ptr<ValueNode> newValue;
-      if (element->getNodeType() == AST::Expression) {
-        newValue = reduceConstExpression(
-            std::static_pointer_cast<ExpressionNode>(element), scope, tree);
-
-      } else {
-        newValue = resolveConstant(element, scope, tree);
-      }
-      if (newValue) {
-        replaceMap[element] = newValue;
-      }
-    }
-    std::shared_ptr<ListNode> list = static_pointer_cast<ListNode>(node);
-    for (auto &values : replaceMap) {
-      list->replaceMember(values.second, values.first);
-    }
-
-  } else if (node->getNodeType() == AST::Bundle) {
-    std::shared_ptr<BundleNode> bundle = static_pointer_cast<BundleNode>(node);
-    std::shared_ptr<ListNode> index = bundle->index();
-    resolveConstantsInNode(index, scope, tree);
+  for (const ASTNode &node : m_tree->getChildren()) {
+    ASTFunctions::resolveConstantsInNode(node, {}, m_tree);
   }
 }
 

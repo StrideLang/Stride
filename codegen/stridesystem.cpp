@@ -1150,9 +1150,9 @@ ConnectionNodes StrideSystem::getDomainChangeStreams(string previousDomainId,
                 newTree->addChild(node);
               }
               for (auto node : importTree) {
-                CodeResolver::fillDefaultPropertiesForNode(node, importTree);
-                ASTFunctions::insertBuiltinObjectsForNode(node, builtinObjects,
-                                                          newTree);
+                ASTFunctions::fillDefaultPropertiesForNode(node, importTree);
+                ASTFunctions::insertRequiredObjectsForNode(node, builtinObjects,
+                                                           newTree);
               }
 
               injectResourceConfiguration(newTree);
@@ -1186,9 +1186,9 @@ ConnectionNodes StrideSystem::getDomainChangeStreams(string previousDomainId,
                 newTree->addChild(node);
               }
               for (auto child : importTree) {
-                CodeResolver::fillDefaultPropertiesForNode(child, importTree);
-                ASTFunctions::insertBuiltinObjectsForNode(child, builtinObjects,
-                                                          newTree);
+                ASTFunctions::fillDefaultPropertiesForNode(child, importTree);
+                ASTFunctions::insertRequiredObjectsForNode(
+                    child, builtinObjects, newTree);
               }
               injectResourceConfiguration(newTree);
               domainChangeNodes.destImports = newTree;

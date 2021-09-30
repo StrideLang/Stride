@@ -8,17 +8,14 @@
 #include <iterator>
 #include <sstream>
 
-std::shared_ptr<DeclarationNode>
-ASTQuery::findDeclarationWithType(std::string name, std::string type,
-                                  ASTNode tree) {
-  for (ASTNode node : tree->getChildren()) {
-    if (node->getNodeType() == AST::Declaration) {
-      auto decl = std::static_pointer_cast<DeclarationNode>(node);
-      if (decl->getName() == name) {
-        if (decl->getObjectType() == type) {
-          return decl;
-        }
-      }
+std::shared_ptr<DeclarationNode> ASTQuery::findDeclarationWithType(
+    std::string objectName, std::string type, const ScopeStack &scopeStack,
+    ASTNode tree, std::vector<std::string> namespaces, std::string platform) {
+  auto decls = ASTQuery::findAllDeclarations(objectName, scopeStack, tree,
+                                             namespaces, platform);
+  for (const auto &decl : decls) {
+    if (decl && decl->getObjectType() == type) {
+      return decl;
     }
   }
   return nullptr;
@@ -36,7 +33,7 @@ std::vector<std::shared_ptr<DeclarationNode>> ASTQuery::findAllDeclarations(
   if (objectName.size() > 0) {
     objectName = scopesList.back();
     scopesList.pop_back();
-    for (std::string ns : namespaces) {
+    for (const std::string &ns : namespaces) {
       scopesList.push_back(ns);
     }
   }
@@ -51,7 +48,6 @@ std::vector<std::shared_ptr<DeclarationNode>> ASTQuery::findAllDeclarations(
         std::string name = decl->getName();
         if (name == objectName) {
           if (ASTQuery::namespaceMatch(scopesList, decl, currentFramework)) {
-
             if (std::find(decls.begin(), decls.end(), decl) == decls.end()) {
               decls.push_back(decl);
             }
@@ -89,7 +85,6 @@ std::vector<std::shared_ptr<DeclarationNode>> ASTQuery::findAllDeclarations(
           //                static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
           //          }
           if (ASTQuery::namespaceMatch(scopesList, decl, currentFramework)) {
-
             if (std::find(decls.begin(), decls.end(), decl) == decls.end()) {
               decls.push_back(decl);
             }
@@ -202,6 +197,83 @@ ASTQuery::getInheritedTypes(std::shared_ptr<DeclarationNode> block,
     }
   }
   return inheritedTypes;
+}
+
+std::vector<ASTNode>
+ASTQuery::getInheritedPorts(std::shared_ptr<DeclarationNode> block,
+                            ScopeStack scope, ASTNode tree) {
+  std::vector<ASTNode> inheritedProperties;
+  auto inheritedTypes = ASTQuery::getInheritedTypes(block, scope, tree);
+  //  std::vector<std::string> inheritedName;
+  for (auto typeDeclaration : inheritedTypes) {
+    auto inheritedFromType = getPortsForTypeBlock(typeDeclaration, scope, tree);
+    for (ASTNode property : inheritedFromType) {
+      if (std::find(inheritedProperties.begin(), inheritedProperties.end(),
+                    property) == inheritedProperties.end()) {
+        inheritedProperties.push_back(property);
+      }
+      //      if (property->getNodeType() == AST::Declaration) {
+      //        inheritedName.push_back(
+      //            std::static_pointer_cast<DeclarationNode>(property)->getName());
+      //      }
+    }
+  }
+  return inheritedProperties;
+}
+
+std::vector<ASTNode>
+ASTQuery::getPortsForType(std::string typeName, ScopeStack scope, ASTNode tree,
+                          std::vector<std::string> namespaces,
+                          std::string framework) {
+  std::vector<ASTNode> portList;
+
+  std::shared_ptr<DeclarationNode> typeBlock =
+      ASTQuery::findTypeDeclarationByName(typeName, scope, tree, namespaces,
+                                          framework);
+
+  if (typeBlock) {
+    if (typeBlock->getObjectType() == "type" ||
+        typeBlock->getObjectType() == "platformModule" ||
+        typeBlock->getObjectType() == "platformBlock") {
+      ValueNode *name = static_cast<ValueNode *>(
+          typeBlock->getPropertyValue("typeName").get());
+      if (name) {
+        assert(name->getNodeType() == AST::String);
+        assert(name->getStringValue() == typeName);
+        auto newPortList =
+            ASTQuery::getPortsForTypeBlock(typeBlock, scope, tree);
+        portList.insert(portList.end(), newPortList.begin(), newPortList.end());
+      } else {
+        std::cerr
+            << "CodeValidator::getPortsForType type missing typeName port."
+            << std::endl;
+      }
+    }
+
+    //        QVector<ASTNode > inheritedProperties =
+    //        getInheritedPorts(typeBlock, scope, tree); portList <<
+    //        inheritedProperties;
+  }
+
+  return portList;
+}
+
+std::vector<ASTNode>
+ASTQuery::getPortsForTypeBlock(std::shared_ptr<DeclarationNode> block,
+                               ScopeStack scope, ASTNode tree) {
+  ASTNode portsValue = block->getPropertyValue("properties");
+  std::vector<ASTNode> outList;
+  if (portsValue && portsValue->getNodeType() != AST::None) {
+    assert(portsValue->getNodeType() == AST::List);
+    ListNode *portList = static_cast<ListNode *>(portsValue.get());
+    for (ASTNode port : portList->getChildren()) {
+      outList.push_back(port);
+    }
+  }
+
+  auto inherited = ASTQuery::getInheritedPorts(block, scope, tree);
+  outList.insert(outList.end(), inherited.begin(), inherited.end());
+  return outList;
 }
 
 bool ASTQuery::namespaceMatch(std::vector<std::string> scopeList,
