@@ -446,8 +446,7 @@ void ParserTest::testCodeGeneration() {
 
   BuildTester tester(STRIDEROOT);
 
-  QStringList toIgnore = {/*"simple",
-                          "module",
+  QStringList toIgnore = {/*"simple", "module",
                           "reactions",
                           "table",
                           "buffer",
@@ -667,8 +666,8 @@ void ParserTest::testModuleDomains() {
       static_cast<ListNode *>(block->getPropertyValue("blocks").get());
   QVERIFY(blockList->getNodeType() == AST::List);
   DeclarationNode *internalBlock =
-      ASTQuery::findDeclaration(std::string("Input"),
-                                {{block, blockList->getChildren()}}, nullptr)
+      ASTQuery::findDeclarationByName(
+          std::string("Input"), {{block, blockList->getChildren()}}, nullptr)
           .get();
   QVERIFY(internalBlock->getNodeType() == AST::Declaration);
   auto domainValue = static_pointer_cast<PortPropertyNode>(
@@ -690,8 +689,8 @@ void ParserTest::testModuleDomains() {
   QVERIFY(readDomain->getName() == "OutputPort");
 
   internalBlock =
-      ASTQuery::findDeclaration(std::string("Output"),
-                                {{block, blockList->getChildren()}}, nullptr)
+      ASTQuery::findDeclarationByName(
+          std::string("Output"), {{block, blockList->getChildren()}}, nullptr)
           .get();
   QVERIFY(internalBlock->getNodeType() == AST::Declaration);
   domainValue = static_pointer_cast<PortPropertyNode>(
@@ -779,7 +778,7 @@ void ParserTest::testLibraryObjectInsertion() {
   QVERIFY(validator.isValid());
 
   std::shared_ptr<DeclarationNode> decl =
-      ASTQuery::findDeclaration(std::string("AudioIn"), {}, tree);
+      ASTQuery::findDeclarationByName(std::string("AudioIn"), {}, tree);
   QVERIFY(decl);
   QVERIFY(decl->getObjectType() == "_hwInput");
 
@@ -794,7 +793,7 @@ void ParserTest::testLibraryObjectInsertion() {
   //    QVERIFY(errors.isEmpty());
 
   // Oscillator is not used and there should be no declaration for it
-  decl = ASTQuery::findDeclaration(std::string("Oscillator"), {}, tree);
+  decl = ASTQuery::findDeclarationByName(std::string("Oscillator"), {}, tree);
   QVERIFY(!decl);
 }
 
@@ -807,10 +806,10 @@ void ParserTest::testContextDomain() {
   resolver.process();
   CodeValidator validator(tree, CodeValidator::NO_RATE_VALIDATION);
   //    QVERIFY(validator.isValid());
-  auto mod = ASTQuery::findDeclaration(std::string("TestMod"), {}, tree);
+  auto mod = ASTQuery::findDeclarationByName(std::string("TestMod"), {}, tree);
   QVERIFY(mod);
 
-  auto loop = ASTQuery::findDeclaration(
+  auto loop = ASTQuery::findDeclarationByName(
       std::string("TestLoop"),
       {{mod, mod->getPropertyValue("blocks")->getChildren()}}, tree);
   QVERIFY(loop);
@@ -860,7 +859,7 @@ void ParserTest::testDomains() {
   //    TestMod(value:Modulator) >> AudioOut;
 
   std::shared_ptr<DeclarationNode> block =
-      ASTQuery::findDeclaration(std::string("Modulator"), {}, tree);
+      ASTQuery::findDeclarationByName(std::string("Modulator"), {}, tree);
   QVERIFY(block->getNodeType() == AST::Declaration);
   BlockNode *domain = static_cast<BlockNode *>(block->getDomain().get());
   QVERIFY(domain->getNodeType() == AST::Block);
@@ -868,7 +867,7 @@ void ParserTest::testDomains() {
 
   // AudioIn[1] >> TestMod2(value: 0.1) >> Signal;
 
-  block = ASTQuery::findDeclaration(std::string("Signal"), {}, tree);
+  block = ASTQuery::findDeclarationByName(std::string("Signal"), {}, tree);
   QVERIFY(block->getNodeType() == AST::Declaration);
   auto domainBlock = static_cast<BlockNode *>(block->getDomain().get());
   //  QVERIFY(domainBlock->getNodeType() == AST::None);
@@ -931,7 +930,7 @@ void ParserTest::testModules() {
   blockNames << "Output";
   blockNames << "AutoDeclared";
   for (auto name : blockNames) {
-    auto decl = ASTQuery::findDeclaration(
+    auto decl = ASTQuery::findDeclarationByName(
         name.toStdString(), {{moduleNode, blockList->getChildren()}}, nullptr);
     QVERIFY(decl);
   }
@@ -1415,7 +1414,7 @@ void ParserTest::testStreamExpansion() {
 
   vector<StreamNode *> streams = CodeValidator::getStreamsAtLine(tree, 17);
   std::shared_ptr<DeclarationNode> decl =
-      ASTQuery::findDeclaration(std::string("OutSignal2"), {}, tree);
+      ASTQuery::findDeclarationByName(std::string("OutSignal2"), {}, tree);
 
   QVERIFY(decl->getNodeType() == AST::BundleDeclaration);
   bundle = decl->getBundle().get();
@@ -1469,7 +1468,7 @@ void ParserTest::testStreamExpansion() {
   QVERIFY(list->getNodeType() == AST::List);
   QVERIFY(list->getChildren().size() == 2);
 
-  decl = ASTQuery::findDeclaration(std::string("OutSignal3"), {}, tree);
+  decl = ASTQuery::findDeclarationByName(std::string("OutSignal3"), {}, tree);
   QVERIFY(decl->getNodeType() == AST::BundleDeclaration);
   ListNode *bundleIndex =
       static_cast<ListNode *>(decl->getBundle()->index().get());
@@ -3431,7 +3430,8 @@ void ParserTest::testTriggersRegistration() {
   CodeValidator validator(tree, CodeValidator::NO_RATE_VALIDATION);
   QVERIFY(validator.isValid());
 
-  auto triggerDecl = ASTQuery::findDeclaration(std::string("Trig"), {}, tree);
+  auto triggerDecl =
+      ASTQuery::findDeclarationByName(std::string("Trig"), {}, tree);
   QVERIFY(triggerDecl);
   auto triggerSources = triggerDecl->getCompilerProperty("triggerSources");
   QVERIFY(triggerSources);
@@ -3461,7 +3461,8 @@ void ParserTest::testResetRegistration() {
   CodeValidator validator(tree, CodeValidator::NO_RATE_VALIDATION);
   QVERIFY(validator.isValid());
 
-  auto triggerDecl = ASTQuery::findDeclaration(std::string("Trig"), {}, tree);
+  auto triggerDecl =
+      ASTQuery::findDeclarationByName(std::string("Trig"), {}, tree);
   QVERIFY(triggerDecl);
   auto triggerResets = triggerDecl->getCompilerProperty("triggerResets");
   QVERIFY(triggerResets);

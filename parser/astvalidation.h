@@ -3,6 +3,7 @@
 
 #include "ast.h"
 #include "declarationnode.h"
+#include "streamnode.h"
 
 #include <functional>
 
@@ -10,6 +11,15 @@ class ASTValidation {
 public:
   ASTValidation();
 
+  // Verifies that types are declared for all nodes, and that the properties and
+  // property types are allowed by the type declaration
+  static std::vector<LangError>
+  validateTypes(ASTNode node, ScopeStack scopeStack = ScopeStack(),
+                ASTNode tree = nullptr,
+                std::vector<std::string> parentNamespace = {},
+                std::string currentFramework = "");
+
+  // Validate property types
   static bool isValidStringProperty(std::shared_ptr<DeclarationNode> decl,
                                     std::string propertyName,
                                     bool optional = false, bool verbose = true);
@@ -51,6 +61,12 @@ public:
       std::function<bool(ASTNode)> validateElement =
           [](ASTNode) { return true; },
       bool optional = false, bool verbose = true);
+
+protected:
+  static std::vector<LangError>
+  validateTypesForDeclaration(std::shared_ptr<DeclarationNode> decl,
+                              ScopeStack scopeStack, ASTNode tree,
+                              std::string currentFramework);
 };
 
 #endif // ASTVALIDATION_H

@@ -67,8 +67,6 @@ public:
   static std::shared_ptr<DeclarationNode>
   getDeclaration(ASTNode node); // Retrieve stored declaration
 
-  static std::string streamMemberName(ASTNode node);
-
   // Resolve types
   static std::string resolveBundleType(BundleNode *bundle,
                                        ScopeStack scopeStack, ASTNode tree);
@@ -130,13 +128,7 @@ public:
   static std::shared_ptr<PropertyNode>
   findPropertyByName(vector<std::shared_ptr<PropertyNode>> properties,
                      QString propertyName);
-  static QVector<ASTNode>
-  validTypesForPort(std::shared_ptr<DeclarationNode> typeDeclaration,
-                    QString portName, ScopeStack scope, ASTNode tree);
 
-  static std::shared_ptr<DeclarationNode>
-  findTypeDeclaration(std::shared_ptr<DeclarationNode> decl, ScopeStack scope,
-                      ASTNode tree, string currentFramework = "");
   static std::shared_ptr<DeclarationNode>
   findDomainDeclaration(string domainName, string framework, ASTNode tree);
   static std::shared_ptr<DeclarationNode> findDomainDeclaration(string domainId,
@@ -149,13 +141,6 @@ public:
   getDataTypeForDeclaration(std::shared_ptr<DeclarationNode> decl,
                             ASTNode tree);
 
-  static std::shared_ptr<DeclarationNode>
-  getMainOutputPortBlock(std::shared_ptr<DeclarationNode> moduleBlock);
-  static std::shared_ptr<DeclarationNode>
-  getMainInputPortBlock(std::shared_ptr<DeclarationNode> moduleBlock);
-  static std::shared_ptr<DeclarationNode>
-  getPort(std::shared_ptr<DeclarationNode> moduleBlock, std::string name);
-
   /// Number of parallel streams that a single stream can be broken up into
   static int numParallelStreams(StreamNode *stream, StrideSystem &platform,
                                 const ScopeStack &scope, ASTNode tree,
@@ -166,8 +151,6 @@ public:
   static int getNodeSize(ASTNode node, const ScopeStack &scopeStack,
                          ASTNode tree);
 
-  static std::vector<std::string>
-  getModulePropertyNames(std::shared_ptr<DeclarationNode> blockDeclaration);
   static int getFunctionDataSize(std::shared_ptr<FunctionNode> func,
                                  ScopeStack scope, ASTNode tree,
                                  QList<LangError> &errors);
@@ -198,12 +181,8 @@ public:
                          ScopeStack scope, ASTNode tree,
                          QList<LangError> &errors);
 
-  // Remove this function. getModuleBlocks() is better.
-  static ASTNode getBlockSubScope(std::shared_ptr<DeclarationNode> block);
   static int getBundleSize(BundleNode *bundle, ScopeStack scope, ASTNode tree,
                            QList<LangError> &errors);
-
-  //  static QString getPortTypeName(PortType type);
 
   static ASTNode getNodeDomain(ASTNode node, ScopeStack scopeStack,
                                ASTNode tree);
@@ -264,10 +243,7 @@ private:
   void validate();
 
   void validatePlatform(ASTNode node, ScopeStack scopeStack);
-  void validateTypes(ASTNode node, ScopeStack scopeStack,
-                     vector<string> parentNamespace = vector<string>(),
-                     std::string framework = "");
-  void validateStreamMembers(StreamNode *node, ScopeStack scopeStack);
+
   void validateBundleIndeces(ASTNode node, ScopeStack scope);
   void validateBundleSizes(ASTNode node, ScopeStack scope);
   void validateSymbolUniqueness(ScopeStack scope);

@@ -595,7 +595,7 @@ void ProjectWindow::createResourceTreeItem(ASTNode inputNode,
     if (configsNode) {
       for (auto config : configsNode->getChildren()) {
         text.clear();
-        text << QString::fromStdString(CodeValidator::streamMemberName(config));
+        text << QString::fromStdString(ASTQuery::getNodeName(config));
 
         QTreeWidgetItem *newConfigItem = new QTreeWidgetItem(newItem, text);
         newItem->addChild(newConfigItem);
@@ -1275,8 +1275,8 @@ void ProjectWindow::fillInspectorTree() {
                   tooltipText += QString::fromStdString(
                       static_pointer_cast<ValueNode>(write)->getStringValue());
                 } else {
-                  tooltipText += QString::fromStdString(
-                      CodeValidator::streamMemberName(write));
+                  tooltipText +=
+                      QString::fromStdString(ASTQuery::getNodeName(write));
                 }
                 tooltipText += "\n";
               }
@@ -1289,8 +1289,8 @@ void ProjectWindow::fillInspectorTree() {
                   tooltipText += QString::fromStdString(
                       static_pointer_cast<ValueNode>(read)->getStringValue());
                 } else {
-                  tooltipText += QString::fromStdString(
-                      CodeValidator::streamMemberName(read));
+                  tooltipText +=
+                      QString::fromStdString(ASTQuery::getNodeName(read));
                 }
                 tooltipText += "\n";
               }
@@ -1424,7 +1424,7 @@ void ProjectWindow::configureSystem() {
 
           for (auto config : configuration->getChildren()) {
             if (config->getNodeType() == AST::Block) {
-              auto configDecl = ASTQuery::findDeclaration(
+              auto configDecl = ASTQuery::findDeclarationByName(
                   static_pointer_cast<BlockNode>(config)->getName(), {}, tree);
               if (configDecl) {
                 QString optionName;

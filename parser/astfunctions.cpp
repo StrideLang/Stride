@@ -37,7 +37,7 @@ void ASTFunctions::insertDependentTypes(
     std::map<std::string, std::vector<ASTNode>> &externalNodes, ASTNode tree) {
   std::vector<std::shared_ptr<DeclarationNode>> blockList;
   //    std::shared_ptr<DeclarationNode> existingDecl =
-  //    CodeValidator::findTypeDeclaration(typeDeclaration, ScopeStack(),
+  //    ASTQuery::findTypeDeclaration(typeDeclaration, ScopeStack(),
   //    m_tree);
   for (auto it = externalNodes.begin(); it != externalNodes.end(); it++) {
     // To avoid redundant checking here we should mark nodes that have already
@@ -132,8 +132,8 @@ void ASTFunctions::insertRequiredObjectsForNode(
         namespaceTree.erase(namespaceTree.begin());
       }
 
-      if (!ASTQuery::findDeclaration(usedBlock->getName(), ScopeStack(), tree,
-                                     namespaceTree, fw)) {
+      if (!ASTQuery::findDeclarationByName(usedBlock->getName(), ScopeStack(),
+                                           tree, namespaceTree, fw)) {
         tree->addChild(usedBlock);
       }
       insertRequiredObjectsForNode(usedBlock, objects, tree, fw);
@@ -215,7 +215,7 @@ void ASTFunctions::insertRequiredObjectsForNode(
     //    QList<std::shared_ptr<DeclarationNode>> blockList;
     BlockNode *name = static_cast<BlockNode *>(node.get());
 
-    auto declaration = ASTQuery::findDeclaration(
+    auto declaration = ASTQuery::findDeclarationByName(
         name->getName(), {}, tree, name->getNamespaceList(), currentFramework);
 
     if (!declaration) {
@@ -248,7 +248,7 @@ void ASTFunctions::insertRequiredObjectsForNode(
         //        {
         //          namespaceList.erase(namespaceList.begin());
         //        }
-        auto existingDeclaration = ASTQuery::findDeclaration(
+        auto existingDeclaration = ASTQuery::findDeclarationByName(
             usedBlock->getName(), {}, tree, namespaceList, framework);
         if (!existingDeclaration) {
           tree->addChild(usedBlock);
@@ -259,9 +259,9 @@ void ASTFunctions::insertRequiredObjectsForNode(
   } else if (node->getNodeType() == AST::Bundle) {
     std::vector<std::shared_ptr<DeclarationNode>> blockList;
     auto bundle = std::static_pointer_cast<BundleNode>(node);
-    auto declaration =
-        ASTQuery::findDeclaration(bundle->getName(), {}, tree,
-                                  bundle->getNamespaceList(), currentFramework);
+    auto declaration = ASTQuery::findDeclarationByName(
+        bundle->getName(), {}, tree, bundle->getNamespaceList(),
+        currentFramework);
     if (!declaration) {
       for (auto it = objects.begin(); it != objects.end(); it++) {
         auto newDeclarations = ASTQuery::findAllDeclarations(
@@ -286,9 +286,9 @@ void ASTFunctions::insertRequiredObjectsForNode(
           framework = std::static_pointer_cast<ValueNode>(frameworkNode)
                           ->getStringValue();
         }
-        auto existingDeclaration =
-            ASTQuery::findDeclaration(usedBlock->getName(), {}, tree,
-                                      usedBlock->getNamespaceList(), framework);
+        auto existingDeclaration = ASTQuery::findDeclarationByName(
+            usedBlock->getName(), {}, tree, usedBlock->getNamespaceList(),
+            framework);
         if (!existingDeclaration) {
           tree->addChild(usedBlock);
         }
@@ -366,8 +366,9 @@ void ASTFunctions::fillDefaultPropertiesForNode(
         std::static_pointer_cast<FunctionNode>(node);
     std::vector<std::shared_ptr<PropertyNode>> blockProperties =
         destFunc->getProperties();
-    std::shared_ptr<DeclarationNode> functionModule = ASTQuery::findDeclaration(
-        destFunc->getName(), {{nullptr, scopeNodes}}, nullptr);
+    std::shared_ptr<DeclarationNode> functionModule =
+        ASTQuery::findDeclarationByName(destFunc->getName(),
+                                        {{nullptr, scopeNodes}}, nullptr);
     if (functionModule) {
       if (functionModule->getObjectType() == "module" ||
           functionModule->getObjectType() == "reaction" ||
@@ -461,8 +462,8 @@ void ASTFunctions::resolveConstantsInNode(ASTNode node, ScopeStack scope,
     } else if (stream->getLeft()->getNodeType() == AST::PortProperty) {
       std::shared_ptr<PortPropertyNode> propertyNode =
           std::static_pointer_cast<PortPropertyNode>(stream->getLeft());
-      std::shared_ptr<DeclarationNode> block =
-          ASTQuery::findDeclaration(propertyNode->getPortName(), scope, tree);
+      std::shared_ptr<DeclarationNode> block = ASTQuery::findDeclarationByName(
+          propertyNode->getPortName(), scope, tree);
       if (block) {
         ASTNode property = block->getPropertyValue(propertyNode->getName());
         if (property) { // First replace if pointing to a name
@@ -656,7 +657,7 @@ ASTFunctions::resolveConstant(ASTNode value, ScopeStack scope, ASTNode tree,
     return newValue;
   } else if (value->getNodeType() == AST::Block) {
     BlockNode *name = static_cast<BlockNode *>(value.get());
-    std::shared_ptr<DeclarationNode> block = ASTQuery::findDeclaration(
+    std::shared_ptr<DeclarationNode> block = ASTQuery::findDeclarationByName(
         name->getName(), scope, tree, name->getNamespaceList(), framework);
     if (block && block->getNodeType() == AST::Declaration &&
         block->getObjectType() == "constant") { // Size == 1
@@ -680,8 +681,8 @@ ASTFunctions::resolveConstant(ASTNode value, ScopeStack scope, ASTNode tree,
   } else if (value->getNodeType() == AST::PortProperty) {
     PortPropertyNode *propertyNode =
         static_cast<PortPropertyNode *>(value.get());
-    std::shared_ptr<DeclarationNode> block =
-        ASTQuery::findDeclaration(propertyNode->getPortName(), scope, tree);
+    std::shared_ptr<DeclarationNode> block = ASTQuery::findDeclarationByName(
+        propertyNode->getPortName(), scope, tree);
     if (block) {
       ASTNode propertyValue = block->getPropertyValue(propertyNode->getName());
       if (propertyValue) {

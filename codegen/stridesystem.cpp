@@ -158,7 +158,7 @@ void StrideSystem::parseSystemTree(ASTNode systemTree, ASTNode configuration) {
             Q_ASSERT(platformName->getNodeType() == AST::Block);
             auto platformSpecBlock =
                 static_pointer_cast<BlockNode>(platformName);
-            auto platformSpec = ASTQuery::findDeclaration(
+            auto platformSpec = ASTQuery::findDeclarationByName(
                 platformSpecBlock->getName(), {}, systemTree);
             if (platformSpec) {
               auto platformBlock = platformSpec->getPropertyValue("framework");
@@ -866,9 +866,8 @@ string StrideSystem::getDataType(ASTNode node, ASTNode tree) {
       std::string domainId = CodeValidator::getDomainIdentifier(node, {}, tree);
       auto frameworkName = CodeValidator::getFrameworkForDomain(domainId, tree);
       frameworkName = getFrameworkAlias(frameworkName);
-      auto decl =
-          ASTQuery::findDeclaration(CodeValidator::streamMemberName(child), {},
-                                    tree, child->getNamespaceList());
+      auto decl = ASTQuery::findDeclarationByName(
+          ASTQuery::getNodeName(child), {}, tree, child->getNamespaceList());
 
       if (decl) {
         return CodeValidator::getDataTypeForDeclaration(decl, tree);
@@ -960,8 +959,8 @@ void StrideSystem::generateDomainConnections(ASTNode tree) {
             auto previousFramework =
                 CodeValidator::getFrameworkForDomain(previousDomainId, tree);
             // We should validate with provided connection framework
-            auto nodeDecl = ASTQuery::findDeclaration(
-                CodeValidator::streamMemberName(stream->getRight()), {},
+            auto nodeDecl = ASTQuery::findDeclarationByName(
+                ASTQuery::getNodeName(stream->getRight()), {},
                 domainChangeNodes.sourceImports, {},
                 getFrameworkAlias(previousFramework));
             stream->getRight()->setCompilerProperty("declaration", nodeDecl);
@@ -974,8 +973,8 @@ void StrideSystem::generateDomainConnections(ASTNode tree) {
             auto destFramework =
                 CodeValidator::getFrameworkForDomain(nextDomainId, tree);
             // We should validate with provided connection framework
-            nodeDecl = ASTQuery::findDeclaration(
-                CodeValidator::streamMemberName(connectionNode), {},
+            nodeDecl = ASTQuery::findDeclarationByName(
+                ASTQuery::getNodeName(connectionNode), {},
                 domainChangeNodes.destImports, {},
                 getFrameworkAlias(destFramework));
             connectionNode->setCompilerProperty("declaration", nodeDecl);
@@ -1063,8 +1062,7 @@ void StrideSystem::injectResourceConfiguration(ASTNode tree) {
     for (auto configEntry : frameworkConfig.second) {
       // FIXME verify framework
       for (size_t i = 0; i < newChildren.size(); i++) {
-        if (CodeValidator::streamMemberName(newChildren[i]) ==
-            configEntry->getName()) {
+        if (ASTQuery::getNodeName(newChildren[i]) == configEntry->getName()) {
           newChildren[i] = configEntry;
           break;
         }
@@ -1378,7 +1376,7 @@ std::string StrideSystem::findDefaultDataTypeInPath(string path,
             return static_pointer_cast<ValueNode>(defaultNode)
                 ->getStringValue();
           } else if (defaultNode->getNodeType() == AST::Block) {
-            return CodeValidator::streamMemberName(defaultNode);
+            return ASTQuery::getNodeName(defaultNode);
           }
         }
       } else if (decl->getObjectType() == "strideTypeDefaultDataType") {
@@ -1389,7 +1387,7 @@ std::string StrideSystem::findDefaultDataTypeInPath(string path,
           if (strideTypeName == strideType) {
             auto frameworkTypeNode = decl->getPropertyValue("frameworkType");
             if (frameworkTypeNode) {
-              return CodeValidator::streamMemberName(frameworkTypeNode);
+              return ASTQuery::getNodeName(frameworkTypeNode);
             }
           }
         }

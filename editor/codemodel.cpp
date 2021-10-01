@@ -191,7 +191,8 @@ QString CodeModel::getHtmlDocumentation(QString symbol) {
              symbol[0]) { // Check if it is a declared module
     QMutexLocker locker(&m_validTreeLock);
     std::shared_ptr<DeclarationNode> declaration =
-        ASTQuery::findDeclaration(symbol.toStdString(), {}, m_lastValidTree);
+        ASTQuery::findDeclarationByName(symbol.toStdString(), {},
+                                        m_lastValidTree);
     if (declaration) {
       AST *metaValue = declaration->getPropertyValue("meta").get();
       if (metaValue) {
@@ -337,7 +338,8 @@ QString CodeModel::getTooltipText(QString symbol) {
   if (symbol[0].toUpper() == symbol[0]) { // Check if it is a declared module
     QMutexLocker locker(&m_validTreeLock);
     std::shared_ptr<DeclarationNode> declaration =
-        ASTQuery::findDeclaration(symbol.toStdString(), {}, m_lastValidTree);
+        ASTQuery::findDeclarationByName(symbol.toStdString(), {},
+                                        m_lastValidTree);
     if (declaration) {
       //            AST *metaValue =
       //            declaration->getPropertyValue("meta").get(); if (metaValue)
@@ -557,7 +559,8 @@ QString CodeModel::getFunctionSyntax(QString symbol) {
   QMutexLocker locker(&m_validTreeLock);
   QVector<ASTNode> libraryNodes;
   std::shared_ptr<DeclarationNode> declaration =
-      ASTQuery::findDeclaration(symbol.toStdString(), {}, m_lastValidTree);
+      ASTQuery::findDeclarationByName(symbol.toStdString(), {},
+                                      m_lastValidTree);
   if (declaration) {
     return getTextForPorts(declaration);
   }

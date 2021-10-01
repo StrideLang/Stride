@@ -132,7 +132,6 @@ private:
                               ScopeStack localScope, ASTNode tree);
   std::vector<ASTNode>
   getModuleStreams(std::shared_ptr<DeclarationNode> module);
-  std::vector<ASTNode> getModuleBlocks(std::shared_ptr<DeclarationNode> module);
 
   void declareInternalBlocksForNode(ASTNode node, ScopeStack scope);
 

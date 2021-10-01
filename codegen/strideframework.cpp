@@ -37,6 +37,7 @@
 #include <iostream>
 
 #include "../parser/astfunctions.h"
+#include "../parser/astquery.h"
 #include "../parser/declarationnode.h"
 #include "../parser/valuenode.h"
 
@@ -284,8 +285,7 @@ StrideFramework::loadFrameworkRoot(std::string frameworkRoot) {
     for (auto inhNode : inheritedNodes) {
       bool found = false;
       for (auto node = nodes.begin(); node != nodes.end(); node++) {
-        if (CodeValidator::streamMemberName(*node) ==
-            CodeValidator::streamMemberName(inhNode)) {
+        if (ASTQuery::getNodeName(*node) == ASTQuery::getNodeName(inhNode)) {
           //          nodes.erase(node);
           found = true;
           break;
@@ -383,16 +383,13 @@ std::vector<ASTNode> StrideFramework::loadImport(string importName,
     auto inheritedNodes = CodeValidator::loadAllInDirectory(subPath);
     for (auto inhNode : inheritedNodes) {
       for (auto node = nodes.begin(); node != nodes.end(); node++) {
-        if (CodeValidator::streamMemberName(*node) ==
-            CodeValidator::streamMemberName(inhNode)) {
+        if (ASTQuery::getNodeName(*node) == ASTQuery::getNodeName(inhNode)) {
           nodes.erase(node);
           qDebug() << "Replacing inherited node: "
-                   << QString::fromStdString(
-                          CodeValidator::streamMemberName((*node)))
+                   << QString::fromStdString(ASTQuery::getNodeName((*node)))
                    << " from " << QString::fromStdString((*node)->getFilename())
                    << " with "
-                   << QString::fromStdString(
-                          CodeValidator::streamMemberName(inhNode))
+                   << QString::fromStdString(ASTQuery::getNodeName(inhNode))
                    << " from "
                    << QString::fromStdString(inhNode->getFilename());
 
