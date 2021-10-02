@@ -522,9 +522,9 @@ void ASTFunctions::resolveConstantsInNode(ASTNode node, ScopeStack scope,
     //      // Now try to see if domain belongs to a framework
 
     //      auto domainId =
-    //          CodeValidator::getNodeDomainName(node, ScopeStack(), tree);
+    //          CodeAnalysis::getNodeDomainName(node, ScopeStack(), tree);
 
-    //      frameworkName = CodeValidator::getFrameworkForDomain(domainId,
+    //      frameworkName = CodeAnalysis::getFrameworkForDomain(domainId,
     //      tree);
     //    }
 

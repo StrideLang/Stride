@@ -3403,7 +3403,7 @@ void ParserTest::testLibraryBasicTypes() {
                << "module"
                << "reaction";
   for (const QString &typeName : typesToCheck) {
-    type = library.findTypeInLibrary(typeName);
+    type = library.findTypeInLibrary(typeName.toStdString());
     QVERIFY(type);
     QVERIFY(library.isValidBlock(type.get()));
   }

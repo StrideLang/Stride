@@ -650,7 +650,7 @@ void CodeModel::updateCodeAnalysis(QString code, QString platformRootPath,
     if (tree) {
       SystemConfiguration config;
       //      config.testing = true;
-      CodeResolver resolver(tree, platformRootPath, config);
+      CodeResolver resolver(tree, platformRootPath.toStdString(), config);
       resolver.process();
       m_system = resolver.getSystem();
 

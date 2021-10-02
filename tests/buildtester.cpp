@@ -85,7 +85,7 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile,
     config.testing = true;
     config.readConfiguration(filename);
 
-    CodeResolver resolver(tree, QString::fromStdString(m_StrideRoot), config);
+    CodeResolver resolver(tree, m_StrideRoot, config);
     resolver.process();
 
     CodeValidator validator(tree);
@@ -103,7 +103,7 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile,
 
     system->generateDomainConnections(tree);
 
-    m_builders = system->createBuilders(QString::fromStdString(filename), tree);
+    m_builders = system->createBuilders(filename, tree);
     if (m_builders.size() == 0) {
       std::cerr << "Can't create builder" << std::endl;
       return false;

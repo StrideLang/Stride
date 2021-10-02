@@ -161,8 +161,9 @@ bool ProjectWindow::build() {
     SystemConfiguration systemConfig;
     systemConfig.readConfiguration(editor->filename().toStdString());
 
-    CodeResolver resolver(tree, m_environment["striderootPath"].toString(),
-                          systemConfig);
+    CodeResolver resolver(
+        tree, m_environment["striderootPath"].toString().toStdString(),
+        systemConfig);
     resolver.process();
     CodeValidator validator(tree);
     errors << validator.getErrors();
@@ -181,7 +182,7 @@ bool ProjectWindow::build() {
       delete builder;
     }
 
-    m_builders = system->createBuilders(editor->filename(), tree);
+    m_builders = system->createBuilders(editor->filename().toStdString(), tree);
     if (m_builders.size() == 0) {
       printConsoleText(tr("Aborting. No builder available."));
       qDebug() << "Can't create builder";

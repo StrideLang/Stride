@@ -53,7 +53,7 @@
 
 class CodeResolver {
 public:
-  CodeResolver(ASTNode tree, QString striderootDir,
+  CodeResolver(ASTNode tree, std::string striderootDir,
                SystemConfiguration systemConfig = SystemConfiguration());
   ~CodeResolver();
 

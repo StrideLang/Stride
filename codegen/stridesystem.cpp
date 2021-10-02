@@ -43,34 +43,39 @@
 
 #include "astfunctions.h"
 #include "astquery.h"
+
+#include "codeanalysis.hpp"
 #include "coderesolver.h"
 #include "codevalidator.h"
+
 #include "declarationnode.h"
 #include "propertynode.h"
 #include "pythonproject.h"
 #include "toolmanager.hpp"
 
-StrideSystem::StrideSystem(QString strideRoot, QString systemName,
+StrideSystem::StrideSystem(string strideRoot, string systemName,
                            int majorVersion, int minorVersion,
                            std::vector<std::shared_ptr<ImportNode>> importList)
     : m_strideRoot(strideRoot), m_systemName(systemName),
       m_majorVersion(majorVersion), m_minorVersion(minorVersion) {
-  QString versionString =
-      QString("%1.%2").arg(m_majorVersion).arg(m_minorVersion);
+  std::string versionString =
+      std::to_string(m_majorVersion) + "." + std::to_string(m_minorVersion);
+  // TODO require C++17 to bring in filesystem:: ?
   m_systemPath =
-      QDir(strideRoot + QDir::separator() + "systems" + QDir::separator() +
-           systemName + QDir::separator() + versionString)
-          .absolutePath();
-  QString systemFile = m_systemPath + QDir::separator() + "System.stride";
+      QDir(QString::fromStdString(strideRoot) + QDir::separator() + "systems" +
+           QDir::separator() + QString::fromStdString(systemName) +
+           QDir::separator() + QString::fromStdString(versionString))
+          .absolutePath()
+          .toStdString();
+  std::string systemFile = m_systemPath + "/System.stride";
 
   for (auto importNode : importList) {
     m_importList[QString::fromStdString(importNode->importName())] =
         QString::fromStdString(importNode->importAlias());
   }
 
-  if (QFile::exists(systemFile)) {
-    ASTNode systemTree =
-        ASTFunctions::parseFile(systemFile.toStdString().c_str(), nullptr);
+  if (QFile::exists(QString::fromStdString(systemFile))) {
+    ASTNode systemTree = ASTFunctions::parseFile(systemFile.c_str(), nullptr);
     if (systemTree) {
       parseSystemTree(systemTree);
 
@@ -108,10 +113,12 @@ StrideSystem::StrideSystem(QString strideRoot, QString systemName,
       //                m_api = PythonTools;
       //                m_types = getPlatformTypeNames();
     } else {
-      qDebug() << "Error parsing system tree in:" << systemFile;
+      std::cerr << __FILE__ << ":" << __LINE__
+                << "Error parsing system tree in:" << systemFile << std::endl;
     }
   } else {
-    qDebug() << "System file not found:" << systemFile;
+    std::cerr << __FILE__ << ":" << __LINE__
+              << "System file not found:" << systemFile << std::endl;
   }
 
   //    if (m_api == NullPlatform) {
@@ -255,7 +262,7 @@ void StrideSystem::parseSystemTree(ASTNode systemTree, ASTNode configuration) {
 
         std::shared_ptr<StrideFramework> newPlatform =
             std::make_shared<StrideFramework>(
-                m_strideRoot.toStdString(), definition["framework"],
+                m_strideRoot, definition["framework"],
                 definition["frameworkVersion"], definition["hardware"],
                 definition["hardwareVersion"], definition["rootNamespace"],
                 frameworkInherits[definition["framework"]].first,
@@ -296,16 +303,14 @@ void StrideSystem::parseSystemTree(ASTNode systemTree, ASTNode configuration) {
   }
 }
 
-std::string StrideSystem::getStrideRoot() const {
-  return m_strideRoot.toStdString();
-}
+std::string StrideSystem::getStrideRoot() const { return m_strideRoot; }
 
 void StrideSystem::setStrideRoot(const std::string &strideRoot) {
-  m_strideRoot.fromStdString(strideRoot);
+  m_strideRoot = strideRoot;
 }
 
 std::vector<string> StrideSystem::listAvailableImports() {
-  QDir dir(m_strideRoot);
+  QDir dir(QString::fromStdString(m_strideRoot));
   dir.cd("library/1.0");
   std::vector<std::string> outEntries;
   for (auto entry : dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
@@ -379,11 +384,12 @@ QStringList StrideSystem::getFunctionNames() {
   return funcNames;
 }
 
-vector<Builder *> StrideSystem::createBuilders(QString fileName, ASTNode tree) {
+vector<Builder *> StrideSystem::createBuilders(std::string fileName,
+                                               ASTNode tree) {
 
   vector<Builder *> builders;
-  QString projectDir = makeProject(fileName);
-  if (projectDir.isEmpty()) {
+  std::string projectDir = makeProject(fileName);
+  if (projectDir.size() == 0) {
     qDebug() << "Error creating project path";
     return builders;
   }
@@ -394,11 +400,10 @@ vector<Builder *> StrideSystem::createBuilders(QString fileName, ASTNode tree) {
                    getFrameworkAlias(platform->getFramework())) !=
          usedFrameworks.end())) {
       if (platform->getAPI() == StrideFramework::PythonTools) {
-        QString pythonExec = "python";
+        std::string pythonExec = "python";
         Builder *builder = new PythonProject(
-            QString::fromStdString(platform->getFramework()),
-            QString::fromStdString(platform->buildPlatformPath()), m_strideRoot,
-            projectDir, pythonExec);
+            platform->getFramework(), platform->buildPlatformPath(),
+            m_strideRoot, projectDir, pythonExec);
         if (builder) {
           if (builder->isValid()) {
             builders.push_back(builder);
@@ -407,8 +412,9 @@ vector<Builder *> StrideSystem::createBuilders(QString fileName, ASTNode tree) {
           }
         }
       } else if (platform->getAPI() == StrideFramework::PluginPlatform) {
-        auto pluginList = QDir(m_strideRoot + "/plugins")
-                              .entryList(QDir::NoDotAndDotDot | QDir::Files);
+        auto pluginList =
+            QDir(QString::fromStdString(m_strideRoot) + "/plugins")
+                .entryList(QDir::NoDotAndDotDot | QDir::Files);
         // FIXME we should copy plugins to framework directories
         //                auto pluginList =
         //                QDir(QString::fromStdString(platformEntry.second->buildPlatformPath(m_strideRoot.toStdString())
@@ -429,7 +435,8 @@ vector<Builder *> StrideSystem::createBuilders(QString fileName, ASTNode tree) {
         for (auto plugin : pluginList) {
           //                    qDebug() << plugin;
 
-          QLibrary pluginLibrary(m_strideRoot + "/plugins/" + plugin);
+          QLibrary pluginLibrary(QString::fromStdString(m_strideRoot) +
+                                 "/plugins/" + plugin);
           if (pluginLibrary.load()) {
             char name[STRIDE_PLUGIN_MAX_STR_LEN];
             int versionMajor = -1;
@@ -461,12 +468,10 @@ vector<Builder *> StrideSystem::createBuilders(QString fileName, ASTNode tree) {
                 create_object_t create =
                     (create_object_t)pluginLibrary.resolve("create_object");
                 if (create) {
-                  Builder *builder = create(
-                      QString::fromStdString(platform->buildPlatformPath()),
-                      m_strideRoot, projectDir);
+                  Builder *builder = create(platform->buildPlatformPath(),
+                                            m_strideRoot, projectDir);
                   if (builder) {
-                    builder->m_frameworkName =
-                        QString::fromStdString(platform->getFramework());
+                    builder->m_frameworkName = platform->getFramework();
                     builders.push_back(builder);
                   }
                 }
@@ -510,7 +515,7 @@ QMap<QString, QString>
 StrideSystem::getFrameworkTools(std::string namespaceName) {
   QMap<QString, QString> tools;
 
-  ToolManager toolManager(m_strideRoot.toStdString());
+  ToolManager toolManager(m_strideRoot);
 
   map<string, vector<ASTNode>> libObjects = getBuiltinObjects();
   if (libObjects.find(namespaceName) == libObjects.end()) { // Invalid namespace
@@ -551,7 +556,7 @@ QMap<QString, QString>
 StrideSystem::getFrameworkPaths(std::string namespaceName) {
   QMap<QString, QString> paths;
 
-  ToolManager toolManager(m_strideRoot.toStdString());
+  ToolManager toolManager(m_strideRoot);
 
   map<string, vector<ASTNode>> libObjects = getBuiltinObjects();
   if (libObjects.find(namespaceName) == libObjects.end()) { // Invalid namespace
@@ -626,7 +631,7 @@ string StrideSystem::substituteTokens(string namespaceName, string text) {
   return text;
 }
 
-vector<string> StrideSystem::getFrameworkNames() {
+std::vector<string> StrideSystem::getFrameworkNames() {
   vector<string> names;
   for (auto platform : m_frameworks) {
     names.push_back(platform->getFramework());
@@ -634,7 +639,7 @@ vector<string> StrideSystem::getFrameworkNames() {
   return names;
 }
 
-map<string, vector<ASTNode>> StrideSystem::getBuiltinObjects() {
+std::map<string, std::vector<ASTNode>> StrideSystem::getBuiltinObjects() {
   map<string, vector<ASTNode>> objects;
   objects[""] = vector<ASTNode>();
   for (auto platform : m_frameworks) {
@@ -863,8 +868,8 @@ StrideSystem::getFrameworkAliasInherits(string frameworkAlias) {
 string StrideSystem::getDataType(ASTNode node, ASTNode tree) {
   for (auto child : tree->getChildren()) {
     if (child->getNodeType() == AST::Block) {
-      std::string domainId = CodeValidator::getDomainIdentifier(node, {}, tree);
-      auto frameworkName = CodeValidator::getFrameworkForDomain(domainId, tree);
+      std::string domainId = CodeAnalysis::getDomainIdentifier(node, {}, tree);
+      auto frameworkName = CodeAnalysis::getFrameworkForDomain(domainId, tree);
       frameworkName = getFrameworkAlias(frameworkName);
       auto decl = ASTQuery::findDeclarationByName(
           ASTQuery::getNodeName(child), {}, tree, child->getNamespaceList());
@@ -911,8 +916,8 @@ void StrideSystem::generateDomainConnections(ASTNode tree) {
       while (stream) {
         auto node = stream->getLeft();
         previousNode = node;
-        auto previousDomainId = CodeValidator::getDomainIdentifier(
-            CodeValidator::getNodeDomain(previousNode, {}, tree), {}, tree);
+        auto previousDomainId = CodeAnalysis::getDomainIdentifier(
+            CodeAnalysis::getNodeDomain(previousNode, {}, tree), {}, tree);
 
         ASTNode next;
         if (stream->getRight()->getNodeType() == AST::Stream) {
@@ -920,8 +925,8 @@ void StrideSystem::generateDomainConnections(ASTNode tree) {
         } else {
           next = stream->getRight();
         }
-        auto nextDomainId = CodeValidator::getDomainIdentifier(
-            CodeValidator::getNodeDomain(next, {}, tree), {}, tree);
+        auto nextDomainId = CodeAnalysis::getDomainIdentifier(
+            CodeAnalysis::getNodeDomain(next, {}, tree), {}, tree);
         if (nextDomainId != previousDomainId) {
           qDebug() << "Domain change: "
                    << QString::fromStdString(previousDomainId) << " -> "
@@ -957,7 +962,7 @@ void StrideSystem::generateDomainConnections(ASTNode tree) {
             stream->getRight()->setCompilerProperty("inputBlock",
                                                     stream->getLeft());
             auto previousFramework =
-                CodeValidator::getFrameworkForDomain(previousDomainId, tree);
+                CodeAnalysis::getFrameworkForDomain(previousDomainId, tree);
             // We should validate with provided connection framework
             auto nodeDecl = ASTQuery::findDeclarationByName(
                 ASTQuery::getNodeName(stream->getRight()), {},
@@ -971,7 +976,7 @@ void StrideSystem::generateDomainConnections(ASTNode tree) {
                     ->getChildren()[0];
             connectionNode->setCompilerProperty("outputBlock", next);
             auto destFramework =
-                CodeValidator::getFrameworkForDomain(nextDomainId, tree);
+                CodeAnalysis::getFrameworkForDomain(nextDomainId, tree);
             // We should validate with provided connection framework
             nodeDecl = ASTQuery::findDeclarationByName(
                 ASTQuery::getNodeName(connectionNode), {},
@@ -983,7 +988,7 @@ void StrideSystem::generateDomainConnections(ASTNode tree) {
             // "next"
 
             auto connectionDomain =
-                CodeValidator::getNodeDomain(connectionNode, {}, tree);
+                CodeAnalysis::getNodeDomain(connectionNode, {}, tree);
             nextInstance->appendToPropertyValue("writes", connectionDomain);
 
             std::shared_ptr<StreamNode> newStream =
@@ -1214,10 +1219,10 @@ string StrideSystem::getCommonAncestorDomain(string domainId1, string domainId2,
           std::string framework) -> std::vector<std::string> {
     std::vector<std::string> parents;
     if (framework.size() == 0) {
-      framework = CodeValidator::getFrameworkForDomain(domainId, tree);
+      framework = CodeAnalysis::getFrameworkForDomain(domainId, tree);
     }
     auto domainDeclaration =
-        CodeValidator::findDomainDeclaration(domainId, tree);
+        CodeAnalysis::findDomainDeclaration(domainId, tree);
     parents.push_back(domainId);
     if (domainDeclaration) {
       auto parentDomain = domainDeclaration->getPropertyValue("parentDomain");
@@ -1226,10 +1231,10 @@ string StrideSystem::getCommonAncestorDomain(string domainId1, string domainId2,
         parentDomainCopy->setRootScope(framework);
         //      auto parentDomainName =
         //      CodeValidator::streamMemberName(parentDomain); auto
-        //      parentDomainDecl = CodeValidator::findDomainDeclaration(
+        //      parentDomainDecl = CodeAnalysis::findDomainDeclaration(
         //          parentDomainName, framework, tree);
         auto parentDomainId =
-            CodeValidator::getDomainIdentifier(parentDomainCopy, {}, tree);
+            CodeAnalysis::getDomainIdentifier(parentDomainCopy, {}, tree);
         auto newParentDomains = getParents(parentDomainId, framework);
         parents.insert(parents.end(), newParentDomains.begin(),
                        newParentDomains.end());
@@ -1254,16 +1259,16 @@ string StrideSystem::getCommonAncestorDomain(string domainId1, string domainId2,
 
 std::string StrideSystem::getParentDomain(string domainId, ASTNode tree) {
   std::string parentDomainId;
-  std::string framework = CodeValidator::getFrameworkForDomain(domainId, tree);
+  std::string framework = CodeAnalysis::getFrameworkForDomain(domainId, tree);
 
-  auto domainDeclaration = CodeValidator::findDomainDeclaration(domainId, tree);
+  auto domainDeclaration = CodeAnalysis::findDomainDeclaration(domainId, tree);
   if (domainDeclaration) {
     auto parentDomain = domainDeclaration->getPropertyValue("parentDomain");
     if (parentDomain && parentDomain->getNodeType() != AST::None) {
       auto parentDomainCopy = parentDomain->deepCopy();
       parentDomainCopy->setRootScope(framework);
       parentDomainId =
-          CodeValidator::getDomainIdentifier(parentDomainCopy, {}, tree);
+          CodeAnalysis::getDomainIdentifier(parentDomainCopy, {}, tree);
     }
   }
   return parentDomainId;
@@ -1315,13 +1320,15 @@ void StrideSystem::installFramework(string frameworkName) {
   }
 }
 
-QString StrideSystem::makeProject(QString fileName) {
-  QFileInfo info(fileName);
-  QString dirName =
-      info.absolutePath() + QDir::separator() + info.fileName() + "_Products";
-  if (!QFile::exists(dirName)) {
-    if (!QDir().mkpath(dirName)) {
-      return QString();
+std::string StrideSystem::makeProject(std::string fileName) {
+  QFileInfo info(QString::fromStdString(fileName));
+  std::string dirName =
+      (info.absolutePath() + QDir::separator() + info.fileName())
+          .toStdString() +
+      "_Products";
+  if (!QFile::exists(QString::fromStdString(dirName))) {
+    if (!QDir().mkpath(QString::fromStdString(dirName))) {
+      return std::string();
     }
   }
   return dirName;
@@ -1347,9 +1354,8 @@ StrideSystem::findDataTypeInPath(string path, std::string strideDataType) {
               static_pointer_cast<ValueNode>(importNameNode)->getStringValue();
           auto importVersion = static_pointer_cast<ValueNode>(importVersionNode)
                                    ->getStringValue();
-          auto inheritedPath = m_strideRoot.toStdString() + "/frameworks/" +
-                               importName + "/" + importVersion +
-                               "/platformlib";
+          auto inheritedPath = m_strideRoot + "/frameworks/" + importName +
+                               "/" + importVersion + "/platformlib";
           auto dataTypeDecl = findDataTypeInPath(inheritedPath, strideDataType);
           if (dataTypeDecl) {
             return dataTypeDecl;
@@ -1401,9 +1407,8 @@ std::string StrideSystem::findDefaultDataTypeInPath(string path,
               static_pointer_cast<ValueNode>(importNameNode)->getStringValue();
           auto importVersion = static_pointer_cast<ValueNode>(importVersionNode)
                                    ->getStringValue();
-          auto inheritedPath = m_strideRoot.toStdString() + "/frameworks/" +
-                               importName + "/" + importVersion +
-                               "/platformlib";
+          auto inheritedPath = m_strideRoot + "/frameworks/" + importName +
+                               "/" + importVersion + "/platformlib";
           auto dataTypeDecl =
               findDefaultDataTypeInPath(inheritedPath, strideType);
           if (dataTypeDecl.size() > 0) {

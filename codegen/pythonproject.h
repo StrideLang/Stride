@@ -35,66 +35,65 @@
 #ifndef PYTHONPROJECT_H
 #define PYTHONPROJECT_H
 
-#include <QObject>
-#include <QString>
 #include <QAtomicInt>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QObject>
 #include <QProcess>
+#include <QString>
 
 #include "builder.h"
 
 #include "ast.h"
-#include "platformnode.h"
 #include "bundlenode.h"
 #include "declarationnode.h"
+#include "expressionnode.h"
+#include "functionnode.h"
+#include "platformnode.h"
 #include "streamnode.h"
 #include "valuenode.h"
-#include "functionnode.h"
-#include "expressionnode.h"
 
-class PythonProject : public Builder
-{
-    Q_OBJECT
+class PythonProject : public Builder {
+  Q_OBJECT
 public:
-    explicit PythonProject(QString platformName,
-                           QString platformPath,
-                           QString strideRoot,
-                           QString projectDir = QString(),
-                           QString pythonExecutable = QString());
-    virtual ~PythonProject();
+  explicit PythonProject(std::string platformName, std::string platformPath,
+                         std::string strideRoot,
+                         std::string projectDir = std::string(),
+                         std::string pythonExecutable = std::string());
+  virtual ~PythonProject();
 
 signals:
 
 public slots:
 
-    virtual std::map<std::string, std::string> generateCode(ASTNode tree) override;
-    virtual bool build(std::map<std::string, std::string> domainMap) override;
-    virtual bool deploy() override { return true;}
-    virtual bool run(bool pressed = true) override;
-    virtual bool isValid() override;
+  virtual std::map<std::string, std::string>
+  generateCode(ASTNode tree) override;
+  virtual bool build(std::map<std::string, std::string> domainMap) override;
+  virtual bool deploy() override { return true; }
+  virtual bool run(bool pressed = true) override;
+  virtual bool isValid() override;
 
-    void consoleMessage();
+  void consoleMessage();
 
-    void stopRunning();
+  void stopRunning();
 
 private:
-    void writeAST(ASTNode tree);
-    void astToJson(ASTNode node, QJsonObject &obj);
-    void listToJsonArray(std::shared_ptr<ListNode> node, QJsonArray &obj);
-    void streamToJsonArray(std::shared_ptr<StreamNode> node, QJsonArray &array);
-    void functionToJson(std::shared_ptr<FunctionNode> node, QJsonObject &obj);
-    void expressionToJson(std::shared_ptr<ExpressionNode> node, QJsonObject &obj);
-    void appendStreamToArray(ASTNode node, QJsonArray &array);
+  void writeAST(ASTNode tree);
+  void astToJson(ASTNode node, QJsonObject &obj);
+  void listToJsonArray(std::shared_ptr<ListNode> node, QJsonArray &obj);
+  void streamToJsonArray(std::shared_ptr<StreamNode> node, QJsonArray &array);
+  void functionToJson(std::shared_ptr<FunctionNode> node, QJsonObject &obj);
+  void expressionToJson(std::shared_ptr<ExpressionNode> node, QJsonObject &obj);
+  void appendStreamToArray(ASTNode node, QJsonArray &array);
 
-    QString m_platformName;
-    QString m_pythonExecutable;
-    QString m_jsonFilename;
-    QAtomicInt m_running;
-    QProcess m_runningProcess;
-    QAtomicInt m_building;
-    QProcess m_buildProcess;
+  std::string m_platformName;
+  std::string m_pythonExecutable;
+  std::string m_jsonFilename;
+  QAtomicInt m_running;
+  QProcess m_runningProcess;
+  QAtomicInt m_building;
+  QProcess m_buildProcess;
 };
 
 #endif // PYTHONPROJECT_H

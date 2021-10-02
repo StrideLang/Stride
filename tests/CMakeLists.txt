@@ -65,7 +65,7 @@ target_compile_definitions(StrideTests PUBLIC "-DBUILDPATH=\"${CMAKE_SOURCE_DIR}
 target_compile_definitions(StrideTests PUBLIC "-DSTRIDEROOT=\"${CMAKE_SOURCE_DIR}/strideroot\"")
 target_compile_definitions(StrideTests PUBLIC "-DSTRIDEBIN=\"${CMAKE_CURRENT_BINARY_DIR}\"")
 target_include_directories(StrideTests PUBLIC ../parser ../codegen)
-target_link_libraries(StrideTests StrideParser Qt5::Core Qt5::Test)
+target_link_libraries(StrideTests StrideParser StrideCodegen Qt5::Core Qt5::Test)
 
 enable_testing()
 add_test(StrideTests ${CMAKE_CURRENT_BINARY_DIR}/testing)

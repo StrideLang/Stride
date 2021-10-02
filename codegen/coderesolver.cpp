@@ -40,10 +40,12 @@
 #include "astfunctions.h"
 #include "astquery.h"
 #include "astruntime.h"
+
+#include "codeanalysis.hpp"
 #include "codevalidator.h"
 #include "stridesystem.hpp"
 
-CodeResolver::CodeResolver(ASTNode tree, QString striderootDir,
+CodeResolver::CodeResolver(ASTNode tree, string striderootDir,
                            SystemConfiguration systemConfig)
     : m_systemConfig(systemConfig), m_tree(tree), m_connectorCounter(0) {
   std::vector<std::shared_ptr<ImportNode>> importList =
@@ -54,7 +56,7 @@ CodeResolver::CodeResolver(ASTNode tree, QString striderootDir,
   if (systems.size() > 0) {
     std::shared_ptr<SystemNode> platformNode = systems.at(0);
     m_system = std::make_shared<StrideSystem>(
-        striderootDir, QString::fromStdString(platformNode->platformName()),
+        striderootDir, platformNode->platformName(),
         platformNode->majorVersion(), platformNode->minorVersion(), importList);
     m_system->m_systemConfig = systemConfig;
     for (size_t i = 1; i < systems.size(); i++) {
@@ -218,7 +220,7 @@ void CodeResolver::resolveStreamRates(std::shared_ptr<StreamNode> stream) {
     // platform rate Force node rate to platform rate
     if (m_system && m_system->getPlatformDomain()) {
       std::shared_ptr<DeclarationNode> domainDeclaration =
-          CodeValidator::findDomainDeclaration(
+          CodeAnalysis::findDomainDeclaration(
               ASTQuery::getNodeName(m_system->getPlatformDomain()), m_tree);
       if (domainDeclaration) {
         ASTNode rateValue = domainDeclaration->getPropertyValue("rate");
@@ -254,10 +256,10 @@ void CodeResolver::resolveStreamRates(std::shared_ptr<StreamNode> stream) {
       if (rate >= 0) {
         CodeValidator::setNodeRate(right, rate, {}, m_tree);
       } else {
-        auto rightDomain = CodeValidator::getNodeDomain(right, {}, m_tree);
+        auto rightDomain = CodeAnalysis::getNodeDomain(right, {}, m_tree);
         if (rightDomain) {
-          auto domainDecl = CodeValidator::findDomainDeclaration(
-              CodeValidator::getDomainIdentifier(rightDomain, {}, m_tree),
+          auto domainDecl = CodeAnalysis::findDomainDeclaration(
+              CodeAnalysis::getDomainIdentifier(rightDomain, {}, m_tree),
               m_tree);
           if (domainDecl) {
             auto defaultRate = CodeValidator::getDomainDefaultRate(domainDecl);
@@ -777,9 +779,9 @@ void CodeResolver::analyzeConnections() {
                       "domain");
               if (domainNode && domainNode->getNodeType() != AST::None) {
                 auto domainId =
-                    CodeValidator::getDomainIdentifier(domainNode, {}, m_tree);
+                    CodeAnalysis::getDomainIdentifier(domainNode, {}, m_tree);
                 auto domainDecl =
-                    CodeValidator::findDomainDeclaration(domainId, m_tree);
+                    CodeAnalysis::findDomainDeclaration(domainId, m_tree);
                 if (domainDecl) {
                   domainDecl->getCompilerProperty("domainReads")
                       ->addChild(node);
@@ -871,12 +873,12 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream,
   ASTNode right = stream->getRight();
   QList<ASTNode> domainStack;
   ASTNode previousDomain =
-      CodeValidator::getNodeDomain(left, scopeStack, m_tree);
+      CodeAnalysis::getNodeDomain(left, scopeStack, m_tree);
   std::string previousDomainId =
-      CodeValidator::getDomainIdentifier(previousDomain, scopeStack, m_tree);
+      CodeAnalysis::getDomainIdentifier(previousDomain, scopeStack, m_tree);
 
   //    std::string contextDomain =
-  //    CodeValidator::getDomainIdentifier(contextDomainNode, scopeStack,
+  //    CodeAnalysis::getDomainIdentifier(contextDomainNode, scopeStack,
   //    m_tree);
 
   if (!previousDomain || previousDomain->getNodeType() == AST::None) {
@@ -888,7 +890,7 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream,
     std::string domainId;
     if (domainNode) {
       domainId =
-          CodeValidator::getDomainIdentifier(domainNode, scopeStack, m_tree);
+          CodeAnalysis::getDomainIdentifier(domainNode, scopeStack, m_tree);
     }
     if (left == right &&
         (!domainNode ||
@@ -935,7 +937,7 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream,
     if (left->getNodeType() == AST::Expression ||
         left->getNodeType() == AST::List) {
       auto samplingDomain =
-          CodeValidator::getNodeDomain(stream->getRight(), scopeStack, m_tree);
+          CodeAnalysis::getNodeDomain(stream->getRight(), scopeStack, m_tree);
       if (samplingDomain) {
         function<void(ASTNode node, ASTNode samplingDomain)> func =
             [&](ASTNode node, ASTNode samplingDomain) {
@@ -953,7 +955,7 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream,
                     // TODO this does not cover the case where sampling domain
                     // is not resolvable at this point.
                     auto domain =
-                        CodeValidator::getNodeDomain(child, scopeStack, m_tree);
+                        CodeAnalysis::getNodeDomain(child, scopeStack, m_tree);
                     if (!domain || domain->getNodeType() == AST::None) {
                       auto instance =
                           CodeValidator::getInstance(child, scopeStack, m_tree);
@@ -1056,7 +1058,7 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream,
       if (left->getNodeType() == AST::Expression ||
           left->getNodeType() == AST::List) {
         //        auto domainNode =
-        //            CodeValidator::getNodeDomain(right, scopeStack, m_tree);
+        //            CodeAnalysis::getNodeDomain(right, scopeStack, m_tree);
         //        if (!domainNode) {
         //          domainNode = std::make_shared<ValueNode>(__FILE__,
         //          __LINE__);
@@ -1116,7 +1118,7 @@ ASTNode CodeResolver::processDomainsForNode(ASTNode node, ScopeStack scopeStack,
                      indexElement->getNodeType() != AST::Expression &&
                      indexElement->getNodeType() != AST::Range) {
             ASTNode domain =
-                CodeValidator::getNodeDomain(indexElement, scopeStack, m_tree);
+                CodeAnalysis::getNodeDomain(indexElement, scopeStack, m_tree);
             if (domain && domain->getNodeType() != AST::None) {
               CodeValidator::setDomainForNode(indexElement, domain, scopeStack,
                                               m_tree);
@@ -1157,7 +1159,7 @@ ASTNode CodeResolver::processDomainsForNode(ASTNode node, ScopeStack scopeStack,
     }
   } else if (node->getNodeType() == AST::Function) {
     auto func = static_pointer_cast<FunctionNode>(node);
-    ASTNode domain = CodeValidator::getNodeDomain(node, scopeStack, m_tree);
+    ASTNode domain = CodeAnalysis::getNodeDomain(node, scopeStack, m_tree);
     if (!domain) {
       // Put declaration in stack to set domain once domain is resolved
       domainStack << node;
@@ -1731,7 +1733,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node,
         }
 
         // Now check if domain set, if not, set to port domain
-        ASTNode domainNode = CodeValidator::getNodeDomain(
+        ASTNode domainNode = CodeAnalysis::getNodeDomain(
             portBlock, {{node, internalBlocks->getChildren()}}, m_tree);
         if (!domainNode || domainNode->getNodeType() == AST::None) {
           if (portBlockDecl) {
@@ -1788,7 +1790,7 @@ void CodeResolver::declareInternalBlocksForNode(ASTNode node,
         }
 
         // Now check if domain set, if not, set to port domain
-        ASTNode domainNode = CodeValidator::getNodeDomain(
+        ASTNode domainNode = CodeAnalysis::getNodeDomain(
             portBlock, {{node, internalBlocks->getChildren()}}, m_tree);
         if (!domainNode || domainNode->getNodeType() == AST::None) {
           if (portBlockDecl && portBlockDecl->getObjectType() != "constant") {
@@ -2099,9 +2101,9 @@ CodeResolver::sliceStreamByDomain(std::shared_ptr<StreamNode> stream,
   ASTNode right = stream->getRight();
   std::string domainName;
   std::string previousDomainName =
-      CodeValidator::getNodeDomainName(left, scopeStack, m_tree);
+      CodeAnalysis::getNodeDomainName(left, scopeStack, m_tree);
   while (left) {
-    domainName = CodeValidator::getNodeDomainName(left, scopeStack, m_tree);
+    domainName = CodeAnalysis::getNodeDomainName(left, scopeStack, m_tree);
     if (left->getNodeType() == AST::Int || left->getNodeType() == AST::Real ||
         left->getNodeType() == AST::Switch) {
       // If constant, ignore domain and go to next member
@@ -2120,7 +2122,7 @@ CodeResolver::sliceStreamByDomain(std::shared_ptr<StreamNode> stream,
         break;
       }
       // Force it to take the domain from the left to avoid domain slicing
-      domainName = CodeValidator::getNodeDomainName(left, scopeStack, m_tree);
+      domainName = CodeAnalysis::getNodeDomainName(left, scopeStack, m_tree);
       if (previousDomainName.size() == 0) {
         previousDomainName = domainName;
       }
@@ -2135,7 +2137,7 @@ CodeResolver::sliceStreamByDomain(std::shared_ptr<StreamNode> stream,
       stack.push_back(right);
       ASTNode lastNode = nullptr;
       previousDomainName = domainName;
-      domainName = CodeValidator::getNodeDomainName(right, scopeStack, m_tree);
+      domainName = CodeAnalysis::getNodeDomainName(right, scopeStack, m_tree);
 
       if (domainName != previousDomainName) {
         bool skipSlice = false;
@@ -2298,7 +2300,7 @@ ASTNode CodeResolver::getModuleContextDomain(
   bool contextDomainSet = false;
   if (outputPortBlock) {
     if (blocks) {
-      contextDomainBlock = CodeValidator::getNodeDomain(
+      contextDomainBlock = CodeAnalysis::getNodeDomain(
           outputPortBlock->getPropertyValue("block"),
           {{moduleDecl, blocks->getChildren()}}, m_tree);
     }
@@ -2306,7 +2308,7 @@ ASTNode CodeResolver::getModuleContextDomain(
   auto inputPortBlock = ASTQuery::getModuleMainInputPortBlock(moduleDecl);
   if (inputPortBlock && !contextDomainSet) {
     if (blocks) {
-      contextDomainBlock = CodeValidator::getNodeDomain(
+      contextDomainBlock = CodeAnalysis::getNodeDomain(
           inputPortBlock->getPropertyValue("block"),
           {{moduleDecl, blocks->getChildren()}}, m_tree);
     }
@@ -2328,7 +2330,7 @@ ASTNode CodeResolver::getModuleContextDomain(
 //          decl->getObjectType() == "switch") {
 //        // Check if signal has domain
 //        ASTNode nodeDomain =
-//            CodeValidator::getNodeDomain(decl, ScopeStack(), m_tree);
+//            CodeAnalysis::getNodeDomain(decl, ScopeStack(), m_tree);
 //        if (!nodeDomain || nodeDomain->getNodeType() == AST::None) {
 //          decl->setDomainString(domainDeclaration->getName());
 //          if (CodeValidator::getNodeRate(decl, ScopeStack(), m_tree) < 0) {
@@ -2406,7 +2408,7 @@ ASTNode CodeResolver::getModuleContextDomain(
 //                            scopeStack =
 //                            QVector<ASTNode>::fromStdVector(blocks->getChildren());
 //                            auto domainBlock =
-//                            CodeValidator::getNodeDomain(outputPortBlock->getPropertyValue("block"),
+//                            CodeAnalysis::getNodeDomain(outputPortBlock->getPropertyValue("block"),
 //                            scopeStack, m_tree); if (domainBlock) {
 //                                ASTNode propertiesList =
 //                                std::make_shared<ListNode>(
@@ -2430,7 +2432,7 @@ ASTNode CodeResolver::getModuleContextDomain(
 //                            scopeStack =
 //                            QVector<ASTNode>::fromStdVector(blocks->getChildren());
 //                            auto domainBlock =
-//                            CodeValidator::getNodeDomain(inputPortBlock->getPropertyValue("block"),
+//                            CodeAnalysis::getNodeDomain(inputPortBlock->getPropertyValue("block"),
 //                            scopeStack, m_tree); if (domainBlock) {
 //                                ASTNode propertiesList =
 //                                std::make_shared<ListNode>(
@@ -2537,7 +2539,7 @@ void CodeResolver::remapStreamDomains(std::shared_ptr<StreamNode> stream,
                 std::make_shared<ListNode>(__FILE__, __LINE__);
             for (auto readDomain :
                  elementInstance->getCompilerProperty("reads")->getChildren()) {
-              if (domainMap.find(CodeValidator::getDomainIdentifier(
+              if (domainMap.find(CodeAnalysis::getDomainIdentifier(
                       readDomain, scopeStack, m_tree)) != domainMap.end()) {
                 std::shared_ptr<PortPropertyNode> mappedDomain =
                     std::make_shared<PortPropertyNode>("OutputPort", "domain",
@@ -2556,7 +2558,7 @@ void CodeResolver::remapStreamDomains(std::shared_ptr<StreamNode> stream,
               std::make_shared<ListNode>(__FILE__, __LINE__);
           for (auto readDomain :
                instance->getCompilerProperty("reads")->getChildren()) {
-            if (domainMap.find(CodeValidator::getDomainIdentifier(
+            if (domainMap.find(CodeAnalysis::getDomainIdentifier(
                     readDomain, scopeStack, m_tree)) != domainMap.end()) {
               std::shared_ptr<PortPropertyNode> mappedDomain =
                   std::make_shared<PortPropertyNode>("OutputPort", "domain",
@@ -2575,7 +2577,7 @@ void CodeResolver::remapStreamDomains(std::shared_ptr<StreamNode> stream,
               std::make_shared<ListNode>(__FILE__, __LINE__);
           for (auto writeDomain :
                instance->getCompilerProperty("writes")->getChildren()) {
-            if (domainMap.find(CodeValidator::getDomainIdentifier(
+            if (domainMap.find(CodeAnalysis::getDomainIdentifier(
                     writeDomain, scopeStack, m_tree)) != domainMap.end()) {
               std::shared_ptr<PortPropertyNode> mappedDomain =
                   std::make_shared<PortPropertyNode>("OutputPort", "domain",
@@ -2611,7 +2613,7 @@ void CodeResolver::remapStreamDomains(std::shared_ptr<StreamNode> stream,
   //                     b.externalConnection->getCompilerProperty("reads")
   //                         ->getChildren()) {
   //                    if
-  //                    (domainMap.find(CodeValidator::getDomainIdentifier(
+  //                    (domainMap.find(CodeAnalysis::getDomainIdentifier(
   //                            readDomain, scopeStack, m_tree)) !=
   //                        domainMap.end()) {
   //                        std::cout << std::endl;
@@ -2746,7 +2748,7 @@ void CodeResolver::checkStreamConnections(std::shared_ptr<StreamNode> stream,
         auto indexList = static_pointer_cast<BundleNode>(left)->index();
 
         auto nextDomain =
-            CodeValidator::getNodeDomain(right, scopeStack, m_tree);
+            CodeAnalysis::getNodeDomain(right, scopeStack, m_tree);
         for (auto node : indexList->getChildren()) {
           markConnectionForNode(right, scopeStack, node);
         }
@@ -2937,7 +2939,7 @@ void CodeResolver::markPreviousReads(ASTNode node, ASTNode previous,
       // platformBlock and platformModule can be ignored as they are tied to
       // a domain. However, we do need to figure out how to support buffer
       // access across domains.
-      newReadDomain = CodeValidator::getNodeDomain(node, scopeStack, m_tree);
+      newReadDomain = CodeAnalysis::getNodeDomain(node, scopeStack, m_tree);
       // FIXME we need to get previousReads for functions from the function
       // itsefl, not the module decl.
 
@@ -3077,7 +3079,7 @@ void CodeResolver::markConnectionForNode(ASTNode node, ScopeStack scopeStack,
 
     if (node->getNodeType() == AST::Bundle) {
       auto bundleNode = static_pointer_cast<BundleNode>(node);
-      auto domain = CodeValidator::getNodeDomain(node, scopeStack, m_tree);
+      auto domain = CodeAnalysis::getNodeDomain(node, scopeStack, m_tree);
       for (auto indexChild : bundleNode->index()->getChildren()) {
         markConnectionForNode(indexChild, scopeStack, nullptr);
         if (indexChild->getNodeType() == AST::Block ||
@@ -3118,11 +3120,11 @@ void CodeResolver::markConnectionForNode(ASTNode node, ScopeStack scopeStack,
 
       if (node->getNodeType() == AST::Function) {
         newWriteDomain =
-            CodeValidator::getNodeDomain(CodeValidator::resolveConnectionBlock(
-                                             node, scopeStack, m_tree, false),
-                                         scopeStack, m_tree);
+            CodeAnalysis::getNodeDomain(CodeValidator::resolveConnectionBlock(
+                                            node, scopeStack, m_tree, false),
+                                        scopeStack, m_tree);
       } else {
-        newWriteDomain = CodeValidator::getNodeDomain(node, scopeStack, m_tree);
+        newWriteDomain = CodeAnalysis::getNodeDomain(node, scopeStack, m_tree);
       }
       for (auto write : nodeWritesProperties->getChildren()) {
         if (write && write->getNodeType() == AST::PortProperty &&
@@ -3232,8 +3234,7 @@ void CodeResolver::markConnectionForNode(ASTNode node, ScopeStack scopeStack,
           }
           if (notRegistered) {
             resets->addChild(decl);
-            auto domain =
-                CodeValidator::getNodeDomain(node, scopeStack, m_tree);
+            auto domain = CodeAnalysis::getNodeDomain(node, scopeStack, m_tree);
             decl->appendToPropertyValue("resetDomains", domain);
           }
         }

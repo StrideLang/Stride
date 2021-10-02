@@ -7,6 +7,7 @@ set(CODEGEN_SRC
   pythonproject.cpp
   codevalidator.cpp
   coderesolver.cpp
+  codeanalysis.cpp
   strideframework.cpp
   stridelibrary.cpp
   stridesystem.cpp
@@ -19,6 +20,7 @@ set(CODEGEN_HEADERS
   pythonproject.h
   codevalidator.h
   coderesolver.h
+  codeanalysis.hpp
   builder.h
   strideframework.hpp
   stridelibrary.hpp

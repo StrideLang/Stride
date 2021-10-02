@@ -56,9 +56,9 @@ public:
   StrideLibrary();
   ~StrideLibrary();
 
-  void initializeLibrary(QString strideRootPath);
+  void initializeLibrary(std::string strideRootPath);
 
-  std::shared_ptr<DeclarationNode> findTypeInLibrary(QString typeName);
+  std::shared_ptr<DeclarationNode> findTypeInLibrary(std::string typeName);
 
   bool isValidBlock(DeclarationNode *block);
 
@@ -71,12 +71,12 @@ private:
                        DeclarationNode *type);
   QList<DeclarationNode *> getParentTypes(DeclarationNode *type);
 
-  void readLibrary(QString rootDir);
+  void readLibrary(std::string rootDir);
 
   std::vector<LibraryTree>
       m_libraryTrees; // List of root and imported library trees
 
-  QString m_libraryPath;
+  std::string m_libraryPath;
 
   int m_majorVersion;
   int m_minorVersion;

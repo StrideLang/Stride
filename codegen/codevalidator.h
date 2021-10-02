@@ -130,11 +130,6 @@ public:
                      QString propertyName);
 
   static std::shared_ptr<DeclarationNode>
-  findDomainDeclaration(string domainName, string framework, ASTNode tree);
-  static std::shared_ptr<DeclarationNode> findDomainDeclaration(string domainId,
-                                                                ASTNode tree);
-
-  static std::shared_ptr<DeclarationNode>
   findDataTypeDeclaration(std::string dataTypeName, ASTNode tree);
 
   static std::string
@@ -184,12 +179,6 @@ public:
   static int getBundleSize(BundleNode *bundle, ScopeStack scope, ASTNode tree,
                            QList<LangError> &errors);
 
-  static ASTNode getNodeDomain(ASTNode node, ScopeStack scopeStack,
-                               ASTNode tree);
-  static std::string getNodeDomainName(ASTNode node, ScopeStack scopeStack,
-                                       ASTNode tree);
-  static std::string getDomainIdentifier(ASTNode domain, ScopeStack scopeStack,
-                                         ASTNode tree);
   static void setDomainForNode(ASTNode node, ASTNode domain,
                                ScopeStack scopeStack, ASTNode tree,
                                bool force = false);
@@ -198,8 +187,7 @@ public:
   getBlocksInScope(ASTNode root, ScopeStack scopeStack, ASTNode tree);
 
   static std::vector<std::string> getUsedDomains(ASTNode tree);
-  static std::string getFrameworkForDomain(std::string domainName,
-                                           ASTNode tree);
+
   static std::vector<std::string> getUsedFrameworks(ASTNode tree);
 
   static double resolveRateToFloat(ASTNode rateNode, ScopeStack scope,
@@ -221,9 +209,6 @@ public:
   // instance.
   static ASTNode getInstance(ASTNode block, ScopeStack scopeStack,
                              ASTNode tree);
-  static bool namespaceMatch(std::vector<string> scopeList,
-                             std::shared_ptr<DeclarationNode> decl,
-                             string currentFramework = "");
 
   static vector<StreamNode *> getStreamsAtLine(ASTNode tree, int line);
 
@@ -242,7 +227,7 @@ private:
   void validateTree(ASTNode tree);
   void validate();
 
-  void validatePlatform(ASTNode node, ScopeStack scopeStack);
+  void validatePlatform(ASTNode node);
 
   void validateBundleIndeces(ASTNode node, ScopeStack scope);
   void validateBundleSizes(ASTNode node, ScopeStack scope);

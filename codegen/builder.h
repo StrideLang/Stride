@@ -49,8 +49,9 @@
 
 class Builder;
 
-typedef Builder *(*create_object_t)(QString projectDir, QString strideRoot,
-                                    QString platformPath);
+typedef Builder *(*create_object_t)(std::string projectDir,
+                                    std::string strideRoot,
+                                    std::string platformPath);
 typedef void (*platform_name_t)(char *name);
 typedef int (*platform_version_major_t)();
 typedef int (*platform_version_minor_t)();
@@ -67,12 +68,13 @@ class StrideSystem;
 class Builder : public QObject {
   Q_OBJECT
 public:
-  Builder(QString projectDir, QString strideRoot, QString platformPath)
+  Builder(std::string projectDir, std::string strideRoot,
+          std::string platformPath)
       : m_projectDir(projectDir), m_strideRoot(strideRoot),
         m_platformPath(platformPath) {}
   virtual ~Builder() {}
 
-  QString getPlatformPath() { return m_platformPath; }
+  std::string getPlatformPath() { return m_platformPath; }
   QString getStdErr() const { return m_stdErr; }
   QString getStdOut() const { return m_stdOut; }
   void clearBuffers() {
@@ -87,7 +89,7 @@ public:
   std::shared_ptr<StrideSystem>
       m_system; // The StrideSystem that created this builder.
   SystemConfiguration m_systemConfiguration;
-  QString m_frameworkName;
+  std::string m_frameworkName;
 
 public slots:
   virtual std::map<std::string, std::string> generateCode(ASTNode tree) = 0;
@@ -101,27 +103,15 @@ public slots:
   virtual bool isValid() { return false; }
 
 protected:
-  QString m_projectDir;
-  QString m_strideRoot;
-  QString m_platformPath;
+  std::string m_projectDir;
+  std::string m_strideRoot;
+  std::string m_platformPath;
   QString m_stdOut;
   QString m_stdErr;
 
   std::function<void()> m_yieldCallback = []() {};
 
-  QString substituteTokens(QString text) {
-    QMap<QString, QString> tokenMap;
-    tokenMap["%projectDir%"] = m_projectDir;
-    tokenMap["%strideRoot%"] = m_strideRoot;
-    tokenMap["%platformRoot%"] = m_platformPath;
-    tokenMap["%projectName%"] = m_platformPath;
-    for (auto mapEntry : tokenMap.keys()) {
-      while (text.indexOf(mapEntry) >= 0) {
-        text.replace(mapEntry, tokenMap[mapEntry]);
-      }
-    }
-    return text;
-  }
+  std::string substituteTokens(std::string text);
 
 private:
   PluginInterface m_interface;
@@ -133,5 +123,21 @@ signals:
   void errorText(QString text);
   void programStopped();
 };
+
+inline std::string Builder::substituteTokens(std::string text) {
+  std::map<std::string, std::string> tokenMap;
+  tokenMap["%projectDir%"] = m_projectDir;
+  tokenMap["%strideRoot%"] = m_strideRoot;
+  tokenMap["%platformRoot%"] = m_platformPath;
+  tokenMap["%projectName%"] = m_platformPath;
+  for (auto mapEntry : tokenMap) {
+    size_t startPos;
+    while ((startPos = text.find(mapEntry.first.c_str())) !=
+           std::string::npos) {
+      text.replace(startPos, mapEntry.first.size(), tokenMap[mapEntry.second]);
+    }
+  }
+  return text;
+}
 
 #endif // BASEPROJECT_H

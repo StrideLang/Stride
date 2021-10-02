@@ -32,10 +32,6 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-#include <QDebug>
-#include <QDir>
-#include <QStringList>
-
 #include "ast.h"
 #include "valuenode.h"
 
@@ -44,17 +40,19 @@
 #include "stridelibrary.hpp"
 #include "stridesystem.hpp"
 
+#include <cassert>
+
 StrideLibrary::StrideLibrary() : m_majorVersion(1), m_minorVersion(0) {}
 
 StrideLibrary::~StrideLibrary() {}
 
-void StrideLibrary::initializeLibrary(QString strideRootPath) {
+void StrideLibrary::initializeLibrary(std::string strideRootPath) {
   m_libraryTrees.clear();
   readLibrary(strideRootPath);
 }
 
 std::shared_ptr<DeclarationNode>
-StrideLibrary::findTypeInLibrary(QString typeName) {
+StrideLibrary::findTypeInLibrary(std::string typeName) {
   for (auto libraryTree : m_libraryTrees) {
     auto nodes = libraryTree.nodes;
     for (ASTNode node : nodes) {
@@ -66,9 +64,8 @@ StrideLibrary::findTypeInLibrary(QString typeName) {
         }
         ASTNode value = block->getPropertyValue("typeName");
         if (value->getNodeType() == AST::String) {
-          QString libTypeName = QString::fromStdString(
-              static_pointer_cast<ValueNode>(value)->getStringValue());
-          if (libTypeName == typeName) {
+          if (static_pointer_cast<ValueNode>(value)->getStringValue() ==
+              typeName) {
             return block;
           }
         }
@@ -80,7 +77,7 @@ StrideLibrary::findTypeInLibrary(QString typeName) {
 
 bool StrideLibrary::isValidBlock(DeclarationNode *block) {
   std::shared_ptr<DeclarationNode> type =
-      findTypeInLibrary(QString::fromStdString(block->getObjectType()));
+      findTypeInLibrary(block->getObjectType());
   if (type) {
     if (block->getProperties().size() == 0) {
       return true; // FIXME we need to check if properties are required
@@ -117,8 +114,7 @@ std::map<std::string, std::vector<ASTNode>> StrideLibrary::getLibraryMembers() {
 
 std::vector<ASTNode> StrideLibrary::loadImport(std::string importName,
                                                std::string importAs) {
-
-  std::string path = m_libraryPath.toStdString();
+  std::string path = m_libraryPath;
   if (importName.size() > 0) {
     path += "/" + importName;
   }
@@ -130,7 +126,7 @@ std::vector<ASTNode> StrideLibrary::loadImport(std::string importName,
   auto newNodes = CodeValidator::loadAllInDirectory(path);
   // FIXME support importing library files with multiple different importAs.
   // Currently broken if library imported multiple times with different alias.
-  for (auto node : newNodes) {
+  for (const auto &node : newNodes) {
     if (importAs.size() > 0) {
       node->appendToPropertyValue(
           "namespaceTree",
@@ -143,15 +139,15 @@ std::vector<ASTNode> StrideLibrary::loadImport(std::string importName,
 
 bool StrideLibrary::isValidProperty(std::shared_ptr<PropertyNode> property,
                                     DeclarationNode *type) {
-  Q_ASSERT(type->getObjectType() == "type");
+  assert(type->getObjectType() == "type");
   std::shared_ptr<PropertyNode> portsInType =
       CodeValidator::findPropertyByName(type->getProperties(), "properties");
   ListNode *portList = static_cast<ListNode *>(portsInType->getValue().get());
-  Q_ASSERT(portList->getNodeType() == AST::List);
+  assert(portList->getNodeType() == AST::List);
   for (ASTNode port : portList->getChildren()) {
     DeclarationNode *portBlock = static_cast<DeclarationNode *>(port.get());
-    Q_ASSERT(portBlock->getNodeType() == AST::Declaration);
-    Q_ASSERT(portBlock->getObjectType() == "typeProperty");
+    assert(portBlock->getNodeType() == AST::Declaration);
+    assert(portBlock->getObjectType() == "typeProperty");
     std::shared_ptr<PropertyNode> portName =
         CodeValidator::findPropertyByName(portBlock->getProperties(), "name");
     string portNameInType =
@@ -165,10 +161,10 @@ bool StrideLibrary::isValidProperty(std::shared_ptr<PropertyNode> property,
   if (inherits) {
     ValueNode *inheritedTypeName =
         static_cast<ValueNode *>(inherits->getValue().get());
-    Q_ASSERT(inheritedTypeName->getNodeType() == AST::String);
-    std::shared_ptr<DeclarationNode> inheritedType = findTypeInLibrary(
-        QString::fromStdString(inheritedTypeName->getStringValue()));
-    Q_ASSERT(inheritedType != nullptr);
+    assert(inheritedTypeName->getNodeType() == AST::String);
+    std::shared_ptr<DeclarationNode> inheritedType =
+        findTypeInLibrary(inheritedTypeName->getStringValue());
+    assert(inheritedType != nullptr);
     if (isValidProperty(property, inheritedType.get())) {
       return true;
     }
@@ -185,16 +181,16 @@ QList<DeclarationNode *> StrideLibrary::getParentTypes(DeclarationNode *type) {
       string parentBlockName =
           static_cast<ValueNode *>(parentType.get())->getStringValue();
       std::shared_ptr<DeclarationNode> parentBlock =
-          findTypeInLibrary(QString::fromStdString(parentBlockName));
+          findTypeInLibrary(parentBlockName);
       return getParentTypes(parentBlock.get());
     }
   }
   return QList<DeclarationNode *>();
 }
 
-void StrideLibrary::readLibrary(QString rootDir) {
-  QString basepath =
-      QString("/library/%1.%2").arg(m_majorVersion).arg(m_minorVersion);
+void StrideLibrary::readLibrary(std::string rootDir) {
+  std::string basepath = "/library/" + std::to_string(m_majorVersion) + "." +
+                         std::to_string(m_minorVersion);
   //    QMapIterator<QString, QStringList> it(importList);
   //    importList[""] = QStringList() << ""; // Add root namespace
   m_libraryPath = rootDir + basepath;

@@ -40,21 +40,20 @@
 #include "pythonproject.h"
 #include "stridesystem.hpp"
 
-PythonProject::PythonProject(QString platformName, QString platformPath,
-                             QString strideRoot, QString projectDir,
-                             QString pythonExecutable)
+PythonProject::PythonProject(string platformName, string platformPath,
+                             string strideRoot, string projectDir,
+                             string pythonExecutable)
     : Builder(projectDir, strideRoot, platformPath),
       m_platformName(platformName), m_runningProcess(this), m_buildProcess(this)
 
 {
-  if (pythonExecutable.isEmpty()) {
+  if (pythonExecutable.size() == 0) {
     m_pythonExecutable = "python";
   } else {
     m_pythonExecutable = pythonExecutable;
   }
 
-  m_jsonFilename =
-      m_projectDir + QDir::separator() + "tree-" + platformName + ".json";
+  m_jsonFilename = m_projectDir + "/tree-" + platformName + ".json";
 
   QObject::connect(&m_buildProcess, SIGNAL(readyReadStandardOutput()), this,
                    SLOT(consoleMessage()));
@@ -100,11 +99,13 @@ bool PythonProject::build(std::map<string, string> domainMap) {
   // Start Build
   m_stdErr.clear();
   m_stdOut.clear();
-  m_buildProcess.setWorkingDirectory(m_strideRoot);
+  m_buildProcess.setWorkingDirectory(QString::fromStdString(m_strideRoot));
   // FIXME un hard-code library version
-  arguments << "library/1.0/python/build.py" << m_jsonFilename << m_projectDir
-            << m_strideRoot << "build";
-  m_buildProcess.start(m_pythonExecutable, arguments);
+  arguments << "library/1.0/python/build.py"
+            << QString::fromStdString(m_jsonFilename)
+            << QString::fromStdString(m_projectDir)
+            << QString::fromStdString(m_strideRoot) << "build";
+  m_buildProcess.start(QString::fromStdString(m_pythonExecutable), arguments);
 
   m_buildProcess.waitForStarted(15000);
   //    qDebug() << "pid:" << m_buildProcess.pid();
@@ -142,11 +143,14 @@ bool PythonProject::run(bool pressed) {
   }
   m_stdErr.clear();
   m_stdOut.clear();
-  m_runningProcess.setWorkingDirectory(m_strideRoot);
+  m_runningProcess.setWorkingDirectory(QString::fromStdString(m_strideRoot));
   // FIXME un hard-code library version
-  arguments << "library/1.0/python/build.py" << m_jsonFilename << m_projectDir
-            << m_strideRoot << "run";
-  m_runningProcess.start(m_pythonExecutable, arguments);
+  arguments << "library/1.0/python/build.py"
+            << QString::fromStdString(m_jsonFilename)
+            << QString::fromStdString(m_projectDir)
+            << QString::fromStdString(m_strideRoot) << "build";
+  m_runningProcess.start(QString::fromStdString(m_pythonExecutable), arguments);
+
   qDebug() << arguments;
 
   m_runningProcess.waitForStarted(15000);
@@ -195,7 +199,7 @@ void PythonProject::writeAST(ASTNode tree) {
     }
     treeObject.append(nodeObject);
   }
-  QFile saveFile(m_jsonFilename);
+  QFile saveFile(QString::fromStdString(m_jsonFilename));
 
   if (!saveFile.open(QIODevice::WriteOnly)) {
     qWarning("Couldn't open save file.");
@@ -417,8 +421,8 @@ void PythonProject::astToJson(ASTNode node, QJsonObject &obj) {
     newObj["minorVersion"] =
         static_cast<SystemNode *>(node.get())->minorVersion();
     QJsonObject platformInfo;
-    platformInfo["path"] = m_platformPath;
-    platformInfo["name"] = m_platformName;
+    platformInfo["path"] = QString::fromStdString(m_platformPath);
+    platformInfo["name"] = QString::fromStdString(m_platformName);
     QJsonArray platformList;
     platformList.append(platformInfo);
     newObj["platforms"] = platformList;

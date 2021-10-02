@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
   if (tree) {
     SystemConfiguration config;
     config.testing = true;
-    CodeResolver resolver(tree, platformRootPath, config);
+    CodeResolver resolver(tree, platformRootPath.toStdString(), config);
     resolver.process();
 
     CodeValidator validator(tree);
@@ -116,7 +116,8 @@ int main(int argc, char *argv[]) {
 
     system->generateDomainConnections(tree);
 
-    vector<Builder *> builders = system->createBuilders(dirName, tree);
+    vector<Builder *> builders =
+        system->createBuilders(dirName.toStdString(), tree);
 
     std::vector<std::map<std::string, std::string>> domainMaps;
     for (auto builder : builders) {
@@ -131,7 +132,8 @@ int main(int argc, char *argv[]) {
         qDebug() << "Built in directory:" << dirName;
       } else {
         qDebug() << "Build failed for " << fileName;
-        qDebug() << "Using framework: " << builder->getPlatformPath();
+        qDebug() << "Using framework: "
+                 << QString::fromStdString(builder->getPlatformPath());
 
         qDebug() << builder->getStdOut();
         qDebug() << builder->getStdErr();
