@@ -19,6 +19,7 @@ ASTValidation::validateTypes(ASTNode node, ScopeStack scopeStack, ASTNode tree,
         std::static_pointer_cast<DeclarationNode>(node);
     errors =
         validateTypesForDeclaration(decl, scopeStack, tree, currentFramework);
+    return errors;
   } else if (node->getNodeType() == AST::Stream) {
     // Stream members will be processed with children below
   } else if (node->getNodeType() == AST::List) {
@@ -341,7 +342,7 @@ std::vector<LangError> ASTValidation::validateTypesForDeclaration(
       blocks = blocksNode->getChildren();
     }
     scopeStack.push_back({decl, blocks});
-    for (auto port : ports) {
+    for (const auto &port : ports) {
       std::string portName = port->getName();
       // Check if portname is valid
       std::vector<ASTNode> portTypesList = ASTQuery::getValidTypesForPort(
@@ -396,7 +397,7 @@ std::vector<LangError> ASTValidation::validateTypesForDeclaration(
         if (portValue) {
           std::vector<std::string> validTypeNames;
 
-          for (ASTNode validType : portTypesList) {
+          for (const ASTNode &validType : portTypesList) {
             if (validType->getNodeType() == AST::String) {
               std::string typeCode =
                   static_cast<ValueNode *>(validType.get())->getStringValue();
@@ -422,10 +423,10 @@ std::vector<LangError> ASTValidation::validateTypesForDeclaration(
               validTypeNames.end()) {
             if (portValue->getNodeType() == AST::List) {
               typeIsValid = true;
-              for (auto child : portValue->getChildren()) {
+              for (const auto &child : portValue->getChildren()) {
                 auto typeName = getTypeName(child);
                 bool thisTypeIsValid = false;
-                for (auto validTypeName : validTypeNames) {
+                for (const auto &validTypeName : validTypeNames) {
                   if (validTypeName == typeName) {
                     thisTypeIsValid = true;
                     break;
@@ -438,7 +439,7 @@ std::vector<LangError> ASTValidation::validateTypesForDeclaration(
               }
             } else {
               auto typeName = getTypeName(portValue);
-              for (auto validTypeName : validTypeNames) {
+              for (const auto &validTypeName : validTypeNames) {
                 if (validTypeName == typeName || validTypeName == "") {
                   typeIsValid = true;
                   break;
@@ -460,7 +461,7 @@ std::vector<LangError> ASTValidation::validateTypesForDeclaration(
             //                                error.errorTokens.push_back(typeNames[0]);
             //                                //FIXME mark which entry fails
             std::string validTypesList;
-            for (auto type : validTypeNames) {
+            for (const auto &type : validTypeNames) {
               validTypesList += type + ",";
             }
             if (validTypesList.size() > 0) {
@@ -477,7 +478,7 @@ std::vector<LangError> ASTValidation::validateTypesForDeclaration(
   }
   std::vector<ASTNode> subScope = ASTQuery::getModuleBlocks(decl);
   if (decl->getPropertyValue("ports")) {
-    for (ASTNode port : decl->getPropertyValue("ports")->getChildren()) {
+    for (const ASTNode &port : decl->getPropertyValue("ports")->getChildren()) {
       subScope.push_back(port);
     }
   }
@@ -491,7 +492,7 @@ std::vector<LangError> ASTValidation::validateTypesForDeclaration(
   // For BundleDeclarations in particular, we need to ignore the bundle when
   // declaring types. The inner bundle has no scope set, and trying to find
   // it will fail if the declaration is scoped....
-  for (auto property : decl->getProperties()) {
+  for (const auto &property : decl->getProperties()) {
     if (property->getName() != "constraints") {
       // Ignore constraints streams as they play by different rules
       auto newErrors = validateTypes(property->getValue(), scopeStack, tree,

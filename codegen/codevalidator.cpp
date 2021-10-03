@@ -504,7 +504,10 @@ void CodeValidator::validate() {
   m_errors.clear();
   if (m_tree) {
     validatePlatform(m_tree);
-    ASTValidation::validateTypes(m_tree);
+    auto newErrors = ASTValidation::validateTypes(m_tree, {}, m_tree);
+    for (const auto &newErr : newErrors) {
+      m_errors.append(newErr);
+    }
     validateBundleIndeces(m_tree, {});
     validateBundleSizes(m_tree, {});
     validateSymbolUniqueness({{nullptr, m_tree->getChildren()}});
