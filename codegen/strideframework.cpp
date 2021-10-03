@@ -61,41 +61,45 @@ StrideFramework::StrideFramework(std::string strideRoot, std::string framework,
 
 StrideFramework::~StrideFramework() {}
 
-string StrideFramework::getFramework() const { return m_framework; }
+std::string StrideFramework::getFramework() const { return m_framework; }
 
-string StrideFramework::getFrameworkVersion() const {
+std::string StrideFramework::getFrameworkVersion() const {
   return m_frameworkVersion;
 }
 
-string StrideFramework::getHardware() const { return m_hardware; }
+std::string StrideFramework::getHardware() const { return m_hardware; }
 
-string StrideFramework::getHardwareVersion() const { return m_hardwareVersion; }
+std::string StrideFramework::getHardwareVersion() const {
+  return m_hardwareVersion;
+}
 
-string StrideFramework::getRootNamespace() const { return m_rootNamespace; }
+std::string StrideFramework::getRootNamespace() const {
+  return m_rootNamespace;
+}
 
 bool StrideFramework::getRequired() const { return m_required; }
 
 StrideFramework::PlatformAPI StrideFramework::getAPI() const { return m_api; }
 
-string StrideFramework::buildPlatformPath() {
-  string path = m_strideRoot + "/";
+std::string StrideFramework::buildPlatformPath() {
+  std::string path = m_strideRoot + "/";
   path += "frameworks/" + m_framework + "/" + m_frameworkVersion;
   return path;
 }
 
-string StrideFramework::buildPlatformLibPath() {
-  string path = buildPlatformPath() + "/";
+std::string StrideFramework::buildPlatformLibPath() {
+  std::string path = buildPlatformPath() + "/";
   path += "platformlib";
   return path;
 }
 
-string StrideFramework::buildTestingLibPath() {
-  string path = buildPlatformLibPath();
+std::string StrideFramework::buildTestingLibPath() {
+  std::string path = buildPlatformLibPath();
   path += "/testing";
   return path;
 }
 
-string StrideFramework::getPlatformDetails() {
+std::string StrideFramework::getPlatformDetails() {
   auto frameworkRoot = buildPlatformLibPath();
   return frameworkRoot;
 }
@@ -105,12 +109,13 @@ void StrideFramework::installFramework() {
   auto fileName = frameworkRoot + "/Configuration.stride";
   auto configuration = ASTFunctions::parseFile(fileName.c_str());
   if (configuration) {
-    for (auto node : configuration->getChildren()) {
+    for (const auto &node : configuration->getChildren()) {
       if (node->getNodeType() == AST::Declaration) {
         auto decl = std::static_pointer_cast<DeclarationNode>(node);
         auto installationNode = decl->getPropertyValue("installation");
         if (installationNode) {
-          for (auto installDirectiveNode : installationNode->getChildren()) {
+          for (const auto &installDirectiveNode :
+               installationNode->getChildren()) {
             if (installDirectiveNode->getNodeType() == AST::Declaration) {
               auto installDirective = std::static_pointer_cast<DeclarationNode>(
                   installDirectiveNode);
@@ -176,8 +181,8 @@ void StrideFramework::installFramework() {
 
 std::vector<string> StrideFramework::getDomainIds() {
   std::vector<string> domainIds;
-  for (auto treeEntry : m_trees) {
-    for (auto node : treeEntry.nodes) {
+  for (const auto &treeEntry : m_trees) {
+    for (const auto &node : treeEntry.nodes) {
       if (node->getNodeType() == AST::Declaration) {
         auto decl = static_pointer_cast<DeclarationNode>(node);
         if (decl->getObjectType() == "_domainDefinition") {
@@ -195,11 +200,11 @@ void StrideFramework::addTestingTree(string treeName, ASTNode treeRoot) {
 
 std::map<string, std::vector<ASTNode>> StrideFramework::getFrameworkMembers() {
   std::map<std::string, std::vector<ASTNode>> libNamespace;
-  for (auto tree : m_trees) {
+  for (const auto &tree : m_trees) {
     if (libNamespace.find(tree.importAs) == libNamespace.end()) {
       libNamespace[tree.importAs] = std::vector<ASTNode>();
     }
-    for (ASTNode node : tree.nodes) {
+    for (const ASTNode &node : tree.nodes) {
       libNamespace[tree.importAs].push_back(node);
     }
   }
@@ -210,7 +215,7 @@ vector<ASTNode> StrideFramework::getPlatformObjectsReference() {
   vector<ASTNode> objects;
   auto blockGroup = m_trees.begin();
   while (blockGroup != m_trees.end()) {
-    for (ASTNode element : blockGroup->nodes) {
+    for (const ASTNode &element : blockGroup->nodes) {
       objects.push_back(element);
     }
     blockGroup++;
@@ -222,7 +227,7 @@ vector<ASTNode> StrideFramework::getPlatformTestingObjectsRef() {
   vector<ASTNode> objects;
   auto blockGroup = m_platformTestTrees.begin();
   while (blockGroup != m_platformTestTrees.end()) {
-    for (ASTNode element : blockGroup->second->getChildren()) {
+    for (const ASTNode &element : blockGroup->second->getChildren()) {
       objects.push_back(element);
     }
     blockGroup++;
@@ -232,8 +237,8 @@ vector<ASTNode> StrideFramework::getPlatformTestingObjectsRef() {
 
 bool StrideFramework::getPluginDetails(string &pluginName, int &majorVersion,
                                        int &minorVersion) {
-  for (auto tree : m_trees) {
-    for (auto declNode : tree.nodes) {
+  for (const auto &tree : m_trees) {
+    for (const auto &declNode : tree.nodes) {
       if (declNode->getNodeType() == AST::Declaration) {
         auto decl = static_pointer_cast<DeclarationNode>(declNode);
         if (decl->getObjectType() == "generatorDirectives") {
@@ -279,10 +284,10 @@ StrideFramework::loadFrameworkRoot(std::string frameworkRoot) {
   auto nodes = CodeValidator::loadAllInDirectory(frameworkRoot);
 
   std::vector<ASTNode> inheritedNodes;
-  for (auto inhPath : m_inheritedPaths) {
+  for (const auto &inhPath : m_inheritedPaths) {
     inheritedNodes = CodeValidator::loadAllInDirectory(inhPath);
     // Remove nodes from inherited if present in current.
-    for (auto inhNode : inheritedNodes) {
+    for (const auto &inhNode : inheritedNodes) {
       bool found = false;
       for (auto node = nodes.begin(); node != nodes.end(); node++) {
         if (ASTQuery::getNodeName(*node) == ASTQuery::getNodeName(inhNode)) {
@@ -317,7 +322,7 @@ std::vector<std::string>
 StrideFramework::getInheritedFrameworkPaths(std::string frameworkRoot) {
   std::vector<std::string> inhPaths;
   auto nodes = CodeValidator::loadAllInDirectory(frameworkRoot);
-  for (auto newNode : nodes) {
+  for (const auto &newNode : nodes) {
     if (newNode->getNodeType() == AST::Declaration) {
       auto decl = static_pointer_cast<DeclarationNode>(newNode);
       if (decl->getObjectType() == "_frameworkDescription") {
@@ -345,7 +350,7 @@ StrideFramework::getInheritedFrameworkPaths(std::string frameworkRoot) {
 std::vector<string> StrideFramework::loadInheritedList(string frameworkRoot) {
   std::vector<std::string> inh;
   auto nodes = CodeValidator::loadAllInDirectory(frameworkRoot);
-  for (auto newNode : nodes) {
+  for (const auto &newNode : nodes) {
     if (newNode->getNodeType() == AST::Declaration) {
       auto decl = static_pointer_cast<DeclarationNode>(newNode);
       if (decl->getObjectType() == "_frameworkDescription") {
@@ -375,11 +380,11 @@ std::vector<ASTNode> StrideFramework::loadImport(string importName,
   }
   auto nodes = CodeValidator::loadAllInDirectory(includeSubPath);
 
-  for (auto node : nodes) {
+  for (const auto &node : nodes) {
     newNodes.push_back(node);
   }
-  for (auto inhPath : m_inheritedPaths) {
-    auto subPath = inhPath += "/" + importName;
+  for (const auto &inhPath : m_inheritedPaths) {
+    auto subPath = inhPath + "/" + importName;
     auto inheritedNodes = CodeValidator::loadAllInDirectory(subPath);
     for (auto inhNode : inheritedNodes) {
       for (auto node = nodes.begin(); node != nodes.end(); node++) {

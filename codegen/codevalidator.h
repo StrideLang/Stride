@@ -84,7 +84,7 @@ public:
                                              ScopeStack scopeStack,
                                              ASTNode tree);
 
-  static shared_ptr<DeclarationNode>
+  static std::shared_ptr<DeclarationNode>
   resolveConnectionBlock(ASTNode node, ScopeStack scopeStack, ASTNode tree,
                          bool downStream = true);
 
@@ -116,7 +116,8 @@ public:
   static double evaluateConstReal(ASTNode node, ScopeStack scope, ASTNode tree,
                                   QList<LangError> &errors);
   static std::string evaluateConstString(ASTNode node, ScopeStack scope,
-                                         ASTNode tree, string currentFramework,
+                                         ASTNode tree,
+                                         std::string currentFramework,
                                          QList<LangError> &errors);
   static ASTNode
   getMemberfromBlockBundleConst(std::shared_ptr<DeclarationNode> blockDecl,
@@ -126,7 +127,7 @@ public:
   static ASTNode getMemberFromList(ListNode *node, int index,
                                    QList<LangError> &errors);
   static std::shared_ptr<PropertyNode>
-  findPropertyByName(vector<std::shared_ptr<PropertyNode>> properties,
+  findPropertyByName(std::vector<std::shared_ptr<PropertyNode>> properties,
                      QString propertyName);
 
   static std::shared_ptr<DeclarationNode>
@@ -172,7 +173,7 @@ public:
                                   QList<LangError> &errors);
 
   static int
-  getLargestPropertySize(vector<std::shared_ptr<PropertyNode>> &properties,
+  getLargestPropertySize(std::vector<std::shared_ptr<PropertyNode>> &properties,
                          ScopeStack scope, ASTNode tree,
                          QList<LangError> &errors);
 
@@ -197,12 +198,13 @@ public:
   static void setNodeRate(ASTNode node, double rate, ScopeStack scope = {},
                           ASTNode tree = nullptr);
 
-  static double getDefaultForTypeAsDouble(string type, string port,
+  static double getDefaultForTypeAsDouble(std::string type, std::string port,
                                           ScopeStack scope, ASTNode tree,
-                                          std::vector<string> namespaces);
-  static ASTNode getDefaultPortValueForType(string type, string portName,
-                                            ScopeStack scope, ASTNode tree,
-                                            std::vector<string> namespaces);
+                                          std::vector<std::string> namespaces);
+  static ASTNode
+  getDefaultPortValueForType(std::string type, std::string portName,
+                             ScopeStack scope, ASTNode tree,
+                             std::vector<std::string> namespaces);
 
   // Get instance. For blocks the declaration is the instance, for modules it is
   // the function node in the stream Many properties need to be stored in the
@@ -210,7 +212,7 @@ public:
   static ASTNode getInstance(ASTNode block, ScopeStack scopeStack,
                              ASTNode tree);
 
-  static vector<StreamNode *> getStreamsAtLine(ASTNode tree, int line);
+  static std::vector<StreamNode *> getStreamsAtLine(ASTNode tree, int line);
 
   static double
   getDomainDefaultRate(std::shared_ptr<DeclarationNode> domainDecl);
@@ -221,7 +223,7 @@ public:
 
   static std::vector<ASTNode> loadAllInDirectory(std::string path);
 
-  static std::vector<string> listAvailableSystems(std::string strideroot);
+  static std::vector<std::string> listAvailableSystems(std::string strideroot);
 
 private:
   void validateTree(ASTNode tree);

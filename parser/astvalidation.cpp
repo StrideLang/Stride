@@ -26,7 +26,7 @@ ASTValidation::validateTypes(ASTNode node, ScopeStack scopeStack, ASTNode tree,
     // Children are checked automatically below
   } else if (node->getNodeType() == AST::Block) {
     BlockNode *block = static_cast<BlockNode *>(node.get());
-    vector<string> namespaces = block->getNamespaceList();
+    std::vector<std::string> namespaces = block->getNamespaceList();
     namespaces.insert(namespaces.begin(), parentNamespace.begin(),
                       parentNamespace.end());
     std::shared_ptr<DeclarationNode> declaration =
@@ -39,7 +39,7 @@ ASTValidation::validateTypes(ASTNode node, ScopeStack scopeStack, ASTNode tree,
       error.filename = node->getFilename();
       //            error.errorTokens.push_back(block->getName());
       //            error.errorTokens.push_back(block->getNamespace());
-      string blockName = "";
+      std::string blockName = "";
       if (block->getScopeLevels()) {
         for (unsigned int i = 0; i < block->getScopeLevels(); i++) {
           blockName += block->getScopeAt(i);
@@ -53,7 +53,7 @@ ASTValidation::validateTypes(ASTNode node, ScopeStack scopeStack, ASTNode tree,
 
   } else if (node->getNodeType() == AST::Bundle) {
     BundleNode *bundle = static_cast<BundleNode *>(node.get());
-    vector<string> namespaces = bundle->getNamespaceList();
+    std::vector<std::string> namespaces = bundle->getNamespaceList();
     namespaces.insert(namespaces.begin(), parentNamespace.begin(),
                       parentNamespace.end());
     std::shared_ptr<DeclarationNode> declaration =
@@ -66,7 +66,7 @@ ASTValidation::validateTypes(ASTNode node, ScopeStack scopeStack, ASTNode tree,
       error.filename = node->getFilename();
       //            error.errorTokens.push_back(bundle->getName());
       //            error.errorTokens.push_back(bundle->getNamespace());
-      string bundleName = "";
+      std::string bundleName = "";
       if (bundle->getScopeLevels()) {
         for (unsigned int i = 0; i < bundle->getScopeLevels(); i++) {
           bundleName += bundle->getScopeAt(i);
@@ -89,7 +89,7 @@ ASTValidation::validateTypes(ASTNode node, ScopeStack scopeStack, ASTNode tree,
       error.filename = node->getFilename();
       //            error.errorTokens.push_back(func->getName());
       //            error.errorTokens.push_back(func->getNamespace());
-      string funcName = "";
+      std::string funcName = "";
       if (func->getScopeLevels()) {
         for (unsigned int i = 0; i < func->getScopeLevels(); i++) {
           funcName += func->getScopeAt(i);
@@ -101,8 +101,9 @@ ASTValidation::validateTypes(ASTNode node, ScopeStack scopeStack, ASTNode tree,
       errors.push_back(error);
     } else {
       for (std::shared_ptr<PropertyNode> property : func->getProperties()) {
-        string propertyName = property->getName();
-        vector<string> validPorts = ASTQuery::getModulePortNames(declaration);
+        std::string propertyName = property->getName();
+        std::vector<std::string> validPorts =
+            ASTQuery::getModulePortNames(declaration);
         // TODO "domain" port is being allowed forcefully. Should this be
         // specified in a different way?
         if (/*propertyName.at(0) != '_' && propertyName != "domain" &&*/
@@ -314,7 +315,7 @@ bool ASTValidation::isValidListProperty(
 
 std::vector<LangError> ASTValidation::validateTypesForDeclaration(
     std::shared_ptr<DeclarationNode> decl, ScopeStack scopeStack, ASTNode tree,
-    string currentFramework) {
+    std::string currentFramework) {
   std::vector<LangError> errors;
   auto blockType = decl->getObjectType();
 
@@ -322,7 +323,7 @@ std::vector<LangError> ASTValidation::validateTypesForDeclaration(
   std::string frameworkName;
   if (frameworkNode) {
     frameworkName =
-        static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
+        std::static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
   }
   std::shared_ptr<DeclarationNode> declaration =
       ASTQuery::findTypeDeclaration(decl, scopeStack, tree, frameworkName);
@@ -403,7 +404,7 @@ std::vector<LangError> ASTValidation::validateTypesForDeclaration(
                   static_cast<ValueNode *>(validType.get())->getStringValue();
               validTypeNames.push_back(typeCode);
             } else if (validType->getNodeType() == AST::Block) {
-              auto blockNode = static_pointer_cast<BlockNode>(validType);
+              auto blockNode = std::static_pointer_cast<BlockNode>(validType);
               std::shared_ptr<DeclarationNode> declaration =
                   ASTQuery::findDeclarationByName(blockNode->getName(),
                                                   scopeStack, tree);
@@ -413,7 +414,7 @@ std::vector<LangError> ASTValidation::validateTypesForDeclaration(
               //                                    == AST::String);
               //                                    Q_ASSERT(declaration);
               if (declaration) {
-                string validTypeName = declaration->getName();
+                std::string validTypeName = declaration->getName();
                 validTypeNames.push_back(validTypeName);
               }
             }

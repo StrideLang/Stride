@@ -133,7 +133,7 @@ std::string LanguageSyntax::getDeclarationForType(
   return out;
 }
 
-string LanguageSyntax::getDeclarationForType(Instance &instance) {
+std::string LanguageSyntax::getDeclarationForType(Instance &instance) {
   return getDeclarationForType(instance.type, instance.fullName(),
                                instance.access, instance.size,
                                instance.defaultValue, instance.constructorArgs);
@@ -184,7 +184,7 @@ string LanguageSyntax::getDeclarationForType(Instance &instance) {
 //  return out;
 //}
 
-std::string LanguageSyntax::include(string includeName) {
+std::string LanguageSyntax::include(std::string includeName) {
   std::string includetext;
   if (includeName.at(0) == '<') {
     includetext += "#include " + includeName + "\n";
@@ -339,14 +339,14 @@ std::string LanguageSyntax::generateModuleDeclaration(
   //        std::cout<< moduleCode <<std::endl;
 }
 
-string LanguageSyntax::getDataType(std::shared_ptr<DeclarationNode> decl,
-                                   StrideSystem *system) {
+std::string LanguageSyntax::getDataType(std::shared_ptr<DeclarationNode> decl,
+                                        StrideSystem *system) {
   std::string dataType;
   std::string frameworkName;
   auto frameworkNode = decl->getCompilerProperty("framework");
   if (frameworkNode) {
     frameworkName =
-        static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
+        std::static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
   }
   if (decl->getObjectType() == "switch" ||
       decl->getObjectType() == "reaction") {
@@ -359,7 +359,7 @@ string LanguageSyntax::getDataType(std::shared_ptr<DeclarationNode> decl,
   if (declaredType && declaredType->getNodeType() == AST::Block) {
     // FIXME we need to determine framework
     auto dataTypeDecl = system->getFrameworkDataType(
-        "", static_pointer_cast<BlockNode>(declaredType)->getName());
+        "", std::static_pointer_cast<BlockNode>(declaredType)->getName());
     if (dataTypeDecl) {
       auto frameworkTypeNode = dataTypeDecl->getPropertyValue("frameworkName");
 
@@ -388,8 +388,8 @@ string LanguageSyntax::getDataType(std::shared_ptr<DeclarationNode> decl,
   if (dataTypeNode) {
     auto dataTypeNameNode = dataTypeNode->getPropertyValue("frameworkName");
     if (dataTypeNameNode && dataTypeNameNode->getNodeType() == AST::String) {
-      dataType =
-          static_pointer_cast<ValueNode>(dataTypeNameNode)->getStringValue();
+      dataType = std::static_pointer_cast<ValueNode>(dataTypeNameNode)
+                     ->getStringValue();
     }
   } else {
     qDebug() << "ERROR: no datatype provided";

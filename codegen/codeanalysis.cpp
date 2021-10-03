@@ -5,8 +5,8 @@
 #include <iostream>
 
 std::shared_ptr<DeclarationNode>
-CodeAnalysis::findDomainDeclaration(string domainName, string framework,
-                                    ASTNode tree) {
+CodeAnalysis::findDomainDeclaration(std::string domainName,
+                                    std::string framework, ASTNode tree) {
   std::string domainFramework;
   auto separatorIndex = domainName.find("::");
   if (separatorIndex != std::string::npos) {
@@ -21,14 +21,15 @@ CodeAnalysis::findDomainDeclaration(string domainName, string framework,
   for (const ASTNode &node : tree->getChildren()) {
     if (node->getNodeType() == AST::Declaration) {
       std::shared_ptr<DeclarationNode> decl =
-          static_pointer_cast<DeclarationNode>(node);
+          std::static_pointer_cast<DeclarationNode>(node);
       if (decl->getObjectType() == "_domainDefinition") {
         if (domainName == decl->getName()) {
           auto domainDeclFramework = decl->getCompilerProperty("framework");
           if (domainDeclFramework &&
               domainDeclFramework->getNodeType() == AST::String) {
-            if (framework == static_pointer_cast<ValueNode>(domainDeclFramework)
-                                 ->getStringValue()) {
+            if (framework ==
+                std::static_pointer_cast<ValueNode>(domainDeclFramework)
+                    ->getStringValue()) {
               return decl;
             }
           }
@@ -150,7 +151,8 @@ ASTNode CodeAnalysis::getNodeDomain(ASTNode node, ScopeStack scopeStack,
         auto frameworkNode = node->getCompilerProperty("framework");
         if (frameworkNode) {
           domainNode->addScope(
-              static_pointer_cast<ValueNode>(frameworkNode)->getStringValue());
+              std::static_pointer_cast<ValueNode>(frameworkNode)
+                  ->getStringValue());
         }
         //        domainNode->setNamespaceList(node->getNamespaceList());
       }
@@ -160,8 +162,8 @@ ASTNode CodeAnalysis::getNodeDomain(ASTNode node, ScopeStack scopeStack,
         "domain"); // static_cast<FunctionNode *>(node.get())->getDomain();
     if (!domainNode) {
       auto funcDecl = ASTQuery::findDeclarationByName(
-          static_pointer_cast<FunctionNode>(node)->getName(), scopeStack, tree,
-          node->getNamespaceList());
+          std::static_pointer_cast<FunctionNode>(node)->getName(), scopeStack,
+          tree, node->getNamespaceList());
       if (funcDecl && funcDecl->getObjectType() == "platformModule") {
         domainNode = funcDecl->getPropertyValue("domain");
 
@@ -218,7 +220,7 @@ ASTNode CodeAnalysis::getNodeDomain(ASTNode node, ScopeStack scopeStack,
              node->getNodeType() == AST::Int ||
              node->getNodeType() == AST::Switch ||
              node->getNodeType() == AST::String) {
-    domainNode = static_pointer_cast<ValueNode>(node)->getDomain();
+    domainNode = std::static_pointer_cast<ValueNode>(node)->getDomain();
   } else if (node->getNodeType() == AST::PortProperty) {
 
     domainNode = node->getCompilerProperty("domain");
@@ -238,15 +240,16 @@ std::string CodeAnalysis::getNodeDomainName(ASTNode node, ScopeStack scopeStack,
   return domainName;
 }
 
-string CodeAnalysis::getDomainIdentifier(ASTNode domain, ScopeStack scopeStack,
-                                         ASTNode tree) {
+std::string CodeAnalysis::getDomainIdentifier(ASTNode domain,
+                                              ScopeStack scopeStack,
+                                              ASTNode tree) {
   std::string name;
   // To avoid inconsistencies, we rely on the block name rather than the
   // domainName property. This guarantees uniqueness within a scope.
   // TODO we should add scope markers to this identifier to avoid clashes
   if (domain) {
     if (domain->getNodeType() == AST::Block) {
-      auto domainBlock = static_pointer_cast<BlockNode>(domain);
+      auto domainBlock = std::static_pointer_cast<BlockNode>(domain);
       std::string framework;
       if (domainBlock->getScopeLevels() > 0) {
         framework = domainBlock->getNamespaceList()[0];
@@ -265,8 +268,8 @@ string CodeAnalysis::getDomainIdentifier(ASTNode domain, ScopeStack scopeStack,
             domainDeclaration->getCompilerProperty("framework");
         std::string frameworkName;
         if (frameworkNode && frameworkNode->getNodeType() == AST::String) {
-          frameworkName =
-              static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
+          frameworkName = std::static_pointer_cast<ValueNode>(frameworkNode)
+                              ->getStringValue();
           if (frameworkName.size() > 0) {
             name = frameworkName + "::" + name;
           }
@@ -274,12 +277,12 @@ string CodeAnalysis::getDomainIdentifier(ASTNode domain, ScopeStack scopeStack,
       }
       auto domainInstanceIndex = domain->getCompilerProperty("domainInstance");
       if (domainInstanceIndex) {
-        int index =
-            static_pointer_cast<ValueNode>(domainInstanceIndex)->getIntValue();
+        int index = std::static_pointer_cast<ValueNode>(domainInstanceIndex)
+                        ->getIntValue();
         name += ":" + std::to_string(index);
       }
     } else if (domain->getNodeType() == AST::Bundle) {
-      auto domainBlock = static_pointer_cast<BundleNode>(domain);
+      auto domainBlock = std::static_pointer_cast<BundleNode>(domain);
       auto domainDeclaration = ASTQuery::findDeclarationByName(
           domainBlock->getName(), scopeStack, tree);
       if (domainDeclaration) {
@@ -292,19 +295,20 @@ string CodeAnalysis::getDomainIdentifier(ASTNode domain, ScopeStack scopeStack,
       }
     } else if (domain->getNodeType() == AST::String) {
       // Should anything be added to the id? Scope?
-      name = static_pointer_cast<ValueNode>(domain)->getStringValue();
+      name = std::static_pointer_cast<ValueNode>(domain)->getStringValue();
       std::cerr << "DEPRECATED: String domain no longer allowed." << std::endl;
       //      assert(0 == 1); // Should not be allowed
     } else if (domain->getNodeType() == AST::PortProperty) {
       // Should anything be added to the id? Scope?
-      auto portProperty = static_pointer_cast<PortPropertyNode>(domain);
+      auto portProperty = std::static_pointer_cast<PortPropertyNode>(domain);
       name = portProperty->getName() + "_" + portProperty->getPortName();
     }
   }
   return name;
 }
 
-string CodeAnalysis::getFrameworkForDomain(string domainName, ASTNode tree) {
+std::string CodeAnalysis::getFrameworkForDomain(std::string domainName,
+                                                ASTNode tree) {
   std::string domainFramework;
   auto separatorIndex = domainName.find("::");
   if (separatorIndex != std::string::npos) {
@@ -315,20 +319,21 @@ string CodeAnalysis::getFrameworkForDomain(string domainName, ASTNode tree) {
     if (node->getNodeType() == AST::Declaration) {
       DeclarationNode *decl = static_cast<DeclarationNode *>(node.get());
       if (decl->getObjectType() == "_domainDefinition") {
-        string declDomainName = decl->getName();
+        std::string declDomainName = decl->getName();
         if (declDomainName == domainName) {
           ASTNode frameworkNameValue = decl->getPropertyValue("framework");
           if (frameworkNameValue->getNodeType() == AST::String) {
             return static_cast<ValueNode *>(frameworkNameValue.get())
                 ->getStringValue();
           } else if (frameworkNameValue->getNodeType() == AST::Block) {
-            auto fwBlock = static_pointer_cast<BlockNode>(frameworkNameValue);
+            auto fwBlock =
+                std::static_pointer_cast<BlockNode>(frameworkNameValue);
 
             auto declImportFramework = decl->getCompilerProperty("framework");
             std::string frameworkName;
             if (declImportFramework) {
               frameworkName =
-                  static_pointer_cast<ValueNode>(declImportFramework)
+                  std::static_pointer_cast<ValueNode>(declImportFramework)
                       ->getStringValue();
             }
             std::shared_ptr<DeclarationNode> fwDeclaration =
@@ -356,5 +361,5 @@ string CodeAnalysis::getFrameworkForDomain(string domainName, ASTNode tree) {
       }
     }
   }
-  return string();
+  return std::string();
 }

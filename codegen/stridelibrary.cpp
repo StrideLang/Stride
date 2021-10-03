@@ -53,18 +53,18 @@ void StrideLibrary::initializeLibrary(std::string strideRootPath) {
 
 std::shared_ptr<DeclarationNode>
 StrideLibrary::findTypeInLibrary(std::string typeName) {
-  for (auto libraryTree : m_libraryTrees) {
+  for (const auto &libraryTree : m_libraryTrees) {
     auto nodes = libraryTree.nodes;
-    for (ASTNode node : nodes) {
+    for (const ASTNode &node : nodes) {
       if (node->getNodeType() == AST::Declaration) {
         std::shared_ptr<DeclarationNode> block =
-            static_pointer_cast<DeclarationNode>(node);
+            std::static_pointer_cast<DeclarationNode>(node);
         if (block->getObjectType() != "type") {
           continue;
         }
         ASTNode value = block->getPropertyValue("typeName");
         if (value->getNodeType() == AST::String) {
-          if (static_pointer_cast<ValueNode>(value)->getStringValue() ==
+          if (std::static_pointer_cast<ValueNode>(value)->getStringValue() ==
               typeName) {
             return block;
           }
@@ -150,7 +150,7 @@ bool StrideLibrary::isValidProperty(std::shared_ptr<PropertyNode> property,
     assert(portBlock->getObjectType() == "typeProperty");
     std::shared_ptr<PropertyNode> portName =
         CodeValidator::findPropertyByName(portBlock->getProperties(), "name");
-    string portNameInType =
+    std::string portNameInType =
         static_cast<ValueNode *>(portName->getValue().get())->getStringValue();
     if (property->getName() == portNameInType) {
       return true;
@@ -178,7 +178,7 @@ QList<DeclarationNode *> StrideLibrary::getParentTypes(DeclarationNode *type) {
   if (inheritProperty) {
     ASTNode parentType = inheritProperty->getValue();
     if (parentType->getNodeType() == AST::String) {
-      string parentBlockName =
+      std::string parentBlockName =
           static_cast<ValueNode *>(parentType.get())->getStringValue();
       std::shared_ptr<DeclarationNode> parentBlock =
           findTypeInLibrary(parentBlockName);

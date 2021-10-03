@@ -68,10 +68,10 @@ public:
   QStringList getPlatformTypeNames();
   QStringList getFunctionNames();
 
-  vector<Builder *> createBuilders(std::string fileName, ASTNode tree);
+  std::vector<Builder *> createBuilders(std::string fileName, ASTNode tree);
 
-  ASTNode
-  getPlatformDomain(string namespaceName = ""); // The platform's default domain
+  ASTNode getPlatformDomain(
+      std::string namespaceName = ""); // The platform's default domain
 
   QMap<QString, QString> getFrameworkTools(std::string namespaceName);
   QMap<QString, QString> getFrameworkPaths(std::string namespaceName);
@@ -145,7 +145,7 @@ public:
   SystemConfiguration m_systemConfig;
 
   std::string getStrideRoot() const;
-  void setStrideRoot(const string &strideRoot);
+  void setStrideRoot(const std::string &strideRoot);
 
   std::vector<std::string> listAvailableImports();
 
@@ -158,9 +158,10 @@ private:
 
   std::shared_ptr<DeclarationNode>
   findDataTypeInPath(std::string path, std::string strideDataType);
-  string findDefaultDataTypeInPath(std::string path, string strideType);
+  std::string findDefaultDataTypeInPath(std::string path,
+                                        std::string strideType);
 
-  string makeProject(string fileName);
+  std::string makeProject(std::string fileName);
 
   QString readFile(QString fileName);
 

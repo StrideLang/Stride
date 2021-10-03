@@ -50,7 +50,7 @@ public:
   void setErrors(QList<LangError> errors);
 
   std::mutex m_markerLock;
-  std::vector<shared_ptr<ErrorMarker>> m_errorMarkers;
+  std::vector<std::shared_ptr<ErrorMarker>> m_errorMarkers;
 
 protected:
   void paintEvent(QPaintEvent *event);

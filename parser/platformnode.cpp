@@ -39,9 +39,9 @@
 
 #include "platformnode.h"
 
-SystemNode::SystemNode(string platformName, int majorVersion, int minorVersion,
-                       const char *filename, int line,
-                       vector<string> hwPlatform)
+SystemNode::SystemNode(std::string platformName, int majorVersion,
+                       int minorVersion, const char *filename, int line,
+                       std::vector<std::string> hwPlatform)
     : AST(AST::Platform, filename, line) {
   m_systemName = platformName;
   m_majorVersion = majorVersion;
@@ -78,8 +78,8 @@ int SystemNode::minorVersion() const { return m_minorVersion; }
 //    m_targetPlatforms = hwPlatform;
 //}
 
-string SystemNode::platformName() const { return m_systemName; }
+std::string SystemNode::platformName() const { return m_systemName; }
 
-void SystemNode::setPlatformName(const string &platformName) {
+void SystemNode::setPlatformName(const std::string &platformName) {
   m_systemName = platformName;
 }

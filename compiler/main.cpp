@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
 
     system->generateDomainConnections(tree);
 
-    vector<Builder *> builders =
+    std::vector<Builder *> builders =
         system->createBuilders(dirName.toStdString(), tree);
 
     std::vector<std::map<std::string, std::string>> domainMaps;
@@ -141,7 +141,7 @@ int main(int argc, char *argv[]) {
       }
     }
   } else {
-    vector<LangError> errors = ASTFunctions::getParseErrors();
+    std::vector<LangError> errors = ASTFunctions::getParseErrors();
     for (LangError err : errors) {
       qDebug() << QString::fromStdString(err.getErrorText());
     }

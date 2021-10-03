@@ -53,7 +53,7 @@
 #include "pythonproject.h"
 #include "toolmanager.hpp"
 
-StrideSystem::StrideSystem(string strideRoot, string systemName,
+StrideSystem::StrideSystem(std::string strideRoot, std::string systemName,
                            int majorVersion, int minorVersion,
                            std::vector<std::shared_ptr<ImportNode>> importList)
     : m_strideRoot(strideRoot), m_systemName(systemName),
@@ -86,7 +86,7 @@ StrideSystem::StrideSystem(string strideRoot, string systemName,
       for (auto framework : m_frameworks) {
         QStringList nameFilters;
         nameFilters.push_back("*.stride");
-        string platformPath = framework->buildTestingLibPath();
+        std::string platformPath = framework->buildTestingLibPath();
         QFileInfoList libraryFiles = QDir(QString::fromStdString(platformPath))
                                          .entryInfoList(nameFilters);
         for (auto fileInfo : libraryFiles) {
@@ -101,7 +101,7 @@ StrideSystem::StrideSystem(string strideRoot, string systemName,
             }
             framework->addTestingTree(fileInfo.baseName().toStdString(), tree);
           } else {
-            vector<LangError> errors = ASTFunctions::getParseErrors();
+            std::vector<LangError> errors = ASTFunctions::getParseErrors();
             foreach (LangError error, errors) {
               qDebug() << QString::fromStdString(error.getErrorText());
             }
@@ -133,15 +133,16 @@ void StrideSystem::parseSystemTree(ASTNode systemTree, ASTNode configuration) {
   std::vector<std::map<std::string, std::string>> platformDefinitions;
   std::map<std::string, std::pair<std::string, std::string>> frameworkInherits;
   //    vector<string> platformDefinitionNames;
-  vector<AST *> connectionDefinitions; // TODO process connection definitions
+  std::vector<AST *>
+      connectionDefinitions; // TODO process connection definitions
 
   for (ASTNode systemNode : systemTree->getChildren()) {
     if (systemNode->getNodeType() == AST::Declaration) {
       std::shared_ptr<DeclarationNode> declaration =
-          static_pointer_cast<DeclarationNode>(systemNode);
+          std::static_pointer_cast<DeclarationNode>(systemNode);
       if (declaration->getObjectType() == "platform") {
-        map<string, string> definition;
-        vector<std::shared_ptr<PropertyNode>> properties =
+        std::map<std::string, std::string> definition;
+        std::vector<std::shared_ptr<PropertyNode>> properties =
             declaration->getProperties();
         for (std::shared_ptr<PropertyNode> prop : properties) {
           if (prop->getValue()->getNodeType() == AST::String) {
@@ -152,7 +153,7 @@ void StrideSystem::parseSystemTree(ASTNode systemTree, ASTNode configuration) {
         }
         platformDefinitions.push_back(definition);
         m_platformDefinitions.push_back(
-            static_pointer_cast<DeclarationNode>(declaration));
+            std::static_pointer_cast<DeclarationNode>(declaration));
       } else if (declaration->getObjectType() == "connection") {
         m_connectionDefinitions.push_back(declaration);
       } else if (declaration->getObjectType() == "system") {
@@ -164,7 +165,7 @@ void StrideSystem::parseSystemTree(ASTNode systemTree, ASTNode configuration) {
           for (ASTNode platformName : platformsList->getChildren()) {
             Q_ASSERT(platformName->getNodeType() == AST::Block);
             auto platformSpecBlock =
-                static_pointer_cast<BlockNode>(platformName);
+                std::static_pointer_cast<BlockNode>(platformName);
             auto platformSpec = ASTQuery::findDeclarationByName(
                 platformSpecBlock->getName(), {}, systemTree);
             if (platformSpec) {
@@ -175,9 +176,9 @@ void StrideSystem::parseSystemTree(ASTNode systemTree, ASTNode configuration) {
                 if (platformBlock->getNodeType() == AST::String &&
                     rootNamespaceBlock->getNodeType() == AST::String) {
                   usedPlatformNames.push_back(
-                      {static_pointer_cast<ValueNode>(platformBlock)
+                      {std::static_pointer_cast<ValueNode>(platformBlock)
                            ->getStringValue(),
-                       static_pointer_cast<ValueNode>(rootNamespaceBlock)
+                       std::static_pointer_cast<ValueNode>(rootNamespaceBlock)
                            ->getStringValue()});
                 } else {
                   qDebug() << "ERROR: Unexpected types for platform spec "
@@ -186,7 +187,7 @@ void StrideSystem::parseSystemTree(ASTNode systemTree, ASTNode configuration) {
                 }
               } else if (platformBlock->getNodeType() == AST::String) {
                 usedPlatformNames.push_back(
-                    {static_pointer_cast<ValueNode>(platformBlock)
+                    {std::static_pointer_cast<ValueNode>(platformBlock)
                          ->getStringValue(),
                      ""});
               }
@@ -213,11 +214,12 @@ void StrideSystem::parseSystemTree(ASTNode systemTree, ASTNode configuration) {
     for (auto systemNode : systemTree->getChildren()) {
       if (systemNode->getNodeType() == AST::Declaration) {
         std::shared_ptr<DeclarationNode> declaration =
-            static_pointer_cast<DeclarationNode>(systemNode);
+            std::static_pointer_cast<DeclarationNode>(systemNode);
         if (declaration->getObjectType() == "platform") {
           if (sourcePlatform->getNodeType() == AST::Block) {
             if (declaration->getName() ==
-                static_pointer_cast<BlockNode>(sourcePlatform)->getName()) {
+                std::static_pointer_cast<BlockNode>(sourcePlatform)
+                    ->getName()) {
               connection->replacePropertyValue(
                   "sourceFramework",
                   declaration->getPropertyValue("framework"));
@@ -232,7 +234,7 @@ void StrideSystem::parseSystemTree(ASTNode systemTree, ASTNode configuration) {
           }
           if (destPlatform->getNodeType() == AST::Block) {
             if (declaration->getName() ==
-                static_pointer_cast<BlockNode>(destPlatform)->getName()) {
+                std::static_pointer_cast<BlockNode>(destPlatform)->getName()) {
               connection->replacePropertyValue(
                   "destinationFramework",
                   declaration->getPropertyValue("framework"));
@@ -253,10 +255,11 @@ void StrideSystem::parseSystemTree(ASTNode systemTree, ASTNode configuration) {
   // Now connect platforms referenced in system with defined platforms
   for (auto usedPlatformName : usedPlatformNames) {
     for (size_t i = 0; i < platformDefinitions.size(); i++) {
-      map<string, string> &definition = platformDefinitions.at(i);
+      std::map<std::string, std::string> &definition =
+          platformDefinitions.at(i);
       //            string &name = platformDefinitionNames.at(i);
       if (definition["framework"] == usedPlatformName.first) {
-        string framework, framworkVersion, hardware, hardwareVersion,
+        std::string framework, framworkVersion, hardware, hardwareVersion,
             rootNamespace;
         framework = definition["framework"];
 
@@ -309,7 +312,7 @@ void StrideSystem::setStrideRoot(const std::string &strideRoot) {
   m_strideRoot = strideRoot;
 }
 
-std::vector<string> StrideSystem::listAvailableImports() {
+std::vector<std::string> StrideSystem::listAvailableImports() {
   QDir dir(QString::fromStdString(m_strideRoot));
   dir.cd("library/1.0");
   std::vector<std::string> outEntries;
@@ -344,7 +347,7 @@ QStringList StrideSystem::getPlatformTypeNames() {
     for (auto node : libNamespace.second) {
       if (node->getNodeType() == AST::Declaration) {
         std::shared_ptr<DeclarationNode> block =
-            static_pointer_cast<DeclarationNode>(node);
+            std::static_pointer_cast<DeclarationNode>(node);
         if (block->getObjectType() == "type" ||
             block->getObjectType() == "platformModule" ||
             block->getObjectType() == "platformBlock") {
@@ -363,7 +366,7 @@ QStringList StrideSystem::getPlatformTypeNames() {
 QStringList StrideSystem::getFunctionNames() {
   QStringList funcNames;
 
-  map<string, vector<ASTNode>> refObjects = getBuiltinObjects();
+  std::map<std::string, std::vector<ASTNode>> refObjects = getBuiltinObjects();
 
   for (auto it = refObjects.begin(); it != refObjects.end(); it++) {
 
@@ -384,10 +387,10 @@ QStringList StrideSystem::getFunctionNames() {
   return funcNames;
 }
 
-vector<Builder *> StrideSystem::createBuilders(std::string fileName,
-                                               ASTNode tree) {
+std::vector<Builder *> StrideSystem::createBuilders(std::string fileName,
+                                                    ASTNode tree) {
 
-  vector<Builder *> builders;
+  std::vector<Builder *> builders;
   std::string projectDir = makeProject(fileName);
   if (projectDir.size() == 0) {
     qDebug() << "Error creating project path";
@@ -430,7 +433,7 @@ vector<Builder *> StrideSystem::createBuilders(std::string fileName,
                                         pluginMinorVersion)) {
           //          qDebug() << "Error getting plugin details";
         }
-        vector<string> validDomains;
+        std::vector<std::string> validDomains;
 
         for (auto plugin : pluginList) {
           //                    qDebug() << plugin;
@@ -489,9 +492,9 @@ vector<Builder *> StrideSystem::createBuilders(std::string fileName,
   return builders;
 }
 
-ASTNode StrideSystem::getPlatformDomain(string namespaceName) {
+ASTNode StrideSystem::getPlatformDomain(std::string namespaceName) {
   ASTNode platformDomain;
-  map<string, vector<ASTNode>> libObjects = getBuiltinObjects();
+  std::map<std::string, std::vector<ASTNode>> libObjects = getBuiltinObjects();
   if (libObjects.find(namespaceName) == libObjects.end()) { // Invalid namespace
     assert(0 == 1);
     return platformDomain;
@@ -499,7 +502,7 @@ ASTNode StrideSystem::getPlatformDomain(string namespaceName) {
   for (ASTNode object : libObjects[namespaceName]) {
     if (object->getNodeType() == AST::Declaration) {
       std::shared_ptr<DeclarationNode> decl =
-          static_pointer_cast<DeclarationNode>(object);
+          std::static_pointer_cast<DeclarationNode>(object);
       if (decl->getName() == "PlatformDomain") {
         if (decl->getObjectType() == "alias") {
           platformDomain = decl->getPropertyValue("block");
@@ -517,7 +520,7 @@ StrideSystem::getFrameworkTools(std::string namespaceName) {
 
   ToolManager toolManager(m_strideRoot);
 
-  map<string, vector<ASTNode>> libObjects = getBuiltinObjects();
+  std::map<std::string, std::vector<ASTNode>> libObjects = getBuiltinObjects();
   if (libObjects.find(namespaceName) == libObjects.end()) { // Invalid namespace
     assert(0 == 1);
     return QMap<QString, QString>();
@@ -527,12 +530,12 @@ StrideSystem::getFrameworkTools(std::string namespaceName) {
   for (ASTNode object : libObjects[namespaceName]) {
     if (object->getNodeType() == AST::Declaration) {
       std::shared_ptr<DeclarationNode> decl =
-          static_pointer_cast<DeclarationNode>(object);
+          std::static_pointer_cast<DeclarationNode>(object);
       if (decl->getObjectType() == "toolRequirement") {
         auto toolInstanceNode = decl->getPropertyValue("toolInstance");
         if (toolInstanceNode && toolInstanceNode->getNodeType() == AST::Block) {
           auto toolInstance =
-              static_pointer_cast<BlockNode>(toolInstanceNode)->getName();
+              std::static_pointer_cast<BlockNode>(toolInstanceNode)->getName();
           if (toolManager.localTools.find(toolInstance) !=
               toolManager.localTools.end()) {
 
@@ -558,7 +561,7 @@ StrideSystem::getFrameworkPaths(std::string namespaceName) {
 
   ToolManager toolManager(m_strideRoot);
 
-  map<string, vector<ASTNode>> libObjects = getBuiltinObjects();
+  std::map<std::string, std::vector<ASTNode>> libObjects = getBuiltinObjects();
   if (libObjects.find(namespaceName) == libObjects.end()) { // Invalid namespace
     assert(0 == 1);
     return QMap<QString, QString>();
@@ -566,12 +569,12 @@ StrideSystem::getFrameworkPaths(std::string namespaceName) {
   for (ASTNode object : libObjects[namespaceName]) {
     if (object->getNodeType() == AST::Declaration) {
       std::shared_ptr<DeclarationNode> decl =
-          static_pointer_cast<DeclarationNode>(object);
+          std::static_pointer_cast<DeclarationNode>(object);
       if (decl->getObjectType() == "pathRequirement") {
         auto toolInstanceNode = decl->getPropertyValue("pathInstance");
         if (toolInstanceNode && toolInstanceNode->getNodeType() == AST::Block) {
           auto pathInstance =
-              static_pointer_cast<BlockNode>(toolInstanceNode)->getName();
+              std::static_pointer_cast<BlockNode>(toolInstanceNode)->getName();
           if (toolManager.localPaths.find(pathInstance) !=
               toolManager.localPaths.end()) {
 
@@ -591,7 +594,8 @@ StrideSystem::getFrameworkPaths(std::string namespaceName) {
   return paths;
 }
 
-string StrideSystem::substituteTokens(string namespaceName, string text) {
+std::string StrideSystem::substituteTokens(std::string namespaceName,
+                                           std::string text) {
   auto paths = getFrameworkPaths(namespaceName);
 
   for (auto mapEntry : paths.keys()) {
@@ -631,19 +635,20 @@ string StrideSystem::substituteTokens(string namespaceName, string text) {
   return text;
 }
 
-std::vector<string> StrideSystem::getFrameworkNames() {
-  vector<string> names;
+std::vector<std::string> StrideSystem::getFrameworkNames() {
+  std::vector<std::string> names;
   for (auto platform : m_frameworks) {
     names.push_back(platform->getFramework());
   }
   return names;
 }
 
-std::map<string, std::vector<ASTNode>> StrideSystem::getBuiltinObjects() {
-  map<string, vector<ASTNode>> objects;
-  objects[""] = vector<ASTNode>();
+std::map<std::string, std::vector<ASTNode>> StrideSystem::getBuiltinObjects() {
+  std::map<std::string, std::vector<ASTNode>> objects;
+  objects[""] = std::vector<ASTNode>();
   for (auto platform : m_frameworks) {
-    vector<ASTNode> platformObjects = platform->getPlatformObjectsReference();
+    std::vector<ASTNode> platformObjects =
+        platform->getPlatformObjectsReference();
 
     // Add all platform objects with their namespace name
 
@@ -653,13 +658,13 @@ std::map<string, std::vector<ASTNode>> StrideSystem::getBuiltinObjects() {
     //        }
     //        objects[platformName] = platformObjects;
     // Then put first platform's objects in default namespace
-    objects[platform->getFramework()] = vector<ASTNode>();
+    objects[platform->getFramework()] = std::vector<ASTNode>();
     std::shared_ptr<StrideFramework> rootPlatform;
     for (auto node : platformObjects) {
       objects[platform->getFramework()].push_back(node);
       if (node->getNodeType() == AST::Declaration ||
           node->getNodeType() == AST::BundleDeclaration) {
-        auto decl = static_pointer_cast<DeclarationNode>(node);
+        auto decl = std::static_pointer_cast<DeclarationNode>(node);
         //          if (decl->getObjectType() == "_frameworkDescription") {
         //            auto importNameNode = decl->getPropertyValue("inherits");
         //            auto importVersionNode =
@@ -691,8 +696,8 @@ std::map<string, std::vector<ASTNode>> StrideSystem::getBuiltinObjects() {
   return objects;
 }
 
-vector<ASTNode> StrideSystem::getOptionTrees(std::string systemPath) {
-  vector<ASTNode> optionTrees;
+std::vector<ASTNode> StrideSystem::getOptionTrees(std::string systemPath) {
+  std::vector<ASTNode> optionTrees;
   QStringList nameFilters;
   nameFilters.push_back("*.stride");
   QString optionPath =
@@ -706,7 +711,7 @@ vector<ASTNode> StrideSystem::getOptionTrees(std::string systemPath) {
       for (auto child : optionTree->getChildren()) {
         bool osMatch = true;
         if (child->getNodeType() == AST::Declaration) {
-          auto decl = static_pointer_cast<DeclarationNode>(child);
+          auto decl = std::static_pointer_cast<DeclarationNode>(child);
           auto osNode = decl->getPropertyValue("buildPlatforms");
           if (osNode && osNode->getNodeType() == AST::List) {
             osMatch = false;
@@ -744,9 +749,9 @@ vector<ASTNode> StrideSystem::getOptionTrees(std::string systemPath) {
   return optionTrees;
 }
 
-std::vector<ASTNode> StrideSystem::loadImportTree(string importName,
-                                                  string importAs,
-                                                  string frameworkName) {
+std::vector<ASTNode> StrideSystem::loadImportTree(std::string importName,
+                                                  std::string importAs,
+                                                  std::string frameworkName) {
   auto importedNodes = m_library.loadImport(importName, importAs);
   for (auto fw : m_frameworks) {
     if ((frameworkName.size() == 0) || (frameworkName == fw->getFramework())) {
@@ -764,7 +769,7 @@ std::vector<ASTNode> StrideSystem::loadImportTree(string importName,
   return importedNodes;
 }
 
-std::map<string, std::vector<ASTNode>> StrideSystem::getImportTrees() {
+std::map<std::string, std::vector<ASTNode>> StrideSystem::getImportTrees() {
 
   return m_systemNodes;
 }
@@ -777,7 +782,7 @@ StrideSystem::getFrameworkSynchronization(std::string frameworkName) {
   for (auto platform : m_frameworks) {
     if ((frameworkName == platform->getRootNamespace()) ||
         frameworkName == platform->getFramework()) {
-      string platformPath = platform->buildPlatformLibPath();
+      std::string platformPath = platform->buildPlatformLibPath();
       QStringList libraryFiles =
           QDir(QString::fromStdString(platformPath)).entryList(nameFilters);
 
@@ -789,7 +794,7 @@ StrideSystem::getFrameworkSynchronization(std::string frameworkName) {
         if (newTree) {
           for (ASTNode node : newTree->getChildren()) {
             if (node->getNodeType() == AST::Declaration) {
-              auto decl = static_pointer_cast<DeclarationNode>(node);
+              auto decl = std::static_pointer_cast<DeclarationNode>(node);
               if (decl->getObjectType() == "synchronization") {
 
                 syncNodes.push_back(decl);
@@ -812,7 +817,7 @@ StrideSystem::getFrameworkDataType(std::string frameworkName,
   for (auto platform : m_frameworks) {
     if ((frameworkName == platform->getRootNamespace()) ||
         frameworkName == platform->getFramework()) {
-      string platformPath = platform->buildPlatformLibPath();
+      std::string platformPath = platform->buildPlatformLibPath();
       auto dataTypeDecl = findDataTypeInPath(platformPath, strideDataType);
       if (dataTypeDecl) {
         return dataTypeDecl;
@@ -823,14 +828,14 @@ StrideSystem::getFrameworkDataType(std::string frameworkName,
   return nullptr;
 }
 
-string StrideSystem::getFrameworkDefaultDataType(string frameworkName,
-                                                 string strideType) {
+std::string StrideSystem::getFrameworkDefaultDataType(std::string frameworkName,
+                                                      std::string strideType) {
   QStringList nameFilters;
   nameFilters.push_back("*.stride");
   for (auto platform : m_frameworks) {
     if ((frameworkName == platform->getRootNamespace()) ||
         frameworkName == platform->getFramework()) {
-      string platformPath = platform->buildPlatformLibPath();
+      std::string platformPath = platform->buildPlatformLibPath();
       auto defaultType = findDefaultDataTypeInPath(platformPath, strideType);
       return defaultType;
     }
@@ -839,13 +844,13 @@ string StrideSystem::getFrameworkDefaultDataType(string frameworkName,
 }
 
 std::vector<std::shared_ptr<DeclarationNode>>
-StrideSystem::getFrameworkOperators(string frameworkName) {
+StrideSystem::getFrameworkOperators(std::string frameworkName) {
   std::vector<std::shared_ptr<DeclarationNode>> operators;
-  map<string, vector<ASTNode>> libObjects = getBuiltinObjects();
+  std::map<std::string, std::vector<ASTNode>> libObjects = getBuiltinObjects();
   if (libObjects.find(frameworkName) != libObjects.end()) {
     for (auto node : libObjects[frameworkName]) {
       if (node->getNodeType() == AST::Declaration) {
-        auto decl = static_pointer_cast<DeclarationNode>(node);
+        auto decl = std::static_pointer_cast<DeclarationNode>(node);
         if (decl->getObjectType() == "platformOperator") {
           operators.push_back(decl);
         }
@@ -855,8 +860,8 @@ StrideSystem::getFrameworkOperators(string frameworkName) {
   return operators;
 }
 
-std::vector<string>
-StrideSystem::getFrameworkAliasInherits(string frameworkAlias) {
+std::vector<std::string>
+StrideSystem::getFrameworkAliasInherits(std::string frameworkAlias) {
   for (auto fw : m_frameworks) {
     if (fw->getRootNamespace() == frameworkAlias) {
       return fw->getInheritedList();
@@ -865,7 +870,7 @@ StrideSystem::getFrameworkAliasInherits(string frameworkAlias) {
   return std::vector<std::string>{};
 }
 
-string StrideSystem::getDataType(ASTNode node, ASTNode tree) {
+std::string StrideSystem::getDataType(ASTNode node, ASTNode tree) {
   for (auto child : tree->getChildren()) {
     if (child->getNodeType() == AST::Block) {
       std::string domainId = CodeAnalysis::getDomainIdentifier(node, {}, tree);
@@ -881,14 +886,14 @@ string StrideSystem::getDataType(ASTNode node, ASTNode tree) {
                   << " ERROR, could not find declaration for node" << std::endl;
       }
     } else if (child->getNodeType() == AST::Declaration) {
-      auto nodeDecl = static_pointer_cast<DeclarationNode>(child);
+      auto nodeDecl = std::static_pointer_cast<DeclarationNode>(child);
       return CodeValidator::getDataTypeForDeclaration(nodeDecl, tree);
     }
   }
   return std::string();
 }
 
-string StrideSystem::getFrameworkAlias(string frameworkName) {
+std::string StrideSystem::getFrameworkAlias(std::string frameworkName) {
   for (auto platform : m_frameworks) {
     if (frameworkName == platform->getFramework()) {
       return platform->getRootNamespace();
@@ -897,7 +902,7 @@ string StrideSystem::getFrameworkAlias(string frameworkName) {
   return frameworkName;
 }
 
-string StrideSystem::getFrameworkFromAlias(string frameworkAlias) {
+std::string StrideSystem::getFrameworkFromAlias(std::string frameworkAlias) {
   for (auto platform : m_frameworks) {
     if (frameworkAlias == platform->getRootNamespace()) {
       return platform->getFramework();
@@ -910,7 +915,7 @@ void StrideSystem::generateDomainConnections(ASTNode tree) {
   std::vector<ASTNode> newChildren;
   for (auto node : tree->getChildren()) {
     if (node->getNodeType() == AST::Stream) {
-      auto stream = static_pointer_cast<StreamNode>(node);
+      auto stream = std::static_pointer_cast<StreamNode>(node);
       std::vector<std::shared_ptr<StreamNode>> newStreams;
       ASTNode previousNode;
       while (stream) {
@@ -921,7 +926,8 @@ void StrideSystem::generateDomainConnections(ASTNode tree) {
 
         ASTNode next;
         if (stream->getRight()->getNodeType() == AST::Stream) {
-          next = static_pointer_cast<StreamNode>(stream->getRight())->getLeft();
+          next = std::static_pointer_cast<StreamNode>(stream->getRight())
+                     ->getLeft();
         } else {
           next = stream->getRight();
         }
@@ -941,7 +947,8 @@ void StrideSystem::generateDomainConnections(ASTNode tree) {
             if (writes) {
               auto newWrites = std::make_shared<ListNode>(__FILE__, __LINE__);
               for (auto w : writes->getChildren()) {
-                auto writeDomain = static_pointer_cast<BlockNode>(w)->getName();
+                auto writeDomain =
+                    std::static_pointer_cast<BlockNode>(w)->getName();
                 if (w->getScopeLevels() > 0) {
                   writeDomain = w->getScopeAt(0) + "::" + writeDomain;
                 }
@@ -1008,7 +1015,7 @@ void StrideSystem::generateDomainConnections(ASTNode tree) {
           }
         }
         if (stream->getRight()->getNodeType() == AST::Stream) {
-          stream = static_pointer_cast<StreamNode>(stream->getRight());
+          stream = std::static_pointer_cast<StreamNode>(stream->getRight());
         } else {
           stream = nullptr;
         }
@@ -1035,13 +1042,13 @@ void StrideSystem::injectResourceConfiguration(ASTNode tree) {
   // Insert default configuration if not provided.
   for (auto node : tree->getChildren()) {
     if (node->getNodeType() == AST::Declaration) {
-      auto decl = static_pointer_cast<DeclarationNode>(node);
+      auto decl = std::static_pointer_cast<DeclarationNode>(node);
       if (decl->getObjectType() == "resourceConfiguration") {
         std::string framework;
         auto frameworkNode = decl->getCompilerProperty("framework");
         if (frameworkNode && frameworkNode->getNodeType() == AST::String) {
-          framework =
-              static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
+          framework = std::static_pointer_cast<ValueNode>(frameworkNode)
+                          ->getStringValue();
         }
         bool configFound = false;
         for (auto config : m_systemConfig.resourceConfigurations[framework]) {
@@ -1077,8 +1084,9 @@ void StrideSystem::injectResourceConfiguration(ASTNode tree) {
   tree->setChildren(newChildren);
 }
 
-ConnectionNodes StrideSystem::getDomainChangeStreams(string previousDomainId,
-                                                     string nextDomainId) {
+ConnectionNodes
+StrideSystem::getDomainChangeStreams(std::string previousDomainId,
+                                     std::string nextDomainId) {
   ConnectionNodes domainChangeNodes;
 
   for (auto connector : m_connectionDefinitions) {
@@ -1105,8 +1113,8 @@ ConnectionNodes StrideSystem::getDomainChangeStreams(string previousDomainId,
       bool sourceDomainsMatch = false;
       for (auto sourceDomain : sourceDomainsList->getChildren()) {
         if (sourceDomain->getNodeType() == AST::String) {
-          if (static_pointer_cast<ValueNode>(sourceDomain)->getStringValue() ==
-              previousDomainId) {
+          if (std::static_pointer_cast<ValueNode>(sourceDomain)
+                  ->getStringValue() == previousDomainId) {
             sourceDomainsMatch = true;
             break;
           }
@@ -1115,8 +1123,8 @@ ConnectionNodes StrideSystem::getDomainChangeStreams(string previousDomainId,
       bool destDomainsMatch = false;
       for (auto destDomain : destDomainsList->getChildren()) {
         if (destDomain->getNodeType() == AST::String) {
-          if (static_pointer_cast<ValueNode>(destDomain)->getStringValue() ==
-              nextDomainId) {
+          if (std::static_pointer_cast<ValueNode>(destDomain)
+                  ->getStringValue() == nextDomainId) {
             destDomainsMatch = true;
             break;
           }
@@ -1137,14 +1145,14 @@ ConnectionNodes StrideSystem::getDomainChangeStreams(string previousDomainId,
           for (auto import : sourceImports->getChildren()) {
             if (import->getNodeType() == AST::String) {
               auto importName =
-                  static_pointer_cast<ValueNode>(import)->getStringValue();
+                  std::static_pointer_cast<ValueNode>(import)->getStringValue();
               auto platformName =
                   connector->getPropertyValue("sourceFramework");
               Q_ASSERT(platformName->getNodeType() == AST::String);
-              auto importTree =
-                  loadImportTree(importName, "",
-                                 static_pointer_cast<ValueNode>(platformName)
-                                     ->getStringValue());
+              auto importTree = loadImportTree(
+                  importName, "",
+                  std::static_pointer_cast<ValueNode>(platformName)
+                      ->getStringValue());
 
               auto builtinObjects = getImportTrees();
               ASTNode newTree = std::make_shared<AST>();
@@ -1174,14 +1182,14 @@ ConnectionNodes StrideSystem::getDomainChangeStreams(string previousDomainId,
           for (auto import : destImports->getChildren()) {
             if (import->getNodeType() == AST::String) {
               auto importName =
-                  static_pointer_cast<ValueNode>(import)->getStringValue();
+                  std::static_pointer_cast<ValueNode>(import)->getStringValue();
               auto platformName =
                   connector->getPropertyValue("destinationFramework");
               Q_ASSERT(platformName->getNodeType() == AST::String);
-              auto importTree =
-                  loadImportTree(importName, "",
-                                 static_pointer_cast<ValueNode>(platformName)
-                                     ->getStringValue());
+              auto importTree = loadImportTree(
+                  importName, "",
+                  std::static_pointer_cast<ValueNode>(platformName)
+                      ->getStringValue());
               auto builtinObjects = getImportTrees();
               ASTNode newTree = std::make_shared<AST>();
 
@@ -1211,8 +1219,9 @@ ConnectionNodes StrideSystem::getDomainChangeStreams(string previousDomainId,
   return domainChangeNodes;
 }
 
-string StrideSystem::getCommonAncestorDomain(string domainId1, string domainId2,
-                                             ASTNode tree) {
+std::string StrideSystem::getCommonAncestorDomain(std::string domainId1,
+                                                  std::string domainId2,
+                                                  ASTNode tree) {
 
   std::function<std::vector<std::string>(std::string, std::string)> getParents =
       [&](std::string domainId,
@@ -1257,7 +1266,7 @@ string StrideSystem::getCommonAncestorDomain(string domainId1, string domainId2,
   return "";
 }
 
-std::string StrideSystem::getParentDomain(string domainId, ASTNode tree) {
+std::string StrideSystem::getParentDomain(std::string domainId, ASTNode tree) {
   std::string parentDomainId;
   std::string framework = CodeAnalysis::getFrameworkForDomain(domainId, tree);
 
@@ -1281,7 +1290,7 @@ StrideSystem::getFrameworkOperator(std::string platform, std::string leftType,
   return nullptr;
 }
 
-void StrideSystem::installFramework(string frameworkName) {
+void StrideSystem::installFramework(std::string frameworkName) {
   for (auto framework : m_frameworks) {
     if (framework->getFramework() == frameworkName) {
       auto configPath =
@@ -1290,19 +1299,20 @@ void StrideSystem::installFramework(string frameworkName) {
       if (tree) {
         for (auto node : tree->getChildren()) {
           if (node->getNodeType() == AST::Declaration) {
-            auto decl = static_pointer_cast<DeclarationNode>(node);
+            auto decl = std::static_pointer_cast<DeclarationNode>(node);
             if (decl->getObjectType() == "_frameworkConfiguration") {
               auto installActions = decl->getPropertyValue("installActions");
               if (installActions) {
                 for (auto action : installActions->getChildren()) {
                   if (action->getNodeType() == AST::Declaration) {
                     auto commandNode =
-                        static_pointer_cast<DeclarationNode>(action)
+                        std::static_pointer_cast<DeclarationNode>(action)
                             ->getPropertyValue("command");
                     if (commandNode &&
                         commandNode->getNodeType() == AST::String) {
-                      auto command = static_pointer_cast<ValueNode>(commandNode)
-                                         ->getStringValue();
+                      auto command =
+                          std::static_pointer_cast<ValueNode>(commandNode)
+                              ->getStringValue();
                       auto ret = system(command.c_str());
                       if (ret != 0) {
                         qDebug() << "Error executing "
@@ -1335,11 +1345,11 @@ std::string StrideSystem::makeProject(std::string fileName) {
 }
 
 std::shared_ptr<DeclarationNode>
-StrideSystem::findDataTypeInPath(string path, std::string strideDataType) {
+StrideSystem::findDataTypeInPath(std::string path, std::string strideDataType) {
   auto nodes = CodeValidator::loadAllInDirectory(path);
   for (ASTNode node : nodes) {
     if (node->getNodeType() == AST::Declaration) {
-      auto decl = static_pointer_cast<DeclarationNode>(node);
+      auto decl = std::static_pointer_cast<DeclarationNode>(node);
       if (decl->getObjectType() == "frameworkDataType") {
         if (decl->getName() == strideDataType) {
           return decl;
@@ -1350,10 +1360,11 @@ StrideSystem::findDataTypeInPath(string path, std::string strideDataType) {
         if (importNameNode && importVersionNode &&
             importNameNode->getNodeType() == AST::String &&
             importVersionNode->getNodeType() == AST::String) {
-          auto importName =
-              static_pointer_cast<ValueNode>(importNameNode)->getStringValue();
-          auto importVersion = static_pointer_cast<ValueNode>(importVersionNode)
-                                   ->getStringValue();
+          auto importName = std::static_pointer_cast<ValueNode>(importNameNode)
+                                ->getStringValue();
+          auto importVersion =
+              std::static_pointer_cast<ValueNode>(importVersionNode)
+                  ->getStringValue();
           auto inheritedPath = m_strideRoot + "/frameworks/" + importName +
                                "/" + importVersion + "/platformlib";
           auto dataTypeDecl = findDataTypeInPath(inheritedPath, strideDataType);
@@ -1367,19 +1378,19 @@ StrideSystem::findDataTypeInPath(string path, std::string strideDataType) {
   return nullptr;
 }
 
-std::string StrideSystem::findDefaultDataTypeInPath(string path,
-                                                    string strideType) {
+std::string StrideSystem::findDefaultDataTypeInPath(std::string path,
+                                                    std::string strideType) {
   auto nodes = CodeValidator::loadAllInDirectory(path);
   for (ASTNode node : nodes) {
     if (node->getNodeType() == AST::Declaration) {
-      auto decl = static_pointer_cast<DeclarationNode>(node);
+      auto decl = std::static_pointer_cast<DeclarationNode>(node);
       if (decl->getObjectType() == "_frameworkDescription" &&
           strideType.size() == 0) {
         // If no stride type provided get default data type
         auto defaultNode = decl->getPropertyValue("defaultDataType");
         if (defaultNode) {
           if (defaultNode->getNodeType() == AST::String) {
-            return static_pointer_cast<ValueNode>(defaultNode)
+            return std::static_pointer_cast<ValueNode>(defaultNode)
                 ->getStringValue();
           } else if (defaultNode->getNodeType() == AST::Block) {
             return ASTQuery::getNodeName(defaultNode);
@@ -1389,7 +1400,8 @@ std::string StrideSystem::findDefaultDataTypeInPath(string path,
         auto strideTypeNode = decl->getPropertyValue("strideType");
         if (strideTypeNode && strideTypeNode->getNodeType() == AST::String) {
           auto strideTypeName =
-              static_pointer_cast<ValueNode>(strideTypeNode)->getStringValue();
+              std::static_pointer_cast<ValueNode>(strideTypeNode)
+                  ->getStringValue();
           if (strideTypeName == strideType) {
             auto frameworkTypeNode = decl->getPropertyValue("frameworkType");
             if (frameworkTypeNode) {
@@ -1403,10 +1415,11 @@ std::string StrideSystem::findDefaultDataTypeInPath(string path,
         if (importNameNode && importVersionNode &&
             importNameNode->getNodeType() == AST::String &&
             importVersionNode->getNodeType() == AST::String) {
-          auto importName =
-              static_pointer_cast<ValueNode>(importNameNode)->getStringValue();
-          auto importVersion = static_pointer_cast<ValueNode>(importVersionNode)
-                                   ->getStringValue();
+          auto importName = std::static_pointer_cast<ValueNode>(importNameNode)
+                                ->getStringValue();
+          auto importVersion =
+              std::static_pointer_cast<ValueNode>(importVersionNode)
+                  ->getStringValue();
           auto inheritedPath = m_strideRoot + "/frameworks/" + importName +
                                "/" + importVersion + "/platformlib";
           auto dataTypeDecl =

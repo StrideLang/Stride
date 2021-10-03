@@ -14,8 +14,8 @@ public:
   static std::string getDeclarationType(std::string type, std::string name,
                                         SignalAccess access, int size);
   static std::string
-  getDeclarationForType(std::string type, string name, SignalAccess access,
-                        int size, std::vector<string> defaultValue,
+  getDeclarationForType(std::string type, std::string name, SignalAccess access,
+                        int size, std::vector<std::string> defaultValue,
                         std::vector<std::string> constructorArgs = {});
   static std::string getDeclarationForType(Instance &instance);
 
@@ -48,7 +48,7 @@ public:
   }
 
   static std::string functionCall(std::string name, std::string arguments,
-                                  string templateParams = "",
+                                  std::string templateParams = "",
                                   bool close = true);
 
   static std::string functionDeclaration(std::string returnType,

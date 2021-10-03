@@ -97,7 +97,7 @@ QString CodeModel::getHtmlDocumentation(QString symbol) {
         QString docHtml = "<h1>" + symbol + "</h1>\n";
         docHtml += QString::fromStdString(
             static_cast<ValueNode *>(metaValue)->getStringValue());
-        vector<std::shared_ptr<PropertyNode>> properties =
+        std::vector<std::shared_ptr<PropertyNode>> properties =
             typeBlock->getProperties();
         QString propertiesHtml = tr("<h2>Ports</h2>") + "\n";
         QString propertiesTable =
@@ -134,12 +134,12 @@ QString CodeModel::getHtmlDocumentation(QString symbol) {
                 QString typesText;
                 for (ASTNode validTypeNode : validTypesList->getChildren()) {
                   if (validTypeNode->getNodeType() == AST::String) {
-                    string typeName =
+                    std::string typeName =
                         static_cast<ValueNode *>(validTypeNode.get())
                             ->getStringValue();
                     typesText += QString::fromStdString(typeName + ", ");
                   } else if (validTypeNode->getNodeType() == AST::Block) {
-                    string typeName =
+                    std::string typeName =
                         static_cast<BlockNode *>(validTypeNode.get())
                             ->getName();
                     typesText += QString::fromStdString(typeName + ", ");
@@ -354,7 +354,7 @@ QString CodeModel::getTooltipText(QString symbol) {
           text += "<b>" + symbol + "</b>\n(";
           Q_ASSERT(properties->getNodeType() == AST::List);
           std::shared_ptr<ListNode> propertiesList =
-              static_pointer_cast<ListNode>(properties);
+              std::static_pointer_cast<ListNode>(properties);
           for (ASTNode member : propertiesList->getChildren()) {
             DeclarationNode *portBlock =
                 static_cast<DeclarationNode *>(member.get());
@@ -387,16 +387,17 @@ QString CodeModel::getTooltipText(QString symbol) {
         ASTNode domain = declaration->getPropertyValue("domain");
         if (domain) {
           if (domain->getNodeType() == AST::String) {
+            text += "Domain: " +
+                    QString::fromStdString(
+                        std::static_pointer_cast<ValueNode>(domain)
+                            ->getStringValue()) +
+                    "\n";
+          } else if (domain->getNodeType() == AST::Block) {
             text +=
                 "Domain: " +
                 QString::fromStdString(
-                    static_pointer_cast<ValueNode>(domain)->getStringValue()) +
+                    std::static_pointer_cast<BlockNode>(domain)->getName()) +
                 "\n";
-          } else if (domain->getNodeType() == AST::Block) {
-            text += "Domain: " +
-                    QString::fromStdString(
-                        static_pointer_cast<BlockNode>(domain)->getName()) +
-                    "\n";
           }
         }
         ASTNode rate = declaration->getPropertyValue("rate");
@@ -404,23 +405,25 @@ QString CodeModel::getTooltipText(QString symbol) {
           if (rate->getNodeType() == AST::String) {
             text +=
                 "Rate: " +
-                QString::fromStdString(
-                    static_pointer_cast<ValueNode>(rate)->getStringValue()) +
+                QString::fromStdString(std::static_pointer_cast<ValueNode>(rate)
+                                           ->getStringValue()) +
                 "\n";
           } else if (rate->getNodeType() == AST::Int) {
-            text += "Rate: " +
-                    QString::number(
-                        static_pointer_cast<ValueNode>(rate)->getIntValue()) +
-                    "\n";
+            text +=
+                "Rate: " +
+                QString::number(
+                    std::static_pointer_cast<ValueNode>(rate)->getIntValue()) +
+                "\n";
           } else if (rate->getNodeType() == AST::Real) {
-            text += "Rate: " +
-                    QString::number(
-                        static_pointer_cast<ValueNode>(rate)->getRealValue()) +
-                    "\n";
+            text +=
+                "Rate: " +
+                QString::number(
+                    std::static_pointer_cast<ValueNode>(rate)->getRealValue()) +
+                "\n";
           } else if (rate->getNodeType() == AST::Block) {
             text += "Rate: " +
                     QString::fromStdString(
-                        static_pointer_cast<BlockNode>(rate)->getName()) +
+                        std::static_pointer_cast<BlockNode>(rate)->getName()) +
                     "\n";
           }
         }
@@ -569,7 +572,7 @@ QString CodeModel::getFunctionSyntax(QString symbol) {
     for (auto node : tree.second) {
       if (node->getNodeType() == AST::Declaration ||
           node->getNodeType() == AST::BundleDeclaration) {
-        auto declaration = static_pointer_cast<DeclarationNode>(node);
+        auto declaration = std::static_pointer_cast<DeclarationNode>(node);
         if (declaration->getName() == symbol.toStdString()) {
 
           return getTextForPorts(declaration);
@@ -655,7 +658,7 @@ void CodeModel::updateCodeAnalysis(QString code, QString platformRootPath,
       m_system = resolver.getSystem();
 
       CodeValidator validator(tree);
-      vector<ASTNode> objects;
+      std::vector<ASTNode> objects;
       if (m_system) {
         m_types = m_system->getPlatformTypeNames();
         m_funcs = m_system->getFunctionNames();
@@ -674,7 +677,7 @@ void CodeModel::updateCodeAnalysis(QString code, QString platformRootPath,
       }
       m_lastValidTree = tree;
     } else { // !tree
-      vector<LangError> syntaxErrors = ASTFunctions::getParseErrors();
+      std::vector<LangError> syntaxErrors = ASTFunctions::getParseErrors();
       m_errors.clear();
       for (unsigned int i = 0; i < syntaxErrors.size(); i++) {
         m_errors << syntaxErrors[i];

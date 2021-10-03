@@ -123,7 +123,7 @@ private:
   void adjustForCurrentFile(const QString &filePath);
   void updateRecentActionList();
 
-  SystemConfiguration readProjectConfiguration(string filename);
+  SystemConfiguration readProjectConfiguration(std::string filename);
 
   void fillInspectorTree();
   QTreeWidgetItem *createTreeItem(ASTNode inputNode);

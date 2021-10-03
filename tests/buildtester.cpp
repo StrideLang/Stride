@@ -52,7 +52,7 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile,
                        bool tolerant) {
   bool buildOK = false;
   QList<LangError> errors;
-  vector<LangError> syntaxErrors;
+  std::vector<LangError> syntaxErrors;
 
   ASTNode tree;
   tree = ASTFunctions::parseFile(filename.c_str());
@@ -70,7 +70,7 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile,
   }
 
   if (tree) {
-    vector<ASTNode> optionTrees;
+    std::vector<ASTNode> optionTrees;
 
     for (auto system : CodeValidator::getSystemNodes(tree)) {
       optionTrees = StrideSystem::getOptionTrees(

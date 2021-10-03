@@ -113,9 +113,9 @@ private:
   std::vector<ASTNode> declareUnknownBundle(std::shared_ptr<BundleNode> name,
                                             int size, ScopeStack localScope,
                                             ASTNode tree);
-  std::shared_ptr<DeclarationNode> createConstantDeclaration(string name,
+  std::shared_ptr<DeclarationNode> createConstantDeclaration(std::string name,
                                                              ASTNode value);
-  void declareIfMissing(string name, ASTNode blockList, ASTNode value);
+  void declareIfMissing(std::string name, ASTNode blockList, ASTNode value);
 
   std::vector<ASTNode>
   declareUnknownExpressionSymbols(std::shared_ptr<ExpressionNode> expr,

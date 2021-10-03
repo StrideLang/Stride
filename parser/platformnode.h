@@ -39,18 +39,16 @@
 
 #include "ast.h"
 
-using namespace std;
-
 class SystemNode : public AST {
 public:
-  SystemNode(string platformName, int majorVersion, int minorVersion,
+  SystemNode(std::string platformName, int majorVersion, int minorVersion,
              const char *filename, int line,
-             vector<string> hwPlatforms = vector<string>());
+             std::vector<std::string> hwPlatforms = std::vector<std::string>());
 
   ~SystemNode();
 
-  string platformName() const;
-  void setPlatformName(const string &platformName);
+  std::string platformName() const;
+  void setPlatformName(const std::string &platformName);
 
   int majorVersion() const;
   int minorVersion() const;
@@ -63,8 +61,8 @@ public:
 private:
   int m_minorVersion;
   int m_majorVersion;
-  string m_systemName;
-  vector<string> m_targetPlatforms;
+  std::string m_systemName;
+  std::vector<std::string> m_targetPlatforms;
 };
 
 #endif // PLATFORMNODE_H
