@@ -13,11 +13,11 @@ public:
 
   // Verifies that types are declared for all nodes, and that the properties and
   // property types are allowed by the type declaration
-  static std::vector<LangError>
-  validateTypes(ASTNode node, ScopeStack scopeStack = ScopeStack(),
-                ASTNode tree = nullptr,
-                std::vector<std::string> parentNamespace = {},
-                std::string currentFramework = "");
+  static void validateTypes(ASTNode node, std::vector<LangError> &errors,
+                            ScopeStack scopeStack = ScopeStack(),
+                            ASTNode tree = nullptr,
+                            std::vector<std::string> parentNamespace = {},
+                            std::string currentFramework = "");
 
   // Validate property types
   static bool isValidStringProperty(std::shared_ptr<DeclarationNode> decl,
@@ -63,10 +63,11 @@ public:
       bool optional = false, bool verbose = true);
 
 protected:
-  static std::vector<LangError>
-  validateTypesForDeclaration(std::shared_ptr<DeclarationNode> decl,
-                              ScopeStack scopeStack, ASTNode tree,
-                              std::string currentFramework);
+  static void validateTypesForDeclaration(std::shared_ptr<DeclarationNode> decl,
+                                          ScopeStack scopeStack,
+                                          std::vector<LangError> &errors,
+                                          ASTNode tree,
+                                          std::string currentFramework);
 };
 
 #endif // ASTVALIDATION_H

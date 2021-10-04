@@ -91,7 +91,7 @@ private:
                             ScopeStack scopeStack, ASTNode tree);
 
   void expandStreamToSizes(std::shared_ptr<StreamNode> stream,
-                           QVector<int> &size, int previousOutSize,
+                           std::vector<int> &size, int previousOutSize,
                            ScopeStack scopeStack);
   ASTNode expandFunctionFromProperties(std::shared_ptr<FunctionNode> func,
                                        ScopeStack scope, ASTNode tree);
@@ -164,26 +164,13 @@ private:
   void appendParent(std::shared_ptr<DeclarationNode> decl,
                     std::shared_ptr<DeclarationNode> parent);
 
-  //    ASTNode makeConnector(ASTNode node, string connectorName, int size,
-  //    const ScopeStack &scopeStack); void terminateStackWithBridge(ASTNode
-  //    node, ScopeStack &streams, ScopeStack &stack, ScopeStack &scopeStack);
   std::shared_ptr<StreamNode> makeStreamFromStack(std::vector<ASTNode> &stack);
   std::vector<ASTNode> sliceStreamByDomain(std::shared_ptr<StreamNode> stream,
                                            ScopeStack scopeStack);
   void sliceDomainsInNode(std::shared_ptr<DeclarationNode> stream,
                           ScopeStack scopeStack);
-  //  std::vector<ASTNode> processExpression(std::shared_ptr<ExpressionNode>
-  //  expr,
-  //                                         ScopeStack scopeStack,
-  //                                         ASTNode outDomain);
 
   ASTNode getModuleContextDomain(std::shared_ptr<DeclarationNode> moduleDecl);
-  //    void setContextDomain(vector<ASTNode> nodes,
-  //    std::shared_ptr<DeclarationNode> domainDeclaration); void
-  //    setContextDomainForStreamNode(ASTNode node,
-  //    std::shared_ptr<DeclarationNode> domainDeclaration);
-
-  //    void populateContextDomains(vector<ASTNode> nodes);
 
   std::vector<ASTNode> mContextDomainStack;
 
@@ -191,9 +178,6 @@ private:
   SystemConfiguration m_systemConfig;
 
   ASTNode m_tree;
-  int m_connectorCounter;
-  //    std::vector<std::vector<string>> m_bridgeAliases; //< 1: bridge signal
-  //    2: original name 3: domain
 };
 
 #endif // CODERESOLVER_H

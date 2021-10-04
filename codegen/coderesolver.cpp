@@ -34,7 +34,6 @@
 
 #include "coderesolver.h"
 
-#include <QDebug>
 #include <iostream>
 
 #include "astfunctions.h"
@@ -47,11 +46,11 @@
 
 CodeResolver::CodeResolver(ASTNode tree, std::string striderootDir,
                            SystemConfiguration systemConfig)
-    : m_systemConfig(systemConfig), m_tree(tree), m_connectorCounter(0) {
+    : m_systemConfig(systemConfig), m_tree(tree) {
   std::vector<std::shared_ptr<ImportNode>> importList =
-      CodeValidator::getImportNodes(tree);
+      ASTQuery::getImportNodes(tree);
   std::vector<std::shared_ptr<SystemNode>> systems =
-      CodeValidator::getSystemNodes(tree);
+      ASTQuery::getSystemNodes(tree);
 
   if (systems.size() > 0) {
     std::shared_ptr<SystemNode> platformNode = systems.at(0);
@@ -60,8 +59,8 @@ CodeResolver::CodeResolver(ASTNode tree, std::string striderootDir,
         platformNode->majorVersion(), platformNode->minorVersion(), importList);
     m_system->m_systemConfig = systemConfig;
     for (size_t i = 1; i < systems.size(); i++) {
-      qDebug() << "Ignoring system: "
-               << QString::fromStdString(platformNode->platformName());
+      std::cerr << "Ignoring system: " << platformNode->platformName()
+                << std::endl;
       LangError error;
       error.type = LangError::SystemRedefinition;
       error.errorTokens.push_back(platformNode->platformName());
@@ -347,13 +346,12 @@ void CodeResolver::declareModuleInternalBlocks() {
 
 void CodeResolver::expandParallelStream(std::shared_ptr<StreamNode> stream,
                                         ScopeStack scopeStack, ASTNode tree) {
-  QList<LangError> errors;
   std::shared_ptr<StreamNode> subStream = stream;
 
   // Figure out stream IO sizes
   ASTNode left = stream->getLeft();
   ASTNode right = stream->getRight();
-  QVector<QPair<int, int>> IOs;
+  std::vector<std::pair<int, int>> IOs;
   while (right) {
     if (left->getNodeType() ==
         AST::Function) { // Expand from properties size to list
@@ -364,11 +362,10 @@ void CodeResolver::expandParallelStream(std::shared_ptr<StreamNode> stream,
         left = subStream->getLeft();
       }
     }
-    QPair<int, int> io;
-    io.first = CodeValidator::getNodeNumInputs(left, scopeStack, tree, errors);
-    io.second =
-        CodeValidator::getNodeNumOutputs(left, scopeStack, tree, errors);
-    IOs << io;
+    IOs.emplace_back(std::pair<int, int>{
+        CodeValidator::getNodeNumInputs(left, scopeStack, tree),
+        CodeValidator::getNodeNumOutputs(left, scopeStack, tree)});
+
     if (right->getNodeType() == AST::Stream) {
       subStream = std::static_pointer_cast<StreamNode>(right);
       left = subStream->getLeft();
@@ -382,39 +379,37 @@ void CodeResolver::expandParallelStream(std::shared_ptr<StreamNode> stream,
           right = subStream->getRight();
         }
       }
-      io.first =
-          CodeValidator::getNodeNumInputs(right, scopeStack, tree, errors);
-      io.second =
-          CodeValidator::getNodeNumOutputs(right, scopeStack, tree, errors);
-      IOs << io;
+      IOs.emplace_back(std::pair<int, int>{
+          CodeValidator::getNodeNumInputs(right, scopeStack, tree),
+          CodeValidator::getNodeNumOutputs(right, scopeStack, tree)});
       right = nullptr;
     }
   }
   // Now go through comparing number of outputs to number of inputs to figure
   // out if we need to duplicate any members
-  QVector<int> numCopies;
-  numCopies << 1;
-  for (int i = 1; i < IOs.size(); ++i) {
+  std::vector<int> numCopies;
+  numCopies.push_back(1);
+  for (size_t i = 1; i < IOs.size(); ++i) {
     int numPrevOut = IOs[i - 1].second * numCopies.back();
     int numCurIn = IOs[i].first;
     if (numPrevOut == -1) { // Found undeclared block
-      numCopies << 1;
+      numCopies.push_back(1);
       continue;
     }
     if (numPrevOut > numCurIn) { // Need to clone next
       if (numCurIn > 0) {
         if (numPrevOut / (float)numCurIn == numPrevOut / numCurIn) {
-          numCopies << numPrevOut / numCurIn;
+          numCopies.push_back(numPrevOut / numCurIn);
         } else {
           // Stream size mismatch. Stop expansion. The error will be reported
           // later by CodeValidator.
-          numCopies << 1;
+          numCopies.push_back(1);
           qDebug() << "Could not clone " << IOs[i - 1].second * numCopies.back()
                    << " outputs into " << IOs[i].first << " inputs.";
         }
       } else {
         // Cloning with size 1
-        numCopies << 1;
+        numCopies.push_back(1);
       }
     } else if (numPrevOut < numCurIn &&
                numPrevOut > 0) { // Need to clone all existing left side
@@ -425,17 +420,17 @@ void CodeResolver::expandParallelStream(std::shared_ptr<StreamNode> stream,
         //                        }
         // Should not be expanded but connected recursively and interleaved
         // (according to the rules of the language)
-        numCopies << 1;
+        numCopies.push_back(1);
       } else {
         // Stream size mismatch. Stop expansion. The error will be reported
         // later by CodeValidator.
         qDebug() << "Could not clone " << IOs[i - 1].second << " outputs into "
                  << IOs[i].first << " inputs.";
-        numCopies << 1;
+        numCopies.push_back(1);
       }
 
     } else { // Size match, no need to clone
-      numCopies << 1;
+      numCopies.push_back(1);
     }
   }
   if (numCopies.size() ==
@@ -539,7 +534,7 @@ void CodeResolver::expandParallel() {
 }
 
 void CodeResolver::expandStreamToSizes(std::shared_ptr<StreamNode> stream,
-                                       QVector<int> &neededCopies,
+                                       std::vector<int> &neededCopies,
                                        int previousOutSize,
                                        ScopeStack scopeStack) {
   ASTNode left = stream->getLeft();
@@ -567,13 +562,12 @@ void CodeResolver::expandStreamToSizes(std::shared_ptr<StreamNode> stream,
       stream->setLeft(newLeft);
     }
   }
-  QList<LangError> errors;
-  previousOutSize = CodeValidator::getNodeNumOutputs(
-      stream->getLeft(), scopeStack, m_tree, errors);
+  previousOutSize =
+      CodeValidator::getNodeNumOutputs(stream->getLeft(), scopeStack, m_tree);
   if (previousOutSize < 0) {
     previousOutSize = 1;
   }
-  neededCopies.pop_front();
+  neededCopies.erase(neededCopies.begin());
   ASTNode right = stream->getRight();
   if (right->getNodeType() == AST::Stream) {
     expandStreamToSizes(std::static_pointer_cast<StreamNode>(right),
@@ -601,7 +595,7 @@ void CodeResolver::expandStreamToSizes(std::shared_ptr<StreamNode> stream,
         stream->setRight(newRight);
       }
     }
-    neededCopies.pop_front();
+    neededCopies.erase(neededCopies.begin());
     Q_ASSERT(neededCopies.size() ==
              0); // This is the end of the stream there should be no sizes left
   }
@@ -609,7 +603,6 @@ void CodeResolver::expandStreamToSizes(std::shared_ptr<StreamNode> stream,
 
 ASTNode CodeResolver::expandFunctionFromProperties(
     std::shared_ptr<FunctionNode> func, ScopeStack scopeStack, ASTNode tree) {
-  QList<LangError> errors;
   std::shared_ptr<ListNode> newFunctions = nullptr;
   //    int dataSize = CodeValidator::getFunctionDataSize(func, scopeStack,
   //    tree, errors);
@@ -625,17 +618,16 @@ ASTNode CodeResolver::expandFunctionFromProperties(
     }
     for (auto prop : props) {
       ASTNode value = prop->getValue();
-      int numOuts =
-          CodeValidator::getNodeNumOutputs(value, scopeStack, tree, errors);
+      int numOuts = CodeValidator::getNodeNumOutputs(value, scopeStack, tree);
       if (numOuts != 1 && numOuts != dataSize) {
-        LangError error;
-        error.type = LangError::BundleSizeMismatch;
-        error.filename = func->getFilename();
-        error.lineNumber = func->getLine();
-        error.errorTokens.push_back(func->getName());
-        error.errorTokens.push_back(QString::number(numOuts).toStdString());
-        error.errorTokens.push_back(QString::number(dataSize).toStdString());
-        errors << error;
+        //        LangError error;
+        //        error.type = LangError::BundleSizeMismatch;
+        //        error.filename = func->getFilename();
+        //        error.lineNumber = func->getLine();
+        //        error.errorTokens.push_back(func->getName());
+        //        error.errorTokens.push_back(QString::number(numOuts).toStdString());
+        //        error.errorTokens.push_back(QString::number(dataSize).toStdString());
+        //        errors << error;
         return nullptr;
       }
       if (numOuts == 1) { // Single value given, duplicate for all copies.
@@ -653,8 +645,8 @@ ASTNode CodeResolver::expandFunctionFromProperties(
           std::shared_ptr<DeclarationNode> block =
               ASTQuery::findDeclarationByName(name->getName(), scopeStack, tree,
                                               name->getNamespaceList());
-          int size = CodeValidator::getBlockDeclaredSize(block, scopeStack,
-                                                         tree, errors);
+          int size =
+              CodeValidator::getBlockDeclaredSize(block, scopeStack, tree);
           Q_ASSERT(size == dataSize);
           for (int i = 0; i < size; ++i) {
             std::shared_ptr<ListNode> indexList = std::make_shared<ListNode>(
@@ -1494,8 +1486,7 @@ void CodeResolver::expandNamesToBundles(std::shared_ptr<StreamNode> stream,
     int size = 0;
     if (block) {
       if (block->getNodeType() == AST::BundleDeclaration) {
-        QList<LangError> errors;
-        size = CodeValidator::getBlockDeclaredSize(block, scope, tree, errors);
+        size = CodeValidator::getBlockDeclaredSize(block, scope, tree);
       } else if (block->getNodeType() == AST::Declaration) {
         size = 1;
       }
@@ -1513,8 +1504,7 @@ void CodeResolver::expandNamesToBundles(std::shared_ptr<StreamNode> stream,
     int size = 0;
     if (block) {
       if (block->getNodeType() == AST::BundleDeclaration) {
-        QList<LangError> errors;
-        size = CodeValidator::getBlockDeclaredSize(block, scope, tree, errors);
+        size = CodeValidator::getBlockDeclaredSize(block, scope, tree);
       } else if (block->getNodeType() == AST::Declaration) {
         size = 1;
       }
@@ -1545,17 +1535,16 @@ CodeResolver::declareUnknownStreamSymbols(std::shared_ptr<StreamNode> stream,
 
   if (left->getNodeType() == AST::Block) {
     std::shared_ptr<BlockNode> name = std::static_pointer_cast<BlockNode>(left);
-    QList<LangError> errors;
     int size = -1;
     if (previousStreamMember) {
       size = CodeValidator::getNodeNumOutputs(previousStreamMember, localScope,
-                                              m_tree, errors);
+                                              m_tree);
     }
     if (size <= 0 && previousStreamMember) { // Look to the right if can't
                                              // resolve from the left
       // Size for first member should always be 1
-      size = CodeValidator::getNodeNumInputs(nextStreamMember, localScope,
-                                             m_tree, errors);
+      size =
+          CodeValidator::getNodeNumInputs(nextStreamMember, localScope, m_tree);
     }
     if (size <= 0) { // None of the elements in the stream have size
       size = 1;
@@ -1589,17 +1578,15 @@ CodeResolver::declareUnknownStreamSymbols(std::shared_ptr<StreamNode> stream,
   } else if (right->getNodeType() == AST::Block) {
     std::shared_ptr<BlockNode> name =
         std::static_pointer_cast<BlockNode>(right);
-    QList<LangError> errors;
     int size = 0;
     if (left->getNodeType() == AST::Function) {
       auto funcDecl = ASTQuery::findDeclarationByName(
           ASTQuery::getNodeName(left), localScope, tree);
       if (funcDecl) {
-        size = CodeValidator::getTypeNumOutputs(funcDecl, localScope, m_tree,
-                                                errors);
+        size = CodeValidator::getTypeNumOutputs(funcDecl, localScope, m_tree);
       }
     } else {
-      size = CodeValidator::getNodeNumOutputs(left, localScope, m_tree, errors);
+      size = CodeValidator::getNodeNumOutputs(left, localScope, m_tree);
     }
     if (size <= 0) { // None of the elements in the stream have size
       size = 1;
@@ -3379,11 +3366,10 @@ void CodeResolver::markConnectionForNode(ASTNode node, ScopeStack scopeStack,
     }
     previous = node;
   } else if (node->getNodeType() == AST::List) {
-    QList<LangError> errors;
     int index = 0;
     for (auto child : node->getChildren()) {
       int inputSize =
-          CodeValidator::getNodeNumInputs(child, scopeStack, m_tree, errors);
+          CodeValidator::getNodeNumInputs(child, scopeStack, m_tree);
       markConnectionForNode(child, scopeStack, previous, index);
       index += inputSize;
     }

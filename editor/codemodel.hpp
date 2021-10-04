@@ -79,7 +79,7 @@ private:
   QStringList m_types;
   QStringList m_funcs;
   QStringList m_objectNames;
-  QList<LangError> m_errors;
+  std::vector<LangError> m_errors;
   QMutex m_validTreeLock;
   ASTNode m_lastValidTree;
 };

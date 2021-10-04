@@ -134,15 +134,17 @@ void ParserTest::testMultichannelUgens() {
   CodeValidator validator(tree);
   QVERIFY(!validator.isValid());
 
-  QList<LangError> errors = validator.getErrors();
-  LangError error = errors.takeFirst();
+  std::vector<LangError> errors = validator.getErrors();
+  LangError error = errors.front();
+  errors.erase(errors.begin());
   QVERIFY(error.type == LangError::StreamMemberSizeMismatch);
   QVERIFY(error.lineNumber == 22);
   QVERIFY(error.errorTokens[0] == "2");
   QVERIFY(error.errorTokens[1] == "Pan");
   QVERIFY(error.errorTokens[2] == "1");
 
-  error = errors.takeFirst();
+  error = errors.front();
+  errors.erase(errors.begin());
   QVERIFY(error.type == LangError::StreamMemberSizeMismatch);
   QVERIFY(error.lineNumber == 25);
   QVERIFY(error.errorTokens[0] == "4");
@@ -429,9 +431,9 @@ void ParserTest::testPortNameValidation() {
   CodeValidator validator(tree);
   QVERIFY(!validator.isValid());
 
-  QList<LangError> errors = validator.getErrors();
+  std::vector<LangError> errors = validator.getErrors();
   QVERIFY(errors.size() == 1);
-  LangError error = errors.takeFirst();
+  LangError error = errors.front();
   QVERIFY(error.type == LangError::InvalidPort);
   QVERIFY(error.lineNumber == 20);
   QVERIFY(error.errorTokens[0] == "TestModule");
@@ -733,7 +735,7 @@ void ParserTest::testConnectionErrors() {
   resolver.process();
   CodeValidator validator(tree, CodeValidator::NO_RATE_VALIDATION);
 
-  QList<LangError> errors = validator.getErrors();
+  std::vector<LangError> errors = validator.getErrors();
   QVERIFY(errors.size() > 0);
   LangError error = errors.at(0);
   QVERIFY(error.type == LangError::StreamMemberSizeMismatch);
@@ -749,7 +751,7 @@ void ParserTest::testPortTypeValidation() {
   resolver.process();
   CodeValidator validator(tree, CodeValidator::NO_RATE_VALIDATION);
 
-  QList<LangError> errors = validator.getErrors();
+  std::vector<LangError> errors = validator.getErrors();
   LangError error = errors.at(0);
   //    QVERIFY(error.lineNumber == 55);
   QVERIFY(error.errorTokens[0] == "testType");
@@ -975,14 +977,13 @@ void ParserTest::testImport() {
   resolver2.process();
   CodeValidator validator2(tree, CodeValidator::NO_RATE_VALIDATION);
   QVERIFY(!validator2.isValid());
-  QList<LangError> errors = validator2.getErrors();
-  LangError error = errors.front();
+  std::vector<LangError> errors = validator2.getErrors();
+  LangError error = errors.at(0);
   QVERIFY(error.type == LangError::UndeclaredSymbol);
   QVERIFY(error.lineNumber == 6);
   QVERIFY(error.errorTokens[0] == "LowPass");
 
-  errors.removeFirst();
-  error = errors.front();
+  error = errors.at(1);
   QVERIFY(error.type == LangError::UndeclaredSymbol);
   QVERIFY(error.lineNumber == 9);
   QVERIFY(error.errorTokens[0] == "F::LowPass");
@@ -1759,7 +1760,7 @@ void ParserTest::testPlatformCommonObjects() {
   resolver.process();
   CodeValidator validator(tree, CodeValidator::NO_RATE_VALIDATION);
   QVERIFY(!validator.isValid());
-  QList<LangError> errors = validator.getErrors();
+  std::vector<LangError> errors = validator.getErrors();
   QVERIFY(resolver.getSystem()->getErrors().size() == 0);
 
   QVERIFY(errors.size() == 5);
@@ -1806,7 +1807,7 @@ void ParserTest::testValueTypeBundleResolution() {
   //    validator.validate();
   QVERIFY(!validator.isValid());
   QVERIFY(resolver.getSystem()->getErrors().size() == 0);
-  QList<LangError> errors = validator.getErrors();
+  std::vector<LangError> errors = validator.getErrors();
 
   std::vector<ASTNode> nodes = tree->getChildren();
   QVERIFY(nodes.at(1)->getNodeType() == AST::BundleDeclaration);
@@ -1902,7 +1903,7 @@ void ParserTest::testValueTypeBundleResolution() {
   QVERIFY(block->getObjectType() == "constant");
   QVERIFY(block->getName() == "Bad_Value_Meta");
 
-  LangError error = errors.takeFirst();
+  LangError error = errors.at(0);
   //    QVERIFY(error.type == LangError::InvalidPortType);
   //    QVERIFY(error.lineNumber == 41);
   //    QVERIFY(error.errorTokens[0] == "constant");
@@ -1926,7 +1927,7 @@ void ParserTest::testValueTypeBundleResolution() {
   QVERIFY(block->getObjectType() == "constant");
   bundle = block->getBundle();
   QVERIFY(bundle->getName() == "Values_Mismatch_2");
-  error = errors.takeFirst();
+  error = errors.at(1);
   QVERIFY(error.lineNumber == 48);
   QVERIFY(error.errorTokens[0] == "Values_Mismatch_2");
   QVERIFY(error.errorTokens[1] == "3");
@@ -1938,7 +1939,7 @@ void ParserTest::testValueTypeBundleResolution() {
   bundle = block->getBundle();
   QVERIFY(bundle->getName() == "Array_Float");
   QVERIFY(errors.size() > 0);
-  error = errors.takeFirst();
+  error = errors.at(2);
   QVERIFY(error.type == LangError::InvalidIndexType);
   QVERIFY(error.lineNumber == 52);
   QVERIFY(error.errorTokens[0] == "Array_Float");
@@ -1949,7 +1950,7 @@ void ParserTest::testValueTypeBundleResolution() {
   QVERIFY(block->getObjectType() == "constant");
   bundle = block->getBundle();
   QVERIFY(bundle->getName() == "Array_String");
-  error = errors.takeFirst();
+  error = errors.at(3);
   QVERIFY(error.type == LangError::InvalidIndexType);
   QVERIFY(error.lineNumber == 53);
   QVERIFY(error.errorTokens[0] == "Array_String");
@@ -1967,16 +1968,16 @@ void ParserTest::testDuplicates() {
   resolver.process();
   CodeValidator validator(tree, CodeValidator::NO_RATE_VALIDATION);
   QVERIFY(!validator.isValid());
-  QList<LangError> errors = validator.getErrors();
+  std::vector<LangError> errors = validator.getErrors();
 
   QVERIFY(errors.size() == 2);
-  LangError error = errors.takeFirst();
+  LangError error = errors.at(0);
   QVERIFY(error.type == LangError::DuplicateSymbol);
   QVERIFY(error.lineNumber == 12);
   QVERIFY(error.errorTokens[0] == "Const");
   QVERIFY(error.errorTokens[2] == "3");
 
-  error = errors.takeFirst();
+  error = errors.at(1);
   QVERIFY(error.type == LangError::DuplicateSymbol);
   QVERIFY(error.lineNumber == 18);
   QVERIFY(error.errorTokens[0] == "Size");

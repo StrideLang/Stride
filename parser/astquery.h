@@ -1,7 +1,7 @@
 #ifndef ASTQUERY_H
 #define ASTQUERY_H
 
-#include "declarationnode.h"
+#include "strideparser.h"
 
 #include <vector>
 
@@ -9,6 +9,10 @@ typedef std::vector<std::pair<ASTNode, std::vector<ASTNode>>> ScopeStack;
 
 class ASTQuery {
 public:
+  static std::vector<std::shared_ptr<SystemNode>> getSystemNodes(ASTNode tree);
+
+  static std::vector<std::shared_ptr<ImportNode>> getImportNodes(ASTNode tree);
+
   // Find declarations
   static std::shared_ptr<DeclarationNode>
   findDeclarationWithType(std::string objectName, std::string type,

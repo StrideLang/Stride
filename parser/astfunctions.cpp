@@ -27,7 +27,7 @@ std::vector<LangError> ASTFunctions::getParseErrors() { return getErrors(); }
 void ASTFunctions::insertRequiredObjects(
     ASTNode tree, std::map<std::string, std::vector<ASTNode>> externalNodes) {
   auto children = tree->getChildren();
-  for (ASTNode object : children) {
+  for (const ASTNode &object : children) {
     insertRequiredObjectsForNode(object, externalNodes, tree);
   }
 }
@@ -45,7 +45,7 @@ void ASTFunctions::insertDependentTypes(
     auto inheritedTypes = ASTQuery::getInheritedTypes(
         typeDeclaration, {{nullptr, it->second}}, tree);
 
-    for (auto inheritedType : inheritedTypes) {
+    for (const auto &inheritedType : inheritedTypes) {
       auto children = tree->getChildren();
       if (std::find(children.begin(), children.end(), inheritedType) !=
           children.end()) {
@@ -68,7 +68,7 @@ void ASTFunctions::insertRequiredObjectsForNode(
     ASTNode tree, std::string currentFramework) {
   std::vector<std::shared_ptr<DeclarationNode>> blockList;
   if (node->getNodeType() == AST::List) {
-    for (ASTNode child : node->getChildren()) {
+    for (const ASTNode &child : node->getChildren()) {
       insertRequiredObjectsForNode(child, objects, tree, currentFramework);
     }
   } else if (node->getNodeType() == AST::Stream) {
@@ -104,10 +104,10 @@ void ASTFunctions::insertRequiredObjectsForNode(
       }
     }
     // Look for declarations of blocks present in function properties
-    for (auto property : func->getProperties()) {
+    for (const auto &property : func->getProperties()) {
       insertRequiredObjectsForNode(property->getValue(), objects, tree);
     }
-    for (std::shared_ptr<DeclarationNode> usedBlock : blockList) {
+    for (const std::shared_ptr<DeclarationNode> &usedBlock : blockList) {
       // Add declarations to tree if not there
       auto usedBlockFramework = usedBlock->getCompilerProperty("framework");
       std::string fw;
@@ -267,7 +267,7 @@ void ASTFunctions::insertRequiredObjectsForNode(
         auto newDeclarations = ASTQuery::findAllDeclarations(
             bundle->getName(), {{nullptr, it->second}}, nullptr,
             bundle->getNamespaceList(), currentFramework);
-        for (auto newDecl : newDeclarations) {
+        for (const auto &newDecl : newDeclarations) {
           if (std::find(blockList.begin(), blockList.end(), declaration) ==
               blockList.end()) {
             blockList.push_back(newDecl);
@@ -279,7 +279,7 @@ void ASTFunctions::insertRequiredObjectsForNode(
           }
         }
       }
-      for (auto usedBlock : blockList) {
+      for (const auto &usedBlock : blockList) {
         auto frameworkNode = usedBlock->getCompilerProperty("framework");
         std::string framework;
         if (frameworkNode && frameworkNode->getNodeType() == AST::String) {
@@ -616,7 +616,7 @@ void ASTFunctions::resolveConstantsInNode(ASTNode node, ScopeStack scope,
     }
   } else if (node->getNodeType() == AST::List) {
     std::map<ASTNode, ASTNode> replaceMap;
-    for (ASTNode element : node->getChildren()) {
+    for (const ASTNode &element : node->getChildren()) {
       resolveConstantsInNode(element, scope, tree);
       std::shared_ptr<ValueNode> newValue;
       if (element->getNodeType() == AST::Expression) {

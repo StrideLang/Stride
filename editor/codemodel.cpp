@@ -636,7 +636,7 @@ QString CodeModel::getTypeSyntax(QString symbol) {
 
 QList<LangError> CodeModel::getErrors() {
   QMutexLocker locker(&m_validTreeLock);
-  return m_errors;
+  return QList<LangError>(m_errors.begin(), m_errors.end());
 }
 
 void CodeModel::updateCodeAnalysis(QString code, QString platformRootPath,
@@ -680,7 +680,7 @@ void CodeModel::updateCodeAnalysis(QString code, QString platformRootPath,
       std::vector<LangError> syntaxErrors = ASTFunctions::getParseErrors();
       m_errors.clear();
       for (unsigned int i = 0; i < syntaxErrors.size(); i++) {
-        m_errors << syntaxErrors[i];
+        m_errors.push_back(syntaxErrors[i]);
       }
     }
   }

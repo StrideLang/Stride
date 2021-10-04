@@ -8,18 +8,18 @@
 
 ASTValidation::ASTValidation() {}
 
-std::vector<LangError>
-ASTValidation::validateTypes(ASTNode node, ScopeStack scopeStack, ASTNode tree,
-                             std::vector<std::string> parentNamespace,
-                             std::string currentFramework) {
-  std::vector<LangError> errors;
+void ASTValidation::validateTypes(ASTNode node, std::vector<LangError> &errors,
+                                  ScopeStack scopeStack, ASTNode tree,
+                                  std::vector<std::string> parentNamespace,
+                                  std::string currentFramework) {
   if (node->getNodeType() == AST::BundleDeclaration ||
       node->getNodeType() == AST::Declaration) {
     std::shared_ptr<DeclarationNode> decl =
         std::static_pointer_cast<DeclarationNode>(node);
-    errors =
-        validateTypesForDeclaration(decl, scopeStack, tree, currentFramework);
-    return errors;
+    validateTypesForDeclaration(decl, scopeStack, errors, tree,
+                                currentFramework);
+
+    return; // Children have been processed with corect scopes.
   } else if (node->getNodeType() == AST::Stream) {
     // Stream members will be processed with children below
   } else if (node->getNodeType() == AST::List) {
@@ -50,7 +50,6 @@ ASTValidation::validateTypes(ASTNode node, ScopeStack scopeStack, ASTNode tree,
       error.errorTokens.push_back(blockName);
       errors.push_back(error);
     }
-
   } else if (node->getNodeType() == AST::Bundle) {
     BundleNode *bundle = static_cast<BundleNode *>(node.get());
     std::vector<std::string> namespaces = bundle->getNamespaceList();
@@ -128,11 +127,8 @@ ASTValidation::validateTypes(ASTNode node, ScopeStack scopeStack, ASTNode tree,
     //      frameworkName =
     //          static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
     //    }
-    auto newErrors =
-        validateTypes(childNode, scopeStack, tree, {}, currentFramework);
-    errors.insert(errors.end(), newErrors.begin(), newErrors.end());
+    validateTypes(childNode, errors, scopeStack, tree, {}, currentFramework);
   }
-  return errors;
 }
 
 bool ASTValidation::isValidStringProperty(std::shared_ptr<DeclarationNode> decl,
@@ -313,10 +309,10 @@ bool ASTValidation::isValidListProperty(
   return true;
 }
 
-std::vector<LangError> ASTValidation::validateTypesForDeclaration(
-    std::shared_ptr<DeclarationNode> decl, ScopeStack scopeStack, ASTNode tree,
+void ASTValidation::validateTypesForDeclaration(
+    std::shared_ptr<DeclarationNode> decl, ScopeStack scopeStack,
+    std::vector<LangError> &errors, ASTNode tree,
     std::string currentFramework) {
-  std::vector<LangError> errors;
   auto blockType = decl->getObjectType();
 
   auto frameworkNode = decl->getCompilerProperty("framework");
@@ -496,10 +492,9 @@ std::vector<LangError> ASTValidation::validateTypesForDeclaration(
   for (const auto &property : decl->getProperties()) {
     if (property->getName() != "constraints") {
       // Ignore constraints streams as they play by different rules
-      auto newErrors = validateTypes(property->getValue(), scopeStack, tree,
-                                     decl->getNamespaceList(), frameworkName);
-      errors.insert(errors.begin(), newErrors.begin(), newErrors.end());
+      std::vector<LangError> internalErrors;
+      validateTypes(property->getValue(), internalErrors, scopeStack, tree,
+                    decl->getNamespaceList(), frameworkName);
     }
   }
-  return errors;
 }

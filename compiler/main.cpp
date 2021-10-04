@@ -97,8 +97,8 @@ int main(int argc, char *argv[]) {
     CodeValidator validator(tree);
 
     if (!validator.isValid()) {
-      QList<LangError> errors = validator.getErrors();
-      for (LangError error : errors) {
+      std::vector<LangError> errors = validator.getErrors();
+      for (LangError &error : errors) {
         qDebug() << QString::fromStdString(error.getErrorText());
       }
       return -1;
@@ -135,8 +135,8 @@ int main(int argc, char *argv[]) {
         qDebug() << "Using framework: "
                  << QString::fromStdString(builder->getPlatformPath());
 
-        qDebug() << builder->getStdOut();
-        qDebug() << builder->getStdErr();
+        qDebug() << QString::fromStdString(builder->getStdOut());
+        qDebug() << QString::fromStdString(builder->getStdErr());
         buildOK = false;
       }
     }

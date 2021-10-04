@@ -63,6 +63,13 @@ public:
                          std::string pythonExecutable = std::string());
   virtual ~PythonProject();
 
+  std::string getStdErr() const override { return m_stdErr.toStdString(); }
+  std::string getStdOut() const override { return m_stdOut.toStdString(); }
+  void clearBuffers() override {
+    m_stdErr = "";
+    m_stdOut = "";
+  }
+
 signals:
 
 public slots:
@@ -94,6 +101,9 @@ private:
   QProcess m_runningProcess;
   QAtomicInt m_building;
   QProcess m_buildProcess;
+
+  QString m_stdOut;
+  QString m_stdErr;
 };
 
 #endif // PYTHONPROJECT_H

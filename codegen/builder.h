@@ -35,12 +35,6 @@
 #ifndef BASEPROJECT_H
 #define BASEPROJECT_H
 
-#include <QLibrary>
-#include <QMap>
-#include <QObject>
-#include <QString>
-#include <QVariant>
-
 #include "ast.h"
 #include "declarationnode.h"
 #include "systemconfiguration.hpp"
@@ -75,15 +69,11 @@ public:
   virtual ~Builder() {}
 
   std::string getPlatformPath() { return m_platformPath; }
-  QString getStdErr() const { return m_stdErr; }
-  QString getStdOut() const { return m_stdOut; }
-  void clearBuffers() {
-    m_stdErr = "";
-    m_stdOut = "";
-  }
-  void registerYieldCallback(std::function<void()> cb) { m_yieldCallback = cb; }
+  virtual std::string getStdErr() const = 0;
+  virtual std::string getStdOut() const = 0;
+  virtual void clearBuffers() = 0;
 
-  std::string getPlatformDirective(std::string directive);
+  void registerYieldCallback(std::function<void()> cb) { m_yieldCallback = cb; }
 
   // Additional information from stride system
   std::shared_ptr<StrideSystem>
@@ -106,8 +96,6 @@ protected:
   std::string m_projectDir;
   std::string m_strideRoot;
   std::string m_platformPath;
-  QString m_stdOut;
-  QString m_stdErr;
 
   std::function<void()> m_yieldCallback = []() {};
 
@@ -115,8 +103,8 @@ protected:
 
 private:
   PluginInterface m_interface;
-  QLibrary *m_pluginLibrary;
-  Builder *m_project;
+  //  QLibrary *m_pluginLibrary;
+  //  Builder *m_project;
 
 signals:
   void outputText(QString text);

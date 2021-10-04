@@ -7,6 +7,47 @@
 #include <iterator>
 #include <sstream>
 
+std::vector<std::shared_ptr<SystemNode>>
+ASTQuery::getSystemNodes(ASTNode tree) {
+  //  Q_ASSERT(m_tree);
+  std::vector<std::shared_ptr<SystemNode>> platformNodes;
+  std::vector<ASTNode> nodes = tree->getChildren();
+  for (ASTNode node : nodes) {
+    if (node->getNodeType() == AST::Platform) {
+      platformNodes.push_back(std::static_pointer_cast<SystemNode>(node));
+    }
+  }
+  return platformNodes;
+}
+
+std::vector<std::shared_ptr<ImportNode>>
+ASTQuery::getImportNodes(ASTNode tree) {
+  std::vector<std::shared_ptr<ImportNode>> importList;
+
+  for (ASTNode node : tree->getChildren()) {
+    if (node->getNodeType() == AST::Import) {
+      std::shared_ptr<ImportNode> import =
+          std::static_pointer_cast<ImportNode>(node);
+      // FIXME add namespace support here (e.g. import
+      // Platform::Filters::Filter)
+      bool imported = false;
+      for (auto importNode : importList) {
+        if ((std::static_pointer_cast<ImportNode>(importNode)->importName() ==
+             import->importName()) &&
+            (std::static_pointer_cast<ImportNode>(importNode)->importAlias() ==
+             import->importAlias())) {
+          imported = true;
+          break;
+        }
+      }
+      if (!imported) {
+        importList.push_back(import);
+      }
+    }
+  }
+  return importList;
+}
+
 std::shared_ptr<DeclarationNode> ASTQuery::findDeclarationWithType(
     std::string objectName, std::string type, const ScopeStack &scopeStack,
     ASTNode tree, std::vector<std::string> namespaces, std::string platform) {

@@ -40,6 +40,7 @@
 
 #include "ast.h"
 #include "astfunctions.h"
+#include "astquery.h"
 #include "coderesolver.h"
 #include "codevalidator.h"
 #include "systemconfiguration.hpp"
@@ -72,7 +73,7 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile,
   if (tree) {
     std::vector<ASTNode> optionTrees;
 
-    for (auto system : CodeValidator::getSystemNodes(tree)) {
+    for (auto system : ASTQuery::getSystemNodes(tree)) {
       optionTrees = StrideSystem::getOptionTrees(
           m_StrideRoot + "/systems/" + system->platformName() + "/" +
           std::to_string(system->majorVersion()) + "." +
@@ -89,7 +90,9 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile,
     resolver.process();
 
     CodeValidator validator(tree);
-    errors << validator.getErrors();
+    for (auto err : validator.getErrors()) {
+      errors.push_back(err);
+    }
 
     if (errors.size() > 0) {
       for (LangError error : errors) {
@@ -131,7 +134,8 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile,
         buildOK &= builder->run();
         if (expectedResultFile.size() > 0) {
           QFile expectedResult(QString::fromStdString(expectedResultFile));
-          QStringList outputLines = builder->getStdOut().split("\n");
+          QStringList outputLines =
+              QString::fromStdString(builder->getStdOut()).split("\n");
           if (!expectedResult.open(QIODevice::ReadOnly | QIODevice::Text)) {
             std::cerr << "Can't open expected result" << std::endl;
             return false;
@@ -169,7 +173,7 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile,
                           << " Expected " << line.toStdString() << std::endl;
                 QFile failedOutput("failed.output");
                 if (failedOutput.open(QIODevice::WriteOnly)) {
-                  failedOutput.write(builder->getStdOut().toLocal8Bit());
+                  failedOutput.write(builder->getStdOut().c_str());
                   failedOutput.close();
                 }
                 return false;

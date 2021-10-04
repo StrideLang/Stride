@@ -166,7 +166,9 @@ bool ProjectWindow::build() {
         systemConfig);
     resolver.process();
     CodeValidator validator(tree);
-    errors << validator.getErrors();
+    for (auto err : validator.getErrors()) {
+      errors.append(err);
+    }
 
     if (errors.size() > 0) {
       editor->setErrors(errors);
@@ -1368,7 +1370,7 @@ void ProjectWindow::configureSystem() {
   }
   auto children = m_codeModel.getOptimizedTree()->getChildren();
   tree->setChildren(children);
-  for (auto system : CodeValidator::getSystemNodes(tree)) {
+  for (auto system : ASTQuery::getSystemNodes(tree)) {
     optionTrees = StrideSystem::getOptionTrees(
         m_environment["striderootPath"].toString().toStdString() + "/systems/" +
         system->platformName() + "/" + std::to_string(system->majorVersion()) +
