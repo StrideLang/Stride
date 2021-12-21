@@ -2,9 +2,8 @@
 #define TOOLMANAGER_HPP
 
 #include <iostream>
+#include <map>
 #include <string>
-
-#include <QDir>
 
 #include "ast.h"
 

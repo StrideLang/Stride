@@ -92,10 +92,14 @@ int CodeEditor::lineNumberAreaWidth() {
 bool CodeEditor::isChanged() { return document()->isModified(); }
 
 bool CodeEditor::changedSinceParse() {
-  return m_changedSinceParse.loadRelaxed() != 0;
+  return m_changedSinceParse.load() != 0;
+//  return m_changedSinceParse.loadRelaxed() != 0;
 }
 
-void CodeEditor::markParsed() { m_changedSinceParse.storeRelaxed(0); }
+void CodeEditor::markParsed() {
+  m_changedSinceParse.storeRelease(0);
+//  m_changedSinceParse.storeRelaxed(0);
+}
 
 void CodeEditor::setAutoComplete(bool enable) { m_autoComplete = enable; }
 
@@ -188,7 +192,7 @@ void CodeEditor::updateAutoCompleteMenu(QString currentWord) {
   m_autoCompleteMenu.clear();
   QAction *activeAction = nullptr;
   if (m_currentContext == UseStatementSystem) {
-    auto availableSystems = CodeValidator::listAvailableSystems(
+    auto availableSystems = StrideSystem::listAvailableSystems(
         m_codeModel->getSystem()->getStrideRoot());
     for (auto systemName : availableSystems) {
       QAction *syntaxAction = m_autoCompleteMenu.addAction(
@@ -245,7 +249,8 @@ void CodeEditor::updateAutoCompleteMenu(QString currentWord) {
 
 void CodeEditor::markChanged(bool changed) {
   document()->setModified(changed);
-  m_changedSinceParse.storeRelaxed(1);
+//  m_changedSinceParse.storeRelaxed(1);
+  m_changedSinceParse.storeRelease(1);
 }
 
 bool CodeEditor::eventFilter(QObject *obj, QEvent *event) {

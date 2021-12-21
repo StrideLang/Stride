@@ -35,6 +35,7 @@
 #include <cmath>
 #include <iostream>
 
+#include <QFile>
 #include <QList>
 #include <QThread>
 

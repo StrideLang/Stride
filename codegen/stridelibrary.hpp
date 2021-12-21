@@ -37,10 +37,6 @@
 
 #include <vector>
 
-#include <QList>
-#include <QMap>
-#include <QString>
-
 #include "declarationnode.h"
 #include "langerror.h"
 
@@ -69,7 +65,7 @@ public:
 private:
   bool isValidProperty(std::shared_ptr<PropertyNode> property,
                        DeclarationNode *type);
-  QList<DeclarationNode *> getParentTypes(DeclarationNode *type);
+  std::vector<DeclarationNode *> getParentTypes(DeclarationNode *type);
 
   void readLibrary(std::string rootDir);
 

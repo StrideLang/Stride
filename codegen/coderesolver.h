@@ -35,11 +35,6 @@
 #ifndef CODERESOLVER_H
 #define CODERESOLVER_H
 
-#include <QSharedPointer>
-#include <QVector>
-
-#include "stridesystem.hpp"
-
 #include "ast.h"
 #include "blocknode.h"
 #include "bundlenode.h"
@@ -48,9 +43,13 @@
 #include "propertynode.h"
 #include "rangenode.h"
 #include "streamnode.h"
-#include "systemconfiguration.hpp"
 #include "valuenode.h"
 
+#include "stridesystem.hpp"
+
+#include "systemconfiguration.hpp"
+
+// Resolves all code and creates a StrideSystem
 class CodeResolver {
 public:
   CodeResolver(ASTNode tree, std::string striderootDir,
@@ -61,10 +60,8 @@ public:
 
   std::shared_ptr<StrideSystem> getSystem() { return m_system; }
 
-  std::vector<std::pair<std::string, std::string>> m_domainChanges;
-
   static std::shared_ptr<DeclarationNode>
-  createSignalDeclaration(QString name, int size, ScopeStack scope,
+  createSignalDeclaration(std::string name, int size, ScopeStack scope,
                           ASTNode tree);
 
 private:
@@ -102,10 +99,14 @@ private:
   void resolveDomainsForStream(std::shared_ptr<StreamNode> stream,
                                ScopeStack scopeStack,
                                ASTNode contextDomainNode);
+
+  void setDomainForNode(ASTNode node, ASTNode domain, ScopeStack scopeStack,
+                        ASTNode tree, bool force = false);
   ASTNode processDomainsForNode(ASTNode node, ScopeStack scopeStack,
-                                QList<ASTNode> &domainStack);
-  void setDomainForStack(QList<ASTNode> domainStack, ASTNode resolvingInstance,
-                         ASTNode domainName, ScopeStack scopeStack);
+                                std::vector<ASTNode> &domainStack);
+  void setDomainForStack(std::vector<ASTNode> domainStack,
+                         ASTNode resolvingInstance, ASTNode domainName,
+                         ScopeStack scopeStack);
 
   std::vector<ASTNode> declareUnknownName(std::shared_ptr<BlockNode> block,
                                           int size, ScopeStack localScope,
@@ -144,6 +145,8 @@ private:
 
   ASTNode resolvePortProperty(std::shared_ptr<PortPropertyNode> portProperty,
                               ScopeStack scopeStack);
+
+  void setNodeRate(ASTNode node, double rate, ScopeStack scope, ASTNode tree);
 
   void setInputBlockForFunction(std::shared_ptr<FunctionNode> func,
                                 ScopeStack scopeStack, ASTNode previous);

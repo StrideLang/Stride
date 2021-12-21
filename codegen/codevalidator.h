@@ -35,11 +35,6 @@
 #ifndef CODEGEN_H
 #define CODEGEN_H
 
-#include <QMap>
-#include <QString>
-#include <QVariant>
-#include <QVector>
-
 #include "strideparser.h"
 
 class StrideSystem;
@@ -57,175 +52,11 @@ public:
   bool platformIsValid();
 
   std::vector<LangError> getErrors();
-  QStringList getPlatformErrors();
-
-  ASTNode getTree() const;
-  void setTree(const ASTNode &tree);
+  std::vector<std::string> getPlatformErrors();
 
   // Static functions -----------------------------
 
-  static std::shared_ptr<DeclarationNode>
-  getDeclaration(ASTNode node); // Retrieve stored declaration
-
-  // Resolve types
-  static std::string resolveBundleType(BundleNode *bundle,
-                                       ScopeStack scopeStack, ASTNode tree);
-  static std::string resolveBlockType(BlockNode *name, ScopeStack scopeStack,
-                                      ASTNode tree);
-  static std::string resolveNodeOutType(ASTNode node, ScopeStack scopeStack,
-                                        ASTNode tree);
-  static std::string resolveListType(ListNode *listnode, ScopeStack scopeStack,
-                                     ASTNode tree);
-  static std::string resolveExpressionType(ExpressionNode *exprnode,
-                                           ScopeStack scopeStack, ASTNode tree);
-  static std::string resolveRangeType(RangeNode *rangenode,
-                                      ScopeStack scopeStack, ASTNode tree);
-  static std::string resolvePortPropertyType(PortPropertyNode *portproperty,
-                                             ScopeStack scopeStack,
-                                             ASTNode tree);
-
-  static std::shared_ptr<DeclarationNode>
-  resolveConnectionBlock(ASTNode node, ScopeStack scopeStack, ASTNode tree,
-                         bool downStream = true);
-
-  static ASTNode
-  getMatchedOuterInstance(std::shared_ptr<FunctionNode> functionNode,
-                          std::shared_ptr<DeclarationNode> blockDecl,
-                          std::shared_ptr<DeclarationNode> funcDecl,
-                          ScopeStack scopeStack, ASTNode tree);
-
-  static int resolveSizePortProperty(std::string targetPortName,
-                                     ScopeStack scopeStack,
-                                     std::shared_ptr<DeclarationNode> decl,
-                                     std::shared_ptr<FunctionNode> func,
-                                     ASTNode tree,
-                                     std::vector<LangError> *errors = nullptr);
-
-  static double resolveRatePortProperty(std::string targetPortName,
-                                        ScopeStack scopeStack,
-                                        std::shared_ptr<DeclarationNode> decl,
-                                        std::shared_ptr<FunctionNode> func,
-                                        ASTNode tree);
-
-  static ASTNode resolveDomain(ASTNode node, ScopeStack scopeStack,
-                               ASTNode tree, bool downStream = true);
-  static double resolveRate(ASTNode node, ScopeStack scopeStack, ASTNode tree,
-                            bool downStream = true);
-
-  static int evaluateConstInteger(ASTNode node, ScopeStack scope, ASTNode tree,
-                                  std::vector<LangError> *errors = nullptr);
-  static double evaluateConstReal(ASTNode node, ScopeStack scope, ASTNode tree,
-                                  std::vector<LangError> *errors = nullptr);
-  static std::string
-  evaluateConstString(ASTNode node, ScopeStack scope, ASTNode tree,
-                      std::string currentFramework,
-                      std::vector<LangError> *errors = nullptr);
-  static ASTNode
-  getMemberfromBlockBundleConst(std::shared_ptr<DeclarationNode> blockDecl,
-                                int index, ASTNode tree, ScopeStack scopeStack,
-                                std::vector<LangError> *errors = nullptr);
-  static ASTNode getValueFromConstBlock(DeclarationNode *block);
-  static ASTNode getMemberFromList(ListNode *node, int index,
-                                   std::vector<LangError> *errors = nullptr);
-  static std::shared_ptr<PropertyNode>
-  findPropertyByName(std::vector<std::shared_ptr<PropertyNode>> properties,
-                     QString propertyName);
-
-  static std::shared_ptr<DeclarationNode>
-  findDataTypeDeclaration(std::string dataTypeName, ASTNode tree);
-
-  static std::string
-  getDataTypeForDeclaration(std::shared_ptr<DeclarationNode> decl,
-                            ASTNode tree);
-
-  /// Number of parallel streams that a single stream can be broken up into
-  static int numParallelStreams(StreamNode *stream, StrideSystem &platform,
-                                const ScopeStack &scope, ASTNode tree,
-                                std::vector<LangError> *errors = nullptr);
-
-  /// Get the number of parallel nodes implicit in node. i.e. into how many
-  /// parallel streams can the node be broken up.
-  static int getNodeSize(ASTNode node, const ScopeStack &scopeStack,
-                         ASTNode tree);
-
-  static int getFunctionDataSize(std::shared_ptr<FunctionNode> func,
-                                 ScopeStack scope, ASTNode tree,
-                                 std::vector<LangError> *errors = nullptr);
-  static int getFunctionNumInstances(std::shared_ptr<FunctionNode> func,
-                                     ScopeStack scope, ASTNode tree,
-                                     std::vector<LangError> *errors = nullptr);
-  static int getNodeNumOutputs(ASTNode node, const ScopeStack &scope,
-                               ASTNode tree,
-                               std::vector<LangError> *errors = nullptr);
-  static int getNodeNumInputs(ASTNode node, ScopeStack scope, ASTNode tree,
-                              std::vector<LangError> *errors = nullptr);
-
-  // A value of -1 means undefined. -2 means set from port property.
-  // FIXME determine the size set by port properties to provide an accurate
-  // size.
-  static int
-  getTypeNumOutputs(std::shared_ptr<DeclarationNode> blockDeclaration,
-                    const ScopeStack &scope, ASTNode tree,
-                    std::vector<LangError> *errors = nullptr);
-  static int getTypeNumInputs(std::shared_ptr<DeclarationNode> blockDeclaration,
-                              const ScopeStack &scope, ASTNode tree,
-                              std::vector<LangError> *errors = nullptr);
-
-  static int getBlockDeclaredSize(std::shared_ptr<DeclarationNode> block,
-                                  ScopeStack scope, ASTNode tree,
-                                  std::vector<LangError> *errors = nullptr);
-
-  static int
-  getLargestPropertySize(std::vector<std::shared_ptr<PropertyNode>> &properties,
-                         ScopeStack scope, ASTNode tree,
-                         std::vector<LangError> *errors = nullptr);
-
-  static int getBundleSize(BundleNode *bundle, ScopeStack scope, ASTNode tree,
-                           std::vector<LangError> *errors = nullptr);
-
-  static void setDomainForNode(ASTNode node, ASTNode domain,
-                               ScopeStack scopeStack, ASTNode tree,
-                               bool force = false);
-
-  static std::vector<ASTNode>
-  getBlocksInScope(ASTNode root, ScopeStack scopeStack, ASTNode tree);
-
-  static std::vector<std::string> getUsedDomains(ASTNode tree);
-
-  static std::vector<std::string> getUsedFrameworks(ASTNode tree);
-
-  static double resolveRateToFloat(ASTNode rateNode, ScopeStack scope,
-                                   ASTNode tree,
-                                   std::vector<LangError> *errors = nullptr);
-  static double getNodeRate(ASTNode node, ScopeStack scope = {},
-                            ASTNode tree = nullptr);
-  static void setNodeRate(ASTNode node, double rate, ScopeStack scope = {},
-                          ASTNode tree = nullptr);
-
-  static double
-  getDefaultForTypeAsDouble(std::string type, std::string port,
-                            ScopeStack scope, ASTNode tree,
-                            std::vector<std::string> namespaces,
-                            std::vector<LangError> *errors = nullptr);
-  static ASTNode
-  getDefaultPortValueForType(std::string type, std::string portName,
-                             ScopeStack scope, ASTNode tree,
-                             std::vector<std::string> namespaces);
-
-  // Get instance. For blocks the declaration is the instance, for modules it is
-  // the function node in the stream Many properties need to be stored in the
-  // instance.
-  static ASTNode getInstance(ASTNode block, ScopeStack scopeStack,
-                             ASTNode tree);
-
   static std::vector<StreamNode *> getStreamsAtLine(ASTNode tree, int line);
-
-  static double
-  getDomainDefaultRate(std::shared_ptr<DeclarationNode> domainDecl);
-
-  static std::vector<ASTNode> loadAllInDirectory(std::string path);
-
-  static std::vector<std::string> listAvailableSystems(std::string strideroot);
 
 private:
   void validateTree(ASTNode tree);
@@ -271,8 +102,6 @@ private:
   int getBlockDataSize(std::shared_ptr<DeclarationNode> declaration,
                        ScopeStack scope,
                        std::vector<LangError> *errors = nullptr);
-
-  QString getNodeText(ASTNode node);
 
   std::shared_ptr<StrideSystem> m_system;
   ASTNode m_tree;

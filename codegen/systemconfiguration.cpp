@@ -52,13 +52,13 @@ void SystemConfiguration::readConfiguration(std::string filename) {
             }
             ASTNode configValue = configOptions->getValue();
             if (configValue->getNodeType() == AST::String) {
-              overrides["all"][optionName] = QString::fromStdString(
+              overrides["all"][optionName] =
                   std::static_pointer_cast<ValueNode>(configValue)
-                      ->getStringValue());
+                      ->getStringValue();
             } else if (configValue->getNodeType() == AST::Int) {
-              overrides["all"][optionName] = QVariant::fromValue(
+              overrides["all"][optionName] =
                   std::static_pointer_cast<ValueNode>(configValue)
-                      ->getIntValue());
+                      ->getIntValue();
             }
           }
         }
@@ -104,10 +104,12 @@ void SystemConfiguration::writeConfiguration(std::string filename) {
         optionName[0] -= 'A' - 'a';
       }
       configFile << "    " << optionName.c_str() << ": " << std::endl;
-      if (option->second.type() == QVariant::String) {
-        configFile << "\"" << option->second.toByteArray().constData() << "\"";
-      } else {
-        configFile << option->second.toString().toLocal8Bit().constData();
+      if (std::holds_alternative<std::string>(option->second)) {
+        configFile << "\"" << std::get<std::string>(option->second) << "\"";
+      } else if (std::holds_alternative<int64_t>(option->second)) {
+        configFile << std::to_string(std::get<int64_t>(option->second));
+      } else if (std::holds_alternative<double>(option->second)) {
+        configFile << std::to_string(std::get<double>(option->second));
       }
       configFile << std::endl;
     }

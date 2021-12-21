@@ -34,6 +34,10 @@
 
 #include "strideframework.hpp"
 
+//#include <QProcess>
+
+#include <cassert>
+#include <filesystem>
 #include <iostream>
 
 #include "../parser/astfunctions.h"
@@ -133,15 +137,11 @@ void StrideFramework::installFramework() {
                         "/" + std::static_pointer_cast<ValueNode>(dirNode)
                                   ->getStringValue();
                   }
-                  QProcess installProcess;
-                  installProcess.setWorkingDirectory(
-                      QString::fromStdString(workingDirectory));
                   auto command =
                       std::static_pointer_cast<ValueNode>(commandNode)
                           ->getStringValue();
-                  qDebug() << "Running command: "
-                           << QString::fromStdString(command) << " IN "
-                           << QString::fromStdString(workingDirectory);
+                  std::cerr << "Running command: " << command << " IN "
+                            << workingDirectory << std::endl;
                   //                  QObject::connect(
                   //                      &installProcess,
                   //                      &QProcess::readyReadStandardOutput,
@@ -156,19 +156,34 @@ void StrideFramework::installFramework() {
                   //                        qDebug() <<
                   //                        installProcess.readAllStandardError();
                   //                      });
-                  installProcess.start(QString::fromStdString(command),
-                                       QStringList());
-                  if (!installProcess.waitForStarted()) {
-                    qDebug() << "Error starting";
+                  //                  installProcess.start(QString::fromStdString(command),
+                  //                                       QStringList());
+
+                  auto previousPath = std::filesystem::current_path();
+                  std::filesystem::current_path(workingDirectory);
+                  FILE *pipe = popen(command.c_str(), "r");
+                  if (pipe) {
+                    char buffer[128];
+                    std::string result = "";
+                    // read till end of process:
+                    while (!feof(pipe)) {
+                      // use buffer to read and add to result
+                      if (fgets(buffer, 128, pipe) != NULL)
+                        result += buffer;
+                    }
+                    auto ret = pclose(pipe);
+                    if (WIFEXITED(ret)) {
+                      if (WEXITSTATUS(ret) != 0) {
+                        std::cerr << "ERROR executing : " << command
+                                  << std::endl;
+                        std::cerr << result << std::endl;
+                      }
+                    }
+                  } else {
+                    std::cerr << "popen failed!";
                   }
 
-                  installProcess.waitForFinished();
-
-                  if (installProcess.exitStatus() != QProcess::NormalExit ||
-                      installProcess.exitCode() != 0) {
-                    std::cerr << "ERROR executing : " << command << std::endl;
-                    qDebug() << installProcess.readAll();
-                  }
+                  std::filesystem::current_path(previousPath);
                 }
               }
             }
@@ -281,11 +296,11 @@ std::vector<ASTNode>
 StrideFramework::loadFrameworkRoot(std::string frameworkRoot) {
   // determine inherited framework paths
 
-  auto nodes = CodeValidator::loadAllInDirectory(frameworkRoot);
+  auto nodes = ASTFunctions::loadAllInDirectory(frameworkRoot);
 
   std::vector<ASTNode> inheritedNodes;
   for (const auto &inhPath : m_inheritedPaths) {
-    inheritedNodes = CodeValidator::loadAllInDirectory(inhPath);
+    inheritedNodes = ASTFunctions::loadAllInDirectory(inhPath);
     // Remove nodes from inherited if present in current.
     for (const auto &inhNode : inheritedNodes) {
       bool found = false;
@@ -321,7 +336,7 @@ StrideFramework::loadFrameworkRoot(std::string frameworkRoot) {
 std::vector<std::string>
 StrideFramework::getInheritedFrameworkPaths(std::string frameworkRoot) {
   std::vector<std::string> inhPaths;
-  auto nodes = CodeValidator::loadAllInDirectory(frameworkRoot);
+  auto nodes = ASTFunctions::loadAllInDirectory(frameworkRoot);
   for (const auto &newNode : nodes) {
     if (newNode->getNodeType() == AST::Declaration) {
       auto decl = static_pointer_cast<DeclarationNode>(newNode);
@@ -349,7 +364,7 @@ StrideFramework::getInheritedFrameworkPaths(std::string frameworkRoot) {
 
 std::vector<string> StrideFramework::loadInheritedList(string frameworkRoot) {
   std::vector<std::string> inh;
-  auto nodes = CodeValidator::loadAllInDirectory(frameworkRoot);
+  auto nodes = ASTFunctions::loadAllInDirectory(frameworkRoot);
   for (const auto &newNode : nodes) {
     if (newNode->getNodeType() == AST::Declaration) {
       auto decl = static_pointer_cast<DeclarationNode>(newNode);
@@ -378,26 +393,23 @@ std::vector<ASTNode> StrideFramework::loadImport(string importName,
   if (importName.size() > 0) {
     includeSubPath += "/" + importName;
   }
-  auto nodes = CodeValidator::loadAllInDirectory(includeSubPath);
+  auto nodes = ASTFunctions::loadAllInDirectory(includeSubPath);
 
   for (const auto &node : nodes) {
     newNodes.push_back(node);
   }
   for (const auto &inhPath : m_inheritedPaths) {
     auto subPath = inhPath + "/" + importName;
-    auto inheritedNodes = CodeValidator::loadAllInDirectory(subPath);
+    auto inheritedNodes = ASTFunctions::loadAllInDirectory(subPath);
     for (auto inhNode : inheritedNodes) {
       for (auto node = nodes.begin(); node != nodes.end(); node++) {
         if (ASTQuery::getNodeName(*node) == ASTQuery::getNodeName(inhNode)) {
           nodes.erase(node);
-          qDebug() << "Replacing inherited node: "
-                   << QString::fromStdString(ASTQuery::getNodeName((*node)))
-                   << " from " << QString::fromStdString((*node)->getFilename())
-                   << " with "
-                   << QString::fromStdString(ASTQuery::getNodeName(inhNode))
-                   << " from "
-                   << QString::fromStdString(inhNode->getFilename());
-
+          std::cerr << "Replacing inherited node: "
+                    << ASTQuery::getNodeName(*node) << " from "
+                    << (*node)->getFilename() << " with "
+                    << ASTQuery::getNodeName(inhNode) << " from "
+                    << inhNode->getFilename() << std::endl;
           break;
         }
       }

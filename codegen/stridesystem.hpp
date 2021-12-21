@@ -35,13 +35,7 @@
 #ifndef STRIDESYSTEM_HPP
 #define STRIDESYSTEM_HPP
 
-#include <QDir>
-#include <QFileInfo>
-#include <QLibrary>
-#include <QList>
-#include <QMap>
-#include <QString>
-#include <QStringList>
+//#include <QLibrary>
 
 #include "strideframework.hpp"
 #include "stridelibrary.hpp"
@@ -63,28 +57,25 @@ public:
                int minorVersion, std::vector<std::shared_ptr<ImportNode>>);
   ~StrideSystem();
 
-  QStringList getErrors();
-  QStringList getWarnings();
-  QStringList getPlatformTypeNames();
-  QStringList getFunctionNames();
+  static std::vector<std::string> listAvailableSystems(std::string strideroot);
+
+  std::vector<std::string> getErrors();
+  std::vector<std::string> getWarnings();
+  std::vector<std::string> getPlatformTypeNames();
+  std::vector<std::string> getFunctionNames();
 
   std::vector<Builder *> createBuilders(std::string fileName, ASTNode tree);
 
   ASTNode getPlatformDomain(
       std::string namespaceName = ""); // The platform's default domain
 
-  QMap<QString, QString> getFrameworkTools(std::string namespaceName);
-  QMap<QString, QString> getFrameworkPaths(std::string namespaceName);
+  std::map<std::string, std::string>
+  getFrameworkTools(std::string namespaceName);
+  std::map<std::string, std::string>
+  getFrameworkPaths(std::string namespaceName);
 
   std::string substituteTokens(std::string namespaceName, std::string text);
-  //    DeclarationNode *getFunction(QString functionName);
   std::vector<std::string> getFrameworkNames();
-
-  // FIXME remove this function, use getImportTrees
-  std::map<std::string, std::vector<ASTNode>>
-  getBuiltinObjects(); // The key to the map is the namespace name
-
-  //    bool typeHasPort(QString typeName, QString propertyName);
 
   static std::vector<ASTNode> getOptionTrees(std::string systemPath);
 
@@ -92,6 +83,8 @@ public:
   std::vector<ASTNode> loadImportTree(std::string importName,
                                       std::string importAs,
                                       std::string frameworkName = "");
+
+  // Must be called after parseSystemTree()
   std::map<std::string, std::vector<ASTNode>> getImportTrees();
 
   std::string getFrameworkAlias(std::string frameworkName);
@@ -149,21 +142,15 @@ public:
 
   std::vector<std::string> listAvailableImports();
 
+  const std::string &systemName() const;
+
 private:
-  QVector<ASTNode> getPortsForTypeBlock(DeclarationNode *block);
-  //    ListNode *getPortsForFunction(QString typeName);
-
-  //  std::vector<ASTNode> processNewTrees(std::string platformPath,
-  //                                       string importName);
-
   std::shared_ptr<DeclarationNode>
   findDataTypeInPath(std::string path, std::string strideDataType);
   std::string findDefaultDataTypeInPath(std::string path,
                                         std::string strideType);
 
   std::string makeProject(std::string fileName);
-
-  QString readFile(QString fileName);
 
   void parseSystemTree(ASTNode systemTree, ASTNode configuration = nullptr);
 
@@ -174,12 +161,12 @@ private:
   std::string m_systemPath;
   std::string m_rootPath;
 
-  QStringList m_errors;
-  QStringList m_warnings;
+  std::vector<std::string> m_errors;
+  std::vector<std::string> m_warnings;
 
-  QStringList m_types;
+  std::vector<std::string> m_types;
 
-  QMap<QString, QString> m_importList;
+  std::map<std::string, std::string> m_importList;
 
   std::map<std::string, std::vector<ASTNode>> m_systemNodes;
 

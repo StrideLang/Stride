@@ -37,6 +37,7 @@
 #include <QtTest>
 
 #include "buildtester.hpp"
+#include "codeanalysis.hpp"
 #include "coderesolver.h"
 #include "codevalidator.h"
 #include "strideframework.hpp"
@@ -1206,69 +1207,69 @@ void ParserTest::testStreamRates() {
   std::shared_ptr<BlockNode> name =
       std::static_pointer_cast<BlockNode>(stream->getLeft());
   QVERIFY(name->getNodeType() == AST::Block);
-  QVERIFY(CodeValidator::getNodeRate(name, {}, tree) == 44100);
+  QVERIFY(CodeAnalysis::getNodeRate(name, {}, tree) == 44100);
 
   std::shared_ptr<BundleNode> bundle =
       std::static_pointer_cast<BundleNode>(stream->getRight());
   QVERIFY(bundle->getNodeType() == AST::Bundle);
-  QVERIFY(CodeValidator::getNodeRate(bundle, {}, tree) == 44100);
+  QVERIFY(CodeAnalysis::getNodeRate(bundle, {}, tree) == 44100);
 
   // Rate1 >> Rate2 >> Output1;
   stream = static_cast<StreamNode *>(nodes.at(6).get());
   QVERIFY(stream->getNodeType() == AST::Stream);
-  QVERIFY(CodeValidator::getNodeRate(stream->getLeft(), {}, tree) == 22050);
+  QVERIFY(CodeAnalysis::getNodeRate(stream->getLeft(), {}, tree) == 22050);
 
   stream = static_cast<StreamNode *>(stream->getRight().get());
   QVERIFY(stream->getNodeType() == AST::Stream);
-  QVERIFY(CodeValidator::getNodeRate(stream->getLeft(), {}, tree) == 11025);
+  QVERIFY(CodeAnalysis::getNodeRate(stream->getLeft(), {}, tree) == 11025);
 
   std::shared_ptr<BlockNode> nameNode =
       std::static_pointer_cast<BlockNode>(stream->getRight());
   QVERIFY(nameNode->getNodeType() == AST::Block);
-  QVERIFY(CodeValidator::getNodeRate(nameNode, {}, tree) == 11025);
+  QVERIFY(CodeAnalysis::getNodeRate(nameNode, {}, tree) == 11025);
 
   // Signal1 >> Rate1 >> Signal2 >> Rate2 >> GetAudioRate >> Output2;
   stream = static_cast<StreamNode *>(nodes.at(7).get());
   QVERIFY(stream->getNodeType() == AST::Stream);
-  QVERIFY(CodeValidator::getNodeRate(stream->getLeft(), {}, tree) == 22050);
+  QVERIFY(CodeAnalysis::getNodeRate(stream->getLeft(), {}, tree) == 22050);
 
   stream = static_cast<StreamNode *>(stream->getRight().get());
   QVERIFY(stream->getNodeType() == AST::Stream);
-  QVERIFY(CodeValidator::getNodeRate(stream->getLeft(), {}, tree) == 22050);
+  QVERIFY(CodeAnalysis::getNodeRate(stream->getLeft(), {}, tree) == 22050);
 
   stream = static_cast<StreamNode *>(stream->getRight().get());
   QVERIFY(stream->getNodeType() == AST::Stream);
-  QVERIFY(CodeValidator::getNodeRate(stream->getLeft(), {}, tree) == 11025);
+  QVERIFY(CodeAnalysis::getNodeRate(stream->getLeft(), {}, tree) == 11025);
 
   stream = static_cast<StreamNode *>(stream->getRight().get());
   QVERIFY(stream->getNodeType() == AST::Stream);
-  QVERIFY(CodeValidator::getNodeRate(stream->getLeft(), {}, tree) == 11025);
+  QVERIFY(CodeAnalysis::getNodeRate(stream->getLeft(), {}, tree) == 11025);
 
   stream = static_cast<StreamNode *>(stream->getRight().get());
   QVERIFY(stream->getNodeType() == AST::Stream);
-  QVERIFY(CodeValidator::getNodeRate(stream->getLeft(), {}, tree) == 11025);
+  QVERIFY(CodeAnalysis::getNodeRate(stream->getLeft(), {}, tree) == 11025);
 
   name = std::static_pointer_cast<BlockNode>(stream->getRight());
   QVERIFY(name->getNodeType() == AST::Block);
-  QVERIFY(CodeValidator::getNodeRate(name, {}, tree) == 11025);
+  QVERIFY(CodeAnalysis::getNodeRate(name, {}, tree) == 11025);
 
   //    Oscillator() >> Rate1 >> LowPass() >> Output3;
   stream = static_cast<StreamNode *>(nodes.at(8).get());
   QVERIFY(stream->getNodeType() == AST::Stream);
-  QVERIFY(CodeValidator::getNodeRate(stream->getLeft(), {}, tree) == 22050);
+  QVERIFY(CodeAnalysis::getNodeRate(stream->getLeft(), {}, tree) == 22050);
   stream = static_cast<StreamNode *>(stream->getRight().get());
   QVERIFY(stream->getNodeType() == AST::Stream);
-  QVERIFY(CodeValidator::getNodeRate(stream->getLeft(), {}, tree) == 22050);
+  QVERIFY(CodeAnalysis::getNodeRate(stream->getLeft(), {}, tree) == 22050);
   stream = static_cast<StreamNode *>(stream->getRight().get());
   QVERIFY(stream->getNodeType() == AST::Stream);
-  QVERIFY(CodeValidator::getNodeRate(stream->getLeft(), {}, tree) == 44100);
-  QVERIFY(CodeValidator::getNodeRate(stream->getRight(), {}, tree) == 44100);
+  QVERIFY(CodeAnalysis::getNodeRate(stream->getLeft(), {}, tree) == 44100);
+  QVERIFY(CodeAnalysis::getNodeRate(stream->getRight(), {}, tree) == 44100);
 
   //    Oscillator() >> AudioOut;
   stream = static_cast<StreamNode *>(nodes.at(9).get());
   QVERIFY(stream->getNodeType() == AST::Stream);
-  QVERIFY(CodeValidator::getNodeRate(stream->getLeft(), {}, tree) == 44100);
-  QVERIFY(CodeValidator::getNodeRate(stream->getRight(), {}, tree) == 44100);
+  QVERIFY(CodeAnalysis::getNodeRate(stream->getLeft(), {}, tree) == 44100);
+  QVERIFY(CodeAnalysis::getNodeRate(stream->getRight(), {}, tree) == 44100);
 }
 
 void ParserTest::testStreamExpansion() {

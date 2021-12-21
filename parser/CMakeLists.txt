@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.13) 
 project(StrideParser) 
 
-set(CMAKE_CXX_STANDARD 11)
-
 set(PARSER_SRC
   ast.cpp 
   astfunctions.cpp 
@@ -51,9 +49,6 @@ set(PARSER_HEADERS
   platformnode.h
   portpropertynode.h
 )
-
-
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 if (WIN32)
 
@@ -107,4 +102,7 @@ add_library(StrideParser
 )
 
 target_compile_options(StrideParser PRIVATE -fPIC)
+target_include_directories(StrideParser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+
 

@@ -83,6 +83,9 @@ protected:
   virtual void closeEvent(QCloseEvent *event);
   virtual bool eventFilter(QObject *obj, QEvent *event);
 
+  void printConsoleText(std::string text);
+  void printConsoleError(std::string text);
+
 private slots:
   bool build();
   void deploy();
@@ -103,9 +106,6 @@ private slots:
   void find(QString query = "");
   void findNext();
   void findPrevious();
-
-  void printConsoleText(QString text);
-  void printConsoleError(QString text);
 
 private:
   void connectActions();

@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.13) 
 project(Stride)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 option(STRIDE_CODE_COVERAGE "Enable Code coverage for tests" OFF)
 
 add_subdirectory(parser)

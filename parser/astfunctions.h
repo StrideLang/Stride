@@ -10,22 +10,28 @@
 #include <map>
 #include <vector>
 
+// The ASTFunctions, ASTQuery and ASTRuntime should provide a minimal layer
+// dealing with syntax constructs and minimal semantic information
+// (with the large exception of 'types')
+
 class ASTFunctions {
 public:
   static ASTNode parseFile(const char *fileName,
                            const char *sourceFilename = nullptr);
   static std::vector<LangError> getParseErrors();
 
-  //
-  static bool resolveInherits(std::shared_ptr<DeclarationNode> decl,
-                              ASTNode tree);
+  static std::vector<ASTNode> loadAllInDirectory(std::string path);
+
+  // Insert properties from inherited types if not present
+  static bool resolveInheritance(std::shared_ptr<DeclarationNode> decl,
+                                 ASTNode tree);
 
   // Insert system and library objects used in tree from import trees.
   // externalNodes provides library and import nodes. The key is the namespace
   // they are imported into
-  static void insertRequiredObjects(
+  static void insertRequiredObjects( //**
       ASTNode tree, std::map<std::string, std::vector<ASTNode>> externalNodes);
-  static void insertRequiredObjectsForNode(
+  static void insertRequiredObjectsForNode( //**
       ASTNode node, std::map<std::string, std::vector<ASTNode>> &objects,
       ASTNode tree, std::string currentFramework = "");
 
@@ -63,6 +69,25 @@ public:
   static std::shared_ptr<ValueNode>
   reduceConstExpression(std::shared_ptr<ExpressionNode> expr, ScopeStack scope,
                         ASTNode tree);
+
+  static int evaluateConstInteger(ASTNode node, ScopeStack scope, ASTNode tree,
+                                  std::vector<LangError> *errors);
+  static double evaluateConstReal(ASTNode node, ScopeStack scope, ASTNode tree,
+                                  std::vector<LangError> *errors);
+  static std::string evaluateConstString(ASTNode node, ScopeStack scope,
+                                         ASTNode tree,
+                                         std::string currentFramework,
+                                         std::vector<LangError> *errors);
+  // Type defaults
+  static double
+  getDefaultForTypeAsDouble(std::string type, std::string port,
+                            ScopeStack scope, ASTNode tree,
+                            std::vector<std::string> namespaces,
+                            std::vector<LangError> *errors = nullptr);
+  static ASTNode
+  getDefaultPortValueForType(std::string type, std::string portName,
+                             ScopeStack scope, ASTNode tree,
+                             std::vector<std::string> namespaces);
 
 protected:
   // Anonymous declaration helpre functions

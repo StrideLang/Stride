@@ -5,12 +5,12 @@
 #include "declarationnode.h"
 #include "valuenode.h"
 
-// TODO remove QVariant, use std
-#include <QVariant>
 #include <map>
 #include <string>
+#include <variant>
 
-typedef std::map<std::string, QVariant> ConfigMap;
+using ConfigMap =
+    std::map<std::string, std::variant<int64_t, double, std::string>>;
 
 class SystemConfiguration {
 public:

@@ -38,10 +38,6 @@
 #include <map>
 #include <string>
 
-#include <QDebug>
-#include <QList>
-#include <QProcess>
-
 #include "ast.h"
 #include "codevalidator.h"
 #include "declarationnode.h"

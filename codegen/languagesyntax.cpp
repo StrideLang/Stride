@@ -1,6 +1,8 @@
 #include "languagesyntax.hpp"
 #include "stridesystem.hpp"
 
+#include <iostream>
+
 std::string LanguageSyntax::getDeclarationType(std::string type,
                                                std::string name,
                                                SignalAccess access, int size) {
@@ -379,8 +381,8 @@ std::string LanguageSyntax::getDataType(std::shared_ptr<DeclarationNode> decl,
 
   if (!dataTypeNode || dataTypeNode->getNodeType() == AST::None) {
     // Fallback, but should never get here...
-    qDebug() << "ERROR, undefined data type for "
-             << QString::fromStdString(decl->getObjectType());
+    std::cerr << "ERROR, undefined data type for " << decl->getObjectType()
+              << std::endl;
     defaultDataType = system->getFrameworkDefaultDataType(frameworkName, "");
     dataTypeNode = system->getFrameworkDataType(frameworkName, defaultDataType);
   }
@@ -392,7 +394,7 @@ std::string LanguageSyntax::getDataType(std::shared_ptr<DeclarationNode> decl,
                      ->getStringValue();
     }
   } else {
-    qDebug() << "ERROR: no datatype provided";
+    std::cerr << "ERROR: no datatype provided" << std::endl;
   }
   return dataType;
 }

@@ -76,9 +76,9 @@ public slots:
 private:
   //    QList<AST *> m_platformObjects;
   std::shared_ptr<StrideSystem> m_system;
-  QStringList m_types;
-  QStringList m_funcs;
-  QStringList m_objectNames;
+  std::vector<std::string> m_types;
+  std::vector<std::string> m_funcs;
+  std::vector<std::string> m_objectNames;
   std::vector<LangError> m_errors;
   QMutex m_validTreeLock;
   ASTNode m_lastValidTree;

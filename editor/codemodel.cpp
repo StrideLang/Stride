@@ -501,17 +501,29 @@ ASTNode CodeModel::getOptimizedTree() {
 
 QStringList CodeModel::getTypes() {
   QMutexLocker locker(&m_validTreeLock);
-  return m_types;
+  QStringList out;
+  for (const auto &s : m_types) {
+    out << QString::fromStdString(s);
+  }
+  return out;
 }
 
 QStringList CodeModel::getFunctions() {
   QMutexLocker locker(&m_validTreeLock);
-  return m_funcs;
+  QStringList out;
+  for (const auto &s : m_funcs) {
+    out << QString::fromStdString(s);
+  }
+  return out;
 }
 
 QStringList CodeModel::getObjectNames() {
   QMutexLocker locker(&m_validTreeLock);
-  return m_objectNames;
+  QStringList out;
+  for (const auto &s : m_objectNames) {
+    out << QString::fromStdString(s);
+  }
+  return out;
 }
 
 QString getTextForPorts(std::shared_ptr<DeclarationNode> declaration) {
@@ -654,24 +666,24 @@ void CodeModel::updateCodeAnalysis(QString code, QString platformRootPath,
       SystemConfiguration config;
       //      config.testing = true;
       CodeResolver resolver(tree, platformRootPath.toStdString(), config);
-      resolver.process();
       m_system = resolver.getSystem();
+      if (m_system->systemName() != "") {
+      resolver.process();
 
       CodeValidator validator(tree);
       std::vector<ASTNode> objects;
-      if (m_system) {
         m_types = m_system->getPlatformTypeNames();
         m_funcs = m_system->getFunctionNames();
-        objects = m_system->getBuiltinObjects()[""];
-      }
+        objects = m_system->getImportTrees()[""];
       m_objectNames.clear();
       for (ASTNode platObject : objects) {
         if (platObject->getNodeType() == AST::Block) {
-          m_objectNames << QString::fromStdString(
+          m_objectNames.push_back(
               static_cast<BlockNode *>(platObject.get())->getName());
         }
       }
       m_errors = validator.getErrors();
+      }
 
       if (m_lastValidTree) {
       }

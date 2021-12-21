@@ -33,6 +33,8 @@
 */
 
 #include "ast.h"
+#include "astfunctions.h"
+#include "astquery.h"
 #include "valuenode.h"
 
 #include "coderesolver.h"
@@ -87,7 +89,7 @@ bool StrideLibrary::isValidBlock(DeclarationNode *block) {
         return true;
       }
       // Now check for inherited properties
-      QList<DeclarationNode *> parentTypes = getParentTypes(block);
+      std::vector<DeclarationNode *> parentTypes = getParentTypes(block);
       bool propertyInParent = false;
       for (DeclarationNode *parent : parentTypes) {
         propertyInParent |= isValidProperty(property, parent);
@@ -123,7 +125,7 @@ std::vector<ASTNode> StrideLibrary::loadImport(std::string importName,
   // For library we don't need support for file name namespace at the root, but
   // there needs to be support for nested files.
 
-  auto newNodes = CodeValidator::loadAllInDirectory(path);
+  auto newNodes = ASTFunctions::loadAllInDirectory(path);
   // FIXME support importing library files with multiple different importAs.
   // Currently broken if library imported multiple times with different alias.
   for (const auto &node : newNodes) {
@@ -141,15 +143,15 @@ bool StrideLibrary::isValidProperty(std::shared_ptr<PropertyNode> property,
                                     DeclarationNode *type) {
   assert(type->getObjectType() == "type");
   std::shared_ptr<PropertyNode> portsInType =
-      CodeValidator::findPropertyByName(type->getProperties(), "properties");
+      ASTQuery::findPropertyByName(type->getProperties(), "properties");
   ListNode *portList = static_cast<ListNode *>(portsInType->getValue().get());
   assert(portList->getNodeType() == AST::List);
-  for (ASTNode port : portList->getChildren()) {
+  for (const ASTNode &port : portList->getChildren()) {
     DeclarationNode *portBlock = static_cast<DeclarationNode *>(port.get());
     assert(portBlock->getNodeType() == AST::Declaration);
     assert(portBlock->getObjectType() == "typeProperty");
     std::shared_ptr<PropertyNode> portName =
-        CodeValidator::findPropertyByName(portBlock->getProperties(), "name");
+        ASTQuery::findPropertyByName(portBlock->getProperties(), "name");
     std::string portNameInType =
         static_cast<ValueNode *>(portName->getValue().get())->getStringValue();
     if (property->getName() == portNameInType) {
@@ -157,7 +159,7 @@ bool StrideLibrary::isValidProperty(std::shared_ptr<PropertyNode> property,
     }
   }
   std::shared_ptr<PropertyNode> inherits =
-      CodeValidator::findPropertyByName(type->getProperties(), "inherits");
+      ASTQuery::findPropertyByName(type->getProperties(), "inherits");
   if (inherits) {
     ValueNode *inheritedTypeName =
         static_cast<ValueNode *>(inherits->getValue().get());
@@ -172,9 +174,10 @@ bool StrideLibrary::isValidProperty(std::shared_ptr<PropertyNode> property,
   return false;
 }
 
-QList<DeclarationNode *> StrideLibrary::getParentTypes(DeclarationNode *type) {
+std::vector<DeclarationNode *>
+StrideLibrary::getParentTypes(DeclarationNode *type) {
   std::shared_ptr<PropertyNode> inheritProperty =
-      CodeValidator::findPropertyByName(type->getProperties(), "inherits");
+      ASTQuery::findPropertyByName(type->getProperties(), "inherits");
   if (inheritProperty) {
     ASTNode parentType = inheritProperty->getValue();
     if (parentType->getNodeType() == AST::String) {
@@ -185,7 +188,7 @@ QList<DeclarationNode *> StrideLibrary::getParentTypes(DeclarationNode *type) {
       return getParentTypes(parentBlock.get());
     }
   }
-  return QList<DeclarationNode *>();
+  return std::vector<DeclarationNode *>();
 }
 
 void StrideLibrary::readLibrary(std::string rootDir) {

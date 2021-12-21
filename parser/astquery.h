@@ -18,12 +18,12 @@ public:
   findDeclarationWithType(std::string objectName, std::string type,
                           const ScopeStack &scopeStack, ASTNode tree,
                           std::vector<std::string> namespaces = {},
-                          std::string platform = std::string());
+                          std::string framework = std::string());
 
   static std::shared_ptr<DeclarationNode>
   findDeclarationByName(std::string objectName, const ScopeStack &scopeStack,
                         ASTNode tree, std::vector<std::string> namespaces = {},
-                        std::string platform = std::string());
+                        std::string framework = std::string());
 
   static std::vector<std::shared_ptr<DeclarationNode>>
   findAllDeclarations(std::string objectName, const ScopeStack &scopeStack,
@@ -44,6 +44,23 @@ public:
   // of nodes
   static std::string getNodeName(ASTNode node);
 
+  ///// Size queries
+  /// Get the number of parallel nodes implicit in node. i.e. into how many
+  /// parallel streams can the node be broken up.
+  static int getNodeSize(ASTNode node, const ScopeStack &scopeStack,
+                         ASTNode tree);
+
+  static int getBundleSize(BundleNode *bundle, ScopeStack scope, ASTNode tree,
+                           std::vector<LangError> *errors = nullptr);
+
+  static int getBlockDeclaredSize(std::shared_ptr<DeclarationNode> block,
+                                  ScopeStack scope, ASTNode tree,
+                                  std::vector<LangError> *errors = nullptr);
+
+  static int
+  getLargestPropertySize(std::vector<std::shared_ptr<PropertyNode>> &properties,
+                         ScopeStack scope, ASTNode tree,
+                         std::vector<LangError> *errors = nullptr);
   // Inheritance information
   static std::vector<std::shared_ptr<DeclarationNode>>
   getInheritedTypes(std::shared_ptr<DeclarationNode> block, ScopeStack scope,
@@ -82,6 +99,24 @@ public:
 
   static std::vector<std::string>
   getModulePortNames(std::shared_ptr<DeclarationNode> blockDeclaration);
+
+  // Bundle Declarations
+  static ASTNode
+  getMemberfromBlockBundleConst(std::shared_ptr<DeclarationNode> blockDecl,
+                                int index, ASTNode tree, ScopeStack scopeStack,
+                                std::vector<LangError> *errors);
+
+  // Const Declarations
+  static ASTNode getValueFromConstBlock(DeclarationNode *block);
+
+  // List nodes
+  static ASTNode getMemberFromList(ListNode *node, int index,
+                                   std::vector<LangError> *errors);
+
+  // Property Nodes
+  static std::shared_ptr<PropertyNode>
+  findPropertyByName(std::vector<std::shared_ptr<PropertyNode>> properties,
+                     std::string propertyName);
 
 private:
   static bool namespaceMatch(std::vector<std::string> scopeList,

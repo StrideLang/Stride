@@ -150,7 +150,7 @@ bool ProjectWindow::build() {
     editor->setErrors(errors);
 
     foreach (LangError error, syntaxErrors) {
-      printConsoleText(QString::fromStdString(error.getErrorText()) + "\n");
+      printConsoleText(error.getErrorText() + "\n");
     }
     return false;
   }
@@ -174,7 +174,7 @@ bool ProjectWindow::build() {
       editor->setErrors(errors);
 
       foreach (LangError error, errors) {
-        printConsoleText(QString::fromStdString(error.getErrorText()) + "\n");
+        printConsoleText(error.getErrorText() + "\n");
       }
       return false;
     }
@@ -186,7 +186,7 @@ bool ProjectWindow::build() {
 
     m_builders = system->createBuilders(editor->filename().toStdString(), tree);
     if (m_builders.size() == 0) {
-      printConsoleText(tr("Aborting. No builder available."));
+      printConsoleText(tr("Aborting. No builder available.").toStdString());
       qDebug() << "Can't create builder";
       return false;
     }
@@ -196,12 +196,12 @@ bool ProjectWindow::build() {
 
     for (auto builder : m_builders) {
       builder->m_system = system;
-      builder->registerYieldCallback([]() { qApp->processEvents(); });
-      connect(builder, SIGNAL(outputText(QString)), this,
-              SLOT(printConsoleText(QString)));
-      connect(builder, SIGNAL(errorText(QString)), this,
-              SLOT(printConsoleError(QString)));
-      connect(builder, SIGNAL(programStopped()), this, SLOT(programStopped()));
+      builder->yieldCallback = []() { qApp->processEvents(); };
+      builder->outputText = std::bind(&ProjectWindow::printConsoleText, this,
+                                      std::placeholders::_1);
+      builder->errorText = std::bind(&ProjectWindow::printConsoleText, this,
+                                     std::placeholders::_1);
+      builder->programStopped = std::bind(&ProjectWindow::programStopped, this);
 
       auto domainMap = builder->generateCode(tree);
 
@@ -304,7 +304,7 @@ void ProjectWindow::run(bool pressed) {
       }
       if (m_builders.size() == 0) {
         ui->actionRun->setChecked(false);
-        printConsoleError(tr("Can't run. No builder available."));
+        printConsoleError(tr("Can't run. No builder available.").toStdString());
       }
     } else {
       programStopped();
@@ -460,7 +460,7 @@ void ProjectWindow::showHelperMenu(QPoint where) {
   //    }
   QMenu *functionMenu = m_helperMenu.addMenu(tr("New function"));
   std::map<std::string, std::vector<ASTNode>> objs =
-      m_codeModel.getSystem()->getBuiltinObjects();
+      m_codeModel.getSystem()->getImportTrees();
   for (auto namespaceGroup : objs) {
     for (auto obj : namespaceGroup.second) {
       if (obj->getNodeType() == AST::Declaration) {
@@ -557,17 +557,17 @@ void ProjectWindow::findPrevious() {
 
 void ProjectWindow::programStopped() { ui->actionRun->setChecked(false); }
 
-void ProjectWindow::printConsoleText(QString text) {
-  if (!text.isEmpty()) {
+void ProjectWindow::printConsoleText(std::string text) {
+  if (text.size() != 0) {
     ui->consoleText->setTextColor(Qt::black);
-    ui->consoleText->append(text);
+    ui->consoleText->append(QString::fromStdString(text));
   }
 }
 
-void ProjectWindow::printConsoleError(QString text) {
-  if (!text.isEmpty()) {
+void ProjectWindow::printConsoleError(std::string text) {
+  if (text.size() != 0) {
     ui->consoleText->setTextColor(Qt::red);
-    ui->consoleText->append(text);
+    ui->consoleText->append(QString::fromStdString(text));
   }
 }
 
@@ -1344,7 +1344,7 @@ void ProjectWindow::markModified() {
     textColor = Qt::red;
   } else {
     QPalette p = this->palette();
-    textColor = p.color(QPalette::Foreground);
+    textColor = p.color(QPalette::WindowText);
   }
   ui->tabWidget->tabBar()->setTabTextColor(currentIndex, textColor);
 }
@@ -1359,6 +1359,10 @@ void ProjectWindow::configureSystem() {
     m_codeModel.updateCodeAnalysis(editor->document()->toPlainText(),
                                    m_environment["striderootPath"].toString(),
                                    editor->filename());
+  } else {
+    QMessageBox::warning(this, tr("No system defined"),
+                         tr("Can't configure system. No system defined"));
+    return;
   }
 
   if (!m_codeModel.getOptimizedTree() || !m_codeModel.getSystem()) {
@@ -1756,10 +1760,9 @@ void ProjectWindow::configureSystem() {
           if (systemConfig.frameworkConfigurations["all"].find(
                   optionDecl->getName()) !=
               systemConfig.frameworkConfigurations["all"].end()) {
-            spinBox->setValue(
+            spinBox->setValue(std::get<int64_t>(
                 systemConfig
-                    .frameworkConfigurations["all"][optionDecl->getName()]
-                    .toInt());
+                    .frameworkConfigurations["all"][optionDecl->getName()]));
           } else { // Use default
             ASTNode defaultNode = optionDecl->getPropertyValue("default");
             if (defaultNode && defaultNode->getNodeType() == AST::Int) {
@@ -1815,10 +1818,9 @@ void ProjectWindow::configureSystem() {
           if (systemConfig.frameworkConfigurations["all"].find(
                   optionDecl->getName()) !=
               systemConfig.frameworkConfigurations["all"].end()) {
-            spinBox->setText(
+            spinBox->setText(QString::fromStdString(std::get<std::string>(
                 systemConfig
-                    .frameworkConfigurations["all"][optionDecl->getName()]
-                    .toString());
+                    .frameworkConfigurations["all"][optionDecl->getName()])));
           } else { // Use default
             ASTNode defaultNode = optionDecl->getPropertyValue("default");
             if (defaultNode && defaultNode->getNodeType() == AST::String) {
@@ -1874,10 +1876,9 @@ void ProjectWindow::configureSystem() {
           if (systemConfig.frameworkConfigurations["all"].find(
                   optionDecl->getName()) !=
               systemConfig.frameworkConfigurations["all"].end()) {
-            spinBox->setText(
+            spinBox->setText(QString::fromStdString(std::get<std::string>(
                 systemConfig
-                    .frameworkConfigurations["all"][optionDecl->getName()]
-                    .toString());
+                    .frameworkConfigurations["all"][optionDecl->getName()])));
           } else { // Use default
             ASTNode defaultNode = optionDecl->getPropertyValue("default");
             if (defaultNode && defaultNode->getNodeType() == AST::String) {
@@ -1934,10 +1935,9 @@ void ProjectWindow::configureSystem() {
           if (systemConfig.frameworkConfigurations["all"].find(
                   optionDecl->getName()) !=
               systemConfig.frameworkConfigurations["all"].end()) {
-            spinBox->setText(
+            spinBox->setText(QString::fromStdString(std::get<std::string>(
                 systemConfig
-                    .frameworkConfigurations["all"][optionDecl->getName()]
-                    .toString());
+                    .frameworkConfigurations["all"][optionDecl->getName()])));
           } else { // Use default
             ASTNode defaultNode = optionDecl->getPropertyValue("default");
             if (defaultNode && defaultNode->getNodeType() == AST::String) {
@@ -1976,10 +1976,9 @@ void ProjectWindow::configureSystem() {
           if (systemConfig.frameworkConfigurations["all"].find(
                   optionDecl->getName()) !=
               systemConfig.frameworkConfigurations["all"].end()) {
-            defaultValue =
+            defaultValue = QString::fromStdString(std::get<std::string>(
                 systemConfig
-                    .frameworkConfigurations["all"][optionDecl->getName()]
-                    .toString();
+                    .frameworkConfigurations["all"][optionDecl->getName()]));
           } else { // Use default
             ASTNode defaultNode = optionDecl->getPropertyValue("default");
             if (defaultNode && defaultNode->getNodeType() == AST::String) {
@@ -2033,10 +2032,10 @@ void ProjectWindow::configureSystem() {
           if (systemConfig.frameworkConfigurations["all"].find(
                   optionDecl->getName()) !=
               systemConfig.frameworkConfigurations["all"].end()) {
-            defaultValue =
+
+            defaultValue = std::get<int64_t>(
                 systemConfig
-                    .frameworkConfigurations["all"][optionDecl->getName()]
-                    .toInt();
+                    .frameworkConfigurations["all"][optionDecl->getName()]);
           } else { // Use default
             if (defaultNode && defaultNode->getNodeType() == AST::Int) {
               defaultValue = std::static_pointer_cast<ValueNode>(defaultNode)
@@ -2105,8 +2104,9 @@ void ProjectWindow::configureSystem() {
 
           if (systemConfig.overrides["all"].find(optionDecl->getName()) !=
               systemConfig.overrides["all"].end()) {
-            spinBox->setValue(
-                systemConfig.overrides["all"][optionDecl->getName()].toInt());
+
+            spinBox->setValue(std::get<int64_t>(
+                systemConfig.overrides["all"][optionDecl->getName()]));
           } else { // Use default
             ASTNode defaultNode = optionDecl->getPropertyValue("default");
             if (defaultNode && defaultNode->getNodeType() == AST::Int) {
@@ -2143,8 +2143,9 @@ void ProjectWindow::configureSystem() {
           ASTNode defaultNode = optionDecl->getPropertyValue("default");
           if (systemConfig.overrides["all"].find(optionDecl->getName()) !=
               systemConfig.overrides["all"].end()) {
-            defaultValue =
-                systemConfig.overrides["all"][optionDecl->getName()].toString();
+
+            defaultValue = QString::fromStdString(std::get<std::string>(
+                systemConfig.overrides["all"][optionDecl->getName()]));
           } else { // Use default
             ASTNode defaultNode = optionDecl->getPropertyValue("default");
             if (defaultNode && defaultNode->getNodeType() == AST::String) {
@@ -2197,8 +2198,9 @@ void ProjectWindow::configureSystem() {
           int defaultValue = 0;
           if (systemConfig.overrides["all"].find(optionDecl->getName()) !=
               systemConfig.overrides["all"].end()) {
-            defaultValue =
-                systemConfig.overrides["all"][optionDecl->getName()].toInt();
+
+            defaultValue = std::get<int64_t>(
+                systemConfig.overrides["all"][optionDecl->getName()]);
           } else { // Use default
             if (defaultNode && defaultNode->getNodeType() == AST::Int) {
               defaultValue = std::static_pointer_cast<ValueNode>(defaultNode)
@@ -2252,44 +2254,45 @@ void ProjectWindow::configureSystem() {
   if (optionsDialog.result() == QDialog::Accepted) {
     for (auto comboBoxInfo = comboBoxes.constBegin();
          comboBoxInfo != comboBoxes.constEnd(); ++comboBoxInfo) {
+
       systemConfig
           .frameworkConfigurations["all"][comboBoxInfo.key().toStdString()] =
-          comboBoxInfo.value()->currentText();
+          comboBoxInfo.value()->currentText().toStdString();
     }
     for (auto comboBoxInfo = intComboBoxes.constBegin();
          comboBoxInfo != intComboBoxes.constEnd(); ++comboBoxInfo) {
       systemConfig
           .frameworkConfigurations["all"][comboBoxInfo.key().toStdString()] =
-          comboBoxInfo.value()->currentText().toInt();
+          comboBoxInfo.value()->currentText().toLong();
     }
     for (auto spinBoxInfo = spinBoxes.constBegin();
          spinBoxInfo != spinBoxes.constEnd(); ++spinBoxInfo) {
       systemConfig
           .frameworkConfigurations["all"][spinBoxInfo.key().toStdString()] =
-          spinBoxInfo.value()->value();
+          (int64_t)spinBoxInfo.value()->value();
     }
     for (auto lineEditInfo = lineEdits.constBegin();
          lineEditInfo != lineEdits.constEnd(); ++lineEditInfo) {
       qDebug() << lineEditInfo.key() << ".." << lineEditInfo.value()->text();
       systemConfig
           .frameworkConfigurations["all"][lineEditInfo.key().toStdString()] =
-          lineEditInfo.value()->text();
+          lineEditInfo.value()->text().toStdString();
     }
 
     for (auto comboBoxInfo = overrideComboBoxes.constBegin();
          comboBoxInfo != overrideComboBoxes.constEnd(); ++comboBoxInfo) {
       systemConfig.overrides["all"][comboBoxInfo.key().toStdString()] =
-          comboBoxInfo.value()->currentText();
+          comboBoxInfo.value()->currentText().toStdString();
     }
     for (auto comboBoxInfo = overrideIntComboBoxes.constBegin();
          comboBoxInfo != overrideIntComboBoxes.constEnd(); ++comboBoxInfo) {
       systemConfig.overrides["all"][comboBoxInfo.key().toStdString()] =
-          comboBoxInfo.value()->currentText().toInt();
+          comboBoxInfo.value()->currentText().toLong();
     }
     for (auto spinBoxInfo = overrideSpinBoxes.constBegin();
          spinBoxInfo != overrideSpinBoxes.constEnd(); ++spinBoxInfo) {
       systemConfig.overrides["all"][spinBoxInfo.key().toStdString()] =
-          spinBoxInfo.value()->value();
+          (int64_t)spinBoxInfo.value()->value();
     }
 
     auto updateResourceConfig = [&](QString key, QVariant value) {

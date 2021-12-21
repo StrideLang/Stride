@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.13) 
 project(StrideIDE) 
 
-set(CMAKE_CXX_STANDARD 11)
-
 set(EDITOR_SRC 
   main.cpp
   localmanagementdialog.cpp 
@@ -66,6 +64,8 @@ target_include_directories(StrideIDE PUBLIC ../parser .)
 target_link_libraries(StrideIDE StrideParser StrideCodegen 
   Qt5::Core Qt5::Widgets Qt5::WebEngine Qt5::WebEngineWidgets Qt5::Qml)
 
+set_property(TARGET StrideIDE PROPERTY CXX_STANDARD 17)
+set_property(TARGET StrideIDE PROPERTY CXX_STANDARD_REQUIRED ON)
 # TODO add Icon
 if(APPLE)
 #  set(MACOSX_BUNDLE_ICON_FILE qt5app.icns)

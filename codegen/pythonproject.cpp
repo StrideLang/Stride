@@ -36,6 +36,7 @@
 #include <QDebug>
 #include <QDir>
 
+#include "codeanalysis.hpp"
 #include "codevalidator.h"
 #include "pythonproject.h"
 #include "stridesystem.hpp"
@@ -233,7 +234,7 @@ void PythonProject::astToJson(ASTNode node, QJsonObject &obj) {
       // FIXME implement support for Range
       // Are ranges and lists always unraveled by the compiler?
     }
-    newObj["rate"] = CodeValidator::getNodeRate(node);
+    newObj["rate"] = CodeAnalysis::getNodeRate(node);
     obj["bundle"] = newObj;
   } else if (node->getNodeType() == AST::Block) {
     QJsonObject newObj;
@@ -472,7 +473,7 @@ void PythonProject::functionToJson(std::shared_ptr<FunctionNode> node,
     }
   }
   obj["ports"] = propObject;
-  obj["rate"] = CodeValidator::getNodeRate(node);
+  obj["rate"] = CodeAnalysis::getNodeRate(node);
   auto inputBlock = node->getCompilerProperty("inputBlock");
   if (inputBlock) {
     if (inputBlock->getNodeType() == AST::Block) {

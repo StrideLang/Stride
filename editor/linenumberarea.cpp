@@ -32,8 +32,10 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-#include "linenumberarea.h"
+#include <QtDebug>
+
 #include "errormarker.h"
+#include "linenumberarea.h"
 
 LineNumberArea::LineNumberArea(CodeEditor *editor) : QWidget(editor) {
   m_codeEditor = editor;

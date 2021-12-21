@@ -1,6 +1,7 @@
 ﻿#include "toolmanager.hpp"
 
 #include <cstdlib>
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 
@@ -16,354 +17,357 @@ ToolManager::ToolManager(std::string strideRoot) {
 }
 
 void ToolManager::readTemplates() {
-  QDir rootDir(QString::fromStdString(m_strideRoot));
-  if (!rootDir.exists("tools")) {
-    rootDir.mkdir("tools");
-  }
-  rootDir.cd("tools");
 
+  std::filesystem::create_directories(m_strideRoot + "/tools");
   toolTemplates.clear();
   toolSearches.clear();
 
   pathTemplates.clear();
   pathSearches.clear();
 
-  auto files = rootDir.entryList(QStringList() << "*.stride");
-  for (auto file : files) {
-    auto tree = ASTFunctions::parseFile(
-        (rootDir.path() + QDir::separator() + file).toLocal8Bit().constData());
-    if (tree) {
-      for (auto child : tree->getChildren()) {
-        if (child->getNodeType() == AST::Declaration) {
-          auto decl = std::static_pointer_cast<DeclarationNode>(child);
-          if (decl->getObjectType() == "toolTemplate") { // ----------------
-            auto platformsNode = decl->getPropertyValue("platforms");
-            if (platformsNode && platformsNode->getNodeType() == AST::List) {
-              bool validPlatform = false;
-              for (auto validOSNode : platformsNode->getChildren()) {
-                if (validOSNode->getNodeType() == AST::String) {
+  std::filesystem::path rootDir(m_strideRoot + "/tools");
+  for (auto file : std::filesystem::directory_iterator{rootDir}) {
+    if (std::filesystem::is_regular_file(file) &&
+        file.path().extension() == ".stride") {
+      auto tree = ASTFunctions::parseFile(file.path().c_str());
+      if (tree) {
+        for (auto child : tree->getChildren()) {
+          if (child->getNodeType() == AST::Declaration) {
+            auto decl = std::static_pointer_cast<DeclarationNode>(child);
+            if (decl->getObjectType() == "toolTemplate") { // ----------------
+              auto platformsNode = decl->getPropertyValue("platforms");
+              if (platformsNode && platformsNode->getNodeType() == AST::List) {
+                bool validPlatform = false;
+                for (auto validOSNode : platformsNode->getChildren()) {
+                  if (validOSNode->getNodeType() == AST::String) {
 #ifdef Q_OS_LINUX
-                  if (std::static_pointer_cast<ValueNode>(validOSNode)
-                          ->getStringValue() == "Linux") {
+                    if (std::static_pointer_cast<ValueNode>(validOSNode)
+                            ->getStringValue() == "Linux") {
 #elif defined(Q_OS_MACOS)
-                  if (std::static_pointer_cast<ValueNode>(validOSNode)
-                          ->getStringValue() == "macOS") {
+                    if (std::static_pointer_cast<ValueNode>(validOSNode)
+                            ->getStringValue() == "macOS") {
 #elif defined(Q_OS_WINDOWS)
-                  if (std::static_pointer_cast<ValueNode>(validOSNode)
-                          ->getStringValue() == "Windows") {
+                    if (std::static_pointer_cast<ValueNode>(validOSNode)
+                            ->getStringValue() == "Windows") {
 #else
-                  if (false) {
+                    if (false) {
 #endif
-                    validPlatform = true;
-                    break;
+                      validPlatform = true;
+                      break;
+                    }
                   }
                 }
-              }
-              if (validPlatform) {
-                std::string displayName;
-                auto displayNameNode = decl->getPropertyValue("displayName");
-                if (displayNameNode &&
-                    displayNameNode->getNodeType() == AST::String) {
-                  displayName =
-                      std::static_pointer_cast<ValueNode>(displayNameNode)
-                          ->getStringValue();
-                }
-                std::string output;
-                auto outputNode = decl->getPropertyValue("output");
-                if (outputNode && outputNode->getNodeType() == AST::Block) {
-                  output = std::static_pointer_cast<BlockNode>(outputNode)
-                               ->getName();
-                }
-                std::string meta;
-                auto metaNode = decl->getPropertyValue("meta");
-                if (metaNode && metaNode->getNodeType() == AST::String) {
-                  meta = std::static_pointer_cast<ValueNode>(metaNode)
-                             ->getStringValue();
-                }
-
-                std::string name = decl->getName();
-                auto newTool = std::make_shared<ToolTemplate>();
-                newTool->meta = meta;
-                newTool->output = output;
-                newTool->strideName = decl->getName();
-                newTool->displayName = displayName;
-                toolTemplates.push_back(newTool);
-              }
-
-            } else {
-              std::cerr << "ERROR in platforms port in toolTemplate"
-                        << std::endl;
-            }
-          } else if (decl->getObjectType() == "toolSearch") { // -----------
-            auto platformsNode = decl->getPropertyValue("platforms");
-            if (platformsNode && platformsNode->getNodeType() == AST::List) {
-              bool validPlatform = false;
-              for (auto validOSNode : platformsNode->getChildren()) {
-                if (validOSNode->getNodeType() == AST::String) {
-#ifdef Q_OS_LINUX
-                  if (std::static_pointer_cast<ValueNode>(validOSNode)
-                          ->getStringValue() == "Linux") {
-#elif defined(Q_OS_MACOS)
-                  if (std::static_pointer_cast<ValueNode>(validOSNode)
-                          ->getStringValue() == "macOS") {
-#elif defined(Q_OS_WINDOWS)
-                  if (std::static_pointer_cast<ValueNode>(validOSNode)
-                          ->getStringValue() == "Windows") {
-#else
-                  if (false) {
-#endif
-                    validPlatform = true;
-                    break;
+                if (validPlatform) {
+                  std::string displayName;
+                  auto displayNameNode = decl->getPropertyValue("displayName");
+                  if (displayNameNode &&
+                      displayNameNode->getNodeType() == AST::String) {
+                    displayName =
+                        std::static_pointer_cast<ValueNode>(displayNameNode)
+                            ->getStringValue();
                   }
-                }
-              }
-              if (validPlatform) {
-                std::string toolTemplate;
-                auto toolTemplateNode = decl->getPropertyValue("toolTemplate");
-                if (toolTemplateNode &&
-                    toolTemplateNode->getNodeType() == AST::Block) {
-                  toolTemplate =
-                      std::static_pointer_cast<BlockNode>(toolTemplateNode)
-                          ->getName();
-                }
-                std::string rootPathRegex;
-                auto rootPathRegexNode =
-                    decl->getPropertyValue("rootPathRegex");
-                if (rootPathRegexNode &&
-                    rootPathRegexNode->getNodeType() == AST::String) {
-                  rootPathRegex =
-                      std::static_pointer_cast<ValueNode>(rootPathRegexNode)
-                          ->getStringValue();
-                }
-                std::string nameRegex;
-                auto binaryNode = decl->getPropertyValue("nameRegex");
-                if (binaryNode && binaryNode->getNodeType() == AST::String) {
-                  nameRegex = std::static_pointer_cast<ValueNode>(binaryNode)
-                                  ->getStringValue();
-                }
-
-                if (toolTemplate.size() > 0) {
-                  if (toolSearches.find(toolTemplate) != toolSearches.end()) {
-                    //                    std::cout << "Warning: tool searches
-                    //                    already contain tool "
-                    //                                 "template: "
-                    //                              << toolTemplate << ".
-                    //                              Overwriting." << std::endl;
-                    // FIXME allow multiple tool searches.
+                  std::string output;
+                  auto outputNode = decl->getPropertyValue("output");
+                  if (outputNode && outputNode->getNodeType() == AST::Block) {
+                    output = std::static_pointer_cast<BlockNode>(outputNode)
+                                 ->getName();
                   }
-                  toolSearches[toolTemplate] = std::make_shared<ToolSearch>();
-                  toolSearches[toolTemplate]->rootPathRegex = rootPathRegex;
-                  toolSearches[toolTemplate]->nameRegex = nameRegex;
-
-                } else {
-                  std::cerr << "ERROR: missing toolTemplate in toolSearch"
-                            << std::endl;
-                }
-              }
-
-            } else {
-              std::cerr << "ERROR in platforms port in toolTemplate"
-                        << std::endl;
-            }
-          } else if (decl->getObjectType() ==
-                     "pathTemplate") { // ----------------
-            auto platformsNode = decl->getPropertyValue("platforms");
-            if (platformsNode && platformsNode->getNodeType() == AST::List) {
-              bool validPlatform = false;
-              for (auto validOSNode : platformsNode->getChildren()) {
-                if (validOSNode->getNodeType() == AST::String) {
-#ifdef Q_OS_LINUX
-                  if (std::static_pointer_cast<ValueNode>(validOSNode)
-                          ->getStringValue() == "Linux") {
-#elif defined(Q_OS_MACOS)
-                  if (std::static_pointer_cast<ValueNode>(validOSNode)
-                          ->getStringValue() == "macOS") {
-#elif defined(Q_OS_WINDOWS)
-                  if (std::static_pointer_cast<ValueNode>(validOSNode)
-                          ->getStringValue() == "Windows") {
-#else
-                  if (false) {
-#endif
-                    validPlatform = true;
-                    break;
+                  std::string meta;
+                  auto metaNode = decl->getPropertyValue("meta");
+                  if (metaNode && metaNode->getNodeType() == AST::String) {
+                    meta = std::static_pointer_cast<ValueNode>(metaNode)
+                               ->getStringValue();
                   }
-                }
-              }
-              if (validPlatform) {
-                std::string displayName;
-                auto displayNameNode = decl->getPropertyValue("displayName");
-                if (displayNameNode &&
-                    displayNameNode->getNodeType() == AST::String) {
-                  displayName =
-                      std::static_pointer_cast<ValueNode>(displayNameNode)
-                          ->getStringValue();
-                }
-                std::string output;
-                auto outputNode = decl->getPropertyValue("output");
-                if (outputNode && outputNode->getNodeType() == AST::Block) {
-                  output = std::static_pointer_cast<BlockNode>(outputNode)
-                               ->getName();
-                }
-                std::string meta;
-                auto metaNode = decl->getPropertyValue("meta");
-                if (metaNode && metaNode->getNodeType() == AST::String) {
-                  meta = std::static_pointer_cast<ValueNode>(metaNode)
-                             ->getStringValue();
+
+                  std::string name = decl->getName();
+                  auto newTool = std::make_shared<ToolTemplate>();
+                  newTool->meta = meta;
+                  newTool->output = output;
+                  newTool->strideName = decl->getName();
+                  newTool->displayName = displayName;
+                  toolTemplates.push_back(newTool);
                 }
 
-                std::string name = decl->getName();
-                auto newTool = std::make_shared<PathTemplate>();
-                newTool->meta = meta;
-                newTool->output = output;
-                newTool->strideName = decl->getName();
-                newTool->displayName = displayName;
-                pathTemplates.push_back(newTool);
-              }
-
-            } else {
-              std::cerr << "ERROR in platforms port in toolTemplate"
-                        << std::endl;
-            }
-          } else if (decl->getObjectType() == "pathSearch") { // -----------
-            auto platformsNode = decl->getPropertyValue("platforms");
-            if (platformsNode && platformsNode->getNodeType() == AST::List) {
-              bool validPlatform = false;
-              for (auto validOSNode : platformsNode->getChildren()) {
-                if (validOSNode->getNodeType() == AST::String) {
-#ifdef Q_OS_LINUX
-                  if (std::static_pointer_cast<ValueNode>(validOSNode)
-                          ->getStringValue() == "Linux") {
-#elif defined(Q_OS_MACOS)
-                  if (std::static_pointer_cast<ValueNode>(validOSNode)
-                          ->getStringValue() == "macOS") {
-#elif defined(Q_OS_WINDOWS)
-                  if (std::static_pointer_cast<ValueNode>(validOSNode)
-                          ->getStringValue() == "Windows") {
-#else
-                  if (false) {
-#endif
-                    validPlatform = true;
-                    break;
-                  }
-                }
-              }
-              if (validPlatform) {
-                std::string pathTemplate;
-                auto toolTemplateNode = decl->getPropertyValue("pathTemplate");
-                if (toolTemplateNode &&
-                    toolTemplateNode->getNodeType() == AST::Block) {
-                  pathTemplate =
-                      std::static_pointer_cast<BlockNode>(toolTemplateNode)
-                          ->getName();
-                }
-                std::string rootPathRegex;
-                auto rootPathRegexNode =
-                    decl->getPropertyValue("rootPathRegex");
-                if (rootPathRegexNode &&
-                    rootPathRegexNode->getNodeType() == AST::String) {
-                  rootPathRegex =
-                      std::static_pointer_cast<ValueNode>(rootPathRegexNode)
-                          ->getStringValue();
-                }
-
-                if (pathTemplate.size() > 0) {
-                  if (toolSearches.find(pathTemplate) != toolSearches.end()) {
-                    std::cout << "Wanring: tool searces already contain tool "
-                                 "template: "
-                              << pathTemplate << ". Overwriting." << std::endl;
-                  }
-                  pathSearches[pathTemplate] = std::make_shared<PathSearch>();
-                  pathSearches[pathTemplate]->rootPathRegex = rootPathRegex;
-                } else {
-                  std::cerr << "ERROR: missing toolTemplate in toolSearch"
-                            << std::endl;
-                }
               } else {
                 std::cerr << "ERROR in platforms port in toolTemplate"
                           << std::endl;
               }
+            } else if (decl->getObjectType() == "toolSearch") { // -----------
+              auto platformsNode = decl->getPropertyValue("platforms");
+              if (platformsNode && platformsNode->getNodeType() == AST::List) {
+                bool validPlatform = false;
+                for (auto validOSNode : platformsNode->getChildren()) {
+                  if (validOSNode->getNodeType() == AST::String) {
+#ifdef Q_OS_LINUX
+                    if (std::static_pointer_cast<ValueNode>(validOSNode)
+                            ->getStringValue() == "Linux") {
+#elif defined(Q_OS_MACOS)
+                    if (std::static_pointer_cast<ValueNode>(validOSNode)
+                            ->getStringValue() == "macOS") {
+#elif defined(Q_OS_WINDOWS)
+                    if (std::static_pointer_cast<ValueNode>(validOSNode)
+                            ->getStringValue() == "Windows") {
+#else
+                    if (false) {
+#endif
+                      validPlatform = true;
+                      break;
+                    }
+                  }
+                }
+                if (validPlatform) {
+                  std::string toolTemplate;
+                  auto toolTemplateNode =
+                      decl->getPropertyValue("toolTemplate");
+                  if (toolTemplateNode &&
+                      toolTemplateNode->getNodeType() == AST::Block) {
+                    toolTemplate =
+                        std::static_pointer_cast<BlockNode>(toolTemplateNode)
+                            ->getName();
+                  }
+                  std::string rootPathRegex;
+                  auto rootPathRegexNode =
+                      decl->getPropertyValue("rootPathRegex");
+                  if (rootPathRegexNode &&
+                      rootPathRegexNode->getNodeType() == AST::String) {
+                    rootPathRegex =
+                        std::static_pointer_cast<ValueNode>(rootPathRegexNode)
+                            ->getStringValue();
+                  }
+                  std::string nameRegex;
+                  auto binaryNode = decl->getPropertyValue("nameRegex");
+                  if (binaryNode && binaryNode->getNodeType() == AST::String) {
+                    nameRegex = std::static_pointer_cast<ValueNode>(binaryNode)
+                                    ->getStringValue();
+                  }
+
+                  if (toolTemplate.size() > 0) {
+                    if (toolSearches.find(toolTemplate) != toolSearches.end()) {
+                      //                    std::cout << "Warning: tool searches
+                      //                    already contain tool "
+                      //                                 "template: "
+                      //                              << toolTemplate << ".
+                      //                              Overwriting." <<
+                      //                              std::endl;
+                      // FIXME allow multiple tool searches.
+                    }
+                    toolSearches[toolTemplate] = std::make_shared<ToolSearch>();
+                    toolSearches[toolTemplate]->rootPathRegex = rootPathRegex;
+                    toolSearches[toolTemplate]->nameRegex = nameRegex;
+
+                  } else {
+                    std::cerr << "ERROR: missing toolTemplate in toolSearch"
+                              << std::endl;
+                  }
+                }
+
+              } else {
+                std::cerr << "ERROR in platforms port in toolSearch"
+                          << std::endl;
+              }
+            } else if (decl->getObjectType() ==
+                       "pathTemplate") { // ----------------
+              auto platformsNode = decl->getPropertyValue("platforms");
+              if (platformsNode && platformsNode->getNodeType() == AST::List) {
+                bool validPlatform = false;
+                for (auto validOSNode : platformsNode->getChildren()) {
+                  if (validOSNode->getNodeType() == AST::String) {
+#ifdef Q_OS_LINUX
+                    if (std::static_pointer_cast<ValueNode>(validOSNode)
+                            ->getStringValue() == "Linux") {
+#elif defined(Q_OS_MACOS)
+                    if (std::static_pointer_cast<ValueNode>(validOSNode)
+                            ->getStringValue() == "macOS") {
+#elif defined(Q_OS_WINDOWS)
+                    if (std::static_pointer_cast<ValueNode>(validOSNode)
+                            ->getStringValue() == "Windows") {
+#else
+                    if (false) {
+#endif
+                      validPlatform = true;
+                      break;
+                    }
+                  }
+                }
+                if (validPlatform) {
+                  std::string displayName;
+                  auto displayNameNode = decl->getPropertyValue("displayName");
+                  if (displayNameNode &&
+                      displayNameNode->getNodeType() == AST::String) {
+                    displayName =
+                        std::static_pointer_cast<ValueNode>(displayNameNode)
+                            ->getStringValue();
+                  }
+                  std::string output;
+                  auto outputNode = decl->getPropertyValue("output");
+                  if (outputNode && outputNode->getNodeType() == AST::Block) {
+                    output = std::static_pointer_cast<BlockNode>(outputNode)
+                                 ->getName();
+                  }
+                  std::string meta;
+                  auto metaNode = decl->getPropertyValue("meta");
+                  if (metaNode && metaNode->getNodeType() == AST::String) {
+                    meta = std::static_pointer_cast<ValueNode>(metaNode)
+                               ->getStringValue();
+                  }
+
+                  std::string name = decl->getName();
+                  auto newTool = std::make_shared<PathTemplate>();
+                  newTool->meta = meta;
+                  newTool->output = output;
+                  newTool->strideName = decl->getName();
+                  newTool->displayName = displayName;
+                  pathTemplates.push_back(newTool);
+                }
+
+              } else {
+                std::cerr << "ERROR in platforms port in pathTemplate"
+                          << std::endl;
+              }
+            } else if (decl->getObjectType() == "pathSearch") { // -----------
+              auto platformsNode = decl->getPropertyValue("platforms");
+              if (platformsNode && platformsNode->getNodeType() == AST::List) {
+                bool validPlatform = false;
+                for (auto validOSNode : platformsNode->getChildren()) {
+                  if (validOSNode->getNodeType() == AST::String) {
+#ifdef Q_OS_LINUX
+                    if (std::static_pointer_cast<ValueNode>(validOSNode)
+                            ->getStringValue() == "Linux") {
+#elif defined(Q_OS_MACOS)
+                    if (std::static_pointer_cast<ValueNode>(validOSNode)
+                            ->getStringValue() == "macOS") {
+#elif defined(Q_OS_WINDOWS)
+                    if (std::static_pointer_cast<ValueNode>(validOSNode)
+                            ->getStringValue() == "Windows") {
+#else
+                    if (false) {
+#endif
+                      validPlatform = true;
+                      break;
+                    }
+                  }
+                }
+                if (validPlatform) {
+                  std::string pathTemplate;
+                  auto toolTemplateNode =
+                      decl->getPropertyValue("pathTemplate");
+                  if (toolTemplateNode &&
+                      toolTemplateNode->getNodeType() == AST::Block) {
+                    pathTemplate =
+                        std::static_pointer_cast<BlockNode>(toolTemplateNode)
+                            ->getName();
+                  }
+                  std::string rootPathRegex;
+                  auto rootPathRegexNode =
+                      decl->getPropertyValue("rootPathRegex");
+                  if (rootPathRegexNode &&
+                      rootPathRegexNode->getNodeType() == AST::String) {
+                    rootPathRegex =
+                        std::static_pointer_cast<ValueNode>(rootPathRegexNode)
+                            ->getStringValue();
+                  }
+
+                  if (pathTemplate.size() > 0) {
+                    if (toolSearches.find(pathTemplate) != toolSearches.end()) {
+                      std::cout << "Wanring: tool searces already contain tool "
+                                   "template: "
+                                << pathTemplate << ". Overwriting."
+                                << std::endl;
+                    }
+                    pathSearches[pathTemplate] = std::make_shared<PathSearch>();
+                    pathSearches[pathTemplate]->rootPathRegex = rootPathRegex;
+                  } else {
+                    std::cerr << "ERROR: missing pathTemplate in pathSearch"
+                              << std::endl;
+                  }
+                } else {
+                  std::cerr << "ERROR invalid platform in pathSearch"
+                            << std::endl;
+                }
+              }
+            } else {
+              std::cerr << "Unsupported declaration in tool file." << std::endl;
             }
           } else {
-            std::cerr << "Unsupported declaration in tool file." << std::endl;
+            std::cerr << "Unexpected node in tool file." << std::endl;
           }
-        } else {
-          std::cerr << "Unexpected node in tool file." << std::endl;
         }
+      } else {
+        std::cerr << "ERROR parsing tool file: " << file.path() << std::endl;
       }
-    } else {
-      std::cerr << "ERROR parsing tool file: " << file.toStdString()
-                << std::endl;
     }
   }
 }
 
 void ToolManager::readLocalConfigs() {
-  QDir rootDir(QString::fromStdString(m_strideRoot) + QDir::separator() +
-               "local/tools");
+
+  if (!std::filesystem::exists(m_strideRoot + "/local/tools")) {
+    std::filesystem::create_directories(m_strideRoot + "/local/tools");
+  }
 
   localTools.clear();
   localPaths.clear();
-  auto files = rootDir.entryList(QStringList() << "*.stride");
-  for (auto file : files) {
-    auto tree = ASTFunctions::parseFile(
-        (rootDir.path() + QDir::separator() + file).toLocal8Bit().constData());
-    if (tree) {
-      for (auto child : tree->getChildren()) {
-        if (child->getNodeType() == AST::Declaration) {
-          auto decl = std::static_pointer_cast<DeclarationNode>(child);
-          if (decl->getObjectType() == "toolInstance") {
-            auto executableNode = decl->getPropertyValue("executable");
-            if (executableNode &&
-                executableNode->getNodeType() == AST::String) {
-              std::string executable =
-                  std::static_pointer_cast<ValueNode>(executableNode)
-                      ->getStringValue();
-              localTools[decl->getName()] = executable;
+  std::filesystem::path rootDir(m_strideRoot + "/local/tools");
+  for (const auto &file : std::filesystem::directory_iterator{rootDir}) {
+    if (std::filesystem::is_regular_file(file) &&
+        file.path().extension() == ".stride") {
+      auto tree = ASTFunctions::parseFile(file.path().c_str());
+      if (tree) {
+        for (const auto &child : tree->getChildren()) {
+          if (child->getNodeType() == AST::Declaration) {
+            auto decl = std::static_pointer_cast<DeclarationNode>(child);
+            if (decl->getObjectType() == "toolInstance") {
+              auto executableNode = decl->getPropertyValue("executable");
+              if (executableNode &&
+                  executableNode->getNodeType() == AST::String) {
+                std::string executable =
+                    std::static_pointer_cast<ValueNode>(executableNode)
+                        ->getStringValue();
+                localTools[decl->getName()] = executable;
 
-            } else {
-              std::cerr << "ERROR: Invalid executable port in tool instance "
-                        << file.toStdString() << std::endl;
-            }
-          } else if (decl->getObjectType() == "pathInstance") {
-            auto pathNode = decl->getPropertyValue("path");
-            if (pathNode && pathNode->getNodeType() == AST::String) {
-              std::string path = std::static_pointer_cast<ValueNode>(pathNode)
-                                     ->getStringValue();
-
-              if (path.find("~") != std::string::npos) {
-                path.replace(path.find("~"), 1, QDir::homePath().toStdString());
+              } else {
+                std::cerr << "ERROR: Invalid executable port in tool instance "
+                          << file.path() << std::endl;
               }
-              localPaths[decl->getName()] = path;
+            } else if (decl->getObjectType() == "pathInstance") {
+              auto pathNode = decl->getPropertyValue("path");
+              if (pathNode && pathNode->getNodeType() == AST::String) {
+                std::string path = std::static_pointer_cast<ValueNode>(pathNode)
+                                       ->getStringValue();
 
-            } else {
-              std::cerr << "ERROR: Invalid executable port in tool instance "
-                        << file.toStdString() << std::endl;
+                if (path.find("~") != std::string::npos) {
+#ifndef _WINDOWS
+                  auto home = std::getenv("HOME");
+#else
+                  auto home = std::getenv("USERPROFILE");
+#endif
+                  path.replace(path.find("~"), 1, std::string(home));
+                }
+                localPaths[decl->getName()] = path;
+
+              } else {
+                std::cerr << "ERROR: Invalid executable port in tool instance "
+                          << file.path() << std::endl;
+              }
             }
           }
         }
+      } else {
+        std::cerr << "ERROR pasring tool instance: " << file.path()
+                  << std::endl;
       }
-    } else {
-      std::cerr << "ERROR pasring tool instance: " << file.toStdString()
-                << std::endl;
     }
   }
 }
 
 void ToolManager::updateAllLocalConfigs() {
-  QDir rootDir(QString::fromStdString(m_strideRoot));
+  if (std::filesystem::exists(m_strideRoot + "/local/tools")) {
+    std::filesystem::remove_all(m_strideRoot + "/local/tools");
+  }
 
-  if (!rootDir.exists("local")) {
-    rootDir.mkdir("local");
-  }
-  rootDir.cd("local");
-  if (rootDir.exists("tools")) {
-    rootDir.cd("tools");
-    rootDir.removeRecursively();
-    rootDir.cdUp();
-  }
-  rootDir.mkdir("tools");
-  rootDir.cd("tools");
-  for (auto toolTemplate : toolTemplates) {
+  std::filesystem::create_directories(m_strideRoot + "/local/tools");
+
+  for (const auto &toolTemplate : toolTemplates) {
     if (toolSearches.find(toolTemplate->strideName) == toolSearches.end()) {
       std::cerr << "No search directive for tool: " << toolTemplate->strideName
                 << std::endl;
@@ -373,22 +377,25 @@ void ToolManager::updateAllLocalConfigs() {
     auto search = toolSearches[toolTemplate->strideName];
 
     // TODO implement regex search of name
-    QFileInfo fi(QString::fromStdString(search->nameRegex));
-    if (fi.isAbsolute() && fi.exists()) {
+    std::filesystem::path fi(search->nameRegex);
+    if (fi.is_absolute() && std::filesystem::exists(fi)) {
       // First try path as absolute
       foundExecutable = search->nameRegex;
     } else {
       if (search->rootPathRegex.size() > 0) {
         // FIXME add regex search
         if (search->rootPathRegex[0] == '~') {
+#ifndef _WINDOWS
+          auto home = std::getenv("HOME");
+#else
+          auto home = std::getenv("USERPROFILE");
+#endif
           search->rootPathRegex =
-              QDir::homePath().toStdString() + search->rootPathRegex.substr(1);
+              std::string(home) + search->rootPathRegex.substr(1);
         }
-        if (QFile::exists(QString::fromStdString(search->rootPathRegex) +
-                          QDir::separator() +
-                          QString::fromStdString(search->nameRegex))) {
-          foundExecutable = search->rootPathRegex +
-                            QDir::separator().toLatin1() + search->nameRegex;
+        if (std::filesystem::exists(search->rootPathRegex + "/" +
+                                    search->nameRegex)) {
+          foundExecutable = search->rootPathRegex + "/" + search->nameRegex;
         }
       }
       // Then check if in system path
@@ -402,10 +409,8 @@ void ToolManager::updateAllLocalConfigs() {
         std::stringstream ss(pathEnv);
         std::string token;
         while (std::getline(ss, token, delim)) {
-          if (QFile::exists(QString::fromStdString(token) + QDir::separator() +
-                            QString::fromStdString(search->nameRegex))) {
-            foundExecutable =
-                token + QDir::separator().toLatin1() + search->nameRegex;
+          if (std::filesystem::exists(token + "/" + search->nameRegex)) {
+            foundExecutable = token + "/" + search->nameRegex;
             break;
           }
         }
@@ -413,8 +418,8 @@ void ToolManager::updateAllLocalConfigs() {
     }
 
     if (foundExecutable.size() > 0) {
-      std::ofstream f((rootDir.path() + QDir::separator()).toStdString() +
-                      toolTemplate->output + ".stride");
+      std::ofstream f(m_strideRoot + "/local/tools/" + toolTemplate->output +
+                      ".stride");
       if (!f.good()) {
         std::cerr << "ERROR creating tool config file:"
                   << toolTemplate->strideName << std::endl;
@@ -431,7 +436,7 @@ void ToolManager::updateAllLocalConfigs() {
     }
   }
 
-  for (auto pathTemplate : pathTemplates) {
+  for (const auto &pathTemplate : pathTemplates) {
     std::string foundPath;
     auto search = pathSearches[pathTemplate->strideName];
 
@@ -445,8 +450,8 @@ void ToolManager::updateAllLocalConfigs() {
     //    }
 
     if (foundPath.size() > 0) {
-      std::ofstream f((rootDir.path() + QDir::separator()).toStdString() +
-                      pathTemplate->output + ".stride");
+      std::ofstream f(m_strideRoot + "/local/tools" + pathTemplate->output +
+                      ".stride");
       if (!f.good()) {
         std::cerr << "ERROR creating path instance file:"
                   << pathTemplate->strideName << std::endl;

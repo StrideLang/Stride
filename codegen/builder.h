@@ -39,6 +39,8 @@
 #include "declarationnode.h"
 #include "systemconfiguration.hpp"
 
+#include <functional>
+
 #define STRIDE_PLUGIN_MAX_STR_LEN 32
 
 class Builder;
@@ -59,8 +61,7 @@ typedef struct {
 
 class StrideSystem;
 
-class Builder : public QObject {
-  Q_OBJECT
+class Builder {
 public:
   Builder(std::string projectDir, std::string strideRoot,
           std::string platformPath)
@@ -73,15 +74,17 @@ public:
   virtual std::string getStdOut() const = 0;
   virtual void clearBuffers() = 0;
 
-  void registerYieldCallback(std::function<void()> cb) { m_yieldCallback = cb; }
-
   // Additional information from stride system
   std::shared_ptr<StrideSystem>
       m_system; // The StrideSystem that created this builder.
   SystemConfiguration m_systemConfiguration;
   std::string m_frameworkName;
 
-public slots:
+  std::function<void(std::string)> outputText = [](std::string) {};
+  std::function<void(std::string)> errorText = [](std::string) {};
+  std::function<void(void)> programStopped = []() {};
+  std::function<void(void)> yieldCallback = []() {};
+
   virtual std::map<std::string, std::string> generateCode(ASTNode tree) = 0;
   virtual bool build(std::map<std::string, std::string> domainMap) = 0;
   virtual bool deploy() = 0;
@@ -97,19 +100,12 @@ protected:
   std::string m_strideRoot;
   std::string m_platformPath;
 
-  std::function<void()> m_yieldCallback = []() {};
-
   std::string substituteTokens(std::string text);
 
 private:
   PluginInterface m_interface;
   //  QLibrary *m_pluginLibrary;
   //  Builder *m_project;
-
-signals:
-  void outputText(QString text);
-  void errorText(QString text);
-  void programStopped();
 };
 
 inline std::string Builder::substituteTokens(std::string text) {

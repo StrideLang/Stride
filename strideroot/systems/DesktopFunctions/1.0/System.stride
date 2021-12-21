@@ -33,7 +33,7 @@ connection _PCTemplateToWiringSerial {
 }
 
 connection _WiringToPCTemplateSerial {
-	sourceFramework _WiringPlatform
+	sourceFramework: _WiringPlatform
 	sourceDomains: [ "WiringDomain" ]
 	destinationFramework: _PCTemplatePlatform
 	destinationDomains: [ "AudioDomain" ]
