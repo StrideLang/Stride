@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(STRIDE_CODE_COVERAGE "Enable Code coverage for tests" OFF)
 
-add_subdirectory(parser)
+add_subdirectory(strideparser)
 add_subdirectory(codegen)
 add_subdirectory(tests)
 add_subdirectory(compiler)

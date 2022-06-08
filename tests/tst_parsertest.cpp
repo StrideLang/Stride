@@ -43,8 +43,8 @@
 #include "strideframework.hpp"
 #include "strideparser.h"
 
-#include "../parser/astfunctions.h"
-#include "../parser/astquery.h"
+#include "astfunctions.h"
+#include "astquery.h"
 
 extern AST *parse(const char *fileName);
 
@@ -111,9 +111,9 @@ private Q_SLOTS:
   void testLibraryValidation();
 
   // Code generation/Compiler
-  //  void testCodeGeneration();
 
 public:
+  //  void testCodeGeneration();
   void testCompilation();
 };
 
@@ -449,14 +449,13 @@ void ParserTest::testCodeGeneration() {
 
   BuildTester tester(STRIDEROOT);
 
-  QStringList toIgnore = {/*"simple", "module",
-                          "reactions",
-                          "table",
-                          "buffer",
-                          "loop",
-                          "platform", "multidomain",
-                          "combinations" ,*/
-                          "sync"};
+  QStringList toIgnore = {
+      /*"simple", "module", "reactions", "table", */ "buffer",
+      "loop",
+      "platform",
+      "multidomain",
+      "combinations",
+      "sync"};
   while (directories.hasNext()) {
     QString dirName = directories.next();
     if (!toIgnore.contains(dirName.mid(dirName.lastIndexOf("/") + 1))) {

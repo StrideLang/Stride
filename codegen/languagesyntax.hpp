@@ -3,8 +3,8 @@
 
 #include <string>
 
-#include "../parser/expressionnode.h"
-#include "../parser/valuenode.h"
+#include "expressionnode.h"
+#include "valuenode.h"
 #include "codeentities.hpp"
 
 class LanguageSyntax {

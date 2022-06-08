@@ -4,3 +4,6 @@
 [submodule "external/antlr4"]
 	path = external/antlr4
 	url = https://github.com/antlr/antlr4.git
+[submodule "strideparser"]
+	path = strideparser
+	url = https://github.com/StrideLang/strideparser

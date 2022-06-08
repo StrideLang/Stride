@@ -40,10 +40,10 @@
 #include <filesystem>
 #include <iostream>
 
-#include "../parser/astfunctions.h"
-#include "../parser/astquery.h"
-#include "../parser/declarationnode.h"
-#include "../parser/valuenode.h"
+#include "astfunctions.h"
+#include "astquery.h"
+#include "declarationnode.h"
+#include "valuenode.h"
 
 using namespace std;
 

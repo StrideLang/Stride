@@ -6,10 +6,10 @@
 #include <string>
 
 #include "../codegen/codevalidator.h"
-#include "../parser/ast.h"
-#include "../parser/declarationnode.h"
-#include "../parser/functionnode.h"
-#include "../parser/portpropertynode.h"
+#include "ast.h"
+#include "declarationnode.h"
+#include "functionnode.h"
+#include "portpropertynode.h"
 
 typedef enum {
   ACCESS_NONE = 0,
