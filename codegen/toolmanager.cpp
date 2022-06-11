@@ -29,7 +29,7 @@ void ToolManager::readTemplates() {
   for (auto file : std::filesystem::directory_iterator{rootDir}) {
     if (std::filesystem::is_regular_file(file) &&
         file.path().extension() == ".stride") {
-      auto tree = ASTFunctions::parseFile(file.path().c_str());
+      auto tree = ASTFunctions::parseFile(file.path().generic_string().c_str());
       if (tree) {
         for (auto child : tree->getChildren()) {
           if (child->getNodeType() == AST::Declaration) {
@@ -311,7 +311,7 @@ void ToolManager::readLocalConfigs() {
   for (const auto &file : std::filesystem::directory_iterator{rootDir}) {
     if (std::filesystem::is_regular_file(file) &&
         file.path().extension() == ".stride") {
-      auto tree = ASTFunctions::parseFile(file.path().c_str());
+      auto tree = ASTFunctions::parseFile(file.path().generic_string().c_str());
       if (tree) {
         for (const auto &child : tree->getChildren()) {
           if (child->getNodeType() == AST::Declaration) {

@@ -158,7 +158,7 @@ void StrideFramework::installFramework() {
                   //                      });
                   //                  installProcess.start(QString::fromStdString(command),
                   //                                       QStringList());
-
+#ifdef Q_OS_LINUX
                   auto previousPath = std::filesystem::current_path();
                   std::filesystem::current_path(workingDirectory);
                   FILE *pipe = popen(command.c_str(), "r");
@@ -184,6 +184,7 @@ void StrideFramework::installFramework() {
                   }
 
                   std::filesystem::current_path(previousPath);
+#endif
                 }
               }
             }
