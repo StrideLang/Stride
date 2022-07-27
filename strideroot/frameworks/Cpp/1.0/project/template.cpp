@@ -1,5 +1,0 @@
-//[[Includes]]
-//[[/Includes]]
-
-//[[Declarations]]
-//[[/Declarations]]

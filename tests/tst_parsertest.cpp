@@ -443,9 +443,9 @@ void ParserTest::testPortNameValidation() {
 
 void ParserTest::testCodeGeneration() {
   QStringList testFiles;
-  QDirIterator directories(STRIDEROOT "/_tests/", QDir::Dirs |
-                                                      QDir::NoSymLinks |
-                                                      QDir::NoDotAndDotDot);
+  QDirIterator directories(BUILDPATH "/tests/data", QDir::Dirs |
+                                                        QDir::NoSymLinks |
+                                                        QDir::NoDotAndDotDot);
 
   BuildTester tester(STRIDEROOT);
 
