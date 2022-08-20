@@ -7,6 +7,6 @@
 [submodule "strideparser"]
 	path = strideparser
 	url = https://github.com/StrideLang/strideparser
-[submodule "stridejit"]
-	path = stridejit
-	url = git@github.com:StrideLang/stridejit.git
+[submodule "strideroot"]
+	path = strideroot
+	url = https://github.com/StrideLang/strideroot.git

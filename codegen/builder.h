@@ -36,7 +36,6 @@
 #define BASEPROJECT_H
 
 #include "ast.h"
-#include "declarationnode.h"
 #include "systemconfiguration.hpp"
 
 #include <functional>
@@ -114,7 +113,7 @@ inline std::string Builder::substituteTokens(std::string text) {
   tokenMap["%strideRoot%"] = m_strideRoot;
   tokenMap["%platformRoot%"] = m_platformPath;
   tokenMap["%projectName%"] = m_platformPath;
-  for (auto mapEntry : tokenMap) {
+  for (const auto &mapEntry : tokenMap) {
     size_t startPos;
     while ((startPos = text.find(mapEntry.first.c_str())) !=
            std::string::npos) {

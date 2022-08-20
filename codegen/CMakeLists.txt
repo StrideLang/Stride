@@ -59,4 +59,10 @@ if (STRIDE_CODE_COVERAGE)
 endif()
 
 target_include_directories(StrideCodegen PUBLIC ../parser .)
-target_link_libraries(StrideCodegen dl StrideParser)
+
+if ("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
+    target_link_libraries(StrideCodegen dl StrideParser)
+else()
+    target_link_libraries(StrideCodegen StrideParser)
+
+endif()

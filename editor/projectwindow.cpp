@@ -2264,7 +2264,7 @@ void ProjectWindow::configureSystem() {
          comboBoxInfo != intComboBoxes.constEnd(); ++comboBoxInfo) {
       systemConfig
           .frameworkConfigurations["all"][comboBoxInfo.key().toStdString()] =
-          comboBoxInfo.value()->currentText().toLong();
+          comboBoxInfo.value()->currentText().toLongLong();
     }
     for (auto spinBoxInfo = spinBoxes.constBegin();
          spinBoxInfo != spinBoxes.constEnd(); ++spinBoxInfo) {
@@ -2288,7 +2288,7 @@ void ProjectWindow::configureSystem() {
     for (auto comboBoxInfo = overrideIntComboBoxes.constBegin();
          comboBoxInfo != overrideIntComboBoxes.constEnd(); ++comboBoxInfo) {
       systemConfig.overrides["all"][comboBoxInfo.key().toStdString()] =
-          comboBoxInfo.value()->currentText().toLong();
+          comboBoxInfo.value()->currentText().toLongLong();
     }
     for (auto spinBoxInfo = overrideSpinBoxes.constBegin();
          spinBoxInfo != overrideSpinBoxes.constEnd(); ++spinBoxInfo) {

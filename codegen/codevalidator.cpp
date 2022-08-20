@@ -35,6 +35,7 @@
 #include "codevalidator.h"
 #include "codeanalysis.hpp"
 
+#include <algorithm>
 #include <iostream>
 #include <memory>
 #include <sstream>

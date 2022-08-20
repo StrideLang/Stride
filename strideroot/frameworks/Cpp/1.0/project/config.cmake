@@ -1,4 +1,0 @@
-set(INCLUDE_DIRS "")
-set(ADDITIONAL_SOURCES "")
-set(ADDITIONAL_DEFINES "")
-set(LINK_LIBRARIES %%link_libraries%%)
