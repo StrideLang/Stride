@@ -115,8 +115,7 @@ void StriderootManagementDialog::itemClicked(QTreeWidgetItem *item,
     ui->versionComboBox->addItem(i.key(), i.value());
   }
 
-  void (QComboBox::*mySignal)(const QString &text) = &QComboBox::activated; // ::textActivated;
-  connect(ui->versionComboBox, mySignal,
+  connect(ui->versionComboBox, &QComboBox::textActivated,
           [this, item, column](const QString &text) {
             ui->detailsText->setText(
                 item->data(column, Qt::UserRole).toMap()[text].toString());

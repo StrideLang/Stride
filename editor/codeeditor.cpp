@@ -36,6 +36,7 @@
 
 #include <QDebug>
 #include <QPainter>
+#include <QRegularExpression>
 #include <QScrollBar>
 #include <QTextBlock>
 
@@ -92,13 +93,13 @@ int CodeEditor::lineNumberAreaWidth() {
 bool CodeEditor::isChanged() { return document()->isModified(); }
 
 bool CodeEditor::changedSinceParse() {
-  return m_changedSinceParse.load() != 0;
-//  return m_changedSinceParse.loadRelaxed() != 0;
+  return m_changedSinceParse.loadRelaxed() != 0;
+  //  return m_changedSinceParse.loadRelaxed() != 0;
 }
 
 void CodeEditor::markParsed() {
   m_changedSinceParse.storeRelease(0);
-//  m_changedSinceParse.storeRelaxed(0);
+  //  m_changedSinceParse.storeRelaxed(0);
 }
 
 void CodeEditor::setAutoComplete(bool enable) { m_autoComplete = enable; }
@@ -249,7 +250,7 @@ void CodeEditor::updateAutoCompleteMenu(QString currentWord) {
 
 void CodeEditor::markChanged(bool changed) {
   document()->setModified(changed);
-//  m_changedSinceParse.storeRelaxed(1);
+  //  m_changedSinceParse.storeRelaxed(1);
   m_changedSinceParse.storeRelease(1);
 }
 
@@ -259,8 +260,8 @@ bool CodeEditor::eventFilter(QObject *obj, QEvent *event) {
       event->type() == QEvent::KeyPress) {
     QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
     //        qDebug("Ate key press %d", keyEvent->key());
-    QRegExp regex("\\w+");
-    if (regex.indexIn(keyEvent->text()) >= 0) {
+    QRegularExpression regex("\\w+");
+    if (keyEvent->text().indexOf(regex) >= 0) {
       this->event(event);
       QTextCursor cursor = textCursor();
       cursor.select(QTextCursor::WordUnderCursor);
@@ -451,7 +452,7 @@ void CodeEditor::keyReleaseEvent(QKeyEvent *event) {
 }
 
 void CodeEditor::mouseMoveEvent(QMouseEvent *event) {
-  m_toolTip.setGeometry(event->x(), event->y(), 10, 10);
+  m_toolTip.setGeometry(event->position().x(), event->position().y(), 10, 10);
   m_toolTip.hide();
   m_mouseIdleTimer.start();
   QPlainTextEdit::mouseMoveEvent(event);

@@ -66,7 +66,7 @@
 #include "savechangeddialog.h"
 #include "striderootmanagementdialog.h"
 
-#include "pythonproject.h"
+//#include "pythonproject.h"
 
 ProjectWindow::ProjectWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::ProjectWindow),
@@ -118,7 +118,7 @@ void ProjectWindow::initialize(bool resetOpenFiles) {
 
   QVBoxLayout *layout = new QVBoxLayout;
   layout->addWidget(m_searchWidget.data());
-  layout->setMargin(0);
+  layout->setContentsMargins(0, 0, 0, 0);
   ui->belowEditorWidget->setLayout(layout);
 
   m_searchWidget->hide();
@@ -144,7 +144,7 @@ bool ProjectWindow::build() {
   syntaxErrors = ASTFunctions::getParseErrors();
 
   if (syntaxErrors.size() > 0) {
-    for (auto syntaxError : syntaxErrors) {
+    for (auto &syntaxError : syntaxErrors) {
       errors << syntaxError;
     }
     editor->setErrors(errors);
@@ -767,7 +767,8 @@ void ProjectWindow::prepareMenus() {
 }
 
 void ProjectWindow::setEditorText(QString code) {
-  QTextEdit *editor = static_cast<QTextEdit *>(ui->tabWidget->currentWidget());
+  CodeEditor *editor =
+      static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
   editor->setPlainText(code);
 }
 
@@ -1257,7 +1258,7 @@ void ProjectWindow::fillInspectorTree() {
   //  ui->resourcesTreeWidget->setSortingEnabled(false);
 
   if (tree) {
-    for (auto node : tree->getChildren()) {
+    for (auto &node : tree->getChildren()) {
       if (node->getNodeType() == AST::Declaration ||
           node->getNodeType() == AST::BundleDeclaration) {
         std::shared_ptr<DeclarationNode> decl =
@@ -1274,7 +1275,7 @@ void ProjectWindow::fillInspectorTree() {
             auto writes = decl->getCompilerProperty("writes");
             if (writes) {
               tooltipText += "Writes:\n";
-              for (auto write : writes->getChildren()) {
+              for (auto &write : writes->getChildren()) {
                 if (write->getNodeType() == AST::String) {
                   tooltipText += QString::fromStdString(
                       std::static_pointer_cast<ValueNode>(write)
@@ -1289,7 +1290,7 @@ void ProjectWindow::fillInspectorTree() {
             auto reads = decl->getCompilerProperty("reads");
             if (reads) {
               tooltipText += "Reads:\n";
-              for (auto read : reads->getChildren()) {
+              for (auto &read : reads->getChildren()) {
                 if (read->getNodeType() == AST::String) {
                   tooltipText += QString::fromStdString(
                       std::static_pointer_cast<ValueNode>(read)

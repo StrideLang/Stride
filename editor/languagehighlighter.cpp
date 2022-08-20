@@ -35,6 +35,7 @@
 #include <QDebug>
 
 #include <QMutexLocker>
+#include <QRegularExpression>
 #include <QTextDocument>
 
 #include "languagehighlighter.h"
@@ -54,7 +55,7 @@ LanguageHighlighter::LanguageHighlighter(QObject *parent)
 void LanguageHighlighter::highlightBlock(const QString &text) {
   QMutexLocker locker(&m_highlighterLock);
 
-  QRegExp expression;
+  QRegularExpression expression;
   QString pattern;
   int index;
 
@@ -63,39 +64,47 @@ void LanguageHighlighter::highlightBlock(const QString &text) {
   expression.setPattern(pattern);
   index = text.indexOf(expression);
   while (index >= 0) {
-    int length = expression.matchedLength();
+    auto match = QRegularExpressionMatch{};
+    index = text.lastIndexOf(expression, index + 1, &match);
+    int length = match.captured(0).size();
     setFormat(index, length, m_formats["ports"]);
     index = text.indexOf(expression, index + length);
   }
 
-  for (QString keyword : m_keywords) {
+  for (const QString &keyword : m_keywords) {
     pattern = QString("\\b%1\\b").arg(keyword);
     expression.setPattern(pattern);
     index = text.indexOf(expression);
     while (index >= 0) {
-      int length = expression.matchedLength();
+      auto match = QRegularExpressionMatch{};
+      index = text.lastIndexOf(expression, index + 1, &match);
+      int length = match.captured(0).size();
       setFormat(index, length, m_formats["keywords"]);
       index = text.indexOf(expression, index + length);
     }
   }
 
-  for (QString blockType : m_blockTypes) {
+  for (const QString &blockType : m_blockTypes) {
     pattern = QString("\\b%1\\b").arg(blockType);
     expression.setPattern(pattern);
     index = text.indexOf(expression);
     while (index >= 0) {
-      int length = expression.matchedLength();
+      auto match = QRegularExpressionMatch{};
+      index = text.lastIndexOf(expression, index + 1, &match);
+      int length = match.captured(0).size();
       setFormat(index, length, m_formats["type"]);
       index = text.indexOf(expression, index + length);
     }
   }
 
-  for (QString objectName : m_builtinNames) {
+  for (const QString &objectName : m_builtinNames) {
     pattern = QString("\\b%1\\b").arg(objectName);
     expression.setPattern(pattern);
     index = text.indexOf(expression);
     while (index >= 0) {
-      int length = expression.matchedLength();
+      auto match = QRegularExpressionMatch{};
+      index = text.lastIndexOf(expression, index + 1, &match);
+      int length = match.captured(0).size();
       setFormat(index, length, m_formats["builtin"]);
       index = text.indexOf(expression, index + length);
     }
@@ -106,7 +115,9 @@ void LanguageHighlighter::highlightBlock(const QString &text) {
     expression.setPattern(pattern);
     index = text.indexOf(expression);
     while (index >= 0) {
-      int length = expression.matchedLength();
+      auto match = QRegularExpressionMatch{};
+      index = text.lastIndexOf(expression, index + 1, &match);
+      int length = match.captured(0).size();
       setFormat(index, length, m_formats["function"]);
       index = text.indexOf(expression, index + length);
     }
@@ -116,7 +127,9 @@ void LanguageHighlighter::highlightBlock(const QString &text) {
   expression.setPattern(pattern);
   index = text.indexOf(expression);
   while (index >= 0) {
-    int length = expression.matchedLength();
+    auto match = QRegularExpressionMatch{};
+    index = text.lastIndexOf(expression, index + 1, &match);
+    int length = match.captured(0).size();
     setFormat(index, length, m_formats["streamOp"]);
     index = text.indexOf(expression, index + length);
   }
@@ -125,7 +138,9 @@ void LanguageHighlighter::highlightBlock(const QString &text) {
   expression.setPattern(pattern);
   index = text.indexOf(expression);
   while (index >= 0) {
-    int length = expression.matchedLength();
+    auto match = QRegularExpressionMatch{};
+    index = text.lastIndexOf(expression, index + 1, &match);
+    int length = match.captured(0).size();
     setFormat(index, length, m_formats["strings"]);
     index = text.indexOf(expression, index + length);
   }
@@ -134,7 +149,9 @@ void LanguageHighlighter::highlightBlock(const QString &text) {
   expression.setPattern(pattern);
   index = text.indexOf(expression);
   while (index >= 0) {
-    int length = expression.matchedLength();
+    auto match = QRegularExpressionMatch{};
+    index = text.lastIndexOf(expression, index + 1, &match);
+    int length = match.captured(0).size();
     setFormat(index, length, m_formats["strings"]);
     index = text.indexOf(expression, index + length);
   }
@@ -144,7 +161,9 @@ void LanguageHighlighter::highlightBlock(const QString &text) {
   expression.setPattern(pattern);
   index = text.indexOf(expression);
   while (index >= 0) {
-    int length = expression.matchedLength();
+    auto match = QRegularExpressionMatch{};
+    index = text.lastIndexOf(expression, index + 1, &match);
+    int length = match.captured(0).size();
     setFormat(index, length, m_formats["comments"]);
     index = text.indexOf(expression, index + length);
   }
