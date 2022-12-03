@@ -10,7 +10,6 @@ set(CODEGEN_SRC
   codeanalysis.cpp
   codequery.cpp
   strideframework.cpp
-  stridelibrary.cpp
   stridesystem.cpp
   systemconfiguration.cpp
   languagesyntax.cpp
@@ -25,7 +24,6 @@ set(CODEGEN_HEADERS
   codequery.hpp
   builder.h
   strideframework.hpp
-  stridelibrary.hpp
   stridesystem.hpp
   systemconfiguration.hpp
   languagesyntax.hpp

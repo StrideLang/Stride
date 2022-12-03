@@ -38,7 +38,7 @@
 //#include <QLibrary>
 
 #include "strideframework.hpp"
-#include "stridelibrary.hpp"
+#include "stridelibrary.h"
 #include "strideparser.h"
 #include "systemconfiguration.hpp"
 
