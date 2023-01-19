@@ -21,7 +21,3 @@ endif()
 if(EXISTS "${CMAKE_SOURCE_DIR}/plugins/pufferfishplugin")
   add_subdirectory(plugins/pufferfishplugin)
 endif()
-
-if(EXISTS "${CMAKE_SOURCE_DIR}/plugins/configgen")
-  add_subdirectory(plugins/configgen)
-endif()

@@ -76,6 +76,7 @@ private:
   void processDomains();
   void resolveRates();
   void analyzeConnections();
+  void resolveTypeCasting();
   void storeDeclarations();
   void analyzeParents();
 
@@ -163,6 +164,13 @@ private:
 
   void storeDeclarationsForNode(ASTNode node, ScopeStack scopeStack,
                                 ASTNode tree);
+
+  void resolveTypeCastForNode(ASTNode node, ScopeStack scopeStack,
+                              ASTNode tree);
+  void resolveTypeCastForStream(std::shared_ptr<StreamNode> stream,
+                                ScopeStack scopeStack, ASTNode tree);
+  void resolveTypeCastForDeclaration(std::shared_ptr<DeclarationNode> decl,
+                                     ScopeStack scopeStack, ASTNode tree);
 
   void appendParent(std::shared_ptr<DeclarationNode> decl,
                     std::shared_ptr<DeclarationNode> parent);

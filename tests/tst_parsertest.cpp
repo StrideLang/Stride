@@ -56,6 +56,7 @@ public:
 
 private Q_SLOTS:
 
+  void testTypeCasting();
   void testCodeGeneration();
 
   // Parser
@@ -123,6 +124,95 @@ ParserTest::ParserTest() {
       "h:mm:ss.zzz}%{if-debug}D%{endif}%{if-info}I%{endif}%{if-warning}W%{"
       "endif}%{if-critical}C%{endif}%{if-fatal}F%{endif}][%{file}:%{line} "
       "%{function}] %{message}");
+}
+
+void ParserTest::testTypeCasting() {
+  ASTNode tree;
+  tree = ASTFunctions::parseFile(BUILDPATH "/tests/data/21_typecast.stride");
+  QVERIFY(tree != nullptr);
+  CodeResolver resolver(tree, STRIDEROOT);
+  resolver.process();
+
+  auto stream = tree->getChildren()[3];
+
+  QCOMPARE(stream->getNodeType(), AST::Stream);
+  auto typeCastProp = stream->getChildren()[0]->getCompilerProperty("typecast");
+  QVERIFY(typeCastProp && typeCastProp->getNodeType() == AST::String);
+  QCOMPARE(std::static_pointer_cast<ValueNode>(typeCastProp)->getStringValue(),
+           "_IntType");
+
+  stream = tree->getChildren()[4];
+
+  QCOMPARE(stream->getNodeType(), AST::Stream);
+  typeCastProp = stream->getChildren()[0]->getCompilerProperty("typecast");
+  QVERIFY(typeCastProp && typeCastProp->getNodeType() == AST::String);
+  QCOMPARE(std::static_pointer_cast<ValueNode>(typeCastProp)->getStringValue(),
+           "_RealType");
+
+  stream = tree->getChildren()[5];
+
+  QCOMPARE(stream->getNodeType(), AST::Stream);
+  typeCastProp = stream->getChildren()[0]->getCompilerProperty("typecast");
+  QVERIFY(typeCastProp && typeCastProp->getNodeType() == AST::String);
+  QCOMPARE(std::static_pointer_cast<ValueNode>(typeCastProp)->getStringValue(),
+           "_IntType");
+
+  stream = tree->getChildren()[6];
+
+  QCOMPARE(stream->getNodeType(), AST::Stream);
+  typeCastProp = stream->getChildren()[0]->getCompilerProperty("typecast");
+  QVERIFY(typeCastProp && typeCastProp->getNodeType() == AST::String);
+  QCOMPARE(std::static_pointer_cast<ValueNode>(typeCastProp)->getStringValue(),
+           "_RealType");
+
+  stream = tree->getChildren()[7];
+
+  QCOMPARE(stream->getNodeType(), AST::Stream);
+  typeCastProp = stream->getChildren()[0]->getCompilerProperty("typecast");
+  QVERIFY(typeCastProp && typeCastProp->getNodeType() == AST::String);
+  QCOMPARE(std::static_pointer_cast<ValueNode>(typeCastProp)->getStringValue(),
+           "_IntType");
+  auto expr =
+      std::static_pointer_cast<ExpressionNode>(stream->getChildren()[0]);
+  QVERIFY(!expr->getLeft()->getCompilerProperty("typecast"));
+  QVERIFY(!expr->getRight()->getCompilerProperty("typecast"));
+
+  stream = tree->getChildren()[8];
+
+  QCOMPARE(stream->getNodeType(), AST::Stream);
+  typeCastProp = stream->getChildren()[0]->getCompilerProperty("typecast");
+  QVERIFY(typeCastProp && typeCastProp->getNodeType() == AST::String);
+  QCOMPARE(std::static_pointer_cast<ValueNode>(typeCastProp)->getStringValue(),
+           "_RealType");
+  expr = std::static_pointer_cast<ExpressionNode>(stream->getChildren()[0]);
+  QVERIFY(!expr->getLeft()->getCompilerProperty("typecast"));
+  QVERIFY(!expr->getRight()->getCompilerProperty("typecast"));
+
+  stream = tree->getChildren()[9];
+
+  QCOMPARE(stream->getNodeType(), AST::Stream);
+  typeCastProp = stream->getChildren()[0]->getCompilerProperty("typecast");
+  QCOMPARE(std::static_pointer_cast<ValueNode>(typeCastProp)->getStringValue(),
+           "_IntType");
+  QVERIFY(typeCastProp && typeCastProp->getNodeType() == AST::String);
+  expr = std::static_pointer_cast<ExpressionNode>(stream->getChildren()[0]);
+  QVERIFY(!expr->getLeft()->getCompilerProperty("typecast"));
+  QVERIFY(expr->getRight()->getCompilerProperty("typecast"));
+  typeCastProp = expr->getRight()->getCompilerProperty("typecast");
+  QCOMPARE(std::static_pointer_cast<ValueNode>(typeCastProp)->getStringValue(),
+           "_RealType");
+
+  stream = tree->getChildren()[10];
+
+  QCOMPARE(stream->getNodeType(), AST::Stream);
+  typeCastProp = stream->getChildren()[0]->getCompilerProperty("typecast");
+  QVERIFY(!typeCastProp);
+  expr = std::static_pointer_cast<ExpressionNode>(stream->getChildren()[0]);
+  QVERIFY(expr->getLeft()->getCompilerProperty("typecast"));
+  QVERIFY(!expr->getRight()->getCompilerProperty("typecast"));
+  typeCastProp = expr->getLeft()->getCompilerProperty("typecast");
+  QCOMPARE(std::static_pointer_cast<ValueNode>(typeCastProp)->getStringValue(),
+           "_IntType");
 }
 
 void ParserTest::testMultichannelUgens() {

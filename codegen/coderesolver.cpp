@@ -42,6 +42,7 @@
 #include "astruntime.h"
 
 #include "codeanalysis.hpp"
+#include "codequery.hpp"
 #include "codevalidator.h"
 #include "stridesystem.hpp"
 
@@ -70,8 +71,8 @@ CodeResolver::CodeResolver(ASTNode tree, std::string striderootDir,
       //      m_errors.append(error);
     }
   } else { // Make a default platform that only inlcudes the common library
-    m_system = std::make_shared<StrideSystem>(striderootDir, "",-1,
-                                              -1, importList);
+    m_system =
+        std::make_shared<StrideSystem>(striderootDir, "", -1, -1, importList);
   }
 }
 
@@ -117,6 +118,7 @@ void CodeResolver::process() {
 
   // Prepare additional metadata
   storeDeclarations();
+  resolveTypeCasting();
   analyzeConnections();
   analyzeParents();
 }
@@ -152,26 +154,26 @@ void CodeResolver::processSystem() {
 
   if (m_system->systemName() != "") {
 
-      // Load nodes for imports
-      for (const auto &import : importList) {
-        std::string importName = import->importName();
-        std::string importAlias = import->importAlias();
-        m_system->loadImportTree(importName, importAlias);
-      }
+    // Load nodes for imports
+    for (const auto &import : importList) {
+      std::string importName = import->importName();
+      std::string importAlias = import->importAlias();
+      m_system->loadImportTree(importName, importAlias);
+    }
 
-      // Add platform domain to ensure a minimal system is available
-      auto platformDomain = m_system->getPlatformDomain();
-      if (platformDomain) {
-        for (auto objects : m_system->getImportTrees()) {
-          auto domainDecl =
-              ASTQuery::findDeclarationByName(ASTQuery::getNodeName(platformDomain),
-                                              {{nullptr, objects.second}}, m_tree);
-          if (domainDecl) {
-            m_tree->addChild(domainDecl);
-            break;
-          }
+    // Add platform domain to ensure a minimal system is available
+    auto platformDomain = m_system->getPlatformDomain();
+    if (platformDomain) {
+      for (auto objects : m_system->getImportTrees()) {
+        auto domainDecl = ASTQuery::findDeclarationByName(
+            ASTQuery::getNodeName(platformDomain), {{nullptr, objects.second}},
+            m_tree);
+        if (domainDecl) {
+          m_tree->addChild(domainDecl);
+          break;
         }
       }
+    }
   }
 }
 
@@ -830,14 +832,20 @@ void CodeResolver::analyzeConnections() {
   }
 }
 
+void CodeResolver::resolveTypeCasting() {
+  for (const auto &node : m_tree->getChildren()) {
+    resolveTypeCastForNode(node, {}, m_tree);
+  }
+}
+
 void CodeResolver::storeDeclarations() {
-  for (auto node : m_tree->getChildren()) {
+  for (const auto &node : m_tree->getChildren()) {
     storeDeclarationsForNode(node, {}, m_tree);
   }
 }
 
 void CodeResolver::analyzeParents() {
-  for (auto node : m_tree->getChildren()) {
+  for (const auto &node : m_tree->getChildren()) {
     if (node->getNodeType() == AST::Declaration ||
         node->getNodeType() == AST::BundleDeclaration) {
       appendParent(std::static_pointer_cast<DeclarationNode>(node), nullptr);
@@ -2438,7 +2446,8 @@ ASTNode CodeResolver::getModuleContextDomain(
 //            } else if (rateValue->getNodeType() == AST::PortProperty) {
 //              decl->replacePropertyValue("rate", rateValue->deepCopy());
 //            } else {
-//              std::cerr << "Unexpected type for rate in domain declaration: "
+//              std::cerr << "Unexpected type for rate in domain declaration:
+//              "
 //                       <<
 //                       QString::fromStdString(domainDeclaration->getName());
 //            }
@@ -2608,7 +2617,8 @@ void CodeResolver::resolveDomainForStreamNode(ASTNode node,
   //          node->getNodeType() == AST::Bundle) {
   //        std::shared_ptr<DeclarationNode> declaration =
   //            ASTQuery::findDeclaration(
-  //                CodeValidator::streamMemberName(node), scopeStack, m_tree);
+  //                CodeValidator::streamMemberName(node), scopeStack,
+  //                m_tree);
   //      }
   //    } else {
   //    }
@@ -3564,7 +3574,7 @@ void CodeResolver::storeDeclarationsForNode(ASTNode node, ScopeStack scopeStack,
       stack.push_back({decl, blocksList});
       if (internalStreams) {
         if (internalStreams->getNodeType() == AST::List) {
-          for (auto node : internalStreams->getChildren()) {
+          for (const auto &node : internalStreams->getChildren()) {
             storeDeclarationsForNode(node, stack, m_tree);
           }
         }
@@ -3572,7 +3582,7 @@ void CodeResolver::storeDeclarationsForNode(ASTNode node, ScopeStack scopeStack,
     }
   } else if (node->getNodeType() == AST::List ||
              node->getNodeType() == AST::Expression) {
-    for (auto listNode : node->getChildren()) {
+    for (const auto &listNode : node->getChildren()) {
       storeDeclarationsForNode(listNode, scopeStack, m_tree);
     }
   }
@@ -3580,6 +3590,90 @@ void CodeResolver::storeDeclarationsForNode(ASTNode node, ScopeStack scopeStack,
     scopeStack.pop_back();
   }
 }
+
+void CodeResolver::resolveTypeCastForNode(ASTNode node, ScopeStack scopeStack,
+                                          ASTNode tree) {
+
+  if (node->getNodeType() == AST::Stream) {
+    resolveTypeCastForStream(std::static_pointer_cast<StreamNode>(node),
+                             scopeStack, tree);
+  } else if (node->getNodeType() == AST::Declaration ||
+             node->getNodeType() == AST::BundleDeclaration) {
+
+    resolveTypeCastForDeclaration(
+        std::static_pointer_cast<DeclarationNode>(node), scopeStack, tree);
+  }
+}
+
+void CodeResolver::resolveTypeCastForStream(std::shared_ptr<StreamNode> stream,
+                                            ScopeStack scopeStack,
+                                            ASTNode tree) {
+  auto left = stream->getLeft();
+  auto right = stream->getRight();
+  auto next = right;
+
+  while (left) {
+    if (right && right->getNodeType() == AST::Stream) {
+      next = std::static_pointer_cast<StreamNode>(next)->getLeft();
+    }
+    // TODO more detailed resolution with specific float and int types
+    if (left->getNodeType() == AST::List ||
+        left->getNodeType() == AST::Expression) {
+      std::vector<std::string> types;
+      std::string resolvedType;
+      bool needsResolution = false;
+      for (const auto &listNode : left->getChildren()) {
+        auto nodeType =
+            CodeQuery::resolveNodeOutDataType(listNode, scopeStack, tree);
+        if (resolvedType.size() == 0) {
+          resolvedType = nodeType;
+        } else if (nodeType != resolvedType) {
+          if (nodeType == "_RealType" && resolvedType == "_IntType") {
+            resolvedType = "_RealType";
+          }
+          needsResolution = true;
+        }
+      }
+      if (needsResolution) {
+        for (auto &listNode : left->getChildren()) {
+          if (CodeQuery::resolveNodeOutDataType(listNode, scopeStack, tree) !=
+              resolvedType) {
+            listNode->setCompilerProperty(
+                "typecast",
+                std::make_shared<ValueNode>(resolvedType, __FILE__, __LINE__));
+          }
+        }
+      }
+    }
+
+    if (right) {
+      auto leftType = CodeQuery::resolveNodeOutDataType(left, scopeStack, tree);
+      auto nextType = CodeQuery::resolveNodeOutDataType(next, scopeStack, tree);
+      if (leftType != nextType) {
+        left->setCompilerProperty(
+            "typecast",
+            std::make_shared<ValueNode>(nextType, __FILE__, __LINE__));
+      }
+    }
+
+    if (right) {
+      if (right->getNodeType() == AST::Stream) {
+        left = std::static_pointer_cast<StreamNode>(right)->getLeft();
+        right = std::static_pointer_cast<StreamNode>(right)->getRight();
+        next = right;
+      } else {
+        left = right;
+        next = right = nullptr;
+      }
+    } else {
+      left = nullptr;
+    }
+  }
+}
+
+void CodeResolver::resolveTypeCastForDeclaration(
+    std::shared_ptr<DeclarationNode> decl, ScopeStack scopeStack,
+    ASTNode tree) {}
 
 void CodeResolver::appendParent(std::shared_ptr<DeclarationNode> decl,
                                 std::shared_ptr<DeclarationNode> parent) {

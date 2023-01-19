@@ -17,9 +17,14 @@ std::string CodeQuery::resolveBundleDataType(BundleNode *bundle,
       if (property) {
         return resolveNodeOutDataType(property->getValue(), scopeStack, tree);
       }
-    } else {
-      //            return
-      //      declaration->getObjectType();
+    } else if (declaration->getObjectType() == "signal") {
+      std::vector<std::shared_ptr<PropertyNode>> properties =
+          declaration->getProperties();
+      ASTNode typeNode = declaration->getPropertyValue("type");
+      if (typeNode && typeNode->getNodeType() == AST::Block) {
+        return std::static_pointer_cast<BlockNode>(typeNode)->getName();
+      }
+      return "";
     }
   }
   return "";
@@ -42,11 +47,11 @@ std::string CodeQuery::resolveBlockDataType(BlockNode *name,
     } else if (declaration->getObjectType() == "signal") {
       std::vector<std::shared_ptr<PropertyNode>> properties =
           declaration->getProperties();
-      std::shared_ptr<PropertyNode> property =
-          ASTQuery::findPropertyByName(properties, "default");
-      auto defaultType =
-          resolveNodeOutDataType(property->getValue(), scopeStack, tree);
-      return defaultType;
+      ASTNode typeNode = declaration->getPropertyValue("type");
+      if (typeNode && typeNode->getNodeType() == AST::Block) {
+        return std::static_pointer_cast<BlockNode>(typeNode)->getName();
+      }
+      return "";
     } else {
       return "";
     }
@@ -58,13 +63,13 @@ std::string CodeQuery::resolveNodeOutDataType(ASTNode node,
                                               ScopeStack scopeStack,
                                               ASTNode tree) {
   if (node->getNodeType() == AST::Int) {
-    return "_IntLiteral";
+    return "_IntType";
   } else if (node->getNodeType() == AST::Real) {
-    return "_RealLiteral";
+    return "_RealType";
   } else if (node->getNodeType() == AST::Switch) {
-    return "_SwitchLiteral";
+    return "_SwitchType";
   } else if (node->getNodeType() == AST::String) {
-    return "_StringhLiteral";
+    return "_StringType";
   } else if (node->getNodeType() == AST::List) {
     return resolveListDataType(static_cast<ListNode *>(node.get()), scopeStack,
                                tree);
@@ -81,9 +86,8 @@ std::string CodeQuery::resolveNodeOutDataType(ASTNode node,
     return resolveRangeDataType(static_cast<RangeNode *>(node.get()),
                                 scopeStack, tree);
   } else if (node->getNodeType() == AST::PortProperty) {
-    return "_PortProperty";
-    //        return resolvePortPropertyType(static_cast<PortPropertyNode
-    //        *>(node.get()), scope, tree);
+    return resolvePortPropertyDataType(
+        static_cast<PortPropertyNode *>(node.get()), scopeStack, tree);
   }
   return "";
 }
@@ -101,11 +105,11 @@ std::string CodeQuery::resolveListDataType(ListNode *listnode,
   for (const ASTNode &member : members) {
     auto nextPortType = resolveNodeOutDataType(member, scopeStack, tree);
     if (type != nextPortType) {
-      if (type == "_IntLiteral" &&
-          nextPortType == "_RealLiteral") { // List becomes Real if Real found
-        type = "_RealLiteral";
-      } else if (type == "_RealLiteral" &&
-                 nextPortType == "_IntLiteral") { // Int in Real list
+      if (type == "_IntType" &&
+          nextPortType == "_RealType") { // List becomes Real if Real found
+        type = "_RealType";
+      } else if (type == "_RealType" &&
+                 nextPortType == "_IntType") { // Int in Real list
         // Nothing here for now
       } else { // Invalid combination
         return "";
@@ -123,15 +127,25 @@ std::string CodeQuery::resolveExpressionDataType(ExpressionNode *exprnode,
     ASTNode right = exprnode->getRight();
     auto leftType = resolveNodeOutDataType(left, scopeStack, tree);
     auto rightType = resolveNodeOutDataType(right, scopeStack, tree);
-    if (leftType == rightType) {
-      return leftType;
+
+    auto type = leftType;
+    if (type != rightType) {
+      if (type == "_IntType" &&
+          rightType == "_RealType") { // Expr becomes Real if Real found
+        type = "_RealType";
+      } else if (type == "_RealType" && rightType == "_IntType") {
+        // Int in Real list
+        // Nothing here for now
+      } else { // Invalid combination
+        return "";
+      }
     }
-    // TODO implement toleraces between ints and reals
+    return type;
 
   } else {
-    // TODO implement for unary
+
+    return resolveNodeOutDataType(exprnode->getValue(), scopeStack, tree);
   }
-  return "";
 }
 
 std::string CodeQuery::resolveRangeDataType(RangeNode *rangenode,
@@ -152,9 +166,9 @@ CodeQuery::resolvePortPropertyDataType(PortPropertyNode *portproperty,
                                        ScopeStack scopeStack, ASTNode tree) {
   // FIXME implement correctly. Should be read from framework?
   if (portproperty->getPortName() == "size") {
-    return "_IntLiteral";
+    return "_IntType";
   } else if (portproperty->getPortName() == "rate") {
-    return "_RealLiteral";
+    return "_RealType";
   }
-  { return "_RealLiteral"; }
+  { return "_RealType"; }
 }
