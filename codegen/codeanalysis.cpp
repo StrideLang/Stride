@@ -926,7 +926,7 @@ int CodeAnalysis::evaluateSizePortProperty(
             } else if (portDecl->getObjectType() == "mainOutputPort") {
               portSize =
                   CodeAnalysis::getNodeNumOutputs(portBlock, scopeStack, tree);
-              if (portSize == -2) {
+              if (portSize == CodeAnalysis::SIZE_PORT_PROPERTY) {
                 std::pair<ASTNode, std::vector<ASTNode>> innerScope =
                     scopeStack.back();
                 scopeStack.pop_back();
@@ -938,7 +938,7 @@ int CodeAnalysis::evaluateSizePortProperty(
             } else if (portDecl->getObjectType() == "propertyInputPort") {
               portSize =
                   CodeAnalysis::getNodeNumInputs(portBlock, scopeStack, tree);
-              if (portSize == -2) {
+              if (portSize == CodeAnalysis::SIZE_PORT_PROPERTY) {
                 std::pair<ASTNode, std::vector<ASTNode>> innerScope =
                     scopeStack.back();
                 scopeStack.pop_back();
@@ -952,7 +952,7 @@ int CodeAnalysis::evaluateSizePortProperty(
               portSize =
                   CodeAnalysis::getNodeNumOutputs(portBlock, scopeStack, tree);
 
-              if (portSize == -2) {
+              if (portSize == CodeAnalysis::SIZE_PORT_PROPERTY) {
                 std::pair<ASTNode, std::vector<ASTNode>> innerScope =
                     scopeStack.back();
                 scopeStack.pop_back();
@@ -1283,7 +1283,13 @@ int CodeAnalysis::getNodeNumOutputs(ASTNode node, const ScopeStack &scope,
   if (node->getNodeType() == AST::List) {
     int size = 0;
     for (const ASTNode &member : node->getChildren()) {
-      size += CodeAnalysis::getNodeNumOutputs(member, scope, tree, errors);
+      auto newSize =
+          CodeAnalysis::getNodeNumOutputs(member, scope, tree, errors);
+      if (newSize >= 0) {
+        size += newSize;
+      } else {
+        assert(0 == 1); // FIXME implement
+      }
     }
     return size;
   } else if (node->getNodeType() == AST::Bundle) {
@@ -1311,7 +1317,7 @@ int CodeAnalysis::getNodeNumOutputs(ASTNode node, const ScopeStack &scope,
     if (block) {
       return getTypeNumOutputs(block, scope, tree, errors);
     } else {
-      return -1;
+      return CodeAnalysis::SIZE_UNKNOWN;
     }
   } else if (node->getNodeType() == AST::Function) {
     std::shared_ptr<FunctionNode> func =
@@ -1322,7 +1328,7 @@ int CodeAnalysis::getNodeNumOutputs(ASTNode node, const ScopeStack &scope,
     if (platformFunc) {
       return getTypeNumOutputs(platformFunc, scope, tree, errors) * dataSize;
     } else {
-      return -1;
+      return CodeAnalysis::SIZE_UNKNOWN;
     }
   } else if (node->getNodeType() == AST::PortProperty) {
     std::shared_ptr<PortPropertyNode> portProp =
@@ -1330,7 +1336,7 @@ int CodeAnalysis::getNodeNumOutputs(ASTNode node, const ScopeStack &scope,
     if (portProp->getPortName() == "size" ||
         portProp->getPortName() == "rate" ||
         portProp->getPortName() == "domain") {
-      return 1;
+      return CodeAnalysis::SIZE_PORT_PROPERTY;
     } else {
       std::cerr
           << "Unknown port property in getNodeNumOutputs() setting size to 1"
@@ -1344,7 +1350,7 @@ int CodeAnalysis::getNodeNumOutputs(ASTNode node, const ScopeStack &scope,
     return ASTQuery::getBlockDeclaredSize(
         std::static_pointer_cast<DeclarationNode>(node), scope, tree, errors);
   }
-  return -100;
+  return CodeAnalysis::SIZE_UNKNOWN;
 }
 
 int CodeAnalysis::getNodeNumInputs(ASTNode node, ScopeStack scope, ASTNode tree,
@@ -1384,7 +1390,7 @@ int CodeAnalysis::getNodeNumInputs(ASTNode node, ScopeStack scope, ASTNode tree,
     if (block) {
       return getTypeNumInputs(block, scope, tree, errors);
     } else {
-      return -1;
+      return CodeAnalysis::SIZE_UNKNOWN;
     }
   } else if (node->getNodeType() == AST::Bundle) {
     return ASTQuery::getBundleSize(static_cast<BundleNode *>(node.get()), scope,
@@ -1404,7 +1410,7 @@ int CodeAnalysis::getNodeNumInputs(ASTNode node, ScopeStack scope, ASTNode tree,
   } else {
     return 0;
   }
-  return -1;
+  return CodeAnalysis::SIZE_UNKNOWN;
 }
 
 int CodeAnalysis::getTypeNumOutputs(
@@ -1514,7 +1520,7 @@ int CodeAnalysis::getTypeNumInputs(
           //                internalDeclarationNode->getNodeType() ==
           //                AST::Declaration);
           if (!internalDeclarationNode) {
-            return -1;
+            return CodeAnalysis::SIZE_UNKNOWN;
           }
           if (internalDeclarationNode->getNodeType() == AST::Declaration ||
               internalDeclarationNode->getNodeType() ==

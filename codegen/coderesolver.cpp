@@ -361,11 +361,14 @@ void CodeResolver::expandParallelStream(std::shared_ptr<StreamNode> stream,
   while (right) {
     if (left->getNodeType() ==
         AST::Function) { // Expand from properties size to list
-      ASTNode newFunctions = expandFunctionFromProperties(
-          std::static_pointer_cast<FunctionNode>(left), scopeStack, tree);
-      if (newFunctions) {
-        subStream->setLeft(newFunctions);
-        left = subStream->getLeft();
+      auto funcInputs = CodeAnalysis::getNodeNumInputs(left, scopeStack, tree);
+      if (funcInputs != CodeAnalysis::SIZE_PORT_PROPERTY) {
+        ASTNode newFunctions = expandFunctionFromProperties(
+            std::static_pointer_cast<FunctionNode>(left), scopeStack, tree);
+        if (newFunctions) {
+          subStream->setLeft(newFunctions);
+          left = subStream->getLeft();
+        }
       }
     }
     IOs.emplace_back(std::pair<int, int>{

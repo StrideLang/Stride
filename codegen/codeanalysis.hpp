@@ -6,6 +6,7 @@
 
 class CodeAnalysis {
 public:
+  enum { SIZE_UNKNOWN = -1, SIZE_PORT_PROPERTY = -2 };
   // Global tree analysis
   static std::vector<std::string> getUsedDomains(ASTNode tree);
   static std::vector<std::string> getUsedFrameworks(ASTNode tree);
