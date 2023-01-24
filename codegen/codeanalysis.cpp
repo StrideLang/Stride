@@ -1253,6 +1253,65 @@ double CodeAnalysis::evaluateRatePortProperty(
   return -1.0;
 }
 
+std::vector<std::shared_ptr<PortPropertyNode>>
+CodeAnalysis::getUsedPortProperties(std::shared_ptr<DeclarationNode> funcDecl) {
+  std::vector<std::shared_ptr<PortPropertyNode>> used;
+
+  auto blocksNode = funcDecl->getPropertyValue("blocks");
+  if (blocksNode) {
+    for (const auto &node : blocksNode->getChildren()) {
+      if (node->getNodeType() == AST::Declaration) {
+        auto decl = std::static_pointer_cast<DeclarationNode>(node);
+        auto newUsed = CodeAnalysis::getUsedPortProperties(decl);
+        used.insert(used.end(), newUsed.begin(), newUsed.end());
+      }
+    }
+  }
+
+  auto streams = funcDecl->getPropertyValue("streams");
+  if (streams) {
+    for (const auto &streamNode : streams->getChildren()) {
+      if (streamNode->getNodeType() == AST::Stream) {
+        auto stream = std::static_pointer_cast<StreamNode>(streamNode);
+        ASTNode node = stream->getLeft();
+        ASTNode next = stream->getRight();
+        do {
+          auto newUsed = getUsedPortPropertiesInNode(node);
+          used.insert(used.end(), newUsed.begin(), newUsed.end());
+
+          if (next && next->getNodeType() == AST::Stream) {
+            node = std::static_pointer_cast<StreamNode>(next)->getLeft();
+            next = std::static_pointer_cast<StreamNode>(next)->getRight();
+          } else if (next) {
+            node = next;
+            next = nullptr;
+          } else {
+            node = nullptr;
+          }
+        } while (node);
+      }
+    }
+  }
+
+  return used;
+}
+
+std::vector<std::shared_ptr<PortPropertyNode>>
+CodeAnalysis::getUsedPortPropertiesInNode(ASTNode node) {
+
+  std::vector<std::shared_ptr<PortPropertyNode>> used;
+  if (node->getNodeType() == AST::PortProperty) {
+    used.push_back(std::static_pointer_cast<PortPropertyNode>(node));
+  } else if (node->getNodeType() == AST::List ||
+             node->getNodeType() == AST::Expression) {
+    for (const auto &elem : node->getChildren()) {
+      auto newUsed = getUsedPortPropertiesInNode(elem);
+      used.insert(used.end(), newUsed.begin(), newUsed.end());
+    }
+  }
+  return used;
+}
+
 ASTNode CodeAnalysis::resolveDomain(ASTNode node, ScopeStack scopeStack,
                                     ASTNode tree, bool downStream) {
   auto blockDecl =

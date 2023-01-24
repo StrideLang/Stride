@@ -89,6 +89,12 @@ public:
                                          std::shared_ptr<FunctionNode> func,
                                          ASTNode tree);
 
+  static std::vector<std::shared_ptr<PortPropertyNode>>
+  getUsedPortProperties(std::shared_ptr<DeclarationNode> funcDecl);
+
+  static std::vector<std::shared_ptr<PortPropertyNode>>
+  getUsedPortPropertiesInNode(ASTNode node);
+
   // //
 
   // Input and output size
