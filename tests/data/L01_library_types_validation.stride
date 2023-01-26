@@ -61,5 +61,7 @@ module Sum {
             ]
         }
     ]
-    streams:        Adder () >> Output;
+    streams:   [
+        Adder () >> Output;
+    ]     
 }

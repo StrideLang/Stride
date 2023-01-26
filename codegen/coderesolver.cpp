@@ -709,11 +709,11 @@ void CodeResolver::processDomains() {
   }
   // Now split streams when there is a domain change
   std::vector<ASTNode> new_tree;
-  for (ASTNode node : m_tree->getChildren()) {
+  for (const ASTNode &node : m_tree->getChildren()) {
     if (node->getNodeType() == AST::Stream) {
       std::vector<ASTNode> streams = sliceStreamByDomain(
           std::static_pointer_cast<StreamNode>(node), ScopeStack());
-      for (ASTNode stream : streams) {
+      for (const ASTNode &stream : streams) {
         new_tree.push_back(stream);
       }
     } else if (node->getNodeType() == AST::Declaration) {
@@ -2035,10 +2035,10 @@ void CodeResolver::resolveStreamSymbols() {
       std::vector<ASTNode> declarations = declareUnknownStreamSymbols(
           stream, nullptr, ScopeStack(),
           m_tree); // FIXME Is this already done in expandParallelFunctions?
-      for (ASTNode decl : declarations) {
+      for (const ASTNode &decl : declarations) {
         m_tree->addChild(decl);
       }
-      expandNamesToBundles(stream, m_tree);
+      //      expandNamesToBundles(stream, m_tree);
     } else if (node->getNodeType() == AST::Declaration) {
       std::shared_ptr<DeclarationNode> decl =
           std::static_pointer_cast<DeclarationNode>(node);
@@ -2325,7 +2325,7 @@ void CodeResolver::sliceDomainsInNode(std::shared_ptr<DeclarationNode> module,
     for (auto stream : streamsNode->getChildren()) {
       std::vector<ASTNode> streams = sliceStreamByDomain(
           std::static_pointer_cast<StreamNode>(stream), ScopeStack());
-      for (ASTNode stream : streams) {
+      for (const ASTNode &stream : streams) {
         new_tree.push_back(stream);
       }
     }
