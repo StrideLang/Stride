@@ -280,31 +280,38 @@ ASTNode CodeAnalysis::getNodeDomain(ASTNode node, ScopeStack scopeStack,
       auto funcDecl = ASTQuery::findDeclarationByName(
           std::static_pointer_cast<FunctionNode>(node)->getName(), scopeStack,
           tree, node->getNamespaceList());
-      if (funcDecl && funcDecl->getObjectType() == "platformModule") {
-        domainNode = funcDecl->getPropertyValue("domain");
+      if (funcDecl) {
+        if (funcDecl->getObjectType() == "platformModule") {
+          domainNode = funcDecl->getPropertyValue("domain");
 
-        auto domainId = CodeAnalysis::getDomainIdentifier(domainNode, {}, tree);
-        std::string domainFramework;
-        auto separatorIndex = domainId.find("::");
-        if (separatorIndex != std::string::npos) {
-          domainFramework = domainId.substr(0, separatorIndex);
-          domainId = domainId.substr(separatorIndex + 2);
-        }
+          // TODO move this namespace resolution for domains to be more general
+          auto domainId =
+              CodeAnalysis::getDomainIdentifier(domainNode, {}, tree);
+          std::string domainFramework;
+          auto separatorIndex = domainId.find("::");
+          if (separatorIndex != std::string::npos) {
+            domainFramework = domainId.substr(0, separatorIndex);
+            domainId = domainId.substr(separatorIndex + 2);
+          }
 
-        auto domainDecl = CodeAnalysis::findDomainDeclaration(
-            domainId, domainFramework, tree);
-        if (domainDecl) {
-          auto parentDomain = domainDecl->getPropertyValue("parentDomain");
-          if (parentDomain && parentDomain->getNodeType() == AST::Block) {
-            auto domainInstanceCountNode =
-                parentDomain->getCompilerProperty("instances");
-            if (!domainInstanceCountNode) {
-              domainInstanceCountNode =
-                  std::make_shared<ValueNode>((int64_t)0, __FILE__, __LINE__);
-              parentDomain->setCompilerProperty("instances",
-                                                domainInstanceCountNode);
+          auto domainDecl = CodeAnalysis::findDomainDeclaration(
+              domainId, domainFramework, tree);
+          if (domainDecl) {
+            auto parentDomain = domainDecl->getPropertyValue("parentDomain");
+            if (parentDomain && parentDomain->getNodeType() == AST::Block) {
+              auto domainInstanceCountNode =
+                  parentDomain->getCompilerProperty("instances");
+              if (!domainInstanceCountNode) {
+                domainInstanceCountNode =
+                    std::make_shared<ValueNode>((int64_t)0, __FILE__, __LINE__);
+                parentDomain->setCompilerProperty("instances",
+                                                  domainInstanceCountNode);
+              }
             }
           }
+        } else if (funcDecl->getObjectType() == "reaction") {
+          // reactions currently belong to a single domain.
+          domainNode = funcDecl->getPropertyValue("domain");
         }
       }
     }

@@ -906,20 +906,19 @@ void CodeResolver::resolveDomainsForStream(std::shared_ptr<StreamNode> stream,
          domainNode->getNodeType() ==
              AST::None)) { // If this is is the last pass then set the unknown
                            // domains to context domain
-      if (left->getNodeType() == AST::Function &&
-          (!domainNode || domainNode->getNodeType() == AST::None)) {
+      if (left->getNodeType() == AST::Function) {
         // Have functions/loops/reactions be assigned to whatever they are
         // connected to if they are final in a stream.
         // FIXME we should look inside the modules themselves to see if we can
         // infer the domain better
+        auto decl = CodeAnalysis::getDeclaration(left);
         if (previousDomain && previousDomain->getNodeType() != AST::None) {
           domainNode = previousDomain;
         } else {
           previousDomain = contextDomainNode;
         }
-      } else if ((left->getNodeType() == AST::Block ||
-                  left->getNodeType() == AST::Bundle) &&
-                 (!domainNode || domainNode->getNodeType() == AST::None)) {
+      } else if (left->getNodeType() == AST::Block ||
+                 left->getNodeType() == AST::Bundle) {
         if (previousDomain && previousDomain->getNodeType() != AST::None) {
           //              domainNode = previousDomain;
         } else {
@@ -2322,7 +2321,7 @@ void CodeResolver::sliceDomainsInNode(std::shared_ptr<DeclarationNode> module,
 
     std::vector<ASTNode> new_tree;
     scopeStack.push_back({module, blocksNode->getChildren()});
-    for (auto stream : streamsNode->getChildren()) {
+    for (const auto &stream : streamsNode->getChildren()) {
       std::vector<ASTNode> streams = sliceStreamByDomain(
           std::static_pointer_cast<StreamNode>(stream), ScopeStack());
       for (const ASTNode &stream : streams) {
@@ -2330,7 +2329,7 @@ void CodeResolver::sliceDomainsInNode(std::shared_ptr<DeclarationNode> module,
       }
     }
     streamsNode->setChildren(new_tree);
-    for (auto block : blocksNode->getChildren()) {
+    for (const auto &block : blocksNode->getChildren()) {
       if (block->getNodeType() == AST::Declaration) {
         sliceDomainsInNode(std::static_pointer_cast<DeclarationNode>(block),
                            scopeStack);
@@ -2349,7 +2348,7 @@ void CodeResolver::sliceDomainsInNode(std::shared_ptr<DeclarationNode> module,
     scopeStack.push_back(
         {module, CodeAnalysis::getBlocksInScope(module, scopeStack, m_tree)});
     if (streamsNode->getNodeType() == AST::List) {
-      for (ASTNode stream : streamsNode->getChildren()) {
+      for (const ASTNode &stream : streamsNode->getChildren()) {
         if (stream->getNodeType() == AST::Stream) {
           std::vector<ASTNode> streams = sliceStreamByDomain(
               std::static_pointer_cast<StreamNode>(stream), scopeStack);
@@ -2369,7 +2368,7 @@ void CodeResolver::sliceDomainsInNode(std::shared_ptr<DeclarationNode> module,
     } else if (streamsNode->getNodeType() == AST::Stream) {
       std::vector<ASTNode> streams = sliceStreamByDomain(
           std::static_pointer_cast<StreamNode>(streamsNode), scopeStack);
-      for (ASTNode streamNode : streams) {
+      for (const ASTNode &streamNode : streams) {
         if (streamNode->getNodeType() == AST::Stream) {
           newStreamsList->addChild(streamNode);
         } else if (streamNode->getNodeType() == AST::Declaration ||
@@ -2382,7 +2381,7 @@ void CodeResolver::sliceDomainsInNode(std::shared_ptr<DeclarationNode> module,
       }
     }
     module->replacePropertyValue("streams", newStreamsList);
-    for (auto block : blocksNode->getChildren()) {
+    for (const auto &block : blocksNode->getChildren()) {
       if (block->getNodeType() == AST::Declaration) {
         // TODO this is untested and likely not completely working...
         std::shared_ptr<DeclarationNode> decl =
@@ -2583,7 +2582,7 @@ void CodeResolver::resolveDomainForStreamNode(ASTNode node,
   } else if (node->getNodeType() == AST::Function) {
     domain = static_cast<FunctionNode *>(node.get())->getDomain();
   } else if (node->getNodeType() == AST::List) {
-    for (ASTNode member : node->getChildren()) {
+    for (const ASTNode &member : node->getChildren()) {
       resolveDomainForStreamNode(member, scopeStack);
     }
     return;
@@ -3676,7 +3675,21 @@ void CodeResolver::resolveTypeCastForStream(std::shared_ptr<StreamNode> stream,
 
 void CodeResolver::resolveTypeCastForDeclaration(
     std::shared_ptr<DeclarationNode> decl, ScopeStack scopeStack,
-    ASTNode tree) {}
+    ASTNode tree) {
+  auto blocks = decl->getPropertyValue("blocks");
+  if (blocks) {
+    for (const auto &node : blocks->getChildren()) {
+      resolveTypeCastForNode(node, scopeStack, tree);
+    }
+  }
+
+  auto streams = decl->getPropertyValue("streams");
+  if (streams) {
+    for (const auto &node : streams->getChildren()) {
+      resolveTypeCastForNode(node, scopeStack, tree);
+    }
+  }
+}
 
 void CodeResolver::appendParent(std::shared_ptr<DeclarationNode> decl,
                                 std::shared_ptr<DeclarationNode> parent) {

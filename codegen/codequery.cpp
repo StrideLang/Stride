@@ -170,5 +170,5 @@ CodeQuery::resolvePortPropertyDataType(PortPropertyNode *portproperty,
   } else if (portproperty->getPortName() == "rate") {
     return "_RealType";
   }
-  { return "_RealType"; }
+  return "_RealType";
 }
