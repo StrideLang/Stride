@@ -39,7 +39,6 @@
 
 #include "astfunctions.h"
 #include "astquery.h"
-#include "astruntime.h"
 
 #include "codeanalysis.hpp"
 #include "codequery.hpp"
@@ -3678,6 +3677,7 @@ void CodeResolver::resolveTypeCastForDeclaration(
     ASTNode tree) {
   auto blocks = decl->getPropertyValue("blocks");
   if (blocks) {
+    scopeStack.push_back({nullptr, blocks->getChildren()});
     for (const auto &node : blocks->getChildren()) {
       resolveTypeCastForNode(node, scopeStack, tree);
     }
