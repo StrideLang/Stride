@@ -56,8 +56,8 @@
 #include "projectwindow.h"
 #include "ui_projectwindow.h"
 
-#include "astfunctions.h"
-#include "astquery.h"
+#include "stride/parser/astfunctions.h"
+#include "stride/parser/astquery.h"
 #include "codeeditor.h"
 #include "coderesolver.h"
 #include "codevalidator.h"

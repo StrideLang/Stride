@@ -5,10 +5,10 @@
 #include <fstream>
 #include <sstream>
 
-#include "astfunctions.h"
-#include "blocknode.h"
-#include "declarationnode.h"
-#include "valuenode.h"
+#include "stride/parser/astfunctions.h"
+#include "stride/parser/blocknode.h"
+#include "stride/parser/declarationnode.h"
+#include "stride/parser/valuenode.h"
 
 ToolManager::ToolManager(std::string strideRoot) {
   setStrideRoot(strideRoot);

@@ -35,7 +35,7 @@
 #ifndef BASEPROJECT_H
 #define BASEPROJECT_H
 
-#include "ast.h"
+#include "stride/parser/ast.h"
 #include "systemconfiguration.hpp"
 
 #include <functional>

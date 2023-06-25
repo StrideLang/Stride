@@ -37,8 +37,8 @@
 #include <cassert>
 #include <iostream>
 
-#include "astfunctions.h"
-#include "astquery.h"
+#include "stride/parser/astfunctions.h"
+#include "stride/parser/astquery.h"
 
 #include "codeanalysis.hpp"
 #include "codequery.hpp"

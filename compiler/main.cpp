@@ -39,7 +39,7 @@
 #include <QFile>
 #include <QFileInfo>
 
-#include "astfunctions.h"
+#include "stride/parser/astfunctions.h"
 #include "coderesolver.h"
 #include "codevalidator.h"
 #include "pythonproject.h"

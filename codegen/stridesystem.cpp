@@ -42,15 +42,15 @@
 
 #include "stridesystem.hpp"
 
-#include "astfunctions.h"
-#include "astquery.h"
+#include "stride/parser/astfunctions.h"
+#include "stride/parser/astquery.h"
 
 #include "codeanalysis.hpp"
 //#include "coderesolver.h"
 #include "codevalidator.h"
 
-#include "declarationnode.h"
-#include "propertynode.h"
+#include "stride/parser/declarationnode.h"
+#include "stride/parser/propertynode.h"
 //#include "pythonproject.h"
 #include "toolmanager.hpp"
 

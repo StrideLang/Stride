@@ -38,10 +38,10 @@
 #include <map>
 #include <string>
 
-#include "ast.h"
+#include "stride/parser/ast.h"
 #include "codevalidator.h"
-#include "declarationnode.h"
-#include "valuenode.h"
+#include "stride/parser/declarationnode.h"
+#include "stride/parser/valuenode.h"
 
 struct FrameworkTree {
   std::string importName;

@@ -1,7 +1,7 @@
 #ifndef CODEANALYSIS_HPP
 #define CODEANALYSIS_HPP
 
-#include "strideparser.h"
+#include "stride/parser/strideparser.h"
 #include "stridesystem.hpp"
 
 class CodeAnalysis {

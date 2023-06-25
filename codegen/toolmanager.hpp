@@ -5,7 +5,7 @@
 #include <map>
 #include <string>
 
-#include "ast.h"
+#include "stride/parser/ast.h"
 
 struct ToolTemplate {
   std::string strideName;

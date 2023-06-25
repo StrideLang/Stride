@@ -1,7 +1,7 @@
 #ifndef CODEQUERY_HPP
 #define CODEQUERY_HPP
 
-#include "strideparser.h"
+#include "stride/parser/strideparser.h"
 
 #include <string>
 

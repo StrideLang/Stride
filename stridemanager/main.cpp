@@ -41,7 +41,7 @@
 
 #include <iostream>
 
-//#include "ast.h"
+//#include "stride/parser/ast.h"
 #include "toolmanager.hpp"
 
 int main(int argc, char *argv[]) {

@@ -40,10 +40,10 @@
 #include <memory>
 #include <sstream>
 
-#include "astfunctions.h"
-#include "astquery.h"
-#include "astruntime.h"
-#include "astvalidation.h"
+#include "stride/parser/astfunctions.h"
+#include "stride/parser/astquery.h"
+#include "stride/parser/astruntime.h"
+#include "stride/parser/astvalidation.h"
 #include "codequery.hpp"
 #include "coderesolver.h"
 

@@ -45,7 +45,7 @@
 #include "autocompletemenu.hpp"
 #include "codemodel.hpp"
 #include "errormarker.h"
-#include "langerror.h"
+#include "stride/parser/langerror.h"
 #include "tooltip.hpp"
 
 class LineNumberArea;

@@ -39,14 +39,14 @@
 #include <QTemporaryFile>
 #include <QVector>
 
-#include "astfunctions.h"
-#include "astquery.h"
-#include "blocknode.h"
+#include "stride/parser/astfunctions.h"
+#include "stride/parser/astquery.h"
+#include "stride/parser/blocknode.h"
 #include "coderesolver.h"
 #include "codevalidator.h"
-#include "declarationnode.h"
-#include "listnode.h"
-#include "valuenode.h"
+#include "stride/parser/declarationnode.h"
+#include "stride/parser/listnode.h"
+#include "stride/parser/valuenode.h"
 
 CodeModel::CodeModel(QObject *parent)
     : QObject(parent), m_lastValidTree(nullptr) {}

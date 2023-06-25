@@ -1,5 +1,5 @@
 #include "systemconfiguration.hpp"
-#include "astfunctions.h"
+#include "stride/parser/astfunctions.h"
 
 #include <fstream>
 #include <iostream>

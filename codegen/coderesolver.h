@@ -35,15 +35,15 @@
 #ifndef CODERESOLVER_H
 #define CODERESOLVER_H
 
-#include "ast.h"
-#include "blocknode.h"
-#include "bundlenode.h"
-#include "declarationnode.h"
-#include "expressionnode.h"
-#include "propertynode.h"
-#include "rangenode.h"
-#include "streamnode.h"
-#include "valuenode.h"
+#include "stride/parser/ast.h"
+#include "stride/parser/blocknode.h"
+#include "stride/parser/bundlenode.h"
+#include "stride/parser/declarationnode.h"
+#include "stride/parser/expressionnode.h"
+#include "stride/parser/propertynode.h"
+#include "stride/parser/rangenode.h"
+#include "stride/parser/streamnode.h"
+#include "stride/parser/valuenode.h"
 
 #include "stridesystem.hpp"
 

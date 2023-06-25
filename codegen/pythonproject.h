@@ -45,14 +45,14 @@
 
 #include "builder.h"
 
-#include "ast.h"
-#include "bundlenode.h"
-#include "declarationnode.h"
-#include "expressionnode.h"
-#include "functionnode.h"
-#include "platformnode.h"
-#include "streamnode.h"
-#include "valuenode.h"
+#include "stride/parser/ast.h"
+//#include "stride/parser/bundlenode.h"
+//#include "stride/parser/declarationnode.h"
+#include "stride/parser/expressionnode.h"
+#include "stride/parser/functionnode.h"
+//#include "stride/parser/platformnode.h"
+#include "stride/parser/streamnode.h"
+//#include "stride/parser/valuenode.h"
 
 class PythonProject : public Builder {
   Q_OBJECT

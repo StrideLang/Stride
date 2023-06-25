@@ -3,9 +3,10 @@
 
 #include <string>
 
-#include "expressionnode.h"
-#include "valuenode.h"
 #include "codeentities.hpp"
+#include "stride/parser/expressionnode.h"
+#include "stride/parser/valuenode.h"
+#include "stridesystem.hpp"
 
 class LanguageSyntax {
 public:

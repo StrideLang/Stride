@@ -1,9 +1,9 @@
 #ifndef SYSTEMCONFIGURATION_HPP
 #define SYSTEMCONFIGURATION_HPP
 
-#include "ast.h"
-#include "declarationnode.h"
-#include "valuenode.h"
+#include "stride/parser/ast.h"
+#include "stride/parser/declarationnode.h"
+#include "stride/parser/valuenode.h"
 
 #include <map>
 #include <string>

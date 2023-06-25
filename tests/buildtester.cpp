@@ -39,9 +39,9 @@
 #include <QList>
 #include <QThread>
 
-#include "ast.h"
-#include "astfunctions.h"
-#include "astquery.h"
+#include "stride/parser/ast.h"
+#include "stride/parser/astfunctions.h"
+#include "stride/parser/astquery.h"
 #include "coderesolver.h"
 #include "codevalidator.h"
 #include "systemconfiguration.hpp"

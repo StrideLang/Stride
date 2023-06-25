@@ -35,7 +35,7 @@
 #ifndef CODEGEN_H
 #define CODEGEN_H
 
-#include "strideparser.h"
+#include "stride/parser/strideparser.h"
 
 class StrideSystem;
 

@@ -41,10 +41,10 @@
 #include "coderesolver.h"
 #include "codevalidator.h"
 #include "strideframework.hpp"
-#include "strideparser.h"
+#include "stride/parser/strideparser.h"
 
-#include "astfunctions.h"
-#include "astquery.h"
+#include "stride/parser/astfunctions.h"
+#include "stride/parser/astquery.h"
 
 extern AST *parse(const char *fileName);
 

@@ -38,7 +38,7 @@
 #include <QMutex>
 #include <QObject>
 
-#include "ast.h"
+#include "stride/parser/ast.h"
 #include "stridesystem.hpp"
 
 class CodeModel : public QObject {

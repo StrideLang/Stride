@@ -5,11 +5,11 @@
 #include <map>
 #include <string>
 
-#include "../codegen/codevalidator.h"
-#include "ast.h"
-#include "declarationnode.h"
-#include "functionnode.h"
-#include "portpropertynode.h"
+//#include "../codegen/codevalidator.h"
+#include "stride/parser/ast.h"
+#include "stride/parser/declarationnode.h"
+//#include "stride/parser/functionnode.h"
+#include "stride/parser/portpropertynode.h"
 
 typedef enum {
   ACCESS_NONE = 0,
