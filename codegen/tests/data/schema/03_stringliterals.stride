@@ -1,0 +1,44 @@
+type _Literals {
+    typeName: "literals"
+    properties: [
+		typeProperty {
+			name: "stringLiteral"
+			types: [_StringLiteral]
+			default: none
+			required: on
+		}		
+        typeProperty {
+			name: "constrainedString"
+			types: [
+                constrainedString {
+                    minLength: 2
+                    maxLength: 8
+                }
+            ]
+			default: none
+			required: on
+		}
+    ]
+}
+
+literals String {
+    stringLiteral: "hello"
+    constrainedString: "wo"
+}
+
+literals String {
+    stringLiteral: "hello"
+    constrainedString: "12345678"
+}
+
+# Failures -----------------
+
+literals Fails {
+    stringLiteral: 4
+    constrainedString: "w"
+}
+
+literals Fails2 {
+    stringLiteral: 4
+    constrainedString: "123456789"
+}

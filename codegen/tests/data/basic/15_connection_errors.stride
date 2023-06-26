@@ -1,7 +1,0 @@
-use DesktopAudio version 1.0
-
-# This should produce an error
-signal BundleMismatch3[3] {}
-signal BundleMismatch2[2] {}
-
-BundleMismatch2 >> BundleMismatch3;

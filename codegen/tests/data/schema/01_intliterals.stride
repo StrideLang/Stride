@@ -1,0 +1,82 @@
+type _Literals {
+    typeName: "literals"
+    properties: [
+		typeProperty {
+			name: "intLiteral"
+			types: [_IntLiteral]
+			default: none
+			required: on
+		}		
+        typeProperty {
+			name: "constrainedInt"
+			types: [
+                constrainedInt {
+                    minimum: 2
+                    maximum: 20
+                }
+            ]
+			default: none
+			required: on
+		}		
+        typeProperty {
+			name: "constrainedInt2"
+			types: [
+                constrainedInt {
+                    exclusiveMinimum: 2
+                    exclusiveMaximum: 20
+                }
+            ]
+			default: none
+			required: on
+		}	
+        typeProperty {
+			name: "constrainedIntMult"
+			types: [
+                constrainedInt {
+                    multipleOf: 4
+                }
+            ]
+			default: 4
+			required: off
+		}
+    ]
+}
+
+literals Int {
+    intLiteral: 4
+    constrainedInt: 5
+    constrainedInt2: 5
+}
+
+literals Int2 {
+    intLiteral: -10
+    constrainedInt: 2
+    constrainedInt2: 3
+}
+
+literals Int3 {
+    intLiteral: 400
+    constrainedInt: 20
+    constrainedInt2: 19
+}
+
+# Failures -----------------
+
+literals Fails {
+    intLiteral: 4.5
+    constrainedInt: 1
+    constrainedInt2: 2
+}
+
+literals Fails2 {
+    intLiteral: "string"
+    constrainedInt: 21
+    constrainedInt2: 20
+}
+
+literals Fails3 {
+    intLiteral: off
+    constrainedInt: -4
+    constrainedInt2: -4
+    constrainedIntMult: 10
+}
