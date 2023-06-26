@@ -41,11 +41,12 @@
 #include <QTimer>
 #include <QTreeWidgetItem>
 
-#include "builder.h"
+#include "stride/codegen/builder.hpp"
+#include "stride/codegen/systemconfiguration.hpp"
+
 #include "codemodel.hpp"
 #include "languagehighlighter.h"
 #include "searchwidget.h"
-#include "systemconfiguration.hpp"
 
 namespace Ui {
 class ProjectWindow;

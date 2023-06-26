@@ -38,8 +38,9 @@
 #include <map>
 #include <string>
 
+#include "stride/codegen/codevalidator.hpp"
+
 #include "stride/parser/ast.h"
-#include "codevalidator.h"
 #include "stride/parser/declarationnode.h"
 #include "stride/parser/valuenode.h"
 

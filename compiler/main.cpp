@@ -39,10 +39,10 @@
 #include <QFile>
 #include <QFileInfo>
 
-#include "stride/parser/astfunctions.h"
-#include "coderesolver.h"
-#include "codevalidator.h"
-#include "pythonproject.h"
+#include "stride/codegen/astfunctions.hpp"
+#include "stride/codegen/coderesolver.hpp"
+#include "stride/codegen/codevalidator.hpp"
+#include "stride/codegen/pythonproject.h"
 
 int main(int argc, char *argv[]) {
   QCoreApplication app(argc, argv);
@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
   //    qDebug() << platformRootPath;
 
   ASTNode tree;
-  tree = ASTFunctions::parseFile(fileName.toLocal8Bit().constData());
+  tree = AST::parseFile(fileName.toLocal8Bit().constData());
 
   bool buildOK = true;
   if (tree) {
@@ -141,7 +141,7 @@ int main(int argc, char *argv[]) {
       }
     }
   } else {
-    std::vector<LangError> errors = ASTFunctions::getParseErrors();
+    std::vector<LangError> errors = AST::getParseErrors();
     for (LangError err : errors) {
       qDebug() << QString::fromStdString(err.getErrorText());
     }

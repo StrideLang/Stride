@@ -5,7 +5,7 @@
 #include <QMap>
 #include <QString>
 
-#include "toolmanager.hpp"
+#include "stride/codegen/toolmanager.hpp"
 
 namespace Ui {
 class LocalManagementDialog;

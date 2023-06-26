@@ -43,7 +43,7 @@ set(EDITOR_UI
   striderootmanagementdialog.ui
   )
 
-find_package(Qt6 6.3.0 REQUIRED COMPONENTS
+find_package(Qt6 6.5.0 REQUIRED COMPONENTS
     Core Widgets WebEngineCore WebEngineWidgets Qml
 )
 qt_standard_project_setup()

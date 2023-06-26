@@ -32,22 +32,19 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-#include "codevalidator.h"
-#include "codeanalysis.hpp"
+#include "stride/codegen/codevalidator.hpp"
+#include "stride/codegen/astfunctions.hpp"
+#include "stride/codegen/astquery.hpp"
+#include "stride/codegen/astruntime.hpp"
+#include "stride/codegen/astvalidation.hpp"
+#include "stride/codegen/codeanalysis.hpp"
+#include "stride/codegen/codequery.hpp"
+#include "stride/codegen/stridesystem.hpp"
 
 #include <algorithm>
 #include <iostream>
 #include <memory>
 #include <sstream>
-
-#include "stride/parser/astfunctions.h"
-#include "stride/parser/astquery.h"
-#include "stride/parser/astruntime.h"
-#include "stride/parser/astvalidation.h"
-#include "codequery.hpp"
-#include "coderesolver.h"
-
-#include "stridesystem.hpp"
 
 CodeValidator::CodeValidator(ASTNode tree, Options options)
     : m_system(nullptr), m_tree(tree), m_options(options) {

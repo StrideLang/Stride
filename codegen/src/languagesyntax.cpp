@@ -1,5 +1,5 @@
-#include "languagesyntax.hpp"
-#include "stridesystem.hpp"
+#include "stride/codegen/languagesyntax.hpp"
+#include "stride/codegen/stridesystem.hpp"
 
 #include <iostream>
 

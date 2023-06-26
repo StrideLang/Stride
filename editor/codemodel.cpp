@@ -39,11 +39,11 @@
 #include <QTemporaryFile>
 #include <QVector>
 
-#include "stride/parser/astfunctions.h"
-#include "stride/parser/astquery.h"
+#include "stride/codegen/astfunctions.hpp"
+#include "stride/codegen/astquery.hpp"
 #include "stride/parser/blocknode.h"
-#include "coderesolver.h"
-#include "codevalidator.h"
+#include "stride/codegen/coderesolver.hpp"
+#include "stride/codegen/codevalidator.hpp"
 #include "stride/parser/declarationnode.h"
 #include "stride/parser/listnode.h"
 #include "stride/parser/valuenode.h"
@@ -659,7 +659,7 @@ void CodeModel::updateCodeAnalysis(QString code, QString platformRootPath,
     tmpFile.write(code.toLocal8Bit());
     tmpFile.close();
     ASTNode tree;
-    tree = ASTFunctions::parseFile(tmpFile.fileName().toLocal8Bit().constData(),
+    tree = AST::parseFile(tmpFile.fileName().toLocal8Bit().constData(),
                                    sourceFile.toLocal8Bit().constData());
 
     if (tree) {
@@ -689,7 +689,7 @@ void CodeModel::updateCodeAnalysis(QString code, QString platformRootPath,
       }
       m_lastValidTree = tree;
     } else { // !tree
-      std::vector<LangError> syntaxErrors = ASTFunctions::getParseErrors();
+      std::vector<LangError> syntaxErrors = AST::getParseErrors();
       m_errors.clear();
       for (unsigned int i = 0; i < syntaxErrors.size(); i++) {
         m_errors.push_back(syntaxErrors[i]);

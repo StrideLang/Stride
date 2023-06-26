@@ -43,16 +43,12 @@
 #include <QProcess>
 #include <QString>
 
-#include "builder.h"
+#include "stride/codegen/builder.hpp"
 
 #include "stride/parser/ast.h"
-//#include "stride/parser/bundlenode.h"
-//#include "stride/parser/declarationnode.h"
 #include "stride/parser/expressionnode.h"
 #include "stride/parser/functionnode.h"
-//#include "stride/parser/platformnode.h"
 #include "stride/parser/streamnode.h"
-//#include "stride/parser/valuenode.h"
 
 class PythonProject : public Builder {
   Q_OBJECT

@@ -32,7 +32,7 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-#include "strideframework.hpp"
+#include "stride/codegen/strideframework.hpp"
 
 //#include <QProcess>
 
@@ -40,8 +40,8 @@
 #include <filesystem>
 #include <iostream>
 
-#include "stride/parser/astfunctions.h"
-#include "stride/parser/astquery.h"
+#include "stride/codegen/astfunctions.hpp"
+#include "stride/codegen/astquery.hpp"
 #include "stride/parser/declarationnode.h"
 #include "stride/parser/valuenode.h"
 
@@ -111,7 +111,7 @@ std::string StrideFramework::getPlatformDetails() {
 void StrideFramework::installFramework() {
   auto frameworkRoot = buildPlatformLibPath();
   auto fileName = frameworkRoot + "/Configuration.stride";
-  auto configuration = ASTFunctions::parseFile(fileName.c_str());
+  auto configuration = AST::parseFile(fileName.c_str());
   if (configuration) {
     for (const auto &node : configuration->getChildren()) {
       if (node->getNodeType() == AST::Declaration) {

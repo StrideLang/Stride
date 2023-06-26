@@ -35,14 +35,12 @@
 #ifndef STRIDESYSTEM_HPP
 #define STRIDESYSTEM_HPP
 
-//#include <QLibrary>
-
-#include "strideframework.hpp"
-#include "stride/parser/stridelibrary.h"
 #include "stride/parser/strideparser.h"
-#include "systemconfiguration.hpp"
 
-#include "builder.h"
+#include "stride/codegen/builder.hpp"
+#include "stride/codegen/strideframework.hpp"
+#include "stride/codegen/stridelibrary.hpp"
+#include "stride/codegen/systemconfiguration.hpp"
 
 typedef struct {
   ASTNode sourceStreams;

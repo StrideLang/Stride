@@ -1,5 +1,5 @@
-#include "systemconfiguration.hpp"
-#include "stride/parser/astfunctions.h"
+#include "stride/codegen/systemconfiguration.hpp"
+#include "stride/codegen/astfunctions.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -10,7 +10,7 @@ SystemConfiguration::SystemConfiguration() {
 
 void SystemConfiguration::readConfiguration(std::string filename) {
   std::string configFilename = filename + ".config";
-  ASTNode configFile = ASTFunctions::parseFile(configFilename.c_str());
+  ASTNode configFile = AST::parseFile(configFilename.c_str());
   if (configFile) {
     for (ASTNode configNode : configFile->getChildren()) {
       if (configNode->getNodeType() == AST::Declaration) {

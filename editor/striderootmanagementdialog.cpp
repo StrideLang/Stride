@@ -5,7 +5,7 @@
 #include <QProcess>
 #include <QtDebug>
 
-#include "strideframework.hpp"
+#include "stride/codegen/strideframework.hpp"
 
 #include "striderootmanagementdialog.h"
 #include "ui_striderootmanagementdialog.h"

@@ -32,18 +32,17 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-#include "coderesolver.h"
+#include "stride/codegen/codeanalysis.hpp"
+#include "stride/codegen/codequery.hpp"
+#include "stride/codegen/codevalidator.hpp"
+//#include "stride/codegen/stridesystem.hpp"
+#include "stride/codegen/coderesolver.hpp"
+
+#include "stride/codegen/astfunctions.hpp"
+#include "stride/codegen/astquery.hpp"
 
 #include <cassert>
 #include <iostream>
-
-#include "stride/parser/astfunctions.h"
-#include "stride/parser/astquery.h"
-
-#include "codeanalysis.hpp"
-#include "codequery.hpp"
-#include "codevalidator.h"
-#include "stridesystem.hpp"
 
 CodeResolver::CodeResolver(ASTNode tree, std::string striderootDir,
                            SystemConfiguration systemConfig)

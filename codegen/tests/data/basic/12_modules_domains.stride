@@ -1,0 +1,25 @@
+use DesktopAudio version 1.0
+
+module SimpleTest {
+    ports: [
+        mainInputPort InputPort {
+            name: 'input'
+            block: Input
+        },
+        mainOutputPort OutputPort {
+            name: 'output'
+            block: Output
+        }
+    ]
+    blocks: [
+    ]
+    streams: [
+        Input >> Output;
+    ]
+}
+
+signal InSignal { domain: AsyncDomain }
+signal OutSignal { domain: AudioDomain }
+
+InSignal >> SimpleTest() >> OutSignal;
+

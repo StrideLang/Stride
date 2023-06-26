@@ -10,7 +10,7 @@ set(MANAGER_SRC
 #set(COMPILER_HEADERS
 #  )
 
-find_package(Qt6 6.3.0 REQUIRED COMPONENTS
+find_package(Qt6 6.5.0 REQUIRED COMPONENTS
   Core 
 )
 qt_standard_project_setup()

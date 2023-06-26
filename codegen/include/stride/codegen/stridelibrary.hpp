@@ -32,56 +32,53 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-#ifndef CODEMODEL_HPP
-#define CODEMODEL_HPP
+#ifndef STRIDELIBRARY_HPP
+#define STRIDELIBRARY_HPP
 
-#include <QMutex>
-#include <QObject>
+#include <map>
+#include <vector>
 
-#include "stride/parser/ast.h"
-#include "stride/codegen/stridesystem.hpp"
+#include "stride/parser/declarationnode.h"
+//#include "langerror.h"
 
-class CodeModel : public QObject {
-  Q_OBJECT
-public:
-  explicit CodeModel(QObject *parent = 0);
-
-  ~CodeModel();
-
-  QString getHtmlDocumentation(QString symbol);
-  QString getTooltipText(QString symbol);
-  QPair<QString, int> getSymbolLocation(QString symbol);
-
-  std::shared_ptr<StrideSystem> getSystem() { return m_system; }
-
-  // Copy of current tree, it is safe to use outside CodeModel
-  // But the caller must clean it up.
-  ASTNode getOptimizedTree();
-
-  //    Builder *createBuilder(QString projectDir);
-
-  QStringList getTypes();
-  QStringList getFunctions();
-  QStringList getObjectNames();
-  QString getFunctionSyntax(QString symbol);
-  QString getTypeSyntax(QString symbol);
-  QList<LangError> getErrors();
-  void updateCodeAnalysis(QString code, QString platformRootPath,
-                          QString sourceFile);
-
-signals:
-
-public slots:
-
-private:
-  //    QList<AST *> m_platformObjects;
-  std::shared_ptr<StrideSystem> m_system;
-  std::vector<std::string> m_types;
-  std::vector<std::string> m_funcs;
-  std::vector<std::string> m_objectNames;
-  std::vector<LangError> m_errors;
-  QMutex m_validTreeLock;
-  ASTNode m_lastValidTree;
+struct LibraryTree {
+  std::string importName;
+  std::string importAs;
+  std::vector<ASTNode> nodes;
+  std::vector<std::string> namespaces;
 };
 
-#endif // CODEMODEL_HPP
+class StrideLibrary {
+public:
+  StrideLibrary();
+  ~StrideLibrary();
+
+  void initializeLibrary(std::string strideRootPath,
+                         std::vector<std::string> includePaths = {});
+
+  std::shared_ptr<DeclarationNode> findTypeInLibrary(std::string typeName);
+
+  bool isValidBlock(DeclarationNode *block);
+
+  std::map<std::string, std::vector<ASTNode>> getLibraryMembers();
+
+  std::vector<ASTNode> loadImport(std::string importName, std::string importAs);
+
+private:
+  bool isValidProperty(std::shared_ptr<PropertyNode> property,
+                       DeclarationNode *type);
+  std::vector<DeclarationNode *> getParentTypes(DeclarationNode *type);
+
+  void readLibrary(std::string rootDir);
+
+  std::vector<LibraryTree>
+      m_libraryTrees; // List of root and imported library trees
+
+  std::string m_libraryPath;
+
+  int m_majorVersion;
+  int m_minorVersion;
+  std::vector<std::string> m_includePaths;
+};
+
+#endif // STRIDELIBRARY_HPP

@@ -40,19 +40,16 @@
 #include <memory.h>
 #include <string>
 
-#include "stridesystem.hpp"
+#include "stride/codegen/astfunctions.hpp"
+#include "stride/codegen/codeanalysis.hpp"
+#include "stride/codegen/codevalidator.hpp"
+#include "stride/codegen/stridesystem.hpp"
+#include "stride/codegen/toolmanager.hpp"
 
-#include "stride/parser/astfunctions.h"
-#include "stride/parser/astquery.h"
-
-#include "codeanalysis.hpp"
-//#include "coderesolver.h"
-#include "codevalidator.h"
-
+#include "stride/codegen/astquery.hpp"
 #include "stride/parser/declarationnode.h"
 #include "stride/parser/propertynode.h"
 //#include "pythonproject.h"
-#include "toolmanager.hpp"
 
 StrideSystem::StrideSystem(std::string strideRoot, std::string systemName,
                            int majorVersion, int minorVersion,
@@ -72,7 +69,7 @@ StrideSystem::StrideSystem(std::string strideRoot, std::string systemName,
   }
 
   if (std::filesystem::exists(systemFile)) {
-    ASTNode systemTree = ASTFunctions::parseFile(systemFile.c_str(), nullptr);
+    ASTNode systemTree = AST::parseFile(systemFile.c_str(), nullptr);
     if (systemTree) {
       parseSystemTree(systemTree);
 
@@ -88,8 +85,8 @@ StrideSystem::StrideSystem(std::string strideRoot, std::string systemName,
                std::filesystem::directory_iterator{platformPath}) {
             if (file.is_regular_file() &&
                 file.path().extension() == ".stride") {
-              ASTNode tree = ASTFunctions::parseFile(
-                  file.path().generic_string().c_str(), nullptr);
+              ASTNode tree =
+                  AST::parseFile(file.path().generic_string().c_str(), nullptr);
               if (tree) {
                 for (auto node : tree->getChildren()) {
                   node->setCompilerProperty(
@@ -101,7 +98,7 @@ StrideSystem::StrideSystem(std::string strideRoot, std::string systemName,
                 framework->addTestingTree(file.path().stem().generic_string(),
                                           tree);
               } else {
-                std::vector<LangError> errors = ASTFunctions::getParseErrors();
+                std::vector<LangError> errors = AST::getParseErrors();
                 for (LangError error : errors) {
                   std::cerr << error.getErrorText() << std::endl;
                 }
@@ -457,58 +454,59 @@ std::vector<Builder *> StrideSystem::createBuilders(std::string fileName,
         }
         std::vector<std::string> validDomains;
 
-        for (auto plugin : std::filesystem::directory_iterator{pluginPath}) {
-          //                    qDebug() << plugin;
-          //          QLibrary
-          //          pluginLibrary(QString::fromStdString(m_strideRoot) +
-          //                                 "/plugins/" + plugin);
+        if (std::filesystem::exists(pluginPath)) {
+          for (auto plugin : std::filesystem::directory_iterator{pluginPath}) {
+            //                    qDebug() << plugin;
+            //          QLibrary
+            //          pluginLibrary(QString::fromStdString(m_strideRoot) +
+            //                                 "/plugins/" + plugin);
 #ifndef _WIN32
-          auto *lib = dlopen(plugin.path().c_str(), RTLD_NOW);
-          if (lib) {
-            char name[STRIDE_PLUGIN_MAX_STR_LEN];
-            int versionMajor = -1;
-            int versionMinor = -1;
+            auto *lib = dlopen(plugin.path().c_str(), RTLD_NOW);
+            if (lib) {
+              char name[STRIDE_PLUGIN_MAX_STR_LEN];
+              int versionMajor = -1;
+              int versionMinor = -1;
 
-            auto nameFunc = (platform_name_t)dlsym(lib, "platform_name");
-            if (nameFunc) {
-              nameFunc(name);
-            }
-            if (strncmp(name, pluginName.c_str(), STRIDE_PLUGIN_MAX_STR_LEN) ==
-                0) {
-
-              auto versionMajorFunc = (platform_version_major_t)dlsym(
-                  lib, "platform_version_major");
-              if (versionMajorFunc) {
-                versionMajor = versionMajorFunc();
+              auto nameFunc = (platform_name_t)dlsym(lib, "platform_name");
+              if (nameFunc) {
+                nameFunc(name);
               }
-              auto versionMinorFunc = (platform_version_minor_t)dlsym(
-                  lib, "platform_version_minor");
-              if (versionMinorFunc) {
-                versionMinor = versionMinorFunc();
-              }
-              if (pluginMajorVersion == versionMajor &&
-                  pluginMinorVersion == versionMinor) {
-                //                                qDebug() << "Code generator
-                //                                plugin found! " <<
-                //                                QString::fromStdString(pluginName);
+              if (strncmp(name, pluginName.c_str(),
+                          STRIDE_PLUGIN_MAX_STR_LEN) == 0) {
 
-                auto create = (create_object_t)dlsym(lib, "create_object");
-                if (create) {
-                  Builder *builder = create(platform->buildPlatformPath(),
-                                            m_strideRoot, projectDir);
-                  if (builder) {
-                    builder->m_frameworkName = platform->getFramework();
-                    builders.push_back(builder);
+                auto versionMajorFunc = (platform_version_major_t)dlsym(
+                    lib, "platform_version_major");
+                if (versionMajorFunc) {
+                  versionMajor = versionMajorFunc();
+                }
+                auto versionMinorFunc = (platform_version_minor_t)dlsym(
+                    lib, "platform_version_minor");
+                if (versionMinorFunc) {
+                  versionMinor = versionMinorFunc();
+                }
+                if (pluginMajorVersion == versionMajor &&
+                    pluginMinorVersion == versionMinor) {
+                  //                                qDebug() << "Code generator
+                  //                                plugin found! " <<
+                  //                                QString::fromStdString(pluginName);
+
+                  auto create = (create_object_t)dlsym(lib, "create_object");
+                  if (create) {
+                    Builder *builder = create(platform->buildPlatformPath(),
+                                              m_strideRoot, projectDir);
+                    if (builder) {
+                      builder->m_frameworkName = platform->getFramework();
+                      builders.push_back(builder);
+                    }
                   }
                 }
               }
+            } else {
+              std::cerr << dlerror() << std::endl;
             }
-          } else {
-            std::cerr << dlerror() << std::endl;
-          }
 #endif
+          }
         }
-
         //                pluginLibrary.unload();
       }
     }
@@ -671,8 +669,8 @@ std::vector<ASTNode> StrideSystem::getOptionTrees(std::string systemPath) {
   for (auto file : std::filesystem::directory_iterator{platformPath}) {
 
     if (file.is_regular_file() && file.path().extension() == ".stride") {
-      ASTNode optionTree = ASTFunctions::parseFile(
-          file.path().generic_string().c_str(), nullptr);
+      ASTNode optionTree =
+          AST::parseFile(file.path().generic_string().c_str(), nullptr);
       if (optionTree) {
         ASTNode finalTree = std::make_shared<AST>();
         for (auto child : optionTree->getChildren()) {
@@ -752,8 +750,8 @@ StrideSystem::getFrameworkSynchronization(std::string frameworkName) {
       for (auto file : std::filesystem::directory_iterator{platformPath}) {
 
         if (file.is_regular_file() && file.path().extension() == ".stride") {
-          auto newTree = ASTFunctions::parseFile(
-              file.path().generic_string().c_str(), nullptr);
+          auto newTree =
+              AST::parseFile(file.path().generic_string().c_str(), nullptr);
           if (newTree) {
             for (ASTNode node : newTree->getChildren()) {
               if (node->getNodeType() == AST::Declaration) {
@@ -1256,7 +1254,7 @@ void StrideSystem::installFramework(std::string frameworkName) {
     if (framework->getFramework() == frameworkName) {
       auto configPath =
           framework->buildPlatformLibPath() + "/" + "Configuration.stride";
-      ASTNode tree = ASTFunctions::parseFile(configPath.c_str(), nullptr);
+      ASTNode tree = AST::parseFile(configPath.c_str(), nullptr);
       if (tree) {
         for (auto node : tree->getChildren()) {
           if (node->getNodeType() == AST::Declaration) {

@@ -1,0 +1,98 @@
+use DesktopAudio version 1.0
+
+loop LoopIn {
+    ports: [
+        mainInputPort InputPort {
+            block: Input
+        }
+    ]
+    blocks: [
+        switch CounterReset {default: on}
+    ]
+    streams: [
+        Input >> Internal;
+    ]
+    terminateWhen: CounterReset
+}
+
+loop LoopOut {
+    ports: [
+        mainOutputPort OutputPort {
+            block: Output
+        }
+    ]
+    blocks: [
+        switch CounterReset {default: on}
+    ]
+    streams: [
+        10 >> Output;
+    ]
+    terminateWhen: CounterReset
+}
+
+loop LoopInOut {
+    ports: [
+        mainOutputPort OutputPort {
+            block: Output
+        }
+        mainInputPort InputPort {
+            block: Input
+        }
+    ]
+    blocks: [
+        switch CounterReset {default: on}
+    ]
+    streams: [
+        Input >> Output;
+    ]
+    terminateWhen: CounterReset
+}
+
+module ContainsLoop {
+    ports: [
+        mainOutputPort OutputPort {
+            block: Output
+        }
+        mainInputPort InputPort {
+            block: Input
+        }
+    ]
+    blocks: [
+        loop InModule {
+            blocks: [
+                switch CounterReset {default: on}
+            ]
+            ports: [
+                mainOutputPort OutputPort {
+                    block: Output
+                }
+            ]
+            streams: [
+                25 >> Output;
+            ]
+            terminateWhen: CounterReset
+        }
+        loop InModuleInput {
+            blocks: [
+                switch CounterReset {default: on}
+                signal Internal {}
+            ]
+            ports: [
+                mainInputPort InputPort {
+                    block: Input
+                }
+            ]
+            streams: [
+                Input >> Internal;
+            ]
+            terminateWhen: CounterReset
+        }
+    ]
+    streams: [
+        InModule() >> Output;
+        Input >> InModuleInput();
+    ]
+}
+
+
+

@@ -42,7 +42,7 @@
 #include <iostream>
 
 //#include "stride/parser/ast.h"
-#include "toolmanager.hpp"
+#include "stride/codegen/toolmanager.hpp"
 
 int main(int argc, char *argv[]) {
   QCoreApplication app(argc, argv);

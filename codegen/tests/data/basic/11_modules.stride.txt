@@ -1,0 +1,24 @@
+use Gamma version 1.0 on PC
+
+2 > 1 >> Switch1;
+2 < 1 >> Switch2;
+2 == 1 >> Switch3;
+2 != 1 >> Switch4;
+2 >= 1 >> Switch5;
+2 <= 1 >> Switch6;
+
+[2,3] > [4, 5] >> Switches7;
+[2,3] < [4, 5] >> Switches8;
+[2,3] == [4, 5] >> Switches9;
+[2,3] != [4, 5] >> Switches10;
+[2,3] >= [4, 5] >> Switches11;
+[2,3] <= [4, 5] >> Switches12;
+
+[2,3] > 2 >> Switches13;
+[2,3] < 2 >> Switches14;
+[2,3] == 2 >> Switches15;
+[2,3] != 2 >> Switches16;
+[2,3] >= 2 >> Switches17;
+[2,3] <= 2 >> Switches18;
+
+[1 > 2, 1 < 2] >> Switches19;

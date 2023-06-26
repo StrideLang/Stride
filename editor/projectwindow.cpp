@@ -56,11 +56,11 @@
 #include "projectwindow.h"
 #include "ui_projectwindow.h"
 
-#include "stride/parser/astfunctions.h"
-#include "stride/parser/astquery.h"
+#include "stride/codegen/astfunctions.hpp"
+#include "stride/codegen/astquery.hpp"
 #include "codeeditor.h"
-#include "coderesolver.h"
-#include "codevalidator.h"
+#include "stride/codegen/coderesolver.hpp"
+#include "stride/codegen/codevalidator.hpp"
 #include "configdialog.h"
 #include "localmanagementdialog.hpp"
 #include "savechangeddialog.h"
@@ -139,9 +139,9 @@ bool ProjectWindow::build() {
   std::vector<LangError> syntaxErrors;
 
   ASTNode tree;
-  tree = ASTFunctions::parseFile(editor->filename().toLocal8Bit().constData());
+  tree = AST::parseFile(editor->filename().toLocal8Bit().constData());
 
-  syntaxErrors = ASTFunctions::getParseErrors();
+  syntaxErrors = AST::getParseErrors();
 
   if (syntaxErrors.size() > 0) {
     for (auto &syntaxError : syntaxErrors) {
@@ -1355,7 +1355,7 @@ void ProjectWindow::configureSystem() {
       static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
   std::vector<ASTNode> optionTrees;
   ASTNode tree =
-      ASTFunctions::parseFile(editor->filename().toStdString().c_str());
+      AST::parseFile(editor->filename().toStdString().c_str());
   if (tree) {
     m_codeModel.updateCodeAnalysis(editor->document()->toPlainText(),
                                    m_environment["striderootPath"].toString(),

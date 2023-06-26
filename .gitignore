@@ -3,6 +3,8 @@ parser/lang_stride.parser.cpp
 parser/lang_stride.parser.hpp
 parser/lang_stride.parser.output
 
+build/
+
 Stride.pro.user
 
 examples/*_Products*

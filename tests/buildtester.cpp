@@ -40,11 +40,11 @@
 #include <QThread>
 
 #include "stride/parser/ast.h"
-#include "stride/parser/astfunctions.h"
-#include "stride/parser/astquery.h"
-#include "coderesolver.h"
-#include "codevalidator.h"
-#include "systemconfiguration.hpp"
+#include "stride/codegen/astfunctions.hpp"
+#include "stride/codegen/astquery.hpp"
+#include "stride/codegen/coderesolver.hpp"
+#include "stride/codegen/codevalidator.hpp"
+#include "stride/codegen/systemconfiguration.hpp"
 
 #include "buildtester.hpp"
 
@@ -57,9 +57,9 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile,
   std::vector<LangError> syntaxErrors;
 
   ASTNode tree;
-  tree = ASTFunctions::parseFile(filename.c_str());
+  tree = AST::parseFile(filename.c_str());
 
-  syntaxErrors = ASTFunctions::getParseErrors();
+  syntaxErrors = AST::getParseErrors();
 
   if (syntaxErrors.size() > 0) {
     for (auto syntaxError : syntaxErrors) {
