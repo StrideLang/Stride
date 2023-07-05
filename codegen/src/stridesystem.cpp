@@ -32,10 +32,13 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-#include <cassert>
 #ifndef _WIN32
 #include <dlfcn.h>
+#else
+#include "Windows.h"
 #endif
+
+#include <cassert>
 #include <filesystem>
 #include <memory.h>
 #include <string>
@@ -453,9 +456,9 @@ std::vector<Builder *> StrideSystem::createBuilders(std::string fileName,
           //          qDebug() << "Error getting plugin details";
         }
         std::vector<std::string> validDomains;
-
         if (std::filesystem::exists(pluginPath)) {
-          for (auto plugin : std::filesystem::directory_iterator{pluginPath}) {
+          for (const auto &plugin :
+               std::filesystem::directory_iterator{pluginPath}) {
             //                    qDebug() << plugin;
             //          QLibrary
             //          pluginLibrary(QString::fromStdString(m_strideRoot) +
@@ -504,6 +507,63 @@ std::vector<Builder *> StrideSystem::createBuilders(std::string fileName,
             } else {
               std::cerr << dlerror() << std::endl;
             }
+#else
+            if (plugin.path().has_filename() &&
+                plugin.path().filename().extension() == ".dll") {
+              SetDllDirectory(
+                  (LPCSTR)plugin.path().parent_path().u8string().c_str());
+              HINSTANCE lib = LoadLibrary(
+                  (LPCSTR)plugin.path().filename().u8string().c_str());
+              if (lib) {
+                char name[STRIDE_PLUGIN_MAX_STR_LEN];
+                int versionMajor = -1;
+                int versionMinor = -1;
+                auto nameFunc =
+                    (platform_name_t)GetProcAddress(lib, "platform_name");
+                if (nameFunc) {
+                  nameFunc(name);
+                }
+                if (strncmp(name, pluginName.c_str(),
+                            STRIDE_PLUGIN_MAX_STR_LEN) == 0) {
+
+                  auto versionMajorFunc =
+                      (platform_version_major_t)GetProcAddress(
+                          lib, "platform_version_major");
+                  if (versionMajorFunc) {
+                    versionMajor = versionMajorFunc();
+                  }
+                  auto versionMinorFunc =
+                      (platform_version_minor_t)GetProcAddress(
+                          lib, "platform_version_minor");
+                  if (versionMinorFunc) {
+                    versionMinor = versionMinorFunc();
+                  }
+                  if (pluginMajorVersion == versionMajor &&
+                      pluginMinorVersion == versionMinor) {
+                    //                                qDebug() << "Code
+                    //                                generator plugin found! "
+                    //                                <<
+                    //                                QString::fromStdString(pluginName);
+
+                    auto create =
+                        (create_object_t)GetProcAddress(lib, "create_object");
+                    if (create) {
+                      Builder *builder = create(platform->buildPlatformPath(),
+                                                m_strideRoot, projectDir);
+                      if (builder) {
+                        builder->m_frameworkName = platform->getFramework();
+                        builders.push_back(builder);
+                      }
+                    }
+                  }
+                }
+              } else {
+                std::cerr << "Error loading plugin library "
+                          << plugin.path().parent_path() << "   "
+                          << plugin.path().filename() << ":" << GetLastError()
+                          << std::endl;
+              }
+            }
 #endif
           }
         }
@@ -549,7 +609,7 @@ StrideSystem::getFrameworkTools(std::string namespaceName) {
   }
   //  namespaceName = ""; // Hack! Everything is currently being put into
   //  root...
-  for (ASTNode object : libObjects[namespaceName]) {
+  for (const ASTNode &object : libObjects[namespaceName]) {
     if (object->getNodeType() == AST::Declaration) {
       std::shared_ptr<DeclarationNode> decl =
           std::static_pointer_cast<DeclarationNode>(object);
@@ -563,8 +623,8 @@ StrideSystem::getFrameworkTools(std::string namespaceName) {
 
             tools[toolInstance] = toolManager.localTools[toolInstance];
           } else {
-            std::cerr << "ERROR tool instance not found in local config"
-                      << std::endl;
+            std::cerr << "ERROR tool instance '" << toolInstance
+                      << "' not found in local config" << std::endl;
           }
         } else {
           std::cerr << "ERROR expected toolInstance port in toolRequirement "

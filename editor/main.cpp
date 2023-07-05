@@ -51,26 +51,26 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context,
   }
 
   switch (type) {
-    case QtDebugMsg:
-      fprintf(stderr, "Debug: %s (%s:%u, %s)\n", localMsg.constData(), file,
-              context.line, function);
-      break;
-    case QtInfoMsg:
-      fprintf(stderr, "Info: %s (%s:%u, %s)\n", localMsg.constData(), file,
-              context.line, function);
-      break;
-    case QtWarningMsg:
-      fprintf(stderr, "Warning: %s (%s:%u, %s)\n", localMsg.constData(), file,
-              context.line, function);
-      break;
-    case QtCriticalMsg:
-      fprintf(stderr, "Critical: %s (%s:%u, %s)\n", localMsg.constData(), file,
-              context.line, function);
-      break;
-    case QtFatalMsg:
-      fprintf(stderr, "Fatal: %s (%s:%u, %s)\n", localMsg.constData(), file,
-              context.line, function);
-      break;
+  case QtDebugMsg:
+    fprintf(stderr, "Debug: %s (%s:%u, %s)\n", localMsg.constData(), file,
+            context.line, function);
+    break;
+  case QtInfoMsg:
+    fprintf(stderr, "Info: %s (%s:%u, %s)\n", localMsg.constData(), file,
+            context.line, function);
+    break;
+  case QtWarningMsg:
+    fprintf(stderr, "Warning: %s (%s:%u, %s)\n", localMsg.constData(), file,
+            context.line, function);
+    break;
+  case QtCriticalMsg:
+    fprintf(stderr, "Critical: %s (%s:%u, %s)\n", localMsg.constData(), file,
+            context.line, function);
+    break;
+  case QtFatalMsg:
+    fprintf(stderr, "Fatal: %s (%s:%u, %s)\n", localMsg.constData(), file,
+            context.line, function);
+    break;
   }
 }
 
@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
   }
 
   ProjectWindow w;
-  a.installEventFilter(&w);  // Pass events from a to w
+  a.installEventFilter(&w); // Pass events from a to w
   w.initialize(previousRunCrashed);
   w.show();
 

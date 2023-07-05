@@ -36,6 +36,7 @@
 
 //#include <QProcess>
 
+#include <array>
 #include <cassert>
 #include <filesystem>
 #include <iostream>
@@ -158,9 +159,9 @@ void StrideFramework::installFramework() {
                   //                      });
                   //                  installProcess.start(QString::fromStdString(command),
                   //                                       QStringList());
-#ifdef Q_OS_LINUX
                   auto previousPath = std::filesystem::current_path();
                   std::filesystem::current_path(workingDirectory);
+#ifdef Q_OS_LINUX
                   FILE *pipe = popen(command.c_str(), "r");
                   if (pipe) {
                     char buffer[128];
@@ -183,8 +184,33 @@ void StrideFramework::installFramework() {
                     std::cerr << "popen failed!";
                   }
 
-                  std::filesystem::current_path(previousPath);
+#elif defined(Q_OS_WINDOWS)
+                  std::array<char, 128> buffer;
+                  std::string result;
+                  std::unique_ptr<FILE, decltype(&_pclose)> pipe(
+                      _popen(command.c_str(), "r"), _pclose);
+                  if (!pipe) {
+                    throw std::runtime_error("popen() failed!");
+                  }
+                  while (fgets(buffer.data(), buffer.size(), pipe.get()) !=
+                         nullptr) {
+                    result += buffer.data();
+                  }
+#else
+                  std::array<char, 128> buffer;
+                  std::string result;
+                  std::unique_ptr<FILE, decltype(&_pclose)> pipe(
+                      _popen(command.c_str(), "r"), _pclose);
+                  if (!pipe) {
+                    throw std::runtime_error("popen() failed!");
+                  }
+                  while (fgets(buffer.data(), buffer.size(), pipe.get()) !=
+                         nullptr) {
+                    result += buffer.data();
+                  }
+                  std::cerr << __FUNCTION__ << " Not implemented!" << std::endl;
 #endif
+                  std::filesystem::current_path(previousPath);
                 }
               }
             }
