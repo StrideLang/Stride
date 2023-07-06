@@ -56,14 +56,14 @@
 #include "projectwindow.h"
 #include "ui_projectwindow.h"
 
-#include "stride/codegen/astfunctions.hpp"
-#include "stride/codegen/astquery.hpp"
 #include "codeeditor.h"
-#include "stride/codegen/coderesolver.hpp"
-#include "stride/codegen/codevalidator.hpp"
 #include "configdialog.h"
 #include "localmanagementdialog.hpp"
 #include "savechangeddialog.h"
+#include "stride/codegen/astfunctions.hpp"
+#include "stride/codegen/astquery.hpp"
+#include "stride/codegen/coderesolver.hpp"
+#include "stride/codegen/codevalidator.hpp"
 #include "striderootmanagementdialog.h"
 
 //#include "pythonproject.h"
@@ -396,7 +396,12 @@ void ProjectWindow::openGeneratedDir() {
     QFileInfo info(editor->filename());
     QString dirName =
         info.absolutePath() + QDir::separator() + info.fileName() + "_Products";
+#ifdef Q_OS_WIN
+    QProcess::startDetached("explorer.exe",
+                            {QDir::toNativeSeparators(dirName)});
+#else
     QDesktopServices::openUrl(QUrl("file://" + dirName));
+#endif
   }
 }
 
@@ -1354,8 +1359,7 @@ void ProjectWindow::configureSystem() {
   CodeEditor *editor =
       static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
   std::vector<ASTNode> optionTrees;
-  ASTNode tree =
-      AST::parseFile(editor->filename().toStdString().c_str());
+  ASTNode tree = AST::parseFile(editor->filename().toStdString().c_str());
   if (tree) {
     m_codeModel.updateCodeAnalysis(editor->document()->toPlainText(),
                                    m_environment["striderootPath"].toString(),

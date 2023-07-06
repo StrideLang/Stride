@@ -56,6 +56,9 @@ public:
 
 private Q_SLOTS:
 
+  // Code generation/Compiler
+  void testCompilation();
+
   void testTypeCasting();
   void testCodeGeneration();
 
@@ -111,11 +114,7 @@ private Q_SLOTS:
   void testLibraryBasicTypes();
   void testLibraryValidation();
 
-  // Code generation/Compiler
-
 public:
-  //  void testCodeGeneration();
-  void testCompilation();
 };
 
 ParserTest::ParserTest() {
@@ -573,17 +572,17 @@ void ParserTest::testCodeGeneration() {
 
 void ParserTest::testCompilation() {
   QStringList testFiles;
-  QDirIterator directories(STRIDEROOT "/_tests/", QDir::Dirs |
-                                                      QDir::NoSymLinks |
-                                                      QDir::NoDotAndDotDot);
-  QStringList toIgnore = {"sync"};
+  QDirIterator directories(BUILDPATH "/tests/data", QDir::Dirs |
+                                                        QDir::NoSymLinks |
+                                                        QDir::NoDotAndDotDot);
+  QStringList toIgnore = {"sync", "loop"};
   while (directories.hasNext()) {
     QString dirName = directories.next();
     if (!toIgnore.contains(dirName.mid(dirName.lastIndexOf("/") + 1))) {
       QDir subDir(directories.filePath());
-      for (auto entry : subDir.entryList(QStringList() << "*.stride",
-                                         QDir::Files | QDir::NoDotAndDotDot |
-                                             QDir::NoSymLinks)) {
+      for (const auto &entry : subDir.entryList(
+               QStringList() << "*.stride",
+               QDir::Files | QDir::NoDotAndDotDot | QDir::NoSymLinks)) {
         testFiles << subDir.absolutePath() + QDir::separator() + entry;
       }
     }
@@ -591,7 +590,7 @@ void ParserTest::testCompilation() {
   qDebug() << "Using: " STRIDEBIN "/stridec";
   QString compilerBin = STRIDEBIN "/../compiler/stridec";
   QScopedPointer<QProcess> compilerProcess(new QProcess(this));
-  for (auto testFile : testFiles) {
+  for (const auto &testFile : testFiles) {
     QStringList arguments;
     arguments << "-s" STRIDEROOT << testFile;
     qDebug() << arguments.join(" ");
