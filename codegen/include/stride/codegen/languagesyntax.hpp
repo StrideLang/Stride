@@ -13,10 +13,10 @@ public:
   static std::string endStatement() { return ";\n"; }
 
   static std::string getDeclarationType(std::string type, std::string name,
-                                        SignalAccess access, int size);
+                                        SignalAccess access, uint64_t size);
   static std::string
   getDeclarationForType(std::string type, std::string name, SignalAccess access,
-                        int size, std::vector<std::string> defaultValue,
+                        uint64_t size, std::vector<std::string> defaultValue,
                         std::vector<std::string> constructorArgs = {});
   static std::string getDeclarationForType(Instance &instance);
 

@@ -5,7 +5,8 @@
 
 std::string LanguageSyntax::getDeclarationType(std::string type,
                                                std::string name,
-                                               SignalAccess access, int size) {
+                                               SignalAccess access,
+                                               uint64_t size) {
   std::string declType;
   std::string base;
   if (size > 1) {
@@ -40,7 +41,7 @@ std::string LanguageSyntax::getDeclarationType(std::string type,
 }
 
 std::string LanguageSyntax::getDeclarationForType(
-    std::string type, std::string name, SignalAccess access, int size,
+    std::string type, std::string name, SignalAccess access, uint64_t size,
     std::vector<std::string> defaultValue,
     std::vector<std::string> constructorArgs) {
   std::string out;
@@ -65,7 +66,7 @@ std::string LanguageSyntax::getDeclarationForType(
     out += type + " " + name + bundleSize + constructorInitList;
     if (defaultValue.size() == 1) {
       out += " = ";
-      int count = size;
+      uint64_t count = size;
       if (size > 1) {
         out += "{";
       }
@@ -81,9 +82,9 @@ std::string LanguageSyntax::getDeclarationForType(
       }
     } else if (defaultValue.size() > 1) {
       out += " = {";
-      int count = size;
+      uint64_t count = size;
       while (count > 0) {
-        for (auto value : defaultValue) {
+        for (const auto &value : defaultValue) {
           out += value + ",";
           count--;
         }
@@ -110,7 +111,7 @@ std::string LanguageSyntax::getDeclarationForType(
            "};\n";
   } else {
     out += name + "_Helper_Type " + name + "_Helper{";
-    for (auto value : defaultValue) {
+    for (const auto &value : defaultValue) {
       out += value + ",";
     }
     if (defaultValue.size() > 0) {

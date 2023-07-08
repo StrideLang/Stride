@@ -53,9 +53,9 @@ struct Declaration : public CodeEntity {
 };
 
 struct Instance : public CodeEntity {
-  Instance(std::string name_, std::string prefix, int size, std::string type,
-           std::vector<std::string> defaultValue, ASTNode instanceNode,
-           SignalAccess access = SignalAccess())
+  Instance(std::string name_, std::string prefix, uint64_t size,
+           std::string type, std::vector<std::string> defaultValue,
+           ASTNode instanceNode, SignalAccess access = SignalAccess())
       : prefix(prefix), size(size), type(type), defaultValue(defaultValue),
         instanceNode(instanceNode), access(access) {
     entityType = CodeEntityType::Instance;
@@ -76,7 +76,7 @@ struct Instance : public CodeEntity {
 
   std::string prefix;
   std::string parent;
-  int size{0};
+  uint64_t size{0};
   std::string type;
   std::vector<std::string> defaultValue;
   ASTNode instanceNode;
