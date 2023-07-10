@@ -39,12 +39,12 @@
 #include <QList>
 #include <QThread>
 
-#include "stride/parser/ast.h"
 #include "stride/codegen/astfunctions.hpp"
 #include "stride/codegen/astquery.hpp"
 #include "stride/codegen/coderesolver.hpp"
 #include "stride/codegen/codevalidator.hpp"
 #include "stride/codegen/systemconfiguration.hpp"
+#include "stride/parser/ast.h"
 
 #include "buildtester.hpp"
 
@@ -91,7 +91,7 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile,
     resolver.process();
 
     CodeValidator validator(tree);
-    for (auto err : validator.getErrors()) {
+    for (const auto &err : validator.getErrors()) {
       errors.push_back(err);
     }
 

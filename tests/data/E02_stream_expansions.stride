@@ -1,6 +1,6 @@
 use DesktopAudio version 1.0
 
-# This should be expanded into lists of equal size:
+# This should expand the Level in the middle into a list of size 2:
 AudioIn >> Level(gain: 1.5) >> AudioOut;
 
 signal In[2] {
@@ -10,10 +10,11 @@ signal In[2] {
 signal Out[2] {
     default: [5,6.5]
 }
-#Expanded to lists of size 2
+
+# No expansion
 In >> Out;
 
-# Only OutSignal2 should be delcared as block of size 2
+# Only OutSignal2 should be auto delcared as block of size 2
 InSignal2 >> [Level(gain: 1.0), Level(gain: 1.0)] >> OutSignal2;
 
 # Level() should be duplicated and OutSignal3 declared as a bundle size 2
@@ -23,7 +24,7 @@ In >> Level(gain: 1.0) >> OutSignal3;
 signal StereoOut[2] { }
 MonoSignal >> Level(gain: 1.0) >> StereoOut;
 
-# Level should be expanded into a list
+# Level should be expanded into a list separating the two values
 MonoSignal2 >> Level(gain: [1.0, 2.0]) >> StereoOut2;
 
 # NewSignal2 should be auto declared as a bundle with size 2

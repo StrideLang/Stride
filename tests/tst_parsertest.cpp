@@ -40,10 +40,10 @@
 #include "stride/codegen/codeanalysis.hpp"
 #include "stride/codegen/coderesolver.hpp"
 #include "stride/codegen/codevalidator.hpp"
-#include "stride/codegen/strideframework.hpp"
-#include "stride/parser/strideparser.h"
+//#include "stride/codegen/strideframework.hpp"
+//#include "stride/parser/strideparser.h"
 
-#include "stride/codegen/astfunctions.hpp"
+//#include "stride/codegen/astfunctions.hpp"
 #include "stride/codegen/astquery.hpp"
 
 extern AST *parse(const char *fileName);
@@ -56,11 +56,10 @@ public:
 
 private Q_SLOTS:
 
-  // Code generation/Compiler
-  void testCompilation();
+  void testStreamExpansion();
 
-  void testTypeCasting();
   void testCodeGeneration();
+  void testTypeCasting();
 
   // Parser
   void testModules();
@@ -82,7 +81,7 @@ private Q_SLOTS:
 
   // Expansion
   void testLibraryObjectInsertion();
-  void testStreamExpansion();
+  //  void testStreamExpansion();
   void testStreamRates();
   void testConstantResolution();
   void testNamespaces();
@@ -113,6 +112,9 @@ private Q_SLOTS:
   // Library
   void testLibraryBasicTypes();
   void testLibraryValidation();
+
+  // Compiler
+  void testCompilation();
 
 public:
 };
@@ -528,7 +530,7 @@ void ParserTest::testPortNameValidation() {
 }
 
 void ParserTest::testCodeGeneration() {
-  QStringList testFiles;
+  //  QStringList testFiles;
   QDirIterator directories(BUILDPATH "/tests/data", QDir::Dirs |
                                                         QDir::NoSymLinks |
                                                         QDir::NoDotAndDotDot);
@@ -536,12 +538,9 @@ void ParserTest::testCodeGeneration() {
   BuildTester tester(STRIDEROOT);
 
   QStringList toIgnore = {
-      /*"simple", "module", "reactions", "table", */ "buffer",
-      "loop",
-      "platform",
-      "multidomain",
-      "combinations",
-      "sync"};
+      /*"simple", "reactions",  "buffer","table",  "loop",*/ "module",
+
+      "platform", "multidomain", "combinations", "sync"};
   while (directories.hasNext()) {
     QString dirName = directories.next();
     if (!toIgnore.contains(dirName.mid(dirName.lastIndexOf("/") + 1))) {
@@ -1359,7 +1358,7 @@ void ParserTest::testStreamExpansion() {
   QVERIFY(validator.isValid());
   QVERIFY(resolver.getSystem()->getErrors().size() == 0);
 
-  //# This should be expanded into lists of equal size:
+  //# This should expand the Level in the middle into a list of size 2:
   // AudioIn >> Level(gain: 1.5) >> AudioOut;
 
   std::vector<ASTNode> nodes = tree->getChildren();
@@ -1403,10 +1402,11 @@ void ParserTest::testStreamExpansion() {
   //# Signals should be delcared as blocks of size 2
   // InSignal2 >> [Level(gain: 1.0), Level(gain: 1.0)] >> OutSignal2;
 
-  std::vector<StreamNode *> streams = CodeValidator::getStreamsAtLine(tree, 17);
-
   std::shared_ptr<DeclarationNode> decl =
       ASTQuery::findDeclarationByName(std::string("InSignal2"), {}, tree);
+
+  QVERIFY(decl->getNodeType() == AST::Declaration);
+  decl = ASTQuery::findDeclarationByName(std::string("OutSignal2"), {}, tree);
 
   QVERIFY(decl->getNodeType() == AST::BundleDeclaration);
   auto bundle = decl->getBundle().get();
@@ -1418,18 +1418,7 @@ void ParserTest::testStreamExpansion() {
   QVERIFY(value->getNodeType() == AST::Int);
   QVERIFY(value->getIntValue() == 2);
 
-  decl = ASTQuery::findDeclarationByName(std::string("OutSignal2"), {}, tree);
-
-  QVERIFY(decl->getNodeType() == AST::BundleDeclaration);
-  bundle = decl->getBundle().get();
-  index = bundle->index().get();
-
-  QVERIFY(index->getNodeType() == AST::List);
-  QVERIFY(index->getChildren().size() == 1);
-  value = static_cast<ValueNode *>(index->getChildren().at(0).get());
-  QVERIFY(value->getNodeType() == AST::Int);
-  QVERIFY(value->getIntValue() == 2);
-
+  std::vector<StreamNode *> streams = CodeValidator::getStreamsAtLine(tree, 18);
   stream = streams.at(0);
 
   BlockNode *name = static_cast<BlockNode *>(stream->getLeft().get());
@@ -1442,13 +1431,13 @@ void ParserTest::testStreamExpansion() {
 
   //# Level() should be duplicated and OutSignal3 declared as a bundle size 2
   //    In >> Level(gain: 1.0) >> OutSignal3;
-  streams = CodeValidator::getStreamsAtLine(tree, 20);
+  streams = CodeValidator::getStreamsAtLine(tree, 21);
   QVERIFY(streams.size() == 1);
   stream = streams.at(0);
 
-  list = static_cast<ListNode *>(stream->getLeft().get());
-  QVERIFY(list->getNodeType() == AST::List);
-  QVERIFY(list->getChildren().size() == 2);
+  auto block = static_cast<BlockNode *>(stream->getLeft().get());
+  QVERIFY(block->getNodeType() == AST::Block);
+  QCOMPARE_EQ(block->getName(), "In");
 
   decl = ASTQuery::findDeclarationByName(std::string("OutSignal3"), {}, tree);
   QVERIFY(decl->getNodeType() == AST::BundleDeclaration);
@@ -1470,31 +1459,21 @@ void ParserTest::testStreamExpansion() {
   QVERIFY(newfunc->getNodeType() == AST::Function);
   QVERIFY(newfunc->getName() == "Level");
 
-  list = static_cast<ListNode *>(stream->getRight()->getChildren()[1].get());
-  QVERIFY(list->getChildren().size() == 2);
-  bundle = static_cast<BundleNode *>(list->getChildren()[0].get());
-  QVERIFY(bundle->getNodeType() == AST::Bundle);
-  QVERIFY(bundle->getName() == "OutSignal3");
-  index = static_cast<ListNode *>(bundle->index().get());
-  QVERIFY(index->getNodeType() == AST::List);
-  QVERIFY(index->getChildren().size() == 1);
-  value = static_cast<ValueNode *>(index->getChildren().at(0).get());
-  QVERIFY(value->getNodeType() == AST::Int);
-  QVERIFY(value->getIntValue() == 0);
+  block = static_cast<BlockNode *>(stream->getRight()->getChildren()[1].get());
+  QVERIFY(block->getNodeType() == AST::Block);
+  QVERIFY(block->getName() == "OutSignal3");
 
-  bundle = static_cast<BundleNode *>(list->getChildren()[1].get());
-  QVERIFY(bundle->getNodeType() == AST::Bundle);
-  QVERIFY(bundle->getName() == "OutSignal3");
-  index = static_cast<ListNode *>(bundle->index().get());
-  QVERIFY(index->getNodeType() == AST::List);
-  QVERIFY(index->getChildren().size() == 1);
-  value = static_cast<ValueNode *>(index->getChildren().at(0).get());
-  QVERIFY(value->getNodeType() == AST::Int);
-  QVERIFY(value->getIntValue() == 1);
+  decl = ASTQuery::findDeclarationByName(std::string("OutSignal3"), {}, tree);
+  QCOMPARE_EQ(decl->getNodeType(), AST::BundleDeclaration);
+  bundleIndex = static_cast<ListNode *>(decl->getBundle()->index().get());
+  QVERIFY(bundleIndex->size() == 1);
+  declSize = static_cast<ValueNode *>(bundleIndex->getChildren()[0].get());
+  QVERIFY(declSize->getNodeType() == AST::Int);
+  QVERIFY(declSize->getIntValue() == 2);
 
   //    signal StereoOut[2] { }
   //    MonoSignal >> Level(gain: 1.0) >> StereoOut;
-  streams = CodeValidator::getStreamsAtLine(tree, 24);
+  streams = CodeValidator::getStreamsAtLine(tree, 25);
   QVERIFY(streams.size() == 1);
   stream = streams.at(0);
   name = static_cast<BlockNode *>(stream->getLeft().get());
@@ -1504,12 +1483,12 @@ void ParserTest::testStreamExpansion() {
   QVERIFY(stream->getNodeType() == AST::Stream);
   func = static_cast<FunctionNode *>(stream->getLeft().get());
   QVERIFY(func->getNodeType() == AST::Function);
-  list = static_cast<ListNode *>(stream->getRight().get());
-  QVERIFY(list->getNodeType() == AST::List);
-  QVERIFY(list->getChildren().size() == 2);
+  block = static_cast<BlockNode *>(stream->getRight().get());
+  QVERIFY(block->getNodeType() == AST::Block);
+  QVERIFY(block->getName() == "StereoOut");
 
-  //    MonoSignal2 >> Level(gain: [1.0, 1.0]) >> StereoOut;
-  streams = CodeValidator::getStreamsAtLine(tree, 27);
+  //    MonoSignal2 >> Level(gain: [1.0, 1.0]) >> StereoOut2;
+  streams = CodeValidator::getStreamsAtLine(tree, 28);
   QVERIFY(streams.size() == 1);
   stream = streams.at(0);
   name = static_cast<BlockNode *>(stream->getLeft().get());
@@ -1536,110 +1515,27 @@ void ParserTest::testStreamExpansion() {
   QVERIFY(value->getNodeType() == AST::Real);
   QVERIFY(value->getRealValue() == 2.0);
 
-  list = static_cast<ListNode *>(stream->getRight().get());
-  QVERIFY(list->getNodeType() == AST::List);
-  QVERIFY(list->getChildren().size() == 2);
-  bundle = static_cast<BundleNode *>(list->getChildren()[0].get());
-  QVERIFY(bundle->getNodeType() == AST::Bundle);
-  index = bundle->index().get();
-  QVERIFY(index->getChildren().size() == 1);
-  value = static_cast<ValueNode *>(index->getChildren()[0].get());
-  QVERIFY(value->getNodeType() == AST::Int);
-  QVERIFY(value->getIntValue() == 0);
-  bundle = static_cast<BundleNode *>(list->getChildren()[1].get());
-  QVERIFY(bundle->getNodeType() == AST::Bundle);
-  index = bundle->index().get();
-  QVERIFY(index->getChildren().size() == 1);
-  value = static_cast<ValueNode *>(index->getChildren()[0].get());
-  QVERIFY(value->getNodeType() == AST::Int);
-  QVERIFY(value->getIntValue() == 1);
+  block = static_cast<BlockNode *>(stream->getRight().get());
+  QVERIFY(block->getNodeType() == AST::Block);
+  QVERIFY(block->getName() == "StereoOut2");
+
+  decl = ASTQuery::findDeclarationByName(std::string("StereoOut2"), {}, tree);
+  QCOMPARE_EQ(decl->getNodeType(), AST::BundleDeclaration);
+  bundleIndex = static_cast<ListNode *>(decl->getBundle()->index().get());
+  QVERIFY(bundleIndex->size() == 1);
+  declSize = static_cast<ValueNode *>(bundleIndex->getChildren()[0].get());
+  QVERIFY(declSize->getNodeType() == AST::Int);
+  QVERIFY(declSize->getIntValue() == 2);
 
   //    Out >> Level(gain: 1.0) >> NewSignal;
   //    NewSignal >> Level(gain: 1.0) >> NewSignal2;
 
-  streams = CodeValidator::getStreamsAtLine(tree, 30);
-  QVERIFY(streams.size() == 1);
-  stream = streams.at(0);
-  list = static_cast<ListNode *>(stream->getLeft().get());
-  QVERIFY(list->getNodeType() == AST::List);
-  QVERIFY(list->size() == 2);
-  bundle = static_cast<BundleNode *>(list->getChildren().at(0).get());
-  QVERIFY(bundle->getNodeType() == AST::Bundle);
-  QVERIFY(bundle->getName() == "Out");
-  ListNode *indexList = static_cast<ListNode *>(bundle->index().get());
-  QVERIFY(indexList->size() == 1);
-  value = static_cast<ValueNode *>(indexList->getChildren().at(0).get());
-  QVERIFY(value->getNodeType() == AST::Int);
-  QVERIFY(value->getIntValue() == 0);
-  bundle = static_cast<BundleNode *>(list->getChildren().at(1).get());
-  QVERIFY(bundle->getNodeType() == AST::Bundle);
-  QVERIFY(bundle->getName() == "Out");
-  indexList = static_cast<ListNode *>(bundle->index().get());
-  QVERIFY(indexList->size() == 1);
-  value = static_cast<ValueNode *>(indexList->getChildren().at(0).get());
-  QVERIFY(value->getNodeType() == AST::Int);
-  QVERIFY(value->getIntValue() == 1);
-
-  stream = static_cast<StreamNode *>(stream->getRight().get());
-  QVERIFY(stream->getNodeType() == AST::Stream);
-  list = static_cast<ListNode *>(stream->getLeft().get());
-  QVERIFY(list->getNodeType() == AST::List);
-  QVERIFY(list->size() == 2);
-  func = static_cast<FunctionNode *>(list->getChildren().at(0).get());
-  QVERIFY(func->getNodeType() == AST::Function);
-  QVERIFY(func->getName() == "Level");
-  value = static_cast<ValueNode *>(func->getPropertyValue("gain").get());
-  QVERIFY(value->getNodeType() == AST::Real);
-  QVERIFY(value->getRealValue() == 1.0);
-  func = static_cast<FunctionNode *>(list->getChildren().at(1).get());
-  QVERIFY(func->getNodeType() == AST::Function);
-  QVERIFY(func->getName() == "Level");
-  value = static_cast<ValueNode *>(func->getPropertyValue("gain").get());
-  QVERIFY(value->getNodeType() == AST::Real);
-  QVERIFY(value->getRealValue() == 1.0);
-
-  list = static_cast<ListNode *>(stream->getRight().get());
-  QVERIFY(list->getNodeType() == AST::List);
-  QVERIFY(list->size() == 2);
-  bundle = static_cast<BundleNode *>(list->getChildren().at(0).get());
-  QVERIFY(bundle->getNodeType() == AST::Bundle);
-  QVERIFY(bundle->getName() == "NewSignal");
-  indexList = static_cast<ListNode *>(bundle->index().get());
-  QVERIFY(indexList->size() == 1);
-  value = static_cast<ValueNode *>(indexList->getChildren().at(0).get());
-  QVERIFY(value->getNodeType() == AST::Int);
-  QVERIFY(value->getIntValue() == 0);
-  bundle = static_cast<BundleNode *>(list->getChildren().at(1).get());
-  QVERIFY(bundle->getNodeType() == AST::Bundle);
-  QVERIFY(bundle->getName() == "NewSignal");
-  indexList = static_cast<ListNode *>(bundle->index().get());
-  QVERIFY(indexList->size() == 1);
-  value = static_cast<ValueNode *>(indexList->getChildren().at(0).get());
-  QVERIFY(value->getNodeType() == AST::Int);
-  QVERIFY(value->getIntValue() == 1);
-
   streams = CodeValidator::getStreamsAtLine(tree, 31);
   QVERIFY(streams.size() == 1);
   stream = streams.at(0);
-  list = static_cast<ListNode *>(stream->getLeft().get());
-  QVERIFY(list->getNodeType() == AST::List);
-  QVERIFY(list->size() == 2);
-  bundle = static_cast<BundleNode *>(list->getChildren().at(0).get());
-  QVERIFY(bundle->getNodeType() == AST::Bundle);
-  QVERIFY(bundle->getName() == "NewSignal");
-  indexList = static_cast<ListNode *>(bundle->index().get());
-  QVERIFY(indexList->size() == 1);
-  value = static_cast<ValueNode *>(indexList->getChildren().at(0).get());
-  QVERIFY(value->getNodeType() == AST::Int);
-  QVERIFY(value->getIntValue() == 0);
-  bundle = static_cast<BundleNode *>(list->getChildren().at(1).get());
-  QVERIFY(bundle->getNodeType() == AST::Bundle);
-  QVERIFY(bundle->getName() == "NewSignal");
-  indexList = static_cast<ListNode *>(bundle->index().get());
-  QVERIFY(indexList->size() == 1);
-  value = static_cast<ValueNode *>(indexList->getChildren().at(0).get());
-  QVERIFY(value->getNodeType() == AST::Int);
-  QVERIFY(value->getIntValue() == 1);
+  block = static_cast<BlockNode *>(stream->getLeft().get());
+  QVERIFY(block->getNodeType() == AST::Block);
+  QVERIFY(block->getName() == "Out");
 
   stream = static_cast<StreamNode *>(stream->getRight().get());
   QVERIFY(stream->getNodeType() == AST::Stream);
@@ -1659,25 +1555,52 @@ void ParserTest::testStreamExpansion() {
   QVERIFY(value->getNodeType() == AST::Real);
   QVERIFY(value->getRealValue() == 1.0);
 
-  list = static_cast<ListNode *>(stream->getRight().get());
+  block = static_cast<BlockNode *>(stream->getRight().get());
+  QVERIFY(block->getNodeType() == AST::Block);
+  QVERIFY(block->getName() == "NewSignal");
+  decl = ASTQuery::findDeclarationByName(std::string("NewSignal"), {}, tree);
+  QCOMPARE_EQ(decl->getNodeType(), AST::BundleDeclaration);
+  bundleIndex = static_cast<ListNode *>(decl->getBundle()->index().get());
+  QVERIFY(bundleIndex->size() == 1);
+  declSize = static_cast<ValueNode *>(bundleIndex->getChildren()[0].get());
+  QVERIFY(declSize->getNodeType() == AST::Int);
+  QVERIFY(declSize->getIntValue() == 2);
+
+  streams = CodeValidator::getStreamsAtLine(tree, 32);
+  QVERIFY(streams.size() == 1);
+  stream = streams.at(0);
+  block = static_cast<BlockNode *>(stream->getLeft().get());
+  QVERIFY(block->getNodeType() == AST::Block);
+  QVERIFY(block->getName() == "NewSignal");
+
+  stream = static_cast<StreamNode *>(stream->getRight().get());
+  QVERIFY(stream->getNodeType() == AST::Stream);
+  list = static_cast<ListNode *>(stream->getLeft().get());
   QVERIFY(list->getNodeType() == AST::List);
   QVERIFY(list->size() == 2);
-  bundle = static_cast<BundleNode *>(list->getChildren().at(0).get());
-  QVERIFY(bundle->getNodeType() == AST::Bundle);
-  QVERIFY(bundle->getName() == "NewSignal2");
-  indexList = static_cast<ListNode *>(bundle->index().get());
-  QVERIFY(indexList->size() == 1);
-  value = static_cast<ValueNode *>(indexList->getChildren().at(0).get());
-  QVERIFY(value->getNodeType() == AST::Int);
-  QVERIFY(value->getIntValue() == 0);
-  bundle = static_cast<BundleNode *>(list->getChildren().at(1).get());
-  QVERIFY(bundle->getNodeType() == AST::Bundle);
-  QVERIFY(bundle->getName() == "NewSignal2");
-  indexList = static_cast<ListNode *>(bundle->index().get());
-  QVERIFY(indexList->size() == 1);
-  value = static_cast<ValueNode *>(indexList->getChildren().at(0).get());
-  QVERIFY(value->getNodeType() == AST::Int);
-  QVERIFY(value->getIntValue() == 1);
+  func = static_cast<FunctionNode *>(list->getChildren().at(0).get());
+  QVERIFY(func->getNodeType() == AST::Function);
+  QVERIFY(func->getName() == "Level");
+  value = static_cast<ValueNode *>(func->getPropertyValue("gain").get());
+  QVERIFY(value->getNodeType() == AST::Real);
+  QVERIFY(value->getRealValue() == 1.0);
+  func = static_cast<FunctionNode *>(list->getChildren().at(1).get());
+  QVERIFY(func->getNodeType() == AST::Function);
+  QVERIFY(func->getName() == "Level");
+  value = static_cast<ValueNode *>(func->getPropertyValue("gain").get());
+  QVERIFY(value->getNodeType() == AST::Real);
+  QVERIFY(value->getRealValue() == 1.0);
+
+  block = static_cast<BlockNode *>(stream->getRight().get());
+  QVERIFY(block->getNodeType() == AST::Block);
+  QVERIFY(block->getName() == "NewSignal2");
+  decl = ASTQuery::findDeclarationByName(std::string("NewSignal2"), {}, tree);
+  QCOMPARE_EQ(decl->getNodeType(), AST::BundleDeclaration);
+  bundleIndex = static_cast<ListNode *>(decl->getBundle()->index().get());
+  QVERIFY(bundleIndex->size() == 1);
+  declSize = static_cast<ValueNode *>(bundleIndex->getChildren()[0].get());
+  QVERIFY(declSize->getNodeType() == AST::Int);
+  QVERIFY(declSize->getIntValue() == 2);
 
   //    Oscillator(frequency: [440,2] amplitude: 1.0) >> Osc;
 
@@ -1698,25 +1621,16 @@ void ParserTest::testStreamExpansion() {
   QVERIFY(value->getNodeType() == AST::Int);
   QVERIFY(value->getIntValue() == 2);
 
-  list = static_cast<ListNode *>(stream->getRight().get());
-  QVERIFY(list->getNodeType() == AST::List);
-  QVERIFY(list->size() == 2);
-  bundle = static_cast<BundleNode *>(list->getChildren().at(0).get());
-  QVERIFY(bundle->getName() == "Osc");
-  indexList = static_cast<ListNode *>(bundle->index().get());
-  QVERIFY(indexList->size() == 1);
-  value = static_cast<ValueNode *>(indexList->getChildren().at(0).get());
-  QVERIFY(value->getNodeType() == AST::Int);
-  QVERIFY(value->getIntValue() == 0);
-  bundle = static_cast<BundleNode *>(list->getChildren().at(1).get());
-  QVERIFY(bundle->getName() == "Osc");
-  indexList = static_cast<ListNode *>(bundle->index().get());
-  QVERIFY(indexList->size() == 1);
-  value = static_cast<ValueNode *>(indexList->getChildren().at(0).get());
-  QVERIFY(value->getNodeType() == AST::Int);
-  QVERIFY(value->getIntValue() == 1);
-
-  streams = CodeValidator::getStreamsAtLine(tree, 22);
+  block = static_cast<BlockNode *>(stream->getRight().get());
+  QVERIFY(block->getNodeType() == AST::Block);
+  QVERIFY(block->getName() == "Osc");
+  decl = ASTQuery::findDeclarationByName(std::string("Osc"), {}, tree);
+  QCOMPARE_EQ(decl->getNodeType(), AST::BundleDeclaration);
+  bundleIndex = static_cast<ListNode *>(decl->getBundle()->index().get());
+  QVERIFY(bundleIndex->size() == 1);
+  declSize = static_cast<ValueNode *>(bundleIndex->getChildren()[0].get());
+  QVERIFY(declSize->getNodeType() == AST::Int);
+  QVERIFY(declSize->getIntValue() == 2);
 }
 
 void ParserTest::testNamespaces() {

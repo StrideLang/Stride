@@ -1,24 +1,23 @@
 #include "gtest/gtest.h"
 
-#include "stride/parser/ast.h"
 #include "stride/codegen/astfunctions.hpp"
 #include "stride/codegen/astquery.hpp"
 #include "stride/codegen/astvalidation.hpp"
-#include "stride/parser/blocknode.h"
-#include "stride/parser/bundlenode.h"
-#include "stride/parser/declarationnode.h"
-#include "stride/parser/expressionnode.h"
-#include "stride/parser/functionnode.h"
-#include "stride/parser/importnode.h"
-#include "stride/parser/platformnode.h"
-#include "stride/parser/rangenode.h"
-#include "stride/parser/valuenode.h"
+#include "stride/parser/ast.h"
+//#include "stride/parser/blocknode.h"
+//#include "stride/parser/bundlenode.h"
+//#include "stride/parser/declarationnode.h"
+//#include "stride/parser/expressionnode.h"
+//#include "stride/parser/functionnode.h"
+//#include "stride/parser/importnode.h"
+//#include "stride/parser/platformnode.h"
+//#include "stride/parser/rangenode.h"
+//#include "stride/parser/valuenode.h"
 
 TEST(Schema, ObjectTypes) {
   auto strideroot = ASTFunctions::getDefaultStrideRoot();
   ASTNode tree;
-  tree =
-      AST::parseFile(TESTS_SOURCE_DIR "schema/05_objectTypes.stride");
+  tree = AST::parseFile(TESTS_SOURCE_DIR "schema/05_objectTypes.stride");
   EXPECT_TRUE(tree != nullptr);
   ASTFunctions::preprocess(tree);
   std::vector<LangError> errors;
@@ -30,8 +29,7 @@ TEST(Schema, ObjectTypes) {
 TEST(Schema, IntLiterals) {
   auto strideroot = ASTFunctions::getDefaultStrideRoot();
   ASTNode tree;
-  tree =
-      AST::parseFile(TESTS_SOURCE_DIR "schema/01_intliterals.stride");
+  tree = AST::parseFile(TESTS_SOURCE_DIR "schema/01_intliterals.stride");
   EXPECT_TRUE(tree != nullptr);
   ASTFunctions::preprocess(tree);
   std::vector<LangError> errors;
@@ -63,8 +61,7 @@ TEST(Schema, IntLiterals) {
 TEST(Schema, RealLiterals) {
   auto strideroot = ASTFunctions::getDefaultStrideRoot();
   ASTNode tree;
-  tree =
-      AST::parseFile(TESTS_SOURCE_DIR "schema/02_realliterals.stride");
+  tree = AST::parseFile(TESTS_SOURCE_DIR "schema/02_realliterals.stride");
   EXPECT_TRUE(tree != nullptr);
   ASTFunctions::preprocess(tree);
   std::vector<LangError> errors;
@@ -88,8 +85,7 @@ TEST(Schema, RealLiterals) {
 TEST(Schema, StringLiterals) {
   auto strideroot = ASTFunctions::getDefaultStrideRoot();
   ASTNode tree;
-  tree = AST::parseFile(TESTS_SOURCE_DIR
-                                 "schema/03_stringliterals.stride");
+  tree = AST::parseFile(TESTS_SOURCE_DIR "schema/03_stringliterals.stride");
   EXPECT_TRUE(tree != nullptr);
   ASTFunctions::preprocess(tree);
   std::vector<LangError> errors;
@@ -109,8 +105,7 @@ TEST(Schema, StringLiterals) {
 TEST(Schema, ConstrainedList) {
   auto strideroot = ASTFunctions::getDefaultStrideRoot();
   ASTNode tree;
-  tree = AST::parseFile(TESTS_SOURCE_DIR
-                                 "schema/04_constrainedList.stride");
+  tree = AST::parseFile(TESTS_SOURCE_DIR "schema/04_constrainedList.stride");
   EXPECT_TRUE(tree != nullptr);
   ASTFunctions::preprocess(tree);
   std::vector<LangError> errors;
