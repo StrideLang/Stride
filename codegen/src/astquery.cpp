@@ -235,7 +235,7 @@ int ASTQuery::getNodeSize(ASTNode node, const ScopeStack &scopeStack,
                           ASTNode tree) {
   int size = 1;
   if (node->getNodeType() == AST::Bundle) {
-    BundleNode *bundle = static_cast<BundleNode *>(node.get());
+    auto bundle = std::static_pointer_cast<BundleNode>(node);
     std::vector<LangError> errors;
     size = getBundleSize(bundle, scopeStack, tree, &errors);
     if (errors.size() > 0) {
@@ -285,7 +285,8 @@ int ASTQuery::getNodeSize(ASTNode node, const ScopeStack &scopeStack,
   return size;
 }
 
-int ASTQuery::getBundleSize(BundleNode *bundle, ScopeStack scope, ASTNode tree,
+int ASTQuery::getBundleSize(std::shared_ptr<BundleNode> bundle,
+                            ScopeStack scope, ASTNode tree,
                             std::vector<LangError> *errors) {
   std::shared_ptr<ListNode> indexList = bundle->index();
   int size = 0;
@@ -295,7 +296,7 @@ int ASTQuery::getBundleSize(BundleNode *bundle, ScopeStack scope, ASTNode tree,
   for (const ASTNode &expr : listExprs) {
     switch (expr->getNodeType()) {
     case AST::Int:
-      size += 1;
+      size += 1; // FIXME looks wrong
       break;
     case AST::Range:
       size += ASTFunctions::evaluateConstInteger(

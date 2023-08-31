@@ -1359,8 +1359,8 @@ int CodeAnalysis::getNodeNumOutputs(ASTNode node, const ScopeStack &scope,
     }
     return size;
   } else if (node->getNodeType() == AST::Bundle) {
-    return ASTQuery::getBundleSize(static_cast<BundleNode *>(node.get()), scope,
-                                   tree, errors);
+    return ASTQuery::getBundleSize(std::static_pointer_cast<BundleNode>(node),
+                                   scope, tree, errors);
   } else if (node->getNodeType() == AST::Int ||
              node->getNodeType() == AST::Real ||
              node->getNodeType() == AST::String ||
@@ -1459,8 +1459,8 @@ int CodeAnalysis::getNodeNumInputs(ASTNode node, ScopeStack scope, ASTNode tree,
       return CodeAnalysis::SIZE_UNKNOWN;
     }
   } else if (node->getNodeType() == AST::Bundle) {
-    return ASTQuery::getBundleSize(static_cast<BundleNode *>(node.get()), scope,
-                                   tree, errors);
+    return ASTQuery::getBundleSize(std::static_pointer_cast<BundleNode>(node),
+                                   scope, tree, errors);
   } else if (node->getNodeType() == AST::List) {
     int size = 0;
     for (const ASTNode &member : node->getChildren()) {

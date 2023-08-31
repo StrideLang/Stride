@@ -68,6 +68,8 @@ target_link_libraries(StrideIDE StrideParser StrideCodegen
 
 set_property(TARGET StrideIDE PROPERTY CXX_STANDARD 17)
 set_property(TARGET StrideIDE PROPERTY CXX_STANDARD_REQUIRED ON)
+set_property(TARGET StrideIDE PROPERTY POSITION_INDEPENDENT_CODE ON) #-fPIC
+
 # TODO add Icon
 if(APPLE)
 #  set(MACOSX_BUNDLE_ICON_FILE qt5app.icns)

@@ -50,7 +50,7 @@ public:
   static int getNodeSize(ASTNode node, const ScopeStack &scopeStack,
                          ASTNode tree);
 
-  static int getBundleSize(BundleNode *bundle, ScopeStack scope, ASTNode tree,
+  static int getBundleSize(std::shared_ptr<BundleNode> bundle, ScopeStack scope, ASTNode tree,
                            std::vector<LangError> *errors = nullptr);
 
   static int getBlockDeclaredSize(std::shared_ptr<DeclarationNode> block,

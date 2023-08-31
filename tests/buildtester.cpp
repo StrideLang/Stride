@@ -39,7 +39,7 @@
 #include <QList>
 #include <QThread>
 
-#include "stride/codegen/astfunctions.hpp"
+//#include "stride/codegen/astfunctions.hpp"
 #include "stride/codegen/astquery.hpp"
 #include "stride/codegen/coderesolver.hpp"
 #include "stride/codegen/codevalidator.hpp"
@@ -62,7 +62,7 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile,
   syntaxErrors = AST::getParseErrors();
 
   if (syntaxErrors.size() > 0) {
-    for (auto syntaxError : syntaxErrors) {
+    for (const auto &syntaxError : syntaxErrors) {
       errors << syntaxError;
     }
     for (LangError error : syntaxErrors) {
@@ -74,7 +74,7 @@ bool BuildTester::test(std::string filename, std::string expectedResultFile,
   if (tree) {
     std::vector<ASTNode> optionTrees;
 
-    for (auto system : ASTQuery::getSystemNodes(tree)) {
+    for (const auto &system : ASTQuery::getSystemNodes(tree)) {
       optionTrees = StrideSystem::getOptionTrees(
           m_StrideRoot + "/systems/" + system->platformName() + "/" +
           std::to_string(system->majorVersion()) + "." +

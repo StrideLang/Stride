@@ -33,12 +33,12 @@
 */
 
 #include "stride/codegen/codevalidator.hpp"
-#include "stride/codegen/astfunctions.hpp"
+//#include "stride/codegen/astfunctions.hpp"
 #include "stride/codegen/astquery.hpp"
 #include "stride/codegen/astruntime.hpp"
 #include "stride/codegen/astvalidation.hpp"
 #include "stride/codegen/codeanalysis.hpp"
-#include "stride/codegen/codequery.hpp"
+//#include "stride/codegen/codequery.hpp"
 #include "stride/codegen/stridesystem.hpp"
 
 #include <algorithm>
@@ -176,7 +176,7 @@ void CodeValidator::validateBundleSizes(ASTNode node,
   }
 
   std::vector<ASTNode> children = node->getChildren();
-  for (ASTNode node : children) {
+  for (const ASTNode &node : children) {
     validateBundleSizes(node, errors, scope);
   }
 }
@@ -358,11 +358,11 @@ void CodeValidator::validateNodeRate(ASTNode node, ASTNode tree) {
     validateNodeRate(stream->getLeft(), tree);
     validateNodeRate(stream->getRight(), tree);
   } else if (node->getNodeType() == AST::Expression) {
-    for (ASTNode child : node->getChildren()) {
+    for (const ASTNode &child : node->getChildren()) {
       validateNodeRate(child, tree);
     }
   } else if (node->getNodeType() == AST::Function) {
-    for (std::shared_ptr<PropertyNode> prop :
+    for (const std::shared_ptr<PropertyNode> &prop :
          static_cast<FunctionNode *>(node.get())->getProperties()) {
       validateNodeRate(prop->getValue(), tree);
     }

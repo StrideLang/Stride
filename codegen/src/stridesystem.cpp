@@ -67,7 +67,7 @@ StrideSystem::StrideSystem(std::string strideRoot, std::string systemName,
                      .generic_string();
   std::string systemFile = m_systemPath + "/System.stride";
 
-  for (auto importNode : importList) {
+  for (const auto &importNode : importList) {
     m_importList[importNode->importName()] = importNode->importAlias();
   }
 
@@ -179,7 +179,7 @@ void StrideSystem::parseSystemTree(ASTNode systemTree, ASTNode configuration) {
                     << std::endl;
         } else if (platforms->getNodeType() == AST::List) {
           ListNode *platformsList = static_cast<ListNode *>(platforms.get());
-          for (ASTNode platformName : platformsList->getChildren()) {
+          for (const ASTNode &platformName : platformsList->getChildren()) {
             assert(platformName->getNodeType() == AST::Block);
             auto platformSpecBlock =
                 std::static_pointer_cast<BlockNode>(platformName);
@@ -228,7 +228,7 @@ void StrideSystem::parseSystemTree(ASTNode systemTree, ASTNode configuration) {
     auto destPlatform = connection->getPropertyValue("destinationFramework");
     // TODO currently only looking in the system tree. Should we allow other
     // locations?
-    for (auto systemNode : systemTree->getChildren()) {
+    for (const auto &systemNode : systemTree->getChildren()) {
       if (systemNode->getNodeType() == AST::Declaration) {
         std::shared_ptr<DeclarationNode> declaration =
             std::static_pointer_cast<DeclarationNode>(systemNode);
@@ -270,7 +270,7 @@ void StrideSystem::parseSystemTree(ASTNode systemTree, ASTNode configuration) {
   }
 
   // Now connect platforms referenced in system with defined platforms
-  for (auto usedPlatformName : usedPlatformNames) {
+  for (const auto &usedPlatformName : usedPlatformNames) {
     for (size_t i = 0; i < platformDefinitions.size(); i++) {
       std::map<std::string, std::string> &definition =
           platformDefinitions.at(i);
@@ -581,7 +581,7 @@ ASTNode StrideSystem::getPlatformDomain(std::string namespaceName) {
     assert(0 == 1);
     return platformDomain;
   }
-  for (ASTNode object : libObjects[namespaceName]) {
+  for (const ASTNode &object : libObjects[namespaceName]) {
     if (object->getNodeType() == AST::Declaration) {
       std::shared_ptr<DeclarationNode> decl =
           std::static_pointer_cast<DeclarationNode>(object);
@@ -807,7 +807,8 @@ StrideSystem::getFrameworkSynchronization(std::string frameworkName) {
     if ((frameworkName == platform->getRootNamespace()) ||
         frameworkName == platform->getFramework()) {
       std::string platformPath = platform->buildPlatformLibPath();
-      for (auto file : std::filesystem::directory_iterator{platformPath}) {
+      for (const auto &file :
+           std::filesystem::directory_iterator{platformPath}) {
 
         if (file.is_regular_file() && file.path().extension() == ".stride") {
           auto newTree =
@@ -868,7 +869,7 @@ StrideSystem::getFrameworkOperators(std::string frameworkName) {
   std::vector<std::shared_ptr<DeclarationNode>> operators;
   std::map<std::string, std::vector<ASTNode>> libObjects = getImportTrees();
   if (libObjects.find(frameworkName) != libObjects.end()) {
-    for (auto node : libObjects[frameworkName]) {
+    for (const auto &node : libObjects[frameworkName]) {
       if (node->getNodeType() == AST::Declaration) {
         auto decl = std::static_pointer_cast<DeclarationNode>(node);
         if (decl->getObjectType() == "platformOperator") {
@@ -882,7 +883,7 @@ StrideSystem::getFrameworkOperators(std::string frameworkName) {
 
 std::vector<std::string>
 StrideSystem::getFrameworkAliasInherits(std::string frameworkAlias) {
-  for (auto fw : m_frameworks) {
+  for (const auto &fw : m_frameworks) {
     if (fw->getRootNamespace() == frameworkAlias) {
       return fw->getInheritedList();
     }
