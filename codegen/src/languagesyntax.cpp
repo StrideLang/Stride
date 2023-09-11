@@ -50,7 +50,8 @@ std::string LanguageSyntax::getDeclarationForType(
     size = defaultValue.size();
   }
 
-  if (access.access == ACCESS_NONE || access.access == ACCESS_SDRst) {
+  if (true) {
+    //    if (access.access == ACCESS_NONE || access.access == ACCESS_SDRst) {
     std::string bundleSize;
     if (size > 1) {
       bundleSize = "[" + std::to_string(size) + "]";
