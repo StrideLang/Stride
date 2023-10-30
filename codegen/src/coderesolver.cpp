@@ -511,7 +511,7 @@ void CodeResolver::processDeclarations() {
                 }
               }
             }
-            for (auto deleteme : toDelete) {
+            for (const auto &deleteme : toDelete) {
               decl->removeProperty(deleteme);
             }
           } else {
@@ -524,7 +524,7 @@ void CodeResolver::processDeclarations() {
 
 void CodeResolver::expandParallel() {
   std::vector<ASTNode> children = m_tree->getChildren();
-  for (ASTNode node : children) {
+  for (const ASTNode &node : children) {
     ScopeStack scopeStack;
     if (node->getNodeType() == AST::Stream) {
       std::shared_ptr<StreamNode> stream =
@@ -534,7 +534,7 @@ void CodeResolver::expandParallel() {
       // following streams to the right size.
       std::vector<ASTNode> declarations =
           declareUnknownStreamSymbols(stream, nullptr, ScopeStack(), m_tree);
-      for (ASTNode decl : declarations) {
+      for (const ASTNode &decl : declarations) {
         m_tree->addChild(decl);
       }
     }
@@ -589,7 +589,7 @@ void CodeResolver::expandStreamToSizes(std::shared_ptr<StreamNode> stream,
         std::vector<ASTNode> newDeclaration =
             declareUnknownName(std::static_pointer_cast<BlockNode>(right),
                                previousOutSize, scopeStack, m_tree);
-        for (ASTNode decl : newDeclaration) {
+        for (const ASTNode &decl : newDeclaration) {
           m_tree->addChild(decl);
         }
       } else if (numCopies > 1 && right->getNodeType() ==
@@ -624,7 +624,7 @@ ASTNode CodeResolver::expandFunctionFromProperties(
                 // to check the actual input size.
       newFunctions->addChild(func->deepCopy());
     }
-    for (auto prop : props) {
+    for (const auto &prop : props) {
       ASTNode value = prop->getValue();
       int numOuts = CodeAnalysis::getNodeNumOutputs(value, scopeStack, tree);
       if (numOuts != 1 && numOuts != dataSize) {

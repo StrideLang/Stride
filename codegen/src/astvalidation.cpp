@@ -1,9 +1,10 @@
 #include "stride/codegen/astvalidation.hpp"
 #include "stride/codegen/astquery.hpp"
 
-#include "stride/parser/strideparser.h"
+//#include "stride/parser/strideparser.h"
 
 #include <algorithm>
+#include <cassert>
 #include <iostream>
 #include <unordered_set>
 
@@ -676,7 +677,11 @@ void ASTValidation::validateConstrainedString(
       if (maximumNode->getNodeType() == AST::Int) {
         auto value =
             std::static_pointer_cast<ValueNode>(maximumNode)->getIntValue();
-        if (codeValue.size() > value) {
+        assert(codeValue.size() < INT64_MAX);
+        if (codeValue.size() < INT64_MAX) {
+          std::cerr << " ERROR: codeValue too large for int64_t" << std::endl;
+        }
+        if ((int64_t)codeValue.size() > value) {
           LangError error;
           error.lineNumber = portValue->getLine();
           error.filename = portValue->getFilename();
@@ -693,7 +698,11 @@ void ASTValidation::validateConstrainedString(
       if (minimumNode->getNodeType() == AST::Int) {
         auto value =
             std::static_pointer_cast<ValueNode>(minimumNode)->getIntValue();
-        if (codeValue.size() < value) {
+        assert(codeValue.size() < INT64_MAX);
+        if (codeValue.size() < INT64_MAX) {
+          std::cerr << " ERROR: codeValue too large for int64_t" << std::endl;
+        }
+        if ((int64_t)codeValue.size() < value) {
           LangError error;
           error.lineNumber = portValue->getLine();
           error.filename = portValue->getFilename();

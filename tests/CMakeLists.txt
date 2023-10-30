@@ -21,12 +21,12 @@ find_package(Qt6 6.5.0 REQUIRED COMPONENTS
 qt_standard_project_setup()
 #set(CMAKE_AUTOMOC ON)
 
-add_executable(StrideTests ${TESTS_SRC} ${TESTS_HEADERS})
+add_executable(stride_tests ${TESTS_SRC} ${TESTS_HEADERS})
 
 if (STRIDE_CODE_COVERAGE)
   message("Building code coverage for tests")
-  set_target_properties(StrideTests PROPERTIES COMPILE_FLAGS "-g -O0 -Wall -fprofile-arcs -ftest-coverage")
-  target_link_libraries(StrideTests gcov)
+  set_target_properties(stride_tests PROPERTIES COMPILE_FLAGS "-g -O0 -Wall -fprofile-arcs -ftest-coverage")
+  target_link_libraries(stride_tests gcov)
 endif()
 
 # To generate coverage reports:
@@ -34,13 +34,13 @@ endif()
 # lcov --capture --directory . --output-file main_coverage.info
 # genhtml main_coverage.info --output-directory out
 
-target_compile_definitions(StrideTests PUBLIC "-DBUILDPATH=\"${CMAKE_SOURCE_DIR}\"")
-target_compile_definitions(StrideTests PUBLIC "-DSTRIDEROOT=\"${CMAKE_SOURCE_DIR}/strideroot\"")
-target_compile_definitions(StrideTests PUBLIC "-DSTRIDEBIN=\"${CMAKE_CURRENT_BINARY_DIR}\"")
-target_link_libraries(StrideTests StrideParser StrideCodegen Qt6::Core Qt6::Test)
+target_compile_definitions(stride_tests PUBLIC "-DBUILDPATH=\"${CMAKE_SOURCE_DIR}\"")
+target_compile_definitions(stride_tests PUBLIC "-DSTRIDEROOT=\"${CMAKE_SOURCE_DIR}/strideroot\"")
+target_compile_definitions(stride_tests PUBLIC "-DSTRIDEBIN=\"${CMAKE_CURRENT_BINARY_DIR}\"")
+target_link_libraries(stride_tests StrideParser StrideCodegen Qt6::Core Qt6::Test)
 
-set_property(TARGET StrideTests PROPERTY CXX_STANDARD 17)
-set_property(TARGET StrideTests PROPERTY CXX_STANDARD_REQUIRED ON)
+set_property(TARGET stride_tests PROPERTY CXX_STANDARD 17)
+set_property(TARGET stride_tests PROPERTY CXX_STANDARD_REQUIRED ON)
 
 enable_testing()
-add_test(StrideTests ${CMAKE_CURRENT_BINARY_DIR}/testing)
+add_test(stride_tests ${CMAKE_CURRENT_BINARY_DIR}/testing)
