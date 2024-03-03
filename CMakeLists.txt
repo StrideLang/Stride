@@ -32,8 +32,8 @@ if(STRIDE_BUILD_JIT)
 endif()
 
 # Plugins
-if(EXISTS "${CMAKE_SOURCE_DIR}/plugins/pufferfishplugin")
-  add_subdirectory(plugins/pufferfishplugin)
+if(EXISTS "${CMAKE_SOURCE_DIR}/plugins/pufferfish")
+  add_subdirectory(plugins/pufferfish)
 endif()
 
 
