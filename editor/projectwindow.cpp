@@ -594,7 +594,7 @@ void ProjectWindow::createResourceTreeItem(ASTNode inputNode,
     }
     text << QString::fromStdString(declaration->getName() + " [" +
                                    frameworkName + "]");
-    qDebug() << text << treeWidget;
+    // qDebug() << text << treeWidget;
     QTreeWidgetItem *newItem = new QTreeWidgetItem(treeWidget, text);
     newItem->setData(0, Qt::UserRole, text);
     treeWidget->addTopLevelItem(newItem);
@@ -2339,18 +2339,18 @@ void ProjectWindow::configureSystem() {
       }
       if (!found) {
         auto properties = std::make_shared<ListNode>(__FILE__, __LINE__);
-        if (value.type() == QVariant::Int) {
+        if (value.typeId() == QMetaType::Int) {
           properties->addChild(std::make_shared<PropertyNode>(
               "value",
               std::make_shared<ValueNode>((int64_t)value.toInt(), __FILE__,
                                           __LINE__),
               __FILE__, __LINE__));
-        } else if (value.type() == QVariant::Double) {
+        } else if (value.typeId() == QMetaType::Double) {
           properties->addChild(std::make_shared<PropertyNode>(
               "value",
               std::make_shared<ValueNode>(value.toDouble(), __FILE__, __LINE__),
               __FILE__, __LINE__));
-        } else if (value.type() == QVariant::String) {
+        } else if (value.typeId() == QMetaType::Double) {
           properties->addChild(std::make_shared<PropertyNode>(
               "value",
               std::make_shared<ValueNode>(value.toString().toStdString(),
