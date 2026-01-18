@@ -135,13 +135,13 @@ bool ProjectWindow::build() {
   CodeEditor *editor =
       static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
 
-  QList<LangError> errors;
-  std::vector<LangError> syntaxErrors;
+  QList<strd::LangError> errors;
+  std::vector<strd::LangError> syntaxErrors;
 
-  ASTNode tree;
-  tree = AST::parseFile(editor->filename().toLocal8Bit().constData());
+  strd::ASTNode tree;
+  tree = strd::AST::parseFile(editor->filename().toLocal8Bit().constData());
 
-  syntaxErrors = AST::getParseErrors();
+  syntaxErrors = strd::AST::getParseErrors();
 
   if (syntaxErrors.size() > 0) {
     for (auto &syntaxError : syntaxErrors) {
@@ -149,7 +149,7 @@ bool ProjectWindow::build() {
     }
     editor->setErrors(errors);
 
-    foreach (LangError error, syntaxErrors) {
+    for (strd::LangError &error : syntaxErrors) {
       printConsoleText(error.getErrorText() + "\n");
     }
     return false;
@@ -158,14 +158,14 @@ bool ProjectWindow::build() {
   if (tree) {
     CodeEditor *editor =
         static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
-    SystemConfiguration systemConfig;
+    strd::SystemConfiguration systemConfig;
     systemConfig.readConfiguration(editor->filename().toStdString());
 
-    CodeResolver resolver(
+    strd::CodeResolver resolver(
         tree, m_environment["striderootPath"].toString().toStdString(),
         systemConfig);
     resolver.process();
-    CodeValidator validator(tree);
+    strd::CodeValidator validator(tree);
     for (auto err : validator.getErrors()) {
       errors.append(err);
     }
@@ -173,12 +173,12 @@ bool ProjectWindow::build() {
     if (errors.size() > 0) {
       editor->setErrors(errors);
 
-      foreach (LangError error, errors) {
+      for (strd::LangError &error : errors) {
         printConsoleText(error.getErrorText() + "\n");
       }
       return false;
     }
-    std::shared_ptr<StrideSystem> system = resolver.getSystem();
+    std::shared_ptr<strd::StrideSystem> system = resolver.getSystem();
 
     for (auto builder : m_builders) {
       delete builder;
@@ -450,7 +450,7 @@ void ProjectWindow::showHelperMenu(QPoint where) {
 
   //    bool platformChosen = false;
   //    foreach(AST *node, m_lastValidTree->getChildren()) {
-  //        if (node->getNodeType() == AST::Platform) {
+  //        if (node->getNodeType() == strd::AST::Platform) {
   //            platformChosen = true;
   //            break;
   //        }
@@ -464,12 +464,13 @@ void ProjectWindow::showHelperMenu(QPoint where) {
   //        SLOT(insertText())); newAction->setData(platformCode[i]);
   //    }
   QMenu *functionMenu = m_helperMenu.addMenu(tr("New function"));
-  std::map<std::string, std::vector<ASTNode>> objs =
+  std::map<std::string, std::vector<strd::ASTNode>> objs =
       m_codeModel.getSystem()->getImportTrees();
   for (auto namespaceGroup : objs) {
-    for (auto obj : namespaceGroup.second) {
-      if (obj->getNodeType() == AST::Declaration) {
-        DeclarationNode *block = static_cast<DeclarationNode *>(obj.get());
+    for (auto &obj : namespaceGroup.second) {
+      if (obj->getNodeType() == strd::AST::Declaration) {
+        strd::DeclarationNode *block =
+            static_cast<strd::DeclarationNode *>(obj.get());
         if (block->getObjectType() == "module") {
           QAction *newAction =
               functionMenu->addAction(QString::fromStdString(block->getName()),
@@ -487,16 +488,17 @@ void ProjectWindow::showHelperMenu(QPoint where) {
             }
           }
           text += QString::fromStdString(block->getName()) + "(";
-          ListNode *portList =
-              static_cast<ListNode *>(block->getPropertyValue("ports").get());
-          if (portList && portList->getNodeType() == AST::List) {
-            for (ASTNode port : portList->getChildren()) {
-              DeclarationNode *portBlock =
-                  static_cast<DeclarationNode *>(port.get());
-              ASTNode portName = portBlock->getPropertyValue("name");
-              if (portName && portName->getNodeType() == AST::String) {
+          strd::ListNode *portList = static_cast<strd::ListNode *>(
+              block->getPropertyValue("ports").get());
+          if (portList && portList->getNodeType() == strd::AST::List) {
+            for (strd::ASTNode port : portList->getChildren()) {
+              strd::DeclarationNode *portBlock =
+                  static_cast<strd::DeclarationNode *>(port.get());
+              strd::ASTNode portName = portBlock->getPropertyValue("name");
+              if (portName && portName->getNodeType() == strd::AST::String) {
                 std::string name =
-                    static_cast<ValueNode *>(portName.get())->getStringValue();
+                    static_cast<strd::ValueNode *>(portName.get())
+                        ->getStringValue();
                 if (name.size() > 0) {
                   text += QString::fromStdString(name) + ":  ";
                 }
@@ -576,21 +578,21 @@ void ProjectWindow::printConsoleError(std::string text) {
   }
 }
 
-void ProjectWindow::createResourceTreeItem(ASTNode inputNode,
+void ProjectWindow::createResourceTreeItem(strd::ASTNode inputNode,
                                            QTreeWidget *treeWidget) {
 
   //  CodeEditor *editor =
   //      static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
-  if (inputNode->getNodeType() == AST::Declaration ||
-      inputNode->getNodeType() == AST::BundleDeclaration) {
-    std::shared_ptr<DeclarationNode> declaration =
-        std::static_pointer_cast<DeclarationNode>(inputNode);
+  if (inputNode->getNodeType() == strd::AST::Declaration ||
+      inputNode->getNodeType() == strd::AST::BundleDeclaration) {
+    std::shared_ptr<strd::DeclarationNode> declaration =
+        std::static_pointer_cast<strd::DeclarationNode>(inputNode);
     QStringList text;
     std::string frameworkName;
     auto frameworkNode = declaration->getCompilerProperty("framework");
-    if (frameworkNode && frameworkNode->getNodeType() == AST::String) {
-      frameworkName =
-          std::static_pointer_cast<ValueNode>(frameworkNode)->getStringValue();
+    if (frameworkNode && frameworkNode->getNodeType() == strd::AST::String) {
+      frameworkName = std::static_pointer_cast<strd::ValueNode>(frameworkNode)
+                          ->getStringValue();
     }
     text << QString::fromStdString(declaration->getName() + " [" +
                                    frameworkName + "]");
@@ -603,7 +605,7 @@ void ProjectWindow::createResourceTreeItem(ASTNode inputNode,
     if (configsNode) {
       for (auto config : configsNode->getChildren()) {
         text.clear();
-        text << QString::fromStdString(ASTQuery::getNodeName(config));
+        text << QString::fromStdString(strd::ASTQuery::getNodeName(config));
 
         QTreeWidgetItem *newConfigItem = new QTreeWidgetItem(newItem, text);
         newItem->addChild(newConfigItem);
@@ -614,23 +616,24 @@ void ProjectWindow::createResourceTreeItem(ASTNode inputNode,
   }
 }
 
-QTreeWidgetItem *ProjectWindow::createTreeItem(ASTNode inputNode) {
+QTreeWidgetItem *ProjectWindow::createTreeItem(strd::ASTNode inputNode) {
   CodeEditor *editor =
       static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
   QTreeWidgetItem *newItem = nullptr;
-  if (inputNode->getNodeType() == AST::Declaration ||
-      inputNode->getNodeType() == AST::BundleDeclaration) {
-    std::shared_ptr<DeclarationNode> declaration =
-        std::static_pointer_cast<DeclarationNode>(inputNode);
+  if (inputNode->getNodeType() == strd::AST::Declaration ||
+      inputNode->getNodeType() == strd::AST::BundleDeclaration) {
+    std::shared_ptr<strd::DeclarationNode> declaration =
+        std::static_pointer_cast<strd::DeclarationNode>(inputNode);
     QStringList itemText;
     QString type = QString::fromStdString(declaration->getObjectType());
-    if (inputNode->getNodeType() == AST::BundleDeclaration) {
-      std::shared_ptr<ListNode> indexList = declaration->getBundle()->index();
+    if (inputNode->getNodeType() == strd::AST::BundleDeclaration) {
+      std::shared_ptr<strd::ListNode> indexList =
+          declaration->getBundle()->index();
       if (indexList->getChildren().size() > 0) {
-        ASTNode indexValue = indexList->getChildren()[0];
-        if (indexValue->getNodeType() == AST::Int) {
-          int size =
-              std::static_pointer_cast<ValueNode>(indexValue)->getIntValue();
+        strd::ASTNode indexValue = indexList->getChildren()[0];
+        if (indexValue->getNodeType() == strd::AST::Int) {
+          int size = std::static_pointer_cast<strd::ValueNode>(indexValue)
+                         ->getIntValue();
           type += QString("[%1]").arg(size);
         }
       } else {
@@ -672,7 +675,7 @@ QTreeWidgetItem *ProjectWindow::createTreeItem(ASTNode inputNode) {
         propertyItem->setBackground(0, Qt::lightGray);
         propertyItem->setBackground(1, Qt::lightGray);
       }
-      if (property->getValue()->getNodeType() == AST::List) {
+      if (property->getValue()->getNodeType() == strd::AST::List) {
         for (auto listMember : property->getValue()->getChildren()) {
           QTreeWidgetItem *subItem = createTreeItem(listMember);
           if (subItem) {
@@ -713,9 +716,9 @@ QTreeWidgetItem *ProjectWindow::createTreeItem(ASTNode inputNode) {
       }
       newItem->addChild(propertyItem);
     }
-  } /*else if (inputNode->getNodeType() == AST::String) {
-    std::shared_ptr<ValueNode> stringValue =
-        std::static_pointer_cast<ValueNode>(inputNode);
+  } /*else if (inputNode->getNodeType() == strd::AST::String) {
+    std::shared_ptr <strd::ValueNode> stringValue =
+        std::static_pointer_cast <strd::ValueNode>(inputNode);
     QStringList itemText;
     itemText << "\"" + QString::fromStdString(stringValue->getStringValue() +
                                               "\"");
@@ -724,9 +727,9 @@ QTreeWidgetItem *ProjectWindow::createTreeItem(ASTNode inputNode) {
     fileInfo << QString::fromStdString(stringValue->getFilename());
     fileInfo << stringValue->getLine();
     newItem->setData(0, Qt::UserRole, fileInfo);
-  } else if (inputNode->getNodeType() == AST::Int) {
-    std::shared_ptr<ValueNode> intNode =
-        std::static_pointer_cast<ValueNode>(inputNode);
+  } else if (inputNode->getNodeType() == strd::AST::Int) {
+    std::shared_ptr <strd::ValueNode> intNode =
+        std::static_pointer_cast <strd::ValueNode>(inputNode);
     QStringList itemText;
     itemText << QString::number(intNode->getIntValue());
     newItem = new QTreeWidgetItem(itemText);
@@ -734,9 +737,9 @@ QTreeWidgetItem *ProjectWindow::createTreeItem(ASTNode inputNode) {
     fileInfo << QString::fromStdString(intNode->getFilename());
     fileInfo << intNode->getLine();
     newItem->setData(0, Qt::UserRole, fileInfo);
-  } else if (inputNode->getNodeType() == AST::Real) {
-    std::shared_ptr<ValueNode> realNode =
-        std::static_pointer_cast<ValueNode>(inputNode);
+  } else if (inputNode->getNodeType() == strd::AST::Real) {
+    std::shared_ptr <strd::ValueNode> realNode =
+        std::static_pointer_cast <strd::ValueNode>(inputNode);
     QStringList itemText;
     itemText << QString::number(realNode->getRealValue());
     newItem = new QTreeWidgetItem(itemText);
@@ -744,7 +747,7 @@ QTreeWidgetItem *ProjectWindow::createTreeItem(ASTNode inputNode) {
     fileInfo << QString::fromStdString(realNode->getFilename());
     fileInfo << realNode->getLine();
     newItem->setData(0, Qt::UserRole, fileInfo);
-  } else if (inputNode->getNodeType() == AST::Block) {
+  } else if (inputNode->getNodeType() == strd::AST::Block) {
     std::shared_ptr<BlockNode> blockNode =
         std::static_pointer_cast<BlockNode>(inputNode);
     QStringList itemText;
@@ -1264,10 +1267,10 @@ void ProjectWindow::fillInspectorTree() {
 
   if (tree) {
     for (auto &node : tree->getChildren()) {
-      if (node->getNodeType() == AST::Declaration ||
-          node->getNodeType() == AST::BundleDeclaration) {
-        std::shared_ptr<DeclarationNode> decl =
-            std::static_pointer_cast<DeclarationNode>(node);
+      if (node->getNodeType() == strd::AST::Declaration ||
+          node->getNodeType() == strd::AST::BundleDeclaration) {
+        std::shared_ptr<strd::DeclarationNode> decl =
+            std::static_pointer_cast<strd::DeclarationNode>(node);
 
         if (decl->getObjectType() == "resource" ||
             decl->getObjectType() == "domainResource") {
@@ -1281,13 +1284,13 @@ void ProjectWindow::fillInspectorTree() {
             if (writes) {
               tooltipText += "Writes:\n";
               for (auto &write : writes->getChildren()) {
-                if (write->getNodeType() == AST::String) {
+                if (write->getNodeType() == strd::AST::String) {
                   tooltipText += QString::fromStdString(
-                      std::static_pointer_cast<ValueNode>(write)
+                      std::static_pointer_cast<strd::ValueNode>(write)
                           ->getStringValue());
                 } else {
-                  tooltipText +=
-                      QString::fromStdString(ASTQuery::getNodeName(write));
+                  tooltipText += QString::fromStdString(
+                      strd::ASTQuery::getNodeName(write));
                 }
                 tooltipText += "\n";
               }
@@ -1296,13 +1299,13 @@ void ProjectWindow::fillInspectorTree() {
             if (reads) {
               tooltipText += "Reads:\n";
               for (auto &read : reads->getChildren()) {
-                if (read->getNodeType() == AST::String) {
+                if (read->getNodeType() == strd::AST::String) {
                   tooltipText += QString::fromStdString(
-                      std::static_pointer_cast<ValueNode>(read)
+                      std::static_pointer_cast<strd::ValueNode>(read)
                           ->getStringValue());
                 } else {
                   tooltipText +=
-                      QString::fromStdString(ASTQuery::getNodeName(read));
+                      QString::fromStdString(strd::ASTQuery::getNodeName(read));
                 }
                 tooltipText += "\n";
               }
@@ -1312,7 +1315,7 @@ void ProjectWindow::fillInspectorTree() {
             ui->treeWidget->addTopLevelItem(newItem);
           }
         }
-      } else if (node->getNodeType() == AST::Stream) {
+      } else if (node->getNodeType() == strd::AST::Stream) {
         // Should we display streams too?
       }
     }
@@ -1358,8 +1361,9 @@ void ProjectWindow::markModified() {
 void ProjectWindow::configureSystem() {
   CodeEditor *editor =
       static_cast<CodeEditor *>(ui->tabWidget->currentWidget());
-  std::vector<ASTNode> optionTrees;
-  ASTNode tree = AST::parseFile(editor->filename().toStdString().c_str());
+  std::vector<strd::ASTNode> optionTrees;
+  strd::ASTNode tree =
+      strd::AST::parseFile(editor->filename().toStdString().c_str());
   if (tree) {
     m_codeModel.updateCodeAnalysis(editor->document()->toPlainText(),
                                    m_environment["striderootPath"].toString(),
@@ -1379,8 +1383,8 @@ void ProjectWindow::configureSystem() {
   }
   auto children = m_codeModel.getOptimizedTree()->getChildren();
   tree->setChildren(children);
-  for (auto system : ASTQuery::getSystemNodes(tree)) {
-    optionTrees = StrideSystem::getOptionTrees(
+  for (auto system : strd::ASTQuery::getSystemNodes(tree)) {
+    optionTrees = strd::StrideSystem::getOptionTrees(
         m_environment["striderootPath"].toString().toStdString() + "/systems/" +
         system->platformName() + "/" + std::to_string(system->majorVersion()) +
         "." + std::to_string(system->minorVersion()));
@@ -1388,7 +1392,7 @@ void ProjectWindow::configureSystem() {
   }
 
   // Read configuration from file
-  SystemConfiguration systemConfig;
+  strd::SystemConfiguration systemConfig;
   systemConfig.readConfiguration(editor->filename().toStdString());
 
   QDialog optionsDialog(this);
@@ -1407,8 +1411,8 @@ void ProjectWindow::configureSystem() {
   QMap<QString, QComboBox *> resourceIntComboBoxes;
 
   for (auto node : children) {
-    if (node->getNodeType() == AST::Declaration) {
-      auto decl = std::static_pointer_cast<DeclarationNode>(node);
+    if (node->getNodeType() == strd::AST::Declaration) {
+      auto decl = std::static_pointer_cast<strd::DeclarationNode>(node);
       if (decl->getObjectType() == "resource" ||
           decl->getObjectType() == "domainResource") {
         continue;
@@ -1421,13 +1425,13 @@ void ProjectWindow::configureSystem() {
         resourceGroupBox->setLayout(resourceGroupLayout);
         std::string groupName;
         auto resourceName = decl->getPropertyValue("name");
-        if (resourceName && resourceName->getNodeType() == AST::String) {
-          groupName = std::static_pointer_cast<ValueNode>(resourceName)
+        if (resourceName && resourceName->getNodeType() == strd::AST::String) {
+          groupName = std::static_pointer_cast<strd::ValueNode>(resourceName)
                           ->getStringValue();
         } else {
           groupName = decl->getName();
         }
-        if (configuration && configuration->getNodeType() == AST::List) {
+        if (configuration && configuration->getNodeType() == strd::AST::List) {
 
           QWidget *optionWidget = new QWidget(resourceGroupBox);
           QHBoxLayout *optionLayout = new QHBoxLayout(optionWidget);
@@ -1438,16 +1442,17 @@ void ProjectWindow::configureSystem() {
                              QString::fromStdString(groupName));
 
           for (auto config : configuration->getChildren()) {
-            if (config->getNodeType() == AST::Block) {
-              auto configDecl = ASTQuery::findDeclarationByName(
-                  std::static_pointer_cast<BlockNode>(config)->getName(), {},
-                  tree);
+            if (config->getNodeType() == strd::AST::Block) {
+              auto configDecl = strd::ASTQuery::findDeclarationByName(
+                  std::static_pointer_cast<strd::BlockNode>(config)->getName(),
+                  {}, tree);
               if (configDecl) {
                 QString optionName;
                 auto configName = configDecl->getPropertyValue("name");
-                if (configName && configName->getNodeType() == AST::String) {
+                if (configName &&
+                    configName->getNodeType() == strd::AST::String) {
                   optionName = QString::fromStdString(
-                      std::static_pointer_cast<ValueNode>(configName)
+                      std::static_pointer_cast<strd::ValueNode>(configName)
                           ->getStringValue());
                 } else {
                   optionName = QString::fromStdString(configDecl->getName());
@@ -1456,17 +1461,18 @@ void ProjectWindow::configureSystem() {
                 auto possibleValues =
                     configDecl->getPropertyValue("possibleValues");
                 if (possibleValues &&
-                    possibleValues->getNodeType() == AST::List &&
+                    possibleValues->getNodeType() == strd::AST::List &&
                     possibleValues->getChildren().size() > 0) {
                   showValues = true;
                 }
                 auto type = configDecl->getPropertyValue("type");
-                if ((!type) || !(type->getNodeType() == AST::Block)) {
+                if ((!type) || !(type->getNodeType() == strd::AST::Block)) {
                   qDebug()
                       << "ERROR: no type provided by resourceConfiguration";
                   continue;
                 }
-                auto typeBlock = std::static_pointer_cast<BlockNode>(type);
+                auto typeBlock =
+                    std::static_pointer_cast<strd::BlockNode>(type);
                 if (typeBlock->getName() == "_IntLiteral") {
 
                   if (!showValues) {
@@ -1483,9 +1489,10 @@ void ProjectWindow::configureSystem() {
                           auto valueProp =
                               resourceConfig->getPropertyValue("value");
                           if (valueProp &&
-                              valueProp->getNodeType() == AST::Int) {
+                              valueProp->getNodeType() == strd::AST::Int) {
                             spinBox->setValue(
-                                std::static_pointer_cast<ValueNode>(valueProp)
+                                std::static_pointer_cast<strd::ValueNode>(
+                                    valueProp)
                                     ->getIntValue());
                             configFound = true;
                           } else {
@@ -1496,19 +1503,23 @@ void ProjectWindow::configureSystem() {
                                 << std::endl;
                           }
 
-                          ASTNode maxNode =
+                          strd::ASTNode maxNode =
                               configDecl->getPropertyValue("maximum");
-                          ASTNode minNode =
+                          strd::ASTNode minNode =
                               configDecl->getPropertyValue("minimum");
 
-                          if (minNode && minNode->getNodeType() == AST::Int) {
+                          if (minNode &&
+                              minNode->getNodeType() == strd::AST::Int) {
                             spinBox->setMinimum(
-                                std::static_pointer_cast<ValueNode>(minNode)
+                                std::static_pointer_cast<strd::ValueNode>(
+                                    minNode)
                                     ->getIntValue());
                           }
-                          if (maxNode && maxNode->getNodeType() == AST::Int) {
+                          if (maxNode &&
+                              maxNode->getNodeType() == strd::AST::Int) {
                             spinBox->setMaximum(
-                                std::static_pointer_cast<ValueNode>(maxNode)
+                                std::static_pointer_cast<strd::ValueNode>(
+                                    maxNode)
                                     ->getIntValue());
                           }
 
@@ -1517,12 +1528,13 @@ void ProjectWindow::configureSystem() {
                       }
                     }
                     if (!configFound) { // Use default
-                      ASTNode defaultNode =
+                      strd::ASTNode defaultNode =
                           configDecl->getPropertyValue("default");
                       if (defaultNode &&
-                          defaultNode->getNodeType() == AST::Int) {
+                          defaultNode->getNodeType() == strd::AST::Int) {
                         spinBox->setValue(
-                            std::static_pointer_cast<ValueNode>(defaultNode)
+                            std::static_pointer_cast<strd::ValueNode>(
+                                defaultNode)
                                 ->getIntValue());
                       }
                     }
@@ -1534,12 +1546,13 @@ void ProjectWindow::configureSystem() {
 
                     optionLayout->addWidget(new QLabel(optionName));
                     QComboBox *widget = new QComboBox(optionWidget);
-                    std::shared_ptr<ListNode> list =
-                        std::static_pointer_cast<ListNode>(possibleValues);
-                    for (ASTNode member : list->getChildren()) {
-                      if (member && member->getNodeType() == AST::Int) {
+                    std::shared_ptr<strd::ListNode> list =
+                        std::static_pointer_cast<strd::ListNode>(
+                            possibleValues);
+                    for (strd::ASTNode member : list->getChildren()) {
+                      if (member && member->getNodeType() == strd::AST::Int) {
                         widget->addItem(QString::number(
-                            std::static_pointer_cast<ValueNode>(member)
+                            std::static_pointer_cast<strd::ValueNode>(member)
                                 ->getIntValue()));
                       }
                     }
@@ -1552,9 +1565,10 @@ void ProjectWindow::configureSystem() {
                           auto valueProp =
                               resourceConfig->getPropertyValue("value");
                           if (valueProp &&
-                              valueProp->getNodeType() == AST::Int) {
+                              valueProp->getNodeType() == strd::AST::Int) {
                             widget->setCurrentText(QString::number(
-                                std::static_pointer_cast<ValueNode>(valueProp)
+                                std::static_pointer_cast<strd::ValueNode>(
+                                    valueProp)
                                     ->getIntValue()));
                             configFound = true;
                           } else {
@@ -1570,14 +1584,15 @@ void ProjectWindow::configureSystem() {
                       }
                     }
                     if (!configFound) { // Use default
-                      ASTNode defaultNode =
+                      strd::ASTNode defaultNode =
                           configDecl->getPropertyValue("default");
 
                       if (defaultNode &&
-                          defaultNode->getNodeType() == AST::Int) {
+                          defaultNode->getNodeType() == strd::AST::Int) {
 
                         widget->setCurrentText(QString::number(
-                            std::static_pointer_cast<ValueNode>(defaultNode)
+                            std::static_pointer_cast<strd::ValueNode>(
+                                defaultNode)
                                 ->getIntValue()));
                       }
                     }
@@ -1604,9 +1619,10 @@ void ProjectWindow::configureSystem() {
                           auto valueProp =
                               resourceConfig->getPropertyValue("value");
                           if (valueProp &&
-                              valueProp->getNodeType() == AST::String) {
+                              valueProp->getNodeType() == strd::AST::String) {
                             widget->setText(QString::fromStdString(
-                                std::static_pointer_cast<ValueNode>(valueProp)
+                                std::static_pointer_cast<strd::ValueNode>(
+                                    valueProp)
                                     ->getStringValue()));
                             configFound = true;
                           } else {
@@ -1621,12 +1637,13 @@ void ProjectWindow::configureSystem() {
                       }
                     }
                     if (!configFound) { // Use default
-                      ASTNode defaultNode =
+                      strd::ASTNode defaultNode =
                           configDecl->getPropertyValue("default");
                       if (defaultNode &&
-                          defaultNode->getNodeType() == AST::String) {
+                          defaultNode->getNodeType() == strd::AST::String) {
                         widget->setText(QString::fromStdString(
-                            std::static_pointer_cast<ValueNode>(defaultNode)
+                            std::static_pointer_cast<strd::ValueNode>(
+                                defaultNode)
                                 ->getStringValue()));
                       }
                     }
@@ -1638,12 +1655,14 @@ void ProjectWindow::configureSystem() {
 
                     optionLayout->addWidget(new QLabel(optionName));
                     QComboBox *widget = new QComboBox(optionWidget);
-                    std::shared_ptr<ListNode> list =
-                        std::static_pointer_cast<ListNode>(possibleValues);
-                    for (ASTNode member : list->getChildren()) {
-                      if (member && member->getNodeType() == AST::String) {
+                    std::shared_ptr<strd::ListNode> list =
+                        std::static_pointer_cast<strd::ListNode>(
+                            possibleValues);
+                    for (strd::ASTNode &member : list->getChildren()) {
+                      if (member &&
+                          member->getNodeType() == strd::AST::String) {
                         widget->addItem(QString::fromStdString(
-                            std::static_pointer_cast<ValueNode>(member)
+                            std::static_pointer_cast<strd::ValueNode>(member)
                                 ->getStringValue()));
                       }
                     }
@@ -1656,9 +1675,10 @@ void ProjectWindow::configureSystem() {
                           auto valueProp =
                               resourceConfig->getPropertyValue("value");
                           if (valueProp &&
-                              valueProp->getNodeType() == AST::String) {
+                              valueProp->getNodeType() == strd::AST::String) {
                             widget->setCurrentText(QString::fromStdString(
-                                std::static_pointer_cast<ValueNode>(valueProp)
+                                std::static_pointer_cast<strd::ValueNode>(
+                                    valueProp)
                                     ->getStringValue()));
                             configFound = true;
                           } else {
@@ -1674,14 +1694,15 @@ void ProjectWindow::configureSystem() {
                       }
                     }
                     if (!configFound) { // Use default
-                      ASTNode defaultNode =
+                      strd::ASTNode defaultNode =
                           configDecl->getPropertyValue("default");
 
                       if (defaultNode &&
-                          defaultNode->getNodeType() == AST::Int) {
+                          defaultNode->getNodeType() == strd::AST::Int) {
 
                         widget->setCurrentText(QString::number(
-                            std::static_pointer_cast<ValueNode>(defaultNode)
+                            std::static_pointer_cast<strd::ValueNode>(
+                                defaultNode)
                                 ->getIntValue()));
                       }
                     }
@@ -1707,59 +1728,61 @@ void ProjectWindow::configureSystem() {
     }
   }
 
-  for (ASTNode optionTree : optionTrees) {
+  for (strd::ASTNode &optionTree : optionTrees) {
     QWidget *groupBox = new QWidget(&optionsDialog);
 
     QVBoxLayout *groupLayout = new QVBoxLayout;
     std::string groupName;
 
-    for (ASTNode option : optionTree->getChildren()) {
+    for (strd::ASTNode option : optionTree->getChildren()) {
       QWidget *optionWidget = new QWidget(groupBox);
       QHBoxLayout *optionLayout = new QHBoxLayout(optionWidget);
-      if (option->getNodeType() == AST::Declaration) {
-        std::shared_ptr<DeclarationNode> optionDecl =
-            std::static_pointer_cast<DeclarationNode>(option);
+      if (option->getNodeType() == strd::AST::Declaration) {
+        std::shared_ptr<strd::DeclarationNode> optionDecl =
+            std::static_pointer_cast<strd::DeclarationNode>(option);
         std::string type = optionDecl->getObjectType();
         if (type == "optionGroup") {
-          ASTNode nameNode = optionDecl->getPropertyValue("name");
-          if (nameNode && nameNode->getNodeType() == AST::String) {
-            groupName =
-                std::static_pointer_cast<ValueNode>(nameNode)->getStringValue();
+          strd::ASTNode nameNode = optionDecl->getPropertyValue("name");
+          if (nameNode && nameNode->getNodeType() == strd::AST::String) {
+            groupName = std::static_pointer_cast<strd::ValueNode>(nameNode)
+                            ->getStringValue();
           }
         } else if (type == "intOption") {
           QString optionName = "";
-          ASTNode nameNode = optionDecl->getPropertyValue("name");
-          if (nameNode && nameNode->getNodeType() == AST::String) {
+          strd::ASTNode nameNode = optionDecl->getPropertyValue("name");
+          if (nameNode && nameNode->getNodeType() == strd::AST::String) {
             optionName = QString::fromStdString(
-                std::static_pointer_cast<ValueNode>(nameNode)
+                std::static_pointer_cast<strd::ValueNode>(nameNode)
                     ->getStringValue());
           }
           QStringList buildPlatforms;
-          ASTNode buildPlatformsNode =
+          strd::ASTNode buildPlatformsNode =
               optionDecl->getPropertyValue("buildPlatforms");
           if (buildPlatformsNode &&
-              buildPlatformsNode->getNodeType() == AST::List) {
-            for (ASTNode member : buildPlatformsNode->getChildren()) {
-              if (member->getNodeType() == AST::String) {
+              buildPlatformsNode->getNodeType() == strd::AST::List) {
+            for (strd::ASTNode member : buildPlatformsNode->getChildren()) {
+              if (member->getNodeType() == strd::AST::String) {
                 buildPlatforms << QString::fromStdString(
-                    std::static_pointer_cast<ValueNode>(member)
+                    std::static_pointer_cast<strd::ValueNode>(member)
                         ->getStringValue());
               }
             }
           }
           optionLayout->addWidget(new QLabel(optionName));
 
-          ASTNode maxNode = optionDecl->getPropertyValue("maximum");
-          ASTNode minNode = optionDecl->getPropertyValue("minimum");
+          strd::ASTNode maxNode = optionDecl->getPropertyValue("maximum");
+          strd::ASTNode minNode = optionDecl->getPropertyValue("minimum");
           QSpinBox *spinBox = new QSpinBox(optionWidget);
 
-          if (minNode && minNode->getNodeType() == AST::Int) {
+          if (minNode && minNode->getNodeType() == strd::AST::Int) {
             spinBox->setMinimum(
-                std::static_pointer_cast<ValueNode>(minNode)->getIntValue());
+                std::static_pointer_cast<strd::ValueNode>(minNode)
+                    ->getIntValue());
           }
-          if (maxNode && maxNode->getNodeType() == AST::Int) {
+          if (maxNode && maxNode->getNodeType() == strd::AST::Int) {
             spinBox->setMaximum(
-                std::static_pointer_cast<ValueNode>(maxNode)->getIntValue());
+                std::static_pointer_cast<strd::ValueNode>(maxNode)
+                    ->getIntValue());
           }
 
           if (systemConfig.frameworkConfigurations["all"].find(
@@ -1769,55 +1792,58 @@ void ProjectWindow::configureSystem() {
                 systemConfig
                     .frameworkConfigurations["all"][optionDecl->getName()]));
           } else { // Use default
-            ASTNode defaultNode = optionDecl->getPropertyValue("default");
-            if (defaultNode && defaultNode->getNodeType() == AST::Int) {
-              spinBox->setValue(std::static_pointer_cast<ValueNode>(defaultNode)
-                                    ->getIntValue());
+            strd::ASTNode defaultNode = optionDecl->getPropertyValue("default");
+            if (defaultNode && defaultNode->getNodeType() == strd::AST::Int) {
+              spinBox->setValue(
+                  std::static_pointer_cast<strd::ValueNode>(defaultNode)
+                      ->getIntValue());
             }
           }
           optionLayout->addWidget(spinBox);
 
-          ASTNode metaNode = optionDecl->getPropertyValue("meta");
-          if (metaNode && metaNode->getNodeType() == AST::String) {
+          strd::ASTNode metaNode = optionDecl->getPropertyValue("meta");
+          if (metaNode && metaNode->getNodeType() == strd::AST::String) {
             optionWidget->setToolTip(QString::fromStdString(
-                std::static_pointer_cast<ValueNode>(metaNode)
+                std::static_pointer_cast<strd::ValueNode>(metaNode)
                     ->getStringValue()));
           }
           spinBoxes[QString::fromStdString(optionDecl->getName())] = spinBox;
         } else if (type == "stringOption") {
           QString optionName = "";
-          ASTNode nameNode = optionDecl->getPropertyValue("name");
-          if (nameNode && nameNode->getNodeType() == AST::String) {
+          strd::ASTNode nameNode = optionDecl->getPropertyValue("name");
+          if (nameNode && nameNode->getNodeType() == strd::AST::String) {
             optionName = QString::fromStdString(
-                std::static_pointer_cast<ValueNode>(nameNode)
+                std::static_pointer_cast<strd::ValueNode>(nameNode)
                     ->getStringValue());
           }
           QStringList buildPlatforms;
-          ASTNode buildPlatformsNode =
+          strd::ASTNode buildPlatformsNode =
               optionDecl->getPropertyValue("buildPlatforms");
           if (buildPlatformsNode &&
-              buildPlatformsNode->getNodeType() == AST::List) {
-            for (ASTNode member : buildPlatformsNode->getChildren()) {
-              if (member->getNodeType() == AST::String) {
+              buildPlatformsNode->getNodeType() == strd::AST::List) {
+            for (strd::ASTNode &member : buildPlatformsNode->getChildren()) {
+              if (member->getNodeType() == strd::AST::String) {
                 buildPlatforms << QString::fromStdString(
-                    std::static_pointer_cast<ValueNode>(member)
+                    std::static_pointer_cast<strd::ValueNode>(member)
                         ->getStringValue());
               }
             }
           }
           optionLayout->addWidget(new QLabel(optionName));
 
-          ASTNode maxNode = optionDecl->getPropertyValue("maximum");
-          ASTNode minNode = optionDecl->getPropertyValue("minimum");
+          strd::ASTNode maxNode = optionDecl->getPropertyValue("maximum");
+          strd::ASTNode minNode = optionDecl->getPropertyValue("minimum");
           QLineEdit *spinBox = new QLineEdit(optionWidget);
 
           //                    if (minNode && minNode->getNodeType() ==
-          //                    AST::Int) {
-          //                        spinBox->setMinimum(static_pointer_cast<ValueNode>(minNode)->getIntValue());
+          //                    strd::AST::Int) {
+          //                        spinBox->setMinimum(static_pointer_cast
+          //                        <strd::ValueNode>(minNode)->getIntValue());
           //                    }
           //                    if (maxNode && maxNode->getNodeType() ==
-          //                    AST::Int) {
-          //                        spinBox->setMaximum(static_pointer_cast<ValueNode>(maxNode)->getIntValue());
+          //                    strd::AST::Int) {
+          //                        spinBox->setMaximum(static_pointer_cast
+          //                        <strd::ValueNode>(maxNode)->getIntValue());
           //                    }
 
           if (systemConfig.frameworkConfigurations["all"].find(
@@ -1827,39 +1853,40 @@ void ProjectWindow::configureSystem() {
                 systemConfig
                     .frameworkConfigurations["all"][optionDecl->getName()])));
           } else { // Use default
-            ASTNode defaultNode = optionDecl->getPropertyValue("default");
-            if (defaultNode && defaultNode->getNodeType() == AST::String) {
+            strd::ASTNode defaultNode = optionDecl->getPropertyValue("default");
+            if (defaultNode &&
+                defaultNode->getNodeType() == strd::AST::String) {
               spinBox->setText(QString::fromStdString(
-                  std::static_pointer_cast<ValueNode>(defaultNode)
+                  std::static_pointer_cast<strd::ValueNode>(defaultNode)
                       ->getStringValue()));
             }
           }
           optionLayout->addWidget(spinBox);
 
-          ASTNode metaNode = optionDecl->getPropertyValue("meta");
-          if (metaNode && metaNode->getNodeType() == AST::String) {
+          strd::ASTNode metaNode = optionDecl->getPropertyValue("meta");
+          if (metaNode && metaNode->getNodeType() == strd::AST::String) {
             optionWidget->setToolTip(QString::fromStdString(
-                std::static_pointer_cast<ValueNode>(metaNode)
+                std::static_pointer_cast<strd::ValueNode>(metaNode)
                     ->getStringValue()));
           }
           lineEdits[QString::fromStdString(optionDecl->getName())] = spinBox;
         } else if (type == "fileOption") {
           QString optionName = "";
-          ASTNode nameNode = optionDecl->getPropertyValue("name");
-          if (nameNode && nameNode->getNodeType() == AST::String) {
+          strd::ASTNode nameNode = optionDecl->getPropertyValue("name");
+          if (nameNode && nameNode->getNodeType() == strd::AST::String) {
             optionName = QString::fromStdString(
-                std::static_pointer_cast<ValueNode>(nameNode)
+                std::static_pointer_cast<strd::ValueNode>(nameNode)
                     ->getStringValue());
           }
           QStringList buildPlatforms;
-          ASTNode buildPlatformsNode =
+          strd::ASTNode buildPlatformsNode =
               optionDecl->getPropertyValue("buildPlatforms");
           if (buildPlatformsNode &&
-              buildPlatformsNode->getNodeType() == AST::List) {
-            for (ASTNode member : buildPlatformsNode->getChildren()) {
-              if (member->getNodeType() == AST::String) {
+              buildPlatformsNode->getNodeType() == strd::AST::List) {
+            for (strd::ASTNode &member : buildPlatformsNode->getChildren()) {
+              if (member->getNodeType() == strd::AST::String) {
                 buildPlatforms << QString::fromStdString(
-                    std::static_pointer_cast<ValueNode>(member)
+                    std::static_pointer_cast<strd::ValueNode>(member)
                         ->getStringValue());
               }
             }
@@ -1885,40 +1912,41 @@ void ProjectWindow::configureSystem() {
                 systemConfig
                     .frameworkConfigurations["all"][optionDecl->getName()])));
           } else { // Use default
-            ASTNode defaultNode = optionDecl->getPropertyValue("default");
-            if (defaultNode && defaultNode->getNodeType() == AST::String) {
+            strd::ASTNode defaultNode = optionDecl->getPropertyValue("default");
+            if (defaultNode &&
+                defaultNode->getNodeType() == strd::AST::String) {
               spinBox->setText(QString::fromStdString(
-                  std::static_pointer_cast<ValueNode>(defaultNode)
+                  std::static_pointer_cast<strd::ValueNode>(defaultNode)
                       ->getStringValue()));
             }
           }
           optionLayout->addWidget(spinBox);
           optionLayout->addWidget(browseButton);
 
-          ASTNode metaNode = optionDecl->getPropertyValue("meta");
-          if (metaNode && metaNode->getNodeType() == AST::String) {
+          strd::ASTNode metaNode = optionDecl->getPropertyValue("meta");
+          if (metaNode && metaNode->getNodeType() == strd::AST::String) {
             optionWidget->setToolTip(QString::fromStdString(
-                std::static_pointer_cast<ValueNode>(metaNode)
+                std::static_pointer_cast<strd::ValueNode>(metaNode)
                     ->getStringValue()));
           }
           lineEdits[QString::fromStdString(optionDecl->getName())] = spinBox;
         } else if (type == "pathOption") {
           QString optionName = "";
-          ASTNode nameNode = optionDecl->getPropertyValue("name");
-          if (nameNode && nameNode->getNodeType() == AST::String) {
+          strd::ASTNode nameNode = optionDecl->getPropertyValue("name");
+          if (nameNode && nameNode->getNodeType() == strd::AST::String) {
             optionName = QString::fromStdString(
-                std::static_pointer_cast<ValueNode>(nameNode)
+                std::static_pointer_cast<strd::ValueNode>(nameNode)
                     ->getStringValue());
           }
           QStringList buildPlatforms;
-          ASTNode buildPlatformsNode =
+          strd::ASTNode buildPlatformsNode =
               optionDecl->getPropertyValue("buildPlatforms");
           if (buildPlatformsNode &&
-              buildPlatformsNode->getNodeType() == AST::List) {
-            for (ASTNode member : buildPlatformsNode->getChildren()) {
-              if (member->getNodeType() == AST::String) {
+              buildPlatformsNode->getNodeType() == strd::AST::List) {
+            for (strd::ASTNode &member : buildPlatformsNode->getChildren()) {
+              if (member->getNodeType() == strd::AST::String) {
                 buildPlatforms << QString::fromStdString(
-                    std::static_pointer_cast<ValueNode>(member)
+                    std::static_pointer_cast<strd::ValueNode>(member)
                         ->getStringValue());
               }
             }
@@ -1944,40 +1972,41 @@ void ProjectWindow::configureSystem() {
                 systemConfig
                     .frameworkConfigurations["all"][optionDecl->getName()])));
           } else { // Use default
-            ASTNode defaultNode = optionDecl->getPropertyValue("default");
-            if (defaultNode && defaultNode->getNodeType() == AST::String) {
+            strd::ASTNode defaultNode = optionDecl->getPropertyValue("default");
+            if (defaultNode &&
+                defaultNode->getNodeType() == strd::AST::String) {
               spinBox->setText(QString::fromStdString(
-                  std::static_pointer_cast<ValueNode>(defaultNode)
+                  std::static_pointer_cast<strd::ValueNode>(defaultNode)
                       ->getStringValue()));
             }
           }
           optionLayout->addWidget(spinBox);
           optionLayout->addWidget(browseButton);
 
-          ASTNode metaNode = optionDecl->getPropertyValue("meta");
-          if (metaNode && metaNode->getNodeType() == AST::String) {
+          strd::ASTNode metaNode = optionDecl->getPropertyValue("meta");
+          if (metaNode && metaNode->getNodeType() == strd::AST::String) {
             optionWidget->setToolTip(QString::fromStdString(
-                std::static_pointer_cast<ValueNode>(metaNode)
+                std::static_pointer_cast<strd::ValueNode>(metaNode)
                     ->getStringValue()));
           }
           lineEdits[QString::fromStdString(optionDecl->getName())] = spinBox;
         } else if (type == "stringListOption") {
           QString optionName = "";
-          ASTNode nameNode = optionDecl->getPropertyValue("name");
-          if (nameNode && nameNode->getNodeType() == AST::String) {
+          strd::ASTNode nameNode = optionDecl->getPropertyValue("name");
+          if (nameNode && nameNode->getNodeType() == strd::AST::String) {
             optionName = QString::fromStdString(
-                std::static_pointer_cast<ValueNode>(nameNode)
+                std::static_pointer_cast<strd::ValueNode>(nameNode)
                     ->getStringValue());
           }
           optionLayout->addWidget(new QLabel(optionName));
 
           QComboBox *combo = new QComboBox(optionWidget);
 
-          ASTNode possiblesNode =
+          strd::ASTNode possiblesNode =
               optionDecl->getPropertyValue("possibleValues");
 
           QString defaultValue;
-          ASTNode defaultNode = optionDecl->getPropertyValue("default");
+          strd::ASTNode defaultNode = optionDecl->getPropertyValue("default");
           if (systemConfig.frameworkConfigurations["all"].find(
                   optionDecl->getName()) !=
               systemConfig.frameworkConfigurations["all"].end()) {
@@ -1985,25 +2014,27 @@ void ProjectWindow::configureSystem() {
                 systemConfig
                     .frameworkConfigurations["all"][optionDecl->getName()]));
           } else { // Use default
-            ASTNode defaultNode = optionDecl->getPropertyValue("default");
-            if (defaultNode && defaultNode->getNodeType() == AST::String) {
+            strd::ASTNode defaultNode = optionDecl->getPropertyValue("default");
+            if (defaultNode &&
+                defaultNode->getNodeType() == strd::AST::String) {
               defaultValue = QString::fromStdString(
-                  std::static_pointer_cast<ValueNode>(defaultNode)
+                  std::static_pointer_cast<strd::ValueNode>(defaultNode)
                       ->getStringValue());
             }
           }
           int defaultIndex = 0;
-          if (possiblesNode && possiblesNode->getNodeType() == AST::List) {
-            std::shared_ptr<ListNode> list =
-                std::static_pointer_cast<ListNode>(possiblesNode);
-            for (ASTNode member : list->getChildren()) {
-              if (member && member->getNodeType() == AST::String) {
+          if (possiblesNode &&
+              possiblesNode->getNodeType() == strd::AST::List) {
+            std::shared_ptr<strd::ListNode> list =
+                std::static_pointer_cast<strd::ListNode>(possiblesNode);
+            for (strd::ASTNode &member : list->getChildren()) {
+              if (member && member->getNodeType() == strd::AST::String) {
                 combo->addItem(QString::fromStdString(
-                    std::static_pointer_cast<ValueNode>(member)
+                    std::static_pointer_cast<strd::ValueNode>(member)
                         ->getStringValue()));
                 if (defaultValue ==
                     QString::fromStdString(
-                        std::static_pointer_cast<ValueNode>(member)
+                        std::static_pointer_cast<strd::ValueNode>(member)
                             ->getStringValue())) {
                   defaultIndex = combo->count() - 1;
                 }
@@ -2020,19 +2051,19 @@ void ProjectWindow::configureSystem() {
           comboBoxes[QString::fromStdString(optionDecl->getName())] = combo;
         } else if (type == "intListOption") {
           QString optionName = "----";
-          ASTNode nameNode = optionDecl->getPropertyValue("name");
-          if (nameNode && nameNode->getNodeType() == AST::String) {
+          strd::ASTNode nameNode = optionDecl->getPropertyValue("name");
+          if (nameNode && nameNode->getNodeType() == strd::AST::String) {
             optionName = QString::fromStdString(
-                std::static_pointer_cast<ValueNode>(nameNode)
+                std::static_pointer_cast<strd::ValueNode>(nameNode)
                     ->getStringValue());
           }
           optionLayout->addWidget(new QLabel(optionName));
 
           QComboBox *combo = new QComboBox(optionWidget);
 
-          ASTNode possiblesNode =
+          strd::ASTNode possiblesNode =
               optionDecl->getPropertyValue("possibleValues");
-          ASTNode defaultNode = optionDecl->getPropertyValue("default");
+          strd::ASTNode defaultNode = optionDecl->getPropertyValue("default");
           int defaultValue = 0;
           if (systemConfig.frameworkConfigurations["all"].find(
                   optionDecl->getName()) !=
@@ -2042,22 +2073,25 @@ void ProjectWindow::configureSystem() {
                 systemConfig
                     .frameworkConfigurations["all"][optionDecl->getName()]);
           } else { // Use default
-            if (defaultNode && defaultNode->getNodeType() == AST::Int) {
-              defaultValue = std::static_pointer_cast<ValueNode>(defaultNode)
-                                 ->getIntValue();
+            if (defaultNode && defaultNode->getNodeType() == strd::AST::Int) {
+              defaultValue =
+                  std::static_pointer_cast<strd::ValueNode>(defaultNode)
+                      ->getIntValue();
             }
           }
           int defaultIndex = 0;
-          if (possiblesNode && possiblesNode->getNodeType() == AST::List) {
-            std::shared_ptr<ListNode> list =
-                std::static_pointer_cast<ListNode>(possiblesNode);
-            for (ASTNode member : list->getChildren()) {
-              if (member && member->getNodeType() == AST::Int) {
-                combo->addItem(
-                    QString::number(std::static_pointer_cast<ValueNode>(member)
-                                        ->getIntValue()));
-                if (defaultValue == std::static_pointer_cast<ValueNode>(member)
-                                        ->getIntValue()) {
+          if (possiblesNode &&
+              possiblesNode->getNodeType() == strd::AST::List) {
+            std::shared_ptr<strd::ListNode> list =
+                std::static_pointer_cast<strd::ListNode>(possiblesNode);
+            for (strd::ASTNode &member : list->getChildren()) {
+              if (member && member->getNodeType() == strd::AST::Int) {
+                combo->addItem(QString::number(
+                    std::static_pointer_cast<strd::ValueNode>(member)
+                        ->getIntValue()));
+                if (defaultValue ==
+                    std::static_pointer_cast<strd::ValueNode>(member)
+                        ->getIntValue()) {
                   defaultIndex = combo->count() - 1;
                 }
               }
@@ -2073,38 +2107,40 @@ void ProjectWindow::configureSystem() {
           intComboBoxes[QString::fromStdString(optionDecl->getName())] = combo;
         } else if (type == "intOverride") {
           QString optionName = "";
-          ASTNode nameNode = optionDecl->getPropertyValue("name");
-          if (nameNode && nameNode->getNodeType() == AST::String) {
+          strd::ASTNode nameNode = optionDecl->getPropertyValue("name");
+          if (nameNode && nameNode->getNodeType() == strd::AST::String) {
             optionName = QString::fromStdString(
-                std::static_pointer_cast<ValueNode>(nameNode)
+                std::static_pointer_cast<strd::ValueNode>(nameNode)
                     ->getStringValue());
           }
           QStringList buildPlatforms;
-          ASTNode buildPlatformsNode =
+          strd::ASTNode buildPlatformsNode =
               optionDecl->getPropertyValue("buildPlatforms");
           if (buildPlatformsNode &&
-              buildPlatformsNode->getNodeType() == AST::List) {
-            for (ASTNode member : buildPlatformsNode->getChildren()) {
-              if (member->getNodeType() == AST::String) {
+              buildPlatformsNode->getNodeType() == strd::AST::List) {
+            for (strd::ASTNode &member : buildPlatformsNode->getChildren()) {
+              if (member->getNodeType() == strd::AST::String) {
                 buildPlatforms << QString::fromStdString(
-                    std::static_pointer_cast<ValueNode>(member)
+                    std::static_pointer_cast<strd::ValueNode>(member)
                         ->getStringValue());
               }
             }
           }
           optionLayout->addWidget(new QLabel(optionName));
 
-          ASTNode maxNode = optionDecl->getPropertyValue("maximum");
-          ASTNode minNode = optionDecl->getPropertyValue("minimum");
+          strd::ASTNode maxNode = optionDecl->getPropertyValue("maximum");
+          strd::ASTNode minNode = optionDecl->getPropertyValue("minimum");
           QSpinBox *spinBox = new QSpinBox(optionWidget);
 
-          if (minNode && minNode->getNodeType() == AST::Int) {
+          if (minNode && minNode->getNodeType() == strd::AST::Int) {
             spinBox->setMinimum(
-                std::static_pointer_cast<ValueNode>(minNode)->getIntValue());
+                std::static_pointer_cast<strd::ValueNode>(minNode)
+                    ->getIntValue());
           }
-          if (maxNode && maxNode->getNodeType() == AST::Int) {
+          if (maxNode && maxNode->getNodeType() == strd::AST::Int) {
             spinBox->setMaximum(
-                std::static_pointer_cast<ValueNode>(maxNode)->getIntValue());
+                std::static_pointer_cast<strd::ValueNode>(maxNode)
+                    ->getIntValue());
           }
 
           if (systemConfig.overrides["all"].find(optionDecl->getName()) !=
@@ -2113,64 +2149,67 @@ void ProjectWindow::configureSystem() {
             spinBox->setValue(std::get<int64_t>(
                 systemConfig.overrides["all"][optionDecl->getName()]));
           } else { // Use default
-            ASTNode defaultNode = optionDecl->getPropertyValue("default");
-            if (defaultNode && defaultNode->getNodeType() == AST::Int) {
-              spinBox->setValue(std::static_pointer_cast<ValueNode>(defaultNode)
-                                    ->getIntValue());
+            strd::ASTNode defaultNode = optionDecl->getPropertyValue("default");
+            if (defaultNode && defaultNode->getNodeType() == strd::AST::Int) {
+              spinBox->setValue(
+                  std::static_pointer_cast<strd::ValueNode>(defaultNode)
+                      ->getIntValue());
             }
           }
           optionLayout->addWidget(spinBox);
 
-          ASTNode metaNode = optionDecl->getPropertyValue("meta");
-          if (metaNode && metaNode->getNodeType() == AST::String) {
+          strd::ASTNode metaNode = optionDecl->getPropertyValue("meta");
+          if (metaNode && metaNode->getNodeType() == strd::AST::String) {
             optionWidget->setToolTip(QString::fromStdString(
-                std::static_pointer_cast<ValueNode>(metaNode)
+                std::static_pointer_cast<strd::ValueNode>(metaNode)
                     ->getStringValue()));
           }
           overrideSpinBoxes[QString::fromStdString(optionDecl->getName())] =
               spinBox;
         } else if (type == "stringListOverride") {
           QString optionName = "";
-          ASTNode nameNode = optionDecl->getPropertyValue("name");
-          if (nameNode && nameNode->getNodeType() == AST::String) {
+          strd::ASTNode nameNode = optionDecl->getPropertyValue("name");
+          if (nameNode && nameNode->getNodeType() == strd::AST::String) {
             optionName = QString::fromStdString(
-                std::static_pointer_cast<ValueNode>(nameNode)
+                std::static_pointer_cast<strd::ValueNode>(nameNode)
                     ->getStringValue());
           }
           optionLayout->addWidget(new QLabel(optionName));
 
           QComboBox *combo = new QComboBox(optionWidget);
 
-          ASTNode possiblesNode =
+          strd::ASTNode possiblesNode =
               optionDecl->getPropertyValue("possibleValues");
 
           QString defaultValue;
-          ASTNode defaultNode = optionDecl->getPropertyValue("default");
+          strd::ASTNode defaultNode = optionDecl->getPropertyValue("default");
           if (systemConfig.overrides["all"].find(optionDecl->getName()) !=
               systemConfig.overrides["all"].end()) {
 
             defaultValue = QString::fromStdString(std::get<std::string>(
                 systemConfig.overrides["all"][optionDecl->getName()]));
           } else { // Use default
-            ASTNode defaultNode = optionDecl->getPropertyValue("default");
-            if (defaultNode && defaultNode->getNodeType() == AST::String) {
+            strd::ASTNode defaultNode = optionDecl->getPropertyValue("default");
+            if (defaultNode &&
+                defaultNode->getNodeType() == strd::AST::String) {
               defaultValue = QString::fromStdString(
-                  std::static_pointer_cast<ValueNode>(defaultNode)
+                  std::static_pointer_cast<strd::ValueNode>(defaultNode)
                       ->getStringValue());
             }
           }
           int defaultIndex = 0;
-          if (possiblesNode && possiblesNode->getNodeType() == AST::List) {
-            std::shared_ptr<ListNode> list =
-                std::static_pointer_cast<ListNode>(possiblesNode);
-            for (ASTNode member : list->getChildren()) {
-              if (member && member->getNodeType() == AST::String) {
+          if (possiblesNode &&
+              possiblesNode->getNodeType() == strd::AST::List) {
+            std::shared_ptr<strd::ListNode> list =
+                std::static_pointer_cast<strd::ListNode>(possiblesNode);
+            for (strd::ASTNode &member : list->getChildren()) {
+              if (member && member->getNodeType() == strd::AST::String) {
                 combo->addItem(QString::fromStdString(
-                    std::static_pointer_cast<ValueNode>(member)
+                    std::static_pointer_cast<strd::ValueNode>(member)
                         ->getStringValue()));
                 if (defaultValue ==
                     QString::fromStdString(
-                        std::static_pointer_cast<ValueNode>(member)
+                        std::static_pointer_cast<strd::ValueNode>(member)
                             ->getStringValue())) {
                   defaultIndex = combo->count() - 1;
                 }
@@ -2187,19 +2226,19 @@ void ProjectWindow::configureSystem() {
               combo;
         } else if (type == "intListOverride") {
           QString optionName = "----";
-          ASTNode nameNode = optionDecl->getPropertyValue("name");
-          if (nameNode && nameNode->getNodeType() == AST::String) {
+          strd::ASTNode nameNode = optionDecl->getPropertyValue("name");
+          if (nameNode && nameNode->getNodeType() == strd::AST::String) {
             optionName = QString::fromStdString(
-                std::static_pointer_cast<ValueNode>(nameNode)
+                std::static_pointer_cast<strd::ValueNode>(nameNode)
                     ->getStringValue());
           }
           optionLayout->addWidget(new QLabel(optionName));
 
           QComboBox *combo = new QComboBox(optionWidget);
 
-          ASTNode possiblesNode =
+          strd::ASTNode possiblesNode =
               optionDecl->getPropertyValue("possibleValues");
-          ASTNode defaultNode = optionDecl->getPropertyValue("default");
+          strd::ASTNode defaultNode = optionDecl->getPropertyValue("default");
           int defaultValue = 0;
           if (systemConfig.overrides["all"].find(optionDecl->getName()) !=
               systemConfig.overrides["all"].end()) {
@@ -2207,22 +2246,25 @@ void ProjectWindow::configureSystem() {
             defaultValue = std::get<int64_t>(
                 systemConfig.overrides["all"][optionDecl->getName()]);
           } else { // Use default
-            if (defaultNode && defaultNode->getNodeType() == AST::Int) {
-              defaultValue = std::static_pointer_cast<ValueNode>(defaultNode)
-                                 ->getIntValue();
+            if (defaultNode && defaultNode->getNodeType() == strd::AST::Int) {
+              defaultValue =
+                  std::static_pointer_cast<strd::ValueNode>(defaultNode)
+                      ->getIntValue();
             }
           }
           int defaultIndex = 0;
-          if (possiblesNode && possiblesNode->getNodeType() == AST::List) {
-            std::shared_ptr<ListNode> list =
-                std::static_pointer_cast<ListNode>(possiblesNode);
-            for (ASTNode member : list->getChildren()) {
-              if (member && member->getNodeType() == AST::Int) {
-                combo->addItem(
-                    QString::number(std::static_pointer_cast<ValueNode>(member)
-                                        ->getIntValue()));
-                if (defaultValue == std::static_pointer_cast<ValueNode>(member)
-                                        ->getIntValue()) {
+          if (possiblesNode &&
+              possiblesNode->getNodeType() == strd::AST::List) {
+            std::shared_ptr<strd::ListNode> list =
+                std::static_pointer_cast<strd::ListNode>(possiblesNode);
+            for (strd::ASTNode &member : list->getChildren()) {
+              if (member && member->getNodeType() == strd::AST::Int) {
+                combo->addItem(QString::number(
+                    std::static_pointer_cast<strd::ValueNode>(member)
+                        ->getIntValue()));
+                if (defaultValue ==
+                    std::static_pointer_cast<strd::ValueNode>(member)
+                        ->getIntValue()) {
                   defaultIndex = combo->count() - 1;
                 }
               }
@@ -2309,23 +2351,23 @@ void ProjectWindow::configureSystem() {
           if (resourceConfig->getName() == key.toStdString()) {
             auto valueNode = resourceConfig->getPropertyValue("value");
             if (valueNode) {
-              if (valueNode->getNodeType() == AST::Int) {
+              if (valueNode->getNodeType() == strd::AST::Int) {
                 resourceConfig->replacePropertyValue(
-                    "value", std::make_shared<ValueNode>((int64_t)value.toInt(),
-                                                         __FILE__, __LINE__));
+                    "value", std::make_shared<strd::ValueNode>(
+                                 (int64_t)value.toInt(), __FILE__, __LINE__));
                 found = true;
                 break;
-              } else if (valueNode->getNodeType() == AST::Real) {
+              } else if (valueNode->getNodeType() == strd::AST::Real) {
                 resourceConfig->replacePropertyValue(
-                    "value", std::make_shared<ValueNode>(value.toDouble(),
-                                                         __FILE__, __LINE__));
+                    "value", std::make_shared<strd::ValueNode>(
+                                 value.toDouble(), __FILE__, __LINE__));
                 found = true;
                 break;
-              } else if (valueNode->getNodeType() == AST::String) {
+              } else if (valueNode->getNodeType() == strd::AST::String) {
                 resourceConfig->replacePropertyValue(
                     "value",
-                    std::make_shared<ValueNode>(value.toString().toStdString(),
-                                                __FILE__, __LINE__));
+                    std::make_shared<strd::ValueNode>(
+                        value.toString().toStdString(), __FILE__, __LINE__));
                 found = true;
                 break;
               } else {
@@ -2338,26 +2380,27 @@ void ProjectWindow::configureSystem() {
         }
       }
       if (!found) {
-        auto properties = std::make_shared<ListNode>(__FILE__, __LINE__);
+        auto properties = std::make_shared<strd::ListNode>(__FILE__, __LINE__);
         if (value.typeId() == QMetaType::Int) {
-          properties->addChild(std::make_shared<PropertyNode>(
+          properties->addChild(std::make_shared<strd::PropertyNode>(
               "value",
-              std::make_shared<ValueNode>((int64_t)value.toInt(), __FILE__,
-                                          __LINE__),
+              std::make_shared<strd::ValueNode>((int64_t)value.toInt(),
+                                                __FILE__, __LINE__),
               __FILE__, __LINE__));
         } else if (value.typeId() == QMetaType::Double) {
-          properties->addChild(std::make_shared<PropertyNode>(
+          properties->addChild(std::make_shared<strd::PropertyNode>(
               "value",
-              std::make_shared<ValueNode>(value.toDouble(), __FILE__, __LINE__),
+              std::make_shared<strd::ValueNode>(value.toDouble(), __FILE__,
+                                                __LINE__),
               __FILE__, __LINE__));
         } else if (value.typeId() == QMetaType::Double) {
-          properties->addChild(std::make_shared<PropertyNode>(
+          properties->addChild(std::make_shared<strd::PropertyNode>(
               "value",
-              std::make_shared<ValueNode>(value.toString().toStdString(),
-                                          __FILE__, __LINE__),
+              std::make_shared<strd::ValueNode>(value.toString().toStdString(),
+                                                __FILE__, __LINE__),
               __FILE__, __LINE__));
         }
-        auto newDecl = std::make_shared<DeclarationNode>(
+        auto newDecl = std::make_shared<strd::DeclarationNode>(
             key.toStdString(), "constant", properties, __FILE__, __LINE__);
         systemConfig.resourceConfigurations["all"].push_back(newDecl);
       }

@@ -46,6 +46,8 @@
 //#include "stride/codegen/astfunctions.hpp"
 #include "stride/codegen/astquery.hpp"
 
+using namespace strd;
+
 extern AST *parse(const char *fileName);
 
 class ParserTest : public QObject {
@@ -1012,13 +1014,13 @@ void ParserTest::testModules() {
   blockNames << "Input";
   blockNames << "Output";
   blockNames << "AutoDeclared";
-  for (auto name : blockNames) {
+  for (const auto &name : blockNames) {
     auto decl = ASTQuery::findDeclarationByName(
         name.toStdString(), {{moduleNode, blockList->getChildren()}}, nullptr);
     QVERIFY(decl);
   }
   // Check to make sure input and output domains have propagated correctly
-  for (auto blockNode : blockList->getChildren()) {
+  for (const auto &blockNode : blockList->getChildren()) {
     DeclarationNode *block = static_cast<DeclarationNode *>(blockNode.get());
     QVERIFY(block->getDomain());
     QVERIFY(block->getDomain()->getNodeType() == AST::PortProperty);
@@ -1904,7 +1906,7 @@ void ParserTest::testLists() {
   QVERIFY(list->getNodeType() == AST::List);
   members = list->getChildren();
   QVERIFY(members.size() == 4);
-  for (ASTNode member : members) {
+  for (const ASTNode &member : members) {
     ValueNode *value = static_cast<ValueNode *>(member.get());
     QVERIFY(value->getNodeType() == AST::Real);
   }
@@ -1919,7 +1921,7 @@ void ParserTest::testLists() {
   QVERIFY(list->getNodeType() == AST::List);
   members = list->getChildren();
   QVERIFY(members.size() == 4);
-  foreach (ASTNode member, members) {
+  for (const ASTNode &member : members) {
     ValueNode *value = static_cast<ValueNode *>(member.get());
     QVERIFY(value->getNodeType() == AST::String);
   }
@@ -1934,7 +1936,7 @@ void ParserTest::testLists() {
   QVERIFY(list->getNodeType() == AST::List);
   members = list->getChildren();
   QVERIFY(members.size() == 4);
-  for (ASTNode member : members) {
+  for (const ASTNode &member : members) {
     ValueNode *value = static_cast<ValueNode *>(member.get());
     QVERIFY(value->getNodeType() == AST::Switch);
   }

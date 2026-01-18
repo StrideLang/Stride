@@ -63,7 +63,7 @@ public:
 
   void setAutoComplete(bool enable);
 
-  void setErrors(QList<LangError> errors);
+  void setErrors(QList<strd::LangError> errors);
   void setToolTipText(QString text);
 
   QString filename() const;

@@ -41,12 +41,14 @@
 
 #include "stride/codegen/astfunctions.hpp"
 #include "stride/codegen/astquery.hpp"
-#include "stride/parser/blocknode.h"
 #include "stride/codegen/coderesolver.hpp"
 #include "stride/codegen/codevalidator.hpp"
+#include "stride/parser/blocknode.h"
 #include "stride/parser/declarationnode.h"
 #include "stride/parser/listnode.h"
 #include "stride/parser/valuenode.h"
+
+using namespace strd;
 
 CodeModel::CodeModel(QObject *parent)
     : QObject(parent), m_lastValidTree(nullptr) {}
@@ -660,7 +662,7 @@ void CodeModel::updateCodeAnalysis(QString code, QString platformRootPath,
     tmpFile.close();
     ASTNode tree;
     tree = AST::parseFile(tmpFile.fileName().toLocal8Bit().constData(),
-                                   sourceFile.toLocal8Bit().constData());
+                          sourceFile.toLocal8Bit().constData());
 
     if (tree) {
       SystemConfiguration config;
@@ -668,21 +670,21 @@ void CodeModel::updateCodeAnalysis(QString code, QString platformRootPath,
       CodeResolver resolver(tree, platformRootPath.toStdString(), config);
       m_system = resolver.getSystem();
       if (m_system->systemName() != "") {
-      resolver.process();
+        resolver.process();
 
-      CodeValidator validator(tree);
-      std::vector<ASTNode> objects;
+        CodeValidator validator(tree);
+        std::vector<ASTNode> objects;
         m_types = m_system->getPlatformTypeNames();
         m_funcs = m_system->getFunctionNames();
         objects = m_system->getImportTrees()[""];
-      m_objectNames.clear();
-      for (ASTNode platObject : objects) {
-        if (platObject->getNodeType() == AST::Block) {
-          m_objectNames.push_back(
-              static_cast<BlockNode *>(platObject.get())->getName());
+        m_objectNames.clear();
+        for (ASTNode platObject : objects) {
+          if (platObject->getNodeType() == AST::Block) {
+            m_objectNames.push_back(
+                static_cast<BlockNode *>(platObject.get())->getName());
+          }
         }
-      }
-      m_errors = validator.getErrors();
+        m_errors = validator.getErrors();
       }
 
       if (m_lastValidTree) {

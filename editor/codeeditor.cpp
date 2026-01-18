@@ -104,8 +104,8 @@ void CodeEditor::markParsed() {
 
 void CodeEditor::setAutoComplete(bool enable) { m_autoComplete = enable; }
 
-void CodeEditor::setErrors(QList<LangError> errors) {
-  QList<LangError> filteredErrors;
+void CodeEditor::setErrors(QList<strd::LangError> errors) {
+  QList<strd::LangError> filteredErrors;
   for (auto error : errors) {
     if (QString::fromStdString(error.filename).endsWith(m_filename)) {
       filteredErrors.push_back(error);
@@ -193,9 +193,9 @@ void CodeEditor::updateAutoCompleteMenu(QString currentWord) {
   m_autoCompleteMenu.clear();
   QAction *activeAction = nullptr;
   if (m_currentContext == UseStatementSystem) {
-    auto availableSystems = StrideSystem::listAvailableSystems(
+    auto availableSystems = strd::StrideSystem::listAvailableSystems(
         m_codeModel->getSystem()->getStrideRoot());
-    for (auto systemName : availableSystems) {
+    for (const auto &systemName : availableSystems) {
       QAction *syntaxAction = m_autoCompleteMenu.addAction(
           QString::fromStdString(systemName), this, SLOT(insertAutoComplete()));
       syntaxAction->setData(QString::fromStdString(systemName) +
@@ -206,7 +206,7 @@ void CodeEditor::updateAutoCompleteMenu(QString currentWord) {
   } else if (m_currentContext == ImportStatement) {
 
     auto availableImports = m_codeModel->getSystem()->listAvailableImports();
-    for (auto systemName : availableImports) {
+    for (const auto &systemName : availableImports) {
       QAction *syntaxAction = m_autoCompleteMenu.addAction(
           QString::fromStdString(systemName), this, SLOT(insertAutoComplete()));
       syntaxAction->setData(QString::fromStdString(systemName));

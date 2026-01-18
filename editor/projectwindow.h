@@ -124,11 +124,11 @@ private:
   void adjustForCurrentFile(const QString &filePath);
   void updateRecentActionList();
 
-  SystemConfiguration readProjectConfiguration(std::string filename);
+  strd::SystemConfiguration readProjectConfiguration(std::string filename);
 
   void fillInspectorTree();
-  QTreeWidgetItem *createTreeItem(ASTNode inputNode);
-  void createResourceTreeItem(ASTNode inputNode, QTreeWidget *treeWidget);
+  QTreeWidgetItem *createTreeItem(strd::ASTNode inputNode);
+  void createResourceTreeItem(strd::ASTNode inputNode, QTreeWidget *treeWidget);
 
   Ui::ProjectWindow *ui;
 
@@ -142,7 +142,7 @@ private:
   QTimer m_codeModelTimer;
   CodeModel m_codeModel;
   QFont m_font;
-  std::vector<Builder *> m_builders;
+  std::vector<strd::Builder *> m_builders;
   QMenu m_helperMenu;
 
   bool m_startingUp;

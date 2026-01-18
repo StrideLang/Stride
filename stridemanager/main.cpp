@@ -44,6 +44,8 @@
 //#include "stride/parser/ast.h"
 #include "stride/codegen/toolmanager.hpp"
 
+using namespace strd;
+
 int main(int argc, char *argv[]) {
   QCoreApplication app(argc, argv);
   QCoreApplication::setApplicationName("strdtools");

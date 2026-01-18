@@ -24,7 +24,7 @@ private:
   void updateToolInfo();
 
   Ui::LocalManagementDialog *ui;
-  ToolManager toolManager;
+  strd::ToolManager toolManager;
 
   QMap<QString, QList<QString>> tools;
   QMap<QString, QList<QString>> paths;

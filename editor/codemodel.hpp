@@ -38,8 +38,8 @@
 #include <QMutex>
 #include <QObject>
 
-#include "stride/parser/ast.h"
 #include "stride/codegen/stridesystem.hpp"
+#include "stride/parser/ast.h"
 
 class CodeModel : public QObject {
   Q_OBJECT
@@ -52,11 +52,11 @@ public:
   QString getTooltipText(QString symbol);
   QPair<QString, int> getSymbolLocation(QString symbol);
 
-  std::shared_ptr<StrideSystem> getSystem() { return m_system; }
+  std::shared_ptr<strd::StrideSystem> getSystem() { return m_system; }
 
   // Copy of current tree, it is safe to use outside CodeModel
   // But the caller must clean it up.
-  ASTNode getOptimizedTree();
+  strd::ASTNode getOptimizedTree();
 
   //    Builder *createBuilder(QString projectDir);
 
@@ -65,7 +65,7 @@ public:
   QStringList getObjectNames();
   QString getFunctionSyntax(QString symbol);
   QString getTypeSyntax(QString symbol);
-  QList<LangError> getErrors();
+  QList<strd::LangError> getErrors();
   void updateCodeAnalysis(QString code, QString platformRootPath,
                           QString sourceFile);
 
@@ -75,13 +75,13 @@ public slots:
 
 private:
   //    QList<AST *> m_platformObjects;
-  std::shared_ptr<StrideSystem> m_system;
+  std::shared_ptr<strd::StrideSystem> m_system;
   std::vector<std::string> m_types;
   std::vector<std::string> m_funcs;
   std::vector<std::string> m_objectNames;
-  std::vector<LangError> m_errors;
+  std::vector<strd::LangError> m_errors;
   QMutex m_validTreeLock;
-  ASTNode m_lastValidTree;
+  strd::ASTNode m_lastValidTree;
 };
 
 #endif // CODEMODEL_HPP

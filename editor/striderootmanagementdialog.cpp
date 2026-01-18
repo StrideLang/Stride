@@ -54,8 +54,9 @@ void StriderootManagementDialog::prepare() {
     for (auto version : versions) {
       if (QFile::exists(m_strideRoot + "/frameworks/" + fwName + "/" + version +
                         "/platformlib/Configuration.stride")) {
-        StrideFramework fw(m_strideRoot.toStdString(), fwName.toStdString(),
-                           version.toStdString(), "", "");
+        strd::StrideFramework fw(m_strideRoot.toStdString(),
+                                 fwName.toStdString(), version.toStdString(),
+                                 "", "");
         QString text = fwName + "\n" + "Version " + version + "\n";
         text += QString::fromStdString(fw.getPlatformDetails());
         details[version] = text;
@@ -80,8 +81,9 @@ void StriderootManagementDialog::prepare() {
     for (auto version : versions) {
       if (QFile::exists(m_strideRoot + "/systems/" + sysName + "/" + version +
                         "/System.stride")) {
-        StrideFramework fw(m_strideRoot.toStdString(), sysName.toStdString(),
-                           version.toStdString(), "", "");
+        strd::StrideFramework fw(m_strideRoot.toStdString(),
+                                 sysName.toStdString(), version.toStdString(),
+                                 "", "");
         QString text = sysName + "\n" + "Version " + version + "\n";
         text += QString::fromStdString(fw.getPlatformDetails());
         details[version] = text;
@@ -125,7 +127,7 @@ void StriderootManagementDialog::itemClicked(QTreeWidgetItem *item,
 void StriderootManagementDialog::installFramework() {
   auto currentItem = ui->elementTree->currentItem();
   if (currentItem) {
-    StrideFramework fw(
+    strd::StrideFramework fw(
         m_strideRoot.toStdString(), currentItem->text(0).toStdString(),
         ui->versionComboBox->currentText().toStdString(), "", "");
     fw.installFramework();

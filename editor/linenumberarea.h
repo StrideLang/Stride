@@ -38,6 +38,8 @@
 #include <QWidget>
 #include <memory>
 
+#include "stride/parser/langerror.h"
+
 #include "codeeditor.h"
 
 class LineNumberArea : public QWidget {
@@ -47,7 +49,7 @@ public:
 
   QSize sizeHint() const;
 
-  void setErrors(QList<LangError> errors);
+  void setErrors(QList<strd::LangError> errors);
 
   std::mutex m_markerLock;
   std::vector<std::shared_ptr<ErrorMarker>> m_errorMarkers;

@@ -48,6 +48,8 @@
 
 #include "buildtester.hpp"
 
+using namespace strd;
+
 BuildTester::BuildTester(std::string strideRoot) { m_StrideRoot = strideRoot; }
 
 bool BuildTester::test(std::string filename, std::string expectedResultFile,

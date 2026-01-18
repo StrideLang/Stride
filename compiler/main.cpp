@@ -39,10 +39,12 @@
 #include <QFile>
 #include <QFileInfo>
 
-#include "stride/codegen/astfunctions.hpp"
+// #include "stride/codegen/astfunctions.hpp"
 #include "stride/codegen/coderesolver.hpp"
 #include "stride/codegen/codevalidator.hpp"
-#include "stride/codegen/pythonproject.h"
+// #include "stride/codegen/pythonproject.h"
+
+using namespace strd;
 
 int main(int argc, char *argv[]) {
   QCoreApplication app(argc, argv);

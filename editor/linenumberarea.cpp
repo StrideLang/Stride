@@ -37,6 +37,8 @@
 #include "errormarker.h"
 #include "linenumberarea.h"
 
+using namespace strd;
+
 LineNumberArea::LineNumberArea(CodeEditor *editor) : QWidget(editor) {
   m_codeEditor = editor;
   for (size_t i = 0; i < numMarkers; i++) {
