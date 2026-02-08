@@ -39,14 +39,13 @@
 #include <QTemporaryFile>
 #include <QVector>
 
-#include "stride/codegen/astfunctions.hpp"
-#include "stride/codegen/astquery.hpp"
 #include "stride/codegen/coderesolver.hpp"
 #include "stride/codegen/codevalidator.hpp"
 #include "stride/parser/blocknode.h"
 #include "stride/parser/declarationnode.h"
 #include "stride/parser/listnode.h"
 #include "stride/parser/valuenode.h"
+#include "stride/utils/astquery.h"
 
 using namespace strd;
 

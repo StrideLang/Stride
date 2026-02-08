@@ -40,11 +40,11 @@
 #include <QThread>
 
 //#include "stride/codegen/astfunctions.hpp"
-#include "stride/codegen/astquery.hpp"
 #include "stride/codegen/coderesolver.hpp"
 #include "stride/codegen/codevalidator.hpp"
 #include "stride/codegen/systemconfiguration.hpp"
 #include "stride/parser/ast.h"
+#include "stride/utils/astquery.h"
 
 #include "buildtester.hpp"
 

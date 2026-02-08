@@ -60,10 +60,9 @@
 #include "configdialog.h"
 #include "localmanagementdialog.hpp"
 #include "savechangeddialog.h"
-#include "stride/codegen/astfunctions.hpp"
-#include "stride/codegen/astquery.hpp"
 #include "stride/codegen/coderesolver.hpp"
 #include "stride/codegen/codevalidator.hpp"
+#include "stride/utils/astquery.h"
 #include "striderootmanagementdialog.h"
 
 //#include "pythonproject.h"

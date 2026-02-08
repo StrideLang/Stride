@@ -40,11 +40,7 @@
 #include "stride/codegen/codeanalysis.hpp"
 #include "stride/codegen/coderesolver.hpp"
 #include "stride/codegen/codevalidator.hpp"
-//#include "stride/codegen/strideframework.hpp"
-//#include "stride/parser/strideparser.h"
-
-//#include "stride/codegen/astfunctions.hpp"
-#include "stride/codegen/astquery.hpp"
+#include "stride/utils/astquery.h"
 
 using namespace strd;
 

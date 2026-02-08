@@ -9,6 +9,7 @@ option(STRIDE_BUILD_JIT "Build Stride JIT compiler library" ON)
 
 # Stride Core
 add_subdirectory(strideparser)
+add_subdirectory(strideutils)
 add_subdirectory(codegen)
 
 # Unit tests
