@@ -1,0 +1,22 @@
+use DesktopAudio version 1.0
+
+module Gen {
+	ports: [
+        mainOutputPort OutputPort {
+            block: Output
+        }
+        propertyInputPort PropertyPort {
+            name: "prop"
+            block: Property
+            default: 1.0
+        }
+    ]
+    blocks: [
+        signal Property {}
+    ]
+    streams: [
+        Property >> Output;
+    ]
+}
+
+Gen(prop: [3, 5] ) >> AudioOut;

@@ -1,0 +1,33 @@
+use DesktopAudio version 1.0
+
+import Generators
+
+module Test {
+	ports: [
+		mainOutputPort OutputPort {
+			block: Output
+		}
+		mainInputPort InputPort {
+			block: Input
+		}
+	]
+	blocks: [
+		reaction InternalReaction {
+			ports: [
+			]
+			streams: [
+				Value + 1 >> Value;
+			]
+		}
+		signal Value { default: 0 domain: OutputPort.domain}
+		switch ReactionSwitch {
+			domain: OutputPort.domain
+		}
+	]
+	streams: [
+		[Input, 0] >> Greater() >> ReactionSwitch >> InternalReaction();
+		Value >> Output;
+	]
+}
+
+AudioIn[0] >> Test() >> AudioOut[0];

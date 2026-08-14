@@ -1,0 +1,16 @@
+use DesktopAudio version 1.0
+
+switch AlwaysOn {
+	default: on
+	domain: AudioDomain
+}
+
+signal Value {
+  domain: AudioDomain
+}
+
+AlwaysOn >> reaction {1.8 >> Value;};
+Value >> AudioOut[0];
+2.0 >> Value;
+Value >> AudioOut[1];
+	

@@ -35,105 +35,117 @@
 #ifndef PROJECTWINDOW_H
 #define PROJECTWINDOW_H
 
-#include <QMainWindow>
 #include <QFile>
-#include <QTimer>
+#include <QMainWindow>
 #include <QMenu>
+#include <QTimer>
 #include <QTreeWidgetItem>
 
-#include "languagehighlighter.h"
-#include "builder.h"
-#include "searchwidget.h"
+#include "stride/codegen/builder.hpp"
+#include "stride/codegen/systemconfiguration.hpp"
+
 #include "codemodel.hpp"
-#include "systemconfiguration.hpp"
+#include "languagehighlighter.h"
+#include "searchwidget.h"
 
 namespace Ui {
 class ProjectWindow;
 }
 
-class ProjectWindow : public QMainWindow
-{
-    Q_OBJECT
+class ProjectWindow : public QMainWindow {
+  Q_OBJECT
 
 public:
-    explicit ProjectWindow(QWidget *parent = 0);
-    ~ProjectWindow();
+  explicit ProjectWindow(QWidget *parent = nullptr);
+  ~ProjectWindow();
+
+  void initialize(bool resetOpenFiles = false);
 
 public slots:
-    void updateMenus();
-    void setEditorText(QString code);
-    bool saveFile(int index = -1);
-    bool saveFileAs(int index = -1);
-    void closeTab(int index = -1);
-    void loadFile();
-    void loadFile(QString fileName);
-    void openOptionsDialog();
-    void openGeneratedDir();
-    void cleanProject();
-    void updateCodeAnalysis(bool force = false);
-    void newFile();
-    void markModified();
-    void configureSystem();
-    void resetCodeTimer();
-    void inspectorItemClicked(QTreeWidgetItem *item, int column);
+  void setEditorText(QString code);
+  bool saveFile(int index = -1);
+  bool saveFileAs(int index = -1);
+  void closeTab(int index = -1);
+  void loadFile();
+  void loadFile(QString fileName);
+  void openOptionsDialog();
+  void openManageStriderootDialog();
+  void openManageLocalDialog();
+  void openGeneratedDir();
+  void cleanProject();
+  void updateCodeAnalysis(bool force = false);
+  void newFile();
+  void markModified();
+  void configureSystem();
+  void resetCodeTimer();
+  void inspectorItemClicked(QTreeWidgetItem *item, int column);
 
 protected:
-    virtual void closeEvent(QCloseEvent *event);
-    virtual bool eventFilter(QObject *obj, QEvent *event);
+  virtual void closeEvent(QCloseEvent *event);
+  virtual bool eventFilter(QObject *obj, QEvent *event);
+
+  void printConsoleText(std::string text);
+  void printConsoleError(std::string text);
 
 private slots:
-    bool build();
-    void flash();
-    void run(bool pressed);
-    void stop();
-    void programStopped();
-    void tabChanged(int index);
-    bool maybeSave();
-    void showDocumentation();
-    void followSymbol();
+  bool build();
+  void deploy();
+  void run(bool pressed);
+  void stop();
+  void programStopped();
+  void tabChanged(int index);
+  bool maybeSave();
+  void showDocumentation();
+  void followSymbol();
+  void openRecent();
 
-    // Editor
-    void commentSection();
-    void uncomment();
-    void showHelperMenu(QPoint where);
-    void insertText(QString text = "");
-    void find(QString query = "");
-    void findNext();
-    void findPrevious();
-
-    void printConsoleText(QString text);
-    void printConsoleError(QString text);
+  // Editor
+  void commentSection();
+  void uncomment();
+  void showHelperMenu(QPoint where);
+  void insertText(QString text = "");
+  void find(QString query = "");
+  void findNext();
+  void findPrevious();
 
 private:
-    void connectActions();
-    void connectShortcuts();
+  void connectActions();
+  void connectShortcuts();
+  void prepareMenus();
 
-    void readSettings();
-    void writeSettings();
+  void readSettings(bool resetOpenFiles = false);
+  void writeSettings();
 
-    void updateEditorSettings();
+  void updateEditorSettings();
 
-    SystemConfiguration readProjectConfiguration();
+  const uint16_t m_maxRecentFiles = 20;
+  QList<QAction *> m_recentFilesActions;
+  QStringList m_recentFilePaths;
+  void adjustForCurrentFile(const QString &filePath);
+  void updateRecentActionList();
 
-    void fillInspectorTree();
-    QTreeWidgetItem *createTreeItem(ASTNode inputNode);
+  strd::SystemConfiguration readProjectConfiguration(std::string filename);
 
-    Ui::ProjectWindow *ui;
+  void fillInspectorTree();
+  QTreeWidgetItem *createTreeItem(strd::ASTNode inputNode);
+  void createResourceTreeItem(strd::ASTNode inputNode, QTreeWidget *treeWidget);
 
-    QScopedPointer<SearchWidget> m_searchWidget;
+  Ui::ProjectWindow *ui;
 
-    LanguageHighlighter *m_highlighter;
+  QScopedPointer<SearchWidget> m_searchWidget;
 
-//    QString m_platformsRootDir;
-    QMap<QString, QVariant> m_options;
-    QMap<QString, QVariant> m_environment;
-    QMap<QString, QVariant> m_guiOptions;
-    QTimer m_codeModelTimer;
-    CodeModel m_codeModel;
-    QFont m_font;
-    std::vector<Builder *> m_builders;
-    QMenu m_helperMenu;
-    bool m_startingUp;
+  LanguageHighlighter *m_highlighter;
+
+  //    QString m_platformsRootDir;
+  QMap<QString, QVariant> m_options;
+  QMap<QString, QVariant> m_environment;
+  QTimer m_codeModelTimer;
+  CodeModel m_codeModel;
+  QFont m_font;
+  std::vector<strd::Builder *> m_builders;
+  QMenu m_helperMenu;
+
+  bool m_startingUp;
 };
 
 #endif // PROJECTWINDOW_H

@@ -1,0 +1,68 @@
+use DesktopAudio version 1.0
+
+module Test {
+	ports: [
+		mainOutputPort OutputPort {
+			block: Output
+		}
+		mainInputPort InputPort {
+			block: Input
+			domain: OutputPort.domain
+		}
+		propertyInputPort TestPort {
+			name: "test"
+			block: TestBlock
+			domain: OutputPort.domain
+		}
+		propertyInputPort TestPort2 {
+			name: "test2"
+			block: TestBlock2
+			domain: OutputPort.domain
+		}
+	]
+	blocks: [
+#		signal Amp { domain: TestPort.domain }
+	]
+	streams: [
+		TestBlock * TestBlock2 >> Amp;
+		Input * Amp >> Output;
+	]
+}
+
+module Test2 {
+	ports: [
+		propertyInputPort TestPort2 {
+			name: "test2"
+			block: TestBlock2
+			domain: OutputPort.domain
+		}
+		mainInputPort InputPort {
+			block: Input
+			domain: OutputPort.domain
+		}
+		propertyInputPort TestPort {
+			name: "test"
+			block: TestBlock
+			domain: OutputPort.domain
+		}
+		mainOutputPort OutputPort {
+			block: Output
+			domain: OutputPort.domain
+		}
+	]
+	blocks: [
+#		signal Amp { domain: TestPort.domain }
+	]
+	streams: [
+		TestBlock * TestBlock2 >> Amp;
+		Input * Amp >> Output;
+	]
+}
+
+signal SigIn[2] { domain: AudioDomain}
+
+AudioIn >> SigIn;
+
+SigIn[0] >> Test(test: AudioIn[0] test2:AudioIn[1]) >> AudioOut[0];
+
+SigIn[1] >> Test2(test: AudioIn[0] test2:AudioIn[1]) >> AudioOut[1];

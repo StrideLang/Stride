@@ -1,0 +1,29 @@
+use DesktopAudio version 1.0
+
+import Generators
+
+table MyTable {
+	size: 1024
+	rate: 1024
+	domain: RootDomain
+}
+
+trigger CounterReset {
+	domain: AudioDomain
+}
+
+signal Counter {
+	default: 0.0
+	domain: AudioDomain
+	reset: CounterReset
+}
+
+[0.5, 1.5] >> MyTable; 
+
+MyTable[Counter] >> AudioOut[0];
+Counter + 1 >> Counter;
+
+MyTable[Counter] >> AudioOut[1];
+Counter + 1 >> Counter;
+
+[Counter, 1024] >> Equal() >> CounterReset;

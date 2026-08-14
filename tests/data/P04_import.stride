@@ -2,10 +2,9 @@ use DesktopAudio version 1.0
 
 import Filters
 
+import Generators as G
+
 AudioIn[1] >> LowPass() >> AudioOut[1];
 
-#import Filters as F
+G::Oscillator() >> AudioOut[1];
 
-#AudioIn[1] >> F::LowPass() >> AudioOut[1];
-
-import Platform::Filters::Filter

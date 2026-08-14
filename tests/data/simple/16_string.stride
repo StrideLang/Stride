@@ -1,0 +1,5 @@
+use DesktopAudio version 1.0
+
+string String {}
+
+AudioIn[0] >> String;

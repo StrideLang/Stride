@@ -1,0 +1,43 @@
+use DesktopAudio version 1.0
+
+import Generators
+
+constant NumberOfGrains   { value: 10 }
+constant GrainTriggerRate { value: 15 }
+constant GrainDuration { value: 0.005 }
+constant GrainFrequency   { value: 220 }
+
+
+signal GrainIndex {
+    default: 0
+    rate:    GrainTriggerRate
+}
+
+trigger ResetGrainState [NumberOfGrains] {}
+
+switch GrainState [NumberOfGrains] {
+    default:off
+    reset:   ResetGrainState
+}
+
+Counter(
+  startValue: 0
+  stopValue:  NumberOfGrains - 1 
+)
+>> GrainIndex;
+
+on >> GrainState[GrainIndex];
+
+GrainState >> AD(
+  attack: GrainDuration* 0.5
+  decay: GrainDuration* 0.5
+) >> Env;
+
+Oscillator(
+  frequency: GrainFrequency
+  amplitude: Env
+  reset:     GrainState
+)
+>> Sum()
+>> Level( gain: 1.0 / NumberOfGrains )
+>> AudioOut[0];

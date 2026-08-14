@@ -1,0 +1,26 @@
+use DesktopAudio version 1.0
+
+import Generators
+
+table SineTable {
+	size: 1024
+	rate: 1024
+	domain: RootDomain
+}
+
+trigger CounterReset {
+	domain: AudioDomain
+}
+
+signal Counter {
+	default: 0.0
+	domain: AudioDomain
+	reset: CounterReset
+}
+
+Oscillator(frequency: 1.0) >> SineTable; 
+
+SineTable[Counter] >> AudioOut[0];
+
+Counter + 1 >> Counter;
+[Counter, 1024] >> GreaterOrEqual() >> CounterReset;

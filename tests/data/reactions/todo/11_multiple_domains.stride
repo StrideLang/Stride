@@ -1,0 +1,35 @@
+use DesktopAudio version 1.0
+
+
+module Test {
+	ports: [
+		mainOutputPort OutputPort {
+			block: Output
+		}
+		mainInputPort InputPort {
+			block: Input
+		}
+		propertyInputPort VarPort {
+			name:"var"
+			block: Var
+		}
+	]
+	blocks: [
+		reaction UsesVar {
+			streams: [
+				Var + 0.001 >> Var;
+				Other + 1 >> Other;
+			]
+		}
+		signal Other { domain: OutputPort.domain }
+		signal Input { domain: OutputPort.domain }
+		signal Output[2] {}
+	]
+	streams: [
+		[Input, 0] >> Greater() >> UsesVar();
+		Input * Var >> Output[1];
+		Var >> Output[2];
+	]
+}
+
+AudioIn[0] >> Test() >> AudioOut;

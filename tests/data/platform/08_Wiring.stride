@@ -1,0 +1,5 @@
+use DesktopAudio version 1.0
+
+signal Var { domain: Wiring::WiringDomain rate:Wiring::PlatformRate }
+
+Var >> Sin() >> Var;

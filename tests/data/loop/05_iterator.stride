@@ -1,0 +1,37 @@
+use DesktopAudio version 1.0
+
+loop Max {
+    ports: [
+        mainInputPort InputPort {
+            block: Input
+        }
+        mainOutputPort OutputPort {
+            block: Output
+        }
+    ]
+    blocks: [
+        signal Input[InputPort.size] {}
+        signal Output { default: Input[0] reset:Reset }
+        iterator Index {
+            default:    1                       # default
+            increment:  1                       # default
+            limit:      InputPort.size          # default: none, has to be assigned by user
+            rate:       0                       # default
+            domain:     OutputPort.domain       # default
+            reset:      Reset                   # default
+            done:       Done                    # default
+        }
+        trigger Reset {domain: OutputPort.domain}
+        trigger Done {domain: OutputPort.domain}
+    ]
+    onExecution: Reset
+    terminateWhen: Done
+    constraints:    [InputPort.size , 2] >> Less () >> Error();
+    streams: [
+        [Input[Index], Output] >> Greater() >> reaction { Input[Index] >> Output;  domain: OutputPort.domain };
+
+    ]
+}
+
+[AudioIn[0], AudioIn[1], -AudioIn[1], -AudioIn[0]] >> Max() >> AudioOut[0];
+

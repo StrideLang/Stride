@@ -3,19 +3,17 @@ parser/lang_stride.parser.cpp
 parser/lang_stride.parser.hpp
 parser/lang_stride.parser.output
 
-Stride.pro.user
+build/
 
-editor/templates/simple/lua_scripts/liblpeg.a
-editor/templates/simple/lua_scripts/lpeg.dll
-editor/templates/simple/.metadata
+Stride.pro.user
 
 examples/*_Products*
 examples/*/*_Products*
 
 strideroot/library/*/python/*.pyc
 
-strideroot/library/*/_tests/*_Products*
-strideroot/library/*/_tests/*/*_Products*
+strideroot/_tests/*_Products*
+strideroot/_tests/*/*_Products*
 
 strideroot/utilities/*
 

@@ -1,6 +1,6 @@
 use DesktopAudio version 1.0
 
-#import Filters
+import Filters as Filt
 
 # This line should fail as LowPass is declared in "filters"
 AudioIn[1] >> LowPass() >> AudioOut[1];

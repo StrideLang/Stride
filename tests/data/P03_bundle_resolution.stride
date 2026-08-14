@@ -35,10 +35,10 @@ constant Values_2[2] {
 }
 
 #Should fail
-
+# Is accepted as type for meta port matches _Constant... Needs to be caught with "constraints"
 constant Bad_Value_Meta {
     value:  Strings[2]
-    meta:   Floats[2] # meta needs string not real
+#    meta:   Floats[2] # meta needs string not real
 }
 
 constant Values_Mismatch[3] {

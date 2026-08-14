@@ -1,0 +1,33 @@
+use DesktopAudio version 1.0
+
+import Notes as N
+import Generators
+
+signal Frequency {
+    domain: AudioDomain
+}
+
+switch SeqTrigger { #FIXME breaks if trigger used instead of switch
+    domain: AudioDomain
+}
+
+constant Values[4] {
+    value: [ N::C4, N::E4, N::G4, N::C5 ]
+}
+
+[Impulse( frequency: 0.5 ), 1.0]
+>> Equal()
+>> SeqTrigger
+>> Sequencer(values: Values)
+>> Frequency;
+
+
+Oscillator(frequency: Frequency) >> AudioOut[0];
+
+#[Impulse( frequency: 0.5 ), 1.0]
+#>> Equal()
+#>> SeqTrigger
+#>> Sequencer(values: [ N::C4, N::E4, N::G4, N::C5 ])
+#>> Frequency;
+#
+#Oscillator(frequency: Frequency) >> AudioOut[0];

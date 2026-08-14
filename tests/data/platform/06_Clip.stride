@@ -1,0 +1,3 @@
+use DesktopAudio version 1.0
+
+AudioIn[0] >> Clip(maximum: 0.5 minimum: -0.5) >> AudioOut[1];

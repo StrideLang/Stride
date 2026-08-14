@@ -1,0 +1,26 @@
+use DesktopAudio version 1.0
+
+loop Accumulate {
+	ports: [	
+		mainInputPort InputPort { block: Input }
+		mainOutputPort OutputPort { block: Output }
+	]
+	blocks: [
+		signal Input[3] {}
+		signal Output {default: 0 reset: Reset }
+		signal Index { default: 0 reset: Reset }
+		switch Done {default: off reset:Reset }
+		trigger Reset {}
+	]
+	streams: [
+		Input[0] + Input[1] + Input[2] >> Output;
+		Index + 1 >> Index ;
+		[ Index , 3 ] >> Equal() >> Done ;
+	]
+	onExecution: Reset
+	terminateWhen: Done
+}
+
+
+[AudioIn[0], AudioIn[1], 7] >> Accumulate() >> AudioOut[0];
+

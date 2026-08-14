@@ -48,7 +48,7 @@ constant IntegerList [3] {
 }
 
 #Lists of streams
-#[ In >> Out; OtherIn >> OtherOut;] >> [Out1, Out2];
+[ In >> Out; OtherIn >> OtherOut;] >> [Out1, Out2];
 #[ In >> Out; OtherIn] >> Out;
-#Out >> [ In >> Out; OtherIn >> OtherOut;];
+Out >> [ In >> Out; OtherIn >> OtherOut;];
 

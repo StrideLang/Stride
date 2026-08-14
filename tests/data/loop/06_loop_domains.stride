@@ -1,0 +1,31 @@
+use DesktopAudio version 1.0
+
+loop Add {
+	ports: [
+		mainInputPort InputPort {
+			block: Input
+		}
+		mainOutputPort OutputPort {
+			block: Output
+		}
+	]
+	blocks: [
+		signal Input[InputPort.size] {domain: OutputPort.domain}
+		signal Output {default: 0 domain: OutputPort.domain}
+		signal Index { default: 0 reset: Reset domain: OutputPort.domain}
+		switch Done {domain: OutputPort.domain}
+		trigger Reset {}
+	]
+	onExecution: Reset
+	terminateWhen: Done
+	streams: [
+		Input [ Index ] + Output >> Output ;
+		Index + 1 >> Index ;
+		[ Index , InputPort.size ] >> Equal() >> Done ;
+		
+	]
+}
+
+signal List[20] { default: 1 }
+
+List >> Add() >> AudioOut[0];

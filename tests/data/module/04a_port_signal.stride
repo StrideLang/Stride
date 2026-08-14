@@ -1,0 +1,28 @@
+use DesktopAudio version 1.0
+
+import Generators
+
+
+module Test {
+	ports: [
+		mainOutputPort OutputPort {
+			block: Output
+		}
+		mainInputPort InputPort {
+			block: Input
+		}
+		propertyInputPort TestPort {
+			name: "test"
+			block: TestBlock
+		}
+	]
+	streams: [
+		Input * TestBlock >> Output;
+		]
+}
+
+signal Half {default: 0.5}
+signal Quarter {default: 0.25}
+
+AudioIn[0] >> Test(test: Half) >> AudioOut[0];
+AudioIn[1] >> Test(test: Quarter) >> AudioOut[1];

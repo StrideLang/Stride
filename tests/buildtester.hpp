@@ -42,7 +42,7 @@ class BuildTester
 {
 public:
     BuildTester(std::string strideRoot = "/home/andres/Documents/src/Stride/Stride/strideroot");
-    bool test(std::string filename, std::string expectedResultFile);
+    bool test(std::string filename, std::string expectedResultFile, bool tolerant = false);
     
 private:
     std::string m_StrideRoot;

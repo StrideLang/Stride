@@ -1,0 +1,10 @@
+use DesktopAudio version 1.0
+
+constant Val1 {value: 0.1}
+constant Val2 {value: 0.2}
+constant Val3 {value: 0.4}
+
+[Val1, Val2, Val3] >> Bundle;
+
+Bundle[0] >> AudioOut[0];
+Bundle[1] + Bundle[2] >> AudioOut[1];

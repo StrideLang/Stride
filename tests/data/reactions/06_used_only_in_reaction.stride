@@ -1,0 +1,27 @@
+use DesktopAudio version 1.0
+
+module InReaction {
+    ports: [
+        mainOutputPort OutputPort {
+            block: Output
+        }
+        mainInputPort InputPort {
+            block: Input
+        }
+    ]
+	blocks: [
+        reaction PassThruReaction {
+			ports: [
+			]
+            streams:    [
+                Input >> Output;
+            ]
+        }
+    ]
+    streams: [
+        on >> PassThruReaction();
+    ]
+}
+
+
+AudioIn[0] >> InReaction () >> AudioOut;

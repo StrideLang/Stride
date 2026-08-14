@@ -1,0 +1,12 @@
+use DesktopAudio version 1.0
+
+buffer Buf {
+	size: 4
+	rate: AudioRate
+	default: 0.0
+	domain: AudioDomain
+}
+
+AudioIn[1] >> Buf;
+
+Buf >> AudioOut[0];

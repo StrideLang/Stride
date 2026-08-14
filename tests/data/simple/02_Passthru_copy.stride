@@ -1,0 +1,4 @@
+use DesktopAudio version 1.0
+
+AudioIn[0] >> AudioOut[0];
+AudioIn[0] >> AudioOut[1];

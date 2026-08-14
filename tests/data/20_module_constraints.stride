@@ -1,0 +1,57 @@
+use DesktopAudio version 1.0
+
+module SimpleTest {
+    ports: [
+        mainInputPort InputPort {
+            name: 'input'
+            block: Input
+        },
+        mainOutputPort OutputPort {
+            name: 'output'
+            block: Output
+        }
+        propertyInputPort PropertyPort {
+            name: 'property'
+            block: Property
+            default: 0.0
+        }
+    ]
+    blocks: [
+        signal Input[OutputPort.size] {}
+        signal Output[OutputPort.size] {}
+    ]
+    streams: [
+        Input * Property >> Output;
+    ]
+    constraints: [
+        [InputPort.rate, 2] >> NotEqual() >> Error(message: "Rate must be 2");
+        [InputPort.size, 2] >> Greater() >> Error(message: "Input size must be less than 3");
+    ]
+}
+
+
+# Correct, passes constraints
+signal InSignal[2] { domain: AsyncDomain rate: 2}
+signal OutSignal[2] { domain: AudioDomain }
+InSignal >> SimpleTest() >> OutSignal;
+
+
+# Fails constraint rate must be 2
+signal InSignal2[2] { domain: AsyncDomain rate: 3}
+signal OutSignal2[2] { domain: AudioDomain }
+InSignal2 >> SimpleTest() >> OutSignal2;
+
+# Fails constraint size must be less than 3
+signal InSignal3[3] { domain: AsyncDomain rate: 2}
+signal OutSignal3[3] { domain: AudioDomain }
+InSignal3 >> SimpleTest() >> OutSignal3;
+
+# Constraint fail for builtin oscillator
+import Generators
+
+signal Sig {
+    rate: 0
+}
+
+Oscillator() >> Sig;
+

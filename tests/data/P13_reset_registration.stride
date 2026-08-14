@@ -1,0 +1,13 @@
+use DesktopAudio version 1.0
+
+trigger Trig { }
+
+switch Switch1 { reset: Trig }
+switch SwitchBundle[2] { reset: Trig }
+signal Sig { reset: Trig }
+signal SigBundle[2] { reset: Trig }
+
+Switch >> Trig;
+
+# Must use switches in a stream for them to be processed.
+Switch1 >> SwitchBundle[1] >> Sig >> SigBundle[1];

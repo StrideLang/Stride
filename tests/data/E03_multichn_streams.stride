@@ -1,4 +1,4 @@
-use RtAudio version 1.0 on PC
+use DesktopAudio version 1.0
 
 import Generators
 
@@ -11,15 +11,15 @@ signal DummyStereo[2] {}
 signal DummyStereo2[2] {}
 signal DummyQuad[4] {}
 
-Oscillator(freq: 5) >> PanMod;
+Oscillator(frequency: 5) >> PanMod;
 
-Oscillator(freq: 440) >> Pan(position: PanMod) >> AudioOut;
+Oscillator(frequency: 440) >> Pan(position: PanMod) >> AudioOut;
 
 # This line is correct as DummyOut should be auto-declared stereo
-Oscillator(freq: 440) >> Pan(position: PanMod) >> DummyOut;
+Oscillator(frequency: 440) >> Pan(position: PanMod) >> DummyOut;
 
 # This line should throw an error (Pan has two outputs)
-Oscillator(freq: 440) >> Pan(position: PanMod) >> DummyOut2;
+Oscillator(frequency: 440) >> Pan(position: PanMod) >> DummyOut2;
 
 # This line should throw an error, output of Pan should provide 4 channels
 DummyStereo >> Pan(position: PanMod) >> DummyStereo2;

@@ -1,3 +1,0 @@
-use DesktopAudio version 1.0
-
-[AudioIn[1], AudioIn[2]] >> [AudioOut[1], AudioOut[2]];

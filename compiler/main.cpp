@@ -32,101 +32,122 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-#include <QCoreApplication>
 #include <QCommandLineParser>
+#include <QCoreApplication>
 #include <QDebug>
+#include <QDir>
 #include <QFile>
 #include <QFileInfo>
-#include <QDir>
 
-//#include "ast.h"
-#include "codevalidator.h"
-#include "pythonproject.h"
+// #include "stride/codegen/astfunctions.hpp"
+#include "stride/codegen/coderesolver.hpp"
+#include "stride/codegen/codevalidator.hpp"
+// #include "stride/codegen/pythonproject.h"
 
-int main(int argc, char *argv[])
-{
-    QCoreApplication app(argc, argv);
-    QCoreApplication::setApplicationName("stridecc");
-    QCoreApplication::setApplicationVersion("0.1-alpha");
+using namespace strd;
 
-    QCommandLineParser parser;
-    parser.setApplicationDescription("Stride command line compiler");
-    parser.addHelpOption();
-    parser.addVersionOption();
-    parser.addPositionalArgument("source", QCoreApplication::translate("main", "Source file to build."));
-//    parser.addPositionalArgument("destination", QCoreApplication::translate("main", "Destination directory."));
+int main(int argc, char *argv[]) {
+  QCoreApplication app(argc, argv);
+  QCoreApplication::setApplicationName("stridecc");
+  QCoreApplication::setApplicationVersion("0.1-alpha");
 
-    QCommandLineOption targetDirectoryOption(QStringList() << "s" << "stride-root",
-                                             QCoreApplication::translate("main", "Path to strideroot directory"),
-                                             QCoreApplication::translate("main", "directory"));
-    parser.addOption(targetDirectoryOption);
-    parser.process(app);
+  QCommandLineParser parser;
+  parser.setApplicationDescription("Stride command line compiler");
+  parser.addHelpOption();
+  parser.addVersionOption();
+  parser.addPositionalArgument(
+      "source", QCoreApplication::translate("main", "Source file to build."));
+  //    parser.addPositionalArgument("destination",
+  //    QCoreApplication::translate("main", "Destination directory."));
 
-    const QStringList args = parser.positionalArguments();
-    QString platformRootPath = parser.value(targetDirectoryOption);
+  QCommandLineOption targetDirectoryOption(
+      QStringList() << "s"
+                    << "stride-root",
+      QCoreApplication::translate("main", "Path to strideroot directory"),
+      QCoreApplication::translate("main", "directory"));
+  parser.addOption(targetDirectoryOption);
+  parser.process(app);
 
-    if (args.size() < 1) {
-        parser.helpText();
+  const QStringList args = parser.positionalArguments();
+  QString platformRootPath = parser.value(targetDirectoryOption);
+
+  if (args.size() < 1) {
+    parser.helpText();
+    return -1;
+  }
+  QString fileName = args.at(0);
+
+  if (platformRootPath.isEmpty()) {
+    platformRootPath =
+        "/home/andres/Documents/src/Stride/Stride/strideroot"; // For my
+                                                               // convenience :)
+  }
+
+  //    qDebug() << args.at(0);
+  //    qDebug() << platformRootPath;
+
+  ASTNode tree;
+  tree = AST::parseFile(fileName.toLocal8Bit().constData());
+
+  bool buildOK = true;
+  if (tree) {
+    SystemConfiguration config;
+    config.testing = true;
+    CodeResolver resolver(tree, platformRootPath.toStdString(), config);
+    resolver.process();
+
+    CodeValidator validator(tree);
+
+    if (!validator.isValid()) {
+      std::vector<LangError> errors = validator.getErrors();
+      for (LangError &error : errors) {
+        qDebug() << QString::fromStdString(error.getErrorText());
+      }
+      return -1;
+    }
+    std::shared_ptr<StrideSystem> system = resolver.getSystem();
+
+    QFileInfo info(fileName);
+    QString dirName = info.absolutePath() + QDir::separator() + info.fileName();
+    if (!QFile::exists(dirName)) {
+      if (!QDir().mkpath(dirName)) {
+        qDebug() << "Error creating project path";
         return -1;
-    }
-    QString fileName = args.at(0);
-
-    if (platformRootPath.isEmpty()) {
-        platformRootPath = "/home/andres/Documents/src/Stride/Stride/strideroot"; // For my convenience :)
+      }
     }
 
-//    qDebug() << args.at(0);
-//    qDebug() << platformRootPath;
+    system->generateDomainConnections(tree);
 
-    ASTNode tree;
-    tree = AST::parseFile(fileName.toLocal8Bit().constData());
+    std::vector<Builder *> builders =
+        system->createBuilders(dirName.toStdString(), tree);
 
-    bool buildOK = true;
-    if (tree) {
-        CodeValidator validator(platformRootPath, tree);
+    std::vector<std::map<std::string, std::string>> domainMaps;
+    for (auto builder : builders) {
+      // TODO find a better way to pass system than here.
+      builder->m_system = system;
+      domainMaps.push_back(builder->generateCode(tree));
+    }
 
-        if (!validator.isValid()) {
-            QList<LangError> errors = validator.getErrors();
-            for (LangError error: errors) {
-                qDebug() << QString::fromStdString(error.getErrorText());
-            }
-            return -1;
-        }
-        std::shared_ptr<StrideSystem> platform = validator.getSystem();
+    size_t counter = 0;
+    for (auto &builder : builders) {
+      if (builder->build(domainMaps[counter++])) {
+        qDebug() << "Built in directory:" << dirName;
+      } else {
+        qDebug() << "Build failed for " << fileName;
+        qDebug() << "Using framework: "
+                 << QString::fromStdString(builder->getPlatformPath());
 
-        QFileInfo info(fileName);
-        QString dirName = info.absolutePath() + QDir::separator()
-                + info.fileName();
-        if (!QFile::exists(dirName)) {
-            if (!QDir().mkpath(dirName)) {
-                qDebug() << "Error creating project path";
-                return -1;
-            }
-        }
-        std::vector<std::string> domains = CodeValidator::getUsedDomains(tree);
-        std::vector<std::string> usedFrameworks;
-        for (string domain: domains) {
-            usedFrameworks.push_back(CodeValidator::getFrameworkForDomain(domain, tree));
-        }
-        vector<Builder *> builders = platform->createBuilders(dirName, usedFrameworks);
-        for (auto builder: builders) {
-            if (builder->build(tree)) {
-                qDebug() << "Built in directory:" << dirName;
-            } else {
-                qDebug() << "Build failed for " << fileName;
-                qDebug() << "Using framework: " << builder->getPlatformPath();
-
-                qDebug() << builder->getStdOut();
-                qDebug() << builder->getStdErr();
-                buildOK = false;
-            }
-        }
-    } else {
-        vector<LangError> errors = AST::getParseErrors();
-        for (LangError err: errors) {
-           qDebug() << QString::fromStdString(err.getErrorText());
-        }
+        qDebug() << QString::fromStdString(builder->getStdOut());
+        qDebug() << QString::fromStdString(builder->getStdErr());
         buildOK = false;
+      }
     }
-    return buildOK ? 0: -1;
+  } else {
+    std::vector<LangError> errors = AST::getParseErrors();
+    for (LangError err : errors) {
+      qDebug() << QString::fromStdString(err.getErrorText());
+    }
+    buildOK = false;
+  }
+  return buildOK ? 0 : -1;
 }

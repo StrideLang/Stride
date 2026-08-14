@@ -14,22 +14,7 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout_3">
-    <property name="spacing">
-     <number>2</number>
-    </property>
-    <property name="leftMargin">
-     <number>2</number>
-    </property>
-    <property name="topMargin">
-     <number>2</number>
-    </property>
-    <property name="rightMargin">
-     <number>2</number>
-    </property>
-    <property name="bottomMargin">
-     <number>2</number>
-    </property>
+   <layout class="QVBoxLayout" name="verticalLayout">
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="sizePolicy">
@@ -110,25 +95,7 @@
    <attribute name="dockWidgetArea">
     <number>2</number>
    </attribute>
-   <widget class="QWebEngineView" name="documentationWidget">
-    <layout class="QVBoxLayout" name="verticalLayout">
-     <property name="spacing">
-      <number>2</number>
-     </property>
-     <property name="leftMargin">
-      <number>2</number>
-     </property>
-     <property name="topMargin">
-      <number>2</number>
-     </property>
-     <property name="rightMargin">
-      <number>2</number>
-     </property>
-     <property name="bottomMargin">
-      <number>2</number>
-     </property>
-    </layout>
-   </widget>
+   <widget class="QWebEngineView" name="documentationWidget"/>
   </widget>
   <widget class="QDockWidget" name="projectDockWidget">
    <property name="windowTitle">
@@ -155,32 +122,95 @@
       <number>2</number>
      </property>
      <item>
-      <widget class="QTreeWidget" name="treeWidget">
-       <property name="frameShape">
-        <enum>QFrame::NoFrame</enum>
+      <widget class="QTabWidget" name="tabWidget_2">
+       <property name="currentIndex">
+        <number>0</number>
        </property>
-       <property name="iconSize">
-        <size>
-         <width>16</width>
-         <height>16</height>
-        </size>
-       </property>
-       <property name="columnCount">
-        <number>2</number>
-       </property>
-       <attribute name="headerVisible">
-        <bool>true</bool>
-       </attribute>
-       <column>
-        <property name="text">
-         <string notr="true">1</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string notr="true">2</string>
-        </property>
-       </column>
+       <widget class="QWidget" name="tab">
+        <attribute name="title">
+         <string>Tree</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_3">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QTreeWidget" name="treeWidget">
+           <property name="frameShape">
+            <enum>QFrame::NoFrame</enum>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>16</width>
+             <height>16</height>
+            </size>
+           </property>
+           <property name="columnCount">
+            <number>2</number>
+           </property>
+           <attribute name="headerVisible">
+            <bool>false</bool>
+           </attribute>
+           <column>
+            <property name="text">
+             <string notr="true">1</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string notr="true">2</string>
+            </property>
+           </column>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="tab_2">
+        <attribute name="title">
+         <string>Resources</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_5">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QTreeWidget" name="resourcesTreeWidget">
+           <property name="frameShape">
+            <enum>QFrame::NoFrame</enum>
+           </property>
+           <attribute name="headerVisible">
+            <bool>false</bool>
+           </attribute>
+           <column>
+            <property name="text">
+             <string notr="true">1</string>
+            </property>
+           </column>
+          </widget>
+         </item>
+        </layout>
+       </widget>
       </widget>
      </item>
     </layout>
@@ -218,26 +248,32 @@
     <property name="title">
      <string>File</string>
     </property>
+    <widget class="QMenu" name="menuRecent_Files">
+     <property name="title">
+      <string>Recent Files</string>
+     </property>
+    </widget>
     <addaction name="actionNew_Project"/>
     <addaction name="actionLoad_File"/>
     <addaction name="actionSave"/>
     <addaction name="actionSave_as"/>
+    <addaction name="menuRecent_Files"/>
     <addaction name="actionClose_Tab"/>
-    <addaction name="actionOptions"/>
     <addaction name="actionQuit"/>
+    <addaction name="separator"/>
    </widget>
    <widget class="QMenu" name="menuBuild">
     <property name="title">
      <string>Build</string>
     </property>
-    <addaction name="actionConfigure_System"/>
     <addaction name="actionBuild"/>
     <addaction name="actionUpload"/>
-    <addaction name="actionRename"/>
     <addaction name="actionRefresh"/>
     <addaction name="actionFollow_Symbol"/>
     <addaction name="actionOpen_Generated_Code"/>
     <addaction name="actionClean_Project"/>
+    <addaction name="separator"/>
+    <addaction name="actionConfigure_System"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
@@ -247,6 +283,10 @@
     <addaction name="actionFind"/>
     <addaction name="actionFind_Next"/>
     <addaction name="actionFind_Previous"/>
+    <addaction name="separator"/>
+    <addaction name="actionOptions"/>
+    <addaction name="actionManage_Strideroot"/>
+    <addaction name="actionManage_Local"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -317,7 +357,7 @@
   </action>
   <action name="actionOptions">
    <property name="text">
-    <string>Options</string>
+    <string>Editor Options</string>
    </property>
   </action>
   <action name="actionLoad_File">
@@ -414,7 +454,22 @@
   </action>
   <action name="actionConfigure_System">
    <property name="text">
-    <string>Configure System</string>
+    <string>System Configuration</string>
+   </property>
+  </action>
+  <action name="actionManage_Strideroot">
+   <property name="text">
+    <string>Manage Strideroot</string>
+   </property>
+  </action>
+  <action name="actionRecent_Files">
+   <property name="text">
+    <string>Recent Files</string>
+   </property>
+  </action>
+  <action name="actionManage_Local">
+   <property name="text">
+    <string>Manage Local</string>
    </property>
   </action>
  </widget>
