@@ -16,3 +16,9 @@
 [submodule "stridelang"]
 	path = stridelang
 	url = ../stridelang.git
+[submodule "editor"]
+	path = editor
+	url = ../editor.git
+[submodule "stridemanager"]
+	path = stridemanager
+	url = ../stridemanager.git
