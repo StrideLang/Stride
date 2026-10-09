@@ -46,7 +46,6 @@ Building Stride requires standard build tools alongside specific third-party lib
 | :--- | :--- | :--- |
 | **LLVM** (14.x recommended) | **`stridejit`** | Provides JIT compilation (ORC JIT, ExecutionEngine, JITLink) and multi-target code generation (x86, AArch64, ARM, WebAssembly). |
 | **Flex & Bison** | **`strideparser`** | Generates the lexical scanner (`lang_stride.l`) and LALR parser (`lang_stride.y`) for Stride source code. |
-| **Qt 6** (`Core`) | **`stridemanager`** | Command-line argument parsing and filesystem management for `stridemngr`. |
 | **Qt 6** (`Core`, `Widgets`, `WebEngine`, `Qml`) | **`editor`** (legacy) | Desktop UI, project management dialogs, and embedded WebEngine views in `StrideIDE`. |
 | **Platform Toolchains** *(Optional)* | **`strideroot`** | Target-specific cross-compilers (e.g. ARM GCC for STM32, XMOS XTC, Arduino/Wiring, RtAudio) when building for embedded platforms. |
 
