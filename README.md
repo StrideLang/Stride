@@ -19,7 +19,7 @@ Stride is built modularly across specialized repositories integrated here as sub
 | **`stridejit`** | [StrideLang/stridejit](https://github.com/StrideLang/stridejit) | JIT compilation engine and runtime execution environment. |
 | **`strideroot`** | [StrideLang/strideroot](https://github.com/StrideLang/strideroot) | Core platform definitions, runtime libraries, and target frameworks. |
 | **`stridemanager`** | [StrideLang/stridemanager](https://github.com/StrideLang/stridemanager) | Project and tool configuration manager CLI (`stridemngr`). |
-| **`editor`** | [StrideLang/editor](https://github.com/StrideLang/editor) | Legacy standalone desktop IDE (`StrideIDE`). |
+| **`editor`** | [StrideLang/editor](https://github.com/StrideLang/editor) | Legacy standalone desktop IDE (`StrideIDE` - deprecated). |
 
 ---
 
@@ -46,7 +46,6 @@ Building Stride requires standard build tools alongside specific third-party lib
 | :--- | :--- | :--- |
 | **LLVM** (14.x recommended) | **`stridejit`** | Provides JIT compilation (ORC JIT, ExecutionEngine, JITLink) and multi-target code generation (x86, AArch64, ARM, WebAssembly). |
 | **Flex & Bison** | **`strideparser`** | Generates the lexical scanner (`lang_stride.l`) and LALR parser (`lang_stride.y`) for Stride source code. |
-| **Qt 6** (`Core`, `Widgets`, `WebEngine`, `Qml`) | **`editor`** (legacy) | Desktop UI, project management dialogs, and embedded WebEngine views in `StrideIDE`. |
 | **Platform Toolchains** *(Optional)* | **`strideroot`** | Target-specific cross-compilers (e.g. ARM GCC for STM32, XMOS XTC, Arduino/Wiring, RtAudio) when building for embedded platforms. |
 
 ---
@@ -75,7 +74,7 @@ git submodule update --init --recursive
 Install build dependencies using Homebrew:
 
 ```bash
-brew install cmake bison flex qt@6 llvm@14
+brew install cmake bison flex llvm@14
 ```
 
 Set paths if using Homebrew-installed Bison and LLVM:
@@ -91,19 +90,17 @@ Install build dependencies via `apt`:
 ```bash
 sudo apt update
 sudo apt install -y build-essential cmake flex bison \
-    llvm-14-dev libllvm14 \
-    qt6-base-dev libgl1-mesa-dev
+    llvm-14-dev libllvm14
 ```
 
 #### Windows
 
 1. Install **Visual Studio 2019 or 2022** with the **Desktop development with C++** workload.
-2. Install **[Qt 6](https://www.qt.io/download)** (Qt 6.5+ recommended).
-3. Install **Flex and Bison**:
+2. Install **Flex and Bison**:
    * Download and extract [win_flex_bison](https://sourceforge.net/projects/winflexbison/).
-4. Install **LLVM 14**:
+3. Install **LLVM 14**:
    * Build/install LLVM 14 from source (e.g. `llvm-project` branch `llvmorg-14.0.6`) or install pre-built binaries.
-5. When configuring CMake, supply paths to LLVM, Flex, and Bison:
+4. When configuring CMake, supply paths to LLVM, Flex, and Bison:
    ```cmd
    cmake -B build -DCMAKE_BUILD_TYPE=Release ^
        -DLLVM_DIR="C:/path/to/llvm-install/lib/cmake/llvm" ^
