@@ -6,6 +6,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(STRIDE_CODE_COVERAGE "Enable Code coverage for tests" OFF)
 option(STRIDE_BUILD_JIT "Build Stride JIT compiler library" ON)
+option(STRIDE_BUILD_EDITOR "Build Stride IDE / Editor" ON)
+option(STRIDE_BUILD_TESTS "Build Unit Tests" ON)
+
+if(STRIDE_BUILD_TESTS)
+    enable_testing()
+endif()
 
 # Stride Core
 add_subdirectory(strideparser)
@@ -25,12 +31,16 @@ if(STRIDE_BUILD_JIT)
 endif()
 
 # Unit tests
-add_subdirectory(tests)
+if(STRIDE_BUILD_TESTS)
+    add_subdirectory(tests)
+endif()
 
 # Tools
 add_subdirectory(stridelang)
 add_subdirectory(stridemanager)
-add_subdirectory(editor)
+if(STRIDE_BUILD_EDITOR AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/editor")
+    add_subdirectory(editor)
+endif()
 
 # Plugins
 if(EXISTS "${CMAKE_SOURCE_DIR}/plugins/pufferfish")
@@ -40,8 +50,12 @@ endif()
 
 # Install
 set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/build")
-install(TARGETS StrideParser StrideCodegen  DESTINATION lib)
-install(TARGETS stridec stridemngr StrideIDE DESTINATION bin)
+install(TARGETS StrideParser StrideCodegen DESTINATION lib)
+if(TARGET StrideIDE)
+    install(TARGETS stridec stridemngr StrideIDE DESTINATION bin)
+else()
+    install(TARGETS stridec stridemngr DESTINATION bin)
+endif()
 
 file(GLOB STRIDEPARSER_HEADERS "strideparser/include/*.h*" )
 install(FILES ${STRIDEPARSER_HEADERS} DESTINATION include)

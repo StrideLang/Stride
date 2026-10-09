@@ -1,78 +1,46 @@
 language: cpp
-dist: trusty
+dist: focal
 
 os:
   - linux
-#  - osx
 
 compiler:
-      - gcc
-    #   - clang
-
-# branches:
-#   only:
-#     - develop
-#     - master
-#     - testing
+  - gcc
+  - clang
 
 env:
+  global:
+    - CTEST_OUTPUT_ON_FAILURE=1
     - QTEST_FUNCTION_TIMEOUT=3000000
 
-matrix:
-    #- CONFIG=release
-    - CONFIG=debug
-
-
-before_install:
-    # - sudo add-apt-repository --yes ppa:beineri/opt-qt562
-    # - sudo apt-get -qq update
-    # - sudo apt-get install qt56base qt56tools
-    # - /opt/qt56/bin/qt56-env.sh
-
-install:
-    # - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
-
-sudo: false
-
-cache:
-    apt: true
+git:
+  submodules: true
+  depth: false
 
 addons:
   apt:
-    sources:
-    - sourceline: 'ppa:beineri/opt-qt58-trusty'
-    - sourceline: 'ppa:ubuntu-toolchain-r/test'
     packages:
-    - g++-6
-    - qt58-meta-minimal
-    - qt58webengine
-    - clang
-    - libasound2-dev
+      - cmake
+      - flex
+      - bison
+      - llvm-14-dev
+      - libllvm14
+      - qt6-base-dev
+      - libgl1-mesa-dev
+      - libasound2-dev
 
 before_script:
-    - QT_ENV_SCRIPT=$(find /opt -name 'qt*-env.sh')
-    - source $QT_ENV_SCRIPT
+  - git submodule update --init --recursive
+  - git clone --depth 1 -b 4.1.2 https://github.com/thestk/rtaudio.git strideroot/frameworks/RtAudio/1.0/project/rtaudio-4.1.2 || true
 
 script:
-  # - qmake -project
-    - git clone --depth 1 -b 4.1.2 https://github.com/thestk/rtaudio.git strideroot/frameworks/RtAudio/1.0/project/rtaudio-4.1.2
-    - qmake Stride.pro
-    - make
-    - tests/tst_parsertest
+  - cmake -B build -DCMAKE_BUILD_TYPE=Release -DSTRIDE_BUILD_EDITOR=OFF -DSTRIDE_BUILD_JIT=ON -DSTRIDE_BUILD_TESTS=ON -DLLVM_DIR=/usr/lib/llvm-14/lib/cmake/llvm
+  - cmake --build build --config Release -j2
+  - ctest --test-dir build --output-on-failure --verbose
 
 notifications:
-    recipients:
-      - mantaraya36@gmail.com
-    email:
-      on_success: change
-      on_failure: change
-  # irc:
-  #   # https://docs.travis-ci.com/user/notifications/#IRC-notification
-  #   channels:
-  #     - "chat.freenode.net#qownnotes"
-  #   template:
-  #     - "[%{commit}] %{repository} (%{branch}): %{message} | Commit message: %{commit_message} | Changes: %{compare_url} | Build details: %{build_url}"
-  #   on_success: always
-  #   on_failure: always
-  #   use_notice: true
-  #   skip_join: true
+  recipients:
+    - mantaraya36@gmail.com
+  email:
+    on_success: change
+    on_failure: change
