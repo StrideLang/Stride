@@ -12,14 +12,6 @@ add_subdirectory(strideparser)
 add_subdirectory(strideutils)
 add_subdirectory(codegen)
 
-# Unit tests
-add_subdirectory(tests)
-
-# Tools
-add_subdirectory(compiler)
-add_subdirectory(stridemanager)
-add_subdirectory(editor)
-
 # StrideJit
 if(STRIDE_BUILD_JIT)
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/stridejit")
@@ -31,6 +23,14 @@ if(STRIDE_BUILD_JIT)
         message("stridejit directory not found. Not building StrideJit")
     endif()
 endif()
+
+# Unit tests
+add_subdirectory(tests)
+
+# Tools
+add_subdirectory(stridelang)
+add_subdirectory(stridemanager)
+add_subdirectory(editor)
 
 # Plugins
 if(EXISTS "${CMAKE_SOURCE_DIR}/plugins/pufferfish")
