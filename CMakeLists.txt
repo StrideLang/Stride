@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(STRIDE_CODE_COVERAGE "Enable Code coverage for tests" OFF)
 option(STRIDE_BUILD_JIT "Build Stride JIT compiler library" ON)
-option(STRIDE_BUILD_EDITOR "Build Stride IDE / Editor" ON)
+option(STRIDE_BUILD_EDITOR "Build Stride IDE / Editor" OFF)
 option(STRIDE_BUILD_TESTS "Build Unit Tests" ON)
 
 if(STRIDE_BUILD_TESTS)

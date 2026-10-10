@@ -14,9 +14,13 @@ set(TESTS_HEADERS
 #  ${CODEGEN_HEADERS}
   )
 
-find_package(Qt6 6.5.0 REQUIRED COMPONENTS
-  Core Test
+find_package(Qt6 COMPONENTS
+  Core Test QUIET
 )
+if(NOT Qt6_FOUND)
+  message(STATUS "Qt6 not found. Skipping Qt-based tests in stride_tests")
+  return()
+endif()
 
 qt_standard_project_setup()
 #set(CMAKE_AUTOMOC ON)

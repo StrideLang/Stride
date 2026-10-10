@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [ develop, master, main ]
   workflow_dispatch:
+    inputs:
+      build_editor:
+        description: 'Build Stride IDE / Editor'
+        type: boolean
+        default: false
 
 jobs:
   build-and-test:
@@ -39,12 +44,10 @@ jobs:
             libasound2-dev \
             ccache
 
-      - name: Install Qt 6
-        uses: jurplel/install-qt-action@v3
-        with:
-          version: '6.5.3'
-          arch: 'linux_gcc_64'
-          cache: true
+      - name: Install Qt 6 (conditional for Editor)
+        if: ${{ inputs.build_editor == true }}
+        run: |
+          sudo apt-get install -y qt6-base-dev qt6-declarative-dev
 
       - name: Setup CCache
         uses: hendrikmuhs/ccache-action@v1.2
@@ -66,11 +69,16 @@ jobs:
             export CXX=g++
           fi
 
+          BUILD_EDITOR="OFF"
+          if [ "${{ inputs.build_editor }}" = "true" ]; then
+            BUILD_EDITOR="ON"
+          fi
+
           cmake -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DSTRIDE_BUILD_EDITOR=OFF \
+            -DSTRIDE_BUILD_EDITOR=${BUILD_EDITOR} \
             -DSTRIDE_BUILD_JIT=ON \
             -DSTRIDE_BUILD_TESTS=ON \
             -DSTRIDEJIT_BUILD_TESTS=ON \
