@@ -1,0 +1,87 @@
+name: Stride CI
+
+on:
+  push:
+    branches: [ develop, master, main ]
+  pull_request:
+    branches: [ develop, master, main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    name: ${{ matrix.os }} (${{ matrix.compiler }}, ${{ matrix.build_type }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04]
+        compiler: [gcc, clang]
+        build_type: [Release]
+
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            ninja-build \
+            flex \
+            bison \
+            llvm-14-dev \
+            libllvm14 \
+            libgl1-mesa-dev \
+            libasound2-dev \
+            ccache
+
+      - name: Install Qt 6
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.5.3'
+          arch: 'linux_gcc_64'
+          cache: true
+
+      - name: Setup CCache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.build_type }}
+
+      - name: Fetch RtAudio Framework Dependency
+        run: |
+          mkdir -p strideroot/frameworks/RtAudio/1.0/project
+          git clone --depth 1 -b 4.1.2 https://github.com/thestk/rtaudio.git strideroot/frameworks/RtAudio/1.0/project/rtaudio-4.1.2 || true
+
+      - name: Configure CMake
+        run: |
+          if [ "${{ matrix.compiler }}" = "clang" ]; then
+            export CC=clang
+            export CXX=clang++
+          else
+            export CC=gcc
+            export CXX=g++
+          fi
+
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DSTRIDE_BUILD_EDITOR=OFF \
+            -DSTRIDE_BUILD_JIT=ON \
+            -DSTRIDE_BUILD_TESTS=ON \
+            -DSTRIDEJIT_BUILD_TESTS=ON \
+            -DSTRIDEPARSER_BUILD_TESTS=ON \
+            -DLLVM_DIR=/usr/lib/llvm-14/lib/cmake/llvm
+
+      - name: Build Stride
+        run: cmake --build build --config ${{ matrix.build_type }}
+
+      - name: Run Tests
+        env:
+          CTEST_OUTPUT_ON_FAILURE: 1
+          QTEST_FUNCTION_TIMEOUT: 3000000
+        run: ctest --test-dir build --output-on-failure --verbose
