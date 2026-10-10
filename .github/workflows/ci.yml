@@ -32,6 +32,7 @@ jobs:
 
       - name: Install System Dependencies
         run: |
+          sudo apt-get purge -y "llvm-13*" "libllvm13*" || true
           sudo apt-get update
           sudo apt-get install -y \
             cmake \
@@ -83,7 +84,8 @@ jobs:
             -DSTRIDE_BUILD_TESTS=ON \
             -DSTRIDEJIT_BUILD_TESTS=ON \
             -DSTRIDEPARSER_BUILD_TESTS=ON \
-            -DLLVM_DIR=/usr/lib/llvm-14/lib/cmake/llvm
+            -DLLVM_DIR=/usr/lib/llvm-14/lib/cmake/llvm \
+            -DCMAKE_PREFIX_PATH=/usr/lib/llvm-14
 
       - name: Build Stride
         run: cmake --build build --config ${{ matrix.build_type }}
