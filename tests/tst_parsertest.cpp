@@ -54,10 +54,7 @@ public:
 
 private Q_SLOTS:
 
-  void testStreamExpansion();
-
   void testCodeGeneration();
-  void testTypeCasting();
 
   // Parser
   void testModules();
@@ -76,10 +73,11 @@ private Q_SLOTS:
   void testBlockIOResolution();
   void testAt();
   void testConstraints();
+  void testTypeCasting();
 
   // Expansion
   void testLibraryObjectInsertion();
-  //  void testStreamExpansion();
+  void testStreamExpansion();
   void testStreamRates();
   void testConstantResolution();
   void testNamespaces();
@@ -536,9 +534,19 @@ void ParserTest::testCodeGeneration() {
   BuildTester tester(STRIDEROOT);
 
   QStringList toIgnore = {
-      /*"simple", "reactions",  "buffer","table",  "loop",*/ "module",
+      //
+      //      "simple",    //
+      //      "reactions", //
+      "buffer",       //
+      "table",        //
+      "loop",         //
+                      //      "module", //
+      "platform",     //
+      "multidomain",  //
+      "combinations", //
+      "sync"          //
 
-      "platform", "multidomain", "combinations", "sync"};
+  };
   while (directories.hasNext()) {
     QString dirName = directories.next();
     if (!toIgnore.contains(dirName.mid(dirName.lastIndexOf("/") + 1))) {

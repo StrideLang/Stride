@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04]
+        os: [ubuntu-24.04]
         compiler: [gcc, clang]
         build_type: [Release]
 
@@ -32,15 +32,15 @@ jobs:
 
       - name: Install System Dependencies
         run: |
-          sudo apt-get purge -y "llvm-13*" "libllvm13*" || true
           sudo apt-get update
           sudo apt-get install -y \
             cmake \
             ninja-build \
             flex \
             bison \
-            llvm-14-dev \
-            libllvm14 \
+            llvm-18-dev \
+            libllvm18 \
+            clang-18 \
             libgl1-mesa-dev \
             libasound2-dev \
             ccache
@@ -63,8 +63,8 @@ jobs:
       - name: Configure CMake
         run: |
           if [ "${{ matrix.compiler }}" = "clang" ]; then
-            export CC=clang
-            export CXX=clang++
+            export CC=clang-18
+            export CXX=clang++-18
           else
             export CC=gcc
             export CXX=g++
@@ -84,8 +84,8 @@ jobs:
             -DSTRIDE_BUILD_TESTS=ON \
             -DSTRIDEJIT_BUILD_TESTS=ON \
             -DSTRIDEPARSER_BUILD_TESTS=ON \
-            -DLLVM_DIR=/usr/lib/llvm-14/lib/cmake/llvm \
-            -DCMAKE_PREFIX_PATH=/usr/lib/llvm-14
+            -DLLVM_DIR=/usr/lib/llvm-18/lib/cmake/llvm \
+            -DCMAKE_PREFIX_PATH=/usr/lib/llvm-18
 
       - name: Build Stride
         run: cmake --build build --config ${{ matrix.build_type }}
