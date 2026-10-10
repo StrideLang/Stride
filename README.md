@@ -1,6 +1,6 @@
 # Stride
 
-[![Build Status](https://travis-ci.org/StrideLanguage/Stride.svg?branch=master)](https://travis-ci.org/StrideLanguage/Stride)
+[![Stride CI](https://github.com/StrideLang/Stride/actions/workflows/ci.yml/badge.svg)](https://github.com/StrideLang/Stride/actions/workflows/ci.yml)
 
 This is the central development repository for the **Stride** programming language ecosystem. It orchestrates the core components, libraries, runtimes, and command-line tools into an integrated development workspace.
 
