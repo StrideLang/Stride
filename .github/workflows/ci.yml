@@ -23,6 +23,9 @@ jobs:
         compiler: [gcc, clang]
         build_type: [Release]
 
+    env:
+      STRIDEROOT: ${{ github.workspace }}/strideroot
+
     steps:
       - name: Checkout repository and submodules
         uses: actions/checkout@v4
@@ -84,6 +87,7 @@ jobs:
             -DSTRIDE_BUILD_TESTS=ON \
             -DSTRIDEJIT_BUILD_TESTS=ON \
             -DSTRIDEPARSER_BUILD_TESTS=ON \
+            -DSTRIDEROOT="${{ github.workspace }}/strideroot" \
             -DLLVM_DIR=/usr/lib/llvm-18/lib/cmake/llvm \
             -DCMAKE_PREFIX_PATH=/usr/lib/llvm-18
 

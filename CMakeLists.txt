@@ -13,6 +13,10 @@ if(STRIDE_BUILD_TESTS)
     enable_testing()
 endif()
 
+if(NOT STRIDEROOT)
+    set(STRIDEROOT "${CMAKE_CURRENT_SOURCE_DIR}/strideroot" CACHE PATH "Path to strideroot")
+endif()
+
 # Stride Core
 add_subdirectory(strideparser)
 add_subdirectory(strideutils)
