@@ -99,3 +99,8 @@ jobs:
           CTEST_OUTPUT_ON_FAILURE: 1
           QTEST_FUNCTION_TIMEOUT: 3000000
         run: ctest --test-dir build --output-on-failure --verbose
+
+      - name: Run Library Unit Tests (CLI Suite)
+        run: |
+          ./build/stridejit/stridetest "${{ env.STRIDEROOT }}/library/1.0/tests" --root "${{ env.STRIDEROOT }}" --verbose
+
