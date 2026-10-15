@@ -127,4 +127,5 @@ ctest --test-dir build --output-on-failure
 
 ## License
 
-Stride is licensed under the terms of the 3-clause BSD License. See `License.txt` for details.
+Stride is licensed under the terms of the GNU Affero General Public License version 3 (AGPL-3.0). See `License.txt` for details.
+Parts of Stride are based on code licensed under the Modified BSD License. See individual licenses in libraries for details.
