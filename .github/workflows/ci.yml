@@ -89,7 +89,7 @@ jobs:
             -DSTRIDEPARSER_BUILD_TESTS=ON \
             -DSTRIDEROOT="${{ github.workspace }}/strideroot" \
             -DLLVM_DIR=/usr/lib/llvm-18/lib/cmake/llvm \
-            -DCMAKE_PREFIX_PATH=/usr/lib/llvm-18
+            -DCMAKE_PREFIX_PATH=/usr/lib/llvm-18 \
             -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" \
 
       - name: Build Stride
