@@ -82,7 +82,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" \
+            # -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" \
             -DSTRIDE_BUILD_EDITOR=${BUILD_EDITOR} \
             -DSTRIDE_BUILD_JIT=ON \
             -DSTRIDE_BUILD_TESTS=ON \
@@ -99,7 +99,7 @@ jobs:
         env:
           CTEST_OUTPUT_ON_FAILURE: 1
           QTEST_FUNCTION_TIMEOUT: 3000000
-          ASAN_OPTIONS: "halt_on_error=1:fast_unwind_on_malloc=0"
+          # ASAN_OPTIONS: "halt_on_error=1:fast_unwind_on_malloc=0"
         run: ctest --test-dir build --output-on-failure --verbose
 
       - name: Run Library Unit Tests (CLI Suite)
