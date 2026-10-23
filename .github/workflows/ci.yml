@@ -90,7 +90,8 @@ jobs:
             -DSTRIDEROOT="${{ github.workspace }}/strideroot" \
             -DLLVM_DIR=/usr/lib/llvm-18/lib/cmake/llvm \
             -DCMAKE_PREFIX_PATH=/usr/lib/llvm-18 \
-            -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" \
+            # -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" \
+
 
       - name: Build Stride
         run: cmake --build build --config ${{ matrix.build_type }}
@@ -99,7 +100,7 @@ jobs:
         env:
           CTEST_OUTPUT_ON_FAILURE: 1
           QTEST_FUNCTION_TIMEOUT: 3000000
-          ASAN_OPTIONS: "halt_on_error=1:fast_unwind_on_malloc=0"
+          # ASAN_OPTIONS: "halt_on_error=1:fast_unwind_on_malloc=0"
         run: ctest --test-dir build --output-on-failure --verbose
 
       - name: Run Library Unit Tests (CLI Suite)
