@@ -20,7 +20,7 @@ endif()
 # Stride Core
 add_subdirectory(strideparser)
 add_subdirectory(strideutils)
-add_subdirectory(codegen)
+add_subdirectory(stridegen)
 
 # StrideJit
 if(STRIDE_BUILD_JIT)
@@ -54,7 +54,7 @@ endif()
 
 # Install
 set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/build")
-install(TARGETS StrideParser StrideCodegen DESTINATION lib)
+install(TARGETS StrideParser StrideGen DESTINATION lib)
 if(TARGET StrideIDE)
     install(TARGETS stridec stridemngr StrideIDE DESTINATION bin)
 else()

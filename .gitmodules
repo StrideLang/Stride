@@ -7,9 +7,9 @@
 [submodule "stridejit"]
 	path = stridejit
 	url = ../stridejit.git
-[submodule "codegen"]
-	path = codegen
-	url = ../codegen.git
+[submodule "stridegen"]
+	path = stridegen
+	url = ../stridegen.git
 [submodule "strideutils"]
 	path = strideutils
 	url = ../strideutils.git

@@ -15,7 +15,7 @@ Stride is built modularly across specialized repositories integrated here as sub
 | **`stridelang`** | [StrideLang/stridelang](https://github.com/StrideLang/stridelang) | The main compiler driver and command-line frontend (`stridec`). |
 | **`strideparser`** | [StrideLang/strideparser](https://github.com/StrideLang/strideparser) | Lexer, parser, and Abstract Syntax Tree (AST) generation. |
 | **`strideutils`** | [StrideLang/strideutils](https://github.com/StrideLang/strideutils) | Shared utilities, data structures, and common helper libraries. |
-| **`codegen`** | [StrideLang/codegen](https://github.com/StrideLang/codegen) | Target code generation engine. |
+| **`stridegen`** | [StrideLang/stridegen](https://github.com/StrideLang/stridegen) | Target code generation engine. |
 | **`stridejit`** | [StrideLang/stridejit](https://github.com/StrideLang/stridejit) | JIT compilation engine and runtime execution environment. |
 | **`strideroot`** | [StrideLang/strideroot](https://github.com/StrideLang/strideroot) | Core platform definitions, runtime libraries, and target frameworks. |
 | **`stridemanager`** | [StrideLang/stridemanager](https://github.com/StrideLang/stridemanager) | Project and tool configuration manager CLI (`stridemngr`). |
