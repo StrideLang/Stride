@@ -708,6 +708,8 @@ def main():
                             else:
                                 log_error(f"CI run failed with conclusion '{conclusion}'. URL: {run_url}")
                                 log_error(f"Changes remain isolated on '{presubmit_branch}' and were NOT merged into '{base_branch}'.")
+                                run_git(["checkout", base_branch], cwd=root, check=False)
+                                log_info(f"Switched back to base branch '{base_branch}'.")
                                 return 1
             else:
                 log_info(f"Push disabled. Presubmit commit remains locally on '{presubmit_branch}'.")
