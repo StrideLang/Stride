@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
 """
 Cross-platform script to synchronize, update, and push git submodules
-and update the parent repository submodule pointers.
+and update the parent repository submodule pointers via a presubmit branch.
 
 Works on Windows, macOS, and Linux with Python 3.6+.
 """
 
 import argparse
+import json
 import os
+import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
-from typing import List, Optional, Tuple, Dict
+from typing import List, Optional, Tuple, Dict, Any
 
 
 # ANSI colors for friendly terminal output
@@ -125,18 +128,18 @@ def get_current_branch(repo_dir: Path) -> Optional[str]:
 
 
 def get_default_remote_branch(repo_dir: Path, remote: str = "origin") -> Optional[str]:
-    """Determine default remote branch (e.g. 'main' or 'master')."""
+    """Determine default remote branch (e.g. 'main' or 'develop' or 'master')."""
     # Try refs/remotes/<remote>/HEAD
     res = run_git(["symbolic-ref", "--short", f"refs/remotes/{remote}/HEAD"], cwd=repo_dir, check=False)
     if res.returncode == 0 and res.stdout.strip():
-        # returns e.g. "origin/main"
+        # returns e.g. "origin/develop"
         target = res.stdout.strip()
         if target.startswith(f"{remote}/"):
             return target[len(remote) + 1:]
         return target
 
     # Try common branch names
-    for b in ["main", "master", "develop"]:
+    for b in ["develop", "main", "master"]:
         r = run_git(["rev-parse", "--verify", f"refs/remotes/{remote}/{b}"], cwd=repo_dir, check=False)
         if r.returncode == 0:
             return b
@@ -145,7 +148,7 @@ def get_default_remote_branch(repo_dir: Path, remote: str = "origin") -> Optiona
 
 
 def get_upstream_branch(repo_dir: Path) -> Optional[str]:
-    """Get the upstream tracking branch for HEAD, e.g. 'origin/main'."""
+    """Get the upstream tracking branch for HEAD, e.g. 'origin/develop'."""
     res = run_git(["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"], cwd=repo_dir, check=False)
     if res.returncode == 0 and res.stdout.strip():
         return res.stdout.strip()
@@ -170,7 +173,7 @@ def update_submodule(
     rebase: bool,
     dry_run: bool,
     allow_dirty: bool
-) -> Dict[str, any]:
+) -> Dict[str, Any]:
     """
     Synchronize, update, and optionally push a submodule.
     Returns status dict with:
@@ -298,11 +301,187 @@ def update_submodule(
     return result
 
 
+def check_gh_cli() -> Tuple[bool, str]:
+    """Check if GitHub CLI (gh) is installed and authenticated."""
+    if not shutil.which("gh"):
+        return False, "GitHub CLI ('gh') is not installed or not in PATH."
+    res = subprocess.run(["gh", "auth", "status"], capture_output=True, text=True)
+    if res.returncode != 0:
+        err = res.stderr.strip() or res.stdout.strip()
+        return False, f"GitHub CLI ('gh') is not authenticated: {err}"
+    return True, ""
+
+
+def find_ci_run_for_commit(
+    commit_sha: str,
+    branch: str,
+    timeout_seconds: int = 90,
+    poll_interval: int = 5
+) -> Optional[Dict[str, Any]]:
+    """
+    Find the GitHub Actions workflow run for a specific commit SHA on a branch.
+    Waits up to timeout_seconds for GitHub to register the run.
+    """
+    start = time.time()
+    log_info(f"Waiting for GitHub Actions run for commit {commit_sha[:7]} on branch '{branch}'...")
+
+    while time.time() - start < timeout_seconds:
+        res = subprocess.run(
+            [
+                "gh", "run", "list",
+                "--branch", branch,
+                "--commit", commit_sha,
+                "--json", "databaseId,status,conclusion,name,workflowName,url,headSha"
+            ],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace"
+        )
+        if res.returncode == 0 and res.stdout.strip():
+            try:
+                runs = json.loads(res.stdout)
+                if runs:
+                    return runs[0]
+            except Exception:
+                pass
+        time.sleep(poll_interval)
+
+    # Fallback: check recent runs on branch if commit SHA matching in gh was delayed
+    res = subprocess.run(
+        [
+            "gh", "run", "list",
+            "--branch", branch,
+            "--limit", "5",
+            "--json", "databaseId,status,conclusion,name,workflowName,url,headSha"
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace"
+    )
+    if res.returncode == 0 and res.stdout.strip():
+        try:
+            runs = json.loads(res.stdout)
+            for r in runs:
+                head_sha = r.get("headSha", "")
+                if head_sha.startswith(commit_sha) or commit_sha.startswith(head_sha):
+                    return r
+        except Exception:
+            pass
+
+    return None
+
+
+def monitor_ci_run(
+    run_id: int,
+    timeout_seconds: int = 1800,
+    poll_interval: int = 10
+) -> Tuple[bool, str, Dict[str, Any]]:
+    """
+    Monitor a GitHub Actions workflow run until completion.
+    Returns (passed, conclusion, run_data).
+    """
+    start = time.time()
+    last_msg = ""
+    while time.time() - start < timeout_seconds:
+        res = subprocess.run(
+            ["gh", "run", "view", str(run_id), "--json", "status,conclusion,jobs,url,name,workflowName"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace"
+        )
+        if res.returncode == 0 and res.stdout.strip():
+            try:
+                data = json.loads(res.stdout)
+                status = data.get("status", "")
+                conclusion = data.get("conclusion", "")
+                jobs = data.get("jobs", [])
+
+                job_statuses = []
+                for j in jobs:
+                    j_name = j.get("name", "job")
+                    j_status = j.get("status", "")
+                    j_conc = j.get("conclusion")
+                    detail = f"{j_name}: {j_conc or j_status}"
+                    job_statuses.append(detail)
+
+                elapsed = int(time.time() - start)
+                mins, secs = divmod(elapsed, 60)
+                msg = f"[CI] Status: {status} ({mins}m{secs:02d}s) | " + ", ".join(job_statuses)
+                if msg != last_msg:
+                    print(msg)
+                    last_msg = msg
+
+                if status == "completed":
+                    passed = (conclusion == "success")
+                    return passed, conclusion, data
+            except Exception:
+                pass
+        time.sleep(poll_interval)
+
+    return False, "timed_out", {}
+
+
+def merge_branch_into_base(
+    root: Path,
+    source_branch: str,
+    base_branch: str,
+    remote: str,
+    push: bool,
+    dry_run: bool
+) -> bool:
+    """
+    Merge source_branch into base_branch and push to remote.
+    """
+    log_step(f"Merging '{source_branch}' into '{base_branch}'...")
+    if dry_run:
+        log_info(f"[DRY-RUN] Would checkout '{base_branch}', merge '{source_branch}', and push to '{remote}'.")
+        return True
+
+    # Checkout base branch
+    res = run_git(["checkout", base_branch], cwd=root, check=False)
+    if res.returncode != 0:
+        log_error(f"Failed to checkout '{base_branch}': {res.stderr.strip()}")
+        return False
+
+    # Pull latest base branch
+    log_info(f"Updating '{base_branch}' from {remote}...")
+    run_git(["pull", "--ff-only", remote, base_branch], cwd=root, check=False)
+
+    # Merge source branch (prefer fast-forward)
+    log_info(f"Merging '{source_branch}' into '{base_branch}'...")
+    ff_res = run_git(["merge", "--ff-only", source_branch], cwd=root, check=False)
+    if ff_res.returncode != 0:
+        log_warn(f"Fast-forward merge not possible ({ff_res.stderr.strip()}). Attempting regular merge...")
+        m_res = run_git(["merge", "--no-ff", "-m", f"Merge branch '{source_branch}' into {base_branch}", source_branch], cwd=root, check=False)
+        if m_res.returncode != 0:
+            log_error(f"Merge failed:\n{m_res.stderr.strip()}")
+            return False
+
+    log_success(f"Merged '{source_branch}' into '{base_branch}' successfully.")
+
+    # Push base branch
+    if push:
+        log_step(f"Pushing merged '{base_branch}' to {remote}...")
+        push_res = run_git(["push", remote, base_branch], cwd=root, check=False)
+        if push_res.returncode == 0:
+            log_success(f"Pushed '{base_branch}' to {remote} successfully.")
+            return True
+        else:
+            log_error(f"Failed to push '{base_branch}':\n{push_res.stderr.strip()}")
+            return False
+    else:
+        log_info(f"Push disabled. Merged changes remain on local '{base_branch}'.")
+        return True
+
+
 def main():
     Colors.disable_if_needed()
 
     parser = argparse.ArgumentParser(
-        description="Synchronize, update, and push git submodules and update the parent repository."
+        description="Synchronize, update, and push git submodules and update parent repository via presubmit."
     )
     parser.add_argument(
         "--submodule", "-s",
@@ -343,11 +522,52 @@ def main():
         action="store_true",
         help="Attempt update even if a submodule has uncommitted changes to tracked files."
     )
+    parser.add_argument(
+        "--presubmit-branch",
+        default="presubmit",
+        help="Branch name to commit and push presubmit changes to (default: 'presubmit')."
+    )
+    parser.add_argument(
+        "--base-branch",
+        help="Base branch to merge into after CI passes (defaults to current branch, e.g. 'develop')."
+    )
+    parser.add_argument(
+        "--no-verify-ci",
+        action="store_true",
+        help="Do not wait for or verify GitHub CI run before merging."
+    )
+    parser.add_argument(
+        "--no-merge",
+        action="store_true",
+        help="Do not merge presubmit branch into base branch even if CI passes."
+    )
+    parser.add_argument(
+        "--ci-timeout",
+        type=int,
+        default=30,
+        help="Timeout in minutes to wait for CI to complete (default: 30)."
+    )
+    parser.add_argument(
+        "--ci-poll-interval",
+        type=int,
+        default=10,
+        help="Interval in seconds between CI status checks (default: 10)."
+    )
 
     args = parser.parse_args()
 
     root = get_repo_root()
     log_info(f"Repository root: {root}")
+
+    # Determine base branch
+    initial_branch = get_current_branch(root)
+    if args.base_branch:
+        base_branch = args.base_branch
+    elif initial_branch and initial_branch != args.presubmit_branch:
+        base_branch = initial_branch
+    else:
+        base_branch = get_default_remote_branch(root, args.remote) or "develop"
+    log_info(f"Base branch for presubmit: {base_branch}")
 
     # Discover submodules
     all_submodules = get_submodules(root)
@@ -402,32 +622,95 @@ def main():
         if args.no_commit:
             log_info("Skipping parent repository commit (--no-commit specified).")
         else:
+            presubmit_branch = args.presubmit_branch
             default_msg = f"chore(submodules): update {', '.join(updated_names)}"
             commit_msg = args.commit_msg or default_msg
-            log_info(f"Committing submodule updates in parent repository: \"{commit_msg}\"")
+
+            log_step(f"Switching to presubmit branch '{presubmit_branch}' based on '{base_branch}'...")
             if not args.dry_run:
+                # Create/reset presubmit branch based on base_branch
+                checkout_res = run_git(["checkout", "-B", presubmit_branch, base_branch], cwd=root, check=False)
+                if checkout_res.returncode != 0:
+                    log_error(f"Failed to create/checkout branch '{presubmit_branch}': {checkout_res.stderr.strip()}")
+                    return 1
+
+                log_info(f"Committing submodule updates to '{presubmit_branch}': \"{commit_msg}\"")
                 run_git(["add"] + rel_paths, cwd=root)
                 run_git(["commit", "-m", commit_msg], cwd=root)
-                log_success("Submodule pointers committed successfully.")
-
-    # Push parent repository if enabled and ahead
-    parent_branch = get_current_branch(root)
-    if parent_branch:
-        parent_upstream = get_upstream_branch(root) or f"{args.remote}/{parent_branch}"
-        behind, ahead = get_commit_counts(root, parent_upstream)
-        if ahead > 0:
-            if push_enabled:
-                log_step(f"Pushing parent repository branch '{parent_branch}' to {args.remote} ({ahead} commit(s) ahead)...")
-                if not args.dry_run:
-                    push_parent = run_git(["push", args.remote, parent_branch], cwd=root, check=False)
-                    if push_parent.returncode == 0:
-                        log_success(f"Pushed parent repository '{parent_branch}' successfully.")
-                    else:
-                        log_error(f"Failed to push parent repository:\n{push_parent.stderr.strip()}")
+                commit_sha = run_git(["rev-parse", "HEAD"], cwd=root).stdout.strip()
+                log_success(f"Committed submodule updates ({commit_sha[:7]}) to '{presubmit_branch}'.")
             else:
-                log_info(f"Parent repository branch '{parent_branch}' is {ahead} commit(s) ahead of {parent_upstream} (push disabled).")
-    else:
-        log_warn("Parent repository is in detached HEAD; skipping parent push.")
+                commit_sha = "0000000"
+                log_info(f"[DRY-RUN] Would checkout -B '{presubmit_branch}' '{base_branch}', add {rel_paths}, and commit \"{commit_msg}\".")
+
+            # Push presubmit branch
+            if push_enabled:
+                log_step(f"Pushing presubmit branch '{presubmit_branch}' to {args.remote}...")
+                if not args.dry_run:
+                    push_res = run_git(["push", "-u", args.remote, presubmit_branch, "--force"], cwd=root, check=False)
+                    if push_res.returncode != 0:
+                        log_error(f"Failed to push '{presubmit_branch}':\n{push_res.stderr.strip()}")
+                        return 1
+                    log_success(f"Pushed '{presubmit_branch}' to {args.remote} successfully.")
+                else:
+                    log_info(f"[DRY-RUN] Would push '{presubmit_branch}' to {args.remote} with --force.")
+
+                # Verify CI and merge
+                if not args.no_verify_ci:
+                    log_step("Verifying GitHub CI run...")
+                    if args.dry_run:
+                        log_info("[DRY-RUN] Would monitor GitHub Actions CI and merge on success.")
+                    else:
+                        gh_ok, gh_err = check_gh_cli()
+                        if not gh_ok:
+                            log_warn(f"Cannot verify CI automatically: {gh_err}")
+                            log_info(f"Please verify CI manually on GitHub and merge '{presubmit_branch}' into '{base_branch}'.")
+                        else:
+                            run_info = find_ci_run_for_commit(
+                                commit_sha=commit_sha,
+                                branch=presubmit_branch,
+                                timeout_seconds=90,
+                                poll_interval=args.ci_poll_interval
+                            )
+                            if not run_info:
+                                log_error(f"No CI run detected for commit {commit_sha[:7]} on branch '{presubmit_branch}'.")
+                                log_info(f"Please check GitHub Actions manually before merging into '{base_branch}'.")
+                                return 1
+
+                            run_id = run_info.get("databaseId")
+                            run_url = run_info.get("url", "")
+                            wf_name = run_info.get("workflowName") or run_info.get("name") or "CI"
+                            log_info(f"Found workflow '{wf_name}' (Run ID: {run_id}): {run_url}")
+                            log_info("Watching CI run progress...")
+
+                            ci_passed, conclusion, _ = monitor_ci_run(
+                                run_id=run_id,
+                                timeout_seconds=args.ci_timeout * 60,
+                                poll_interval=args.ci_poll_interval
+                            )
+
+                            if ci_passed:
+                                log_success(f"CI run passed! ({run_url})")
+                                if not args.no_merge:
+                                    merged = merge_branch_into_base(
+                                        root=root,
+                                        source_branch=presubmit_branch,
+                                        base_branch=base_branch,
+                                        remote=args.remote,
+                                        push=push_enabled,
+                                        dry_run=args.dry_run
+                                    )
+                                    if not merged:
+                                        log_error(f"Failed to merge '{presubmit_branch}' into '{base_branch}'.")
+                                        return 1
+                                else:
+                                    log_info(f"--no-merge specified; skipping merge into '{base_branch}'.")
+                            else:
+                                log_error(f"CI run failed with conclusion '{conclusion}'. URL: {run_url}")
+                                log_error(f"Changes remain isolated on '{presubmit_branch}' and were NOT merged into '{base_branch}'.")
+                                return 1
+            else:
+                log_info(f"Push disabled. Presubmit commit remains locally on '{presubmit_branch}'.")
 
     # Summary
     log_step("Summary")

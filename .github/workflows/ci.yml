@@ -2,9 +2,9 @@ name: Stride CI
 
 on:
   push:
-    branches: [ develop, master, main ]
+    branches: [ develop, master, main, presubmit ]
   pull_request:
-    branches: [ develop, master, main ]
+    branches: [ develop, master, main, presubmit ]
   workflow_dispatch:
     inputs:
       build_editor:
