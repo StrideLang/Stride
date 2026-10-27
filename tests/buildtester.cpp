@@ -20,7 +20,7 @@
     Authors: Andres Cabrera and Joseph Tilbian
 */
 
-﻿/*
+/*
     Stride is licensed under the terms of the 3-clause BSD license.
 
     Copyright (C) 2017. The Regents of the University of California.
@@ -61,10 +61,10 @@
 #include <QList>
 #include <QThread>
 
-//#include "stride/codegen/astfunctions.hpp"
-#include "stride/codegen/coderesolver.hpp"
-#include "stride/codegen/codevalidator.hpp"
-#include "stride/codegen/systemconfiguration.hpp"
+//#include "stride/stridegen/astfunctions.hpp"
+#include "stride/stridegen/coderesolver.hpp"
+#include "stride/stridegen/codevalidator.hpp"
+#include "stride/stridegen/systemconfiguration.hpp"
 #include "stride/parser/ast.h"
 #include "stride/utils/astquery.h"
 

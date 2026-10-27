@@ -25,9 +25,9 @@
 #include <QtTest>
 
 #include "buildtester.hpp"
-#include "stride/codegen/codeanalysis.hpp"
-#include "stride/codegen/coderesolver.hpp"
-#include "stride/codegen/codevalidator.hpp"
+#include "stride/stridegen/codeanalysis.hpp"
+#include "stride/stridegen/coderesolver.hpp"
+#include "stride/stridegen/codevalidator.hpp"
 #include "stride/utils/astquery.h"
 
 using namespace strd;
