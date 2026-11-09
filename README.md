@@ -12,13 +12,12 @@ Stride is built modularly across specialized repositories integrated here as sub
 
 | Component | Repository | Description |
 | :--- | :--- | :--- |
-| **`stridelang`** | [StrideLang/stridelang](https://github.com/StrideLang/stridelang) | The main compiler driver and command-line frontend (`stridec`). |
+| **`stridelang`** | [StrideLang/stridelang](https://github.com/StrideLang/stridelang) | Unified Stride CLI toolchain, compiler driver, and package manager (`stride` & `stridec`). |
 | **`strideparser`** | [StrideLang/strideparser](https://github.com/StrideLang/strideparser) | Lexer, parser, and Abstract Syntax Tree (AST) generation. |
 | **`strideutils`** | [StrideLang/strideutils](https://github.com/StrideLang/strideutils) | Shared utilities, data structures, and common helper libraries. |
 | **`stridegen`** | [StrideLang/stridegen](https://github.com/StrideLang/stridegen) | Target code generation engine. |
 | **`stridejit`** | [StrideLang/stridejit](https://github.com/StrideLang/stridejit) | JIT compilation engine and runtime execution environment. |
 | **`strideroot`** | [StrideLang/strideroot](https://github.com/StrideLang/strideroot) | Core platform definitions, runtime libraries, and target frameworks. |
-| **`stridemanager`** | [StrideLang/stridemanager](https://github.com/StrideLang/stridemanager) | Project and tool configuration manager CLI (`stridemngr`). |
 | **`editor`** | [StrideLang/editor](https://github.com/StrideLang/editor) | Legacy standalone desktop IDE (`StrideIDE` - deprecated). |
 
 ---
@@ -110,7 +109,7 @@ sudo apt install -y build-essential cmake flex bison \
 
 ---
 
-### Build Instructions
+## Build Instructions
 
 ```bash
 cmake -B build -DCMAKE_BUILD_TYPE=Release

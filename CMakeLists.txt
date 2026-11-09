@@ -41,7 +41,6 @@ endif()
 
 # Tools
 add_subdirectory(stridelang)
-add_subdirectory(stridemanager)
 if(STRIDE_BUILD_EDITOR AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/editor")
     add_subdirectory(editor)
 endif()
@@ -51,19 +50,17 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/plugins/pufferfish")
   add_subdirectory(plugins/pufferfish)
 endif()
 
-
 # Install
 set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/build")
 install(TARGETS StrideParser StrideGen DESTINATION lib)
+
+set(STRIDE_BIN_TARGETS stride stridec)
 if(TARGET StrideIDE)
-    install(TARGETS stridec stridemngr StrideIDE DESTINATION bin)
-else()
-    install(TARGETS stridec stridemngr DESTINATION bin)
+    list(APPEND STRIDE_BIN_TARGETS StrideIDE)
 endif()
+install(TARGETS ${STRIDE_BIN_TARGETS} DESTINATION bin)
 
 file(GLOB STRIDEPARSER_HEADERS "strideparser/include/*.h*" )
 install(FILES ${STRIDEPARSER_HEADERS} DESTINATION include)
 file(GLOB STRIDECODEGEN_HEADERS "strideparser/include/*.h*" )
 install(FILES ${STRIDECODEGEN_HEADERS} DESTINATION include)
-
-
