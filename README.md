@@ -30,6 +30,13 @@ For active editor support, syntax highlighting, language features, and code inte
 
 ---
 
+## Developer Workflow & Documentation
+
+* **[Developer Workflow Guide](stridelang/doc/developer_workflow.md)**: Developing locally alongside an installed Stride release, STRIDE_DEV configuration, and VS Code setup.
+* **[Release Procedure Guide](stridelang/doc/release_procedure.md)**: Versioning, installer packaging (NSIS, DEB, TGZ), and CI/CD release pipeline.
+
+---
+
 ## Prerequisites & Dependencies
 
 Building Stride requires standard build tools alongside specific third-party libraries mapped to each submodule:
