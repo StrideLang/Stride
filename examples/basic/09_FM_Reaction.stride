@@ -1,9 +1,9 @@
 # Frequency Modulation with Reaction
 
 use DesktopAudio version 1.0
-#use SaturnM7 version 1.0
 
-import Generators
+import Dsp::Generators as Generators
+import Dsp::Routing as Routing
 
 signal CarrierFreq  { default: 220 rate: AudioRate }
 signal CMRatio      { default: 5 rate: AudioRate }
@@ -11,53 +11,51 @@ signal Index        { default: 5.0 rate: AudioRate }
 
 constant Factor     { value: 0.9999 }
 
-signal Env          { default: 1.0 rate: AudioRate}
-signal Trig         { default: 1.0 rate: AudioRate}
+signal Env          { default: 1.0 rate: AudioRate }
+signal Trig         { default: 1.0 rate: AudioRate }
 
-signal Modulator            { default: 0.0 rate: AudioRate}
-signal CarrierFreqModulator { default: 0.0 rate: AudioRate}
-signal X                    { default: 0.0 rate: AudioRate}
+signal Modulator            { default: 0.0 rate: AudioRate }
+signal CarrierFreqModulator { default: 0.0 rate: AudioRate }
+signal X                    { default: 0.0 rate: AudioRate }
 
 reaction TriggerEnv {
-    streams:       [
+    streams: [
         0.3 >> Env;
     ]
 }
 
-Impulse (frequency: 3) >> Trig;
+Generators::Impulse (frequency: 3) >> Trig;
 
 [ Trig, 1 ] >> Equal () >> TriggerEnv();
 
 Env * Factor >> Env;
 
-Oscillator (frequency: 1 amplitude: 0.2) >> X;
+Generators::Oscillator (frequency: 1 amplitude: 0.2) >> X;
 
-Oscillator (
+Generators::Oscillator (
     frequency:    0.5 + X
     amplitude:    CarrierFreq * 0.01
 )
 + 220
 >> CarrierFreq;
 
-Oscillator (
+Generators::Oscillator (
     frequency:    ModFreq
 )
 >> Modulator;
 
-
 CarrierFreq * CMRatio
 >> ModFreq;
 
-
-Oscillator (
+Generators::Oscillator (
     frequency:      0.2
     amplitude:      CarrierFreq * 0.1
 )
 >> CarrierFreqModulator;
 
-Oscillator (
+Generators::Oscillator (
     frequency: CarrierFreqModulator + CarrierFreq + Modulator * (CarrierFreq * Index)
     amplitude: Env
 )
->> Level (gain: 0.3)
+>> Routing::Level (gain: 0.3)
 >> AudioOut;

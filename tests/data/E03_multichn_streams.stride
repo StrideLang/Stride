@@ -1,6 +1,7 @@
 use DesktopAudio version 1.0
 
-import Generators
+import Dsp::Generators as Generators
+import Dsp::Routing as Routing
 
 signal PanMod {
 	rate: 4000
@@ -11,20 +12,20 @@ signal DummyStereo[2] {}
 signal DummyStereo2[2] {}
 signal DummyQuad[4] {}
 
-Oscillator(frequency: 5) >> PanMod;
+Generators::Oscillator(frequency: 5) >> PanMod;
 
-Oscillator(frequency: 440) >> Pan(position: PanMod) >> AudioOut;
+Generators::Oscillator(frequency: 440) >> Routing::Pan(position: PanMod) >> AudioOut;
 
 # This line is correct as DummyOut should be auto-declared stereo
-Oscillator(frequency: 440) >> Pan(position: PanMod) >> DummyOut;
+Generators::Oscillator(frequency: 440) >> Routing::Pan(position: PanMod) >> DummyOut;
 
 # This line should throw an error (Pan has two outputs)
-Oscillator(frequency: 440) >> Pan(position: PanMod) >> DummyOut2;
+Generators::Oscillator(frequency: 440) >> Routing::Pan(position: PanMod) >> DummyOut2;
 
 # This line should throw an error, output of Pan should provide 4 channels
-DummyStereo >> Pan(position: PanMod) >> DummyStereo2;
+DummyStereo >> Routing::Pan(position: PanMod) >> DummyStereo2;
 
 # This line should work (Pan is expanded to two copies)
-DummyStereo >> Pan(position: PanMod) >> DummyQuad;
+DummyStereo >> Routing::Pan(position: PanMod) >> DummyQuad;
 
 

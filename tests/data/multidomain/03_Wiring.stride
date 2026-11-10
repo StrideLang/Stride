@@ -1,6 +1,6 @@
 use DesktopAudio version 1.0
 
-import Generators
+import Dsp::Generators as Generators
 
 signal Sig {
     domain: AudioDomain
@@ -8,6 +8,6 @@ signal Sig {
 
 Wiring::AnalogIn[0] >> Sig;
 
-Oscillator(frequency: Sig) >> AudioOut[0];
+Generators::Oscillator(frequency: Sig) >> AudioOut[0];
 
 #Wiring::AnalogIn[0] >> AudioOut[0];

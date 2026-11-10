@@ -1,6 +1,7 @@
 use DesktopAudio version 1.0
 
-import Generators
+import Dsp::Generators as Generators
+import Dsp::Routing as Routing
 
 constant NumberOfGrains   { value: 10 }
 constant GrainTriggerRate { value: 15 }
@@ -39,5 +40,5 @@ Oscillator(
   reset:     GrainState
 )
 >> Sum()
->> Level( gain: 1.0 / NumberOfGrains )
+>> Routing::Level( gain: 1.0 / NumberOfGrains )
 >> AudioOut[0];

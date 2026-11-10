@@ -1,6 +1,6 @@
 use DesktopAudio version 1.0
 
-import Generators
+import Dsp::Generators as Generators
 
 table SineTable {
 	size: 1024
@@ -18,7 +18,7 @@ signal Counter {
 	reset: CounterReset
 }
 
-Oscillator(frequency: 1.0) >> SineTable; 
+Generators::Oscillator(frequency: 1.0) >> SineTable; 
 
 SineTable[Counter] >> AudioOut[0];
 

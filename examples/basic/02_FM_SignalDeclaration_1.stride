@@ -1,12 +1,11 @@
 # Frequency Modulation with Signal Declaration
 
 use DesktopAudio version 1.0
-#use SaturnM7 version 1.0
 
-import Generators
+import Dsp::Generators as Generators
 
-signal Modulator {rate: AudioRate}
+signal Modulator { rate: AudioRate }
 
-Oscillator ( frequency: 3.0 amplitude: 40.0 ) >> Modulator;
+Generators::Oscillator ( frequency: 3.0 amplitude: 40.0 ) >> Modulator;
 
-Oscillator ( frequency: 440.0 + Modulator amplitude: 0.1 ) >> AudioOut;
+Generators::Oscillator ( frequency: 440.0 + Modulator amplitude: 0.1 ) >> AudioOut;

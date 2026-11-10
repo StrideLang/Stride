@@ -1,8 +1,10 @@
 use DesktopAudio version 1.0
 
+import Dsp::Routing as Routing
+
 constant Const1 {value: 2.0}
 
 signal Sig {}
 
-AudioIn >> Level(gain: 0.1) >> AudioOut;
+AudioIn >> Routing::Level(gain: 0.1) >> AudioOut;
 

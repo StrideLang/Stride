@@ -1,8 +1,8 @@
 use DesktopAudio version 1.0
 
-import Filters as Filt
+import Dsp::Filters as Filt
 
-# This line should fail as LowPass is declared in "filters"
+# This line should fail as LowPass is declared in "Filt"
 AudioIn[1] >> LowPass() >> AudioOut[1];
 
 # This line shoud fail as LowPass not in scope F

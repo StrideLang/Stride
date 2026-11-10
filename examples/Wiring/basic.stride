@@ -1,6 +1,6 @@
 use Wiring version 1.0
 
-import Generators
+import Dsp::Generators as Generators
 
 signal Frequency {
     domain: PlatformDomain
@@ -8,4 +8,4 @@ signal Frequency {
 
 1 + AnalogIn[1] * (1.0/128.0) >> Frequency;
 
-[ Oscillator ( frequency: Frequency ) , 0 ] >> Greater() >> DigitalOut[14];
+[ Generators::Oscillator ( frequency: Frequency ) , 0 ] >> Greater() >> DigitalOut[14];

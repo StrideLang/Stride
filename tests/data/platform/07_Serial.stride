@@ -1,6 +1,6 @@
 use DesktopAudio version 1.0
 
-import Serial
+import IO::Serial as Serial
 
 AudioIn[0] >> SerialOut[0];
 

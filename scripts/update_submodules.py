@@ -455,7 +455,7 @@ def merge_branch_into_base(
     ff_res = run_git(["merge", "--ff-only", source_branch], cwd=root, check=False)
     if ff_res.returncode != 0:
         log_warn(f"Fast-forward merge not possible ({ff_res.stderr.strip()}). Attempting regular merge...")
-        m_res = run_git(["merge", "--no-ff", "-m", f"Merge branch '{source_branch}' into {base_branch}", source_branch], cwd=root, check=False)
+        m_res = run_git(["-c", "core.commitGraph=false", "merge", "--no-ff", "-m", f"Merge branch '{source_branch}' into {base_branch}", source_branch], cwd=root, check=False)
         if m_res.returncode != 0:
             log_error(f"Merge failed:\n{m_res.stderr.strip()}")
             return False
@@ -568,6 +568,12 @@ def main():
     else:
         base_branch = get_default_remote_branch(root, args.remote) or "develop"
     log_info(f"Base branch for presubmit: {base_branch}")
+    if not args.dry_run:
+        run_git(["fetch", args.remote, base_branch], cwd=root, check=False)
+        if get_current_branch(root) == base_branch:
+            run_git(["merge", "--ff-only", f"{args.remote}/{base_branch}"], cwd=root, check=False)
+        else:
+            run_git(["fetch", args.remote, f"{base_branch}:{base_branch}"], cwd=root, check=False)
 
     # Discover submodules
     all_submodules = get_submodules(root)

@@ -1,6 +1,6 @@
 use DesktopAudio version 1.0
 
-import Generators
+import Dsp::Generators as Generators
 
 signal Val1 {default: 0.1}
 signal Val2 {default: 0.2}

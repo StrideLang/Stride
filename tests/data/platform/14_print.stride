@@ -1,6 +1,6 @@
 use DesktopAudio version 1.0
 
-import Generators
+import Dsp::Generators as Generators
 
 signal S {
     domain: AudioBlockDomain

@@ -1,12 +1,12 @@
 use DesktopAudio version 1.0
 
-import Generators
+import Dsp::Generators as Generators
 
 signal Envelope {
 	domain: AudioBlockDomain
 }
 
-Impulse(frequency: 1) >> AD() >> Envelope; 
+Generators::Impulse(frequency: 1) >> Generators::AD() >> Envelope; 
 
-Oscillator(frequency: 440 amplitude: Envelope) >> AudioOut[0];
+Generators::Oscillator(frequency: 440 amplitude: Envelope) >> AudioOut[0];
 

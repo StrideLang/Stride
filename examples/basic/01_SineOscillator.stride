@@ -1,8 +1,7 @@
 # Sine Oscillator
 
 use DesktopAudio version 1.0
-#use SaturnM7 version 1.0
 
-import Generators
+import Dsp::Generators as Generators
 
-Oscillator ( frequency: 440.0 amplitude: 0.1 ) >> AudioOut;
+Generators::Oscillator ( frequency: 440.0 amplitude: 0.1 ) >> AudioOut;

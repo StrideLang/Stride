@@ -1,7 +1,8 @@
 
 use DesktopAudio version 1.0
 
-import Generators
+import Dsp::Generators as Generators
+import Dsp::Routing as Routing
 
 AudioIn[1] >> Signal >> AudioOut[1];
 
@@ -24,9 +25,9 @@ Rate1 >> Rate2 >> Output1;
 
 Signal1 >> Rate1 >> Signal2 >> Rate2 >> GetAudioRate >> Output2;
 
-TestModule() >> Rate1 >> Level(gain: 0.5) >> AudioRateSig;
+TestModule() >> Rate1 >> Routing::Level(gain: 0.5) >> AudioRateSig;
 
-Oscillator() >> AudioOut;
+Generators::Oscillator() >> AudioOut;
 
 module TestModule {
     ports: [

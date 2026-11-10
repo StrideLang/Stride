@@ -1,17 +1,17 @@
 # Beating
 
 use DesktopAudio version 1.0
-#use SaturnM7 version 1.0
 
-import Generators
+import Dsp::Generators as Generators
+import Dsp::Routing as Routing
 
-Oscillator (frequency: [440, 443, 437, 880, 885, 887] amplitude: 0.1) >> Oscillators;
+Generators::Oscillator (frequency: [440, 443, 437, 880, 885, 887] amplitude: 0.1) >> Oscillators;
 
-Oscillators[1]
+Oscillators[0]
++ Oscillators[1]
 + Oscillators[2]
 + Oscillators[3]
 + Oscillators[4]
 + Oscillators[5]
-+ Oscillators[6]
->> Level ( gain: 0.5 )
+>> Routing::Level ( gain: 0.5 )
 >> AudioOut;

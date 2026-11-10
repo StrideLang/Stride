@@ -1,7 +1,7 @@
 use DesktopAudio version 1.0
 
-import Generators
+import Dsp::Generators as Generators
 
-Oscillator() >> AudioOut[0];
+Generators::Oscillator() >> AudioOut[0];
 
-Impulse(frequency: 1) >> AudioOut[1];
+Generators::Impulse(frequency: 1) >> AudioOut[1];

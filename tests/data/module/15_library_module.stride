@@ -1,5 +1,5 @@
 use DesktopAudio version 1.0
 
-import Generators
+import Dsp::Routing as Routing
 
-AudioIn[0] >> Level(gain: 0.3) >> AudioOut[0];
+AudioIn[0] >> Routing::Level(gain: 0.3) >> AudioOut[0];
