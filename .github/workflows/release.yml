@@ -1,0 +1,211 @@
+name: Release Build & Cross-Platform Packaging
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-vscode-extension:
+    name: Package VS Code Extension (.vsix)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout vscode-stride-lang
+        uses: actions/checkout@v4
+        with:
+          repository: StrideLang/vscode-stride-lang
+          path: vscode-stride-lang
+          token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Setup Node.js
+        if: hashFiles('vscode-stride-lang/package.json') != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build .vsix
+        if: hashFiles('vscode-stride-lang/package.json') != ''
+        working-directory: vscode-stride-lang
+        run: |
+          npm ci || npm install
+          npx @vscode/vsce package --out stride-language.vsix
+
+      - name: Upload VSIX Artifact
+        if: hashFiles('vscode-stride-lang/package.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: vscode-extension
+          path: vscode-stride-lang/*.vsix
+
+  build-and-package:
+    name: Package (${{ matrix.os }})
+    needs: [build-vscode-extension]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            generator: "NSIS;ZIP"
+          - os: macos-latest
+            generator: "TGZ;ZIP"
+          - os: ubuntu-24.04
+            generator: "TGZ;DEB"
+
+    steps:
+      - name: Checkout Stride repository and submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Download VS Code Extension (.vsix) for Installer Bundling
+        uses: actions/download-artifact@v4
+        with:
+          name: vscode-extension
+          path: vscode-stride-lang
+        continue-on-error: true
+
+      - name: Setup Ninja
+        uses: ashutoshvarma/setup-ninja@master
+        with:
+          version: 1.11.1
+
+      - name: Setup Linux LLVM & Dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build flex bison llvm-18-dev libllvm18 clang-18
+
+      - name: Setup macOS LLVM & Dependencies
+        if: runner.os == 'macOS'
+        run: |
+          brew install bison flex llvm@18
+          echo "LLVM_DIR=$(brew --prefix llvm@18)/lib/cmake/llvm" >> $GITHUB_ENV
+          echo "BISON_EXECUTABLE=$(brew --prefix bison)/bin/bison" >> $GITHUB_ENV
+          echo "FLEX_EXECUTABLE=$(brew --prefix flex)/bin/flex" >> $GITHUB_ENV
+
+      - name: Setup Windows Dependencies (NSIS & WinFlexBison)
+        if: runner.os == 'Windows'
+        run: |
+          choco install nsis winflexbison3 -y
+
+      - name: Setup MSVC Environment
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Cache Windows LLVM Build
+        if: runner.os == 'Windows'
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/_deps/llvm-project-build
+            build/_deps/llvm-project-src
+            build/_deps/llvm-project-subbuild
+          key: windows-llvmorg-22.1.5-x64-v1
+
+      - name: Configure CMake (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          cmake -S stridelang -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DSTRIDE_BUILD_TESTS=OFF \
+            -DSTRIDEJIT_BUILD_TESTS=OFF \
+            -DSTRIDEPARSER_BUILD_TESTS=OFF \
+            -DSTRIDEJIT_BUILD_TESTING=OFF \
+            -DSTRIDE_OFFICIAL_RELEASE=ON \
+            -DSTRIDEROOT="${{ github.workspace }}/strideroot" \
+            -DLLVM_DIR=/usr/lib/llvm-18/lib/cmake/llvm \
+            -DCMAKE_PREFIX_PATH=/usr/lib/llvm-18
+
+      - name: Configure CMake (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          cmake -S stridelang -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DSTRIDE_BUILD_TESTS=OFF \
+            -DSTRIDEJIT_BUILD_TESTS=OFF \
+            -DSTRIDEPARSER_BUILD_TESTS=OFF \
+            -DSTRIDEJIT_BUILD_TESTING=OFF \
+            -DSTRIDE_OFFICIAL_RELEASE=ON \
+            -DSTRIDEROOT="${{ github.workspace }}/strideroot" \
+            -DLLVM_DIR="${{ env.LLVM_DIR }}" \
+            -DBISON_EXECUTABLE="${{ env.BISON_EXECUTABLE }}" \
+            -DFLEX_EXECUTABLE="${{ env.FLEX_EXECUTABLE }}"
+
+      - name: Configure CMake (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          cmake -S stridelang -B build -G Ninja `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DSTRIDE_BUILD_TESTS=OFF `
+            -DSTRIDEJIT_BUILD_TESTS=OFF `
+            -DSTRIDEPARSER_BUILD_TESTS=OFF `
+            -DSTRIDEJIT_BUILD_TESTING=OFF `
+            -DSTRIDEJIT_BUILD_LLVM=ON `
+            -DSTRIDE_OFFICIAL_RELEASE=ON `
+            -DSTRIDEROOT="${{ github.workspace }}/strideroot"
+
+      - name: Build Stride Toolchain
+        run: |
+          cmake --build build --config Release --target stride stridec
+
+      - name: Create Packages with CPack
+        working-directory: build
+        run: |
+          cpack -C Release -G "${{ matrix.generator }}"
+
+      - name: Upload Installer Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: installers-${{ matrix.os }}
+          path: |
+            build/*.exe
+            build/*.zip
+            build/*.tar.gz
+            build/*.deb
+
+  create-github-release:
+    name: Publish GitHub Release
+    needs: [build-and-package, build-vscode-extension]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout Stride repository (for release notes)
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: notes
+
+      - name: Download all installer artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+
+      - name: Generate Checksums (SHA256)
+        working-directory: release-assets
+        run: |
+          find . -type f -exec sha256sum {} + > SHA256SUMS.txt
+
+      - name: Resolve Release Notes
+        id: notes
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          NOTES_FILE="notes/stride_${VERSION}_release_notes.md"
+          if [ -f "$NOTES_FILE" ]; then
+            echo "body_path=$NOTES_FILE" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release-assets/**/*.*
+            release-assets/SHA256SUMS.txt
+          body_path: ${{ steps.notes.outputs.body_path }}
+          generate_release_notes: ${{ steps.notes.outputs.body_path == '' }}
+          draft: false
+          prerelease: false
