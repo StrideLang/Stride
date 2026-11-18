@@ -1,5 +1,14 @@
 cmake_minimum_required(VERSION 3.13) 
-project(Stride VERSION 0.1.0)
+
+set(STRIDE_PROJECT_VERSION "0.1.0")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/stridelang/CMakeLists.txt")
+    file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/stridelang/CMakeLists.txt" _stridelang_project_line
+         REGEX "project\\(stridelang VERSION [0-9]+\\.[0-9]+\\.[0-9]+")
+    if(_stridelang_project_line MATCHES "VERSION ([0-9]+\\.[0-9]+\\.[0-9]+)")
+        set(STRIDE_PROJECT_VERSION "${CMAKE_MATCH_1}")
+    endif()
+endif()
+project(Stride VERSION ${STRIDE_PROJECT_VERSION})
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
