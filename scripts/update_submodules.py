@@ -609,7 +609,7 @@ def main():
 
     # Check which submodules have modified commit pointers in parent repo
     log_step("Checking parent repository status...")
-    diff_res = run_git(["diff", "--name-only", "--diff-filter=M"], cwd=root, check=False)
+    diff_res = run_git(["diff", base_branch, "--name-only", "--diff-filter=M"], cwd=root, check=False)
     modified_paths = set(diff_res.stdout.strip().splitlines()) if diff_res.stdout.strip() else set()
 
     submodules_modified_in_parent = []
