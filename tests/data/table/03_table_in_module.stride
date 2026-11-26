@@ -11,7 +11,7 @@ module TableInModule {
     blocks: [
         table SineTable {
             size: 1024
-            rate: 1024
+            logicalFillRate: 1024
             domain: OutputPort.domain
         }
         signal CounterVal {

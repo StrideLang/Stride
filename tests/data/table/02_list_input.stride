@@ -4,7 +4,7 @@ import Dsp::Generators as Generators
 
 table MyTable {
 	size: 1024
-	rate: 1024
+	logicalFillRate: 1024
 	domain: RootDomain
 }
 
